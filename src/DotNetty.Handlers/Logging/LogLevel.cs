@@ -3,14 +3,14 @@
 
 namespace DotNetty.Handlers.Logging
 {
-    using DotNetty.Common.Internal.Logging;
+  using DotNetty.Common.Internal.Logging;
 
-    public enum LogLevel
-    {
-        TRACE = InternalLogLevel.TRACE,
-        DEBUG = InternalLogLevel.DEBUG,
-        INFO = InternalLogLevel.INFO,
-        WARN = InternalLogLevel.WARN,
-        ERROR = InternalLogLevel.ERROR,
-    }
+  public enum LogLevel
+  {
+    TRACE = InternalLogLevel.TRACE,
+    DEBUG = InternalLogLevel.DEBUG,
+    INFO = InternalLogLevel.INFO,
+    WARN = InternalLogLevel.WARN,
+    ERROR = InternalLogLevel.ERROR,
+  }
 }

@@ -3,19 +3,19 @@
 
 namespace DotNetty.Common.Concurrency
 {
-    using System;
+  using System;
 
-    public static class ExecutionEnvironment
+  public static class ExecutionEnvironment
+  {
+    [ThreadStatic]
+    static IEventExecutor currentExecutor;
+
+    public static bool TryGetCurrentExecutor(out IEventExecutor executor)
     {
-        [ThreadStatic]
-        static IEventExecutor currentExecutor;
-
-        public static bool TryGetCurrentExecutor(out IEventExecutor executor)
-        {
-            executor = currentExecutor;
-            return executor != null;
-        }
-
-        internal static void SetCurrentExecutor(IEventExecutor executor) => currentExecutor = executor;
+      executor = currentExecutor;
+      return executor != null;
     }
+
+    internal static void SetCurrentExecutor(IEventExecutor executor) => currentExecutor = executor;
+  }
 }

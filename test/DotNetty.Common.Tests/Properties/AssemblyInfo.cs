@@ -5,4 +5,6 @@ using System.Reflection;
 using System.Resources;
 
 [assembly: NeutralResourcesLanguage("en-US")]
+#if !TEST40
 [assembly: AssemblyMetadata("Serviceable", "True")]
+#endif

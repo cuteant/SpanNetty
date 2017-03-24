@@ -3,24 +3,28 @@
 
 namespace DotNetty.Codecs.Mqtt.Packets
 {
-    using System.Collections.Generic;
+  using System.Collections.Generic;
 
-    public sealed class SubscribePacket : PacketWithId
+  public sealed class SubscribePacket : PacketWithId
+  {
+    public SubscribePacket()
     {
-        public SubscribePacket()
-        {
-        }
-
-        public SubscribePacket(int packetId, params SubscriptionRequest[] requests)
-        {
-            this.PacketId = packetId;
-            this.Requests = requests;
-        }
-
-        public override PacketType PacketType => PacketType.SUBSCRIBE;
-
-        public override QualityOfService QualityOfService => QualityOfService.AtLeastOnce;
-
-        public IReadOnlyList<SubscriptionRequest> Requests { get; set; }
     }
+
+    public SubscribePacket(int packetId, params SubscriptionRequest[] requests)
+    {
+      this.PacketId = packetId;
+      this.Requests = requests;
+    }
+
+    public override PacketType PacketType => PacketType.SUBSCRIBE;
+
+    public override QualityOfService QualityOfService => QualityOfService.AtLeastOnce;
+
+#if NET_4_0_GREATER
+    public IReadOnlyList<SubscriptionRequest> Requests { get; set; }
+#else
+    public IList<SubscriptionRequest> Requests { get; set; }
+#endif
+  }
 }

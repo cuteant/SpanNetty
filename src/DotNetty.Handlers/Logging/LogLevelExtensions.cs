@@ -3,10 +3,10 @@
 
 namespace DotNetty.Handlers.Logging
 {
-    using DotNetty.Common.Internal.Logging;
+  using DotNetty.Common.Internal.Logging;
 
-    public static class LogLevelExtensions
-    {
-        public static InternalLogLevel ToInternalLevel(this LogLevel level) => (InternalLogLevel)level;
-    }
+  public static class LogLevelExtensions
+  {
+    public static InternalLogLevel ToInternalLevel(this LogLevel level) => (InternalLogLevel)level;
+  }
 }

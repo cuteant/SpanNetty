@@ -3,31 +3,35 @@
 
 namespace DotNetty.Codecs.Mqtt.Packets
 {
-    using System.Collections.Generic;
+  using System.Collections.Generic;
 
-    public sealed class SubAckPacket : PacketWithId
+  public sealed class SubAckPacket : PacketWithId
+  {
+    public override PacketType PacketType => PacketType.SUBACK;
+
+#if NET_4_0_GREATER
+    public IReadOnlyList<QualityOfService> ReturnCodes { get; set; }
+#else
+    public IList<QualityOfService> ReturnCodes { get; set; }
+#endif
+
+    public static SubAckPacket InResponseTo(SubscribePacket subscribePacket, QualityOfService maxQoS)
     {
-        public override PacketType PacketType => PacketType.SUBACK;
+      var subAckPacket = new SubAckPacket
+      {
+        PacketId = subscribePacket.PacketId
+      };
+      var subscriptionRequests = subscribePacket.Requests;
+      var returnCodes = new QualityOfService[subscriptionRequests.Count];
+      for (int i = 0; i < subscriptionRequests.Count; i++)
+      {
+        QualityOfService requestedQos = subscriptionRequests[i].QualityOfService;
+        returnCodes[i] = requestedQos <= maxQoS ? requestedQos : maxQoS;
+      }
 
-        public IReadOnlyList<QualityOfService> ReturnCodes { get; set; }
+      subAckPacket.ReturnCodes = returnCodes;
 
-        public static SubAckPacket InResponseTo(SubscribePacket subscribePacket, QualityOfService maxQoS)
-        {
-            var subAckPacket = new SubAckPacket
-            {
-                PacketId = subscribePacket.PacketId
-            };
-            IReadOnlyList<SubscriptionRequest> subscriptionRequests = subscribePacket.Requests;
-            var returnCodes = new QualityOfService[subscriptionRequests.Count];
-            for (int i = 0; i < subscriptionRequests.Count; i++)
-            {
-                QualityOfService requestedQos = subscriptionRequests[i].QualityOfService;
-                returnCodes[i] = requestedQos <= maxQoS ? requestedQos : maxQoS;
-            }
-
-            subAckPacket.ReturnCodes = returnCodes;
-
-            return subAckPacket;
-        }
+      return subAckPacket;
     }
+  }
 }

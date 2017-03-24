@@ -3,32 +3,32 @@
 
 namespace DotNetty.Transport.Channels
 {
-    using System;
-    using DotNetty.Common.Concurrency;
-    using DotNetty.Common.Internal.Logging;
+  using System;
+  using DotNetty.Common.Concurrency;
+  using DotNetty.Common.Internal.Logging;
 
-    static class Util
+  static class Util
+  {
+    /// <summary>
+    ///     Marks the specified {@code promise} as success.  If the {@code promise} is done already, log a message.
+    /// </summary>
+    public static void SafeSetSuccess(TaskCompletionSource promise, IInternalLogger logger)
     {
-        /// <summary>
-        ///     Marks the specified {@code promise} as success.  If the {@code promise} is done already, log a message.
-        /// </summary>
-        public static void SafeSetSuccess(TaskCompletionSource promise, IInternalLogger logger)
-        {
-            if (promise != TaskCompletionSource.Void && !promise.TryComplete())
-            {
-                logger.Warn($"Failed to mark a promise as success because it is done already: {promise}");
-            }
-        }
-
-        /// <summary>
-        ///     Marks the specified {@code promise} as failure.  If the {@code promise} is done already, log a message.
-        /// </summary>
-        public static void SafeSetFailure(TaskCompletionSource promise, Exception cause, IInternalLogger logger)
-        {
-            if (promise != TaskCompletionSource.Void && !promise.TrySetException(cause))
-            {
-                logger.Warn($"Failed to mark a promise as failure because it's done already: {promise}", cause);
-            }
-        }
+      if (promise != TaskCompletionSource.Void && !promise.TryComplete())
+      {
+        logger.Warn($"Failed to mark a promise as success because it is done already: {promise}");
+      }
     }
+
+    /// <summary>
+    ///     Marks the specified {@code promise} as failure.  If the {@code promise} is done already, log a message.
+    /// </summary>
+    public static void SafeSetFailure(TaskCompletionSource promise, Exception cause, IInternalLogger logger)
+    {
+      if (promise != TaskCompletionSource.Void && !promise.TrySetException(cause))
+      {
+        logger.Warn($"Failed to mark a promise as failure because it's done already: {promise}", cause);
+      }
+    }
+  }
 }

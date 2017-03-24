@@ -3,240 +3,240 @@
 
 namespace DotNetty.Transport.Channels.Sockets
 {
-    using System;
-    using System.Net.Sockets;
-    using System.Threading;
-    using DotNetty.Buffers;
-    using DotNetty.Common.Utilities;
+  using System;
+  using System.Net.Sockets;
+  using System.Threading;
+  using DotNetty.Buffers;
+  using DotNetty.Common.Utilities;
 
-    /// <summary>
-    ///     {@link AbstractNioChannel} base class for {@link Channel}s that operate on bytes.
-    /// </summary>
-    public abstract class AbstractSocketByteChannel : AbstractSocketChannel
+  /// <summary>
+  ///     {@link AbstractNioChannel} base class for {@link Channel}s that operate on bytes.
+  /// </summary>
+  public abstract class AbstractSocketByteChannel : AbstractSocketChannel
+  {
+    static readonly string ExpectedTypes =
+        $" (expected: {StringUtil.SimpleClassName<IByteBuffer>()})"; //+ ", " +
+
+    // todo: FileRegion support        
+    //typeof(FileRegion).Name + ')';
+
+    static readonly Action<object> FlushAction = _ => ((AbstractSocketByteChannel)_).Flush();
+    static readonly Action<object, object> ReadCompletedSyncCallback = OnReadCompletedSync;
+
+    /// <summary>Create a new instance</summary>
+    /// <param name="parent">the parent <see cref="IChannel"/> by which this instance was created. May be <c>null</c></param>
+    /// <param name="socket">the underlying <see cref="Socket"/> on which it operates</param>
+    protected AbstractSocketByteChannel(IChannel parent, Socket socket)
+        : base(parent, socket)
     {
-        static readonly string ExpectedTypes =
-            $" (expected: {StringUtil.SimpleClassName<IByteBuffer>()})"; //+ ", " +
+    }
 
-        // todo: FileRegion support        
-        //typeof(FileRegion).Name + ')';
+    protected override IChannelUnsafe NewUnsafe() => new SocketByteChannelUnsafe(this);
 
-        static readonly Action<object> FlushAction = _ => ((AbstractSocketByteChannel)_).Flush();
-        static readonly Action<object, object> ReadCompletedSyncCallback = OnReadCompletedSync;
+    protected class SocketByteChannelUnsafe : AbstractSocketUnsafe
+    {
+      public SocketByteChannelUnsafe(AbstractSocketByteChannel channel)
+          : base(channel)
+      {
+      }
 
-        /// <summary>Create a new instance</summary>
-        /// <param name="parent">the parent <see cref="IChannel"/> by which this instance was created. May be <c>null</c></param>
-        /// <param name="socket">the underlying <see cref="Socket"/> on which it operates</param>
-        protected AbstractSocketByteChannel(IChannel parent, Socket socket)
-            : base(parent, socket)
+      new AbstractSocketByteChannel Channel => (AbstractSocketByteChannel)this.channel;
+
+      void CloseOnRead()
+      {
+        this.Channel.ShutdownInput();
+        if (this.channel.Open)
         {
+          // todo: support half-closure
+          //if (bool.TrueString.Equals(this.channel.Configuration.getOption(ChannelOption.ALLOW_HALF_CLOSURE))) {
+          //    key.interestOps(key.interestOps() & ~readInterestOp);
+          //    this.channel.Pipeline.FireUserEventTriggered(ChannelInputShutdownEvent.INSTANCE);
+          //} else {
+          this.CloseAsync();
+          //}
         }
+      }
 
-        protected override IChannelUnsafe NewUnsafe() => new SocketByteChannelUnsafe(this);
-
-        protected class SocketByteChannelUnsafe : AbstractSocketUnsafe
+      void HandleReadException(IChannelPipeline pipeline, IByteBuffer byteBuf, Exception cause, bool close,
+          IRecvByteBufAllocatorHandle allocHandle)
+      {
+        if (byteBuf != null)
         {
-            public SocketByteChannelUnsafe(AbstractSocketByteChannel channel)
-                : base(channel)
-            {
-            }
-
-            new AbstractSocketByteChannel Channel => (AbstractSocketByteChannel)this.channel;
-
-            void CloseOnRead()
-            {
-                this.Channel.ShutdownInput();
-                if (this.channel.Open)
-                {
-                    // todo: support half-closure
-                    //if (bool.TrueString.Equals(this.channel.Configuration.getOption(ChannelOption.ALLOW_HALF_CLOSURE))) {
-                    //    key.interestOps(key.interestOps() & ~readInterestOp);
-                    //    this.channel.Pipeline.FireUserEventTriggered(ChannelInputShutdownEvent.INSTANCE);
-                    //} else {
-                    this.CloseAsync();
-                    //}
-                }
-            }
-
-            void HandleReadException(IChannelPipeline pipeline, IByteBuffer byteBuf, Exception cause, bool close,
-                IRecvByteBufAllocatorHandle allocHandle)
-            {
-                if (byteBuf != null)
-                {
-                    if (byteBuf.IsReadable())
-                    {
-                        this.Channel.ReadPending = false;
-                        pipeline.FireChannelRead(byteBuf);
-                    }
-                    else
-                    {
-                        byteBuf.Release();
-                    }
-                }
-                allocHandle.ReadComplete();
-                pipeline.FireChannelReadComplete();
-                pipeline.FireExceptionCaught(cause);
-                if (close || cause is SocketException)
-                {
-                    this.CloseOnRead();
-                }
-            }
-
-            public override void FinishRead(SocketChannelAsyncOperation operation)
-            {
-                AbstractSocketByteChannel ch = this.Channel;
-                if ((ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active) == 0)
-                {
-                    return; // read was signaled as a result of channel closure
-                }
-                IChannelConfiguration config = ch.Configuration;
-                IChannelPipeline pipeline = ch.Pipeline;
-                IByteBufferAllocator allocator = config.Allocator;
-                IRecvByteBufAllocatorHandle allocHandle = this.RecvBufAllocHandle;
-                allocHandle.Reset(config);
-
-                IByteBuffer byteBuf = null;
-                bool close = false;
-                try
-                {
-                    operation.Validate();
-
-                    do
-                    {
-                        byteBuf = allocHandle.Allocate(allocator);
-                        //int writable = byteBuf.WritableBytes;
-                        allocHandle.LastBytesRead = ch.DoReadBytes(byteBuf);
-                        if (allocHandle.LastBytesRead <= 0)
-                        {
-                            // nothing was read -> release the buffer.
-                            byteBuf.Release();
-                            byteBuf = null;
-                            close = allocHandle.LastBytesRead < 0;
-                            break;
-                        }
-
-                        allocHandle.IncMessagesRead(1);
-                        this.Channel.ReadPending = false;
-
-                        pipeline.FireChannelRead(byteBuf);
-                        byteBuf = null;
-                    }
-                    while (allocHandle.ContinueReading());
-
-                    allocHandle.ReadComplete();
-                    pipeline.FireChannelReadComplete();
-
-                    if (close)
-                    {
-                        this.CloseOnRead();
-                    }
-                }
-                catch (Exception t)
-                {
-                    this.HandleReadException(pipeline, byteBuf, t, close, allocHandle);
-                }
-                finally
-                {
-                    // Check if there is a readPending which was not processed yet.
-                    // This could be for two reasons:
-                    // /// The user called Channel.read() or ChannelHandlerContext.read() input channelRead(...) method
-                    // /// The user called Channel.read() or ChannelHandlerContext.read() input channelReadComplete(...) method
-                    //
-                    // See https://github.com/netty/netty/issues/2254
-                    if (!close && (ch.ReadPending || config.AutoRead))
-                    {
-                        ch.DoBeginRead();
-                    }
-                }
-            }
+          if (byteBuf.IsReadable())
+          {
+            this.Channel.ReadPending = false;
+            pipeline.FireChannelRead(byteBuf);
+          }
+          else
+          {
+            byteBuf.Release();
+          }
         }
-
-        protected override void ScheduleSocketRead()
+        allocHandle.ReadComplete();
+        pipeline.FireChannelReadComplete();
+        pipeline.FireExceptionCaught(cause);
+        if (close || cause is SocketException)
         {
-            SocketChannelAsyncOperation operation = this.ReadOperation;
-            bool pending;
-#if NETSTANDARD1_3
-            pending = this.Socket.ReceiveAsync(operation);
+          this.CloseOnRead();
+        }
+      }
+
+      public override void FinishRead(SocketChannelAsyncOperation operation)
+      {
+        AbstractSocketByteChannel ch = this.Channel;
+        if ((ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active) == 0)
+        {
+          return; // read was signaled as a result of channel closure
+        }
+        IChannelConfiguration config = ch.Configuration;
+        IChannelPipeline pipeline = ch.Pipeline;
+        IByteBufferAllocator allocator = config.Allocator;
+        IRecvByteBufAllocatorHandle allocHandle = this.RecvBufAllocHandle;
+        allocHandle.Reset(config);
+
+        IByteBuffer byteBuf = null;
+        bool close = false;
+        try
+        {
+          operation.Validate();
+
+          do
+          {
+            byteBuf = allocHandle.Allocate(allocator);
+            //int writable = byteBuf.WritableBytes;
+            allocHandle.LastBytesRead = ch.DoReadBytes(byteBuf);
+            if (allocHandle.LastBytesRead <= 0)
+            {
+              // nothing was read -> release the buffer.
+              byteBuf.Release();
+              byteBuf = null;
+              close = allocHandle.LastBytesRead < 0;
+              break;
+            }
+
+            allocHandle.IncMessagesRead(1);
+            this.Channel.ReadPending = false;
+
+            pipeline.FireChannelRead(byteBuf);
+            byteBuf = null;
+          }
+          while (allocHandle.ContinueReading());
+
+          allocHandle.ReadComplete();
+          pipeline.FireChannelReadComplete();
+
+          if (close)
+          {
+            this.CloseOnRead();
+          }
+        }
+        catch (Exception t)
+        {
+          this.HandleReadException(pipeline, byteBuf, t, close, allocHandle);
+        }
+        finally
+        {
+          // Check if there is a readPending which was not processed yet.
+          // This could be for two reasons:
+          // /// The user called Channel.read() or ChannelHandlerContext.read() input channelRead(...) method
+          // /// The user called Channel.read() or ChannelHandlerContext.read() input channelReadComplete(...) method
+          //
+          // See https://github.com/netty/netty/issues/2254
+          if (!close && (ch.ReadPending || config.AutoRead))
+          {
+            ch.DoBeginRead();
+          }
+        }
+      }
+    }
+
+    protected override void ScheduleSocketRead()
+    {
+      SocketChannelAsyncOperation operation = this.ReadOperation;
+      bool pending;
+#if NETSTANDARD
+      pending = this.Socket.ReceiveAsync(operation);
 #else
-            if (ExecutionContext.IsFlowSuppressed())
-            {
-                pending = this.Socket.ReceiveAsync(operation);
-            }
-            else
-            {
-                using (ExecutionContext.SuppressFlow())
-                {
-                    pending = this.Socket.ReceiveAsync(operation);
-                }
-            }
+      if (ExecutionContext.IsFlowSuppressed())
+      {
+        pending = this.Socket.ReceiveAsync(operation);
+      }
+      else
+      {
+        using (ExecutionContext.SuppressFlow())
+        {
+          pending = this.Socket.ReceiveAsync(operation);
+        }
+      }
 #endif
-            if (!pending)
-            {
-                // todo: potential allocation / non-static field?
-                this.EventLoop.Execute(ReadCompletedSyncCallback, this.Unsafe, operation);
-            }
+      if (!pending)
+      {
+        // todo: potential allocation / non-static field?
+        this.EventLoop.Execute(ReadCompletedSyncCallback, this.Unsafe, operation);
+      }
+    }
+
+    static void OnReadCompletedSync(object u, object e) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation)e);
+
+    protected override void DoWrite(ChannelOutboundBuffer input)
+    {
+      int writeSpinCount = -1;
+
+      while (true)
+      {
+        object msg = input.Current;
+        if (msg == null)
+        {
+          // Wrote all messages.
+          break;
         }
 
-        static void OnReadCompletedSync(object u, object e) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation)e);
-
-        protected override void DoWrite(ChannelOutboundBuffer input)
+        if (msg is IByteBuffer)
         {
-            int writeSpinCount = -1;
+          var buf = (IByteBuffer)msg;
+          int readableBytes = buf.ReadableBytes;
+          if (readableBytes == 0)
+          {
+            input.Remove();
+            continue;
+          }
 
-            while (true)
+          bool scheduleAsync = false;
+          bool done = false;
+          long flushedAmount = 0;
+          if (writeSpinCount == -1)
+          {
+            writeSpinCount = this.Configuration.WriteSpinCount;
+          }
+          for (int i = writeSpinCount - 1; i >= 0; i--)
+          {
+            int localFlushedAmount = this.DoWriteBytes(buf);
+            if (localFlushedAmount == 0) // todo: check for "sent less than attempted bytes" to avoid unnecessary extra doWriteBytes call?
             {
-                object msg = input.Current;
-                if (msg == null)
-                {
-                    // Wrote all messages.
-                    break;
-                }
+              scheduleAsync = true;
+              break;
+            }
 
-                if (msg is IByteBuffer)
-                {
-                    var buf = (IByteBuffer)msg;
-                    int readableBytes = buf.ReadableBytes;
-                    if (readableBytes == 0)
-                    {
-                        input.Remove();
-                        continue;
-                    }
+            flushedAmount += localFlushedAmount;
+            if (!buf.IsReadable())
+            {
+              done = true;
+              break;
+            }
+          }
 
-                    bool scheduleAsync = false;
-                    bool done = false;
-                    long flushedAmount = 0;
-                    if (writeSpinCount == -1)
-                    {
-                        writeSpinCount = this.Configuration.WriteSpinCount;
-                    }
-                    for (int i = writeSpinCount - 1; i >= 0; i--)
-                    {
-                        int localFlushedAmount = this.DoWriteBytes(buf);
-                        if (localFlushedAmount == 0) // todo: check for "sent less than attempted bytes" to avoid unnecessary extra doWriteBytes call?
-                        {
-                            scheduleAsync = true;
-                            break;
-                        }
+          input.Progress(flushedAmount);
 
-                        flushedAmount += localFlushedAmount;
-                        if (!buf.IsReadable())
-                        {
-                            done = true;
-                            break;
-                        }
-                    }
-
-                    input.Progress(flushedAmount);
-
-                    if (done)
-                    {
-                        input.Remove();
-                    }
-                    else
-                    {
-                        this.IncompleteWrite(scheduleAsync, this.PrepareWriteOperation(buf.GetIoBuffer()));
-                        break;
-                    }
-                } /*else if (msg is FileRegion) { todo: FileRegion support
+          if (done)
+          {
+            input.Remove();
+          }
+          else
+          {
+            this.IncompleteWrite(scheduleAsync, this.PrepareWriteOperation(buf.GetIoBuffer()));
+            break;
+          }
+        } /*else if (msg is FileRegion) { todo: FileRegion support
                 FileRegion region = (FileRegion) msg;
                 bool done = region.transfered() >= region.count();
                 bool scheduleAsync = false;
@@ -271,89 +271,89 @@ namespace DotNetty.Transport.Channels.Sockets
                     break;
                 }
             }*/
-                else
-                {
-                    // Should not reach here.
-                    throw new InvalidOperationException();
-                }
-            }
-        }
-
-        protected override object FilterOutboundMessage(object msg)
+        else
         {
-            if (msg is IByteBuffer)
-            {
-                return msg;
-                //IByteBuffer buf = (IByteBuffer) msg;
-                //if (buf.isDirect()) {
-                //    return msg;
-                //}
-
-                //return newDirectBuffer(buf);
-            }
-
-            // todo: FileRegion support
-            //if (msg is FileRegion) {
-            //    return msg;
-            //}
-
-            throw new NotSupportedException(
-                "unsupported message type: " + msg.GetType().Name + ExpectedTypes);
+          // Should not reach here.
+          throw new InvalidOperationException();
         }
+      }
+    }
 
-        protected void IncompleteWrite(bool scheduleAsync, SocketChannelAsyncOperation operation)
-        {
-            // Did not write completely.
-            if (scheduleAsync)
-            {
-                this.SetState(StateFlags.WriteScheduled);
-                bool pending;
+    protected override object FilterOutboundMessage(object msg)
+    {
+      if (msg is IByteBuffer)
+      {
+        return msg;
+        //IByteBuffer buf = (IByteBuffer) msg;
+        //if (buf.isDirect()) {
+        //    return msg;
+        //}
 
-#if NETSTANDARD1_3
-                pending = this.Socket.SendAsync(operation);
+        //return newDirectBuffer(buf);
+      }
+
+      // todo: FileRegion support
+      //if (msg is FileRegion) {
+      //    return msg;
+      //}
+
+      throw new NotSupportedException(
+          "unsupported message type: " + msg.GetType().Name + ExpectedTypes);
+    }
+
+    protected void IncompleteWrite(bool scheduleAsync, SocketChannelAsyncOperation operation)
+    {
+      // Did not write completely.
+      if (scheduleAsync)
+      {
+        this.SetState(StateFlags.WriteScheduled);
+        bool pending;
+
+#if NETSTANDARD
+        pending = this.Socket.SendAsync(operation);
 #else
-                if (ExecutionContext.IsFlowSuppressed())
-                {
-                    pending = this.Socket.SendAsync(operation);
-                }
-                else
-                {
-                    using (ExecutionContext.SuppressFlow())
-                    {
-                        pending = this.Socket.SendAsync(operation);
-                    }
-                }
+        if (ExecutionContext.IsFlowSuppressed())
+        {
+          pending = this.Socket.SendAsync(operation);
+        }
+        else
+        {
+          using (ExecutionContext.SuppressFlow())
+          {
+            pending = this.Socket.SendAsync(operation);
+          }
+        }
 #endif
 
-                if (!pending)
-                {
-                    ((ISocketChannelUnsafe)this.Unsafe).FinishWrite(operation);
-                }
-            }
-            else
-            {
-                // Schedule flush again later so other tasks can be picked up input the meantime
-                this.EventLoop.Execute(FlushAction, this);
-            }
+        if (!pending)
+        {
+          ((ISocketChannelUnsafe)this.Unsafe).FinishWrite(operation);
         }
-
-        // todo: support FileRegion
-        ///// <summary>
-        // /// Write a {@link FileRegion}
-        // *
-        // /// @param region        the {@link FileRegion} from which the bytes should be written
-        // /// @return amount       the amount of written bytes
-        // /// </summary>
-        //protected abstract long doWriteFileRegion(FileRegion region);
-
-        /// <summary>
-        ///     Read bytes into the given {@link ByteBuf} and return the amount.
-        /// </summary>
-        protected abstract int DoReadBytes(IByteBuffer buf);
-
-        /// <summary>Write bytes form the given <see cref="IByteBuffer"/> to the underlying <see cref="IChannel"/>.</summary>
-        /// <param name="buf">the <see cref="IByteBuffer"/> from which the bytes should be written</param>
-        /// <returns>the amount of written bytes</returns>
-        protected abstract int DoWriteBytes(IByteBuffer buf);
+      }
+      else
+      {
+        // Schedule flush again later so other tasks can be picked up input the meantime
+        this.EventLoop.Execute(FlushAction, this);
+      }
     }
+
+    // todo: support FileRegion
+    ///// <summary>
+    // /// Write a {@link FileRegion}
+    // *
+    // /// @param region        the {@link FileRegion} from which the bytes should be written
+    // /// @return amount       the amount of written bytes
+    // /// </summary>
+    //protected abstract long doWriteFileRegion(FileRegion region);
+
+    /// <summary>
+    ///     Read bytes into the given {@link ByteBuf} and return the amount.
+    /// </summary>
+    protected abstract int DoReadBytes(IByteBuffer buf);
+
+    /// <summary>Write bytes form the given <see cref="IByteBuffer"/> to the underlying <see cref="IChannel"/>.</summary>
+    /// <param name="buf">the <see cref="IByteBuffer"/> from which the bytes should be written</param>
+    /// <returns>the amount of written bytes</returns>
+    protected abstract int DoWriteBytes(IByteBuffer buf);
+  }
 }

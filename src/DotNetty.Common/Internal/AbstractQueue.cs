@@ -3,18 +3,18 @@
 
 namespace DotNetty.Common.Internal
 {
-    public abstract class AbstractQueue<T> : IQueue<T>
-    {
-        public abstract bool TryEnqueue(T item);
+  public abstract class AbstractQueue<T> : IQueue<T>
+  {
+    public abstract bool TryEnqueue(T item);
 
-        public abstract bool TryDequeue(out T item);
+    public abstract bool TryDequeue(out T item);
 
-        public abstract bool TryPeek(out T item);
+    public abstract bool TryPeek(out T item);
 
-        public abstract int Count { get; }
+    public abstract int Count { get; }
 
-        public abstract bool IsEmpty { get; }
+    public abstract bool IsEmpty { get; }
 
-        public abstract void Clear();
-    }
+    public abstract void Clear();
+  }
 }

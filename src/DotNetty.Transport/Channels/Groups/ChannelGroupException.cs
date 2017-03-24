@@ -3,30 +3,34 @@
 
 namespace DotNetty.Transport.Channels.Groups
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
+  using System;
+  using System.Collections;
+  using System.Collections.Generic;
+  using System.Collections.ObjectModel;
 
-    public class ChannelGroupException : ChannelException, IEnumerable<KeyValuePair<IChannel, Exception>>
+  public class ChannelGroupException : ChannelException, IEnumerable<KeyValuePair<IChannel, Exception>>
+  {
+#if NET_4_0_GREATER
+    readonly IReadOnlyCollection<KeyValuePair<IChannel, Exception>> failed;
+#else
+    readonly ReadOnlyCollection<KeyValuePair<IChannel, Exception>> failed;
+#endif
+
+    public ChannelGroupException(IList<KeyValuePair<IChannel, Exception>> exceptions)
     {
-        readonly IReadOnlyCollection<KeyValuePair<IChannel, Exception>> failed;
-
-        public ChannelGroupException(IList<KeyValuePair<IChannel, Exception>> exceptions)
-        {
-            if (exceptions == null)
-            {
-                throw new ArgumentNullException(nameof(exceptions));
-            }
-            if (exceptions.Count == 0)
-            {
-                throw new ArgumentException("excetpions must be not empty.");
-            }
-            this.failed = new ReadOnlyCollection<KeyValuePair<IChannel, Exception>>(exceptions);
-        }
-
-        public IEnumerator<KeyValuePair<IChannel, Exception>> GetEnumerator() => this.failed.GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => this.failed.GetEnumerator();
+      if (exceptions == null)
+      {
+        throw new ArgumentNullException(nameof(exceptions));
+      }
+      if (exceptions.Count == 0)
+      {
+        throw new ArgumentException("excetpions must be not empty.");
+      }
+      this.failed = new ReadOnlyCollection<KeyValuePair<IChannel, Exception>>(exceptions);
     }
+
+    public IEnumerator<KeyValuePair<IChannel, Exception>> GetEnumerator() => this.failed.GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => this.failed.GetEnumerator();
+  }
 }

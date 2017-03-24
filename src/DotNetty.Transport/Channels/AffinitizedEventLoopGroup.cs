@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Transport.Channels
@@ -28,10 +28,8 @@ namespace DotNetty.Transport.Channels
 
         IEventExecutor IEventExecutorGroup.GetNext() => this.GetNext();
 
-        /// <summary>
-        /// If running in a context of an existing <see cref="IEventLoop"/>, this <see cref="IEventLoop"/> is returned.
-        /// Otherwise, <see cref="IEventLoop"/> is retrieved from underlying <see cref="IEventLoopGroup"/>.
-        /// </summary>
+        /// <summary>If running in a context of an existing <see cref="IEventLoop"/>, this <see cref="IEventLoop"/> is returned.
+        /// Otherwise, <see cref="IEventLoop"/> is retrieved from underlying <see cref="IEventLoopGroup"/>.</summary>
         public IEventLoop GetNext()
         {
             IEventExecutor executor;

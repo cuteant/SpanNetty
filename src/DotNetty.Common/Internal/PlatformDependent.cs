@@ -3,10 +3,10 @@
 
 namespace DotNetty.Common.Internal
 {
-    public static class PlatformDependent
-    {
-        public static IQueue<T> NewFixedMpscQueue<T>(int capacity) where T : class => new MpscArrayQueue<T>(capacity);
+  public static class PlatformDependent
+  {
+    public static IQueue<T> NewFixedMpscQueue<T>(int capacity) where T : class => new MpscArrayQueue<T>(capacity);
 
-        public static IQueue<T> NewMpscQueue<T>() where T : class => new CompatibleConcurrentQueue<T>();
-    }
+    public static IQueue<T> NewMpscQueue<T>() where T : class => new CompatibleConcurrentQueue<T>();
+  }
 }

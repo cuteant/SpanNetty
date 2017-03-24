@@ -3,14 +3,20 @@
 
 namespace DotNetty.Common.Utilities
 {
-    using System.Runtime.CompilerServices;
+#if NET_4_0_GREATER
+  using System.Runtime.CompilerServices;
+#endif
 
-    public static class BitOps
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int RightUShift(this int value, int bits) => unchecked((int)((uint)value >> bits));
+  public static class BitOps
+  {
+#if NET_4_0_GREATER
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+    public static int RightUShift(this int value, int bits) => unchecked((int)((uint)value >> bits));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static long RightUShift(this long value, int bits) => unchecked((long)((ulong)value >> bits));
-    }
+#if NET_4_0_GREATER
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+    public static long RightUShift(this long value, int bits) => unchecked((long)((ulong)value >> bits));
+  }
 }
