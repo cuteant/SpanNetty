@@ -3,7 +3,7 @@
   <PropertyGroup>
     <VersionPrefix>0.4.3</VersionPrefix>
     <VersionSuffix></VersionSuffix>
-    <Authors>Microsoft Azure, SeaBiscuit</Authors>
+    <Authors>Microsoft Azure, Seabiscuit</Authors>
     <Copyright>Copyright © Microsoft Corporation</Copyright>
     <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
     <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288859</PackageIconUrl>
