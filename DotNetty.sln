@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.9
+VisualStudioVersion = 15.0.26228.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{013DFD29-E1DB-4968-A67B-C2342E6F5B6E}"
 	ProjectSection(SolutionItems) = preProject
@@ -55,9 +55,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Mqtt", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Redis", "src\DotNetty.Codecs.Redis\DotNetty.Codecs.Redis.csproj", "{4ED4B313-21BA-473E-ADC0-FF36E64C2DCF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Echo.Server.Net45", "examples\Echo.Server\Echo.Server.Net45.csproj", "{BA163586-F875-4488-9188-53A4A14DFD34}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Echo.Server", "examples\Echo.Server\Echo.Server.csproj", "{BA163586-F875-4488-9188-53A4A14DFD34}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Echo.Client.Net45", "examples\Echo.Client\Echo.Client.Net45.csproj", "{C24AB93F-41E9-4291-BA8F-E9D3CF6C2EBC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Echo.Client.Net46", "examples\Echo.Client\Echo.Client.Net46.csproj", "{C24AB93F-41E9-4291-BA8F-E9D3CF6C2EBC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Echo.Client.Net40", "examples\Echo.Client\Echo.Client.Net40.csproj", "{8D6BDE94-9397-4DD7-A24D-45A5F02D1A41}"
 EndProject

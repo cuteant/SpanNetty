@@ -21,7 +21,23 @@ using System.Runtime.InteropServices;
 [assembly: NeutralResourcesLanguage("en-US")]
 
 [assembly: AssemblyVersion("0.4.0.0")]
+#if NETSTANDARD1_0 || NET40
 [assembly: AssemblyFileVersion("0.4.0.0")]
+#elif NETSTANDARD1_1 || WINDOWS8 || NET45 || NETCORE45
+[assembly: AssemblyFileVersion("0.4.1000.0")]
+#elif NETSTANDARD1_2 || WINDOWS81 || NET451 || NETCORE451 || WPA81
+[assembly: AssemblyFileVersion("0.4.2000.0")]
+#elif NETSTANDARD1_3 || NET46
+[assembly: AssemblyFileVersion("0.4.3000.0")]
+#elif NETSTANDARD1_4 || UAP10_0 || NETCORE50 || NET461
+[assembly: AssemblyFileVersion("0.4.4000.0")]
+#elif NETSTANDARD1_5 || NET462
+[assembly: AssemblyFileVersion("0.4.5000.0")]
+#elif NETSTANDARD1_6 || NETCOREAPP1_0 || NET463
+[assembly: AssemblyFileVersion("0.4.6000.0")]
+#else // this is here to prevent the build system from complaining. It should never be hit
+[assembly: AssemblyFileVersion("0.4.9000.0")]
+#endif
 
 #if NET40 || PORTABLE
 namespace System.Reflection

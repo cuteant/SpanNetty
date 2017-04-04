@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Echo.Client</RootNamespace>
     <AssemblyName>Echo.Client</AssemblyName>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -17,9 +17,9 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <IntermediateOutputPath>obj\Debug\Net45</IntermediateOutputPath>
-    <OutputPath>..\..\Deploy\Samples.Client45\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;DESKTOPCLR;NET451;NET_3_5_GREATER;NET_4_0_GREATER</DefineConstants>
+    <IntermediateOutputPath>obj\Debug\Net46</IntermediateOutputPath>
+    <OutputPath>..\..\Deploy\Samples.Client46\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;DESKTOPCLR;NET461;NET_3_5_GREATER;NET_4_0_GREATER;NET_4_5_GREATER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -27,9 +27,9 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <IntermediateOutputPath>obj\Release\Net45</IntermediateOutputPath>
-    <OutputPath>..\..\Deploy\Samples.Client45\</OutputPath>
-    <DefineConstants>TRACE;DESKTOPCLR;NET451;NET_3_5_GREATER;NET_4_0_GREATER</DefineConstants>
+    <IntermediateOutputPath>obj\Release\Net46</IntermediateOutputPath>
+    <OutputPath>..\..\Deploy\Samples.Client46\</OutputPath>
+    <DefineConstants>TRACE;DESKTOPCLR;NET461;NET_3_5_GREATER;NET_4_0_GREATER;NET_4_5_GREATER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -56,7 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Echo.Client.Net45.project.json" />
+    <None Include="Echo.Client.Net46.project.json" />
     <None Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

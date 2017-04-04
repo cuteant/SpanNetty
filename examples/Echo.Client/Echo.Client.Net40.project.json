@@ -7,8 +7,8 @@
     "win": {}
   },
   "dependencies": {
-    "CuteAnt": "2.0.0-rtm-170201",
-    "CuteAnt.Extensions.Logging.NLog": "2.0.0-rtm-170201",
+    "CuteAnt": "2.0.0-rtm-170301",
+    "CuteAnt.Extensions.Logging.NLog": "2.0.0-rtm-170301",
     "Microsoft.Bcl": "1.1.10",
     "Microsoft.Bcl.Async": "1.0.168",
     "Microsoft.Bcl.Build": "1.0.21"

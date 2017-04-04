@@ -8,13 +8,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-#if NET40
-[assembly: AssemblyTitle("DotNetty.Codecs.Mqtt for .NetFx4.0")]
-#elif NET451
-[assembly: AssemblyTitle("DotNetty.Codecs.Mqtt for .NetFx4.5")]
-#elif NET46
-[assembly: AssemblyTitle("DotNetty.Codecs.Mqtt for .NetFx4.6")]
-#endif
+[assembly: AssemblyTitle("DotNetty.Codecs.Mqtt")]
 #if DEBUG
 [assembly: AssemblyConfiguration("Debug")]
 #else

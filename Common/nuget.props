@@ -1,8 +1,12 @@
 <!-- This file may be overwritten by automation. Only values allowed here are VersionPrefix and VersionSuffix.  -->
 <Project>
   <PropertyGroup>
-    <VersionPrefix>0.4.3</VersionPrefix>
-    <VersionSuffix></VersionSuffix>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
+  </PropertyGroup>
+  
+  <PropertyGroup Label="NuGet">
+    <IsPackable>true</IsPackable>
     <Authors>Microsoft Azure, Seabiscuit</Authors>
     <Copyright>Copyright © Microsoft Corporation</Copyright>
     <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>

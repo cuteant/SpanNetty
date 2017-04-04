@@ -1,44 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\common\common.props" />
+  <Import Project="..\..\common\define.props" />
+  
   <PropertyGroup>
-    <TargetFrameworks>net452</TargetFrameworks>
-    <PlatformTarget>anycpu</PlatformTarget>
+    <TargetFrameworks>net461;net452</TargetFrameworks>
     <RootNamespace>DotNetty.Tests.Performance</RootNamespace>
     <AssemblyName>DotNetty.Tests.Performance</AssemblyName>
-    <DefineConstants>$(DefineConstants);NET_3_5_GREATER</DefineConstants>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>../../tools/StrongKey.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-  
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net452'">
     <RuntimeIdentifier>win</RuntimeIdentifier>
   </PropertyGroup>
-  
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net452|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <DefineConstants>$(DefineConstants);DESKTOPCLR;NET_4_0_GREATER</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net452|AnyCPU'">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <DefineConstants>$(DefineConstants);DESKTOPCLR;NET_4_0_GREATER</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net452'">
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>

@@ -1,0 +1,21 @@
+<!-- This file may be overwritten by automation. Only values allowed here are VersionPrefix and VersionSuffix.  -->
+<Project>
+  <PropertyGroup>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GenerateAssemblyConfigurationAttribute>true</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyDescriptionAttribute>true</GenerateAssemblyDescriptionAttribute>
+    <GenerateAssemblyCompanyAttribute>true</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyCopyrightAttribute>true</GenerateAssemblyCopyrightAttribute>
+    <GenerateAssemblyProductAttribute>true</GenerateAssemblyProductAttribute>
+    <GenerateNeutralResourcesLanguageAttribute>true</GenerateNeutralResourcesLanguageAttribute>
+    <GenerateAssemblyVersionAttribute>true</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>true</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>true</GenerateAssemblyInformationalVersionAttribute>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>../../tools/StrongKey.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+</Project>
