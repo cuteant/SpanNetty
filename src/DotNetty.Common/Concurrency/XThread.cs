@@ -60,28 +60,27 @@ namespace DotNetty.Common.Concurrency
 
     void CreateLongRunningTask(XParameterizedThreadStart threadStartFunc)
     {
-      this.task = Task.Factory.StartNew(
-          () =>
-          {
-                  // We start the task running, then unleash it by signaling the readyToStart event.
-                  // This is needed to avoid thread reuse for tasks (see below)
-                  this.readyToStart.WaitOne();
-                  // This is the first time we're using this thread, therefore the TLS slot must be empty
-                  if (currentThread != null)
-            {
-              Debug.WriteLine("warning: currentThread already created; OS thread reused");
-              Debug.Assert(false);
-            }
-            currentThread = this;
-            threadStartFunc(this.startupParameter);
-            this.completed.Set();
-          },
-          CancellationToken.None,
-          // .NET always creates a brand new thread for LongRunning tasks
-          // This is not documented but unlikely to ever change:
-          // https://github.com/dotnet/corefx/issues/2576#issuecomment-126693306
-          TaskCreationOptions.LongRunning,
-          TaskScheduler.Default);
+      this.task = Task.Factory.StartNew(() =>
+      {
+        // We start the task running, then unleash it by signaling the readyToStart event.
+        // This is needed to avoid thread reuse for tasks (see below)
+        this.readyToStart.WaitOne();
+        // This is the first time we're using this thread, therefore the TLS slot must be empty
+        if (currentThread != null)
+        {
+          Debug.WriteLine("warning: currentThread already created; OS thread reused");
+          Debug.Assert(false);
+        }
+        currentThread = this;
+        threadStartFunc(this.startupParameter);
+        this.completed.Set();
+      },
+      CancellationToken.None,
+      // .NET always creates a brand new thread for LongRunning tasks
+      // This is not documented but unlikely to ever change:
+      // https://github.com/dotnet/corefx/issues/2576#issuecomment-126693306
+      TaskCreationOptions.LongRunning,
+      TaskScheduler.Default);
     }
 
     public void Start(object parameter)

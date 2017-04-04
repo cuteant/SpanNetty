@@ -69,7 +69,7 @@ namespace Nito
     ///     Initializes a new instance of the <see cref="Deque&lt;T&gt;" /> class.
     /// </summary>
     public Deque()
-        : this(DefaultCapacity)
+      : this(DefaultCapacity)
     {
     }
 

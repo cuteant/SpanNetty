@@ -15,7 +15,11 @@ namespace DotNetty.Common.Utilities
     public static readonly Task<int> Zero = TaskEx.FromResult(0);
 #endif
 
-    public static readonly Task<int> Completed = Zero;
+#if NET_4_5_GREATER
+    public static readonly Task Completed = Task.CompletedTask;
+#else
+    public static readonly Task Completed = Zero;
+#endif
 
     public static readonly Task<int> Cancelled = CreateCancelledTask();
 
