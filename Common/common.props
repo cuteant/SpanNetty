@@ -16,6 +16,6 @@
 
   <PropertyGroup>
     <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>../../tools/StrongKey.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>../../tools/DotNetty.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 </Project>

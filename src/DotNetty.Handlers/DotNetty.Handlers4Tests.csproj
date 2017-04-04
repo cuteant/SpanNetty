@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\common\DotNettyAssemblyInfo.cs" Link="Properties\DotNettyAssemblyInfo.cs" />
-    <Compile Include="..\DotNettyVersionInfo.cs" Link="Properties\DotNettyVersionInfo.cs" />
+    <Compile Include="..\..\common\DotNettyVersionInfo.cs" Link="Properties\DotNettyVersionInfo.cs" />
   </ItemGroup>
 
   <ItemGroup>
