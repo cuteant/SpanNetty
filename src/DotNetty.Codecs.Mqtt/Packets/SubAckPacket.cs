@@ -9,7 +9,11 @@ namespace DotNetty.Codecs.Mqtt.Packets
     {
         public override PacketType PacketType => PacketType.SUBACK;
 
-        public IReadOnlyList<QualityOfService> ReturnCodes { get; set; }
+#if NET40
+    public IList<QualityOfService> ReturnCodes { get; set; }
+#else
+    public IReadOnlyList<QualityOfService> ReturnCodes { get; set; }
+#endif
 
         public static SubAckPacket InResponseTo(SubscribePacket subscribePacket, QualityOfService maxQoS)
         {
@@ -17,7 +21,7 @@ namespace DotNetty.Codecs.Mqtt.Packets
             {
                 PacketId = subscribePacket.PacketId
             };
-            IReadOnlyList<SubscriptionRequest> subscriptionRequests = subscribePacket.Requests;
+            var subscriptionRequests = subscribePacket.Requests;
             var returnCodes = new QualityOfService[subscriptionRequests.Count];
             for (int i = 0; i < subscriptionRequests.Count; i++)
             {

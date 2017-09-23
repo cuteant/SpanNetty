@@ -58,11 +58,15 @@ namespace DotNetty.Buffers.Tests
             }
 
             AssertArenaMetrics(allocator.Metric.HeapArenas(), expectedActive, expectedAlloc, expectedDealloc);
-        }
+    }
 
-        static void AssertArenaMetrics(IReadOnlyList<IPoolArenaMetric> arenaMetrics, long expectedActive, long expectedAlloc, long expectedDealloc)
-        {
-            long active = 0;
+#if TEST40
+    static void AssertArenaMetrics(IList<IPoolArenaMetric> arenaMetrics, long expectedActive, long expectedAlloc, long expectedDealloc)
+#else
+    static void AssertArenaMetrics(IReadOnlyList<IPoolArenaMetric> arenaMetrics, long expectedActive, long expectedAlloc, long expectedDealloc)
+#endif
+    {
+      long active = 0;
             long alloc = 0;
             long dealloc = 0;
             foreach (IPoolArenaMetric arena in arenaMetrics)
@@ -88,7 +92,7 @@ namespace DotNetty.Buffers.Tests
 
         static void AssertPoolChunkListMetric(IPoolArenaMetric arenaMetric)
         {
-            IReadOnlyList<IPoolChunkListMetric> lists = arenaMetric.ChunkLists;
+            var lists = arenaMetric.ChunkLists;
             Assert.Equal(6, lists.Count);
             AssertPoolChunkListMetric(lists[0], 1, 25);
             AssertPoolChunkListMetric(lists[1], 1, 50);
@@ -165,9 +169,9 @@ namespace DotNetty.Buffers.Tests
             const int ChunkSize = 16 * 1024 * 1024;
             var allocator = new PooledByteBufferAllocator(1, 8192, 11, 0, 0, 0);
             IByteBuffer buffer = allocator.HeapBuffer(ChunkSize);
-            IReadOnlyList<IPoolArenaMetric> arenas = allocator.Metric.HeapArenas();
+            var arenas = allocator.Metric.HeapArenas();
             Assert.Equal(1, arenas.Count);
-            IReadOnlyList<IPoolChunkListMetric> lists = arenas[0].ChunkLists;
+            var lists = arenas[0].ChunkLists;
             Assert.Equal(6, lists.Count);
 
             Assert.False(lists[0].GetEnumerator().MoveNext());

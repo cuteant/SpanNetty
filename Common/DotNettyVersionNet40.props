@@ -1,0 +1,10 @@
+<!-- This file may be overwritten by automation. Only values allowed here are VersionPrefix and VersionSuffix.  -->
+<Project>
+  <Import Project="common.props" />
+  <Import Project="define.props" />
+
+  <PropertyGroup>
+    <VersionPrefix>0.4.4</VersionPrefix>
+    <VersionSuffix></VersionSuffix>
+  </PropertyGroup>
+</Project>

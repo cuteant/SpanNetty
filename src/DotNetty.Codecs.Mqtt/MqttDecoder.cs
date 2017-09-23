@@ -472,7 +472,9 @@ namespace DotNetty.Codecs.Mqtt
             return value;
         }
 
+#if !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)] // we don't care about the method being on exception's stack so it's OK to inline
+#endif
         static void DecreaseRemainingLength(ref int remainingLength, int minExpectedLength)
         {
             if (remainingLength < minExpectedLength)

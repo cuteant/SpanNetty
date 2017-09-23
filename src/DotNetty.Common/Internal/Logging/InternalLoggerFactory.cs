@@ -6,7 +6,11 @@ namespace DotNetty.Common.Internal.Logging
     using System;
     using System.Diagnostics.Contracts;
     using System.Threading;
+#if NET40
+    using CuteAnt.Extensions.Logging;
+#else
     using Microsoft.Extensions.Logging;
+#endif
 
     /// <summary>
     ///     Creates an <see cref="IInternalLogger" /> or changes the default factory
@@ -40,8 +44,13 @@ namespace DotNetty.Common.Internal.Logging
         static ILoggerFactory NewDefaultFactory(string name)
         {
             var f = new LoggerFactory();
+#if NETSTANDARD
             f.AddProvider(new EventSourceLoggerProvider());
             f.CreateLogger(name).LogDebug("Using EventSource as the default logging framework");
+#else
+            f.AddNLog();
+            f.CreateLogger(name).LogDebug("Using NLog as the default logging framework");
+#endif
             return f;
         }
 

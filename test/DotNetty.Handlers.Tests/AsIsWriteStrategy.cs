@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Handlers.Tests
@@ -14,7 +14,7 @@ namespace DotNetty.Handlers.Tests
         public Task WriteToChannelAsync(EmbeddedChannel channel, ArraySegment<byte> input)
         {
             channel.WriteInbound(Unpooled.WrappedBuffer(input.Array, input.Offset, input.Count));
-            return TaskEx.Completed;
+            return TaskUtil.Completed;
         }
 
         public override string ToString() => "as-is";

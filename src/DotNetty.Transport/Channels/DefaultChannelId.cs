@@ -74,7 +74,7 @@ namespace DotNetty.Transport.Channels
                 if (MachineIdPattern.Match(customMachineId).Success)
                 {
                     machineId = ParseMachineId(customMachineId);
-                    Logger.Debug("-Dio.netty.machineId: {} (user-set)", customMachineId);
+                    if (Logger.DebugEnabled) Logger.Debug("-Dio.netty.machineId: {} (user-set)", customMachineId);
                 }
                 else
                 {

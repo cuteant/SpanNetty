@@ -90,7 +90,14 @@ namespace DotNetty.Common.Concurrency
             this.Start();
         }
 
-        public static void Sleep(int millisecondsTimeout) => Task.Delay(millisecondsTimeout).Wait();
+    public static void Sleep(int millisecondsTimeout)
+    {
+#if NET40
+      TaskEx.Delay(millisecondsTimeout).Wait();
+#else
+      Task.Delay(millisecondsTimeout).Wait();
+#endif
+    }
 
         public string Name { get; set; }
 

@@ -26,10 +26,18 @@ namespace DotNetty.Transport.Channels.Sockets
         readonly DefaultDatagramChannelConfig config;
         readonly IPEndPoint anyRemoteEndPoint;
 
+#if NET40
+        public SocketDatagramChannel()
+            : this(new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+        {
+          // TODO .Net Fx4.5及以上版本，默认为AddressFamily.InterNetworkV6，并设置 DualMode 为 true，双线绑定
+        }
+#else
         public SocketDatagramChannel()
             : this(new Socket(SocketType.Dgram, ProtocolType.Udp))
         {
         }
+#endif
 
         public SocketDatagramChannel(AddressFamily addressFamily)
             : this(new Socket(addressFamily, SocketType.Dgram, ProtocolType.Udp))
@@ -116,7 +124,7 @@ namespace DotNetty.Transport.Channels.Sockets
             operation.SetBuffer(bytes.Array, bytes.Offset, bytes.Count);
 
             bool pending;
-#if NETSTANDARD1_3
+#if NETSTANDARD
             pending = this.Socket.ReceiveFromAsync(operation);
 #else
             if (ExecutionContext.IsFlowSuppressed())

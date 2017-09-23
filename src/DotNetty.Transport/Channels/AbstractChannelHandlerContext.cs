@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Transport.Channels
@@ -169,7 +169,11 @@ namespace DotNetty.Transport.Channels
             var newParamTypes = new Type[paramTypes.Length + 1];
             newParamTypes[0] = typeof(IChannelHandlerContext);
             Array.Copy(paramTypes, 0, newParamTypes, 1, paramTypes.Length);
+#if DESKTOPCLR
+            return handlerType.GetMethod(methodName, newParamTypes).GetCustomAttributeX<SkipAttribute>(false) != null;
+#else
             return handlerType.GetMethod(methodName, newParamTypes).GetCustomAttribute<SkipAttribute>(false) != null;
+#endif
         }
 
         internal volatile AbstractChannelHandlerContext Next;
@@ -910,7 +914,7 @@ namespace DotNetty.Transport.Channels
             this.InvokeExceptionCaught(cause);
         }
 
-        static Task ComposeExceptionTask(Exception cause) => TaskEx.FromException(cause);
+        static Task ComposeExceptionTask(Exception cause) => TaskUtil.FromException(cause);
 
         const string ExceptionCaughtMethodName = nameof(IChannelHandler.ExceptionCaught);
 
@@ -1090,3 +1094,8 @@ namespace DotNetty.Transport.Channels
         }
     }
 }
+
+
+#if !DESKTOPCLR && (NET40 || NET45 || NET451 || NET46 || NET461 || NET462 || NET47)
+  确保编译不出问题
+#endif

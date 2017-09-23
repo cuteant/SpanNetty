@@ -193,7 +193,11 @@ namespace DotNetty.Transport.Channels
                 write = next;
             }
             this.AssertEmpty();
+#if NET40
+            return TaskEx.WhenAll(tasks);
+#else
             return Task.WhenAll(tasks);
+#endif
         }
 
         void AssertEmpty() => Contract.Assert(this.tail == null && this.head == null && this.size == 0);

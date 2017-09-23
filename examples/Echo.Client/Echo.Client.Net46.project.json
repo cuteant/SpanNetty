@@ -1,0 +1,12 @@
+﻿{
+  "frameworks": {
+    "net461": {}
+  },
+  "runtimes": {
+    "win-anycpu": {},
+    "win": {}
+  },
+  "dependencies": {
+    "CuteAnt.Extensions.Logging.NLog": "2.0.0-rtm-170701"
+  }
+}

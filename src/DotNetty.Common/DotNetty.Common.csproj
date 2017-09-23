@@ -1,44 +1,45 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup Label="NuGet">
-    <TargetFrameworks>netstandard1.3;net45</TargetFrameworks>
-    <IsPackable>true</IsPackable>
-    <PackageId>DotNetty.Common</PackageId>
-    <Description>DotNetty common routines</Description>
-    <Copyright>Copyright © Microsoft Corporation</Copyright>
-    <AssemblyTitle>DotNetty: common routines</AssemblyTitle>
-    <NeutralLanguage>en-US</NeutralLanguage>
-    <VersionPrefix>0.4.6</VersionPrefix>
-    <Authors>Microsoft Azure</Authors>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
-    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\common\DotNettyVersion.props" />
+  
+  <PropertyGroup>
+    <TargetFrameworks>net461;net451;net40;netstandard1.4</TargetFrameworks>
+    <RootNamespace>DotNetty.Common</RootNamespace>
     <AssemblyName>DotNetty.Common</AssemblyName>
-    <AssemblyOriginatorKeyFile>../../DotNetty.snk</AssemblyOriginatorKeyFile>
-    <SignAssembly>true</SignAssembly>
-    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
-    <PackageTags>socket;tcp;protocol;netty;dotnetty;network</PackageTags>
-    <PackageProjectUrl>https://github.com/Azure/DotNetty/</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/Azure/DotNetty/blob/master/LICENSE.txt</PackageLicenseUrl>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/Azure/DotNetty/</RepositoryUrl>
-    <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="..\shared\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>DotNetty.Common.Unofficial</PackageId>
+    <Title>DotNetty.Common.Unofficial</Title>
+    <Description>DotNetty common routines：the complete port of the DotNetty.Common assembly to support .NET 4.0 and newer.</Description>
+    <PackageTags>socket;tcp;protocol;netty;dotnetty;network</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net451' or '$(TargetFramework)' == 'net40'">
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
+
   <ItemGroup>
+    <Compile Include="..\..\common\DotNettyAssemblyInfo.cs" Link="Properties\DotNettyAssemblyInfo.cs" />
+    <Compile Include="..\..\common\DotNettyVersionInfo.cs" Link="Properties\DotNettyVersionInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net451' or '$(TargetFramework)' == 'net40'">
+    <PackageReference Include="CuteAnt" Version="2.0.0-rtm-170601" />
+    <PackageReference Include="CuteAnt.Extensions.Logging.NLog" Version="2.0.0-rtm-170701" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net451' or '$(TargetFramework)' == 'netstandard1.4'">
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.3.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.4'">
     <PackageReference Include="Microsoft.Extensions.Logging" Version="1.1.1" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.4.0" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
     <PackageReference Include="System.Diagnostics.Contracts" Version="4.3.0" />
     <PackageReference Include="System.Net.NetworkInformation" Version="4.3.0" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
-    <Reference Include="System.Runtime" />
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
+    <PackageReference Include="Microsoft.Bcl" Version="1.1.10" />
+    <PackageReference Include="Microsoft.Bcl.Async" Version="1.0.168" />
+    <PackageReference Include="Microsoft.Bcl.Build" Version="1.0.21" />
   </ItemGroup>
 </Project>

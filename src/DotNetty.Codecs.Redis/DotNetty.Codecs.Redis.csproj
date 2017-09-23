@@ -1,42 +1,31 @@
-﻿<?xml version="1.0" encoding="utf-8"?><Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup Label="NuGet">
-    <TargetFrameworks>netstandard1.3;net45</TargetFrameworks>
-    <IsPackable>true</IsPackable>
-    <PackageId>DotNetty.Codecs.Redis</PackageId>
-    <Description>Redis codec for DotNetty</Description>
-    <Copyright>Copyright © Microsoft Corporation</Copyright>
-    <AssemblyTitle>DotNetty: Redis codec</AssemblyTitle>
-    <NeutralLanguage>en-US</NeutralLanguage>
-    <VersionPrefix>0.4.6</VersionPrefix>
-    <Authors>Microsoft Azure</Authors>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\common\DotNettyVersion.props" />
+  
+  <PropertyGroup>
+    <TargetFrameworks>net461;net451;net40;netstandard1.4</TargetFrameworks>
+    <RootNamespace>DotNetty.Codecs.Redis</RootNamespace>
     <AssemblyName>DotNetty.Codecs.Redis</AssemblyName>
-    <AssemblyOriginatorKeyFile>../../DotNetty.snk</AssemblyOriginatorKeyFile>
-    <SignAssembly>true</SignAssembly>
-    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
-    <PackageTags>socket;tcp;protocol;netty;dotnetty;network;redis</PackageTags>
-    <PackageProjectUrl>https://github.com/Azure/DotNetty/</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/Azure/DotNetty/blob/master/LICENSE.txt</PackageLicenseUrl>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/Azure/DotNetty/</RepositoryUrl>
-    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.1</NetStandardImplicitPackageVersion>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="..\shared\SharedAssemblyInfo.cs" Link="Properties\SharedAssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DotNetty.Common\DotNetty.Common.csproj" />
-    <ProjectReference Include="..\DotNetty.Buffers\DotNetty.Buffers.csproj" />
-    <ProjectReference Include="..\DotNetty.Codecs\DotNetty.Codecs.csproj" />
-    <ProjectReference Include="..\DotNetty.Transport\DotNetty.Transport.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
-    <PackageReference Include="System.Diagnostics.Contracts" Version="4.3.0" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>DotNetty.Codecs.Redis.Unofficial</PackageId>
+    <Title>DotNetty.Codecs.Redis.Unofficial</Title>
+    <Description>Redis codec for DotNetty：the complete port of the DotNetty.Codecs.Redis assembly to support .NET 4.0 and newer.</Description>
+    <PackageTags>socket;tcp;protocol;netty;dotnetty;network;redis</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net451' or '$(TargetFramework)' == 'net40'">
     <Reference Include="System" />
     <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\common\DotNettyAssemblyInfo.cs" Link="Properties\DotNettyAssemblyInfo.cs" />
+    <Compile Include="..\..\common\DotNettyVersionInfo.cs" Link="Properties\DotNettyVersionInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DotNetty.Codecs\DotNetty.Codecs.csproj" />
   </ItemGroup>
 </Project>

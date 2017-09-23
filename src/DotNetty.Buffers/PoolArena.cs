@@ -41,10 +41,14 @@ namespace DotNetty.Buffers
         readonly PoolChunkList<T> q075;
         readonly PoolChunkList<T> q100;
 
-        readonly IReadOnlyList<IPoolChunkListMetric> chunkListMetrics;
+#if NET40
+    readonly IList<IPoolChunkListMetric> chunkListMetrics;
+#else
+    readonly IReadOnlyList<IPoolChunkListMetric> chunkListMetrics;
+#endif
 
-        // Metrics for allocations and deallocations
-        long allocationsNormal;
+    // Metrics for allocations and deallocations
+    long allocationsNormal;
 
         // We need to use the LongCounter here as this is not guarded via synchronized block.
         long allocationsTiny;
@@ -458,11 +462,19 @@ namespace DotNetty.Buffers
 
         public int NumChunkLists => this.chunkListMetrics.Count;
 
-        public IReadOnlyList<IPoolSubpageMetric> TinySubpages => SubPageMetricList(this.tinySubpagePools);
+#if NET40
+    public IList<IPoolSubpageMetric> TinySubpages => SubPageMetricList(this.tinySubpagePools);
 
-        public IReadOnlyList<IPoolSubpageMetric> SmallSubpages => SubPageMetricList(this.smallSubpagePools);
+    public IList<IPoolSubpageMetric> SmallSubpages => SubPageMetricList(this.smallSubpagePools);
 
-        public IReadOnlyList<IPoolChunkListMetric> ChunkLists => this.chunkListMetrics;
+    public IList<IPoolChunkListMetric> ChunkLists => this.chunkListMetrics;
+#else
+    public IReadOnlyList<IPoolSubpageMetric> TinySubpages => SubPageMetricList(this.tinySubpagePools);
+
+    public IReadOnlyList<IPoolSubpageMetric> SmallSubpages => SubPageMetricList(this.smallSubpagePools);
+
+    public IReadOnlyList<IPoolChunkListMetric> ChunkLists => this.chunkListMetrics;
+#endif
 
         static List<IPoolSubpageMetric> SubPageMetricList(PoolSubpage<T>[] pages)
         {

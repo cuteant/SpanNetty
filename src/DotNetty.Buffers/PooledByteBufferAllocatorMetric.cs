@@ -16,7 +16,11 @@ namespace DotNetty.Buffers
             this.allocator = allocator;
         }
 
-        public IReadOnlyList<IPoolArenaMetric> HeapArenas() => this.allocator.HeapArenas();
+#if NET40
+    public IList<IPoolArenaMetric> HeapArenas() => this.allocator.HeapArenas();
+#else
+    public IReadOnlyList<IPoolArenaMetric> HeapArenas() => this.allocator.HeapArenas();
+#endif
 
         public int TinyCacheSize => this.allocator.TinyCacheSize;
 
@@ -30,7 +34,7 @@ namespace DotNetty.Buffers
 
         public int NumThreadLocalCaches()
         {
-            IReadOnlyList<IPoolArenaMetric> arenas = this.HeapArenas();
+            var arenas = this.HeapArenas();
             if (arenas == null)
             {
                 return 0;

@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\common\DotNettyVersionNet40.props" />
+  <Import Project="..\..\..\CuteAnt.Extensions.Common\src\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems" Label="Shared" />
+
+  <PropertyGroup>
+    <TargetFramework>net40</TargetFramework>
+    <RootNamespace>DotNetty.Handlers</RootNamespace>
+    <AssemblyName>DotNetty.Handlers</AssemblyName>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net40'">
+    <DefineConstants>$(DefineConstants);DESKTOPCLR</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\common\DotNettyAssemblyInfo.cs" Link="Properties\DotNettyAssemblyInfo.cs" />
+    <Compile Include="..\..\common\DotNettyVersionInfo.cs" Link="Properties\DotNettyVersionInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DotNetty.Codecs\DotNetty.Codecs4Tests.csproj" />
+  </ItemGroup>
+</Project>

@@ -190,7 +190,7 @@ namespace DotNetty.Common.Utilities
                         }
                         else
                         {
-                            Logger.Debug("Released: {}", FormatReleaseString(referenceCounted, decrement));
+                            if (Logger.DebugEnabled) Logger.Debug("Released: {}", FormatReleaseString(referenceCounted, decrement));
                         }
                     }
                     catch (Exception ex)

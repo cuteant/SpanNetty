@@ -198,10 +198,17 @@ namespace DotNetty.Transport.Bootstrapping
                 // todo: async/await instead?
                 try
                 {
+#if NET40
+                    Action<Task> continuationAction = future => ForceClose(child, future.Exception);
+                    this.childGroup.GetNext().RegisterAsync(child).ContinueWith(
+                        continuationAction,
+                        TaskContinuationOptions.NotOnRanToCompletion | TaskContinuationOptions.ExecuteSynchronously);
+#else
                     this.childGroup.GetNext().RegisterAsync(child).ContinueWith(
                         (future, state) => ForceClose((IChannel)state, future.Exception),
                         child,
                         TaskContinuationOptions.NotOnRanToCompletion | TaskContinuationOptions.ExecuteSynchronously);
+#endif
                 }
                 catch (Exception ex)
                 {

@@ -4,7 +4,9 @@
 namespace DotNetty.Common
 {
     using System;
+#if !NET40
     using System.Runtime.CompilerServices;
+#endif
     using System.Text;
     using System.Threading;
     using DotNetty.Common.Utilities;
@@ -44,10 +46,14 @@ namespace DotNetty.Common
             return index;
         }
 
+#if !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static InternalThreadLocalMap GetIfSet() => slowThreadLocalMap;
 
+#if !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static InternalThreadLocalMap Get()
         {
             InternalThreadLocalMap ret = slowThreadLocalMap;
@@ -141,7 +147,9 @@ namespace DotNetty.Common
             set => this.localChannelReaderStackDepth = value;
         }
 
+#if !NET40
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public object GetIndexedVariable(int index)
         {
             object[] lookup = this.indexedVariables;

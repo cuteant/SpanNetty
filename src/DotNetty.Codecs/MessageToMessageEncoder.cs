@@ -52,11 +52,11 @@ namespace DotNetty.Codecs
             }
             catch (EncoderException e)
             {
-                return TaskEx.FromException(e);
+                return TaskUtil.FromException(e);
             }
             catch (Exception ex)
             {
-                return TaskEx.FromException(new EncoderException(ex)); // todo: we don't have a stack on EncoderException but it's present on inner exception.
+                return TaskUtil.FromException(new EncoderException(ex)); // todo: we don't have a stack on EncoderException but it's present on inner exception.
             }
             finally
             {

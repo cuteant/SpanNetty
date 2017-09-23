@@ -994,7 +994,7 @@ namespace DotNetty.Transport.Channels
         {
             try
             {
-                Logger.Debug("Discarded inbound message {} that reached at the tail of the pipeline. " +
+                if(Logger.DebugEnabled) Logger.Debug("Discarded inbound message {} that reached at the tail of the pipeline. " +
                     "Please check your pipeline configuration.",
                     msg);
             }

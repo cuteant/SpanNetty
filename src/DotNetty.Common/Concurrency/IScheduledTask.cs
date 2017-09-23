@@ -3,7 +3,11 @@
 
 namespace DotNetty.Common.Concurrency
 {
-    using System.Runtime.CompilerServices;
+#if !NET40
+  using System.Runtime.CompilerServices;
+#else
+  using Microsoft.Runtime.CompilerServices;
+#endif
     using System.Threading.Tasks;
 
     public interface IScheduledTask

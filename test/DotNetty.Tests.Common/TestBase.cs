@@ -3,17 +3,19 @@
 
 namespace DotNetty.Tests.Common
 {
-    using DotNetty.Common.Internal.Logging;
-    using Xunit.Abstractions;
+  using DotNetty.Common.Internal.Logging;
+  using Xunit.Abstractions;
 
-    public abstract class TestBase
+  public abstract class TestBase
+  {
+    protected readonly ITestOutputHelper Output;
+
+    protected TestBase(ITestOutputHelper output)
     {
-        protected readonly ITestOutputHelper Output;
-
-        protected TestBase(ITestOutputHelper output)
-        {
-            this.Output = output;
-            InternalLoggerFactory.DefaultFactory.AddProvider(new XUnitOutputLoggerProvider(output));
-        }
+      this.Output = output;
+#if !NET40
+      InternalLoggerFactory.DefaultFactory.AddProvider(new XUnitOutputLoggerProvider(output));
+#endif
     }
+  }
 }

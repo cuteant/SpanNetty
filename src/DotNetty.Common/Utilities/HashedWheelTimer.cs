@@ -416,7 +416,11 @@ namespace DotNetty.Common.Utilities
                     {
                         long sleepTimeMs = sleepTime.Ticks / TimeSpan.TicksPerMillisecond; // we've already rounded so no worries about the remainder > 0 here
                         Contract.Assert(sleepTimeMs <= int.MaxValue);
+#if NET40
+                        delay = TaskEx.Delay((int)sleepTimeMs, this.owner.CancellationToken);
+#else
                         delay = Task.Delay((int)sleepTimeMs, this.owner.CancellationToken);
+#endif
                         delay.Wait();
                     }
                     catch (AggregateException) when (delay != null && delay.IsCanceled)

@@ -28,7 +28,11 @@ namespace DotNetty.Transport.Channels.Sockets
         ///     Create a new instance
         /// </summary>
         public TcpServerSocketChannel()
-            : this(new Socket(SocketType.Stream, ProtocolType.Tcp))
+#if NET40
+          : this(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+#else
+          : this(new Socket(SocketType.Stream, ProtocolType.Tcp))
+#endif
         {
         }
 

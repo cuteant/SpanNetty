@@ -117,8 +117,13 @@ namespace DotNetty.Handlers.Timeout
             {
                 this.AddWriteTimeoutTask(task);
 
-                // Cancel the scheduled timeout if the flush promise is complete.
-                future.ContinueWith(WriteTimeoutTask.OperationCompleteAction, task, TaskContinuationOptions.ExecuteSynchronously);
+        // Cancel the scheduled timeout if the flush promise is complete.
+#if NET40
+        Action<Task> continuationAction = completed => WriteTimeoutTask.HandleOperationComplete(completed, task);
+        future.ContinueWith(continuationAction, TaskContinuationOptions.ExecuteSynchronously);
+#else
+        future.ContinueWith(WriteTimeoutTask.OperationCompleteAction, task, TaskContinuationOptions.ExecuteSynchronously);
+#endif
             }
         }
 
@@ -161,7 +166,7 @@ namespace DotNetty.Handlers.Timeout
                 this.handler = handler;
             }
 
-            static void HandleOperationComplete(Task future, object state)
+            internal static void HandleOperationComplete(Task future, object state)
             {
                 var writeTimeoutTask = (WriteTimeoutTask) state;
 

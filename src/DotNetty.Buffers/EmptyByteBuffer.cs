@@ -327,7 +327,7 @@ namespace DotNetty.Buffers
         public Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
             this.CheckIndex(index, length);
-            return TaskEx.Zero;
+            return TaskUtil.Zero;
         }
 
         public IByteBuffer SetZero(int index, int length) => this.CheckIndex(index, length);
@@ -704,13 +704,13 @@ namespace DotNetty.Buffers
         public Task WriteBytesAsync(Stream stream, int length)
         {
             this.CheckLength(length);
-            return TaskEx.Completed;
+            return TaskUtil.Completed;
         }
 
         public Task WriteBytesAsync(Stream stream, int length, CancellationToken cancellationToken)
         {
             this.CheckLength(length);
-            return TaskEx.Completed;
+            return TaskUtil.Completed;
         }
 
         // ReSharper disable UnusedParameter.Local

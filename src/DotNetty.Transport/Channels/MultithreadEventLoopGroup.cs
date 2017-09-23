@@ -60,7 +60,12 @@ namespace DotNetty.Transport.Channels
                 {
                     if (!success)
                     {
-                        Task.WhenAll(this.eventLoops
+#if NET40
+            TaskEx
+#else
+            Task
+#endif
+                            .WhenAll(this.eventLoops
                                 .Take(i)
                                 .Select(loop => loop.ShutdownGracefullyAsync()))
                             .Wait();
@@ -70,7 +75,11 @@ namespace DotNetty.Transport.Channels
                 this.eventLoops[i] = eventLoop;
                 terminationTasks[i] = eventLoop.TerminationCompletion;
             }
+#if NET40
+            this.TerminationCompletion = TaskEx.WhenAll(terminationTasks);
+#else
             this.TerminationCompletion = Task.WhenAll(terminationTasks);
+#endif
         }
 
         /// <inheritdoc />

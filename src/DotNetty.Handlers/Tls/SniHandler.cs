@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Handlers.Tls
@@ -214,7 +214,7 @@ namespace DotNetty.Handlers.Tls
                                                 };
 
                                                 hostname = idn.GetAscii(hostname);
-#if NETSTANDARD1_3
+#if NETSTANDARD
                                                 // TODO: netcore does not have culture sensitive tolower()
                                                 hostname = hostname.ToLowerInvariant();
 #else

@@ -451,7 +451,11 @@ namespace DotNetty.Transport.Channels.Embedded
             }
 
             this.lastException = null;
+#if NET40
+            throw ExceptionEnlightenment.PrepareForRethrow(e);
+#else
             ExceptionDispatchInfo.Capture(e).Throw();
+#endif
         }
 
         /// <summary>
@@ -475,7 +479,7 @@ namespace DotNetty.Transport.Channels.Embedded
             {
             }
 
-            public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress) => TaskEx.Completed;
+            public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress) => TaskUtil.Completed;
         }
 
         internal sealed class LastInboundHandler : ChannelHandlerAdapter

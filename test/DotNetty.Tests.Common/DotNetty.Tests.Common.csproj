@@ -1,31 +1,36 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\common\common.props" />
+  <Import Project="..\..\common\define.props" />
+  
   <PropertyGroup>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <TargetFrameworks>netcoreapp1.1;net452</TargetFrameworks>
-    <AssemblyOriginatorKeyFile>../../DotNetty.snk</AssemblyOriginatorKeyFile>
-    <SignAssembly>true</SignAssembly>
+    <TargetFrameworks>net461;net452</TargetFrameworks>
+    <RootNamespace>DotNetty.Tests.Common</RootNamespace>
+    <AssemblyName>DotNetty.Tests.Common</AssemblyName>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="..\..\shared\dotnetty.com.pfx" />
-    <EmbeddedResource Include="..\..\shared\contoso.com.pfx" />
-  </ItemGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net452'">
+    <RuntimeIdentifier>win</RuntimeIdentifier>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp1.1' ">
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="1.1.1" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />
-    <PackageReference Include="xunit" Version="2.2.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0" />
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net452'">
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net452' ">
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="1.1.1" />
-    <PackageReference Include="xunit" Version="2.2.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0" />
-  </ItemGroup>
+
   <ItemGroup>
-    <ProjectReference Include="..\..\src\DotNetty.Common\DotNetty.Common.csproj" />
+    <EmbeddedResource Include="..\..\shared\dotnetty.com.pfx" Link="dotnetty.com.pfx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\shared\contoso.com.pfx" Link="contoso.com.pfx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.csproj" />
   </ItemGroup>
 </Project>

@@ -128,7 +128,7 @@ namespace DotNetty.Common.Concurrency
 
             if (cancellationToken.IsCancellationRequested)
             {
-                return TaskEx.Cancelled;
+                return TaskUtil.Cancelled;
             }
 
             if (!cancellationToken.CanBeCanceled)
@@ -143,7 +143,7 @@ namespace DotNetty.Common.Concurrency
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return TaskEx.Cancelled;
+                return TaskUtil.Cancelled;
             }
 
             if (!cancellationToken.CanBeCanceled)
@@ -158,7 +158,7 @@ namespace DotNetty.Common.Concurrency
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return TaskEx.Cancelled;
+                return TaskUtil.Cancelled;
             }
 
             if (!cancellationToken.CanBeCanceled)

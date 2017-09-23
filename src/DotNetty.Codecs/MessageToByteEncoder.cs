@@ -54,11 +54,11 @@ namespace DotNetty.Codecs
             }
             catch (EncoderException e)
             {
-                return TaskEx.FromException(e);
+                return TaskUtil.FromException(e);
             }
             catch (Exception ex)
             {
-                return TaskEx.FromException(new EncoderException(ex));
+                return TaskUtil.FromException(new EncoderException(ex));
             }
             finally
             {

@@ -277,7 +277,11 @@ namespace Nito
 
             if (item == null)
             {
+#if !NET40
                 TypeInfo typeInfo = typeof(T).GetTypeInfo();
+#else
+                var typeInfo = typeof(T);
+#endif
                 if (typeInfo.IsClass && !typeInfo.IsPointer)
                     return true; // classes, arrays, and delegates
                 if (typeInfo.IsInterface)

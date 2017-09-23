@@ -313,12 +313,12 @@ namespace DotNetty.Transport.Channels
 
                 if (this.channel.Registered)
                 {
-                    return TaskEx.FromException(new InvalidOperationException("registered to an event loop already"));
+                    return TaskUtil.FromException(new InvalidOperationException("registered to an event loop already"));
                 }
 
                 if (!this.channel.IsCompatible(eventLoop))
                 {
-                    return TaskEx.FromException(new InvalidOperationException("incompatible event loop type: " + eventLoop.GetType().Name));
+                    return TaskUtil.FromException(new InvalidOperationException("incompatible event loop type: " + eventLoop.GetType().Name));
                 }
 
                 this.channel.eventLoop = eventLoop;
@@ -424,7 +424,7 @@ namespace DotNetty.Transport.Channels
                 catch (Exception t)
                 {
                     this.CloseIfClosed();
-                    return TaskEx.FromException(t);
+                    return TaskUtil.FromException(t);
                 }
 
                 if (!wasActive && this.channel.Active)
@@ -432,7 +432,7 @@ namespace DotNetty.Transport.Channels
                     this.InvokeLater(() => this.channel.pipeline.FireChannelActive());
                 }
 
-                return TaskEx.Completed;
+                return TaskUtil.Completed;
             }
 
             public abstract Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress);
@@ -449,7 +449,7 @@ namespace DotNetty.Transport.Channels
                 catch (Exception t)
                 {
                     this.CloseIfClosed();
-                    return TaskEx.FromException(t);
+                    return TaskUtil.FromException(t);
                 }
 
                 if (wasActive && !this.channel.Active)
@@ -459,7 +459,7 @@ namespace DotNetty.Transport.Channels
 
                 this.CloseIfClosed(); // doDisconnect() might have closed the channel
 
-                return TaskEx.Completed;
+                return TaskUtil.Completed;
             }
 
             public Task CloseAsync() /*CancellationToken cancellationToken) */
@@ -601,7 +601,7 @@ namespace DotNetty.Transport.Channels
 
                 if (!this.channel.registered)
                 {
-                    return TaskEx.Completed;
+                    return TaskUtil.Completed;
                 }
 
                 var promise = new TaskCompletionSource();
@@ -681,7 +681,7 @@ namespace DotNetty.Transport.Channels
 
                     // release message now to prevent resource-leak
                     ReferenceCountUtil.Release(msg);
-                    return TaskEx.FromException(new ClosedChannelException());
+                    return TaskUtil.FromException(new ClosedChannelException());
                 }
 
                 int size;
@@ -698,7 +698,7 @@ namespace DotNetty.Transport.Channels
                 {
                     ReferenceCountUtil.Release(msg);
 
-                    return TaskEx.FromException(t);
+                    return TaskUtil.FromException(t);
                 }
 
                 var promise = new TaskCompletionSource();
@@ -785,7 +785,7 @@ namespace DotNetty.Transport.Channels
                 return false;
             }
 
-            protected Task CreateClosedChannelExceptionTask() => TaskEx.FromException(new ClosedChannelException());
+            protected Task CreateClosedChannelExceptionTask() => TaskUtil.FromException(new ClosedChannelException());
 
             protected void CloseIfClosed()
             {

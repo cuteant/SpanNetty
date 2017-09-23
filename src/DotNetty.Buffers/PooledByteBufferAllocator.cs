@@ -117,7 +117,11 @@ namespace DotNetty.Buffers
         readonly int tinyCacheSize;
         readonly int smallCacheSize;
         readonly int normalCacheSize;
-        readonly IReadOnlyList<IPoolArenaMetric> heapArenaMetrics;
+#if NET40
+    readonly IList<IPoolArenaMetric> heapArenaMetrics;
+#else
+    readonly IReadOnlyList<IPoolArenaMetric> heapArenaMetrics;
+#endif
         readonly PoolThreadLocalCache threadCache;
         readonly int chunkSize;
         readonly PooledByteBufferAllocatorMetric metric;
@@ -256,7 +260,11 @@ namespace DotNetty.Buffers
             }
         }
 
-        internal IReadOnlyList<IPoolArenaMetric> HeapArenas() => this.heapArenaMetrics;
+#if NET40
+    internal IList<IPoolArenaMetric> HeapArenas() => this.heapArenaMetrics;
+#else
+    internal IReadOnlyList<IPoolArenaMetric> HeapArenas() => this.heapArenaMetrics;
+#endif
 
         // ReSharper disable ConvertToAutoPropertyWhenPossible
         internal int TinyCacheSize => this.tinyCacheSize;

@@ -267,7 +267,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     if (ch.DoConnect(remoteAddress, localAddress))
                     {
                         this.FulfillConnectPromise(wasActive);
-                        return TaskEx.Completed;
+                        return TaskUtil.Completed;
                     }
                     else
                     {
@@ -295,16 +295,29 @@ namespace DotNetty.Transport.Channels.Sockets
                                 connectTimeout);
                         }
 
+#if NET40
+                        Action<Task> continuationAction = completed =>
+                        {
+                          var c = ch;
+                          c.connectCancellationTask?.Cancel();
+                          c.connectPromise = null;
+                          c.CloseSafe();
+                        };
+                        ch.connectPromise.Task.ContinueWith(
+                            continuationAction,
+                            TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.ExecuteSynchronously);
+#else
                         ch.connectPromise.Task.ContinueWith(
                             (t, s) =>
                             {
-                                var c = (AbstractSocketChannel)s;
-                                c.connectCancellationTask?.Cancel();
-                                c.connectPromise = null;
-                                c.CloseSafe();
+                              var c = (AbstractSocketChannel)s;
+                              c.connectCancellationTask?.Cancel();
+                              c.connectPromise = null;
+                              c.CloseSafe();
                             },
                             ch,
                             TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.ExecuteSynchronously);
+#endif
 
                         return ch.connectPromise.Task;
                     }
@@ -312,7 +325,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 catch (Exception ex)
                 {
                     this.CloseIfClosed();
-                    return TaskEx.FromException(this.AnnotateConnectException(ex, remoteAddress));
+                    return TaskUtil.FromException(this.AnnotateConnectException(ex, remoteAddress));
                 }
             }
 
