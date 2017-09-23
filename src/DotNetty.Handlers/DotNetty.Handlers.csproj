@@ -6,7 +6,7 @@
   </ImportGroup>
   
   <PropertyGroup>
-    <TargetFrameworks>net461;net451;net40;netstandard1.4</TargetFrameworks>
+    <TargetFrameworks>net461;net451;net40;netstandard1.3</TargetFrameworks>
     <RootNamespace>DotNetty.Handlers</RootNamespace>
     <AssemblyName>DotNetty.Handlers</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
@@ -29,7 +29,7 @@
     <Compile Include="..\..\common\DotNettyVersionInfo.cs" Link="Properties\DotNettyVersionInfo.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.4' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
     <PackageReference Include="System.Net.Security" Version="4.3.0" />
     <PackageReference Include="System.Globalization.Extensions" Version="4.3.0" />
   </ItemGroup>

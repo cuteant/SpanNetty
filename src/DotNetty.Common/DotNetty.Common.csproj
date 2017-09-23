@@ -2,7 +2,7 @@
   <Import Project="..\..\common\DotNettyVersion.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>net461;net451;net40;netstandard1.4</TargetFrameworks>
+    <TargetFrameworks>net461;net451;net40;netstandard1.3</TargetFrameworks>
     <RootNamespace>DotNetty.Common</RootNamespace>
     <AssemblyName>DotNetty.Common</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -29,10 +29,10 @@
     <PackageReference Include="CuteAnt" Version="2.0.0-rtm-170601" />
     <PackageReference Include="CuteAnt.Extensions.Logging.NLog" Version="2.0.0-rtm-170701" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net451' or '$(TargetFramework)' == 'netstandard1.4'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net451' or '$(TargetFramework)' == 'netstandard1.3'">
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.3.0" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.4'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
     <PackageReference Include="Microsoft.Extensions.Logging" Version="1.1.1" />
     <PackageReference Include="System.Diagnostics.Contracts" Version="4.3.0" />
     <PackageReference Include="System.Net.NetworkInformation" Version="4.3.0" />

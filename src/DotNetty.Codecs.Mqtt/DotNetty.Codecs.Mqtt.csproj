@@ -2,7 +2,7 @@
   <Import Project="..\..\common\DotNettyVersion.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>net461;net451;net40;netstandard1.4</TargetFrameworks>
+    <TargetFrameworks>net461;net451;net40;netstandard1.3</TargetFrameworks>
     <RootNamespace>DotNetty.Codecs.Mqtt</RootNamespace>
     <AssemblyName>DotNetty.Codecs.Mqtt</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>

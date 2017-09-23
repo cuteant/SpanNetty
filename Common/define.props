@@ -14,6 +14,10 @@
     <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
     <DefineConstants>$(DefineConstants);NETSTANDARD;NET_4_0_GREATER</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
+    <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
+    <DefineConstants>$(DefineConstants);NETSTANDARD;NET_4_0_GREATER;NET_4_5_GREATER</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.4'">
     <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
     <DefineConstants>$(DefineConstants);NETSTANDARD;NETSTANDARD1_3_GREATER;NET_4_0_GREATER;NET_4_5_GREATER</DefineConstants>
