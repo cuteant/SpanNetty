@@ -50,12 +50,13 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Compile Include="EchoServerHandler.cs" />
-    <Compile Include="EchoServerSettings.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="project.json" />
     <None Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -78,9 +79,17 @@
       <Project>{b4e683bc-92ea-4adc-8b99-ba7208507d80}</Project>
       <Name>DotNetty.Handlers</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj">
+      <Project>{f89ee43e-f0ae-4ea1-beff-6322c6e8eaf5}</Project>
+      <Name>DotNetty.Transport.Libuv</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.csproj">
       <Project>{c2a9f2f6-363a-4ae0-8080-6830cb204996}</Project>
       <Name>DotNetty.Transport</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Examples.Common\Examples.Common.csproj">
+      <Project>{d1ca5ce3-72df-4fc2-bc00-d6a56e400880}</Project>
+      <Name>Examples.Common</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

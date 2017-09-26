@@ -49,13 +49,14 @@
       <Link>dotnetty.com.pfx</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Compile Include="ClientSettings.cs" />
     <Compile Include="EchoClientHandler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Echo.Client.Net46.project.json" />
     <None Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -81,6 +82,10 @@
     <ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.csproj">
       <Project>{c2a9f2f6-363a-4ae0-8080-6830cb204996}</Project>
       <Name>DotNetty.Transport</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Examples.Common\Examples.Common.csproj">
+      <Project>{d1ca5ce3-72df-4fc2-bc00-d6a56e400880}</Project>
+      <Name>Examples.Common</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

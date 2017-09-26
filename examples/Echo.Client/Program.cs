@@ -14,6 +14,11 @@ namespace Echo.Client
   using DotNetty.Transport.Bootstrapping;
   using DotNetty.Transport.Channels;
   using DotNetty.Transport.Channels.Sockets;
+#if NET40
+  using ClientSettings = Echo.Client.EchoClientSettings;
+#else
+  using Examples.Common;
+#endif
 
   class Program
   {
@@ -23,7 +28,7 @@ namespace Echo.Client
 
       X509Certificate2 cert = null;
       string targetHost = null;
-      if (EchoClientSettings.IsSsl)
+      if (ClientSettings.IsSsl)
       {
         cert = new X509Certificate2("dotnetty.com.pfx", "password");
         targetHost = cert.GetNameInfo(X509NameType.DnsName, false);
@@ -50,7 +55,7 @@ namespace Echo.Client
               pipeline.AddLast("echo", new EchoClientHandler());
             }));
 
-        IChannel clientChannel = await bootstrap.ConnectAsync(new IPEndPoint(EchoClientSettings.Host, EchoClientSettings.Port));
+        IChannel clientChannel = await bootstrap.ConnectAsync(new IPEndPoint(ClientSettings.Host, ClientSettings.Port));
 
         Console.ReadLine();
 
