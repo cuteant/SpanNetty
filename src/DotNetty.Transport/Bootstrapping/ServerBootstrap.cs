@@ -200,11 +200,11 @@ namespace DotNetty.Transport.Bootstrapping
                 {
 #if NET40
                     Action<Task> continuationAction = future => ForceClose(child, future.Exception);
-                    this.childGroup.GetNext().RegisterAsync(child).ContinueWith(
+                    this.childGroup.RegisterAsync(child).ContinueWith(
                         continuationAction,
                         TaskContinuationOptions.NotOnRanToCompletion | TaskContinuationOptions.ExecuteSynchronously);
 #else
-                    this.childGroup.GetNext().RegisterAsync(child).ContinueWith(
+                    this.childGroup.RegisterAsync(child).ContinueWith(
                         (future, state) => ForceClose((IChannel)state, future.Exception),
                         child,
                         TaskContinuationOptions.NotOnRanToCompletion | TaskContinuationOptions.ExecuteSynchronously);

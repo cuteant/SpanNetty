@@ -2,11 +2,17 @@
   <Import Project="..\..\common\common.props" />
   <Import Project="..\..\common\define.props" />
   
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworks>net461;net452</TargetFrameworks>
     <RootNamespace>DotNetty.Tests.Performance</RootNamespace>
     <AssemblyName>DotNetty.Tests.Performance</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <ApplicationIcon />
+    <OutputTypeEx>library</OutputTypeEx>
+    <StartupObject />
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net452'">
@@ -24,6 +30,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DotNetty.Handlers\DotNetty.Handlers.csproj" />
+    <ProjectReference Include="..\..\src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
     <ProjectReference Include="..\DotNetty.Tests.Common\DotNetty.Tests.Common.csproj" />
   </ItemGroup>
 </Project>

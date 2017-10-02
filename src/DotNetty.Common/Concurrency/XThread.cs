@@ -99,6 +99,8 @@ namespace DotNetty.Common.Concurrency
 #endif
     }
 
+        public int Id => this.threadId;
+
         public string Name { get; set; }
 
         public bool IsAlive { get; private set; }

@@ -1,55 +1,51 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace DotNetty.Transport.Channels
+namespace DotNetty.Transport.Libuv
 {
     using System;
+    using System.Diagnostics;
+    using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Libuv.Native;
 
-    /// <summary>
-    /// <see cref="IEventLoopGroup"/> backed by a set of <see cref="SingleThreadEventLoop"/> instances.
-    /// </summary>
-    public sealed class MultithreadEventLoopGroup : IEventLoopGroup
+    public sealed class WorkerEventLoopGroup : IEventLoopGroup
     {
-        static readonly int DefaultEventLoopThreadCount = Environment.ProcessorCount * 2;
-        static readonly Func<IEventLoopGroup, IEventLoop> DefaultEventLoopFactory = group => new SingleThreadEventLoop(group);
+        static readonly int DefaultEventLoopThreadCount = Environment.ProcessorCount;
+        static readonly TimeSpan StartTimeout = TimeSpan.FromMilliseconds(10);
 
         readonly IEventLoop[] eventLoops;
+        readonly DispatcherEventLoop dispatcherLoop;
         int requestId;
 
-        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
-        public MultithreadEventLoopGroup()
-            : this(DefaultEventLoopFactory, DefaultEventLoopThreadCount)
+        public WorkerEventLoopGroup(DispatcherEventLoop dispatcherLoop) 
+            : this(dispatcherLoop, DefaultEventLoopThreadCount)
         {
         }
 
-        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
-        public MultithreadEventLoopGroup(int eventLoopCount)
-            : this(DefaultEventLoopFactory, eventLoopCount)
+        public WorkerEventLoopGroup(DispatcherEventLoop dispatcherLoop, int eventLoopCount)
         {
-        }
+            Contract.Requires(dispatcherLoop != null);
 
-        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
-        public MultithreadEventLoopGroup(Func<IEventLoopGroup, IEventLoop> eventLoopFactory)
-            : this(eventLoopFactory, DefaultEventLoopThreadCount)
-        {
-        }
+            this.dispatcherLoop = dispatcherLoop;
+            this.dispatcherLoop.PipeStartTask.Wait(StartTimeout);
+            this.PipeName = this.dispatcherLoop.PipeName;
 
-        /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
-        public MultithreadEventLoopGroup(Func<IEventLoopGroup, IEventLoop> eventLoopFactory, int eventLoopCount)
-        {
             this.eventLoops = new IEventLoop[eventLoopCount];
             var terminationTasks = new Task[eventLoopCount];
             for (int i = 0; i < eventLoopCount; i++)
             {
-                IEventLoop eventLoop;
+                WorkerEventLoop eventLoop;
                 bool success = false;
                 try
                 {
-                    eventLoop = eventLoopFactory(this);
+                    eventLoop = new WorkerEventLoop(this);
+                    eventLoop.StartAsync().Wait(StartTimeout);
+
                     success = true;
                 }
                 catch (Exception ex)
@@ -60,14 +56,7 @@ namespace DotNetty.Transport.Channels
                 {
                     if (!success)
                     {
-#if NET40
-            TaskEx
-#else
-            Task
-#endif
-                            .WhenAll(this.eventLoops
-                                .Take(i)
-                                .Select(loop => loop.ShutdownGracefullyAsync()))
+                        Task.WhenAll(this.eventLoops.Take(i).Select(loop => loop.ShutdownGracefullyAsync()))
                             .Wait();
                     }
                 }
@@ -75,29 +64,47 @@ namespace DotNetty.Transport.Channels
                 this.eventLoops[i] = eventLoop;
                 terminationTasks[i] = eventLoop.TerminationCompletion;
             }
-#if NET40
-            this.TerminationCompletion = TaskEx.WhenAll(terminationTasks);
-#else
+
             this.TerminationCompletion = Task.WhenAll(terminationTasks);
-#endif
         }
 
-        /// <inheritdoc />
+        internal string PipeName { get; }
+
+        internal void Accept(NativeHandle handle)
+        {
+            Debug.Assert(this.dispatcherLoop != null);
+            this.dispatcherLoop.Accept(handle);
+        }
+
         public Task TerminationCompletion { get; }
 
-        /// <inheritdoc />
         public IEventLoop GetNext()
         {
             int id = Interlocked.Increment(ref this.requestId);
             return this.eventLoops[Math.Abs(id % this.eventLoops.Length)];
         }
 
-        /// <inheritdoc />
         IEventExecutor IEventExecutorGroup.GetNext() => this.GetNext();
 
-        public Task RegisterAsync(IChannel channel) => this.GetNext().RegisterAsync(channel);
+        public Task RegisterAsync(IChannel channel)
+        {
+            if (!(channel is NativeChannel nativeChannel))
+            {
+                throw new ArgumentException($"{nameof(channel)} must be of {typeof(NativeChannel)}");
+            }
 
-        /// <inheritdoc />
+            IntPtr loopHandle = nativeChannel.GetLoopHandle();
+            foreach (IEventLoop loop in this.eventLoops)
+            {
+                if (((ILoopExecutor)loop).UnsafeLoop.Handle == loopHandle)
+                {
+                    return loop.RegisterAsync(nativeChannel);
+                }
+            }
+
+            throw new InvalidOperationException($"Loop {loopHandle} does not exist");
+        }
+
         public Task ShutdownGracefullyAsync()
         {
             foreach (IEventLoop eventLoop in this.eventLoops)
@@ -107,13 +114,13 @@ namespace DotNetty.Transport.Channels
             return this.TerminationCompletion;
         }
 
-        /// <inheritdoc />
         public Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
         {
             foreach (IEventLoop eventLoop in this.eventLoops)
             {
                 eventLoop.ShutdownGracefullyAsync(quietPeriod, timeout);
             }
+
             return this.TerminationCompletion;
         }
     }
