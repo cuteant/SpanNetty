@@ -116,7 +116,7 @@ namespace DotNetty.Transport.Libuv
                 {
                     request?.Dispose();
                     this.CloseIfClosed();
-                    return TaskEx.FromException(this.AnnotateConnectException(ex, remoteAddress));
+                    return TaskUtil.FromException(this.AnnotateConnectException(ex, remoteAddress));
                 }
             }
 
