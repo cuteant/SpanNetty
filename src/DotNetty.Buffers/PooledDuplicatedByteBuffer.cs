@@ -38,6 +38,10 @@ namespace DotNetty.Buffers
 
         public override int ArrayOffset  => this.Unwrap().ArrayOffset;
 
+        public override ref byte GetPinnableMemoryAddress() => ref this.Unwrap().GetPinnableMemoryAddress();
+
+        public override IntPtr AddressOfPinnedMemory() => this.Unwrap().AddressOfPinnedMemory();
+
         public override ArraySegment<byte> GetIoBuffer(int index, int length) => this.Unwrap().GetIoBuffer(index, length);
 
         public override ArraySegment<byte>[] GetIoBuffers(int index, int length) => this.Unwrap().GetIoBuffers(index, length);
@@ -97,6 +101,5 @@ namespace DotNetty.Buffers
         protected internal override void _SetLong(int index, long value) => this.UnwrapCore()._SetLong(index, value);
 
         protected internal override void _SetLongLE(int index, long value) => this.UnwrapCore()._SetLongLE(index, value);
-
     }
 }

@@ -6,7 +6,6 @@ namespace DotNetty.Transport.Libuv.Native
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
-    using System.Threading;
 
     /// <summary>
     /// IPC pipe server to hand out handles to different libuv loops.
@@ -65,9 +64,9 @@ namespace DotNetty.Transport.Libuv.Native
                 throw new InvalidOperationException("No connection for listening pipe.");
             }
 
-            int id = Interlocked.Increment(ref this.requestId);
-            Pipe pipe = this.pipes[Math.Abs(id % this.pipes.Count)];
-
+            // This is called within the loop, no need to atomically increase
+            this.requestId++;
+            Pipe pipe = this.pipes[Math.Abs(this.requestId % this.pipes.Count)];
             this.windowsApi.DetachFromIOCP(handle);
             pipe.Send(handle);
         }

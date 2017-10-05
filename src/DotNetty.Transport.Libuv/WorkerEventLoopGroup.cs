@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+// ReSharper disable ForCanBeConvertedToForeach
 namespace DotNetty.Transport.Libuv
 {
     using System;
@@ -94,9 +95,11 @@ namespace DotNetty.Transport.Libuv
             }
 
             IntPtr loopHandle = nativeChannel.GetLoopHandle();
-            foreach (IEventLoop loop in this.eventLoops)
+            for (int i = 0; i < this.eventLoops.Length; i++)
             {
-                if (((ILoopExecutor)loop).UnsafeLoop.Handle == loopHandle)
+                IEventLoop loop = this.eventLoops[i];
+                IntPtr handle = ((ILoopExecutor)loop).UnsafeLoop.Handle;
+                if (handle == loopHandle)
                 {
                     return loop.RegisterAsync(nativeChannel);
                 }
@@ -120,7 +123,6 @@ namespace DotNetty.Transport.Libuv
             {
                 eventLoop.ShutdownGracefullyAsync(quietPeriod, timeout);
             }
-
             return this.TerminationCompletion;
         }
     }

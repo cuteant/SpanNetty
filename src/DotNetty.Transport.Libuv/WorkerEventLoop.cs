@@ -13,6 +13,7 @@ namespace DotNetty.Transport.Libuv
     sealed class WorkerEventLoop : LoopExecutor, IEventLoop
     {
         readonly TaskCompletionSource connectCompletion;
+        Pipe pipeHandle;
 
         public WorkerEventLoop(WorkerEventLoopGroup parent) 
             : base(parent, null)
@@ -37,12 +38,10 @@ namespace DotNetty.Transport.Libuv
             return this.connectCompletion.Task;
         }
 
-        internal Pipe PipeHandle { get; private set; }
-
         protected override void Initialize()
         {
             Loop loop = ((ILoopExecutor)this).UnsafeLoop;
-            this.PipeHandle = new Pipe(loop, true);
+            this.pipeHandle = new Pipe(loop, true);
             PipeConnect request = null;
 
             try
@@ -59,7 +58,7 @@ namespace DotNetty.Transport.Libuv
 
         protected override void Shutdown()
         {
-            this.PipeHandle.CloseHandle();
+            this.pipeHandle.CloseHandle();
             base.Shutdown();
         } 
 
@@ -79,7 +78,7 @@ namespace DotNetty.Transport.Libuv
                         Logger.Info($"{nameof(WorkerEventLoop)} ({this.LoopThreadId}) dispatcher pipe {this.PipeName} connected.");
                     }
 
-                    this.PipeHandle.ReadStart(this.OnRead);
+                    this.pipeHandle.ReadStart(this.OnRead);
                     this.connectCompletion.TryComplete();
                 }
             }
@@ -146,7 +145,7 @@ namespace DotNetty.Transport.Libuv
             {
                 NativeMethods.uv_pipe_connect(
                     this.Handle,
-                    this.workerEventLoop.PipeHandle.Handle,
+                    this.workerEventLoop.pipeHandle.Handle,
                     this.workerEventLoop.PipeName,
                     WatcherCallback);
             }

@@ -2019,7 +2019,7 @@ namespace DotNetty.Buffers.Tests
             this.buffer.SetIndex(Capacity / 4, Capacity * 3 / 4);
             int i1 = Capacity / 4;
             Assert.Equal(-1,
-                this.buffer.ForEachByte(new ByteProcessor.CustomProcessor(
+                this.buffer.ForEachByte(new ByteProcessor(
                     value =>
                     {
                         Assert.Equal(value, (byte)(i1 + 1));
@@ -2050,7 +2050,7 @@ namespace DotNetty.Buffers.Tests
 
             int stop = Capacity / 2;
             int i1 = Capacity / 3;
-            Assert.Equal(stop, this.buffer.ForEachByte(Capacity / 3, Capacity / 3, new ByteProcessor.CustomProcessor(value =>
+            Assert.Equal(stop, this.buffer.ForEachByte(Capacity / 3, Capacity / 3, new ByteProcessor(value =>
             {
                 Assert.Equal((byte)(i1 + 1), value);
                 if (i1 == stop)
@@ -2074,7 +2074,7 @@ namespace DotNetty.Buffers.Tests
 
             int lastIndex = 0;
             int i1 = Capacity * 3 / 4 - 1;
-            Assert.Equal(-1, this.buffer.ForEachByteDesc(Capacity / 4, Capacity * 2 / 4, new ByteProcessor.CustomProcessor(value =>
+            Assert.Equal(-1, this.buffer.ForEachByteDesc(Capacity / 4, Capacity * 2 / 4, new ByteProcessor(value =>
             {
                 Assert.Equal((byte)(i1 + 1), value);
 #if TEST40
@@ -2299,6 +2299,18 @@ namespace DotNetty.Buffers.Tests
         public void SetBytesAfterRelease3() => Assert.Throws<IllegalReferenceCountException>(() => this.ReleasedBuffer().SetBytes(0, this.ReleaseLater(Unpooled.Buffer()), 0, 1));
 
         [Fact]
+        public void SetUsAsciiCharSequenceAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.SetCharSequenceAfterRelease0(Encoding.ASCII));
+
+        [Fact]
+        public void SetUtf8CharSequenceAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.SetCharSequenceAfterRelease0(Encoding.UTF8));
+
+        [Fact]
+        public void SetUtf16CharSequenceAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.SetCharSequenceAfterRelease0(Encoding.Unicode));
+
+        [Fact]
+        void SetCharSequenceAfterRelease0(Encoding encoding) => this.ReleasedBuffer().SetCharSequence(0, new StringCharSequence("x"), encoding);
+
+        [Fact]
         public void SetBytesAfterRelease4() => Assert.Throws<IllegalReferenceCountException>(() => this.ReleasedBuffer().SetBytes(0, new byte[8]));
 
         [Fact]
@@ -2440,6 +2452,17 @@ namespace DotNetty.Buffers.Tests
         public void WriteZeroAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.ReleasedBuffer().WriteZero(1));
 
         [Fact]
+        public void WriteUsAsciiCharSequenceAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.WriteCharSequenceAfterRelease0(Encoding.ASCII));
+
+        [Fact]
+        public void WriteUtf8CharSequenceAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.WriteCharSequenceAfterRelease0(Encoding.UTF8));
+
+        [Fact]
+        public void WriteUtf16CharSequenceAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.WriteCharSequenceAfterRelease0(Encoding.Unicode));
+
+        void WriteCharSequenceAfterRelease0(Encoding encoding) => this.ReleasedBuffer().WriteCharSequence(new StringCharSequence("x"), encoding);
+
+        [Fact]
         public void ForEachByteAfterRelease() => Assert.Throws<IllegalReferenceCountException>(() => this.ReleasedBuffer().ForEachByte(new TestByteProcessor()));
 
         [Fact]
@@ -2483,12 +2506,107 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
+        public void MemoryAddressAfterRelease()
+        {
+            IByteBuffer buf = this.ReleasedBuffer();
+            if (buf.HasMemoryAddress)
+            {
+                Assert.Throws<IllegalReferenceCountException>(() => buf.GetPinnableMemoryAddress());
+            }
+        }
+
+        [Fact]
         public void SliceRelease()
         {
             IByteBuffer buf = this.NewBuffer(8);
             Assert.Equal(1, buf.ReferenceCount);
             Assert.True(buf.Slice().Release());
             Assert.Equal(0, buf.ReferenceCount);
+        }
+
+        [Fact]
+        public virtual void WriteUsAsciiCharSequenceExpand() => this.WriteCharSequenceExpand(Encoding.ASCII);
+
+        [Fact]
+        public virtual void WriteUtf8CharSequenceExpand() => this.WriteCharSequenceExpand(Encoding.UTF8);
+
+        [Fact]
+        public virtual void WriteUtf16CharSequenceExpand() => this.WriteCharSequenceExpand(Encoding.Unicode);
+
+        void WriteCharSequenceExpand(Encoding encoding)
+        {
+            IByteBuffer buf = this.NewBuffer(1);
+            try
+            {
+                int writerIndex = buf.Capacity - 1;
+                buf.SetWriterIndex(writerIndex);
+                int written = buf.WriteCharSequence(new StringCharSequence("AB"), encoding);
+                Assert.Equal(writerIndex, buf.WriterIndex - written);
+            }
+            finally
+            {
+                buf.Release();
+            }
+        }
+
+        [Fact]
+        public void SetUsAsciiCharSequenceNoExpand() => Assert.Throws<IndexOutOfRangeException>(() => this.SetCharSequenceNoExpand(Encoding.ASCII));
+
+        [Fact]
+        public void SetUtf8CharSequenceNoExpand() => Assert.Throws<IndexOutOfRangeException>(() => this.SetCharSequenceNoExpand(Encoding.UTF8));
+
+        [Fact]
+        public void SetUtf16CharSequenceNoExpand() => Assert.Throws<IndexOutOfRangeException>(() => this.SetCharSequenceNoExpand(Encoding.Unicode));
+
+        void SetCharSequenceNoExpand(Encoding encoding)
+        {
+            IByteBuffer buf = this.NewBuffer(1);
+            try
+            {
+                buf.SetCharSequence(0, new StringCharSequence("AB"), encoding);
+            }
+            finally
+            {
+                buf.Release();
+            }
+        }
+
+        [Fact]
+        public void SetUsAsciiCharSequence() => this.SetGetCharSequence(Encoding.ASCII);
+
+        [Fact]
+        public void SetUtf8CharSequence() => this.SetGetCharSequence(Encoding.UTF8);
+
+        [Fact]
+        public void SetUtf16CharSequence() => this.SetGetCharSequence(Encoding.Unicode);
+
+        void SetGetCharSequence(Encoding encoding)
+        {
+            IByteBuffer buf = this.NewBuffer(16);
+            var sequence = new StringCharSequence("AB");
+            int bytes = buf.SetCharSequence(1, sequence, encoding);
+            Assert.Equal(sequence, buf.GetCharSequence(1, bytes, encoding));
+            buf.Release();
+        }
+
+        [Fact]
+        public void WriteReadAsciiCharSequence() => this.WriteReadCharSequence(Encoding.ASCII);
+
+        [Fact]
+        public void WriteReadUtf8CharSequence() => this.WriteReadCharSequence(Encoding.UTF8);
+
+        [Fact]
+        public void WriteReadUtf16CharSequence() => this.WriteReadCharSequence(Encoding.Unicode);
+
+        void WriteReadCharSequence(Encoding encoding)
+        {
+            IByteBuffer buf = this.NewBuffer(16);
+            var sequence = new StringCharSequence("AB");
+            buf.SetWriterIndex(1);
+            int bytes = buf.WriteCharSequence(sequence, encoding);
+            buf.SetReaderIndex(1);
+            Assert.Equal(sequence, buf.ReadCharSequence(bytes, encoding));
+            buf.Release();
         }
 
         [Fact]
@@ -3133,7 +3251,7 @@ namespace DotNetty.Buffers.Tests
             }
         }
 
-        sealed class ForEachByteDesc2Processor : ByteProcessor
+        sealed class ForEachByteDesc2Processor : IByteProcessor
         {
             int index;
 
@@ -3145,7 +3263,7 @@ namespace DotNetty.Buffers.Tests
 
             public byte[] Bytes { get; }
 
-            public override bool Process(byte value)
+            public bool Process(byte value)
             {
                 this.Bytes[this.index--] = value;
                 return true;
@@ -3172,7 +3290,7 @@ namespace DotNetty.Buffers.Tests
             }
         }
 
-        sealed class ForEachByte2Processor : ByteProcessor
+        sealed class ForEachByte2Processor : IByteProcessor
         {
             int index;
 
@@ -3184,7 +3302,7 @@ namespace DotNetty.Buffers.Tests
 
             public byte[] Bytes { get; }
 
-            public override bool Process(byte value)
+            public bool Process(byte value)
             {
                 this.Bytes[this.index++] = value;
                 return true;
@@ -3345,9 +3463,9 @@ namespace DotNetty.Buffers.Tests
             return buf;
         }
 
-        sealed class TestByteProcessor : ByteProcessor
+        sealed class TestByteProcessor : IByteProcessor
         {
-            public override bool Process(byte value) => true;
+            public bool Process(byte value) => true;
         }
     }
 }

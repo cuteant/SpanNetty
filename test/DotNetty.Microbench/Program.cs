@@ -7,7 +7,12 @@ namespace DotNetty.Microbench
     using BenchmarkDotNet.Running;
     using DotNetty.Microbench.Allocators;
     using DotNetty.Microbench.Buffers;
+    using DotNetty.Microbench.Codecs;
+    using DotNetty.Microbench.Common;
     using DotNetty.Microbench.Concurrency;
+    using DotNetty.Microbench.Headers;
+    using DotNetty.Microbench.Http;
+    using DotNetty.Microbench.Internal;
 
     class Program
     {
@@ -15,11 +20,26 @@ namespace DotNetty.Microbench
         {
             typeof(PooledHeapByteBufferAllocatorBenchmark),
             typeof(UnpooledHeapByteBufferAllocatorBenchmark),
+
             typeof(ByteBufferBenchmark),
-            typeof(UnpooledHeapByteBufferBenchmark),
-            typeof(PooledHeapByteBufferBenchmark),
+            typeof(PooledByteBufferBenchmark),
+            typeof(UnpooledByteBufferBenchmark),
+
+            typeof(DateFormatterBenchmark),
+
+            typeof(AsciiStringBenchmark),
+
             typeof(FastThreadLocalBenchmark),
-            typeof(SingleThreadEventExecutorBenchmark)
+            typeof(SingleThreadEventExecutorBenchmark),
+
+            typeof(HeadersBenchmark),
+
+            typeof(ClientCookieDecoderBenchmark),
+            typeof(HttpRequestDecoderBenchmark),
+            typeof(HttpRequestEncoderInsertBenchmark),
+            typeof(WriteBytesVsShortOrMediumBenchmark),
+
+            typeof(PlatformDependentBenchmark)
         };
 
         static void Main(string[] args)

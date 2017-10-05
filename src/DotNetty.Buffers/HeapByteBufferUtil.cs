@@ -16,9 +16,7 @@ namespace DotNetty.Buffers
 
         [MethodImpl(InlineMethod.Value)]
         internal static short GetShortLE(byte[] memory, int index) => 
-            unchecked(
-                (short)(memory[index] | 
-                memory[index + 1] << 8));
+            unchecked((short)(memory[index] | memory[index + 1] << 8));
 
         [MethodImpl(InlineMethod.Value)]
         internal static int GetUnsignedMedium(byte[] memory, int index) => 

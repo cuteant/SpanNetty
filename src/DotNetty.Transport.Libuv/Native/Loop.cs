@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+// ReSharper disable ConvertToAutoPropertyWithPrivateSetter
 namespace DotNetty.Transport.Libuv.Native
 {
     using DotNetty.Common.Internal.Logging;
@@ -11,14 +12,15 @@ namespace DotNetty.Transport.Libuv.Native
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Loop>();
         static readonly uv_walk_cb WalkCallback = OnWalkCallback;
+        IntPtr handle;
 
         public Loop()
         {
             int size = NativeMethods.uv_loop_size().ToInt32();
-            this.Handle = Marshal.AllocHGlobal(size);
+            this.handle = Marshal.AllocHGlobal(size);
             try
             {
-                int result = NativeMethods.uv_loop_init(this.Handle);
+                int result = NativeMethods.uv_loop_init(this.handle);
                 if (result < 0)
                 {
                     throw NativeMethods.CreateError((uv_err_code)result);
@@ -26,30 +28,29 @@ namespace DotNetty.Transport.Libuv.Native
             }
             catch
             {
-                Marshal.FreeHGlobal(this.Handle);
+                Marshal.FreeHGlobal(this.handle);
                 throw;
             }
 
             GCHandle gcHandle = GCHandle.Alloc(this, GCHandleType.Normal);
-            ((uv_loop_t*)this.Handle)->data = GCHandle.ToIntPtr(gcHandle);
+            ((uv_loop_t*)this.handle)->data = GCHandle.ToIntPtr(gcHandle);
 
             if (Logger.InfoEnabled)
             {
-                Logger.Info($"Loop {this.Handle} allocated.");
+                Logger.Info($"Loop {this.handle} allocated.");
             }
         }
 
-        public IntPtr Handle { get; private set; }
+        public IntPtr Handle => this.handle;
 
-        public bool IsAlive => this.Handle != IntPtr.Zero 
-            && NativeMethods.uv_loop_alive(this.Handle) != 0;
+        public bool IsAlive => this.handle != IntPtr.Zero && NativeMethods.uv_loop_alive(this.handle) != 0;
 
         public long Now
         {
             get
             {
                 this.Validate();
-                return NativeMethods.uv_now(this.Handle);
+                return NativeMethods.uv_now(this.handle);
             }
         }
 
@@ -58,35 +59,35 @@ namespace DotNetty.Transport.Libuv.Native
             get
             {
                 this.Validate();
-                return NativeMethods.uv_hrtime(this.Handle);
+                return NativeMethods.uv_hrtime(this.handle);
             }
         }
 
         public int GetBackendTimeout()
         {
-            return NativeMethods.uv_backend_timeout(this.Handle); 
+            return NativeMethods.uv_backend_timeout(this.handle); 
         }
 
         public int ActiveHandleCount() => 
-            this.Handle != IntPtr.Zero
-            ? (int)((uv_loop_t*)this.Handle)->active_handles 
+            this.handle != IntPtr.Zero
+            ? (int)((uv_loop_t*)this.handle)->active_handles 
             : 0;
 
         public int Run(uv_run_mode mode)
         {
             this.Validate();
-            return NativeMethods.uv_run(this.Handle, mode);
+            return NativeMethods.uv_run(this.handle, mode);
         }
 
         public void Stop()
         {
             this.Validate();
-            NativeMethods.uv_stop(this.Handle);
+            NativeMethods.uv_stop(this.handle);
         }
 
         void Validate()
         {
-            if (this.Handle != IntPtr.Zero)
+            if (this.handle != IntPtr.Zero)
             {
                 return;
             }
@@ -96,7 +97,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         public void Close()
         {
-            IntPtr loopHandle = this.Handle;
+            IntPtr loopHandle = this.handle;
             if (loopHandle == IntPtr.Zero)
             {
                 return;
@@ -159,7 +160,7 @@ namespace DotNetty.Transport.Libuv.Native
 
             // Release memory
             Marshal.FreeHGlobal(loopHandle);
-            this.Handle = IntPtr.Zero;
+            this.handle = IntPtr.Zero;
             Logger.Info($"Loop {loopHandle} memory released.");
         }
 

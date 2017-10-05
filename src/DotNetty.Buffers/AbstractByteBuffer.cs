@@ -243,7 +243,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        protected void EnsureWritable0(int minWritableBytes)
+        protected internal void EnsureWritable0(int minWritableBytes)
         {
             this.EnsureAccessible();
             if (minWritableBytes <= this.WritableBytes)
@@ -455,6 +455,19 @@ namespace DotNetty.Buffers
 
         public abstract IByteBuffer GetBytes(int index, Stream destination, int length);
 
+        public virtual ICharSequence GetCharSequence(int index, int length, Encoding encoding)
+        {
+            // TODO: We could optimize this for UTF8 and US_ASCII
+            return new StringCharSequence(this.ToString(index, length, encoding));
+        }
+
+        public virtual ICharSequence ReadCharSequence(int length, Encoding encoding)
+        {
+            ICharSequence sequence = this.GetCharSequence(this.readerIndex, length, encoding);
+            this.readerIndex += length;
+            return sequence;
+        }
+
         public virtual IByteBuffer SetByte(int index, int value)
         {
             this.CheckIndex(index);
@@ -597,6 +610,7 @@ namespace DotNetty.Buffers
             this.SetBytes(index, src, 0, src.Length);
             return this;
         }
+
         public abstract IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length);
 
         public virtual IByteBuffer SetBytes(int index, IByteBuffer src)
@@ -664,6 +678,48 @@ namespace DotNetty.Buffers
             }
 
             return this;
+        }
+
+        public virtual int SetCharSequence(int index, ICharSequence sequence, Encoding encoding) => this.SetCharSequence0(index, sequence, encoding, false);
+
+        int SetCharSequence0(int index, ICharSequence sequence, Encoding encoding, bool expand)
+        {
+            if (ReferenceEquals(encoding, Encoding.UTF8))
+            {
+                int length = ByteBufferUtil.Utf8MaxBytes(sequence);
+                if (expand)
+                {
+                    this.EnsureWritable0(length);
+                    this.CheckIndex0(index, length);
+                }
+                else
+                {
+                    this.CheckIndex(index, length);
+                }
+                return ByteBufferUtil.WriteUtf8(this, index, sequence, sequence.Count);
+            }
+            if (ReferenceEquals(encoding, Encoding.ASCII))
+            {
+                int length = sequence.Count;
+                if (expand)
+                {
+                    this.EnsureWritable0(length);
+                    this.CheckIndex0(index, length);
+                }
+                else
+                {
+                    this.CheckIndex(index, length);
+                }
+                return ByteBufferUtil.WriteAscii(this, index, sequence, length);
+            }
+            byte[] bytes = encoding.GetBytes(sequence.ToString());
+            if (expand)
+            {
+                this.EnsureWritable0(bytes.Length);
+                // setBytes(...) will take care of checking the indices.
+            }
+            this.SetBytes(index, bytes);
+            return bytes.Length;
         }
 
         public virtual byte ReadByte()
@@ -821,6 +877,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer ReadSlice(int length)
         {
+            this.CheckReadableBytes(length);
             IByteBuffer slice = this.Slice(this.readerIndex, length);
             this.readerIndex += length;
             return slice;
@@ -828,6 +885,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer ReadRetainedSlice(int length)
         {
+            this.CheckReadableBytes(length);
             IByteBuffer slice = this.RetainedSlice(this.readerIndex, length);
             this.readerIndex += length;
             return slice;
@@ -1104,6 +1162,13 @@ namespace DotNetty.Buffers
             return this;
         }
 
+        public virtual int WriteCharSequence(ICharSequence sequence, Encoding encoding)
+        {
+            int written = this.SetCharSequence0(this.writerIndex, sequence, encoding, true);
+            this.writerIndex += written;
+            return written;
+        }
+
         public virtual IByteBuffer Copy() => this.Copy(this.readerIndex, this.ReadableBytes);
 
         public abstract IByteBuffer Copy(int index, int length);
@@ -1145,19 +1210,19 @@ namespace DotNetty.Buffers
             return endIndex - index;
         }
 
-        public virtual int ForEachByte(ByteProcessor processor)
+        public virtual int ForEachByte(IByteProcessor processor)
         {
             this.EnsureAccessible();
             return this.ForEachByteAsc0(this.readerIndex, this.writerIndex, processor);
         }
 
-        public virtual int ForEachByte(int index, int length, ByteProcessor processor)
+        public virtual int ForEachByte(int index, int length, IByteProcessor processor)
         {
             this.CheckIndex(index, length);
             return this.ForEachByteAsc0(index, index + length, processor);
         }
 
-        int ForEachByteAsc0(int start, int end, ByteProcessor processor)
+        int ForEachByteAsc0(int start, int end, IByteProcessor processor)
         {
             for (; start < end; ++start)
             {
@@ -1170,19 +1235,19 @@ namespace DotNetty.Buffers
             return -1;
         }
 
-        public virtual int ForEachByteDesc(ByteProcessor processor)
+        public virtual int ForEachByteDesc(IByteProcessor processor)
         {
             this.EnsureAccessible();
             return this.ForEachByteDesc0(this.writerIndex - 1, this.readerIndex, processor);
         }
 
-        public virtual int ForEachByteDesc(int index, int length, ByteProcessor processor)
+        public virtual int ForEachByteDesc(int index, int length, IByteProcessor processor)
         {
             this.CheckIndex(index, length);
             return this.ForEachByteDesc0(index + length - 1, index, processor);
         }
 
-        int ForEachByteDesc0(int rStart, int rEnd, ByteProcessor processor)
+        int ForEachByteDesc0(int rStart, int rEnd, IByteProcessor processor)
         {
             for (; rStart >= rEnd; --rStart)
             {
@@ -1331,7 +1396,15 @@ namespace DotNetty.Buffers
 
         public abstract int ArrayOffset { get; }
 
+        public abstract bool HasMemoryAddress { get; }
+
+        public abstract ref byte GetPinnableMemoryAddress();
+
+        public abstract IntPtr AddressOfPinnedMemory();
+
         public abstract IByteBuffer Unwrap();
+
+        public abstract bool IsDirect { get; }
 
         public abstract int ReferenceCount { get; }
 

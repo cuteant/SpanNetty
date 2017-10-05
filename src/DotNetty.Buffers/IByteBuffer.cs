@@ -35,6 +35,8 @@ namespace DotNetty.Buffers
         /// </summary>
         IByteBufferAllocator Allocator { get; }
 
+        bool IsDirect { get; }
+
         int ReaderIndex { get; }
 
         int WriterIndex { get; }
@@ -481,6 +483,9 @@ namespace DotNetty.Buffers
         /// </exception>
         IByteBuffer GetBytes(int index, Stream destination, int length);
 
+
+        ICharSequence GetCharSequence(int index, int length, Encoding encoding);
+
         /// <summary>
         ///     Sets the specified boolean at the specified absolute <paramref name="index" /> in this buffer.
         ///     This method does not directly modify <see cref="ReaderIndex" /> or <see cref="WriterIndex" /> of this buffer.
@@ -756,6 +761,8 @@ namespace DotNetty.Buffers
 
         IByteBuffer SetZero(int index, int length);
 
+        int SetCharSequence(int index, ICharSequence sequence, Encoding encoding);
+
         /// <summary>
         ///     Gets a boolean at the current <see cref="ReaderIndex" /> and increases the <see cref="ReaderIndex" />
         ///     by <c>1</c> in this buffer.
@@ -935,6 +942,8 @@ namespace DotNetty.Buffers
 
         IByteBuffer ReadBytes(Stream destination, int length);
 
+        ICharSequence ReadCharSequence(int length, Encoding encoding);
+
         /// <summary>
         ///     Increases the current <see cref="ReaderIndex" /> by the specified <paramref name="length" /> in this buffer.
         /// </summary>
@@ -1077,8 +1086,25 @@ namespace DotNetty.Buffers
         /// <summary>
         ///     Grabs the underlying byte array for this buffer
         /// </summary>
-        /// <value></value>
         byte[] Array { get; }
+
+        /// <summary>
+        /// Returns {@code true} if and only if this buffer has a reference to the low-level memory address that points
+        /// to the backing data.
+        /// </summary>
+        bool HasMemoryAddress { get; }
+
+        /// <summary>
+        ///  Returns the low-level memory address that point to the first byte of ths backing data.
+        /// </summary>
+        /// <returns>The low-level memory address</returns>
+        ref byte GetPinnableMemoryAddress();
+
+        /// <summary>
+        /// Returns the pointer address of the buffer if the memory is pinned.
+        /// </summary>
+        /// <returns>IntPtr.Zero if not pinned.</returns>
+        IntPtr AddressOfPinnedMemory();
 
         /// <summary>
         ///     Creates a deep clone of the existing byte array and returns it
@@ -1122,6 +1148,8 @@ namespace DotNetty.Buffers
 
         IByteBuffer WriteZero(int length);
 
+        int WriteCharSequence(ICharSequence sequence, Encoding encoding);
+
         int IndexOf(int fromIndex, int toIndex, byte value);
 
         int BytesBefore(byte value);
@@ -1141,10 +1169,10 @@ namespace DotNetty.Buffers
         /// </summary>
         /// <returns>
         ///     <c>-1</c> if the processor iterated to or beyond the end of the readable bytes.
-        ///     The last-visited index If the <see cref="ByteProcessor.Process(byte)" /> returned <c>false</c>.
+        ///     The last-visited index If the <see cref="IByteProcessor.Process(byte)" /> returned <c>false</c>.
         /// </returns>
         /// <param name="processor">Processor.</param>
-        int ForEachByte(ByteProcessor processor);
+        int ForEachByte(IByteProcessor processor);
 
         /// <summary>
         ///     Iterates over the specified area of this buffer with the specified <paramref name="processor"/> in ascending order.
@@ -1152,22 +1180,22 @@ namespace DotNetty.Buffers
         /// </summary>
         /// <returns>
         ///     <c>-1</c> if the processor iterated to or beyond the end of the specified area.
-        ///     The last-visited index If the <see cref="ByteProcessor.Process(byte)"/> returned <c>false</c>.
+        ///     The last-visited index If the <see cref="IByteProcessor.Process(byte)"/> returned <c>false</c>.
         /// </returns>
         /// <param name="index">Index.</param>
         /// <param name="length">Length.</param>
         /// <param name="processor">Processor.</param>
-        int ForEachByte(int index, int length, ByteProcessor processor);
+        int ForEachByte(int index, int length, IByteProcessor processor);
 
         /// <summary>
         ///     Iterates over the readable bytes of this buffer with the specified <paramref name="processor"/> in descending order.
         /// </summary>
         /// <returns>
         ///     <c>-1</c> if the processor iterated to or beyond the beginning of the readable bytes.
-        ///     The last-visited index If the <see cref="ByteProcessor.Process(byte)"/> returned <c>false</c>.
+        ///     The last-visited index If the <see cref="IByteProcessor.Process(byte)"/> returned <c>false</c>.
         /// </returns>
         /// <param name="processor">Processor.</param>
-        int ForEachByteDesc(ByteProcessor processor);
+        int ForEachByteDesc(IByteProcessor processor);
 
         /// <summary>
         ///     Iterates over the specified area of this buffer with the specified <paramref name="processor"/> in descending order.
@@ -1175,11 +1203,11 @@ namespace DotNetty.Buffers
         /// </summary>
         /// <returns>
         ///     <c>-1</c> if the processor iterated to or beyond the beginning of the specified area.
-        ///     The last-visited index If the <see cref="ByteProcessor.Process(byte)"/> returned <c>false</c>.
+        ///     The last-visited index If the <see cref="IByteProcessor.Process(byte)"/> returned <c>false</c>.
         /// </returns>
         /// <param name="index">Index.</param>
         /// <param name="length">Length.</param>
         /// <param name="processor">Processor.</param>
-        int ForEachByteDesc(int index, int length, ByteProcessor processor);
+        int ForEachByteDesc(int index, int length, IByteProcessor processor);
     }
 }

@@ -4,6 +4,7 @@
 namespace DotNetty.Transport.Libuv
 {
     using System;
+    using System.Diagnostics;
     using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
@@ -223,7 +224,7 @@ namespace DotNetty.Transport.Libuv
 
         IRunnable PollTask()
         {
-            Contract.Assert(this.InEventLoop);
+            Debug.Assert(this.InEventLoop);
 
             if (!this.taskQueue.TryDequeue(out IRunnable task))
             {
