@@ -99,7 +99,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     }
                     return;
                 }
-                catch (SocketException ex) when (ex.SocketErrorCode == SocketError.OperationAborted)
+                catch (SocketException ex) when (ex.SocketErrorCode == SocketError.OperationAborted || ex.SocketErrorCode == SocketError.InvalidArgument)
                 {
                     closed = true;
                 }
@@ -215,7 +215,7 @@ namespace DotNetty.Transport.Channels.Sockets
                             allocHandle.IncMessagesRead(1);
                         }
                     }
-                    catch (SocketException ex) when (ex.SocketErrorCode == SocketError.OperationAborted)
+                    catch (SocketException ex) when (ex.SocketErrorCode == SocketError.OperationAborted || ex.SocketErrorCode == SocketError.InvalidArgument)
                     {
                         closed = true;
                     }
