@@ -399,6 +399,8 @@ namespace DotNetty.Transport.Channels
 
             public IChannel Channel => this.ctx.Channel;
 
+            public IChannelPipeline Pipeline => this.ctx.Pipeline;
+
             public IByteBufferAllocator Allocator => this.ctx.Allocator;
 
             public IEventExecutor Executor => this.ctx.Executor;

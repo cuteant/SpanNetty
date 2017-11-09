@@ -2,7 +2,9 @@
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using DotNetty.Handlers.IPFilter;
 using DotNetty.Handlers.Timeout;
+using DotNetty.Transport.Channels;
 
 namespace DotNetty.Handlers
 {
@@ -88,12 +90,81 @@ namespace DotNetty.Handlers
     partial class ThrowHelper
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_CannotDetermineToAcceptOrRejectAChannel(IChannelHandlerContext ctx)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException(nameof(ctx), "cannot determine to accept or reject a channel: " + ctx.Channel);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_IdleState(IdleState state, bool first)
         {
             throw GetArgumentException();
             ArgumentException GetArgumentException()
             {
                 return new ArgumentException("Unhandled: state=" + state + ", first=" + first);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static IIPFilterRule ThrowArgumentOutOfRangeException_IPv4RequiresTheSubnetPrefixToBeInRangeOf0_32(int cidrPrefix)
+        {
+            throw GetArgumentOutOfRangeException();
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException(
+                    nameof(cidrPrefix),
+                    string.Format(
+                        "IPv4 requires the subnet prefix to be in range of " +
+                        "[0,32]. The prefix was: {0}",
+                        cidrPrefix));
+            }
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static IIPFilterRule ThrowArgumentOutOfRangeException_IPv6RequiresTheSubnetPrefixToBeInRangeOf0_128(int cidrPrefix)
+        {
+            throw GetArgumentOutOfRangeException();
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException(
+                    nameof(cidrPrefix),
+                    string.Format(
+                        "IPv6 requires the subnet prefix to be in range of " +
+                        "[0,128]. The prefix was: {0}",
+                        cidrPrefix));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static IIPFilterRule ThrowArgumentOutOfRangeException_OctetsCountMustBeEqual4ForIPv4()
+        {
+            throw GetArgumentOutOfRangeException();
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException("ipAddress", "Octets count must be equal 4 for IPv4 address.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static IIPFilterRule ThrowArgumentOutOfRangeException_OctetsCountMustBeEqual16ForIPv6()
+        {
+            throw GetArgumentOutOfRangeException();
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException("ipAddress", "Octets count must be equal 16 for IPv6 address.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static IIPFilterRule ThrowArgumentOutOfRangeException_OnlySupportIPv4AndIPv6Addresses()
+        {
+            throw GetArgumentOutOfRangeException();
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException("ipAddress", "Only IPv4 and IPv6 addresses are supported");
             }
         }
 
