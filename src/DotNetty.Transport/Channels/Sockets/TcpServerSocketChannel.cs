@@ -103,9 +103,6 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     closed = true;
                 }
-                catch (SocketException ex) when (ex.SocketErrorCode == SocketError.WouldBlock)
-                {
-                }
                 catch (SocketException ex)
                 {
                     // socket exceptions here are internal to channel's operation and should not go through the pipeline
@@ -124,7 +121,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
             if (closed && this.Open)
             {
-                this.Unsafe.CloseAsync();
+                this.Unsafe.CloseSafe();
             }
         }
 
@@ -250,7 +247,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
                     if (closed && ch.Open)
                     {
-                        this.CloseAsync();
+                        this.CloseSafe();
                     }
                 }
                 finally
