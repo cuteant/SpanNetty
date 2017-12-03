@@ -1,12 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\common\DotNettyVersion.props" />
+  <Import Project="..\version.props" />
+  <Import Project="..\nuget.props" />
   
   <ImportGroup Condition=" '$(TargetFramework)' == 'net40' ">
 	<Import Project="..\..\..\CuteAnt.Extensions.Common\src\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems" Label="Shared" />
   </ImportGroup>
   
   <PropertyGroup>
-    <TargetFrameworks>net461;net451;net40;netstandard1.3</TargetFrameworks>
+    <TargetFrameworks>net471;net451;net40;netstandard2.0</TargetFrameworks>
     <RootNamespace>DotNetty.Handlers</RootNamespace>
     <AssemblyName>DotNetty.Handlers</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
@@ -19,19 +20,9 @@
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;tls;ssl</PackageTags>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net451' or '$(TargetFramework)' == 'net40'">
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\..\common\DotNettyAssemblyInfo.cs" Link="Properties\DotNettyAssemblyInfo.cs" />
-    <Compile Include="..\..\common\DotNettyVersionInfo.cs" Link="Properties\DotNettyVersionInfo.cs" />
-  </ItemGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
-    <PackageReference Include="System.Net.Security" Version="4.3.0" />
-    <PackageReference Include="System.Globalization.Extensions" Version="4.3.0" />
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="System.Net.Security" Version="$(SystemNetSecurityPackageVersion)" />
+    <PackageReference Include="System.Globalization.Extensions" Version="$(SystemGlobalizationExtensionsPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>

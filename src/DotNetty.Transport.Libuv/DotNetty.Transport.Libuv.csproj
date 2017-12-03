@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\common\DotNettyVersion.props" />
+  <Import Project="..\version.props" />
+  <Import Project="..\nuget.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>net461;net451;netstandard1.3</TargetFrameworks>
+    <TargetFrameworks>net471;net451;net40;netstandard2.0</TargetFrameworks>
     <RootNamespace>DotNetty.Transport.Libuv</RootNamespace>
     <AssemblyName>DotNetty.Transport.Libuv</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -15,18 +16,8 @@
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network</PackageTags>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net451'">
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
-
   <ItemGroup>
-    <Compile Include="..\..\common\DotNettyAssemblyInfo.cs" Link="Properties\DotNettyAssemblyInfo.cs" />
-    <Compile Include="..\..\common\DotNettyVersionInfo.cs" Link="Properties\DotNettyVersionInfo.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Libuv" Version="1.10.0" />
+    <PackageReference Include="Libuv" Version="$(LibuvPackageVersion)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DotNetty.Transport\DotNetty.Transport.csproj" />

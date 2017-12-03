@@ -1,28 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\common\DotNettyVersionNet40.props" />
+  <Import Project="..\version.props" />
+  <Import Project="..\nuget.props" />
   
   <PropertyGroup>
     <TargetFramework>net40</TargetFramework>
     <RootNamespace>DotNetty.Common</RootNamespace>
     <AssemblyName>DotNetty.Common</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\..\common\DotNettyAssemblyInfo.cs" Link="Properties\DotNettyAssemblyInfo.cs" />
-    <Compile Include="..\..\common\DotNettyVersionInfo.cs" Link="Properties\DotNettyVersionInfo.cs" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
-    <PackageReference Include="CuteAnt" Version="2.0.0-rtm-170601" />
-    <PackageReference Include="CuteAnt.Extensions.Logging.NLog" Version="2.0.0-rtm-170701" />
-    <PackageReference Include="Microsoft.Bcl" Version="1.1.10" />
-    <PackageReference Include="Microsoft.Bcl.Async" Version="1.0.168" />
-    <PackageReference Include="Microsoft.Bcl.Build" Version="1.0.21" />
+    <PackageReference Include="CuteAnt.Core" Version="$(CuteAntCorePackageVersion)" />
+    <PackageReference Include="Microsoft.Bcl" Version="$(MicrosoftBclPackageVersion)" />
+    <PackageReference Include="Microsoft.Bcl.Async" Version="$(MicrosoftBclAsyncPackageVersion)" />
+    <PackageReference Include="Microsoft.Bcl.Build" Version="$(MicrosoftBclBuildPackageVersion)" />
   </ItemGroup>
 </Project>

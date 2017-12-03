@@ -1,22 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\common\DotNettyVersionNet40.props" />
+  <Import Project="..\version.props" />
+  <Import Project="..\nuget.props" />
   
   <PropertyGroup>
     <TargetFramework>net40</TargetFramework>
     <RootNamespace>DotNetty.Codecs.Mqtt</RootNamespace>
     <AssemblyName>DotNetty.Codecs.Mqtt</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="..\..\common\DotNettyAssemblyInfo.cs" Link="Properties\DotNettyAssemblyInfo.cs" />
-    <Compile Include="..\..\common\DotNettyVersionInfo.cs" Link="Properties\DotNettyVersionInfo.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DotNetty.Codecs\DotNetty.Codecs4Tests.csproj" />

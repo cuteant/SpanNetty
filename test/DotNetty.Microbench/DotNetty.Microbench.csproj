@@ -1,27 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\common\common.props" />
-  <Import Project="..\..\common\define.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>net461</TargetFrameworks>
-    <PlatformTarget>anycpu</PlatformTarget>
+    <TargetFrameworks>net471</TargetFrameworks>
     <RootNamespace>DotNetty.Microbench</RootNamespace>
     <AssemblyName>DotNetty.Microbench</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
-  
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net452'">
-    <RuntimeIdentifier>win</RuntimeIdentifier>
-  </PropertyGroup>
-
-  <ItemGroup Condition="'$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net452'">
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.10.9" />
+    <PackageReference Include="BenchmarkDotNet" Version="$(BenchmarkDotNetPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>
