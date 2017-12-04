@@ -7,12 +7,23 @@
     <AssemblyName>DotNetty.Tests.End2End</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net452' ">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNetTestSdkPackageVersion)" />
     <PackageReference Include="xunit" Version="$(xUnitPackageVersion)" />
     <PackageReference Include="xunit.analyzers" Version="$(xUnitAnalyzersPackageVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitRunnerVsPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)'=='netcoreapp2.0' ">
+    <PackageReference Include="System.ObjectModel" Version="$(SystemObjectModelPackageVersion)" />
+    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="$(SystemRuntimeSerializationPrimitivesPackageVersion)" />
+    <PackageReference Include="System.Runtime.Serialization.Xml" Version="$(SystemRuntimeSerializationXmlPackageVersion)" />
+    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="$(SystemRuntimeSerializationFormattersPackageVersion)" />
+    <PackageReference Include="System.Xml.XmlSerializer" Version="$(SystemXmlXmlSerializerPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>
