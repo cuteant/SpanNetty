@@ -3,7 +3,7 @@
   <Import Project="..\nuget.props" />
   
   <ImportGroup Condition=" '$(TargetFramework)' == 'net40' ">
-	<Import Project="..\..\..\CuteAnt.Extensions.Common\src\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems" Label="Shared" />
+    <Import Project="..\..\..\CuteAnt.Extensions.Common\src\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems" Label="Shared" />
   </ImportGroup>
   
   <PropertyGroup>
@@ -19,14 +19,6 @@
     <Description>Transport model in DotNetty：the complete port of the DotNetty.Buffers assembly to support .NET 4.0 and newer.</Description>
     <PackageTags>socket;tcp;udp;protocol;netty;dotnetty;network</PackageTags>
   </PropertyGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="System.Reflection.TypeExtensions" Version="$(SystemReflectionTypeExtensionsPackageVersion)" />
-    <PackageReference Include="System.Net.Sockets" Version="$(SystemNetSocketsPackageVersion)" />
-    <PackageReference Include="System.Net.Primitives" Version="$(SystemNetPrimitivesPackageVersion)" />
-    <PackageReference Include="System.Diagnostics.StackTrace" Version="$(SystemDiagnosticsStackTracePackageVersion)" />
-    <PackageReference Include="System.Net.NameResolution" Version="$(SystemNetNameResolutionPackageVersion)" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DotNetty.Buffers\DotNetty.Buffers.csproj" />

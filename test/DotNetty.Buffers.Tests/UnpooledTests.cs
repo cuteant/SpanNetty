@@ -93,7 +93,7 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void Equals()
+        public void Equals1()
         {
             // Different length.
             IByteBuffer a = WrappedBuffer(new byte[] { 1 });

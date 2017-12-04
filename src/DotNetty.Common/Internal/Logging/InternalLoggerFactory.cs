@@ -6,10 +6,9 @@ namespace DotNetty.Common.Internal.Logging
     using System;
     using System.Diagnostics.Contracts;
     using System.Threading;
-#if NET40
-    using CuteAnt.Extensions.Logging;
-#else
     using Microsoft.Extensions.Logging;
+#if NET40
+    using NLog.Extensions.Logging;
 #endif
 
     /// <summary>
@@ -44,7 +43,7 @@ namespace DotNetty.Common.Internal.Logging
         static ILoggerFactory NewDefaultFactory(string name)
         {
             var f = new LoggerFactory();
-#if NETSTANDARD
+#if !NET40
             f.AddProvider(new EventSourceLoggerProvider());
             f.CreateLogger(name).LogDebug("Using EventSource as the default logging framework");
 #else

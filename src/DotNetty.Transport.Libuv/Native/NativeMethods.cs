@@ -317,11 +317,11 @@ namespace DotNetty.Transport.Libuv.Native
         {
             Contract.Requires(handle != IntPtr.Zero);
 
-#if NETSTANDARD1_3
+//#if NETSTANDARD
             int namelen = Marshal.SizeOf<sockaddr>();
-#else
-            int namelen = Marshal.SizeOf(typeof(sockaddr));
-#endif
+//#else
+//            int namelen = Marshal.SizeOf(typeof(sockaddr));
+//#endif
             uv_tcp_getsockname(handle, out sockaddr sockaddr, ref namelen);
 
             return sockaddr.GetIPEndPoint();
@@ -331,11 +331,11 @@ namespace DotNetty.Transport.Libuv.Native
         {
             Contract.Requires(handle != IntPtr.Zero);
 
-#if NETSTANDARD1_3
+//#if NETSTANDARD
             int namelen = Marshal.SizeOf<sockaddr>();
-#else
-            int namelen = Marshal.SizeOf(typeof(sockaddr));
-#endif
+//#else
+//            int namelen = Marshal.SizeOf(typeof(sockaddr));
+//#endif
             int result = uv_tcp_getpeername(handle, out sockaddr sockaddr, ref namelen);
             if (result < 0)
             {

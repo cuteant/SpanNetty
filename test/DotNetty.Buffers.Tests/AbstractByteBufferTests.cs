@@ -320,12 +320,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void RandomShortAccess() => this.RandomShortAccess(true);
+        public void RandomShortAccess() => this.RandomShortAccessInternal(true);
 
         [Fact]
-        public void RandomShortLEAccess() => this.RandomShortAccess(false);
+        public void RandomShortLEAccess() => this.RandomShortAccessInternal(false);
 
-        void RandomShortAccess(bool testBigEndian)
+        void RandomShortAccessInternal(bool testBigEndian)
         {
             for (int i = 0; i < this.buffer.Capacity - 1; i += 2)
             {
@@ -356,12 +356,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void RandomUnsignedShortAccess() => this.RandomUnsignedShortAccess(true);
+        public void RandomUnsignedShortAccess() => this.RandomUnsignedShortAccessInternal(true);
 
         [Fact]
-        public void RandomUnsignedShortLEAccess() => this.RandomUnsignedShortAccess(false);
+        public void RandomUnsignedShortLEAccess() => this.RandomUnsignedShortAccessInternal(false);
 
-        void RandomUnsignedShortAccess(bool testBigEndian)
+        void RandomUnsignedShortAccessInternal(bool testBigEndian)
         {
             for (int i = 0; i < this.buffer.Capacity - 1; i += 2)
             {
@@ -392,12 +392,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void RandomMediumAccess() => this.RandomMediumAccess(true);
+        public void RandomMediumAccess() => this.RandomMediumAccessInternal(true);
 
         [Fact]
-        public void RandomMediumLEAccess() => this.RandomMediumAccess(false);
+        public void RandomMediumLEAccess() => this.RandomMediumAccessInternal(false);
 
-        public void RandomMediumAccess(bool testBigEndian)
+        public void RandomMediumAccessInternal(bool testBigEndian)
         {
             for (int i = 0; i < this.buffer.Capacity - 2; i += 3)
             {
@@ -428,12 +428,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void RandomUnsignedMediumAccess() => this.RandomUnsignedMediumAccess(true);
+        public void RandomUnsignedMediumAccess() => this.RandomUnsignedMediumAccessInternal(true);
 
         [Fact]
-        public void RandomUnsignedMediumLEAccess() => this.RandomUnsignedMediumAccess(false);
+        public void RandomUnsignedMediumLEAccess() => this.RandomUnsignedMediumAccessInternal(false);
 
-        public void RandomUnsignedMediumAccess(bool testBigEndian)
+        public void RandomUnsignedMediumAccessInternal(bool testBigEndian)
         {
             for (int i = 0; i < this.buffer.Capacity - 2; i += 3)
             {
@@ -464,12 +464,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void RandomIntAccess() => this.RandomIntAccess(true);
+        public void RandomIntAccess() => this.RandomIntAccessInternal(true);
 
         [Fact]
-        public void RandomIntLEAccess() => this.RandomIntAccess(false);
+        public void RandomIntLEAccess() => this.RandomIntAccessInternal(false);
 
-        void RandomIntAccess(bool testBigEndian)
+        void RandomIntAccessInternal(bool testBigEndian)
         {
             for (int i = 0; i < this.buffer.Capacity - 3; i += 4)
             {
@@ -500,12 +500,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void RandomUnsignedIntAccess() => this.RandomUnsignedIntAccess(true);
+        public void RandomUnsignedIntAccess() => this.RandomUnsignedIntAccessInternal(true);
 
         [Fact]
-        public void RandomUnsignedIntLEAccess() => this.RandomUnsignedIntAccess(false);
+        public void RandomUnsignedIntLEAccess() => this.RandomUnsignedIntAccessInternal(false);
 
-        void RandomUnsignedIntAccess(bool testBigEndian)
+        void RandomUnsignedIntAccessInternal(bool testBigEndian)
         {
             for (int i = 0; i < this.buffer.Capacity - 3; i += 4)
             {
@@ -536,12 +536,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void RandomLongAccess() => this.RandomLongAccess(true);
+        public void RandomLongAccess() => this.RandomLongAccessInternal(true);
 
         [Fact]
-        public void RandomLongLEAccess() => this.RandomLongAccess(false);
+        public void RandomLongLEAccess() => this.RandomLongAccessInternal(false);
 
-        void RandomLongAccess(bool testBigEndian)
+        void RandomLongAccessInternal(bool testBigEndian)
         {
             for (int i = 0; i < this.buffer.Capacity - 7; i += 8)
             {
@@ -659,12 +659,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void SequentialShortAccess() => this.SequentialShortAccess(true);
+        public void SequentialShortAccess() => this.SequentialShortAccessInternal(true);
 
         [Fact]
-        public void SequentialShortLEAccess() => this.SequentialShortAccess(false);
+        public void SequentialShortLEAccess() => this.SequentialShortAccessInternal(false);
 
-        void SequentialShortAccess(bool testBigEndian)
+        void SequentialShortAccessInternal(bool testBigEndian)
         {
             this.buffer.SetWriterIndex(0);
             for (int i = 0; i < this.buffer.Capacity; i += 2)
@@ -709,12 +709,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void SequentialUnsignedShortAccess() => this.SequentialUnsignedShortAccess(true);
+        public void SequentialUnsignedShortAccess() => this.SequentialUnsignedShortAccessInternal(true);
 
         [Fact]
-        public void SequentialUnsignedShortLEAccess() => this.SequentialUnsignedShortAccess(true);
+        public void SequentialUnsignedShortLEAccess() => this.SequentialUnsignedShortAccessInternal(true);
 
-        void SequentialUnsignedShortAccess(bool testBigEndian)
+        void SequentialUnsignedShortAccessInternal(bool testBigEndian)
         {
             this.buffer.SetWriterIndex(0);
             for (int i = 0; i < this.buffer.Capacity; i += 2)
@@ -759,12 +759,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void SequentialMediumAccess() => this.SequentialMediumAccess(true);
+        public void SequentialMediumAccess() => this.SequentialMediumAccessInternal(true);
 
         [Fact]
-        public void SequentialMediumLEAccess() => this.SequentialMediumAccess(false);
+        public void SequentialMediumLEAccess() => this.SequentialMediumAccessInternal(false);
 
-        void SequentialMediumAccess(bool testBigEndian)
+        void SequentialMediumAccessInternal(bool testBigEndian)
         {
             this.buffer.SetWriterIndex(0);
             for (int i = 0; i < this.buffer.Capacity / 3 * 3; i += 3)
@@ -808,12 +808,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void SequentialUnsignedMediumAccess() => this.SequentialUnsignedMediumAccess(true);
+        public void SequentialUnsignedMediumAccess() => this.SequentialUnsignedMediumAccessInternal(true);
 
         [Fact]
-        public void SequentialUnsignedMediumLEAccess() => this.SequentialUnsignedMediumAccess(false);
+        public void SequentialUnsignedMediumLEAccess() => this.SequentialUnsignedMediumAccessInternal(false);
 
-        void SequentialUnsignedMediumAccess(bool testBigEndian)
+        void SequentialUnsignedMediumAccessInternal(bool testBigEndian)
         {
             this.buffer.SetWriterIndex(0);
             for (int i = 0; i < this.buffer.Capacity / 3 * 3; i += 3)
@@ -857,12 +857,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void SequentialIntAccess() => this.SequentialIntAccess(true);
+        public void SequentialIntAccess() => this.SequentialIntAccessInternal(true);
 
         [Fact]
-        public void SequentialIntLEAccess() => this.SequentialIntAccess(false);
+        public void SequentialIntLEAccess() => this.SequentialIntAccessInternal(false);
 
-        void SequentialIntAccess(bool testBigEndian)
+        void SequentialIntAccessInternal(bool testBigEndian)
         {
             this.buffer.SetWriterIndex(0);
             for (int i = 0; i < this.buffer.Capacity; i += 4)
@@ -907,12 +907,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void SequentialUnsignedIntAccess() => this.SequentialUnsignedIntAccess(true);
+        public void SequentialUnsignedIntAccess() => this.SequentialUnsignedIntAccessInternal(true);
 
         [Fact]
-        public void SequentialUnsignedIntLEAccess() => this.SequentialUnsignedIntAccess(false);
+        public void SequentialUnsignedIntLEAccess() => this.SequentialUnsignedIntAccessInternal(false);
 
-        void SequentialUnsignedIntAccess(bool testBigEndian)
+        void SequentialUnsignedIntAccessInternal(bool testBigEndian)
         {
             this.buffer.SetWriterIndex(0);
             for (int i = 0; i < this.buffer.Capacity; i += 4)
@@ -957,12 +957,12 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void SequentialLongAccess() => this.SequentialLongAccess(true);
+        public void SequentialLongAccess() => this.SequentialLongAccessInternal(true);
 
         [Fact]
-        public void SequentialLongLEAccess() => this.SequentialLongAccess(false);
+        public void SequentialLongLEAccess() => this.SequentialLongAccessInternal(false);
 
-        void SequentialLongAccess(bool testBigEndian)
+        void SequentialLongAccessInternal(bool testBigEndian)
         {
             this.buffer.SetWriterIndex(0);
             for (int i = 0; i < this.buffer.Capacity; i += 8)
@@ -1784,7 +1784,7 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void Equals()
+        public void Equals1()
         {
             Assert.False(this.buffer.Equals(null));
             Assert.False(this.buffer.Equals(new object()));
@@ -1958,23 +1958,23 @@ namespace DotNetty.Buffers.Tests
             set.Add(elemB);
 
             Assert.Equal(2, set.Count);
-            Assert.True(set.Contains(this.ReleaseLater(elemA.Copy())));
+            Assert.Contains(this.ReleaseLater(elemA.Copy()), set);
 
             IByteBuffer elemBCopy = this.ReleaseLater(elemB.Copy());
-            Assert.True(set.Contains(elemBCopy));
+            Assert.Contains(elemBCopy, set);
 
             this.buffer.Clear();
             this.buffer.WriteBytes(elemA.Duplicate());
 
             Assert.True(set.Remove(this.buffer));
-            Assert.False(set.Contains(elemA));
-            Assert.Equal(1, set.Count);
+            Assert.DoesNotContain(elemA, set);
+            Assert.Single(set);
 
             this.buffer.Clear();
             this.buffer.WriteBytes(elemB.Duplicate());
             Assert.True(set.Remove(this.buffer));
-            Assert.False(set.Contains(elemB));
-            Assert.Equal(0, set.Count);
+            Assert.DoesNotContain(elemB, set);
+            Assert.Empty(set);
         }
 
         // Test case for https://github.com/netty/netty/issues/325
@@ -2599,7 +2599,7 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void RetainedSliceContents() => this.SliceContents(true);
+        public void RetainedSliceContents() => this.SliceContentsInternal(true);
 
         [Fact]
         public void MultipleLevelRetainedSlice1() => this.MultipleLevelRetainedSliceWithNonRetained(true, true);
@@ -2662,27 +2662,27 @@ namespace DotNetty.Buffers.Tests
         public void MultipleRetainedDuplicateReleaseOriginal4() => this.MultipleRetainedDuplicateReleaseOriginal(false, false);
 
         [Fact]
-        public void SliceContents() => this.SliceContents(false);
+        public void SliceContents() => this.SliceContentsInternal(false);
 
         [Fact]
-        public void RetainedDuplicateContents() => this.DuplicateContents(true);
+        public void RetainedDuplicateContents() => this.DuplicateContentsInternal(true);
 
         [Fact]
-        public void DuplicateContents() => this.DuplicateContents(false);
+        public void DuplicateContents() => this.DuplicateContentsInternal(false);
 
         [Fact]
-        public virtual void DuplicateCapacityChange() => this.DuplicateCapacityChange(false);
+        public virtual void DuplicateCapacityChange() => this.DuplicateCapacityChangeInternal(false);
 
         [Fact]
-        public virtual void RetainedDuplicateCapacityChange() => this.DuplicateCapacityChange(true);
+        public virtual void RetainedDuplicateCapacityChange() => this.DuplicateCapacityChangeInternal(true);
 
         [Fact]
-        public void SliceCapacityChange() => Assert.Throws<NotSupportedException>(() => this.SliceCapacityChange(false));
+        public void SliceCapacityChange() => Assert.Throws<NotSupportedException>(() => this.SliceCapacityChangeInternal(false));
 
         [Fact]
-        public void RetainedSliceCapacityChange() => Assert.Throws<NotSupportedException>(() => this.SliceCapacityChange(true));
+        public void RetainedSliceCapacityChange() => Assert.Throws<NotSupportedException>(() => this.SliceCapacityChangeInternal(true));
 
-        void DuplicateCapacityChange(bool retainedDuplicate)
+        void DuplicateCapacityChangeInternal(bool retainedDuplicate)
         {
             IByteBuffer buf = this.NewBuffer(8);
             IByteBuffer dup = retainedDuplicate ? buf.RetainedDuplicate() : buf.Duplicate();
@@ -2703,7 +2703,7 @@ namespace DotNetty.Buffers.Tests
             }
         }
 
-        void SliceCapacityChange(bool retainedSlice)
+        void SliceCapacityChangeInternal(bool retainedSlice)
         {
             IByteBuffer buf = this.NewBuffer(8);
             IByteBuffer slice = retainedSlice ? buf.RetainedSlice(buf.ReaderIndex + 1, 3)
@@ -2753,7 +2753,7 @@ namespace DotNetty.Buffers.Tests
             }
         }
 
-        void SliceContents(bool retainedSlice)
+        void SliceContentsInternal(bool retainedSlice)
         {
             IByteBuffer buf = this.NewBuffer(8).ResetWriterIndex();
             IByteBuffer expected = this.NewBuffer(3).ResetWriterIndex();
@@ -3018,7 +3018,7 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(0, dup3.ReferenceCount);
         }
 
-        void DuplicateContents(bool retainedDuplicate)
+        void DuplicateContentsInternal(bool retainedDuplicate)
         {
             IByteBuffer buf = this.NewBuffer(8).ResetWriterIndex();
             buf.WriteBytes(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
@@ -3202,8 +3202,8 @@ namespace DotNetty.Buffers.Tests
             buf.Clear();
             Assert.False(buf.IsReadable());
             ArraySegment<byte>[] nioBuffers = buf.GetIoBuffers();
-            Assert.Equal(1, nioBuffers.Length);
-            Assert.Equal(0, nioBuffers[0].Count);
+            Assert.Single(nioBuffers);
+            Assert.Empty(nioBuffers[0]);
             buf.Release();
         }
 

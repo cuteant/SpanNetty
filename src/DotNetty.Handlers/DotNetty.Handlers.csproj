@@ -3,7 +3,7 @@
   <Import Project="..\nuget.props" />
   
   <ImportGroup Condition=" '$(TargetFramework)' == 'net40' ">
-	<Import Project="..\..\..\CuteAnt.Extensions.Common\src\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems" Label="Shared" />
+    <Import Project="..\..\..\CuteAnt.Extensions.Common\src\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems" Label="Shared" />
   </ImportGroup>
   
   <PropertyGroup>
@@ -19,11 +19,6 @@
     <Description>Application handlers for DotNetty：the complete port of the DotNetty.Handlers assembly to support .NET 4.0 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;tls;ssl</PackageTags>
   </PropertyGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="System.Net.Security" Version="$(SystemNetSecurityPackageVersion)" />
-    <PackageReference Include="System.Globalization.Extensions" Version="$(SystemGlobalizationExtensionsPackageVersion)" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DotNetty.Codecs\DotNetty.Codecs.csproj" />

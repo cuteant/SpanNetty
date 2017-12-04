@@ -22,13 +22,10 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'net451' ">
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="$(SystemRuntimeCompilerServicesUnsafePackageVersion)" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.3'">
-    <PackageReference Include="System.Diagnostics.Contracts" Version="$(SystemDiagnosticsContractsPackageVersion)" />
-    <PackageReference Include="System.Net.NetworkInformation" Version="$(SystemNetNetworkInformationPackageVersion)" />
-  </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
     <PackageReference Include="Microsoft.Bcl" Version="$(MicrosoftBclPackageVersion)" />
     <PackageReference Include="Microsoft.Bcl.Async" Version="$(MicrosoftBclAsyncPackageVersion)" />
     <PackageReference Include="Microsoft.Bcl.Build" Version="$(MicrosoftBclBuildPackageVersion)" />
+    <PackageReference Include="NLog.Extensions.Logging.Unofficial" Version="$(NLogExtensionsLoggingUnofficialPackageVersion)" />
   </ItemGroup>
 </Project>

@@ -74,15 +74,15 @@ namespace DotNetty.Common.Tests
         [Fact]
         public void MaxCapacityTest()
         {
-            this.MaxCapacityTest(300);
+            this.MaxCapacityTestInternal(300);
             var rand = new Random();
             for (int i = 0; i < 50; i++)
             {
-                this.MaxCapacityTest(rand.Next(1000) + 256); // 256 - 1256
+                this.MaxCapacityTestInternal(rand.Next(1000) + 256); // 256 - 1256
             }
         }
 
-        void MaxCapacityTest(int maxCapacity)
+        void MaxCapacityTestInternal(int maxCapacity)
         {
             var recycler = new ThreadLocalPool<HandledObject>(handle => new HandledObject(handle), maxCapacity);
 

@@ -4,11 +4,7 @@
 namespace DotNetty.Common.Internal.Logging
 {
     using System;
-#if NET40
-    using CuteAnt.Extensions.Logging;
-#else
     using Microsoft.Extensions.Logging;
-#endif
 
     sealed class GenericLogger : AbstractInternalLogger
     {

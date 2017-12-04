@@ -22,11 +22,7 @@ namespace Examples.Common
         {
             get
             {
-#if NETSTANDARD1_3
-                return AppContext.BaseDirectory;
-#else
                 return AppDomain.CurrentDomain.BaseDirectory;
-#endif
             }
         }
 
