@@ -5,91 +5,79 @@
 namespace DotNetty.Transport.Libuv
 {
     using System;
-    using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
-    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
-    public sealed class WorkerEventLoopGroup : IEventLoopGroup
+    public sealed class EventLoopGroup : IEventLoopGroup
     {
-        static readonly int DefaultEventLoopThreadCount = Environment.ProcessorCount;
-        static readonly TimeSpan StartTimeout = TimeSpan.FromMilliseconds(500);
-
-        readonly WorkerEventLoop[] eventLoops;
-        readonly DispatcherEventLoop dispatcherLoop;
+        static readonly int DefaultEventLoopCount = Environment.ProcessorCount;
+        readonly EventLoop[] eventLoops;
         int requestId;
 
-        public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup) 
-            : this(eventLoopGroup, DefaultEventLoopThreadCount)
+        public EventLoopGroup() : this(DefaultEventLoopCount)
         {
         }
 
-        public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int eventLoopCount)
+        public EventLoopGroup(int eventLoopCount)
         {
-            Contract.Requires(eventLoopGroup != null);
-
-            this.dispatcherLoop = eventLoopGroup.Dispatcher;
-            this.PipeName = this.dispatcherLoop.PipeName;
-
-            // Wait until the pipe is listening to connect
-            this.dispatcherLoop.WaitForLoopRun(StartTimeout);
-
-            this.eventLoops = new WorkerEventLoop[eventLoopCount];
+            this.eventLoops = new EventLoop[eventLoopCount];
             var terminationTasks = new Task[eventLoopCount];
             for (int i = 0; i < eventLoopCount; i++)
             {
-                WorkerEventLoop eventLoop;
+                EventLoop eventLoop;
                 bool success = false;
                 try
                 {
-                    eventLoop = new WorkerEventLoop(this);
-                    success = eventLoop.ConnectTask.Wait(StartTimeout);
-                    if (!success)
-                    {
-                        throw new TimeoutException($"Connect to dispatcher pipe {this.PipeName} timed out.");
-                    }
+                    eventLoop = new EventLoop(this, $"{nameof(EventLoopGroup)}-{i}");
+                    success = true;
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidOperationException($"Failed to create a child {nameof(WorkerEventLoop)}.", ex.Unwrap());
+                    throw new InvalidOperationException("failed to create a child event loop.", ex);
                 }
                 finally
                 {
                     if (!success)
                     {
-                        Task.WhenAll(this.eventLoops.Take(i).Select(loop => loop.ShutdownGracefullyAsync())).Wait();
+                        Task.WhenAll(this.eventLoops
+                                .Take(i)
+                                .Select(loop => loop.ShutdownGracefullyAsync()))
+                            .Wait();
                     }
                 }
 
                 this.eventLoops[i] = eventLoop;
                 terminationTasks[i] = eventLoop.TerminationCompletion;
             }
-
             this.TerminationCompletion = Task.WhenAll(terminationTasks);
-        }
-
-        internal string PipeName { get; }
-
-        internal void Accept(NativeHandle handle)
-        {
-            Debug.Assert(this.dispatcherLoop != null);
-            this.dispatcherLoop.Accept(handle);
         }
 
         public Task TerminationCompletion { get; }
 
+        IEventExecutor IEventExecutorGroup.GetNext() => this.GetNext();
+
         public IEventLoop GetNext()
         {
-            int id = Interlocked.Increment(ref this.requestId);
-            return this.eventLoops[Math.Abs(id % this.eventLoops.Length)];
-        }
+            // Attempt to select event loop based on thread first
+            int threadId = XThread.CurrentThread.Id;
+            int i;
+            for (i = 0; i < this.eventLoops.Length; i++)
+            {
+                if (this.eventLoops[i].LoopThreadId == threadId)
+                {
+                    return this.eventLoops[i];
+                }
+            }
 
-        IEventExecutor IEventExecutorGroup.GetNext() => this.GetNext();
+            // Default select, this means libuv handles not created yet,
+            // the chosen loop will be used to create handles from.
+            i = Interlocked.Increment(ref this.requestId);
+            return this.eventLoops[Math.Abs(i % this.eventLoops.Length)];
+        }
 
         public Task RegisterAsync(IChannel channel)
         {
@@ -98,9 +86,11 @@ namespace DotNetty.Transport.Libuv
                 throw new ArgumentException($"{nameof(channel)} must be of {typeof(NativeChannel)}");
             }
 
+            // The handle loop must be the same as the loop of the
+            // handle was created from.
             NativeHandle handle = nativeChannel.GetHandle();
             IntPtr loopHandle = handle.LoopHandle();
-            for (int i=0; i <this.eventLoops.Length; i++)
+            for (int i = 0; i < this.eventLoops.Length; i++)
             {
                 if (this.eventLoops[i].UnsafeLoop.Handle == loopHandle)
                 {
@@ -113,7 +103,7 @@ namespace DotNetty.Transport.Libuv
 
         public Task ShutdownGracefullyAsync()
         {
-            foreach (WorkerEventLoop eventLoop in this.eventLoops)
+            foreach (EventLoop eventLoop in this.eventLoops)
             {
                 eventLoop.ShutdownGracefullyAsync();
             }
@@ -122,7 +112,7 @@ namespace DotNetty.Transport.Libuv
 
         public Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
         {
-            foreach (WorkerEventLoop eventLoop in this.eventLoops)
+            foreach (EventLoop eventLoop in this.eventLoops)
             {
                 eventLoop.ShutdownGracefullyAsync(quietPeriod, timeout);
             }

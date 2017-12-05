@@ -5,7 +5,8 @@ namespace DotNetty.Transport.Libuv.Native
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
+    using System.Threading;
 
     /// <summary>
     /// IPC pipe server to hand out handles to different libuv loops.
@@ -28,20 +29,14 @@ namespace DotNetty.Transport.Libuv.Native
 
         public void Listen(string name, int backlog = DefaultPipeBacklog)
         {
-            Contract.Requires(backlog > 0);
+            Debug.Assert(backlog > 0);
 
             this.Validate();
             int result = NativeMethods.uv_pipe_bind(this.Handle, name);
-            if (result < 0)
-            {
-                throw NativeMethods.CreateError((uv_err_code)result);
-            }
+            NativeMethods.ThrowIfError(result);
 
             result = NativeMethods.uv_listen(this.Handle, backlog, ConnectionCallback);
-            if (result < 0)
-            {
-                throw NativeMethods.CreateError((uv_err_code)result);
-            }
+            NativeMethods.ThrowIfError(result);
         }
 
         internal void Shutdown()
@@ -61,12 +56,12 @@ namespace DotNetty.Transport.Libuv.Native
         {
             if (this.pipes.Count == 0)
             {
-                throw new InvalidOperationException("No connection for listening pipe.");
+                throw new InvalidOperationException("No pipe connections to dispatch handles.");
             }
 
-            // This is called within the loop, no need to atomically increase
-            this.requestId++;
-            Pipe pipe = this.pipes[Math.Abs(this.requestId % this.pipes.Count)];
+            int id = Interlocked.Increment(ref this.requestId);
+            Pipe pipe = this.pipes[Math.Abs(id % this.pipes.Count)];
+
             this.windowsApi.DetachFromIOCP(handle);
             pipe.Send(handle);
         }
@@ -87,10 +82,7 @@ namespace DotNetty.Transport.Libuv.Native
 
                     client = new Pipe(loop, true); // IPC pipe
                     int result = NativeMethods.uv_accept(this.Handle, client.Handle);
-                    if (result < 0)
-                    {
-                        throw NativeMethods.CreateError((uv_err_code)result);
-                    }
+                    NativeMethods.ThrowIfError(result);
 
                     this.pipes.Add(client);
                     client.ReadStart(this.OnRead);
@@ -117,7 +109,7 @@ namespace DotNetty.Transport.Libuv.Native
             this.pipes.Remove(pipe);
             pipe.CloseHandle();
 
-            if (status != (int)uv_err_code.UV_EOF)
+            if (status != NativeMethods.EOF)
             {
                 OperationException error = NativeMethods.CreateError((uv_err_code)status);
                 Logger.Warn($"{nameof(PipeListener)} read error", error);
