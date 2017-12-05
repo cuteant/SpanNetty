@@ -18,10 +18,10 @@ namespace DotNetty.Handlers.Tls
   using DotNetty.Common.Utilities;
   using DotNetty.Transport.Channels;
 
-#if !DESKTOPCLR && (NET40 || NET45 || NET451 || NET46 || NET461 || NET462 || NET47)
+#if !DESKTOPCLR && (NET40 || NET45 || NET451 || NET46 || NET461 || NET462 || NET47 || NET471)
   确保编译不出问题
 #endif
-#if !NETSTANDARD && (NETSTANDARD1_3 || NETSTANDARD1_4 || NETSTANDARD1_5 || NETSTANDARD1_6)
+#if !NETSTANDARD && (NETSTANDARD1_3 || NETSTANDARD1_4 || NETSTANDARD1_5 || NETSTANDARD1_6 || NETSTANDARD2_0)
   确保编译不出问题
 #endif
 

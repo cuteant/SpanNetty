@@ -1096,6 +1096,6 @@ namespace DotNetty.Transport.Channels
 }
 
 
-#if !DESKTOPCLR && (NET40 || NET45 || NET451 || NET46 || NET461 || NET462 || NET47)
+#if !DESKTOPCLR && (NET40 || NET45 || NET451 || NET46 || NET461 || NET462 || NET47 || NET471)
   确保编译不出问题
 #endif

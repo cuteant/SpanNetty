@@ -14,11 +14,7 @@ namespace Echo.Client
   using DotNetty.Transport.Bootstrapping;
   using DotNetty.Transport.Channels;
   using DotNetty.Transport.Channels.Sockets;
-#if NET40
-  using ClientSettings = Echo.Client.EchoClientSettings;
-#else
   using Examples.Common;
-#endif
 
   class Program
   {

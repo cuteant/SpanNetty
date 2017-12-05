@@ -7,11 +7,7 @@ namespace Echo.Client
   using System.Text;
   using DotNetty.Buffers;
   using DotNetty.Transport.Channels;
-#if NET40
-  using ClientSettings = Echo.Client.EchoClientSettings;
-#else
   using Examples.Common;
-#endif
 
   public class EchoClientHandler : ChannelHandlerAdapter
   {
