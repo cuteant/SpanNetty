@@ -22,7 +22,7 @@ namespace DotNetty.Handlers.Tls
 #if NET40
       : this(certificate, negotiateClientCertificate, checkCertificateRevocation, SslProtocols.Default)
 #else
-      : this(certificate, negotiateClientCertificate, checkCertificateRevocation, SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12)
+      : this(certificate, negotiateClientCertificate, checkCertificateRevocation, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12)
 #endif
     {
     }

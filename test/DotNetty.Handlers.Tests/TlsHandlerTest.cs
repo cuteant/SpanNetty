@@ -45,9 +45,9 @@ namespace DotNetty.Handlers.Tests
       };
       var boolToggle = new[] { false, true };
 #if TEST40
-      var protocols = new[] { SslProtocols.Ssl3, SslProtocols.Tls };
+      var protocols = new[] { SslProtocols.Tls };
 #else
-      var protocols = new[] { SslProtocols.Ssl3, SslProtocols.Tls, SslProtocols.Tls11, SslProtocols.Tls12 };
+      var protocols = new[] { SslProtocols.Tls, SslProtocols.Tls11, SslProtocols.Tls12 };
 #endif
       var writeStrategyFactories = new Func<IWriteStrategy>[]
       {
@@ -120,9 +120,9 @@ namespace DotNetty.Handlers.Tests
       };
       var boolToggle = new[] { false, true };
 #if TEST40
-      var protocols = new[] { SslProtocols.Ssl3, SslProtocols.Tls };
+      var protocols = new[] { SslProtocols.Tls };
 #else
-      var protocols = new[] { SslProtocols.Ssl3, SslProtocols.Tls, SslProtocols.Tls11, SslProtocols.Tls12 };
+      var protocols = new[] { SslProtocols.Tls, SslProtocols.Tls11, SslProtocols.Tls12 };
 #endif
 
       return

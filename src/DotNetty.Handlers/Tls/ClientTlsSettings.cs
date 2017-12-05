@@ -30,7 +30,7 @@ namespace DotNetty.Handlers.Tls
 #if NET40
       : this(SslProtocols.Default, checkCertificateRevocation, certificates, targetHost)
 #else
-      : this(SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12, checkCertificateRevocation, certificates, targetHost)
+      : this(SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12, checkCertificateRevocation, certificates, targetHost)
 #endif
     {
     }
