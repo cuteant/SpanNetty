@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   
   <PropertyGroup>
-    <TargetFrameworks>net471</TargetFrameworks>
+    <TargetFramework>net471</TargetFramework>
     <RootNamespace>DotNetty.Tests.Performance</RootNamespace>
     <AssemblyName>DotNetty.Tests.Performance</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
