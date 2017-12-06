@@ -258,6 +258,32 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void WrappedBuffers()
         {
+#if TEST40
+            Assert.True(
+                WrappedBuffer(new byte[] { 1, 2, 3 }).Equals(
+                WrappedBuffer(new byte[][] { new byte[] { 1, 2, 3 } })));
+
+            Assert.True(
+                WrappedBuffer(new byte[] { 1, 2, 3 }).Equals(
+                this.FreeLater(WrappedBuffer(
+                    new byte[] { 1 },
+                    new byte[] { 2 },
+                    new byte[] { 3 }))));
+
+            Assert.True(
+                WrappedBuffer(new byte[] { 1, 2, 3 }).Equals(
+                WrappedBuffer(new[]
+                {
+                    WrappedBuffer(new byte[] { 1, 2, 3 })
+                })));
+
+            Assert.True(
+                WrappedBuffer(new byte[] { 1, 2, 3 }).Equals(
+                this.FreeLater(WrappedBuffer(
+                    WrappedBuffer(new byte[] { 1 }),
+                    WrappedBuffer(new byte[] { 2 }),
+                    WrappedBuffer(new byte[] { 3 })))));
+#else
             Assert.Equal(
                 WrappedBuffer(new byte[] { 1, 2, 3 }),
                 WrappedBuffer(new byte[][] { new byte[] { 1, 2, 3 } }));
@@ -282,6 +308,7 @@ namespace DotNetty.Buffers.Tests
                     WrappedBuffer(new byte[] { 1 }),
                     WrappedBuffer(new byte[] { 2 }), 
                     WrappedBuffer(new byte[] { 3 }))));
+#endif
         }
 
         [Fact]
@@ -327,6 +354,29 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void CopiedBuffers()
         {
+#if TEST40
+            Assert.True(
+                WrappedBuffer(new byte[] { 1, 2, 3 }).Equals(
+                CopiedBuffer(new byte[][] { new byte[] { 1, 2, 3 } })));
+
+            Assert.True(
+                WrappedBuffer(new byte[] { 1, 2, 3 }).Equals(
+                CopiedBuffer(
+                    new byte[] { 1 },
+                    new byte[] { 2 },
+                    new byte[] { 3 })));
+
+            Assert.True(
+                WrappedBuffer(new byte[] { 1, 2, 3 }).Equals(
+                CopiedBuffer(new[] { WrappedBuffer(new byte[] { 1, 2, 3 }) })));
+
+            Assert.True(
+                WrappedBuffer(new byte[] { 1, 2, 3 }).Equals(
+                CopiedBuffer(
+                    WrappedBuffer(new byte[] { 1 }),
+                    WrappedBuffer(new byte[] { 2 }),
+                    WrappedBuffer(new byte[] { 3 }))));
+#else
             Assert.Equal(
                 WrappedBuffer(new byte[] { 1, 2, 3 }),
                 CopiedBuffer(new byte[][] { new byte[] { 1, 2, 3 } }));
@@ -348,6 +398,7 @@ namespace DotNetty.Buffers.Tests
                     WrappedBuffer(new byte[] { 1 }),
                     WrappedBuffer(new byte[] { 2 }), 
                     WrappedBuffer(new byte[] { 3 })));
+#endif
         }
 
         [Fact]

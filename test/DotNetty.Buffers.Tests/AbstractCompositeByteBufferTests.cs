@@ -192,9 +192,15 @@ namespace DotNetty.Buffers.Tests
             buf.Consolidate(1, 2);
 
             Assert.Equal(3, buf.NumComponents);
+#if TEST40
+            Assert.True(Unpooled.WrappedBuffer(new byte[] { 1 }).Equals(buf[0]));
+            Assert.True(Unpooled.WrappedBuffer(new byte[] { 2, 3, 4, 5, 6 }).Equals(buf[1]));
+            Assert.True(Unpooled.WrappedBuffer(new byte[] { 7, 8, 9, 10 }).Equals(buf[2]));
+#else
             Assert.Equal(Unpooled.WrappedBuffer(new byte[] { 1 }), buf[0]);
             Assert.Equal(Unpooled.WrappedBuffer(new byte[] { 2, 3, 4, 5, 6 }), buf[1]);
             Assert.Equal(Unpooled.WrappedBuffer(new byte[] { 7, 8, 9, 10 }), buf[2]);
+#endif
 
             buf.Release();
         }
@@ -326,7 +332,11 @@ namespace DotNetty.Buffers.Tests
 
             a = Unpooled.WrappedBuffer(Unpooled.WrappedBuffer(new byte[] { 1, 2, 3 }));
             IByteBuffer b = Unpooled.WrappedBuffer(Unpooled.WrappedBuffer(new byte[][] { new byte[] { 1, 2, 3 } }));
+#if TEST40
+            Assert.True(a.Equals(b));
+#else
             Assert.Equal(a, b);
+#endif
 
             a.Release();
             b.Release();
@@ -336,7 +346,11 @@ namespace DotNetty.Buffers.Tests
                 new byte[] { 1 },
                 new byte[] { 2 },
                 new byte[] { 3 }));
+#if TEST40
+            Assert.True(a.Equals(b));
+#else
             Assert.Equal(a, b);
+#endif
 
             a.Release();
             b.Release();
@@ -345,7 +359,11 @@ namespace DotNetty.Buffers.Tests
             b = Unpooled.WrappedBuffer(new [] {
                 Unpooled.WrappedBuffer(new byte[] { 1, 2, 3 }) 
             });
+#if TEST40
+            Assert.True(a.Equals(b));
+#else
             Assert.Equal(a, b);
+#endif
 
             a.Release();
             b.Release();
@@ -355,7 +373,11 @@ namespace DotNetty.Buffers.Tests
                 Unpooled.WrappedBuffer(new byte[] { 1 }),
                 Unpooled.WrappedBuffer(new byte[] { 2 }),
                 Unpooled.WrappedBuffer(new byte[] { 3 }));
+#if TEST40
+            Assert.True(a.Equals(b));
+#else
             Assert.Equal(a, b);
+#endif
 
             a.Release();
             b.Release();
@@ -364,7 +386,11 @@ namespace DotNetty.Buffers.Tests
             b = Unpooled.WrappedBuffer(Unpooled.WrappedBuffer(new [] {
                 Unpooled.WrappedBuffer(new byte[] { 1, 2, 3 })
             }));
+#if TEST40
+            Assert.True(a.Equals(b));
+#else
             Assert.Equal(a, b);
+#endif
 
             a.Release();
             b.Release();
@@ -374,7 +400,11 @@ namespace DotNetty.Buffers.Tests
                 Unpooled.WrappedBuffer(new byte[] { 1 }),
                 Unpooled.WrappedBuffer(new byte[] { 2 }),
                 Unpooled.WrappedBuffer(new byte[] { 3 })));
+#if TEST40
+            Assert.True(a.Equals(b));
+#else
             Assert.Equal(a, b);
+#endif
 
             a.Release();
             b.Release();
@@ -822,7 +852,11 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer buffer = this.NewBuffer(8);
             buffer.WriteZero(4);
             IByteBuffer copy = withIndexAndLength ? buffer.Copy(0, 4) : buffer.Copy();
+#if TEST40
+            Assert.True(buffer.Equals(copy));
+#else
             Assert.Equal(buffer, copy);
+#endif
             Assert.Same(buffer.Allocator, copy.Allocator);
             buffer.Release();
             copy.Release();
