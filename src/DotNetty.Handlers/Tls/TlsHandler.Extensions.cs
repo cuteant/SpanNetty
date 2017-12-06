@@ -33,10 +33,17 @@ namespace DotNetty.Handlers.Tls
         EnsureCertificateIsAllowedForServerAuth(ConvertToX509Certificate2(serverSettings.Certificate));
 
         // Enable client certificate function only if ClientCertificateRequired is true in the configuration
-        if (serverSettings.ClientCertificateMode == ClientCertificateMode.NoCertificate || serverSettings.EnabledProtocols == SslProtocols.Ssl2) // SSL 版本 2 协议不支持客户端证书
+        if (serverSettings.ClientCertificateMode == ClientCertificateMode.NoCertificate)
         {
           return new SslStream(stream, true);
         }
+#if DESKTOPCLR
+        // SSL 版本 2 协议不支持客户端证书
+        if (serverSettings.EnabledProtocols == SslProtocols.Ssl2)
+        {
+          return new SslStream(stream, true);
+        }
+#endif
 
         return new SslStream(stream,
             leaveInnerStreamOpen: true,

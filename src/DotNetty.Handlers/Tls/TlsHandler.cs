@@ -882,7 +882,7 @@ namespace DotNetty.Handlers.Tls
       private int _inputLength;
       private TaskCompletionSource<int> _readCompletionSource;
       private ArraySegment<byte> _sslOwnedBuffer;
-#if NETSTANDARD1_3
+#if NETSTANDARD
       private int _readByteCount;
 #else
       private SynchronousAsyncResult<int> _syncReadResult;
@@ -927,16 +927,16 @@ namespace DotNetty.Handlers.Tls
 
         ArraySegment<byte> sslBuffer = _sslOwnedBuffer;
 
-#if NETSTANDARD1_3
+#if NETSTANDARD
         this._readByteCount = this.ReadFromInput(sslBuffer.Array, sslBuffer.Offset, sslBuffer.Count);
         // hack: this tricks SslStream's continuation to run synchronously instead of dispatching to TP. Remove once Begin/EndRead are available. 
         new Task(
             ms =>
             {
-                var self = (MediationStream)ms;
-                TaskCompletionSource<int> p = self._readCompletionSource;
-                this._readCompletionSource = null;
-                p.TrySetResult(self._readByteCount);
+              var self = (MediationStream)ms;
+              TaskCompletionSource<int> p = self._readCompletionSource;
+              this._readCompletionSource = null;
+              p.TrySetResult(self._readByteCount);
             },
             this)
             .RunSynchronously(TaskScheduler.Default);
@@ -948,7 +948,7 @@ namespace DotNetty.Handlers.Tls
 #endif
       }
 
-#if !NET40
+#if NETSTANDARD
 
       public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
       {
@@ -965,9 +965,7 @@ namespace DotNetty.Handlers.Tls
         return _readCompletionSource.Task;
       }
 
-#endif
-
-      //#if DESKTOPCLR
+#else
       public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
       {
         if (_inputLength - _inputOffset > 0)
@@ -1023,7 +1021,7 @@ namespace DotNetty.Handlers.Tls
         result.AsyncState = state;
         return result;
       }
-      //#endif
+#endif
 
       public override void Write(byte[] buffer, int offset, int count) => _owner.FinishWrap(buffer, offset, count);
 
@@ -1033,7 +1031,7 @@ namespace DotNetty.Handlers.Tls
 
 #endif
 
-      //#if DESKTOPCLR
+#if DESKTOPCLR
 #if !NET40
       private static readonly Action<Task, object> s_writeCompleteCallback = HandleChannelWriteComplete;
 #endif
@@ -1118,7 +1116,7 @@ namespace DotNetty.Handlers.Tls
           throw;
         }
       }
-      //#endif
+#endif
 
       private int ReadFromInput(byte[] destination, int destinationOffset, int destinationCapacity)
       {
