@@ -4,30 +4,26 @@
 namespace DotNetty.Handlers.Tls
 {
   using System;
-  using System.Net.Security;
-  using System.Security.Authentication;
-  using System.Security.Cryptography.X509Certificates;
-  using System;
   using System.Collections.Generic;
-  using System.Linq;
+  using System.Net.Security;
   using System.Security.Authentication;
   using System.Security.Cryptography.X509Certificates;
 
   public sealed class ClientTlsSettings : TlsSettings
   {
-#if NET40
-    IList<X509Certificate2> certificates;
-#else
-    IReadOnlyCollection<X509Certificate2> certificates;
-#endif
+//#if NET40
+//    IList<X509Certificate2> certificates;
+//#else
+//    IReadOnlyCollection<X509Certificate2> certificates;
+//#endif
 
     public ClientTlsSettings(string targetHost)
-        : this(targetHost, new List<X509Certificate>())
+      : this(targetHost, new List<X509Certificate>())
     {
     }
 
     public ClientTlsSettings(string targetHost, List<X509Certificate> certificates)
-        : this(false, certificates, targetHost)
+      : this(false, certificates, targetHost)
     {
     }
 
@@ -71,6 +67,6 @@ namespace DotNetty.Handlers.Tls
     /// <summary>Whether allow the certificate chain errors</summary>
     public bool AllowCertificateChainErrors { get; set; }
 
-    public Func<X509Certificate2, X509Chain, SslPolicyErrors, bool> ServerCertificateValidation { get; set; }
+    public Func<X509Certificate, X509Chain, SslPolicyErrors, bool> ServerCertificateValidation { get; set; }
   }
 }

@@ -82,6 +82,13 @@ namespace DotNetty.Handlers.Tls
             leaveInnerStreamOpen: true,
             userCertificateValidationCallback: (sender, certificate, chain, sslPolicyErrors) =>
             {
+              if (clientSettings.ServerCertificateValidation != null)
+              {
+                if (!clientSettings.ServerCertificateValidation(certificate, chain, sslPolicyErrors))
+                {
+                  return false;
+                }
+              }
               var callback = ServicePointManager.ServerCertificateValidationCallback;
               if (callback != null) { return callback(sender, certificate, chain, sslPolicyErrors); }
 
