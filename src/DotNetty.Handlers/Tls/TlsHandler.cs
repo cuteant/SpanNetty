@@ -16,6 +16,7 @@ namespace DotNetty.Handlers.Tls
   using DotNetty.Codecs;
   using DotNetty.Common.Concurrency;
   using DotNetty.Common.Utilities;
+  using DotNetty.Common.Internal.Logging;
   using DotNetty.Transport.Channels;
 
 #if !DESKTOPCLR && (NET40 || NET45 || NET451 || NET46 || NET461 || NET462 || NET47 || NET471)
@@ -25,9 +26,11 @@ namespace DotNetty.Handlers.Tls
   确保编译不出问题
 #endif
 
-  public sealed class TlsHandler : ByteToMessageDecoder
+  public sealed partial class TlsHandler : ByteToMessageDecoder
   {
     #region @@ Fields @@
+
+    private static readonly IInternalLogger s_logger = InternalLoggerFactory.GetInstance<TlsHandler>();
 
     private readonly TlsSettings _settings;
     private const int c_fallbackReadBufferSize = 256;
@@ -55,10 +58,10 @@ namespace DotNetty.Handlers.Tls
 
     #region @@ Constructors @@
 
-    public TlsHandler(TlsSettings settings)
-      : this(stream => new SslStream(stream, true), settings)
-    {
-    }
+    //public TlsHandler(TlsSettings settings)
+    //  : this(stream => new SslStream(stream, true), settings)
+    //{
+    //}
 
     public TlsHandler(Func<Stream, SslStream> sslStreamFactory, TlsSettings settings)
     {
@@ -206,8 +209,10 @@ namespace DotNetty.Handlers.Tls
         }
         else
         {
-          packetLengths = new List<int>(4);
-          packetLengths.Add(_packetLength);
+          packetLengths = new List<int>(4)
+          {
+            _packetLength
+          };
           offset += _packetLength;
           totalLength = _packetLength;
           _packetLength = 0;
@@ -521,8 +526,7 @@ namespace DotNetty.Handlers.Tls
       if (!oldState.HasAny(TlsHandlerState.AuthenticationStarted))
       {
         _state = oldState | TlsHandlerState.Authenticating;
-        var serverSettings = _settings as ServerTlsSettings;
-        if (serverSettings != null)
+        if (_settings is ServerTlsSettings serverSettings)
         {
 #if !NET40
           _sslStream.AuthenticateAsServerAsync(serverSettings.Certificate,
@@ -963,7 +967,7 @@ namespace DotNetty.Handlers.Tls
 
 #endif
 
-//#if DESKTOPCLR
+      //#if DESKTOPCLR
       public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
       {
         if (_inputLength - _inputOffset > 0)
@@ -1019,7 +1023,7 @@ namespace DotNetty.Handlers.Tls
         result.AsyncState = state;
         return result;
       }
-//#endif
+      //#endif
 
       public override void Write(byte[] buffer, int offset, int count) => _owner.FinishWrap(buffer, offset, count);
 
@@ -1029,7 +1033,7 @@ namespace DotNetty.Handlers.Tls
 
 #endif
 
-//#if DESKTOPCLR
+      //#if DESKTOPCLR
 #if !NET40
       private static readonly Action<Task, object> s_writeCompleteCallback = HandleChannelWriteComplete;
 #endif
@@ -1045,8 +1049,10 @@ namespace DotNetty.Handlers.Tls
         {
           case TaskStatus.RanToCompletion:
             // write+flush completed synchronously (and successfully)
-            var result = new SynchronousAsyncResult<int>();
-            result.AsyncState = state;
+            var result = new SynchronousAsyncResult<int>
+            {
+              AsyncState = state
+            };
             callback(result);
             return result;
 
@@ -1112,7 +1118,7 @@ namespace DotNetty.Handlers.Tls
           throw;
         }
       }
-//#endif
+      //#endif
 
       private int ReadFromInput(byte[] destination, int destinationOffset, int destinationCapacity)
       {

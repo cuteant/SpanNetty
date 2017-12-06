@@ -3,6 +3,11 @@
 
 namespace DotNetty.Handlers.Tls
 {
+  using System;
+  using System.Net.Security;
+  using System.Security.Authentication;
+  using System.Security.Cryptography.X509Certificates;
+  using System;
   using System.Collections.Generic;
   using System.Linq;
   using System.Security.Authentication;
@@ -27,11 +32,15 @@ namespace DotNetty.Handlers.Tls
     }
 
     public ClientTlsSettings(bool checkCertificateRevocation, List<X509Certificate> certificates, string targetHost)
+      : this(
 #if NET40
-      : this(SslProtocols.Default, checkCertificateRevocation, certificates, targetHost)
+          SslProtocols.Default
+#elif DESKTOPCLR
+          SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12
 #else
-      : this(SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12, checkCertificateRevocation, certificates, targetHost)
+          SslProtocols.Tls12 | SslProtocols.Tls11
 #endif
+          , checkCertificateRevocation, certificates, targetHost)
     {
     }
 
@@ -52,5 +61,16 @@ namespace DotNetty.Handlers.Tls
 #endif
 
     public string TargetHost { get; }
+
+    /// <summary>Whether allow untrusted certificate</summary>
+    public bool AllowUnstrustedCertificate { get; set; }
+
+    /// <summary>Whether allow the certificate whose name doesn't match current remote endpoint's host name</summary>
+    public bool AllowNameMismatchCertificate { get; set; }
+
+    /// <summary>Whether allow the certificate chain errors</summary>
+    public bool AllowCertificateChainErrors { get; set; }
+
+    public Func<X509Certificate2, X509Chain, SslPolicyErrors, bool> ServerCertificateValidation { get; set; }
   }
 }

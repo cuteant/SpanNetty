@@ -21,6 +21,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CuteAnt.AsyncEx" Version="$(CuteAntAsyncExPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\DotNetty.Codecs\DotNetty.Codecs.csproj" />
   </ItemGroup>
 </Project>

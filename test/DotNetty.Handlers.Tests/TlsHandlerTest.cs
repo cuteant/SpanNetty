@@ -46,8 +46,10 @@ namespace DotNetty.Handlers.Tests
       var boolToggle = new[] { false, true };
 #if TEST40
       var protocols = new[] { SslProtocols.Tls };
-#else
+#elif DESKTOPCLR
       var protocols = new[] { SslProtocols.Tls, SslProtocols.Tls11, SslProtocols.Tls12 };
+#else
+      var protocols = new[] { SslProtocols.Tls12, SslProtocols.Tls11 };
 #endif
       var writeStrategyFactories = new Func<IWriteStrategy>[]
       {
@@ -121,8 +123,10 @@ namespace DotNetty.Handlers.Tests
       var boolToggle = new[] { false, true };
 #if TEST40
       var protocols = new[] { SslProtocols.Tls };
-#else
+#elif DESKTOPCLR
       var protocols = new[] { SslProtocols.Tls, SslProtocols.Tls11, SslProtocols.Tls12 };
+#else
+      var protocols = new[] { SslProtocols.Tls12, SslProtocols.Tls11 };
 #endif
 
       return

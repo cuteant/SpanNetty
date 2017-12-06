@@ -3,6 +3,8 @@
 
 namespace DotNetty.Handlers.Tls
 {
+  using System;
+  using System.Net.Security;
   using System.Security.Authentication;
   using System.Security.Cryptography.X509Certificates;
 
@@ -19,10 +21,13 @@ namespace DotNetty.Handlers.Tls
     }
 
     public ServerTlsSettings(X509Certificate certificate, bool negotiateClientCertificate, bool checkCertificateRevocation)
+      : this(certificate, negotiateClientCertificate, checkCertificateRevocation,
 #if NET40
-      : this(certificate, negotiateClientCertificate, checkCertificateRevocation, SslProtocols.Default)
+          SslProtocols.Default)
+#elif DESKTOPCLR
+          SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12)
 #else
-      : this(certificate, negotiateClientCertificate, checkCertificateRevocation, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12)
+          SslProtocols.Tls12 | SslProtocols.Tls11)
 #endif
     {
     }
@@ -32,10 +37,15 @@ namespace DotNetty.Handlers.Tls
     {
       this.Certificate = certificate;
       this.NegotiateClientCertificate = negotiateClientCertificate;
+      ClientCertificateMode = negotiateClientCertificate ? ClientCertificateMode.AllowCertificate : ClientCertificateMode.NoCertificate;
     }
 
     public X509Certificate Certificate { get; }
 
-    public bool NegotiateClientCertificate { get; }
+    internal bool NegotiateClientCertificate { get; }
+
+    public ClientCertificateMode ClientCertificateMode { get; set; } = ClientCertificateMode.NoCertificate;
+
+    public Func<X509Certificate2, X509Chain, SslPolicyErrors, bool> ClientCertificateValidation { get; set; }
   }
 }
