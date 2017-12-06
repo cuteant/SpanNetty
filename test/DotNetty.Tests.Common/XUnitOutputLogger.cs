@@ -1,16 +1,11 @@
-﻿#if !NET40
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Tests.Common
 {
   using System;
   using Xunit.Abstractions;
-#if NET40
-  using CuteAnt.Extensions.Logging;
-#else
   using Microsoft.Extensions.Logging;
-#endif
 
   public class XUnitOutputLogger : ILogger
   {
@@ -50,4 +45,3 @@ namespace DotNetty.Tests.Common
     public IDisposable BeginScope<TState>(TState state) => new Disposable(() => { });
   }
 }
-#endif

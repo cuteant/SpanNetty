@@ -2003,12 +2003,20 @@ namespace DotNetty.Buffers.Tests
                     value =>
                     {
                         Assert.Equal(value, (byte)(i1 + 1));
+#if TEST40
+                        Interlocked.Exchange(ref lastIndex, i1);
+#else
                         Volatile.Write(ref lastIndex, i1);
+#endif
                         i1++;
                         return true;
                     })));
 
+#if TEST40
+            Assert.Equal(Capacity * 3 / 4 - 1, lastIndex);
+#else
             Assert.Equal(Capacity * 3 / 4 - 1, Volatile.Read(ref lastIndex));
+#endif
         }
 
         [Fact]
@@ -2049,12 +2057,20 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(-1, this.buffer.ForEachByteDesc(Capacity / 4, Capacity * 2 / 4, new ByteProcessor.CustomProcessor(value =>
             {
                 Assert.Equal((byte)(i1 + 1), value);
+#if TEST40
+                Interlocked.Exchange(ref lastIndex, i1);
+#else
                 Volatile.Write(ref lastIndex, i1);
-                i1 --;
+#endif
+              i1--;
                 return true;
             })));
 
+#if TEST40
+            Assert.Equal(Capacity / 4, lastIndex);
+#else
             Assert.Equal(Capacity / 4, Volatile.Read(ref lastIndex));
+#endif
         }
 
         [Fact]
@@ -3180,8 +3196,12 @@ namespace DotNetty.Buffers.Tests
                     Assert.True(released);
                     var t2 = new Thread(s2 =>
                     {
-                        Volatile.Write(ref cnt, buf.ReferenceCount);
-                        latch.Set();
+#if TEST40
+                      Interlocked.Exchange(ref cnt, buf.ReferenceCount);
+#else
+                      Volatile.Write(ref cnt, buf.ReferenceCount);
+#endif
+                      latch.Set();
                     });
                     t2.Start();
                     // Keep Thread alive a bit so the ThreadLocal caches are not freed
@@ -3190,7 +3210,11 @@ namespace DotNetty.Buffers.Tests
                 t1.Start();
 
                 latch.Wait();
+#if TEST40
+                Assert.Equal(0, cnt);
+#else
                 Assert.Equal(0, Volatile.Read(ref cnt));
+#endif
                 innerLatch.Set();
             }
         }

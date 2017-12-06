@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  
+  <PropertyGroup>
+    <TargetFramework>net45</TargetFramework>
+    <RootNamespace>DotNetty.Handlers.Tests</RootNamespace>
+    <AssemblyName>DotNetty.Handlers.Tests</AssemblyName>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <DefineConstants>$(DefineConstants);TEST40</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="2.1.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DotNetty.Handlers\DotNetty.Handlers.csproj" />
+    <ProjectReference Include="..\DotNetty.Tests.Common.Net40\DotNetty.Tests.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\DotNetty.Handlers.Tests\**\*.cs" Exclude="..\DotNetty.Handlers.Tests\bin\**;..\DotNetty.Handlers.Tests\obj\**" />
+    <EmbeddedResource Include="..\DotNetty.Handlers.Tests\**\*.resx" Exclude="..\DotNetty.Handlers.Tests\bin\**;..\DotNetty.Handlers.Tests\obj\**;@(EmbeddedResource)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
+  </ItemGroup>
+</Project>

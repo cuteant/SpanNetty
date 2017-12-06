@@ -1,5 +1,4 @@
-﻿#if !NET40
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Common.Tests.Internal.Logging
@@ -7,11 +6,7 @@ namespace DotNetty.Common.Tests.Internal.Logging
   using System;
   using DotNetty.Common.Internal.Logging;
   using DotNetty.Tests.Common;
-#if NET40
-  using CuteAnt.Extensions.Logging;
-#else
   using Microsoft.Extensions.Logging;
-#endif
   using Moq;
   using Xunit;
 
@@ -64,4 +59,3 @@ namespace DotNetty.Common.Tests.Internal.Logging
     }
   }
 }
-#endif

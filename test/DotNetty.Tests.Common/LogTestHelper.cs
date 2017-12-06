@@ -1,5 +1,4 @@
-﻿#if !NET40
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Tests.Common
@@ -13,7 +12,13 @@ namespace DotNetty.Tests.Common
     public static IDisposable SetInterceptionLogger(Intercept interceptAction)
     {
       InternalLoggerFactory.DefaultFactory.AddProvider(new InterceptionLoggerProvider(interceptAction));
-      return new Disposable(() => InternalLoggerFactory.DefaultFactory.AddProvider(new EventSourceLoggerProvider()));
+      return new Disposable(() => InternalLoggerFactory.DefaultFactory.AddProvider(
+#if TEST40
+          new NLog.Extensions.Logging.NLogLoggerProvider()
+#else
+          new EventSourceLoggerProvider()
+#endif
+          ));
     }
 
     public delegate void Intercept(string categoryName, LogLevel logLevel, EventId eventId, string message, Exception exception);
@@ -54,4 +59,3 @@ namespace DotNetty.Tests.Common
     }
   }
 }
-#endif
