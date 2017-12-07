@@ -12,7 +12,9 @@ namespace DotNetty.Transport.Libuv
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
-    public abstract class NativeChannel : AbstractChannel
+    public abstract class NativeChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>, INativeChannel
+        where TChannel : NativeChannel<TChannel, TUnsafe>
+        where TUnsafe : NativeChannel<TChannel, TUnsafe>.NativeChannelUnsafe, new()
     {
         [Flags]
         protected enum StateFlags
@@ -77,19 +79,21 @@ namespace DotNetty.Transport.Libuv
 
         protected abstract void DoScheduleRead();
 
+        IntPtr INativeChannel.GetLoopHandle() => GetLoopHandle();
         internal abstract IntPtr GetLoopHandle();
 
-        protected abstract class NativeChannelUnsafe : AbstractUnsafe, INativeUnsafe
+        public abstract class NativeChannelUnsafe : AbstractUnsafe, INativeUnsafe
         {
-            NativeChannel Channel => (NativeChannel)this.channel;
+            //NativeChannel Channel => (NativeChannel)this.channel;
 
-            protected NativeChannelUnsafe(NativeChannel channel) : base(channel)
-            {
-            }
+            //protected NativeChannelUnsafe(NativeChannel channel) : base(channel)
+            //{
+            //}
+            public NativeChannelUnsafe() : base() { }
 
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
             {
-                NativeChannel ch = this.Channel;
+                var ch = this.Channel;
                 if (!ch.Open)
                 {
                     return this.CreateClosedChannelExceptionTask();
@@ -122,7 +126,7 @@ namespace DotNetty.Transport.Libuv
 
             void INativeUnsafe.FinishConnect(ConnectRequest request)
             {
-                NativeChannel ch = this.Channel;
+                var ch = this.Channel;
                 if (ch.EventLoop.InEventLoop)
                 {
                     this.FinishConnect(request);
@@ -137,7 +141,7 @@ namespace DotNetty.Transport.Libuv
 
             void FinishConnect(ConnectRequest request)
             {
-                NativeChannel ch = this.Channel;
+                var ch = this.Channel;
                 TaskCompletionSource promise = ch.connectPromise;
                 try
                 {
@@ -168,7 +172,7 @@ namespace DotNetty.Transport.Libuv
 
             ReadOperation INativeUnsafe.PrepareRead()
             {
-                NativeChannel ch = this.Channel;
+                var ch = this.Channel;
                 IChannelConfiguration config = ch.Configuration;
                 IByteBufferAllocator allocator = config.Allocator;
 
@@ -182,7 +186,7 @@ namespace DotNetty.Transport.Libuv
 
             void INativeUnsafe.FinishRead(ReadOperation operation)
             {
-                var ch = (NativeChannel)this.channel;
+                var ch = this.channel;
                 if (ch.EventLoop.InEventLoop)
                 {
                     this.FinishRead(operation);
@@ -197,7 +201,7 @@ namespace DotNetty.Transport.Libuv
 
             void FinishRead(ReadOperation operation)
             {
-                NativeChannel ch = this.Channel;
+                var ch = this.Channel;
                 IChannelPipeline pipeline = ch.Pipeline;
                 IRecvByteBufAllocatorHandle allocHandle = this.RecvBufAllocHandle;
 
@@ -231,7 +235,7 @@ namespace DotNetty.Transport.Libuv
 
             void INativeUnsafe.FinishWrite(WriteRequest writeRequest)
             {
-                AbstractChannel ch = this.channel;
+                var ch = this.channel;
                 if (ch.EventLoop.InEventLoop)
                 {
                     this.FinishWrite(writeRequest);
@@ -242,7 +246,7 @@ namespace DotNetty.Transport.Libuv
                 }
             } 
 
-            static readonly Action<object, object> WriteCallbackAction = (u, e) => ((NativeChannelUnsafe)u).FinishWrite((WriteRequest)e);
+            static readonly Action<object, object> WriteCallbackAction = (u, e) => ((TUnsafe)u).FinishWrite((WriteRequest)e);
 
             void FinishWrite(WriteRequest writeRequest)
             {
@@ -263,20 +267,20 @@ namespace DotNetty.Transport.Libuv
 
             internal void ScheduleRead()
             {
-                var ch = (NativeChannel)this.channel;
+                var ch = this.channel;
                 if (ch.EventLoop.InEventLoop)
                 {
                     ch.DoScheduleRead();
                 }
                 else
                 {
-                    ch.EventLoop.Execute(p => ((NativeChannel)p).DoScheduleRead(), ch);
+                    ch.EventLoop.Execute(p => ((TChannel)p).DoScheduleRead(), ch);
                 }
             }
         }
     }
 
-    interface INativeUnsafe
+    public interface INativeUnsafe
     {
         IntPtr UnsafeHandle { get; }
 
@@ -294,5 +298,10 @@ namespace DotNetty.Transport.Libuv
         void Accept(RemoteConnection connection);
 
         void Accept(NativeHandle handle);
+    }
+
+    interface INativeChannel : IChannel
+    {
+        IntPtr GetLoopHandle();
     }
 }

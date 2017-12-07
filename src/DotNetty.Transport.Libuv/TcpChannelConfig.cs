@@ -8,7 +8,7 @@ namespace DotNetty.Transport.Libuv
 
     sealed class TcpChannelConfig : DefaultChannelConfiguration
     {
-        public TcpChannelConfig(TcpChannel channel) : base(channel)
+        public TcpChannelConfig(IChannel channel) : base(channel)
         {
         }
 

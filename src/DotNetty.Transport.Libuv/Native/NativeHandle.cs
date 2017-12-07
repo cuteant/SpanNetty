@@ -9,13 +9,13 @@ namespace DotNetty.Transport.Libuv.Native
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
 
-    abstract unsafe class NativeHandle : IDisposable
+    public abstract unsafe class NativeHandle : IDisposable
     {
         protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<NativeHandle>();
         static readonly uv_close_cb CloseCallback = OnCloseHandle;
         internal IntPtr Handle;
 
-        protected NativeHandle(uv_handle_type handleType)
+        internal NativeHandle(uv_handle_type handleType)
         {
             this.HandleType = handleType;
         }

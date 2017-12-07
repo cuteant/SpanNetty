@@ -7,19 +7,21 @@ namespace DotNetty.Transport.Channels.Sockets
     using System.Net.Sockets;
     using DotNetty.Common.Utilities;
 
-    public class SocketChannelAsyncOperation : SocketAsyncEventArgs
+    public class SocketChannelAsyncOperation<TChannel, TUnsafe> : SocketAsyncEventArgs
+        where TChannel : AbstractSocketChannel<TChannel, TUnsafe>
+        where TUnsafe : AbstractSocketChannel<TChannel, TUnsafe>.AbstractSocketUnsafe, new()
     {
-        public SocketChannelAsyncOperation(AbstractSocketChannel channel)
+        public SocketChannelAsyncOperation(TChannel channel)
             : this(channel, true)
         {
         }
 
-        public SocketChannelAsyncOperation(AbstractSocketChannel channel, bool setEmptyBuffer)
+        public SocketChannelAsyncOperation(TChannel channel, bool setEmptyBuffer)
         {
             Contract.Requires(channel != null);
 
             this.Channel = channel;
-            this.Completed += AbstractSocketChannel.IoCompletedCallback;
+            this.Completed += AbstractSocketChannel<TChannel, TUnsafe>.IoCompletedCallback;
             if (setEmptyBuffer)
             {
                 this.SetBuffer(ArrayExtensions.ZeroBytes, 0, 0);
@@ -35,6 +37,6 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        public AbstractSocketChannel Channel { get; private set; }
+        public TChannel Channel { get; private set; }
     }
 }

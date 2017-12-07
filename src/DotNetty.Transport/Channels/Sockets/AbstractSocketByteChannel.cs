@@ -12,7 +12,9 @@ namespace DotNetty.Transport.Channels.Sockets
     /// <summary>
     ///     {@link AbstractNioChannel} base class for {@link Channel}s that operate on bytes.
     /// </summary>
-    public abstract class AbstractSocketByteChannel : AbstractSocketChannel
+    public abstract class AbstractSocketByteChannel<TChannel, TUnsafe> : AbstractSocketChannel<TChannel, TUnsafe>
+        where TChannel : AbstractSocketByteChannel<TChannel, TUnsafe>
+        where TUnsafe : AbstractSocketByteChannel<TChannel, TUnsafe>.SocketByteChannelUnsafe, new()
     {
         static readonly string ExpectedTypes =
             $" (expected: {StringUtil.SimpleClassName<IByteBuffer>()})"; //+ ", " +
@@ -20,7 +22,7 @@ namespace DotNetty.Transport.Channels.Sockets
         // todo: FileRegion support        
         //typeof(FileRegion).Name + ')';
 
-        static readonly Action<object> FlushAction = _ => ((AbstractSocketByteChannel)_).Flush();
+        static readonly Action<object> FlushAction = _ => ((TChannel)_).Flush();
         static readonly Action<object, object> ReadCompletedSyncCallback = OnReadCompletedSync;
 
         /// <summary>Create a new instance</summary>
@@ -31,16 +33,18 @@ namespace DotNetty.Transport.Channels.Sockets
         {
         }
 
-        protected override IChannelUnsafe NewUnsafe() => new SocketByteChannelUnsafe(this);
+        // ## 苦竹 屏蔽 ##
+        //protected override IChannelUnsafe NewUnsafe() => new SocketByteChannelUnsafe(this);
 
-        protected class SocketByteChannelUnsafe : AbstractSocketUnsafe
+        public class SocketByteChannelUnsafe : AbstractSocketUnsafe
         {
-            public SocketByteChannelUnsafe(AbstractSocketByteChannel channel)
-                : base(channel)
-            {
-            }
+            public SocketByteChannelUnsafe() { }
+            //public SocketByteChannelUnsafe(AbstractSocketByteChannel channel)
+            //    : base(channel)
+            //{
+            //}
 
-            new AbstractSocketByteChannel Channel => (AbstractSocketByteChannel)this.channel;
+            //new AbstractSocketByteChannel Channel => (AbstractSocketByteChannel)this.channel;
 
             void CloseOnRead()
             {
@@ -81,9 +85,9 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
             }
 
-            public override void FinishRead(SocketChannelAsyncOperation operation)
+            public override void FinishRead(SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
             {
-                AbstractSocketByteChannel ch = this.Channel;
+                var ch = this.Channel;
                 if ((ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active) == 0)
                 {
                     return; // read was signaled as a result of channel closure
@@ -152,7 +156,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override void ScheduleSocketRead()
         {
-            SocketChannelAsyncOperation operation = this.ReadOperation;
+            var operation = this.ReadOperation;
             bool pending;
 #if NETSTANDARD
             pending = this.Socket.ReceiveAsync(operation);
@@ -176,7 +180,9 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        static void OnReadCompletedSync(object u, object e) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation)e);
+        // ## 苦竹 修改 ##
+        //static void OnReadCompletedSync(object u, object e) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation)e);
+        static void OnReadCompletedSync(object u, object e) => ((TUnsafe)u).FinishRead((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
 
         protected override void DoWrite(ChannelOutboundBuffer input)
         {
@@ -191,9 +197,9 @@ namespace DotNetty.Transport.Channels.Sockets
                     break;
                 }
 
-                if (msg is IByteBuffer)
+                if (msg is IByteBuffer buf)
                 {
-                    var buf = (IByteBuffer)msg;
+                    //var buf = (IByteBuffer)msg; // ## 苦竹 修改 ##
                     int readableBytes = buf.ReadableBytes;
                     if (readableBytes == 0)
                     {
@@ -301,7 +307,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 "unsupported message type: " + msg.GetType().Name + ExpectedTypes);
         }
 
-        protected void IncompleteWrite(bool scheduleAsync, SocketChannelAsyncOperation operation)
+        protected void IncompleteWrite(bool scheduleAsync, SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
         {
             // Did not write completely.
             if (scheduleAsync)
@@ -327,7 +333,9 @@ namespace DotNetty.Transport.Channels.Sockets
 
                 if (!pending)
                 {
-                    ((ISocketChannelUnsafe)this.Unsafe).FinishWrite(operation);
+                    // ## 苦竹 修改 ##
+                    //((ISocketChannelUnsafe)this.Unsafe).FinishWrite(operation);
+                    this.Unsafe.FinishWrite(operation);
                 }
             }
             else

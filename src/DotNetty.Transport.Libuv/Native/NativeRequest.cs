@@ -8,12 +8,12 @@ namespace DotNetty.Transport.Libuv.Native
     using System.Diagnostics.Contracts;
     using System.Runtime.InteropServices;
 
-    abstract unsafe class NativeRequest : IDisposable
+    public abstract unsafe class NativeRequest : IDisposable
     {
         protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<NativeRequest>();
         protected internal IntPtr Handle;
 
-        protected NativeRequest(uv_req_type requestType, int size)
+        internal NativeRequest(uv_req_type requestType, int size)
         {
             int totalSize = NativeMethods.uv_req_size(requestType).ToInt32();
             totalSize += size;
@@ -28,7 +28,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         protected bool IsValid => this.Handle != IntPtr.Zero;
 
-        public uv_req_type RequestType { get; }
+        internal uv_req_type RequestType { get; }
 
         protected void CloseHandle()
         {

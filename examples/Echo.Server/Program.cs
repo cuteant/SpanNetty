@@ -57,7 +57,7 @@ namespace Echo.Server
         bootstrap
           .Option(ChannelOption.SoBacklog, 100)
           .Handler(new LoggingHandler(LogLevel.INFO))
-          .ChildHandler(new ActionChannelInitializer<IChannel>(channel =>
+          .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
           {
             IChannelPipeline pipeline = channel.Pipeline;
             if (tlsCertificate != null)

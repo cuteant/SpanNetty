@@ -10,9 +10,18 @@ namespace DotNetty.Transport.Libuv
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Channels.Sockets;
     using DotNetty.Transport.Libuv.Native;
 
-    public sealed class TcpChannel : NativeChannel
+    public sealed class TcpChannel : TcpChannel<TcpChannel>
+    {
+        public TcpChannel() : base() { }
+
+        internal TcpChannel(IChannel parent, Tcp tcp) : base(parent, tcp) { }
+    }
+
+    public class TcpChannel<TChannel> : NativeChannel<TChannel, TcpChannel<TChannel>.TcpChannelUnsafe>, ISocketChannel
+        where TChannel : TcpChannel<TChannel>
     {
         const int DefaultWriteRequestPoolSize = 1024;
 
@@ -22,11 +31,11 @@ namespace DotNetty.Transport.Libuv
         readonly TcpChannelConfig config;
         Tcp tcp;
 
-        public TcpChannel(): this(null, null)
+        public TcpChannel() : this(null, null)
         {
         }
 
-        internal TcpChannel(IChannel parent, Tcp tcp) : base(parent)
+        protected TcpChannel(IChannel parent, Tcp tcp) : base(parent)
         {
             this.config = new TcpChannelConfig(this);
             this.SetState(StateFlags.Open);
@@ -43,21 +52,22 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        public override IChannelConfiguration Configuration => this.config;
+        public sealed override IChannelConfiguration Configuration => this.config;
 
-        public override ChannelMetadata Metadata => TcpMetadata;
+        public sealed override ChannelMetadata Metadata => TcpMetadata;
 
-        protected override EndPoint LocalAddressInternal => this.tcp?.GetLocalEndPoint();
+        protected sealed override EndPoint LocalAddressInternal => this.tcp?.GetLocalEndPoint();
 
-        protected override EndPoint RemoteAddressInternal => this.tcp?.GetPeerEndPoint();
+        protected sealed override EndPoint RemoteAddressInternal => this.tcp?.GetPeerEndPoint();
 
-        protected override IChannelUnsafe NewUnsafe() => new TcpChannelUnsafe(this);
+        // ## 苦竹 屏蔽 ##
+        //protected override IChannelUnsafe NewUnsafe() => new TcpChannelUnsafe(this);
 
-        protected override void DoRegister()
+        protected sealed override void DoRegister()
         {
             if (this.tcp != null)
             {
-                ((TcpChannelUnsafe)this.Unsafe).ScheduleRead();
+                this.Unsafe.ScheduleRead();
             }
             else
             {
@@ -85,15 +95,15 @@ namespace DotNetty.Transport.Libuv
             return ((uv_stream_t*)this.tcp.Handle)->loop;
         }
 
-        protected override void DoBind(EndPoint localAddress)
+        protected sealed override void DoBind(EndPoint localAddress)
         {
             this.tcp.Bind((IPEndPoint)localAddress);
             this.CacheLocalAddress();
         }
 
-        protected override void DoDisconnect() => this.DoClose();
+        protected sealed override void DoDisconnect() => this.DoClose();
 
-        protected override void DoClose()
+        protected sealed override void DoClose()
         {
             if (this.TryResetState(StateFlags.Open | StateFlags.Active))
             {
@@ -103,17 +113,17 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        protected override void DoBeginRead()
+        protected sealed override void DoBeginRead()
         {
             if (!this.Open || this.IsInState(StateFlags.ReadScheduled))
             {
                 return;
             }
 
-            ((TcpChannelUnsafe)this.Unsafe).ScheduleRead();
+            this.Unsafe.ScheduleRead();
         }
 
-        protected override void DoScheduleRead()
+        protected sealed override void DoScheduleRead()
         {
             if (!this.Open)
             {
@@ -123,11 +133,11 @@ namespace DotNetty.Transport.Libuv
             if (!this.IsInState(StateFlags.ReadScheduled))
             {
                 this.SetState(StateFlags.ReadScheduled);
-                this.tcp.ReadStart((TcpChannelUnsafe)this.Unsafe);
+                this.tcp.ReadStart(this.Unsafe);
             }
         }
 
-        protected override void DoWrite(ChannelOutboundBuffer input)
+        protected sealed override void DoWrite(ChannelOutboundBuffer input)
         {
             if (this.EventLoop.InEventLoop)
             {
@@ -139,7 +149,7 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        static readonly Action<object, object> WriteAction = (u, e) => ((TcpChannel)u).Write((ChannelOutboundBuffer)e);
+        static readonly Action<object, object> WriteAction = (u, e) => ((TChannel)u).Write((ChannelOutboundBuffer)e);
 
         void Write(ChannelOutboundBuffer input)
         {
@@ -162,7 +172,7 @@ namespace DotNetty.Transport.Libuv
                 else
                 {
                     WriteRequest writeRequest = Recycler.Take();
-                    writeRequest.Prepare((TcpChannelUnsafe)this.Unsafe, nioBuffers);
+                    writeRequest.Prepare(this.Unsafe, nioBuffers);
                     this.tcp.Write(writeRequest);
                     input.RemoveBytes(expectedWrittenBytes);
                 }
@@ -193,7 +203,7 @@ namespace DotNetty.Transport.Libuv
                     ArraySegment<byte> nioBuffer = buf.GetIoBuffer();
                     nioBuffers.Add(nioBuffer);
                     WriteRequest writeRequest = Recycler.Take();
-                    writeRequest.Prepare((TcpChannelUnsafe)this.Unsafe, nioBuffers);
+                    writeRequest.Prepare(this.Unsafe, nioBuffers);
                     this.tcp.Write(writeRequest);
 
                     input.Remove();
@@ -206,13 +216,14 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        sealed class TcpChannelUnsafe : NativeChannelUnsafe
+        public sealed class TcpChannelUnsafe : NativeChannelUnsafe
         {
-            public TcpChannelUnsafe(TcpChannel channel) : base(channel)
-            {
-            }
+            public TcpChannelUnsafe() { }
+            //public TcpChannelUnsafe(TcpChannel channel) : base(channel)
+            //{
+            //}
 
-            public override IntPtr UnsafeHandle => ((TcpChannel)this.channel).tcp.Handle;
+            public override IntPtr UnsafeHandle => this.channel.tcp.Handle;
         }
     }
 }

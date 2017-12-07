@@ -9,7 +9,7 @@ namespace DotNetty.Transport.Libuv.Native
     using DotNetty.Buffers;
     using DotNetty.Common.Internal;
 
-    sealed class Tcp : TcpHandle
+    public sealed class Tcp : TcpHandle
     {
         static readonly uv_alloc_cb AllocateCallback = OnAllocateCallback;
         static readonly uv_read_cb ReadCallback = OnReadCallback;
@@ -17,7 +17,7 @@ namespace DotNetty.Transport.Libuv.Native
         INativeUnsafe unsafeChannel;
         readonly ILinkedQueue<ReadOperation> pendingReads;
 
-        public Tcp(Loop loop) : base(loop)
+        internal Tcp(Loop loop) : base(loop)
         {
             this.pendingReads = PlatformDependent.SpscLinkedQueue<ReadOperation>();
         }
@@ -90,7 +90,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
         }
 
-        public void Write(WriteRequest request)
+        internal void Write(WriteRequest request)
         {
             this.Validate();
             int result;

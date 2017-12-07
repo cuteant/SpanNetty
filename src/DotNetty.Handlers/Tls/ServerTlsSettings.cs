@@ -39,9 +39,17 @@ namespace DotNetty.Handlers.Tls
     public ServerTlsSettings(X509Certificate certificate, bool negotiateClientCertificate, bool checkCertificateRevocation, SslProtocols enabledProtocols)
       : base(enabledProtocols, checkCertificateRevocation)
     {
-      this.Certificate = certificate;
-      this.NegotiateClientCertificate = negotiateClientCertificate;
+      Certificate = certificate;
+      NegotiateClientCertificate = negotiateClientCertificate;
       ClientCertificateMode = negotiateClientCertificate ? ClientCertificateMode.AllowCertificate : ClientCertificateMode.NoCertificate;
+    }
+
+    public ServerTlsSettings(X509Certificate certificate, ClientCertificateMode clientCertificateMode, bool checkCertificateRevocation, SslProtocols enabledProtocols)
+      : base(enabledProtocols, checkCertificateRevocation)
+    {
+      Certificate = certificate;
+      NegotiateClientCertificate = clientCertificateMode != ClientCertificateMode.NoCertificate;
+      ClientCertificateMode = clientCertificateMode;
     }
 
     public X509Certificate Certificate { get; }

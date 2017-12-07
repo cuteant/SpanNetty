@@ -6,9 +6,9 @@ namespace DotNetty.Transport.Libuv.Native
     using System;
     using System.Diagnostics;
 
-    abstract class ConnectRequest : NativeRequest
+    public abstract class ConnectRequest : NativeRequest
     {
-        protected static readonly uv_watcher_cb WatcherCallback = OnWatcherCallback;
+        internal static readonly uv_watcher_cb WatcherCallback = OnWatcherCallback;
 
         protected ConnectRequest() : base(uv_req_type.UV_CONNECT, 0)
         {

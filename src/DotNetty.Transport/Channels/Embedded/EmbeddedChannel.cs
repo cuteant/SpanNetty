@@ -13,7 +13,7 @@ namespace DotNetty.Transport.Channels.Embedded
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
-    public class EmbeddedChannel : AbstractChannel
+    public class EmbeddedChannel : AbstractChannel<EmbeddedChannel, EmbeddedChannel.DefaultUnsafe>
     {
         static readonly EndPoint LOCAL_ADDRESS = new EmbeddedSocketAddress();
         static readonly EndPoint REMOTE_ADDRESS = new EmbeddedSocketAddress();
@@ -154,7 +154,8 @@ namespace DotNetty.Transport.Channels.Embedded
 
         protected override EndPoint RemoteAddressInternal => this.Active ? REMOTE_ADDRESS : null;
 
-        protected override IChannelUnsafe NewUnsafe() => new DefaultUnsafe(this);
+        // ## 苦竹 屏蔽 ##
+        //protected override IChannelUnsafe NewUnsafe() => new DefaultUnsafe(this);
 
         protected override bool IsCompatible(IEventLoop eventLoop) => eventLoop is EmbeddedEventLoop;
 
@@ -472,12 +473,13 @@ namespace DotNetty.Transport.Channels.Embedded
 
         static object Poll(Queue<object> queue) => IsNotEmpty(queue) ? queue.Dequeue() : null;
 
-        class DefaultUnsafe : AbstractUnsafe
+        public class DefaultUnsafe : AbstractUnsafe
         {
-            public DefaultUnsafe(AbstractChannel channel)
-                : base(channel)
-            {
-            }
+            public DefaultUnsafe() { }
+            //public DefaultUnsafe(AbstractChannel channel)
+            //    : base(channel)
+            //{
+            //}
 
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress) => TaskUtil.Completed;
         }

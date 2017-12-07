@@ -8,7 +8,7 @@ namespace DotNetty.Transport.Libuv.Native
     using System.Runtime.InteropServices;
     using DotNetty.Common;
 
-    sealed class WriteRequest : NativeRequest
+    public sealed class WriteRequest : NativeRequest
     {
         internal static readonly uv_watcher_cb WriteCallback = OnWriteCallback;
 

@@ -11,7 +11,9 @@ namespace DotNetty.Transport.Channels.Sockets
     /// <summary>
     /// {@link AbstractNioChannel} base class for {@link Channel}s that operate on messages.
     /// </summary>
-    public abstract class AbstractSocketMessageChannel : AbstractSocketChannel
+    public abstract class AbstractSocketMessageChannel<TChannel, TUnsafe> : AbstractSocketChannel<TChannel, TUnsafe>
+        where TChannel : AbstractSocketMessageChannel<TChannel, TUnsafe>
+        where TUnsafe : AbstractSocketMessageChannel<TChannel, TUnsafe>.SocketMessageUnsafe, new()
     {
         /// <summary>
         /// @see {@link AbstractNioChannel#AbstractNioChannel(Channel, SelectableChannel, int)}
@@ -21,24 +23,26 @@ namespace DotNetty.Transport.Channels.Sockets
         {
         }
 
-        protected override IChannelUnsafe NewUnsafe() => new SocketMessageUnsafe(this);
+        // ## 苦竹 屏蔽 ##
+        //protected override IChannelUnsafe NewUnsafe() => new SocketMessageUnsafe(this);
 
-        protected class SocketMessageUnsafe : AbstractSocketUnsafe
+        public class SocketMessageUnsafe : AbstractSocketUnsafe
         {
             readonly List<object> readBuf = new List<object>();
 
-            public SocketMessageUnsafe(AbstractSocketMessageChannel channel)
-                : base(channel)
-            {
-            }
+            public SocketMessageUnsafe() { }
+            //public SocketMessageUnsafe(AbstractSocketMessageChannel channel)
+            //    : base(channel)
+            //{
+            //}
 
-            new AbstractSocketMessageChannel Channel => (AbstractSocketMessageChannel)this.channel;
+            //new AbstractSocketMessageChannel Channel => (AbstractSocketMessageChannel)this.channel;
 
-            public override void FinishRead(SocketChannelAsyncOperation operation)
+            public override void FinishRead(SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
             {
                 Contract.Assert(this.channel.EventLoop.InEventLoop);
 
-                AbstractSocketMessageChannel ch = this.Channel;
+                var ch = this.Channel;
                 if ((ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active) == 0)
                 {
                     return; // read was signaled as a result of channel closure
@@ -89,8 +93,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
                     if (exception != null)
                     {
-                        var asSocketException = exception as SocketException;
-                        if (asSocketException != null && asSocketException.SocketErrorCode != SocketError.TryAgain) // todo: other conditions for not closing message-based socket?
+                        if (exception is SocketException asSocketException && asSocketException.SocketErrorCode != SocketError.TryAgain) // todo: other conditions for not closing message-based socket?
                         {
                             // ServerChannel should not be closed even on SocketException because it can often continue
                             // accepting incoming connections. (e.g. too many open files)
@@ -128,14 +131,14 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             while (true)
             {
-                object msg = input.Current;
+                var msg = input.Current;
                 if (msg == null)
                 {
                     break;
                 }
                 try
                 {
-                    bool done = false;
+                    var done = false;
                     for (int i = this.Configuration.WriteSpinCount - 1; i >= 0; i--)
                     {
                         if (this.DoWriteMessage(msg, input))

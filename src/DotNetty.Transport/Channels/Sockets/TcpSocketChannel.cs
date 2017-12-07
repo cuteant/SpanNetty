@@ -11,10 +11,33 @@ namespace DotNetty.Transport.Channels.Sockets
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
 
+    public sealed class TcpSocketChannel : TcpSocketChannel<TcpSocketChannel>
+    {
+        /// <summary>Create a new instance</summary>
+        public TcpSocketChannel() : base() { }
+
+        /// <summary>Create a new instance</summary>
+        public TcpSocketChannel(AddressFamily addressFamily) : base(addressFamily) { }
+
+        /// <summary>Create a new instance using the given <see cref="ISocketChannel" />.</summary>
+        public TcpSocketChannel(Socket socket) : base(socket) { }
+
+        /// <summary>Create a new instance</summary>
+        /// <param name="parent">
+        ///     the <see cref="IChannel" /> which created this instance or <c>null</c> if it was created by the
+        ///     user
+        /// </param>
+        /// <param name="socket">the <see cref="ISocketChannel" /> which will be used</param>
+        public TcpSocketChannel(IChannel parent, Socket socket) : base(parent, socket) { }
+
+        internal TcpSocketChannel(IChannel parent, Socket socket, bool connected) : base(parent, socket, connected) { }
+    }
+
     /// <summary>
     ///     <see cref="ISocketChannel" /> which uses Socket-based implementation.
     /// </summary>
-    public class TcpSocketChannel : AbstractSocketByteChannel, ISocketChannel
+    public class TcpSocketChannel<TChannel> : AbstractSocketByteChannel<TChannel, TcpSocketChannel<TChannel>.TcpSocketChannelUnsafe>, ISocketChannel
+        where TChannel : TcpSocketChannel<TChannel>
     {
         static readonly ChannelMetadata METADATA = new ChannelMetadata(false, 16);
 
@@ -22,11 +45,11 @@ namespace DotNetty.Transport.Channels.Sockets
 
         /// <summary>Create a new instance</summary>
         public TcpSocketChannel()
-  #if NET40
-          : this(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
-  #else
-          : this(new Socket(SocketType.Stream, ProtocolType.Tcp))
-  #endif
+#if NET40
+            : this(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+#else
+            : this(new Socket(SocketType.Stream, ProtocolType.Tcp))
+#endif
         {
         }
 
@@ -53,10 +76,10 @@ namespace DotNetty.Transport.Channels.Sockets
         {
         }
 
-        internal TcpSocketChannel(IChannel parent, Socket socket, bool connected)
+        protected TcpSocketChannel(IChannel parent, Socket socket, bool connected)
             : base(parent, socket)
         {
-            this.config = new TcpSocketChannelConfig(this, socket);
+            this.config = new TcpSocketChannelConfig((TChannel)this, socket);
             if (connected)
             {
                 this.OnConnected();
@@ -127,8 +150,10 @@ namespace DotNetty.Transport.Channels.Sockets
             bool success = false;
             try
             {
-                var eventPayload = new SocketChannelAsyncOperation(this, false);
-                eventPayload.RemoteEndPoint = remoteAddress;
+                var eventPayload = new SocketChannelAsyncOperation<TChannel, TcpSocketChannelUnsafe>((TChannel)this, false)
+                {
+                    RemoteEndPoint = remoteAddress
+                };
                 bool connected = !this.Socket.ConnectAsync(eventPayload);
                 success = true;
                 return connected;
@@ -142,7 +167,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        protected override void DoFinishConnect(SocketChannelAsyncOperation operation)
+        protected override void DoFinishConnect(SocketChannelAsyncOperation<TChannel, TcpSocketChannelUnsafe> operation)
         {
             try
             {
@@ -194,8 +219,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 return -1; // prevents ObjectDisposedException from being thrown in case connection has been lost in the meantime
             }
 
-            SocketError errorCode;
-            int received = this.Socket.Receive(byteBuf.Array, byteBuf.ArrayOffset + byteBuf.WriterIndex, byteBuf.WritableBytes, SocketFlags.None, out errorCode);
+            int received = this.Socket.Receive(byteBuf.Array, byteBuf.ArrayOffset + byteBuf.WriterIndex, byteBuf.WritableBytes, SocketFlags.None, out SocketError errorCode);
 
             switch (errorCode)
             {
@@ -227,8 +251,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 throw new NotImplementedException("Only IByteBuffer implementations backed by array are supported.");
             }
 
-            SocketError errorCode;
-            int sent = this.Socket.Send(buf.Array, buf.ArrayOffset + buf.ReaderIndex, buf.ReadableBytes, SocketFlags.None, out errorCode);
+            int sent = this.Socket.Send(buf.Array, buf.ArrayOffset + buf.ReaderIndex, buf.ReadableBytes, SocketFlags.None, out SocketError errorCode);
 
             if (errorCode != SocketError.Success && errorCode != SocketError.WouldBlock)
             {
@@ -285,8 +308,7 @@ namespace DotNetty.Transport.Channels.Sockets
                             ArraySegment<byte> nioBuffer = sharedBufferList[0];
                             for (int i = this.Configuration.WriteSpinCount - 1; i >= 0; i--)
                             {
-                                SocketError errorCode;
-                                int localWrittenBytes = socket.Send(nioBuffer.Array, nioBuffer.Offset, nioBuffer.Count, SocketFlags.None, out errorCode);
+                                int localWrittenBytes = socket.Send(nioBuffer.Array, nioBuffer.Offset, nioBuffer.Count, SocketFlags.None, out SocketError errorCode);
                                 if (errorCode != SocketError.Success && errorCode != SocketError.WouldBlock)
                                 {
                                     throw new SocketException((int)errorCode);
@@ -309,8 +331,7 @@ namespace DotNetty.Transport.Channels.Sockets
                         default:
                             for (int i = this.Configuration.WriteSpinCount - 1; i >= 0; i--)
                             {
-                                SocketError errorCode;
-                                long localWrittenBytes = socket.Send(sharedBufferList, SocketFlags.None, out errorCode);
+                                long localWrittenBytes = socket.Send(sharedBufferList, SocketFlags.None, out SocketError errorCode);
                                 if (errorCode != SocketError.Success && errorCode != SocketError.WouldBlock)
                                 {
                                     throw new SocketException((int)errorCode);
@@ -334,8 +355,8 @@ namespace DotNetty.Transport.Channels.Sockets
 
                     if (!done)
                     {
-                        ArraySegment<byte>[] copiedBuffers = sharedBufferList.ToArray(); // copying buffers to
-                        SocketChannelAsyncOperation asyncOperation = this.PrepareWriteOperation(copiedBuffers);
+                        var copiedBuffers = sharedBufferList.ToArray(); // copying buffers to
+                        var asyncOperation = this.PrepareWriteOperation(copiedBuffers);
 
                         // Release the fully written buffers, and update the indexes of the partially written buffer.
                         input.RemoveBytes(writtenBytes);
@@ -355,14 +376,16 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        protected override IChannelUnsafe NewUnsafe() => new TcpSocketChannelUnsafe(this);
+        // ## 苦竹 屏蔽 ##
+        //protected override IChannelUnsafe NewUnsafe() => new TcpSocketChannelUnsafe(this);
 
-        sealed class TcpSocketChannelUnsafe : SocketByteChannelUnsafe
+        public sealed class TcpSocketChannelUnsafe : SocketByteChannelUnsafe
         {
-            public TcpSocketChannelUnsafe(TcpSocketChannel channel)
-                : base(channel)
-            {
-            }
+            public TcpSocketChannelUnsafe() { }
+            //public TcpSocketChannelUnsafe(TcpSocketChannel channel)
+            //    : base(channel)
+            //{
+            //}
 
             // todo: review
             //protected Executor closeExecutor()
@@ -377,12 +400,12 @@ namespace DotNetty.Transport.Channels.Sockets
 
         sealed class TcpSocketChannelConfig : DefaultSocketChannelConfiguration
         {
-            public TcpSocketChannelConfig(TcpSocketChannel channel, Socket javaSocket)
+            public TcpSocketChannelConfig(TChannel channel, Socket javaSocket)
                 : base(channel, javaSocket)
             {
             }
 
-            protected override void AutoReadCleared() => ((TcpSocketChannel)this.Channel).ClearReadPending();
+            protected override void AutoReadCleared() => ((TChannel)this.Channel).ClearReadPending();
         }
     }
 }

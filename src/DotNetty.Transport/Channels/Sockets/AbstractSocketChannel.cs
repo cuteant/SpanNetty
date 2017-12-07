@@ -13,9 +13,12 @@ namespace DotNetty.Transport.Channels.Sockets
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
-    public abstract class AbstractSocketChannel : AbstractChannel
+    public abstract class AbstractSocketChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>
+      where TChannel : AbstractSocketChannel<TChannel, TUnsafe>
+      where TUnsafe : AbstractSocketChannel<TChannel, TUnsafe>.AbstractSocketUnsafe, new()
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractSocketChannel>();
+        // ## 苦竹 屏蔽 ##
+        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractSocketChannel>();
 
         [Flags]
         protected enum StateFlags
@@ -28,13 +31,13 @@ namespace DotNetty.Transport.Channels.Sockets
         }
 
         internal static readonly EventHandler<SocketAsyncEventArgs> IoCompletedCallback = OnIoCompleted;
-        static readonly Action<object, object> ConnectCallbackAction = (u, e) => ((ISocketChannelUnsafe)u).FinishConnect((SocketChannelAsyncOperation)e);
-        static readonly Action<object, object> ReadCallbackAction = (u, e) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation)e);
-        static readonly Action<object, object> WriteCallbackAction = (u, e) => ((ISocketChannelUnsafe)u).FinishWrite((SocketChannelAsyncOperation)e);
+        static readonly Action<object, object> ConnectCallbackAction = (u, e) => ((ISocketChannelUnsafe)u).FinishConnect((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
+        static readonly Action<object, object> ReadCallbackAction = (u, e) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
+        static readonly Action<object, object> WriteCallbackAction = (u, e) => ((ISocketChannelUnsafe)u).FinishWrite((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
 
         protected readonly Socket Socket;
-        SocketChannelAsyncOperation readOperation;
-        SocketChannelAsyncOperation writeOperation;
+        SocketChannelAsyncOperation<TChannel, TUnsafe> readOperation;
+        SocketChannelAsyncOperation<TChannel, TUnsafe> writeOperation;
         volatile bool inputShutdown;
         internal bool ReadPending;
         volatile StateFlags state;
@@ -88,7 +91,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
                 else
                 {
-                    eventLoop.Execute(channel => ((AbstractSocketChannel)channel).ClearReadPending0(), this);
+                    eventLoop.Execute(channel => ((TChannel)channel).ClearReadPending0(), this);
                 }
             }
             else
@@ -132,27 +135,27 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected bool IsInState(StateFlags stateToCheck) => (this.state & stateToCheck) == stateToCheck;
 
-        protected SocketChannelAsyncOperation ReadOperation => this.readOperation ?? (this.readOperation = new SocketChannelAsyncOperation(this, true));
+        protected SocketChannelAsyncOperation<TChannel, TUnsafe> ReadOperation => this.readOperation ?? (this.readOperation = new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, true));
 
-        SocketChannelAsyncOperation WriteOperation => this.writeOperation ?? (this.writeOperation = new SocketChannelAsyncOperation(this, false));
+        SocketChannelAsyncOperation<TChannel, TUnsafe> WriteOperation => this.writeOperation ?? (this.writeOperation = new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, false));
 
-        protected SocketChannelAsyncOperation PrepareWriteOperation(ArraySegment<byte> buffer)
+        protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(ArraySegment<byte> buffer)
         {
-            SocketChannelAsyncOperation operation = this.WriteOperation;
+            var operation = this.WriteOperation;
             operation.SetBuffer(buffer.Array, buffer.Offset, buffer.Count);
             return operation;
         }
 
-        protected SocketChannelAsyncOperation PrepareWriteOperation(IList<ArraySegment<byte>> buffers)
+        protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(IList<ArraySegment<byte>> buffers)
         {
-            SocketChannelAsyncOperation operation = this.WriteOperation;
+            var operation = this.WriteOperation;
             operation.BufferList = buffers;
             return operation;
         }
 
         protected void ResetWriteOperation()
         {
-            SocketChannelAsyncOperation operation = this.writeOperation;
+            var operation = this.writeOperation;
 
             Contract.Assert(operation != null);
 
@@ -169,9 +172,9 @@ namespace DotNetty.Transport.Channels.Sockets
         /// <remarks>PORT NOTE: matches behavior of NioEventLoop.processSelectedKey</remarks>
         static void OnIoCompleted(object sender, SocketAsyncEventArgs args)
         {
-            var operation = (SocketChannelAsyncOperation)args;
-            AbstractSocketChannel channel = operation.Channel;
-            var @unsafe = (ISocketChannelUnsafe)channel.Unsafe;
+            var operation = (SocketChannelAsyncOperation<TChannel, TUnsafe>)args;
+            var channel = operation.Channel;
+            var @unsafe = channel.Unsafe;
             IEventLoop eventLoop = channel.EventLoop;
             switch (args.LastOperation)
             {
@@ -228,29 +231,31 @@ namespace DotNetty.Transport.Channels.Sockets
             /// <summary>
             ///     Finish connect
             /// </summary>
-            void FinishConnect(SocketChannelAsyncOperation operation);
+            void FinishConnect(SocketChannelAsyncOperation<TChannel, TUnsafe> operation);
 
             /// <summary>
             ///     Read from underlying {@link SelectableChannel}
             /// </summary>
-            void FinishRead(SocketChannelAsyncOperation operation);
+            void FinishRead(SocketChannelAsyncOperation<TChannel, TUnsafe> operation);
 
-            void FinishWrite(SocketChannelAsyncOperation operation);
+            void FinishWrite(SocketChannelAsyncOperation<TChannel, TUnsafe> operation);
         }
 
-        protected abstract class AbstractSocketUnsafe : AbstractUnsafe, ISocketChannelUnsafe
+        public abstract class AbstractSocketUnsafe : AbstractUnsafe, ISocketChannelUnsafe
         {
-            protected AbstractSocketUnsafe(AbstractSocketChannel channel)
-                : base(channel)
-            {
-            }
+            public AbstractSocketUnsafe() { }
+            //protected AbstractSocketUnsafe(AbstractSocketChannel channel)
+            //    : base(channel)
+            //{
+            //}
 
-            public AbstractSocketChannel Channel => (AbstractSocketChannel)this.channel;
+            //public AbstractSocketChannel Channel => (AbstractSocketChannel)this.channel;
+            //public TChannel Channel => this.channel;
 
             public sealed override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
             {
                 // todo: handle cancellation
-                AbstractSocketChannel ch = this.Channel;
+                var ch = this.Channel;
                 if (!ch.Open)
                 {
                     return this.CreateClosedChannelExceptionTask();
@@ -281,7 +286,7 @@ namespace DotNetty.Transport.Channels.Sockets
                                 (c, a) =>
                                 {
                                     // todo: make static / cache delegate?..
-                                    var self = (AbstractSocketChannel)c;
+                                    var self = (TChannel)c;
                                     // todo: call Socket.CancelConnectAsync(...)
                                     TaskCompletionSource promise = self.connectPromise;
                                     var cause = new ConnectTimeoutException("connection timed out: " + a.ToString());
@@ -298,10 +303,10 @@ namespace DotNetty.Transport.Channels.Sockets
 #if NET40
                         Action<Task> continuationAction = completed =>
                         {
-                          var c = ch;
-                          c.connectCancellationTask?.Cancel();
-                          c.connectPromise = null;
-                          c.CloseSafe();
+                            var c = ch;
+                            c.connectCancellationTask?.Cancel();
+                            c.connectPromise = null;
+                            c.CloseSafe();
                         };
                         ch.connectPromise.Task.ContinueWith(
                             continuationAction,
@@ -310,10 +315,10 @@ namespace DotNetty.Transport.Channels.Sockets
                         ch.connectPromise.Task.ContinueWith(
                             (t, s) =>
                             {
-                              var c = (AbstractSocketChannel)s;
-                              c.connectCancellationTask?.Cancel();
-                              c.connectPromise = null;
-                              c.CloseSafe();
+                                var c = (TChannel)s;
+                                c.connectCancellationTask?.Cancel();
+                                c.connectPromise = null;
+                                c.CloseSafe();
                             },
                             ch,
                             TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.ExecuteSynchronously);
@@ -369,11 +374,11 @@ namespace DotNetty.Transport.Channels.Sockets
                 this.CloseIfClosed();
             }
 
-            public void FinishConnect(SocketChannelAsyncOperation operation)
+            public void FinishConnect(SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
             {
                 Contract.Assert(this.channel.EventLoop.InEventLoop);
 
-                AbstractSocketChannel ch = this.Channel;
+                var ch = this.Channel;
                 try
                 {
                     bool wasActive = ch.Active;
@@ -395,7 +400,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
             }
 
-            public abstract void FinishRead(SocketChannelAsyncOperation operation);
+            public abstract void FinishRead(SocketChannelAsyncOperation<TChannel, TUnsafe> operation);
 
             protected sealed override void Flush0()
             {
@@ -409,7 +414,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 base.Flush0();
             }
 
-            public void FinishWrite(SocketChannelAsyncOperation operation)
+            public void FinishWrite(SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
             {
                 bool resetWritePending = this.Channel.TryResetState(StateFlags.WriteScheduled);
 
@@ -473,7 +478,7 @@ namespace DotNetty.Transport.Channels.Sockets
         /// <summary>
         ///     Finish the connect
         /// </summary>
-        protected abstract void DoFinishConnect(SocketChannelAsyncOperation operation);
+        protected abstract void DoFinishConnect(SocketChannelAsyncOperation<TChannel, TUnsafe> operation);
 
         protected override void DoClose()
         {
@@ -492,14 +497,14 @@ namespace DotNetty.Transport.Channels.Sockets
                 this.connectCancellationTask = null;
             }
 
-            SocketChannelAsyncOperation readOp = this.readOperation;
+            var readOp = this.readOperation;
             if (readOp != null)
             {
                 readOp.Dispose();
                 this.readOperation = null;
             }
 
-            SocketChannelAsyncOperation writeOp = this.writeOperation;
+            var writeOp = this.writeOperation;
             if (writeOp != null)
             {
                 writeOp.Dispose();

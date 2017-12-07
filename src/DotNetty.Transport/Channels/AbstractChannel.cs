@@ -14,13 +14,15 @@ namespace DotNetty.Transport.Channels
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
-    public abstract class AbstractChannel : DefaultAttributeMap, IChannel
+    public abstract class AbstractChannel<TChannel, TUnsafe> : DefaultAttributeMap, IChannel
+        where TChannel : AbstractChannel<TChannel, TUnsafe>
+        where TUnsafe : AbstractChannel<TChannel, TUnsafe>.AbstractUnsafe, new()
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractChannel>();
+        protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance(typeof(TChannel));
 
         static readonly NotYetConnectedException NotYetConnectedException = new NotYetConnectedException();
 
-        readonly IChannelUnsafe channelUnsafe;
+        readonly TUnsafe channelUnsafe;
 
         readonly DefaultChannelPipeline pipeline;
         readonly TaskCompletionSource closeFuture = new TaskCompletionSource();
@@ -51,6 +53,7 @@ namespace DotNetty.Transport.Channels
         ///     Creates a new instance.
         /// </summary>
         /// <param name="parent">the parent of this channel. <c>null</c> if there's no parent.</param>
+        /// <param name="id"></param>
         protected AbstractChannel(IChannel parent, IChannelId id)
         {
             this.Parent = parent;
@@ -155,7 +158,7 @@ namespace DotNetty.Transport.Channels
         public bool Registered => this.registered;
 
         /// Returns a new <see cref="DefaultChannelId"/> instance. Subclasses may override this method to assign custom
-        /// <see cref="IChannelId"/>s to <see cref="IChannel"/>s that use the <see cref="AbstractChannel"/> constructor.
+        /// <see cref="IChannelId"/>s to <see cref="IChannel"/>s that use the <see cref="AbstractChannel{TChannel, TUnsafe}"/> constructor.
         protected virtual IChannelId NewId() => DefaultChannelId.NewInstance();
 
         /// <summary>Returns a new pipeline instance.</summary>
@@ -191,13 +194,19 @@ namespace DotNetty.Transport.Channels
 
         public Task CloseCompletion => this.closeFuture.Task;
 
-        public IChannelUnsafe Unsafe => this.channelUnsafe;
+        IChannelUnsafe IChannel.Unsafe => this.channelUnsafe;
+        public TUnsafe Unsafe => this.channelUnsafe;
 
         /// <summary>
         ///     Create a new <see cref="AbstractUnsafe" /> instance which will be used for the life-time of the
         ///     <see cref="IChannel" />
         /// </summary>
-        protected abstract IChannelUnsafe NewUnsafe();
+        protected virtual TUnsafe NewUnsafe()
+        {
+            var @unsafe = new TUnsafe();
+            @unsafe.Initialize((TChannel)this);
+            return @unsafe;
+        }
 
         /// <summary>
         ///     Returns the ID of this channel.
@@ -279,9 +288,9 @@ namespace DotNetty.Transport.Channels
         /// <summary>
         ///     <see cref="IChannelUnsafe" /> implementation which sub-classes must extend and use.
         /// </summary>
-        protected abstract class AbstractUnsafe : IChannelUnsafe
+        public abstract class AbstractUnsafe : IChannelUnsafe
         {
-            protected readonly AbstractChannel channel;
+            protected TChannel channel; // ## 苦竹 修改 readonly ##
             ChannelOutboundBuffer outboundBuffer;
             IRecvByteBufAllocatorHandle recvHandle;
             bool inFlush0;
@@ -297,11 +306,14 @@ namespace DotNetty.Transport.Channels
             //    return ((PausableChannelEventExecutor) eventLoop().asInvoker()).unwrapInvoker();
             //}
 
-            protected AbstractUnsafe(AbstractChannel channel)
+            public AbstractUnsafe() { }
+            public virtual void Initialize(TChannel channel)
             {
                 this.channel = channel;
                 this.outboundBuffer = new ChannelOutboundBuffer(channel);
             }
+
+            public TChannel Channel => this.channel;
 
             public ChannelOutboundBuffer OutboundBuffer => this.outboundBuffer;
 
@@ -832,8 +844,8 @@ namespace DotNetty.Transport.Channels
             /// <summary>
             /// Prepares to close the <see cref="IChannel"/>. If this method returns an <see cref="IEventExecutor"/>, the
             /// caller must call the <see cref="IEventExecutor.Execute(DotNetty.Common.Concurrency.IRunnable)"/> method with a task that calls
-            /// <see cref="AbstractChannel.DoClose"/> on the returned <see cref="IEventExecutor"/>. If this method returns <c>null</c>,
-            /// <see cref="AbstractChannel.DoClose"/> must be called from the caller thread. (i.e. <see cref="IEventLoop"/>)
+            /// <see cref="AbstractChannel{TChannel, TUnsafe}.DoClose"/> on the returned <see cref="IEventExecutor"/>. If this method returns <c>null</c>,
+            /// <see cref="AbstractChannel{TChannel, TUnsafe}.DoClose"/> must be called from the caller thread. (i.e. <see cref="IEventLoop"/>)
             /// </summary>
             protected virtual IEventExecutor PrepareToClose() => null;
         }

@@ -6,6 +6,7 @@
     <AssemblyName>DotNetty.Tests.Performance</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <SignAssembly>false</SignAssembly>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>

@@ -10,7 +10,7 @@ namespace DotNetty.Transport.Libuv
     {
         const int DefaultBacklog = 128;
 
-        public TcpServerChannelConfig(TcpServerChannel channel) : base(channel)
+        public TcpServerChannelConfig(IChannel channel) : base(channel)
         {
         }
 

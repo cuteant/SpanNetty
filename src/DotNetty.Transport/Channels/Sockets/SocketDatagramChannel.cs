@@ -17,27 +17,34 @@ namespace DotNetty.Transport.Channels.Sockets
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
-    public class SocketDatagramChannel : AbstractSocketMessageChannel, IDatagramChannel
+    public sealed class SocketDatagramChannel : SocketDatagramChannel<SocketDatagramChannel>
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<SocketDatagramChannel>();
+        public SocketDatagramChannel() : base() { }
+
+        public SocketDatagramChannel(AddressFamily addressFamily) : base(addressFamily) { }
+
+        public SocketDatagramChannel(Socket socket) : base(socket) { }
+    }
+
+    public class SocketDatagramChannel<TChannel> : AbstractSocketMessageChannel<TChannel, SocketDatagramChannel<TChannel>.DatagramChannelUnsafe>, IDatagramChannel
+        where TChannel : SocketDatagramChannel<TChannel>
+    {
+        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<SocketDatagramChannel>();
         static readonly Action<object, object> ReceiveFromCompletedSyncCallback = OnReceiveFromCompletedSync;
         static readonly ChannelMetadata ChannelMetadata = new ChannelMetadata(true);
 
         readonly DefaultDatagramChannelConfig config;
         readonly IPEndPoint anyRemoteEndPoint;
 
+        public SocketDatagramChannel()
 #if NET40
-        public SocketDatagramChannel()
+            // TODO .Net Fx4.5及以上版本，默认为AddressFamily.InterNetworkV6，并设置 DualMode 为 true，双线绑定
             : this(new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
-        {
-          // TODO .Net Fx4.5及以上版本，默认为AddressFamily.InterNetworkV6，并设置 DualMode 为 true，双线绑定
-        }
 #else
-        public SocketDatagramChannel()
             : this(new Socket(SocketType.Dgram, ProtocolType.Udp))
+#endif
         {
         }
-#endif
 
         public SocketDatagramChannel(AddressFamily addressFamily)
             : this(new Socket(addressFamily, SocketType.Dgram, ProtocolType.Udp))
@@ -94,7 +101,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        protected override void DoFinishConnect(SocketChannelAsyncOperation operation)
+        protected override void DoFinishConnect(SocketChannelAsyncOperation<TChannel, DatagramChannelUnsafe> operation)
         {
             throw new NotSupportedException();
         }
@@ -112,7 +119,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override void ScheduleSocketRead()
         {
-            SocketChannelAsyncOperation operation = this.ReadOperation;
+            var operation = this.ReadOperation;
             operation.RemoteEndPoint = this.anyRemoteEndPoint;
 
             IRecvByteBufAllocatorHandle handle = this.Unsafe.RecvBufAllocHandle;
@@ -149,7 +156,7 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             Contract.Requires(buf != null);
 
-            SocketChannelAsyncOperation operation = this.ReadOperation;
+            var operation = this.ReadOperation;
             var data = (IByteBuffer)operation.UserToken;
             bool free = true;
 
@@ -182,7 +189,9 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        static void OnReceiveFromCompletedSync(object u, object p) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation)p);
+        // ## 苦竹 修改 ##
+        //static void OnReceiveFromCompletedSync(object u, object p) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation)p);
+        static void OnReceiveFromCompletedSync(object u, object p) => ((DatagramChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation<TChannel, DatagramChannelUnsafe>)p);
 
         protected override void ScheduleMessageWrite(object message)
         {
@@ -200,24 +209,26 @@ namespace DotNetty.Transport.Channels.Sockets
                 return;
             }
 
-            SocketChannelAsyncOperation operation = this.PrepareWriteOperation(data.GetIoBuffer(data.ReaderIndex, length));
+            var operation = this.PrepareWriteOperation(data.GetIoBuffer(data.ReaderIndex, length));
             operation.RemoteEndPoint = envelope.Recipient;
             this.SetState(StateFlags.WriteScheduled);
             bool pending = this.Socket.SendToAsync(operation);
             if (!pending)
             {
-                ((ISocketChannelUnsafe)this.Unsafe).FinishWrite(operation);
+                this.Unsafe.FinishWrite(operation);
             }
         }
 
-        protected override IChannelUnsafe NewUnsafe() => new DatagramChannelUnsafe(this);
+        // ## 苦竹 屏蔽 ##
+        //protected override IChannelUnsafe NewUnsafe() => new DatagramChannelUnsafe(this);
 
-        sealed class DatagramChannelUnsafe : SocketMessageUnsafe
+        public sealed class DatagramChannelUnsafe : SocketMessageUnsafe
         {
-            public DatagramChannelUnsafe(SocketDatagramChannel channel)
-                : base(channel)
-            {
-            }
+            public DatagramChannelUnsafe() { }
+            //public DatagramChannelUnsafe(SocketDatagramChannel channel)
+            //    : base(channel)
+            //{
+            //}
 
             protected override bool CanWrite => this.channel.Open && this.channel.Registered;
         }
@@ -227,15 +238,14 @@ namespace DotNetty.Transport.Channels.Sockets
             EndPoint remoteAddress = null;
             IByteBuffer data = null;
 
-            var envelope = msg as IAddressedEnvelope<IByteBuffer>;
-            if (envelope != null)
+            if (msg is IAddressedEnvelope<IByteBuffer> envelope)
             {
                 remoteAddress = envelope.Recipient;
                 data = envelope.Content;
             }
-            else if (msg is IByteBuffer)
+            else if (msg is IByteBuffer buffer)
             {
-                data = (IByteBuffer)msg;
+                data = buffer;//  (IByteBuffer)msg;
                 remoteAddress = this.RemoteAddressInternal;
             }
 
@@ -258,24 +268,21 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override object FilterOutboundMessage(object msg)
         {
-            var packet = msg as DatagramPacket;
-            if (packet != null)
+            if (msg is DatagramPacket packet)
             {
                 return IsSingleBuffer(packet.Content)
                     ? packet
                     : new DatagramPacket(this.CreateNewDirectBuffer(packet, packet.Content), packet.Recipient);
             }
 
-            var buffer = msg as IByteBuffer;
-            if (buffer != null)
+            if (msg is IByteBuffer buffer)
             {
                 return IsSingleBuffer(buffer)
                     ? buffer
                     : this.CreateNewDirectBuffer(buffer);
             }
 
-            var envolope = msg as IAddressedEnvelope<IByteBuffer>;
-            if (envolope != null)
+            if (msg is IAddressedEnvelope<IByteBuffer> envolope)
             {
                 if (IsSingleBuffer(envolope.Content))
                 {

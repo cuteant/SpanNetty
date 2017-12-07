@@ -6,32 +6,43 @@ namespace DotNetty.Transport.Libuv
     using System;
     using System.Diagnostics;
     using System.Net;
-    using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
-    public sealed class TcpServerChannel : NativeChannel, IServerChannel
+    public sealed class TcpServerChannel : TcpServerChannel<TcpServerChannel, DefaultTcpChannelFactory>
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<TcpServerChannel>();
+        public TcpServerChannel() : base() { }
+    }
+
+
+    public class TcpServerChannel<TServerChannel, TChannelFactory> : NativeChannel<TServerChannel, TcpServerChannel<TServerChannel, TChannelFactory>.TcpServerChannelUnsafe>, IServerChannel
+        where TServerChannel : TcpServerChannel<TServerChannel, TChannelFactory>
+        where TChannelFactory : ITcpChannelFactory, new()
+    {
+        // ## 苦竹 屏蔽 ##
+        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<TcpServerChannel>();
         static readonly ChannelMetadata TcpServerMetadata = new ChannelMetadata(false, 16);
 
         readonly TcpServerChannelConfig config;
         TcpListener tcpListener;
 
+        private readonly TChannelFactory _channelFactory;
+
         public TcpServerChannel() : base(null)
         {
             this.config = new TcpServerChannelConfig(this);
+            _channelFactory = new TChannelFactory();
         }
 
-        public override IChannelConfiguration Configuration => this.config;
+        public sealed override IChannelConfiguration Configuration => this.config;
 
-        public override ChannelMetadata Metadata => TcpServerMetadata;
+        public sealed override ChannelMetadata Metadata => TcpServerMetadata;
 
-        protected override EndPoint LocalAddressInternal => this.tcpListener?.GetLocalEndPoint();
+        protected sealed override EndPoint LocalAddressInternal => this.tcpListener?.GetLocalEndPoint();
 
-        protected override EndPoint RemoteAddressInternal => null;
+        protected sealed override EndPoint RemoteAddressInternal => null;
 
-        protected override void DoBind(EndPoint localAddress)
+        protected sealed override void DoBind(EndPoint localAddress)
         {
             if (!this.Open)
             {
@@ -40,15 +51,16 @@ namespace DotNetty.Transport.Libuv
 
             if (!this.IsInState(StateFlags.Active))
             {
-                this.tcpListener.Listen((IPEndPoint)localAddress, (TcpServerChannelUnsafe)this.Unsafe, this.config.Backlog);
+                this.tcpListener.Listen((IPEndPoint)localAddress, this.Unsafe, this.config.Backlog);
                 this.CacheLocalAddress();
                 this.SetState(StateFlags.Active);
             }
         }
 
-        protected override IChannelUnsafe NewUnsafe() => new TcpServerChannelUnsafe(this);
+        // ## 苦竹 屏蔽 ##
+        //protected override IChannelUnsafe NewUnsafe() => new TcpServerChannelUnsafe(this);
 
-        protected override void DoRegister()
+        protected sealed override void DoRegister()
         {
             Debug.Assert(this.tcpListener == null);
 
@@ -59,7 +71,7 @@ namespace DotNetty.Transport.Libuv
             this.config.SetOptions(this.tcpListener);
 
             var dispatcher = loopExecutor as DispatcherEventLoop;
-            dispatcher?.Register((TcpServerChannelUnsafe)this.Unsafe);
+            dispatcher?.Register(this.Unsafe);
         }
 
         internal override unsafe IntPtr GetLoopHandle()
@@ -72,7 +84,7 @@ namespace DotNetty.Transport.Libuv
             return ((uv_stream_t*)this.tcpListener.Handle)->loop;
         }
 
-        protected override void DoClose()
+        protected sealed override void DoClose()
         {
             if (this.TryResetState(StateFlags.Open | StateFlags.Active))
             {
@@ -81,7 +93,7 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        protected override void DoBeginRead()
+        protected sealed override void DoBeginRead()
         {
             if (!this.Open)
             {
@@ -94,17 +106,18 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        sealed class TcpServerChannelUnsafe : NativeChannelUnsafe, IServerNativeUnsafe
+        public sealed class TcpServerChannelUnsafe : NativeChannelUnsafe, IServerNativeUnsafe
         {
-            public TcpServerChannelUnsafe(TcpServerChannel channel) : base(channel)
-            {
-            }
+            public TcpServerChannelUnsafe() { }
+            //public TcpServerChannelUnsafe(TcpServerChannel channel) : base(channel)
+            //{
+            //}
 
-            public override IntPtr UnsafeHandle => ((TcpServerChannel)this.channel).tcpListener.Handle;
+            public override IntPtr UnsafeHandle => this.channel.tcpListener.Handle;
 
             void IServerNativeUnsafe.Accept(RemoteConnection connection)
             {
-                AbstractChannel ch = this.channel;
+                var ch = this.channel;
                 if (ch.EventLoop.InEventLoop)
                 {
                     this.Accept(connection);
@@ -119,7 +132,7 @@ namespace DotNetty.Transport.Libuv
 
             void Accept(RemoteConnection connection)
             {
-                var ch = (TcpServerChannel)this.channel;
+                var ch = this.channel;
                 NativeHandle client = connection.Client;
 
                 if (connection.Error != null)
@@ -159,24 +172,26 @@ namespace DotNetty.Transport.Libuv
 
             void Accept(Tcp tcp)
             {
-                var ch = (TcpServerChannel)this.channel;
-                var tcpChannel = new TcpChannel(ch, tcp);
+                var ch = this.channel;
+                // ## 苦竹 修改 ##
+                //var tcpChannel = new TcpChannel(ch, tcp);
+                var tcpChannel = ch._channelFactory.CreateChannel(ch, tcp);
                 ch.Pipeline.FireChannelRead(tcpChannel);
                 ch.Pipeline.FireChannelReadComplete();
             }
         }
 
-        protected override void DoDisconnect()
+        protected sealed override void DoDisconnect()
         {
             throw new NotSupportedException();
         }
 
-        protected override void DoScheduleRead()
+        protected sealed override void DoScheduleRead()
         {
             throw new NotSupportedException();
         }
 
-        protected override void DoWrite(ChannelOutboundBuffer input)
+        protected sealed override void DoWrite(ChannelOutboundBuffer input)
         {
             throw new NotSupportedException();
         }
