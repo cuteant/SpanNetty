@@ -30,7 +30,7 @@ namespace DotNetty.Handlers.Tls
 #if DEBUG
           SslProtocols.Tls12 | SslProtocols.Tls11)  // 注意 xunit.2.3.1 tls1.0测试无法通过
 #else
-          SslProtocols.Tls | SslProtocols.Tls12 | SslProtocols.Tls11)
+          SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls)
 #endif
 #endif
     {

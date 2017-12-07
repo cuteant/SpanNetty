@@ -5,6 +5,7 @@
     <RootNamespace>DotNetty.Tests.Performance</RootNamespace>
     <AssemblyName>DotNetty.Tests.Performance</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
 
   <ItemGroup>

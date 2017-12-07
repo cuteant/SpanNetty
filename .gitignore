@@ -335,3 +335,4 @@ TODO.txt
 /src/CuteAnt.Features
 /nuspecs
 /NuGet.Config
+/test/DotNetty.Transport.Tests.Performance/Perf
