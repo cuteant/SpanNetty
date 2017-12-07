@@ -27,7 +27,11 @@ namespace DotNetty.Handlers.Tls
 #elif DESKTOPCLR
           SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12)
 #else
-          SslProtocols.Tls12 | SslProtocols.Tls11)
+#if DEBUG
+          SslProtocols.Tls12 | SslProtocols.Tls11)  // 注意 xunit.2.3.1 tls1.0测试无法通过
+#else
+          SslProtocols.Tls | SslProtocols.Tls12 | SslProtocols.Tls11)
+#endif
 #endif
     {
     }

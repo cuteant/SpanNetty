@@ -34,7 +34,7 @@ namespace DotNetty.Handlers.Tls
 #elif DESKTOPCLR
           SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12
 #else
-          SslProtocols.Tls12 | SslProtocols.Tls11
+          SslProtocols.Tls11 | SslProtocols.Tls12
 #endif
           , checkCertificateRevocation, certificates, targetHost)
     {
