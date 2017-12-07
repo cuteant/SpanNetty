@@ -8,52 +8,52 @@
     <VersionSuffix Condition=" '$(VersionDateSuffix)'!='' ">$(VersionSuffix)-$(VersionDateSuffix)</VersionSuffix>-->
   </PropertyGroup>
   <Choose>
-    <When Condition="'$(TargetFramework)' == 'net40'">
+    <When Condition=" '$(TargetFramework)' == 'net40' ">
       <PropertyGroup>
         <FileVersion>0.4.7.0</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition="'$(TargetFramework)' == 'net45'">
+    <When Condition=" '$(TargetFramework)' == 'net45' ">
       <PropertyGroup>
         <FileVersion>0.4.7.1000</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition="'$(TargetFramework)' == 'net451'">
+    <When Condition=" '$(TargetFramework)' == 'net451' ">
       <PropertyGroup>
         <FileVersion>0.4.7.1100</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition="'$(TargetFramework)' == 'net452'">
+    <When Condition=" '$(TargetFramework)' == 'net452' ">
       <PropertyGroup>
         <FileVersion>0.4.7.1200</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition="'$(TargetFramework)' == 'net46'">
+    <When Condition=" '$(TargetFramework)' == 'net46' ">
       <PropertyGroup>
         <FileVersion>0.4.7.2000</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition="'$(TargetFramework)' == 'net461'">
+    <When Condition=" '$(TargetFramework)' == 'net461' ">
       <PropertyGroup>
         <FileVersion>0.4.7.2100</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition="'$(TargetFramework)' == 'net462'">
+    <When Condition=" '$(TargetFramework)' == 'net462' ">
       <PropertyGroup>
         <FileVersion>0.4.7.2200</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition="'$(TargetFramework)' == 'net47'">
+    <When Condition=" '$(TargetFramework)' == 'net47' ">
       <PropertyGroup>
         <FileVersion>0.4.7.3000</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition="'$(TargetFramework)' == 'net471'">
+    <When Condition=" '$(TargetFramework)' == 'net471' ">
       <PropertyGroup>
         <FileVersion>0.4.7.3100</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <When Condition=" '$(TargetFramework)' == 'netcoreapp2.0' or '$(TargetFramework)' == 'netstandard2.0' ">
       <PropertyGroup>
         <FileVersion>0.4.7.5000</FileVersion>
       </PropertyGroup>
