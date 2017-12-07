@@ -254,11 +254,7 @@ namespace DotNetty.Handlers.Tests
       }, TimeSpan.FromMilliseconds(10), timeout);
     }
 
-#if DESKTOPCLR
     [Theory]
-#else
-    [Theory(Skip ="aaaaaaaa")]
-#endif
     [InlineData(true)]
     [InlineData(false)]
     public void NoAutoReadHandshakeProgresses(bool dropChannelActive)
