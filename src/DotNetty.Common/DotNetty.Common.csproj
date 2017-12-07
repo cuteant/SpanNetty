@@ -19,7 +19,7 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net471' ">
     <PackageReference Include="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsLoggingPackageVersion)" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net451' or '$(TargetFramework)' == 'net40' ">
     <PackageReference Include="NetFx.Extensions.Logging" Version="$(NetFxExtensionsLoggingPackageVersion)" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'net451' ">
@@ -29,6 +29,5 @@
     <PackageReference Include="Microsoft.Bcl" Version="$(MicrosoftBclPackageVersion)" />
     <PackageReference Include="Microsoft.Bcl.Async" Version="$(MicrosoftBclAsyncPackageVersion)" />
     <PackageReference Include="Microsoft.Bcl.Build" Version="$(MicrosoftBclBuildPackageVersion)" />
-    <PackageReference Include="NLog.Extensions.Logging.Unofficial" Version="$(NLogExtensionsLoggingUnofficialPackageVersion)" />
   </ItemGroup>
 </Project>

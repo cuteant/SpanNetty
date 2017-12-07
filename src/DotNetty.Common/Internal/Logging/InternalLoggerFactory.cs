@@ -7,9 +7,6 @@ namespace DotNetty.Common.Internal.Logging
     using System.Diagnostics.Contracts;
     using System.Threading;
     using Microsoft.Extensions.Logging;
-#if NET40
-    using NLog.Extensions.Logging;
-#endif
 
     /// <summary>
     ///     Creates an <see cref="IInternalLogger" /> or changes the default factory
@@ -42,15 +39,14 @@ namespace DotNetty.Common.Internal.Logging
 
         static ILoggerFactory NewDefaultFactory(string name)
         {
-            var f = new LoggerFactory();
 #if !NET40
+            var f = new LoggerFactory();
             f.AddProvider(new EventSourceLoggerProvider());
             f.CreateLogger(name).LogDebug("Using EventSource as the default logging framework");
-#else
-            f.AddNLog();
-            f.CreateLogger(name).LogDebug("Using NLog as the default logging framework");
-#endif
             return f;
+#else
+            return Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
+#endif
         }
 
         /// <summary>

@@ -2,13 +2,16 @@
 namespace DotNetty.Handlers.Tls
 {
   using System;
+  using System.Diagnostics.Contracts;
   using System.IO;
   using System.Linq;
   using System.Net;
   using System.Net.Security;
-  using System.Security.Authentication;
   using System.Security.Cryptography.X509Certificates;
   using System.Threading.Tasks;
+#if DESKTOPCLR
+  using System.Security.Authentication;
+#endif
 
   partial class TlsHandler
   {
@@ -28,6 +31,8 @@ namespace DotNetty.Handlers.Tls
 
     private static SslStream CreateSslStream(TlsSettings settings, Stream stream)
     {
+      Contract.Requires(settings != null);
+
       if (settings is ServerTlsSettings serverSettings)
       {
         EnsureCertificateIsAllowedForServerAuth(ConvertToX509Certificate2(serverSettings.Certificate));
