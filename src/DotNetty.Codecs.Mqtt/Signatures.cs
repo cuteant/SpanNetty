@@ -10,11 +10,9 @@ namespace DotNetty.Codecs.Mqtt
     {
         const byte QoS1Signature = (int)QualityOfService.AtLeastOnce << 1;
 
-    // most often used (anticipated) come first
+        // most often used (anticipated) come first
 
-#if !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(InlineMethod.Value)]
         public static bool IsPublish(int signature)
         {
             const byte TypeOnlyMask = 0xf << 4;

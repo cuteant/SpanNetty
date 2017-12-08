@@ -1238,9 +1238,7 @@ namespace DotNetty.Buffers
             this.CheckIndex0(index, fieldLength);
         }
 
-#if !NET40
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(InlineMethod.Value)]
         protected void CheckIndex0(int index, int fieldLength)
         {
             if (MathUtil.IsOutOfBounds(index, fieldLength, this.Capacity))
@@ -1249,9 +1247,7 @@ namespace DotNetty.Buffers
             }
         }
 
-#if !NET40
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(InlineMethod.Value)]
         protected void CheckSrcIndex(int index, int length, int srcIndex, int srcCapacity)
         {
             this.CheckIndex(index, length);
@@ -1261,9 +1257,7 @@ namespace DotNetty.Buffers
             }
         }
 
-#if !NET40
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(InlineMethod.Value)]
         protected void CheckDstIndex(int index, int length, int dstIndex, int dstCapacity)
         {
             this.CheckIndex(index, length);
@@ -1301,9 +1295,7 @@ namespace DotNetty.Buffers
             }
         }
 
-#if !NET40
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(InlineMethod.Value)]
         protected void EnsureAccessible()
         {
             if (CheckAccessible && this.ReferenceCount == 0)

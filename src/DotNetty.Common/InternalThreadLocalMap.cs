@@ -1,12 +1,10 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
+// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Common
 {
     using System;
-#if !NET40
     using System.Runtime.CompilerServices;
-#endif
     using System.Text;
     using System.Threading;
     using DotNetty.Common.Utilities;
@@ -46,14 +44,10 @@ namespace DotNetty.Common
             return index;
         }
 
-#if !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(InlineMethod.Value)]
         public static InternalThreadLocalMap GetIfSet() => slowThreadLocalMap;
 
-#if !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(InlineMethod.Value)]
         public static InternalThreadLocalMap Get()
         {
             InternalThreadLocalMap ret = slowThreadLocalMap;
@@ -147,9 +141,7 @@ namespace DotNetty.Common
             set => this.localChannelReaderStackDepth = value;
         }
 
-#if !NET40
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
+        [MethodImpl(InlineMethod.Value)]
         public object GetIndexedVariable(int index)
         {
             object[] lookup = this.indexedVariables;
