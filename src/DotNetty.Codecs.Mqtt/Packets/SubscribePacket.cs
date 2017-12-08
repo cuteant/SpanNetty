@@ -22,9 +22,9 @@ namespace DotNetty.Codecs.Mqtt.Packets
         public override QualityOfService QualityOfService => QualityOfService.AtLeastOnce;
 
 #if NET40
-    public IList<SubscriptionRequest> Requests { get; set; }
+        public IList<SubscriptionRequest> Requests { get; set; }
 #else
-    public IReadOnlyList<SubscriptionRequest> Requests { get; set; }
+        public IReadOnlyList<SubscriptionRequest> Requests { get; set; }
 #endif
     }
 }

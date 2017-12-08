@@ -38,7 +38,7 @@ namespace DotNetty.Handlers.Tls
     }
 
     public ClientTlsSettings(SslProtocols enabledProtocols, bool checkCertificateRevocation, List<X509Certificate> certificates, string targetHost)
-        : base(enabledProtocols, checkCertificateRevocation)
+      : base(enabledProtocols, checkCertificateRevocation)
     {
       X509CertificateCollection = new X509CertificateCollection(certificates.ToArray());
       TargetHost = targetHost;

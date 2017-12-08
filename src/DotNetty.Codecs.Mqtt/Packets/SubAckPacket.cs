@@ -10,9 +10,9 @@ namespace DotNetty.Codecs.Mqtt.Packets
         public override PacketType PacketType => PacketType.SUBACK;
 
 #if NET40
-    public IList<QualityOfService> ReturnCodes { get; set; }
+        public IList<QualityOfService> ReturnCodes { get; set; }
 #else
-    public IReadOnlyList<QualityOfService> ReturnCodes { get; set; }
+        public IReadOnlyList<QualityOfService> ReturnCodes { get; set; }
 #endif
 
         public static SubAckPacket InResponseTo(SubscribePacket subscribePacket, QualityOfService maxQoS)

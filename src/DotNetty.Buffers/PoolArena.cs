@@ -42,13 +42,13 @@ namespace DotNetty.Buffers
         readonly PoolChunkList<T> q100;
 
 #if NET40
-    readonly IList<IPoolChunkListMetric> chunkListMetrics;
+        readonly IList<IPoolChunkListMetric> chunkListMetrics;
 #else
-    readonly IReadOnlyList<IPoolChunkListMetric> chunkListMetrics;
+        readonly IReadOnlyList<IPoolChunkListMetric> chunkListMetrics;
 #endif
 
-    // Metrics for allocations and deallocations
-    long allocationsNormal;
+        // Metrics for allocations and deallocations
+        long allocationsNormal;
 
         // We need to use the LongCounter here as this is not guarded via synchronized block.
         long allocationsTiny;
@@ -463,17 +463,17 @@ namespace DotNetty.Buffers
         public int NumChunkLists => this.chunkListMetrics.Count;
 
 #if NET40
-    public IList<IPoolSubpageMetric> TinySubpages => SubPageMetricList(this.tinySubpagePools);
+        public IList<IPoolSubpageMetric> TinySubpages => SubPageMetricList(this.tinySubpagePools);
 
-    public IList<IPoolSubpageMetric> SmallSubpages => SubPageMetricList(this.smallSubpagePools);
+        public IList<IPoolSubpageMetric> SmallSubpages => SubPageMetricList(this.smallSubpagePools);
 
-    public IList<IPoolChunkListMetric> ChunkLists => this.chunkListMetrics;
+        public IList<IPoolChunkListMetric> ChunkLists => this.chunkListMetrics;
 #else
-    public IReadOnlyList<IPoolSubpageMetric> TinySubpages => SubPageMetricList(this.tinySubpagePools);
+        public IReadOnlyList<IPoolSubpageMetric> TinySubpages => SubPageMetricList(this.tinySubpagePools);
 
-    public IReadOnlyList<IPoolSubpageMetric> SmallSubpages => SubPageMetricList(this.smallSubpagePools);
+        public IReadOnlyList<IPoolSubpageMetric> SmallSubpages => SubPageMetricList(this.smallSubpagePools);
 
-    public IReadOnlyList<IPoolChunkListMetric> ChunkLists => this.chunkListMetrics;
+        public IReadOnlyList<IPoolChunkListMetric> ChunkLists => this.chunkListMetrics;
 #endif
 
         static List<IPoolSubpageMetric> SubPageMetricList(PoolSubpage<T>[] pages)
