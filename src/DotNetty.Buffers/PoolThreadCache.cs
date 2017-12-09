@@ -106,7 +106,7 @@ namespace DotNetty.Buffers
             }
 
             // We only need to watch the thread when any cache is used.
-            if (this.tinySubPageDirectCaches != null || this.smallSubPageDirectCaches != null || this.normalDirectCaches != null 
+            if (this.tinySubPageDirectCaches != null || this.smallSubPageDirectCaches != null || this.normalDirectCaches != null
                 || this.tinySubPageHeapCaches != null || this.smallSubPageHeapCaches != null || this.normalHeapCaches != null)
             {
                 this.freeTask = this.Free0;
@@ -178,19 +178,19 @@ namespace DotNetty.Buffers
         /**
          * Try to allocate a tiny buffer out of the cache. Returns {@code true} if successful {@code false} otherwise
          */
-        internal bool AllocateTiny(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) => 
+        internal bool AllocateTiny(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
             this.Allocate(this.CacheForTiny(area, normCapacity), buf, reqCapacity);
 
         /**
          * Try to allocate a small buffer out of the cache. Returns {@code true} if successful {@code false} otherwise
          */
-        internal bool AllocateSmall(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) => 
+        internal bool AllocateSmall(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
             this.Allocate(this.CacheForSmall(area, normCapacity), buf, reqCapacity);
 
         /**
          * Try to allocate a small buffer out of the cache. Returns {@code true} if successful {@code false} otherwise
          */
-        internal bool AllocateNormal(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) => 
+        internal bool AllocateNormal(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
             this.Allocate(this.CacheForNormal(area, normCapacity), buf, reqCapacity);
 
         bool Allocate(MemoryRegionCache cache, PooledByteBuffer<T> buf, int reqCapacity)
@@ -361,7 +361,7 @@ namespace DotNetty.Buffers
             }
 
             protected override void InitBuf(
-                PoolChunk<T> chunk, long handle, PooledByteBuffer<T> buf, int reqCapacity) => 
+                PoolChunk<T> chunk, long handle, PooledByteBuffer<T> buf, int reqCapacity) =>
                 chunk.InitBufWithSubpage(buf, handle, reqCapacity);
         }
 
@@ -376,7 +376,7 @@ namespace DotNetty.Buffers
             }
 
             protected override void InitBuf(
-                PoolChunk<T> chunk, long handle, PooledByteBuffer<T> buf, int reqCapacity) => 
+                PoolChunk<T> chunk, long handle, PooledByteBuffer<T> buf, int reqCapacity) =>
                 chunk.InitBuf(buf, handle, reqCapacity);
         }
 

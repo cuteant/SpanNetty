@@ -18,8 +18,8 @@ namespace DotNetty.Microbench
     {
         static readonly Type[] BenchmarkTypes =
         {
-            typeof(PooledHeapByteBufferAllocatorBenchmark),
-            typeof(UnpooledHeapByteBufferAllocatorBenchmark),
+            typeof(PooledByteBufferAllocatorBenchmark),
+            typeof(UnpooledByteBufferAllocatorBenchmark),
 
             typeof(ByteBufferBenchmark),
             typeof(PooledByteBufferBenchmark),

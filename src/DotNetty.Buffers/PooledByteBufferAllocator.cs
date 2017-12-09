@@ -216,7 +216,7 @@ namespace DotNetty.Buffers
             Contract.Requires((pageSize & pageSize - 1) == 0, "Expected power of 2");
 
             // Logarithm base 2. At this point we know that pageSize is a power of two.
-            return (sizeof(int) * 8 - 1) -  pageSize.NumberOfLeadingZeros();
+            return (sizeof(int) * 8 - 1) - pageSize.NumberOfLeadingZeros();
         }
 
         static int ValidateAndCalculateChunkSize(int pageSize, int maxOrder)
@@ -274,7 +274,7 @@ namespace DotNetty.Buffers
 
         public static bool DefaultPreferDirect => PlatformDependent.DirectBufferPreferred;
 
-        public override bool IsDirectBufferPooled =>  this.heapArenas != null;
+        public override bool IsDirectBufferPooled => this.heapArenas != null;
 
         sealed class PoolThreadLocalCache : FastThreadLocal<PoolThreadCache<byte[]>>
         {
@@ -293,7 +293,7 @@ namespace DotNetty.Buffers
                     PoolArena<byte[]> directArena = this.LeastUsedArena(this.owner.directArenas);
 
                     return new PoolThreadCache<byte[]>(
-                            heapArena, directArena, 
+                            heapArena, directArena,
                             this.owner.tinyCacheSize, this.owner.smallCacheSize, this.owner.normalCacheSize,
                             DefaultMaxCachedBufferCapacity, DefaultCacheTrimInterval);
                 }
@@ -343,7 +343,7 @@ namespace DotNetty.Buffers
         public PooledByteBufferAllocatorMetric Metric => this.metric;
 
         IByteBufferAllocatorMetric IByteBufferAllocatorMetricProvider.Metric => this.Metric;
-        
+
         internal long UsedHeapMemory => UsedMemory(this.heapArenas);
 
         internal long UsedDirectMemory => UsedMemory(this.directArenas);

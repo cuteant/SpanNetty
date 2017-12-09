@@ -16,25 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3D04C4DC-6F8
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{B6984E67-A4D0-459E-B3C9-01CA4DBBE241}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "BitManipulator.Sources", "..\CuteAnt.Extensions.Common\src\BitManipulator.Sources\BitManipulator.Sources.shproj", "{7EF98A5A-F149-46A1-9012-FF422B5B3764}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CuteAnt.Extensions.Async.Sources", "..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.Async.Sources\CuteAnt.Extensions.Async.Sources.shproj", "{B2BE33A0-1EB0-49F7-BD28-72806D4A1DF1}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CuteAnt.Extensions.DateTimeUtilities.Sources", "..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.DateTimeUtilities.Sources\CuteAnt.Extensions.DateTimeUtilities.Sources.shproj", "{F0DCBA0C-1EE9-403C-931C-555776F6C680}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CuteAnt.Extensions.IO.Sources", "..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.IO.Sources\CuteAnt.Extensions.IO.Sources.shproj", "{88B40B6F-FDBD-4384-9581-F53A140D4FFA}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CuteAnt.Extensions.Logging.Sources", "..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.Logging.Sources\CuteAnt.Extensions.Logging.Sources.shproj", "{8DBB7DC8-2B90-4A8C-A60D-D41466174BDE}"
-EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CuteAnt.Extensions.Reflection.Sources", "..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.Reflection.Sources\CuteAnt.Extensions.Reflection.Sources.shproj", "{C7F8DBE6-77B7-494D-AF00-018F7579548C}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CuteAnt.Extensions.Security.Sources", "..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.Security.Sources\CuteAnt.Extensions.Security.Sources.shproj", "{020315CF-387F-477E-8B6E-0DD2F9DDE232}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Nito.AsyncEx.Tasks.Sources", "..\CuteAnt.Extensions.Common\src\Nito.AsyncEx.Tasks.Sources\Nito.AsyncEx.Tasks.Sources.shproj", "{90BCC560-AA2B-4146-858A-9E524B696F75}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "System.ServiceModel.Internals.Interop", "..\CuteAnt.Extensions.Common\src\System.ServiceModel.Internals.Interop\System.ServiceModel.Internals.Interop.shproj", "{D52035FF-2F78-4B31-8108-C89B072609F7}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CuteAnt.Extensions.TypeNameHelper.Sources", "..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.TypeNameHelper.Sources\CuteAnt.Extensions.TypeNameHelper.Sources.shproj", "{B8008769-2082-44FD-AEFC-DD19BD973982}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Common", "src\DotNetty.Common\DotNetty.Common.csproj", "{3B9613C3-0FE1-4F7A-AD5A-454952629867}"
 EndProject
@@ -51,8 +33,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Mqtt", "src\DotNetty.Codecs.Mqtt\DotNetty.Codecs.Mqtt.csproj", "{D8AE3ECA-1BE6-44C5-9174-7C92CCFBEFC2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Redis", "src\DotNetty.Codecs.Redis\DotNetty.Codecs.Redis.csproj", "{4ED4B313-21BA-473E-ADC0-FF36E64C2DCF}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Transport.Libuv", "src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj", "{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Tests.Common", "test\DotNetty.Tests.Common.Net40\DotNetty.Tests.Common.csproj", "{23BA9A56-8FD6-4ACC-AC34-F6D6122A9141}"
 EndProject
@@ -77,17 +57,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Transport.Tests", 
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.Security.Sources\CuteAnt.Extensions.Security.Sources.projitems*{020315cf-387f-477e-8b6e-0dd2f9dde232}*SharedItemsImports = 13
-		..\CuteAnt.Extensions.Common\src\BitManipulator.Sources\BitManipulator.Sources.projitems*{7ef98a5a-f149-46a1-9012-ff422b5b3764}*SharedItemsImports = 13
-		..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.IO.Sources\CuteAnt.Extensions.IO.Sources.projitems*{88b40b6f-fdbd-4384-9581-f53a140d4ffa}*SharedItemsImports = 13
-		..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.Logging.Sources\CuteAnt.Extensions.Logging.Sources.projitems*{8dbb7dc8-2b90-4a8c-a60d-d41466174bde}*SharedItemsImports = 13
-		..\CuteAnt.Extensions.Common\src\Nito.AsyncEx.Tasks.Sources\Nito.AsyncEx.Tasks.Sources.projitems*{90bcc560-aa2b-4146-858a-9e524b696f75}*SharedItemsImports = 13
-		..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.Async.Sources\CuteAnt.Extensions.Async.Sources.projitems*{b2be33a0-1eb0-49f7-bd28-72806d4a1df1}*SharedItemsImports = 13
-		..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.TypeNameHelper.Sources\CuteAnt.Extensions.TypeNameHelper.Sources.projitems*{b8008769-2082-44fd-aefc-dd19bd973982}*SharedItemsImports = 13
 		..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.Reflection.Sources\CuteAnt.Extensions.Reflection.Sources.projitems*{c7f8dbe6-77b7-494d-af00-018f7579548c}*SharedItemsImports = 13
-		..\CuteAnt.Extensions.Common\src\System.ServiceModel.Internals.Interop\System.ServiceModel.Internals.Interop.projitems*{d52035ff-2f78-4b31-8108-c89b072609f7}*SharedItemsImports = 13
 		..\CuteAnt.Extensions.Common\src\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems*{d90e9b82-6317-4055-82e3-fe8625c143e9}*SharedItemsImports = 13
-		..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.DateTimeUtilities.Sources\CuteAnt.Extensions.DateTimeUtilities.Sources.projitems*{f0dcba0c-1ee9-403c-931c-555776f6c680}*SharedItemsImports = 13
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -212,22 +183,6 @@ Global
 		{4ED4B313-21BA-473E-ADC0-FF36E64C2DCF}.Release|x64.Build.0 = Release|Any CPU
 		{4ED4B313-21BA-473E-ADC0-FF36E64C2DCF}.Release|x86.ActiveCfg = Release|Any CPU
 		{4ED4B313-21BA-473E-ADC0-FF36E64C2DCF}.Release|x86.Build.0 = Release|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Debug|ARM.Build.0 = Debug|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Debug|x64.Build.0 = Debug|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Debug|x86.Build.0 = Debug|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Release|ARM.ActiveCfg = Release|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Release|ARM.Build.0 = Release|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Release|x64.ActiveCfg = Release|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Release|x64.Build.0 = Release|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Release|x86.ActiveCfg = Release|Any CPU
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}.Release|x86.Build.0 = Release|Any CPU
 		{23BA9A56-8FD6-4ACC-AC34-F6D6122A9141}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{23BA9A56-8FD6-4ACC-AC34-F6D6122A9141}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{23BA9A56-8FD6-4ACC-AC34-F6D6122A9141}.Debug|ARM.ActiveCfg = Debug|Any CPU
@@ -377,16 +332,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{7EF98A5A-F149-46A1-9012-FF422B5B3764} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
-		{B2BE33A0-1EB0-49F7-BD28-72806D4A1DF1} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
-		{F0DCBA0C-1EE9-403C-931C-555776F6C680} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
-		{88B40B6F-FDBD-4384-9581-F53A140D4FFA} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
-		{8DBB7DC8-2B90-4A8C-A60D-D41466174BDE} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
 		{C7F8DBE6-77B7-494D-AF00-018F7579548C} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
-		{020315CF-387F-477E-8B6E-0DD2F9DDE232} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
-		{90BCC560-AA2B-4146-858A-9E524B696F75} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
-		{D52035FF-2F78-4B31-8108-C89B072609F7} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
-		{B8008769-2082-44FD-AEFC-DD19BD973982} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
 		{3B9613C3-0FE1-4F7A-AD5A-454952629867} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{0040F4F7-B6F8-4823-A6F6-1ABC16C20098} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{C2A9F2F6-363A-4AE0-8080-6830CB204996} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
@@ -395,7 +341,6 @@ Global
 		{B4E683BC-92EA-4ADC-8B99-BA7208507D80} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{D8AE3ECA-1BE6-44C5-9174-7C92CCFBEFC2} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{4ED4B313-21BA-473E-ADC0-FF36E64C2DCF} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
-		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{23BA9A56-8FD6-4ACC-AC34-F6D6122A9141} = {01F3CC7E-F996-411E-AFD6-72673A826549}
 		{2CE6DC69-0C2E-4243-A5C1-DCDB96453916} = {01F3CC7E-F996-411E-AFD6-72673A826549}
 		{0C84F94E-9E0E-4B84-8008-CEFF8AF393DD} = {01F3CC7E-F996-411E-AFD6-72673A826549}

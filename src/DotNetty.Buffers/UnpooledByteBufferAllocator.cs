@@ -15,7 +15,7 @@ namespace DotNetty.Buffers
         readonly UnpooledByteBufferAllocatorMetric metric = new UnpooledByteBufferAllocatorMetric();
         readonly bool disableLeakDetector;
 
-        public static readonly UnpooledByteBufferAllocator Default = 
+        public static readonly UnpooledByteBufferAllocator Default =
             new UnpooledByteBufferAllocator(PlatformDependent.DirectBufferPreferred);
 
         public UnpooledByteBufferAllocator()
@@ -23,12 +23,12 @@ namespace DotNetty.Buffers
         {
         }
 
-        public UnpooledByteBufferAllocator(bool preferDirect) 
+        public UnpooledByteBufferAllocator(bool preferDirect)
             : this(preferDirect, false)
         {
         }
 
-        public UnpooledByteBufferAllocator(bool preferDirect, bool disableLeakDetector) 
+        public UnpooledByteBufferAllocator(bool preferDirect, bool disableLeakDetector)
             : base(preferDirect)
         {
             this.disableLeakDetector = disableLeakDetector;
@@ -64,7 +64,7 @@ namespace DotNetty.Buffers
         internal void DecrementDirect(int amount) => this.metric.DirectCounter(-amount);
 
         internal void IncrementHeap(int amount) => this.metric.HeapCounter(amount);
-        
+
         internal void DecrementHeap(int amount) => this.metric.HeapCounter(-amount);
 
         sealed class InstrumentedUnpooledHeapByteBuffer : UnpooledHeapByteBuffer

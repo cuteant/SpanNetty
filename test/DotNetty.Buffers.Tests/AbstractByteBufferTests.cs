@@ -2524,6 +2524,33 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
+        public void ReadSliceOutOfBounds() => Assert.Throws<IndexOutOfRangeException>(() => this.ReadSliceOutOfBoundsInteranl(false));
+
+        [Fact]
+        public void ReadRetainedSliceOutOfBounds() => Assert.Throws<IndexOutOfRangeException>(() => this.ReadSliceOutOfBoundsInteranl(true));
+
+        void ReadSliceOutOfBoundsInteranl(bool retainedSlice)
+        {
+            IByteBuffer buf = this.NewBuffer(100);
+            try
+            {
+                buf.WriteZero(50);
+                if (retainedSlice)
+                {
+                    buf.ReadRetainedSlice(51);
+                }
+                else
+                {
+                    buf.ReadSlice(51);
+                }
+            }
+            finally
+            {
+                buf.Release();
+            }
+        }
+
+        [Fact]
         public virtual void WriteUsAsciiCharSequenceExpand() => this.WriteCharSequenceExpand(Encoding.ASCII);
 
         [Fact]

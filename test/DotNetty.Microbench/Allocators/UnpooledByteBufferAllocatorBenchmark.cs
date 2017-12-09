@@ -5,10 +5,9 @@ namespace DotNetty.Microbench.Allocators
 {
     using DotNetty.Buffers;
 
-    public class PooledByteBufferAllocatorBenchmark : AbstractByteBufferAllocatorBenchmark
+    public class UnpooledByteBufferAllocatorBenchmark : AbstractByteBufferAllocatorBenchmark
     {
-        public PooledByteBufferAllocatorBenchmark()
-            : base(new PooledByteBufferAllocator(true, 4, 4, 8192, 11, 0, 0, 0)) // Disable thread-local cache
+        public UnpooledByteBufferAllocatorBenchmark() : base(new UnpooledByteBufferAllocator(true))
         {
         }
     }
