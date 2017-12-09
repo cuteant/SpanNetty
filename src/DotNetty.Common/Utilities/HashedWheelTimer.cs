@@ -9,9 +9,9 @@ namespace DotNetty.Common.Utilities
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
-    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using CuteAnt.Text;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
@@ -535,7 +535,7 @@ namespace DotNetty.Common.Utilities
                 PreciseTimeSpan currentTime = PreciseTimeSpan.FromStart - this.timer.StartTime;
                 TimeSpan remaining = this.Deadline - currentTime.ToTimeSpan();
 
-                StringBuilder buf = new StringBuilder(192)
+                var buf = StringBuilderCache.Acquire() // new StringBuilder(192)
                     .Append(this.GetType().Name)
                     .Append('(')
                     .Append("deadline: ");
@@ -559,10 +559,12 @@ namespace DotNetty.Common.Utilities
                     buf.Append(", cancelled");
                 }
 
-                return buf.Append(", task: ")
+                var result = buf.Append(", task: ")
                     .Append(this.Task)
                     .Append(')')
                     .ToString();
+                StringBuilderCache.Release(buf);
+                return result;
             }
         }
 

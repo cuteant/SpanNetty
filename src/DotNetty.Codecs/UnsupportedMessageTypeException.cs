@@ -4,7 +4,7 @@
 namespace DotNetty.Codecs
 {
     using System;
-    using System.Text;
+    using CuteAnt.Pool;
 
     /// <summary>
     ///     Thrown if an unsupported message is received by an codec.
@@ -37,7 +37,7 @@ namespace DotNetty.Codecs
 
         static string ComposeMessage(string actualType, params Type[] expectedTypes)
         {
-            var buf = new StringBuilder(actualType);
+            var buf = StringBuilderManager.Allocate().Append(actualType);
 
             if (expectedTypes != null && expectedTypes.Length > 0)
             {
@@ -54,7 +54,7 @@ namespace DotNetty.Codecs
                 buf.Append(')');
             }
 
-            return buf.ToString();
+            return StringBuilderManager.ReturnAndFree(buf);
         }
     }
 }

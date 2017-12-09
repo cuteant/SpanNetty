@@ -13,6 +13,7 @@ namespace DotNetty.Codecs.Http.Multipart
     using System.IO;
     using System.Text;
     using System.Text.RegularExpressions;
+    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
@@ -401,7 +402,7 @@ namespace DotNetty.Codecs.Http.Multipart
                         var pastAttribute = (InternalAttribute)this.MultipartHttpDatas[this.MultipartHttpDatas.Count - 2];
                         // remove past size
                         this.globalBodySize -= pastAttribute.Size;
-                        StringBuilder replacement = new StringBuilder(
+                        var replacement = StringBuilderManager.Allocate(
                             139 + this.MultipartDataBoundary.Length + this.MultipartMixedBoundary.Length * 2
                                 + fileUpload.FileName.Length + fileUpload.Name.Length)
                             .Append("--")
@@ -445,7 +446,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
                         replacement.Append("\r\n");
 
-                        pastAttribute.SetValue(replacement.ToString(), 1);
+                        pastAttribute.SetValue(StringBuilderManager.ReturnAndFree(replacement), 1);
                         pastAttribute.SetValue("", 2);
 
                         // update past size

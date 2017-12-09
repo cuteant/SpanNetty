@@ -10,6 +10,7 @@ namespace DotNetty.Buffers
     using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Common.Utilities;
 
     sealed class PoolChunkList<T> : IPoolChunkListMetric
@@ -212,11 +213,12 @@ namespace DotNetty.Buffers
 
         public override string ToString()
         {
-            var buf = new StringBuilder();
+            var buf = StringBuilderManager.Allocate();
             lock (this.arena)
             {
                 if (this.head == null)
                 {
+                    StringBuilderManager.Free(buf);
                     return "none";
                 }
 
@@ -232,7 +234,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            return buf.ToString();
+            return StringBuilderManager.ReturnAndFree(buf);
         }
 
         internal void Destroy(PoolArena<T> poolArena)

@@ -4,13 +4,13 @@
 namespace DotNetty.Common.Utilities
 {
     using System.Collections.Generic;
-    using System.Text;
+    using CuteAnt.Pool;
 
     public static class DebugExtensions
     {
         public static string ToDebugString<TKey, TValue>(this IDictionary<TKey, TValue> dictionary)
         {
-            var sb = new StringBuilder();
+            var sb = StringBuilderManager.Allocate();
             bool first = true;
             foreach (KeyValuePair<TKey, TValue> pair in dictionary)
             {
@@ -26,7 +26,8 @@ namespace DotNetty.Common.Utilities
 
                 sb.Append("{`").Append(pair.Key).Append("`: ").Append(pair.Value).Append('}');
             }
-            return sb.Append('}').ToString();
+            sb.Append('}');
+            return StringBuilderManager.ReturnAndFree(sb);
         }
     }
 }

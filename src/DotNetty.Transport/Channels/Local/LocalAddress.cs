@@ -5,7 +5,7 @@ namespace DotNetty.Transport.Channels.Local
 {
     using System;
     using System.Net;
-    using System.Text;
+    using CuteAnt.Text;
 
     public class LocalAddress : EndPoint, IComparable<LocalAddress>
     {
@@ -16,12 +16,12 @@ namespace DotNetty.Transport.Channels.Local
 
         internal LocalAddress(IChannel channel)
         {
-            var buf = new StringBuilder(16);
+            var buf = StringBuilderCache.Acquire(); // new StringBuilder(16);
             buf.Append("local:E");
             buf.Append((channel.GetHashCode() & 0xFFFFFFFFL | 0x100000000L).ToString("X"));
             buf[7] = ':';
-            
-            this.strVal = buf.ToString();
+
+            this.strVal = StringBuilderCache.GetStringAndRelease(buf);
             this.id = this.strVal.Substring(6);
        }
 

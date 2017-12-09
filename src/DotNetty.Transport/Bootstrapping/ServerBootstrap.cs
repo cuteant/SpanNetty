@@ -6,9 +6,9 @@ namespace DotNetty.Transport.Bootstrapping
     using System;
     using System.Diagnostics.Contracts;
     using System.Linq;
-    using System.Text;
     using System.Threading.Tasks;
     using CuteAnt.Collections;
+    using CuteAnt.Pool;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
@@ -242,7 +242,7 @@ namespace DotNetty.Transport.Bootstrapping
 
         public override string ToString()
         {
-            var buf = new StringBuilder(base.ToString());
+            var buf = StringBuilderManager.Allocate().Append(base.ToString());
             buf.Length = buf.Length - 1;
             buf.Append(", ");
             if (this.childGroup != null)
@@ -280,7 +280,7 @@ namespace DotNetty.Transport.Bootstrapping
                 buf.Length = buf.Length - 1;
             }
 
-            return buf.ToString();
+            return StringBuilderManager.ReturnAndFree(buf);
         }
     }
 }

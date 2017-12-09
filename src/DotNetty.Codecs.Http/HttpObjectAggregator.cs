@@ -7,8 +7,8 @@ namespace DotNetty.Codecs.Http
 {
     using System;
     using System.Diagnostics;
-    using System.Text;
     using System.Threading.Tasks;
+    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Internal.Logging;
@@ -317,7 +317,7 @@ namespace DotNetty.Codecs.Http
                 return this;
             }
 
-            public override string ToString() => HttpMessageUtil.AppendFullRequest(new StringBuilder(256), this).ToString();
+            public override string ToString() => StringBuilderManager.ReturnAndFree(HttpMessageUtil.AppendFullRequest(StringBuilderManager.Allocate(256), this));
         }
 
         sealed class AggregatedFullHttpResponse : AggregatedFullHttpMessage, IFullHttpResponse
@@ -350,7 +350,7 @@ namespace DotNetty.Codecs.Http
                 return this;
             }
 
-            public override string ToString() => HttpMessageUtil.AppendFullResponse(new StringBuilder(256), this).ToString();
+            public override string ToString() => StringBuilderManager.ReturnAndFree(HttpMessageUtil.AppendFullResponse(StringBuilderManager.Allocate(256), this));
         }
     }
 }

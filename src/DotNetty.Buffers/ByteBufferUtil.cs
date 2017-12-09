@@ -7,6 +7,7 @@ namespace DotNetty.Buffers
     using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
     using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
@@ -610,24 +611,24 @@ namespace DotNetty.Buffers
                 for (int i = 0; i < HexPadding.Length; i++)
                 {
                     int padding = HexPadding.Length - i;
-                    var buf = new StringBuilder(padding * 3);
+                    var buf = StringBuilderManager.Allocate(padding * 3);
                     for (int j = 0; j < padding; j++)
                     {
                         buf.Append("   ");
                     }
-                    HexPadding[i] = buf.ToString();
+                    HexPadding[i] = StringBuilderManager.ReturnAndFree(buf);
                 }
 
                 // Generate the lookup table for byte dump paddings
                 for (int i = 0; i < BytePadding.Length; i++)
                 {
                     int padding = BytePadding.Length - i;
-                    var buf = new StringBuilder(padding);
+                    var buf = StringBuilderManager.Allocate(padding);
                     for (int j = 0; j < padding; j++)
                     {
                         buf.Append(' ');
                     }
-                    BytePadding[i] = buf.ToString();
+                    BytePadding[i] = StringBuilderManager.ReturnAndFree(buf);
                 }
 
                 // Generate the lookup table for byte-to-char conversion
@@ -646,12 +647,12 @@ namespace DotNetty.Buffers
                 // Generate the lookup table for the start-offset header in each row (up to 64KiB).
                 for (int i = 0; i < HexDumpRowPrefixes.Length; i++)
                 {
-                    var buf = new StringBuilder(12);
+                    var buf = StringBuilderManager.Allocate(); // new StringBuilder(12);
                     buf.Append(Environment.NewLine);
                     buf.Append((i << 4 & 0xFFFFFFFFL | 0x100000000L).ToString("X2"));
                     buf.Insert(buf.Length - 9, '|');
                     buf.Append('|');
-                    HexDumpRowPrefixes[i] = buf.ToString();
+                    HexDumpRowPrefixes[i] = StringBuilderManager.ReturnAndFree(buf);
                 }
             }
 
@@ -708,9 +709,9 @@ namespace DotNetty.Buffers
                 else
                 {
                     int rows = length / 16 + (length % 15 == 0 ? 0 : 1) + 4;
-                    var buf = new StringBuilder(rows * 80);
+                    var buf = StringBuilderManager.Allocate(rows * 80);
                     AppendPrettyHexDump(buf, buffer, offset, length);
-                    return buf.ToString();
+                    return StringBuilderManager.ReturnAndFree(buf);
                 }
             }
 

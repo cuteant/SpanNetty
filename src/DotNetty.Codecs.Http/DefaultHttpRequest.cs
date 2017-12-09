@@ -7,7 +7,7 @@ namespace DotNetty.Codecs.Http
 {
     using System;
     using System.Diagnostics.Contracts;
-    using System.Text;
+    using CuteAnt.Pool;
     
     public class DefaultHttpRequest : DefaultHttpMessage, IHttpRequest
     {
@@ -83,6 +83,6 @@ namespace DotNetty.Codecs.Http
                 && base.Equals(obj);
         }
 
-        public override string ToString() => HttpMessageUtil.AppendRequest(new StringBuilder(256), this).ToString();
+        public override string ToString() => StringBuilderManager.ReturnAndFree(HttpMessageUtil.AppendRequest(StringBuilderManager.Allocate(256), this));
     }
 }

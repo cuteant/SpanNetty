@@ -5,8 +5,8 @@ namespace DotNetty.Handlers.Logging
 {
     using System;
     using System.Net;
-    using System.Text;
     using System.Threading.Tasks;
+    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
@@ -233,11 +233,11 @@ namespace DotNetty.Handlers.Logging
         protected virtual string Format(IChannelHandlerContext ctx, string eventName)
         {
             string chStr = ctx.Channel.ToString();
-            return new StringBuilder(chStr.Length + 1 + eventName.Length)
+            var sb = StringBuilderManager.Allocate(chStr.Length + 1 + eventName.Length)
                 .Append(chStr)
                 .Append(' ')
-                .Append(eventName)
-                .ToString();
+                .Append(eventName);
+            return StringBuilderManager.ReturnAndFree(sb);
         }
 
         /// <summary>
@@ -280,11 +280,11 @@ namespace DotNetty.Handlers.Logging
             string arg1Str = firstArg.ToString();
             string arg2Str = secondArg.ToString();
 
-            var buf = new StringBuilder(
+            var buf = StringBuilderManager.Allocate(
                 chStr.Length + 1 + eventName.Length + 2 + arg1Str.Length + 2 + arg2Str.Length);
             buf.Append(chStr).Append(' ').Append(eventName).Append(": ")
                 .Append(arg1Str).Append(", ").Append(arg2Str);
-            return buf.ToString();
+            return StringBuilderManager.ReturnAndFree(buf);
         }
 
         /// <summary>
@@ -296,19 +296,19 @@ namespace DotNetty.Handlers.Logging
             int length = msg.ReadableBytes;
             if (length == 0)
             {
-                var buf = new StringBuilder(chStr.Length + 1 + eventName.Length + 4);
+                var buf = StringBuilderManager.Allocate(chStr.Length + 1 + eventName.Length + 4);
                 buf.Append(chStr).Append(' ').Append(eventName).Append(": 0B");
-                return buf.ToString();
+                return StringBuilderManager.ReturnAndFree(buf);
             }
             else
             {
                 int rows = length / 16 + (length % 15 == 0 ? 0 : 1) + 4;
-                var buf = new StringBuilder(chStr.Length + 1 + eventName.Length + 2 + 10 + 1 + 2 + rows * 80);
+                var buf = StringBuilderManager.Allocate(chStr.Length + 1 + eventName.Length + 2 + 10 + 1 + 2 + rows * 80);
 
                 buf.Append(chStr).Append(' ').Append(eventName).Append(": ").Append(length).Append('B').Append('\n');
                 ByteBufferUtil.AppendPrettyHexDump(buf, msg);
 
-                return buf.ToString();
+                return StringBuilderManager.ReturnAndFree(buf);
             }
         }
 
@@ -323,21 +323,21 @@ namespace DotNetty.Handlers.Logging
             int length = content.ReadableBytes;
             if (length == 0)
             {
-                var buf = new StringBuilder(chStr.Length + 1 + eventName.Length + 2 + msgStr.Length + 4);
+                var buf = StringBuilderManager.Allocate(chStr.Length + 1 + eventName.Length + 2 + msgStr.Length + 4);
                 buf.Append(chStr).Append(' ').Append(eventName).Append(", ").Append(msgStr).Append(", 0B");
-                return buf.ToString();
+                return StringBuilderManager.ReturnAndFree(buf);
             }
             else
             {
                 int rows = length / 16 + (length % 15 == 0 ? 0 : 1) + 4;
-                var buf = new StringBuilder(
+                var buf = StringBuilderManager.Allocate(
                     chStr.Length + 1 + eventName.Length + 2 + msgStr.Length + 2 + 10 + 1 + 2 + rows * 80);
 
                 buf.Append(chStr).Append(' ').Append(eventName).Append(": ")
                     .Append(msgStr).Append(", ").Append(length).Append('B').Append('\n');
                 ByteBufferUtil.AppendPrettyHexDump(buf, content);
 
-                return buf.ToString();
+                return StringBuilderManager.ReturnAndFree(buf);
             }
         }
 
@@ -348,8 +348,8 @@ namespace DotNetty.Handlers.Logging
         {
             string chStr = ctx.Channel.ToString();
             string msgStr = msg.ToString();
-            var buf = new StringBuilder(chStr.Length + 1 + eventName.Length + 2 + msgStr.Length);
-            return buf.Append(chStr).Append(' ').Append(eventName).Append(": ").Append(msgStr).ToString();
+            var buf = StringBuilderManager.Allocate(chStr.Length + 1 + eventName.Length + 2 + msgStr.Length);
+            return StringBuilderManager.ReturnAndFree(buf.Append(chStr).Append(' ').Append(eventName).Append(": ").Append(msgStr));
         }
     }
 }

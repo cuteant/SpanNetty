@@ -10,6 +10,7 @@ namespace DotNetty.Common.Internal
     using System.Net.Sockets;
     using System.Text;
     using System.Collections.Generic;
+    using CuteAnt.Text;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
@@ -121,12 +122,14 @@ namespace DotNetty.Common.Internal
         /// <returns>hex formatted MAC address.</returns>
         public static string FormatAddress(byte[] addr)
         {
-            StringBuilder buf = new StringBuilder(24);
+            var buf = StringBuilderCache.Acquire(); // new StringBuilder(24);
             foreach (byte b in addr)
             {
                 buf.Append((b & 0xFF).ToString("X2")).Append(":");
             }
-            return buf.ToString(0, buf.Length - 1);
+            var result = buf.ToString(0, buf.Length - 1);
+            StringBuilderCache.Release(buf);
+            return result;
         }
 
         /// <returns>positive - current is better, 0 - cannot tell from MAC addr, negative - candidate is better.</returns>

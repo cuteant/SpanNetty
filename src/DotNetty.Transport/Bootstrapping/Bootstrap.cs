@@ -7,8 +7,8 @@ namespace DotNetty.Transport.Bootstrapping
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Net;
-    using System.Text;
     using System.Threading.Tasks;
+    using CuteAnt.Pool;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
@@ -238,13 +238,12 @@ namespace DotNetty.Transport.Bootstrapping
                 return base.ToString();
             }
 
-            var buf = new StringBuilder(base.ToString());
+            var buf = StringBuilderManager.Allocate().Append(base.ToString());
             buf.Length = buf.Length - 1;
 
-            return buf.Append(", remoteAddress: ")
+            return StringBuilderManager.ReturnAndFree(buf.Append(", remoteAddress: ")
                 .Append(this.remoteAddress)
-                .Append(')')
-                .ToString();
+                .Append(')'));
         }
     }
 }

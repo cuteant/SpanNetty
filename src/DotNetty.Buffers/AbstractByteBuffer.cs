@@ -11,6 +11,7 @@ namespace DotNetty.Buffers
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using CuteAnt.Pool;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
@@ -1276,7 +1277,7 @@ namespace DotNetty.Buffers
                 return StringUtil.SimpleClassName(this) + "(freed)";
             }
 
-            StringBuilder buf = new StringBuilder()
+            var buf = StringBuilderManager.Allocate()
                 .Append(StringUtil.SimpleClassName(this))
                 .Append("(ridx: ").Append(this.readerIndex)
                 .Append(", widx: ").Append(this.writerIndex)
@@ -1292,7 +1293,7 @@ namespace DotNetty.Buffers
                 buf.Append(", unwrapped: ").Append(unwrapped);
             }
             buf.Append(')');
-            return buf.ToString();
+            return StringBuilderManager.ReturnAndFree(buf);
         }
 
         protected void CheckIndex(int index) => this.CheckIndex(index, 1);

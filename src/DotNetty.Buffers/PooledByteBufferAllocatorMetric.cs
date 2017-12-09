@@ -4,7 +4,7 @@
 namespace DotNetty.Buffers
 {
     using System.Collections.Generic;
-    using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Common.Utilities;
 
     public sealed class PooledByteBufferAllocatorMetric : IByteBufferAllocatorMetric
@@ -64,7 +64,7 @@ namespace DotNetty.Buffers
 
         public override string ToString()
         {
-            var sb = new StringBuilder(256);
+            var sb = StringBuilderManager.Allocate(256);
             sb.Append(StringUtil.SimpleClassName(this))
                 .Append("(usedHeapMemory: ").Append(this.UsedHeapMemory)
                 .Append("; usedDirectMemory: ").Append(this.UsedDirectMemory)
@@ -75,7 +75,7 @@ namespace DotNetty.Buffers
                 .Append("; normalCacheSize: ").Append(this.NormalCacheSize)
                 .Append("; numThreadLocalCaches: ").Append(this.NumThreadLocalCaches())
                 .Append("; chunkSize: ").Append(this.ChunkSize).Append(')');
-            return sb.ToString();
+            return StringBuilderManager.ReturnAndFree(sb);
         }
     }
 }

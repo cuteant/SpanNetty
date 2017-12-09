@@ -6,7 +6,7 @@
 namespace DotNetty.Codecs.Http
 {
     using System.Diagnostics.Contracts;
-    using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common;
 
@@ -151,6 +151,6 @@ namespace DotNetty.Codecs.Http
                 && this.trailingHeaders.Equals(other.trailingHeaders);
         }
 
-        public override string ToString() => HttpMessageUtil.AppendFullResponse(new StringBuilder(256), this).ToString();
+        public override string ToString() => StringBuilderManager.ReturnAndFree(HttpMessageUtil.AppendFullResponse(StringBuilderManager.Allocate(256), this));
     }
 }

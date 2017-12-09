@@ -7,6 +7,7 @@ namespace DotNetty.Codecs.Http
 {
     using System;
     using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
 
@@ -597,12 +598,11 @@ namespace DotNetty.Codecs.Http
 
         public int CompareTo(HttpResponseStatus other) => this.code - other.code;
 
-        public override string ToString() => 
-            new StringBuilder(this.ReasonPhrase.Count + 4)
+        public override string ToString() =>
+            StringBuilderManager.ReturnAndFree(StringBuilderManager.Allocate(this.ReasonPhrase.Count + 4)
             .Append(this.Code)
             .Append(' ')
-            .Append(this.ReasonPhrase)
-            .ToString();
+            .Append(this.ReasonPhrase));
 
         internal void Encode(IByteBuffer buf)
         {

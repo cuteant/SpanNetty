@@ -10,6 +10,7 @@ namespace DotNetty.Codecs.Http
     using System.Collections.Immutable;
     using System.Diagnostics.Contracts;
     using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Common.Utilities;
 
     public class QueryStringDecoder
@@ -204,7 +205,7 @@ namespace DotNetty.Codecs.Http
             int decodedCapacity = (toExcluded - firstEscaped) / 3;
             var byteBuf = new byte[decodedCapacity];
             int idx;
-            var strBuf = new StringBuilder(len);
+            var strBuf = StringBuilderManager.Allocate(len);
             strBuf.Append(s, from, firstEscaped - from);
 
             for (int i = firstEscaped; i < toExcluded; i++)
@@ -232,7 +233,7 @@ namespace DotNetty.Codecs.Http
                 strBuf.Append(charset.GetString(byteBuf, 0, idx));
             }
 
-            return strBuf.ToString();
+            return StringBuilderManager.ReturnAndFree(strBuf);
         }
 
         static int FindPathEndIndex(string uri)

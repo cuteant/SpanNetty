@@ -9,6 +9,7 @@ namespace DotNetty.Codecs.Http.Multipart
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
@@ -84,13 +85,13 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override string ToString()
         {
-            var result = new StringBuilder();
+            var result = StringBuilderManager.Allocate();
             foreach (IByteBuffer buf in this.value)
             {
                 result.Append(buf.ToString(this.charset));
             }
-            
-            return result.ToString();
+
+            return StringBuilderManager.ReturnAndFree(result);
         }
 
         public int Size => this.size;

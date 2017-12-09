@@ -8,7 +8,7 @@ namespace DotNetty.Buffers
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
-    using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
@@ -374,7 +374,7 @@ namespace DotNetty.Buffers
         public string DumpStats()
         {
             int heapArenasLen = this.heapArenas?.Length ?? 0;
-            StringBuilder buf = new StringBuilder(512)
+            var buf = StringBuilderManager.Allocate(512)
                     .Append(heapArenasLen)
                     .Append(" heap arena(s):")
                     .Append(StringUtil.Newline);
@@ -400,7 +400,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            return buf.ToString();
+            return StringBuilderManager.ReturnAndFree(buf);
         }
     }
 }

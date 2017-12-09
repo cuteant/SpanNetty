@@ -6,6 +6,7 @@
 namespace DotNetty.Codecs.Http
 {
     using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
 
@@ -40,13 +41,13 @@ namespace DotNetty.Codecs.Http
 
         public override string ToString()
         {
-            var buf = new StringBuilder(base.ToString());
+            var buf = StringBuilderManager.Allocate().Append(base.ToString());
             buf.Append(StringUtil.Newline);
             this.AppendHeaders(buf);
 
             // Remove the last newline.
             buf.Length = buf.Length - StringUtil.Newline.Length;
-            return buf.ToString();
+            return StringBuilderManager.ReturnAndFree(buf);
         }
 
         void AppendHeaders(StringBuilder buf)

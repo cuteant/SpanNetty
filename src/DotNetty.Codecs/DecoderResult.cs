@@ -5,7 +5,7 @@ namespace DotNetty.Codecs
 {
     using System;
     using System.Diagnostics.Contracts;
-    using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Common.Utilities;
 
     public class DecoderResult
@@ -34,7 +34,7 @@ namespace DotNetty.Codecs
 
         public bool IsSuccess => ReferenceEquals(this.cause, SignalSuccess);
 
-        public bool IsFailure => !ReferenceEquals(this.cause, SignalSuccess) 
+        public bool IsFailure => !ReferenceEquals(this.cause, SignalSuccess)
             && !ReferenceEquals(this.cause, SignalUnfinished);
 
         public Exception Cause => this.IsFailure ? this.cause : null;
@@ -52,11 +52,11 @@ namespace DotNetty.Codecs
             }
 
             string error = this.cause.ToString();
-            return new StringBuilder(error.Length + 17)
+            var sb = StringBuilderManager.Allocate(error.Length + 17)
                 .Append("failure(")
                 .Append(error)
-                .Append(')')
-                .ToString();
+                .Append(')');
+            return StringBuilderManager.ReturnAndFree(sb);
         }
     }
 }

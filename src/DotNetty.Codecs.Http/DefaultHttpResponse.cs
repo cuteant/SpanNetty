@@ -5,7 +5,7 @@
 namespace DotNetty.Codecs.Http
 {
     using System.Diagnostics.Contracts;
-    using System.Text;
+    using CuteAnt.Pool;
 
     public class DefaultHttpResponse : DefaultHttpMessage, IHttpResponse
     {
@@ -19,7 +19,7 @@ namespace DotNetty.Codecs.Http
             this.status = status;
         }
 
-        public DefaultHttpResponse(HttpVersion version, HttpResponseStatus status, HttpHeaders headers) 
+        public DefaultHttpResponse(HttpVersion version, HttpResponseStatus status, HttpHeaders headers)
             : base(version, headers)
         {
             Contract.Requires(status != null);
@@ -36,6 +36,6 @@ namespace DotNetty.Codecs.Http
             return this;
         }
 
-        public override string ToString() => HttpMessageUtil.AppendResponse(new StringBuilder(256), this).ToString();
+        public override string ToString() => StringBuilderManager.ReturnAndFree(HttpMessageUtil.AppendResponse(StringBuilderManager.Allocate(256), this));
     }
 }

@@ -9,7 +9,7 @@ namespace DotNetty.Codecs.Http.Cors
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
-    using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
 
@@ -101,7 +101,7 @@ namespace DotNetty.Codecs.Http.Cors
 
         public override string ToString()
         {
-            var builder = new StringBuilder();
+            var builder = StringBuilderManager.Allocate();
             builder.Append($"{StringUtil.SimpleClassName(this)}")
                 .Append($"[enabled = {this.enabled}");
 
@@ -184,7 +184,7 @@ namespace DotNetty.Codecs.Http.Cors
             }
 
             builder.Append("]");
-            return builder.ToString();
+            return StringBuilderManager.ReturnAndFree(builder);
         }
     }
 }

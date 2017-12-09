@@ -6,7 +6,7 @@ namespace DotNetty.Buffers
     using System.Diagnostics;
     using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
-    using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
@@ -471,7 +471,7 @@ namespace DotNetty.Buffers
 
         public override string ToString()
         {
-            return new StringBuilder()
+            var sb = StringBuilderManager.Allocate()
                 .Append("Chunk(")
                 .Append(RuntimeHelpers.GetHashCode(this).ToString("X"))
                 .Append(": ")
@@ -480,8 +480,8 @@ namespace DotNetty.Buffers
                 .Append(this.chunkSize - this.freeBytes)
                 .Append('/')
                 .Append(this.chunkSize)
-                .Append(')')
-                .ToString();
+                .Append(')');
+            return StringBuilderManager.ReturnAndFree(sb);
         }
 
         internal void Destroy() =>this.Arena.DestroyChunk(this);

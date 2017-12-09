@@ -6,6 +6,7 @@ namespace DotNetty.Common.Internal.Logging
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using CuteAnt.Pool;
 
     /// <summary>
     ///     Formats messages according to very simple substitution rules. Substitutions
@@ -145,7 +146,7 @@ namespace DotNetty.Common.Internal.Logging
             }
 
             int i = 0;
-            var sbuf = new StringBuilder(messagePattern.Length + 50);
+            var sbuf = StringBuilderManager.Allocate(messagePattern.Length + 50);
 
             int l;
             for (l = 0; l < argArray.Length; l++)
@@ -204,11 +205,11 @@ namespace DotNetty.Common.Internal.Logging
             sbuf.Append(messagePattern.Substring(i, messagePattern.Length - i));
             if (l < argArray.Length - 1)
             {
-                return new FormattingTuple(sbuf.ToString(), argArray, throwableCandidate);
+                return new FormattingTuple(StringBuilderManager.ReturnAndFree(sbuf), argArray, throwableCandidate);
             }
             else
             {
-                return new FormattingTuple(sbuf.ToString(), argArray, null);
+                return new FormattingTuple(StringBuilderManager.ReturnAndFree(sbuf), argArray, null);
             }
         }
 

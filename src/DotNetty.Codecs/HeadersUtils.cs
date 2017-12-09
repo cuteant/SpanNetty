@@ -4,7 +4,7 @@
 namespace DotNetty.Codecs
 {
     using System.Collections.Generic;
-    using System.Text;
+    using CuteAnt.Pool;
     using DotNetty.Common.Utilities;
 
     public static class HeadersUtils
@@ -47,7 +47,7 @@ namespace DotNetty.Codecs
             else
             {
                 // original capacity assumes 20 chars per headers
-                StringBuilder sb = new StringBuilder(simpleName.Length + 2 + size * 20)
+                var sb = StringBuilderManager.Allocate(simpleName.Length + 2 + size * 20)
                     .Append(simpleName)
                     .Append('[');
                 foreach (HeaderEntry<TKey, TValue> header in headers)
@@ -55,7 +55,7 @@ namespace DotNetty.Codecs
                     sb.Append(header.Key).Append(": ").Append(header.Value).Append(", ");
                 }
                 sb.Length = sb.Length - 2;
-                return sb.Append(']').ToString();
+                return StringBuilderManager.ReturnAndFree(sb.Append(']'));
             }
         }
 

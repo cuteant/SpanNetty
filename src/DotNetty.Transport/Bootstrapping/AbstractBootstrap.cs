@@ -7,9 +7,9 @@ namespace DotNetty.Transport.Bootstrapping
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Net;
-    using System.Text;
     using System.Threading.Tasks;
     using CuteAnt.Collections;
+    using CuteAnt.Pool;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
@@ -362,7 +362,7 @@ namespace DotNetty.Transport.Bootstrapping
 
         public override string ToString()
         {
-            StringBuilder buf = new StringBuilder()
+            var buf = StringBuilderManager.Allocate()
                 .Append(this.GetType().Name)
                 .Append('(');
             if (this.group != null)
@@ -413,7 +413,7 @@ namespace DotNetty.Transport.Bootstrapping
                 buf[buf.Length - 2] = ')';
                 buf.Length = buf.Length - 1;
             }
-            return buf.ToString();
+            return StringBuilderManager.ReturnAndFree(buf);
         }
 
         //static class PendingRegistrationPromise : DefaultChannelPromise

@@ -8,8 +8,8 @@ namespace DotNetty.Codecs.Http
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.Contracts;
-    using System.Text;
     using System.Threading.Tasks;
+    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
@@ -129,7 +129,7 @@ namespace DotNetty.Codecs.Http
         {
         }
 
-        public HttpServerUpgradeHandler(ISourceCodec sourceCodec, IUpgradeCodecFactory upgradeCodecFactory, int maxContentLength) 
+        public HttpServerUpgradeHandler(ISourceCodec sourceCodec, IUpgradeCodecFactory upgradeCodecFactory, int maxContentLength)
             : base(maxContentLength)
         {
             Contract.Requires(sourceCodec != null);
@@ -228,7 +228,7 @@ namespace DotNetty.Codecs.Http
             // Make sure the CONNECTION header contains UPGRADE as well as all protocol-specific headers.
             ICollection<AsciiString> requiredHeaders = upgradeCodec.RequiredUpgradeHeaders;
             IList<ICharSequence> values = SplitHeader(connectionHeader);
-            if (!AsciiString.ContainsContentEqualsIgnoreCase(values, HttpHeaderNames.Upgrade) 
+            if (!AsciiString.ContainsContentEqualsIgnoreCase(values, HttpHeaderNames.Upgrade)
                 || !AsciiString.ContainsAllContentEqualsIgnoreCase(values, requiredHeaders))
             {
                 return false;
@@ -288,7 +288,7 @@ namespace DotNetty.Codecs.Http
 
         static IFullHttpResponse CreateUpgradeResponse(ICharSequence upgradeProtocol)
         {
-            var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.SwitchingProtocols, 
+            var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.SwitchingProtocols,
                 Unpooled.Empty, false);
             res.Headers.Add(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade);
             res.Headers.Add(HttpHeaderNames.Upgrade, upgradeProtocol);
@@ -297,7 +297,7 @@ namespace DotNetty.Codecs.Http
 
         static IList<ICharSequence> SplitHeader(ICharSequence header)
         {
-            var builder = new StringBuilder(header.Count);
+            var builder = StringBuilderManager.Allocate(header.Count);
             var protocols = new List<ICharSequence>(4);
             // ReSharper disable once ForCanBeConvertedToForeach
             for (int i = 0; i < header.Count; ++i)
@@ -326,6 +326,7 @@ namespace DotNetty.Codecs.Http
             {
                 protocols.Add(new AsciiString(builder.ToString()));
             }
+            StringBuilderManager.Free(builder);
 
             return protocols;
         }

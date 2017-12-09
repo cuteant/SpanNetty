@@ -11,6 +11,7 @@ namespace DotNetty.Buffers
     using System.Runtime.InteropServices;
     using System.Text;
     using System.Threading;
+    using CuteAnt.Pool;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
@@ -611,7 +612,7 @@ namespace DotNetty.Buffers
 
         public override string ToString()
         {
-            StringBuilder buf = new StringBuilder()
+            var buf = StringBuilderManager.Allocate()
                 .Append("Chunk(s) at 0~25%:")
                 .Append(StringUtil.Newline)
                 .Append(this.qInit)
@@ -643,7 +644,7 @@ namespace DotNetty.Buffers
             AppendPoolSubPages(buf, this.smallSubpagePools);
             buf.Append(StringUtil.Newline);
 
-            return buf.ToString();
+            return StringBuilderManager.ReturnAndFree(buf);
         }
 
         static void AppendPoolSubPages(StringBuilder buf, PoolSubpage<T>[] subpages)

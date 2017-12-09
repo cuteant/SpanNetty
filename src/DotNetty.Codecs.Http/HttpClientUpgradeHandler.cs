@@ -7,8 +7,8 @@ namespace DotNetty.Codecs.Http
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.Contracts;
-    using System.Text;
     using System.Threading.Tasks;
+    using CuteAnt.Pool;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
@@ -185,14 +185,14 @@ namespace DotNetty.Codecs.Http
             connectionParts.AddRange(this.upgradeCodec.SetUpgradeHeaders(ctx, request));
 
             // Set the CONNECTION header from the set of all protocol-specific headers that were added.
-            var builder = new StringBuilder();
+            var builder = StringBuilderManager.Allocate();
             foreach (ICharSequence part in connectionParts)
             {
                 builder.Append(part);
                 builder.Append(',');
             }
             builder.Append(HttpHeaderValues.Upgrade);
-            request.Headers.Set(HttpHeaderNames.Connection, new StringCharSequence(builder.ToString()));
+            request.Headers.Set(HttpHeaderNames.Connection, new StringCharSequence(StringBuilderManager.ReturnAndFree(builder)));
         }
     }
 }
