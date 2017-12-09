@@ -439,11 +439,11 @@ namespace DotNetty.Codecs.Http.Tests
 
             for (int i = 1; i < data.Length; i++)
             {
-                LastResponseWithTrailingHeaderFragmented(data, i);
+                LastResponseWithTrailingHeaderFragmentedInternal(data, i);
             }
         }
 
-        static void LastResponseWithTrailingHeaderFragmented(byte[] content, int fragmentSize)
+        static void LastResponseWithTrailingHeaderFragmentedInternal(byte[] content, int fragmentSize)
         {
             var ch = new EmbeddedChannel(new HttpResponseDecoder());
             const int HeaderLength = 47;
@@ -529,11 +529,11 @@ namespace DotNetty.Codecs.Http.Tests
 
             for (int i = 1; i < data.Length; i++)
             {
-                ResponseWithContentLengthFragmented(data, i);
+                ResponseWithContentLengthFragmentedInternal(data, i);
             }
         }
 
-        static void ResponseWithContentLengthFragmented(byte[] header, int fragmentSize)
+        static void ResponseWithContentLengthFragmentedInternal(byte[] header, int fragmentSize)
         {
             var ch = new EmbeddedChannel(new HttpResponseDecoder());
             // split up the header

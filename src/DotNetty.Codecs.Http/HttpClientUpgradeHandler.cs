@@ -81,7 +81,7 @@ namespace DotNetty.Codecs.Http
 
             if (this.upgradeRequested)
             {
-                return TaskEx.FromException(new InvalidOperationException("Attempting to write HTTP request with upgrade in progress"));
+                return TaskUtil.FromException(new InvalidOperationException("Attempting to write HTTP request with upgrade in progress"));
             }
 
             this.upgradeRequested = true;

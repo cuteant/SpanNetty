@@ -17,7 +17,7 @@ namespace DotNetty.Codecs.Http.Tests
         const int SetMultipart = 2;
         const int SetChunked = 4;
 
-        static IEnumerable<object[]> GetKeepAliveCases() => new[]
+        public static IEnumerable<object[]> GetKeepAliveCases() => new[]
         {
             new object[] { true, HttpVersion.Http10, HttpResponseStatus.OK, RequestKeepAlive, SetResponseLength, HttpHeaderValues.KeepAlive },          //  0
             new object[] { true, HttpVersion.Http10, HttpResponseStatus.OK, RequestKeepAlive, SetMultipart, HttpHeaderValues.KeepAlive },                //  1

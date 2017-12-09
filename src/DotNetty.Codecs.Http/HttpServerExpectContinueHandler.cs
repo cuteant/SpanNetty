@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http
                 var context = (IChannelHandlerContext)state;
                 return context.CloseAsync();
             }
-            return TaskEx.Completed;
+            return TaskUtil.Completed;
         }
     }
 }

@@ -66,7 +66,7 @@ namespace HttpServer
                     .Option(ChannelOption.SoBacklog, 8192)
                     .Option(ChannelOption.SoReuseaddr, true)
                     .ChildHandler(
-                        new ActionChannelInitializer<IChannel>(channel =>
+                        new ActionChannelInitializer<ISocketChannel>(channel =>
                             {
                                 IChannelPipeline pipeline = channel.Pipeline;
                                 if (tlsCertificate != null)
