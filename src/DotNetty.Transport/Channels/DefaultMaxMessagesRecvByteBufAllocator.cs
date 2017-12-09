@@ -55,7 +55,7 @@ namespace DotNetty.Transport.Channels
 
             public abstract int Guess();
 
-            /// <summary>Only <see cref="IChannelConfiguration.MaxMessagesPerRead" /> is used.</summary>
+            /// <summary>Only <see cref="M:IChannelConfiguration.MaxMessagesPerRead" /> is used.</summary>
             public void Reset(IChannelConfiguration config)
             {
                 this.config = config;

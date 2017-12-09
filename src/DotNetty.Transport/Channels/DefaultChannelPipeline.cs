@@ -53,7 +53,7 @@ namespace DotNetty.Transport.Channels
         /// Set to
         /// <c>true</c>
         /// once the
-        /// <see cref="AbstractChannel" />
+        /// <see cref="AbstractChannel{TChannel, TUnsafe}" />
         /// is registered.Once set to
         /// <c>true</c>
         /// the value will never
@@ -1007,10 +1007,10 @@ namespace DotNetty.Transport.Channels
         sealed class TailContext : AbstractChannelHandlerContext, IChannelHandler
         {
             static readonly string TailName = GenerateName0(typeof(TailContext));
-            static readonly SkipFlags SkipFlags = CalculateSkipPropagationFlags(typeof(TailContext));
+            static readonly SkipFlags s_skipFlags = CalculateSkipPropagationFlags(typeof(TailContext));
 
             public TailContext(DefaultChannelPipeline pipeline)
-                : base(pipeline, null, TailName, SkipFlags)
+                : base(pipeline, null, TailName, s_skipFlags)
             {
                 this.SetAdded();
             }
@@ -1085,13 +1085,13 @@ namespace DotNetty.Transport.Channels
         sealed class HeadContext : AbstractChannelHandlerContext, IChannelHandler
         {
             static readonly string HeadName = GenerateName0(typeof(HeadContext));
-            static readonly SkipFlags SkipFlags = CalculateSkipPropagationFlags(typeof(HeadContext));
+            static readonly SkipFlags s_skipFlags = CalculateSkipPropagationFlags(typeof(HeadContext));
 
             readonly IChannelUnsafe channelUnsafe;
             bool firstRegistration = true;
 
             public HeadContext(DefaultChannelPipeline pipeline)
-                : base(pipeline, null, HeadName, SkipFlags)
+                : base(pipeline, null, HeadName, s_skipFlags)
             {
                 this.channelUnsafe = pipeline.Channel.Unsafe;
                 this.SetAdded();

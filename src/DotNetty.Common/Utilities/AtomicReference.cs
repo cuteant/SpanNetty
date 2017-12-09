@@ -14,7 +14,7 @@ namespace DotNetty.Common.Utilities
         T atomicValue;
 
         /// <summary>
-        ///     Sets the initial value of this <see cref="AtomicReference{T}" /> to <see cref="originalValue" />.
+        ///     Sets the initial value of this <see cref="AtomicReference{T}" /> to <paramref name="originalValue"/>.
         /// </summary>
         public AtomicReference(T originalValue)
         {
@@ -49,7 +49,6 @@ namespace DotNetty.Common.Utilities
 
         /// <summary>
         ///     Implicit conversion operator = automatically casts the <see cref="AtomicReference{T}" /> to an instance of
-        ///     <typeparam name="T"></typeparam>
         /// </summary>
         public static implicit operator T(AtomicReference<T> aRef) => aRef.Value;
 

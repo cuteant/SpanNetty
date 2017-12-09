@@ -24,7 +24,7 @@ namespace DotNetty.Transport.Channels
     ///         ...
     ///     </pre>
     ///     Be aware that this class is marked as {@link Sharable} and so the implementation must be safe to be re-used.
-    ///     @param <T>   A sub-type of {@link Channel}
+    ///     @param    A sub-type of {@link Channel}
     /// </summary>
     public abstract class ChannelInitializer<T> : ChannelHandlerAdapter
         where T : IChannel

@@ -228,6 +228,7 @@ namespace DotNetty.Handlers.Logging
         /// <summary>
         ///     Formats an event and returns the formatted message
         /// </summary>
+        /// <param name="ctx"></param>
         /// <param name="eventName">the name of the event</param>
         protected virtual string Format(IChannelHandlerContext ctx, string eventName)
         {
@@ -242,6 +243,7 @@ namespace DotNetty.Handlers.Logging
         /// <summary>
         ///     Formats an event and returns the formatted message.
         /// </summary>
+        /// <param name="ctx"></param>
         /// <param name="eventName">the name of the event</param>
         /// <param name="arg">the argument of the event</param>
         protected virtual string Format(IChannelHandlerContext ctx, string eventName, object arg)
@@ -264,6 +266,7 @@ namespace DotNetty.Handlers.Logging
         ///     Formats an event and returns the formatted message.  This method is currently only used for formatting
         ///     <see cref="IChannelHandler.ConnectAsync(IChannelHandlerContext, EndPoint, EndPoint)" />
         /// </summary>
+        /// <param name="ctx"></param>
         /// <param name="eventName">the name of the event</param>
         /// <param name="firstArg">the first argument of the event</param>
         /// <param name="secondArg">the second argument of the event</param>

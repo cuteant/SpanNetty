@@ -3,12 +3,9 @@
 
 namespace DotNetty.Transport.Channels.Pool
 {
- /**
-     * Allows to map {@link ChannelPool} implementations to a specific key.
-     *
-     * @param <K> the type of the key
-     * @param <P> the type of the {@link ChannelPool}
-     */    
+    /// <summary>Allows to map {@link ChannelPool} implementations to a specific key.</summary>
+    /// <typeparam name="TKey">the type of the key</typeparam>
+    /// <typeparam name="TPool">the type of the channel pool</typeparam>
     public interface IChannelPoolMap<TKey, TPool>
         where TPool : IChannelPool
     {
@@ -27,9 +24,4 @@ namespace DotNetty.Transport.Channels.Pool
          */
         bool Contains(TKey key);
     }
-    
-    /**
-     * Called before a {@link Channel} will be returned via {@link ChannelPool#acquire()} or
-     * {@link ChannelPool#acquire(Promise)}.
-     */
 }

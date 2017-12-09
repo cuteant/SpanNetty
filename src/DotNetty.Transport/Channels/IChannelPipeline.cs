@@ -180,7 +180,7 @@ namespace DotNetty.Transport.Channels
         /// <summary>
         ///     Inserts a {@link ChannelHandler} at the first position of this pipeline.
         /// </summary>
-        /// <param name="invoker">the {@link ChannelHandlerInvoker} which invokes the {@code handler}s event handler methods</param>
+        /// <param name="group">the {@link ChannelHandlerInvoker} which invokes the {@code handler}s event handler methods</param>
         /// <param name="name">the name of the handler to insert first. <code>null</code> to let the name auto-generated.</param>
         /// <param name="handler">the handler to insert first</param>
         /// <exception cref="ArgumentException">if there's an entry with the same name already in the pipeline</exception>
@@ -201,7 +201,7 @@ namespace DotNetty.Transport.Channels
         /// <summary>
         ///     Appends a {@link ChannelHandler} at the last position of this pipeline.
         /// </summary>
-        /// <param name="invoker">the {@link ChannelHandlerInvoker} which invokes the {@code handler}s event handler methods</param>
+        /// <param name="group">the {@link ChannelHandlerInvoker} which invokes the {@code handler}s event handler methods</param>
         /// <param name="name">the name of the handler to append. {@code null} to let the name auto-generated.</param>
         /// <param name="handler">the handler to append</param>
         /// <exception cref="ArgumentException">if there's an entry with the same name already in the pipeline</exception>
@@ -225,7 +225,7 @@ namespace DotNetty.Transport.Channels
         /// <summary>
         ///     Inserts a {@link ChannelHandler} before an existing handler of this pipeline.
         /// </summary>
-        /// <param name="invoker">the {@link ChannelHandlerInvoker} which invokes the {@code handler}s event handler methods</param>
+        /// <param name="group">the {@link ChannelHandlerInvoker} which invokes the {@code handler}s event handler methods</param>
         /// <param name="baseName">the name of the existing handler</param>
         /// <param name="name">the name of the handler to insert before. {@code null} to let the name auto-generated.</param>
         /// <param name="handler">the handler to insert before</param>
@@ -254,7 +254,7 @@ namespace DotNetty.Transport.Channels
         /// <summary>
         ///     Inserts a {@link ChannelHandler} after an existing handler of this pipeline.
         /// </summary>
-        /// <param name="invoker">the {@link ChannelHandlerInvoker} which invokes the {@code handler}s event handler methods</param>
+        /// <param name="group">the {@link ChannelHandlerInvoker} which invokes the {@code handler}s event handler methods</param>
         /// <param name="baseName">the name of the existing handler</param>
         /// <param name="name">the name of the handler to insert after. {@code null} to let the name auto-generated.</param>
         /// <param name="handler">the handler to insert after</param>
@@ -314,7 +314,7 @@ namespace DotNetty.Transport.Channels
         /// <summary>
         ///     Removes the {@link ChannelHandler} of the specified type from this pipeline.
         ///     @param
-        ///     <T>
+        ///     {T}
         ///         the type of the handler
         ///         @param handlerType   the type of the handler
         ///         @return the removed handler
@@ -530,7 +530,7 @@ namespace DotNetty.Transport.Channels
         ///     Request to bind to the given {@link SocketAddress} and notify the {@link ChannelFuture} once the operation
         ///     completes, either because the operation was successful or because of an error.
         ///     The given {@link ChannelPromise} will be notified.
-        ///     <p>
+        ///     <p />
         ///         This will result in having the
         ///         {@link ChannelHandler#bind(ChannelHandlerContext, SocketAddress, ChannelPromise)} method
         ///         called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
@@ -542,11 +542,11 @@ namespace DotNetty.Transport.Channels
         ///     Request to connect to the given {@link EndPoint} and notify the {@link Task} once the operation
         ///     completes, either because the operation was successful or because of an error.
         ///     The given {@link Task} will be notified.
-        ///     <p>
+        ///     <p />
         ///         If the connection fails because of a connection timeout, the {@link Task} will get failed with
         ///         a {@link ConnectTimeoutException}. If it fails because of connection refused a {@link ConnectException}
         ///         will be used.
-        ///         <p>
+        ///         <p />
         ///             This will result in having the
         ///             {@link ChannelHandler#connect(ChannelHandlerContext, EndPoint, EndPoint, ChannelPromise)}
         ///             method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
@@ -559,7 +559,7 @@ namespace DotNetty.Transport.Channels
         ///     {@link Task} once the operation completes, either because the operation was successful or because of
         ///     an error.
         ///     The given {@link ChannelPromise} will be notified and also returned.
-        ///     <p>
+        ///     <p />
         ///         This will result in having the
         ///         {@link ChannelHandler#connect(ChannelHandlerContext, EndPoint, EndPoint, ChannelPromise)}
         ///         method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
@@ -571,7 +571,7 @@ namespace DotNetty.Transport.Channels
         ///     Request to disconnect from the remote peer and notify the {@link Task} once the operation completes,
         ///     either because the operation was successful or because of an error.
         ///     The given {@link ChannelPromise} will be notified.
-        ///     <p>
+        ///     <p />
         ///         This will result in having the
         ///         {@link ChannelHandler#disconnect(ChannelHandlerContext, ChannelPromise)}
         ///         method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
@@ -584,7 +584,7 @@ namespace DotNetty.Transport.Channels
         ///     either because the operation was successful or because of
         ///     an error.
         ///     After it is closed it is not possible to reuse it again.
-        ///     <p>
+        ///     <p />
         ///         This will result in having the
         ///         {@link ChannelHandler#close(ChannelHandlerContext, ChannelPromise)}
         ///         method called of the next {@link ChannelHandler} contained in the  {@link ChannelPipeline} of the
@@ -597,7 +597,7 @@ namespace DotNetty.Transport.Channels
         ///     {@link EventExecutor} and notify the {@link ChannelFuture} once the operation completes, either because the
         ///     operation was successful or because of an error.
         ///     The given {@link ChannelPromise} will be notified.
-        ///     <p>
+        ///     <p />
         ///         ChannelOutboundHandler
         ///         This will result in having the
         ///         {@link ChannelHandler#deregister(ChannelHandlerContext, ChannelPromise)}

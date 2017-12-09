@@ -17,7 +17,7 @@ namespace DotNetty.Transport.Channels.Local
     /**
  * A {@link Channel} for the local transport.
  */
-    public class LocalChannel : AbstractChannel
+    public class LocalChannel : AbstractChannel<LocalChannel, LocalChannel.LocalUnsafe>
     {
         enum State
         {
@@ -27,7 +27,7 @@ namespace DotNetty.Transport.Channels.Local
             Closed
         }
 
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<LocalChannel>();
+        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<LocalChannel>();
         static readonly ChannelMetadata METADATA = new ChannelMetadata(false);
         static readonly int MAX_READER_STACK_DEPTH = 8;
         static readonly ClosedChannelException DoWriteClosedChannelException = new ClosedChannelException();
@@ -84,7 +84,7 @@ namespace DotNetty.Transport.Channels.Local
 
         public override bool Active => this.state == State.Connected;
 
-        protected override IChannelUnsafe NewUnsafe() => new LocalUnsafe(this);
+        //protected override IChannelUnsafe NewUnsafe() => new LocalUnsafe(this);
 
         protected override bool IsCompatible(IEventLoop loop) => loop is SingleThreadEventLoop;
 
@@ -328,7 +328,7 @@ namespace DotNetty.Transport.Channels.Local
                     break;
             }
 
-            LocalChannel peer = this.peer;
+            var peer = this.peer;
 
             this.writeInProgress = true;
             try
@@ -456,41 +456,41 @@ namespace DotNetty.Transport.Channels.Local
             }
         }
 
-        class LocalUnsafe : AbstractUnsafe
+        public sealed class LocalUnsafe : AbstractUnsafe
         {
-            readonly LocalChannel localChannel;
+            //readonly LocalChannel localChannel;
 
-            public LocalUnsafe(LocalChannel channel)
-                : base(channel)
-            {
-                this.localChannel = channel;
-            }
+            //public LocalUnsafe(LocalChannel channel)
+            //    : base(channel)
+            //{
+            //    this.localChannel = channel;
+            //}
 
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
             {
                 var promise = new TaskCompletionSource();
 
-                if (this.localChannel.state == State.Connected)
+                if (this.channel.state == State.Connected)
                 {
                     var cause = new AlreadyConnectedException();
                     Util.SafeSetFailure(promise, cause, Logger);
-                    this.localChannel.Pipeline.FireExceptionCaught(cause);
+                    this.channel.Pipeline.FireExceptionCaught(cause);
                     return promise.Task;
                 }
 
-                if (this.localChannel.connectPromise != null)
+                if (this.channel.connectPromise != null)
                 {
                     throw new ConnectionPendingException();
                 }
 
-                this.localChannel.connectPromise = promise;
+                this.channel.connectPromise = promise;
 
-                if (this.localChannel.state != State.Bound)
+                if (this.channel.state != State.Bound)
                 {
                     // Not bound yet and no localAddress specified - get one.
                     if (localAddress == null)
                     {
-                        localAddress = new LocalAddress(this.localChannel);
+                        localAddress = new LocalAddress(this.channel);
                     }
                 }
 
@@ -498,7 +498,7 @@ namespace DotNetty.Transport.Channels.Local
                 {
                     try
                     {
-                        this.localChannel.DoBind(localAddress);
+                        this.channel.DoBind(localAddress);
                     }
                     catch (Exception ex)
                     {
@@ -513,11 +513,11 @@ namespace DotNetty.Transport.Channels.Local
                 {
                     Exception cause = new ConnectException($"connection refused: {remoteAddress}", null);
                     Util.SafeSetFailure(promise, cause, Logger);
-                    this.localChannel.CloseAsync();
+                    this.channel.CloseAsync();
                     return promise.Task;
                 }
 
-                this.localChannel.peer = ((LocalServerChannel)boundChannel).Serve(this.localChannel);
+                this.channel.peer = ((LocalServerChannel)boundChannel).Serve(this.channel);
                 return promise.Task;
             }
         }

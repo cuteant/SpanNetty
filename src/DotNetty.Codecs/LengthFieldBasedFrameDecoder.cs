@@ -14,7 +14,7 @@ namespace DotNetty.Codecs
   * value of the length field in the message.  It is particularly useful when you
   * decode a binary message which has an integer header field that represents the
   * length of the message body or the whole message.
-  * <p>
+  * <p />
   * {@link LengthFieldBasedFrameDecoder} has many configuration parameters so
   * that it can decode any message with a length field, which is often seen in
   * proprietary client-server protocols. Here are some example that will give

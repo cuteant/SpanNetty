@@ -155,7 +155,7 @@ namespace DotNetty.Transport.Channels.Pool
                         channel = await this.ConnectChannel(bs);
                         if (!promise.TrySetResult(channel))
                         {
-                            this.ReleaseAsync(channel);
+                            await this.ReleaseAsync(channel);
                         }
                     }
                     catch (Exception e)
@@ -218,7 +218,7 @@ namespace DotNetty.Transport.Channels.Pool
         /**
          * Bootstrap a new {@link Channel}. The default implementation uses {@link Bootstrap#connect()}, sub-classes may
          * override this.
-         * <p>
+         * <p/>
          * The {@link Bootstrap} that is passed in here is cloned via {@link Bootstrap#clone()}, so it is safe to modify.
          */
         protected virtual Task<IChannel> ConnectChannel(Bootstrap bs) => bs.ConnectAsync();

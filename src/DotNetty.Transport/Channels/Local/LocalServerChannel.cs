@@ -11,7 +11,7 @@ namespace DotNetty.Transport.Channels.Local
     /**
  * A {@link ServerChannel} for the local transport which allows in VM communication.
  */
-    public class LocalServerChannel : AbstractServerChannel
+    public class LocalServerChannel : AbstractServerChannel<LocalServerChannel, LocalServerChannel.LocalServerUnsafe>
     {
         readonly IQueue<object> inboundBuffer = PlatformDependent.NewMpscQueue<object>();
 
@@ -84,7 +84,7 @@ namespace DotNetty.Transport.Channels.Local
             }
 
             IChannelPipeline pipeline = this.Pipeline;
-            for (;;)
+            for (; ; )
             {
                 if (!inboundBuffer.TryDequeue(out object m))
                 {
@@ -132,5 +132,7 @@ namespace DotNetty.Transport.Channels.Local
                 pipeline.FireChannelReadComplete();
             }
         }
+
+        public class LocalServerUnsafe : DefaultServerUnsafe { }
     }
 }

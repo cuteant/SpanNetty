@@ -77,7 +77,7 @@ namespace DotNetty.Transport.Channels.Pool
          *                              be failed.
          */
         public FixedChannelPool(Bootstrap bootstrap, IChannelPoolHandler handler, int maxConnections, int maxPendingAcquires = int.MaxValue)
-            : this(bootstrap, handler, ChannelActiveHealthChecker.Instance, AcquireTimeoutAction.None, Timeout.InfiniteTimeSpan, maxConnections, maxPendingAcquires)
+            : this(bootstrap, handler, ChannelActiveHealthChecker.Instance, AcquireTimeoutAction.None, TimeoutShim.InfiniteTimeSpan, maxConnections, maxPendingAcquires)
         {
         }
 
@@ -160,11 +160,11 @@ namespace DotNetty.Transport.Channels.Pool
             }
 
             this.acquireTimeout = acquireTimeout;
-            if (action == AcquireTimeoutAction.None && acquireTimeout == Timeout.InfiniteTimeSpan)
+            if (action == AcquireTimeoutAction.None && acquireTimeout == TimeoutShim.InfiniteTimeSpan)
             {
                 this.timeoutTask = null;
             }
-            else if (action == AcquireTimeoutAction.None && acquireTimeout != Timeout.InfiniteTimeSpan)
+            else if (action == AcquireTimeoutAction.None && acquireTimeout != TimeoutShim.InfiniteTimeSpan)
             {
                 throw new ArgumentException("action");
             }

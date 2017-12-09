@@ -252,7 +252,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             IChannel channel = await pool.AcquireAsync();
             pool.Dispose();
 
-            await group.GetNext().SubmitAsync(() => TaskEx.Completed);
+            await group.GetNext().SubmitAsync(() => TaskUtil.Completed);
             var e = await Assert.ThrowsAsync<InvalidOperationException>(() => pool.ReleaseAsync(channel));
             Assert.Same(FixedChannelPool.PoolClosedOnReleaseException, e);
             

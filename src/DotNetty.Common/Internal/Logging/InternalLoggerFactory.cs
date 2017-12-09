@@ -11,7 +11,7 @@ namespace DotNetty.Common.Internal.Logging
     /// <summary>
     ///     Creates an <see cref="IInternalLogger" /> or changes the default factory
     ///     implementation. This factory allows you to choose what logging framework
-    ///     DotNetty should use.  The default factory is own <see cref="LoggerFactory"/> with <see cref="EventSourceLoggerProvider" /> registered.
+    ///     DotNetty should use.  The default factory is own <see cref="LoggerFactory"/> with <see cref="T:DotNetty.Common.Internal.Logging.EventSourceLoggerProvider" /> registered.
     ///     You can change it to your preferred logging framework before other DotNetty classes are loaded:
     ///     <pre>
     ///         <code>InternalLoggerFactory.DefaultFactory = new LoggerFactory();</code>
