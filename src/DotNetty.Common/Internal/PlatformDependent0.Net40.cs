@@ -1,6 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-#if !NET40
+#if NET40
 namespace DotNetty.Common.Internal
 {
     using System.Runtime.CompilerServices;
@@ -12,72 +12,53 @@ namespace DotNetty.Common.Internal
         internal static readonly int HashCodeC1 = unchecked((int)0xcc9e2d51);
         internal static readonly int HashCodeC2 = 0x1b873593;
 
+        // https://stackoverflow.com/questions/43289/comparing-two-byte-arrays-in-net
         [MethodImpl(InlineMethod.Value)]
         internal static unsafe bool ByteArrayEquals(byte* bytes1, int startPos1, byte* bytes2, int startPos2, int length)
         {
-            if (length <= 0)
-            {
-                return true;
-            }
+            if (length <= 0) { return true; }
 
             byte* baseOffset1 = bytes1 + startPos1;
             byte* baseOffset2 = bytes2 + startPos2;
-            int remainingBytes = length & 7;
-            byte* end = baseOffset1 + remainingBytes;
-            for (byte* i = baseOffset1 - 8 + length, j = baseOffset2 - 8 + length; i >= end; i -= 8, j -= 8)
-            {
-                if (Unsafe.Read<long>(i) != Unsafe.Read<long>(j))
-                {
-                    return false;
-                }
-            }
 
-            if (remainingBytes >= 4)
-            {
-                remainingBytes -= 4;
-                if (Unsafe.Read<int>(baseOffset1 + remainingBytes) != Unsafe.Read<int>(baseOffset2 + remainingBytes))
-                {
-                    return false;
-                }
-            }
-            if (remainingBytes >= 2)
-            {
-                return Unsafe.Read<short>(baseOffset1) == Unsafe.Read<short>(baseOffset2)
-                    && (remainingBytes == 2 || *(bytes1 + startPos1 + 2) == *(bytes2 + startPos2 + 2));
-            }
-            return *baseOffset1 == *baseOffset2;
+            for (int i = 0; i < length / 8; i++, baseOffset1 += 8, baseOffset2 += 8)
+                if (*((long*)baseOffset1) != *((long*)baseOffset2)) return false;
+            if ((length & 4) != 0) { if (*((int*)baseOffset1) != *((int*)baseOffset2)) return false; baseOffset1 += 4; baseOffset2 += 4; }
+            if ((length & 2) != 0) { if (*((short*)baseOffset1) != *((short*)baseOffset2)) return false; baseOffset1 += 2; baseOffset2 += 2; }
+            if ((length & 1) != 0) if (*((byte*)baseOffset1) != *((byte*)baseOffset2)) return false;
+            return true;
         }
 
         [MethodImpl(InlineMethod.Value)]
-        internal static unsafe int HashCodeAscii(byte* bytes,  int length)
+        internal static unsafe int HashCodeAscii(byte* bytes, int length)
         {
             int hash = HashCodeAsciiSeed;
             int remainingBytes = length & 7;
             byte* end = bytes + remainingBytes;
             for (byte* i = bytes - 8 + length; i >= end; i -= 8)
             {
-                hash = HashCodeAsciiCompute(Unsafe.Read<long>(i), hash);
+                hash = HashCodeAsciiCompute(*((long*)i), hash);
             }
 
             switch (remainingBytes)
             {
                 case 7:
                     return ((hash * HashCodeC1 + HashCodeAsciiSanitize(*bytes))
-                        * HashCodeC2 + HashCodeAsciiSanitize(Unsafe.Read<short>(bytes + 1)))
-                        * HashCodeC1 + HashCodeAsciiSanitize(Unsafe.Read<int>(bytes + 3));
+                        * HashCodeC2 + HashCodeAsciiSanitize(*((short*)(bytes + 1))))
+                        * HashCodeC1 + HashCodeAsciiSanitize(*((int*)(bytes + 3)));
                 case 6:
-                    return (hash * HashCodeC1 + HashCodeAsciiSanitize(Unsafe.Read<short>(bytes)))
-                        * HashCodeC2 + HashCodeAsciiSanitize(Unsafe.Read<int>(bytes + 2));
+                    return (hash * HashCodeC1 + HashCodeAsciiSanitize(*((short*)bytes)))
+                        * HashCodeC2 + HashCodeAsciiSanitize(*((int*)(bytes + 2)));
                 case 5:
                     return (hash * HashCodeC1 + HashCodeAsciiSanitize(*bytes))
-                        * HashCodeC2 + HashCodeAsciiSanitize(Unsafe.Read<int>(bytes + 1));
+                        * HashCodeC2 + HashCodeAsciiSanitize(*((int*)(bytes + 1)));
                 case 4:
-                    return hash * HashCodeC1 + HashCodeAsciiSanitize(Unsafe.Read<int>(bytes));
+                    return hash * HashCodeC1 + HashCodeAsciiSanitize(*((int*)bytes));
                 case 3:
                     return (hash * HashCodeC1 + HashCodeAsciiSanitize(*bytes))
-                        * HashCodeC2 + HashCodeAsciiSanitize(Unsafe.Read<short>(bytes + 1));
+                        * HashCodeC2 + HashCodeAsciiSanitize(*((short*)(bytes + 1)));
                 case 2:
-                    return hash * HashCodeC1 + HashCodeAsciiSanitize(Unsafe.Read<short>(bytes));
+                    return hash * HashCodeC1 + HashCodeAsciiSanitize(*((short*)bytes));
                 case 1:
                     return hash * HashCodeC1 + HashCodeAsciiSanitize(*bytes);
                 default:
@@ -104,7 +85,7 @@ namespace DotNetty.Common.Internal
         static int HashCodeAsciiSanitize(int value) => value & 0x1f1f1f1f;
 
         [MethodImpl(InlineMethod.Value)]
-        static int HashCodeAsciiSanitize(short value) =>  value & 0x1f1f;
+        static int HashCodeAsciiSanitize(short value) => value & 0x1f1f;
 
         [MethodImpl(InlineMethod.Value)]
         static int HashCodeAsciiSanitize(byte value) => value & 0x1f;

@@ -902,7 +902,7 @@ namespace DotNetty.Common.Utilities
 
         public string ToString(int start) => this.ToString(start, this.length);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public unsafe string ToString(int start, int end)
         {
             int count = end - start;
@@ -1417,34 +1417,34 @@ namespace DotNetty.Common.Utilities
             return IndexNotFound;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static bool EqualsIgnoreCase(byte a, byte b) => a == b || ToLowerCase(a) == ToLowerCase(b);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static bool EqualsIgnoreCase(char a, char b) => a == b || ToLowerCase(a) == ToLowerCase(b);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static byte ToLowerCase(byte b) => IsUpperCase(b) ? (byte)(b + 32) : b;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static char ToLowerCase(char c) => IsUpperCase(c) ? (char)(c + 32) : c;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static byte ToUpperCase(byte b) => IsLowerCase(b) ? (byte)(b - 32) : b;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static bool IsLowerCase(byte value) => value >= 'a' && value <= 'z';
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public static bool IsUpperCase(byte value) => value >= 'A' && value <= 'Z';
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public static bool IsUpperCase(char value) => value >= 'A' && value <= 'Z';
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public static byte CharToByte(char c) => c > MaxCharValue ? Replacement : unchecked((byte)c);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public static char ByteToChar(byte b) => (char)(b);
 
         public static explicit operator string(AsciiString value) => value?.ToString() ?? string.Empty;

@@ -98,7 +98,7 @@ namespace DotNetty.Common.Utilities
             return result;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public static long ParseLong(ICharSequence str, int radix = 10)
         {
             if (str is AsciiString asciiString)
@@ -129,7 +129,7 @@ namespace DotNetty.Common.Utilities
             return ParseLong(str, i, radix, negative);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static long ParseLong(ICharSequence str, int offset, int radix, bool negative)
         {
             long max = long.MinValue / radix;
@@ -468,7 +468,7 @@ namespace DotNetty.Common.Utilities
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public static int Digit(byte b)
         {
             const byte First = (byte)'0';
@@ -482,7 +482,7 @@ namespace DotNetty.Common.Utilities
             return b - First;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public static int Digit(char c, int radix)
         {
             if (radix >= MinRadix && radix <= MaxRadix)
@@ -521,7 +521,7 @@ namespace DotNetty.Common.Utilities
             return -1;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public static bool IsISOControl(int c) => (c >= 0 && c <= 0x1f) || (c >= 0x7f && c <= 0x9f);
 
         public static int IndexOf(this ICharSequence cs, char searchChar, int start)
@@ -586,7 +586,7 @@ namespace DotNetty.Common.Utilities
             return IsSurrogatePair(high, low) ? ToCodePoint(high, low) : high;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public static int ToCodePoint(char high, char low)
         {
             // See RFC 2781, Section 2.2
@@ -596,7 +596,7 @@ namespace DotNetty.Common.Utilities
             return (h | l) + 0x10000;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static bool IsSurrogatePair(char high, char low) => char.IsHighSurrogate(high) && char.IsLowSurrogate(low);
 
         internal static int IndexOf(IReadOnlyList<char> value, char ch, int start)

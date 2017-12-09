@@ -145,7 +145,7 @@ namespace DotNetty.Buffers
 
         void Recycle() => this.recyclerHandle.Release(this);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         protected int Idx(int index) => this.Offset + index;
     }
 }

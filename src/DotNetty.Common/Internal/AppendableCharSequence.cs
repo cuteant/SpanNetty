@@ -133,7 +133,7 @@ namespace DotNetty.Common.Internal
 
         public IAppendable Append(char c) => this.Append((byte)c);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public IAppendable Append(byte c)
         {
             if (this.pos == this.chars.Length)
@@ -192,7 +192,7 @@ namespace DotNetty.Common.Internal
 
         // Create a new ascii string, this method assumes all chars has been sanitized
         // to ascii chars when appending to the array
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public unsafe AsciiString SubStringUnsafe(int start, int end)
         {
             var bytes = new byte[end - start];

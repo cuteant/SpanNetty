@@ -196,7 +196,7 @@ namespace DotNetty.Codecs.Compression
         {
             if (this.finished)
             {
-                return TaskEx.Completed;
+                return TaskUtil.Completed;
             }
 
             this.finished = true;

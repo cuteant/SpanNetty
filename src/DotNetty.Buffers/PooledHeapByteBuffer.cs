@@ -10,7 +10,7 @@ namespace DotNetty.Buffers
     using DotNetty.Common;
     using DotNetty.Common.Internal;
 
-    sealed class PooledHeapByteBuffer : PooledByteBuffer<byte[]>
+    sealed partial class PooledHeapByteBuffer : PooledByteBuffer<byte[]>
     {
         static readonly ThreadLocalPool<PooledHeapByteBuffer> Recycler = new ThreadLocalPool<PooledHeapByteBuffer>(handle => new PooledHeapByteBuffer(handle, 0));
 

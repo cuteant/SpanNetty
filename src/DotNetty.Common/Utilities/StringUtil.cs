@@ -589,7 +589,7 @@ namespace DotNetty.Common.Utilities
             return i;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static bool IsOws(char c) => c == Space || c == Tab;
     }
 }

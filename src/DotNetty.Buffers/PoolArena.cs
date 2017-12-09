@@ -767,7 +767,11 @@ namespace DotNetty.Buffers
             PooledUnsafeDirectByteBuffer.NewInstance(maxCapacity);
 
         protected override unsafe void MemoryCopy(byte[] src, int srcOffset, byte[] dst, int dstOffset, int length) =>
+#if NET40
+                PlatformDependent.CopyMemory(src, srcOffset, dst, dstOffset, length);
+#else
                 PlatformDependent.CopyMemory((byte*)Unsafe.AsPointer(ref src[srcOffset]), (byte*)Unsafe.AsPointer(ref dst[dstOffset]), length);
+#endif
 
         protected internal override void DestroyChunk(PoolChunk<byte[]> chunk)
         {

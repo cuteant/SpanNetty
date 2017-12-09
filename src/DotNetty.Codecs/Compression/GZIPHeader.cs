@@ -80,6 +80,9 @@ namespace DotNetty.Codecs.Compression
 
         static GZIPHeader()
         {
+#if NET40
+            Platform = OS_WIN32;
+#else
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 Platform = OS_WIN32;
@@ -96,6 +99,7 @@ namespace DotNetty.Codecs.Compression
             {
                 Platform = OS_UNKNOWN;
             }
+#endif
         }
 
         internal GZIPHeader()

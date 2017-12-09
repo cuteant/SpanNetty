@@ -15,7 +15,7 @@ namespace DotNetty.Common.Internal
 
     using static PlatformDependent0;
 
-    public static class PlatformDependent
+    public static partial class PlatformDependent
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance(typeof(PlatformDependent));
 
@@ -53,12 +53,12 @@ namespace DotNetty.Common.Internal
                 return true;
             }
 
-            fixed (byte* array1 = &bytes1[startPos1])
-                fixed (byte* array2 = &bytes2[startPos2])
-                    return PlatformDependent0.ByteArrayEquals(array1, array2, length);
+            fixed (byte* array1 = bytes1)
+            fixed (byte* array2 = bytes2)
+                return PlatformDependent0.ByteArrayEquals(array1, startPos1, array2, startPos2, length);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public static unsafe int HashCodeAscii(byte[] bytes, int startPos, int length)
         {
             if (length == 0)
@@ -168,7 +168,7 @@ namespace DotNetty.Common.Internal
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static int HashCodeAsciiCompute(ICharSequence value, int offset, int hash)
         {
             if (!IsLittleEndian)
@@ -186,7 +186,7 @@ namespace DotNetty.Common.Internal
                 HashCodeAsciiSanitizeInt(value, offset + 4);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static int HashCodeAsciiSanitizeInt(ICharSequence value, int offset)
         {
             if (!IsLittleEndian)
@@ -204,7 +204,7 @@ namespace DotNetty.Common.Internal
                 | (value[offset] & 0x1f);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static int HashCodeAsciiSanitizeShort(ICharSequence value, int offset)
         {
             if (!IsLittleEndian)
@@ -218,9 +218,10 @@ namespace DotNetty.Common.Internal
                 | (value[offset] & 0x1f);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static int HashCodeAsciiSanitizsByte(char value) => value & 0x1f;
 
+#if !NET40
         public static unsafe void CopyMemory(byte[] src, int srcIndex, byte[] dst, int dstIndex, int length)
         {
             if (length > 0)
@@ -278,9 +279,10 @@ namespace DotNetty.Common.Internal
         {
             if (length > 0)
             {
-                fixed(byte* source = &src[srcIndex])
+                fixed (byte* source = &src[srcIndex])
                     Unsafe.InitBlock(source, value, unchecked((uint)length));
             }
         }
+#endif
     }
 }

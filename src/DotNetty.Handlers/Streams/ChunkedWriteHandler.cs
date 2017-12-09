@@ -228,6 +228,15 @@ namespace DotNetty.Handlers.Streams
                         // be closed before its not written.
                         //
                         // See https://github.com/netty/netty/issues/303
+#if NET40
+                        future.ContinueWith(_ =>
+                            {
+                                var pendingTask = current;
+                                CloseInput((IChunkedInput<T>)pendingTask.Message);
+                                pendingTask.Success();
+                            },
+                            TaskContinuationOptions.ExecuteSynchronously);
+#else
                         future.ContinueWith((_, state) =>
                             {
                                 var pendingTask = (PendingWrite)state;
@@ -236,9 +245,26 @@ namespace DotNetty.Handlers.Streams
                             },
                             current, 
                             TaskContinuationOptions.ExecuteSynchronously);
+#endif
                     }
                     else if (channel.IsWritable)
                     {
+#if NET40
+                        future.ContinueWith(task =>
+                            {
+                                var pendingTask = current;
+                                if (task.IsFaulted)
+                                {
+                                    CloseInput((IChunkedInput<T>)pendingTask.Message);
+                                    pendingTask.Fail(task.Exception);
+                                }
+                                else
+                                {
+                                    pendingTask.Progress(chunks.Progress, chunks.Length);
+                                }
+                            },
+                            TaskContinuationOptions.ExecuteSynchronously);
+#else
                         future.ContinueWith((task, state) =>
                             {
                                 var pendingTask = (PendingWrite)state;
@@ -254,9 +280,30 @@ namespace DotNetty.Handlers.Streams
                             },
                             current,
                             TaskContinuationOptions.ExecuteSynchronously);
+#endif
                     }
                     else
                     {
+#if NET40
+                        future.ContinueWith(task =>
+                        {
+                            var handler = this;
+                            if (task.IsFaulted)
+                            {
+                                CloseInput((IChunkedInput<T>)handler.currentWrite.Message);
+                                handler.currentWrite.Fail(task.Exception);
+                            }
+                            else
+                            {
+                                handler.currentWrite.Progress(chunks.Progress, chunks.Length);
+                                if (channel.IsWritable)
+                                {
+                                    handler.ResumeTransfer();
+                                }
+                            }
+                        },
+                        TaskContinuationOptions.ExecuteSynchronously);
+#else
                         future.ContinueWith((task, state) =>
                         {
                             var handler = (ChunkedWriteHandler<T>) state;
@@ -276,6 +323,7 @@ namespace DotNetty.Handlers.Streams
                         },
                         this,
                         TaskContinuationOptions.ExecuteSynchronously);
+#endif
                     }
 
                     // Flush each chunk to conserve memory
@@ -284,6 +332,22 @@ namespace DotNetty.Handlers.Streams
                 }
                 else
                 {
+#if NET40
+                    context.WriteAsync(pendingMessage)
+                        .ContinueWith(task =>
+                            {
+                                var pendingTask = current;
+                                if (task.IsFaulted)
+                                {
+                                    pendingTask.Fail(task.Exception);
+                                }
+                                else
+                                {
+                                    pendingTask.Success();
+                                }
+                            },
+                            TaskContinuationOptions.ExecuteSynchronously);
+#else
                     context.WriteAsync(pendingMessage)
                         .ContinueWith((task, state) =>
                             {
@@ -299,6 +363,7 @@ namespace DotNetty.Handlers.Streams
                             },
                             current,
                             TaskContinuationOptions.ExecuteSynchronously);
+#endif
 
                     this.currentWrite = null;
                     requiresFlush = true;
