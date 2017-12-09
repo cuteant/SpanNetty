@@ -87,7 +87,7 @@ namespace DotNetty.Common
         public static DetectionLevel Level { get; set; }
 
         readonly ConditionalWeakTable<object, GCNotice> gcNotificationMap = new ConditionalWeakTable<object, GCNotice>();
-        readonly ConcurrentDictionary<string, bool> reportedLeaks = new ConcurrentDictionary<string, bool>();
+        readonly ConcurrentDictionary<string, bool> reportedLeaks = new ConcurrentDictionary<string, bool>(StringComparer.Ordinal);
 
         readonly string resourceType;
         readonly int samplingInterval;

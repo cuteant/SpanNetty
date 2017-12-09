@@ -4,12 +4,12 @@
 namespace DotNetty.Transport.Bootstrapping
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Net;
     using System.Text;
     using System.Threading.Tasks;
+    using CuteAnt.Collections;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
@@ -32,14 +32,14 @@ namespace DotNetty.Transport.Bootstrapping
         volatile IEventLoopGroup group;
         volatile Func<TChannel> channelFactory;
         volatile EndPoint localAddress;
-        readonly ConcurrentDictionary<ChannelOption, ChannelOptionValue> options;
-        readonly ConcurrentDictionary<IConstant, AttributeValue> attrs;
+        readonly CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue> options;
+        readonly CachedReadConcurrentDictionary<IConstant, AttributeValue> attrs;
         volatile IChannelHandler handler;
 
         protected internal AbstractBootstrap()
         {
-            this.options = new ConcurrentDictionary<ChannelOption, ChannelOptionValue>();
-            this.attrs = new ConcurrentDictionary<IConstant, AttributeValue>();
+            this.options = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>();
+            this.attrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>();
             // Disallow extending from a different package.
         }
 
@@ -49,8 +49,8 @@ namespace DotNetty.Transport.Bootstrapping
             this.channelFactory = bootstrap.channelFactory;
             this.handler = bootstrap.handler;
             this.localAddress = bootstrap.localAddress;
-            this.options = new ConcurrentDictionary<ChannelOption, ChannelOptionValue>(bootstrap.options);
-            this.attrs = new ConcurrentDictionary<IConstant, AttributeValue>(bootstrap.attrs);
+            this.options = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(bootstrap.options);
+            this.attrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(bootstrap.attrs);
         }
 
         /// <summary>

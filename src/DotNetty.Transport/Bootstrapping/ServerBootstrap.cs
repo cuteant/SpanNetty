@@ -4,11 +4,11 @@
 namespace DotNetty.Transport.Bootstrapping
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
+    using CuteAnt.Collections;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
@@ -20,15 +20,15 @@ namespace DotNetty.Transport.Bootstrapping
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ServerBootstrap>();
 
-        readonly ConcurrentDictionary<ChannelOption, ChannelOptionValue> childOptions;
-        readonly ConcurrentDictionary<IConstant, AttributeValue> childAttrs;
+        readonly CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue> childOptions;
+        readonly CachedReadConcurrentDictionary<IConstant, AttributeValue> childAttrs;
         volatile IEventLoopGroup childGroup;
         volatile IChannelHandler childHandler;
 
         public ServerBootstrap()
         {
-            this.childOptions = new ConcurrentDictionary<ChannelOption, ChannelOptionValue>();
-            this.childAttrs = new ConcurrentDictionary<IConstant, AttributeValue>();
+            this.childOptions = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>();
+            this.childAttrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>();
         }
 
         ServerBootstrap(ServerBootstrap bootstrap)
@@ -36,8 +36,8 @@ namespace DotNetty.Transport.Bootstrapping
         {
             this.childGroup = bootstrap.childGroup;
             this.childHandler = bootstrap.childHandler;
-            this.childOptions = new ConcurrentDictionary<ChannelOption, ChannelOptionValue>(bootstrap.childOptions);
-            this.childAttrs = new ConcurrentDictionary<IConstant, AttributeValue>(bootstrap.childAttrs);
+            this.childOptions = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(bootstrap.childOptions);
+            this.childAttrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(bootstrap.childAttrs);
         }
 
         /// <summary>
