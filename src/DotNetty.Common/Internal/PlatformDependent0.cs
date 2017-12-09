@@ -1,13 +1,13 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
+#if !NET40
 namespace DotNetty.Common.Internal
 {
     using System.Runtime.CompilerServices;
 
     static class PlatformDependent0
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static unsafe bool ByteArrayEquals(byte* bytes1, int startPos1, byte* bytes2, int startPos2, int length)
         {
             if (length <= 0)
@@ -44,3 +44,4 @@ namespace DotNetty.Common.Internal
         }
     }
 }
+#endif

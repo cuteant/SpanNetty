@@ -16,7 +16,7 @@ namespace DotNetty.Buffers
     /// <summary>
     ///     Represents an empty byte buffer
     /// </summary>
-    public sealed class EmptyByteBuffer : IByteBuffer
+    public sealed partial class EmptyByteBuffer : IByteBuffer
     {
         static readonly ArraySegment<byte> EmptyBuffer = new ArraySegment<byte>(ArrayExtensions.ZeroBytes);
         static readonly ArraySegment<byte>[] EmptyBuffers = { EmptyBuffer };

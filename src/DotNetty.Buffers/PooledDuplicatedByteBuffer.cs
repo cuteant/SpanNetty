@@ -9,7 +9,7 @@ namespace DotNetty.Buffers
     using System.Threading.Tasks;
     using DotNetty.Common;
 
-    sealed class PooledDuplicatedByteBuffer : AbstractPooledDerivedByteBuffer
+    sealed partial class PooledDuplicatedByteBuffer : AbstractPooledDerivedByteBuffer
     {
         static readonly ThreadLocalPool<PooledDuplicatedByteBuffer> Recycler = new ThreadLocalPool<PooledDuplicatedByteBuffer>(handle => new PooledDuplicatedByteBuffer(handle));
 

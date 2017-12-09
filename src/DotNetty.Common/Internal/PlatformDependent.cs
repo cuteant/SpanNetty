@@ -12,7 +12,7 @@ namespace DotNetty.Common.Internal
     using System.Threading;
     using DotNetty.Common.Internal.Logging;
 
-    public static class PlatformDependent
+    public static partial class PlatformDependent
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance(typeof(PlatformDependent));
 
@@ -49,6 +49,7 @@ namespace DotNetty.Common.Internal
                 return PlatformDependent0.ByteArrayEquals(array1, startPos1, array2, startPos2, length);
         }
 
+#if !NET40
         public static unsafe void CopyMemory(byte[] src, int srcIndex, byte[] dst, int dstIndex, int length)
         {
             if (length > 0)
@@ -110,5 +111,6 @@ namespace DotNetty.Common.Internal
                     Unsafe.InitBlock(source, value, unchecked((uint)length));
             }
         }
+#endif
     }
 }

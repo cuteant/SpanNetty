@@ -13,41 +13,41 @@ namespace DotNetty.Buffers
     {
         const byte Zero = 0;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static short GetShort(byte* bytes) =>
             unchecked((short)(((*bytes) << 8) | *(bytes + 1)));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static short GetShortLE(byte* bytes) =>
             unchecked((short)((*bytes) | (*(bytes + 1) << 8)));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static int GetUnsignedMedium(byte* bytes) =>
             *bytes << 16 | 
             *(bytes + 1) << 8 | 
             *(bytes + 2);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static int GetUnsignedMediumLE(byte* bytes) =>
             *bytes | 
             *(bytes + 1) << 8 | 
             *(bytes + 2) << 16;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static int GetInt(byte* bytes) =>
             (*bytes << 24) | 
             (*(bytes + 1) << 16) | 
             (*(bytes + 2) << 8) | 
             (*(bytes + 3));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static int GetIntLE(byte* bytes) =>
             *bytes | 
             (*(bytes + 1) << 8) |
             (*(bytes + 2) << 16) | 
             (*(bytes + 3) << 24);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static long GetLong(byte* bytes)
         {
             unchecked
@@ -58,7 +58,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static long GetLongLE(byte* bytes)
         {
             unchecked
@@ -69,7 +69,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static void SetShort(byte* bytes, int value)
         {
             unchecked
@@ -79,7 +79,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static void SetShortLE(byte* bytes, int value)
         {
             unchecked
@@ -89,7 +89,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static void SetMedium(byte* bytes, int value)
         {
             unchecked
@@ -101,7 +101,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static void SetMediumLE(byte* bytes, int value)
         {
             unchecked
@@ -113,7 +113,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static void SetInt(byte* bytes, int value)
         {
             unchecked
@@ -126,7 +126,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static void SetIntLE(byte* bytes, int value)
         {
             unchecked
@@ -139,7 +139,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static void SetLong(byte* bytes, long value)
         {
             unchecked
@@ -156,7 +156,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         internal static void SetLongLE(byte* bytes, long value)
         {
             unchecked

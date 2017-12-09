@@ -11,7 +11,7 @@ namespace DotNetty.Buffers
     using System.Threading.Tasks;
     using DotNetty.Common.Internal;
 
-    public class UnpooledHeapByteBuffer : AbstractReferenceCountedByteBuffer
+    public partial class UnpooledHeapByteBuffer : AbstractReferenceCountedByteBuffer
     {
         readonly IByteBufferAllocator allocator;
         byte[] array;

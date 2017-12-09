@@ -20,7 +20,7 @@ namespace DotNetty.Buffers
     /// <summary>
     ///     Abstract base class implementation of a <see cref="T:DotNetty.Buffers.IByteBuffer" />
     /// </summary>
-    public abstract class AbstractByteBuffer : IByteBuffer
+    public abstract partial class AbstractByteBuffer : IByteBuffer
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractByteBuffer>();
         const string PropMode = "io.netty.buffer.bytebuf.checkAccessible";

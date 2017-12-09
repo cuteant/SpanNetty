@@ -17,7 +17,7 @@ namespace DotNetty.Buffers
     /// It's important that the {@link #readerIndex()} and {@link #writerIndex()} will not do any adjustments on the
     /// indices on the fly because of internal optimizations made by {@link ByteBufUtil#writeAscii(ByteBuf, CharSequence)}
     /// and {@link ByteBufUtil#writeUtf8(ByteBuf, CharSequence)}.
-    class WrappedByteBuffer : IByteBuffer
+    partial class WrappedByteBuffer : IByteBuffer
     {
         protected readonly IByteBuffer Buf;
 

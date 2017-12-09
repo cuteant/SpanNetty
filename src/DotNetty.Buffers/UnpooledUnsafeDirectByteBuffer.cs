@@ -12,7 +12,7 @@ namespace DotNetty.Buffers
     using System.Threading.Tasks;
     using DotNetty.Common.Internal;
 
-    public unsafe class UnpooledUnsafeDirectByteBuffer : AbstractReferenceCountedByteBuffer
+    public unsafe partial class UnpooledUnsafeDirectByteBuffer : AbstractReferenceCountedByteBuffer
     {
         readonly IByteBufferAllocator allocator;
 
@@ -297,7 +297,11 @@ namespace DotNetty.Buffers
             int read;
             fixed (byte* addr = &this.Addr(index))
                 read = UnsafeByteBufferUtil.SetBytes(this, addr, index, src, length);
+#if NET40
+            return TaskEx.FromResult(read);
+#else
             return Task.FromResult(read);
+#endif
         }
 
         public override int IoBufferCount => 1;
@@ -335,7 +339,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer Unwrap() => null;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         ref byte Addr(int index) => ref this.buffer[index];
 
         public override IByteBuffer SetZero(int index, int length)

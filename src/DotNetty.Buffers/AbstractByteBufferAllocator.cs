@@ -143,7 +143,7 @@ namespace DotNetty.Buffers
         public virtual CompositeByteBuffer CompositeDirectBuffer(int maxNumComponents) => 
             ToLeakAwareBuffer(new CompositeByteBuffer(this, true, maxNumComponents));
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static void Validate(int initialCapacity, int maxCapacity)
         {
             if (initialCapacity < 0)

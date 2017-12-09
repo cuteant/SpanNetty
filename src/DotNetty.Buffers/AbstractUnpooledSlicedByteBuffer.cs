@@ -11,7 +11,7 @@ namespace DotNetty.Buffers
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
-    abstract class AbstractUnpooledSlicedByteBuffer : AbstractDerivedByteBuffer
+    abstract partial class AbstractUnpooledSlicedByteBuffer : AbstractDerivedByteBuffer
     {
         readonly IByteBuffer buffer;
         readonly int adjustment;
@@ -58,7 +58,9 @@ namespace DotNetty.Buffers
 
         public override bool HasMemoryAddress => this.Unwrap().HasMemoryAddress;
 
+#if !NET40
         public override ref byte GetPinnableMemoryAddress() => ref Unsafe.Add(ref this.Unwrap().GetPinnableMemoryAddress(), this.adjustment);
+#endif
 
         public override IntPtr AddressOfPinnedMemory()
         {
@@ -322,7 +324,7 @@ namespace DotNetty.Buffers
 
         // Returns the index with the needed adjustment.
         protected int Idx(int index) => index + this.adjustment;
-        
+
         internal static void CheckSliceOutOfBounds(int index, int length, IByteBuffer buffer)
         {
             if (MathUtil.IsOutOfBounds(index, length, buffer.Capacity))

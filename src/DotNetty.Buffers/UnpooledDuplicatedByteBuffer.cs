@@ -9,7 +9,7 @@ namespace DotNetty.Buffers
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
 
-    class UnpooledDuplicatedByteBuffer : AbstractDerivedByteBuffer
+    partial class UnpooledDuplicatedByteBuffer : AbstractDerivedByteBuffer
     {
         readonly AbstractByteBuffer buffer;
 

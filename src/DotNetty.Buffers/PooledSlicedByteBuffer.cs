@@ -12,7 +12,7 @@ namespace DotNetty.Buffers
     using DotNetty.Common.Utilities;
     using static AbstractUnpooledSlicedByteBuffer;
 
-    sealed class PooledSlicedByteBuffer : AbstractPooledDerivedByteBuffer
+    sealed partial class PooledSlicedByteBuffer : AbstractPooledDerivedByteBuffer
     {
         static readonly ThreadLocalPool<PooledSlicedByteBuffer> Recycler = new ThreadLocalPool<PooledSlicedByteBuffer>(handle => new PooledSlicedByteBuffer(handle));
 
@@ -45,7 +45,9 @@ namespace DotNetty.Buffers
 
         public override int ArrayOffset => this.Idx(this.Unwrap().ArrayOffset);
 
+#if !NET40
         public override ref byte GetPinnableMemoryAddress() => ref Unsafe.Add(ref this.Unwrap().GetPinnableMemoryAddress(), this.adjustment);
+#endif
 
         public override IntPtr AddressOfPinnedMemory()
         {
