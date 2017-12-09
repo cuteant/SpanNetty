@@ -1,8 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-// ReSharper disable ConvertToAutoPropertyWhenPossible
-#if NET40
+﻿#if NET40
 namespace DotNetty.Common.Internal
 {
     using System;
@@ -87,7 +83,7 @@ namespace DotNetty.Common.Internal
             if (length <= Zero) { return; }
 
             fixed (byte* destination = &dst[dstIndex])
-                CopyMemory(destination, src, length);
+                CopyMemory(src, destination, length);
         }
 
         public static unsafe void CopyMemory(byte[] src, int srcIndex, byte* dst, int length)
@@ -95,7 +91,7 @@ namespace DotNetty.Common.Internal
             if (length <= Zero) { return; }
 
             fixed (byte* source = &src[srcIndex])
-                CopyMemory(dst, source, length);
+                CopyMemory(source, dst, length);
         }
 
         public static void Clear(byte[] src, int srcIndex, int length)
