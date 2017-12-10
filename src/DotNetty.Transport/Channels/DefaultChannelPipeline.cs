@@ -9,7 +9,6 @@ namespace DotNetty.Transport.Channels
     using System.Diagnostics.Contracts;
     using System.Net;
     using System.Runtime.CompilerServices;
-    using System.Text;
     using System.Threading.Tasks;
     using CuteAnt.Pool;
     using DotNetty.Common;

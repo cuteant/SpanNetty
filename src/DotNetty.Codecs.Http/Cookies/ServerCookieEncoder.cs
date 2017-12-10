@@ -119,7 +119,7 @@ namespace DotNetty.Codecs.Http.Cookies
             }
 
             var encoded = new List<string>(cookies.Length);
-            Dictionary<string, int> nameToIndex = this.Strict && cookies.Length > 1 ? new Dictionary<string, int>() : null;
+            Dictionary<string, int> nameToIndex = this.Strict && cookies.Length > 1 ? new Dictionary<string, int>(StringComparer.Ordinal) : null;
             bool hasDupdName = false;
             for (int i = 0; i < cookies.Length; i++)
             {
@@ -150,7 +150,7 @@ namespace DotNetty.Codecs.Http.Cookies
             }
 
             var encoded = new List<string>();
-            var nameToIndex = new Dictionary<string, int>();
+            var nameToIndex = new Dictionary<string, int>(StringComparer.Ordinal);
             bool hasDupdName = false;
             int i = 0;
             foreach (ICookie c in cookies)

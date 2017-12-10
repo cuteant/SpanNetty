@@ -12,7 +12,7 @@ namespace DotNetty.Common.Utilities
     /// </summary>
     public abstract class ConstantPool
     {
-        readonly Dictionary<string, IConstant> constants = new Dictionary<string, IConstant>();
+        readonly Dictionary<string, IConstant> constants = new Dictionary<string, IConstant>(StringComparer.Ordinal);
 
         int nextId = 1;
 

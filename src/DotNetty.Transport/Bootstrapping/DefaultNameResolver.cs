@@ -12,8 +12,7 @@ namespace DotNetty.Transport.Bootstrapping
 
         public async Task<EndPoint> ResolveAsync(EndPoint address)
         {
-            var asDns = address as DnsEndPoint;
-            if (asDns != null)
+            if (address is DnsEndPoint asDns)
             {
 #if NET40
                 IPHostEntry resolved = Dns.GetHostEntry(asDns.Host);

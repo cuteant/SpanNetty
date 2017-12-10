@@ -112,7 +112,7 @@ namespace DotNetty.Codecs.Http
             {
                 from++;
             }
-            var parameters = new Dictionary<string, List<string>>();
+            var parameters = new Dictionary<string, List<string>>(StringComparer.Ordinal);
             int nameStart = from;
             int valueStart = -1;
             int i;

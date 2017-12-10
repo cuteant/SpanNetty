@@ -9,24 +9,15 @@ namespace DotNetty.Common.Utilities
 
     public static class TaskUtil
     {
-#if !NET40
-        public static readonly Task<int> Zero = Task.FromResult(0);
-        public static readonly Task<bool> True = Task.FromResult(true);
-        public static readonly Task<bool> False = Task.FromResult(false);
-#else
-        public static readonly Task<int> Zero = TaskEx.FromResult(0);
-        public static readonly Task<bool> True = TaskEx.FromResult(true);
-        public static readonly Task<bool> False = TaskEx.FromResult(false);
-#endif
+        public static readonly Task<int> Zero = CuteAnt.AsyncEx.TaskConstants.Int32Zero;
 
-#if NET_4_5_GREATER
-        public static readonly Task Completed = Task.CompletedTask;
-#else
-        public static readonly Task Completed = Zero;
-#endif
+        public static readonly Task Completed = CuteAnt.AsyncEx.TaskConstants.Completed;
 
         public static readonly Task<int> Cancelled = CreateCancelledTask();
 
+        public static readonly Task<bool> True = CuteAnt.AsyncEx.TaskConstants.BooleanTrue;
+
+        public static readonly Task<bool> False = CuteAnt.AsyncEx.TaskConstants.BooleanFalse;
 
         static Task<int> CreateCancelledTask()
         {
@@ -37,16 +28,16 @@ namespace DotNetty.Common.Utilities
 
         public static Task FromException(Exception exception)
         {
-            var tcs = new TaskCompletionSource();
-            tcs.TrySetException(exception);
-            return tcs.Task;
+            //var tcs = new TaskCompletionSource();
+            //tcs.TrySetException(exception);
+            return CuteAnt.AsyncEx.AsyncUtils.FromException(exception); //tcs.Task;
         }
 
         public static Task<T> FromException<T>(Exception exception)
         {
-            var tcs = new TaskCompletionSource<T>();
-            tcs.TrySetException(exception);
-            return tcs.Task;
+            //var tcs = new TaskCompletionSource<T>();
+            //tcs.TrySetException(exception);
+            return CuteAnt.AsyncEx.AsyncUtils.FromException<T>(exception); //tcs.Task;
         }
 
         static readonly Action<Task, object> LinkOutcomeContinuationAction = (t, tcs) =>

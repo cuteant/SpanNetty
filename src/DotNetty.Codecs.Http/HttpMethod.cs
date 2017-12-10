@@ -77,7 +77,7 @@ namespace DotNetty.Codecs.Http
 
         static HttpMethod()
         {
-            MethodMap = new Dictionary<string, HttpMethod>
+            MethodMap = new Dictionary<string, HttpMethod>(StringComparer.OrdinalIgnoreCase)
             {
                 { Options.ToString(), Options },
                 { Get.ToString(), Get },
