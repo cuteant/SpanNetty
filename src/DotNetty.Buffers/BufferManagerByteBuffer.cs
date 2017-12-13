@@ -1,151 +1,111 @@
-﻿//// Copyright (c) Microsoft. All rights reserved.
-//// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+﻿using CuteAnt.Buffers;
+using DotNetty.Common;
+using DotNetty.Common.Internal;
 
-//namespace DotNetty.Buffers
-//{
-//    using System;
-//    using System.Diagnostics;
-//    using System.Runtime.CompilerServices;
-//    using DotNetty.Common;
-//    using DotNetty.Common.Utilities;
+namespace DotNetty.Buffers
+{
+    abstract class BufferManagerByteBuffer : AbstractReferenceCountedByteBuffer
+    {
+        readonly ThreadLocalPool.Handle recyclerHandle;
 
-//    abstract class BufferManagerByteBuffer<T> : AbstractReferenceCountedByteBuffer
-//    {
-//        readonly ThreadLocalPool.Handle recyclerHandle;
+        protected internal byte[] Memory;
+        internal int MaxLength;
+        PooledByteBufferAllocator _allocator;
+        BufferManager _bufferMannager;
 
-//        protected internal PoolChunk<T> Chunk;
-//        protected internal long Handle;
-//        protected internal T Memory;
-//        protected internal int Offset;
-//        protected internal int Length;
-//        internal int MaxLength;
-//        internal PoolThreadCache<T> Cache;
-//        PooledByteBufferAllocator allocator;
+        protected BufferManagerByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
+            : base(maxCapacity)
+        {
+            this.recyclerHandle = recyclerHandle;
+        }
 
-//        protected BufferManagerByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
-//            : base(maxCapacity)
-//        {
-//            this.recyclerHandle = recyclerHandle;
-//        }
+        /// <summary>Method must be called before reuse this {@link PooledByteBufAllocator}.</summary>
+        /// <param name="bufferManager"></param>
+        /// <param name="initialCapacity"></param>
+        /// <param name="maxCapacity"></param>
+        internal void Reuse(BufferManager bufferManager, int initialCapacity, int maxCapacity)
+        {
+            _bufferMannager = bufferManager;
+            Memory = bufferManager.TakeBuffer(initialCapacity);
 
-//        internal virtual void Init(PoolChunk<T> chunk, long handle, int offset, int length, int maxLength, PoolThreadCache<T> cache) =>
-//            this.Init0(chunk, handle, offset, length, maxLength, cache);
+            this.SetMaxCapacity(maxCapacity);
+            this.SetReferenceCount(1);
+            this.SetIndex0(0, 0);
+            this.DiscardMarks();
+        }
 
-//        internal virtual void InitUnpooled(PoolChunk<T> chunk, int length) => this.Init0(chunk, 0, 0, length, length, null);
+        public override int Capacity => Memory.Length;
 
-//        void Init0(PoolChunk<T> chunk, long handle, int offset, int length, int maxLength, PoolThreadCache<T> cache)
-//        {
-//            Debug.Assert(handle >= 0);
-//            Debug.Assert(chunk != null);
+        protected virtual byte[] AllocateArray(int initialCapacity) => _bufferMannager.TakeBuffer(initialCapacity);
 
-//            this.Chunk = chunk;
-//            this.Memory = chunk.Memory;
-//            this.allocator = chunk.Arena.Parent;
-//            this.Cache = cache;
-//            this.Handle = handle;
-//            this.Offset = offset;
-//            this.Length = length;
-//            this.MaxLength = maxLength;
-//        }
+        protected void FreeArray(byte[] bytes) => _bufferMannager.ReturnBuffer(bytes);
 
-//        /**
-//          * Method must be called before reuse this {@link PooledByteBufAllocator}
-//          */
-//        internal void Reuse(int maxCapacity)
-//        {
-//            this.SetMaxCapacity(maxCapacity);
-//            this.SetReferenceCount(1);
-//            this.SetIndex0(0, 0);
-//            this.DiscardMarks();
-//        }
-        
-//        public override int Capacity => this.Length;
+        protected void SetArray(byte[] initialArray) => this.Memory = initialArray;
 
-//        public sealed override IByteBuffer AdjustCapacity(int newCapacity)
-//        {
-//            this.CheckNewCapacity(newCapacity);
+        public sealed override IByteBuffer AdjustCapacity(int newCapacity)
+        {
+            this.CheckNewCapacity(newCapacity);
 
-//            // If the request capacity does not require reallocation, just update the length of the memory.
-//            if (this.Chunk.Unpooled)
-//            {
-//                if (newCapacity == this.Length)
-//                {
-//                    return this;
-//                }
-//            }
-//            else
-//            {
-//                if (newCapacity > this.Length)
-//                {
-//                    if (newCapacity <= this.MaxLength)
-//                    {
-//                        this.Length = newCapacity;
-//                        return this;
-//                    }
-//                }
-//                else if (newCapacity < this.Length)
-//                {
-//                    if (newCapacity > this.MaxLength.RightUShift(1))
-//                    {
-//                        if (this.MaxLength <= 512)
-//                        {
-//                            if (newCapacity > this.MaxLength - 16)
-//                            {
-//                                this.Length = newCapacity;
-//                                this.SetIndex(Math.Min(this.ReaderIndex, newCapacity), Math.Min(this.WriterIndex, newCapacity));
-//                                return this;
-//                            }
-//                        }
-//                        else
-//                        {
-//                            // > 512 (i.e. >= 1024)
-//                            this.Length = newCapacity;
-//                            this.SetIndex(Math.Min(this.ReaderIndex, newCapacity), Math.Min(this.WriterIndex, newCapacity));
-//                            return this;
-//                        }
-//                    }
-//                }
-//                else
-//                {
-//                    return this;
-//                }
-//            }
+            int oldCapacity = this.Memory.Length;
+            byte[] oldArray = this.Memory;
+            if (newCapacity > oldCapacity)
+            {
+                byte[] newArray = this.AllocateArray(newCapacity);
+                PlatformDependent.CopyMemory(this.Memory, 0, newArray, 0, oldCapacity);
 
-//            // Reallocation required.
-//            this.Chunk.Arena.Reallocate(this, newCapacity, true);
-//            return this;
-//        }
+                this.SetArray(newArray);
+                this.FreeArray(oldArray);
+            }
+            else if (newCapacity < oldCapacity)
+            {
+                byte[] newArray = this.AllocateArray(newCapacity);
+                int readerIndex = this.ReaderIndex;
+                if (readerIndex < newCapacity)
+                {
+                    int writerIndex = this.WriterIndex;
+                    if (writerIndex > newCapacity)
+                    {
+                        this.SetWriterIndex0(writerIndex = newCapacity);
+                    }
 
-//        public sealed override IByteBufferAllocator Allocator => this.allocator;
+                    PlatformDependent.CopyMemory(this.Memory, readerIndex, newArray, 0, writerIndex - readerIndex);
+                }
+                else
+                {
+                    this.SetIndex(newCapacity, newCapacity);
+                }
 
-//        public sealed override IByteBuffer Unwrap() => null;
+                this.SetArray(newArray);
+                this.FreeArray(oldArray);
+            }
+            return this;
+        }
 
-//        public sealed override IByteBuffer RetainedDuplicate() => PooledDuplicatedByteBuffer.NewInstance(this, this, this.ReaderIndex, this.WriterIndex);
+        public sealed override IByteBufferAllocator Allocator => this._allocator;
 
-//        public sealed override IByteBuffer RetainedSlice()
-//        {
-//            int index = this.ReaderIndex;
-//            return this.RetainedSlice(index, this.WriterIndex - index);
-//        }
+        public sealed override IByteBuffer Unwrap() => null;
 
-//        public sealed override IByteBuffer RetainedSlice(int index, int length) => PooledSlicedByteBuffer.NewInstance(this, this, index, length);
+        public sealed override IByteBuffer RetainedDuplicate() => PooledDuplicatedByteBuffer.NewInstance(this, this, this.ReaderIndex, this.WriterIndex);
 
-//        protected internal sealed override void Deallocate()
-//        {
-//            if (this.Handle >= 0)
-//            {
-//                long handle = this.Handle;
-//                this.Handle = -1;
-//                this.Memory = default(T);
-//                this.Chunk.Arena.Free(this.Chunk, handle, this.MaxLength, this.Cache);
-//                this.Chunk = null;
-//                this.Recycle();
-//            }
-//        }
+        public sealed override IByteBuffer RetainedSlice()
+        {
+            int index = this.ReaderIndex;
+            return this.RetainedSlice(index, this.WriterIndex - index);
+        }
 
-//        void Recycle() => this.recyclerHandle.Release(this);
+        public sealed override IByteBuffer RetainedSlice(int index, int length) => PooledSlicedByteBuffer.NewInstance(this, this, index, length);
 
-//        [MethodImpl(InlineMethod.Value)]
-//        protected int Idx(int index) => this.Offset + index;
-//    }
-//}
+        protected internal sealed override void Deallocate()
+        {
+            if (_bufferMannager != null & Memory != null)
+            {
+                _bufferMannager.ReturnBuffer(Memory);
+                _bufferMannager = null;
+                Memory = null;
+                this.Recycle();
+            }
+        }
+
+        void Recycle() => this.recyclerHandle.Release(this);
+    }
+}

@@ -59,8 +59,11 @@ namespace DotNetty.Common.Tests
 
         class RecyclableObject : IThreadLocalPooledObjectRecycling
         {
-            internal static readonly ThreadLocalObjectPool<RecyclableObject> pool =
-                new ThreadLocalObjectPool<RecyclableObject>(new RecyclableObjectPolicy(), 1);
+            internal static readonly CuteAnt.Pool.ObjectPool<RecyclableObject> pool;
+            static RecyclableObject()
+            {
+                pool = ThreadLocalObjectPoolProvider.Default.Create(new RecyclableObjectPolicy(), 1);
+            }
 
             readonly ThreadLocalPool.Handle handle;
 
@@ -72,7 +75,7 @@ namespace DotNetty.Common.Tests
             public static RecyclableObject NewInstance() => pool.Take();
             public static void Return(RecyclableObject obj) => pool.Return(obj);
 
-            public void Recycle() => handle.Release(this);
+            void IThreadLocalPooledObjectRecycling.Recycle() => handle.Release(this);
         }
     }
 }
