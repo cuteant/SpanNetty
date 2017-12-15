@@ -8,6 +8,7 @@ namespace DotNetty.Buffers
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common;
+    using DotNetty.Common.Utilities;
 
     sealed partial class PooledDuplicatedByteBuffer : AbstractPooledDerivedByteBuffer
     {
@@ -101,5 +102,9 @@ namespace DotNetty.Buffers
         protected internal override void _SetLong(int index, long value) => this.UnwrapCore()._SetLong(index, value);
 
         protected internal override void _SetLongLE(int index, long value) => this.UnwrapCore()._SetLongLE(index, value);
+
+        public override int ForEachByte(int index, int length, IByteProcessor processor) => this.Unwrap().ForEachByte(index, length, processor);
+
+        public override int ForEachByteDesc(int index, int length, IByteProcessor processor) => this.Unwrap().ForEachByteDesc(index, length, processor);
     }
 }
