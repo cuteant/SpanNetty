@@ -177,5 +177,18 @@ namespace DotNetty.Buffers
         }
 
         public override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
+
+        public override IByteBuffer WriteZero(int length)
+        {
+            if (length == 0) { return this; }
+
+            this.EnsureWritable(length);
+            int wIndex = this.WriterIndex;
+            this.CheckIndex0(wIndex, length);
+            PlatformDependent.Clear(this.Memory, this.Idx(wIndex), length);
+            this.SetWriterIndex(wIndex + length);
+
+            return this;
+        }
     }
 }

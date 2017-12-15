@@ -11,7 +11,7 @@ namespace DotNetty.Buffers
     using System.Threading.Tasks;
     using DotNetty.Common.Internal;
 
-    public partial class UnpooledHeapByteBuffer : AbstractReferenceCountedByteBuffer
+    partial class UnpooledHeapByteBuffer : AbstractReferenceCountedByteBuffer
     {
         readonly IByteBufferAllocator allocator;
         byte[] array;
@@ -153,7 +153,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer GetBytes(int index, Stream destination, int length)
         {
-            this.EnsureAccessible();
+            this.CheckIndex(index, length);
             destination.Write(this.Array, this.ArrayOffset + index, length);
             return this;
         }
@@ -199,17 +199,17 @@ namespace DotNetty.Buffers
 
         public override ArraySegment<byte> GetIoBuffer(int index, int length)
         {
-            this.EnsureAccessible();
+            this.CheckIndex(index, length);
             return new ArraySegment<byte>(this.array, index, length);
         }
 
         public override ArraySegment<byte>[] GetIoBuffers(int index, int length) => new[] { this.GetIoBuffer(index, length) };
 
-        public override byte GetByte(int index)
-        {
-            this.EnsureAccessible();
-            return this._GetByte(index);
-        }
+        //public override byte GetByte(int index)
+        //{
+        //    this.EnsureAccessible();
+        //    return this._GetByte(index);
+        //}
 
         protected internal override byte _GetByte(int index) => HeapByteBufferUtil.GetByte(this.array, index);
 
@@ -220,148 +220,148 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public override short GetShort(int index)
-        {
-            this.EnsureAccessible();
-            return this._GetShort(index);
-        }
+        //public override short GetShort(int index)
+        //{
+        //    this.EnsureAccessible();
+        //    return this._GetShort(index);
+        //}
 
         protected internal override short _GetShort(int index) => HeapByteBufferUtil.GetShort(this.array, index);
 
-        public override short GetShortLE(int index)
-        {
-            this.EnsureAccessible();
-            return this._GetShortLE(index);
-        }
+        //public override short GetShortLE(int index)
+        //{
+        //    this.EnsureAccessible();
+        //    return this._GetShortLE(index);
+        //}
 
         protected internal override short _GetShortLE(int index) => HeapByteBufferUtil.GetShortLE(this.array, index);
 
-        public override int GetUnsignedMedium(int index)
-        {
-            this.EnsureAccessible();
-            return this._GetUnsignedMedium(index);
-        }
+        //public override int GetUnsignedMedium(int index)
+        //{
+        //    this.EnsureAccessible();
+        //    return this._GetUnsignedMedium(index);
+        //}
 
         protected internal override int _GetUnsignedMedium(int index) => HeapByteBufferUtil.GetUnsignedMedium(this.array, index);
 
-        public override int GetUnsignedMediumLE(int index)
-        {
-            this.EnsureAccessible();
-            return this._GetUnsignedMediumLE(index);
-        }
+        //public override int GetUnsignedMediumLE(int index)
+        //{
+        //    this.EnsureAccessible();
+        //    return this._GetUnsignedMediumLE(index);
+        //}
 
         protected internal override int _GetUnsignedMediumLE(int index) => HeapByteBufferUtil.GetUnsignedMediumLE(this.array, index);
 
-        public override int GetInt(int index)
-        {
-            this.EnsureAccessible();
-            return this._GetInt(index);
-        }
+        //public override int GetInt(int index)
+        //{
+        //    this.EnsureAccessible();
+        //    return this._GetInt(index);
+        //}
 
         protected internal override int _GetInt(int index) => HeapByteBufferUtil.GetInt(this.array, index);
 
-        public override int GetIntLE(int index)
-        {
-            this.EnsureAccessible();
-            return this._GetIntLE(index);
-        }
+        //public override int GetIntLE(int index)
+        //{
+        //    this.EnsureAccessible();
+        //    return this._GetIntLE(index);
+        //}
 
         protected internal override int _GetIntLE(int index) => HeapByteBufferUtil.GetIntLE(this.array, index);
 
-        public override long GetLong(int index)
-        {
-            this.EnsureAccessible();
-            return this._GetLong(index);
-        }
+        //public override long GetLong(int index)
+        //{
+        //    this.EnsureAccessible();
+        //    return this._GetLong(index);
+        //}
 
         protected internal override long _GetLong(int index) => HeapByteBufferUtil.GetLong(this.array, index);
 
-        public override long GetLongLE(int index)
-        {
-            this.EnsureAccessible();
-            return this._GetLongLE(index);
-        }
+        //public override long GetLongLE(int index)
+        //{
+        //    this.EnsureAccessible();
+        //    return this._GetLongLE(index);
+        //}
 
         protected internal override long _GetLongLE(int index) => HeapByteBufferUtil.GetLongLE(this.array, index);
 
-        public override IByteBuffer SetByte(int index, int value)
-        {
-            this.EnsureAccessible();
-            this._SetByte(index, value);
-            return this;
-        }
+        //public override IByteBuffer SetByte(int index, int value)
+        //{
+        //    this.EnsureAccessible();
+        //    this._SetByte(index, value);
+        //    return this;
+        //}
 
         protected internal override void _SetByte(int index, int value) => HeapByteBufferUtil.SetByte(this.array, index, value);
 
-        public override IByteBuffer SetShort(int index, int value)
-        {
-            this.EnsureAccessible();
-            this._SetShort(index, value);
-            return this;
-        }
+        //public override IByteBuffer SetShort(int index, int value)
+        //{
+        //    this.EnsureAccessible();
+        //    this._SetShort(index, value);
+        //    return this;
+        //}
 
         protected internal override void _SetShort(int index, int value) => HeapByteBufferUtil.SetShort(this.array, index, value);
 
-        public override IByteBuffer SetShortLE(int index, int value)
-        {
-            this.EnsureAccessible();
-            this._SetShortLE(index, value);
-            return this;
-        }
+        //public override IByteBuffer SetShortLE(int index, int value)
+        //{
+        //    this.EnsureAccessible();
+        //    this._SetShortLE(index, value);
+        //    return this;
+        //}
 
         protected internal override void _SetShortLE(int index, int value) => HeapByteBufferUtil.SetShortLE(this.array, index, value);
 
-        public override IByteBuffer SetMedium(int index, int value)
-        {
-            this.EnsureAccessible();
-            this._SetMedium(index, value);
-            return this;
-        }
+        //public override IByteBuffer SetMedium(int index, int value)
+        //{
+        //    this.EnsureAccessible();
+        //    this._SetMedium(index, value);
+        //    return this;
+        //}
 
         protected internal override void _SetMedium(int index, int value) => HeapByteBufferUtil.SetMedium(this.array, index, value);
 
-        public override IByteBuffer SetMediumLE(int index, int value)
-        {
-            this.EnsureAccessible();
-            this._SetMediumLE(index, value);
-            return this;
-        }
+        //public override IByteBuffer SetMediumLE(int index, int value)
+        //{
+        //    this.EnsureAccessible();
+        //    this._SetMediumLE(index, value);
+        //    return this;
+        //}
 
         protected internal override void _SetMediumLE(int index, int value) => HeapByteBufferUtil.SetMediumLE(this.array, index, value);
 
-        public override IByteBuffer SetInt(int index, int value)
-        {
-            this.EnsureAccessible();
-            this._SetInt(index, value);
-            return this;
-        }
+        //public override IByteBuffer SetInt(int index, int value)
+        //{
+        //    this.EnsureAccessible();
+        //    this._SetInt(index, value);
+        //    return this;
+        //}
 
         protected internal override void _SetInt(int index, int value) => HeapByteBufferUtil.SetInt(this.array, index, value);
 
-        public override IByteBuffer SetIntLE(int index, int value)
-        {
-            this.EnsureAccessible();
-            this._SetIntLE(index, value);
-            return this;
-        }
+        //public override IByteBuffer SetIntLE(int index, int value)
+        //{
+        //    this.EnsureAccessible();
+        //    this._SetIntLE(index, value);
+        //    return this;
+        //}
 
         protected internal override void _SetIntLE(int index, int value) => HeapByteBufferUtil.SetIntLE(this.array, index, value);
 
-        public override IByteBuffer SetLong(int index, long value)
-        {
-            this.EnsureAccessible();
-            this._SetLong(index, value);
-            return this;
-        }
+        //public override IByteBuffer SetLong(int index, long value)
+        //{
+        //    this.EnsureAccessible();
+        //    this._SetLong(index, value);
+        //    return this;
+        //}
 
         protected internal override void _SetLong(int index, long value) => HeapByteBufferUtil.SetLong(this.array, index, value);
 
-        public override IByteBuffer SetLongLE(int index, long value)
-        {
-            this.EnsureAccessible();
-            this._SetLongLE(index, value);
-            return this;
-        }
+        //public override IByteBuffer SetLongLE(int index, long value)
+        //{
+        //    this.EnsureAccessible();
+        //    this._SetLongLE(index, value);
+        //    return this;
+        //}
 
         protected internal override void _SetLongLE(int index, long value) => HeapByteBufferUtil.SetLongLE(this.array, index, value);
 
@@ -381,5 +381,18 @@ namespace DotNetty.Buffers
         }
 
         public override IByteBuffer Unwrap() => null;
+
+        public override IByteBuffer WriteZero(int length)
+        {
+            if (length == 0) { return this; }
+
+            this.EnsureWritable(length);
+            int wIndex = this.WriterIndex;
+            this.CheckIndex0(wIndex, length);
+            PlatformDependent.Clear(this.array, wIndex, length);
+            this.SetWriterIndex(wIndex + length);
+
+            return this;
+        }
     }
 }

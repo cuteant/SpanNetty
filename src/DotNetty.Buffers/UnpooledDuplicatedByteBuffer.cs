@@ -13,7 +13,7 @@ namespace DotNetty.Buffers
     {
         readonly AbstractByteBuffer buffer;
 
-        public UnpooledDuplicatedByteBuffer(AbstractByteBuffer buffer) 
+        public UnpooledDuplicatedByteBuffer(AbstractByteBuffer buffer)
             : this(buffer, buffer.ReaderIndex, buffer.WriterIndex)
         {
         }
@@ -26,6 +26,10 @@ namespace DotNetty.Buffers
                 this.buffer = duplicated.buffer;
             }
             else if (buffer is AbstractPooledDerivedByteBuffer)
+            {
+                this.buffer = (AbstractByteBuffer)buffer.Unwrap();
+            }
+            else if (buffer is AbstractBufferManagerDerivedByteBuffer)
             {
                 this.buffer = (AbstractByteBuffer)buffer.Unwrap();
             }
@@ -84,11 +88,11 @@ namespace DotNetty.Buffers
 
         protected internal override long _GetLongLE(int index) => this.UnwrapCore()._GetLongLE(index);
 
-        public override IByteBuffer GetBytes(int index, IByteBuffer destination, int dstIndex, int length) => this.Unwrap().GetBytes(index, destination, dstIndex, length);
+        public override IByteBuffer GetBytes(int index, IByteBuffer destination, int dstIndex, int length) { this.Unwrap().GetBytes(index, destination, dstIndex, length); return this; }
 
-        public override IByteBuffer GetBytes(int index, byte[] destination, int dstIndex, int length) => this.Unwrap().GetBytes(index, destination, dstIndex, length);
+        public override IByteBuffer GetBytes(int index, byte[] destination, int dstIndex, int length) { this.Unwrap().GetBytes(index, destination, dstIndex, length); return this; }
 
-        public override IByteBuffer GetBytes(int index, Stream destination, int length) => this.Unwrap().GetBytes(index, destination, length);
+        public override IByteBuffer GetBytes(int index, Stream destination, int length) { this.Unwrap().GetBytes(index, destination, length); return this; }
 
         protected internal override void _SetByte(int index, int value) => this.UnwrapCore()._SetByte(index, value);
 
@@ -100,11 +104,11 @@ namespace DotNetty.Buffers
 
         protected internal override void _SetMediumLE(int index, int value) => this.UnwrapCore()._SetMediumLE(index, value);
 
-        public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length) => this.Unwrap().SetBytes(index, src, srcIndex, length);
+        public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length) { this.Unwrap().SetBytes(index, src, srcIndex, length); return this; }
 
         public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken) => this.Unwrap().SetBytesAsync(index, src, length, cancellationToken);
 
-        public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length) => this.Unwrap().SetBytes(index, src, srcIndex, length);
+        public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length) { this.Unwrap().SetBytes(index, src, srcIndex, length);return this; }
 
         protected internal override void _SetInt(int index, int value) => this.UnwrapCore()._SetInt(index, value);
 

@@ -178,10 +178,14 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer WriteZero(int length)
         {
+            if (length == 0) { return this; }
+
             this.EnsureWritable(length);
             int wIndex = this.WriterIndex;
+            this.CheckIndex0(wIndex, length);
             UnsafeByteBufferUtil.SetZero(this.Addr(wIndex), length);
             this.SetWriterIndex(wIndex + length);
+
             return this;
         }
     }

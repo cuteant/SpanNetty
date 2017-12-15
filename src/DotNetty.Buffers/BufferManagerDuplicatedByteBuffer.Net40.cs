@@ -1,7 +1,7 @@
 ﻿#if NET40
 namespace DotNetty.Buffers
 {
-    partial class UnpooledDuplicatedByteBuffer
+    partial class BufferManagerDuplicatedByteBuffer
     {
         public override ref byte GetPinnableMemoryOffsetAddress(int elementOffset)
         {

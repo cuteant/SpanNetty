@@ -1,154 +1,32 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+﻿using System;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
+using CuteAnt.Buffers;
+using DotNetty.Common;
 
-// ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Buffers
 {
-    using System;
-    using System.Diagnostics.Contracts;
-    using System.IO;
-    using System.Runtime.CompilerServices;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using DotNetty.Common.Internal;
-
-    unsafe partial class UnpooledUnsafeDirectByteBuffer : AbstractReferenceCountedByteBuffer
+    unsafe partial class BufferManagerUnsafeDirectByteBuffer : BufferManagerByteBuffer
     {
-        readonly IByteBufferAllocator allocator;
+        static readonly ThreadLocalPool<BufferManagerUnsafeDirectByteBuffer> Recycler = new ThreadLocalPool<BufferManagerUnsafeDirectByteBuffer>(handle => new BufferManagerUnsafeDirectByteBuffer(handle, 0));
 
-        int capacity;
-        bool doNotFree;
-        byte[] buffer;
-
-        public UnpooledUnsafeDirectByteBuffer(IByteBufferAllocator alloc, int initialCapacity, int maxCapacity)
-            : base(maxCapacity)
+        internal static BufferManagerUnsafeDirectByteBuffer NewInstance(BufferManagerByteBufferAllocator allocator, BufferManager bufferManager, byte[] buffer, int maxCapacity)
         {
-            Contract.Requires(alloc != null);
-            Contract.Requires(initialCapacity >= 0);
-            Contract.Requires(maxCapacity >= 0);
-
-            if (initialCapacity > maxCapacity)
-            {
-                throw new ArgumentException($"initialCapacity({initialCapacity}) > maxCapacity({maxCapacity})");
-            }
-
-            this.allocator = alloc;
-            this.SetByteBuffer(this.NewArray(initialCapacity), false);
+            var buf = Recycler.Take();
+            buf.Reuse(allocator, bufferManager, buffer, maxCapacity);
+            return buf;
         }
 
-        protected UnpooledUnsafeDirectByteBuffer(IByteBufferAllocator alloc, byte[] initialBuffer, int maxCapacity, bool doFree)
-            : base(maxCapacity)
+        internal BufferManagerUnsafeDirectByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
+            : base(recyclerHandle, maxCapacity)
         {
-            Contract.Requires(alloc != null);
-            Contract.Requires(initialBuffer != null);
-
-            int initialCapacity = initialBuffer.Length;
-            if (initialCapacity > maxCapacity)
-            {
-                throw new ArgumentException($"initialCapacity({initialCapacity}) > maxCapacity({maxCapacity})");
-            }
-
-            this.allocator = alloc;
-            this.doNotFree = !doFree;
-            this.SetByteBuffer(initialBuffer, false);
-        }
-
-        protected virtual byte[] AllocateDirect(int initialCapacity) => this.NewArray(initialCapacity);
-
-        protected byte[] NewArray(int initialCapacity) => new byte[initialCapacity];
-
-        protected virtual void FreeDirect(byte[] array)
-        {
-            // NOOP rely on GC.
-        }
-
-        void SetByteBuffer(byte[] array, bool tryFree)
-        {
-            if (tryFree)
-            {
-                byte[] oldBuffer = this.buffer;
-                if (oldBuffer != null)
-                {
-                    if (this.doNotFree)
-                    {
-                        this.doNotFree = false;
-                    }
-                    else
-                    {
-                        this.FreeDirect(oldBuffer);
-                    }
-                }
-            }
-            this.buffer = array;
-            this.capacity = array.Length;
         }
 
         public override bool IsDirect => true;
 
-        public override int Capacity => this.capacity;
-
-        public override IByteBuffer AdjustCapacity(int newCapacity)
-        {
-            this.CheckNewCapacity(newCapacity);
-
-            int rIdx = this.ReaderIndex;
-            int wIdx = this.WriterIndex;
-
-            int oldCapacity = this.capacity;
-            if (newCapacity > oldCapacity)
-            {
-                byte[] oldBuffer = this.buffer;
-                byte[] newBuffer = this.AllocateDirect(newCapacity);
-                PlatformDependent.CopyMemory(oldBuffer, 0, newBuffer, 0, oldCapacity);
-                this.SetByteBuffer(newBuffer, true);
-            }
-            else if (newCapacity < oldCapacity)
-            {
-                byte[] oldBuffer = this.buffer;
-                byte[] newBuffer = this.AllocateDirect(newCapacity);
-                if (rIdx < newCapacity)
-                {
-                    if (wIdx > newCapacity)
-                    {
-                        this.SetWriterIndex(wIdx = newCapacity);
-                    }
-                    PlatformDependent.CopyMemory(oldBuffer, rIdx, newBuffer, 0, wIdx - rIdx);
-                }
-                else
-                {
-                    this.SetIndex(newCapacity, newCapacity);
-                }
-                this.SetByteBuffer(newBuffer, true);
-            }
-            return this;
-        }
-
-        public override IByteBufferAllocator Allocator => this.allocator;
-
-        public override bool HasArray => true;
-
-        public override byte[] Array
-        {
-            get
-            {
-                this.EnsureAccessible();
-                return this.buffer;
-            }
-        }
-
-        public override int ArrayOffset => 0;
-
-        public override bool HasMemoryAddress => true;
-
-        public override ref byte GetPinnableMemoryAddress()
-        {
-            this.EnsureAccessible();
-            return ref this.buffer[0];
-        }
-
-        public override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
-
-        protected internal override byte _GetByte(int index) => this.buffer[index];
+        protected internal override byte _GetByte(int index) => this.Memory[index];
 
         protected internal override short _GetShort(int index)
         {
@@ -214,7 +92,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        protected internal override void _SetByte(int index, int value) => this.buffer[index] = unchecked((byte)value);
+        protected internal override void _SetByte(int index, int value) => this.Memory[index] = unchecked((byte)value);
 
         protected internal override void _SetShort(int index, int value)
         {
@@ -309,7 +187,7 @@ namespace DotNetty.Buffers
         public override ArraySegment<byte> GetIoBuffer(int index, int length)
         {
             this.CheckIndex(index, length);
-            return new ArraySegment<byte>(this.buffer, index, length);
+            return new ArraySegment<byte>(this.Memory, index, length);
         }
 
         public override ArraySegment<byte>[] GetIoBuffers(int index, int length) => new[] { this.GetIoBuffer(index, length) };
@@ -321,26 +199,8 @@ namespace DotNetty.Buffers
                 return UnsafeByteBufferUtil.Copy(this, addr, index, length);
         }
 
-        protected internal override void Deallocate()
-        {
-            byte[] buf = this.buffer;
-            if (buf == null)
-            {
-                return;
-            }
-
-            this.buffer = null;
-
-            if (!this.doNotFree)
-            {
-                this.FreeDirect(buf);
-            }
-        }
-
-        public override IByteBuffer Unwrap() => null;
-
         [MethodImpl(InlineMethod.Value)]
-        ref byte Addr(int index) => ref this.buffer[index];
+        ref byte Addr(int index) => ref this.Memory[index];
 
         public override IByteBuffer SetZero(int index, int length)
         {

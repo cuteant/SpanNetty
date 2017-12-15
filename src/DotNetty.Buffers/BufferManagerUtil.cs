@@ -7,6 +7,7 @@ namespace DotNetty.Buffers
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Text;
+    using CuteAnt.Buffers;
     using DotNetty.Common.Internal;
 
     /// <summary>
@@ -14,30 +15,49 @@ namespace DotNetty.Buffers
     /// </summary>
     public static class BufferManagerUtil
     {
-        static readonly UnpooledByteBufferAllocator Allocator = UnpooledByteBufferAllocator.Default;
+        static readonly BufferManagerByteBufferAllocator Allocator = BufferManagerByteBufferAllocator.Default;
+
+        internal static readonly BufferManager DefaultBufferManager;
+
+        static BufferManagerUtil()
+        {
+            BufferManager.MaxBufferPoolSize = SystemPropertyUtil.GetInt("io.netty.allocator.maxBufferPoolSize", int.MaxValue);
+            BufferManager.MaxIndividualBufferSize = SystemPropertyUtil.GetInt("io.netty.allocator.maxIndividualBufferSize", 1024 * 1024 * 10);
+            DefaultBufferManager = BufferManager.GlobalManager;
+        }
 
         public static readonly IByteBuffer Empty = Allocator.Buffer(0, 0);
 
-        public static IByteBuffer Buffer() => Allocator.HeapBuffer();
+        public static IByteBuffer Buffer() => Allocator.Buffer();
 
         public static IByteBuffer DirectBuffer() => Allocator.DirectBuffer();
 
-        public static IByteBuffer Buffer(int initialCapacity) => Allocator.HeapBuffer(initialCapacity);
+        public static IByteBuffer HeapBuffer() => Allocator.HeapBuffer();
+
+        public static IByteBuffer Buffer(int initialCapacity) => Allocator.Buffer(initialCapacity);
 
         public static IByteBuffer DirectBuffer(int initialCapacity) => Allocator.DirectBuffer(initialCapacity);
 
+        public static IByteBuffer HeapBuffer(int initialCapacity) => Allocator.HeapBuffer(initialCapacity);
+
         public static IByteBuffer Buffer(int initialCapacity, int maxCapacity) =>
-            Allocator.HeapBuffer(initialCapacity, maxCapacity);
+            Allocator.Buffer(initialCapacity, maxCapacity);
 
         public static IByteBuffer DirectBuffer(int initialCapacity, int maxCapacity) =>
             Allocator.DirectBuffer(initialCapacity, maxCapacity);
+
+        public static IByteBuffer HeapBuffer(int initialCapacity, int maxCapacity) =>
+            Allocator.HeapBuffer(initialCapacity, maxCapacity);
 
         /// <summary>
         ///     Creates a new big-endian buffer which wraps the specified array.
         ///     A modification on the specified array's content will be visible to the returned buffer.
         /// </summary>
         public static IByteBuffer WrappedBuffer(byte[] array) =>
-            array.Length == 0 ? Empty  : new UnpooledHeapByteBuffer(Allocator, array, array.Length);
+            array.Length == 0 ? Empty :
+                PlatformDependent.DirectBufferPreferred ?
+                    BufferManagerUnsafeDirectByteBuffer.NewInstance(Allocator, DefaultBufferManager, array, array.Length) :
+                    (IByteBuffer)BufferManagerHeapByteBuffer.NewInstance(Allocator, DefaultBufferManager, array, array.Length);
 
         /// <summary>
         ///     Creates a new big-endian buffer which wraps the sub-region of the
@@ -78,11 +98,11 @@ namespace DotNetty.Buffers
             }
         }
 
-        /// <summary>
-        ///     Creates a new big-endian composite buffer which wraps the specified arrays without copying them.
-        ///     A modification on the specified arrays' content will be visible to the returned buffer.
-        /// </summary>
-        public static IByteBuffer WrappedBuffer(params byte[][] arrays) => WrappedBuffer(AbstractByteBufferAllocator.DefaultMaxComponents, arrays);
+        ///// <summary>
+        /////     Creates a new big-endian composite buffer which wraps the specified arrays without copying them.
+        /////     A modification on the specified arrays' content will be visible to the returned buffer.
+        ///// </summary>
+        //public static IByteBuffer WrappedBuffer(params byte[][] arrays) => WrappedBuffer(AbstractByteBufferAllocator.DefaultMaxComponents, arrays);
 
         /// <summary>
         ///     Creates a new big-endian composite buffer which wraps the readable bytes of the specified buffers without copying them. 
@@ -92,46 +112,46 @@ namespace DotNetty.Buffers
         /// <returns>The readable portion of the buffers. The caller is responsible for releasing this buffer.</returns>
         public static IByteBuffer WrappedBuffer(params IByteBuffer[] buffers) => WrappedBuffer(AbstractByteBufferAllocator.DefaultMaxComponents, buffers);
 
-        /// <summary>
-        ///     Creates a new big-endian composite buffer which wraps the specified arrays without copying them.
-        ///     A modification on the specified arrays' content will be visible to the returned buffer.
-        /// </summary>
-        public static IByteBuffer WrappedBuffer(int maxNumComponents, params byte[][] arrays)
-        {
-            switch (arrays.Length)
-            {
-                case 0:
-                    break;
-                case 1:
-                    if (arrays[0].Length != 0)
-                    {
-                        return WrappedBuffer(arrays[0]);
-                    }
-                    break;
-                default:
-                    // Get the list of the component, while guessing the byte order.
-                    var components = new List<IByteBuffer>(arrays.Length);
-                    foreach (byte[] array in arrays)
-                    {
-                        if (array == null)
-                        {
-                            break;
-                        }
-                        if (array.Length > 0)
-                        {
-                            components.Add(WrappedBuffer(array));
-                        }
-                    }
+        ///// <summary>
+        /////     Creates a new big-endian composite buffer which wraps the specified arrays without copying them.
+        /////     A modification on the specified arrays' content will be visible to the returned buffer.
+        ///// </summary>
+        //public static IByteBuffer WrappedBuffer(int maxNumComponents, params byte[][] arrays)
+        //{
+        //    switch (arrays.Length)
+        //    {
+        //        case 0:
+        //            break;
+        //        case 1:
+        //            if (arrays[0].Length != 0)
+        //            {
+        //                return WrappedBuffer(arrays[0]);
+        //            }
+        //            break;
+        //        default:
+        //            // Get the list of the component, while guessing the byte order.
+        //            var components = new List<IByteBuffer>(arrays.Length);
+        //            foreach (byte[] array in arrays)
+        //            {
+        //                if (array == null)
+        //                {
+        //                    break;
+        //                }
+        //                if (array.Length > 0)
+        //                {
+        //                    components.Add(WrappedBuffer(array));
+        //                }
+        //            }
 
-                    if (components.Count > 0)
-                    {
-                        return new CompositeByteBuffer(Allocator, false, maxNumComponents, components);
-                    }
-                    break;
-            }
+        //            if (components.Count > 0)
+        //            {
+        //                return new CompositeByteBuffer(Allocator, false, maxNumComponents, components);
+        //            }
+        //            break;
+        //    }
 
-            return Empty;
-        }
+        //    return Empty;
+        //}
 
         /// <summary>
         ///     Creates a new big-endian composite buffer which wraps the readable bytes of the specified buffers without copying them.
@@ -186,7 +206,7 @@ namespace DotNetty.Buffers
                 return Empty;
             }
 
-            var newArray = new byte[array.Length];
+            var newArray = DefaultBufferManager.TakeBuffer(array.Length);
             PlatformDependent.CopyMemory(array, 0, newArray, 0, array.Length);
 
             return WrappedBuffer(newArray);
@@ -210,7 +230,7 @@ namespace DotNetty.Buffers
                 return Empty;
             }
 
-            var copy = new byte[length];
+            var copy = DefaultBufferManager.TakeBuffer(length);
             PlatformDependent.CopyMemory(array, offset, copy, 0, length);
             return WrappedBuffer(copy);
         }
@@ -270,7 +290,7 @@ namespace DotNetty.Buffers
                 return Empty;
             }
 
-            var mergedArray = new byte[length];
+            var mergedArray = DefaultBufferManager.TakeBuffer(length);
             for (int i = 0, j = 0; i < arrays.Length; i++)
             {
                 byte[] a = arrays[i];
@@ -320,7 +340,7 @@ namespace DotNetty.Buffers
                 return Empty;
             }
 
-            var mergedArray = new byte[length];
+            var mergedArray = DefaultBufferManager.TakeBuffer(length);
             for (int i = 0, j = 0; i < buffers.Length; i++)
             {
                 IByteBuffer b = buffers[i];

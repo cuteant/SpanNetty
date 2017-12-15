@@ -9,21 +9,21 @@ namespace DotNetty.Buffers
     using System.Threading.Tasks;
     using DotNetty.Common;
 
-    sealed partial class PooledDuplicatedByteBuffer : AbstractPooledDerivedByteBuffer
+    sealed partial class BufferManagerDuplicatedByteBuffer : AbstractBufferManagerDerivedByteBuffer
     {
-        static readonly ThreadLocalPool<PooledDuplicatedByteBuffer> Recycler = new ThreadLocalPool<PooledDuplicatedByteBuffer>(handle => new PooledDuplicatedByteBuffer(handle));
+        static readonly ThreadLocalPool<BufferManagerDuplicatedByteBuffer> Recycler = new ThreadLocalPool<BufferManagerDuplicatedByteBuffer>(handle => new BufferManagerDuplicatedByteBuffer(handle));
 
-        internal static PooledDuplicatedByteBuffer NewInstance(AbstractByteBuffer unwrapped, IByteBuffer wrapped, int readerIndex, int writerIndex)
+        internal static BufferManagerDuplicatedByteBuffer NewInstance(AbstractByteBuffer unwrapped, IByteBuffer wrapped, int readerIndex, int writerIndex)
         {
-            PooledDuplicatedByteBuffer duplicate = Recycler.Take();
-            duplicate.Init<PooledDuplicatedByteBuffer>(unwrapped, wrapped, readerIndex, writerIndex, unwrapped.MaxCapacity);
+            BufferManagerDuplicatedByteBuffer duplicate = Recycler.Take();
+            duplicate.Init<BufferManagerDuplicatedByteBuffer>(unwrapped, wrapped, readerIndex, writerIndex, unwrapped.MaxCapacity);
             duplicate.MarkReaderIndex();
             duplicate.MarkWriterIndex();
 
             return duplicate;
         }
 
-        public PooledDuplicatedByteBuffer(ThreadLocalPool.Handle recyclerHandle)
+        public BufferManagerDuplicatedByteBuffer(ThreadLocalPool.Handle recyclerHandle)
             : base(recyclerHandle)
         {
         }
@@ -48,7 +48,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer Copy(int index, int length) => this.Unwrap().Copy(index, length);
 
-        public override IByteBuffer RetainedSlice(int index, int length) => PooledSlicedByteBuffer.NewInstance(this.UnwrapCore(), this, index, length);
+        public override IByteBuffer RetainedSlice(int index, int length) => BufferManagerSlicedByteBuffer.NewInstance(this.UnwrapCore(), this, index, length);
 
         public override IByteBuffer Duplicate() => this.Duplicate0().SetIndex(this.ReaderIndex, this.WriterIndex);
 
