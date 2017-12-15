@@ -10,20 +10,20 @@ using DotNetty.Common.Internal;
 namespace DotNetty.Buffers
 {
     /// <summary>Utility class for managing and creating unpooled buffers</summary>
-    public static class BufferManagerUtils
+    public static class BufferManagerUtil
     {
         private static readonly BufferManagerByteBufferAllocator Allocator = BufferManagerByteBufferAllocator.Default;
 
         internal static readonly BufferManager DefaultBufferManager;
 
-        static BufferManagerUtils()
+        static BufferManagerUtil()
         {
             BufferManager.MaxBufferPoolSize = SystemPropertyUtil.GetInt("io.netty.allocator.maxBufferPoolSize", int.MaxValue);
             BufferManager.MaxIndividualBufferSize = SystemPropertyUtil.GetInt("io.netty.allocator.maxIndividualBufferSize", 1024 * 1024 * 10);
             DefaultBufferManager = BufferManager.GlobalManager;
         }
 
-        public static readonly IByteBuffer Empty = Allocator.Buffer(0, 0);
+        public static readonly IByteBuffer Empty = Unpooled.Empty;
 
         public static IByteBuffer Buffer() => Allocator.Buffer();
 

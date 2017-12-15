@@ -6,7 +6,7 @@ namespace DotNetty.Buffers.Tests
     using System;
     using System.Collections.Generic;
     using Xunit;
-    using static BufferManagerUtils;
+    using static BufferManagerUtil;
 
     /// <summary>
     /// Tests channel buffers

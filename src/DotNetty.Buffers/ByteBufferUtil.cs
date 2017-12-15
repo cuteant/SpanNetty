@@ -394,6 +394,7 @@ namespace DotNetty.Buffers
         }
 
 
+        [MethodImpl(InlineMethod.Value)]
         public static int Utf8MaxBytes(ICharSequence seq) => Encoding.UTF8.GetMaxByteCount(seq.Count);
 
         public static IByteBuffer WriteAscii(IByteBufferAllocator alloc, ICharSequence seq)
