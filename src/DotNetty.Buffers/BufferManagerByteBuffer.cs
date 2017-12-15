@@ -54,11 +54,16 @@ namespace DotNetty.Buffers
 
         protected virtual void FreeArray(byte[] bytes)
         {
+#if DEBUG
+            // for unit testing
             try
             {
                 _bufferMannager.ReturnBuffer(bytes);
             }
             catch { } // 防止回收非 BufferMannager 的 byte array 抛异常
+#else
+            _bufferMannager.ReturnBuffer(bytes);
+#endif
         }
 
         protected void SetArray(byte[] initialArray) => this.Memory = initialArray;
