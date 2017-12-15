@@ -9,7 +9,7 @@ namespace DotNetty.Transport.Libuv
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
-    public sealed class TcpServerChannel : TcpServerChannel<TcpServerChannel, DefaultTcpChannelFactory>
+    public sealed class TcpServerChannel : TcpServerChannel<TcpServerChannel, TcpChannelFactory>
     {
         public TcpServerChannel() : base() { }
     }

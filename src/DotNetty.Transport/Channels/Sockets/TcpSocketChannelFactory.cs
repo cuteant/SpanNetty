@@ -2,9 +2,9 @@
 
 namespace DotNetty.Transport.Channels.Sockets
 {
-    public class DefaultTcpSocketChannelFactory : ITcpSocketChannelFactory
+    public sealed class TcpSocketChannelFactory : ITcpSocketChannelFactory
     {
-        public virtual ISocketChannel CreateChannel<TServerChannel>(TServerChannel channel, Socket socket)
+        public ISocketChannel CreateChannel<TServerChannel>(TServerChannel channel, Socket socket)
             where TServerChannel : IServerSocketChannel
         {
             return new TcpSocketChannel(channel, socket, true);

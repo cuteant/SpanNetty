@@ -9,7 +9,7 @@ namespace DotNetty.Transport.Channels.Sockets
     using System.Net.Sockets;
     //using DotNetty.Common.Internal.Logging;
 
-    public sealed class TcpServerSocketChannel : TcpServerSocketChannel<TcpServerSocketChannel, DefaultTcpSocketChannelFactory>
+    public sealed class TcpServerSocketChannel : TcpServerSocketChannel<TcpServerSocketChannel, TcpSocketChannelFactory>
     {
         public TcpServerSocketChannel() : base() { }
 

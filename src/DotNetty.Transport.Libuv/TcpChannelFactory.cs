@@ -4,7 +4,7 @@ using DotNetty.Transport.Libuv.Native;
 
 namespace DotNetty.Transport.Libuv
 {
-    public class DefaultTcpChannelFactory : ITcpChannelFactory
+    public sealed class TcpChannelFactory : ITcpChannelFactory
     {
         public ISocketChannel CreateChannel<TServerChannel>(TServerChannel channel, Tcp tcp) where TServerChannel : IServerChannel
         {
