@@ -12,6 +12,7 @@ namespace DotNetty.Buffers
         protected internal byte[] Memory;
         protected BufferManagerByteBufferAllocator _allocator;
         BufferManager _bufferMannager;
+        int _capacity;
 
         protected BufferManagerByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
             : base(maxCapacity)
@@ -28,7 +29,7 @@ namespace DotNetty.Buffers
         {
             _allocator = allocator;
             _bufferMannager = bufferManager;
-            Memory = AllocateArray(initialCapacity);
+            SetArray(AllocateArray(initialCapacity));
 
             this.SetMaxCapacity(maxCapacity);
             this.SetReferenceCount(1);
@@ -40,7 +41,7 @@ namespace DotNetty.Buffers
         {
             _allocator = allocator;
             _bufferMannager = bufferManager;
-            Memory = buffer;
+            SetArray(buffer);
 
             this.SetMaxCapacity(maxCapacity);
             this.SetReferenceCount(1);
@@ -48,7 +49,7 @@ namespace DotNetty.Buffers
             this.DiscardMarks();
         }
 
-        public override int Capacity => Memory.Length;
+        public override int Capacity => _capacity;
 
         protected virtual byte[] AllocateArray(int initialCapacity) => _bufferMannager.TakeBuffer(initialCapacity);
 
@@ -66,13 +67,17 @@ namespace DotNetty.Buffers
 #endif
         }
 
-        protected void SetArray(byte[] initialArray) => this.Memory = initialArray;
+        protected void SetArray(byte[] initialArray)
+        {
+            this.Memory = initialArray;
+            _capacity = initialArray.Length;
+        }
 
         public sealed override IByteBuffer AdjustCapacity(int newCapacity)
         {
             this.CheckNewCapacity(newCapacity);
 
-            int oldCapacity = this.Memory.Length;
+            int oldCapacity = _capacity;
             byte[] oldArray = this.Memory;
             if (newCapacity > oldCapacity)
             {
