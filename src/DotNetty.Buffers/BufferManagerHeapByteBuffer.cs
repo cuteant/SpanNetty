@@ -15,10 +15,10 @@ namespace DotNetty.Buffers
     {
         static readonly ThreadLocalPool<BufferManagerHeapByteBuffer> Recycler = new ThreadLocalPool<BufferManagerHeapByteBuffer>(handle => new BufferManagerHeapByteBuffer(handle, 0));
 
-        internal static BufferManagerHeapByteBuffer NewInstance(BufferManagerByteBufferAllocator allocator, BufferManager bufferManager, byte[] buffer, int maxCapacity)
+        internal static BufferManagerHeapByteBuffer NewInstance(BufferManagerByteBufferAllocator allocator, BufferManager bufferManager, byte[] buffer, int length, int maxCapacity)
         {
             var buf = Recycler.Take();
-            buf.Reuse(allocator, bufferManager, buffer, maxCapacity);
+            buf.Reuse(allocator, bufferManager, buffer, length, maxCapacity);
             return buf;
         }
 

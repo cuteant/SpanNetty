@@ -71,7 +71,7 @@ namespace DotNetty.Buffers
         internal static InstrumentedBufferManagerHeapByteBuffer Create(BufferManagerByteBufferAllocator allocator, int initialCapacity, int maxCapacity)
         {
             var buf = s_recycler.Take();
-            buf.Reuse(allocator, BufferManagerUtil.DefaultBufferManager, initialCapacity, maxCapacity);
+            buf.Reuse(allocator, BufferManagerUtils.DefaultBufferManager, initialCapacity, maxCapacity);
             return buf;
         }
 
@@ -102,7 +102,7 @@ namespace DotNetty.Buffers
         internal static InstrumentedUBufferManagerUnsafeDirectByteBuffer Create(BufferManagerByteBufferAllocator allocator, int initialCapacity, int maxCapacity)
         {
             var buf = s_recycler.Take();
-            buf.Reuse(allocator, BufferManagerUtil.DefaultBufferManager, initialCapacity, maxCapacity);
+            buf.Reuse(allocator, BufferManagerUtils.DefaultBufferManager, initialCapacity, maxCapacity);
             return buf;
         }
 

@@ -24,7 +24,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer buffer = allocator.Buffer(1);
             try
             {
-                AssertBuffer(buffer, this.IsDirectExpected(preferDirect), 1, this.DefaultMaxCapacity);
+                AssertBuffer(buffer, this.IsDirectExpected(preferDirect), ExpectedCapacity, this.DefaultMaxCapacity);
             }
             finally
             {
@@ -41,7 +41,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer buffer = allocator.Buffer(1, maxCapacity);
             try
             {
-                AssertBuffer(buffer, this.IsDirectExpected(preferDirect), 1, maxCapacity);
+                AssertBuffer(buffer, this.IsDirectExpected(preferDirect), ExpectedCapacity, maxCapacity);
             }
             finally
             {
@@ -58,7 +58,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer buffer = allocator.HeapBuffer(1);
             try
             {
-                AssertBuffer(buffer, false, 1, this.DefaultMaxCapacity);
+                AssertBuffer(buffer, false, ExpectedCapacity, this.DefaultMaxCapacity);
             }
             finally
             {
@@ -77,7 +77,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer buffer = allocator.HeapBuffer(1, maxCapacity);
             try
             {
-                AssertBuffer(buffer, false, 1, maxCapacity);
+                AssertBuffer(buffer, false, ExpectedCapacity, maxCapacity);
             }
             finally
             {
@@ -94,7 +94,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer buffer = allocator.DirectBuffer(1);
             try
             {
-                AssertBuffer(buffer, true, 1, this.DefaultMaxCapacity);
+                AssertBuffer(buffer, true, ExpectedCapacity, this.DefaultMaxCapacity);
             }
             finally
             {
@@ -111,7 +111,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer buffer = allocator.DirectBuffer(1, maxCapacity);
             try
             {
-                AssertBuffer(buffer, true, 1, maxCapacity);
+                AssertBuffer(buffer, true, ExpectedCapacity, maxCapacity);
             }
             finally
             {
@@ -224,5 +224,7 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(expectedMaxNumComponents, buffer.MaxNumComponents);
             AssertBuffer(buffer, false, 0, this.DefaultMaxCapacity);
         }
+
+        protected virtual int ExpectedCapacity { get; } = 1;
     }
 }

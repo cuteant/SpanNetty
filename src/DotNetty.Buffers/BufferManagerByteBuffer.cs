@@ -35,7 +35,8 @@ namespace DotNetty.Buffers
             this.SetIndex0(0, 0);
             this.DiscardMarks();
         }
-        internal void Reuse(BufferManagerByteBufferAllocator allocator, BufferManager bufferManager, byte[] buffer, int maxCapacity)
+
+        internal void Reuse(BufferManagerByteBufferAllocator allocator, BufferManager bufferManager, byte[] buffer, int length, int maxCapacity)
         {
             _allocator = allocator;
             _bufferMannager = bufferManager;
@@ -43,7 +44,7 @@ namespace DotNetty.Buffers
 
             this.SetMaxCapacity(maxCapacity);
             this.SetReferenceCount(1);
-            this.SetIndex0(0, 0);
+            this.SetIndex0(0, length);
             this.DiscardMarks();
         }
 
@@ -51,7 +52,14 @@ namespace DotNetty.Buffers
 
         protected virtual byte[] AllocateArray(int initialCapacity) => _bufferMannager.TakeBuffer(initialCapacity);
 
-        protected virtual void FreeArray(byte[] bytes) => _bufferMannager.ReturnBuffer(bytes);
+        protected virtual void FreeArray(byte[] bytes)
+        {
+            try
+            {
+                _bufferMannager.ReturnBuffer(bytes);
+            }
+            catch { } // 防止回收非 BufferMannager 的 byte array 抛异常
+        }
 
         protected void SetArray(byte[] initialArray) => this.Memory = initialArray;
 
@@ -110,11 +118,14 @@ namespace DotNetty.Buffers
 
         protected internal sealed override void Deallocate()
         {
-            if (_bufferMannager != null & Memory != null)
+            var buffer = Memory;
+            if (_bufferMannager != null & buffer != null)
             {
-                _bufferMannager.ReturnBuffer(Memory);
+                FreeArray(buffer);
+
                 _bufferMannager = null;
                 Memory = null;
+
                 this.Recycle();
             }
         }

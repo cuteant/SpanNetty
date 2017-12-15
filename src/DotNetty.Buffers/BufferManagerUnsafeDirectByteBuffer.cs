@@ -12,10 +12,10 @@ namespace DotNetty.Buffers
     {
         static readonly ThreadLocalPool<BufferManagerUnsafeDirectByteBuffer> Recycler = new ThreadLocalPool<BufferManagerUnsafeDirectByteBuffer>(handle => new BufferManagerUnsafeDirectByteBuffer(handle, 0));
 
-        internal static BufferManagerUnsafeDirectByteBuffer NewInstance(BufferManagerByteBufferAllocator allocator, BufferManager bufferManager, byte[] buffer, int maxCapacity)
+        internal static BufferManagerUnsafeDirectByteBuffer NewInstance(BufferManagerByteBufferAllocator allocator, BufferManager bufferManager, byte[] buffer, int length, int maxCapacity)
         {
             var buf = Recycler.Take();
-            buf.Reuse(allocator, bufferManager, buffer, maxCapacity);
+            buf.Reuse(allocator, bufferManager, buffer, length, maxCapacity);
             return buf;
         }
 
