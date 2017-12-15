@@ -33,16 +33,14 @@ namespace DotNetty.Transport.Channels.Sockets
         {
         }
 
-        // ## 苦竹 屏蔽 ##
-        //protected override IChannelUnsafe NewUnsafe() => new SocketByteChannelUnsafe(this);
+        //protected override IChannelUnsafe NewUnsafe() => new SocketByteChannelUnsafe(this); ## 苦竹 屏蔽 ##
 
         public class SocketByteChannelUnsafe : AbstractSocketUnsafe
         {
-            public SocketByteChannelUnsafe() { }
-            //public SocketByteChannelUnsafe(AbstractSocketByteChannel channel)
-            //    : base(channel)
-            //{
-            //}
+            public SocketByteChannelUnsafe() //(AbstractSocketByteChannel channel)
+                : base() //channel)
+            {
+            }
 
             //new AbstractSocketByteChannel Channel => (AbstractSocketByteChannel)this.channel;
 
@@ -180,8 +178,6 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        // ## 苦竹 修改 ##
-        //static void OnReadCompletedSync(object u, object e) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation)e);
         static void OnReadCompletedSync(object u, object e) => ((TUnsafe)u).FinishRead((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
 
         protected override void DoWrite(ChannelOutboundBuffer input)
@@ -333,9 +329,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
                 if (!pending)
                 {
-                    // ## 苦竹 修改 ##
-                    //((ISocketChannelUnsafe)this.Unsafe).FinishWrite(operation);
-                    this.Unsafe.FinishWrite(operation);
+                    this.Unsafe.FinishWrite(operation); // ## 苦竹 修改 ## ((ISocketChannelUnsafe)this.Unsafe).FinishWrite(operation);
                 }
             }
             else

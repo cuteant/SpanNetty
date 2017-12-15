@@ -172,8 +172,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
         protected override EndPoint RemoteAddressInternal => this.Active ? REMOTE_ADDRESS : null;
 
-        // ## 苦竹 屏蔽 ##
-        //protected override IChannelUnsafe NewUnsafe() => new DefaultUnsafe(this);
+        //protected override IChannelUnsafe NewUnsafe() => new DefaultUnsafe(this); ## 苦竹 屏蔽 ##
 
         protected override bool IsCompatible(IEventLoop eventLoop) => eventLoop is EmbeddedEventLoop;
 
@@ -493,11 +492,10 @@ namespace DotNetty.Transport.Channels.Embedded
 
         public class DefaultUnsafe : AbstractUnsafe
         {
-            public DefaultUnsafe() { }
-            //public DefaultUnsafe(AbstractChannel channel)
-            //    : base(channel)
-            //{
-            //}
+            public DefaultUnsafe() //AbstractChannel channel)
+                : base() //channel)
+            {
+            }
 
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress) => TaskUtil.Completed;
         }

@@ -13,13 +13,6 @@ namespace DotNetty.Transport.Libuv
     using DotNetty.Transport.Channels.Sockets;
     using DotNetty.Transport.Libuv.Native;
 
-    public sealed class TcpChannel : TcpChannel<TcpChannel>
-    {
-        public TcpChannel() : base() { }
-
-        internal TcpChannel(IChannel parent, Tcp tcp) : base(parent, tcp) { }
-    }
-
     public class TcpChannel<TChannel> : NativeChannel<TChannel, TcpChannel<TChannel>.TcpChannelUnsafe>, ISocketChannel
         where TChannel : TcpChannel<TChannel>
     {
@@ -60,8 +53,7 @@ namespace DotNetty.Transport.Libuv
 
         protected sealed override EndPoint RemoteAddressInternal => this.tcp?.GetPeerEndPoint();
 
-        // ## 苦竹 屏蔽 ##
-        //protected override IChannelUnsafe NewUnsafe() => new TcpChannelUnsafe(this);
+        //protected override IChannelUnsafe NewUnsafe() => new TcpChannelUnsafe(this); ## 苦竹 屏蔽 ##
 
         protected sealed override void DoRegister()
         {
@@ -218,10 +210,9 @@ namespace DotNetty.Transport.Libuv
 
         public sealed class TcpChannelUnsafe : NativeChannelUnsafe
         {
-            public TcpChannelUnsafe() { }
-            //public TcpChannelUnsafe(TcpChannel channel) : base(channel)
-            //{
-            //}
+            public TcpChannelUnsafe() : base() //TcpChannel channel) : base(channel)
+            {
+            }
 
             public override IntPtr UnsafeHandle => this.channel.tcp.Handle;
         }

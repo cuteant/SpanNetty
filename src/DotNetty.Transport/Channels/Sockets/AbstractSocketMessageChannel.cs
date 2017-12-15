@@ -23,18 +23,16 @@ namespace DotNetty.Transport.Channels.Sockets
         {
         }
 
-        // ## 苦竹 屏蔽 ##
-        //protected override IChannelUnsafe NewUnsafe() => new SocketMessageUnsafe(this);
+        //protected override IChannelUnsafe NewUnsafe() => new SocketMessageUnsafe(this); ## 苦竹 屏蔽 ##
 
         public class SocketMessageUnsafe : AbstractSocketUnsafe
         {
             readonly List<object> readBuf = new List<object>();
 
-            public SocketMessageUnsafe() { }
-            //public SocketMessageUnsafe(AbstractSocketMessageChannel channel)
-            //    : base(channel)
-            //{
-            //}
+            public SocketMessageUnsafe() // (AbstractSocketMessageChannel channel)
+                : base() //channel)
+            {
+            }
 
             //new AbstractSocketMessageChannel Channel => (AbstractSocketMessageChannel)this.channel;
 

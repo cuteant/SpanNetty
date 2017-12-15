@@ -6,21 +6,15 @@ namespace DotNetty.Transport.Libuv
     using System;
     using System.Diagnostics;
     using System.Net;
+    //using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
-
-    public sealed class TcpServerChannel : TcpServerChannel<TcpServerChannel, TcpChannelFactory>
-    {
-        public TcpServerChannel() : base() { }
-    }
-
 
     public class TcpServerChannel<TServerChannel, TChannelFactory> : NativeChannel<TServerChannel, TcpServerChannel<TServerChannel, TChannelFactory>.TcpServerChannelUnsafe>, IServerChannel
         where TServerChannel : TcpServerChannel<TServerChannel, TChannelFactory>
         where TChannelFactory : ITcpChannelFactory, new()
     {
-        // ## 苦竹 屏蔽 ##
-        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<TcpServerChannel>();
+        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<TcpServerChannel>(); ## 苦竹 屏蔽 ##
         static readonly ChannelMetadata TcpServerMetadata = new ChannelMetadata(false, 16);
 
         readonly TcpServerChannelConfig config;
@@ -57,8 +51,7 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        // ## 苦竹 屏蔽 ##
-        //protected override IChannelUnsafe NewUnsafe() => new TcpServerChannelUnsafe(this);
+        //protected override IChannelUnsafe NewUnsafe() => new TcpServerChannelUnsafe(this); ## 苦竹 屏蔽 ##
 
         protected sealed override void DoRegister()
         {
@@ -108,10 +101,9 @@ namespace DotNetty.Transport.Libuv
 
         public sealed class TcpServerChannelUnsafe : NativeChannelUnsafe, IServerNativeUnsafe
         {
-            public TcpServerChannelUnsafe() { }
-            //public TcpServerChannelUnsafe(TcpServerChannel channel) : base(channel)
-            //{
-            //}
+            public TcpServerChannelUnsafe() : base() // (TcpServerChannel channel) : base(channel)
+            {
+            }
 
             public override IntPtr UnsafeHandle => this.channel.tcpListener.Handle;
 
@@ -173,9 +165,7 @@ namespace DotNetty.Transport.Libuv
             void Accept(Tcp tcp)
             {
                 var ch = this.channel;
-                // ## 苦竹 修改 ##
-                //var tcpChannel = new TcpChannel(ch, tcp);
-                var tcpChannel = ch._channelFactory.CreateChannel(ch, tcp);
+                var tcpChannel = ch._channelFactory.CreateChannel(ch, tcp); //  ## 苦竹 修改 ## new TcpChannel(ch, tcp);
                 ch.Pipeline.FireChannelRead(tcpChannel);
                 ch.Pipeline.FireChannelReadComplete();
             }

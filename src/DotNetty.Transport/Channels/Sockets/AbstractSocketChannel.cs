@@ -17,8 +17,7 @@ namespace DotNetty.Transport.Channels.Sockets
       where TChannel : AbstractSocketChannel<TChannel, TUnsafe>
       where TUnsafe : AbstractSocketChannel<TChannel, TUnsafe>.AbstractSocketUnsafe, new()
     {
-        // ## 苦竹 屏蔽 ##
-        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractSocketChannel>();
+        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractSocketChannel>(); ## 苦竹 屏蔽 ##
 
         [Flags]
         protected enum StateFlags
@@ -243,11 +242,10 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public abstract class AbstractSocketUnsafe : AbstractUnsafe, ISocketChannelUnsafe
         {
-            public AbstractSocketUnsafe() { }
-            //protected AbstractSocketUnsafe(AbstractSocketChannel channel)
-            //    : base(channel)
-            //{
-            //}
+            protected AbstractSocketUnsafe() //(AbstractSocketChannel channel)
+                : base() //(channel)
+            {
+            }
 
             //public AbstractSocketChannel Channel => (AbstractSocketChannel)this.channel;
             //public TChannel Channel => this.channel;

@@ -305,7 +305,6 @@ namespace DotNetty.Transport.Channels
             //    // return the unwrapped invoker.
             //    return ((PausableChannelEventExecutor) eventLoop().asInvoker()).unwrapInvoker();
             //}
-
             public AbstractUnsafe() { }
             public virtual void Initialize(TChannel channel)
             {

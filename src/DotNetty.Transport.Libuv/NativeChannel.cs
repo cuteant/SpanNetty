@@ -86,10 +86,9 @@ namespace DotNetty.Transport.Libuv
         {
             //NativeChannel Channel => (NativeChannel)this.channel;
 
-            //protected NativeChannelUnsafe(NativeChannel channel) : base(channel)
-            //{
-            //}
-            public NativeChannelUnsafe() : base() { }
+            protected NativeChannelUnsafe() : base() //(NativeChannel channel) : base(channel)
+            {
+            }
 
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
             {

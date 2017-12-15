@@ -189,8 +189,6 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        // ## 苦竹 修改 ##
-        //static void OnReceiveFromCompletedSync(object u, object p) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation)p);
         static void OnReceiveFromCompletedSync(object u, object p) => ((DatagramChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation<TChannel, DatagramChannelUnsafe>)p);
 
         protected override void ScheduleMessageWrite(object message)
@@ -219,16 +217,14 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        // ## 苦竹 屏蔽 ##
-        //protected override IChannelUnsafe NewUnsafe() => new DatagramChannelUnsafe(this);
+        //protected override IChannelUnsafe NewUnsafe() => new DatagramChannelUnsafe(this); ## 苦竹 屏蔽 ##
 
         public sealed class DatagramChannelUnsafe : SocketMessageUnsafe
         {
-            public DatagramChannelUnsafe() { }
-            //public DatagramChannelUnsafe(SocketDatagramChannel channel)
-            //    : base(channel)
-            //{
-            //}
+            public DatagramChannelUnsafe() //SocketDatagramChannel channel)
+                : base() //channel)
+            {
+            }
 
             protected override bool CanWrite => this.channel.Open && this.channel.Registered;
         }

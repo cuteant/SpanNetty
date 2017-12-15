@@ -150,7 +150,8 @@ namespace DotNetty.Transport.Channels
         static byte[] DefaultMachineId()
         {
             byte[] bestMacAddr = Platform.GetDefaultDeviceId();
-            if (bestMacAddr == null) {
+            if (bestMacAddr == null)
+            {
                 bestMacAddr = new byte[MacAddressUtil.MacAddressLength];
                 ThreadLocalRandom.Value.NextBytes(bestMacAddr);
                 Logger.Warn(
@@ -171,7 +172,7 @@ namespace DotNetty.Transport.Channels
             i = this.AppendHexDumpField(buf, i, TimestampLen);
             i = this.AppendHexDumpField(buf, i, RandomLen);
             Debug.Assert(i == this.data.Length);
-            return StringBuilderManager.ReturnAndFree(buf).Substring(0, buf.Length - 1);
+            var strValue = buf.ToString().Substring(0, buf.Length - 1); StringBuilderManager.Free(buf); return strValue;
         }
 
         int AppendHexDumpField(StringBuilder buf, int i, int length)

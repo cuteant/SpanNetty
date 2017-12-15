@@ -9,17 +9,6 @@ namespace DotNetty.Transport.Channels.Sockets
     using System.Net.Sockets;
     //using DotNetty.Common.Internal.Logging;
 
-    public sealed class TcpServerSocketChannel : TcpServerSocketChannel<TcpServerSocketChannel, TcpSocketChannelFactory>
-    {
-        public TcpServerSocketChannel() : base() { }
-
-        /// <summary>Create a new instance</summary>
-        public TcpServerSocketChannel(AddressFamily addressFamily) : base(addressFamily) { }
-
-        /// <summary>Create a new instance using the given <see cref="Socket"/>.</summary>
-        public TcpServerSocketChannel(Socket socket) : base(socket) { }
-    }
-
     /// <summary>
     ///     A <see cref="IServerSocketChannel" /> implementation which uses Socket-based implementation to accept new
     ///     connections.
@@ -28,8 +17,7 @@ namespace DotNetty.Transport.Channels.Sockets
         where TServerChannel : TcpServerSocketChannel<TServerChannel, TChannelFactory>
         where TChannelFactory : ITcpSocketChannelFactory, new()
     {
-        // ## 苦竹 屏蔽 ##
-        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<TcpServerSocketChannel>();
+        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<TcpServerSocketChannel>(); ## 苦竹 屏蔽 ##
         static readonly ChannelMetadata METADATA = new ChannelMetadata(false, 16);
 
         static readonly Action<object, object> ReadCompletedSyncCallback = OnReadCompletedSync;
@@ -82,8 +70,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe> AcceptOperation => this.acceptOperation ?? (this.acceptOperation = new SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe>((TServerChannel)this, false));
 
-        // ## 苦竹 屏蔽 ##
-        //protected override IChannelUnsafe NewUnsafe() => new TcpServerSocketChannelUnsafe(this);
+        //protected override IChannelUnsafe NewUnsafe() => new TcpServerSocketChannelUnsafe(this); ## 苦竹 屏蔽 ##
 
         protected override void DoBind(EndPoint localAddress)
         {
@@ -143,7 +130,6 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        //static void OnReadCompletedSync(object u, object p) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation)p);
         static void OnReadCompletedSync(object u, object p) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe>)p);
 
         protected override bool DoConnect(EndPoint remoteAddress, EndPoint localAddress)
@@ -173,11 +159,10 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public sealed class TcpServerSocketChannelUnsafe : AbstractSocketUnsafe
         {
-            public TcpServerSocketChannelUnsafe() { }
-            //public TcpServerSocketChannelUnsafe(TcpServerSocketChannel channel)
-            //    : base(channel)
-            //{
-            //}
+            public TcpServerSocketChannelUnsafe() //TcpServerSocketChannel channel)
+                : base() //channel)
+            {
+            }
 
             //new TcpServerSocketChannel Channel => (TcpServerSocketChannel)this.channel;
 
@@ -284,9 +269,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    // ## 苦竹 修改 ##
-                    //return new TcpSocketChannel(this.channel, socket, true);
-                    return this.channel._channelFactory.CreateChannel(this.channel, socket);
+                    return this.channel._channelFactory.CreateChannel(this.channel, socket); // ## 苦竹 修改 ## return new TcpSocketChannel(this.channel, socket, true);
                 }
                 catch (Exception ex)
                 {
