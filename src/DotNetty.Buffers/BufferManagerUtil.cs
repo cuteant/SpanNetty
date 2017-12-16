@@ -11,7 +11,7 @@ namespace DotNetty.Buffers
     /// <summary>Utility class for managing and creating unpooled buffers</summary>
     public static class BufferManagerUtil
     {
-        private static readonly BufferManagerByteBufferAllocator Allocator = BufferManagerByteBufferAllocator.Default;
+        internal static readonly BufferManagerByteBufferAllocator Allocator = BufferManagerByteBufferAllocator.Default;
 
         internal static readonly BufferManager DefaultBufferManager;
 
