@@ -279,7 +279,7 @@ namespace DotNetty.Transport.Libuv
         }
     }
 
-    public interface INativeUnsafe
+    interface INativeUnsafe
     {
         IntPtr UnsafeHandle { get; }
 
@@ -297,10 +297,5 @@ namespace DotNetty.Transport.Libuv
         void Accept(RemoteConnection connection);
 
         void Accept(NativeHandle handle);
-    }
-
-    interface INativeChannel : IChannel
-    {
-        IntPtr GetLoopHandle();
     }
 }

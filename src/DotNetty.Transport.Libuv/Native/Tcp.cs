@@ -22,7 +22,7 @@ namespace DotNetty.Transport.Libuv.Native
             this.pendingReads = PlatformDependent.NewSpscLinkedQueue<ReadOperation>();
         }
 
-        public void ReadStart(INativeUnsafe channel)
+        internal void ReadStart(INativeUnsafe channel)
         {
             Contract.Requires(channel != null);
 

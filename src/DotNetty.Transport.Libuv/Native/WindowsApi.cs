@@ -39,11 +39,11 @@ namespace DotNetty.Transport.Libuv.Native
             IntPtr socket = IntPtr.Zero;
             NativeMethods.uv_fileno(handle.Handle, ref socket);
 
-//#if NETSTANDARD
+#if NETSTANDARD
             uint len = (uint)Marshal.SizeOf<FILE_COMPLETION_INFORMATION>();
-//#else
-//            uint len = (uint)Marshal.SizeOf(typeof(FILE_COMPLETION_INFORMATION));
-//#endif
+#else
+            uint len = (uint)Marshal.SizeOf(typeof(FILE_COMPLETION_INFORMATION));
+#endif
             if (NtSetInformationFile(socket, 
                 out statusBlock, this.fileCompletionInfoPtr, len, 
                 FileReplaceCompletionInformation) == STATUS_INVALID_INFO_CLASS)
