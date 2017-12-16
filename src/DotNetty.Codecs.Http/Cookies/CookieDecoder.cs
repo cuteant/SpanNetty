@@ -22,13 +22,13 @@ namespace DotNetty.Codecs.Http.Cookies
         {
             if (nameBegin == -1 || nameBegin == nameEnd)
             {
-                Logger.Debug("Skipping cookie with null name");
+                if (Logger.DebugEnabled) Logger.Debug("Skipping cookie with null name");
                 return null;
             }
 
             if (valueBegin == -1)
             {
-                Logger.Debug("Skipping cookie with null value");
+                if (Logger.DebugEnabled) Logger.Debug("Skipping cookie with null value");
                 return null;
             }
 
@@ -36,7 +36,7 @@ namespace DotNetty.Codecs.Http.Cookies
             ICharSequence unwrappedValue = UnwrapValue(sequence);
             if (unwrappedValue == null)
             {
-                Logger.Debug("Skipping cookie because starting quotes are not properly balanced in '{}'", sequence);
+                if (Logger.DebugEnabled) Logger.Debug("Skipping cookie because starting quotes are not properly balanced in '{}'", sequence);
                 return null;
             }
 

@@ -101,7 +101,7 @@ namespace DotNetty.Codecs.Http.Cors
                 SetVaryHeader(response);
                 return true;
             }
-            Logger.Debug("Request origin [{}]] was not among the configured origins [{}]", origin, this.config.Origins);
+            if (Logger.DebugEnabled) Logger.Debug("Request origin [{}]] was not among the configured origins [{}]", origin, this.config.Origins);
 
             return false;
         }

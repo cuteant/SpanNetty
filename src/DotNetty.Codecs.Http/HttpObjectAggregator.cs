@@ -163,7 +163,7 @@ namespace DotNetty.Codecs.Http
                         {
                             if (t.IsFaulted)
                             {
-                                Logger.Debug("Failed to send a 413 Request Entity Too Large.", t.Exception);
+                                if (Logger.DebugEnabled) Logger.Debug("Failed to send a 413 Request Entity Too Large.", t.Exception);
                             }
                             ((IChannelHandlerContext)s).CloseAsync();
                         }, 
@@ -176,7 +176,7 @@ namespace DotNetty.Codecs.Http
                         {
                             if (t.IsFaulted)
                             {
-                                Logger.Debug("Failed to send a 413 Request Entity Too Large.", t.Exception);
+                                if (Logger.DebugEnabled) Logger.Debug("Failed to send a 413 Request Entity Too Large.", t.Exception);
                                 ((IChannelHandlerContext)s).CloseAsync();
                             }
                         },

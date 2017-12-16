@@ -82,7 +82,7 @@ namespace DotNetty.Handlers.Flow
             {
                 if (!this.queue.IsEmpty)
                 {
-                    Logger.Trace($"Non-empty queue: {this.queue}");
+                    if (Logger.TraceEnabled) Logger.Trace($"Non-empty queue: {this.queue}");
 
                     if (this.releaseMessages)
                     {
