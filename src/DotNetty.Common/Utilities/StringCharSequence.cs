@@ -10,11 +10,11 @@ namespace DotNetty.Common.Utilities
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
 
-    public sealed class StringCharSequence : ICharSequence, IEquatable<StringCharSequence>
+    public sealed partial class StringCharSequence : ICharSequence, IEquatable<StringCharSequence>
     {
         public static readonly StringCharSequence Empty = new StringCharSequence(string.Empty);
 
-        readonly string value;
+        string value; // ## 苦竹 修改 ## readonly
         readonly int offset;
         readonly int count;
 

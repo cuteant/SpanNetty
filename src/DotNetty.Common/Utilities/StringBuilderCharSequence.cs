@@ -9,9 +9,9 @@ namespace DotNetty.Common.Utilities
     using System.Diagnostics.Contracts;
     using System.Text;
 
-    public sealed class StringBuilderCharSequence : ICharSequence, IEquatable<StringBuilderCharSequence>
+    public partial class StringBuilderCharSequence : ICharSequence, IEquatable<StringBuilderCharSequence> // ## 苦竹 修改 ## sealed
     {
-        readonly StringBuilder builder;
+        internal StringBuilder builder; // ## 苦竹 修改 ## readonly
         readonly int offset;
 
         public StringBuilderCharSequence(int capacity = 0)

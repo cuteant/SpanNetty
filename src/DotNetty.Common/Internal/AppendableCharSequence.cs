@@ -28,7 +28,7 @@ namespace DotNetty.Common.Internal
     // Therefore this is backed by bytes directly in DotNetty to avoid double conversions, 
     // and all chars are assumed to be ASCII!
     // 
-    public sealed class AppendableCharSequence : ICharSequence, IAppendable, IEquatable<AppendableCharSequence>
+    public sealed partial class AppendableCharSequence : ICharSequence, IAppendable, IEquatable<AppendableCharSequence>
     {
         byte[] chars;
         int pos;

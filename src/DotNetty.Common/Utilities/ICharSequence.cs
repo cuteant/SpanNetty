@@ -5,7 +5,7 @@ namespace DotNetty.Common.Utilities
 {
     using System.Collections.Generic;
 
-    public interface ICharSequence : IReadOnlyList<char>
+    public partial interface ICharSequence : IReadOnlyList<char>
     {
         /// Start is the inclusive start index to begin the subsequence.
         /// End is the exclusive end index to end the subsequence.

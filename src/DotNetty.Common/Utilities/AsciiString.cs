@@ -13,7 +13,7 @@ namespace DotNetty.Common.Utilities
     using System.Text;
     using DotNetty.Common.Internal;
 
-    public sealed class AsciiString : ICharSequence, IEquatable<AsciiString>, IComparable<AsciiString>, IComparable
+    public sealed partial class AsciiString : ICharSequence, IEquatable<AsciiString>, IComparable<AsciiString>, IComparable
     {
         public static readonly AsciiString Empty = Cached(string.Empty);
         const int MaxCharValue = 255;
@@ -45,7 +45,7 @@ namespace DotNetty.Common.Utilities
             public bool Equals(ICharSequence a, ICharSequence b) => ContentEquals(a, b);
         }
 
-        readonly byte[] value;
+        byte[] value; // ## 苦竹 修改 ## readonly
         readonly int offset;
         readonly int length;
 
