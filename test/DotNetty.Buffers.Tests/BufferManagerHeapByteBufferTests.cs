@@ -13,7 +13,7 @@ namespace DotNetty.Buffers.Tests
         protected override void SetCharSequenceNoExpand(Encoding encoding)
         {
             var array = new byte[1];
-            var buf = BufferManagerHeapByteBuffer.NewInstance(BufferManagerUtil.Allocator, BufferManagerUtil.DefaultBufferManager, array, array.Length, array.Length);
+            var buf = BufferManagerHeapByteBuffer.NewInstance(BufferManagerUtil.Allocator, BufferManagerUtil.DefaultBufferPool, array, array.Length, array.Length);
             try
             {
                 buf.SetCharSequence(0, new StringCharSequence("AB"), encoding);

@@ -1,8 +1,8 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using CuteAnt;
 using CuteAnt.Buffers;
 using DotNetty.Common.Internal;
 
@@ -13,13 +13,13 @@ namespace DotNetty.Buffers
     {
         internal static readonly BufferManagerByteBufferAllocator Allocator = BufferManagerByteBufferAllocator.Default;
 
-        internal static readonly BufferManager DefaultBufferManager;
+        internal static readonly ArrayPool<byte> DefaultBufferPool;
 
         static BufferManagerUtil()
         {
             BufferManager.MaxBufferPoolSize = DotNetty.Common.Internal.SystemPropertyUtil.GetInt("io.netty.allocator.maxBufferPoolSize", int.MaxValue);
             BufferManager.MaxIndividualBufferSize = DotNetty.Common.Internal.SystemPropertyUtil.GetInt("io.netty.allocator.maxIndividualBufferSize", 1024 * 1024 * 10);
-            DefaultBufferManager = BufferManager.GlobalManager;
+            DefaultBufferPool = BufferManager.Shared;
         }
 
         public static readonly IByteBuffer Empty = Unpooled.Empty;
@@ -53,14 +53,14 @@ namespace DotNetty.Buffers
 
             return array.Length == 0 ? Empty :
                 PlatformDependent.DirectBufferPreferred
-                    ? BufferManagerUnsafeDirectByteBuffer.NewInstance(Allocator, DefaultBufferManager, array, array.Length, array.Length)
-                    : (IByteBuffer)BufferManagerHeapByteBuffer.NewInstance(Allocator, DefaultBufferManager, array, array.Length, array.Length);
+                    ? BufferManagerUnsafeDirectByteBuffer.NewInstance(Allocator, DefaultBufferPool, array, array.Length, array.Length)
+                    : (IByteBuffer)BufferManagerHeapByteBuffer.NewInstance(Allocator, DefaultBufferPool, array, array.Length, array.Length);
         }
 
-        public static IByteBuffer WrappedBuffer(BufferManager bufferManager, byte[] array)
+        public static IByteBuffer WrappedBuffer(ArrayPool<byte> bufferManager, byte[] array)
         {
             if (null == array) { return Empty; }
-            if (null == bufferManager) { bufferManager = DefaultBufferManager; }
+            if (null == bufferManager) { bufferManager = DefaultBufferPool; }
 
             return array.Length == 0 ? Empty :
                 PlatformDependent.DirectBufferPreferred
@@ -81,17 +81,17 @@ namespace DotNetty.Buffers
             if (offset == 0)
             {
                 return PlatformDependent.DirectBufferPreferred
-                     ? BufferManagerUnsafeDirectByteBuffer.NewInstance(Allocator, DefaultBufferManager, array, length, array.Length)
-                     : (IByteBuffer)BufferManagerHeapByteBuffer.NewInstance(Allocator, DefaultBufferManager, array, length, array.Length);
+                     ? BufferManagerUnsafeDirectByteBuffer.NewInstance(Allocator, DefaultBufferPool, array, length, array.Length)
+                     : (IByteBuffer)BufferManagerHeapByteBuffer.NewInstance(Allocator, DefaultBufferPool, array, length, array.Length);
             }
 
             return WrappedBuffer(array).Slice(offset, length);
         }
 
-        public static IByteBuffer WrappedBuffer(BufferManager bufferManager, byte[] array, int offset, int length)
+        public static IByteBuffer WrappedBuffer(ArrayPool<byte> bufferManager, byte[] array, int offset, int length)
         {
             if (null == array || length == 0) { return Empty; }
-            if (null == bufferManager) { bufferManager = DefaultBufferManager; }
+            if (null == bufferManager) { bufferManager = DefaultBufferPool; }
             if (MathUtil.IsOutOfBounds(offset, length, array.Length))
             {
                 ThrowHelper.ThrowIndexOutOfRangeException($"offset: {offset}, length: {length} (expected: range(0, {array.Length}))");
@@ -108,7 +108,7 @@ namespace DotNetty.Buffers
         }
 
         public static IByteBuffer WrappedBuffer(ArraySegment<byte> buffer) => WrappedBuffer(buffer.Array, buffer.Offset, buffer.Count);
-        public static IByteBuffer WrappedBuffer(BufferManager bufferManager, ArraySegment<byte> buffer) => WrappedBuffer(bufferManager, buffer.Array, buffer.Offset, buffer.Count);
+        public static IByteBuffer WrappedBuffer(ArrayPool<byte> bufferManager, ArraySegment<byte> buffer) => WrappedBuffer(bufferManager, buffer.Array, buffer.Offset, buffer.Count);
 
         public static IByteBuffer WrappedBuffer(IList<ArraySegment<byte>> buffers)
         {
@@ -192,7 +192,7 @@ namespace DotNetty.Buffers
         {
             if (array == null || array.Length == 0) { return Empty; }
 
-            var newArray = DefaultBufferManager.TakeBuffer(array.Length);
+            var newArray = DefaultBufferPool.Rent(array.Length);
             PlatformDependent.CopyMemory(array, 0, newArray, 0, array.Length);
 
             return WrappedBuffer(newArray, 0, array.Length);
@@ -209,7 +209,7 @@ namespace DotNetty.Buffers
         {
             if (array == null || length == 0) { return Empty; }
 
-            var copy = DefaultBufferManager.TakeBuffer(length);
+            var copy = DefaultBufferPool.Rent(length);
             PlatformDependent.CopyMemory(array, offset, copy, 0, length);
             return WrappedBuffer(copy, 0, length);
         }
@@ -270,7 +270,7 @@ namespace DotNetty.Buffers
 
             if (length == 0) { return Empty; }
 
-            var mergedArray = DefaultBufferManager.TakeBuffer(length);
+            var mergedArray = DefaultBufferPool.Rent(length);
             for (int i = 0, j = 0; i < buffers.Length; i++)
             {
                 IByteBuffer b = buffers[i];

@@ -2,10 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Buffers;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using CuteAnt.Buffers;
 using DotNetty.Common;
 using DotNetty.Common.Internal;
 
@@ -15,7 +15,7 @@ namespace DotNetty.Buffers
     {
         static readonly ThreadLocalPool<BufferManagerHeapByteBuffer> Recycler = new ThreadLocalPool<BufferManagerHeapByteBuffer>(handle => new BufferManagerHeapByteBuffer(handle, 0));
 
-        internal static BufferManagerHeapByteBuffer NewInstance(BufferManagerByteBufferAllocator allocator, BufferManager bufferManager, byte[] buffer, int length, int maxCapacity)
+        internal static BufferManagerHeapByteBuffer NewInstance(BufferManagerByteBufferAllocator allocator, ArrayPool<byte> bufferManager, byte[] buffer, int length, int maxCapacity)
         {
             var buf = Recycler.Take();
             buf.Reuse(allocator, bufferManager, buffer, length, maxCapacity);

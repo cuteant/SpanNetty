@@ -1,5 +1,5 @@
 ﻿using System;
-using CuteAnt.Buffers;
+using System.Buffers;
 using DotNetty.Common;
 using DotNetty.Common.Internal;
 
@@ -11,7 +11,7 @@ namespace DotNetty.Buffers
 
         protected internal byte[] Memory;
         protected BufferManagerByteBufferAllocator _allocator;
-        BufferManager _bufferMannager;
+        ArrayPool<byte> _bufferMannager;
         int _capacity;
 
         protected BufferManagerByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
@@ -25,7 +25,7 @@ namespace DotNetty.Buffers
         /// <param name="initialCapacity"></param>
         /// <param name="maxCapacity"></param>
         /// <param name="bufferManager"></param>
-        internal void Reuse(BufferManagerByteBufferAllocator allocator, BufferManager bufferManager, int initialCapacity, int maxCapacity)
+        internal void Reuse(BufferManagerByteBufferAllocator allocator, ArrayPool<byte> bufferManager, int initialCapacity, int maxCapacity)
         {
             _allocator = allocator;
             _bufferMannager = bufferManager;
@@ -37,7 +37,7 @@ namespace DotNetty.Buffers
             this.DiscardMarks();
         }
 
-        internal void Reuse(BufferManagerByteBufferAllocator allocator, BufferManager bufferManager, byte[] buffer, int length, int maxCapacity)
+        internal void Reuse(BufferManagerByteBufferAllocator allocator, ArrayPool<byte> bufferManager, byte[] buffer, int length, int maxCapacity)
         {
             _allocator = allocator;
             _bufferMannager = bufferManager;
@@ -51,7 +51,7 @@ namespace DotNetty.Buffers
 
         public override int Capacity => _capacity;
 
-        protected virtual byte[] AllocateArray(int initialCapacity) => _bufferMannager.TakeBuffer(initialCapacity);
+        protected virtual byte[] AllocateArray(int initialCapacity) => _bufferMannager.Rent(initialCapacity);
 
         protected virtual void FreeArray(byte[] bytes)
         {
@@ -59,7 +59,7 @@ namespace DotNetty.Buffers
             // for unit testing
             try
             {
-                _bufferMannager.ReturnBuffer(bytes);
+                _bufferMannager.Return(bytes);
             }
             catch { } // 防止回收非 BufferMannager 的 byte array 抛异常
 #else

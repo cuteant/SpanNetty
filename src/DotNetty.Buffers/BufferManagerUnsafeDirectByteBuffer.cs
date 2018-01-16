@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using CuteAnt.Buffers;
 using DotNetty.Common;
 
 namespace DotNetty.Buffers
@@ -12,7 +12,7 @@ namespace DotNetty.Buffers
     {
         static readonly ThreadLocalPool<BufferManagerUnsafeDirectByteBuffer> Recycler = new ThreadLocalPool<BufferManagerUnsafeDirectByteBuffer>(handle => new BufferManagerUnsafeDirectByteBuffer(handle, 0));
 
-        internal static BufferManagerUnsafeDirectByteBuffer NewInstance(BufferManagerByteBufferAllocator allocator, BufferManager bufferManager, byte[] buffer, int length, int maxCapacity)
+        internal static BufferManagerUnsafeDirectByteBuffer NewInstance(BufferManagerByteBufferAllocator allocator, ArrayPool<byte> bufferManager, byte[] buffer, int length, int maxCapacity)
         {
             var buf = Recycler.Take();
             buf.Reuse(allocator, bufferManager, buffer, length, maxCapacity);
