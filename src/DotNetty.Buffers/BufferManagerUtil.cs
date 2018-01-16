@@ -17,8 +17,8 @@ namespace DotNetty.Buffers
 
         static BufferManagerUtil()
         {
-            BufferManager.MaxBufferPoolSize = SystemPropertyUtil.GetInt("io.netty.allocator.maxBufferPoolSize", int.MaxValue);
-            BufferManager.MaxIndividualBufferSize = SystemPropertyUtil.GetInt("io.netty.allocator.maxIndividualBufferSize", 1024 * 1024 * 10);
+            BufferManager.MaxBufferPoolSize = DotNetty.Common.Internal.SystemPropertyUtil.GetInt("io.netty.allocator.maxBufferPoolSize", int.MaxValue);
+            BufferManager.MaxIndividualBufferSize = DotNetty.Common.Internal.SystemPropertyUtil.GetInt("io.netty.allocator.maxIndividualBufferSize", 1024 * 1024 * 10);
             DefaultBufferManager = BufferManager.GlobalManager;
         }
 
@@ -108,18 +108,9 @@ namespace DotNetty.Buffers
         }
 
         public static IByteBuffer WrappedBuffer(ArraySegment<byte> buffer) => WrappedBuffer(buffer.Array, buffer.Offset, buffer.Count);
-        public static IByteBuffer WrappedBuffer(ArraySegmentWrapper<byte> buffer) => WrappedBuffer(buffer.Array, buffer.Offset, buffer.Count);
         public static IByteBuffer WrappedBuffer(BufferManager bufferManager, ArraySegment<byte> buffer) => WrappedBuffer(bufferManager, buffer.Array, buffer.Offset, buffer.Count);
-        public static IByteBuffer WrappedBuffer(BufferManager bufferManager, ArraySegmentWrapper<byte> buffer) => WrappedBuffer(bufferManager, buffer.Array, buffer.Offset, buffer.Count);
 
         public static IByteBuffer WrappedBuffer(IList<ArraySegment<byte>> buffers)
-        {
-            if (null == buffers) { return Empty; }
-
-            return WrappedBuffer(buffers.Select(_ => WrappedBuffer(_)).ToArray());
-        }
-
-        public static IByteBuffer WrappedBuffer(IList<ArraySegmentWrapper<byte>> buffers)
         {
             if (null == buffers) { return Empty; }
 

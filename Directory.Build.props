@@ -4,14 +4,16 @@
     <SourceRoot>$(MSBuildThisFileDirectory)</SourceRoot>
   </PropertyGroup>
 
-  <Import Project="..\CuteAnt.Extensions.Common\build\Dependencies.props" />
-  <Import Project="..\CuteAnt.Extensions.Common\build\Dependencies.System.props" />
-  <Import Project="..\CuteAnt.Extensions.Common\build\Dependencies.3rdParty.props" />
-  <Import Project="..\CuteAnt.Extensions.Common\build\Dependencies.AspNetCore.props" />
-  <Import Project="..\CuteAnt.Extensions.Common\build\Dependencies.AspNet.props" />
-  <Import Project="..\CuteAnt.Extensions.Common\build\Dependencies.CuteAnt.props" />
-  <Import Project="..\CuteAnt.Extensions.Common\build\Dependencies.Testing.props" />
-  <Import Project="..\CuteAnt.Extensions.Common\build\Dependencies.Tooling.props" />
+  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.props" />
+  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.3rdParty.props" />
+  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.AspNet.props" />
+  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.AspNetCore.Dev.props" />
+  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.CuteAnt.props" />
+  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.Extensions.Dev.props" />
+  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.NetCore.props" />
+  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.Roslyn.props" />
+  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.System.props" />
+  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.Testing.props" />
 
   <PropertyGroup>
     <SignAssembly>True</SignAssembly>
@@ -20,6 +22,7 @@
 
   <!-- Common compile parameters -->
   <PropertyGroup>
+    <LangVersion>latest</LangVersion>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -29,32 +32,39 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <ImportLibs>netcore</ImportLibs>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <TestProjectTargetFramework>net461</TestProjectTargetFramework>
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
+    <DefineConstants>$(DefineConstants);NETCOREAPP;NETCOREAPP_2_0_GREATER;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER</DefineConstants>
   </PropertyGroup>
-  
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
-    <DefineConstants>$(DefineConstants);NETCOREAPP;NETSTANDARD;NET_4_0_GREATER;NET_4_5_GREATER</DefineConstants>
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
+    <DefineConstants>$(DefineConstants);NETCOREAPP;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard1.1'">
+    <DefineConstants>$(DefineConstants);NETSTANDARD;NET_4_0_GREATER</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <DefineConstants>$(DefineConstants);NETSTANDARD;NET_4_0_GREATER;NET_4_5_GREATER</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETSTANDARD;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net40'">
     <DefineConstants>$(DefineConstants);DESKTOPCLR</DefineConstants>
+    <ImportLibs>netfx</ImportLibs>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net452' or '$(TargetFramework)' == 'net451' or '$(TargetFramework)' == 'net45'">
     <DefineConstants>$(DefineConstants);DESKTOPCLR;NET_4_0_GREATER</DefineConstants>
+    <ImportLibs>netfx</ImportLibs>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net46' or '$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net462'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net462' or '$(TargetFramework)' == 'net461' or '$(TargetFramework)' == 'net46'">
     <DefineConstants>$(DefineConstants);DESKTOPCLR;NET_4_0_GREATER;NET_4_5_GREATER</DefineConstants>
+    <ImportLibs>netfx</ImportLibs>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net47' or '$(TargetFramework)' == 'net471'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'net47'">
     <DefineConstants>$(DefineConstants);DESKTOPCLR;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER</DefineConstants>
+    <ImportLibs>netfx</ImportLibs>
   </PropertyGroup>
-  
-  
+
+
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net471|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -81,7 +91,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net46|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -121,7 +131,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net452|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -161,7 +171,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net40|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -175,7 +185,23 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard1.1|AnyCPU'">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard1.1|AnyCPU'">
+    <DebugType>portable</DebugType>
+    <Optimize>true</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
     <DebugSymbols>True</DebugSymbols>
     <DebugType>portable</DebugType>
@@ -189,7 +215,6 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.0|AnyCPU'">
     <DebugSymbols>True</DebugSymbols>
     <DebugType>portable</DebugType>
@@ -198,6 +223,19 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netcoreapp2.0|AnyCPU'">
+    <DebugType>portable</DebugType>
+    <Optimize>true</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.1|AnyCPU'">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netcoreapp2.1|AnyCPU'">
     <DebugType>portable</DebugType>
     <Optimize>true</Optimize>
     <ErrorReport>prompt</ErrorReport>

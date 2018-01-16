@@ -3,8 +3,8 @@
   <PropertyGroup>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <VersionPrefix Condition=" '$(VersionPrefix)'=='' ">1.0.0</VersionPrefix>
-    <VersionSuffix Condition=" '$(VersionSuffix)'=='' ">rtm</VersionSuffix>
-    <VersionDateSuffix Condition=" '$(VersionDateSuffix)'=='' ">171111</VersionDateSuffix>
+    <VersionSuffix Condition=" '$(VersionSuffix)'=='' ">preview1</VersionSuffix>
+    <VersionDateSuffix Condition=" '$(VersionDateSuffix)'=='' ">180115-01</VersionDateSuffix>
     <VersionSuffix Condition=" '$(VersionDateSuffix)'!='' ">$(VersionSuffix)-$(VersionDateSuffix)</VersionSuffix>
   </PropertyGroup>
   <Choose>
@@ -56,6 +56,11 @@
     <When Condition=" '$(TargetFramework)' == 'netcoreapp2.0' or '$(TargetFramework)' == 'netstandard2.0' ">
       <PropertyGroup>
         <FileVersion>1.0.0.5000</FileVersion>
+      </PropertyGroup>
+    </When>
+    <When Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
+      <PropertyGroup>
+        <FileVersion>1.0.0.5100</FileVersion>
       </PropertyGroup>
     </When>
     <Otherwise>
