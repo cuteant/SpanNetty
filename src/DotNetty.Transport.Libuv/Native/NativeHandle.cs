@@ -13,7 +13,7 @@ namespace DotNetty.Transport.Libuv.Native
     {
         protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<NativeHandle>();
         static readonly uv_close_cb CloseCallback = OnCloseHandle;
-        protected readonly uv_handle_type HandleType;
+        internal readonly uv_handle_type HandleType;
         internal IntPtr Handle;
 
         internal NativeHandle(uv_handle_type handleType)

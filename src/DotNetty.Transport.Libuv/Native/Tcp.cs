@@ -7,7 +7,7 @@ namespace DotNetty.Transport.Libuv.Native
     using System.Diagnostics;
     using System.Net;
 
-    sealed class Tcp : TcpHandle
+    public sealed class Tcp : TcpHandle
     {
         static readonly uv_alloc_cb AllocateCallback = OnAllocateCallback;
         static readonly uv_read_cb ReadCallback = OnReadCallback;
@@ -15,12 +15,12 @@ namespace DotNetty.Transport.Libuv.Native
         readonly ReadOperation pendingRead;
         INativeUnsafe nativeUnsafe;
 
-        public Tcp(Loop loop, uint flags = 0 /* AF_UNSPEC */ ) : base(loop, flags)
+        internal Tcp(Loop loop, uint flags = 0 /* AF_UNSPEC */ ) : base(loop, flags)
         {
             this.pendingRead = new ReadOperation();
         }
 
-        public void ReadStart(INativeUnsafe channel)
+        internal void ReadStart(INativeUnsafe channel)
         {
             Debug.Assert(channel != null);
 
@@ -72,7 +72,7 @@ namespace DotNetty.Transport.Libuv.Native
             tcp.OnReadCallback(status, error);
         }
 
-        public void Write(WriteRequest request)
+        internal void Write(WriteRequest request)
         {
             this.Validate();
             try

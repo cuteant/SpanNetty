@@ -93,9 +93,9 @@ namespace DotNetty.Transport.Libuv
 
         public Task RegisterAsync(IChannel channel)
         {
-            if (!(channel is NativeChannel nativeChannel))
+            if (!(channel is INativeChannel nativeChannel))
             {
-                throw new ArgumentException($"{nameof(channel)} must be of {typeof(NativeChannel)}");
+                throw new ArgumentException($"{nameof(channel)} must be of {typeof(INativeChannel)}");
             }
 
             NativeHandle handle = nativeChannel.GetHandle();

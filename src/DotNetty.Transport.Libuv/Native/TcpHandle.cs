@@ -9,9 +9,9 @@ namespace DotNetty.Transport.Libuv.Native
     using System.Net;
     using System.Runtime.InteropServices;
 
-    abstract unsafe class TcpHandle : NativeHandle
+    public abstract unsafe class TcpHandle : NativeHandle
     {
-        protected TcpHandle(Loop loop, uint flags) : base(uv_handle_type.UV_TCP)
+        internal TcpHandle(Loop loop, uint flags) : base(uv_handle_type.UV_TCP)
         {
             Debug.Assert(loop != null);
 

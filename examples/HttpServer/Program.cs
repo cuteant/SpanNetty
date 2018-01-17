@@ -29,18 +29,18 @@ namespace HttpServer
             bool useLibuv = ServerSettings.UseLibuv;
             Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
 
-            IEventLoopGroup group;
-            IEventLoopGroup workGroup;
+            IEventLoopGroup bossGroup;
+            IEventLoopGroup workerGroup;
             if (useLibuv)
             {
-                var dispatcherLoop = new DispatcherEventLoop();
-                group = new MultithreadEventLoopGroup(_ => dispatcherLoop, 1);
-                workGroup = new WorkerEventLoopGroup(dispatcherLoop);
+                var dispatcher = new DispatcherEventLoopGroup();
+                bossGroup = dispatcher;
+                workerGroup = new WorkerEventLoopGroup(dispatcher);
             }
             else
             {
-                group = new MultithreadEventLoopGroup(1);
-                workGroup = new MultithreadEventLoopGroup();
+                bossGroup = new MultithreadEventLoopGroup(1);
+                workerGroup = new MultithreadEventLoopGroup();
             }
 
             X509Certificate2 tlsCertificate = null;
@@ -51,7 +51,7 @@ namespace HttpServer
             try
             {
                 var bootstrap = new ServerBootstrap();
-                bootstrap.Group(group, workGroup);
+                bootstrap.Group(bossGroup, workerGroup);
 
                 if (useLibuv)
                 {
@@ -89,7 +89,9 @@ namespace HttpServer
             }
             finally
             {
-                group.ShutdownGracefullyAsync().Wait();
+                await Task.WhenAll(
+                    bossGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
+                    workerGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)));
             }
         }
 

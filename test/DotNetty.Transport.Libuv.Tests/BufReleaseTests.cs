@@ -35,10 +35,10 @@ namespace DotNetty.Transport.Libuv.Tests
             Bootstrap cb = new Bootstrap()
                 .Group(this.group)
                 .Channel<TcpChannel>();
-            this.BufRelease(sb, cb);
+            this.BufReleaseInternal(sb, cb);
         }
 
-        void BufRelease(ServerBootstrap sb, Bootstrap cb)
+        void BufReleaseInternal(ServerBootstrap sb, Bootstrap cb)
         {
             var serverHandler = new BufWriterHandler();
             var clientHandler = new BufWriterHandler();

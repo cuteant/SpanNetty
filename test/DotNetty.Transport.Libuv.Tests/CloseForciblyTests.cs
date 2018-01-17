@@ -33,10 +33,10 @@ namespace DotNetty.Transport.Libuv.Tests
             Bootstrap cb = new Bootstrap()
                 .Group(this.group)
                 .Channel<TcpChannel>();
-            this.CloseForcibly(sb, cb);
+            this.CloseForciblyInternal(sb, cb);
         }
 
-        void CloseForcibly(ServerBootstrap sb, Bootstrap cb)
+        void CloseForciblyInternal(ServerBootstrap sb, Bootstrap cb)
         {
             sb.Handler(new InboundHandler())
               .ChildHandler(new ChannelHandlerAdapter());

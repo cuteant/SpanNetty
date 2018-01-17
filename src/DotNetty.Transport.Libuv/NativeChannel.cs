@@ -14,9 +14,11 @@ namespace DotNetty.Transport.Libuv
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
-    public abstract class NativeChannel : AbstractChannel
+    public abstract class NativeChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>, INativeChannel
+        where TChannel : NativeChannel<TChannel, TUnsafe>
+        where TUnsafe : NativeChannel<TChannel, TUnsafe>.NativeChannelUnsafe, new()
     {
-        protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<NativeChannel>();
+        //protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<NativeChannel>();
 
         [Flags]
         protected enum StateFlags
@@ -78,7 +80,7 @@ namespace DotNetty.Transport.Libuv
                 {
                     this.DoBind(localAddress);
                 }
-                request = new TcpConnect((INativeUnsafe)this.Unsafe, (IPEndPoint)remoteAddress);
+                request = new TcpConnect(this.Unsafe, (IPEndPoint)remoteAddress);
             }
             catch
             {
@@ -108,17 +110,20 @@ namespace DotNetty.Transport.Libuv
 
         protected abstract void DoStopRead();
 
+        NativeHandle INativeChannel.GetHandle() => this.GetHandle();
         internal abstract NativeHandle GetHandle();
+        bool INativeChannel.IsBound => this.IsBound;
+        internal abstract bool IsBound { get; }
 
-        protected abstract class NativeChannelUnsafe : AbstractUnsafe, INativeUnsafe
+        public abstract class NativeChannelUnsafe : AbstractUnsafe, INativeUnsafe
         {
-            protected NativeChannelUnsafe(NativeChannel channel) : base(channel)
+            protected NativeChannelUnsafe() : base() //(NativeChannel channel) : base(channel)
             {
             }
 
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
             {
-                var ch = (NativeChannel)this.channel;
+                var ch = this.channel;
                 if (!ch.Open)
                 {
                     return this.CreateClosedChannelExceptionTask();
@@ -147,13 +152,13 @@ namespace DotNetty.Transport.Libuv
                 catch (Exception ex)
                 {
                     this.CloseIfClosed();
-                    return TaskEx.FromException(this.AnnotateConnectException(ex, remoteAddress));
+                    return TaskUtil.FromException(this.AnnotateConnectException(ex, remoteAddress));
                 }
             }
 
             static void CancelConnect(object context, object state)
             {
-                var ch = (NativeChannel)context;
+                var ch = (TChannel)context;
                 var address = (IPEndPoint)state;
                 TaskCompletionSource promise = ch.connectPromise;
                 var cause = new ConnectTimeoutException($"connection timed out: {address}");
@@ -166,7 +171,7 @@ namespace DotNetty.Transport.Libuv
             // Connect request callback from libuv thread
             void INativeUnsafe.FinishConnect(ConnectRequest request)
             {
-                var ch = (NativeChannel)this.channel;
+                var ch = this.channel;
                 ch.connectCancellationTask?.Cancel();
 
                 TaskCompletionSource promise = ch.connectPromise;
@@ -221,7 +226,7 @@ namespace DotNetty.Transport.Libuv
             {
                 Debug.Assert(readOperation != null);
 
-                var ch = (NativeChannel)this.channel;
+                var ch = this.channel;
                 IChannelConfiguration config = ch.Configuration;
                 IByteBufferAllocator allocator = config.Allocator;
 
@@ -235,7 +240,7 @@ namespace DotNetty.Transport.Libuv
             // Read callback from libuv thread
             void INativeUnsafe.FinishRead(ReadOperation operation)
             {
-                var ch = (NativeChannel)this.channel;
+                var ch = this.channel;
                 IChannelConfiguration config = ch.Configuration;
                 IChannelPipeline pipeline = ch.Pipeline;
                 OperationException error = operation.Error;

@@ -13,7 +13,9 @@ namespace DotNetty.Transport.Libuv
 
     using TcpListener = Native.TcpListener;
 
-    public sealed class TcpServerChannel : NativeChannel, IServerChannel
+    public class TcpServerChannel<TServerChannel, TChannelFactory> : NativeChannel<TServerChannel, TcpServerChannel<TServerChannel, TChannelFactory>.TcpServerChannelUnsafe>, IServerChannel
+        where TServerChannel : TcpServerChannel<TServerChannel, TChannelFactory>
+        where TChannelFactory : ITcpChannelFactory, new()
     {
         static readonly ChannelMetadata TcpServerMetadata = new ChannelMetadata(false);
 
@@ -21,9 +23,12 @@ namespace DotNetty.Transport.Libuv
         TcpListener tcpListener;
         bool isBound;
 
+        private readonly TChannelFactory _channelFactory;
+
         public TcpServerChannel() : base(null)
         {
             this.config = new TcpServerChannelConfig(this);
+            _channelFactory = new TChannelFactory();
         }
 
         public override IChannelConfiguration Configuration => this.config;
@@ -34,7 +39,7 @@ namespace DotNetty.Transport.Libuv
 
         protected override EndPoint RemoteAddressInternal => null;
 
-        internal bool IsBound => this.isBound;
+        internal override bool IsBound => this.isBound;
 
         protected override void DoBind(EndPoint localAddress)
         {
@@ -59,14 +64,14 @@ namespace DotNetty.Transport.Libuv
                 this.tcpListener.Bind(address);
                 this.isBound = true;
 
-                this.tcpListener.Listen((TcpServerChannelUnsafe)this.Unsafe, this.config.Backlog);
+                this.tcpListener.Listen(this.Unsafe, this.config.Backlog);
 
                 this.CacheLocalAddress();
                 this.SetState(StateFlags.Active);
             }
         }
 
-        protected override IChannelUnsafe NewUnsafe() => new TcpServerChannelUnsafe(this);
+        //protected override IChannelUnsafe NewUnsafe() => new TcpServerChannelUnsafe(this); ## 苦竹 屏蔽 ##
 
         internal override NativeHandle GetHandle()
         {
@@ -100,26 +105,26 @@ namespace DotNetty.Transport.Libuv
                 {
                     // Set up the dispatcher callback, all dispatched handles 
                     // need to call Accept on this channel to setup pipeline
-                    dispatcher.Register((TcpServerChannelUnsafe)this.Unsafe);
+                    dispatcher.Register(this.Unsafe);
                 }
                 this.SetState(StateFlags.ReadScheduled);
             }
         }
 
-        sealed class TcpServerChannelUnsafe : NativeChannelUnsafe, IServerNativeUnsafe
+        public sealed class TcpServerChannelUnsafe : NativeChannelUnsafe, IServerNativeUnsafe
         {
             static readonly Action<object, object> AcceptAction = (u, e) => ((TcpServerChannelUnsafe)u).Accept((Tcp)e);
 
-            public TcpServerChannelUnsafe(TcpServerChannel channel) : base(channel)
+            public TcpServerChannelUnsafe() : base() // TcpServerChannel channel) : base(channel)
             {
             }
 
-            public override IntPtr UnsafeHandle => ((TcpServerChannel)this.channel).tcpListener.Handle;
+            public override IntPtr UnsafeHandle => this.channel.tcpListener.Handle;
 
             // Connection callback from Libuv thread
             void IServerNativeUnsafe.Accept(RemoteConnection connection)
             {
-                var ch = (TcpServerChannel)this.channel;
+                var ch = this.channel;
                 NativeHandle client = connection.Client;
 
                 // If the AutoRead is false, reject the connection
@@ -161,7 +166,7 @@ namespace DotNetty.Transport.Libuv
             // Called from other Libuv loop/thread received tcp handle from pipe
             void IServerNativeUnsafe.Accept(NativeHandle handle)
             {
-                var ch = (TcpServerChannel)this.channel;
+                var ch = this.channel;
                 if (ch.EventLoop.InEventLoop)
                 {
                     this.Accept((Tcp)handle);
@@ -174,7 +179,7 @@ namespace DotNetty.Transport.Libuv
 
             void Accept(Tcp tcp)
             {
-                var ch = (TcpServerChannel)this.channel;
+                var ch = this.channel;
                 IChannelPipeline pipeline = ch.Pipeline;
                 IRecvByteBufAllocatorHandle allocHandle = this.RecvBufAllocHandle;
 
@@ -182,7 +187,7 @@ namespace DotNetty.Transport.Libuv
                 Exception exception = null;
                 try
                 {
-                    var tcpChannel = new TcpChannel(ch, tcp);
+                    var tcpChannel = ch._channelFactory.CreateChannel(ch, tcp); // ## 苦竹 修改 ## new TcpChannel(ch, tcp);
                     ch.Pipeline.FireChannelRead(tcpChannel);
                     allocHandle.IncMessagesRead(1);
                 }

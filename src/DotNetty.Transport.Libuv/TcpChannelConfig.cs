@@ -14,7 +14,7 @@ namespace DotNetty.Transport.Libuv
     {
         readonly Dictionary<ChannelOption, int> options;
 
-        public TcpChannelConfig(TcpChannel channel) : base(channel)
+        public TcpChannelConfig(IChannel channel) : base(channel)
         {
             // 
             // Note:
@@ -94,7 +94,7 @@ namespace DotNetty.Transport.Libuv
         {
             try
             {
-                var channel = (TcpChannel)this.Channel;
+                var channel = (INativeChannel)this.Channel;
                 var tcp = (Tcp)channel.GetHandle();
                 return tcp.ReceiveBufferSize(0);
             }
@@ -110,7 +110,7 @@ namespace DotNetty.Transport.Libuv
 
         void SetReceiveBufferSize(int value)
         {
-            var channel = (TcpChannel)this.Channel;
+            var channel = (INativeChannel)this.Channel;
             if (!channel.IsBound)
             {
                 // Defer until bound
@@ -149,7 +149,7 @@ namespace DotNetty.Transport.Libuv
         {
             try
             {
-                var channel = (TcpChannel)this.Channel;
+                var channel = (INativeChannel)this.Channel;
                 var tcp = (Tcp)channel.GetHandle();
                 return tcp.SendBufferSize(0);
             }
@@ -165,7 +165,7 @@ namespace DotNetty.Transport.Libuv
 
         void SetSendBufferSize(int value)
         {
-            var channel = (TcpChannel)this.Channel;
+            var channel = (INativeChannel)this.Channel;
             if (!channel.IsBound)
             {
                 // Defer until bound
@@ -212,7 +212,7 @@ namespace DotNetty.Transport.Libuv
         void SetTcpNoDelay(bool value)
         {
             int optionValue = value ? 1 : 0;
-            var channel = (TcpChannel)this.Channel;
+            var channel = (INativeChannel)this.Channel;
             if (!channel.IsBound)
             {
                 // Defer until bound
@@ -259,7 +259,7 @@ namespace DotNetty.Transport.Libuv
         void SetKeepAlive(bool value)
         {
             int optionValue = value ? 1 : 0;
-            var channel = (TcpChannel)this.Channel;
+            var channel = (INativeChannel)this.Channel;
             if (!channel.IsBound)
             {
                 // Defer until bound
@@ -298,7 +298,7 @@ namespace DotNetty.Transport.Libuv
         {
             try
             {
-                var channel = (TcpChannel)this.Channel;
+                var channel = (INativeChannel)this.Channel;
                 var tcpListener = (Tcp)channel.GetHandle();
                 return PlatformApi.GetReuseAddress(tcpListener);
             }
@@ -315,7 +315,7 @@ namespace DotNetty.Transport.Libuv
         void SetReuseAddress(bool value)
         {
             int optionValue = value ? 1 : 0;
-            var channel = (TcpChannel)this.Channel;
+            var channel = (INativeChannel)this.Channel;
             if (!channel.IsBound)
             {
                 // Defer until registered
@@ -357,7 +357,7 @@ namespace DotNetty.Transport.Libuv
         {
             Debug.Assert(this.options.Count <= 5);
 
-            var channel = (TcpChannel)this.Channel;
+            var channel = (INativeChannel)this.Channel;
             var tcp = (Tcp)channel.GetHandle();
             foreach (ChannelOption option in this.options.Keys)
             {
