@@ -63,7 +63,7 @@ namespace DotNetty.Transport.Libuv.Native
     [StructLayout(LayoutKind.Sequential)]
     struct uv_buf_t
     {
-        static readonly bool isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        //static readonly bool isWindows = PlatformApi.IsWindows;
 
         /*
            Windows 
@@ -82,7 +82,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         internal uv_buf_t(IntPtr memory, int length)
         {
-            if (isWindows)
+            if (PlatformApi.IsWindows)
             {
                 this.first = (IntPtr)length;
                 this.second = memory;
@@ -158,7 +158,7 @@ namespace DotNetty.Transport.Libuv.Native
     [StructLayout(LayoutKind.Sequential)]
     struct sockaddr
     {
-        static readonly bool IsMacOS = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+        //static readonly bool IsMacOS = PlatformApi.IsDarwin;
 
         // this type represents native memory occupied by sockaddr struct
         // https://msdn.microsoft.com/en-us/library/windows/desktop/ms740496(v=vs.85).aspx
@@ -221,7 +221,7 @@ namespace DotNetty.Transport.Libuv.Native
             int port = ((int)(this.field0 & 0x00FF0000) >> 8) | (int)((this.field0 & 0xFF000000) >> 24);
 
             int family = (int)this.field0;
-            if (IsMacOS)
+            if (PlatformApi.IsDarwin)
             {
                 // see explaination in example 4
                 family = family >> 8;

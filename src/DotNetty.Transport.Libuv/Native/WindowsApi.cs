@@ -16,7 +16,7 @@ namespace DotNetty.Transport.Libuv.Native
     sealed class WindowsApi : IDisposable
     {
         IntPtr fileCompletionInfoPtr;
-        bool tryDetachFromIOCP = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        bool tryDetachFromIOCP = PlatformApi.IsWindows;
 
         public WindowsApi()
         {

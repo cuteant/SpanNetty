@@ -8,7 +8,7 @@ namespace DotNetty.Transport.Libuv.Native
     using System.Net.Sockets;
     using System.Runtime.InteropServices;
 
-    static class PlatformApi
+    static partial class PlatformApi
     {
         const int AF_INET6_LINUX = 10;
         const int AF_INET6_OSX = 30;
@@ -16,17 +16,17 @@ namespace DotNetty.Transport.Libuv.Native
         internal static uint GetAddressFamily(AddressFamily addressFamily)
         {
             // AF_INET 2
-            if (addressFamily == AddressFamily.InterNetwork || RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (addressFamily == AddressFamily.InterNetwork || IsWindows)
             {
                 return (uint)addressFamily;
             }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            if (IsLinux)
             {
                 return AF_INET6_LINUX;
             }
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            if (IsDarwin)
             {
                 return AF_INET6_OSX;
             }
@@ -38,7 +38,7 @@ namespace DotNetty.Transport.Libuv.Native
         {
             IntPtr socketHandle = GetSocketHandle(tcpHandle);
 
-            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) 
+            return IsWindows 
                 ? WindowsApi.GetReuseAddress(socketHandle) 
                 : UnixApi.GetReuseAddress(socketHandle);
         }
@@ -46,7 +46,7 @@ namespace DotNetty.Transport.Libuv.Native
         internal static void SetReuseAddress(TcpHandle tcpHandle, int value)
         {
             IntPtr socketHandle = GetSocketHandle(tcpHandle);
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (IsWindows)
             {
                 WindowsApi.SetReuseAddress(socketHandle, value);
             }
@@ -58,7 +58,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         internal static bool GetReusePort(TcpHandle tcpHandle)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (IsWindows)
             {
                 return GetReuseAddress(tcpHandle);
             }
@@ -72,7 +72,7 @@ namespace DotNetty.Transport.Libuv.Native
             IntPtr socketHandle = GetSocketHandle(tcpHandle);
             // Ignore SO_REUSEPORT on Windows because it is controlled
             // by SO_REUSEADDR
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (IsWindows)
             {
                 return;
             }

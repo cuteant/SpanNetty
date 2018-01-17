@@ -22,7 +22,7 @@ namespace DotNetty.Transport.Libuv
             Contract.Requires(parent != null);
 
             string pipeName = "DotNetty_" + Guid.NewGuid().ToString("n");
-            this.PipeName = (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) 
+            this.PipeName = (PlatformApi.IsWindows 
                 ? @"\\.\pipe\" : "/tmp/") + pipeName;
             this.Start();
         }
