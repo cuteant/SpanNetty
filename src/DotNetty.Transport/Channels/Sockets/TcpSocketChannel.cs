@@ -23,17 +23,13 @@ namespace DotNetty.Transport.Channels.Sockets
 
         /// <summary>Create a new instance</summary>
         public TcpSocketChannel()
-#if NET40
-            : this(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
-#else
-            : this(new Socket(SocketType.Stream, ProtocolType.Tcp))
-#endif
+            : this(SocketEx.CreateSocket()) //new Socket(SocketType.Stream, ProtocolType.Tcp))
         {
         }
 
         /// <summary>Create a new instance</summary>
         public TcpSocketChannel(AddressFamily addressFamily)
-            : this(new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp))
+            : this(SocketEx.CreateSocket(addressFamily)) //new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp))
         {
         }
 
@@ -175,8 +171,8 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 if (this.TryResetState(StateFlags.Open | StateFlags.Active))
                 {
-                    this.Socket.Shutdown(SocketShutdown.Both);
-                    this.Socket.Dispose();
+                    //this.Socket.Shutdown(SocketShutdown.Both);
+                    this.Socket.SafeClose(); //this.Socket.Dispose();
                 }
             }
             finally

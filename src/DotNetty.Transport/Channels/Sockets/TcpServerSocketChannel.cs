@@ -32,11 +32,7 @@ namespace DotNetty.Transport.Channels.Sockets
         ///     Create a new instance
         /// </summary>
         public TcpServerSocketChannel()
-#if NET40
-          : this(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
-#else
-          : this(new Socket(SocketType.Stream, ProtocolType.Tcp))
-#endif
+          : this(SocketEx.CreateSocket()) //new Socket(SocketType.Stream, ProtocolType.Tcp))
         {
         }
 
@@ -44,7 +40,7 @@ namespace DotNetty.Transport.Channels.Sockets
         ///     Create a new instance
         /// </summary>
         public TcpServerSocketChannel(AddressFamily addressFamily)
-            : this(new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp))
+            : this(SocketEx.CreateSocket(addressFamily)) //new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp))
         {
         }
 
