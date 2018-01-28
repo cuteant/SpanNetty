@@ -334,5 +334,4 @@ TODO.txt
 *.project.lock.json
 /src/CuteAnt.Features
 /nuspecs
-/NuGet.Config
 /test/DotNetty.Transport.Tests.Performance/Perf

@@ -40,6 +40,10 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 return (T)(object)this.Backlog;
             }
+            if (ChannelOption.SoLinger.Equals(option))
+            {
+                return (T)(object)this.Linger;
+            }
 
             return base.GetOption(option);
         }
@@ -59,6 +63,10 @@ namespace DotNetty.Transport.Channels.Sockets
             else if (ChannelOption.SoBacklog.Equals(option))
             {
                 this.Backlog = (int)(object)value;
+            }
+            else if (ChannelOption.SoLinger.Equals(option))
+            {
+                this.Linger = (int)(object)value;
             }
             else
             {
@@ -144,6 +152,48 @@ namespace DotNetty.Transport.Channels.Sockets
                 Contract.Requires(value >= 0);
 
                 this.backlog = value;
+            }
+        }
+
+        public int Linger
+        {
+            get
+            {
+                try
+                {
+                    LingerOption lingerState = this.Socket.LingerState;
+                    return lingerState.Enabled ? lingerState.LingerTime : -1;
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    throw new ChannelException(ex);
+                }
+                catch (SocketException ex)
+                {
+                    throw new ChannelException(ex);
+                }
+            }
+            set
+            {
+                try
+                {
+                    if (value < 0)
+                    {
+                        this.Socket.LingerState = new LingerOption(false, 0);
+                    }
+                    else
+                    {
+                        this.Socket.LingerState = new LingerOption(true, value);
+                    }
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    throw new ChannelException(ex);
+                }
+                catch (SocketException ex)
+                {
+                    throw new ChannelException(ex);
+                }
             }
         }
     }

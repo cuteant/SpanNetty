@@ -63,7 +63,7 @@ namespace DotNetty.Buffers
             }
             catch { } // 防止回收非 BufferMannager 的 byte array 抛异常
 #else
-            _bufferMannager.ReturnBuffer(bytes);
+            _bufferMannager.Return(bytes);
 #endif
         }
 

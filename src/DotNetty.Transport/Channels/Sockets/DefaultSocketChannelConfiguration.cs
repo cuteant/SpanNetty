@@ -4,6 +4,7 @@
 namespace DotNetty.Transport.Channels.Sockets
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Net.Sockets;
 
@@ -218,7 +219,14 @@ namespace DotNetty.Transport.Channels.Sockets
                     }
                     else
                     {
-                        this.Socket.LingerState = new LingerOption(true, value);
+                        if (s_lingerCache.TryGetValue(value, out var lingerOption))
+                        {
+                            this.Socket.LingerState = lingerOption;
+                        }
+                        else
+                        {
+                            this.Socket.LingerState = new LingerOption(true, value);
+                        }
                     }
                 }
                 catch (ObjectDisposedException ex)
@@ -331,6 +339,16 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     throw new ChannelException(ex);
                 }
+            }
+        }
+
+        private static readonly Dictionary<int, LingerOption> s_lingerCache;
+        static DefaultSocketChannelConfiguration()
+        {
+            s_lingerCache = new Dictionary<int, LingerOption>(11);
+            for(var idx = 0; idx <= 10; idx++)
+            {
+                s_lingerCache.Add(idx, new LingerOption(true, idx));
             }
         }
     }
