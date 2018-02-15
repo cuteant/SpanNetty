@@ -4,6 +4,7 @@
 namespace DotNetty.Transport.Channels.Pool
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
@@ -24,9 +25,7 @@ namespace DotNetty.Transport.Channels.Pool
 
         static readonly InvalidOperationException FullException = new InvalidOperationException("ChannelPool full");
 
-        readonly IDeque<IChannel> deque = PlatformDependent.NewDeque<IChannel>();
-
-        readonly bool lastRecentUsed;
+        readonly IQueue<IChannel> store;
 
         /**
          * Creates a new instance using the {@link IChannelHealthChecker#ACTIVE}.
@@ -91,7 +90,10 @@ namespace DotNetty.Transport.Channels.Pool
             // Clone the original Bootstrap as we want to set our own handler
             this.Bootstrap = bootstrap.Clone();
             this.Bootstrap.Handler(new ActionChannelInitializer<IChannel>(this.OnChannelInitializing));
-            this.lastRecentUsed = lastRecentUsed;
+            this.store =
+                lastRecentUsed
+                    ? (IQueue<IChannel>)new CompatibleConcurrentStack<IChannel>()
+                    : new CompatibleConcurrentQueue<IChannel>();
         }
 
         void OnChannelInitializing(IChannel channel)
@@ -129,52 +131,35 @@ namespace DotNetty.Transport.Channels.Pool
          */
         internal bool ReleaseHealthCheck { get; }
 
-        public virtual Task<IChannel> AcquireAsync()
+        public virtual ValueTask<IChannel> AcquireAsync()
         {
-            var promise = new TaskCompletionSource<IChannel>();
-            this.Acquire(promise);
-            return promise.Task;
+            if (!this.TryPollChannel(out IChannel channel))
+            {
+                Bootstrap bs = this.Bootstrap.Clone();
+                bs.Attribute(PoolKey, this);
+                return new ValueTask<IChannel>(this.ConnectChannel(bs));
+            }
+            
+            IEventLoop eventLoop = channel.EventLoop;
+            if (eventLoop.InEventLoop)
+            {
+                return this.DoHealthCheck(channel);
+            }
+            else
+            {
+                var completionSource = new TaskCompletionSource<IChannel>();
+                eventLoop.Execute(this.DoHealthCheck, channel, completionSource);
+                return new ValueTask<IChannel>(completionSource.Task);    
+            }
         }
 
-        /**
-         * Tries to retrieve healthy channel from the pool if any or creates a new channel otherwise.
-         * @param promise the promise to provide acquire result.
-         * @return future for acquiring a channel.
-         */
-        protected virtual async void Acquire(TaskCompletionSource<IChannel> promise)
+        async void DoHealthCheck(object channel, object state)
         {
+            var promise = state as TaskCompletionSource<IChannel>;
             try
             {
-                if (!this.TryPollChannel(out var channel))
-                {
-                    // No Channel left in the pool bootstrap a new Channel
-                    Bootstrap bs = this.Bootstrap.Clone();
-                    bs.Attribute(PoolKey, this);
-                    try
-                    {
-                        channel = await this.ConnectChannel(bs);
-                        if (!promise.TrySetResult(channel))
-                        {
-                            await this.ReleaseAsync(channel);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        promise.TrySetException(e);
-                    }
-
-                    return;
-                }
-
-                IEventLoop loop = channel.EventLoop;
-                if (loop.InEventLoop)
-                {
-                    this.DoHealthCheck(channel, promise);
-                }
-                else
-                {
-                    loop.Execute(this.DoHealthCheck, channel, promise);
-                }
+                var result = await this.DoHealthCheck((IChannel)channel);
+                promise.TrySetResult(result);
             }
             catch (Exception ex)
             {
@@ -182,9 +167,7 @@ namespace DotNetty.Transport.Channels.Pool
             }
         }
 
-        void DoHealthCheck(object channel, object promise) => this.DoHealthCheck((IChannel)channel, (TaskCompletionSource<IChannel>)promise);
-
-        async void DoHealthCheck(IChannel channel, TaskCompletionSource<IChannel> promise)
+        async ValueTask<IChannel> DoHealthCheck(IChannel channel)
         {
             Contract.Assert(channel.EventLoop.InEventLoop);
             try
@@ -195,68 +178,83 @@ namespace DotNetty.Transport.Channels.Pool
                     {
                         channel.GetAttribute(PoolKey).Set(this);
                         this.Handler.ChannelAcquired(channel);
-                        promise.TrySetResult(channel);
+                        return channel;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        CloseAndFail(channel, ex, promise);
+                        CloseChannel(channel);
+                        throw;
                     }
                 }
                 else
                 {
                     CloseChannel(channel);
-                    this.Acquire(promise);
+                    return await this.AcquireAsync();
                 }
             }
             catch
             {
                 CloseChannel(channel);
-                this.Acquire(promise);
+                return await this.AcquireAsync();
             }
         }
 
         /**
          * Bootstrap a new {@link Channel}. The default implementation uses {@link Bootstrap#connect()}, sub-classes may
          * override this.
-         * <p/>
+         * <p>
          * The {@link Bootstrap} that is passed in here is cloned via {@link Bootstrap#clone()}, so it is safe to modify.
          */
         protected virtual Task<IChannel> ConnectChannel(Bootstrap bs) => bs.ConnectAsync();
 
-        public virtual Task ReleaseAsync(IChannel channel)
+        public virtual async ValueTask<bool> ReleaseAsync(IChannel channel)
         {
             Contract.Requires(channel != null);
-            var promise = new TaskCompletionSource();
             try
             {
                 IEventLoop loop = channel.EventLoop;
                 if (loop.InEventLoop)
                 {
-                    this.DoReleaseChannel(channel, promise);
+                    return await this.DoReleaseChannel(channel);
                 }
                 else
                 {
+                    var promise = new TaskCompletionSource<bool>();
                     loop.Execute(this.DoReleaseChannel, channel, promise);
+                    return await promise.Task;
                 }
+            }
+            catch (Exception)
+            {
+                CloseChannel(channel);
+                throw;
+            }
+        }
+        
+        async void DoReleaseChannel(object channel, object state)
+        {
+            var promise = state as TaskCompletionSource<bool>;
+            try
+            {
+                var result = await this.DoReleaseChannel((IChannel)channel);
+                promise.TrySetResult(result);
             }
             catch (Exception ex)
             {
-                CloseAndFail(channel, ex, promise);
+                promise.TrySetException(ex);
             }
-            return promise.Task;
         }
 
-        void DoReleaseChannel(object channel, object promise) => this.DoReleaseChannel((IChannel)channel, (TaskCompletionSource)promise);
-
-        void DoReleaseChannel(IChannel channel, TaskCompletionSource promise)
+        async ValueTask<bool> DoReleaseChannel(IChannel channel)
         {
             Contract.Assert(channel.EventLoop.InEventLoop);
 
             // Remove the POOL_KEY attribute from the Channel and check if it was acquired from this pool, if not fail.
             if (channel.GetAttribute(PoolKey).GetAndSet(null) != this)
             {
+                CloseChannel(channel);
                 // Better include a stacktrace here as this is an user error.
-                CloseAndFail(channel, new ArgumentException($"Channel {channel} was not acquired from this ChannelPool"), promise);
+                throw new ArgumentException($"Channel {channel} was not acquired from this ChannelPool");
             }
             else
             {
@@ -264,16 +262,18 @@ namespace DotNetty.Transport.Channels.Pool
                 {
                     if (this.ReleaseHealthCheck)
                     {
-                        this.DoHealthCheckOnRelease(channel, promise);
+                        return await this.DoHealthCheckOnRelease(channel);
                     }
                     else
                     {
-                        this.ReleaseAndOffer(channel, promise);
+                        this.ReleaseAndOffer(channel);
+                        return true;
                     }
                 }
-                catch (Exception cause)
+                catch
                 {
-                    CloseAndFail(channel, cause, promise);
+                    CloseChannel(channel);
+                    throw;
                 }
             }
         }
@@ -285,50 +285,39 @@ namespace DotNetty.Transport.Channels.Pool
          * @param future the future that contains information fif channel is healthy or not.
          * @throws Exception in case when failed to notify handler about release operation.
          */
-        async void DoHealthCheckOnRelease(IChannel channel, TaskCompletionSource promise)
+        async ValueTask<bool> DoHealthCheckOnRelease(IChannel channel)
         {
             if (await this.HealthChecker.IsHealthyAsync(channel))
             {
                 //channel turns out to be healthy, offering and releasing it.
-                this.ReleaseAndOffer(channel, promise);
+                this.ReleaseAndOffer(channel);
+                return true;
             }
             else
             {
                 //channel not healthy, just releasing it.
                 this.Handler.ChannelReleased(channel);
-                promise.Complete();
+                return false;
             }
         }
-
-        void ReleaseAndOffer(IChannel channel, TaskCompletionSource promise)
+        
+        void ReleaseAndOffer(IChannel channel)
         {
             if (this.TryOfferChannel(channel))
             {
                 this.Handler.ChannelReleased(channel);
-                promise.Complete();
             }
             else
             {
-                CloseAndFail(channel, FullException, promise);
+                CloseChannel(channel);
+                throw FullException;
             }
         }
-
+       
         static void CloseChannel(IChannel channel)
         {
             channel.GetAttribute(PoolKey).GetAndSet(null);
             channel.CloseAsync();
-        }
-
-        static void CloseAndFail(IChannel channel, Exception cause, TaskCompletionSource promise)
-        {
-            CloseChannel(channel);
-            promise.TrySetException(cause);
-        }
-
-        static void CloseAndFail<T>(IChannel channel, Exception cause, TaskCompletionSource<T> promise)
-        {
-            CloseChannel(channel);
-            promise.TrySetException(cause);
         }
 
         /**
@@ -338,10 +327,7 @@ namespace DotNetty.Transport.Channels.Pool
          * Sub-classes may override {@link #pollChannel()} and {@link #offerChannel(Channel)}. Be aware that
          * implementations of these methods needs to be thread-safe!
          */
-        protected virtual bool TryPollChannel(out IChannel channel)
-            => this.lastRecentUsed
-            ? this.deque.TryDequeueLast(out channel)
-            : this.deque.TryDequeue(out channel);
+        protected virtual bool TryPollChannel(out IChannel channel) => this.store.TryDequeue(out channel);
 
         /**
          * Offer a {@link Channel} back to the internal storage. This will return {@code true} if the {@link Channel}
@@ -350,14 +336,25 @@ namespace DotNetty.Transport.Channels.Pool
          * Sub-classes may override {@link #pollChannel()} and {@link #offerChannel(Channel)}. Be aware that
          * implementations of these methods needs to be thread-safe!
          */
-        protected virtual bool TryOfferChannel(IChannel channel) => this.deque.TryEnqueue(channel);
+        protected virtual bool TryOfferChannel(IChannel channel) => this.store.TryEnqueue(channel);
 
         public virtual void Dispose()
         {
-            while (this.TryPollChannel(out var channel))
+            while (this.TryPollChannel(out IChannel channel))
             {
                 channel.CloseAsync();
             }
+        }
+        
+        class CompatibleConcurrentStack<T> : ConcurrentStack<T>, IQueue<T>
+        {
+            public bool TryEnqueue(T item)
+            {
+                this.Push(item);
+                return true;
+            }
+
+            public bool TryDequeue(out T item) => this.TryPop(out item);
         }
     }
 }
