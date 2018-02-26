@@ -253,7 +253,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 while (true)
                 {
-                    int size = input.Count;
+                    int size = input.Size;
                     if (size == 0)
                     {
                         // All written
@@ -263,7 +263,8 @@ namespace DotNetty.Transport.Channels.Sockets
                     bool done = false;
 
                     // Ensure the pending writes are made of ByteBufs only.
-                    sharedBufferList = input.GetSharedBufferList(1024);
+                    int maxBytesPerGatheringWrite = ((TcpSocketChannelConfig)this.config).GetMaxBytesPerGatheringWrite();
+                    sharedBufferList = input.GetSharedBufferList(1024, maxBytesPerGatheringWrite);
                     int nioBufferCnt = sharedBufferList.Count;
                     long expectedWrittenBytes = input.NioBufferSize;
                     Socket socket = this.Socket;
@@ -280,8 +281,7 @@ namespace DotNetty.Transport.Channels.Sockets
                         default:
                             for (int i = this.Configuration.WriteSpinCount - 1; i >= 0; i--)
                             {
-                                SocketError errorCode;
-                                long localWrittenBytes = socket.Send(bufferList, SocketFlags.None, out errorCode);
+                                long localWrittenBytes = socket.Send(bufferList, SocketFlags.None, out SocketError errorCode);
                                 if (errorCode != SocketError.Success && errorCode != SocketError.WouldBlock)
                                 {
                                     throw new SocketException((int)errorCode);
@@ -382,9 +382,34 @@ namespace DotNetty.Transport.Channels.Sockets
 
         sealed class TcpSocketChannelConfig : DefaultSocketChannelConfiguration
         {
+            volatile int maxBytesPerGatheringWrite = int.MaxValue;
+
             public TcpSocketChannelConfig(TChannel channel, Socket javaSocket)
                 : base(channel, javaSocket)
             {
+                this.CalculateMaxBytesPerGatheringWrite();
+            }
+
+            public int GetMaxBytesPerGatheringWrite() => this.maxBytesPerGatheringWrite;
+
+            public override int SendBufferSize
+            {
+                get => base.SendBufferSize;
+                set
+                {
+                    base.SendBufferSize = value;
+                    this.CalculateMaxBytesPerGatheringWrite();
+                }
+            }
+
+            void CalculateMaxBytesPerGatheringWrite()
+            {
+                // Multiply by 2 to give some extra space in case the OS can process write data faster than we can provide.
+                int newSendBufferSize = this.SendBufferSize << 1;
+                if (newSendBufferSize > 0)
+                {
+                    this.maxBytesPerGatheringWrite = newSendBufferSize;
+                }
             }
 
             protected override void AutoReadCleared() => ((TChannel)this.Channel).ClearReadPending();
