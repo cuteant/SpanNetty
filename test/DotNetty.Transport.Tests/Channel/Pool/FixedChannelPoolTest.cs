@@ -1,4 +1,5 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
+﻿#if !TEST40
+// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Transport.Tests.Channel.Pool
@@ -252,7 +253,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             IChannel channel = await pool.AcquireAsync();
             pool.Dispose();
 
-            await group.GetNext().SubmitAsync(() => TaskEx.Completed);
+            await group.GetNext().SubmitAsync(() => TaskUtil.Completed);
             var e = await Assert.ThrowsAsync<InvalidOperationException>(async () => await pool.ReleaseAsync(channel));
             Assert.Same(FixedChannelPool.PoolClosedOnReleaseException, e);
             
@@ -306,3 +307,4 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         }
     }
 }
+#endif

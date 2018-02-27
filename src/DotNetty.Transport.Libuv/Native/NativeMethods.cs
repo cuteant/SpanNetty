@@ -85,7 +85,7 @@ namespace DotNetty.Transport.Libuv.Native
         internal static unsafe void InitMemory(IntPtr buf, IntPtr memory, int length)
         {
             var len = (IntPtr)length;
-            if (IsWindows)
+            if (PlatformApi.IsWindows)
             {
                 *(IntPtr*)buf = len;
                 *(IntPtr*)(buf + Size) = memory;

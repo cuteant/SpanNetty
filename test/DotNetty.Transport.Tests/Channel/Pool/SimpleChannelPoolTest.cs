@@ -1,4 +1,5 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
+﻿#if !TEST40
+// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Transport.Tests.Channel.Pool
@@ -243,3 +244,4 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         }
     }
 }
+#endif
