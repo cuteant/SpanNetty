@@ -354,7 +354,7 @@ namespace DotNetty.Transport.Libuv.Native
             return sockaddr.GetIPEndPoint();
         }
 
-#if NETSTANDARD1_3
+#if NETSTANDARD
         internal static IntPtr Allocate(int size) => Marshal.AllocCoTaskMem(size);
 
         internal static void FreeMemory(IntPtr ptr) => Marshal.FreeCoTaskMem(ptr);
