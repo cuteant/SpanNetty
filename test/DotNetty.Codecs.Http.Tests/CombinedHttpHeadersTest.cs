@@ -40,7 +40,7 @@ namespace DotNetty.Codecs.Http.Tests
             otherHeaders.Add(HeaderName, "a");
             otherHeaders.Add(HeaderName, "b");
             headers.Add(otherHeaders);
-            Assert.Equal("a,b", headers.Get(HeaderName).ToString());
+            Assert.Equal("a,b", headers.Get(HeaderName, null)?.ToString());
         }
 
         [Fact]
@@ -52,7 +52,7 @@ namespace DotNetty.Codecs.Http.Tests
             otherHeaders.Add(HeaderName, "b");
             otherHeaders.Add(HeaderName, "c");
             headers.Add(otherHeaders);
-            Assert.Equal("a,b,c", headers.Get(HeaderName).ToString());
+            Assert.Equal("a,b,c", headers.Get(HeaderName, null)?.ToString());
         }
 
         [Fact]
@@ -64,7 +64,7 @@ namespace DotNetty.Codecs.Http.Tests
             otherHeaders.Add(HeaderName, "b");
             otherHeaders.Add(HeaderName, "c");
             headers.Set(otherHeaders);
-            Assert.Equal("b,c", headers.Get(HeaderName).ToString());
+            Assert.Equal("b,c", headers.Get(HeaderName, null)?.ToString());
         }
 
         [Fact]
@@ -76,7 +76,7 @@ namespace DotNetty.Codecs.Http.Tests
             otherHeaders.Add(HeaderName, "b");
             otherHeaders.Add(HeaderName, "c");
             headers.Add(otherHeaders);
-            Assert.Equal("a,b,c", headers.Get(HeaderName).ToString());
+            Assert.Equal("a,b,c", headers.Get(HeaderName, null)?.ToString());
         }
 
         [Fact]
@@ -88,7 +88,7 @@ namespace DotNetty.Codecs.Http.Tests
             otherHeaders.Add(HeaderName, "b");
             otherHeaders.Add(HeaderName, "c");
             headers.Set(otherHeaders);
-            Assert.Equal("b,c", headers.Get(HeaderName).ToString());
+            Assert.Equal("b,c", headers.Get(HeaderName, null)?.ToString());
         }
 
         [Fact]
@@ -96,7 +96,7 @@ namespace DotNetty.Codecs.Http.Tests
         {
             CombinedHttpHeaders headers = NewCombinedHttpHeaders();
             headers.Add(HeaderName, HeaderValue.SixQuoted.Subset(4));
-            Assert.True(ContentEquals((StringCharSequence)HeaderValue.SixQuoted.SubsetAsCsvString(4), headers.Get(HeaderName)));
+            Assert.True(ContentEquals((StringCharSequence)HeaderValue.SixQuoted.SubsetAsCsvString(4), headers.Get(HeaderName, null)));
             Assert.Equal(HeaderValue.SixQuoted.Subset(4), headers.GetAll(HeaderName));
         }
 
@@ -105,7 +105,7 @@ namespace DotNetty.Codecs.Http.Tests
         {
             CombinedHttpHeaders headers = NewCombinedHttpHeaders();
             headers.Add(HeaderName, HeaderValue.Eight.Subset(6));
-            Assert.True(ContentEquals((StringCharSequence)HeaderValue.Eight.SubsetAsCsvString(6), headers.Get(HeaderName)));
+            Assert.True(ContentEquals((StringCharSequence)HeaderValue.Eight.SubsetAsCsvString(6), headers.Get(HeaderName, null)));
             Assert.Equal(HeaderValue.Eight.Subset(6), headers.GetAll(HeaderName));
         }
 
@@ -117,7 +117,7 @@ namespace DotNetty.Codecs.Http.Tests
             {
                 headers.Add(HeaderName, "value");
             }
-            Assert.True(ContentEquals((StringCharSequence)"value,value,value,value,value", headers.Get(HeaderName)));
+            Assert.True(ContentEquals((StringCharSequence)"value,value,value,value,value", headers.Get(HeaderName, null)));
         }
 
         [Fact]
@@ -240,7 +240,7 @@ namespace DotNetty.Codecs.Http.Tests
 
         static void AssertCsvValues(CombinedHttpHeaders headers, HeaderValue headerValue)
         {
-            Assert.True(ContentEquals(headerValue.AsCsv(), headers.Get(HeaderName)));
+            Assert.True(ContentEquals(headerValue.AsCsv(), headers.Get(HeaderName, null)));
 
             List<ICharSequence> expected = headerValue.AsList();
             IList<ICharSequence> values = headers.GetAll(HeaderName);
@@ -254,7 +254,7 @@ namespace DotNetty.Codecs.Http.Tests
 
         static void AssertCsvValue(CombinedHttpHeaders headers, HeaderValue headerValue)
         {
-            Assert.True(ContentEquals((StringCharSequence)headerValue.ToString(), headers.Get(HeaderName)));
+            Assert.True(ContentEquals((StringCharSequence)headerValue.ToString(), headers.Get(HeaderName, null)));
             Assert.True(ContentEquals((StringCharSequence)headerValue.ToString(), headers.GetAll(HeaderName)[0]));
         }
 
@@ -318,7 +318,7 @@ namespace DotNetty.Codecs.Http.Tests
             var expected = new List<ICharSequence> { (StringCharSequence)"a", (StringCharSequence)"", (StringCharSequence)"b", (StringCharSequence)"", (StringCharSequence)"c, d" };
             IList<ICharSequence> actual = headers.GetAll(HeaderName);
             Assert.True(expected.SequenceEqual(actual));
-            Assert.Equal("a,,b,,\"c, d\"", headers.Get(HeaderName).ToString());
+            Assert.Equal("a,,b,,\"c, d\"", headers.Get(HeaderName, null)?.ToString());
 
             Assert.True(headers.ContainsValue(HeaderName, (StringCharSequence)"a", true));
             Assert.True(headers.ContainsValue(HeaderName, (StringCharSequence)" a ", true));

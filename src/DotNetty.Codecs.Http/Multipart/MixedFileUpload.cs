@@ -129,9 +129,8 @@ namespace DotNetty.Codecs.Http.Multipart
             this.CheckSize(buffer.ReadableBytes);
             if (buffer.ReadableBytes > this.limitSize)
             {
-                if (this.fileUpload is MemoryFileUpload)
+                if (this.fileUpload is MemoryFileUpload memoryUpload)
                 {
-                    IFileUpload memoryUpload = this.fileUpload;
                     // change to Disk
                     this.fileUpload = new DiskFileUpload(
                         memoryUpload.Name, 

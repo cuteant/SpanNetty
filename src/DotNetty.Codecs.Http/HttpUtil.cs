@@ -15,8 +15,8 @@ namespace DotNetty.Codecs.Http
 
         public static bool IsKeepAlive(IHttpMessage message)
         {
-            ICharSequence connection = message.Headers.Get(HttpHeaderNames.Connection);
-            if (connection != null && HttpHeaderValues.Close.ContentEqualsIgnoreCase(connection))
+            if (message.Headers.TryGet(HttpHeaderNames.Connection, out ICharSequence connection) 
+                && HttpHeaderValues.Close.ContentEqualsIgnoreCase(connection))
             {
                 return false;
             }
@@ -61,8 +61,7 @@ namespace DotNetty.Codecs.Http
 
         public static long GetContentLength(IHttpMessage message)
         {
-            ICharSequence value = message.Headers.Get(HttpHeaderNames.ContentLength);
-            if (value != null)
+            if (message.Headers.TryGet(HttpHeaderNames.ContentLength, out ICharSequence value))
             {
                 return CharUtil.ParseLong(value);
             }
@@ -81,8 +80,7 @@ namespace DotNetty.Codecs.Http
 
         public static long GetContentLength(IHttpMessage message, long defaultValue)
         {
-            ICharSequence value = message.Headers.Get(HttpHeaderNames.ContentLength);
-            if (value != null)
+            if (message.Headers.TryGet(HttpHeaderNames.ContentLength, out ICharSequence value))
             {
                 return CharUtil.ParseLong(value);
             }
@@ -140,7 +138,7 @@ namespace DotNetty.Codecs.Http
                 return false;
             }
 
-            ICharSequence expectValue = message.Headers.Get(HttpHeaderNames.Expect);
+            ICharSequence expectValue = message.Headers.Get(HttpHeaderNames.Expect, null);
             // unquoted tokens in the expect header are case-insensitive, thus 100-continue is case insensitive
             return HttpHeaderValues.Continue.ContentEqualsIgnoreCase(expectValue);
         }
@@ -152,8 +150,8 @@ namespace DotNetty.Codecs.Http
                 return false;
             }
 
-            ICharSequence expectValue = message.Headers.Get(HttpHeaderNames.Expect);
-            return expectValue != null && !HttpHeaderValues.Continue.ContentEqualsIgnoreCase(expectValue);
+            return message.Headers.TryGet(HttpHeaderNames.Expect, out ICharSequence expectValue) 
+                && !HttpHeaderValues.Continue.ContentEqualsIgnoreCase(expectValue);
         }
 
         // Expect: 100-continue is for requests only and it works only on HTTP/1.1 or later. Note further that RFC 7231
@@ -215,8 +213,9 @@ namespace DotNetty.Codecs.Http
 
         public static Encoding GetCharset(IHttpMessage message, Encoding defaultCharset)
         {
-            ICharSequence contentTypeValue = message.Headers.Get(HttpHeaderNames.ContentType);
-            return contentTypeValue != null ? GetCharset(contentTypeValue, defaultCharset) : defaultCharset;
+            return message.Headers.TryGet(HttpHeaderNames.ContentType, out ICharSequence contentTypeValue) 
+                ? GetCharset(contentTypeValue, defaultCharset) 
+                : defaultCharset;
         }
 
         public static Encoding GetCharset(ICharSequence contentTypeValue, Encoding defaultCharset)
@@ -246,11 +245,8 @@ namespace DotNetty.Codecs.Http
             }
         }
 
-        public static ICharSequence GetCharsetAsSequence(IHttpMessage message)
-        {
-            ICharSequence contentTypeValue = message.Headers.Get(HttpHeaderNames.ContentType);
-            return contentTypeValue != null ? GetCharsetAsSequence(contentTypeValue) : null;
-        }
+        public static ICharSequence GetCharsetAsSequence(IHttpMessage message) 
+            => message.Headers.TryGet(HttpHeaderNames.ContentType, out ICharSequence contentTypeValue) ? GetCharsetAsSequence(contentTypeValue) : null;
 
         public static ICharSequence GetCharsetAsSequence(ICharSequence contentTypeValue)
         {
@@ -270,11 +266,8 @@ namespace DotNetty.Codecs.Http
             return null;
         }
 
-        public static ICharSequence GetMimeType(IHttpMessage message)
-        {
-            ICharSequence contentTypeValue = message.Headers.Get(HttpHeaderNames.ContentType);
-            return contentTypeValue != null ? GetMimeType(contentTypeValue) : null;
-        }
+        public static ICharSequence GetMimeType(IHttpMessage message) => 
+            message.Headers.TryGet(HttpHeaderNames.ContentType, out ICharSequence contentTypeValue) ? GetMimeType(contentTypeValue) : null;
 
         public static ICharSequence GetMimeType(ICharSequence contentTypeValue)
         {

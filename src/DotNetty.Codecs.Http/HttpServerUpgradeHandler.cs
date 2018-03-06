@@ -190,13 +190,13 @@ namespace DotNetty.Codecs.Http
             {
                 return false;
             }
-            return request.Headers.Get(HttpHeaderNames.Upgrade) != null;
+            return request.Headers.Contains(HttpHeaderNames.Upgrade);
         }
 
         bool Upgrade(IChannelHandlerContext ctx, IFullHttpRequest request)
         {
             // Select the best protocol based on those requested in the UPGRADE header.
-            IList<ICharSequence> requestedProtocols = SplitHeader(request.Headers.Get(HttpHeaderNames.Upgrade));
+            IList<ICharSequence> requestedProtocols = SplitHeader(request.Headers.Get(HttpHeaderNames.Upgrade, null));
             int numRequestedProtocols = requestedProtocols.Count;
             IUpgradeCodec upgradeCodec = null;
             ICharSequence upgradeProtocol = null;
@@ -219,8 +219,8 @@ namespace DotNetty.Codecs.Http
             }
 
             // Make sure the CONNECTION header is present.
-            ICharSequence connectionHeader = request.Headers.Get(HttpHeaderNames.Connection);
-            if (connectionHeader == null)
+            ;
+            if (!request.Headers.TryGet(HttpHeaderNames.Connection, out ICharSequence connectionHeader))
             {
                 return false;
             }

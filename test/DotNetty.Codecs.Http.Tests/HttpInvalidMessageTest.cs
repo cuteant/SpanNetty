@@ -40,7 +40,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(dr);
             Assert.False(dr.IsSuccess);
             Assert.True(dr.IsFailure);
-            Assert.Equal("Good Value", req.Headers.Get((AsciiString)"Good_Name").ToString());
+            Assert.Equal("Good Value", req.Headers.Get((AsciiString)"Good_Name", null).ToString());
             Assert.Equal("/maybe-something", req.Uri);
             this.EnsureInboundTrafficDiscarded(ch);
         }
@@ -72,7 +72,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.False(dr.IsSuccess);
             Assert.True(dr.IsFailure);
             Assert.Equal("Maybe OK", res.Status.ReasonPhrase);
-            Assert.Equal("Good Value", res.Headers.Get((AsciiString)"Good_Name").ToString());
+            Assert.Equal("Good Value", res.Headers.Get((AsciiString)"Good_Name", null).ToString());
             this.EnsureInboundTrafficDiscarded(ch);
         }
 

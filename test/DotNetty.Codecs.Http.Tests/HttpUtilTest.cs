@@ -30,8 +30,7 @@ namespace DotNetty.Codecs.Http.Tests
             headers.Add(new AsciiString("Foo"), new AsciiString("1"));
             headers.Add(new AsciiString("Foo"), new AsciiString("2"));
 
-            ICharSequence value = headers.Get(new AsciiString("Foo"));
-            Assert.NotNull(value);
+            Assert.True(headers.TryGet(new AsciiString("Foo"), out ICharSequence value));
             Assert.Equal("1", value.ToString());
 
             IList<ICharSequence> values = headers.GetAll(new AsciiString("Foo"));

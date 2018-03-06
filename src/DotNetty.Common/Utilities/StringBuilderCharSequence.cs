@@ -23,6 +23,10 @@ namespace DotNetty.Common.Utilities
             this.Count = 0;
         }
 
+        public StringBuilderCharSequence(StringBuilder builder) : this(builder, 0, builder.Length)
+        {
+        }
+
         public StringBuilderCharSequence(StringBuilder builder, int offset, int count)
         {
             Contract.Requires(builder != null);

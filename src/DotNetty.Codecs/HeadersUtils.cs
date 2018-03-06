@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs
 {
+    using System;
     using System.Collections.Generic;
     using CuteAnt.Pool;
     using DotNetty.Common.Utilities;
@@ -11,7 +12,6 @@ namespace DotNetty.Codecs
     {
         public static List<string> GetAllAsString<TKey, TValue>(IHeaders<TKey, TValue> headers, TKey name)
             where TKey : class
-            where TValue : class
         {
             IList<TValue> allNames = headers.GetAll(name);
             var values = new List<string>();
@@ -27,17 +27,23 @@ namespace DotNetty.Codecs
             return values;
         }
 
-        public static string GetAsString<TKey, TValue>(IHeaders<TKey, TValue> headers, TKey name)
+        public static bool TryGetAsString<TKey, TValue>(IHeaders<TKey, TValue> headers, TKey name, out string value)
             where TKey : class
-            where TValue : class
         {
-            TValue orig = headers.Get(name);
-            return orig?.ToString();
+            if (headers.TryGet(name, out TValue orig))
+            {
+                value = orig.ToString();
+                return true;
+            }
+            else
+            {
+                value = default(string);
+                return false;
+            }
         }
 
         public static string ToString<TKey, TValue>(IEnumerable<HeaderEntry<TKey, TValue>> headers, int size)
             where TKey : class
-            where TValue : class
         {
             string simpleName = StringUtil.SimpleClassName(headers);
             if (size == 0)
@@ -72,5 +78,11 @@ namespace DotNetty.Codecs
 
             return names;
         }
+
+        internal static void ThrowArgumentNullException(string name) => throw new ArgumentNullException(name);
+
+        internal static void ThrowArgumentException(string message) => throw new ArgumentException(message);
+
+        internal static void ThrowInvalidOperationException(string message) => throw new InvalidOperationException(message);
     }
 }

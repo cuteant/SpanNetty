@@ -1091,6 +1091,8 @@ namespace DotNetty.Common.Utilities
 
         public double ParseDouble(int start, int end) => Convert.ToDouble(this.ToString(start, end));
 
+        public static AsciiString Of(string value) => new AsciiString(value);
+
         public static AsciiString Of(ICharSequence charSequence) => charSequence is AsciiString s ? s : new AsciiString(charSequence);
 
         public static AsciiString Cached(string value)

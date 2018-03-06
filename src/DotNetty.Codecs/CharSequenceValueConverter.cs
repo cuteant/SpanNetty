@@ -9,7 +9,8 @@ namespace DotNetty.Codecs
 
     public class CharSequenceValueConverter : IValueConverter<ICharSequence>
     {
-        public static readonly CharSequenceValueConverter Instance = new CharSequenceValueConverter();
+        public static readonly CharSequenceValueConverter Default = new CharSequenceValueConverter();
+        static readonly AsciiString TrueAscii = new AsciiString("true");
 
         public virtual ICharSequence ConvertObject(object value)
         {
@@ -17,21 +18,22 @@ namespace DotNetty.Codecs
             {
                 return sequence;
             }
-
             return new StringCharSequence(value.ToString());
         }
 
+        public ICharSequence ConvertInt(int value) => new StringCharSequence(value.ToString());
+
+        public ICharSequence ConvertLong(long value) => new StringCharSequence(value.ToString());
+
+        public ICharSequence ConvertDouble(double value) => new StringCharSequence(value.ToString(CultureInfo.InvariantCulture));
+
+        public ICharSequence ConvertChar(char value) => new StringCharSequence(value.ToString());
+
         public ICharSequence ConvertBoolean(bool value) => new StringCharSequence(value.ToString());
 
-        public bool ConvertToBoolean(ICharSequence value)
-        {
-            if (value is AsciiString asciiString)
-            {
-                return asciiString.ParseBoolean();
-            }
+        public ICharSequence ConvertFloat(float value) => new StringCharSequence(value.ToString(CultureInfo.InvariantCulture));
 
-            return bool.Parse(value.ToString());
-        }
+        public bool ConvertToBoolean(ICharSequence value) => AsciiString.ContentEqualsIgnoreCase(value, TrueAscii);
 
         public ICharSequence ConvertByte(byte value) => new StringCharSequence(value.ToString());
 
@@ -41,11 +43,8 @@ namespace DotNetty.Codecs
             {
                 return asciiString.ByteAt(0);
             }
-
             return byte.Parse(value.ToString());
         }
-
-        public ICharSequence ConvertChar(char value) => new StringCharSequence(value.ToString());
 
         public char ConvertToChar(ICharSequence value) => value[0];
 
@@ -57,11 +56,8 @@ namespace DotNetty.Codecs
             {
                 return asciiString.ParseShort();
             }
-
             return short.Parse(value.ToString());
         }
-
-        public ICharSequence ConvertInt(int value) => new StringCharSequence(value.ToString());
 
         public int ConvertToInt(ICharSequence value)
         {
@@ -69,11 +65,8 @@ namespace DotNetty.Codecs
             {
                 return asciiString.ParseInt();
             }
-
             return int.Parse(value.ToString());
         }
-
-        public ICharSequence ConvertLong(long value) => new StringCharSequence(value.ToString());
 
         public long ConvertToLong(ICharSequence value)
         {
@@ -81,7 +74,6 @@ namespace DotNetty.Codecs
             {
                 return asciiString.ParseLong();
             }
-
             return long.Parse(value.ToString());
         }
 
@@ -94,12 +86,8 @@ namespace DotNetty.Codecs
             {
                 throw new FormatException($"header can't be parsed into a Date: {value}");
             }
-
             return dateTime.Value.Ticks / TimeSpan.TicksPerMillisecond;
         }
-
-        public ICharSequence ConvertFloat(float value) => 
-            new StringCharSequence(value.ToString(CultureInfo.InvariantCulture));
 
         public float ConvertToFloat(ICharSequence value)
         {
@@ -107,12 +95,9 @@ namespace DotNetty.Codecs
             {
                 return asciiString.ParseFloat();
             }
-
-            return float.Parse(value.ToString());
+            return float.Parse(value.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture);
         }
 
-        public ICharSequence ConvertDouble(double value) =>
-            new StringCharSequence(value.ToString(CultureInfo.InvariantCulture));
 
         public double ConvertToDouble(ICharSequence value)
         {
@@ -120,8 +105,7 @@ namespace DotNetty.Codecs
             {
                 return asciiString.ParseDouble();
             }
-
-            return double.Parse(value.ToString());
+            return double.Parse(value.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture);
         }
     }
 }

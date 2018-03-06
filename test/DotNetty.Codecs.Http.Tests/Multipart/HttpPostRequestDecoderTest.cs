@@ -571,5 +571,37 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             Assert.Throws<ErrorDataDecoderException>(() => new HttpPostRequestDecoder(inMemoryFactory, req));
             req.Release();
         }
+
+        [Fact]
+        public void DecodeMalformedEmptyContentTypeFieldParameters()
+        {
+            const string Boundary = "dLV9Wyq26L_-JQxk6ferf-RT153LhOO";
+            var req = new DefaultFullHttpRequest(
+                HttpVersion.Http11,
+                HttpMethod.Post,
+                "http://localhost");
+
+            req.Headers.Add(HttpHeaderNames.ContentType, "multipart/form-data; boundary=" + Boundary);
+            // Force to use memory-based data.
+            var inMemoryFactory = new DefaultHttpDataFactory(false);
+            const string Data = "asdf";
+            const string Filename = "tmp-0.txt";
+            const string Body = "--" + Boundary + "\r\n" +
+                "Content-Disposition: form-data; name=\"file\"; filename=\"" + Filename + "\"\r\n" +
+                "Content-Type: \r\n" +
+                "\r\n" +
+                Data + "\r\n" +
+                "--" + Boundary + "--\r\n";
+
+            req.Content.WriteBytes(Encoding.UTF8.GetBytes(Body));
+            // Create decoder instance to test.
+            var decoder = new HttpPostRequestDecoder(inMemoryFactory, req);
+            Assert.False(decoder.GetBodyHttpDatas().Count == 0);
+            IInterfaceHttpData part1 = decoder.GetBodyHttpDatas()[0];
+            Assert.IsAssignableFrom<IFileUpload>(part1);
+            var fileUpload = (IFileUpload)part1;
+            Assert.Equal(Filename, fileUpload.FileName);
+            decoder.Destroy();
+        }
     }
 }

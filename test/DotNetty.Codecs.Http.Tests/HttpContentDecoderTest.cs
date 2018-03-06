@@ -57,9 +57,8 @@ namespace DotNetty.Codecs.Http.Tests
 
             var req = channel.ReadInbound<IFullHttpRequest>();
             Assert.NotNull(req);
-            int? length = req.Headers.GetInt(HttpHeaderNames.ContentLength);
-            Assert.True(length.HasValue);
-            Assert.Equal(HelloWorld.Length, length.Value);
+            Assert.True(req.Headers.TryGetInt(HttpHeaderNames.ContentLength, out int length));
+            Assert.Equal(HelloWorld.Length, length);
             Assert.Equal(HelloWorld, req.Content.ToString(Encoding.ASCII));
             req.Release();
 
@@ -86,9 +85,8 @@ namespace DotNetty.Codecs.Http.Tests
 
             var resp = channel.ReadInbound<IFullHttpResponse>();
             Assert.NotNull(resp);
-            int? length = resp.Headers.GetInt(HttpHeaderNames.ContentLength);
-            Assert.True(length.HasValue);
-            Assert.Equal(HelloWorld.Length, length.Value);
+            Assert.True(resp.Headers.TryGetInt(HttpHeaderNames.ContentLength, out int length));
+            Assert.Equal(HelloWorld.Length, length);
             Assert.Equal(HelloWorld, resp.Content.ToString(Encoding.ASCII));
             resp.Release();
 
@@ -293,8 +291,7 @@ namespace DotNetty.Codecs.Http.Tests
             object o = req.Peek();
             Assert.IsAssignableFrom<IHttpRequest>(o);
             var request = (IHttpRequest)o;
-            ICharSequence v = request.Headers.Get(HttpHeaderNames.ContentLength);
-            if (v != null)
+            if (request.Headers.TryGet(HttpHeaderNames.ContentLength, out ICharSequence v))
             {
                 Assert.Equal(HelloWorld.Length, long.Parse(v.ToString()));
             }
@@ -323,8 +320,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var req = channel.ReadInbound<IFullHttpRequest>();
             Assert.NotNull(req);
-            ICharSequence value = req.Headers.Get(HttpHeaderNames.ContentLength);
-            Assert.NotNull(value);
+            Assert.True(req.Headers.TryGet(HttpHeaderNames.ContentLength, out ICharSequence value));
             Assert.Equal(HelloWorld.Length, long.Parse(value.ToString()));
             req.Release();
 
@@ -357,7 +353,7 @@ namespace DotNetty.Codecs.Http.Tests
             var r = (IHttpResponse)o;
 
             Assert.False(r.Headers.Contains(HttpHeaderNames.ContentLength));
-            ICharSequence transferEncoding = r.Headers.Get(HttpHeaderNames.TransferEncoding);
+            Assert.True(r.Headers.TryGet(HttpHeaderNames.TransferEncoding, out ICharSequence transferEncoding));
             Assert.NotNull(transferEncoding);
             Assert.Equal(HttpHeaderValues.Chunked, transferEncoding);
 
@@ -385,8 +381,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var res = channel.ReadInbound<IFullHttpResponse>();
             Assert.NotNull(res);
-            ICharSequence value = res.Headers.Get(HttpHeaderNames.ContentLength);
-            Assert.NotNull(value);
+            Assert.True(res.Headers.TryGet(HttpHeaderNames.ContentLength, out ICharSequence value));
             Assert.Equal(HelloWorld.Length, long.Parse(value.ToString()));
             res.Release();
 

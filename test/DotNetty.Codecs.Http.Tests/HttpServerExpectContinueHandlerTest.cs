@@ -30,7 +30,7 @@ namespace DotNetty.Codecs.Http.Tests
             var response = channel.ReadOutbound<IHttpResponse>();
 
             Assert.Equal(HttpResponseStatus.Continue, response.Status);
-            Assert.Equal((AsciiString)"bar", response.Headers.Get((AsciiString)"foo"));
+            Assert.Equal((AsciiString)"bar", response.Headers.Get((AsciiString)"foo", null));
             ReferenceCountUtil.Release(response);
 
             var processedRequest = channel.ReadInbound<IHttpRequest>();

@@ -163,7 +163,7 @@ namespace DotNetty.Codecs.Http
                         {
                             if (t.IsFaulted)
                             {
-                                if (Logger.DebugEnabled) Logger.Debug("Failed to send a 413 Request Entity Too Large.", t.Exception);
+                                Logger.Debug("Failed to send a 413 Request Entity Too Large.", t.Exception);
                             }
                             ((IChannelHandlerContext)s).CloseAsync();
                         }, 
@@ -176,7 +176,7 @@ namespace DotNetty.Codecs.Http
                         {
                             if (t.IsFaulted)
                             {
-                                if (Logger.DebugEnabled) Logger.Debug("Failed to send a 413 Request Entity Too Large.", t.Exception);
+                                Logger.Debug("Failed to send a 413 Request Entity Too Large.", t.Exception);
                                 ((IChannelHandlerContext)s).CloseAsync();
                             }
                         },
@@ -294,9 +294,8 @@ namespace DotNetty.Codecs.Http
 
             public override IByteBufferHolder Replace(IByteBuffer content)
             {
-                var dup = new DefaultFullHttpRequest(this.ProtocolVersion, this.Method, this.Uri, content);
-                dup.Headers.Set(this.Headers);
-                dup.TrailingHeaders.Set(this.TrailingHeaders);
+                var dup = new DefaultFullHttpRequest(this.ProtocolVersion, this.Method, this.Uri, content, 
+                    this.Headers.Copy(), this.TrailingHeaders.Copy());
                 dup.Result = this.Result;
                 return dup;
             }
@@ -335,9 +334,8 @@ namespace DotNetty.Codecs.Http
 
             public override IByteBufferHolder Replace(IByteBuffer content)
             {
-                var dup = new DefaultFullHttpResponse(this.ProtocolVersion, this.Status, content);
-                dup.Headers.Set(this.Headers);
-                dup.TrailingHeaders.Set(this.TrailingHeaders);
+                var dup = new DefaultFullHttpResponse(this.ProtocolVersion, this.Status, content, 
+                    this.Headers.Copy(), this.TrailingHeaders.Copy());
                 dup.Result = this.Result;
                 return dup;
             }

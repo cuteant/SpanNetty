@@ -91,8 +91,7 @@ namespace DotNetty.Codecs.Http
 
         static bool IsMultipart(IHttpResponse response)
         {
-            ICharSequence contentType = response.Headers.Get(HttpHeaderNames.ContentType);
-            return contentType != null 
+            return response.Headers.TryGet(HttpHeaderNames.ContentType, out ICharSequence contentType)
                 && contentType.RegionMatchesIgnoreCase(0, MultipartPrefix, 0, MultipartPrefix.Count);
         }
     }

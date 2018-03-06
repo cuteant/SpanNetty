@@ -43,9 +43,9 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public static bool IsMultipartRequest(IHttpRequest request)
         {
-            if (request.Headers.Contains(HttpHeaderNames.ContentType))
+            if (request.Headers.TryGet(HttpHeaderNames.ContentType, out ICharSequence contentType))
             {
-                return GetMultipartDataBoundary(request.Headers.Get(HttpHeaderNames.ContentType)) != null;
+                return GetMultipartDataBoundary(contentType) != null;
             }
             else
             {

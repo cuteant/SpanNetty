@@ -13,19 +13,19 @@ namespace DotNetty.Codecs.Http
 
     public abstract class HttpHeaders : IEnumerable<HeaderEntry<AsciiString, ICharSequence>>
     {
-        public abstract ICharSequence Get(AsciiString name);
+        public abstract bool TryGet(AsciiString name, out ICharSequence value);
 
-        public ICharSequence Get(AsciiString name, ICharSequence defaultValue) => this.Get(name) ?? defaultValue;
+        public ICharSequence Get(AsciiString name, ICharSequence defaultValue) => this.TryGet(name, out ICharSequence value) ? value : defaultValue;
 
-        public abstract int? GetInt(AsciiString name);
+        public abstract bool TryGetInt(AsciiString name, out int value);
 
         public abstract int GetInt(AsciiString name, int defaultValue);
 
-        public abstract short? GetShort(AsciiString name);
+        public abstract bool TryGetShort(AsciiString name, out short value);
 
         public abstract short GetShort(AsciiString name, short defaultValue);
 
-        public abstract long? GetTimeMillis(AsciiString name);
+        public abstract bool TryGetTimeMillis(AsciiString name, out long value);
 
         public abstract long GetTimeMillis(AsciiString name, long defaultValue);
 
@@ -221,7 +221,19 @@ namespace DotNetty.Codecs.Http
             return false;
         }
 
-        public string GetAsString(AsciiString name) => this.Get(name).ToString();
+        public bool TryGetAsString(AsciiString name, out string value)
+        {
+            if (this.TryGet(name, out ICharSequence v))
+            {
+                value = v.ToString();
+                return true;
+            }
+            else
+            {
+                value = default(string);
+                return false;
+            }
+        }
 
         public IList<string> GetAllAsString(AsciiString name)
         {
@@ -240,5 +252,16 @@ namespace DotNetty.Codecs.Http
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
         public override string ToString() => HeadersUtils.ToString(this, this.Size);
+
+        /// <summary>
+        /// Deep copy of the headers.
+        /// </summary>
+        /// <returns>A deap copy of this.</returns>
+        public virtual HttpHeaders Copy()
+        {
+            var copy = new DefaultHttpHeaders();
+            copy.Set(this);
+            return copy;
+        }
     }
 }

@@ -7,13 +7,12 @@ namespace DotNetty.Codecs
 
     public interface IHeaders<TKey, TValue> : IEnumerable<HeaderEntry<TKey, TValue>> 
         where TKey : class
-        where TValue : class
     {
-        TValue Get(TKey name);
+        bool TryGet(TKey name, out TValue value);
 
         TValue Get(TKey name, TValue defaultValue);
 
-        TValue GetAndRemove(TKey name);
+        bool TryGetAndRemove(TKey name, out TValue value);
 
         TValue GetAndRemove(TKey name, TValue defaultValue);
 
@@ -21,75 +20,75 @@ namespace DotNetty.Codecs
 
         IList<TValue> GetAllAndRemove(TKey name);
 
-        bool? GetBoolean(TKey name);
+        bool TryGetBoolean(TKey name, out bool value);
 
         bool GetBoolean(TKey name, bool defaultValue);
 
-        byte? GetByte(TKey name);
+        bool TryGetByte(TKey name, out byte value);
 
         byte GetByte(TKey name, byte defaultValue);
 
-        char? GetChar(TKey name);
+        bool TryGetChar(TKey name, out char value);
 
         char GetChar(TKey name, char defaultValue);
 
-        short? GetShort(TKey name);
+        bool TryGetShort(TKey name, out short value);
 
         short GetShort(TKey name, short defaultValue);
 
-        int? GetInt(TKey name);
+        bool TryGetInt(TKey name, out int value);
 
         int GetInt(TKey name, int defaultValue);
 
-        long? GetLong(TKey name);
+        bool TryGetLong(TKey name, out long value);
 
         long GetLong(TKey name, long defaultValue);
 
-        float? GetFloat(TKey name);
+        bool TryGetFloat(TKey name, out float value);
 
         float GetFloat(TKey name, float defaultValue);
 
-        double? GetDouble(TKey name);
+        bool TryGetDouble(TKey name, out double value);
 
         double GetDouble(TKey name, double defaultValue);
 
-        long? GetTimeMillis(TKey name);
+        bool TryGetTimeMillis(TKey name, out long value);
 
         long GetTimeMillis(TKey name, long defaultValue);
 
-        bool? GetBooleanAndRemove(TKey name);
+        bool TryGetBooleanAndRemove(TKey name, out bool value);
 
         bool GetBooleanAndRemove(TKey name, bool defaultValue);
 
-        byte? GetByteAndRemove(TKey name);
+        bool TryGetByteAndRemove(TKey name, out byte value);
 
         byte GetByteAndRemove(TKey name, byte defaultValue);
 
-        char? GetCharAndRemove(TKey name);
+        bool TryGetCharAndRemove(TKey name, out char value);
 
         char GetCharAndRemove(TKey name, char defaultValue);
 
-        short? GetShortAndRemove(TKey name);
+        bool TryGetShortAndRemove(TKey name, out short value);
 
         short GetShortAndRemove(TKey name, short defaultValue);
 
-        int? GetIntAndRemove(TKey name);
+        bool TryGetIntAndRemove(TKey name, out int value);
 
         int GetIntAndRemove(TKey name, int defaultValue);
 
-        long? GetLongAndRemove(TKey name);
+        bool TryGetLongAndRemove(TKey name, out long value);
 
         long GetLongAndRemove(TKey name, long defaultValue);
 
-        float? GetFloatAndRemove(TKey name);
+        bool TryGetFloatAndRemove(TKey name, out float value);
 
         float GetFloatAndRemove(TKey name, float defaultValue);
 
-        double? GetDoubleAndRemove(TKey name);
+        bool TryGetDoubleAndRemove(TKey name, out double value);
 
         double GetDoubleAndRemove(TKey name, double defaultValue);
 
-        long? GetTimeMillisAndRemove(TKey name);
+        bool TryGetTimeMillisAndRemove(TKey name, out long value);
 
         long GetTimeMillisAndRemove(TKey name, long defaultValue);
 

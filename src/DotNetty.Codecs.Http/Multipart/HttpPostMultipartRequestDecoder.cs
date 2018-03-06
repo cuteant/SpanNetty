@@ -82,7 +82,7 @@ namespace DotNetty.Codecs.Http.Multipart
             this.charset = charset;
 
             // Fill default values
-            this.SetMultipart(this.request.Headers.Get(HttpHeaderNames.ContentType));
+            this.SetMultipart(this.request.Headers.Get(HttpHeaderNames.ContentType, null));
             if (request is IHttpContent content)
             {
                 // Offer automatically if the given request is als type of HttpContent
@@ -1495,7 +1495,7 @@ namespace DotNetty.Codecs.Http.Multipart
             int valueStart = HttpPostBodyUtil.FindNonWhitespace(sb, colonEnd);
             int valueEnd = HttpPostBodyUtil.FindEndOfString(sb);
             headers.Add(sb.SubSequence(nameStart, nameEnd));
-            ICharSequence svalue = sb.SubSequence(valueStart, valueEnd);
+            ICharSequence svalue = (valueStart >= valueEnd) ? AsciiString.Empty : sb.SubSequence(valueStart, valueEnd);
             ICharSequence[] values;
             if (svalue.IndexOf(';') >= 0)
             {

@@ -33,8 +33,7 @@ namespace DotNetty.Codecs.Http
 
         protected override void Decode(IChannelHandlerContext ctx, IHttpRequest msg, List<object> output)
         {
-            ICharSequence acceptedEncoding = msg.Headers.Get(HttpHeaderNames.AcceptEncoding)
-                ?? HttpContentDecoder.Identity;
+            ICharSequence acceptedEncoding = msg.Headers.Get(HttpHeaderNames.AcceptEncoding, HttpContentDecoder.Identity);
 
             HttpMethod meth = msg.Method;
             if (ReferenceEquals(meth, HttpMethod.Head))

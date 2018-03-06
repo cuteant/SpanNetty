@@ -150,17 +150,17 @@ namespace DotNetty.Codecs.Http
             return this;
         }
 
-        public override ICharSequence Get(AsciiString name) => this.headers.Get(name);
+        public override bool TryGet(AsciiString name, out ICharSequence value) => this.headers.TryGet(name, out value);
 
-        public override int? GetInt(AsciiString name) => this.headers.GetInt(name);
+        public override bool TryGetInt(AsciiString name, out int value) => this.headers.TryGetInt(name, out value);
 
         public override int GetInt(AsciiString name, int defaultValue) => this.headers.GetInt(name, defaultValue);
 
-        public override short? GetShort(AsciiString name) => this.headers.GetShort(name);
+        public override bool TryGetShort(AsciiString name, out short value) => this.headers.TryGetShort(name, out value);
 
         public override short GetShort(AsciiString name, short defaultValue) => this.headers.GetShort(name, defaultValue);
 
-        public override long? GetTimeMillis(AsciiString name) => this.headers.GetTimeMillis(name);
+        public override bool TryGetTimeMillis(AsciiString name, out long value) => this.headers.TryGetTimeMillis(name, out value);
 
         public override long GetTimeMillis(AsciiString name, long defaultValue) => this.headers.GetTimeMillis(name, defaultValue);
 
@@ -196,16 +196,12 @@ namespace DotNetty.Codecs.Http
 
         public override ISet<AsciiString> Names() => this.headers.Names();
 
-        public override bool Equals(object obj)
-        {
-            if (!(obj is DefaultHttpHeaders other))
-            {
-                return false;
-            }
-            return this.headers.Equals(other.headers, AsciiString.CaseSensitiveHasher);
-        }
+        public override bool Equals(object obj) => obj is DefaultHttpHeaders other 
+            && this.headers.Equals(other.headers, AsciiString.CaseSensitiveHasher);
 
         public override int GetHashCode() => this.headers.HashCode(AsciiString.CaseSensitiveHasher);
+
+        public override HttpHeaders Copy() => new DefaultHttpHeaders(this.headers.Copy());
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void ValidateHeaderNameElement(byte value)

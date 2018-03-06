@@ -174,8 +174,8 @@ namespace DotNetty.Codecs.Http.Tests
                 + Crlf + Crlf;
             Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes(Request))));
             var req = channel.ReadInbound<IHttpRequest>();
-            Assert.Equal("part1 newLinePart2", req.Headers.Get(new AsciiString("MyTestHeader")).ToString());
-            Assert.Equal("part21 newLinePart22", req.Headers.Get(new AsciiString("MyTestHeader2")).ToString());
+            Assert.Equal("part1 newLinePart2", req.Headers.Get(new AsciiString("MyTestHeader"), null).ToString());
+            Assert.Equal("part21 newLinePart22", req.Headers.Get(new AsciiString("MyTestHeader2"), null).ToString());
 
             var c = channel.ReadInbound<ILastHttpContent>();
             c.Release();
@@ -197,7 +197,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             channel.WriteInbound(Unpooled.WrappedBuffer(data));
             var req = channel.ReadInbound<IHttpRequest>();
-            Assert.Equal("", req.Headers.Get((AsciiString)"EmptyHeader").ToString());
+            Assert.Equal("", req.Headers.Get((AsciiString)"EmptyHeader", null).ToString());
         }
 
         [Fact]
@@ -289,7 +289,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(HttpVersion.Http11, req.ProtocolVersion);
             Assert.Equal("/some/path", req.Uri);
             Assert.Equal(1, req.Headers.Size);
-            Assert.True(AsciiString.ContentEqualsIgnoreCase((StringCharSequence)"localhost1", req.Headers.Get(HttpHeaderNames.Host)));
+            Assert.True(AsciiString.ContentEqualsIgnoreCase((StringCharSequence)"localhost1", req.Headers.Get(HttpHeaderNames.Host, null)));
             var cnt = channel.ReadInbound<ILastHttpContent>();
             cnt.Release();
 
@@ -299,8 +299,8 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(HttpVersion.Http10, req.ProtocolVersion);
             Assert.Equal("/some/other/path", req.Uri);
             Assert.Equal(2, req.Headers.Size);
-            Assert.True(AsciiString.ContentEqualsIgnoreCase((StringCharSequence)"localhost2", req.Headers.Get(HttpHeaderNames.Host)));
-            Assert.True(AsciiString.ContentEqualsIgnoreCase((StringCharSequence)"0", req.Headers.Get(HttpHeaderNames.ContentLength)));
+            Assert.True(AsciiString.ContentEqualsIgnoreCase((StringCharSequence)"localhost2", req.Headers.Get(HttpHeaderNames.Host, null)));
+            Assert.True(AsciiString.ContentEqualsIgnoreCase((StringCharSequence)"0", req.Headers.Get(HttpHeaderNames.ContentLength, null)));
             cnt = channel.ReadInbound<ILastHttpContent>();
             cnt.Release();
 

@@ -11,6 +11,11 @@ namespace DotNetty.Codecs.Http
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
 
+    /**
+     * The response code and its description of HTTP or its derived protocols, such as
+     * <a href="http://en.wikipedia.org/wiki/Real_Time_Streaming_Protocol">RTSP</a> and
+     * <a href="http://en.wikipedia.org/wiki/Internet_Content_Adaptation_Protocol">ICAP</a>.
+     */
     public class HttpResponseStatus : IComparable<HttpResponseStatus>
     {
         /**
@@ -146,8 +151,7 @@ namespace DotNetty.Codecs.Http
         /**
          * 407 Proxy Authentication Required
          */
-        public static readonly HttpResponseStatus ProxyAuthenticationRequired =
-            NewStatus(407, "Proxy Authentication Required");
+        public static readonly HttpResponseStatus ProxyAuthenticationRequired = NewStatus(407, "Proxy Authentication Required");
 
         /**
          * 408 Request Timeout
@@ -244,8 +248,7 @@ namespace DotNetty.Codecs.Http
         /**
          * 431 Request Header Fields Too Large (RFC6585)
          */
-        public static readonly HttpResponseStatus RequestHeaderFieldsTooLarge =
-            NewStatus(431, "Request Header Fields Too Large");
+        public static readonly HttpResponseStatus RequestHeaderFieldsTooLarge = NewStatus(431, "Request Header Fields Too Large");
 
         /**
          * 500 Internal Server Error
@@ -297,10 +300,14 @@ namespace DotNetty.Codecs.Http
          */
         public static readonly HttpResponseStatus NetworkAuthenticationRequired = NewStatus(511, "Network Authentication Required");
 
+        static HttpResponseStatus NewStatus(int statusCode, string reasonPhrase) => new HttpResponseStatus(statusCode, new AsciiString(reasonPhrase), true);
+
         // Returns the {@link HttpResponseStatus} represented by the specified code.
         // If the specified code is a standard HTTP getStatus code, a cached instance
         // will be returned.  Otherwise, a new instance will be returned.
-        public static HttpResponseStatus ValueOf(int code)
+        public static HttpResponseStatus ValueOf(int code) => ValueOf0(code) ?? new HttpResponseStatus(code);
+
+        static HttpResponseStatus ValueOf0(int code)
         {
             switch (code)
             {
@@ -417,96 +424,31 @@ namespace DotNetty.Codecs.Http
                 case 511:
                     return NetworkAuthenticationRequired;
             }
-
-            return new HttpResponseStatus(code);
+            return null;
         }
 
-        static HttpResponseStatus NewStatus(int statusCode, string reasonPhrase) => new HttpResponseStatus(statusCode, new AsciiString(reasonPhrase), true);
-
-        public static HttpResponseStatus ParseLine(ICharSequence line)
+        public static HttpResponseStatus ValueOf(int code, AsciiString reasonPhrase)
         {
-            string status = line.ToString();
+            HttpResponseStatus responseStatus = ValueOf0(code);
+            return responseStatus != null && responseStatus.ReasonPhrase.ContentEquals(reasonPhrase) 
+                ? responseStatus 
+                : new HttpResponseStatus(code, reasonPhrase);
+        }
+
+        public static HttpResponseStatus ParseLine(ICharSequence line) => line is AsciiString asciiString ? ParseLine(asciiString) : ParseLine(line.ToString());
+
+        public static HttpResponseStatus ParseLine(string line)
+        {
             try
             {
-                int space = status.IndexOf(' ');
-                if (space == -1)
-                {
-                    return ValueOf(int.Parse(status));
-                }
-                else
-                {
-                    int code = int.Parse(status.Substring(0, space));
-                    var reasonPhrase = new AsciiString(line.SubSequence(space + 1));
-                    HttpResponseStatus responseStatus = ValueOf(code);
-                    return AsciiString.ContentEquals(responseStatus.ReasonPhrase, reasonPhrase)
-                        ? responseStatus  : new HttpResponseStatus(code, reasonPhrase);
-                }
+                int space = line.IndexOf(' ');
+                return space == -1 
+                    ? ValueOf(int.Parse(line)) 
+                    : ValueOf(int.Parse(line.Substring(0, space)), new AsciiString(line.Substring(space + 1)));
             }
             catch (Exception e)
             {
-                throw new ArgumentException($"malformed status line: {status} ", e);
-            }
-        }
-
-        sealed class HttpStatusLineProcessor : IByteProcessor
-        {
-            const byte AsciiSpace = (byte)' ';
-            readonly AsciiString asciiString;
-            int i;
-
-            // 0 = New or havn't seen {@link #ASCII_SPACE}.
-            // 1 = Last byte was {@link #ASCII_SPACE}.
-            // 2 = Terminal State. Processed the byte after {@link #ASCII_SPACE}, and parsed the status line.
-            // 3 = Terminal State. There was no byte after {@link #ASCII_SPACE} but status has been parsed with what we saw.
-            int state;
-            HttpResponseStatus status;
-
-            public HttpStatusLineProcessor(AsciiString asciiString)
-            {
-                this.asciiString = asciiString;
-            }
-
-            public bool Process(byte value)
-            {
-                switch (this.state)
-                {
-                    case 0:
-                        if (value == AsciiSpace)
-                        {
-                            this.state = 1;
-                        }
-                        break;
-                    case 1:
-                        this.ParseStatus(this.i);
-                        this.state = 2;
-                        return false;
-                }
-                ++this.i;
-                return true;
-            }
-
-            void ParseStatus(int codeEnd)
-            {
-                int code = this.asciiString.ParseInt(0, codeEnd);
-                this.status = ValueOf(code);
-                if (codeEnd < this.asciiString.Count)
-                {
-                    var actualReason = (AsciiString)this.asciiString.SubSequence(codeEnd + 1, this.asciiString.Count);
-                    if (!AsciiString.ContentEquals(this.status.ReasonPhrase, actualReason))
-                    {
-                        this.status = new HttpResponseStatus(code, actualReason);
-                    }
-                }
-            }
-
-            public HttpResponseStatus Status()
-            {
-                if (this.state <= 1)
-                {
-                    this.ParseStatus(this.asciiString.Count);
-                    this.state = 3;
-                }
-                return this.status;
+                throw new ArgumentException($"malformed status line: {line}", e);
             }
         }
 
@@ -514,20 +456,17 @@ namespace DotNetty.Codecs.Http
         {
             try
             {
-                var processor = new HttpStatusLineProcessor(line);
-                line.ForEachByte(processor);
-                HttpResponseStatus status = processor.Status();
-                if (status == null)
-                {
-                    throw new ArgumentException("unable to get status after parsing input");
-                }
-                return status;
+                int space = line.ForEachByte(ByteProcessor.FindAsciiSpace);
+                return space == -1 
+                    ? ValueOf(line.ParseInt()) 
+                    : ValueOf(line.ParseInt(0, space), (AsciiString)line.SubSequence(space + 1));
             }
             catch (Exception e)
             {
                 throw new ArgumentException($"malformed status line: {line}", e);
             }
         }
+
 
         readonly int code;
         readonly AsciiString codeAsText;

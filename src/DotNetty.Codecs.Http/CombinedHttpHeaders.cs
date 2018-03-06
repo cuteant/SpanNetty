@@ -155,8 +155,7 @@ namespace DotNetty.Codecs.Http
 
             CombinedHttpHeadersImpl AddEscapedValue(AsciiString name, ICharSequence escapedValue)
             {
-                ICharSequence currentValue = this.Get(name);
-                if (currentValue == null)
+                if (!this.TryGet(name, out ICharSequence currentValue))
                 {
                     base.Add(name, escapedValue);
                 }

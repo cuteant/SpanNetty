@@ -67,7 +67,7 @@ namespace DotNetty.Microbench.Headers
         {
             foreach (AsciiString name in this.httpNames)
             {
-                this.httpHeaders.Get(name);
+                this.httpHeaders.TryGet(name, out _);
             }
             return this.httpHeaders;
         }

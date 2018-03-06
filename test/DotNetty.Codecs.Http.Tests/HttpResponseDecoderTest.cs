@@ -251,7 +251,7 @@ namespace DotNetty.Codecs.Http.Tests
             var res = ch.ReadInbound<IHttpResponse>();
             Assert.Same(HttpVersion.Http11, res.ProtocolVersion);
             Assert.Equal(HttpResponseStatus.OK, res.Status);
-            Assert.Equal("chunked", res.Headers.Get(HttpHeaderNames.TransferEncoding).ToString());
+            Assert.Equal("chunked", res.Headers.Get(HttpHeaderNames.TransferEncoding, null).ToString());
             res = ch.ReadInbound<IHttpResponse>();
             Assert.Null(res);
 
@@ -275,7 +275,7 @@ namespace DotNetty.Codecs.Http.Tests
             var res = ch.ReadInbound<IHttpResponse>();
             Assert.Same(HttpVersion.Http11, res.ProtocolVersion);
             Assert.Equal(HttpResponseStatus.OK, res.Status);
-            Assert.Equal("chunked", res.Headers.Get(HttpHeaderNames.TransferEncoding).ToString());
+            Assert.Equal("chunked", res.Headers.Get(HttpHeaderNames.TransferEncoding, null).ToString());
 
             // Read the partial content.
             var content = ch.ReadInbound<IHttpContent>();
@@ -353,7 +353,7 @@ namespace DotNetty.Codecs.Http.Tests
             var res = ch.ReadInbound<IHttpResponse>();
             Assert.Same(HttpVersion.Http11, res.ProtocolVersion);
             Assert.Equal(HttpResponseStatus.OK, res.Status);
-            Assert.Equal("h2=h2v2; Expires=Wed, 09-Jun-2021 10:18:14 GMT", res.Headers.Get((AsciiString)"X-Header").ToString());
+            Assert.Equal("h2=h2v2; Expires=Wed, 09-Jun-2021 10:18:14 GMT", res.Headers.Get((AsciiString)"X-Header", null).ToString());
             var content = ch.ReadInbound<IHttpContent>();
             Assert.Null(content);
 

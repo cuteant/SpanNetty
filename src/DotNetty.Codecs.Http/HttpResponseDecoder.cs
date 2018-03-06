@@ -31,7 +31,7 @@ namespace DotNetty.Codecs.Http
         protected sealed override IHttpMessage CreateMessage(AsciiString[] initialLine) =>
              new DefaultHttpResponse(
                 HttpVersion.ValueOf(initialLine[0]),
-                new HttpResponseStatus(initialLine[1].ParseInt() , initialLine[2]), this.ValidateHeaders);
+                HttpResponseStatus.ValueOf(initialLine[1].ParseInt() , initialLine[2]), this.ValidateHeaders);
 
         protected override IHttpMessage CreateInvalidMessage() => new DefaultFullHttpResponse(HttpVersion.Http10, UnknownStatus, this.ValidateHeaders);
 

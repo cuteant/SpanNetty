@@ -171,7 +171,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var lastChunk = ch.ReadOutbound<ILastHttpContent>();
             Assert.NotNull(lastChunk);
-            Assert.Equal("Netty", lastChunk.TrailingHeaders.Get((AsciiString)"X-Test").ToString());
+            Assert.Equal("Netty", lastChunk.TrailingHeaders.Get((AsciiString)"X-Test", null).ToString());
             lastChunk.Release();
 
             var last = ch.ReadOutbound<object>();
@@ -195,8 +195,8 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(res);
             Assert.False(res is IHttpContent, $"{res.GetType()}");
 
-            Assert.Null(res.Headers.Get(HttpHeaderNames.TransferEncoding));
-            Assert.Equal("gzip", res.Headers.Get(HttpHeaderNames.ContentEncoding).ToString());
+            Assert.False(res.Headers.TryGet(HttpHeaderNames.TransferEncoding, out _));
+            Assert.Equal("gzip", res.Headers.Get(HttpHeaderNames.ContentEncoding, null).ToString());
 
             long contentLengthHeaderValue = HttpUtil.GetContentLength(res);
             long observedLength = 0;
@@ -283,10 +283,10 @@ namespace DotNetty.Codecs.Http.Tests
             res = ch.ReadOutbound<IFullHttpResponse>();
             Assert.NotNull(res);
 
-            Assert.Null(res.Headers.Get(HttpHeaderNames.TransferEncoding));
+            Assert.False(res.Headers.TryGet(HttpHeaderNames.TransferEncoding, out _));
 
             // Content encoding shouldn't be modified.
-            Assert.Null(res.Headers.Get(HttpHeaderNames.ContentEncoding));
+            Assert.False(res.Headers.TryGet(HttpHeaderNames.ContentEncoding, out _));
             Assert.Equal(0, res.Content.ReadableBytes);
             Assert.Equal("", res.Content.ToString(Encoding.ASCII));
             res.Release();
@@ -306,13 +306,13 @@ namespace DotNetty.Codecs.Http.Tests
             ch.WriteOutbound(res);
 
             res = ch.ReadOutbound<IFullHttpResponse>();
-            Assert.Null(res.Headers.Get(HttpHeaderNames.TransferEncoding));
+            Assert.False(res.Headers.TryGet(HttpHeaderNames.TransferEncoding, out _));
 
             // Content encoding shouldn't be modified.
-            Assert.Null(res.Headers.Get(HttpHeaderNames.ContentEncoding));
+            Assert.False(res.Headers.TryGet(HttpHeaderNames.ContentEncoding, out _));
             Assert.Equal(0, res.Content.ReadableBytes);
             Assert.Equal("", res.Content.ToString(Encoding.ASCII));
-            Assert.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test"));
+            Assert.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test", null));
 
             var last = ch.ReadOutbound<object>();
             Assert.Null(last);
@@ -341,13 +341,13 @@ namespace DotNetty.Codecs.Http.Tests
 
             res = ch.ReadOutbound<IFullHttpResponse>();
             Assert.NotNull(res);
-            Assert.Null(res.Headers.Get(HttpHeaderNames.TransferEncoding));
+            Assert.False(res.Headers.TryGet(HttpHeaderNames.TransferEncoding, out _));
 
             // Content encoding shouldn't be modified.
-            Assert.Null(res.Headers.Get(HttpHeaderNames.ContentEncoding));
+            Assert.False(res.Headers.TryGet(HttpHeaderNames.ContentEncoding, out _));
             Assert.Equal(0, res.Content.ReadableBytes);
             Assert.Equal("", res.Content.ToString(Encoding.ASCII));
-            Assert.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test"));
+            Assert.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test", null));
 
             var last = ch.ReadOutbound<object>();
             Assert.Null(last);
@@ -410,8 +410,8 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.True(ch.WriteOutbound(res));
 
             var response = ch.ReadOutbound<IFullHttpResponse>();
-            Assert.Equal(len.ToString(), response.Headers.Get(HttpHeaderNames.ContentLength).ToString());
-            Assert.Equal(HttpHeaderValues.Identity.ToString(), response.Headers.Get(HttpHeaderNames.ContentEncoding).ToString());
+            Assert.Equal(len.ToString(), response.Headers.Get(HttpHeaderNames.ContentLength, null).ToString());
+            Assert.Equal(HttpHeaderValues.Identity.ToString(), response.Headers.Get(HttpHeaderNames.ContentEncoding, null).ToString());
             Assert.Equal("Hello, World", response.Content.ToString(Encoding.ASCII));
             response.Release();
 
@@ -433,9 +433,9 @@ namespace DotNetty.Codecs.Http.Tests
             var content = res as IHttpContent;
             Assert.Null(content);
 
-            Assert.Equal("chunked", res.Headers.Get(HttpHeaderNames.TransferEncoding));
-            Assert.Null(res.Headers.Get(HttpHeaderNames.ContentLength));
-            Assert.Equal("gzip", res.Headers.Get(HttpHeaderNames.ContentEncoding));
+            Assert.Equal("chunked", res.Headers.Get(HttpHeaderNames.TransferEncoding, null));
+            Assert.False(res.Headers.TryGet(HttpHeaderNames.ContentLength, out _));
+            Assert.Equal("gzip", res.Headers.Get(HttpHeaderNames.ContentEncoding, null));
         }
     }
 }

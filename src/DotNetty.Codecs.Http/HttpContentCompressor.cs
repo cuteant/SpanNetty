@@ -44,8 +44,7 @@ namespace DotNetty.Codecs.Http
 
         protected override Result BeginEncode(IHttpResponse headers, ICharSequence acceptEncoding)
         {
-            ICharSequence contentEncoding = headers.Headers.Get(HttpHeaderNames.ContentEncoding);
-            if (contentEncoding != null)
+            if (headers.Headers.Contains(HttpHeaderNames.ContentEncoding))
             {
                 // Content-Encoding was set, either as something specific or as the IDENTITY encoding
                 // Therefore, we should NOT encode here

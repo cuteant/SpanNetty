@@ -453,8 +453,8 @@ namespace DotNetty.Codecs.Http
             {
                 return false;
             }
-            ICharSequence newProtocol = msg.Headers.Get(HttpHeaderNames.Upgrade);
-            return newProtocol == null 
+
+            return !msg.Headers.TryGet(HttpHeaderNames.Upgrade, out ICharSequence newProtocol)
                 || !AsciiString.Contains(newProtocol, HttpVersion.Http10String) 
                    && !AsciiString.Contains(newProtocol, HttpVersion.Http11String);
         }

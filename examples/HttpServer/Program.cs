@@ -6,6 +6,8 @@ namespace HttpServer
     using System;
     using System.IO;
     using System.Net;
+    using System.Runtime;
+    using System.Runtime.InteropServices;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using DotNetty.Codecs.Http;
@@ -26,21 +28,26 @@ namespace HttpServer
 
         static async Task RunServerAsync()
         {
+
             bool useLibuv = ServerSettings.UseLibuv;
             Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
 
-            IEventLoopGroup bossGroup;
-            IEventLoopGroup workerGroup;
+            GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+            Console.WriteLine($"Server garbage collection: {GCSettings.IsServerGC}");
+            Console.WriteLine($"Current latency mode for garbage collection: {GCSettings.LatencyMode}");
+
+            IEventLoopGroup group;
+            IEventLoopGroup workGroup;
             if (useLibuv)
             {
                 var dispatcher = new DispatcherEventLoopGroup();
-                bossGroup = dispatcher;
-                workerGroup = new WorkerEventLoopGroup(dispatcher);
+                group = dispatcher;
+                workGroup = new WorkerEventLoopGroup(dispatcher);
             }
             else
             {
-                bossGroup = new MultithreadEventLoopGroup(1);
-                workerGroup = new MultithreadEventLoopGroup();
+                group = new MultithreadEventLoopGroup(1);
+                workGroup = new MultithreadEventLoopGroup();
             }
 
             X509Certificate2 tlsCertificate = null;
@@ -51,11 +58,18 @@ namespace HttpServer
             try
             {
                 var bootstrap = new ServerBootstrap();
-                bootstrap.Group(bossGroup, workerGroup);
+                bootstrap.Group(group, workGroup);
 
                 if (useLibuv)
                 {
                     bootstrap.Channel<TcpServerChannel>();
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) 
+                        || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                    {
+                        bootstrap
+                            .Option(ChannelOption.SoReuseport, true)
+                            .ChildOption(ChannelOption.SoReuseaddr, true);
+                    }
                 }
                 else
                 {
@@ -64,21 +78,17 @@ namespace HttpServer
 
                 bootstrap
                     .Option(ChannelOption.SoBacklog, 8192)
-                    .Option(ChannelOption.SoReuseaddr, true)
-                    .ChildHandler(
-                        new ActionChannelInitializer<ISocketChannel>(channel =>
-                            {
-                                IChannelPipeline pipeline = channel.Pipeline;
-                                if (tlsCertificate != null)
-                                {
-                                    pipeline.AddLast(TlsHandler.Server(tlsCertificate));
-                                }
-
-                                pipeline.AddLast("encoder", new HttpResponseEncoder());
-                                pipeline.AddLast("decoder", new HttpRequestDecoder(4096, 8192, 8192, false));
-                                pipeline.AddLast("handler", new HelloServerHandler());
-                            }))
-                    .ChildOption(ChannelOption.SoReuseaddr, true);
+                    .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
+                    {
+                        IChannelPipeline pipeline = channel.Pipeline;
+                        if (tlsCertificate != null)
+                        {
+                            pipeline.AddLast(TlsHandler.Server(tlsCertificate));
+                        }
+                        pipeline.AddLast("encoder", new HttpResponseEncoder());
+                        pipeline.AddLast("decoder", new HttpRequestDecoder(4096, 8192, 8192, false));
+                        pipeline.AddLast("handler", new HelloServerHandler());
+                    }));
 
                 IChannel bootstrapChannel = await bootstrap.BindAsync(IPAddress.IPv6Any, ServerSettings.Port);
 
@@ -89,9 +99,7 @@ namespace HttpServer
             }
             finally
             {
-                await Task.WhenAll(
-                    bossGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
-                    workerGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)));
+                group.ShutdownGracefullyAsync().Wait();
             }
         }
 

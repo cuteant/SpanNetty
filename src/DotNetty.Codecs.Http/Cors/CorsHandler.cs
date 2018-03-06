@@ -72,8 +72,7 @@ namespace DotNetty.Codecs.Http.Cors
 
         bool SetOrigin(IHttpResponse response)
         {
-            ICharSequence origin = this.request.Headers.Get(HttpHeaderNames.Origin);
-            if (origin == null)
+            if (!this.request.Headers.TryGet(HttpHeaderNames.Origin, out ICharSequence origin))
             {
                 return false;
             }
@@ -101,7 +100,7 @@ namespace DotNetty.Codecs.Http.Cors
                 SetVaryHeader(response);
                 return true;
             }
-            if (Logger.DebugEnabled) Logger.Debug("Request origin [{}]] was not among the configured origins [{}]", origin, this.config.Origins);
+            Logger.Debug("Request origin [{}]] was not among the configured origins [{}]", origin, this.config.Origins);
 
             return false;
         }
@@ -113,8 +112,7 @@ namespace DotNetty.Codecs.Http.Cors
                 return true;
             }
 
-            ICharSequence origin = this.request.Headers.Get(HttpHeaderNames.Origin);
-            if (origin == null)
+            if (!this.request.Headers.TryGet(HttpHeaderNames.Origin, out ICharSequence origin))
             {
                 // Not a CORS request so we cannot validate it. It may be a non CORS request.
                 return true;
@@ -127,7 +125,7 @@ namespace DotNetty.Codecs.Http.Cors
             return this.config.Origins.Contains(origin);
         }
 
-        void EchoRequestOrigin(IHttpResponse response) => SetOrigin(response, this.request.Headers.Get(HttpHeaderNames.Origin));
+        void EchoRequestOrigin(IHttpResponse response) => SetOrigin(response, this.request.Headers.Get(HttpHeaderNames.Origin, null));
 
         static void SetVaryHeader(IHttpResponse response) => response.Headers.Set(HttpHeaderNames.Vary, HttpHeaderNames.Origin);
 
@@ -140,7 +138,7 @@ namespace DotNetty.Codecs.Http.Cors
         void SetAllowCredentials(IHttpResponse response)
         {
             if (this.config.IsCredentialsAllowed 
-                && !AsciiString.ContentEquals(response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin), AnyOrigin))
+                && !AsciiString.ContentEquals(response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null), AnyOrigin))
             {
                 response.Headers.Set(HttpHeaderNames.AccessControlAllowCredentials, new AsciiString("true"));
             }

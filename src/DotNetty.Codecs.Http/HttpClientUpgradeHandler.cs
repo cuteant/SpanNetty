@@ -142,8 +142,7 @@ namespace DotNetty.Codecs.Http
                     response = (IFullHttpResponse)output[0];
                 }
 
-                ICharSequence upgradeHeader = response.Headers.Get(HttpHeaderNames.Upgrade);
-                if (upgradeHeader != null && !AsciiString.ContentEqualsIgnoreCase(this.upgradeCodec.Protocol, upgradeHeader))
+                if (response.Headers.TryGet(HttpHeaderNames.Upgrade, out ICharSequence upgradeHeader) && !AsciiString.ContentEqualsIgnoreCase(this.upgradeCodec.Protocol, upgradeHeader))
                 {
                     throw new  InvalidOperationException($"Switching Protocols response with unexpected UPGRADE protocol: {upgradeHeader}");
                 }

@@ -20,17 +20,33 @@ namespace DotNetty.Codecs.Http
         {
         }
 
-        public override ICharSequence Get(AsciiString name) => null;
+        public override bool TryGet(AsciiString name, out ICharSequence value)
+        {
+            value = default(ICharSequence);
+            return false;
+        }
 
-        public override int? GetInt(AsciiString name) => null;
+        public override bool TryGetInt(AsciiString name, out int value)
+        {
+            value = default(int);
+            return false;
+        }
 
         public override int GetInt(AsciiString name, int defaultValue) => defaultValue;
 
-        public override short? GetShort(AsciiString name) => null;
+        public override bool TryGetShort(AsciiString name, out short value)
+        {
+            value = default(short);
+            return false;
+        }
 
         public override short GetShort(AsciiString name, short defaultValue) => defaultValue;
 
-        public override long? GetTimeMillis(AsciiString name) => null;
+        public override bool TryGetTimeMillis(AsciiString name, out long value)
+        {
+            value = default(long);
+            return false;
+        }
 
         public override long GetTimeMillis(AsciiString name, long defaultValue) => defaultValue;
 

@@ -24,8 +24,8 @@ namespace DotNetty.Codecs.Http.Tests.Cors
         public void SimpleRequestWithAnyOrigin()
         {
             IHttpResponse response = SimpleRequest(CorsConfigBuilder.ForAnyOrigin().Build(), "http://localhost:7777");
-            Assert.Equal("*", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin).ToString());
-            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders));
+            Assert.Equal("*", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null).ToString());
+            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders, null));
         }
 
         [Fact]
@@ -35,9 +35,9 @@ namespace DotNetty.Codecs.Http.Tests.Cors
                 .AllowNullOrigin()
                 .AllowCredentials()
                 .Build(), "null");
-            Assert.Equal("null", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin).ToString());
-            Assert.Equal("true", response.Headers.Get(HttpHeaderNames.AccessControlAllowCredentials).ToString());
-            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders));
+            Assert.Equal("null", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null).ToString());
+            Assert.Equal("true", response.Headers.Get(HttpHeaderNames.AccessControlAllowCredentials, null).ToString());
+            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders, null));
         }
 
         [Fact]
@@ -45,8 +45,8 @@ namespace DotNetty.Codecs.Http.Tests.Cors
         {
             var origin = new AsciiString("http://localhost:8888");
             IHttpResponse response = SimpleRequest(CorsConfigBuilder.ForOrigin(origin).Build(), origin.ToString());
-            Assert.Equal(origin, response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin));
-            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders));
+            Assert.Equal(origin, response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null));
+            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders, null));
         }
 
         [Fact]
@@ -56,11 +56,11 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             var origin2 = new AsciiString("https://localhost:8888");
             ICharSequence[] origins = { origin1, origin2};
             IHttpResponse response1 = SimpleRequest(CorsConfigBuilder.ForOrigins(origins).Build(), origin1.ToString());
-            Assert.Equal(origin1, response1.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin));
-            Assert.Null(response1.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders));
+            Assert.Equal(origin1, response1.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null));
+            Assert.Null(response1.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders, null));
             IHttpResponse response2 = SimpleRequest(CorsConfigBuilder.ForOrigins(origins).Build(), origin2.ToString());
-            Assert.Equal(origin2, response2.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin));
-            Assert.Null(response2.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders));
+            Assert.Equal(origin2, response2.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null));
+            Assert.Null(response2.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders, null));
         }
 
         [Fact]
@@ -69,8 +69,8 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             var origin = new AsciiString("http://localhost:8888");
             IHttpResponse response = SimpleRequest(CorsConfigBuilder.ForOrigins(
                 new AsciiString("https://localhost:8888")).Build(), origin.ToString());
-            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin));
-            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders));
+            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null));
+            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders, null));
         }
 
         [Fact]
@@ -79,10 +79,10 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             CorsConfig config = CorsConfigBuilder.ForOrigin(
                 new AsciiString("http://localhost:8888")).AllowedRequestMethods(HttpMethod.Get, HttpMethod.Delete).Build();
             IHttpResponse response = PreflightRequest(config, "http://localhost:8888", "content-type, xheader1");
-            Assert.Equal("http://localhost:8888", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin));
-            Assert.Contains("GET", response.Headers.Get(HttpHeaderNames.AccessControlAllowMethods).ToString());
-            Assert.Contains("DELETE", response.Headers.Get(HttpHeaderNames.AccessControlAllowMethods).ToString());
-            Assert.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary));
+            Assert.Equal("http://localhost:8888", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null));
+            Assert.Contains("GET", response.Headers.Get(HttpHeaderNames.AccessControlAllowMethods, null).ToString());
+            Assert.Contains("DELETE", response.Headers.Get(HttpHeaderNames.AccessControlAllowMethods, null).ToString());
+            Assert.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary, null));
         }
 
         [Fact]
@@ -95,8 +95,8 @@ namespace DotNetty.Codecs.Http.Tests.Cors
                 .PreflightResponseHeader((AsciiString)HeaderName, (AsciiString)Value1, (AsciiString)Value2).Build();
             IHttpResponse response = PreflightRequest(config, "http://localhost:8888", "content-type, xheader1");
             AssertValues(response, HeaderName, Value1, Value2);
-            Assert.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary));
-            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength).ToString());
+            Assert.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary, null));
+            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null).ToString());
         }
 
         [Fact]
@@ -110,7 +110,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
                 .Build();
             IHttpResponse response = PreflightRequest(config, "http://localhost:8888", "content-type, xheader1");
             AssertValues(response, HeaderName, Value1, Value2);
-            Assert.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary));
+            Assert.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary, null));
         }
 
         class ValueGenerator : ICallable<object>
@@ -124,8 +124,8 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             CorsConfig config = CorsConfigBuilder.ForOrigin((AsciiString)"http://localhost:8888")
                 .PreflightResponseHeader((AsciiString)"GenHeader", new ValueGenerator()).Build();
             IHttpResponse response = PreflightRequest(config, "http://localhost:8888", "content-type, xheader1");
-            Assert.Equal("generatedValue", response.Headers.Get((AsciiString)"GenHeader").ToString());
-            Assert.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary));
+            Assert.Equal("generatedValue", response.Headers.Get((AsciiString)"GenHeader", null).ToString());
+            Assert.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary, null));
         }
 
         [Fact]
@@ -137,8 +137,8 @@ namespace DotNetty.Codecs.Http.Tests.Cors
                     .AllowCredentials()
                     .Build();
             IHttpResponse response = PreflightRequest(config, origin.ToString(), "content-type, xheader1");
-            Assert.Equal("null", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin));
-            Assert.Equal("true", response.Headers.Get(HttpHeaderNames.AccessControlAllowCredentials));
+            Assert.Equal("null", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null));
+            Assert.Equal("true", response.Headers.Get(HttpHeaderNames.AccessControlAllowCredentials, null));
         }
 
         [Fact]
@@ -147,7 +147,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             var origin = new AsciiString("null");
             CorsConfig config = CorsConfigBuilder.ForOrigin(origin).AllowCredentials().Build();
             IHttpResponse response = PreflightRequest(config, origin.ToString(), "content-type, xheader1");
-            Assert.Equal("true", response.Headers.Get(HttpHeaderNames.AccessControlAllowCredentials));
+            Assert.Equal("true", response.Headers.Get(HttpHeaderNames.AccessControlAllowCredentials, null));
         }
 
         [Fact]
@@ -165,9 +165,9 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             CorsConfig config = CorsConfigBuilder.ForAnyOrigin()
                 .ExposeHeaders((AsciiString)"custom1", (AsciiString)"custom2").Build();
             IHttpResponse response = SimpleRequest(config, "http://localhost:7777");
-            Assert.Equal("*", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin));
-            Assert.Contains("custom1", response.Headers.Get(HttpHeaderNames.AccessControlExposeHeaders).ToString());
-            Assert.Contains("custom2", response.Headers.Get(HttpHeaderNames.AccessControlExposeHeaders).ToString());
+            Assert.Equal("*", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null));
+            Assert.Contains("custom1", response.Headers.Get(HttpHeaderNames.AccessControlExposeHeaders, null).ToString());
+            Assert.Contains("custom2", response.Headers.Get(HttpHeaderNames.AccessControlExposeHeaders, null).ToString());
         }
 
         [Fact]
@@ -175,7 +175,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
         {
             CorsConfig config = CorsConfigBuilder.ForAnyOrigin().AllowCredentials().Build();
             IHttpResponse response = SimpleRequest(config, "http://localhost:7777");
-            Assert.Equal("true", response.Headers.Get(HttpHeaderNames.AccessControlAllowCredentials));
+            Assert.Equal("true", response.Headers.Get(HttpHeaderNames.AccessControlAllowCredentials, null));
         }
 
         [Fact]
@@ -191,9 +191,9 @@ namespace DotNetty.Codecs.Http.Tests.Cors
         {
             CorsConfig config = CorsConfigBuilder.ForAnyOrigin().AllowCredentials().Build();
             IHttpResponse response = SimpleRequest(config, "http://localhost:7777");
-            Assert.Equal("true", response.Headers.Get(HttpHeaderNames.AccessControlAllowCredentials));
-            Assert.Equal("http://localhost:7777", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin).ToString());
-            Assert.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary));
+            Assert.Equal("true", response.Headers.Get(HttpHeaderNames.AccessControlAllowCredentials, null));
+            Assert.Equal("http://localhost:7777", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null).ToString());
+            Assert.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary, null));
         }
 
         [Fact]
@@ -202,8 +202,8 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             CorsConfig config = CorsConfigBuilder.ForAnyOrigin()
                 .ExposeHeaders((AsciiString)"one", (AsciiString)"two").Build();
             IHttpResponse response = SimpleRequest(config, "http://localhost:7777");
-            Assert.Contains("one", response.Headers.Get(HttpHeaderNames.AccessControlExposeHeaders).ToString());
-            Assert.Contains("two", response.Headers.Get(HttpHeaderNames.AccessControlExposeHeaders).ToString());
+            Assert.Contains("one", response.Headers.Get(HttpHeaderNames.AccessControlExposeHeaders, null).ToString());
+            Assert.Contains("two", response.Headers.Get(HttpHeaderNames.AccessControlExposeHeaders, null).ToString());
         }
 
         [Fact]
@@ -213,7 +213,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
                 .ShortCircuit().Build();
             IHttpResponse response = SimpleRequest(config, "http://localhost:7777");
             Assert.Equal(HttpResponseStatus.Forbidden, response.Status);
-            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength).ToString());
+            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null).ToString());
         }
 
         [Fact]
@@ -222,7 +222,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             CorsConfig config = CorsConfigBuilder.ForOrigin((AsciiString)"http://localhost:8080").Build();
             IHttpResponse response = SimpleRequest(config, "http://localhost:7777");
             Assert.Equal(HttpResponseStatus.OK, response.Status);
-            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin));
+            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null));
         }
 
         [Fact]
@@ -232,7 +232,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
                 .ShortCircuit().Build();
             IHttpResponse response = SimpleRequest(config, null);
             Assert.Equal(HttpResponseStatus.OK, response.Status);
-            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin));
+            Assert.Null(response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null));
         }
 
         [Fact]
@@ -422,7 +422,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
 
         static void AssertValues(IHttpResponse response, string headerName, params string[] values)
         {
-            ICharSequence header = response.Headers.Get(new AsciiString(headerName));
+            ICharSequence header = response.Headers.Get(new AsciiString(headerName), null);
             foreach (string value in values)
             {
                 Assert.Contains(value, header.ToString());

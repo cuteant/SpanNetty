@@ -37,7 +37,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(aggregatedMessage);
 
             Assert.Equal(chunk1.Content.ReadableBytes + chunk2.Content.ReadableBytes, HttpUtil.GetContentLength(aggregatedMessage));
-            Assert.Equal(bool.TrueString, aggregatedMessage.Headers.Get((AsciiString)"X-Test").ToString());
+            Assert.Equal(bool.TrueString, aggregatedMessage.Headers.Get((AsciiString)"X-Test", null)?.ToString());
             CheckContentBuffer(aggregatedMessage);
             var last = ch.ReadInbound<object>();
             Assert.Null(last);
@@ -67,8 +67,8 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(aggregatedMessage);
 
             Assert.Equal(chunk1.Content.ReadableBytes + chunk2.Content.ReadableBytes, HttpUtil.GetContentLength(aggregatedMessage));
-            Assert.Equal(bool.TrueString, aggregatedMessage.Headers.Get((AsciiString)"X-Test").ToString());
-            Assert.Equal(bool.TrueString, aggregatedMessage.TrailingHeaders.Get((AsciiString)"X-Trailer").ToString());
+            Assert.Equal(bool.TrueString, aggregatedMessage.Headers.Get((AsciiString)"X-Test", null)?.ToString());
+            Assert.Equal(bool.TrueString, aggregatedMessage.TrailingHeaders.Get((AsciiString)"X-Trailer", null)?.ToString());
             CheckContentBuffer(aggregatedMessage);
             var last = ch.ReadInbound<object>();
             Assert.Null(last);
@@ -90,7 +90,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var response = ch.ReadOutbound<IFullHttpResponse>();
             Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
-            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength));
+            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
             Assert.False(ch.Open);
 
             try
@@ -186,7 +186,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(aggregatedMessage);
 
             Assert.Equal(chunk1.Content.ReadableBytes + chunk2.Content.ReadableBytes, HttpUtil.GetContentLength(aggregatedMessage));
-            Assert.Equal(bool.TrueString, aggregatedMessage.Headers.Get((AsciiString)"X-Test"));
+            Assert.Equal(bool.TrueString, aggregatedMessage.Headers.Get((AsciiString)"X-Test", null));
             CheckContentBuffer(aggregatedMessage);
             var last = ch.ReadInbound<object>();
             Assert.Null(last);
@@ -238,7 +238,7 @@ namespace DotNetty.Codecs.Http.Tests
             // The aggregator should respond with '413.'
             var response = ch.ReadOutbound<IFullHttpResponse>();
             Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
-            Assert.Equal((AsciiString)"0", response.Headers.Get(HttpHeaderNames.ContentLength));
+            Assert.Equal((AsciiString)"0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
 
             // An ill-behaving client could continue to send data without a respect, and such data should be discarded.
             Assert.False(ch.WriteInbound(chunk1));
@@ -281,7 +281,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var response = ch.ReadOutbound<IFullHttpResponse>();
             Assert.Equal(HttpResponseStatus.ExpectationFailed, response.Status);
-            Assert.Equal((AsciiString)"0", response.Headers.Get(HttpHeaderNames.ContentLength));
+            Assert.Equal((AsciiString)"0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
             response.Release();
 
             if (close)
@@ -321,7 +321,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var response = ch.ReadOutbound<IFullHttpResponse>();
             Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
-            Assert.Equal((AsciiString)"0", response.Headers.Get(HttpHeaderNames.ContentLength));
+            Assert.Equal((AsciiString)"0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
 
             // Keep-alive is on by default in HTTP/1.1, so the connection should be still alive.
             Assert.True(ch.Open);
@@ -352,7 +352,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var response = ch.ReadOutbound<IFullHttpResponse>();
             Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
-            Assert.Equal((AsciiString)"0", response.Headers.Get(HttpHeaderNames.ContentLength));
+            Assert.Equal((AsciiString)"0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
 
             // We are forcing the connection closed if an expectation is exceeded.
             Assert.False(ch.Open);
@@ -379,7 +379,7 @@ namespace DotNetty.Codecs.Http.Tests
             // The aggregator should respond with '413'.
             var response = ch.ReadOutbound<IFullHttpResponse>();
             Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
-            Assert.Equal((AsciiString)"0", response.Headers.Get(HttpHeaderNames.ContentLength));
+            Assert.Equal((AsciiString)"0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
 
             // An ill-behaving client could continue to send data without a respect, and such data should be discarded.
             Assert.False(ch.WriteInbound(chunk1));
@@ -449,7 +449,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.False(ch.WriteInbound(message));
             var response = ch.ReadOutbound<IHttpResponse>();
             Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
-            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength));
+            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
 
             if (ServerShouldCloseConnection(message, response))
             {

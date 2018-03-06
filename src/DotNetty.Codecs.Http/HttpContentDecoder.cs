@@ -48,8 +48,7 @@ namespace DotNetty.Codecs.Http
                 HttpHeaders headers = httpMessage.Headers;
 
                 // Determine the content encoding.
-                ICharSequence contentEncoding = headers.Get(HttpHeaderNames.ContentEncoding);
-                if (contentEncoding != null)
+                if (headers.TryGet(HttpHeaderNames.ContentEncoding, out ICharSequence contentEncoding))
                 {
                     contentEncoding = AsciiString.Trim(contentEncoding);
                 }

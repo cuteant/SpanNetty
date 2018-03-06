@@ -4,21 +4,22 @@
 // ReSharper disable ConvertToAutoProperty
 // ReSharper disable ConvertToAutoPropertyWithPrivateSetter
 // ReSharper disable ForCanBeConvertedToForeach
+// ReSharper disable PossibleUnintendedReferenceComparison
+// ReSharper disable EmptyGeneralCatchClause
 namespace DotNetty.Codecs
 {
     using System;
     using System.Collections;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
     using DotNetty.Common.Utilities;
 
     using static Common.Internal.MathUtil;
+    using static HeadersUtils;
 
     public class DefaultHeaders<TKey, TValue> : IHeaders<TKey, TValue>
         where TKey : class
-        where TValue : class
     {
         const int HashCodeSeed = unchecked((int)0xc2b2ae35);
 
@@ -53,9 +54,9 @@ namespace DotNetty.Codecs
         public DefaultHeaders(IHashingStrategy<TKey> nameHashingStrategy,
             IValueConverter<TValue> valueConverter, INameValidator<TKey> nameValidator, int arraySizeHint)
         {
-            Contract.Requires(nameHashingStrategy != null);
-            Contract.Requires(valueConverter != null);
-            Contract.Requires(nameValidator != null);
+            if (ReferenceEquals(nameHashingStrategy, null)) ThrowArgumentNullException(nameof(nameHashingStrategy));
+            if (ReferenceEquals(valueConverter, null)) ThrowArgumentNullException(nameof(valueConverter));
+            if (ReferenceEquals(nameValidator, null)) ThrowArgumentNullException(nameof(nameValidator));
 
             this.hashingStrategy = nameHashingStrategy;
             this.ValueConverter = valueConverter;
@@ -68,50 +69,44 @@ namespace DotNetty.Codecs
             this.head = new HeaderEntry<TKey, TValue>();
         }
 
-        public TValue Get(TKey name)
+        public bool TryGet(TKey name, out TValue value)
         {
-            Contract.Requires(name != null);
+            if (name == null) ThrowArgumentNullException(nameof(name));
 
+            bool found = false;
             int h = this.hashingStrategy.HashCode(name);
             int i = this.Index(h);
             HeaderEntry<TKey, TValue> e = this.entries[i];
-            TValue value = null;
+            value = default(TValue);
             // loop until the first header was found
             while (e != null)
             {
                 if (e.Hash == h && this.hashingStrategy.Equals(name, e.key))
                 {
                     value = e.value;
+                    found = true;
                 }
 
                 e = e.Next;
             }
-            return value;
+            return found;
         }
 
-        public TValue Get(TKey name, TValue defaultValue)
-        {
-            TValue value = this.Get(name);
-            return value ?? defaultValue;
-        }
+        public TValue Get(TKey name, TValue defaultValue) => this.TryGet(name, out TValue value) ? value : defaultValue;
 
-        public TValue GetAndRemove(TKey name)
+        public bool TryGetAndRemove(TKey name, out TValue value)
         {
-            Contract.Requires(name != null);
+            if (name == null) ThrowArgumentNullException(nameof(name));
 
             int h = this.hashingStrategy.HashCode(name);
-            return this.Remove0(h, this.Index(h), name);
+            return this.TryRemove0(h, this.Index(h), name, out value);
         }
 
-        public TValue GetAndRemove(TKey name, TValue defaultValue)
-        {
-            TValue value = this.GetAndRemove(name);
-            return value ?? defaultValue;
-        }
+        public TValue GetAndRemove(TKey name, TValue defaultValue) => this.TryGetAndRemove(name, out TValue value) ? value : defaultValue;
 
         public virtual IList<TValue> GetAll(TKey name)
         {
-            Contract.Requires(name != null);
+            if (name == null) ThrowArgumentNullException(nameof(name));
 
             var values = new List<TValue>();
             int h = this.hashingStrategy.HashCode(name);
@@ -138,11 +133,12 @@ namespace DotNetty.Codecs
             return all;
         }
 
-        public bool Contains(TKey name) => this.Get(name) != null;
+        public bool Contains(TKey name) => this.TryGet(name, out _);
 
         public bool ContainsObject(TKey name, object value)
         {
-            Contract.Requires(value != null);
+            if (value == null) ThrowArgumentNullException(nameof(value));
+
             return this.Contains(name, this.ValueConverter.ConvertObject(value));
         }
 
@@ -168,7 +164,7 @@ namespace DotNetty.Codecs
 
         public bool Contains(TKey name, TValue value, IHashingStrategy<TValue> valueHashingStrategy)
         {
-            Contract.Requires(name != null);
+            if (name == null) ThrowArgumentNullException(nameof(name));
 
             int h = this.hashingStrategy.HashCode(name);
             int i = this.Index(h);
@@ -208,7 +204,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> Add(TKey name, TValue value)
         {
-            Contract.Requires(value != null);
+            if (ReferenceEquals(value, null)) ThrowArgumentNullException(nameof(value));
 
             this.nameValidator.ValidateName(name);
             int h = this.hashingStrategy.HashCode(name);
@@ -231,7 +227,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> AddObject(TKey name, object value)
         {
-            Contract.Requires(value != null);
+            if (value == null) ThrowArgumentNullException(nameof(value));
 
             return this.Add(name, this.ValueConverter.ConvertObject(value));
         }
@@ -279,7 +275,7 @@ namespace DotNetty.Codecs
         {
             if (ReferenceEquals(headers, this))
             {
-                throw new ArgumentException("can't add to itself.");
+                ThrowArgumentException("can't add to itself.");
             }
             this.AddImpl(headers);
             return this;
@@ -323,25 +319,26 @@ namespace DotNetty.Codecs
 
         public IHeaders<TKey, TValue> Set(TKey name, TValue value)
         {
-            Contract.Requires(value != null);
+            if (ReferenceEquals(value, null)) ThrowArgumentNullException(nameof(value));
 
             this.nameValidator.ValidateName(name);
             int h = this.hashingStrategy.HashCode(name);
             int i = this.Index(h);
-            this.Remove0(h, i, name);
+            this.TryRemove0(h, i, name, out _);
             this.Add0(h, i, name, value);
             return this;
         }
 
         public virtual IHeaders<TKey, TValue> Set(TKey name, IEnumerable<TValue> values)
         {
-            Contract.Requires(values != null);
+            if (ReferenceEquals(values, null)) ThrowArgumentNullException(nameof(values));
 
             this.nameValidator.ValidateName(name);
             int h = this.hashingStrategy.HashCode(name);
             int i = this.Index(h);
 
-            this.Remove0(h, i, name);
+            this.TryRemove0(h, i, name, out _);
+            // ReSharper disable once PossibleNullReferenceException
             foreach (TValue v in values)
             {
                 if (v ==  null)
@@ -356,7 +353,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> SetObject(TKey name, object value)
         {
-            Contract.Requires(value != null);
+            if (value == null) ThrowArgumentNullException(nameof(value));
 
             TValue convertedValue = this.ValueConverter.ConvertObject(value);
             return this.Set(name, convertedValue);
@@ -364,13 +361,14 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> SetObject(TKey name, IEnumerable<object> values)
         {
-            Contract.Requires(values != null);
+            if (ReferenceEquals(values, null)) ThrowArgumentNullException(nameof(values));
 
             this.nameValidator.ValidateName(name);
             int h = this.hashingStrategy.HashCode(name);
             int i = this.Index(h);
 
-            this.Remove0(h, i, name);
+            this.TryRemove0(h, i, name, out _);
+            // ReSharper disable once PossibleNullReferenceException
             foreach (object v in values)
             {
                 if (v == null)
@@ -401,8 +399,6 @@ namespace DotNetty.Codecs
 
         public IHeaders<TKey, TValue> SetShort(TKey name, short value) => this.Set(name, this.ValueConverter.ConvertShort(value));
 
-
-
         public virtual IHeaders<TKey, TValue> Set(IHeaders<TKey, TValue> headers)
         {
             if (!ReferenceEquals(headers, this))
@@ -426,11 +422,11 @@ namespace DotNetty.Codecs
             return this;
         }
 
-        public bool Remove(TKey name) => this.GetAndRemove(name) != null;
+        public bool Remove(TKey name) => this.TryGetAndRemove(name, out _);
 
         public IHeaders<TKey, TValue> Clear()
         {
-            this.entries.Fill(null);
+            Array.Clear(this.entries, 0, this.entries.Length);
             this.head.Before = this.head.After = this.head;
             this.size = 0;
             return this;
@@ -440,163 +436,384 @@ namespace DotNetty.Codecs
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-        public bool? GetBoolean(TKey name)
+        public bool TryGetBoolean(TKey name, out bool value)
         {
-            TValue v = this.Get(name);
-            return v != null ? this.ValueConverter.ConvertToBoolean(v) : default(bool?);
-        }
-
-        public bool GetBoolean(TKey name, bool defaultValue) => this.GetBoolean(name) ?? defaultValue;
-
-        public byte? GetByte(TKey name)
-        {
-            TValue v = this.Get(name);
-            return v != null ? this.ValueConverter.ConvertToByte(v) : default(byte?);
-        }
-
-        public byte GetByte(TKey name, byte defaultValue) => this.GetByte(name) ?? defaultValue;
-
-        public char? GetChar(TKey name)
-        {
-            TValue v = this.Get(name);
-            return v != null ? this.ValueConverter.ConvertToChar(v) : default(char?);
-        }
-
-        public char GetChar(TKey name, char defaultValue) => this.GetChar(name) ?? defaultValue;
-
-        public short? GetShort(TKey name)
-        {
-            TValue v = this.Get(name);
-            return v != null ? this.ValueConverter.ConvertToShort(v) : default(short?);
-        }
-
-        public short GetShort(TKey name, short defaultValue) => this.GetShort(name) ?? defaultValue;
-
-        public int? GetInt(TKey name)
-        {
-            TValue v = this.Get(name);
-            return v != null ? this.ValueConverter.ConvertToInt(v) : default(int?);
-        }
-
-        public int GetInt(TKey name, int defaultValue) => this.GetInt(name) ?? defaultValue;
-
-        public long? GetLong(TKey name)
-        {
-            TValue v = this.Get(name);
-            return v != null ? this.ValueConverter.ConvertToLong(v) : default(long?);
-        }
-
-        public long GetLong(TKey name, long defaultValue) => this.GetLong(name) ?? defaultValue;
-
-        public float? GetFloat(TKey name)
-        {
-            TValue v = this.Get(name);
-            return v != null ? this.ValueConverter.ConvertToFloat(v) : default(float?);
-        }
-
-        public float GetFloat(TKey name, float defaultValue) => this.GetFloat(name) ?? defaultValue;
-
-        public double? GetDouble(TKey name)
-        {
-            TValue v = this.Get(name);
-            return v != null ? this.ValueConverter.ConvertToDouble(v) : default(double?);
-        }
-
-        public double GetDouble(TKey name, double defaultValue) => this.GetDouble(name) ?? defaultValue;
-
-        public long? GetTimeMillis(TKey name)
-        {
-            TValue v = this.Get(name);
-            return v != null ? this.ValueConverter.ConvertToTimeMillis(v) : default(long?);
-        }
-
-        public long GetTimeMillis(TKey name, long defaultValue) => this.GetTimeMillis(name) ?? defaultValue;
-
-        public bool? GetBooleanAndRemove(TKey name)
-        {
-            TValue v = this.GetAndRemove(name);
-            return v != null ? this.ValueConverter.ConvertToBoolean(v) : default(bool?);
-        }
-
-        public bool GetBooleanAndRemove(TKey name, bool defaultValue) => this.GetBooleanAndRemove(name) ?? defaultValue;
-
-        public byte? GetByteAndRemove(TKey name)
-        {
-            TValue v = this.GetAndRemove(name);
-            return v != null ? this.ValueConverter.ConvertToByte(v) : default(byte?);
-        }
-
-        public byte GetByteAndRemove(TKey name, byte defaultValue) => this.GetByteAndRemove(name) ?? defaultValue;
-
-        public char? GetCharAndRemove(TKey name)
-        {
-            TValue v = this.GetAndRemove(name);
-            if (v == null)
+            if (this.TryGet(name, out TValue v))
             {
-                return null;
+                try
+                {
+                    value = this.ValueConverter.ConvertToBoolean(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
             }
-            try
+
+            value = default(bool);
+            return false;
+        }
+
+        public bool GetBoolean(TKey name, bool defaultValue) => this.TryGetBoolean(name, out bool value) ? value : defaultValue;
+
+        public bool TryGetByte(TKey name, out byte value)
+        {
+            if (this.TryGet(name, out TValue v))
             {
-                return this.ValueConverter.ConvertToChar(v);
+                try
+                {
+                    value = this.ValueConverter.ConvertToByte(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
             }
-            catch
+
+            value = default(byte);
+            return false;
+        }
+
+        public byte GetByte(TKey name, byte defaultValue) => this.TryGetByte(name, out byte value) ? value : defaultValue;
+
+        public bool TryGetChar(TKey name, out char value)
+        {
+            if (this.TryGet(name, out TValue v))
             {
-                return null;
+                try
+                {
+                    value = this.ValueConverter.ConvertToChar(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
             }
+
+            value = default(char);
+            return false;
         }
 
-        public char GetCharAndRemove(TKey name, char defaultValue) => this.GetCharAndRemove(name) ?? defaultValue;
+        public char GetChar(TKey name, char defaultValue) => this.TryGetChar(name, out char value) ? value : defaultValue;
 
-        public short? GetShortAndRemove(TKey name)
+        public bool TryGetShort(TKey name, out short value)
         {
-            TValue v = this.GetAndRemove(name);
-            return v != null ? this.ValueConverter.ConvertToShort(v) : default(short?);
+            if (this.TryGet(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToShort(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(short);
+            return false;
         }
 
-        public short GetShortAndRemove(TKey name, short defaultValue) => this.GetShortAndRemove(name) ?? defaultValue;
+        public short GetShort(TKey name, short defaultValue) => this.TryGetShort(name, out short value) ? value : defaultValue;
 
-        public int? GetIntAndRemove(TKey name)
+        public bool TryGetInt(TKey name, out int value)
         {
-            TValue v = this.GetAndRemove(name);
-            return v != null ? this.ValueConverter.ConvertToInt(v) : default(int?);
+            if (this.TryGet(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToInt(v);
+                    return true;
+                }
+                catch(Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(int);
+            return false;
         }
 
-        public int GetIntAndRemove(TKey name, int defaultValue) => this.GetIntAndRemove(name) ?? defaultValue;
+        public int GetInt(TKey name, int defaultValue) => this.TryGetInt(name, out int value) ? value : defaultValue;
 
-        public long? GetLongAndRemove(TKey name)
+        public bool TryGetLong(TKey name, out long value)
         {
-            TValue v = this.GetAndRemove(name);
-            return v != null ? this.ValueConverter.ConvertToLong(v) : default(long?);
+            if (this.TryGet(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToLong(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(long);
+            return false;
         }
 
-        public long GetLongAndRemove(TKey name, long defaultValue) => this.GetLongAndRemove(name) ?? defaultValue;
+        public long GetLong(TKey name, long defaultValue) => this.TryGetLong(name, out long value) ? value : defaultValue;
 
-        public float? GetFloatAndRemove(TKey name)
+        public bool TryGetFloat(TKey name, out float value)
         {
-            TValue v = this.GetAndRemove(name);
-            return v != null ? this.ValueConverter.ConvertToFloat(v) : default(float?);
+            if (this.TryGet(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToFloat(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(float);
+            return false;
         }
 
-        public float GetFloatAndRemove(TKey name, float defaultValue) => this.GetFloatAndRemove(name) ?? defaultValue;
+        public float GetFloat(TKey name, float defaultValue) => this.TryGetFloat(name, out float value) ? value : defaultValue;
 
-        public double? GetDoubleAndRemove(TKey name)
+        public bool TryGetDouble(TKey name, out double value)
         {
-            TValue v = this.GetAndRemove(name);
-            return v != null ? this.ValueConverter.ConvertToDouble(v) : default(double?);
+            if (this.TryGet(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToDouble(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(double);
+            return false;
         }
 
-        public double GetDoubleAndRemove(TKey name, double defaultValue) => this.GetDoubleAndRemove(name) ?? defaultValue;
+        public double GetDouble(TKey name, double defaultValue) => this.TryGetDouble(name, out double value) ? value : defaultValue;
 
-        public long? GetTimeMillisAndRemove(TKey name)
+        public bool TryGetTimeMillis(TKey name, out long value)
         {
-            TValue v = this.GetAndRemove(name);
-            return v != null ? this.ValueConverter.ConvertToTimeMillis(v) : default(long?);
+            if (this.TryGet(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToTimeMillis(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(long);
+            return false;
         }
 
-        public long GetTimeMillisAndRemove(TKey name, long defaultValue) => this.GetTimeMillisAndRemove(name) ?? defaultValue;
+        public long GetTimeMillis(TKey name, long defaultValue) => this.TryGetTimeMillis(name, out long value) ? value : defaultValue;
 
-        public override bool Equals(object obj) => 
-            obj is IHeaders<TKey, TValue> headers && this.Equals(headers, DefaultValueHashingStrategy);
+        public bool TryGetBooleanAndRemove(TKey name, out bool value)
+        {
+            if (this.TryGetAndRemove(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToBoolean(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(bool);
+            return false;
+        }
+
+        public bool GetBooleanAndRemove(TKey name, bool defaultValue) => this.TryGetBooleanAndRemove(name, out bool value) ? value : defaultValue;
+
+        public bool TryGetByteAndRemove(TKey name, out byte value)
+        {
+            if (this.TryGetAndRemove(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToByte(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+            value = default(byte);
+            return false;
+        }
+
+        public byte GetByteAndRemove(TKey name, byte defaultValue) => this.TryGetByteAndRemove(name, out byte value) ? value : defaultValue;
+
+        public bool TryGetCharAndRemove(TKey name, out char value)
+        {
+            if (this.TryGetAndRemove(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToChar(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(char);
+            return false;
+        }
+
+        public char GetCharAndRemove(TKey name, char defaultValue) => this.TryGetCharAndRemove(name, out char value) ? value : defaultValue;
+
+        public bool TryGetShortAndRemove(TKey name, out short value)
+        {
+            if (this.TryGetAndRemove(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToShort(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(short);
+            return false;
+        }
+
+        public short GetShortAndRemove(TKey name, short defaultValue) => this.TryGetShortAndRemove(name, out short value) ? value : defaultValue;
+
+        public bool TryGetIntAndRemove(TKey name, out int value)
+        {
+            if (this.TryGetAndRemove(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToInt(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(int);
+            return false;
+        }
+
+        public int GetIntAndRemove(TKey name, int defaultValue) => this.TryGetIntAndRemove(name, out int value) ? value : defaultValue;
+
+        public bool TryGetLongAndRemove(TKey name, out long value)
+        {
+            if (this.TryGetAndRemove(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToLong(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(long);
+            return false;
+        }
+
+        public long GetLongAndRemove(TKey name, long defaultValue) => this.TryGetLongAndRemove(name, out long value) ? value : defaultValue;
+
+        public bool TryGetFloatAndRemove(TKey name, out float value)
+        {
+            if (this.TryGetAndRemove(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToFloat(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(float);
+            return false;
+        }
+
+        public float GetFloatAndRemove(TKey name, float defaultValue) => this.TryGetFloatAndRemove(name, out float value) ? value : defaultValue;
+
+        public bool TryGetDoubleAndRemove(TKey name, out double value)
+        {
+            if (this.TryGetAndRemove(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToDouble(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(double);
+            return false;
+        }
+
+        public double GetDoubleAndRemove(TKey name, double defaultValue) => this.TryGetDoubleAndRemove(name, out double value) ? value : defaultValue;
+
+        public bool TryGetTimeMillisAndRemove(TKey name, out long value)
+        {
+            if (this.TryGetAndRemove(name, out TValue v))
+            {
+                try
+                {
+                    value = this.ValueConverter.ConvertToTimeMillis(v);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // Ignore
+                }
+            }
+
+            value = default(long);
+            return false;
+        }
+
+        public long GetTimeMillisAndRemove(TKey name, long defaultValue) => this.TryGetTimeMillisAndRemove(name, out long value) ? value : defaultValue;
+
+        public override bool Equals(object obj) => obj is IHeaders<TKey, TValue> headers && this.Equals(headers, DefaultValueHashingStrategy);
 
         public override int GetHashCode() => this.HashCode(DefaultValueHashingStrategy);
 
@@ -651,7 +868,9 @@ namespace DotNetty.Codecs
         protected HeaderEntry<TKey, TValue> NewHeaderEntry(int h, TKey name, TValue value, HeaderEntry<TKey, TValue> next) =>
             new HeaderEntry<TKey, TValue>(h, name, value, next, this.head);
 
-        [MethodImpl(InlineMethod.Value)]
+#if !NET40
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         int Index(int hash) => hash & this.hashMask;
 
         void Add0(int h, int i, TKey name, TValue value)
@@ -661,15 +880,18 @@ namespace DotNetty.Codecs
             ++this.size;
         }
 
-        TValue Remove0(int h, int i, TKey name)
+        bool TryRemove0(int h, int i, TKey name, out TValue value)
         {
+            value = default(TValue);
+
             HeaderEntry<TKey, TValue> e = this.entries[i];
             if (e == null)
             {
-                return null;
+                return false;
             }
 
-            TValue value = null;
+            bool result = false;
+
             HeaderEntry<TKey, TValue> next = e.Next;
             while (next != null)
             {
@@ -679,6 +901,7 @@ namespace DotNetty.Codecs
                     e.Next = next.Next;
                     next.Remove();
                     --this.size;
+                    result = true;
                 }
                 else
                 {
@@ -691,16 +914,24 @@ namespace DotNetty.Codecs
             e = this.entries[i];
             if (e.Hash == h && this.hashingStrategy.Equals(name, e.key))
             {
-                if (value == null)
+                if (!result)
                 {
                     value = e.value;
+                    result = true;
                 }
                 this.entries[i] = e.Next;
                 e.Remove();
                 --this.size;
             }
 
-            return value;
+            return result;
+        }
+
+        public DefaultHeaders<TKey, TValue> Copy()
+        {
+            var copy = new DefaultHeaders<TKey, TValue>(this.hashingStrategy,  this.ValueConverter, this.nameValidator, this.entries.Length);
+            copy.AddImpl(this);
+            return copy;
         }
 
         struct ValueEnumerator : IEnumerator<TValue>, IEnumerable<TValue>
@@ -714,13 +945,13 @@ namespace DotNetty.Codecs
 
             public ValueEnumerator(DefaultHeaders<TKey, TValue> headers, TKey name)
             {
-                Contract.Requires(name != null);
+                if (name == null) ThrowArgumentNullException(nameof(name));
 
                 this.hashingStrategy = headers.hashingStrategy;
                 this.hash = this.hashingStrategy.HashCode(name);
                 this.name = name;
                 this.node = this.head = headers.entries[headers.Index(this.hash)];
-                this.current = null;
+                this.current = default(TValue);
             }
 
             bool IEnumerator.MoveNext()
@@ -756,13 +987,13 @@ namespace DotNetty.Codecs
             void IEnumerator.Reset()
             {
                 this.node = this.head;
-                this.current = null;
+                this.current = default(TValue);
             }
 
             void IDisposable.Dispose()
             {
                 this.node = null;
-                this.current = null;
+                this.current = default(TValue);
             }
 
             public IEnumerator<TValue> GetEnumerator() => this;
@@ -790,7 +1021,9 @@ namespace DotNetty.Codecs
 
             object IEnumerator.Current
             {
-                [MethodImpl(InlineMethod.Value)]
+#if !NET40
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
                 get
                 {
                     if (this.index == 0 || this.index == this.size + 1)
@@ -831,13 +1064,10 @@ namespace DotNetty.Codecs
                 this.index = 0;
             }
         }
-
-        static void ThrowInvalidOperationException(string message) => throw new InvalidOperationException(message);
     }
 
     public sealed class HeaderEntry<TKey, TValue>
         where TKey : class
-        where TValue : class
     {
         internal readonly int Hash;
         // ReSharper disable InconsistentNaming
@@ -884,22 +1114,29 @@ namespace DotNetty.Codecs
             this.After.Before = this.Before;
         }
 
-        public override int GetHashCode() => this.Hash;
-
         public TKey Key => this.key;
 
         public TValue Value => this.value;
 
         public TValue SetValue(TValue newValue)
         {
-            Contract.Requires(newValue != null);
+            if (ReferenceEquals(newValue, null)) ThrowArgumentNullException(nameof(newValue));
 
             TValue oldValue = this.value;
             this.value = newValue;
-
             return oldValue;
         }
 
-        public override string ToString() => this.Hash == -1 ? "Empty" : $"{this.key}={this.value}";
+        public override string ToString() => $"{this.key}={this.value}";
+
+        // ReSharper disable once MergeConditionalExpression
+        public override bool Equals(object obj) => obj is HeaderEntry<TKey, TValue> other 
+            && (this.key == null ? other.key == null : this.key.Equals(other.key))
+            && (ReferenceEquals(this.value, null) ? ReferenceEquals(other.value, null) : this.value.Equals(other.value));
+
+        // ReSharper disable NonReadonlyMemberInGetHashCode
+        public override int GetHashCode() => (this.key == null ? 0 : this.key.GetHashCode()) 
+                ^ (ReferenceEquals(this.value, null) ? 0 : this.value.GetHashCode());
+        // ReSharper restore NonReadonlyMemberInGetHashCode
     }
 }

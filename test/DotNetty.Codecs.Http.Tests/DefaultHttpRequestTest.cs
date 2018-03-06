@@ -29,7 +29,7 @@ namespace DotNetty.Codecs.Http.Tests
             // Check if random access returns nothing.
             for (int i = 0; i < 1000; i++)
             {
-                Assert.Null(h.Get(HttpHeadersTestUtils.Of(i.ToString())));
+                Assert.False(h.TryGet(HttpHeadersTestUtils.Of(i.ToString()), out _));
             }
 
             // Check if sequential access returns nothing.

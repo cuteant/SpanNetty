@@ -4,11 +4,11 @@
 namespace DotNetty.Codecs.Http.Multipart
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Text;
-    using DotNetty.Common.Internal;
 
     public class DefaultHttpDataFactory : IHttpDataFactory
     {
@@ -25,7 +25,8 @@ namespace DotNetty.Codecs.Http.Multipart
         readonly Encoding charset = HttpConstants.DefaultEncoding;
 
         // Keep all HttpDatas until cleanAllHttpData() is called.
-        readonly IDictionary<IHttpRequest, List<IHttpData>> requestFileDeleteMap = PlatformDependent.NewConcurrentHashMap<IHttpRequest, List<IHttpData>>();
+        readonly ConcurrentDictionary<IHttpRequest, List<IHttpData>> requestFileDeleteMap = 
+            new ConcurrentDictionary<IHttpRequest, List<IHttpData>>(IdentityComparer.Default);
 
         // HttpData will be in memory if less than default size (16KB).
         // The type will be Mixed.
@@ -69,11 +70,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         List<IHttpData> GetList(IHttpRequest request)
         {
-            if (!this.requestFileDeleteMap.TryGetValue(request, out List<IHttpData> list))
-            {
-                list = new List<IHttpData>();
-                this.requestFileDeleteMap.Add(request, list);
-            }
+            List<IHttpData> list = this.requestFileDeleteMap.GetOrAdd(request, _ => new List<IHttpData>());
             return list;
         }
 
@@ -83,16 +80,16 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 var diskAttribute = new DiskAttribute(name, this.charset);
                 diskAttribute.MaxSize = this.maxSize;
-                List<IHttpData> fileToDelete = this.GetList(request);
-                fileToDelete.Add(diskAttribute);
+                List<IHttpData> list = this.GetList(request);
+                list.Add(diskAttribute);
                 return diskAttribute;
             }
             if (this.checkSize)
             {
                 var mixedAttribute = new MixedAttribute(name, this.minSize, this.charset);
                 mixedAttribute.MaxSize = this.maxSize;
-                List<IHttpData> fileToDelete = this.GetList(request);
-                fileToDelete.Add(mixedAttribute);
+                List<IHttpData> list = this.GetList(request);
+                list.Add(mixedAttribute);
                 return mixedAttribute;
             }
             var attribute = new MemoryAttribute(name);
@@ -106,16 +103,16 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 var diskAttribute = new DiskAttribute(name, definedSize, this.charset);
                 diskAttribute.MaxSize = this.maxSize;
-                List<IHttpData> fileToDelete = this.GetList(request);
-                fileToDelete.Add(diskAttribute);
+                List<IHttpData> list = this.GetList(request);
+                list.Add(diskAttribute);
                 return diskAttribute;
             }
             if (this.checkSize)
             {
                 var mixedAttribute = new MixedAttribute(name, definedSize, this.minSize, this.charset);
                 mixedAttribute.MaxSize = this.maxSize;
-                List<IHttpData> fileToDelete = this.GetList(request);
-                fileToDelete.Add(mixedAttribute);
+                List<IHttpData> list = this.GetList(request);
+                list.Add(mixedAttribute);
                 return mixedAttribute;
             }
             var attribute = new MemoryAttribute(name, definedSize);
@@ -131,7 +128,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             catch (IOException)
             {
-                throw new ArgumentException($"Attribute {data.DataType} bigger than maxSize allowed");
+                throw new ArgumentException("Attribute bigger than maxSize allowed");
             }
         }
 
@@ -152,8 +149,8 @@ namespace DotNetty.Codecs.Http.Multipart
                     attribute.MaxSize = this.maxSize;
                 }
                 CheckHttpDataSize(attribute);
-                List<IHttpData> fileToDelete = this.GetList(request);
-                fileToDelete.Add(attribute);
+                List<IHttpData> list = this.GetList(request);
+                list.Add(attribute);
                 return attribute;
             }
             if (this.checkSize)
@@ -161,8 +158,8 @@ namespace DotNetty.Codecs.Http.Multipart
                 var mixedAttribute = new MixedAttribute(name, value, this.minSize, this.charset);
                 mixedAttribute.MaxSize = this.maxSize;
                 CheckHttpDataSize(mixedAttribute);
-                List<IHttpData> fileToDelete = this.GetList(request);
-                fileToDelete.Add(mixedAttribute);
+                List<IHttpData> list = this.GetList(request);
+                list.Add(mixedAttribute);
                 return mixedAttribute;
             }
             try
@@ -174,7 +171,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             catch (IOException e)
             {
-                throw new ArgumentException($"({request}, {name}, {value})" ,e);
+                throw new ArgumentException($"({request}, {name}, {value})", e);
             }
         }
 
@@ -188,8 +185,8 @@ namespace DotNetty.Codecs.Http.Multipart
                     contentTransferEncoding, encoding, size);
                 fileUpload.MaxSize = this.maxSize;
                 CheckHttpDataSize(fileUpload);
-                List<IHttpData> fileToDelete = this.GetList(request);
-                fileToDelete.Add(fileUpload);
+                List<IHttpData> list = this.GetList(request);
+                list.Add(fileUpload);
                 return fileUpload;
             }
             if (this.checkSize)
@@ -198,8 +195,8 @@ namespace DotNetty.Codecs.Http.Multipart
                     contentTransferEncoding, encoding, size, this.minSize);
                 fileUpload.MaxSize = this.maxSize;
                 CheckHttpDataSize(fileUpload);
-                List<IHttpData> fileToDelete = this.GetList(request);
-                fileToDelete.Add(fileUpload);
+                List<IHttpData> list = this.GetList(request);
+                list.Add(fileUpload);
                 return fileUpload;
             }
             var memoryFileUpload = new MemoryFileUpload(name, fileName, contentType, 
@@ -211,49 +208,76 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void RemoveHttpDataFromClean(IHttpRequest request, IInterfaceHttpData data)
         {
-            if (data is IHttpData httpData)
+            if (!(data is IHttpData httpData))
             {
-                List<IHttpData> fileToDelete = this.GetList(request);
-                fileToDelete.Remove(httpData);
+                return;
+            }
+
+            // Do not use getList because it adds empty list to requestFileDeleteMap
+            // if request is not found
+            if (!this.requestFileDeleteMap.TryGetValue(request, out List<IHttpData> list))
+            {
+                return;
+            }
+
+            // Can't simply call list.remove(data), because different data items may be equal.
+            // Need to check identity.
+            int index = -1;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (ReferenceEquals(list[i], httpData))
+                {
+                    index = i;
+                    break;
+                }
+            }
+            if (index != -1)
+            {
+                list.RemoveAt(index);
+            }
+            if (list.Count == 0)
+            {
+                this.requestFileDeleteMap.TryRemove(request, out _);
             }
         }
 
         public void CleanRequestHttpData(IHttpRequest request)
         {
-            if (!this.requestFileDeleteMap.TryGetValue(request, out List<IHttpData> fileToDelete))
+            if (this.requestFileDeleteMap.TryRemove(request, out List<IHttpData> list))
             {
-                return;
-            }
-
-            this.requestFileDeleteMap.Remove(request);
-            foreach (IHttpData data in fileToDelete)
-            {
-                data.Delete();
+                foreach (IHttpData data in list)
+                {
+                    data.Release();
+                }
             }
         }
 
         public void CleanAllHttpData()
         {
-            while (true)
+            while (!this.requestFileDeleteMap.IsEmpty)
             {
                 IHttpRequest[] keys = this.requestFileDeleteMap.Keys.ToArray();
-                if (keys.Length == 0)
-                {
-                    break;
-                }
                 foreach (IHttpRequest key in keys)
                 {
-                    if (this.requestFileDeleteMap.TryGetValue(key, out List<IHttpData> list))
+                    if (this.requestFileDeleteMap.TryRemove(key, out List<IHttpData> list))
                     {
-                        this.requestFileDeleteMap.Remove(key);
                         foreach (IHttpData data in list)
                         {
-                            data.Delete();
+                            data.Release();
                         }
-                        list.Clear();
                     }
                 }
             }
+        }
+
+        // Similar to IdentityHashMap in Java
+        sealed class IdentityComparer : IEqualityComparer<IHttpRequest>
+        {
+            internal static readonly IdentityComparer Default = new IdentityComparer();
+
+            public bool Equals(IHttpRequest x, IHttpRequest y) => ReferenceEquals(x, y);
+
+            public int GetHashCode(IHttpRequest obj) => obj.GetHashCode();
         }
     }
 }

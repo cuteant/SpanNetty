@@ -59,12 +59,12 @@ namespace DotNetty.Codecs.Http.Tests
             headers.Add(HttpHeadersTestUtils.Of("Connection"), Connection);
 
             // Passes
-            string value = headers.GetAsString(HttpHeaderNames.Connection);
+            headers.TryGetAsString(HttpHeaderNames.Connection, out string value);
             Assert.NotNull(value);
             Assert.Equal(Connection, value);
 
             // Passes
-            ICharSequence value2 = headers.Get(HttpHeaderNames.Connection);
+            ICharSequence value2 = headers.Get(HttpHeaderNames.Connection, null);
             Assert.NotNull(value2);
             Assert.Equal(Connection, value2);
         }
@@ -78,11 +78,11 @@ namespace DotNetty.Codecs.Http.Tests
             const string CacheControl = "no-cache";
             headers.Add(HttpHeaderNames.CacheControl, CacheControl);
 
-            string value = headers.GetAsString(HttpHeaderNames.CacheControl);
+            headers.TryGetAsString(HttpHeaderNames.CacheControl, out string value);
             Assert.NotNull(value);
             Assert.Equal(CacheControl, value);
 
-            ICharSequence value2 = headers.Get(HttpHeaderNames.CacheControl);
+            ICharSequence value2 = headers.Get(HttpHeaderNames.CacheControl, null);
             Assert.NotNull(value2);
             Assert.Equal(CacheControl, value2);
         }
@@ -94,7 +94,7 @@ namespace DotNetty.Codecs.Http.Tests
             headers.Add(HttpHeadersTestUtils.Of("Foo"), HttpHeadersTestUtils.Of("1"));
             headers.Add(HttpHeadersTestUtils.Of("Foo"), HttpHeadersTestUtils.Of("2"));
 
-            Assert.Equal("1", headers.Get(HttpHeadersTestUtils.Of("Foo")));
+            Assert.Equal("1", headers.Get(HttpHeadersTestUtils.Of("Foo"), null));
 
             IList<ICharSequence> values = headers.GetAll(HttpHeadersTestUtils.Of("Foo"));
             Assert.Equal(2, values.Count);
@@ -137,7 +137,7 @@ namespace DotNetty.Codecs.Http.Tests
 
         static void AssertDefaultValues(HttpHeaders headers, HttpHeadersTestUtils.HeaderValue headerValue)
         {
-            Assert.True(AsciiString.ContentEquals(headerValue.AsList()[0], (StringCharSequence)headers.Get(HeaderName)));
+            Assert.True(AsciiString.ContentEquals(headerValue.AsList()[0], (StringCharSequence)headers.Get(HeaderName, null)));
             List<ICharSequence> expected = headerValue.AsList();
             IList<ICharSequence> actual = headers.GetAll(HeaderName);
             Assert.Equal(expected.Count, actual.Count);

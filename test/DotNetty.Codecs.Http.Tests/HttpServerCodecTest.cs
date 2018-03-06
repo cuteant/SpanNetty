@@ -79,7 +79,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             // Ensure the aggregator generates a full request.
             var req = ch.ReadInbound<IFullHttpRequest>();
-            Assert.Equal("1", req.Headers.Get(HttpHeaderNames.ContentLength).ToString());
+            Assert.Equal("1", req.Headers.Get(HttpHeaderNames.ContentLength, null).ToString());
             Assert.Equal(1, req.Content.ReadableBytes);
             Assert.Equal((byte)42, req.Content.ReadByte());
             req.Release();

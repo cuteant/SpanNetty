@@ -114,12 +114,13 @@ namespace DotNetty.Common.Utilities
                 return false;
             }
 
-            return string.Compare(this.value, this.offset, other.value, other.offset, this.count) == 0;
+            return string.Compare(this.value, this.offset, other.value, other.offset, this.count,
+                StringComparison.Ordinal) == 0;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(this, null))
+            if (ReferenceEquals(obj, null))
             {
                 return false;
             }
