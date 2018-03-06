@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.0;net471;net452</TargetFrameworks>
+    <TargetFrameworks>$(StandardTestTfms)</TargetFrameworks>
     <RootNamespace>DotNetty.Handlers.Tests</RootNamespace>
     <AssemblyName>DotNetty.Handlers.Tests</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>

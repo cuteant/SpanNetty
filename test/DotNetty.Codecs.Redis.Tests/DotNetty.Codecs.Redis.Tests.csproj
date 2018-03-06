@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp2.0;net471;net452</TargetFrameworks>
+    <TargetFrameworks>$(StandardTestTfms)</TargetFrameworks>
     <RootNamespace>DotNetty.Codecs.Redis.Tests</RootNamespace>
     <AssemblyName>DotNetty.Codecs.Redis.Tests</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>

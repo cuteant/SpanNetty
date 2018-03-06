@@ -15,6 +15,11 @@
   <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.System.props" />
   <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.Testing.props" />
 
+  <!-- Ensure changes to this file cause project rebuilds. -->
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+
   <PropertyGroup>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\..\build\DotNetty.snk</AssemblyOriginatorKeyFile>
