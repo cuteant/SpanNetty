@@ -37,10 +37,10 @@ namespace DotNetty.Transport.Libuv.Tests
             Bootstrap cb = new Bootstrap()
                 .Group(this.group)
                 .Channel<TcpChannel>();
-            this.ReadPendingIsResetAfterEachReadInternal(sb, cb);
+            this.ReadPendingIsResetAfterEachRead0(sb, cb);
         }
 
-        void ReadPendingIsResetAfterEachReadInternal(ServerBootstrap sb, Bootstrap cb)
+        void ReadPendingIsResetAfterEachRead0(ServerBootstrap sb, Bootstrap cb)
         {
             var serverInitializer = new MyInitializer();
             sb.Option(ChannelOption.SoBacklog, 1024);

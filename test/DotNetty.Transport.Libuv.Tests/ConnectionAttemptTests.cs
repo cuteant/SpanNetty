@@ -32,10 +32,10 @@ namespace DotNetty.Transport.Libuv.Tests
             Bootstrap cb = new Bootstrap()
                 .Group(this.group)
                 .Channel<TcpChannel>();
-            ConnectTimeoutInternal(cb);
+            ConnectTimeout0(cb);
         }
 
-        static void ConnectTimeoutInternal(Bootstrap cb)
+        static void ConnectTimeout0(Bootstrap cb)
         {
             var handler = new TestHandler();
             cb.Handler(handler)
@@ -58,10 +58,10 @@ namespace DotNetty.Transport.Libuv.Tests
             Bootstrap cb = new Bootstrap()
                 .Group(this.group)
                 .Channel<TcpChannel>();
-            ConnectRefusedInternal(cb);
+            ConnectRefused0(cb);
         }
 
-        static void ConnectRefusedInternal(Bootstrap cb)
+        static void ConnectRefused0(Bootstrap cb)
         {
             var handler = new TestHandler();
             cb.Handler(handler);

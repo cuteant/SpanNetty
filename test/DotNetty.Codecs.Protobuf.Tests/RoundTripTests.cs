@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs.Protobuf.Tests
 {
+    using System;
     using System.Collections.Generic;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels.Embedded;
@@ -12,7 +13,7 @@ namespace DotNetty.Codecs.Protobuf.Tests
 
     public class RoundTripTests
     {
-        static IEnumerable<object[]> GetAddressBookCases()
+        public static IEnumerable<object[]> GetAddressBookCases()
         {
             var person = new Person
             {

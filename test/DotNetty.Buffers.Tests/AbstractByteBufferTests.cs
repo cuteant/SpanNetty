@@ -1800,7 +1800,7 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void Equals1()
+        public void TestEquals()
         {
             Assert.False(this.buffer.Equals(null));
             Assert.False(this.buffer.Equals(new object()));

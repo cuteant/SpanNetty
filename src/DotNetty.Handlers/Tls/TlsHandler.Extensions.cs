@@ -40,18 +40,18 @@ namespace DotNetty.Handlers.Tls
         // Enable client certificate function only if ClientCertificateRequired is true in the configuration
         if (serverSettings.ClientCertificateMode == ClientCertificateMode.NoCertificate)
         {
-          return new SslStream(stream, true);
+          return new SslStream(stream, false);
         }
 #if DESKTOPCLR
         // SSL 版本 2 协议不支持客户端证书
         if (serverSettings.EnabledProtocols == SslProtocols.Ssl2)
         {
-          return new SslStream(stream, true);
+          return new SslStream(stream, false);
         }
 #endif
 
         return new SslStream(stream,
-            leaveInnerStreamOpen: true,
+            leaveInnerStreamOpen: false,
             userCertificateValidationCallback: (sender, certificate, chain, sslPolicyErrors) =>
             {
               if (certificate == null)
@@ -84,7 +84,7 @@ namespace DotNetty.Handlers.Tls
       {
         var clientSettings = (ClientTlsSettings)settings;
         return new SslStream(stream,
-            leaveInnerStreamOpen: true,
+            leaveInnerStreamOpen: false,
             userCertificateValidationCallback: (sender, certificate, chain, sslPolicyErrors) =>
             {
               if (clientSettings.ServerCertificateValidation != null)

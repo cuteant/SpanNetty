@@ -16,6 +16,7 @@
     <PackageReference Include="xunit.analyzers" Version="$(xUnitAnalyzersPackageVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitRunnerVsPackageVersion)" />
     <PackageReference Include="Moq" Version="$(MoqPackageVersion)" />
+    <DotNetCliToolReference Include="dotnet-xunit" Version="$(xUnitDotNetPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>

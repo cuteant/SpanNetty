@@ -28,10 +28,8 @@ namespace DotNetty.Handlers.Tls
       : this(
 #if NET40
           SslProtocols.Default
-#elif DESKTOPCLR
-          SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12
 #else
-          SslProtocols.Tls12 | SslProtocols.Tls11
+          SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12
 #endif
           , checkCertificateRevocation, certificates, targetHost)
     {

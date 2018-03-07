@@ -38,10 +38,10 @@ namespace DotNetty.Transport.Libuv.Tests
             Bootstrap cb = new Bootstrap()
                 .Group(this.group)
                 .Channel<TcpChannel>();
-            this.SingleCompositeBufferWriteInternal(sb, cb);
+            this.SingleCompositeBufferWrite0(sb, cb);
         }
 
-        void SingleCompositeBufferWriteInternal(ServerBootstrap sb, Bootstrap cb)
+        void SingleCompositeBufferWrite0(ServerBootstrap sb, Bootstrap cb)
         {
             sb.ChildHandler(new ActionChannelInitializer<TcpChannel>(channel =>
             {

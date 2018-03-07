@@ -24,14 +24,8 @@ namespace DotNetty.Handlers.Tls
       : this(certificate, negotiateClientCertificate, checkCertificateRevocation,
 #if NET40
           SslProtocols.Default)
-#elif DESKTOPCLR
-          SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12)
-#else
-#if DEBUG
-          SslProtocols.Tls12 | SslProtocols.Tls11)  // 注意 xunit.2.3.1 tls1.0测试无法通过
 #else
           SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls)
-#endif
 #endif
     {
     }
