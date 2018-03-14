@@ -480,7 +480,7 @@ namespace DotNetty.Transport.Channels
                 return this.CloseAsync(new ClosedChannelException(), false);
             }
 
-            Task CloseAsync(Exception cause, bool notify)
+            protected Task CloseAsync(Exception cause, bool notify)
             {
                 var promise = new TaskCompletionSource();
                 if (!promise.SetUncancellable())
@@ -773,9 +773,9 @@ namespace DotNetty.Transport.Channels
                 {
                     this.channel.DoWrite(outboundBuffer);
                 }
-                catch (Exception t)
+                catch (Exception ex)
                 {
-                    outboundBuffer.FailFlushed(t, true);
+                    Util.CompleteChannelCloseTaskSafely(this.channel, this.CloseAsync(new ClosedChannelException("Failed to write", ex), false));
                 }
                 finally
                 {
