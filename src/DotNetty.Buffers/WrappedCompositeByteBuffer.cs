@@ -528,9 +528,17 @@ namespace DotNetty.Buffers
 
         public override int SetCharSequence(int index, ICharSequence sequence, Encoding encoding) => this.wrapped.SetCharSequence(index, sequence, encoding);
 
+        public override string GetString(int index, int length, Encoding encoding) => this.wrapped.GetString(index, length, encoding);
+
+        public override string ReadString(int length, Encoding encoding) => this.wrapped.ReadString(length, encoding);
+
+        public override int SetString(int index, string value, Encoding encoding) => this.wrapped.SetString(index, value, encoding);
+
         public override IByteBuffer ReadBytes(Stream destination, int length) => this.wrapped.ReadBytes(destination, length);
 
         public override int WriteCharSequence(ICharSequence sequence, Encoding encoding) => this.wrapped.WriteCharSequence(sequence, encoding);
+
+        public override int WriteString(string value, Encoding encoding) => this.wrapped.WriteString(value, encoding);
 
         public override IByteBuffer SkipBytes(int length)
         {

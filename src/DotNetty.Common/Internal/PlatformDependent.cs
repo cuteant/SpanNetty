@@ -56,8 +56,8 @@ namespace DotNetty.Common.Internal
             }
 
             fixed (byte* array1 = bytes1)
-            fixed (byte* array2 = bytes2)
-                return PlatformDependent0.ByteArrayEquals(array1, startPos1, array2, startPos2, length);
+                fixed (byte* array2 = bytes2)
+                    return PlatformDependent0.ByteArrayEquals(array1, startPos1, array2, startPos2, length);
         }
 
         [MethodImpl(InlineMethod.Value)]
