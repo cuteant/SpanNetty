@@ -221,4 +221,11 @@ namespace DotNetty.Transport.Libuv
 
         protected override void DoWrite(ChannelOutboundBuffer input) => throw new NotSupportedException($"{nameof(TcpServerChannel)}");
     }
+
+    internal interface IServerNativeUnsafe
+    {
+        void Accept(RemoteConnection connection);
+
+        void Accept(NativeHandle handle);
+    }
 }

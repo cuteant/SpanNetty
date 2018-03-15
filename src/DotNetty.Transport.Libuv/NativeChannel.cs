@@ -289,11 +289,13 @@ namespace DotNetty.Transport.Libuv
                 }
             }
 
-            internal async void CloseSafe()
+            internal void CloseSafe() => CloseSafe(this.channel, this.channel.CloseAsync());
+
+            internal static async void CloseSafe(object channelObject, Task closeTask)
             {
                 try
                 {
-                    await this.CloseAsync();
+                    await closeTask;
                 }
                 catch (TaskCanceledException)
                 {
@@ -302,24 +304,53 @@ namespace DotNetty.Transport.Libuv
                 {
                     if (Logger.DebugEnabled)
                     {
-                        Logger.Debug($"Failed to close channel {this.channel} cleanly.", ex);
+                        Logger.Debug($"Failed to close channel {channelObject} cleanly.", ex);
                     }
                 }
             }
 
-            // Write request callback from libuv thread, note this is only called
-            // if there are errors in write operations.
-            void INativeUnsafe.FinishWrite(OperationException error)
+            protected sealed override void Flush0()
             {
-                ChannelOutboundBuffer input = this.OutboundBuffer;
-                var exception = new ChannelException(error);
-                input?.FailFlushed(exception, true);
-                this.channel.Pipeline.FireExceptionCaught(exception);
+                var ch = this.channel;
+                if (!ch.IsInState(StateFlags.WriteScheduled))
+                {
+                    base.Flush0();
+                }
+            }
+
+            // Write request callback from libuv thread
+            void INativeUnsafe.FinishWrite(int bytesWritten, OperationException error)
+            {
+                var ch = this.channel;
+                bool resetWritePending = ch.TryResetState(StateFlags.WriteScheduled);
+                Debug.Assert(resetWritePending);
+
+                try
+                {
+                    ChannelOutboundBuffer input = this.OutboundBuffer;
+                    if (error != null)
+                    {
+                        input.FailFlushed(error, true);
+                        CloseSafe(ch, this.CloseAsync(new ChannelException("Failed to write", error), false));
+                    }
+                    else
+                    {
+                        if (bytesWritten > 0)
+                        {
+                            input.RemoveBytes(bytesWritten);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    CloseSafe(ch, this.CloseAsync(new ClosedChannelException("Failed to write", ex), false));
+                }
+                this.Flush0();
             }
         }
     }
 
-    interface INativeUnsafe
+    internal interface INativeUnsafe
     {
         IntPtr UnsafeHandle { get; }
 
@@ -329,13 +360,6 @@ namespace DotNetty.Transport.Libuv
 
         void FinishRead(ReadOperation readOperation);
 
-        void FinishWrite(OperationException error);
-    }
-    
-    interface IServerNativeUnsafe
-    {
-        void Accept(RemoteConnection connection);
-
-        void Accept(NativeHandle handle);
+        void FinishWrite(int bytesWritten, OperationException error);
     }
 }
