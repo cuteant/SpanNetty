@@ -9,6 +9,8 @@ namespace DotNetty.Codecs.Http.Tests
     using DotNetty.Transport.Channels.Embedded;
     using Xunit;
 
+    using static HttpResponseStatus;
+
     public sealed class HttpServerKeepAliveHandlerTest
     {
         const string RequestKeepAlive = "REQUEST_KEEP_ALIVE";
@@ -19,21 +21,21 @@ namespace DotNetty.Codecs.Http.Tests
 
         public static IEnumerable<object[]> GetKeepAliveCases() => new[]
         {
-            new object[] { true, HttpVersion.Http10, HttpResponseStatus.OK, RequestKeepAlive, SetResponseLength, HttpHeaderValues.KeepAlive },          //  0
-            new object[] { true, HttpVersion.Http10, HttpResponseStatus.OK, RequestKeepAlive, SetMultipart, HttpHeaderValues.KeepAlive },                //  1
-            new object[] { false, HttpVersion.Http10, HttpResponseStatus.OK, null, SetResponseLength, null },                             //  2
-            new object[] { true, HttpVersion.Http11, HttpResponseStatus.OK, RequestKeepAlive, SetResponseLength, null },                //  3
-            new object[] { false, HttpVersion.Http11, HttpResponseStatus.OK, RequestKeepAlive, SetResponseLength, HttpHeaderValues.Close },              //  4
-            new object[] { true, HttpVersion.Http11, HttpResponseStatus.OK, RequestKeepAlive, SetMultipart, null },                      //  5
-            new object[] { true, HttpVersion.Http11, HttpResponseStatus.OK, RequestKeepAlive, SetChunked, null },                        //  6
-            new object[] { false, HttpVersion.Http11, HttpResponseStatus.OK, null, SetResponseLength, null },                             //  7
-            new object[] { false, HttpVersion.Http10, HttpResponseStatus.OK, RequestKeepAlive, NotSelfDefinedMsgLength, null },       //  8
-            new object[] { false, HttpVersion.Http10, HttpResponseStatus.OK, null, NotSelfDefinedMsgLength, null },                     //  9
-            new object[] { false, HttpVersion.Http11, HttpResponseStatus.OK, RequestKeepAlive, NotSelfDefinedMsgLength, null },       // 10
-            new object[] { false, HttpVersion.Http11, HttpResponseStatus.OK, null, NotSelfDefinedMsgLength, null },                     // 11
-            new object[] { false, HttpVersion.Http10, HttpResponseStatus.OK, RequestKeepAlive, SetResponseLength, null },               // 12
-            new object[] { true, HttpVersion.Http11, HttpResponseStatus.NoContent, RequestKeepAlive, NotSelfDefinedMsgLength, null}, // 13
-            new object[] { false, HttpVersion.Http10, HttpResponseStatus.NoContent, null, NotSelfDefinedMsgLength, null}               // 14
+            new object[] { true, HttpVersion.Http10, OK, RequestKeepAlive, SetResponseLength, HttpHeaderValues.KeepAlive }, //  0
+            new object[] { true, HttpVersion.Http10, OK, RequestKeepAlive, SetMultipart, HttpHeaderValues.KeepAlive },      //  1
+            new object[] { false, HttpVersion.Http10, OK, null, SetResponseLength, null },                                  //  2
+            new object[] { true, HttpVersion.Http11, OK, RequestKeepAlive, SetResponseLength, null },                       //  3
+            new object[] { false, HttpVersion.Http11, OK, RequestKeepAlive, SetResponseLength, HttpHeaderValues.Close },    //  4
+            new object[] { true, HttpVersion.Http11, OK, RequestKeepAlive, SetMultipart, null },                            //  5
+            new object[] { true, HttpVersion.Http11, OK, RequestKeepAlive, SetChunked, null },                              //  6
+            new object[] { false, HttpVersion.Http11, OK, null, SetResponseLength, null },                                  //  7
+            new object[] { false, HttpVersion.Http10, OK, RequestKeepAlive, NotSelfDefinedMsgLength, null },                //  8
+            new object[] { false, HttpVersion.Http10, OK, null, NotSelfDefinedMsgLength, null },                            //  9
+            new object[] { false, HttpVersion.Http11, OK, RequestKeepAlive, NotSelfDefinedMsgLength, null },                // 10
+            new object[] { false, HttpVersion.Http11, OK, null, NotSelfDefinedMsgLength, null },                            // 11
+            new object[] { false, HttpVersion.Http10, OK, RequestKeepAlive, SetResponseLength, null },                      // 12
+            new object[] { true, HttpVersion.Http11, NoContent, RequestKeepAlive, NotSelfDefinedMsgLength, null},           // 13
+            new object[] { false, HttpVersion.Http10, NoContent, null, NotSelfDefinedMsgLength, null}                       // 14
         };
 
         [Theory]
@@ -65,7 +67,9 @@ namespace DotNetty.Codecs.Http.Tests
 
         [Theory]
         [MemberData(nameof(GetKeepAliveCases))]
+#pragma warning disable xUnit1026 // Theory methods should use all of their parameters
         public void ConnectionCloseHeaderHandledCorrectly(bool isKeepAliveResponseExpected, HttpVersion httpVersion, HttpResponseStatus responseStatus, string sendKeepAlive, int setSelfDefinedMessageLength, ICharSequence setResponseConnection)
+#pragma warning restore xUnit1026 // Theory methods should use all of their parameters
         {
             var channel = new EmbeddedChannel(new HttpServerKeepAliveHandler());
             var response = new DefaultFullHttpResponse(httpVersion, responseStatus);
@@ -92,7 +96,7 @@ namespace DotNetty.Codecs.Http.Tests
             var finalRequest = new DefaultFullHttpRequest(httpVersion, HttpMethod.Get, "/v1/foo/bar");
             HttpUtil.SetKeepAlive(finalRequest, false);
             var response = new DefaultFullHttpResponse(httpVersion, responseStatus);
-            var informationalResp = new DefaultFullHttpResponse(httpVersion, HttpResponseStatus.Processing);
+            var informationalResp = new DefaultFullHttpResponse(httpVersion, Processing);
             HttpUtil.SetKeepAlive(response, true);
             HttpUtil.SetContentLength(response, 0);
             HttpUtil.SetKeepAlive(informationalResp, true);

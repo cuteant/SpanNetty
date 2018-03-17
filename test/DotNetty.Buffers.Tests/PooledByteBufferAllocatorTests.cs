@@ -142,16 +142,16 @@ namespace DotNetty.Buffers.Tests
         {
             var allocator = new PooledByteBufferAllocator(true, 1, 1, 8192, 11, 0, 0, 0);
             // Huge allocation
-            AllocNotNullInternal(allocator, allocator.Metric.ChunkSize + 1);
+            AllocNotNull0(allocator, allocator.Metric.ChunkSize + 1);
             // Normal allocation
-            AllocNotNullInternal(allocator, 1024);
+            AllocNotNull0(allocator, 1024);
             // Small allocation
-            AllocNotNullInternal(allocator, 512);
+            AllocNotNull0(allocator, 512);
             // Tiny allocation
-            AllocNotNullInternal(allocator, 1);
+            AllocNotNull0(allocator, 1);
         }
 
-        static void AllocNotNullInternal(PooledByteBufferAllocator allocator, int capacity)
+        static void AllocNotNull0(PooledByteBufferAllocator allocator, int capacity)
         {
             IByteBuffer buffer = allocator.HeapBuffer(capacity);
             Assert.NotNull(buffer.Allocator);

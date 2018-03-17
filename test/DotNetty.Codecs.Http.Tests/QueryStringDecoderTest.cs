@@ -32,7 +32,7 @@ namespace DotNetty.Codecs.Http.Tests
             d = new QueryStringDecoder("/foo?a=b=c");
             Assert.Equal("/foo", d.Path);
             Assert.Equal(1, d.Parameters.Count);
-            Assert.Equal(1, d.Parameters["a"].Count);
+            Assert.Single(d.Parameters["a"]);
             Assert.Equal("b=c", d.Parameters["a"][0]);
 
             d = new QueryStringDecoder("/foo?a=1&a=2");
@@ -175,7 +175,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.True(parameters.ContainsKey("1"));
             List<string> param = parameters["1"];
             Assert.NotNull(param);
-            Assert.Equal(1, param.Count);
+            Assert.Single(param);
             Assert.Equal("2", param[0]);
         }
 
@@ -243,7 +243,7 @@ namespace DotNetty.Codecs.Http.Tests
 
                 foreach (string value in expectedValues)
                 {
-                    Assert.True(values.Contains(value));
+                    Assert.Contains(value, values);
                 }
             }
         }
@@ -260,17 +260,17 @@ namespace DotNetty.Codecs.Http.Tests
 
             KeyValuePair<string, List<string>> entry = parameters.ElementAt(0);
             Assert.Equal("param1", entry.Key);
-            Assert.Equal(1, entry.Value.Count);
+            Assert.Single(entry.Value);
             Assert.Equal("value1", entry.Value[0]);
 
             entry = parameters.ElementAt(1);
             Assert.Equal("param2", entry.Key);
-            Assert.Equal(1, entry.Value.Count);
+            Assert.Single(entry.Value);
             Assert.Equal("value2", entry.Value[0]);
 
             entry = parameters.ElementAt(2);
             Assert.Equal("param3", entry.Key);
-            Assert.Equal(1, entry.Value.Count);
+            Assert.Single(entry.Value);
             Assert.Equal("value3", entry.Value[0]);
         }
 
@@ -286,17 +286,17 @@ namespace DotNetty.Codecs.Http.Tests
 
             KeyValuePair<string, List<string>> entry = parameters.ElementAt(0);
             Assert.Equal("param1", entry.Key);
-            Assert.Equal(1, entry.Value.Count);
+            Assert.Single(entry.Value);
             Assert.Equal("value1", entry.Value[0]);
 
             entry = parameters.ElementAt(1);
             Assert.Equal("param2", entry.Key);
-            Assert.Equal(1, entry.Value.Count);
+            Assert.Single(entry.Value);
             Assert.Equal("value2", entry.Value[0]);
 
             entry = parameters.ElementAt(2);
             Assert.Equal("param3", entry.Key);
-            Assert.Equal(1, entry.Value.Count);
+            Assert.Single(entry.Value);
             Assert.Equal("value3", entry.Value[0]);
         }
 
@@ -314,17 +314,17 @@ namespace DotNetty.Codecs.Http.Tests
 
             KeyValuePair<string, List<string>> entry = parameters.ElementAt(0);
             Assert.Equal("param1", entry.Key);
-            Assert.Equal(1, entry.Value.Count);
+            Assert.Single(entry.Value);
             Assert.Equal("value1", entry.Value[0]);
 
             entry = parameters.ElementAt(1);
             Assert.Equal("param2", entry.Key);
-            Assert.Equal(1, entry.Value.Count);
+            Assert.Single(entry.Value);
             Assert.Equal("value2", entry.Value[0]);
 
             entry = parameters.ElementAt(2);
             Assert.Equal("param3", entry.Key);
-            Assert.Equal(1, entry.Value.Count);
+            Assert.Single(entry.Value);
             Assert.Equal("value3", entry.Value[0]);
         }
 
@@ -340,12 +340,12 @@ namespace DotNetty.Codecs.Http.Tests
 
             KeyValuePair<string, List<string>> entry = parameters.ElementAt(0);
             Assert.Equal("query", entry.Key);
-            Assert.Equal(1, entry.Value.Count);
+            Assert.Single(entry.Value);
             Assert.Equal("name", entry.Value[0]);
 
             entry = parameters.ElementAt(1);
             Assert.Equal("value", entry.Key);
-            Assert.Equal(1, entry.Value.Count);
+            Assert.Single(entry.Value);
             Assert.Equal("123", entry.Value[0]);
         }
 

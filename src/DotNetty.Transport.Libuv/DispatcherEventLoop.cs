@@ -14,7 +14,7 @@ namespace DotNetty.Transport.Libuv
     sealed class DispatcherEventLoop : LoopExecutor, IEventLoop
     {
         PipeListener pipeListener;
-        TcpServerChannel.IServerNativeUnsafe nativeUnsafe;
+        IServerNativeUnsafe nativeUnsafe;
 
         internal DispatcherEventLoop(IEventLoopGroup parent, string threadName = null)
             : base(parent, threadName)
@@ -29,7 +29,7 @@ namespace DotNetty.Transport.Libuv
 
         internal string PipeName { get; }
 
-        internal void Register(TcpServerChannel.IServerNativeUnsafe serverChannel)
+        internal void Register(IServerNativeUnsafe serverChannel)
         {
             Debug.Assert(serverChannel != null);
             this.nativeUnsafe = serverChannel;

@@ -221,7 +221,7 @@ namespace DotNetty.Codecs.Http.Tests
             // Read the partial content.
             var content = ch.ReadInbound<IHttpContent>();
             Assert.Equal("12345678", content.Content.ToString(Encoding.ASCII));
-            Assert.IsNotType<ILastHttpContent>(content);
+            Assert.Null(content as ILastHttpContent);
             content.Release();
 
             res = ch.ReadInbound<IHttpResponse>();
@@ -280,7 +280,7 @@ namespace DotNetty.Codecs.Http.Tests
             // Read the partial content.
             var content = ch.ReadInbound<IHttpContent>();
             Assert.Equal("12345678", content.Content.ToString(Encoding.ASCII));
-            Assert.IsNotType<ILastHttpContent>(content);
+            Assert.Null(content as ILastHttpContent);
             content.Release();
 
             content = ch.ReadInbound<IHttpContent>();
@@ -439,11 +439,11 @@ namespace DotNetty.Codecs.Http.Tests
 
             for (int i = 1; i < data.Length; i++)
             {
-                LastResponseWithTrailingHeaderFragmentedInternal(data, i);
+                LastResponseWithTrailingHeaderFragmented0(data, i);
             }
         }
 
-        static void LastResponseWithTrailingHeaderFragmentedInternal(byte[] content, int fragmentSize)
+        static void LastResponseWithTrailingHeaderFragmented0(byte[] content, int fragmentSize)
         {
             var ch = new EmbeddedChannel(new HttpResponseDecoder());
             const int HeaderLength = 47;
@@ -529,11 +529,11 @@ namespace DotNetty.Codecs.Http.Tests
 
             for (int i = 1; i < data.Length; i++)
             {
-                ResponseWithContentLengthFragmentedInternal(data, i);
+                ResponseWithContentLengthFragmented0(data, i);
             }
         }
 
-        static void ResponseWithContentLengthFragmentedInternal(byte[] header, int fragmentSize)
+        static void ResponseWithContentLengthFragmented0(byte[] header, int fragmentSize)
         {
             var ch = new EmbeddedChannel(new HttpResponseDecoder());
             // split up the header
@@ -614,7 +614,7 @@ namespace DotNetty.Codecs.Http.Tests
             byte[] otherData = { 1, 2, 3, 4 };
 
             var ch = new EmbeddedChannel(new HttpResponseDecoder());
-            var compositeBuffer = Unpooled.WrappedBuffer(data, otherData);
+            IByteBuffer compositeBuffer = Unpooled.WrappedBuffer(data, otherData);
             ch.WriteInbound(compositeBuffer);
 
             var res = ch.ReadInbound<IHttpResponse>();

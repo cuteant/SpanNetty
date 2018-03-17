@@ -368,7 +368,7 @@ namespace DotNetty.Codecs.Http.Tests
             }
             catch (AggregateException e)
             {
-                Assert.Equal(1, e.InnerExceptions.Count);
+                Assert.Single(e.InnerExceptions);
                 Assert.IsType<EncoderException>(e.InnerExceptions[0]);
                 Exception exception = e.InnerExceptions[0];
                 Assert.IsType<InvalidOperationException>(exception.InnerException);

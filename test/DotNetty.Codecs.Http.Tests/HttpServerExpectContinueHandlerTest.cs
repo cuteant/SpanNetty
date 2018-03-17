@@ -63,7 +63,7 @@ namespace DotNetty.Codecs.Http.Tests
             ReferenceCountUtil.Release(response);
 
             // request was swallowed
-            Assert.Equal(0, channel.InboundMessages.Count);
+            Assert.Empty(channel.InboundMessages);
             Assert.False(channel.FinishAndReleaseAll());
         }
     }

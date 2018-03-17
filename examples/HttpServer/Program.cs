@@ -32,7 +32,6 @@ namespace HttpServer
             bool useLibuv = ServerSettings.UseLibuv;
             Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
 
-            GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
             Console.WriteLine($"Server garbage collection: {GCSettings.IsServerGC}");
             Console.WriteLine($"Current latency mode for garbage collection: {GCSettings.LatencyMode}");
 

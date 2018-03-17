@@ -42,7 +42,7 @@ namespace DotNetty.Transport.Libuv.Native
         int count;
         int size;
 
-        NativeChannel.INativeUnsafe nativeUnsafe;
+        INativeUnsafe nativeUnsafe;
 
         public WriteRequest(ThreadLocalPool.Handle recyclerHandle)
             : base(uv_req_type.UV_WRITE, BufferSize * MaximumLimit)
@@ -58,7 +58,7 @@ namespace DotNetty.Transport.Libuv.Native
             this.handles = new List<GCHandle>();
         }
 
-        internal void DoWrite(NativeChannel.INativeUnsafe channelUnsafe, ChannelOutboundBuffer input)
+        internal void DoWrite(INativeUnsafe channelUnsafe, ChannelOutboundBuffer input)
         {
             Debug.Assert(this.nativeUnsafe == null);
 
@@ -178,7 +178,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         void OnWriteCallback(int status)
         {
-            NativeChannel.INativeUnsafe @unsafe = this.nativeUnsafe;
+            INativeUnsafe @unsafe = this.nativeUnsafe;
             int bytesWritten = this.size;
             this.Release();
 

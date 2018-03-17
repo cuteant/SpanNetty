@@ -20,12 +20,29 @@ namespace DotNetty.Microbench
         {
             typeof(PooledByteBufferAllocatorBenchmark),
             typeof(UnpooledByteBufferAllocatorBenchmark),
+
+
             typeof(ByteBufferBenchmark),
+            typeof(PooledByteBufferBenchmark),
             typeof(UnpooledByteBufferBenchmark),
             typeof(PooledByteBufferBenchmark),
             typeof(ByteBufUtilBenchmark),
+
+            typeof(DateFormatterBenchmark),
+
+            typeof(AsciiStringBenchmark),
+
             typeof(FastThreadLocalBenchmark),
-            typeof(SingleThreadEventExecutorBenchmark)
+            typeof(SingleThreadEventExecutorBenchmark),
+
+            typeof(HeadersBenchmark),
+
+            typeof(ClientCookieDecoderBenchmark),
+            typeof(HttpRequestDecoderBenchmark),
+            typeof(HttpRequestEncoderInsertBenchmark),
+            typeof(WriteBytesVsShortOrMediumBenchmark),
+
+            typeof(PlatformDependentBenchmark)
         };
 
         static void Main(string[] args)

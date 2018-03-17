@@ -348,7 +348,7 @@ namespace DotNetty.Codecs.Http.Tests
             headers.Add(HeaderName, new List<ICharSequence> { (StringCharSequence)" c, d \t" });
 
             var list = new List<ICharSequence>(headers.ValueCharSequenceIterator(new AsciiString("foo")));
-            Assert.Equal(0, list.Count);
+            Assert.Empty(list);
             AssertValueIterator(headers.ValueCharSequenceIterator(HeaderName));
         }
 

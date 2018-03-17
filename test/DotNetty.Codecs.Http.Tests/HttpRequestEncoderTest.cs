@@ -94,7 +94,7 @@ namespace DotNetty.Codecs.Http.Tests
             IByteBuffer buf = Unpooled.Buffer();
             buf.Release();
             var exception = Assert.Throws<AggregateException>(() => channel.WriteAndFlushAsync(buf).Wait());
-            Assert.Equal(1, exception.InnerExceptions.Count);
+            Assert.Single(exception.InnerExceptions);
             Assert.IsType<EncoderException>(exception.InnerExceptions[0]);
             Assert.IsType<IllegalReferenceCountException>(exception.InnerExceptions[0].InnerException);
             channel.FinishAndReleaseAll();

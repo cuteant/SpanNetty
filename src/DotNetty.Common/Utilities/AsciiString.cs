@@ -235,7 +235,7 @@ namespace DotNetty.Common.Utilities
             // We rely on the array access itself to pick up the array out of bounds conditions
             if (index < 0 || index >= this.length)
             {
-                throw new IndexOutOfRangeException($"index: {index} must be in the range [0,{this.length})");
+                ThrowIndexOutOfRangeException($"index: {index} must be in the range [0,{this.length})");
             }
 
             return this.value[index + this.offset];

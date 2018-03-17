@@ -28,7 +28,7 @@ namespace DotNetty.Codecs.Http.Tests.Cookies
 
             var regex = new Regex(Result, RegexOptions.Compiled);
             MatchCollection matches = regex.Matches(encodedCookie);
-            Assert.Equal(1, matches.Count);
+            Assert.Single(matches);
 
             Match match = matches[0];
             Assert.NotNull(match);

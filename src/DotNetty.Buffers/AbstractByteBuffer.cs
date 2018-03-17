@@ -243,7 +243,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         protected internal void EnsureWritable0(int minWritableBytes)
         {
             this.EnsureAccessible();
