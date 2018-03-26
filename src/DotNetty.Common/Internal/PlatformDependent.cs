@@ -224,13 +224,11 @@ namespace DotNetty.Common.Internal
         static int HashCodeAsciiSanitizsByte(char value) => value & 0x1f;
 
 #if !NET40
-        public static unsafe void CopyMemory(byte[] src, int srcIndex, byte[] dst, int dstIndex, int length)
+        public static void CopyMemory(byte[] src, int srcIndex, byte[] dst, int dstIndex, int length)
         {
             if (length > 0)
             {
-                fixed (byte* source = &src[srcIndex])
-                fixed (byte* destination = &dst[dstIndex])
-                    Unsafe.CopyBlock(destination, source, unchecked((uint)length));
+                Unsafe.CopyBlockUnaligned(ref dst[dstIndex], ref src[srcIndex], unchecked((uint)length));
             }
         }
 
@@ -238,7 +236,7 @@ namespace DotNetty.Common.Internal
         {
             if (length > 0)
             {
-                Unsafe.CopyBlock(dst, src, unchecked((uint)length));
+                Unsafe.CopyBlockUnaligned(dst, src, unchecked((uint)length));
             }
         }
 
@@ -247,7 +245,7 @@ namespace DotNetty.Common.Internal
             if (length > 0)
             {
                 fixed (byte* destination = &dst[dstIndex])
-                    Unsafe.CopyBlock(destination, src, unchecked((uint)length));
+                    Unsafe.CopyBlockUnaligned(destination, src, unchecked((uint)length));
             }
         }
 
@@ -256,16 +254,15 @@ namespace DotNetty.Common.Internal
             if (length > 0)
             {
                 fixed (byte* source = &src[srcIndex])
-                    Unsafe.CopyBlock(dst, source, unchecked((uint)length));
+                    Unsafe.CopyBlockUnaligned(dst, source, unchecked((uint)length));
             }
         }
 
-        public static unsafe void Clear(byte[] src, int srcIndex, int length)
+        public static void Clear(byte[] src, int srcIndex, int length)
         {
             if (length > 0)
             {
-                fixed (void* source = &src[srcIndex])
-                    Unsafe.InitBlock(source, default(byte), unchecked((uint)length));
+                Unsafe.InitBlockUnaligned(ref src[srcIndex], default(byte), unchecked((uint)length));
             }
         }
 
@@ -273,16 +270,15 @@ namespace DotNetty.Common.Internal
         {
             if (length > 0)
             {
-                Unsafe.InitBlock(src, value, unchecked((uint)length));
+                Unsafe.InitBlockUnaligned(src, value, unchecked((uint)length));
             }
         }
 
-        public static unsafe void SetMemory(byte[] src, int srcIndex, int length, byte value)
+        public static void SetMemory(byte[] src, int srcIndex, int length, byte value)
         {
             if (length > 0)
             {
-                fixed (byte* source = &src[srcIndex])
-                    Unsafe.InitBlock(source, value, unchecked((uint)length));
+                Unsafe.InitBlockUnaligned(ref src[srcIndex], value, unchecked((uint)length));
             }
         }
 #endif
