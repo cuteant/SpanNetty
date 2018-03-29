@@ -75,7 +75,7 @@ namespace DotNetty.Buffers
             if (null == array || length == 0) { return Empty; }
             if (MathUtil.IsOutOfBounds(offset, length, array.Length))
             {
-                ThrowHelper.ThrowIndexOutOfRangeException($"offset: {offset}, length: {length} (expected: range(0, {array.Length}))");
+                ThrowHelper.ThrowIndexOutOfRangeException_Index(offset, length, array.Length);
             }
 
             if (offset == 0)
@@ -94,7 +94,7 @@ namespace DotNetty.Buffers
             if (null == bufferManager) { bufferManager = DefaultBufferPool; }
             if (MathUtil.IsOutOfBounds(offset, length, array.Length))
             {
-                ThrowHelper.ThrowIndexOutOfRangeException($"offset: {offset}, length: {length} (expected: range(0, {array.Length}))");
+                ThrowHelper.ThrowIndexOutOfRangeException_Index(offset, length, array.Length);
             }
 
             if (offset == 0)
