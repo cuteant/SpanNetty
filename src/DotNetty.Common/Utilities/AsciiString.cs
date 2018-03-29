@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 // ReSharper disable ConvertToAutoPropertyWhenPossible
+// ReSharper disable UseStringInterpolation
 namespace DotNetty.Common.Utilities
 {
     using System;
@@ -78,7 +79,7 @@ namespace DotNetty.Common.Utilities
             {
                 if (MathUtil.IsOutOfBounds(start, length, value.Length))
                 {
-                    throw new IndexOutOfRangeException($"expected: 0 <= start({start}) <= start + length({length}) <= value.length({value.Length})");
+                    ThrowIndexOutOfRangeException_Start(start, length, value.Length);
                 }
 
                 this.value = value;
@@ -96,7 +97,7 @@ namespace DotNetty.Common.Utilities
         {
             if (MathUtil.IsOutOfBounds(start, length, value.Length))
             {
-                throw new IndexOutOfRangeException($"expected: 0 <= start({start}) <= start + length({length}) <= value.length({value.Length})");
+                ThrowIndexOutOfRangeException_Start(start, length, value.Length);
             }
 
             this.value = new byte[length];
@@ -127,7 +128,7 @@ namespace DotNetty.Common.Utilities
         {
             if (MathUtil.IsOutOfBounds(start, length, value.Count))
             {
-                ThrowIndexOutOfRangeException($"expected: 0 <= start({start}) <= start + length({length}) <= value.length({value.Count})");
+                ThrowIndexOutOfRangeException_Start(start, length, value.Count);
             }
 
             this.value = new byte[length];
@@ -165,7 +166,7 @@ namespace DotNetty.Common.Utilities
         {
             if (MathUtil.IsOutOfBounds(start, length, value.Length))
             {
-                ThrowIndexOutOfRangeException($"expected: 0 <= start({start}) <= start + length({length}) <= value.length({value.Length})");
+                ThrowIndexOutOfRangeException_Start(start, length, value.Length);
             }
 
             this.value = new byte[value.Length];
@@ -184,7 +185,7 @@ namespace DotNetty.Common.Utilities
         {
             if (MathUtil.IsOutOfBounds(index, count, this.length))
             {
-                ThrowIndexOutOfRangeException($"expected: 0 <= index({index} <= start + length({count}) <= length({this.length})");
+                ThrowIndexOutOfRangeException_Index(index, count, this.length);
             }
             return this.ForEachByte0(index, count, visitor);
         }
@@ -209,7 +210,7 @@ namespace DotNetty.Common.Utilities
         {
             if (MathUtil.IsOutOfBounds(index, count, this.length))
             {
-                ThrowIndexOutOfRangeException($"expected: 0 <= index({index} <= start + length({count}) <= length({this.length})");
+                ThrowIndexOutOfRangeException_Index(index, count, this.length);
             }
 
             return this.ForEachByteDesc0(index, count, visitor);
@@ -235,7 +236,7 @@ namespace DotNetty.Common.Utilities
             // We rely on the array access itself to pick up the array out of bounds conditions
             if (index < 0 || index >= this.length)
             {
-                ThrowIndexOutOfRangeException($"index: {index} must be in the range [0,{this.length})");
+                ThrowIndexOutOfRangeException_Index(index, this.length);
             }
 
             return this.value[index + this.offset];
@@ -278,7 +279,7 @@ namespace DotNetty.Common.Utilities
 
             if (MathUtil.IsOutOfBounds(srcIdx, count, this.length))
             {
-                throw new IndexOutOfRangeException($"expected: 0 <= srcIdx({srcIdx}) <= srcIdx + length({count}) <= srcLen({this.length})");
+                ThrowIndexOutOfRangeException_SrcIndex(srcIdx, count, this.length);
             }
             if (count == 0)
             {
@@ -401,7 +402,7 @@ namespace DotNetty.Common.Utilities
 
             if (MathUtil.IsOutOfBounds(start, count, this.length))
             {
-                throw new IndexOutOfRangeException($"expected: 0 <= start({start}) <= srcIdx + length({count}) <= srcLen({this.length})");
+                ThrowIndexOutOfRangeException_SrcIndex(start, count, this.length);
             }
 
             var buffer = new char[count];
@@ -419,7 +420,7 @@ namespace DotNetty.Common.Utilities
 
             if (MathUtil.IsOutOfBounds(srcIdx, count, this.length))
             {
-                throw new IndexOutOfRangeException($"expected: 0 <= srcIdx({srcIdx}) <= srcIdx + length({count}) <= srcLen({this.length})");
+                ThrowIndexOutOfRangeException_SrcIndex(srcIdx, count, this.length);
             }
 
             int dstEnd = dstIdx + count;
@@ -437,7 +438,7 @@ namespace DotNetty.Common.Utilities
         {
             if (MathUtil.IsOutOfBounds(start, end - start, this.length))
             {
-                throw new IndexOutOfRangeException($"expected: 0 <= start({start}) <= end ({end}) <= length({this.length})");
+                ThrowIndexOutOfRangeException_StartEnd(start, end, this.length);
             }
 
             if (start == 0 && end == this.length)
@@ -908,7 +909,7 @@ namespace DotNetty.Common.Utilities
             int count = end - start;
             if (MathUtil.IsOutOfBounds(start, count, this.length))
             {
-                ThrowIndexOutOfRangeException($"expected: 0 <= start({start}) <= srcIdx + length({count}) <= srcLen({this.length})");
+                ThrowIndexOutOfRangeException_SrcIndex(start, count, this.length);
             }
             if (count == 0)
             {
@@ -1509,7 +1510,55 @@ namespace DotNetty.Common.Utilities
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-        static void ThrowIndexOutOfRangeException(string message) => throw new IndexOutOfRangeException(message);
+        static void ThrowIndexOutOfRangeException_Start(int start, int length, int count)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("expected: 0 <= start({0}) <= start + length({1}) <= value.length({2})", start, length, count));
+            }
+        }
+
+        static void ThrowIndexOutOfRangeException_StartEnd(int start, int end, int length)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("expected: 0 <= start({0}) <= end ({1}) <= length({2})", start, end, length));
+            }
+        }
+
+        static void ThrowIndexOutOfRangeException_SrcIndex(int start, int count, int length)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("expected: 0 <= start({0}) <= srcIdx + length({1}) <= srcLen({2})", start, count, length));
+            }
+        }
+
+        static void ThrowIndexOutOfRangeException_Index(int index, int length, int count)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("expected: 0 <= index({0} <= start + length({1}) <= length({2})", index, length, count));
+            }
+        }
+
+        static void ThrowIndexOutOfRangeException_Index(int index, int length)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("index: {0} must be in the range [0,{1})", index, length));
+            }
+        }
 
         interface ICharEqualityComparator
         {

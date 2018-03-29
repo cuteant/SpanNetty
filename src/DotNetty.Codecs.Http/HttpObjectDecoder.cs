@@ -845,11 +845,21 @@ namespace DotNetty.Codecs.Http
                     //    or close the connection.
                     //       No need to notify the upstream handlers - just log.
                     //       If decoding a response, just throw an exception.
-                    ThrowHelper.ThrowTooLongFrameException(this.NewExceptionMessage(this.maxLength));
+                    ThrowTooLongFrameException(this, this.maxLength);
                 }
 
                 this.seq.Append(value);
                 return true;
+            }
+
+            static void ThrowTooLongFrameException(HeaderParser parser, int length)
+            {
+                throw GetTooLongFrameException();
+
+                TooLongFrameException GetTooLongFrameException()
+                {
+                    return new TooLongFrameException(parser.NewExceptionMessage(length));
+                }
             }
 
             protected virtual string NewExceptionMessage(int length) => $"HTTP header is larger than {length} bytes.";

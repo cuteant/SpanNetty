@@ -9,8 +9,16 @@ namespace DotNetty.Microbench.Common
     using BenchmarkDotNet.Attributes.Jobs;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
+#if DESKTOPCLR
+    using BenchmarkDotNet.Diagnostics.Windows.Configs;
+#endif
 
+#if !DESKTOPCLR
     [CoreJob]
+#else
+    [ClrJob]
+    [InliningDiagnoser]
+#endif
     [BenchmarkCategory("Common")]
     public class AsciiStringBenchmark
     {

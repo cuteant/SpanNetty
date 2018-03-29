@@ -28,9 +28,19 @@ namespace HttpServer
 
         static async Task RunServerAsync()
         {
+            Console.WriteLine(
+                $"\n{RuntimeInformation.OSArchitecture} {RuntimeInformation.OSDescription}"
+                + $"\n{RuntimeInformation.ProcessArchitecture} {RuntimeInformation.FrameworkDescription}"
+                + $"\nProcessor Count : {Environment.ProcessorCount}\n");
+
 
             bool useLibuv = ServerSettings.UseLibuv;
             Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
+
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+            }
 
             Console.WriteLine($"Server garbage collection: {GCSettings.IsServerGC}");
             Console.WriteLine($"Current latency mode for garbage collection: {GCSettings.LatencyMode}");

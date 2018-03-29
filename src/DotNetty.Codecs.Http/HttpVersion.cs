@@ -28,7 +28,7 @@ namespace DotNetty.Codecs.Http
         {
             if (text == null)
             {
-                ThrowHelper.ThrowArgumentException(nameof(text));
+                ThrowHelper.ThrowArgumentException_NullText();
             }
 
             // ReSharper disable once PossibleNullReferenceException
@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http
 
             if (text.Count == 0)
             {
-                ThrowHelper.ThrowArgumentException("text is empty (possibly HTTP/0.9)");
+                ThrowHelper.ThrowArgumentException_EmptyText();
             }
 
             // Try to match without convert to uppercase first as this is what 99% of all clients

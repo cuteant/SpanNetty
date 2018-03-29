@@ -56,28 +56,28 @@ namespace DotNetty.Common.Internal
             byte* end = bytes + remainingBytes;
             for (byte* i = bytes - 8 + length; i >= end; i -= 8)
             {
-                hash = HashCodeAsciiCompute(Unsafe.Read<long>(i), hash);
+                hash = HashCodeAsciiCompute(Unsafe.ReadUnaligned<long>(i), hash);
             }
 
             switch (remainingBytes)
             {
                 case 7:
                     return ((hash * HashCodeC1 + HashCodeAsciiSanitize(*bytes))
-                        * HashCodeC2 + HashCodeAsciiSanitize(Unsafe.Read<short>(bytes + 1)))
-                        * HashCodeC1 + HashCodeAsciiSanitize(Unsafe.Read<int>(bytes + 3));
+                        * HashCodeC2 + HashCodeAsciiSanitize(Unsafe.ReadUnaligned<short>(bytes + 1)))
+                        * HashCodeC1 + HashCodeAsciiSanitize(Unsafe.ReadUnaligned<int>(bytes + 3));
                 case 6:
-                    return (hash * HashCodeC1 + HashCodeAsciiSanitize(Unsafe.Read<short>(bytes)))
-                        * HashCodeC2 + HashCodeAsciiSanitize(Unsafe.Read<int>(bytes + 2));
+                    return (hash * HashCodeC1 + HashCodeAsciiSanitize(Unsafe.ReadUnaligned<short>(bytes)))
+                        * HashCodeC2 + HashCodeAsciiSanitize(Unsafe.ReadUnaligned<int>(bytes + 2));
                 case 5:
                     return (hash * HashCodeC1 + HashCodeAsciiSanitize(*bytes))
-                        * HashCodeC2 + HashCodeAsciiSanitize(Unsafe.Read<int>(bytes + 1));
+                        * HashCodeC2 + HashCodeAsciiSanitize(Unsafe.ReadUnaligned<int>(bytes + 1));
                 case 4:
-                    return hash * HashCodeC1 + HashCodeAsciiSanitize(Unsafe.Read<int>(bytes));
+                    return hash * HashCodeC1 + HashCodeAsciiSanitize(Unsafe.ReadUnaligned<int>(bytes));
                 case 3:
                     return (hash * HashCodeC1 + HashCodeAsciiSanitize(*bytes))
-                        * HashCodeC2 + HashCodeAsciiSanitize(Unsafe.Read<short>(bytes + 1));
+                        * HashCodeC2 + HashCodeAsciiSanitize(Unsafe.ReadUnaligned<short>(bytes + 1));
                 case 2:
-                    return hash * HashCodeC1 + HashCodeAsciiSanitize(Unsafe.Read<short>(bytes));
+                    return hash * HashCodeC1 + HashCodeAsciiSanitize(Unsafe.ReadUnaligned<short>(bytes));
                 case 1:
                     return hash * HashCodeC1 + HashCodeAsciiSanitize(*bytes);
                 default:

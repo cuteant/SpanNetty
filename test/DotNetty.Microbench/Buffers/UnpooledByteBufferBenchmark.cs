@@ -7,11 +7,11 @@ namespace DotNetty.Microbench.Buffers
     using BenchmarkDotNet.Attributes.Jobs;
     using DotNetty.Buffers;
     using DotNetty.Common;
-#if NET46
+#if DESKTOPCLR
     using BenchmarkDotNet.Diagnostics.Windows.Configs;
 #endif
 
-#if !NET46
+#if !DESKTOPCLR
     [CoreJob]
 #else
     [ClrJob]

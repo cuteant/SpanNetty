@@ -35,7 +35,7 @@ namespace DotNetty.Codecs.Http
             {
                 if (name == null || name.Count == 0)
                 {
-                    ThrowHelper.ThrowArgumentException($"empty headers are not allowed [{name}]");
+                    ThrowHelper.ThrowArgumentException_HeaderName();
                 }
                 if (name is AsciiString asciiString)
                 {
@@ -219,13 +219,13 @@ namespace DotNetty.Codecs.Http
                 case 0x3a: //':':
                 case 0x3b: //';':
                 case 0x3d: //'=':
-                    ThrowHelper.ThrowArgumentException($"a header name cannot contain the following prohibited characters: =,;: \\t\\r\\n\\v\\f: {value}");
+                    ThrowHelper.ThrowArgumentException_HeaderValue(value);
                     break;
                 default:
                     // Check to see if the character is not an ASCII character, or invalid
                     if (value > 127)
                     {
-                        ThrowHelper.ThrowArgumentException($"a header name cannot contain non-ASCII character: {value}");
+                        ThrowHelper.ThrowArgumentException_HeaderValueNonAscii(value);
                     }
                     break;
             }
@@ -247,13 +247,13 @@ namespace DotNetty.Codecs.Http
                 case ':':
                 case ';':
                 case '=':
-                    ThrowHelper.ThrowArgumentException($"a header name cannot contain the following prohibited characters: =,;: \\t\\r\\n\\v\\f: {value}");
+                    ThrowHelper.ThrowArgumentException_HeaderValue(value);
                     break;
                 default:
                     // Check to see if the character is not an ASCII character, or invalid
                     if (value > 127)
                     {
-                        ThrowHelper.ThrowArgumentException($"a header name cannot contain non-ASCII character: {value}");
+                        ThrowHelper.ThrowArgumentException_HeaderValueNonAscii(value);
                     }
                     break;
             }
@@ -301,7 +301,7 @@ namespace DotNetty.Codecs.Http
 
                 if (state != 0)
                 {
-                    ThrowHelper.ThrowArgumentException($"a header value must not end with '\\r' or '\\n':{seq}");
+                    ThrowHelper.ThrowArgumentException_HeaderValueEnd(seq);
                 }
                 return seq;
             }
@@ -319,13 +319,13 @@ namespace DotNetty.Codecs.Http
                     switch (character)
                     {
                         case '\x00': // NULL
-                            ThrowHelper.ThrowArgumentException("a header value contains a prohibited character '\0'");
+                            ThrowHelper.ThrowArgumentException_HeaderValueNullChar();
                             break;
                         case '\x0b': // Vertical tab
-                            ThrowHelper.ThrowArgumentException("a header value contains a prohibited character '\\v'");
+                            ThrowHelper.ThrowArgumentException_HeaderValueVerticalTabChar();
                             break;
                         case '\f':
-                            ThrowHelper.ThrowArgumentException("a header value contains a prohibited character '\\f'");
+                            ThrowHelper.ThrowArgumentException_HeaderValueFormFeed();
                             break;
                     }
                 }
@@ -348,7 +348,7 @@ namespace DotNetty.Codecs.Http
                             case '\n':
                                 return 2;
                             default:
-                                ThrowHelper.ThrowArgumentException("only '\\n' is allowed after '\\r'");
+                                ThrowHelper.ThrowArgumentException_NewLineAfterLineFeed();
                                 break;
                         }
                         break;
@@ -359,7 +359,7 @@ namespace DotNetty.Codecs.Http
                             case ' ':
                                 return 0;
                             default:
-                                ThrowHelper.ThrowArgumentException("only ' ' and '\\t' are allowed after '\\n'");
+                                ThrowHelper.ThrowArgumentException_TabAndSpaceAfterLineFeed();
                                 break;
                         }
                         break;

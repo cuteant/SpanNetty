@@ -67,7 +67,7 @@ namespace DotNetty.Codecs.Http
                     || HttpHeaderNames.TransferEncoding.ContentEqualsIgnoreCase(name)
                     || HttpHeaderNames.Trailer.ContentEqualsIgnoreCase(name))
                 {
-                    ThrowHelper.ThrowArgumentException($"prohibited trailing header: {name}");
+                    ThrowHelper.ThrowArgumentException_TrailingHeaderName(name);
                 }
             }
         }

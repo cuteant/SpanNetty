@@ -761,11 +761,11 @@ namespace DotNetty.Buffers
         {
             if (MathUtil.IsOutOfBounds(srcIdx, length, src.Count))
             {
-                ThrowHelper.ThrowIndexOutOfRangeException($"expected: 0 <= srcIdx({srcIdx}) <= srcIdx + length({length}) <= srcLen({src.Count})");
+                ThrowHelper.ThrowIndexOutOfRangeException_Src(srcIdx, length, src.Count);
             }
             if (dst == null)
             {
-                ThrowHelper.ThrowArgumentNullException(nameof(src));
+                ThrowHelper.ThrowArgumentNullException_Dst();
             }
             // ReSharper disable once PossibleNullReferenceException
             dst.SetBytes(dstIdx, src.Array, srcIdx + src.Offset, length);
@@ -776,11 +776,11 @@ namespace DotNetty.Buffers
         {
             if (MathUtil.IsOutOfBounds(srcIdx, length, src.Count))
             {
-                ThrowHelper.ThrowIndexOutOfRangeException($"expected: 0 <= srcIdx({srcIdx}) <= srcIdx + length({length}) <= srcLen({src.Count})");
+                ThrowHelper.ThrowIndexOutOfRangeException_Src(srcIdx, length, src.Count);
             }
             if (dst == null)
             {
-                ThrowHelper.ThrowArgumentNullException(nameof(src));
+                ThrowHelper.ThrowArgumentNullException_Dst();
             }
             // ReSharper disable once PossibleNullReferenceException
             dst.WriteBytes(src.Array, srcIdx + src.Offset, length);
