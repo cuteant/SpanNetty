@@ -670,6 +670,7 @@ namespace DotNetty.Buffers
             this.SetBytes(index, src, 0, src.Length);
             return this;
         }
+
         public abstract IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length);
 
         public virtual IByteBuffer SetBytes(int index, IByteBuffer src)

@@ -20,19 +20,19 @@ namespace HttpServer
             protected override AsciiString GetInitialValue()
             {
                 DateTime dateTime = DateTime.UtcNow;
-                return new AsciiString($"{dateTime.DayOfWeek}, {dateTime:dd MMM yyyy HH:mm:ss z}");
+                return AsciiString.Cached($"{dateTime.DayOfWeek}, {dateTime:dd MMM yyyy HH:mm:ss z}");
             }
         }
 
         static readonly byte[] StaticPlaintext = Encoding.UTF8.GetBytes("Hello, World!");
         static readonly int StaticPlaintextLen = StaticPlaintext.Length;
         static readonly IByteBuffer PlaintextContentBuffer = Unpooled.UnreleasableBuffer(Unpooled.DirectBuffer().WriteBytes(StaticPlaintext));
-        static readonly ICharSequence PlaintextClheaderValue = new AsciiString($"{StaticPlaintextLen}");
-        static readonly ICharSequence JsonClheaderValue = new AsciiString($"{JsonLen()}");
+        static readonly AsciiString PlaintextClheaderValue = AsciiString.Cached($"{StaticPlaintextLen}");
+        static readonly AsciiString JsonClheaderValue = AsciiString.Cached($"{JsonLen()}");
 
-        static readonly ICharSequence TypePlain = new AsciiString("text/plain");
-        static readonly ICharSequence TypeJson = new AsciiString("application/json");
-        static readonly ICharSequence ServerName = new AsciiString("Netty");
+        static readonly AsciiString TypePlain = AsciiString.Cached("text/plain");
+        static readonly AsciiString TypeJson = AsciiString.Cached("application/json");
+        static readonly AsciiString ServerName = AsciiString.Cached("Netty");
         static readonly AsciiString ContentTypeEntity = HttpHeaderNames.ContentType;
         static readonly AsciiString DateEntity = HttpHeaderNames.Date;
         static readonly AsciiString ContentLengthEntity = HttpHeaderNames.ContentLength;
@@ -44,13 +44,13 @@ namespace HttpServer
 
         static MessageBody NewMessage() => new MessageBody("Hello, World!");
 
-        public override void ChannelRead(IChannelHandlerContext context, object message)
+        public override void ChannelRead(IChannelHandlerContext ctx, object message)
         {
             if (message is IHttpRequest request)
             {
                 try
                 {
-                    this.Process(context, request);
+                    this.Process(ctx, request);
                 }
                 finally
                 {
@@ -59,7 +59,7 @@ namespace HttpServer
             }
             else
             {
-                context.FireChannelRead(message);
+                ctx.FireChannelRead(message);
             }
         }
 
