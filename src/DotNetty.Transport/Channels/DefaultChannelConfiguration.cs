@@ -46,7 +46,7 @@ namespace DotNetty.Transport.Channels
             }
             else if (allocator == null)
             {
-                throw new ArgumentNullException(nameof(allocator));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.allocator);
             }
             this.RecvByteBufAllocator = allocator;
         }

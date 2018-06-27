@@ -20,11 +20,11 @@ namespace DotNetty.Transport.Channels.Groups
         {
             if (exceptions == null)
             {
-                throw new ArgumentNullException(nameof(exceptions));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.exceptions);
             }
             if (exceptions.Count == 0)
             {
-                throw new ArgumentException("excetpions must be not empty.");
+                ThrowHelper.ThrowArgumentException_Excs();
             }
             this.failed = new ReadOnlyCollection<KeyValuePair<IChannel, Exception>>(exceptions);
         }

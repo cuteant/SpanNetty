@@ -29,7 +29,7 @@ namespace DotNetty.Buffers
 
             if (initialCapacity > maxCapacity)
             {
-                throw new ArgumentException($"initialCapacity({initialCapacity}) > maxCapacity({maxCapacity})");
+                ThrowHelper.ThrowArgumentException_InitialCapacity(initialCapacity, maxCapacity);
             }
 
             this.allocator = alloc;
@@ -45,7 +45,7 @@ namespace DotNetty.Buffers
             int initialCapacity = initialBuffer.Length;
             if (initialCapacity > maxCapacity)
             {
-                throw new ArgumentException($"initialCapacity({initialCapacity}) > maxCapacity({maxCapacity})");
+                ThrowHelper.ThrowArgumentException_InitialCapacity(initialCapacity, maxCapacity);
             }
 
             this.allocator = alloc;

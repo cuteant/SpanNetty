@@ -43,7 +43,7 @@ namespace DotNetty.Common.Internal.Logging
                 case InternalLogLevel.ERROR:
                     return this.ErrorEnabled;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); return false;
             }
         }
 
@@ -137,7 +137,7 @@ namespace DotNetty.Common.Internal.Logging
                     this.Error(msg, cause);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
             }
         }
 
@@ -161,7 +161,7 @@ namespace DotNetty.Common.Internal.Logging
                     this.Error(cause);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
             }
         }
 
@@ -185,7 +185,7 @@ namespace DotNetty.Common.Internal.Logging
                     this.Error(msg);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
             }
         }
 
@@ -209,7 +209,7 @@ namespace DotNetty.Common.Internal.Logging
                     this.Error(format, arg);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
             }
         }
 
@@ -233,7 +233,7 @@ namespace DotNetty.Common.Internal.Logging
                     this.Error(format, argA, argB);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
             }
         }
 
@@ -257,7 +257,7 @@ namespace DotNetty.Common.Internal.Logging
                     this.Error(format, arguments);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
             }
         }
 

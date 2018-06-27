@@ -191,8 +191,7 @@ namespace DotNetty.Handlers.Tls
 
       if (hasEkuExtension)
       {
-        throw new InvalidOperationException(
-          $"Certificate {certificate.Thumbprint} cannot be used as an SSL server certificate. It has an Extended Key Usage extension but the usages do not include Server Authentication (OID 1.3.6.1.5.5.7.3.1).");
+        ThrowHelper.ThrowInvalidOperationException_SSLAuth(certificate);
       }
     }
 

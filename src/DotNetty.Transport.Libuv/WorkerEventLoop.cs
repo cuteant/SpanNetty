@@ -27,7 +27,7 @@ namespace DotNetty.Transport.Libuv
             string name = parent.PipeName;
             if (string.IsNullOrEmpty(name))
             {
-                throw new ArgumentException("Pipe name is required for worker event loop", nameof(parent));
+                ThrowHelper.ThrowArgumentException_PipeName();
             }
 
             this.pipeName = name;

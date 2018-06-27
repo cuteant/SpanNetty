@@ -91,7 +91,7 @@ namespace DotNetty.Transport.Libuv.Native
             SocketError status = getsockopt(socket, SocketOptionLevel.Socket, optionName, ref value, ref optLen);
             if (status == SocketError.SocketError)
             {
-                throw new SocketException(Marshal.GetLastWin32Error());
+                ThrowHelper.ThrowSocketException(Marshal.GetLastWin32Error());
             }
             return value;
         }
@@ -101,7 +101,7 @@ namespace DotNetty.Transport.Libuv.Native
             SocketError status = setsockopt(socket, SocketOptionLevel.Socket, optionName, ref value, 4);
             if (status == SocketError.SocketError)
             {
-                throw new SocketException(Marshal.GetLastWin32Error());
+                ThrowHelper.ThrowSocketException(Marshal.GetLastWin32Error());
             }
         }
 

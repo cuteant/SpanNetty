@@ -45,7 +45,7 @@ namespace DotNetty.Transport.Channels
             var terminationTasks = new Task[eventLoopCount];
             for (int i = 0; i < eventLoopCount; i++)
             {
-                IEventLoop eventLoop;
+                IEventLoop eventLoop = null;
                 bool success = false;
                 try
                 {
@@ -54,7 +54,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidOperationException("failed to create a child event loop.", ex);
+                    ThrowHelper.ThrowInvalidOperationException(ex);
                 }
                 finally
                 {

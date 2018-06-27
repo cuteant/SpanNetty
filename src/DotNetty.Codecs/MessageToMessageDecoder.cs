@@ -45,7 +45,7 @@ namespace DotNetty.Codecs
             }
             catch (Exception e)
             {
-                throw new DecoderException(e);
+                ThrowHelper.ThrowDecoderException(e);
             }
             finally
             {

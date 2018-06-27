@@ -45,7 +45,7 @@ namespace DotNetty.Common
             if (index < 0)
             {
                 Interlocked.Decrement(ref nextIndex);
-                throw new InvalidOperationException("too many thread-local indexed variables");
+                ThrowHelper.ThrowInvalidOperationException_TooMany();
             }
             return index;
         }

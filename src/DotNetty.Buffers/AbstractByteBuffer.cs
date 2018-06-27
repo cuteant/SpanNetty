@@ -1206,7 +1206,7 @@ namespace DotNetty.Buffers
             this.EnsureWritable(length);
             if (this.WritableBytes < length)
             {
-                throw new ArgumentOutOfRangeException(nameof(length));
+                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.length);
             }
 
             int writerIdx = this.writerIndex;

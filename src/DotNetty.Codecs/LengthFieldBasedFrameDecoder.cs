@@ -5,6 +5,7 @@ namespace DotNetty.Codecs
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
@@ -329,7 +330,7 @@ namespace DotNetty.Codecs
             if (frameLength < 0)
             {
                 input.SkipBytes(this.lengthFieldEndOffset);
-                throw new CorruptedFrameException("negative pre-adjustment length field: " + frameLength);
+                ThrowHelper.ThrowCorruptedFrameException_FrameLength(frameLength);
             }
 
             frameLength += this.lengthAdjustment + this.lengthFieldEndOffset;
@@ -337,8 +338,7 @@ namespace DotNetty.Codecs
             if (frameLength < this.lengthFieldEndOffset)
             {
                 input.SkipBytes(this.lengthFieldEndOffset);
-                throw new CorruptedFrameException("Adjusted frame length (" + frameLength + ") is less " +
-                    "than lengthFieldEndOffset: " + this.lengthFieldEndOffset);
+                ThrowHelper.ThrowCorruptedFrameException_LengthFieldEndOffset(frameLength, this.lengthFieldEndOffset);
             }
 
             if (frameLength > this.maxFrameLength)
@@ -372,8 +372,7 @@ namespace DotNetty.Codecs
             if (this.initialBytesToStrip > frameLengthInt)
             {
                 input.SkipBytes(frameLengthInt);
-                throw new CorruptedFrameException("Adjusted frame length (" + frameLength + ") is less " +
-                    "than initialBytesToStrip: " + this.initialBytesToStrip);
+                ThrowHelper.ThrowCorruptedFrameException_InitialBytesToStrip(frameLength, this.initialBytesToStrip);
             }
             input.SkipBytes(this.initialBytesToStrip);
 
@@ -400,28 +399,21 @@ namespace DotNetty.Codecs
         /// <returns>A long integer that represents the unadjusted length of the next frame.</returns>
         protected long GetUnadjustedFrameLength(IByteBuffer buffer, int offset, int length, ByteOrder order)
         {
-            long frameLength;
             switch (length)
             {
                 case 1:
-                    frameLength = buffer.GetByte(offset);
-                    break;
+                    return buffer.GetByte(offset);
                 case 2:
-                    frameLength = order == ByteOrder.BigEndian ? buffer.GetUnsignedShort(offset) : buffer.GetUnsignedShortLE(offset);
-                    break;
+                    return order == ByteOrder.BigEndian ? buffer.GetUnsignedShort(offset) : buffer.GetUnsignedShortLE(offset);
                 case 3:
-                    frameLength = order == ByteOrder.BigEndian ? buffer.GetUnsignedMedium(offset) : buffer.GetUnsignedMediumLE(offset);
-                    break;
+                    return order == ByteOrder.BigEndian ? buffer.GetUnsignedMedium(offset) : buffer.GetUnsignedMediumLE(offset);
                 case 4:
-                    frameLength = order == ByteOrder.BigEndian ? buffer.GetInt(offset) : buffer.GetIntLE(offset);
-                    break;
+                    return order == ByteOrder.BigEndian ? buffer.GetInt(offset) : buffer.GetIntLE(offset);
                 case 8:
-                    frameLength = order == ByteOrder.BigEndian ? buffer.GetLong(offset) : buffer.GetLongLE(offset);
-                    break;
+                    return order == ByteOrder.BigEndian ? buffer.GetLong(offset) : buffer.GetLongLE(offset);
                 default:
-                    throw new DecoderException("unsupported lengthFieldLength: " + this.lengthFieldLength + " (expected: 1, 2, 3, 4, or 8)");
+                    ThrowHelper.ThrowDecoderException(this.lengthFieldLength); return default;
             }
-            return frameLength;
         }
 
         protected virtual IByteBuffer ExtractFrame(IChannelHandlerContext context, IByteBuffer buffer, int index, int length)
@@ -443,7 +435,14 @@ namespace DotNetty.Codecs
                 if (!this.failFast ||
                     this.failFast && firstDetectionOfTooLongFrame)
                 {
-                    this.Fail(tooLongFrameLength);
+                    if (tooLongFrameLength > 0)
+                    {
+                        Fail(tooLongFrameLength, this.maxFrameLength);
+                    }
+                    else
+                    {
+                        Fail(this.maxFrameLength);
+                    }
                 }
             }
             else
@@ -451,22 +450,37 @@ namespace DotNetty.Codecs
                 // Keep discarding and notify handlers if necessary.
                 if (this.failFast && firstDetectionOfTooLongFrame)
                 {
-                    this.Fail(this.tooLongFrameLength);
+                    if (tooLongFrameLength > 0)
+                    {
+                        Fail(tooLongFrameLength, this.maxFrameLength);
+                    }
+                    else
+                    {
+                        Fail(this.maxFrameLength);
+                    }
                 }
             }
         }
 
-        void Fail(long frameLength)
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void Fail(long frameLength, int maxFrameLength)
         {
-            if (frameLength > 0)
+            throw GetTooLongFrameException();
+            TooLongFrameException GetTooLongFrameException()
             {
-                throw new TooLongFrameException("Adjusted frame length exceeds " + this.maxFrameLength +
+                return new TooLongFrameException("Adjusted frame length exceeds " + maxFrameLength +
                     ": " + frameLength + " - discarded");
             }
-            else
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void Fail(int maxFrameLength)
+        {
+            throw GetTooLongFrameException();
+            TooLongFrameException GetTooLongFrameException()
             {
-                throw new TooLongFrameException(
-                    "Adjusted frame length exceeds " + this.maxFrameLength +
+                return new TooLongFrameException(
+                    "Adjusted frame length exceeds " + maxFrameLength +
                         " - discarding");
             }
         }

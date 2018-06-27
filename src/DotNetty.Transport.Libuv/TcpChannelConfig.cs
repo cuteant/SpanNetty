@@ -100,12 +100,13 @@ namespace DotNetty.Transport.Libuv
             }
             catch (ObjectDisposedException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
             catch (OperationException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
+            return -1;
         }
 
         void SetReceiveBufferSize(int value)
@@ -137,11 +138,11 @@ namespace DotNetty.Transport.Libuv
             }
             catch (ObjectDisposedException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
             catch (OperationException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
         }
 
@@ -155,12 +156,13 @@ namespace DotNetty.Transport.Libuv
             }
             catch (ObjectDisposedException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
             catch (OperationException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
+            return -1;
         }
 
         void SetSendBufferSize(int value)
@@ -192,11 +194,11 @@ namespace DotNetty.Transport.Libuv
             }
             catch (ObjectDisposedException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
             catch (OperationException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
         }
 
@@ -239,11 +241,11 @@ namespace DotNetty.Transport.Libuv
             }
             catch (ObjectDisposedException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
             catch (OperationException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
         }
 
@@ -286,11 +288,11 @@ namespace DotNetty.Transport.Libuv
             }
             catch (ObjectDisposedException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
             catch (OperationException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
         }
 
@@ -304,12 +306,13 @@ namespace DotNetty.Transport.Libuv
             }
             catch (ObjectDisposedException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
             catch (SocketException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
+            return false;
         }
 
         void SetReuseAddress(bool value)
@@ -342,11 +345,11 @@ namespace DotNetty.Transport.Libuv
             }
             catch (ObjectDisposedException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
             catch (SocketException ex)
             {
-                throw new ChannelException(ex);
+                ThrowHelper.ThrowChannelException(ex);
             }
         }
 
@@ -383,7 +386,7 @@ namespace DotNetty.Transport.Libuv
                 }
                 else
                 {
-                    throw new ChannelException($"Invalid channel option {option}");
+                    ThrowHelper.ThrowChannelException(option);
                 }
             }
         }

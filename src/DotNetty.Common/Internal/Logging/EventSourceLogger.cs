@@ -40,7 +40,7 @@ namespace DotNetty.Common.Internal.Logging
                 case LogLevel.None:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null);
+                    ThrowHelper.ThrowArgumentOutOfRangeException_LogLevel(logLevel); break;
             }
         }
 
@@ -63,7 +63,7 @@ namespace DotNetty.Common.Internal.Logging
                 case LogLevel.None:
                     return true;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null);
+                    ThrowHelper.ThrowArgumentOutOfRangeException_LogLevel(logLevel); return false;
             }
         }
 

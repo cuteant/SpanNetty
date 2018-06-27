@@ -24,7 +24,7 @@ namespace DotNetty.Buffers
             {
                 if (this.data.ReferenceCount <= 0)
                 {
-                    throw new IllegalReferenceCountException(this.data.ReferenceCount);
+                    ThrowHelper.ThrowIllegalReferenceCountException(this.data.ReferenceCount);
                 }
 
                 return this.data;

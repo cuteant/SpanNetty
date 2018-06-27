@@ -163,7 +163,7 @@ namespace DotNetty.Common
                         }
                         else if (element.recycleId != element.lastRecycledId)
                         {
-                            throw new InvalidOperationException("recycled already");
+                            ThrowHelper.ThrowInvalidOperationException_RecycledAlready();
                         }
                         element.Stack = dst;
                         dstElems[newDstSize++] = element;
@@ -242,7 +242,7 @@ namespace DotNetty.Common
                 Contract.Requires(item != null);
                 if ((item.recycleId | item.lastRecycledId) != 0)
                 {
-                    throw new InvalidOperationException("released already");
+                    ThrowHelper.ThrowInvalidOperationException_ReleasedAlready();
                 }
                 item.recycleId = item.lastRecycledId = ownThreadId;
 
@@ -277,7 +277,7 @@ namespace DotNetty.Common
                 Handle ret = this.elements[size];
                 if (ret.lastRecycledId != ret.recycleId)
                 {
-                    throw new InvalidOperationException("recycled multiple times");
+                    ThrowHelper.ThrowInvalidOperationException_RecycledMultiTimes();
                 }
                 ret.recycleId = 0;
                 ret.lastRecycledId = 0;

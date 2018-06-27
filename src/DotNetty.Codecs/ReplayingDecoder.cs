@@ -91,7 +91,7 @@ namespace DotNetty.Codecs
                     {
                         if (oldInputLength == input.ReadableBytes && EqualityComparer<TState>.Default.Equals(oldState, this.state))
                         {
-                            throw new DecoderException($"{this.GetType().Name}.Decode() must consume the inbound data or change its state if it did not decode anything.");
+                            ThrowHelper.ThrowDecoderException_Anything(this.GetType());
                         }
                         else
                         {
@@ -103,7 +103,7 @@ namespace DotNetty.Codecs
 
                     if (oldReaderIndex == input.ReaderIndex && EqualityComparer<TState>.Default.Equals(oldState, this.state))
                     {
-                        throw new DecoderException($"{this.GetType().Name}.Decode() method must consume the inbound data or change its state if it decoded something.");
+                        ThrowHelper.ThrowDecoderException_Something(this.GetType());
                     }
 
                     if (this.SingleDecode)
@@ -118,7 +118,7 @@ namespace DotNetty.Codecs
             }
             catch (Exception cause)
             {
-                throw new DecoderException(cause);
+                ThrowHelper.ThrowDecoderException(cause);
             }
         }
 

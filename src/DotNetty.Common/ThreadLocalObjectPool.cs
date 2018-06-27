@@ -23,13 +23,15 @@ namespace DotNetty.Common
 
         public ThreadLocalObjectPool(IThreadLocalPooledObjectPolicy<TPoolItem> policy)
         {
-            _policy = policy ?? throw new ArgumentNullException(nameof(policy));
+            if (null == policy) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.policy); }
+            _policy = policy;
             _innerPool = new ThreadLocalPool<TPoolItem>(_policy.ValueFactory, ThreadLocalPool.DefaultMaxCapacity, _policy.PreCreate);
         }
 
         public ThreadLocalObjectPool(IThreadLocalPooledObjectPolicy<TPoolItem> policy, int maxCapacity)
         {
-            _policy = policy ?? throw new ArgumentNullException(nameof(policy));
+            if (null == policy) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.policy); }
+            _policy = policy;
             _innerPool = new ThreadLocalPool<TPoolItem>(_policy.ValueFactory, maxCapacity, _policy.PreCreate);
         }
 

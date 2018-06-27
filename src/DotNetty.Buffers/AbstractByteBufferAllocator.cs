@@ -41,7 +41,7 @@ namespace DotNetty.Buffers
                 case ResourceLeakDetector.DetectionLevel.Disabled:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
             }
 
             return buf;
@@ -70,7 +70,7 @@ namespace DotNetty.Buffers
                 case ResourceLeakDetector.DetectionLevel.Disabled:
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
             }
 
             return buf;

@@ -88,7 +88,7 @@ namespace DotNetty.Transport.Channels
                 IEventLoop eventLoop = this.eventLoop;
                 if (eventLoop == null)
                 {
-                    throw new InvalidOperationException("channel not registered to an event loop");
+                    ThrowHelper.ThrowInvalidOperationException_ChannelNotReg();
                 }
                 return eventLoop;
             }

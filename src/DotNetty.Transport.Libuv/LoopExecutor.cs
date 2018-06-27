@@ -90,7 +90,7 @@ namespace DotNetty.Transport.Libuv
         {
             if (this.executionState > NotStartedState)
             {
-                throw new InvalidOperationException($"Invalid state {this.executionState}");
+                ThrowHelper.ThrowInvalidOperationException_ExecutionState(this.executionState);
             }
             this.thread.Start(this);
         }
@@ -152,7 +152,7 @@ namespace DotNetty.Transport.Libuv
                 this.Initialize();
                 if (Interlocked.CompareExchange(ref this.executionState, StartedState, NotStartedState) != NotStartedState)
                 {
-                    throw new InvalidOperationException($"Invalid {nameof(LoopExecutor)} state {this.executionState}");
+                    ThrowHelper.ThrowInvalidOperationException_ExecutionState0(this.executionState);
                 }
                 this.loopRunStart.Set();
                 this.loop.Run(uv_run_mode.UV_RUN_DEFAULT);
@@ -452,7 +452,7 @@ namespace DotNetty.Transport.Libuv
                 this.AddTask(task);
                 if (this.IsShutdown)
                 {
-                    Reject($"{nameof(LoopExecutor)} terminated");
+                    ThrowHelper.ThrowRejectedExecutionException_Terminated();
                 }
             }
             this.WakeUp(inEventLoop);
@@ -462,11 +462,11 @@ namespace DotNetty.Transport.Libuv
         {
             if (this.IsShutdown)
             {
-                Reject($"{nameof(LoopExecutor)} already shutdown");
+                ThrowHelper.ThrowRejectedExecutionException_Shutdown();
             }
             if (!this.taskQueue.TryEnqueue(task))
             {
-                Reject($"{nameof(LoopExecutor)} queue task failed");
+                ThrowHelper.ThrowRejectedExecutionException_Queue();
             }
         }
 

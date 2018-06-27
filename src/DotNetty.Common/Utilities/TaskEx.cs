@@ -54,7 +54,7 @@ namespace DotNetty.Common.Utilities
                     ((TaskCompletionSource)tcs).TryUnwrap(t.Exception);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
             }
         };
 
@@ -104,7 +104,7 @@ namespace DotNetty.Common.Utilities
                             ((TaskCompletionSource<T>)tcs).TryUnwrap(t.Exception);
                             break;
                         default:
-                            throw new ArgumentOutOfRangeException();
+                            ThrowHelper.ThrowArgumentOutOfRangeException(); break;
                     }
                 };
         }

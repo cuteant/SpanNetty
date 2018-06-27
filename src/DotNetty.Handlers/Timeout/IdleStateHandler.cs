@@ -422,7 +422,7 @@ namespace DotNetty.Handlers.Timeout
                 case IdleState.WriterIdle:
                     return first ? IdleStateEvent.FirstWriterIdleStateEvent : IdleStateEvent.WriterIdleStateEvent;
                 default:
-                    throw new ArgumentException("Unhandled: state=" + state + ", first=" + first);
+                    ThrowHelper.ThrowArgumentException_IdleState(state, first); return null;
             }
         }
 

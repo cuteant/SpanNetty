@@ -84,7 +84,7 @@ namespace DotNetty.Codecs
             DateTime? dateTime = DateFormatter.ParseHttpDate(value);
             if (dateTime == null)
             {
-                throw new FormatException($"header can't be parsed into a Date: {value}");
+                ThrowHelper.ThrowFormatException(value);
             }
             return dateTime.Value.Ticks / TimeSpan.TicksPerMillisecond;
         }

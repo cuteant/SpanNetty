@@ -96,7 +96,7 @@ namespace DotNetty.Codecs
             // ReSharper disable once DoNotCallOverridableMethodsInConstructor -- used for safety check only
             if (this.IsSharable)
             {
-                throw new InvalidOperationException($"Decoders inheriting from {typeof(ByteToMessageDecoder).Name} cannot be sharable.");
+                ThrowHelper.ThrowInvalidOperationException_ByteToMessageDecoder();
             }
         }
 
@@ -199,7 +199,7 @@ namespace DotNetty.Codecs
                 }
                 catch (Exception ex)
                 {
-                    throw new DecoderException(ex);
+                    ThrowHelper.ThrowDecoderException(ex);
                 }
                 finally
                 {
@@ -274,7 +274,7 @@ namespace DotNetty.Codecs
             }
             catch (Exception e)
             {
-                throw new DecoderException(e);
+                ThrowHelper.ThrowDecoderException(e);
             }
             finally
             {
@@ -344,7 +344,7 @@ namespace DotNetty.Codecs
 
                     if (oldInputLength == input.ReadableBytes)
                     {
-                        throw new DecoderException($"{this.GetType().Name}.Decode() did not read anything but decoded a message.");
+                        ThrowHelper.ThrowDecoderException_ByteToMessageDecoder(this.GetType());
                     }
 
                     if (this.SingleDecode)
@@ -359,7 +359,7 @@ namespace DotNetty.Codecs
             }
             catch (Exception cause)
             {
-                throw new DecoderException(cause);
+                ThrowHelper.ThrowDecoderException(cause);
             }
         }
 

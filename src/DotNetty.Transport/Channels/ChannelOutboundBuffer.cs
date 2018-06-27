@@ -520,7 +520,7 @@ namespace DotNetty.Transport.Channels
         {
             if (index < 1 || index > 31)
             {
-                throw new InvalidOperationException("index: " + index + " (expected: 1~31)");
+                ThrowHelper.ThrowInvalidOperationException_WritabilityMask(index);
             }
             return 1 << index;
         }
@@ -640,12 +640,12 @@ namespace DotNetty.Transport.Channels
 
             if (!allowChannelOpen && this.channel.Open)
             {
-                throw new InvalidOperationException("close() must be invoked after the channel is closed.");
+                ThrowHelper.ThrowInvalidOperationException_Close0();
             }
 
             if (!this.IsEmpty)
             {
-                throw new InvalidOperationException("close() must be invoked after all flushed writes are handled.");
+                ThrowHelper.ThrowInvalidOperationException_Close1();
             }
 
             // Release all unflushed messages.

@@ -234,7 +234,7 @@ namespace DotNetty.Buffers
                 case SizeClass.Tiny:
                     return this.CacheForTiny(area, normCapacity);
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); return default;
             }
         }
 

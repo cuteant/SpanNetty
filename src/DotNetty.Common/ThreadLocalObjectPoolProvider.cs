@@ -14,8 +14,7 @@ namespace DotNetty.Common
             var threadLocalPolicy = policy as IThreadLocalPooledObjectPolicy<T>;
             if (threadLocalPolicy == null)
             {
-                var msg = $"Type of policy requires pooled object policy of type {typeof(IThreadLocalPooledObjectPolicy<T>)}.";
-                throw new InvalidCastException(msg);
+                ThrowHelper.ThrowInvalidCastException<T>();
             }
             return new ThreadLocalObjectPool<T>(threadLocalPolicy, MaximumRetained);
         }
@@ -25,8 +24,7 @@ namespace DotNetty.Common
             var threadLocalPolicy = policy as IThreadLocalPooledObjectPolicy<T>;
             if (threadLocalPolicy == null)
             {
-                var msg = $"Type of policy requires pooled object policy of type {typeof(IThreadLocalPooledObjectPolicy<T>)}.";
-                throw new InvalidCastException(msg);
+                ThrowHelper.ThrowInvalidCastException<T>();
             }
             return new ThreadLocalObjectPool<T>(threadLocalPolicy, maximumRetained);
         }

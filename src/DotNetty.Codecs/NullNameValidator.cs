@@ -11,7 +11,7 @@ namespace DotNetty.Codecs
         {
             if (name == null)
             {
-                throw new ArgumentNullException(nameof(name));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name);
             }
         }
     }

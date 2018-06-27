@@ -133,7 +133,7 @@ namespace DotNetty.Transport.Libuv
                 {
                     if (ch.connectPromise != null)
                     {
-                        throw new InvalidOperationException("connection attempt already made");
+                        ThrowHelper.ThrowInvalidOperationException_ConnAttempt();
                     }
 
                     ch.connectPromise = new TaskCompletionSource(remoteAddress);
@@ -164,7 +164,7 @@ namespace DotNetty.Transport.Libuv
                 var cause = new ConnectTimeoutException($"connection timed out: {address}");
                 if (promise != null && promise.TrySetException(cause))
                 {
-                    ((NativeChannelUnsafe)ch.Unsafe).CloseSafe();
+                    ch.Unsafe.CloseSafe();
                 }
             }
 

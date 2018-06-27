@@ -262,7 +262,7 @@ namespace DotNetty.Buffers
                 if (bLen <= 0) { continue; }
                 if (int.MaxValue - length < bLen)
                 {
-                    throw new ArgumentException("The total length of the specified buffers is too big.");
+                    ThrowHelper.ThrowArgumentException_LenIsTooBig();
                 }
 
                 length += bLen;

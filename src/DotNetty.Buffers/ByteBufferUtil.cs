@@ -138,7 +138,7 @@ namespace DotNetty.Buffers
         {
             if (aStartIndex < 0 || bStartIndex < 0 || length < 0)
             {
-                throw new ArgumentException("All indexes and lengths must be non-negative");
+                ThrowHelper.ThrowArgumentException_NonNegative();
             }
             if (a.WriterIndex - length < aStartIndex || b.WriterIndex - length < bStartIndex)
             {
@@ -947,8 +947,7 @@ namespace DotNetty.Buffers
             {
                 if (MathUtil.IsOutOfBounds(offset, length, buf.Capacity))
                 {
-                    throw new IndexOutOfRangeException(
-                        $"expected: 0 <= offset({offset}) <= offset + length({length}) <= buf.capacity({buf.Capacity}{')'}");
+                    ThrowHelper.ThrowIndexOutOfRangeException_Expected(offset, length, buf.Capacity);
                 }
                 if (length == 0)
                 {

@@ -60,7 +60,7 @@ namespace DotNetty.Handlers.Logging
         {
             if (type == null)
             {
-                throw new NullReferenceException("type");
+                ThrowHelper.ThrowNullReferenceException(ExceptionArgument.type);
             }
 
             this.Logger = InternalLoggerFactory.GetInstance(type);
@@ -86,7 +86,7 @@ namespace DotNetty.Handlers.Logging
         {
             if (name == null)
             {
-                throw new NullReferenceException("name");
+                ThrowHelper.ThrowNullReferenceException(ExceptionArgument.name);
             }
 
             this.Logger = InternalLoggerFactory.GetInstance(name);

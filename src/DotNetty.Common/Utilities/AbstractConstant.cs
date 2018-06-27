@@ -86,7 +86,7 @@ namespace DotNetty.Common.Utilities
                 return 1;
             }
 
-            throw new Exception("failed to compare two different constants");
+            return ThrowHelper.ThrowException_Compare();
         }
     }
 }

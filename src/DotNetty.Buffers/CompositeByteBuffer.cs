@@ -11,6 +11,7 @@ namespace DotNetty.Buffers
     using System.Diagnostics.Contracts;
     using System.IO;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common;
@@ -341,21 +342,23 @@ namespace DotNetty.Buffers
             }
         }
 
+        [MethodImpl(InlineMethod.Value)]
         void CheckComponentIndex(int cIndex)
         {
             this.EnsureAccessible();
             if (cIndex < 0 || cIndex > this.components.Count)
             {
-                throw new ArgumentOutOfRangeException($"cIndex: {cIndex} (expected: >= 0 && <= numComponents({this.components.Count}))");
+                ThrowHelper.ThrowArgumentOutOfRangeException_Index(cIndex, this.components.Count);
             }
         }
 
+        [MethodImpl(InlineMethod.Value)]
         void CheckComponentIndex(int cIndex, int numComponents)
         {
             this.EnsureAccessible();
             if (cIndex < 0 || cIndex + numComponents > this.components.Count)
             {
-                throw new ArgumentOutOfRangeException($"cIndex: {cIndex}, numComponents: {numComponents} " + $"(expected: cIndex >= 0 && cIndex + numComponents <= totalNumComponents({this.components.Count}))");
+                ThrowHelper.ThrowArgumentOutOfRangeException_Index(cIndex, numComponents, this.components.Count);
             }
         }
 
@@ -1361,7 +1364,7 @@ namespace DotNetty.Buffers
             }
 
             this.components.RemoveRange(cIndex, numComponents);
-            this.components.Insert(cIndex,new ComponentEntry(consolidated));
+            this.components.Insert(cIndex, new ComponentEntry(consolidated));
             this.UpdateComponentOffsets(cIndex);
             return this;
         }
@@ -1461,7 +1464,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        IByteBuffer AllocateBuffer(int capacity) => 
+        IByteBuffer AllocateBuffer(int capacity) =>
             this.direct ? this.Allocator.DirectBuffer(capacity) : this.Allocator.HeapBuffer(capacity);
 
         public override string ToString()

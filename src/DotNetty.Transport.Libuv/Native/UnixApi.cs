@@ -40,7 +40,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
             if (status != 0)
             {
-                throw new SocketException(Marshal.GetLastWin32Error());
+                ThrowHelper.ThrowSocketException(Marshal.GetLastWin32Error());
             }
 
             return value != 0;
@@ -59,7 +59,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
             if (status != 0)
             {
-                throw new SocketException(Marshal.GetLastWin32Error());
+                ThrowHelper.ThrowSocketException(Marshal.GetLastWin32Error());
             }
         }
 
@@ -78,7 +78,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
             if (status != 0)
             {
-                throw new SocketException(Marshal.GetLastWin32Error());
+                ThrowHelper.ThrowSocketException(Marshal.GetLastWin32Error());
             }
             return value != 0;
         }
@@ -96,7 +96,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
             if (status != 0)
             {
-                throw new SocketException(Marshal.GetLastWin32Error());
+                ThrowHelper.ThrowSocketException(Marshal.GetLastWin32Error());
             }
         }
     }

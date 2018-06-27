@@ -42,7 +42,7 @@ namespace DotNetty.Transport.Channels
             long totalCount = this.Count - pos;
             if (totalCount < 0)
             {
-                throw new ArgumentOutOfRangeException($"position out of range: {pos} (expected: 0 - {this.Count - 1})");
+                ThrowHelper.ThrowArgumentOutOfRangeException_Position(pos, this.Count);
             }
 
             if (totalCount == 0)
@@ -51,7 +51,7 @@ namespace DotNetty.Transport.Channels
             }
             if (this.ReferenceCount == 0)
             {
-                throw new IllegalReferenceCountException(0);
+                ThrowHelper.ThrowIllegalReferenceCountException(0);
             }
 
             var buffer = new byte[totalCount];

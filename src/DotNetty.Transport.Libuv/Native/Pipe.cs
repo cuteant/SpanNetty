@@ -65,7 +65,7 @@ namespace DotNetty.Transport.Libuv.Native
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Expecting tcp handle, {type} not supported");
+                    ThrowHelper.ThrowInvalidOperationException_ExpectingTcpHandle(type);
                 }
 
                 int result = NativeMethods.uv_accept(this.Handle, client.Handle);

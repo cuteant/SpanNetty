@@ -10,7 +10,7 @@ namespace DotNetty.Buffers
     using System.Runtime.CompilerServices;
     using DotNetty.Common.Utilities;
 
-    static class ThrowHelper
+    static partial class ThrowHelper
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowIndexOutOfRangeException_Index(int index, int length, int capacity)

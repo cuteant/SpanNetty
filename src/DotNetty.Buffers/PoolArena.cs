@@ -328,7 +328,7 @@ namespace DotNetty.Buffers
                         ++this.deallocationsTiny;
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        ThrowHelper.ThrowArgumentOutOfRangeException(); break;
                 }
                 destroyChunk = !chunk.Parent.Free(chunk, handle);
             }

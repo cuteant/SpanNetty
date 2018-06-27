@@ -390,7 +390,7 @@ namespace DotNetty.Transport.Channels
         {
             if (this.head.Next == this.tail)
             {
-                throw new InvalidOperationException("Pipeline is empty.");
+                ThrowHelper.ThrowInvalidOperationException_Pipeline();
             }
             return this.Remove(this.head.Next).Handler;
         }
@@ -399,7 +399,7 @@ namespace DotNetty.Transport.Channels
         {
             if (this.head.Next == this.tail)
             {
-                throw new InvalidOperationException("Pipeline is empty.");
+                ThrowHelper.ThrowInvalidOperationException_Pipeline();
             }
             return this.Remove(this.tail.Prev).Handler;
         }
@@ -501,8 +501,7 @@ namespace DotNetty.Transport.Channels
                 ChannelHandlerAdapter h = adapter;
                 if (!h.IsSharable && h.Added)
                 {
-                    throw new ChannelPipelineException(
-                        h.GetType().Name + " is not a @Sharable handler, so can't be added or removed multiple times.");
+                    ThrowHelper.ThrowChannelPipelineException(h);
                 }
                 h.Added = true;
             }
@@ -845,7 +844,7 @@ namespace DotNetty.Transport.Channels
         {
             if (this.Context0(name) != null)
             {
-                throw new ArgumentException("Duplicate handler name: " + name, nameof(name));
+                ThrowHelper.ThrowArgumentException_DuplicateHandler(name);
             }
         }
 
@@ -868,7 +867,7 @@ namespace DotNetty.Transport.Channels
             var ctx = (AbstractChannelHandlerContext)this.Context(name);
             if (ctx == null)
             {
-                throw new ArgumentException($"Handler with a name `{name}` could not be found in the pipeline.");
+                ThrowHelper.ThrowArgumentException_Context(name);
             }
 
             return ctx;
@@ -879,7 +878,7 @@ namespace DotNetty.Transport.Channels
             var ctx = (AbstractChannelHandlerContext)this.Context(handler);
             if (ctx == null)
             {
-                throw new ArgumentException($"Handler of type `{handler.GetType().Name}` could not be found in the pipeline.");
+                ThrowHelper.ThrowArgumentException_Context(handler);
             }
 
             return ctx;
@@ -890,7 +889,7 @@ namespace DotNetty.Transport.Channels
             var ctx = (AbstractChannelHandlerContext)this.Context<T>();
             if (ctx == null)
             {
-                throw new ArgumentException($"Handler of type `{typeof(T).Name}` could not be found in the pipeline.");
+                ThrowHelper.ThrowArgumentException_Context<T>();
             }
 
             return ctx;

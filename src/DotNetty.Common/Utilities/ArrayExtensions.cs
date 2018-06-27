@@ -19,7 +19,7 @@ namespace DotNetty.Common.Utilities
 
             if (length > array.Length)
             {
-                throw new ArgumentOutOfRangeException(nameof(length), $"length({length}) cannot be longer than Array.length({array.Length})");
+                ThrowHelper.ThrowArgumentOutOfRangeException_Slice(length, array.Length);
             }
             return Slice(array, 0, length);
         }
@@ -30,7 +30,7 @@ namespace DotNetty.Common.Utilities
 
             if (index + length > array.Length)
             {
-                throw new ArgumentOutOfRangeException(nameof(length), $"index: ({index}), length({length}) index + length cannot be longer than Array.length({array.Length})");
+                ThrowHelper.ThrowArgumentOutOfRangeException_Slice(index, length, array.Length);
             }
             var result = new T[length];
             Array.Copy(array, index, result, 0, length);
@@ -45,11 +45,11 @@ namespace DotNetty.Common.Utilities
             Contract.Requires(src != null);
             if (index + srcLength > array.Length)
             {
-                throw new ArgumentOutOfRangeException(nameof(srcLength), $"index: ({index}), srcLength({srcLength}) index + length cannot be longer than Array.length({array.Length})");
+                ThrowHelper.ThrowArgumentOutOfRangeException_SetRange_Index(index, srcLength, array.Length);
             }
             if (srcIndex + srcLength > src.Length)
             {
-                throw new ArgumentOutOfRangeException(nameof(srcLength), $"index: ({srcIndex}), srcLength({srcLength}) index + length cannot be longer than src.length({src.Length})");
+                ThrowHelper.ThrowArgumentOutOfRangeException_SetRange_SrcIndex(srcIndex, srcLength, src.Length);
             }
 
             Array.Copy(src, srcIndex, array, index, srcLength);

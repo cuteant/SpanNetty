@@ -260,7 +260,7 @@ namespace DotNetty.Buffers
             {
                 if (int.MaxValue - length < a.Length)
                 {
-                    throw new ArgumentException("The total length of the specified arrays is too big.");
+                    ThrowHelper.ThrowArgumentException_CopyArray();
                 }
                 length += a.Length;
             }
@@ -309,7 +309,7 @@ namespace DotNetty.Buffers
                 }
                 if (int.MaxValue - length < bLen)
                 {
-                    throw new ArgumentException("The total length of the specified buffers is too big.");
+                    ThrowHelper.ThrowArgumentException_CopyBuffer();
                 }
 
                 length += bLen;

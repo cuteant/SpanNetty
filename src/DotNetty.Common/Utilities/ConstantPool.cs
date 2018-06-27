@@ -69,7 +69,7 @@ namespace DotNetty.Common.Utilities
         {
             if (this.Exists(name))
             {
-                throw new ArgumentException($"'{name}' is already in use");
+                ThrowHelper.ThrowArgumentException(name);
             }
 
             IConstant c = this.NewInstance0<T>(name);

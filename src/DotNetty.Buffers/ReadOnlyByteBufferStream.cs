@@ -39,7 +39,7 @@ namespace DotNetty.Buffers
         {
             if (offset + count > output.Length)
             {
-                throw new ArgumentException($"The sum of {nameof(offset)} and {nameof(count)} is larger than the {nameof(output)} length");
+                ThrowHelper.ThrowArgumentException_Sum();
             }
 
             int read = Math.Min(count, this.buffer.ReadableBytes);

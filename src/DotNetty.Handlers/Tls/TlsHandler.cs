@@ -680,7 +680,7 @@ namespace DotNetty.Handlers.Tls
             break;
           }
         default:
-          throw new ArgumentOutOfRangeException(nameof(task), "Unexpected task status: " + task.Status);
+          ThrowHelper.ThrowArgumentOutOfRangeException_HandshakeCompleted(task.Status); break;
       }
     }
 #endif
@@ -1090,7 +1090,7 @@ namespace DotNetty.Handlers.Tls
             break;
 
           default:
-            throw new ArgumentOutOfRangeException("Unexpected task status: " + writeTask.Status);
+            ThrowHelper.ThrowArgumentOutOfRangeException_WriteComplete(writeTask.Status); break;
         }
 
         self._writeCallback?.Invoke(self._writeCompletion.Task);

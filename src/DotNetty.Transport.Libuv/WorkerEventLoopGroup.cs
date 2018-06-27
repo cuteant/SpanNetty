@@ -43,7 +43,7 @@ namespace DotNetty.Transport.Libuv
             var terminationTasks = new Task[eventLoopCount];
             for (int i = 0; i < eventLoopCount; i++)
             {
-                WorkerEventLoop eventLoop;
+                WorkerEventLoop eventLoop = null;
                 bool success = false;
                 try
                 {
@@ -51,12 +51,12 @@ namespace DotNetty.Transport.Libuv
                     success = eventLoop.ConnectTask.Wait(StartTimeout);
                     if (!success)
                     {
-                        throw new TimeoutException($"Connect to dispatcher pipe {this.PipeName} timed out.");
+                        ThrowHelper.ThrowTimeoutException(this.PipeName);
                     }
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidOperationException($"Failed to create a child {nameof(WorkerEventLoop)}.", ex.Unwrap());
+                    ThrowHelper.ThrowInvalidOperationException_CreateChild(ex);
                 }
                 finally
                 {
@@ -93,9 +93,10 @@ namespace DotNetty.Transport.Libuv
 
         public Task RegisterAsync(IChannel channel)
         {
-            if (!(channel is INativeChannel nativeChannel))
+            var nativeChannel = channel as INativeChannel;
+            if (null == nativeChannel)
             {
-                throw new ArgumentException($"{nameof(channel)} must be of {typeof(INativeChannel)}");
+                ThrowHelper.ThrowArgumentException_RegChannel();
             }
 
             NativeHandle handle = nativeChannel.GetHandle();

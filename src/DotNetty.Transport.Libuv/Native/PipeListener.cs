@@ -56,7 +56,7 @@ namespace DotNetty.Transport.Libuv.Native
         {
             if (this.pipes.Count == 0)
             {
-                throw new InvalidOperationException("No pipe connections to dispatch handles.");
+                ThrowHelper.ThrowInvalidOperationException_Dispatch();
             }
 
             int id = Interlocked.Increment(ref this.requestId);

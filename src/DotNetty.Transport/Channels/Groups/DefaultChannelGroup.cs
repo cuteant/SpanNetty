@@ -30,7 +30,7 @@ namespace DotNetty.Transport.Channels.Groups
         {
             if (name == null)
             {
-                throw new ArgumentNullException(nameof(name));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name);
             }
             this.Name = name;
             this.executor = executor;

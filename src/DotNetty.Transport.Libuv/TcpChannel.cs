@@ -57,7 +57,7 @@ namespace DotNetty.Transport.Libuv
         {
             if (this.tcp == null)
             {
-                throw new InvalidOperationException("Tcp handle not intialized");
+                ThrowHelper.ThrowInvalidOperationException_TcpHandle();
             }
             return this.tcp;
         }

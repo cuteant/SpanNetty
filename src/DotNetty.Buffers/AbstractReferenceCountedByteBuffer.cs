@@ -43,7 +43,7 @@ namespace DotNetty.Buffers
                 // Ensure we not resurrect (which means the refCnt was 0) and also that we encountered an overflow.
                 if (nextCnt <= increment)
                 {
-                    throw new IllegalReferenceCountException(refCnt, increment);
+                    ThrowHelper.ThrowIllegalReferenceCountException(refCnt, increment);
                 }
                 if (Interlocked.CompareExchange(ref this.referenceCount, refCnt + increment, refCnt) == refCnt)
                 {
@@ -74,7 +74,7 @@ namespace DotNetty.Buffers
                 int refCnt = this.ReferenceCount;
                 if (refCnt < decrement)
                 {
-                    throw new IllegalReferenceCountException(refCnt, -decrement);
+                    ThrowHelper.ThrowIllegalReferenceCountException(refCnt, -decrement);
                 }
 
                 if (Interlocked.CompareExchange(ref this.referenceCount, refCnt - decrement, refCnt) == refCnt)

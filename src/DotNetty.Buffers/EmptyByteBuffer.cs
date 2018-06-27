@@ -85,7 +85,7 @@ namespace DotNetty.Buffers
 
             if (minWritableBytes != 0)
             {
-                throw new IndexOutOfRangeException();
+                ThrowHelper.ThrowIndexOutOfRangeException();
             }
             return this;
         }

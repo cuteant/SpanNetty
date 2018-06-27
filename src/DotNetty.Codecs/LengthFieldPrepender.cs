@@ -138,7 +138,7 @@ namespace DotNetty.Codecs
 
             if (length < 0)
             {
-                throw new ArgumentException("Adjusted frame length (" + length + ") is less than zero");
+                ThrowHelper.ThrowArgumentException_LessThanZero(length);
             }
 
             switch (this.lengthFieldLength)
@@ -146,14 +146,14 @@ namespace DotNetty.Codecs
                 case 1:
                     if (length >= 256)
                     {
-                        throw new ArgumentException("length of object does not fit into one byte: " + length);
+                        ThrowHelper.ThrowArgumentException_Byte(length);
                     }
                     output.Add(context.Allocator.Buffer(1).WriteByte((byte)length));
                     break;
                 case 2:
                     if (length >= 65536)
                     {
-                        throw new ArgumentException("length of object does not fit into a short integer: " + length);
+                        ThrowHelper.ThrowArgumentException_Short(length);
                     }
                     output.Add(this.byteOrder == ByteOrder.BigEndian 
                         ? context.Allocator.Buffer(2).WriteShort((short)length) 
@@ -162,7 +162,7 @@ namespace DotNetty.Codecs
                 case 3:
                     if (length >= 16777216)
                     {
-                        throw new ArgumentException("length of object does not fit into a medium integer: " + length);
+                        ThrowHelper.ThrowArgumentException_Medium(length);
                     }
                     output.Add(this.byteOrder == ByteOrder.BigEndian
                         ? context.Allocator.Buffer(3).WriteMedium(length)
@@ -179,7 +179,7 @@ namespace DotNetty.Codecs
                         : context.Allocator.Buffer(8).WriteLongLE(length));
                     break;
                 default:
-                    throw new Exception("Unknown length field length");
+                    ThrowHelper.ThrowException_UnknownLen(); break;
             }
 
             output.Add(message.Retain());

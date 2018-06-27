@@ -31,7 +31,7 @@ namespace DotNetty.Transport.Libuv.Native
                 return AF_INET6_OSX;
             }
 
-            throw new InvalidOperationException($"Address family : {addressFamily} platform : {RuntimeInformation.OSDescription} not supported");
+            return ThrowHelper.ThrowInvalidOperationException_Dispatch(addressFamily);
         }
 
         internal static bool GetReuseAddress(TcpHandle tcpHandle)

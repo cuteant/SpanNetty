@@ -229,7 +229,7 @@ namespace DotNetty.Buffers
             {
                 if (chunkSize > MaxChunkSize >> 1)
                 {
-                    throw new ArgumentException($"pageSize ({pageSize}) << maxOrder ({maxOrder}) must not exceed {MaxChunkSize}");
+                    ThrowHelper.ThrowArgumentException_PageSize(pageSize, maxOrder, MaxChunkSize);
                 }
                 chunkSize <<= 1;
             }
