@@ -33,7 +33,7 @@ namespace DotNetty.Common.Concurrency
 
         public bool Cancel()
         {
-            if (!this.AtomicCancellationStateUpdate(CancellationProhibited, CancellationRequested))
+            if (!this.AtomicCancellationStateUpdate(CancellationRequested, CancellationProhibited))
             {
                 return false;
             }
