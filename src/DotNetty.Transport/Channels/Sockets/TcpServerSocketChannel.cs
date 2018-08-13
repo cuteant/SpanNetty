@@ -18,7 +18,7 @@ namespace DotNetty.Transport.Channels.Sockets
         where TChannelFactory : ITcpSocketChannelFactory, new()
     {
         //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<TcpServerSocketChannel>(); ## 苦竹 屏蔽 ##
-        static readonly ChannelMetadata METADATA = new ChannelMetadata(false, 16);
+        static readonly ChannelMetadata METADATA = new ChannelMetadata(false);
 
         static readonly Action<object, object> ReadCompletedSyncCallback = OnReadCompletedSync;
 
