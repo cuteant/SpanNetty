@@ -276,7 +276,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 else
                 {
                     // Should not reach here.
-                    throw new InvalidOperationException();
+                    ThrowHelper.ThrowInvalidOperationException();
                 }
             }
         }
@@ -299,8 +299,7 @@ namespace DotNetty.Transport.Channels.Sockets
             //    return msg;
             //}
 
-            throw new NotSupportedException(
-                "unsupported message type: " + msg.GetType().Name + ExpectedTypes);
+            return ThrowHelper.ThrowNotSupportedException_UnsupportedMsgType(msg);
         }
 
         protected bool IncompleteWrite(bool scheduleAsync, SocketChannelAsyncOperation<TChannel, TUnsafe> operation)

@@ -91,7 +91,7 @@ namespace DotNetty.Transport.Libuv.Native
             catch (Exception exception)
             {
                 client?.CloseHandle();
-                Logger.Warn($"{nameof(PipeListener)} failed to send server handle to client", exception);
+                if (Logger.WarnEnabled) Logger.FailedToSendServerHandleToClient(exception);
             }
         }
 
@@ -112,7 +112,7 @@ namespace DotNetty.Transport.Libuv.Native
             if (status != NativeMethods.EOF)
             {
                 OperationException error = NativeMethods.CreateError((uv_err_code)status);
-                Logger.Warn($"{nameof(PipeListener)} read error", error);
+                if (Logger.WarnEnabled) Logger.ReadError(error);
             }
         }
 

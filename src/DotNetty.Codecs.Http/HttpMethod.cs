@@ -194,7 +194,7 @@ namespace DotNetty.Codecs.Http
             name = name.Trim();
             if (string.IsNullOrEmpty(name))
             {
-                throw new ArgumentException(nameof(name));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name);
             }
 
             for (int i=0; i<name.Length;i++)
@@ -202,7 +202,7 @@ namespace DotNetty.Codecs.Http
                 char c = name[i];
                 if (CharUtil.IsISOControl(c) || char.IsWhiteSpace(c))
                 {
-                    throw new ArgumentException($"Invalid character '{c}' in {nameof(name)}");
+                    ThrowHelper.ThrowArgumentException_InvalidMethodName(c, name);
                 }
             }
 
@@ -217,12 +217,12 @@ namespace DotNetty.Codecs.Http
 
         public override bool Equals(object obj)
         {
-            if (!(obj is HttpMethod method))
+            if (obj is HttpMethod method)
             {
-                return false;
+                return this.name.Equals(method.name);
             }
 
-            return this.name.Equals(method.name);
+            return false;
         }
 
         public override string ToString() => this.name.ToString();

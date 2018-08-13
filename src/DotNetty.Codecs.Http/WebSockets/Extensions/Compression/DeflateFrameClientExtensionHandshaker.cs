@@ -22,7 +22,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
         {
             if (compressionLevel < 0 || compressionLevel > 9)
             {
-                throw new ArgumentException($"compressionLevel: {compressionLevel} (expected: 0-9)");
+                ThrowHelper.ThrowArgumentException_CompressionLevel(compressionLevel);
             }
             this.compressionLevel = compressionLevel;
             this.useWebkitExtensionName = useWebkitExtensionName;
@@ -30,23 +30,40 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         public WebSocketExtensionData NewRequestData() => new WebSocketExtensionData(
             this.useWebkitExtensionName ? XWebkitDeflateFrameExtension : DeflateFrameExtension,
-            new Dictionary<string, string>());
+            new Dictionary<string, string>(StringComparer.Ordinal));
 
         public IWebSocketClientExtension HandshakeExtension(WebSocketExtensionData extensionData)
         {
-            if (!XWebkitDeflateFrameExtension.Equals(extensionData.Name) &&
-                !DeflateFrameExtension.Equals(extensionData.Name))
-            {
-                return null;
-            }
+            //if (!string.Equals(XWebkitDeflateFrameExtension, extensionData.Name, StringComparison.Ordinal) &&
+            //    !string.Equals(DeflateFrameExtension, extensionData.Name, StringComparison.Ordinal))
+            //{
+            //    return null;
+            //}
 
-            if (extensionData.Parameters.Count == 0)
+            //if (extensionData.Parameters.Count == 0)
+            //{
+            //    return new DeflateFrameClientExtension(this.compressionLevel);
+            //}
+            //else
+            //{
+            //    return null;
+            //}
+            var extensionDataName = extensionData.Name;
+            switch (extensionDataName)
             {
-                return new DeflateFrameClientExtension(this.compressionLevel);
-            }
-            else
-            {
-                return null;
+                case XWebkitDeflateFrameExtension:
+                case DeflateFrameExtension:
+                    if (extensionData.Parameters.Count == 0)
+                    {
+                        return new DeflateFrameClientExtension(this.compressionLevel);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+
+                default:
+                    return null;
             }
         }
 

@@ -38,13 +38,13 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public override void ChannelRead(IChannelHandlerContext ctx, object msg)
         {
-            if (!(msg is IFullHttpResponse))
+            var response = msg as IFullHttpResponse;
+            if (null == response)
             {
                 ctx.FireChannelRead(msg);
                 return;
             }
 
-            var response = (IFullHttpResponse)msg;
             try
             {
                 if (!this.handshaker.IsHandshakeComplete)
@@ -55,7 +55,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     return;
                 }
 
-                throw new InvalidOperationException("WebSocketClientHandshaker should have been finished yet");
+                ThrowHelper.ThrowInvalidOperationException_WebSocketClientHandshaker();
             }
             finally
             {

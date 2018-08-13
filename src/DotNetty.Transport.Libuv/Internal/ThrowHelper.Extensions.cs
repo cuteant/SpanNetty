@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using DotNetty.Common.Concurrency;
 using DotNetty.Common.Utilities;
 using DotNetty.Transport.Channels;
@@ -111,6 +113,16 @@ namespace DotNetty.Transport.Libuv
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task ThrowInvalidOperationException(IntPtr loopHandle)
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException($"Loop {loopHandle} does not exist");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowInvalidOperationException_ExecutionState(int executionState)
         {
             throw GetInvalidOperationException();
@@ -181,12 +193,32 @@ namespace DotNetty.Transport.Libuv
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_FailedToCreateChildEventLoop(Exception ex)
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("failed to create a child event loop.", ex);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowInvalidOperationException_CreateChild(Exception ex)
         {
             throw GetInvalidOperationException();
             InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException($"Failed to create a child {nameof(WorkerEventLoop)}.", ex.Unwrap());
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_HandleNotInit()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("tcpListener handle not intialized");
             }
         }
 
@@ -230,6 +262,16 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
+        internal static ChannelException GetChannelException(OperationException ex)
+        {
+            return new ChannelException(ex);
+        }
+
+        internal static ChannelException GetChannelException_FailedToWrite(OperationException error)
+        {
+            return new ChannelException("Failed to write", error);
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowChannelException(Exception exc)
         {
@@ -253,11 +295,36 @@ namespace DotNetty.Transport.Libuv
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowTimeoutException(string pipeName)
         {
-            throw GetArgumentException();
-            TimeoutException GetArgumentException()
+            throw GetException();
+            TimeoutException GetException()
             {
                 return new TimeoutException($"Connect to dispatcher pipe {pipeName} timed out.");
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotSupportedException(IPEndPoint endPoint, out sockaddr addr)
+        {
+            throw GetException();
+            NotSupportedException GetException()
+            {
+                return new NotSupportedException($"End point {endPoint} is not supported, expecting InterNetwork/InterNetworkV6.");
+            }
+        }
+
+        internal static ConnectTimeoutException GetConnectTimeoutException(OperationException error)
+        {
+            return new ConnectTimeoutException(error.ToString());
+        }
+
+        internal static ClosedChannelException GetClosedChannelException()
+        {
+            return new ClosedChannelException();
+        }
+
+        internal static ClosedChannelException GetClosedChannelException_FailedToWrite(Exception ex)
+        {
+            return new ClosedChannelException("Failed to write", ex);
         }
     }
 }

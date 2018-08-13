@@ -86,6 +86,36 @@ namespace DotNetty.Buffers
     partial class ThrowHelper
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static T ThrowGetException_ShouldNotReachHere<T>()
+        {
+            throw GetException();
+            Exception GetException()
+            {
+                return new Exception("should not reach here");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_CheckIndex(int length)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("length: " + length);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_CheckLength(int length)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("length: " + length + " (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_LenIsTooBig()
         {
             throw GetArgumentException();
@@ -152,6 +182,28 @@ namespace DotNetty.Buffers
             ArgumentException GetArgumentException()
             {
                 return new ArgumentException($"pageSize ({pageSize}) << maxOrder ({maxOrder}) must not exceed {maxChunkSize}");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_IsText(int index, int length)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException($"index: {index}length: {length}");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_CheckSliceOutOfBounds(int index, int length, IByteBuffer buffer)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException($"{buffer}.Slice({index}, {length})");
             }
         }
 

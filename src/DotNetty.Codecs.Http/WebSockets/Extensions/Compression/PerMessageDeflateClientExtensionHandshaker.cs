@@ -28,11 +28,11 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
         {
             if (requestedServerWindowSize > MaxWindowSize || requestedServerWindowSize < MinWindowSize)
             {
-                throw new ArgumentException($"requestedServerWindowSize: {requestedServerWindowSize} (expected: 8-15)");
+                ThrowHelper.ThrowArgumentException_WindowSize(ExceptionArgument.requestedServerWindowSize, requestedServerWindowSize);
             }
             if (compressionLevel < 0 || compressionLevel > 9)
             {
-                throw new ArgumentException($"compressionLevel: {compressionLevel} (expected: 0-9)");
+                ThrowHelper.ThrowArgumentException_CompressionLevel(compressionLevel);
             }
             this.compressionLevel = compressionLevel;
             this.allowClientWindowSize = allowClientWindowSize;
@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         public WebSocketExtensionData NewRequestData()
         {
-            var parameters = new Dictionary<string, string>(4);
+            var parameters = new Dictionary<string, string>(4, StringComparer.Ordinal);
             if (this.requestedServerWindowSize != MaxWindowSize)
             {
                 parameters.Add(ServerNoContext, null);
@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         public IWebSocketClientExtension HandshakeExtension(WebSocketExtensionData extensionData)
         {
-            if (!PerMessageDeflateExtension.Equals(extensionData.Name))
+            if (!string.Equals(PerMessageDeflateExtension, extensionData.Name, StringComparison.Ordinal))
             {
                 return null;
             }
@@ -78,7 +78,8 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
             foreach (KeyValuePair<string, string> parameter in extensionData.Parameters)
             {
-                if (ClientMaxWindow.Equals(parameter.Key, StringComparison.OrdinalIgnoreCase))
+                var parameterKey = parameter.Key;
+                if (string.Equals(ClientMaxWindow, parameterKey, StringComparison.OrdinalIgnoreCase))
                 {
                     // allowed client_window_size_bits
                     if (this.allowClientWindowSize)
@@ -90,7 +91,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                         succeed = false;
                     }
                 }
-                else if (ServerMaxWindow.Equals(parameter.Key, StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(ServerMaxWindow, parameterKey, StringComparison.OrdinalIgnoreCase))
                 {
                     // acknowledged server_window_size_bits
                     serverWindowSize = int.Parse(parameter.Value);
@@ -99,7 +100,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                         succeed = false;
                     }
                 }
-                else if (ClientNoContext.Equals(parameter.Key, StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(ClientNoContext, parameterKey, StringComparison.OrdinalIgnoreCase))
                 {
                     // allowed client_no_context_takeover
                     if (this.allowClientNoContext)
@@ -111,7 +112,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                         succeed = false;
                     }
                 }
-                else if (ServerNoContext.Equals(parameter.Key, StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(ServerNoContext, parameterKey, StringComparison.OrdinalIgnoreCase))
                 {
                     // acknowledged server_no_context_takeover
                     if (this.requestedServerNoContext)

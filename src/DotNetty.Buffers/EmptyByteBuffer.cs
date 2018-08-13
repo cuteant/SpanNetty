@@ -506,7 +506,7 @@ namespace DotNetty.Buffers
         {
             if (index != 0)
             {
-                throw new IndexOutOfRangeException();
+                ThrowHelper.ThrowIndexOutOfRangeException();
             }
             return this;
         }
@@ -515,11 +515,11 @@ namespace DotNetty.Buffers
         {
             if (length < 0)
             {
-                throw new ArgumentException("length: " + length);
+                ThrowHelper.ThrowArgumentException_CheckIndex(length);
             }
             if (index != 0 || length != 0)
             {
-                throw new IndexOutOfRangeException();
+                ThrowHelper.ThrowIndexOutOfRangeException();
             }
 
             return this;
@@ -530,11 +530,11 @@ namespace DotNetty.Buffers
         {
             if (length < 0)
             {
-                throw new ArgumentException("length: " + length + " (expected: >= 0)");
+                ThrowHelper.ThrowArgumentException_CheckLength(length);
             }
             if (length != 0)
             {
-                throw new IndexOutOfRangeException();
+                ThrowHelper.ThrowIndexOutOfRangeException();
             }
             return this;
         }

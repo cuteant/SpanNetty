@@ -160,12 +160,12 @@ namespace DotNetty.Transport.Libuv
             catch (Exception ex)
             {
                 this.loopRunStart.Set();
-                Logger.Error("Loop {}:{} run default error.", this.thread.Name, handle, ex);
+                Logger.LoopRunDefaultError(this.thread, handle, ex);
                 this.terminationCompletionSource.TrySetException(ex);
             }
             finally
             {
-                Logger.Info("Loop {}:{} thread finished.", this.thread.Name, handle);
+                if (Logger.InfoEnabled) Logger.LoopThreadFinished(this.thread, handle);
                 this.CleanupAndTerminate();
             }
         }
@@ -181,7 +181,7 @@ namespace DotNetty.Transport.Libuv
             }
             catch (Exception ex)
             {
-                Logger.Error("{}: shutting down loop error", ex);
+                Logger.ShuttingDownLoopError(ex);
             }
         }
 
@@ -235,9 +235,9 @@ namespace DotNetty.Transport.Libuv
             finally
             {
                 Interlocked.Exchange(ref this.executionState, TerminatedState);
-                if (!this.taskQueue.IsEmpty)
+                if (!this.taskQueue.IsEmpty && Logger.WarnEnabled)
                 {
-                    Logger.Warn($"{nameof(LoopExecutor)} terminated with non-empty task queue ({this.taskQueue.Count})");
+                    Logger.TerminatedWithNonEmptyTaskQueue(this.taskQueue.Count);
                 }
                 this.terminationCompletionSource.TryComplete();
             }
@@ -253,25 +253,25 @@ namespace DotNetty.Transport.Libuv
             }
             catch (Exception ex)
             {
-                Logger.Warn("{}:{} release error {}", this.thread.Name, handle, ex);
+                if (Logger.WarnEnabled) Logger.LoopReleaseError(this.thread, handle, ex);
             }
 
             SafeDispose(this.timerHandle);
             SafeDispose(this.asyncHandle);
             SafeDispose(this.loop);
-            Logger.Info("{}:{} disposed.", this.thread.Name, handle);
+            if (Logger.InfoEnabled) Logger.LoopDisposed(this.thread, handle);
         }
 
         static void SafeDispose(IDisposable handle)
         {
             try
             {
-                Logger.Info("Disposing {}", handle.GetType());
+                if (Logger.InfoEnabled) Logger.LoopDisposing(handle);
                 handle.Dispose();
             }
             catch (Exception ex)
             {
-                Logger.Warn("{} dispose error {}", handle.GetType(), ex);
+                if (Logger.WarnEnabled) Logger.LoopDisposeError(handle, ex);
             }
         }
 
@@ -297,7 +297,7 @@ namespace DotNetty.Transport.Libuv
             long runTasks = 0;
             long executionTime;
             this.wakeUp = false;
-            for (;;)
+            while(true)
             {
                 SafeExecute(task);
 
@@ -402,7 +402,7 @@ namespace DotNetty.Transport.Libuv
             {
                 return false;
             }
-            for (;;)
+            while(true)
             {
                 SafeExecute(task);
                 task = PollTaskFrom(taskQueue);
@@ -488,7 +488,7 @@ namespace DotNetty.Transport.Libuv
             bool inEventLoop = this.InEventLoop;
             bool wakeUpLoop;
             int oldState;
-            for (;;)
+            while(true)
             {
                 if (this.IsShuttingDown)
                 {

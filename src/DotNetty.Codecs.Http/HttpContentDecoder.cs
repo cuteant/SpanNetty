@@ -42,6 +42,7 @@ namespace DotNetty.Codecs.Http
                 return;
             }
 
+            var httpContent = message as IHttpContent;
             if (message is IHttpMessage httpMessage)
             {
                 this.Cleanup();
@@ -60,7 +61,7 @@ namespace DotNetty.Codecs.Http
 
                 if (this.decoder == null)
                 {
-                    if (httpMessage is IHttpContent httpContent)
+                    if (httpContent != null)
                     {
                         httpContent.Retain();
                     }
@@ -93,26 +94,26 @@ namespace DotNetty.Codecs.Http
                     headers.Set(HttpHeaderNames.ContentEncoding, targetContentEncoding);
                 }
 
-                if (httpMessage is IHttpContent)
+                if (httpContent != null)
                 {
                     // If message is a full request or response object (headers + data), don't copy data part into out.
                     // Output headers only; data part will be decoded below.
                     // Note: "copy" object must not be an instance of LastHttpContent class,
                     // as this would (erroneously) indicate the end of the HttpMessage to other handlers.
-                    IHttpMessage copy;
-                    if (httpMessage is IHttpRequest req)
+                    IHttpMessage copy = null;
+                    switch (httpMessage)
                     {
-                        // HttpRequest or FullHttpRequest
-                        copy = new DefaultHttpRequest(req.ProtocolVersion, req.Method, req.Uri);
-                    }
-                    else if (httpMessage is IHttpResponse res)
-                    {
-                        // HttpResponse or FullHttpResponse
-                        copy = new DefaultHttpResponse(res.ProtocolVersion, res.Status);
-                    }
-                    else
-                    {
-                        throw new CodecException($"Object of class {StringUtil.SimpleClassName(httpMessage.GetType())} is not a HttpRequest or HttpResponse");
+                        case IHttpRequest req:
+                            // HttpRequest or FullHttpRequest
+                            copy = new DefaultHttpRequest(req.ProtocolVersion, req.Method, req.Uri);
+                            break;
+                        case IHttpResponse res:
+                            // HttpResponse or FullHttpResponse
+                            copy = new DefaultHttpResponse(res.ProtocolVersion, res.Status);
+                            break;
+                        default:
+                            ThrowHelper.ThrowCodecException_InvalidHttpMsg(httpMessage);
+                            break;
                     }
                     copy.Headers.Set(httpMessage.Headers);
                     copy.Result = httpMessage.Result;
@@ -124,15 +125,15 @@ namespace DotNetty.Codecs.Http
                 }
             }
 
-            if (message is IHttpContent c)
+            if (httpContent != null)
             {
                 if (this.decoder == null)
                 {
-                    output.Add(c.Retain());
+                    output.Add(httpContent.Retain());
                 }
                 else
                 {
-                    this.DecodeContent(c, output);
+                    this.DecodeContent(httpContent, output);
                 }
             }
         }
@@ -224,7 +225,7 @@ namespace DotNetty.Codecs.Http
 
         void FetchDecoderOutput(ICollection<object> output)
         {
-            for (;;)
+            while(true)
             {
                 var buf = this.decoder.ReadInbound<IByteBuffer>();
                 if (buf == null)

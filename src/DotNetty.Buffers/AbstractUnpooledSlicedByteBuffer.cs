@@ -21,20 +21,22 @@ namespace DotNetty.Buffers
         {
             CheckSliceOutOfBounds(index, length, buffer);
 
-            if (buffer is AbstractUnpooledSlicedByteBuffer byteBuffer)
+            switch (buffer)
             {
-                this.buffer = byteBuffer.buffer;
-                this.adjustment = byteBuffer.adjustment + index;
-            }
-            else if (buffer is UnpooledDuplicatedByteBuffer)
-            {
-                this.buffer = buffer.Unwrap();
-                this.adjustment = index;
-            }
-            else
-            {
-                this.buffer = buffer;
-                this.adjustment = index;
+                case AbstractUnpooledSlicedByteBuffer byteBuffer:
+                    this.buffer = byteBuffer.buffer;
+                    this.adjustment = byteBuffer.adjustment + index;
+                    break;
+
+                case UnpooledDuplicatedByteBuffer _:
+                    this.buffer = buffer.Unwrap();
+                    this.adjustment = index;
+                    break;
+
+                default:
+                    this.buffer = buffer;
+                    this.adjustment = index;
+                    break;
             }
 
             this.SetWriterIndex0(length);
@@ -329,7 +331,7 @@ namespace DotNetty.Buffers
         {
             if (MathUtil.IsOutOfBounds(index, length, buffer.Capacity))
             {
-                throw new IndexOutOfRangeException($"{buffer}.Slice({index}, {length})");
+                ThrowHelper.ThrowIndexOutOfRangeException_CheckSliceOutOfBounds(index, length, buffer);
             }
         }
     }

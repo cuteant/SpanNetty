@@ -15,15 +15,38 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
         {
         }
 
-        public override bool AcceptOutboundMessage(object msg) =>
-            ((msg is TextWebSocketFrame || msg is BinaryWebSocketFrame) 
-                && (((WebSocketFrame) msg).Rsv & WebSocketRsv.Rsv1) == 0) 
-            || (msg is ContinuationWebSocketFrame && this.compressing);
+        public override bool AcceptOutboundMessage(object msg)
+        {
+            switch (msg)
+            {
+                case TextWebSocketFrame textFrame when (textFrame.Rsv & WebSocketRsv.Rsv1) == 0:
+                    return true;
+                case BinaryWebSocketFrame binFrame when (binFrame.Rsv & WebSocketRsv.Rsv1) == 0:
+                    return true;
+                case ContinuationWebSocketFrame conFrame when this.compressing:
+                    return true;
+                default:
+                    return false;
+            }
+            //return ((msg is TextWebSocketFrame || msg is BinaryWebSocketFrame)
+            //    && (((WebSocketFrame)msg).Rsv & WebSocketRsv.Rsv1) == 0)
+            //|| (msg is ContinuationWebSocketFrame && this.compressing);
+        }
 
-        protected override int Rsv(WebSocketFrame msg) =>
-            msg is TextWebSocketFrame || msg is BinaryWebSocketFrame 
-                ? msg.Rsv | WebSocketRsv.Rsv1 
-                : msg.Rsv;
+        protected override int Rsv(WebSocketFrame msg)
+        {
+            switch (msg)
+            {
+                case TextWebSocketFrame _:
+                case BinaryWebSocketFrame _:
+                    return msg.Rsv | WebSocketRsv.Rsv1;
+                default:
+                    return msg.Rsv;
+            }
+            //return msg is TextWebSocketFrame || msg is BinaryWebSocketFrame
+            //    ? msg.Rsv | WebSocketRsv.Rsv1
+            //    : msg.Rsv;
+        }
 
         protected override bool RemoveFrameTail(WebSocketFrame msg) => msg.IsFinalFragment;
 
@@ -35,9 +58,15 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             {
                 this.compressing = false;
             }
-            else if (msg is TextWebSocketFrame || msg is BinaryWebSocketFrame)
+            else //if (msg is TextWebSocketFrame || msg is BinaryWebSocketFrame)
             {
-                this.compressing = true;
+                switch (msg)
+                {
+                    case TextWebSocketFrame _:
+                    case BinaryWebSocketFrame _:
+                        this.compressing = true;
+                        break;
+                }
             }
         }
     }

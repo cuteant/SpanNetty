@@ -6,6 +6,7 @@ namespace DotNetty.Transport.Channels
     using System;
     using System.Diagnostics.Contracts;
     using System.Net;
+    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
@@ -52,25 +53,26 @@ namespace DotNetty.Transport.Channels
         {
             if (this.InboundHandler != null)
             {
-                throw new InvalidOperationException($"init() can not be invoked if {StringUtil.SimpleClassName(this)} was constructed with non-default constructor.");
+                ThrowHelper.ThrowInvalidOperationException_InitCannoBeInvokedIf(this);
             }
 
             if (inbound == null)
             {
-                throw new ArgumentNullException(nameof(inbound));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.inbound);
             }
 
             if (outbound == null)
             {
-                throw new ArgumentNullException(nameof(outbound));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.outbound);
             }
         }
 
+        [MethodImpl(InlineMethod.Value)]
         void CheckAdded()
         {
             if (!this.handlerAdded)
             {
-                throw new InvalidOperationException("handler not added to pipeline yet");
+                ThrowHelper.ThrowInvalidOperationException_HandlerNotAddedToPipeYet();
             }
         }
 
@@ -90,7 +92,7 @@ namespace DotNetty.Transport.Channels
         {
             if (this.InboundHandler == null)
             {
-                throw new InvalidOperationException($"Init() must be invoked before being added to a {nameof(IChannelPipeline)} if {StringUtil.SimpleClassName(this)} was constructed with the default constructor.");
+                ThrowHelper.ThrowInvalidOperationException_InitMustBeInvokedBefore(this);
             }
 
             this.outboundCtx = new DelegatingChannelHandlerContext(context, this.OutboundHandler);
@@ -105,15 +107,11 @@ namespace DotNetty.Transport.Channels
                     {
                         if (Logger.DebugEnabled)
                         {
-                            Logger.Debug("An exception {}"
-                                + "was thrown by a user handler's exceptionCaught() "
-                                + "method while handling the following exception:", error, cause);
+                            Logger.FreedThreadLocalBufferFromThreadFull(error, cause);
                         }
                         else if (Logger.WarnEnabled)
                         {
-                            Logger.Warn("An exception '{}' [enable DEBUG level for full stacktrace] "
-                                + "was thrown by a user handler's exceptionCaught() "
-                                + "method while handling the following exception:", error, cause);
+                            Logger.FreedThreadLocalBufferFromThread(error, cause);
                         }
                     }
                 });

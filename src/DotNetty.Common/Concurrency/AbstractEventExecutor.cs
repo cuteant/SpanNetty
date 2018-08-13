@@ -165,7 +165,7 @@ namespace DotNetty.Common.Concurrency
             }
             catch (Exception ex)
             {
-                Logger.Warn("A task raised an exception. Task: {}", task, ex);
+                Logger.ATaskRaisedAnException(task, ex);
             }
         }
 

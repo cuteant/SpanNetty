@@ -100,7 +100,7 @@ namespace DotNetty.Codecs.Http.Cors
                 SetVaryHeader(response);
                 return true;
             }
-            Logger.Debug("Request origin [{}]] was not among the configured origins [{}]", origin, this.config.Origins);
+            if (Logger.DebugEnabled) Logger.RequestOriginWasNotAmongTheConfiguredOrigins(origin, this.config);
 
             return false;
         }
@@ -137,7 +137,7 @@ namespace DotNetty.Codecs.Http.Cors
 
         void SetAllowCredentials(IHttpResponse response)
         {
-            if (this.config.IsCredentialsAllowed 
+            if (this.config.IsCredentialsAllowed
                 && !AsciiString.ContentEquals(response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null), AnyOrigin))
             {
                 response.Headers.Set(HttpHeaderNames.AccessControlAllowCredentials, new AsciiString("true"));
@@ -147,8 +147,8 @@ namespace DotNetty.Codecs.Http.Cors
         static bool IsPreflightRequest(IHttpRequest request)
         {
             HttpHeaders headers = request.Headers;
-            return request.Method.Equals(HttpMethod.Options) 
-                && headers.Contains(HttpHeaderNames.Origin) 
+            return request.Method.Equals(HttpMethod.Options)
+                && headers.Contains(HttpHeaderNames.Origin)
                 && headers.Contains(HttpHeaderNames.AccessControlRequestMethod);
         }
 
@@ -197,7 +197,7 @@ namespace DotNetty.Codecs.Http.Cors
             Task task = ctx.WriteAndFlushAsync(response);
             if (!keepAlive)
             {
-                task.ContinueWith(CloseOnComplete, ctx, 
+                task.ContinueWith(CloseOnComplete, ctx,
                     TaskContinuationOptions.ExecuteSynchronously);
             }
         }

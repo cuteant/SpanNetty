@@ -73,12 +73,12 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public int CompareTo(IInterfaceHttpData other)
         {
-            if (!(other is InternalAttribute))
+            if (other is InternalAttribute attr)
             {
-                throw new ArgumentException($"Cannot compare {this.DataType} with {other.DataType}");
+                return this.CompareTo(attr);
             }
 
-            return this.CompareTo((InternalAttribute)other);
+            return ThrowHelper.ThrowArgumentException_CompareToHttpData(this.DataType, other.DataType);
         }
 
         public int CompareTo(InternalAttribute other) => string.Compare(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);

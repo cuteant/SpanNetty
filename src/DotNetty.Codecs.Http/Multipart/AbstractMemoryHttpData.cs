@@ -28,7 +28,7 @@ namespace DotNetty.Codecs.Http.Multipart
             this.CheckSize(localsize);
             if (this.DefinedSize > 0 && this.DefinedSize < localsize)
             {
-                throw new IOException($"Out of size: {localsize} > {this.DefinedSize}");
+                ThrowHelper.ThrowIOException_OutOfSize(localsize, this.DefinedSize);
             }
             this.byteBuf?.Release();
 
@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
             if (!inputStream.CanRead)
             {
-                throw new ArgumentException($"{nameof(inputStream)} is not readable");
+                ThrowHelper.ThrowArgumentException_Stream_NotReadable();
             }
 
             IByteBuffer buffer = Unpooled.Buffer();
@@ -64,7 +64,7 @@ namespace DotNetty.Codecs.Http.Multipart
             this.Size = written;
             if (this.DefinedSize > 0 && this.DefinedSize < this.Size)
             {
-                throw new IOException($"Out of size: {this.Size} > {this.DefinedSize}");
+                ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
             }
 
             this.byteBuf?.Release();
@@ -80,7 +80,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 this.CheckSize(this.Size + localsize);
                 if (this.DefinedSize > 0 && this.DefinedSize < this.Size + localsize)
                 {
-                    throw new IOException($"Out of size: {(this.Size + localsize)} > {this.DefinedSize}");
+                    ThrowHelper.ThrowIOException_OutOfSize(this.Size + localsize, this.DefinedSize);
                 }
 
                 this.Size += localsize;
@@ -109,7 +109,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 if (buffer == null)
                 {
-                    throw new ArgumentNullException(nameof(buffer));
+                    ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer);
                 }
             }
         }
@@ -184,7 +184,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
             if (!destination.CanWrite)
             {
-                throw new ArgumentException($"{nameof(destination)} is not writable");
+                ThrowHelper.ThrowArgumentException_Stream_NotWritable();
             }
             if (this.byteBuf == null)
             {

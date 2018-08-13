@@ -42,11 +42,11 @@ namespace DotNetty.Common.Utilities
             {
                 if (this.index == -1)
                 {
-                    throw new InvalidOperationException("Enumerator not initialized.");
+                    ThrowHelper.ThrowInvalidOperationException_EnumeratorNotInit();
                 }
                 if (this.index >= this.charSequence.Count)
                 {
-                    throw new InvalidOperationException("Eumerator already completed.");
+                    ThrowHelper.ThrowInvalidOperationException_EnumeratorAlreadyCompleted();
                 }
                 return this.currentElement;
             }
@@ -58,11 +58,11 @@ namespace DotNetty.Common.Utilities
             {
                 if (this.index == -1)
                 {
-                    throw new InvalidOperationException("Enumerator not initialized.");
+                    ThrowHelper.ThrowInvalidOperationException_EnumeratorNotInit();
                 }
                 if (this.index >= this.charSequence.Count)
                 {
-                    throw new InvalidOperationException("Eumerator already completed.");
+                    ThrowHelper.ThrowInvalidOperationException_EnumeratorAlreadyCompleted();
                 }
                 return this.currentElement;
             }

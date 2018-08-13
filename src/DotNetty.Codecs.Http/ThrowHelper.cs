@@ -8,7 +8,7 @@ namespace DotNetty.Codecs.Http
     using System.Runtime.CompilerServices;
     using DotNetty.Common.Utilities;
 
-    static class ThrowHelper
+    static partial class ThrowHelper
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_NullText()

@@ -15,15 +15,15 @@ namespace DotNetty.Transport.Channels.Local
         {
             if (oldLocalAddress != null) 
             {
-                throw new ChannelException("already bound");
-            }
-            
-            if (!(localAddress is LocalAddress)) 
-            {
-                throw new ChannelException($"unsupported address type: {localAddress.GetType()}");
+                ThrowHelper.ThrowChannelException_AlreadyBound();
             }
 
-            var addr = (LocalAddress) localAddress;
+            var addr = localAddress as LocalAddress;
+            if (null == addr) 
+            {
+                ThrowHelper.ThrowChannelException_UnsupportedAddrType(localAddress);
+            }
+
             if (LocalAddress.Any.Equals(addr)) 
             {
                 addr = new LocalAddress(channel);
@@ -32,7 +32,7 @@ namespace DotNetty.Transport.Channels.Local
             var result = BoundChannels.GetOrAdd(addr, channel);
             if (!ReferenceEquals(result, channel))
             {
-                throw new ChannelException($"address already in use by: {result}");
+                ThrowHelper.ThrowChannelException_AddrAlreadyInUseBy(result);
             }
             
             return addr;

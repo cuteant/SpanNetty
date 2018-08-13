@@ -63,7 +63,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 this.CheckSize(this.Size);
                 if (this.DefinedSize > 0 && this.DefinedSize < this.Size)
                 {
-                    throw new IOException($"Out of size: {this.Size} > {this.DefinedSize}");
+                    ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
                 }
                 if (this.fileStream == null)
                 {
@@ -98,7 +98,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     this.CheckSize(this.Size + localsize);
                     if (this.DefinedSize > 0 && this.DefinedSize < this.Size + localsize)
                     {
-                        throw new IOException($"Out of size: {this.Size} > {this.DefinedSize}");
+                        ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
                     }
                     if (this.fileStream == null)
                     {
@@ -129,7 +129,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 if (buffer == null)
                 {
-                    throw new ArgumentNullException(nameof(buffer));
+                    ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer);
                 }
             }
         }
@@ -171,10 +171,10 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 catch (Exception error)
                 {
-                    Logger.Warn("Failed to delete: {} {}", this.fileStream, error);
+                    if (Logger.WarnEnabled) Logger.FailedToDelete(this.fileStream, error);
                 }
                 this.fileStream = null;
-                throw new IOException($"Out of size: {this.Size} > {this.DefinedSize}");
+                ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
             }
             //isRenamed = true;
             this.SetCompleted();
@@ -190,7 +190,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 catch (IOException error)
                 {
-                    Logger.Warn("Failed to delete file.", error);
+                    if (Logger.WarnEnabled) Logger.FailedToDeleteFile(error);
                 }
 
                 this.fileStream = null;
@@ -263,7 +263,7 @@ namespace DotNetty.Codecs.Http.Multipart
             Contract.Requires(destination != null);
             if (this.fileStream == null)
             {
-                throw new InvalidOperationException("No file defined so cannot be renamed");
+                ThrowHelper.ThrowInvalidOperationException_NoFileDefined();
             }
 
             // must copy
@@ -295,7 +295,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 catch (IOException exception)
                 {
-                    Logger.Warn("Failed to delete file.", exception);
+                    if (Logger.WarnEnabled) Logger.FailedToDeleteFile(exception);
                 }
                 this.fileStream = destination;
                 return true;
@@ -308,7 +308,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 catch (IOException exception)
                 {
-                    Logger.Warn("Failed to delete file.", exception);
+                    if (Logger.WarnEnabled) Logger.FailedToDeleteFile(exception);
                 }
                 return false;
             }
@@ -326,7 +326,7 @@ namespace DotNetty.Codecs.Http.Multipart
             long srcsize = fileStream.Length;
             if (srcsize > int.MaxValue)
             {
-                throw new ArgumentException("File too big to be loaded in memory");
+                ThrowHelper.ThrowArgumentException_FileTooBig();
             }
 
             var array = new byte[(int)srcsize];

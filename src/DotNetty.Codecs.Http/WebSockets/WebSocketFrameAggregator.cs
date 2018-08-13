@@ -15,7 +15,17 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
         }
 
-        protected override bool IsStartMessage(WebSocketFrame msg) => msg is TextWebSocketFrame || msg is BinaryWebSocketFrame;
+        protected override bool IsStartMessage(WebSocketFrame msg)
+        {
+            switch (msg)
+            {
+                case TextWebSocketFrame _:
+                case BinaryWebSocketFrame _:
+                    return true;
+                default:
+                    return false;
+            }
+        }
 
         protected override bool IsContentMessage(WebSocketFrame msg) => msg is ContinuationWebSocketFrame;
 
@@ -41,18 +51,16 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected override WebSocketFrame BeginAggregation(WebSocketFrame start, IByteBuffer content)
         {
-            if (start is TextWebSocketFrame)
+            switch (start)
             {
-                return new TextWebSocketFrame(true, start.Rsv, content);
+                case TextWebSocketFrame _:
+                    return new TextWebSocketFrame(true, start.Rsv, content);
+                case BinaryWebSocketFrame _:
+                    return new BinaryWebSocketFrame(true, start.Rsv, content);
+                default:
+                    // Should not reach here.
+                    return ThrowHelper.ThrowException_UnkonwFrameType();
             }
-
-            if (start is BinaryWebSocketFrame)
-            {
-                return new BinaryWebSocketFrame(true, start.Rsv, content);
-            }
-
-            // Should not reach here.
-            throw new Exception("Unkonw WebSocketFrame type, must be either TextWebSocketFrame or BinaryWebSocketFrame");
         }
     }
 }

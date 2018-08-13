@@ -189,7 +189,7 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             if (!byteBuf.HasArray)
             {
-                throw new NotImplementedException("Only IByteBuffer implementations backed by array are supported.");
+                ThrowHelper.ThrowNotImplementedException_OnlyIByteBufferImpl();
             }
 
             if (!this.Socket.Connected)
@@ -214,7 +214,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     }
                     break;
                 default:
-                    throw new SocketException((int)errorCode);
+                    ThrowHelper.ThrowSocketException(errorCode); break;
             }
 
             byteBuf.SetWriterIndex(byteBuf.WriterIndex + received);
@@ -226,14 +226,14 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             if (!buf.HasArray)
             {
-                throw new NotImplementedException("Only IByteBuffer implementations backed by array are supported.");
+                ThrowHelper.ThrowNotImplementedException_OnlyIByteBufferImpl();
             }
 
             int sent = this.Socket.Send(buf.Array, buf.ArrayOffset + buf.ReaderIndex, buf.ReadableBytes, SocketFlags.None, out SocketError errorCode);
 
             if (errorCode != SocketError.Success && errorCode != SocketError.WouldBlock)
             {
-                throw new SocketException((int)errorCode);
+                ThrowHelper.ThrowSocketException(errorCode);
             }
 
             if (sent > 0)
@@ -288,7 +288,7 @@ namespace DotNetty.Transport.Channels.Sockets
                                 long localWrittenBytes = socket.Send(bufferList, SocketFlags.None, out SocketError errorCode);
                                 if (errorCode != SocketError.Success && errorCode != SocketError.WouldBlock)
                                 {
-                                    throw new SocketException((int)errorCode);
+                                    ThrowHelper.ThrowSocketException(errorCode);
                                 }
 
                                 if (localWrittenBytes == 0)

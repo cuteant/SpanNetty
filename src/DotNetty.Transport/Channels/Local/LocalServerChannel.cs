@@ -85,7 +85,7 @@ namespace DotNetty.Transport.Channels.Local
             }
 
             IChannelPipeline pipeline = this.Pipeline;
-            for (; ; )
+            while (true)
             {
                 if (!inboundBuffer.TryDequeue(out object m))
                 {

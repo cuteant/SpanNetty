@@ -22,13 +22,13 @@ namespace DotNetty.Codecs.Http.Cookies
         {
             if (nameBegin == -1 || nameBegin == nameEnd)
             {
-                if (Logger.DebugEnabled) Logger.Debug("Skipping cookie with null name");
+                if (Logger.DebugEnabled) Logger.SkippingCookieWithNullName();
                 return null;
             }
 
             if (valueBegin == -1)
             {
-                if (Logger.DebugEnabled) Logger.Debug("Skipping cookie with null value");
+                if (Logger.DebugEnabled) Logger.SkippingCookieWithNullValue();
                 return null;
             }
 
@@ -36,7 +36,7 @@ namespace DotNetty.Codecs.Http.Cookies
             ICharSequence unwrappedValue = UnwrapValue(sequence);
             if (unwrappedValue == null)
             {
-                if (Logger.DebugEnabled) Logger.Debug("Skipping cookie because starting quotes are not properly balanced in '{}'", sequence);
+                if (Logger.DebugEnabled) Logger.SkippingCookieBecauseStartingQuotesAreNotProperlyBalancedIn(sequence);
                 return null;
             }
 
@@ -47,8 +47,7 @@ namespace DotNetty.Codecs.Http.Cookies
             {
                 if (Logger.DebugEnabled)
                 {
-                    Logger.Debug("Skipping cookie because name '{}' contains invalid char '{}'", 
-                        name, name[invalidOctetPos]);
+                    Logger.SkippingCookieBecauseNameContainsInvalidChar(name, invalidOctetPos);
                 }
                 return null;
             }
@@ -59,8 +58,7 @@ namespace DotNetty.Codecs.Http.Cookies
             {
                 if (Logger.DebugEnabled)
                 {
-                    Logger.Debug("Skipping cookie because value '{}' contains invalid char '{}'",
-                        unwrappedValue, unwrappedValue[invalidOctetPos]);
+                    Logger.SkippingCookieBecauseValueContainsInvalidChar(unwrappedValue, invalidOctetPos);
                 }
 
                 return null;

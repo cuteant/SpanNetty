@@ -72,13 +72,13 @@ namespace DotNetty.Codecs.Http.WebSockets
                 frameSize |= (uint)(b & 0x7f);
                 if (frameSize > this.maxFrameSize)
                 {
-                    throw new TooLongFrameException(nameof(WebSocket00FrameDecoder));
+                    ThrowHelper.ThrowTooLongFrameException_WebSocket00FrameDecoder();
                 }
                 lengthFieldSize++;
                 if (lengthFieldSize > 8)
                 {
                     // Perhaps a malicious peer?
-                    throw new TooLongFrameException(nameof(WebSocket00FrameDecoder));
+                    ThrowHelper.ThrowTooLongFrameException_WebSocket00FrameDecoder();
                 }
             } while ((b & 0x80) == 0x80);
 
@@ -102,7 +102,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 if (rbytes > this.maxFrameSize)
                 {
                     // Frame length exceeded the maximum
-                    throw new TooLongFrameException(nameof(WebSocket00FrameDecoder));
+                    ThrowHelper.ThrowTooLongFrameException_WebSocket00FrameDecoder();
                 }
                 else
                 {
@@ -114,7 +114,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             int frameSize = delimPos - ridx;
             if (frameSize > this.maxFrameSize)
             {
-                throw new TooLongFrameException(nameof(WebSocket00FrameDecoder));
+                ThrowHelper.ThrowTooLongFrameException_WebSocket00FrameDecoder();
             }
 
             IByteBuffer binaryData = ReadBytes(ctx.Allocator, buffer, frameSize);
@@ -124,7 +124,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (ffDelimPos >= 0)
             {
                 binaryData.Release();
-                throw new ArgumentException("a text frame should not contain 0xFF.");
+                ThrowHelper.ThrowArgumentException_TextFrame();
             }
 
             return new TextWebSocketFrame(binaryData);

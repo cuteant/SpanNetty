@@ -22,20 +22,21 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected override void Decode(IChannelHandlerContext ctx, WebSocketFrame frame, List<object> output)
         {
-            if (frame is PingWebSocketFrame)
+            switch (frame)
             {
-                frame.Content.Retain();
-                ctx.Channel.WriteAndFlushAsync(new PongWebSocketFrame(frame.Content));
-                return;
-            }
+                case PingWebSocketFrame _:
+                    frame.Content.Retain();
+                    ctx.Channel.WriteAndFlushAsync(new PongWebSocketFrame(frame.Content));
+                    return;
 
-            if (frame is PongWebSocketFrame && this.dropPongFrames)
-            {
-                // Pong frames need to get ignored
-                return;
-            }
+                case PongWebSocketFrame _ when this.dropPongFrames:
+                    // Pong frames need to get ignored
+                    return;
 
-            output.Add(frame.Retain());
+                default:
+                    output.Add(frame.Retain());
+                    break;
+            }
         }
 
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)

@@ -59,7 +59,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
             catch (Exception exception)
             {
-                Logger.Error($"{this.HandleType} {this.Handle} callback error.", exception);
+                Logger.CallbackRrror(this.HandleType, this.Handle, exception);
             }
         }
 

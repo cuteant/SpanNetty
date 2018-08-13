@@ -95,7 +95,7 @@ namespace DotNetty.Common
 
             public void Run()
             {
-                for (;;)
+                while(true)
                 {
                     this.FetchWatchees();
                     this.NotifyWatchees();
@@ -141,7 +141,7 @@ namespace DotNetty.Common
 
             void FetchWatchees()
             {
-                for (;;)
+                while(true)
                 {
                     Entry e;
                     if (!PendingEntries.TryDequeue(out e))
@@ -175,7 +175,7 @@ namespace DotNetty.Common
                         }
                         catch (Exception t)
                         {
-                            Logger.Warn("Thread death watcher task raised an exception:", t);
+                            Logger.ThreadDeathWatcherTaskRaisedAnException(t);
                         }
                     }
                     else

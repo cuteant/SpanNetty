@@ -326,12 +326,12 @@ namespace DotNetty.Transport.Channels
 
                 if (this.channel.Registered)
                 {
-                    return TaskUtil.FromException(new InvalidOperationException("registered to an event loop already"));
+                    return ThrowHelper.ThrowInvalidOperationException_RegisteredToEventLoopAlready();
                 }
 
                 if (!this.channel.IsCompatible(eventLoop))
                 {
-                    return TaskUtil.FromException(new InvalidOperationException("incompatible event loop type: " + eventLoop.GetType().Name));
+                    return ThrowHelper.ThrowInvalidOperationException_IncompatibleEventLoopType(eventLoop);
                 }
 
                 this.channel.eventLoop = eventLoop;
@@ -350,7 +350,7 @@ namespace DotNetty.Transport.Channels
                     }
                     catch (Exception ex)
                     {
-                        Logger.Warn("Force-closing a channel whose registration task was not accepted by an event loop: {}", this.channel, ex);
+                        if (Logger.WarnEnabled) Logger.ForceClosingAChannel(this.channel, ex);
                         this.CloseForcibly();
                         this.channel.closeFuture.Complete();
                         Util.SafeSetFailure(promise, ex, Logger);
@@ -368,7 +368,7 @@ namespace DotNetty.Transport.Channels
                     // call was outside of the eventLoop
                     if (!promise.SetUncancellable() || !this.EnsureOpen(promise))
                     {
-                        Util.SafeSetFailure(promise, new ClosedChannelException(), Logger);
+                        Util.SafeSetFailure(promise, ThrowHelper.GetClosedChannelException(), Logger);
                         return;
                     }
                     bool firstRegistration = this.neverRegistered;
@@ -479,7 +479,7 @@ namespace DotNetty.Transport.Channels
             {
                 this.AssertEventLoop();
 
-                return this.CloseAsync(new ClosedChannelException(), false);
+                return this.CloseAsync(ThrowHelper.GetClosedChannelException(), false);
             }
 
             protected Task CloseAsync(Exception cause, bool notify)
@@ -528,7 +528,7 @@ namespace DotNetty.Transport.Channels
                             {
                                 // Fail all the queued messages
                                 outboundBuffer.FailFlushed(cause, notify);
-                                outboundBuffer.Close(new ClosedChannelException());
+                                outboundBuffer.Close(ThrowHelper.GetClosedChannelException());
                                 this.FireChannelInactiveAndDeregister(wasActive);
                             });
                         }
@@ -545,7 +545,7 @@ namespace DotNetty.Transport.Channels
                     {
                         // Fail all the queued messages.
                         outboundBuffer.FailFlushed(cause, notify);
-                        outboundBuffer.Close(new ClosedChannelException());
+                        outboundBuffer.Close(ThrowHelper.GetClosedChannelException());
                     }
                     if (this.inFlush0)
                     {
@@ -587,7 +587,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception e)
                 {
-                    Logger.Warn("Failed to close a channel.", e);
+                    if (Logger.WarnEnabled) Logger.FailedToCloseAChannel(e);
                 }
             }
 
@@ -636,7 +636,7 @@ namespace DotNetty.Transport.Channels
                     }
                     catch (Exception t)
                     {
-                        Logger.Warn("Unexpected exception occurred while deregistering a channel.", t);
+                        if (Logger.WarnEnabled) Logger.UnexpectedExceptionOccurredWhileDeregisteringChannel(t);
                     }
                     finally
                     {
@@ -694,7 +694,7 @@ namespace DotNetty.Transport.Channels
 
                     // release message now to prevent resource-leak
                     ReferenceCountUtil.Release(msg);
-                    return TaskUtil.FromException(new ClosedChannelException());
+                    return TaskUtil.FromException(ThrowHelper.GetClosedChannelException());
                 }
 
                 int size;
@@ -761,7 +761,7 @@ namespace DotNetty.Transport.Channels
                         else
                         {
                             // Do not trigger channelWritabilityChanged because the channel is closed already.
-                            outboundBuffer.FailFlushed(new ClosedChannelException(), false);
+                            outboundBuffer.FailFlushed(ThrowHelper.GetClosedChannelException(), false);
                         }
                     }
                     finally
@@ -777,7 +777,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    Util.CompleteChannelCloseTaskSafely(this.channel, this.CloseAsync(new ClosedChannelException("Failed to write", ex), false));
+                    Util.CompleteChannelCloseTaskSafely(this.channel, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex), false));
                 }
                 finally
                 {
@@ -794,11 +794,11 @@ namespace DotNetty.Transport.Channels
                     return true;
                 }
 
-                Util.SafeSetFailure(promise, new ClosedChannelException(), Logger);
+                Util.SafeSetFailure(promise, ThrowHelper.GetClosedChannelException(), Logger);
                 return false;
             }
 
-            protected Task CreateClosedChannelExceptionTask() => TaskUtil.FromException(new ClosedChannelException());
+            protected Task CreateClosedChannelExceptionTask() => ThrowHelper.ThrowClosedChannelException();
 
             protected void CloseIfClosed()
             {
@@ -828,7 +828,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (RejectedExecutionException e)
                 {
-                    Logger.Warn("Can't invoke task later as EventLoop rejected it", e);
+                    if (Logger.WarnEnabled) Logger.CannotInvokeTaskLaterAsEventLoopRejectedIt(e);
                 }
             }
 

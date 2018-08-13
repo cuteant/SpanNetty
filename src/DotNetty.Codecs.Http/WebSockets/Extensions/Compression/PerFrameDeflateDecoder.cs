@@ -10,9 +10,22 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
         {
         }
 
-        public override bool AcceptInboundMessage(object msg) => 
-            (msg is TextWebSocketFrame || msg is BinaryWebSocketFrame || msg is ContinuationWebSocketFrame) 
-            && (((WebSocketFrame) msg).Rsv & WebSocketRsv.Rsv1) > 0;
+        public override bool AcceptInboundMessage(object msg)
+        {
+            switch (msg)
+            {
+                case TextWebSocketFrame textFrame when (textFrame.Rsv & WebSocketRsv.Rsv1) > 0:
+                    return true;
+                case BinaryWebSocketFrame binFrame when (binFrame.Rsv & WebSocketRsv.Rsv1) > 0:
+                    return true;
+                case ContinuationWebSocketFrame conFrame when (conFrame.Rsv & WebSocketRsv.Rsv1) > 0:
+                    return true;
+                default:
+                    return false;
+            }
+            //return (msg is TextWebSocketFrame || msg is BinaryWebSocketFrame || msg is ContinuationWebSocketFrame)
+            //&& (((WebSocketFrame)msg).Rsv & WebSocketRsv.Rsv1) > 0;
+        }
 
         protected override int NewRsv(WebSocketFrame msg) => msg.Rsv ^ WebSocketRsv.Rsv1;
 

@@ -534,17 +534,17 @@ namespace DotNetty.Transport.Channels
                 {
                     if (Logger.WarnEnabled)
                     {
-                        Logger.Warn($"Failed to remove a handler: {ctx.Name}", ex2);
+                        Logger.FailedToRemoveAHandler(ctx, ex2);
                     }
                 }
 
                 if (removed)
                 {
-                    this.FireExceptionCaught(new ChannelPipelineException($"{ctx.Handler.GetType().Name}.HandlerAdded() has thrown an exception; removed.", ex));
+                    this.FireExceptionCaught(ThrowHelper.GetChannelPipelineException_HandlerAddedThrowRemovedExc(ctx, ex));
                 }
                 else
                 {
-                    this.FireExceptionCaught(new ChannelPipelineException($"{ctx.Handler.GetType().Name}.HandlerAdded() has thrown an exception; also failed to remove.", ex));
+                    this.FireExceptionCaught(ThrowHelper.GetChannelPipelineException_HandlerAddedThrowAlsoFailedToRemovedExc(ctx, ex));
                 }
             }
         }
@@ -565,7 +565,7 @@ namespace DotNetty.Transport.Channels
             }
             catch (Exception ex)
             {
-                this.FireExceptionCaught(new ChannelPipelineException($"{ctx.Handler.GetType().Name}.HandlerRemoved() has thrown an exception.", ex));
+                this.FireExceptionCaught(ThrowHelper.GetChannelPipelineException_HandlerRemovedThrowExc(ctx, ex));
             }
         }
 
@@ -952,9 +952,7 @@ namespace DotNetty.Transport.Channels
         {
             try
             {
-                Logger.Warn("An ExceptionCaught() event was fired, and it reached at the tail of the pipeline. " +
-                    "It usually means the last handler in the pipeline did not handle the exception.",
-                    cause);
+                Logger.AnExceptionCaughtEventWasFired(cause);
             }
             finally
             {
@@ -971,9 +969,7 @@ namespace DotNetty.Transport.Channels
         {
             try
             {
-                if(Logger.DebugEnabled) Logger.Debug("Discarded inbound message {} that reached at the tail of the pipeline. " +
-                    "Please check your pipeline configuration.",
-                    msg);
+                if(Logger.DebugEnabled) Logger.DiscardedInboundMessage(msg);
             }
             finally
             {
@@ -1207,9 +1203,7 @@ namespace DotNetty.Transport.Channels
                     {
                         if (Logger.WarnEnabled)
                         {
-                            Logger.Warn(
-                                "Can't invoke HandlerAdded() as the IEventExecutor {} rejected it, removing handler {}.",
-                                executor, this.Ctx.Name, e);
+                            Logger.CannotInvokeHandlerAddedAsTheIEventExecutorRejectedIt(executor, this.Ctx, e);
                         }
                         Remove0(this.Ctx);
                         this.Ctx.SetRemoved();
@@ -1244,9 +1238,7 @@ namespace DotNetty.Transport.Channels
                     {
                         if (Logger.WarnEnabled)
                         {
-                            Logger.Warn(
-                                "Can't invoke HandlerRemoved() as the IEventExecutor {} rejected it," +
-                                    " removing handler {}.", executor, this.Ctx.Name, e);
+                            Logger.CannotInvokeHandlerRemovedAsTheIEventExecutorRejectedIt(executor, this.Ctx, e);
                         }
                         // remove0(...) was call before so just call AbstractChannelHandlerContext.setRemoved().
                         this.Ctx.SetRemoved();

@@ -30,7 +30,7 @@ namespace DotNetty.Transport.Channels.Local
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                throw new ArgumentException("id");
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.id);
             }
             this.id = id.Trim().ToLowerInvariant();
             this.strVal = $"local: {this.id}";

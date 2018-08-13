@@ -77,7 +77,7 @@ namespace DotNetty.Transport.Libuv
         {
             if (this.tcpListener == null)
             {
-                throw new InvalidOperationException("tcpListener handle not intialized");
+                ThrowHelper.ThrowInvalidOperationException_HandleNotInit();
             }
 
             return this.tcpListener;
@@ -127,12 +127,13 @@ namespace DotNetty.Transport.Libuv
                 var ch = this.channel;
                 NativeHandle client = connection.Client;
 
+                var connError = connection.Error;
                 // If the AutoRead is false, reject the connection
-                if (!ch.config.AutoRead || connection.Error != null)
+                if (!ch.config.AutoRead || connError != null)
                 {
-                    if (connection.Error != null)
+                    if (connError != null)
                     {
-                        Logger.Info("Accept client connection failed.", connection.Error);
+                        if (Logger.InfoEnabled) Logger.AcceptClientConnectionFailed(connError);
                     }
                     try
                     {
@@ -140,7 +141,7 @@ namespace DotNetty.Transport.Libuv
                     }
                     catch (Exception ex)
                     {
-                        Logger.Warn("Failed to dispose a client connection.", ex);
+                        if (Logger.WarnEnabled) Logger.FailedToDisposeAClientConnection(ex);
                     }
                     finally
                     {

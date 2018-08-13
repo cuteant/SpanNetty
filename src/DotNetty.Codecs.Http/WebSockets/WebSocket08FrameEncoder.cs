@@ -45,40 +45,36 @@ namespace DotNetty.Codecs.Http.WebSockets
             var mask = stackalloc byte[4];
 
             byte opcode = 0;
-            if (msg is TextWebSocketFrame)
+            switch (msg)
             {
-                opcode = OpcodeText;
-            }
-            else if (msg is PingWebSocketFrame)
-            {
-                opcode = OpcodePing;
-            }
-            else if (msg is PongWebSocketFrame)
-            {
-                opcode = OpcodePong;
-            }
-            else if (msg is CloseWebSocketFrame)
-            {
-                opcode = OpcodeClose;
-            }
-            else if (msg is BinaryWebSocketFrame)
-            {
-                opcode = OpcodeBinary;
-            }
-            else if (msg is ContinuationWebSocketFrame)
-            {
-                opcode = OpcodeCont;
-            }
-            else
-            {
-                ThrowNotSupportedException(msg);
+                case TextWebSocketFrame _:
+                    opcode = OpcodeText;
+                    break;
+                case PingWebSocketFrame _:
+                    opcode = OpcodePing;
+                    break;
+                case PongWebSocketFrame _:
+                    opcode = OpcodePong;
+                    break;
+                case CloseWebSocketFrame _:
+                    opcode = OpcodeClose;
+                    break;
+                case BinaryWebSocketFrame _:
+                    opcode = OpcodeBinary;
+                    break;
+                case ContinuationWebSocketFrame _:
+                    opcode = OpcodeCont;
+                    break;
+                default:
+                    ThrowNotSupportedException(msg);
+                    break;
             }
 
             int length = data.ReadableBytes;
 
             if (Logger.DebugEnabled)
             {
-                Logger.Debug($"Encoding WebSocket Frame opCode={opcode} length={length}");
+                Logger.EncodingWebSocketFrameOpCode(opcode, length);
             }
 
             int b0 = 0;

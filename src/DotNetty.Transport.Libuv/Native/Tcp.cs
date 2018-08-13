@@ -50,7 +50,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
             catch (Exception exception)
             {
-                Logger.Warn($"Tcp {this.Handle} read callbcak error.", exception);
+                if (Logger.WarnEnabled) Logger.TcpHandleReadCallbcakError(this.Handle, exception);
             }
             finally
             {

@@ -290,7 +290,7 @@ namespace DotNetty.Common
                 buf.Append("Recent access records: ").Append(StringUtil.Newline);
 
                 int i = 1;
-                var seen = new HashSet<string>();
+                var seen = new HashSet<string>(StringComparer.Ordinal);
                 for (; oldHead != RecordEntry.Bottom; oldHead = oldHead.Next)
                 {
                     string s = oldHead.ToString();

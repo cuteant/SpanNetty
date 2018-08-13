@@ -53,7 +53,7 @@ namespace DotNetty.Common.Internal
             }
             catch (SocketException e)
             {
-                logger.Warn("Failed to retrieve the list of available network interfaces", e);
+                logger.FailedToRetrieveTheListOfAvailableNetworkInterfaces(e);
             }
 
             foreach (var entry in ifaces)

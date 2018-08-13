@@ -40,7 +40,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public AsciiString ToHttpHeaderValue()
         {
-            ThrowIfUnknown(this);
+            if (this == Unknown) ThrowHelper.ThrowInvalidOperationException_UnknownWebSocketVersion();
             return this.value;
         }
 

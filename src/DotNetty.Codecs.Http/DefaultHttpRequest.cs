@@ -73,14 +73,14 @@ namespace DotNetty.Codecs.Http
 
         public override bool Equals(object obj)
         {
-            if (!(obj is DefaultHttpRequest other))
+            if (obj is DefaultHttpRequest other)
             {
-                return false;
+                return this.method.Equals(other.method)
+                    && string.Equals(this.uri, other.uri, StringComparison.OrdinalIgnoreCase)
+                    && base.Equals(obj);
             }
 
-            return this.method.Equals(other.method) 
-                && this.uri.Equals(other.uri, StringComparison.OrdinalIgnoreCase)
-                && base.Equals(obj);
+            return false;
         }
 
         public override string ToString() => StringBuilderManager.ReturnAndFree(HttpMessageUtil.AppendRequest(StringBuilderManager.Allocate(256), this));

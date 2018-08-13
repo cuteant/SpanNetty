@@ -1,7 +1,15 @@
 ﻿using System;
+using System.Net;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
+using DotNetty.Buffers;
 using DotNetty.Common.Utilities;
 using DotNetty.Transport.Channels;
+#if !NET40
+using DotNetty.Transport.Channels.Local;
+using DotNetty.Transport.Channels.Pool;
+#endif
 
 namespace DotNetty.Transport
 {
@@ -74,6 +82,9 @@ namespace DotNetty.Transport
         allocator,
         matchers,
         exceptions,
+        id,
+        inbound,
+        outbound,
     }
 
     #endregion
@@ -89,6 +100,8 @@ namespace DotNetty.Transport
 
     partial class ThrowHelper
     {
+        #region -- ArgumentException --
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_Excs()
         {
@@ -96,6 +109,66 @@ namespace DotNetty.Transport
             ArgumentException GetArgumentException()
             {
                 return new ArgumentException("excetpions must be not empty.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_TheLastOpCompleted()
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("The last operation completed on the socket was not expected");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Action()
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("action");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static bool ThrowArgumentException_ChannelWasNotAcquiredFromPool(IChannel channel)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException($"Channel {channel} was not acquired from this ChannelPool");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_AcquireTimeoutMillis(TimeSpan acquireTimeout)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException($"acquireTimeoutMillis: {acquireTimeout} (expected: >= 1)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_MaxPendingAcquires(int maxPendingAcquires)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException($"maxPendingAcquires: {maxPendingAcquires} (expected: >= 1)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_MaxConnections(int maxConnections)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException($"maxConnections: {maxConnections} (expected: >= 1)");
             }
         }
 
@@ -139,6 +212,10 @@ namespace DotNetty.Transport
             }
         }
 
+        #endregion
+
+        #region -- ArgumentOutOfRangeException --
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentOutOfRangeException_Position(long pos, long count)
         {
@@ -146,6 +223,147 @@ namespace DotNetty.Transport
             ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
                 return new ArgumentOutOfRangeException($"position out of range: {pos} (expected: 0 - {count - 1})");
+            }
+        }
+
+        #endregion
+
+        #region -- InvalidOperationException --
+
+#if !NET40
+        static readonly InvalidOperationException s_fullException = new InvalidOperationException("ChannelPool full");
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_ChannelPoolFull()
+        {
+            throw s_fullException;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_TooManyOutstandingAcquireOperations()
+        {
+            throw FixedChannelPool.FullException;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_PoolClosedOnReleaseException()
+        {
+            throw FixedChannelPool.PoolClosedOnReleaseException;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_PoolClosedOnAcquireException()
+        {
+            throw FixedChannelPool.PoolClosedOnAcquireException;
+        }
+#endif
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_ChildGroupSetAlready()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("childGroup set already");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_HandlerNotSet()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("handler not set");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_RemoteAddrNotSet()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("remoteAddress not set");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_LocalAddrMustBeSetBeforehand()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("localAddress must be set beforehand.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_ChannelOrFactoryNotSet()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("channel or channelFactory not set");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_GroupNotSet()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("group not set");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_GroupHasAlreadyBeenSet()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("group has already been set.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_ChildHandlerNotYet()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("childHandler not set");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_HandlerNotAddedToPipeYet()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("handler not added to pipeline yet");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_ConnAttemptAlreadyMade()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("connection attempt already made");
             }
         }
 
@@ -210,6 +428,246 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_EnsureNotSharable(object handlerAdapter)
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException($"ChannelHandler {StringUtil.SimpleClassName(handlerAdapter)} is not allowed to be shared");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_InitCannoBeInvokedIf(object msg)
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException($"init() can not be invoked if {StringUtil.SimpleClassName(msg)} was constructed with non-default constructor.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_InitMustBeInvokedBefore(object msg)
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException($"Init() must be invoked before being added to a {nameof(IChannelPipeline)} if {StringUtil.SimpleClassName(msg)} was constructed with the default constructor.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task ThrowInvalidOperationException_RegisteredToEventLoopAlready()
+        {
+            return TaskUtil.FromException(GetInvalidOperationException());
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("registered to an event loop already");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task ThrowInvalidOperationException_IncompatibleEventLoopType(IEventLoop eventLoop)
+        {
+            return TaskUtil.FromException(GetInvalidOperationException());
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("incompatible event loop type: " + eventLoop.GetType().Name);
+            }
+        }
+
+        #endregion
+
+        #region -- ChannelException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowChannelException()
+        {
+            throw GetException();
+            ChannelException GetException()
+            {
+                return new ChannelException();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowChannelException_AlreadyBound()
+        {
+            throw GetException();
+            ChannelException GetException()
+            {
+                return new ChannelException("already bound");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowChannelException_UnsupportedAddrType(EndPoint localAddress)
+        {
+            throw GetException();
+            ChannelException GetException()
+            {
+                return new ChannelException($"unsupported address type: {localAddress?.GetType()}");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowChannelException_AddrAlreadyInUseBy(IChannel result)
+        {
+            throw GetException();
+            ChannelException GetException()
+            {
+                return new ChannelException($"address already in use by: {result}");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowChannelException_FailedToEnterNonBlockingMode(SocketException ex)
+        {
+            throw GetException();
+            ChannelException GetException()
+            {
+                return new ChannelException("Failed to enter non-blocking mode.", ex);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static bool ThrowChannelException_Get_Bool(ObjectDisposedException ex)
+        {
+            throw GetException();
+            ChannelException GetException()
+            {
+                return new ChannelException(ex);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static bool ThrowChannelException_Get_Bool(SocketException ex)
+        {
+            throw GetException();
+            ChannelException GetException()
+            {
+                return new ChannelException(ex);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static int ThrowChannelException_Get_Int(ObjectDisposedException ex)
+        {
+            throw GetException();
+            ChannelException GetException()
+            {
+                return new ChannelException(ex);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static int ThrowChannelException_Get_Int(SocketException ex)
+        {
+            throw GetException();
+            ChannelException GetException()
+            {
+                return new ChannelException(ex);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowChannelException_Set(ObjectDisposedException ex)
+        {
+            throw GetException();
+            ChannelException GetException()
+            {
+                return new ChannelException(ex);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowChannelException_Set(SocketException ex)
+        {
+            throw GetException();
+            ChannelException GetException()
+            {
+                return new ChannelException(ex);
+            }
+        }
+
+        #endregion
+
+        #region -- NotSupportedException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static object ThrowNotSupportedException_UnsupportedMsgType(object msg)
+        {
+            throw GetArgumentException();
+            NotSupportedException GetArgumentException()
+            {
+                return new NotSupportedException($"unsupported message type: {msg.GetType().Name} (expected: {StringUtil.SimpleClassName<IByteBuffer>()})");
+            }
+        }
+
+        #endregion
+
+        #region -- ClosedChannelException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task ThrowClosedChannelException()
+        {
+            return TaskUtil.FromException(GetClosedChannelException());
+        }
+
+        public static ClosedChannelException GetClosedChannelException()
+        {
+            return new ClosedChannelException();
+        }
+
+        public static ClosedChannelException GetClosedChannelException_FailedToWrite(Exception ex)
+        {
+            return new ClosedChannelException("Failed to write", ex);
+        }
+
+#if !NET40
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowDoWriteClosedChannelException()
+        {
+            throw LocalChannel.DoWriteClosedChannelException;
+        }
+#endif
+
+        #endregion
+
+        #region -- ChannelPipelineException --
+
+        public static ChannelPipelineException GetChannelPipelineException_HandlerAddedThrowRemovedExc(AbstractChannelHandlerContext ctx, Exception ex)
+        {
+            return new ChannelPipelineException($"{ctx.Handler.GetType().Name}.HandlerAdded() has thrown an exception; removed.", ex);
+        }
+
+        public static ChannelPipelineException GetChannelPipelineException_HandlerAddedThrowAlsoFailedToRemovedExc(AbstractChannelHandlerContext ctx, Exception ex)
+        {
+            return new ChannelPipelineException($"{ctx.Handler.GetType().Name}.HandlerAdded() has thrown an exception; also failed to remove.", ex);
+        }
+
+        public static ChannelPipelineException GetChannelPipelineException_HandlerRemovedThrowExc(AbstractChannelHandlerContext ctx, Exception ex)
+        {
+            return new ChannelPipelineException($"{ctx.Handler.GetType().Name}.HandlerRemoved() has thrown an exception.", ex);
+        }
+
+        #endregion
+
+        #region -- Others --
+
+        // 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotImplementedException_OnlyIByteBufferImpl()
+        {
+            throw GetNotImplementedException();
+            NotImplementedException GetNotImplementedException()
+            {
+                return new NotImplementedException("Only IByteBuffer implementations backed by array are supported.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowChannelPipelineException(ChannelHandlerAdapter h)
         {
             throw GetChannelPipelineException();
@@ -229,5 +687,47 @@ namespace DotNetty.Transport
                 return new IllegalReferenceCountException(0);
             }
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotYetConnectedException()
+        {
+            throw GetException();
+            NotYetConnectedException GetException()
+            {
+                return new NotYetConnectedException();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowConnectionPendingException()
+        {
+            throw GetException();
+            ConnectionPendingException GetException()
+            {
+                return new ConnectionPendingException();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowSocketException(SocketError err)
+        {
+            throw GetException();
+            SocketException GetException()
+            {
+                return new SocketException((int)err);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNullReferenceException_Command()
+        {
+            throw GetException();
+            NullReferenceException GetException()
+            {
+                return new NullReferenceException("command");
+            }
+        }
+
+        #endregion
     }
 }

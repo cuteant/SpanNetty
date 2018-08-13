@@ -4,6 +4,7 @@
 namespace DotNetty.Codecs.Http.Multipart
 {
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Common;
@@ -46,11 +47,12 @@ namespace DotNetty.Codecs.Http.Multipart
             }
         }
 
+        [MethodImpl(InlineMethod.Value)]
         public void CheckSize(long newSize)
         {
             if (this.maxSize >= 0 && newSize > this.maxSize)
             {
-                throw new IOException($"{this.DataType} Size exceed allowed maximum capacity");
+                ThrowHelper.ThrowIOException_CheckSize(this.DataType);
             }
         }
 

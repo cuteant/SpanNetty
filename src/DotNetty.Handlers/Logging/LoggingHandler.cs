@@ -250,17 +250,16 @@ namespace DotNetty.Handlers.Logging
         /// <param name="arg">the argument of the event</param>
         protected virtual string Format(IChannelHandlerContext ctx, string eventName, object arg)
         {
-            if (arg is IByteBuffer)
+            switch (arg)
             {
-                return this.FormatByteBuffer(ctx, eventName, (IByteBuffer)arg);
-            }
-            else if (arg is IByteBufferHolder)
-            {
-                return this.FormatByteBufferHolder(ctx, eventName, (IByteBufferHolder)arg);
-            }
-            else
-            {
-                return this.FormatSimple(ctx, eventName, arg);
+                case IByteBuffer byteBuffer:
+                    return this.FormatByteBuffer(ctx, eventName, byteBuffer);
+
+                case IByteBufferHolder byteBufferHolder:
+                    return this.FormatByteBufferHolder(ctx, eventName, byteBufferHolder);
+
+                default:
+                    return this.FormatSimple(ctx, eventName, arg);
             }
         }
 

@@ -57,7 +57,7 @@ namespace DotNetty.Codecs.Http
                 return null;
             }
 
-            ICharSequence targetContentEncoding;
+            ICharSequence targetContentEncoding = null;
             switch (wrapper.Value)
             {
                 case ZlibWrapper.Gzip:
@@ -67,7 +67,7 @@ namespace DotNetty.Codecs.Http
                     targetContentEncoding = DeflateString;
                     break;
                 default:
-                    throw new CodecException($"{wrapper.Value} not supported, only Gzip and Zlib are allowed.");
+                    ThrowHelper.ThrowCodecException_InvalidCompression(wrapper.Value); break;
             }
 
             return new Result(targetContentEncoding,

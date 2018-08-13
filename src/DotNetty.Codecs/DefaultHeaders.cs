@@ -54,9 +54,9 @@ namespace DotNetty.Codecs
         public DefaultHeaders(IHashingStrategy<TKey> nameHashingStrategy,
             IValueConverter<TValue> valueConverter, INameValidator<TKey> nameValidator, int arraySizeHint)
         {
-            if (ReferenceEquals(nameHashingStrategy, null)) ThrowArgumentNullException(nameof(nameHashingStrategy));
-            if (ReferenceEquals(valueConverter, null)) ThrowArgumentNullException(nameof(valueConverter));
-            if (ReferenceEquals(nameValidator, null)) ThrowArgumentNullException(nameof(nameValidator));
+            if (ReferenceEquals(nameHashingStrategy, null)) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.nameHashingStrategy);
+            if (ReferenceEquals(valueConverter, null)) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.valueConverter);
+            if (ReferenceEquals(nameValidator, null)) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.nameValidator);
 
             this.hashingStrategy = nameHashingStrategy;
             this.ValueConverter = valueConverter;
@@ -71,7 +71,7 @@ namespace DotNetty.Codecs
 
         public bool TryGet(TKey name, out TValue value)
         {
-            if (name == null) ThrowArgumentNullException(nameof(name));
+            if (name == null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name);
 
             bool found = false;
             int h = this.hashingStrategy.HashCode(name);
@@ -96,7 +96,7 @@ namespace DotNetty.Codecs
 
         public bool TryGetAndRemove(TKey name, out TValue value)
         {
-            if (name == null) ThrowArgumentNullException(nameof(name));
+            if (name == null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name);
 
             int h = this.hashingStrategy.HashCode(name);
             return this.TryRemove0(h, this.Index(h), name, out value);
@@ -106,7 +106,7 @@ namespace DotNetty.Codecs
 
         public virtual IList<TValue> GetAll(TKey name)
         {
-            if (name == null) ThrowArgumentNullException(nameof(name));
+            if (name == null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name);
 
             var values = new List<TValue>();
             int h = this.hashingStrategy.HashCode(name);
@@ -137,7 +137,7 @@ namespace DotNetty.Codecs
 
         public bool ContainsObject(TKey name, object value)
         {
-            if (value == null) ThrowArgumentNullException(nameof(value));
+            if (value == null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value);
 
             return this.Contains(name, this.ValueConverter.ConvertObject(value));
         }
@@ -164,7 +164,7 @@ namespace DotNetty.Codecs
 
         public bool Contains(TKey name, TValue value, IHashingStrategy<TValue> valueHashingStrategy)
         {
-            if (name == null) ThrowArgumentNullException(nameof(name));
+            if (name == null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name);
 
             int h = this.hashingStrategy.HashCode(name);
             int i = this.Index(h);
@@ -204,7 +204,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> Add(TKey name, TValue value)
         {
-            if (ReferenceEquals(value, null)) ThrowArgumentNullException(nameof(value));
+            if (ReferenceEquals(value, null)) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value);
 
             this.nameValidator.ValidateName(name);
             int h = this.hashingStrategy.HashCode(name);
@@ -227,7 +227,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> AddObject(TKey name, object value)
         {
-            if (value == null) ThrowArgumentNullException(nameof(value));
+            if (value == null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value);
 
             return this.Add(name, this.ValueConverter.ConvertObject(value));
         }
@@ -275,7 +275,7 @@ namespace DotNetty.Codecs
         {
             if (ReferenceEquals(headers, this))
             {
-                ThrowArgumentException("can't add to itself.");
+                ThrowHelper.ThrowArgumentException_CannotAddToItSelf();
             }
             this.AddImpl(headers);
             return this;
@@ -319,7 +319,7 @@ namespace DotNetty.Codecs
 
         public IHeaders<TKey, TValue> Set(TKey name, TValue value)
         {
-            if (ReferenceEquals(value, null)) ThrowArgumentNullException(nameof(value));
+            if (ReferenceEquals(value, null)) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value);
 
             this.nameValidator.ValidateName(name);
             int h = this.hashingStrategy.HashCode(name);
@@ -331,7 +331,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> Set(TKey name, IEnumerable<TValue> values)
         {
-            if (ReferenceEquals(values, null)) ThrowArgumentNullException(nameof(values));
+            if (ReferenceEquals(values, null)) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.values);
 
             this.nameValidator.ValidateName(name);
             int h = this.hashingStrategy.HashCode(name);
@@ -353,7 +353,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> SetObject(TKey name, object value)
         {
-            if (value == null) ThrowArgumentNullException(nameof(value));
+            if (value == null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value);
 
             TValue convertedValue = this.ValueConverter.ConvertObject(value);
             return this.Set(name, convertedValue);
@@ -361,7 +361,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> SetObject(TKey name, IEnumerable<object> values)
         {
-            if (ReferenceEquals(values, null)) ThrowArgumentNullException(nameof(values));
+            if (ReferenceEquals(values, null)) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.values);
 
             this.nameValidator.ValidateName(name);
             int h = this.hashingStrategy.HashCode(name);
@@ -945,7 +945,7 @@ namespace DotNetty.Codecs
 
             public ValueEnumerator(DefaultHeaders<TKey, TValue> headers, TKey name)
             {
-                if (name == null) ThrowArgumentNullException(nameof(name));
+                if (name == null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name);
 
                 this.hashingStrategy = headers.hashingStrategy;
                 this.hash = this.hashingStrategy.HashCode(name);
@@ -1028,7 +1028,7 @@ namespace DotNetty.Codecs
                 {
                     if (this.index == 0 || this.index == this.size + 1)
                     {
-                        ThrowInvalidOperationException("Enumerator not initialized or completed.");
+                        ThrowHelper.ThrowInvalidOperationException_EnumeratorNotInitOrCompleted();
                     }
                     return this.node;
                 }
@@ -1120,7 +1120,7 @@ namespace DotNetty.Codecs
 
         public TValue SetValue(TValue newValue)
         {
-            if (ReferenceEquals(newValue, null)) ThrowArgumentNullException(nameof(newValue));
+            if (ReferenceEquals(newValue, null)) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.newValue);
 
             TValue oldValue = this.value;
             this.value = newValue;

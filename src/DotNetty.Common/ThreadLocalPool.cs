@@ -332,7 +332,7 @@ namespace DotNetty.Common
                         // We never unlink the first queue, as we don't want to synchronize on updating the head.
                         if (!cursor.IsEmpty)
                         {
-                            for (;;)
+                            while(true)
                             {
                                 if (cursor.Transfer(this))
                                 {

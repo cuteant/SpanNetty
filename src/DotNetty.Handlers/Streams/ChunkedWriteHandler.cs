@@ -67,7 +67,7 @@ namespace DotNetty.Handlers.Streams
 
         void Discard(Exception cause = null)
         {
-            for (;;)
+            while(true)
             {
                 PendingWrite current = this.currentWrite;
                 if (this.currentWrite == null)
@@ -107,7 +107,7 @@ namespace DotNetty.Handlers.Streams
                     catch (Exception exception)
                     {
                         current.Fail(exception);
-                        Logger.Warn($"{StringUtil.SimpleClassName(typeof(ChunkedWriteHandler<T>))}.IsEndOfInput failed", exception);
+                        if (Logger.WarnEnabled) Logger.IsEndOfInputFailed<T>(exception);
                     }
                     finally
                     {
@@ -136,7 +136,7 @@ namespace DotNetty.Handlers.Streams
             {
                 if (Logger.WarnEnabled)
                 {
-                    Logger.Warn("Unexpected exception while sending chunks.", exception);
+                    Logger.UnexpectedExceptionWhileSendingChunks(exception);
                 }
             }
         }
@@ -392,7 +392,7 @@ namespace DotNetty.Handlers.Streams
             {
                 if (Logger.WarnEnabled)
                 {
-                    Logger.Warn("Failed to close a chunked input.", exception);
+                    Logger.FailedToCloseAChunkedInput(exception);
                 }
             }
         }

@@ -28,7 +28,7 @@ namespace DotNetty.Transport.Libuv
             var terminationTasks = new Task[eventLoopCount];
             for (int i = 0; i < eventLoopCount; i++)
             {
-                EventLoop eventLoop;
+                EventLoop eventLoop = null;
                 bool success = false;
                 try
                 {
@@ -37,7 +37,7 @@ namespace DotNetty.Transport.Libuv
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidOperationException("failed to create a child event loop.", ex);
+                    ThrowHelper.ThrowInvalidOperationException_FailedToCreateChildEventLoop(ex);
                 }
                 finally
                 {
@@ -99,7 +99,7 @@ namespace DotNetty.Transport.Libuv
                 }
             }
 
-            throw new InvalidOperationException($"Loop {loopHandle} does not exist");
+            return ThrowHelper.ThrowInvalidOperationException(loopHandle);
         }
 
         public Task ShutdownGracefullyAsync()

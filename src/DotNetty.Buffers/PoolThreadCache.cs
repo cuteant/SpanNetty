@@ -263,7 +263,7 @@ namespace DotNetty.Buffers
 
             if (numFreed > 0 && Logger.DebugEnabled)
             {
-                Logger.Debug("Freed {} thread-local buffer(s) from thread: {}", numFreed, this.deathWatchThread.Name);
+                Logger.FreedThreadLocalBufferFromThread(numFreed, this.deathWatchThread);
             }
 
             this.DirectArena?.DecrementNumThreadCaches();

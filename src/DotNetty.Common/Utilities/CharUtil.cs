@@ -8,7 +8,7 @@ namespace DotNetty.Common.Utilities
     using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
 
-    public static class CharUtil
+    public static partial class CharUtil
     {
         public static readonly string Digits = "0123456789ABCDEF";
 
@@ -44,14 +44,14 @@ namespace DotNetty.Common.Utilities
 
             if (start == end)
             {
-                throw new FormatException();
+                ThrowHelper.ThrowFormatException();
             }
 
             int i = start;
             bool negative = seq[i] == '-';
             if (negative && ++i == end)
             {
-                throw new FormatException(seq.SubSequence(start, end).ToString());
+                ThrowHelper.ThrowFormatException(seq, start, end);
             }
 
             return ParseInt(seq, i, end, radix, negative);
@@ -72,16 +72,16 @@ namespace DotNetty.Common.Utilities
                 int digit = Digit((char)(seq[currOffset++] & 0xFF), radix);
                 if (digit == -1)
                 {
-                    throw new FormatException(seq.SubSequence(start, end).ToString());
+                    ThrowHelper.ThrowFormatException(seq, start, end);
                 }
                 if (max > result)
                 {
-                    throw new FormatException(seq.SubSequence(start, end).ToString());
+                    ThrowHelper.ThrowFormatException(seq, start, end);
                 }
                 int next = result * radix - digit;
                 if (next > result)
                 {
-                    throw new FormatException(seq.SubSequence(start, end).ToString());
+                    ThrowHelper.ThrowFormatException(seq, start, end);
                 }
                 result = next;
             }
@@ -91,7 +91,7 @@ namespace DotNetty.Common.Utilities
                 result = -result;
                 if (result < 0)
                 {
-                    throw new FormatException(seq.SubSequence(start, end).ToString());
+                    ThrowHelper.ThrowFormatException(seq, start, end);
                 }
             }
 
@@ -110,7 +110,7 @@ namespace DotNetty.Common.Utilities
                 || radix < MinRadix
                 || radix > MaxRadix)
             {
-                ThrowFormatException(str);
+                ThrowFormatException0(str);
             }
 
             // ReSharper disable once PossibleNullReferenceException
@@ -118,12 +118,12 @@ namespace DotNetty.Common.Utilities
             int i = 0;
             if (length == 0)
             {
-                ThrowFormatException(str);
+                ThrowFormatException0(str);
             }
             bool negative = str[i] == '-';
             if (negative && ++i == length)
             {
-                ThrowFormatException(str);
+                ThrowFormatException0(str);
             }
 
             return ParseLong(str, i, radix, negative);
@@ -139,16 +139,16 @@ namespace DotNetty.Common.Utilities
                 int digit = Digit(str[offset++], radix);
                 if (digit == -1)
                 {
-                    ThrowFormatException(str);
+                    ThrowFormatException0(str);
                 }
                 if (max > result)
                 {
-                    ThrowFormatException(str);
+                    ThrowFormatException0(str);
                 }
                 long next = result * radix - digit;
                 if (next > result)
                 {
-                    ThrowFormatException(str);
+                    ThrowFormatException0(str);
                 }
                 result = next;
             }
@@ -158,14 +158,14 @@ namespace DotNetty.Common.Utilities
                 result = -result;
                 if (result < 0)
                 {
-                    ThrowFormatException(str);
+                    ThrowFormatException0(str);
                 }
             }
 
             return result;
         }
 
-        static void ThrowFormatException(ICharSequence str)  => throw new FormatException(str.ToString());
+        static void ThrowFormatException(ICharSequence str) => throw new FormatException(str.ToString());
 
         public static bool IsNullOrEmpty(ICharSequence sequence) => sequence == null || sequence.Count == 0;
 
@@ -423,8 +423,8 @@ namespace DotNetty.Common.Utilities
             int last = IndexOfLastNonWhiteSpaceChar(sequence, start);
 
             length = last - start + 1;
-            return length == sequence.Count 
-                ? sequence 
+            return length == sequence.Count
+                ? sequence
                 : sequence.SubSequence(start, last + 1);
         }
 
@@ -526,19 +526,19 @@ namespace DotNetty.Common.Utilities
 
         public static int IndexOf(this ICharSequence cs, char searchChar, int start)
         {
-            if (cs == null)
+            switch (cs)
             {
-                return AsciiString.IndexNotFound;
-            }
+                case null:
+                    return AsciiString.IndexNotFound;
 
-            if (cs is StringCharSequence sequence)
-            {
-                return sequence.IndexOf(searchChar, start);
-            }
+                case StringCharSequence sequence:
+                    return sequence.IndexOf(searchChar, start);
 
-            if (cs is AsciiString s)
-            {
-                return s.IndexOf(searchChar, start);
+                case AsciiString s:
+                    return s.IndexOf(searchChar, start);
+
+                default:
+                    break;
             }
 
             int sz = cs.Count;
@@ -576,7 +576,7 @@ namespace DotNetty.Common.Utilities
             Contract.Requires(index >= 0 && index < seq.Count);
 
             char high = seq[index++];
-            if (index >=  seq.Count)
+            if (index >= seq.Count)
             {
                 return high;
             }

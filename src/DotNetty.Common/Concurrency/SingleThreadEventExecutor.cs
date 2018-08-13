@@ -104,7 +104,7 @@ namespace DotNetty.Common.Concurrency
                     }
                     catch (Exception ex)
                     {
-                        Logger.Error("{}: execution loop failed", this.thread.Name, ex);
+                        Logger.ExecutionLoopFailed(this.thread, ex);
                         this.executionState = ST_TERMINATED;
                         this.terminationCompletionSource.TrySetException(ex);
                     }
@@ -199,7 +199,7 @@ namespace DotNetty.Common.Concurrency
                     } 
                     catch (Exception ex) 
                     {
-                        Logger.Warn("Shutdown hook raised an exception.", ex);
+                        Logger.ShutdownHookRaisedAnException(ex);
                     } 
                     finally 
                     {
@@ -346,9 +346,9 @@ namespace DotNetty.Common.Concurrency
             // Check if confirmShutdown() was called at the end of the loop.
             if (success && (this.gracefulShutdownStartTime == PreciseTimeSpan.Zero))
             {
-                Logger.Error(
-                    $"Buggy {typeof(IEventExecutor).Name} implementation; {typeof(SingleThreadEventExecutor).Name}.ConfirmShutdown() must be called "
-                    + "before run() implementation terminates.");
+                Logger.BuggyImplementation();
+                    //$"Buggy {typeof(IEventExecutor).Name} implementation; {typeof(SingleThreadEventExecutor).Name}.ConfirmShutdown() must be called "
+                    //+ "before run() implementation terminates.");
             }
 
             try
@@ -373,7 +373,7 @@ namespace DotNetty.Common.Concurrency
                     Interlocked.Exchange(ref this.executionState, ST_TERMINATED);
                     if (!this.taskQueue.IsEmpty)
                     {
-                        Logger.Warn($"An event executor terminated with non-empty task queue ({this.taskQueue.Count})");
+                        Logger.AnEventExecutorTerminatedWithNonEmptyTaskQueue(this.taskQueue.Count);
                     }
 
                     //firstRun = true;

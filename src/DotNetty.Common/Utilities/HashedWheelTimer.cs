@@ -66,20 +66,19 @@ namespace DotNetty.Common.Utilities
         {
             if (tickInterval <= TimeSpan.Zero)
             {
-                throw new ArgumentException($"{nameof(tickInterval)} must be greater than 0: {tickInterval}");
+                ThrowHelper.ThrowArgumentException_MustBeGreaterThanZero(tickInterval);
             }
             if (Math.Ceiling(tickInterval.TotalMilliseconds) > int.MaxValue)
             {
-                throw new ArgumentException($"{nameof(tickInterval)} must be less than or equal to ${int.MaxValue} ms.");
+                ThrowHelper.ThrowArgumentException_MustBeLessThanOrEqualTo();
             }
             if (ticksPerWheel <= 0)
             {
-                throw new ArgumentException($"{nameof(ticksPerWheel)} must be greater than 0: {ticksPerWheel}");
+                ThrowHelper.ThrowArgumentException_MustBeGreaterThanZero(ticksPerWheel);
             }
             if (ticksPerWheel > int.MaxValue / 2 + 1)
             {
-                throw new ArgumentOutOfRangeException(
-                    $"{nameof(ticksPerWheel)} may not be greater than 2^30: {ticksPerWheel}");
+                ThrowHelper.ThrowArgumentOutOfRangeException_MustBeGreaterThan(ticksPerWheel);
             }
 
             // Normalize ticksPerWheel to power of two and initialize the wheel.
@@ -171,9 +170,9 @@ namespace DotNetty.Common.Utilities
                 case WorkerStateStarted:
                     break;
                 case WorkerStateShutdown:
-                    throw new InvalidOperationException("cannot be started once stopped");
+                    ThrowHelper.ThrowInvalidOperationException_CannotBeStartedOnceStopped(); break;
                 default:
-                    throw new InvalidOperationException("Invalid WorkerState");
+                    ThrowHelper.ThrowInvalidOperationException_InvalidWorkerState(); break;
             }
 
             // Wait until the startTime is initialized by the worker.
@@ -189,7 +188,7 @@ namespace DotNetty.Common.Utilities
 
             if (XThread.CurrentThread == this.workerThread)
             {
-                throw new InvalidOperationException($"{nameof(HashedWheelTimer)}.stop() cannot be called from timer task.");
+                ThrowHelper.ThrowInvalidOperationException_CannotBeCalledFromTimerTask();
             }
 
             if (Interlocked.CompareExchange(ref this.workerStateVolatile, WorkerStateShutdown, WorkerStateStarted) != WorkerStateStarted)
@@ -220,11 +219,11 @@ namespace DotNetty.Common.Utilities
         {
             if (task == null)
             {
-                throw new ArgumentNullException(nameof(task));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task);
             }
             if (this.WorkerState == WorkerStateShutdown)
             {
-                throw new RejectedExecutionException("Timer has been stopped and cannot process new operations.");
+                ThrowHelper.ThrowRejectedExecutionException_TimerStopped();
             }
             if (this.ShouldLimitTimeouts)
             {
@@ -232,7 +231,7 @@ namespace DotNetty.Common.Utilities
                 if (pendingTimeoutsCount > this.maxPendingTimeouts)
                 {
                     Interlocked.Decrement(ref this.PendingTimeouts);
-                    throw new RejectedExecutionException($"Number of pending timeouts ({pendingTimeoutsCount}) is greater than or equal to maximum allowed pending timeouts ({this.maxPendingTimeouts})");
+                    ThrowHelper.ThrowRejectedExecutionException_NumOfPendingTimeouts(pendingTimeoutsCount, this.maxPendingTimeouts);
                 }
             }
 
@@ -327,7 +326,7 @@ namespace DotNetty.Common.Utilities
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error("Timeout processing failed.", ex);
+                    Logger.TimeoutProcessingFailed(ex);
                 }
                 finally
                 {
@@ -382,7 +381,7 @@ namespace DotNetty.Common.Utilities
                     {
                         if (Logger.WarnEnabled)
                         {
-                            Logger.Warn("An exception was thrown while processing a cancellation task", ex);
+                            Logger.AnExcWasThrownWhileProcessingACancellationTask(ex);
                         }
                     }
                 }
@@ -525,7 +524,7 @@ namespace DotNetty.Common.Utilities
                 {
                     if (Logger.WarnEnabled)
                     {
-                        Logger.Warn($"An exception was thrown by {this.Task.GetType().Name}.", t);
+                        Logger.AnExceptionWasThrownBy(this.Task, t);
                     }
                 }
             }
@@ -619,11 +618,7 @@ namespace DotNetty.Common.Utilities
                         else
                         {
                             // The timeout was placed into a wrong slot. This should never happen.
-                            throw new InvalidOperationException(
-                                string.Format(
-                                    "timeout.deadline (%d) > deadline (%d)",
-                                    timeout.Deadline,
-                                    deadline));
+                            ThrowHelper.ThrowInvalidOperationException_Deadline(timeout.Deadline, deadline);
                         }
                     }
                     else

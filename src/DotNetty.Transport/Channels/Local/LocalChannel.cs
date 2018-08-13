@@ -31,7 +31,7 @@ namespace DotNetty.Transport.Channels.Local
         //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<LocalChannel>();
         static readonly ChannelMetadata METADATA = new ChannelMetadata(false);
         static readonly int MAX_READER_STACK_DEPTH = 8;
-        static readonly ClosedChannelException DoWriteClosedChannelException = new ClosedChannelException();
+        internal static readonly ClosedChannelException DoWriteClosedChannelException = new ClosedChannelException();
         static readonly ClosedChannelException DoCloseClosedChannelException = new ClosedChannelException();
 
         readonly IQueue<object> inboundBuffer = PlatformDependent.NewMpscQueue<object>();
@@ -96,7 +96,7 @@ namespace DotNetty.Transport.Channels.Local
         void InternalRead()
         {
             IChannelPipeline pipeline = this.Pipeline;
-            for (;;)
+            while(true)
             {
                 if (!this.inboundBuffer.TryDequeue(out object m))
                 {
@@ -284,7 +284,7 @@ namespace DotNetty.Transport.Channels.Local
 
                 try
                 {
-                    for (;;)
+                    while(true)
                     {
                         if (!inboundBuffer.TryDequeue(out object received))
                         {
@@ -322,9 +322,9 @@ namespace DotNetty.Transport.Channels.Local
             {
                 case State.Open:
                 case State.Bound:
-                    throw new NotYetConnectedException();
+                    ThrowHelper.ThrowNotYetConnectedException(); break;
                 case State.Closed:
-                    throw DoWriteClosedChannelException;
+                    ThrowHelper.ThrowDoWriteClosedChannelException(); break;
                 case State.Connected:
                     break;
             }
@@ -334,7 +334,7 @@ namespace DotNetty.Transport.Channels.Local
             this.writeInProgress = true;
             try
             {
-                for (;;)
+                while(true)
                 {
                     object msg = buffer.Current;
                     if (msg == null)
@@ -481,7 +481,7 @@ namespace DotNetty.Transport.Channels.Local
 
                 if (this.channel.connectPromise != null)
                 {
-                    throw new ConnectionPendingException();
+                    ThrowHelper.ThrowConnectionPendingException();
                 }
 
                 this.channel.connectPromise = promise;

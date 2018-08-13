@@ -90,7 +90,7 @@ namespace DotNetty.Codecs.Http
 
         public bool Equals(HttpStatusClass other) => this.min == other.min && this.max == other.max;
 
-        public override bool Equals(object obj) =>  obj is HttpStatusClass && this.Equals((HttpStatusClass)obj);
+        public override bool Equals(object obj) =>  obj is HttpStatusClass httpStatusClass && this.Equals(httpStatusClass);
 
         public override int GetHashCode() => this.min.GetHashCode() ^ this.max.GetHashCode();
 

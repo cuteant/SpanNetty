@@ -67,11 +67,11 @@ namespace DotNetty.Codecs
             }
             else if (length < 0)
             {
-                throw new ArgumentException("Can't have end < start");
+                ThrowHelper.ThrowArgumentException_CannotHaveEndStart();
             }
             else if (length > 64)
             {
-                throw new ArgumentException("Can't parse more than 64 chars, looks like a user error or a malformed header");
+                ThrowHelper.ThrowArgumentException_CannotParseMoreThan64Chars();
             }
 
             return Formatter().Parse0(txt, start, end);

@@ -52,7 +52,7 @@ namespace DotNetty.Transport.Libuv
             }
             catch (Exception exception)
             {
-                Logger.Warn($"{nameof(WorkerEventLoop)} failed to create connect request to dispatcher", exception);
+                if (Logger.WarnEnabled) Logger.FailedToCreateConnectRequestToDispatcher(exception);
                 request?.Dispose();
                 this.connectCompletion.TryUnwrap(exception);
             }
@@ -66,14 +66,14 @@ namespace DotNetty.Transport.Libuv
             {
                 if (request.Error != null)
                 {
-                    Logger.Warn($"{nameof(WorkerEventLoop)} failed to connect to dispatcher", request.Error);
+                    if (Logger.WarnEnabled) Logger.FailedToConnectToDispatcher(request);
                     this.connectCompletion.TryUnwrap(request.Error);
                 }
                 else
                 {
                     if (Logger.InfoEnabled)
                     {
-                        Logger.Info($"{nameof(WorkerEventLoop)} ({this.LoopThreadId}) dispatcher pipe {this.pipeName} connected.");
+                        Logger.DispatcherPipeConnected(this.LoopThreadId, this.pipeName);
                     }
 
                     this.pipe.ReadStart(this.OnRead);
@@ -94,7 +94,7 @@ namespace DotNetty.Transport.Libuv
                 if (status != NativeMethods.EOF)
                 {
                     OperationException error = NativeMethods.CreateError((uv_err_code)status);
-                    Logger.Warn("IPC Pipe read error", error);
+                    if (Logger.WarnEnabled) Logger.IPCPipeReadError(error);
                 }
             }
             else
@@ -128,7 +128,7 @@ namespace DotNetty.Transport.Libuv
             {
                 if (this.Error != null && this.retryCount < MaximumRetryCount)
                 {
-                    Logger.Info($"{nameof(WorkerEventLoop)} failed to connect to dispatcher, Retry count = {this.retryCount}", this.Error);
+                    if (Logger.InfoEnabled) Logger.FailedToConnectToDispatcher(this.retryCount, this.Error);
                     this.Connect();
                     this.retryCount++;
                 }

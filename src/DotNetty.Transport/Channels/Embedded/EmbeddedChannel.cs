@@ -194,7 +194,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
         protected override void DoWrite(ChannelOutboundBuffer input)
         {
-            for (;;)
+            while(true)
             {
                 object msg = input.Current;
                 if (msg == null)
@@ -407,7 +407,7 @@ namespace DotNetty.Transport.Channels.Embedded
         {
             if (queue != null && queue.Count > 0)
             {
-                for (;;)
+                while(true)
                 {
                     if (queue.Count == 0)
                     {
@@ -478,7 +478,7 @@ namespace DotNetty.Transport.Channels.Embedded
         {
             if (!this.Open)
             {
-                this.RecordException(new ClosedChannelException());
+                this.RecordException(ThrowHelper.GetClosedChannelException());
                 this.CheckException();
             }
         }

@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Http
                 {
                     if (value != null)
                     {
-                        throw new InvalidOperationException($"{nameof(CombinedHttpHeaders)} should only have one value");
+                        ThrowHelper.ThrowInvalidOperationException_OnlyHaveOneValue();
                     }
                     value = v;
                 }
@@ -55,7 +55,7 @@ namespace DotNetty.Codecs.Http
                 }
                 if (values.Count != 1)
                 {
-                    throw new InvalidOperationException($"{nameof(CombinedHttpHeaders)} should only have one value");
+                    ThrowHelper.ThrowInvalidOperationException_OnlyHaveOneValue();
                 }
 
                 return UnescapeCsvFields(values[0]);
@@ -66,7 +66,7 @@ namespace DotNetty.Codecs.Http
                 // Override the fast-copy mechanism used by DefaultHeaders
                 if (ReferenceEquals(headers, this))
                 {
-                    throw new ArgumentException("can't add to itself.");
+                    ThrowHelper.ThrowArgumentException_HeadCantAddSelf();
                 }
 
                 if (headers is CombinedHttpHeadersImpl)

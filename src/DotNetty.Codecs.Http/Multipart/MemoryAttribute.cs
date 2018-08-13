@@ -88,12 +88,12 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override int CompareTo(IInterfaceHttpData other)
         {
-            if (!(other is IAttribute))
+            if (other is IAttribute attr)
             {
-                throw new ArgumentException($"Cannot compare {this.DataType}  with {other.DataType}");
+                return this.CompareTo(attr);
             }
 
-            return this.CompareTo((IAttribute)other);
+            return ThrowHelper.ThrowArgumentException_CompareToHttpData(this.DataType, other.DataType);
         }
 
         public int CompareTo(IAttribute attribute) => string.Compare(this.Name, attribute.Name, StringComparison.OrdinalIgnoreCase);
@@ -151,7 +151,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 catch (IOException e)
                 {
-                    throw new ChannelException(e);
+                    ThrowHelper.ThrowChannelException_IO(e);
                 }
             }
             return attr;

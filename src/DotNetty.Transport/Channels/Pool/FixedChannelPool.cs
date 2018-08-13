@@ -22,13 +22,13 @@ namespace DotNetty.Transport.Channels.Pool
     /// </summary>
     public class FixedChannelPool : SimpleChannelPool
     {
-        static readonly InvalidOperationException FullException = new InvalidOperationException("Too many outstanding acquire operations");
+        internal static readonly InvalidOperationException FullException = new InvalidOperationException("Too many outstanding acquire operations");
 
         static readonly TimeoutException TimeoutException = new TimeoutException("Acquire operation took longer then configured maximum time");
 
         internal static readonly InvalidOperationException PoolClosedOnReleaseException = new InvalidOperationException("FixedChannelPooled was closed");
 
-        static readonly InvalidOperationException PoolClosedOnAcquireException = new InvalidOperationException("FixedChannelPooled was closed");
+        internal static readonly InvalidOperationException PoolClosedOnAcquireException = new InvalidOperationException("FixedChannelPooled was closed");
 
         public enum AcquireTimeoutAction
         {
@@ -176,11 +176,11 @@ namespace DotNetty.Transport.Channels.Pool
         {
             if (maxConnections < 1)
             {
-                throw new ArgumentException($"maxConnections: {maxConnections} (expected: >= 1)");
+                ThrowHelper.ThrowArgumentException_MaxConnections(maxConnections);
             }
             if (maxPendingAcquires < 1)
             {
-                throw new ArgumentException($"maxPendingAcquires: {maxPendingAcquires} (expected: >= 1)");
+                ThrowHelper.ThrowArgumentException_MaxPendingAcquires(maxPendingAcquires);
             }
 
             this.acquireTimeout = acquireTimeout;
@@ -190,11 +190,11 @@ namespace DotNetty.Transport.Channels.Pool
             }
             else if (action == AcquireTimeoutAction.None && acquireTimeout != TimeoutShim.InfiniteTimeSpan)
             {
-                throw new ArgumentException("action");
+                ThrowHelper.ThrowArgumentException_Action();
             }
             else if (action != AcquireTimeoutAction.None && acquireTimeout < TimeSpan.Zero)
             {
-                throw new ArgumentException($"acquireTimeoutMillis: {acquireTimeout} (expected: >= 1)");
+                ThrowHelper.ThrowArgumentException_AcquireTimeoutMillis(acquireTimeout);
             }
             else
             {
@@ -207,7 +207,7 @@ namespace DotNetty.Transport.Channels.Pool
                         this.timeoutTask = new TimeoutTask(this, this.OnTimeoutNew);
                         break;
                     default:
-                        throw new ArgumentException("action");
+                        ThrowHelper.ThrowArgumentException_Action(); break;
                 }
             }
 
@@ -248,7 +248,7 @@ namespace DotNetty.Transport.Channels.Pool
 
             if (this.closed)
             {
-                throw PoolClosedOnAcquireException;
+                ThrowHelper.ThrowInvalidOperationException_PoolClosedOnAcquireException();
             }
 
             if (this.acquiredChannelCount < this.maxConnections)
@@ -260,7 +260,7 @@ namespace DotNetty.Transport.Channels.Pool
             {
                 if (this.pendingAcquireCount >= this.maxPendingAcquires)
                 {
-                    throw FullException;
+                    ThrowHelper.ThrowInvalidOperationException_TooManyOutstandingAcquireOperations(); return default;
                 }
                 else
                 {
@@ -277,7 +277,7 @@ namespace DotNetty.Transport.Channels.Pool
                     }
                     else
                     {
-                        throw FullException;
+                        ThrowHelper.ThrowInvalidOperationException_TooManyOutstandingAcquireOperations();
                     }
 
                     return new ValueTask<IChannel>(promise.Task);
@@ -345,7 +345,7 @@ namespace DotNetty.Transport.Channels.Pool
                 if (this.closed)
                 {
                     ch.CloseAsync();
-                    throw PoolClosedOnReleaseException;
+                    ThrowHelper.ThrowInvalidOperationException_PoolClosedOnReleaseException();
                 }
             }
         }
@@ -401,7 +401,7 @@ namespace DotNetty.Transport.Channels.Pool
             while(this.pendingAcquireQueue.TryDequeue(out AcquireTask task))
             {
                 task.TimeoutTask?.Cancel();
-                task.Promise.TrySetException(new ClosedChannelException());
+                task.Promise.TrySetException(ThrowHelper.GetClosedChannelException());
             }
 
             this.acquiredChannelCount = 0;
@@ -474,7 +474,7 @@ namespace DotNetty.Transport.Channels.Pool
                     }
                     else
                     {
-                        throw PoolClosedOnAcquireException;
+                        ThrowHelper.ThrowInvalidOperationException_PoolClosedOnAcquireException();
                     }
                 }
 

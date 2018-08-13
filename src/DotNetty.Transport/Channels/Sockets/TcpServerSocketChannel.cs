@@ -108,7 +108,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     // socket exceptions here are internal to channel's operation and should not go through the pipeline
                     // especially as they have no effect on overall channel's operation
-                    Logger.Info("Exception on accept.", ex);
+                    if (Logger.InfoEnabled) Logger.ExceptionOnAccept(ex);
                 }
                 catch (ObjectDisposedException)
                 {
@@ -224,7 +224,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     {
                         // socket exceptions here are internal to channel's operation and should not go through the pipeline
                         // especially as they have no effect on overall channel's operation
-                        Logger.Info("Exception on accept.", ex);
+                         if (Logger.InfoEnabled) Logger.ExceptionOnAccept(ex);
                     }
                     catch (ObjectDisposedException)
                     {
@@ -269,14 +269,15 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warn("Failed to create a new channel from accepted socket.", ex);
+                    var warnEnabled = Logger.WarnEnabled;
+                    if (warnEnabled) Logger.FailedToCreateANewChannelFromAcceptedSocket(ex);
                     try
                     {
                         socket.Dispose();
                     }
                     catch (Exception ex2)
                     {
-                        Logger.Warn("Failed to close a socket cleanly.", ex2);
+                        if (warnEnabled) Logger.FailedToCloseASocketCleanly(ex2);
                     }
                     throw;
                 }

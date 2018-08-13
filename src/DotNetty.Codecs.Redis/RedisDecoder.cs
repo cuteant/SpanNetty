@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Redis
         {
             try
             {
-                for (;;)
+                while(true)
                 {
                     switch (this.state)
                     {

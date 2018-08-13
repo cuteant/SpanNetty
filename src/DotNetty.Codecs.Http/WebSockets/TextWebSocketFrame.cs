@@ -28,7 +28,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
         }
 
-        static IByteBuffer FromText(string text) => string.IsNullOrEmpty(text) 
+        static IByteBuffer FromText(string text) => string.IsNullOrEmpty(text)
             ? Unpooled.Empty : Unpooled.CopiedBuffer(text, Encoding.UTF8);
 
         public TextWebSocketFrame(bool finalFragment, int rsv, IByteBuffer binaryData)

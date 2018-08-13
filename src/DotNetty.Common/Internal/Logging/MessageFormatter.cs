@@ -212,55 +212,49 @@ namespace DotNetty.Common.Internal.Logging
         static void DeeplyAppendParameter(StringBuilder sbuf, object o,
             ISet<object[]> seenMap)
         {
-            if (o == null)
+            switch (o)
             {
-                sbuf.Append("null");
-                return;
-            }
-            if (!o.GetType().IsArray)
-            {
-                SafeObjectAppend(sbuf, o);
-            }
-            else
-            {
+                case null:
+                    sbuf.Append("null");
+                    return;
+
                 // check for primitive array types because they
                 // unfortunately cannot be cast to Object[]
-                if (o is bool[])
-                {
-                    BooleanArrayAppend(sbuf, (bool[])o);
-                }
-                else if (o is byte[])
-                {
-                    ByteArrayAppend(sbuf, (byte[])o);
-                }
-                else if (o is char[])
-                {
-                    CharArrayAppend(sbuf, (char[])o);
-                }
-                else if (o is short[])
-                {
-                    ShortArrayAppend(sbuf, (short[])o);
-                }
-                else if (o is int[])
-                {
-                    IntArrayAppend(sbuf, (int[])o);
-                }
-                else if (o is long[])
-                {
-                    LongArrayAppend(sbuf, (long[])o);
-                }
-                else if (o is float[])
-                {
-                    FloatArrayAppend(sbuf, (float[])o);
-                }
-                else if (o is double[])
-                {
-                    DoubleArrayAppend(sbuf, (double[])o);
-                }
-                else
-                {
-                    ObjectArrayAppend(sbuf, (object[])o, seenMap);
-                }
+                case bool[] boolArray:
+                    BooleanArrayAppend(sbuf, boolArray);
+                    break;
+                case byte[] byteArray:
+                    ByteArrayAppend(sbuf, byteArray);
+                    break;
+                case char[] charArray:
+                    CharArrayAppend(sbuf, charArray);
+                    break;
+                case short[] shortArray:
+                    ShortArrayAppend(sbuf, shortArray);
+                    break;
+                case int[] intArray:
+                    IntArrayAppend(sbuf, intArray);
+                    break;
+                case long[] longArray:
+                    LongArrayAppend(sbuf, longArray);
+                    break;
+                case float[] floatArray:
+                    FloatArrayAppend(sbuf, floatArray);
+                    break;
+                case double[] doubleArray:
+                    DoubleArrayAppend(sbuf, doubleArray);
+                    break;
+
+                default:
+                    if (!o.GetType().IsArray)
+                    {
+                        SafeObjectAppend(sbuf, o);
+                    }
+                    else
+                    {
+                        ObjectArrayAppend(sbuf, (object[])o, seenMap);
+                    }
+                    break;
             }
         }
 

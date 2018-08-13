@@ -21,21 +21,23 @@ namespace DotNetty.Buffers
         internal UnpooledDuplicatedByteBuffer(AbstractByteBuffer buffer, int readerIndex, int writerIndex)
             : base(buffer.MaxCapacity)
         {
-            if (buffer is UnpooledDuplicatedByteBuffer duplicated)
+            switch (buffer)
             {
-                this.buffer = duplicated.buffer;
-            }
-            else if (buffer is AbstractPooledDerivedByteBuffer)
-            {
-                this.buffer = (AbstractByteBuffer)buffer.Unwrap();
-            }
-            else if (buffer is AbstractBufferManagerDerivedByteBuffer)
-            {
-                this.buffer = (AbstractByteBuffer)buffer.Unwrap();
-            }
-            else
-            {
-                this.buffer = buffer;
+                case UnpooledDuplicatedByteBuffer duplicated:
+                    this.buffer = duplicated.buffer;
+                    break;
+
+                case AbstractPooledDerivedByteBuffer _:
+                    this.buffer = (AbstractByteBuffer)buffer.Unwrap();
+                    break;
+
+                case AbstractBufferManagerDerivedByteBuffer _:
+                    this.buffer = (AbstractByteBuffer)buffer.Unwrap();
+                    break;
+
+                default:
+                    this.buffer = buffer;
+                    break;
             }
 
             this.SetIndex0(readerIndex, writerIndex);

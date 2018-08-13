@@ -96,7 +96,7 @@ namespace DotNetty.Transport.Libuv
             TaskCompletionSource promise = this.connectPromise;
             if (promise != null)
             {
-                promise.TrySetException(new ClosedChannelException());
+                promise.TrySetException(ThrowHelper.GetClosedChannelException());
                 this.connectPromise = null;
             }
         }
@@ -186,11 +186,11 @@ namespace DotNetty.Transport.Libuv
                             if (error.ErrorCode == ErrorCode.ETIMEDOUT)
                             {
                                 // Connection timed out should use the standard ConnectTimeoutException
-                                promise.TrySetException(new ConnectTimeoutException(error.ToString()));
+                                promise.TrySetException(ThrowHelper.GetConnectTimeoutException(error));
                             }
                             else
                             {
-                                promise.TrySetException(new ChannelException(error));
+                                promise.TrySetException(ThrowHelper.GetChannelException(error));
                             }
                         }
                         else
@@ -274,7 +274,7 @@ namespace DotNetty.Transport.Libuv
                 {
                     if (error != null)
                     {
-                        pipeline.FireExceptionCaught(new ChannelException(error));
+                        pipeline.FireExceptionCaught(ThrowHelper.GetChannelException(error));
                     }
                     this.CloseSafe();
                 }
@@ -304,7 +304,7 @@ namespace DotNetty.Transport.Libuv
                 {
                     if (Logger.DebugEnabled)
                     {
-                        Logger.Debug($"Failed to close channel {channelObject} cleanly.", ex);
+                        Logger.FailedToCloseChannelCleanly(channelObject, ex);
                     }
                 }
             }
@@ -331,7 +331,7 @@ namespace DotNetty.Transport.Libuv
                     if (error != null)
                     {
                         input.FailFlushed(error, true);
-                        CloseSafe(ch, this.CloseAsync(new ChannelException("Failed to write", error), false));
+                        CloseSafe(ch, this.CloseAsync(ThrowHelper.GetChannelException_FailedToWrite(error), false));
                     }
                     else
                     {
@@ -343,7 +343,7 @@ namespace DotNetty.Transport.Libuv
                 }
                 catch (Exception ex)
                 {
-                    CloseSafe(ch, this.CloseAsync(new ClosedChannelException("Failed to write", ex), false));
+                    CloseSafe(ch, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex), false));
                 }
                 this.Flush0();
             }

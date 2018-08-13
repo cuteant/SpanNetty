@@ -32,7 +32,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         string selectedSubprotocol;
 
         // Use this as wildcard to support all requested sub-protocols
-        public static readonly string SubProtocolWildcard = "*";
+        public const string SubProtocolWildcard = "*";
 
         protected WebSocketServerHandshaker(WebSocketVersion version, string uri, string subprotocols, int maxFramePayloadLength)
         {
@@ -58,7 +58,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public ISet<string> Subprotocols()
         {
-            var ret = new HashSet<string>(this.subprotocols);
+            var ret = new HashSet<string>(this.subprotocols, StringComparer.Ordinal);
             return ret;
         }
 
@@ -79,7 +79,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             if (Logger.DebugEnabled)
             {
-                Logger.Debug("{} WebSocket version {} server handshake", channel, this.version);
+                Logger.WebSocketVersionServerHandshake(channel, this.version);
             }
 
             IFullHttpResponse response = this.NewHandshakeResponse(req, responseHeaders);
@@ -102,7 +102,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 ctx = p.Context<HttpServerCodec>();
                 if (ctx == null)
                 {
-                    completion.TrySetException(new InvalidOperationException("No HttpDecoder and no HttpServerCodec in the pipeline"));
+                    completion.TrySetException(ThrowHelper.GetInvalidOperationException_NoHttpDecoderAndServerCodec());
                     return;
                 }
 
@@ -140,7 +140,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
             if (Logger.DebugEnabled)
             {
-                Logger.Debug("{} WebSocket version {} server handshake", channel, this.version);
+                Logger.WebSocketVersionServerHandshake(channel, this.version);
             }
             IChannelPipeline p = channel.Pipeline;
             IChannelHandlerContext ctx = p.Context<HttpRequestDecoder>();
@@ -150,7 +150,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 ctx = p.Context<HttpServerCodec>();
                 if (ctx == null)
                 {
-                    return TaskUtil.FromException(new InvalidOperationException("No HttpDecoder and no HttpServerCodec in the pipeline"));
+                    return ThrowHelper.ThrowInvalidOperationException_NoHttpDecoderAndServerCodec();
                 }
             }
 
@@ -235,8 +235,8 @@ namespace DotNetty.Codecs.Http.WebSockets
 
                 foreach (string supportedSubprotocol in this.subprotocols)
                 {
-                    if (SubProtocolWildcard.Equals(supportedSubprotocol)
-                        || requestedSubprotocol.Equals(supportedSubprotocol))
+                    if (string.Equals(SubProtocolWildcard, supportedSubprotocol, StringComparison.Ordinal)
+                        || string.Equals(requestedSubprotocol, supportedSubprotocol, StringComparison.Ordinal))
                     {
                         this.selectedSubprotocol = requestedSubprotocol;
                         return requestedSubprotocol;

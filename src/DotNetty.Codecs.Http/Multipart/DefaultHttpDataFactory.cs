@@ -128,7 +128,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             catch (IOException)
             {
-                throw new ArgumentException("Attribute bigger than maxSize allowed");
+                ThrowHelper.ThrowArgumentException_AttrBigger();
             }
         }
 

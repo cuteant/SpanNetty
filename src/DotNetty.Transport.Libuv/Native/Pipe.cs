@@ -171,7 +171,7 @@ namespace DotNetty.Transport.Libuv.Native
                 if (status < 0)
                 {
                     OperationException error = NativeMethods.CreateError((uv_err_code)status);
-                    Logger.Warn($"{nameof(PipeListener)} failed to write server handle to client", error);
+                    if (Logger.WarnEnabled) Logger.FailedToWriteServerHandleToClient(error);
                 }
 
                 this.sentHandle.CloseHandle();

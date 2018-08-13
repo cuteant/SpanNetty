@@ -84,7 +84,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             if (this.destroyed)
             {
-                throw new InvalidOperationException($"{StringUtil.SimpleClassName<HttpPostStandardRequestDecoder>()} was destroyed already");
+                ThrowHelper.ThrowInvalidOperationException_CheckDestroyed<HttpPostStandardRequestDecoder>();
             }
         }
 
@@ -113,7 +113,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
             if (!this.isLastChunk)
             {
-                throw new NotEnoughDataDecoderException(nameof(HttpPostStandardRequestDecoder));
+                ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.HttpPostStandardRequestDecoder);
             }
             return this.bodyListHttpData;
         }
@@ -124,7 +124,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
             if (!this.isLastChunk)
             {
-                throw new NotEnoughDataDecoderException(nameof(HttpPostStandardRequestDecoder));
+                ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.HttpPostStandardRequestDecoder);
             }
             return this.bodyMapHttpData[name];
         }
@@ -135,7 +135,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
             if (!this.isLastChunk)
             {
-                throw new NotEnoughDataDecoderException(nameof(HttpPostStandardRequestDecoder));
+                ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.HttpPostStandardRequestDecoder);
             }
             
             if (this.bodyMapHttpData.TryGetValue(name, out List<IInterfaceHttpData> list))
@@ -186,7 +186,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     // OK except if end of list
                     if (this.bodyListHttpDataRank >= this.bodyListHttpData.Count)
                     {
-                        throw new EndOfDataDecoderException(nameof(HttpPostStandardRequestDecoder));
+                        ThrowHelper.ThrowEndOfDataDecoderException_HttpPostStandardRequestDecoder();
                     }
                 }
 
@@ -303,7 +303,7 @@ namespace DotNetty.Codecs.Http.Multipart
                                     else
                                     {
                                         // Error
-                                        throw new ErrorDataDecoderException("Bad end of line");
+                                        ThrowHelper.ThrowErrorDataDecoderException_BadEndOfLine();
                                     }
                                 }
                                 else
@@ -370,7 +370,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 // error while decoding
                 this.undecodedChunk.SetReaderIndex(firstpos);
-                throw new ErrorDataDecoderException(e);
+                ThrowHelper.ThrowErrorDataDecoderException(e);
             }
         }
 
@@ -452,7 +452,7 @@ namespace DotNetty.Codecs.Http.Multipart
                                     {
                                         // Error
                                         sao.SetReadPosition(0);
-                                        throw new ErrorDataDecoderException("Bad end of line");
+                                        ThrowHelper.ThrowErrorDataDecoderException_BadEndOfLine();
                                     }
                                 }
                                 else
@@ -526,13 +526,13 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 // error while decoding
                 this.undecodedChunk.SetReaderIndex(firstpos);
-                throw new ErrorDataDecoderException(e);
+                ThrowHelper.ThrowErrorDataDecoderException(e);
             }
             catch (ArgumentException e)
             {
                 // error while decoding
                 this.undecodedChunk.SetReaderIndex(firstpos);
-                throw new ErrorDataDecoderException(e);
+                ThrowHelper.ThrowErrorDataDecoderException(e);
             }
         }
 
@@ -553,7 +553,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             catch (ArgumentException e)
             {
-                throw new ErrorDataDecoderException($"Bad string: '{s}'", e);
+                return ThrowHelper.ThrowErrorDataDecoderException_BadString(s, e);
             }
         }
 

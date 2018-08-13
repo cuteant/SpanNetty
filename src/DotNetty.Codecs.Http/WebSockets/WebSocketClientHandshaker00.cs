@@ -92,7 +92,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             if (!response.Status.Equals(HttpResponseStatus.SwitchingProtocols))
             {
-                throw new WebSocketHandshakeException($"Invalid handshake response getStatus: {response.Status}");
+                ThrowHelper.ThrowWebSocketHandshakeException_InvalidHandshakeResponseGS(response);
             }
 
             HttpHeaders headers = response.Headers;
@@ -100,19 +100,19 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (!headers.TryGet(HttpHeaderNames.Upgrade, out ICharSequence upgrade) 
                 ||!Websocket.ContentEqualsIgnoreCase(upgrade))
             {
-                throw new WebSocketHandshakeException($"Invalid handshake response upgrade: {upgrade}");
+                ThrowHelper.ThrowWebSocketHandshakeException_InvalidHandshakeResponseU(upgrade);
             }
 
             if (!headers.ContainsValue(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade, true))
             {
                 headers.TryGet(HttpHeaderNames.Connection, out upgrade);
-                throw new WebSocketHandshakeException($"Invalid handshake response connection: {upgrade}");
+                ThrowHelper.ThrowWebSocketHandshakeException_InvalidHandshakeResponseConn(upgrade);
             }
 
             IByteBuffer challenge = response.Content;
             if (!challenge.Equals(this.expectedChallengeResponseBytes))
             {
-                throw new WebSocketHandshakeException("Invalid challenge");
+                ThrowHelper.ThrowWebSocketHandshakeException_InvalidChallenge();
             }
         }
 

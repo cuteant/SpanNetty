@@ -44,7 +44,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     webSocketUrl, V00, subprotocol, customHeaders, maxFramePayloadLength);
             }
 
-            throw new WebSocketHandshakeException($"Protocol version {version}not supported.");
+            return ThrowHelper.ThrowWebSocketHandshakeException_InvalidVersion(version);
         }
     }
 }

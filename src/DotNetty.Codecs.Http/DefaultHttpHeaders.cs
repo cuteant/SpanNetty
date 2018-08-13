@@ -271,15 +271,17 @@ namespace DotNetty.Codecs.Http
         {
             public override ICharSequence ConvertObject(object value)
             {
-                if (value is ICharSequence seq)
+                switch (value)
                 {
-                    return seq;
+                    case ICharSequence seq:
+                        return seq;
+
+                    case DateTime time:
+                        return new StringCharSequence(DateFormatter.Format(time));
+
+                    default:
+                        return new StringCharSequence(value.ToString());
                 }
-                if (value is DateTime time)
-                {
-                    return new StringCharSequence(DateFormatter.Format(time));
-                }
-                return new StringCharSequence(value.ToString());
             }
         }
 

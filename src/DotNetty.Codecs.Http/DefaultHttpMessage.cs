@@ -53,14 +53,14 @@ namespace DotNetty.Codecs.Http
 
         public override bool Equals(object obj)
         {
-            if (!(obj is DefaultHttpMessage other))
+            if (obj is DefaultHttpMessage other)
             {
-                return false;
+                return this.headers.Equals(other.headers)
+                    && this.version.Equals(other.version)
+                    && base.Equals(obj);
             }
 
-            return this.headers.Equals(other.headers)
-                && this.version.Equals(other.version)
-                && base.Equals(obj);
+            return false;
         }
 
         public IHttpMessage SetProtocolVersion(HttpVersion value)

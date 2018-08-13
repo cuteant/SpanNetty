@@ -86,7 +86,7 @@ namespace DotNetty.Common.Utilities
                 return 1;
             }
 
-            return ThrowHelper.ThrowException_Compare();
+            return ThrowHelper.ThrowException_CompareConstant();
         }
     }
 }

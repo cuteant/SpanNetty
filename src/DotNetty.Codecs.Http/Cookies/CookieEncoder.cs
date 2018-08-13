@@ -27,19 +27,19 @@ namespace DotNetty.Codecs.Http.Cookies
             int pos;
             if ((pos = FirstInvalidCookieNameOctet(name)) >= 0)
             {
-                throw new ArgumentException($"Cookie name contains an invalid char: {name[pos]}");
+                ThrowHelper.ThrowArgumentException_CookieName(name, pos);
             }
 
             var sequnce = new StringCharSequence(value);
             ICharSequence unwrappedValue = UnwrapValue(sequnce);
             if (unwrappedValue == null)
             {
-                throw new ArgumentException($"Cookie value wrapping quotes are not balanced: {value}");
+                ThrowHelper.ThrowArgumentException_CookieValue(value);
             }
 
             if ((pos = FirstInvalidCookieValueOctet(unwrappedValue)) >= 0)
             {
-                throw new ArgumentException($"Cookie value contains an invalid char: {value[pos]}");
+                ThrowHelper.ThrowArgumentException_CookieValue(value, pos);
             }
         }
     }

@@ -148,16 +148,16 @@ namespace DotNetty.Codecs.Base64
         {
             if (src == null)
             {
-                throw new ArgumentNullException(nameof(src));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src);
             }
             if (dialect.alphabet == null)
             {
-                throw new ArgumentNullException(nameof(dialect.alphabet));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dialect_alphabet);
             }
             Contract.Assert(dialect.alphabet.Length == 64, "alphabet.Length must be 64!");
             if ((offset < src.ReaderIndex) || (offset + length > src.ReaderIndex + src.ReadableBytes))
             {
-                throw new ArgumentOutOfRangeException(nameof(offset));
+                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.offset);
             }
             if (length <= 0)
             {
@@ -206,8 +206,7 @@ namespace DotNetty.Codecs.Base64
                     sbyte value = (sbyte)(srcArray[i] & 0x7F);
                     if (decodabet[value] < WHITE_SPACE_ENC)
                     {
-                        throw new ArgumentException(string.Format("bad Base64 input character at {0}:{1}",
-                            i, value));
+                        ThrowHelper.ThrowArgumentException_BadBase64InputChar(i, value);
                     }
                     if (decodabet[value] >= EQUALS_SIGN_ENC)
                     {
@@ -264,8 +263,7 @@ namespace DotNetty.Codecs.Base64
                 sbyte value = (sbyte)(src.GetByte(i) & 0x7F);
                 if (decodabet[value] < WHITE_SPACE_ENC)
                 {
-                    throw new ArgumentException(string.Format("bad Base64 input character at {0}:{1}",
-                        i, value));
+                    ThrowHelper.ThrowArgumentException_BadBase64InputChar(i, value);
                 }
                 if (decodabet[value] >= EQUALS_SIGN_ENC)
                 {
@@ -312,15 +310,15 @@ namespace DotNetty.Codecs.Base64
         {
             if (src == null)
             {
-                throw new ArgumentNullException(nameof(src));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src);
             }
             if (dialect.decodabet == null)
             {
-                throw new ArgumentNullException(nameof(dialect.decodabet));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dialect_decodabet);
             }
             if ((offset < src.ReaderIndex) || (offset + length > src.ReaderIndex + src.ReadableBytes))
             {
-                throw new ArgumentOutOfRangeException(nameof(offset));
+                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.offset);
             }
             Contract.Assert(dialect.decodabet.Length == 127, "decodabet.Length must be 127!");
             if (length <= 0)

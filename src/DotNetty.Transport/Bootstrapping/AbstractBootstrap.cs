@@ -7,6 +7,7 @@ namespace DotNetty.Transport.Bootstrapping
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Net;
+    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
     using CuteAnt.Collections;
     using CuteAnt.Pool;
@@ -63,7 +64,7 @@ namespace DotNetty.Transport.Bootstrapping
 
             if (this.group != null)
             {
-                throw new InvalidOperationException("group has already been set.");
+                ThrowHelper.ThrowInvalidOperationException_GroupHasAlreadyBeenSet();
             }
             this.group = group;
             return (TBootstrap)this;
@@ -171,11 +172,11 @@ namespace DotNetty.Transport.Bootstrapping
         {
             if (this.group == null)
             {
-                throw new InvalidOperationException("group not set");
+                ThrowHelper.ThrowInvalidOperationException_GroupNotSet();
             }
             if (this.channelFactory == null)
             {
-                throw new InvalidOperationException("channel or channelFactory not set");
+                ThrowHelper.ThrowInvalidOperationException_ChannelOrFactoryNotSet();
             }
             return (TBootstrap)this;
         }
@@ -206,7 +207,7 @@ namespace DotNetty.Transport.Bootstrapping
             EndPoint address = this.localAddress;
             if (address == null)
             {
-                throw new InvalidOperationException("localAddress must be set beforehand.");
+                ThrowHelper.ThrowInvalidOperationException_LocalAddrMustBeSetBeforehand();
             }
             return this.DoBindAsync(address);
         }
@@ -286,7 +287,7 @@ namespace DotNetty.Transport.Bootstrapping
                     }
                     catch (Exception ex)
                     {
-                       Logger.Warn("Failed to close channel: " + channel, ex);
+                        Logger.FailedToCloseChannel(channel, ex);
                     }
                 }
                 else
@@ -373,17 +374,30 @@ namespace DotNetty.Transport.Bootstrapping
 
         protected static void SetChannelOption(IChannel channel, ChannelOptionValue option, IInternalLogger logger)
         {
+            var warnEnabled = logger.WarnEnabled;
             try
             {
                 if (!option.Set(channel.Configuration))
                 {
-                    logger.Warn("Unknown channel option '{}' for channel '{}'", option.Option, channel);
+                    if (warnEnabled) UnknownChannelOptionForChannel(logger, channel, option);
                 }
             }
             catch (Exception ex)
             {
-                logger.Warn("Failed to set channel option '{}' with value '{}' for channel '{}'", option.Option, option, channel, ex);
+                if (warnEnabled) FailedToSetChannelOptionWithValueForChannel(logger, channel, option, ex);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void UnknownChannelOptionForChannel(IInternalLogger logger, IChannel channel, ChannelOptionValue option)
+        {
+            logger.Warn("Unknown channel option '{}' for channel '{}'", option.Option, channel);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void FailedToSetChannelOptionWithValueForChannel(IInternalLogger logger, IChannel channel, ChannelOptionValue option, Exception ex)
+        {
+            logger.Warn("Failed to set channel option '{}' with value '{}' for channel '{}'", option.Option, option, channel, ex);
         }
 
         public override string ToString()

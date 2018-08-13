@@ -10,7 +10,7 @@ namespace DotNetty.Codecs.Http.Multipart
         public static int HashCode(IFileUpload upload) => upload.Name.GetHashCode();
 
         public static bool Equals(IFileUpload upload1, IFileUpload upload2) => 
-            upload1.Name.Equals(upload2.Name, StringComparison.OrdinalIgnoreCase);
+            string.Equals(upload1.Name, upload2.Name, StringComparison.OrdinalIgnoreCase);
 
         public static int CompareTo(IFileUpload upload1, IFileUpload upload2) => 
             string.Compare(upload1.Name, upload2.Name, StringComparison.OrdinalIgnoreCase);

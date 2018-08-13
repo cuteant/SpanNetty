@@ -218,7 +218,7 @@ namespace DotNetty.Common.Internal
 
                 if (newCapacity < 0)
                 {
-                    throw new InvalidOperationException($"New capacity {newCapacity} must be positive");
+                    ThrowHelper.ThrowInvalidOperationException_CapacityMustBePositive(newCapacity);
                 }
             }
             while (neededSpace > newCapacity);

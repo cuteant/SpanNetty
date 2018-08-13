@@ -98,7 +98,7 @@ namespace DotNetty.Transport.Bootstrapping
             EndPoint remoteAddress = this.remoteAddress;
             if (remoteAddress == null)
             {
-                throw new InvalidOperationException("remoteAddress not set");
+                ThrowHelper.ThrowInvalidOperationException_RemoteAddrNotSet();
             }
 
             return this.DoResolveAndConnectAsync(remoteAddress, this.LocalAddress());
@@ -177,7 +177,7 @@ namespace DotNetty.Transport.Bootstrapping
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warn("Failed to close channel: " + channel, ex);
+                    if (Logger.WarnEnabled) Logger.FailedToCloseChannel(channel, ex);
                 }
 
                 throw;
@@ -235,7 +235,7 @@ namespace DotNetty.Transport.Bootstrapping
             base.Validate();
             if (this.Handler() == null)
             {
-                throw new InvalidOperationException("handler not set");
+                ThrowHelper.ThrowInvalidOperationException_HandlerNotSet();
             }
             return this;
         }

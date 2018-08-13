@@ -111,16 +111,15 @@ namespace DotNetty.Codecs.Http
 
             HttpUtil.SetTransferEncodingChunked(start, false);
 
-            if (start is IHttpRequest request)
+            switch (start)
             {
-                return new AggregatedFullHttpRequest(request, content, null);
+                case IHttpRequest request:
+                    return new AggregatedFullHttpRequest(request, content, null);
+                case IHttpResponse response:
+                    return new AggregatedFullHttpResponse(response, content, null);
+                default:
+                    return ThrowHelper.ThrowCodecException_InvalidType(start);
             }
-            else if (start is IHttpResponse response)
-            {
-                return new AggregatedFullHttpResponse(response, content, null);
-            }
-
-            throw new CodecException($"Invalid type {StringUtil.SimpleClassName(start)} expecting {nameof(IHttpRequest)} or {nameof(IHttpResponse)}");
         }
 
         protected override void Aggregate(IFullHttpMessage aggregated, IHttpContent content)
@@ -163,7 +162,7 @@ namespace DotNetty.Codecs.Http
                         {
                             if (t.IsFaulted)
                             {
-                                Logger.Debug("Failed to send a 413 Request Entity Too Large.", t.Exception);
+                                if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
                             }
                             ((IChannelHandlerContext)s).CloseAsync();
                         }, 
@@ -176,7 +175,7 @@ namespace DotNetty.Codecs.Http
                         {
                             if (t.IsFaulted)
                             {
-                                Logger.Debug("Failed to send a 413 Request Entity Too Large.", t.Exception);
+                                if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
                                 ((IChannelHandlerContext)s).CloseAsync();
                             }
                         },
@@ -191,11 +190,11 @@ namespace DotNetty.Codecs.Http
             else if (oversized is IHttpResponse)
             {
                 ctx.CloseAsync();
-                throw new TooLongFrameException($"Response entity too large: {oversized}");
+                ThrowHelper.ThrowTooLongFrameException_ResponseTooLarge(oversized);
             }
             else
             {
-                throw new InvalidOperationException($"Invalid type {StringUtil.SimpleClassName(oversized)}, expecting {nameof(IHttpRequest)} or {nameof(IHttpResponse)}");
+                ThrowHelper.ThrowInvalidOperationException_InvalidType(oversized);
             }
         }
 

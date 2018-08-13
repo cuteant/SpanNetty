@@ -13,7 +13,7 @@ namespace DotNetty.Common.Utilities
     /// <summary>
     ///     String utility class.
     /// </summary>
-    public static class StringUtil
+    public static partial class StringUtil
     {
         public static readonly string EmptyString = "";
         public static readonly string Newline = SystemPropertyUtil.Get("line.separator", Environment.NewLine);
@@ -219,7 +219,7 @@ namespace DotNetty.Common.Utilities
             int lo = DecodeHexNibble(s[pos + 1]);
             if (hi == -1 || lo == -1)
             {
-                throw new ArgumentException($"invalid hex byte '{s.Substring(pos, 2)}' at index {pos} of '{s}'");
+                ThrowHelper.ThrowArgumentException_DecodeHexByte(s, pos);
             }
 
             return (byte)((hi << 4) + lo);
@@ -230,7 +230,7 @@ namespace DotNetty.Common.Utilities
         {
             if (length < 0 || (length & 1) != 0)
             {
-                throw new ArgumentException($"length: {length}");
+                ThrowHelper.ThrowArgumentException_InvalidLen(length);
             }
             if (length == 0)
             {
@@ -418,7 +418,7 @@ namespace DotNetty.Common.Utilities
                     else
                     {
                         // Not followed by a double-quote or the following double-quote is the last character
-                        throw NewInvalidEscapedCsvFieldException(value, i);
+                        ThrowInvalidEscapedCsvFieldException(value, i);
                     }
                 }
                 unescaped.Append(current);
@@ -463,7 +463,7 @@ namespace DotNetty.Common.Utilities
                             else
                             {
                                 // double-quote followed by other character is invalid
-                                throw new ArgumentException($"invalid escaped CSV field: {value} index: {i - 1}");
+                                ThrowInvalidEscapedCsvFieldException(value, i - 1);
                             }
                             break;
                         default:
@@ -494,7 +494,7 @@ namespace DotNetty.Common.Utilities
                         case LineFeed:
                         case CarriageReturn:
                             // special characters appears without being enclosed with double-quotes
-                            throw new ArgumentException($"invalid escaped CSV field: {value} index: {i}");
+                            ThrowInvalidEscapedCsvFieldException(value, i); break;
                         default:
                             current.Append(c);
                             break;
@@ -503,7 +503,7 @@ namespace DotNetty.Common.Utilities
             }
             if (quoted)
             {
-                throw new ArgumentException($"invalid escaped CSV field: {value} index: {last}");
+                ThrowInvalidEscapedCsvFieldException(value, last);
             }
 
             unescaped.Add((StringCharSequence)current.ToString());
@@ -522,7 +522,7 @@ namespace DotNetty.Common.Utilities
                     case CarriageReturn:
                     case Comma:
                         // If value contains any special character, it should be enclosed with double-quotes
-                        throw NewInvalidEscapedCsvFieldException(value, i);
+                        ThrowInvalidEscapedCsvFieldException(value, i); break;
                 }
             }
         }

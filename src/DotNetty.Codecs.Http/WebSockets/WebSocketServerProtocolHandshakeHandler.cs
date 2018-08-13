@@ -93,8 +93,8 @@ namespace DotNetty.Codecs.Http.WebSockets
         }
 
         bool IsNotWebSocketPath(IFullHttpRequest req) => this.checkStartsWith 
-            ? !req.Uri.StartsWith(this.websocketPath) 
-            : !req.Uri.Equals(this.websocketPath);
+            ? !req.Uri.StartsWith(this.websocketPath, System.StringComparison.Ordinal) 
+            : !string.Equals(req.Uri, this.websocketPath, System.StringComparison.Ordinal);
 
         static void SendHttpResponse(IChannelHandlerContext ctx, IHttpRequest req, IHttpResponse res)
         {

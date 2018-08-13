@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Http
             {
                 if (this.state != StInit)
                 {
-                    throw new InvalidOperationException($"unexpected message type: {StringUtil.SimpleClassName(message)}");
+                    ThrowHelper.ThrowInvalidOperationException_UnexpectedMsg(message);
                 }
 
                 var m = (T)message;
@@ -73,80 +73,84 @@ namespace DotNetty.Codecs.Http
                 }
             }
 
-            if (message is IHttpContent || message is IByteBuffer || message is IFileRegion)
+            switch (message)
             {
-                switch (this.state)
-                {
-                    case StInit:
-                        throw new InvalidOperationException($"unexpected message type: {StringUtil.SimpleClassName(message)}");
-                    case StContentNonChunk:
-                        long contentLength = ContentLength(message);
-                        if (contentLength > 0)
-                        {
-                            if (buf != null && buf.WritableBytes >= contentLength && message is IHttpContent)
+                case IHttpContent _:
+                case IByteBuffer _:
+                case IFileRegion _:
+                    switch (this.state)
+                    {
+                        case StInit:
+                            ThrowHelper.ThrowInvalidOperationException_UnexpectedMsg(message); break;
+                        case StContentNonChunk:
+                            long contentLength = ContentLength(message);
+                            if (contentLength > 0)
                             {
-                                // merge into other buffer for performance reasons
-                                buf.WriteBytes(((IHttpContent)message).Content);
+                                if (buf != null && buf.WritableBytes >= contentLength && message is IHttpContent)
+                                {
+                                    // merge into other buffer for performance reasons
+                                    buf.WriteBytes(((IHttpContent)message).Content);
+                                    output.Add(buf);
+                                }
+                                else
+                                {
+                                    if (buf != null)
+                                    {
+                                        output.Add(buf);
+                                    }
+                                    output.Add(EncodeAndRetain(message));
+                                }
+
+                                if (message is ILastHttpContent)
+                                {
+                                    this.state = StInit;
+                                }
+                                break;
+                            }
+
+                            goto case StContentAlwaysEmpty; // fall-through!
+                        case StContentAlwaysEmpty:
+                            // ReSharper disable once ConvertIfStatementToNullCoalescingExpression
+                            if (buf != null)
+                            {
+                                // We allocated a buffer so add it now.
                                 output.Add(buf);
                             }
                             else
                             {
-                                if (buf != null)
-                                {
-                                    output.Add(buf);
-                                }
-                                output.Add(EncodeAndRetain(message));
+                                // Need to produce some output otherwise an
+                                // IllegalStateException will be thrown as we did not write anything
+                                // Its ok to just write an EMPTY_BUFFER as if there are reference count issues these will be
+                                // propagated as the caller of the encode(...) method will release the original
+                                // buffer.
+                                // Writing an empty buffer will not actually write anything on the wire, so if there is a user
+                                // error with msg it will not be visible externally
+                                output.Add(Unpooled.Empty);
                             }
 
-                            if (message is ILastHttpContent)
-                            {
-                                this.state = StInit;
-                            }
                             break;
-                        }
+                        case StContentChunk:
+                            if (buf != null)
+                            {
+                                // We allocated a buffer so add it now.
+                                output.Add(buf);
+                            }
+                            this.EncodeChunkedContent(context, message, ContentLength(message), output);
 
-                        goto case StContentAlwaysEmpty; // fall-through!
-                    case StContentAlwaysEmpty:
-                        // ReSharper disable once ConvertIfStatementToNullCoalescingExpression
-                        if (buf != null)
-                        {
-                            // We allocated a buffer so add it now.
-                            output.Add(buf);
-                        }
-                        else
-                        {
-                            // Need to produce some output otherwise an
-                            // IllegalStateException will be thrown as we did not write anything
-                            // Its ok to just write an EMPTY_BUFFER as if there are reference count issues these will be
-                            // propagated as the caller of the encode(...) method will release the original
-                            // buffer.
-                            // Writing an empty buffer will not actually write anything on the wire, so if there is a user
-                            // error with msg it will not be visible externally
-                            output.Add(Unpooled.Empty);
-                        }
+                            break;
+                        default:
+                            ThrowHelper.ThrowEncoderException_UnexpectedState(this.state, message); break;
+                    }
 
-                        break;
-                    case StContentChunk:
-                        if (buf != null)
-                        {
-                            // We allocated a buffer so add it now.
-                            output.Add(buf);
-                        }
-                        this.EncodeChunkedContent(context, message, ContentLength(message), output);
+                    if (message is ILastHttpContent)
+                    {
+                        this.state = StInit;
+                    }
+                    break;
 
-                        break;
-                    default:
-                        throw new EncoderException($"unexpected state {this.state}: {StringUtil.SimpleClassName(message)}");
-                }
-
-                if (message is ILastHttpContent)
-                {
-                    this.state = StInit;
-                }
-            }
-            else if (buf != null)
-            {
-                output.Add(buf);
+                default:
+                    output.Add(buf);
+                    break;
             }
         }
 
@@ -205,40 +209,47 @@ namespace DotNetty.Codecs.Http
 
         protected virtual bool IsContentAlwaysEmpty(T msg) => false;
 
-        public override bool AcceptOutboundMessage(object msg) => msg is IHttpObject || msg is IByteBuffer || msg is IFileRegion;
+        public override bool AcceptOutboundMessage(object msg)
+        {
+            switch (msg)
+            {
+                case IHttpObject _:
+                case IByteBuffer _:
+                case IFileRegion _:
+                    return true;
+                default:
+                    return false;
+            }
+        }
 
         static object EncodeAndRetain(object message)
         {
-            if (message is IByteBuffer buffer)
+            switch (message)
             {
-                return buffer.Retain();
+                case IByteBuffer buffer:
+                    return buffer.Retain();
+                case IHttpContent content:
+                    return content.Content.Retain();
+                case IFileRegion region:
+                    return region.Retain();
+                default:
+                    ThrowHelper.ThrowInvalidOperationException_UnexpectedMsg(message); return null;
             }
-            if (message is IHttpContent content)
-            {
-                return content.Content.Retain();
-            }
-            if (message is IFileRegion region) 
-            {
-                return region.Retain();
-            }
-            throw new InvalidOperationException($"unexpected message type: {StringUtil.SimpleClassName(message)}");
         }
 
         static long ContentLength(object message)
         {
-            if (message is IHttpContent content)
+            switch (message)
             {
-                return content.Content.ReadableBytes;
+                case IHttpContent content:
+                    return content.Content.ReadableBytes;
+                case IByteBuffer buffer:
+                    return buffer.ReadableBytes;
+                case IFileRegion region:
+                    return region.Count;
+                default:
+                    ThrowHelper.ThrowInvalidOperationException_UnexpectedMsg(message); return default;
             }
-            if (message is IByteBuffer buffer)
-            {
-                return buffer.ReadableBytes;
-            }
-            if (message is IFileRegion region) 
-            {
-                return region.Count;
-            }
-            throw new InvalidOperationException($"unexpected message type: {StringUtil.SimpleClassName(message)}");
         }
 
         // Add some additional overhead to the buffer. The rational is that it is better to slightly over allocate and waste

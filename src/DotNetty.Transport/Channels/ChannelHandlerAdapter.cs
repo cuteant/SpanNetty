@@ -79,7 +79,7 @@ namespace DotNetty.Transport.Channels
         {
             if (this.IsSharable)
             {
-                throw new InvalidOperationException($"ChannelHandler {StringUtil.SimpleClassName(this)} is not allowed to be shared");
+                ThrowHelper.ThrowInvalidOperationException_EnsureNotSharable(this);
             }
         }
     }

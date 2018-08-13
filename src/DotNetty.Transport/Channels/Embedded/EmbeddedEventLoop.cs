@@ -37,7 +37,7 @@ namespace DotNetty.Transport.Channels.Embedded
         {
             if (command == null)
             {
-                throw new NullReferenceException("command");
+                ThrowHelper.ThrowNullReferenceException_Command();
             }
             this.tasks.Enqueue(command);
         }
@@ -51,7 +51,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
         internal void RunTasks()
         {
-            for (;;)
+            while(true)
             {
                 // have to perform an additional check since Queue<T> throws upon empty dequeue in .NET
                 if (this.tasks.Count == 0)
@@ -70,7 +70,7 @@ namespace DotNetty.Transport.Channels.Embedded
         internal PreciseTimeSpan RunScheduledTasks()
         {
             PreciseTimeSpan time = GetNanos();
-            for (;;)
+            while(true)
             {
                 IRunnable task = this.PollScheduledTask(time);
                 if (task == null)

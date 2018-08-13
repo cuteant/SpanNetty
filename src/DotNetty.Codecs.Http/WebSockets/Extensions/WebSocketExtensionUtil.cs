@@ -32,7 +32,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                     Dictionary<string, string> parameters;
                     if (extensionParameters.Length > 1)
                     {
-                        parameters = new Dictionary<string, string>(extensionParameters.Length - 1);
+                        parameters = new Dictionary<string, string>(extensionParameters.Length - 1, System.StringComparer.Ordinal);
                         for (int i = 1; i < extensionParameters.Length; i++)
                         {
                             string parameter = extensionParameters[i].Trim();
@@ -46,7 +46,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                     }
                     else
                     {
-                        parameters = new Dictionary<string, string>();
+                        parameters = new Dictionary<string, string>(System.StringComparer.Ordinal);
                     }
                     extensions.Add(new WebSocketExtensionData(name, parameters));
                 }

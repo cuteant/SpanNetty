@@ -81,7 +81,7 @@ namespace DotNetty.Transport.Channels
             {
                 if (Logger.WarnEnabled)
                 {
-                    Logger.Warn("Failed to close a file stream.", exception);
+                    Logger.FailedToCloseAFileStream(exception);
                 }
             }
         }

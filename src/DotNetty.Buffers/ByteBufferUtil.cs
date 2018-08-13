@@ -317,25 +317,25 @@ namespace DotNetty.Buffers
 
         public static int ReserveAndWriteUtf8(IByteBuffer buf, ICharSequence seq, int reserveBytes)
         {
-            for (;;)
+            while(true)
             {
-                if (buf is AbstractByteBuffer byteBuf)
+                switch (buf)
                 {
-                    byteBuf.EnsureWritable0(reserveBytes);
-                    int written = WriteUtf8(byteBuf, byteBuf.WriterIndex, seq, seq.Count);
-                    byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
-                    return written;
-                }
-                else if (buf is WrappedByteBuffer)
-                {
-                    // Unwrap as the wrapped buffer may be an AbstractByteBuf and so we can use fast-path.
-                    buf = buf.Unwrap();
-                }
-                else
-                {
-                    byte[] bytes = Encoding.UTF8.GetBytes(seq.ToString());
-                    buf.WriteBytes(bytes);
-                    return bytes.Length;
+                    case AbstractByteBuffer byteBuf:
+                        byteBuf.EnsureWritable0(reserveBytes);
+                        int written = WriteUtf8(byteBuf, byteBuf.WriterIndex, seq, seq.Count);
+                        byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
+                        return written;
+
+                    case WrappedByteBuffer _:
+                        // Unwrap as the wrapped buffer may be an AbstractByteBuf and so we can use fast-path.
+                        buf = buf.Unwrap();
+                        break;
+
+                    default:
+                        byte[] bytes = Encoding.UTF8.GetBytes(seq.ToString());
+                        buf.WriteBytes(bytes);
+                        return bytes.Length;
                 }
             }
         }
@@ -422,25 +422,25 @@ namespace DotNetty.Buffers
         /// <returns> This method returns the actual number of bytes written.</returns>
         public static int ReserveAndWriteUtf8(IByteBuffer buf, string value, int reserveBytes)
         {
-            for (;;)
+            while(true)
             {
-                if (buf is AbstractByteBuffer byteBuf)
+                switch (buf)
                 {
-                    byteBuf.EnsureWritable0(reserveBytes);
-                    int written = WriteUtf8(byteBuf, byteBuf.WriterIndex, value, value.Length);
-                    byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
-                    return written;
-                }
-                else if (buf is WrappedByteBuffer)
-                {
-                    // Unwrap as the wrapped buffer may be an AbstractByteBuf and so we can use fast-path.
-                    buf = buf.Unwrap();
-                }
-                else
-                {
-                    byte[] bytes = Encoding.UTF8.GetBytes(value);
-                    buf.WriteBytes(bytes);
-                    return bytes.Length;
+                    case AbstractByteBuffer byteBuf:
+                        byteBuf.EnsureWritable0(reserveBytes);
+                        int written = WriteUtf8(byteBuf, byteBuf.WriterIndex, value, value.Length);
+                        byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
+                        return written;
+
+                    case WrappedByteBuffer _:
+                        // Unwrap as the wrapped buffer may be an AbstractByteBuf and so we can use fast-path.
+                        buf = buf.Unwrap();
+                        break;
+
+                    default:
+                        byte[] bytes = Encoding.UTF8.GetBytes(value);
+                        buf.WriteBytes(bytes);
+                        return bytes.Length;
                 }
             }
         }
@@ -595,25 +595,25 @@ namespace DotNetty.Buffers
             }
             else
             {
-                for (;;)
+                while(true)
                 {
-                    if (buf is AbstractByteBuffer byteBuf)
+                    switch (buf)
                     {
-                        byteBuf.EnsureWritable0(len);
-                        int written = WriteAscii(byteBuf, byteBuf.WriterIndex, seq, len);
-                        byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
-                        return written;
-                    }
-                    else if (buf is WrappedByteBuffer)
-                    {
-                        // Unwrap as the wrapped buffer may be an AbstractByteBuf and so we can use fast-path.
-                        buf = buf.Unwrap();
-                    }
-                    else
-                    {
-                        byte[] bytes = Encoding.ASCII.GetBytes(seq.ToString());
-                        buf.WriteBytes(bytes);
-                        return bytes.Length;
+                        case AbstractByteBuffer byteBuf:
+                            byteBuf.EnsureWritable0(len);
+                            int written = WriteAscii(byteBuf, byteBuf.WriterIndex, seq, len);
+                            byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
+                            return written;
+
+                        case WrappedByteBuffer _:
+                            // Unwrap as the wrapped buffer may be an AbstractByteBuf and so we can use fast-path.
+                            buf = buf.Unwrap();
+                            break;
+
+                        default:
+                            byte[] bytes = Encoding.ASCII.GetBytes(seq.ToString());
+                            buf.WriteBytes(bytes);
+                            return bytes.Length;
                     }
                 }
             }
@@ -644,25 +644,25 @@ namespace DotNetty.Buffers
         {
             // ASCII uses 1 byte per char
             int len = value.Length;
-            for (;;)
+            while(true)
             {
-                if (buf is AbstractByteBuffer byteBuf)
+                switch (buf)
                 {
-                    byteBuf.EnsureWritable0(len);
-                    int written = WriteAscii(byteBuf, byteBuf.WriterIndex, value, len);
-                    byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
-                    return written;
-                }
-                else if (buf is WrappedByteBuffer)
-                {
-                    // Unwrap as the wrapped buffer may be an AbstractByteBuf and so we can use fast-path.
-                    buf = buf.Unwrap();
-                }
-                else
-                {
-                    byte[] bytes = Encoding.ASCII.GetBytes(value);
-                    buf.WriteBytes(bytes);
-                    return bytes.Length;
+                    case AbstractByteBuffer byteBuf:
+                        byteBuf.EnsureWritable0(len);
+                        int written = WriteAscii(byteBuf, byteBuf.WriterIndex, value, len);
+                        byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
+                        return written;
+
+                    case WrappedByteBuffer _:
+                        // Unwrap as the wrapped buffer may be an AbstractByteBuf and so we can use fast-path.
+                        buf = buf.Unwrap();
+                        break;
+
+                    default:
+                        byte[] bytes = Encoding.ASCII.GetBytes(value);
+                        buf.WriteBytes(bytes);
+                        return bytes.Length;
                 }
             }
         }
@@ -1037,7 +1037,7 @@ namespace DotNetty.Buffers
             int maxIndex = buf.ReaderIndex + buf.ReadableBytes;
             if (index < 0 || length < 0 || index > maxIndex - length)
             {
-                throw new IndexOutOfRangeException($"index: {index}length: {length}");
+                ThrowHelper.ThrowIndexOutOfRangeException_IsText(index, length);
             }
             if (ReferenceEquals(Encoding.UTF8, encoding))
             {

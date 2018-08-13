@@ -97,7 +97,7 @@ namespace DotNetty.Codecs.Http.Cookies
                 return true;
             }
 
-            if (!this.name.Equals(other.Name))
+            if (!string.Equals(this.name, other.Name, StringComparison.Ordinal))
             {
                 return false;
             }
@@ -113,7 +113,7 @@ namespace DotNetty.Codecs.Http.Cookies
             {
                 return false;
             }
-            else if (!this.path.Equals(other.Path))
+            else if (!string.Equals(this.path, other.Path, StringComparison.Ordinal))
             {
                 return false;
             }
@@ -127,7 +127,7 @@ namespace DotNetty.Codecs.Http.Cookies
             }
             else
             {
-                return this.domain.Equals(other.Domain, StringComparison.OrdinalIgnoreCase);
+                return string.Equals(this.domain, other.Domain, StringComparison.OrdinalIgnoreCase);
             }
 
             return true;
@@ -188,12 +188,12 @@ namespace DotNetty.Codecs.Http.Cookies
                 return 1;
             }
 
-            if (!(obj is ICookie cookie))
+            if (obj is ICookie cookie)
             {
-                throw new ArgumentException($"{nameof(obj)} must be of {nameof(ICookie)} type");
+                return this.CompareTo(cookie);
             }
 
-            return this.CompareTo(cookie);
+            return ThrowHelper.ThrowArgumentException_CompareToCookie();
         }
 
         public override string ToString()

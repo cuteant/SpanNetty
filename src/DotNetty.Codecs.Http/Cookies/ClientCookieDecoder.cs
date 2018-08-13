@@ -37,7 +37,7 @@ namespace DotNetty.Codecs.Http.Cookies
             {
 
                 // Skip spaces and separators.
-                for (;;)
+                while(true)
                 {
                     if (i == headerLen)
                     {
@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http.Cookies
                 int valueBegin;
                 int valueEnd;
 
-                for (;;)
+                while(true)
                 {
                     char curChar = header[i];
                     if (curChar == ';')

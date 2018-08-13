@@ -30,12 +30,12 @@ namespace DotNetty.Codecs.Http
 
         public override bool Equals(object obj)
         {
-            if (!(obj is HttpScheme other))
+            if (obj is HttpScheme other)
             {
-                return false;
+                return other.port == this.port && other.name.Equals(this.name);
             }
 
-            return other.port == this.port && other.name.Equals(this.name);
+            return false;
         }
 
         public override int GetHashCode() => this.port * 31 + this.name.GetHashCode();

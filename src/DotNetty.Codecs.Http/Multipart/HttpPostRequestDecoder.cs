@@ -85,7 +85,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 ICharSequence boundary = headerContentType[mrank].SubstringAfter('=');
                 if (boundary == null)
                 {
-                    throw new ErrorDataDecoderException("Needs a boundary value");
+                    ThrowHelper.ThrowErrorDataDecoderException_NeedBoundaryValue();
                 }
                 if (boundary[0] == '"')
                 {

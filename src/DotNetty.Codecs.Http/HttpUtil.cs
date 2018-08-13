@@ -75,7 +75,7 @@ namespace DotNetty.Codecs.Http
             }
 
             // Otherwise we don't.
-            throw new FormatException($"header not found: {HttpHeaderNames.ContentLength}");
+            return ThrowHelper.ThrowFormatException_HeaderNotFound();
         }
 
         public static long GetContentLength(IHttpMessage message, long defaultValue)
@@ -104,23 +104,25 @@ namespace DotNetty.Codecs.Http
         {
             // WebSocket messages have constant content-lengths.
             HttpHeaders h = message.Headers;
-            if (message is IHttpRequest req)
+            switch (message)
             {
-                if (HttpMethod.Get.Equals(req.Method)
-                    && h.Contains(HttpHeaderNames.SecWebsocketKey1)
-                    && h.Contains(HttpHeaderNames.SecWebsocketKey2))
-                {
-                    return 8;
-                }
-            }
-            else if (message is IHttpResponse res)
-            {
-                if (res.Status.Code == 101
-                    && h.Contains(HttpHeaderNames.SecWebsocketOrigin)
-                    && h.Contains(HttpHeaderNames.SecWebsocketLocation))
-                {
-                    return 16;
-                }
+                case IHttpRequest req:
+                    if (HttpMethod.Get.Equals(req.Method)
+                        && h.Contains(HttpHeaderNames.SecWebsocketKey1)
+                        && h.Contains(HttpHeaderNames.SecWebsocketKey2))
+                    {
+                        return 8;
+                    }
+                    break;
+
+                case IHttpResponse res:
+                    if (res.Status.Code == 101
+                        && h.Contains(HttpHeaderNames.SecWebsocketOrigin)
+                        && h.Contains(HttpHeaderNames.SecWebsocketLocation))
+                    {
+                        return 16;
+                    }
+                    break;
             }
 
             // Not a web socket message
@@ -252,7 +254,7 @@ namespace DotNetty.Codecs.Http
         {
             if (contentTypeValue == null)
             {
-                throw new ArgumentException(nameof(contentTypeValue));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentTypeValue);
             }
             int indexOfCharset = AsciiString.IndexOfIgnoreCaseAscii(contentTypeValue, CharsetEquals, 0);
             if (indexOfCharset != AsciiString.IndexNotFound)
@@ -273,7 +275,7 @@ namespace DotNetty.Codecs.Http
         {
             if (contentTypeValue == null)
             {
-                throw new ArgumentException(nameof(contentTypeValue));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentTypeValue);
             }
             int indexOfSemicolon = AsciiString.IndexOfIgnoreCaseAscii(contentTypeValue, Semicolon, 0);
             if (indexOfSemicolon != AsciiString.IndexNotFound)

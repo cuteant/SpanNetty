@@ -56,7 +56,7 @@ namespace DotNetty.Codecs
             }
             catch (Exception ex)
             {
-                return TaskUtil.FromException(new EncoderException(ex)); // todo: we don't have a stack on EncoderException but it's present on inner exception.
+                return ThrowHelper.ThrowEncoderException(ex); // todo: we don't have a stack on EncoderException but it's present on inner exception.
             }
             finally
             {

@@ -52,7 +52,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 if (!buffer.HasArray)
                 {
-                    throw new ArgumentException("buffer hasn't backing byte array");
+                    ThrowHelper.ThrowArgumentException_BufferNoBacking();
                 }
                 this.Buffer = buffer;
                 this.Bytes = buffer.Array;

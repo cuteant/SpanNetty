@@ -420,10 +420,11 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception t)
                 {
-                    if (DefaultChannelPipeline.Logger.WarnEnabled)
+                    var logger = DefaultChannelPipeline.Logger;
+                    if (logger.WarnEnabled)
                     {
-                        DefaultChannelPipeline.Logger.Warn("Failed to submit an ExceptionCaught() event.", t);
-                        DefaultChannelPipeline.Logger.Warn("The ExceptionCaught() event that was failed to submit was:", cause);
+                        logger.FailedToSubmitAnExceptionCaughtEvent(t);
+                        logger.TheExceptionCaughtEventThatWasFailedToSubmit(cause);
                     }
                 }
             }
@@ -439,12 +440,11 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception t)
                 {
-                    if (DefaultChannelPipeline.Logger.WarnEnabled)
+                    var logger = DefaultChannelPipeline.Logger;
+                    if (logger.WarnEnabled)
                     {
-                        DefaultChannelPipeline.Logger.Warn("Failed to submit an ExceptionCaught() event.", t);
-                        DefaultChannelPipeline.Logger.Warn(
-                                "An exception was thrown by a user handler's " +
-                                        "ExceptionCaught() method while handling the following exception:", cause);
+                        logger.FailedToSubmitAnExceptionCaughtEvent(t);
+                        logger.ExceptionCaughtMethodWhileHandlingTheFollowingException(cause);
                     }
                 }
             }
@@ -898,11 +898,10 @@ namespace DotNetty.Transport.Channels
         {
             if (InExceptionCaught(cause))
             {
-                if (DefaultChannelPipeline.Logger.WarnEnabled)
+                var logger = DefaultChannelPipeline.Logger;
+                if (logger.WarnEnabled)
                 {
-                    DefaultChannelPipeline.Logger.Warn(
-                        "An exception was thrown by a user handler " +
-                            "while handling an exceptionCaught event", cause);
+                    logger.ThrowByAUserHandlerWhileHandlingAnExceptionCaughtEvent(cause);
                 }
                 return;
             }

@@ -45,7 +45,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             this.encoder.WriteOutbound(msg.Content.Retain());
 
             CompositeByteBuffer fullCompressedContent = ctx.Allocator.CompositeBuffer();
-            for (;;)
+            while(true)
             {
                 var partCompressedContent = this.encoder.ReadOutbound<IByteBuffer>();
                 if (partCompressedContent == null)
@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             if (fullCompressedContent.NumComponents <= 0)
             {
                 fullCompressedContent.Release();
-                throw new CodecException("cannot read compressed buffer");
+                ThrowHelper.ThrowCodecException_CannotReadCompressedBuf();
             }
 
             if (msg.IsFinalFragment && this.noContext)
@@ -84,24 +84,22 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                 compressedContent = fullCompressedContent;
             }
 
-            WebSocketFrame outMsg;
-            if (msg is TextWebSocketFrame)
+            WebSocketFrame outMsg = null;
+            switch (msg)
             {
-                outMsg = new TextWebSocketFrame(msg.IsFinalFragment, this.Rsv(msg), compressedContent);
+                case TextWebSocketFrame _:
+                    outMsg = new TextWebSocketFrame(msg.IsFinalFragment, this.Rsv(msg), compressedContent);
+                    break;
+                case BinaryWebSocketFrame _:
+                    outMsg = new BinaryWebSocketFrame(msg.IsFinalFragment, this.Rsv(msg), compressedContent);
+                    break;
+                case ContinuationWebSocketFrame _:
+                    outMsg = new ContinuationWebSocketFrame(msg.IsFinalFragment, this.Rsv(msg), compressedContent);
+                    break;
+                default:
+                    ThrowHelper.ThrowCodecException_UnexpectedFrameType(msg);
+                    break;
             }
-            else if (msg is BinaryWebSocketFrame)
-            {
-                outMsg = new BinaryWebSocketFrame(msg.IsFinalFragment, this.Rsv(msg), compressedContent);
-            }
-            else if (msg is ContinuationWebSocketFrame)
-            {
-                outMsg = new ContinuationWebSocketFrame(msg.IsFinalFragment, this.Rsv(msg), compressedContent);
-            }
-            else
-            {
-                throw new CodecException($"unexpected frame type: {msg.GetType().Name}");
-            }
-
             output.Add(outMsg);
         }
 
@@ -118,7 +116,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                 // Clean-up the previous encoder if not cleaned up correctly.
                 if (this.encoder.Finish())
                 {
-                    for (;;)
+                    while(true)
                     {
                         var buf = this.encoder.ReadOutbound<IByteBuffer>();
                         if (buf == null)

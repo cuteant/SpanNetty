@@ -79,7 +79,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                         }
                         else
                         {
-                            throw new CodecException($"invalid WebSocket Extension handshake for \"{extensionsHeader}\"");
+                            ThrowHelper.ThrowCodecException_InvalidWSExHandshake(extensionsHeader);
                         }
                     }
 

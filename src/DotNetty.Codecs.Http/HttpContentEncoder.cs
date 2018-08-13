@@ -7,6 +7,7 @@ namespace DotNetty.Codecs.Http
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.Contracts;
+    using System.Runtime.CompilerServices;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
@@ -29,7 +30,18 @@ namespace DotNetty.Codecs.Http
         EmbeddedChannel encoder;
         State state = State.AwaitHeaders;
 
-        public override bool AcceptOutboundMessage(object msg) => msg is IHttpContent || msg is IHttpResponse;
+        public override bool AcceptOutboundMessage(object msg)
+        {
+            switch (msg)
+            {
+                case IHttpContent _:
+                case IHttpResponse _:
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
 
         protected override void Decode(IChannelHandlerContext ctx, IHttpRequest msg, List<object> output)
         {
@@ -51,7 +63,9 @@ namespace DotNetty.Codecs.Http
 
         protected override void Encode(IChannelHandlerContext ctx, IHttpObject msg, List<object> output)
         {
-            bool isFull = msg is IHttpResponse && msg is ILastHttpContent;
+            var res = msg as IHttpResponse;
+            var lastContent = msg as ILastHttpContent;
+            bool isFull = res != null && lastContent != null;
             switch (this.state)
             {
                 case State.AwaitHeaders:
@@ -59,7 +73,6 @@ namespace DotNetty.Codecs.Http
                     EnsureHeaders(msg);
                     Debug.Assert(this.encoder == null);
 
-                    var res = (IHttpResponse)msg;
                     int code = res.Status.Code;
                     ICharSequence acceptEncoding;
                     if (code == ContinueCode)
@@ -74,7 +87,7 @@ namespace DotNetty.Codecs.Http
                         acceptEncoding = this.acceptEncodingQueue.Count > 0 ? this.acceptEncodingQueue.Dequeue() : null;
                         if (acceptEncoding == null)
                         {
-                            throw new InvalidOperationException("cannot send more responses than requests");
+                            ThrowHelper.ThrowInvalidOperationException_CannotSendMore();
                         }
                     }
 
@@ -186,7 +199,7 @@ namespace DotNetty.Codecs.Http
                     EnsureContent(msg);
                     output.Add(ReferenceCountUtil.Retain(msg));
                     // Passed through all following contents of the current response.
-                    if (msg is ILastHttpContent)
+                    if (lastContent != null)
                     {
                         this.state = State.AwaitHeaders;
                     }
@@ -219,24 +232,40 @@ namespace DotNetty.Codecs.Http
             }
         }
 
-        static bool IsPassthru(HttpVersion version, int code, ICharSequence httpMethod) =>
-            code < 200 || code == 204 || code == 304
-            || (ReferenceEquals(httpMethod, ZeroLengthHead) || ReferenceEquals(httpMethod, ZeroLengthConnect) && code == 200)
-            || ReferenceEquals(version, HttpVersion.Http10);
+        static bool IsPassthru(HttpVersion version, int code, ICharSequence httpMethod)
+        {
+            switch (code)
+            {
+                case 204:
+                case 304:
+                    return true;
+                case 200 when ReferenceEquals(httpMethod, ZeroLengthConnect):
+                    return true;
+                default:
+                    if (code < 200) { return true; }
+                    break;
+            }
+            return ReferenceEquals(httpMethod, ZeroLengthHead) || ReferenceEquals(version, HttpVersion.Http10);
+            //return code < 200 || code == 204 || code == 304
+            //  || (ReferenceEquals(httpMethod, ZeroLengthHead) || ReferenceEquals(httpMethod, ZeroLengthConnect) && code == 200)
+            //  || ReferenceEquals(version, HttpVersion.Http10);
+        }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void EnsureHeaders(IHttpObject msg)
         {
             if (!(msg is IHttpResponse))
             {
-                throw new CodecException($"unexpected message type: {msg.GetType().Name} (expected: {StringUtil.SimpleClassName<IHttpResponse>()})");
+                ThrowHelper.ThrowCodecException_EnsureHeaders(msg);
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void EnsureContent(IHttpObject msg)
         {
             if (!(msg is IHttpContent))
             {
-                throw new CodecException($"unexpected message type: {msg.GetType().Name} (expected: {StringUtil.SimpleClassName<IHttpContent>()})");
+                ThrowHelper.ThrowCodecException_EnsureContent(msg);
             }
         }
 
@@ -322,7 +351,7 @@ namespace DotNetty.Codecs.Http
 
         void FetchEncoderOutput(ICollection<object> output)
         {
-            for (;;)
+            while(true)
             {
                 var buf = this.encoder.ReadOutbound<IByteBuffer>();
                 if (buf == null)

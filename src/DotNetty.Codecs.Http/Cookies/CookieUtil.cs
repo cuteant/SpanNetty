@@ -194,7 +194,7 @@ namespace DotNetty.Codecs.Http.Cookies
             int i = FirstInvalidOctet(value, ValidCookieAttributeOctets);
             if (i != -1)
             {
-                throw new ArgumentException($"{name} contains the prohibited characters: ${value[i]}");
+                ThrowHelper.ThrowArgumentException_ValidateAttrValue(name, value, i);
             }
 
             return value;

@@ -33,7 +33,7 @@ namespace DotNetty.Transport.Channels.Sockets
             SocketError socketError = this.SocketError;
             if (socketError != SocketError.Success)
             {
-                throw new SocketException((int)socketError);
+                ThrowHelper.ThrowSocketException(socketError);
             }
         }
 

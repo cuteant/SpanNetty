@@ -152,7 +152,7 @@ namespace DotNetty.Codecs.Http
                             {
                                 if (!this.chunkedSupported)
                                 {
-                                    throw new ArgumentException("Chunked messages not supported");
+                                    ThrowHelper.ThrowArgumentException_ChunkedMsgNotSupported();
                                 }
                                 // Chunked encoding - generate HttpMessage first.  HttpChunks will follow.
                                 output.Add(this.message);

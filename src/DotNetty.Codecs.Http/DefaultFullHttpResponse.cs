@@ -143,13 +143,13 @@ namespace DotNetty.Codecs.Http
 
         public override bool Equals(object obj)
         {
-            if (!(obj is DefaultFullHttpResponse other))
+            if (obj is DefaultFullHttpResponse other)
             {
-                return false;
+                return base.Equals(other)
+                    && this.content.Equals(other.content)
+                    && this.trailingHeaders.Equals(other.trailingHeaders);
             }
-            return base.Equals(other) 
-                && this.content.Equals(other.content) 
-                && this.trailingHeaders.Equals(other.trailingHeaders);
+            return false;
         }
 
         public override string ToString() => StringBuilderManager.ReturnAndFree(HttpMessageUtil.AppendFullResponse(StringBuilderManager.Allocate(256), this));

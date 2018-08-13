@@ -95,7 +95,7 @@ namespace DotNetty.Codecs.Http.Cors
             }
             catch (Exception exception)
             {
-                throw new InvalidOperationException($"Could not generate value for callable [{callable}]", exception);
+                return ThrowHelper.ThrowInvalidOperationException_Cqrs(callable, exception);
             }
         }
 

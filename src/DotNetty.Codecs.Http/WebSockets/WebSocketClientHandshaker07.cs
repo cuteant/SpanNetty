@@ -51,8 +51,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             if (Logger.DebugEnabled)
             {
-                Logger.Debug("WebSocket version 07 client handshake key: {}, expected response: {}",
-                    key, this.expectedChallengeResponseString);
+                Logger.WebSocketVersion07ClientHandshakeKey(key, this.expectedChallengeResponseString);
             }
 
             // Format request
@@ -87,25 +86,25 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             if (!response.Status.Equals(status))
             {
-                throw new WebSocketHandshakeException($"Invalid handshake response getStatus: {response.Status}");
+                ThrowHelper.ThrowWebSocketHandshakeException_InvalidHandshakeResponseGS(response);
             }
 
             if (headers.TryGet(HttpHeaderNames.Upgrade, out ICharSequence upgrade) 
                 || !HttpHeaderValues.Websocket.ContentEqualsIgnoreCase(upgrade))
             {
-                throw new WebSocketHandshakeException($"Invalid handshake response upgrade: {upgrade}");
+                ThrowHelper.ThrowWebSocketHandshakeException_InvalidHandshakeResponseU(upgrade);
             }
 
             if (!headers.ContainsValue(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade, true))
             {
                 headers.TryGet(HttpHeaderNames.Connection, out upgrade);
-                throw new WebSocketHandshakeException($"Invalid handshake response connection: {upgrade}");
+                ThrowHelper.ThrowWebSocketHandshakeException_InvalidHandshakeResponseConn(upgrade);
             }
 
             if (headers.TryGet(HttpHeaderNames.SecWebsocketAccept, out ICharSequence accept) 
                 || !accept.Equals(this.expectedChallengeResponseString))
             {
-                throw new WebSocketHandshakeException($"Invalid challenge. Actual: {accept}. Expected: {this.expectedChallengeResponseString}");
+                ThrowHelper.ThrowWebSocketHandshakeException_InvalidChallenge(accept, this.expectedChallengeResponseString);
             }
         }
 

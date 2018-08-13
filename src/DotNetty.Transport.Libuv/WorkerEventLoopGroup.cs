@@ -109,7 +109,7 @@ namespace DotNetty.Transport.Libuv
                 }
             }
 
-            throw new InvalidOperationException($"Loop {loopHandle} does not exist");
+            return ThrowHelper.ThrowInvalidOperationException(loopHandle);
         }
 
         public Task ShutdownGracefullyAsync()

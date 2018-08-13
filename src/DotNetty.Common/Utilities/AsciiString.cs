@@ -477,7 +477,7 @@ namespace DotNetty.Common.Utilities
             }
 
             var indexOfVisitor = new IndexOfProcessor((byte)firstChar);
-            for (; ; )
+            while(true)
             {
                 int i = this.ForEachByte(start, thisLen - start, indexOfVisitor);
                 if (i == -1 || subCount + i > thisLen)
@@ -961,7 +961,7 @@ namespace DotNetty.Common.Utilities
         {
             if (start + 1 >= this.length)
             {
-                throw new IndexOutOfRangeException($"2 bytes required to convert to character. index {start} would go out of bounds.");
+                ThrowHelper.ThrowIndexOutOfRangeException_ParseChar(start);
             }
 
             int startWithOffset = start + this.offset;
@@ -982,7 +982,7 @@ namespace DotNetty.Common.Utilities
             short result = (short)intValue;
             if (result != intValue)
             {
-                throw new FormatException(this.SubSequence(start, end).ToString());
+                ThrowHelper.ThrowFormatException(this, start, end);
             }
 
             return result;
@@ -998,18 +998,18 @@ namespace DotNetty.Common.Utilities
         {
             if (radix < CharUtil.MinRadix || radix > CharUtil.MaxRadix)
             {
-                throw new FormatException($"Radix must be from {CharUtil.MinRadix} to {CharUtil.MaxRadix}");
+                ThrowHelper.ThrowFormatException_Radix();
             }
             if (start == end)
             {
-                throw new FormatException($"Content is empty because {start} and {end} are the same.");
+                ThrowHelper.ThrowFormatException(start, end);
             }
 
             int i = start;
             bool negative = this.ByteAt(i) == '-';
             if (negative && ++i == end)
             {
-                throw new FormatException(this.SubSequence(start, end).ToString());
+                ThrowHelper.ThrowFormatException(this, start, end);
             }
 
             return this.ParseInt(i, end, radix, negative);
@@ -1025,16 +1025,16 @@ namespace DotNetty.Common.Utilities
                 int digit = CharUtil.Digit((char)(this.value[currOffset++ + this.offset]), radix);
                 if (digit == -1)
                 {
-                    throw new FormatException(this.SubSequence(start, end).ToString());
+                    ThrowHelper.ThrowFormatException(this, start, end);
                 }
                 if (max > result)
                 {
-                    throw new FormatException(this.SubSequence(start, end).ToString());
+                    ThrowHelper.ThrowFormatException(this, start, end);
                 }
                 int next = result * radix - digit;
                 if (next > result)
                 {
-                    throw new FormatException(this.SubSequence(start, end).ToString());
+                    ThrowHelper.ThrowFormatException(this, start, end);
                 }
                 result = next;
             }
@@ -1044,7 +1044,7 @@ namespace DotNetty.Common.Utilities
                 result = -result;
                 if (result < 0)
                 {
-                    throw new FormatException(this.SubSequence(start, end).ToString());
+                    ThrowHelper.ThrowFormatException(this, start, end);
                 }
             }
 
@@ -1061,19 +1061,19 @@ namespace DotNetty.Common.Utilities
         {
             if (radix < CharUtil.MinRadix || radix > CharUtil.MaxRadix)
             {
-                throw new FormatException($"Radix must be from {CharUtil.MinRadix} to {CharUtil.MaxRadix}");
+                ThrowHelper.ThrowFormatException_Radix();
             }
 
             if (start == end)
             {
-                throw new FormatException($"Content is empty because {start} and {end} are the same.");
+                ThrowHelper.ThrowFormatException(start, end);
             }
 
             int i = start;
             bool negative = this.ByteAt(i) == '-';
             if (negative && ++i == end)
             {
-                throw new FormatException(this.SubSequence(start, end).ToString());
+                ThrowHelper.ThrowFormatException(this, start, end);
             }
 
             return this.ParseLong(i, end, radix, negative);
@@ -1089,16 +1089,16 @@ namespace DotNetty.Common.Utilities
                 int digit = CharUtil.Digit((char)(this.value[currOffset++ + this.offset]), radix);
                 if (digit == -1)
                 {
-                    throw new FormatException(this.SubSequence(start, end).ToString());
+                    ThrowHelper.ThrowFormatException(this, start, end);
                 }
                 if (max > result)
                 {
-                    throw new FormatException(this.SubSequence(start, end).ToString());
+                    ThrowHelper.ThrowFormatException(this, start, end);
                 }
                 long next = result * radix - digit;
                 if (next > result)
                 {
-                    throw new FormatException(this.SubSequence(start, end).ToString());
+                    ThrowHelper.ThrowFormatException(this, start, end);
                 }
                 result = next;
             }
@@ -1108,7 +1108,7 @@ namespace DotNetty.Common.Utilities
                 result = -result;
                 if (result < 0)
                 {
-                    throw new FormatException(this.SubSequence(start, end).ToString());
+                    ThrowHelper.ThrowFormatException(this, start, end);
                 }
             }
 
@@ -1314,21 +1314,22 @@ namespace DotNetty.Common.Utilities
             {
                 return false;
             }
-            if (cs is StringCharSequence stringCharSequence && seq is StringCharSequence)
+            switch (cs)
             {
-                return ignoreCase 
-                    ? stringCharSequence.RegionMatchesIgnoreCase(csStart, seq, start, length) 
-                    : stringCharSequence.RegionMatches (csStart, seq, start, length);
-            }
-            if (cs is AsciiString asciiString)
-            {
-                return ignoreCase 
-                    ? asciiString.RegionMatchesIgnoreCase(csStart, seq, start, length) 
-                    : asciiString.RegionMatches(csStart, seq, start, length);
-            }
+                case StringCharSequence stringCharSequence when seq is StringCharSequence:
+                    return ignoreCase
+                        ? stringCharSequence.RegionMatchesIgnoreCase(csStart, seq, start, length)
+                        : stringCharSequence.RegionMatches(csStart, seq, start, length);
 
-            return RegionMatchesCharSequences(cs, csStart, seq, start, length,
-                ignoreCase ? GeneralCaseInsensitiveComparator : DefaultCharComparator);
+                case AsciiString asciiString:
+                    return ignoreCase
+                        ? asciiString.RegionMatchesIgnoreCase(csStart, seq, start, length)
+                        : asciiString.RegionMatches(csStart, seq, start, length);
+
+                default:
+                    return RegionMatchesCharSequences(cs, csStart, seq, start, length,
+                        ignoreCase ? GeneralCaseInsensitiveComparator : DefaultCharComparator);
+            }
         }
 
         public static bool RegionMatchesAscii(ICharSequence cs, bool ignoreCase, int csStart, ICharSequence seq, int start, int length)
@@ -1338,23 +1339,23 @@ namespace DotNetty.Common.Utilities
                 return false;
             }
 
-            if (!ignoreCase && cs is StringCharSequence && seq is StringCharSequence)
+            switch (cs)
             {
-                //we don't call regionMatches from String for ignoreCase==true. It's a general purpose method,
-                //which make complex comparison in case of ignoreCase==true, which is useless for ASCII-only strings.
-                //To avoid applying this complex ignore-case comparison, we will use regionMatchesCharSequences
-                return cs.RegionMatches(csStart, seq, start, length);
-            }
+                case StringCharSequence _ when !ignoreCase && seq is StringCharSequence:
+                    //we don't call regionMatches from String for ignoreCase==true. It's a general purpose method,
+                    //which make complex comparison in case of ignoreCase==true, which is useless for ASCII-only strings.
+                    //To avoid applying this complex ignore-case comparison, we will use regionMatchesCharSequences
+                    return cs.RegionMatches(csStart, seq, start, length);
 
-            if (cs is AsciiString asciiString)
-            {
-                return ignoreCase 
-                    ? asciiString.RegionMatchesIgnoreCase(csStart, seq, start, length) 
-                    : asciiString.RegionMatches(csStart, seq, start, length);
-            }
+                case AsciiString asciiString:
+                    return ignoreCase
+                        ? asciiString.RegionMatchesIgnoreCase(csStart, seq, start, length)
+                        : asciiString.RegionMatches(csStart, seq, start, length);
 
-            return RegionMatchesCharSequences(cs, csStart, seq, start, length,
-                ignoreCase ? AsciiCaseInsensitiveCharComparator : DefaultCharComparator);
+                default:
+                    return RegionMatchesCharSequences(cs, csStart, seq, start, length,
+                        ignoreCase ? AsciiCaseInsensitiveCharComparator : DefaultCharComparator);
+            }
         }
 
         public static int IndexOfIgnoreCase(ICharSequence str, ICharSequence searchStr, int startPos)
@@ -1423,17 +1424,19 @@ namespace DotNetty.Common.Utilities
 
         public static int IndexOf(ICharSequence cs, char searchChar, int start)
         {
-            if (cs is StringCharSequence stringCharSequence)
+            switch (cs)
             {
-                return stringCharSequence.IndexOf(searchChar, start);
-            }
-            else if (cs is AsciiString asciiString)
-            {
-                return asciiString.IndexOf(searchChar, start);
-            }
-            if (cs == null)
-            {
-                return IndexNotFound;
+                case StringCharSequence stringCharSequence:
+                    return stringCharSequence.IndexOf(searchChar, start);
+
+                case AsciiString asciiString:
+                    return asciiString.IndexOf(searchChar, start);
+
+                case null:
+                    return IndexNotFound;
+
+                default:
+                    break;
             }
             int sz = cs.Count;
             if (start < 0)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using DotNetty.Common.Utilities;
 
 namespace DotNetty.Codecs
@@ -71,6 +72,15 @@ namespace DotNetty.Codecs
         newSize,
         expression,
         encoding,
+        src,
+        dialect_alphabet,
+        dialect_decodabet,
+        nameHashingStrategy,
+        valueConverter,
+        nameValidator,
+        newValue,
+        delimiters,
+        delimiter,
     }
 
     #endregion
@@ -86,14 +96,13 @@ namespace DotNetty.Codecs
 
     partial class ThrowHelper
     {
-
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowNullReferenceException()
+        internal static void ThrowNullReferenceException(ExceptionArgument argument)
         {
             throw GetNullReferenceException();
             NullReferenceException GetNullReferenceException()
             {
-                return new NullReferenceException("encoding");
+                return new NullReferenceException(GetArgumentName(argument));
             }
         }
 
@@ -104,6 +113,96 @@ namespace DotNetty.Codecs
             Exception GetException()
             {
                 return new Exception("Unknown length field length");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_EmptyDelimiter()
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("empty delimiter");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_EmptyDelimiters()
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("empty delimiters");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_CannotAddToItSelf()
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("can't add to itself.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_CannotHaveEndStart()
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("Can't have end < start");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_CannotParseMoreThan64Chars()
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("Can't parse more than 64 chars, looks like a user error or a malformed header");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_MaxFrameLengthMustBe(int maxFrameLength)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("maxFrameLength must be a positive integer: " + maxFrameLength);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_MaxCumulationBufferComponents(int value)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"maxCumulationBufferComponents: {value} (expected: >= 2)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_MaxContentLength(int maxContentLength)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"maxContentLength: {maxContentLength}(expected: >= 0)", nameof(maxContentLength));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_BadBase64InputChar(int index, sbyte value)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException(string.Format("bad Base64 input character at {0}:{1}", index, value));
             }
         }
 
@@ -144,6 +243,56 @@ namespace DotNetty.Codecs
             ArgumentException GetException()
             {
                 return new ArgumentException("length of object does not fit into a medium integer: " + length);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowMessageAggregationException_UnknownAggregationState()
+        {
+            throw GetException();
+            MessageAggregationException GetException()
+            {
+                return new MessageAggregationException("Unknown aggregation state.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowMessageAggregationException_StartMessage()
+        {
+            throw GetException();
+            MessageAggregationException GetException()
+            {
+                return new MessageAggregationException("Start message should not have any current content.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_EnumeratorNotInitOrCompleted()
+        {
+            throw GetException();
+            InvalidOperationException GetException()
+            {
+                return new InvalidOperationException("Enumerator not initialized or completed.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_NotAddedToAPipelineYet()
+        {
+            throw GetException();
+            InvalidOperationException GetException()
+            {
+                return new InvalidOperationException("not added to a pipeline yet");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_DecoderProperties()
+        {
+            throw GetException();
+            InvalidOperationException GetException()
+            {
+                return new InvalidOperationException("decoder properties cannot be changed once the decoder is added to a pipeline.");
             }
         }
 
@@ -208,6 +357,16 @@ namespace DotNetty.Codecs
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task ThrowEncoderException(Exception ex)
+        {
+            return TaskUtil.FromException(GetException());
+            EncoderException GetException()
+            {
+                return new EncoderException(ex);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowEncoderException(Type type)
         {
             throw GetException();
@@ -257,6 +416,30 @@ namespace DotNetty.Codecs
                 return new CorruptedFrameException("Adjusted frame length (" + frameLength + ") is less " +
                     "than initialBytesToStrip: " + initialBytesToStrip);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowTooLongFrameException(int maxFrameLength, long frameLength)
+        {
+            throw GetException();
+            TooLongFrameException GetException()
+            {
+                return new TooLongFrameException("frame length exceeds " + maxFrameLength + ": " + frameLength + " - discarded");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowTooLongFrameException(int maxFrameLength)
+        {
+            throw GetException();
+            TooLongFrameException GetException()
+            {
+                return new TooLongFrameException("frame length exceeds " + maxFrameLength + " - discarding");
+            }
+        }
+        internal static TooLongFrameException GetTooLongFrameException(int maxContentLength)
+        {
+            return new TooLongFrameException($"content length exceeded {maxContentLength} bytes.");
         }
     }
 }

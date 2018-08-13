@@ -9,7 +9,7 @@ namespace DotNetty.Transport.Libuv.Native
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
 
-    public abstract unsafe class NativeHandle : IDisposable
+    public abstract unsafe partial class NativeHandle : IDisposable
     {
         protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<NativeHandle>();
         static readonly uv_close_cb CloseCallback = OnCloseHandle;
@@ -38,7 +38,7 @@ namespace DotNetty.Transport.Libuv.Native
         {
             if (!this.IsValid)
             {
-                NativeMethods.ThrowObjectDisposedException($"{this.GetType()}");
+                ThrowObjectDisposedException(); // NativeMethods.ThrowObjectDisposedException($"{this.GetType()}");
             }
         }
 
@@ -109,7 +109,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
             catch (Exception exception)
             {
-                Logger.Error($"{nameof(NativeHandle)} {this.Handle} error whilst closing handle.", exception);
+                Logger.ErrorWhilstClosingHandle(this.Handle, exception);
                 // For finalizer, we cannot allow this to escape.
                 if (disposing) throw;
             }

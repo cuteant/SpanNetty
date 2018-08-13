@@ -222,7 +222,7 @@ namespace DotNetty.Codecs.Http
                 {
                     if (i + 3 > toExcluded)
                     {
-                        throw new ArgumentException($"unterminated escape sequence at index {i} of: {s}");
+                        ThrowHelper.ThrowArgumentException_UnterminatedEscapeSeq(i, s);
                     }
                     byteBuf[idx++] = StringUtil.DecodeHexByte(s, i + 1);
                     i += 3;

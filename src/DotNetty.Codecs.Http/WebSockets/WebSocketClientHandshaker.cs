@@ -71,7 +71,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 var codec = channel.Pipeline.Get<HttpClientCodec>();
                 if (codec == null)
                 {
-                    return TaskUtil.FromException(new InvalidOperationException("ChannelPipeline does not contain a HttpResponseDecoder or HttpClientCodec"));
+                    return ThrowHelper.ThrowInvalidOperationException_HttpResponseDecoder();
                 }
             }
 
@@ -86,7 +86,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                             IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
                             if (ctx == null)
                             {
-                                tcs.TrySetException(new InvalidOperationException("ChannelPipeline does not contain a HttpRequestEncoder or HttpClientCodec"));
+                                tcs.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
                                 return;
                             }
 
@@ -100,7 +100,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                             tcs.TryUnwrap(t.Exception);
                             break;
                         default:
-                            throw new ArgumentOutOfRangeException();
+                            ThrowHelper.ThrowArgumentOutOfRangeException(); break;
                     }
                 },
                 completion,
@@ -137,7 +137,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 // We require a subprotocol and received one -> verify it
                 foreach (string protocol in expectedProtocol.Split(','))
                 {
-                    if (protocol.Trim().Equals(receivedProtocol))
+                    if (string.Equals(protocol.Trim(), receivedProtocol, StringComparison.Ordinal))
                     {
                         protocolValid = true;
                         this.ActualSubprotocol = receivedProtocol;
@@ -148,7 +148,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             if (!protocolValid)
             {
-                throw new WebSocketHandshakeException($"Invalid subprotocol. Actual: {receivedProtocol}. Expected one of: {this.expectedSubprotocol}");
+                ThrowHelper.ThrowWebSocketHandshakeException_InvalidSubprotocol(receivedProtocol, this.expectedSubprotocol);
             }
 
             this.SetHandshakeComplete();
@@ -174,7 +174,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 ctx = p.Context<HttpClientCodec>();
                 if (ctx == null)
                 {
-                    throw new InvalidOperationException("ChannelPipeline does not contain a HttpRequestEncoder or HttpClientCodec");
+                    ThrowHelper.ThrowInvalidOperationException_HttpRequestEncoder();
                 }
 
                 var codec = (HttpClientCodec)ctx.Handler;
@@ -230,7 +230,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     ctx = p.Context<HttpClientCodec>();
                     if (ctx == null)
                     {
-                        completionSource.TrySetException(new InvalidOperationException("ChannelPipeline does not contain a HttpResponseDecoder or HttpClientCodec"));
+                        completionSource.TrySetException(ThrowHelper.GetInvalidOperationException<HttpResponseDecoder>());
                     }
                 }
                 else
@@ -342,8 +342,8 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
             if (port == HttpScheme.Https.Port)
             {
-                return HttpScheme.Https.Name.ToString().Equals(scheme)
-                    || WebSocketScheme.WSS.Name.ToString().Equals(scheme) 
+                return string.Equals(HttpScheme.Https.Name.ToString(), scheme, StringComparison.Ordinal)
+                    || string.Equals(WebSocketScheme.WSS.Name.ToString(), scheme, StringComparison.Ordinal) 
                         ? host : NetUtil.ToSocketAddressString(host, port);
             }
 
@@ -386,7 +386,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 
             // Convert uri-host to lower case (by RFC 6454, chapter 4 "Origin of a URI")
-            string host = uri.Host.ToLower();
+            string host = uri.Host.ToLowerInvariant();
 
             if (port != defaultPort && port != -1)
             {
@@ -405,7 +405,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 
             string relativeUri = uri.OriginalString;
-            return new Uri(relativeUri.StartsWith("//")
+            return new Uri(relativeUri.StartsWith("//", StringComparison.Ordinal)
                 ? HttpScheme.Http + ":" + relativeUri
                 : HttpSchemePrefix + relativeUri);
         }

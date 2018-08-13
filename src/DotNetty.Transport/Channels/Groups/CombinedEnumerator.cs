@@ -30,7 +30,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         public bool MoveNext()
         {
-            for (;;)
+            while(true)
             {
                 if (this.currentEnumerator.MoveNext())
                 {

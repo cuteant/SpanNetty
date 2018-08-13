@@ -105,16 +105,16 @@ namespace DotNetty.Codecs.Http
         {
             Contract.Requires(text != null);
 
-            text = text.Trim().ToUpper();
+            text = text.Trim().ToUpperInvariant();
             if (string.IsNullOrEmpty(text))
             {
-                throw new ArgumentException("empty text");
+                ThrowHelper.ThrowArgumentException_Empty(ExceptionArgument.text);
             }
 
             Match match = VersionPattern.Match(text);
             if (!match.Success)
             {
-                throw new ArgumentException($"invalid version format: {text}");
+                ThrowHelper.ThrowArgumentException_InvalidVersion(text);
             }
 
             this.protocolName = match.Groups[1].Value;
@@ -129,13 +129,13 @@ namespace DotNetty.Codecs.Http
         {
             if (protocolName == null)
             {
-                throw new ArgumentException(nameof(protocolName));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.protocolName);
             }
 
-            protocolName = protocolName.Trim().ToUpper();
+            protocolName = protocolName.Trim().ToUpperInvariant();
             if (string.IsNullOrEmpty(protocolName))
             {
-                throw new ArgumentException("empty protocolName");
+                ThrowHelper.ThrowArgumentException_Empty(ExceptionArgument.protocolName);
             }
 
             // ReSharper disable once ForCanBeConvertedToForeach
@@ -144,17 +144,17 @@ namespace DotNetty.Codecs.Http
                 char c = protocolName[i];
                 if (CharUtil.IsISOControl(c) || char.IsWhiteSpace(c))
                 {
-                    throw new ArgumentException($"invalid character {c} in protocolName");
+                    ThrowHelper.ThrowArgumentException_InvalidProtocolName(c);
                 }
             }
 
             if (majorVersion < 0)
             {
-                throw new ArgumentException("negative majorVersion");
+                ThrowHelper.ThrowArgumentException_NegativeVersion(ExceptionArgument.majorVersion);
             }
             if (minorVersion < 0)
             {
-                throw new ArgumentException("negative minorVersion");
+                ThrowHelper.ThrowArgumentException_NegativeVersion(ExceptionArgument.minorVersion);
             }
 
             this.protocolName = protocolName;
@@ -182,14 +182,14 @@ namespace DotNetty.Codecs.Http
 
         public override bool Equals(object obj)
         {
-            if (!(obj is HttpVersion that))
+            if (obj is HttpVersion that)
             {
-                return false;
+                return this.minorVersion == that.minorVersion
+                    && this.majorVersion == that.majorVersion
+                    && string.Equals(this.protocolName, that.protocolName, StringComparison.Ordinal);
             }
 
-            return this.minorVersion == that.minorVersion
-                && this.majorVersion == that.majorVersion
-                && this.protocolName.Equals(that.protocolName);
+            return false;
         }
 
         public int CompareTo(HttpVersion other)
@@ -216,12 +216,12 @@ namespace DotNetty.Codecs.Http
                 return 0;
             }
 
-            if (!(obj is HttpVersion))
+            if (obj is HttpVersion httpVersion)
             {
-                throw new ArgumentException($"{nameof(obj)} must be of {nameof(HttpVersion)} type");
+                return this.CompareTo(httpVersion);
             }
 
-            return this.CompareTo((HttpVersion)obj);
+            return ThrowHelper.ThrowArgumentException_CompareToHttpVersion();
         }
 
         internal void Encode(IByteBuffer buf)

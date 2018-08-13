@@ -27,7 +27,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 || !req.Headers.TryGet(HttpHeaderNames.Upgrade, out ICharSequence value)
                 || !HttpHeaderValues.Websocket.ContentEqualsIgnoreCase(value))
             {
-                throw new WebSocketHandshakeException("not a WebSocket handshake request: missing upgrade");
+                ThrowHelper.ThrowWebSocketHandshakeException_MissingUpgrade();
             }
 
             // Hixie 75 does not contain these headers while Hixie 76 does
@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     {
                         if (Logger.DebugEnabled)
                         {
-                            Logger.Debug("Requested subprotocol(s) not supported: {}", subprotocols);
+                            Logger.RequestedSubprotocolNotSupported(subprotocols);
                         }
                     }
                     else

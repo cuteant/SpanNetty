@@ -9,7 +9,7 @@ namespace DotNetty.Transport.Libuv.Native
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
 
-    sealed unsafe class Loop : IDisposable
+    sealed unsafe partial class Loop : IDisposable
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Loop>();
         static readonly uv_walk_cb WalkCallback = OnWalkCallback;
@@ -35,7 +35,7 @@ namespace DotNetty.Transport.Libuv.Native
             this.handle = loopHandle;
             if (Logger.InfoEnabled)
             {
-                Logger.Info($"Loop {this.handle} allocated.");
+                Logger.LoopAllocated(this.handle);
             }
         }
 
@@ -97,7 +97,7 @@ namespace DotNetty.Transport.Libuv.Native
         {
             if (this.handle == IntPtr.Zero)
             {
-                NativeMethods.ThrowObjectDisposedException($"{this.GetType()}");
+                ThrowObjectDisposedException(); // NativeMethods.ThrowObjectDisposedException($"{this.GetType()}");
             }
         }
 
@@ -128,16 +128,17 @@ namespace DotNetty.Transport.Libuv.Native
             //https://github.com/libuv/libuv/blob/v1.x/test/task.h#L190
 
             int count = 0;
+            var debugEnabled = Logger.DebugEnabled;
             while (true)
             {
-                Logger.Debug($"Loop {handle} walking handles, count = {count}.");
+                if (debugEnabled) Logger.LoopWalkingHandles(handle, count);
                 NativeMethods.uv_walk(handle, WalkCallback, handle);
 
-                Logger.Debug($"Loop {handle} running default to call close callbacks, count = {count}.");
+                if (debugEnabled) Logger.LoopRunningDefaultToCallCloseCallbacks(handle, count);
                 NativeMethods.uv_run(handle, uv_run_mode.UV_RUN_DEFAULT);
 
                 int result = NativeMethods.uv_loop_close(handle);
-                Logger.Debug($"Loop {handle} close result = {result}, count = {count}.");
+                if (debugEnabled) Logger.LoopCloseResult(handle, result, count);
                 if (result == 0)
                 {
                     break;
@@ -146,11 +147,12 @@ namespace DotNetty.Transport.Libuv.Native
                 count++;
                 if (count >= 20)
                 {
-                    Logger.Warn($"Loop {handle} close all handles limit 20 times exceeded.");
+                    Logger.LoopCloseAllHandlesLimit20TimesExceeded(handle);
                     break;
                 }
             }
-            Logger.Info($"Loop {handle} closed, count = {count}.");
+            var infoEnabled = Logger.InfoEnabled;
+            if (infoEnabled) Logger.LoopClosed(handle, count);
 
             // Free GCHandle
             if (pHandle != IntPtr.Zero)
@@ -160,13 +162,13 @@ namespace DotNetty.Transport.Libuv.Native
                 {
                     nativeHandle.Free();
                     ((uv_loop_t*)handle)->data = IntPtr.Zero;
-                    Logger.Info($"Loop {handle} GCHandle released.");
+                    if (infoEnabled) Logger.LoopGCHandleReleased(handle);
                 }
             }
 
             // Release memory
             NativeMethods.FreeMemory(handle);
-            Logger.Info($"Loop {handle} memory released.");
+            if (infoEnabled) Logger.LoopMemoryReleased(handle);
         }
 
         static void OnWalkCallback(IntPtr handle, IntPtr loopHandle)
@@ -181,11 +183,11 @@ namespace DotNetty.Transport.Libuv.Native
                 // All handles must implement IDisposable
                 var target = NativeHandle.GetTarget<IDisposable>(handle);
                 target?.Dispose();
-                Logger.Debug($"Loop {loopHandle} walk callback disposed {handle} {target?.GetType()}");
+                if (Logger.DebugEnabled) Logger.LoopWalkCallbackDisposed(handle, loopHandle, target);
             }
             catch (Exception exception)
             {
-                Logger.Warn($"Loop {loopHandle} Walk callback attempt to close handle {handle} failed. {exception}");
+                if (Logger.WarnEnabled) Logger.LoopWalkCallbackAttemptToCloseHandleFailed(handle, loopHandle, exception);
             }
         }
 

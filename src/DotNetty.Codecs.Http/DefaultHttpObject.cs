@@ -34,11 +34,11 @@ namespace DotNetty.Codecs.Http
 
         public override bool Equals(object obj)
         {
-            if (!(obj is DefaultHttpObject other))
+            if (obj is DefaultHttpObject other)
             {
-                return false;
+                return this.decoderResult.Equals(other.decoderResult);
             }
-            return this.decoderResult.Equals(other.decoderResult);
+            return false;
         }
     }
 }

@@ -57,7 +57,7 @@ namespace DotNetty.Transport.Bootstrapping
             base.Group(parentGroup);
             if (this.childGroup != null)
             {
-                throw new InvalidOperationException("childGroup set already");
+                ThrowHelper.ThrowInvalidOperationException_ChildGroupSetAlready();
             }
             this.childGroup = childGroup;
             return this;
@@ -155,11 +155,11 @@ namespace DotNetty.Transport.Bootstrapping
             base.Validate();
             if (this.childHandler == null)
             {
-                throw new InvalidOperationException("childHandler not set");
+                ThrowHelper.ThrowInvalidOperationException_ChildHandlerNotYet();
             }
             if (this.childGroup == null)
             {
-                Logger.Warn("childGroup is not set. Using parentGroup instead.");
+                if (Logger.WarnEnabled) Logger.ChildGroupIsNotSetUsingParentGroupInstead();
                 this.childGroup = this.Group();
             }
             return this;
@@ -219,7 +219,7 @@ namespace DotNetty.Transport.Bootstrapping
             static void ForceClose(IChannel child, Exception ex)
             {
                 child.Unsafe.CloseForcibly();
-                Logger.Warn("Failed to register an accepted channel: " + child, ex);
+                if (Logger.WarnEnabled) Logger.ChildGroupIsNotSetUsingParentGroupInstead(child, ex);
             }
 
             public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)

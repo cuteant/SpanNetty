@@ -91,7 +91,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
                     if (Logger.DebugEnabled)
                     {
-                        Logger.Debug("Decoding WebSocket Frame opCode={}", this.frameOpcode);
+                        Logger.DecodingWebSocketFrameOpCode(this.frameOpcode);
                     }
 
                     this.state = State.ReadingSecond;
@@ -225,7 +225,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
                     if (Logger.DebugEnabled)
                     {
-                        Logger.Debug("Decoding WebSocket Frame length={}", this.framePayloadLength);
+                        Logger.DecodingWebSocketFrameLength(this.framePayloadLength);
                     }
 
                     this.state = State.MaskingKey;
@@ -344,7 +344,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     }
                     return;
                 default:
-                    throw new Exception("Shouldn't reach here.");
+                    ThrowHelper.ThrowException_FrameDecoder(); break;
             }
         }
 

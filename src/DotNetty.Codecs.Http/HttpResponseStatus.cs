@@ -448,7 +448,7 @@ namespace DotNetty.Codecs.Http
             }
             catch (Exception e)
             {
-                throw new ArgumentException($"malformed status line: {line}", e);
+                return ThrowHelper.ThrowArgumentException_ParseLine(line, e);
             }
         }
 
@@ -463,7 +463,7 @@ namespace DotNetty.Codecs.Http
             }
             catch (Exception e)
             {
-                throw new ArgumentException($"malformed status line: {line}", e);
+                return ThrowHelper.ThrowArgumentException_ParseLine(line, e);
             }
         }
 
@@ -489,11 +489,11 @@ namespace DotNetty.Codecs.Http
         {
             if (code < 0)
             {
-                throw new ArgumentException($"code: {code} (expected: 0+)");
+                ThrowHelper.ThrowArgumentException_InvalidResponseCode(code);
             }
             if (reasonPhrase == null)
             {
-                throw new ArgumentException(nameof(reasonPhrase));
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.reasonPhrase);
             }
 
             // ReSharper disable once ForCanBeConvertedToForeach
@@ -505,7 +505,7 @@ namespace DotNetty.Codecs.Http
                 {
                     case '\n':
                     case '\r':
-                        throw new ArgumentException($"reasonPhrase contains one of the following prohibited characters: \\r\\n: {reasonPhrase}");
+                        ThrowHelper.ThrowArgumentException_ReasonPhrase(reasonPhrase); break;
                 }
             }
 
@@ -528,11 +528,11 @@ namespace DotNetty.Codecs.Http
 
         public override bool Equals(object obj)
         {
-            if (!(obj is HttpResponseStatus other))
+            if (obj is HttpResponseStatus other)
             {
-                return false;
+                return this.code == other.code;
             }
-            return this.code == other.code;
+            return false;
         }
 
         public int CompareTo(HttpResponseStatus other) => this.code - other.code;

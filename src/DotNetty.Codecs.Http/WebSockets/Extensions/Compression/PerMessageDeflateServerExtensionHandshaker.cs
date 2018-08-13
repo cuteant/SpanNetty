@@ -9,14 +9,14 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
     public sealed class PerMessageDeflateServerExtensionHandshaker : IWebSocketServerExtensionHandshaker
     {
-        public static readonly int MinWindowSize = 8;
-        public static readonly int MaxWindowSize = 15;
+        public const int MinWindowSize = 8;
+        public const int MaxWindowSize = 15;
 
-        internal static readonly string PerMessageDeflateExtension = "permessage-deflate";
-        internal static readonly string ClientMaxWindow = "client_max_window_bits";
-        internal static readonly string ServerMaxWindow = "server_max_window_bits";
-        internal static readonly string ClientNoContext = "client_no_context_takeover";
-        internal static readonly string ServerNoContext = "server_no_context_takeover";
+        internal const string PerMessageDeflateExtension = "permessage-deflate";
+        internal const string ClientMaxWindow = "client_max_window_bits";
+        internal const string ServerMaxWindow = "server_max_window_bits";
+        internal const string ClientNoContext = "client_no_context_takeover";
+        internal const string ServerNoContext = "server_no_context_takeover";
 
         readonly int compressionLevel;
         readonly bool allowServerWindowSize;
@@ -35,11 +35,11 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
         {
             if (preferredClientWindowSize > MaxWindowSize || preferredClientWindowSize < MinWindowSize)
             {
-                throw new ArgumentException($"preferredServerWindowSize: {preferredClientWindowSize} (expected: 8-15)");
+                ThrowHelper.ThrowArgumentException_WindowSize(ExceptionArgument.preferredClientWindowSize, preferredClientWindowSize);
             }
             if (compressionLevel < 0 || compressionLevel > 9)
             {
-                throw new ArgumentException($"compressionLevel: {compressionLevel} (expected: 0-9)");
+                ThrowHelper.ThrowArgumentException_CompressionLevel(compressionLevel);
             }
             this.compressionLevel = compressionLevel;
             this.allowServerWindowSize = allowServerWindowSize;
@@ -50,7 +50,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         public IWebSocketServerExtension HandshakeExtension(WebSocketExtensionData extensionData)
         {
-            if (!PerMessageDeflateExtension.Equals(extensionData.Name))
+            if (!string.Equals(PerMessageDeflateExtension, extensionData.Name, StringComparison.Ordinal))
             {
                 return null;
             }
@@ -63,12 +63,13 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
             foreach (KeyValuePair<string, string> parameter in extensionData.Parameters)
             {
-                if (ClientMaxWindow.Equals(parameter.Key, StringComparison.OrdinalIgnoreCase))
+                var parameterKey = parameter.Key;
+                if (string.Equals(ClientMaxWindow, parameterKey, StringComparison.OrdinalIgnoreCase))
                 {
                     // use preferred clientWindowSize because client is compatible with customization
                     clientWindowSize = this.preferredClientWindowSize;
                 }
-                else if (ServerMaxWindow.Equals(parameter.Key, StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(ServerMaxWindow, parameterKey, StringComparison.OrdinalIgnoreCase))
                 {
                     // use provided windowSize if it is allowed
                     if (this.allowServerWindowSize)
@@ -84,12 +85,12 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                         deflateEnabled = false;
                     }
                 }
-                else if (ClientNoContext.Equals(parameter.Key, StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(ClientNoContext, parameterKey, StringComparison.OrdinalIgnoreCase))
                 {
                     // use preferred clientNoContext because client is compatible with customization
                     clientNoContext = this.preferredClientNoContext;
                 }
-                else if (ServerNoContext.Equals(parameter.Key, StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(ServerNoContext, parameterKey, StringComparison.OrdinalIgnoreCase))
                 {
                     // use server no context if allowed
                     if (this.allowServerNoContext)
@@ -150,7 +151,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
             public WebSocketExtensionData NewReponseData()
             {
-                var parameters = new Dictionary<string, string>(4);
+                var parameters = new Dictionary<string, string>(4, StringComparer.Ordinal);
                 if (this.serverNoContext)
                 {
                     parameters.Add(ServerNoContext, null);

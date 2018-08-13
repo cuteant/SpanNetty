@@ -52,12 +52,12 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override int CompareTo(IInterfaceHttpData other)
         {
-            if (!(other is IFileUpload))
+            if (other is IFileUpload fu)
             {
-                throw new ArgumentException($"Cannot compare {this.DataType}  with {other.DataType}");
+                return this.CompareTo(fu);
             }
 
-            return this.CompareTo((IFileUpload)other);
+            return ThrowHelper.ThrowArgumentException_CompareToHttpData(this.DataType, other.DataType);
         }
 
         public int CompareTo(IFileUpload other) => FileUploadUtil.CompareTo(this, other);
@@ -155,7 +155,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 catch (IOException e)
                 {
-                    throw new ChannelException(e);
+                    ThrowHelper.ThrowChannelException_IO(e);
                 }
             }
 

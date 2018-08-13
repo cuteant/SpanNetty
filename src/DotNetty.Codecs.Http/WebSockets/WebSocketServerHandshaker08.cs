@@ -38,7 +38,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (!req.Headers.TryGet(HttpHeaderNames.SecWebsocketKey, out ICharSequence key) 
                 || key == null)
             {
-                throw new WebSocketHandshakeException("not a WebSocket request: missing key");
+                ThrowHelper.ThrowWebSocketHandshakeException_MissingKey();
             }
             string acceptSeed = key + Websocket08AcceptGuid;
             byte[] sha1 = WebSocketUtil.Sha1(Encoding.ASCII.GetBytes(acceptSeed));
@@ -46,7 +46,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             if (Logger.DebugEnabled)
             {
-                Logger.Debug("WebSocket version 08 server handshake key: {}, response: {}", key, accept);
+                Logger.WebSocketVersion08ServerHandshakeKey(key, accept);
             }
 
             res.Headers.Add(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket);
@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     if (Logger.DebugEnabled)
                     {
-                        Logger.Debug("Requested subprotocol(s) not supported: {}", subprotocols);
+                        Logger.RequestedSubprotocolNotSupported(subprotocols);
                     }
                 }
                 else

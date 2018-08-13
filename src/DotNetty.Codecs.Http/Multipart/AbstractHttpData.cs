@@ -35,7 +35,7 @@ namespace DotNetty.Codecs.Http.Multipart
             name = ReplacePattern.Replace(name, "");
             if (string.IsNullOrEmpty(name))
             {
-                throw new ArgumentException("empty name");
+                ThrowHelper.ThrowArgumentException_Empty(ExceptionArgument.name);
             }
 
             this.name = name;
@@ -57,7 +57,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             if (this.MaxSize >= 0 && newSize > this.MaxSize)
             {
-                throw new IOException("Size exceed allowed maximum capacity");
+                ThrowHelper.ThrowIOException_CheckSize();
             }
         }
 
@@ -91,7 +91,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 catch (IOException e)
                 {
-                    throw new ChannelException(e);
+                    return ThrowHelper.ThrowChannelException_IO<IByteBuffer>(e);
                 }
             }
         }

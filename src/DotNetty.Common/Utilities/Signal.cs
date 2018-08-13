@@ -29,7 +29,7 @@ namespace DotNetty.Common.Utilities
         {
             if (!ReferenceEquals(this, signal))
             {
-                throw new InvalidOperationException($"unexpected signal: {signal}");
+                ThrowHelper.ThrowInvalidOperationException_Unexpected(signal);
             }
         }
 
@@ -47,12 +47,12 @@ namespace DotNetty.Common.Utilities
             {
                 return 0;
             }
-            if (!ReferenceEquals(obj, null) && obj is Signal)
+            if (!ReferenceEquals(obj, null) && obj is Signal signal)
             {
-                return this.CompareTo((Signal)obj);
+                return this.CompareTo(signal);
             }
 
-            throw new Exception("failed to compare two different signal constants");
+            return ThrowHelper.ThrowException_CompareSignal();
         }
 
         public int CompareTo(Signal other)

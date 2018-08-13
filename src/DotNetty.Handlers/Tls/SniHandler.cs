@@ -152,7 +152,7 @@ namespace DotNetty.Handlers.Tls
                                         break;
                                     }
 
-                                    for (;;)
+                                    while(true)
                                     {
                                         if (extensionsLimit - offset < 4)
                                         {
@@ -249,9 +249,9 @@ namespace DotNetty.Handlers.Tls
                     error = e;
 
                     // unexpected encoding, ignore sni and use default
-                    if (Logger.DebugEnabled)
+                    if (Logger.WarnEnabled)
                     {
-                        Logger.Warn($"Unexpected client hello packet: {ByteBufferUtil.HexDump(input)}", e);
+                        Logger.UnexpectedClientHelloPacket(input, e);
                     }
                 }
 

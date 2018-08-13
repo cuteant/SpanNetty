@@ -74,18 +74,19 @@ namespace DotNetty.Codecs.Http
 
         public override Task WriteAsync(IChannelHandlerContext context, object message)
         {
-            if (!(message is IHttpRequest))
+            var request = message as IHttpRequest;
+            if (null == request)
             {
                 return context.WriteAsync(message);
             }
 
             if (this.upgradeRequested)
             {
-                return TaskUtil.FromException(new InvalidOperationException("Attempting to write HTTP request with upgrade in progress"));
+                return ThrowHelper.ThrowInvalidOperationException_Attempting();
             }
 
             this.upgradeRequested = true;
-            this.SetUpgradeRequestHeaders(context, (IHttpRequest)message);
+            this.SetUpgradeRequestHeaders(context, request);
 
             // Continue writing the request.
             Task task = context.WriteAsync(message);
@@ -103,7 +104,7 @@ namespace DotNetty.Codecs.Http
             {
                 if (!this.upgradeRequested)
                 {
-                    throw new InvalidOperationException("Read HTTP response without requesting protocol switch");
+                    ThrowHelper.ThrowInvalidOperationException_ReadHttpResponse();
                 }
 
                 if (message is IHttpResponse rep)
@@ -144,7 +145,7 @@ namespace DotNetty.Codecs.Http
 
                 if (response.Headers.TryGet(HttpHeaderNames.Upgrade, out ICharSequence upgradeHeader) && !AsciiString.ContentEqualsIgnoreCase(this.upgradeCodec.Protocol, upgradeHeader))
                 {
-                    throw new  InvalidOperationException($"Switching Protocols response with unexpected UPGRADE protocol: {upgradeHeader}");
+                    ThrowHelper.ThrowInvalidOperationException_UnexpectedUpgradeProtocol(upgradeHeader);
                 }
 
                 // Upgrade to the new protocol.

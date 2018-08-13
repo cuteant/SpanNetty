@@ -598,7 +598,7 @@ namespace DotNetty.Transport.Channels
             try
             {
                 this.inFail = true;
-                for (;;)
+                while(true)
                 {
                     if (!this.Remove0(cause, notify))
                     {

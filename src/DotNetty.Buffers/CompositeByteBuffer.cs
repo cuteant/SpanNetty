@@ -804,7 +804,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            throw new Exception("should not reach here");
+            return ThrowHelper.ThrowGetException_ShouldNotReachHere<int>();
         }
 
         public virtual int ToByteIndex(int cIndex)
@@ -1304,7 +1304,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            throw new Exception("should not reach here");
+            return ThrowHelper.ThrowGetException_ShouldNotReachHere<ComponentEntry>();
         }
 
         /// <summary>

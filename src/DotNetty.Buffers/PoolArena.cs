@@ -491,7 +491,7 @@ namespace DotNetty.Buffers
                     continue;
                 }
                 PoolSubpage<T> s = head.Next;
-                for (; ; )
+                while (true)
                 {
                     metrics.Add(s);
                     s = s.Next;
@@ -661,7 +661,7 @@ namespace DotNetty.Buffers
                     .Append(i)
                     .Append(": ");
                 PoolSubpage<T> s = head.Next;
-                for (; ; )
+                while (true)
                 {
                     buf.Append(s);
                     s = s.Next;

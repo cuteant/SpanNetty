@@ -58,7 +58,7 @@ namespace DotNetty.Codecs
             }
             catch (Exception ex)
             {
-                return TaskUtil.FromException(new EncoderException(ex));
+                return ThrowHelper.ThrowEncoderException(ex);
             }
             finally
             {

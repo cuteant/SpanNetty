@@ -70,7 +70,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
             catch (Exception exception)
             {
-                Logger.Error($"{this.requestType} {this.Handle} error whilst closing handle.", exception);
+                Logger.ErrorWhilstClosingHandle(this.requestType ,this.Handle, exception);
 
                 // For finalizer, we cannot allow this to escape.
                 if (disposing) throw;

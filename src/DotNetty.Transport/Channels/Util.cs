@@ -22,7 +22,7 @@ namespace DotNetty.Transport.Channels
         {
             if (promise != TaskCompletionSource.Void && !promise.TryComplete())
             {
-                logger.Warn($"Failed to mark a promise as success because it is done already: {promise}");
+                if (logger.WarnEnabled) logger.FailedToMarkAPromiseAsSuccess(promise);
             }
         }
 
@@ -37,7 +37,7 @@ namespace DotNetty.Transport.Channels
         {
             if (promise != TaskCompletionSource.Void && !promise.TrySetException(cause))
             {
-                logger.Warn($"Failed to mark a promise as failure because it's done already: {promise}", cause);
+                if (logger.WarnEnabled) logger.FailedToMarkAPromiseAsFailure(promise, cause);
             }
         }
 
@@ -64,7 +64,7 @@ namespace DotNetty.Transport.Channels
             {
                 if (Log.DebugEnabled)
                 {
-                    Log.Debug("Failed to close channel " + channelObject + " cleanly.", ex);
+                    Log.FailedToCloseChannelCleanly(channelObject, ex);
                 }
             }
         }

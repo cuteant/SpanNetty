@@ -63,7 +63,7 @@ namespace DotNetty.Transport.Channels
 
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
         {
-            Logger.Warn("Failed to initialize a channel. Closing: " + ctx.Channel, cause);
+            if (Logger.WarnEnabled) Logger.FailedToInitializeAChannel(ctx, cause);
             ctx.CloseAsync();
         }
 

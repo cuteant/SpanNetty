@@ -312,7 +312,7 @@ namespace DotNetty.Transport.Libuv.Native
             Debug.Assert(endPoint != null);
 
             string ip = endPoint.Address.ToString();
-            int result;
+            int result = 0;
             switch (endPoint.AddressFamily)
             {
                 case AddressFamily.InterNetwork:
@@ -322,7 +322,7 @@ namespace DotNetty.Transport.Libuv.Native
                     result = uv_ip6_addr(ip, endPoint.Port, out addr);
                     break;
                 default:
-                    throw new NotSupportedException($"End point {endPoint} is not supported, expecting InterNetwork/InterNetworkV6.");
+                    ThrowHelper.ThrowNotSupportedException(endPoint, out addr); break;
             }
             ThrowIfError(result);
         }

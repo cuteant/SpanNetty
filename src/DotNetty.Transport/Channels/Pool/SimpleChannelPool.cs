@@ -22,7 +22,7 @@ namespace DotNetty.Transport.Channels.Pool
     {
         public static readonly AttributeKey<SimpleChannelPool> PoolKey = AttributeKey<SimpleChannelPool>.NewInstance("channelPool");
 
-        static readonly InvalidOperationException FullException = new InvalidOperationException("ChannelPool full");
+        //static readonly InvalidOperationException FullException = new InvalidOperationException("ChannelPool full");
 
         readonly IQueue<IChannel> store;
 
@@ -263,7 +263,7 @@ namespace DotNetty.Transport.Channels.Pool
             {
                 CloseChannel(channel);
                 // Better include a stacktrace here as this is an user error.
-                throw new ArgumentException($"Channel {channel} was not acquired from this ChannelPool");
+                return ThrowHelper.ThrowArgumentException_ChannelWasNotAcquiredFromPool(channel);
             }
             else
             {
@@ -320,7 +320,7 @@ namespace DotNetty.Transport.Channels.Pool
             else
             {
                 CloseChannel(channel);
-                throw FullException;
+                ThrowHelper.ThrowInvalidOperationException_ChannelPoolFull();
             }
         }
        

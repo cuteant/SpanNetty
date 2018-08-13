@@ -5,6 +5,7 @@ namespace DotNetty.Codecs
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
@@ -61,10 +62,10 @@ namespace DotNetty.Codecs
         {
             ValidateMaxFrameLength(maxFrameLength);
             if (delimiters == null)
-                throw new NullReferenceException("delimiters");
+                ThrowHelper.ThrowNullReferenceException(ExceptionArgument.delimiters);
 
             if (delimiters.Length == 0)
-                throw new ArgumentException("empty delimiters");
+                ThrowHelper.ThrowArgumentException_EmptyDelimiters();
 
             if (IsLineBased(delimiters) && !this.IsSubclass())
             {
@@ -237,12 +238,13 @@ namespace DotNetty.Codecs
             }
         }
 
+        [MethodImpl(InlineMethod.Value)]
         void Fail(long frameLength)
         {
             if (frameLength > 0)
-                throw new TooLongFrameException("frame length exceeds " + this.maxFrameLength + ": " + frameLength + " - discarded");
+                ThrowHelper.ThrowTooLongFrameException(this.maxFrameLength, frameLength);
             else
-                throw new TooLongFrameException("frame length exceeds " + this.maxFrameLength + " - discarding");
+                ThrowHelper.ThrowTooLongFrameException(this.maxFrameLength);
         }
 
         /**
@@ -285,16 +287,16 @@ namespace DotNetty.Codecs
         static void ValidateDelimiter(IByteBuffer delimiter)
         {
             if (delimiter == null)
-                throw new NullReferenceException("delimiter");
+                ThrowHelper.ThrowNullReferenceException(ExceptionArgument.delimiter);
 
             if (!delimiter.IsReadable())
-                throw new ArgumentException("empty delimiter");
+                ThrowHelper.ThrowArgumentException_EmptyDelimiter();
         }
 
         static void ValidateMaxFrameLength(int maxFrameLength)
         {
             if (maxFrameLength <= 0)
-                throw new ArgumentException("maxFrameLength must be a positive integer: " + maxFrameLength);
+                ThrowHelper.ThrowArgumentException_MaxFrameLengthMustBe(maxFrameLength);
         }
     }
 }

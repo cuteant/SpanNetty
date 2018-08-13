@@ -64,11 +64,11 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     if (Logger.WarnEnabled)
                     {
-                        Logger.Warn("Failed to close a partially initialized socket.", ex2);
+                        Logger.FailedToCloseAPartiallyInitializedSocket(ex2);
                     }
                 }
 
-                throw new ChannelException("Failed to enter non-blocking mode.", ex);
+                ThrowHelper.ThrowChannelException_FailedToEnterNonBlockingMode(ex);
             }
         }
 
@@ -221,7 +221,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     break;
                 default:
                     // todo: think of a better way to comm exception
-                    throw new ArgumentException("The last operation completed on the socket was not expected");
+                    ThrowHelper.ThrowArgumentException_TheLastOpCompleted(); break;
             }
         }
 
@@ -263,7 +263,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     if (ch.connectPromise != null)
                     {
-                        throw new InvalidOperationException("connection attempt already made");
+                        ThrowHelper.ThrowInvalidOperationException_ConnAttemptAlreadyMade();
                     }
 
                     bool wasActive = this.channel.Active;
@@ -430,7 +430,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
                 catch (Exception ex)
                 {
-                    Util.CompleteChannelCloseTaskSafely(this.channel, this.CloseAsync(new ClosedChannelException("Failed to write", ex), false));
+                    Util.CompleteChannelCloseTaskSafely(this.channel, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex), false));
                 }
 
                 // Double check if there's no pending flush
@@ -482,7 +482,7 @@ namespace DotNetty.Transport.Channels.Sockets
             if (promise != null)
             {
                 // Use TrySetException() instead of SetException() to avoid the race against cancellation due to timeout.
-                promise.TrySetException(new ClosedChannelException());
+                promise.TrySetException(ThrowHelper.GetClosedChannelException());
                 this.connectPromise = null;
             }
 

@@ -15,12 +15,24 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
         {
         }
 
-        public override bool AcceptInboundMessage(object msg) => 
-            ((msg is TextWebSocketFrame || msg is BinaryWebSocketFrame) 
-                && (((WebSocketFrame)msg).Rsv & WebSocketRsv.Rsv1) > 0) 
-            || (msg is ContinuationWebSocketFrame && this.compressing);
+        public override bool AcceptInboundMessage(object msg)
+        {
+            switch (msg)
+            {
+                case TextWebSocketFrame textFrame when (textFrame.Rsv & WebSocketRsv.Rsv1) > 0:
+                    return true;
+                case BinaryWebSocketFrame binFrame when (binFrame.Rsv & WebSocketRsv.Rsv1) > 0:
+                    return true;
+                case ContinuationWebSocketFrame conFrame when this.compressing:
+                    return true;
+                default:
+                    return false;
+            }
+            //return ((msg is TextWebSocketFrame || msg is BinaryWebSocketFrame) && (((WebSocketFrame)msg).Rsv & WebSocketRsv.Rsv1) > 0)
+            //    || (msg is ContinuationWebSocketFrame && this.compressing);
+        }
 
-        protected override int NewRsv(WebSocketFrame msg) => 
+        protected override int NewRsv(WebSocketFrame msg) =>
             (msg.Rsv & WebSocketRsv.Rsv1) > 0 ? msg.Rsv ^ WebSocketRsv.Rsv1 : msg.Rsv;
 
         protected override bool AppendFrameTail(WebSocketFrame msg) => msg.IsFinalFragment;
@@ -33,9 +45,15 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             {
                 this.compressing = false;
             }
-            else if (msg is TextWebSocketFrame || msg is BinaryWebSocketFrame)
+            else //if (msg is TextWebSocketFrame || msg is BinaryWebSocketFrame)
             {
-                this.compressing = true;
+                switch (msg)
+                {
+                    case TextWebSocketFrame _:
+                    case BinaryWebSocketFrame _:
+                        this.compressing = true;
+                        break;
+                }
             }
         }
     }

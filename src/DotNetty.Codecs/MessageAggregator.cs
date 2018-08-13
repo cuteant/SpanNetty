@@ -50,7 +50,7 @@ namespace DotNetty.Codecs
         {
             if (maxContentLength < 0)
             {
-                throw new ArgumentException($"maxContentLength: {maxContentLength}(expected: >= 0)", nameof(maxContentLength));
+                ThrowHelper.ThrowArgumentException_MaxContentLength(maxContentLength);
             }
         }
 
@@ -84,11 +84,11 @@ namespace DotNetty.Codecs
             {
                 if (value < 2)
                 {
-                    throw new ArgumentException($"maxCumulationBufferComponents: {value} (expected: >= 2)");
+                    ThrowHelper.ThrowArgumentException_MaxCumulationBufferComponents(value);
                 }
                 if (this.handlerContext != null)
                 {
-                    throw new InvalidOperationException("decoder properties cannot be changed once the decoder is added to a pipeline.");
+                    ThrowHelper.ThrowInvalidOperationException_DecoderProperties();
                 }
 
                 this.maxCumulationBufferComponents = value;
@@ -99,7 +99,7 @@ namespace DotNetty.Codecs
         {
             if (this.handlerContext == null)
             {
-                throw new InvalidOperationException("not added to a pipeline yet");
+                ThrowHelper.ThrowInvalidOperationException_NotAddedToAPipelineYet();
             }
 
             return this.handlerContext;
@@ -115,7 +115,7 @@ namespace DotNetty.Codecs
                     this.currentMessage.Release();
                     this.currentMessage = default(TOutput);
 
-                    throw new MessageAggregationException("Start message should not have any current content.");
+                    ThrowHelper.ThrowMessageAggregationException_StartMessage();
                 }
 
                 var m = As<TStart>(message);
@@ -250,7 +250,7 @@ namespace DotNetty.Codecs
             }
             else
             {
-                throw new MessageAggregationException("Unknown aggregation state.");
+                ThrowHelper.ThrowMessageAggregationException_UnknownAggregationState();
             }
         }
 
@@ -316,7 +316,7 @@ namespace DotNetty.Codecs
         }
 
         protected virtual void HandleOversizedMessage(IChannelHandlerContext ctx, TStart oversized) => 
-            ctx.FireExceptionCaught(new TooLongFrameException($"content length exceeded {this.MaxContentLength} bytes."));
+            ctx.FireExceptionCaught(ThrowHelper.GetTooLongFrameException(this.MaxContentLength));
 
         public override void ChannelReadComplete(IChannelHandlerContext context)
         {

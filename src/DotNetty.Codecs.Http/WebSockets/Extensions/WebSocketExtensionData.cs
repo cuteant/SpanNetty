@@ -18,7 +18,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
             Contract.Requires(parameters != null);
 
             this.name = name;
-            this.parameters = new Dictionary<string, string>(parameters);
+            this.parameters = new Dictionary<string, string>(parameters, System.StringComparer.Ordinal);
         }
 
         public string Name => this.name;

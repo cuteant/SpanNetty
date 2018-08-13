@@ -46,9 +46,9 @@ namespace DotNetty.Common
 
         public override bool Equals(object obj)
         {
-            if (obj is PreciseTimeSpan)
+            if (obj is PreciseTimeSpan preciseTimeSpan)
             {
-                return this.Equals((PreciseTimeSpan)obj);
+                return this.Equals(preciseTimeSpan);
             }
 
             return false;
