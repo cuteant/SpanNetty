@@ -17,11 +17,11 @@ namespace DotNetty.Transport.Channels
     using DotNetty.Common.Utilities;
     using Thread = DotNetty.Common.Concurrency.XThread;
 
-    public class DefaultChannelPipeline : IChannelPipeline
+    public partial class DefaultChannelPipeline : IChannelPipeline
     {
         internal static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<DefaultChannelPipeline>();
 
-        static readonly Action<object, object> CallHandlerAddedAction = (self, ctx) => ((DefaultChannelPipeline)self).CallHandlerAdded0((AbstractChannelHandlerContext)ctx);
+        static readonly Action<object, object> CallHandlerAddedAction = OnCallHandlerAdded; // (self, ctx) => ((DefaultChannelPipeline)self).CallHandlerAdded0((AbstractChannelHandlerContext)ctx);
 
         static readonly NameCachesLocal NameCaches = new NameCachesLocal();
 
@@ -49,7 +49,7 @@ namespace DotNetty.Transport.Channels
         PendingHandlerCallback pendingHandlerCallbackHead;
 
         /// <summary>
-        /// Set to <c>true</c> once the <see cref="AbstractChannel" /> is registered. Once set to <c>true</c>, the
+        /// Set to <c>true</c> once the <see cref="AbstractChannel{TChannel, TUnsafe}" /> is registered. Once set to <c>true</c>, the
         /// value will never change.
         /// </summary>
         bool registered;

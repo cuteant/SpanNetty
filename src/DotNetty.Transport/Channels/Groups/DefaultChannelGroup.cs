@@ -127,14 +127,14 @@ namespace DotNetty.Transport.Channels.Groups
 
         public bool Remove(IChannel channel)
         {
-            IChannel ch;
+            //IChannel ch;
             if (channel is IServerChannel)
             {
-                return this.serverChannels.TryRemove(channel.Id, out ch);
+                return this.serverChannels.TryRemove(channel.Id, out _);
             }
             else
             {
-                return this.nonServerChannels.TryRemove(channel.Id, out ch);
+                return this.nonServerChannels.TryRemove(channel.Id, out _);
             }
         }
 
@@ -299,14 +299,14 @@ namespace DotNetty.Transport.Channels.Groups
 
         public bool Remove(IChannelId channelId)
         {
-            IChannel ch;
+            //IChannel ch;
 
-            if (this.serverChannels.TryRemove(channelId, out ch))
+            if (this.serverChannels.TryRemove(channelId, out _))
             {
                 return true;
             }
 
-            if (this.nonServerChannels.TryRemove(channelId, out ch))
+            if (this.nonServerChannels.TryRemove(channelId, out _))
             {
                 return true;
             }

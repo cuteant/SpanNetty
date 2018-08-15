@@ -4,12 +4,16 @@
 namespace DotNetty.Codecs.Http.Cookies
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.Contracts;
     using DotNetty.Common.Utilities;
 
     public sealed class ClientCookieDecoder : CookieDecoder
     {
+        static readonly HashSet<char> _headerChars = new HashSet<char>(
+            new char[] { '\t', '\n', (char)0x0b, '\f', '\r', ' ', ';' });
+
         // Strict encoder that validates that name and value chars are in the valid scope
         // defined in RFC6265
         public static readonly ClientCookieDecoder StrictDecoder = new ClientCookieDecoder(true);
@@ -51,8 +55,7 @@ namespace DotNetty.Codecs.Http.Cookies
                         goto loop;
 
                     }
-                    else if (c == '\t' || c == '\n' || c == 0x0b || c == '\f'
-                          || c == '\r' || c == ' ' || c == ';')
+                    else if (_headerChars.Contains(c))
                     {
                         i++;
                         continue;
@@ -61,42 +64,41 @@ namespace DotNetty.Codecs.Http.Cookies
                 }
 
                 int nameBegin = i;
-                int nameEnd;
-                int valueBegin;
-                int valueEnd;
+                int nameEnd = 0;
+                int valueBegin = 0;
+                int valueEnd = 0;
 
-                while(true)
+                while (true)
                 {
                     char curChar = header[i];
-                    if (curChar == ';')
+                    switch (curChar)
                     {
-                        // NAME; (no value till ';')
-                        nameEnd = i;
-                        valueBegin = valueEnd = -1;
-                        break;
+                        case ';':
+                            // NAME; (no value till ';')
+                            nameEnd = i;
+                            valueBegin = valueEnd = -1;
+                            goto loop0;
 
-                    }
-                    else if (curChar == '=')
-                    {
-                        // NAME=VALUE
-                        nameEnd = i;
-                        i++;
-                        if (i == headerLen)
-                        {
-                            // NAME= (empty value, i.e. nothing after '=')
-                            valueBegin = valueEnd = 0;
+                        case '=':
+                            // NAME=VALUE
+                            nameEnd = i;
+                            i++;
+                            if (i == headerLen)
+                            {
+                                // NAME= (empty value, i.e. nothing after '=')
+                                valueBegin = valueEnd = 0;
+                                goto loop0;
+                            }
+
+                            valueBegin = i;
+                            // NAME=VALUE;
+                            int semiPos = header.IndexOf(';', i);
+                            valueEnd = i = semiPos > 0 ? semiPos : headerLen;
+                            goto loop0;
+
+                        default:
+                            i++;
                             break;
-                        }
-
-                        valueBegin = i;
-                        // NAME=VALUE;
-                        int semiPos = header.IndexOf(';', i);
-                        valueEnd = i = semiPos > 0 ? semiPos : headerLen;
-                        break;
-                    }
-                    else
-                    {
-                        i++;
                     }
 
                     if (i == headerLen)
@@ -108,6 +110,7 @@ namespace DotNetty.Codecs.Http.Cookies
                     }
                 }
 
+                loop0:
                 if (valueEnd > 0 && header[valueEnd - 1] == ',')
                 {
                     // old multiple cookies separator, skipping it
@@ -189,21 +192,23 @@ namespace DotNetty.Codecs.Http.Cookies
             {
                 int length = keyEnd - keyStart;
 
-                if (length == 4)
+                switch (length)
                 {
-                    this.Parse4(keyStart, valueStart, valueEnd);
-                }
-                else if (length == 6)
-                {
-                    this.Parse6(keyStart, valueStart, valueEnd);
-                }
-                else if (length == 7)
-                {
-                    this.Parse7(keyStart, valueStart, valueEnd);
-                }
-                else if (length == 8)
-                {
-                    this.Parse8(keyStart);
+                    case 4:
+                        this.Parse4(keyStart, valueStart, valueEnd);
+                        break;
+
+                    case 6:
+                        this.Parse6(keyStart, valueStart, valueEnd);
+                        break;
+
+                    case 7:
+                        this.Parse7(keyStart, valueStart, valueEnd);
+                        break;
+
+                    case 8:
+                        this.Parse8(keyStart);
+                        break;
                 }
             }
 

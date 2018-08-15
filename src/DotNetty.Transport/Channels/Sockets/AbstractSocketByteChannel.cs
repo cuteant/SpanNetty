@@ -10,7 +10,7 @@ namespace DotNetty.Transport.Channels.Sockets
     using DotNetty.Common.Utilities;
 
     /// <summary>
-    /// <see cref="AbstractSocketChannel"/> base class for <see cref="IChannel"/>s that operate on bytes.
+    /// <see cref="AbstractSocketChannel{TChannel, TUnsafe}"/> base class for <see cref="IChannel"/>s that operate on bytes.
     /// </summary>
     public abstract partial class AbstractSocketByteChannel<TChannel, TUnsafe> : AbstractSocketChannel<TChannel, TUnsafe>
     {
@@ -20,7 +20,7 @@ namespace DotNetty.Transport.Channels.Sockets
         // todo: FileRegion support        
         //typeof(FileRegion).Name + ')';
 
-        static readonly Action<object> FlushAction = _ => ((TChannel)_).Flush();
+        static readonly Action<object> FlushAction = OnFlushSync; // _ => ((TChannel)_).Flush();
         static readonly Action<object, object> ReadCompletedSyncCallback = OnReadCompletedSync;
 
         /// <summary>Create a new instance</summary>

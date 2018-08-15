@@ -92,7 +92,7 @@ namespace DotNetty.Handlers.Timeout
     /// <seealso cref="ReadTimeoutHandler"/>
     /// <seealso cref="WriteTimeoutHandler"/>
     /// </summary>
-    public class IdleStateHandler : ChannelDuplexHandler
+    public partial class IdleStateHandler : ChannelDuplexHandler
     {
         static readonly TimeSpan MinTimeout = TimeSpan.FromMilliseconds(1);
 
@@ -122,9 +122,9 @@ namespace DotNetty.Handlers.Timeout
         int lastMessageHashCode;
         long lastPendingWriteBytes;
 
-        static readonly Action<object, object> ReadTimeoutAction = WrapperTimeoutHandler(HandleReadTimeout);
-        static readonly Action<object, object> WriteTimeoutAction = WrapperTimeoutHandler(HandleWriteTimeout);
-        static readonly Action<object, object> AllTimeoutAction = WrapperTimeoutHandler(HandleAllTimeout);
+        static readonly Action<object, object> ReadTimeoutAction = WrappingHandleReadTimeout; // WrapperTimeoutHandler(HandleReadTimeout);
+        static readonly Action<object, object> WriteTimeoutAction = WrappingHandleWriteTimeout; // WrapperTimeoutHandler(HandleWriteTimeout);
+        static readonly Action<object, object> AllTimeoutAction = WrappingHandleAllTimeout; // WrapperTimeoutHandler(HandleAllTimeout);
 
         /// <summary>
         /// Initializes a new instance firing <see cref="IdleStateEvent"/>s.
@@ -201,11 +201,11 @@ namespace DotNetty.Handlers.Timeout
                 ? TimeUtil.Max(allIdleTime, IdleStateHandler.MinTimeout)
                 : TimeSpan.Zero;
 
-            this.writeListener = new Action<Task>(antecedent =>
-                {
-                    this.lastWriteTime = this.Ticks();
-                    this.firstWriterIdleEvent = this.firstAllIdleEvent = true;
-                });
+            this.writeListener = new Action<Task>(WrappingWriteListener); // antecedent =>
+            //    {
+            //        this.lastWriteTime = this.Ticks();
+            //        this.firstWriterIdleEvent = this.firstAllIdleEvent = true;
+            //    });
         }
 
         /// <summary>
@@ -498,21 +498,21 @@ namespace DotNetty.Handlers.Timeout
             return false;
         }
 
-        static Action<object, object> WrapperTimeoutHandler(Action<IdleStateHandler, IChannelHandlerContext> action)
-        {
-            return (handler, ctx) =>
-            {
-                var self = (IdleStateHandler)handler; // instead of this
-                var context = (IChannelHandlerContext)ctx;
+        //static Action<object, object> WrapperTimeoutHandler(Action<IdleStateHandler, IChannelHandlerContext> action)
+        //{
+        //    return (handler, ctx) =>
+        //    {
+        //        var self = (IdleStateHandler)handler; // instead of this
+        //        var context = (IChannelHandlerContext)ctx;
 
-                if (!context.Channel.Open)
-                {
-                    return;
-                }
+        //        if (!context.Channel.Open)
+        //        {
+        //            return;
+        //        }
 
-                action(self, context);
-            };
-        }
+        //        action(self, context);
+        //    };
+        //}
 
         static void HandleReadTimeout(IdleStateHandler self, IChannelHandlerContext context)
         {

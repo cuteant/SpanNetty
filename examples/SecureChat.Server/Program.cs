@@ -40,7 +40,7 @@ namespace SecureChat.Server
                     .Group(bossGroup, workerGroup)
                     .Channel<TcpServerSocketChannel>()
                     .Option(ChannelOption.SoBacklog, 100)
-                    .Handler(new LoggingHandler(LogLevel.INFO))
+                    .Handler(new MsLoggingHandler("LSTN"))
                     .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
@@ -49,6 +49,7 @@ namespace SecureChat.Server
                             pipeline.AddLast(TlsHandler.Server(tlsCertificate));
                         }
 
+                        pipeline.AddLast(new MsLoggingHandler("CONN"));
                         pipeline.AddLast(new DelimiterBasedFrameDecoder(8192, Delimiters.LineDelimiter()));
                         pipeline.AddLast(STRING_ENCODER, STRING_DECODER, SERVER_HANDLER);
                     }));

@@ -85,6 +85,7 @@ namespace DotNetty.Transport
         id,
         inbound,
         outbound,
+        initialization,
     }
 
     #endregion
@@ -438,7 +439,7 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowInvalidOperationException_InitCannoBeInvokedIf(object msg)
+        internal static void ThrowInvalidOperationException_InitCannotBeInvokedIf(object msg)
         {
             throw GetInvalidOperationException();
             InvalidOperationException GetInvalidOperationException()

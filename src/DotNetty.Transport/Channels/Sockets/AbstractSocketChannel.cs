@@ -28,9 +28,9 @@ namespace DotNetty.Transport.Channels.Sockets
         }
 
         internal static readonly EventHandler<SocketAsyncEventArgs> IoCompletedCallback = OnIoCompleted;
-        static readonly Action<object, object> ConnectCallbackAction = (u, e) => ((ISocketChannelUnsafe)u).FinishConnect((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
-        static readonly Action<object, object> ReadCallbackAction = (u, e) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
-        static readonly Action<object, object> WriteCallbackAction = (u, e) => ((ISocketChannelUnsafe)u).FinishWrite((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
+        static readonly Action<object, object> ConnectCallbackAction = OnConnectCompletedSync; // (u, e) => ((ISocketChannelUnsafe)u).FinishConnect((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
+        static readonly Action<object, object> ReadCallbackAction = OnReadCompletedSync; // (u, e) => ((ISocketChannelUnsafe)u).FinishRead((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
+        static readonly Action<object, object> WriteCallbackAction = OnWriteCompletedSync; // (u, e) => ((ISocketChannelUnsafe)u).FinishWrite((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
 
         protected readonly Socket Socket;
         SocketChannelAsyncOperation<TChannel, TUnsafe> readOperation;

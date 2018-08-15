@@ -267,9 +267,9 @@ namespace DotNetty.Common.Internal.Logging
             }
             catch (Exception t)
             {
-                Console.Error.WriteLine("Failed ToString() invocation on an object of type ["
+                sbuf.Append("Failed ToString() invocation on an object of type ["
                     + o.GetType().Name + "]:" + Environment.NewLine + t);
-                sbuf.Append("[FAILED toString()]");
+                //sbuf.Append("[FAILED toString()]");
             }
         }
 

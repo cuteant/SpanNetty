@@ -14,8 +14,8 @@ namespace DotNetty.Codecs.Http.Multipart
     {
         public static string DiskBaseDirectory;
         public static bool DeleteOnExitTemporaryFile = true;
-        public static readonly string FilePrefix = "Attr_";
-        public static readonly string FilePostfix = ".att";
+        public const string FilePrefix = "Attr_";
+        public const string FilePostfix = ".att";
 
         public DiskAttribute(string name)
             : this(name, HttpConstants.DefaultEncoding)

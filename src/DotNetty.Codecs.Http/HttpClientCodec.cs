@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Http
 {
     using System.Collections.Generic;
     using System.Threading;
+    using CuteAnt.Collections;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
@@ -13,7 +14,7 @@ namespace DotNetty.Codecs.Http
         HttpClientUpgradeHandler.ISourceCodec
     {
         // A queue that is used for correlating a request and a response.
-        readonly Queue<HttpMethod> queue = new Queue<HttpMethod>();
+        readonly Deque<HttpMethod> queue = new Deque<HttpMethod>();
         readonly bool parseHttpAfterConnectRequest;
 
         // If true, decoding stops (i.e. pass-through)
@@ -103,7 +104,7 @@ namespace DotNetty.Codecs.Http
 
                 if (message is IHttpRequest request && !this.clientCodec.done)
                 {
-                    this.clientCodec.queue.Enqueue(request.Method);
+                    this.clientCodec.queue.AddToBack(request.Method);
                 }
 
                 base.Encode(context, message, output);
@@ -190,7 +191,7 @@ namespace DotNetty.Codecs.Http
 
                 // Get the getMethod of the HTTP request that corresponds to the
                 // current response.
-                HttpMethod method = this.clientCodec.queue.Dequeue();
+                HttpMethod method = this.clientCodec.queue.RemoveFromFront();
 
                 char firstChar = method.AsciiName[0];
                 switch (firstChar)

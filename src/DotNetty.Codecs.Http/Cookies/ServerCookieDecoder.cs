@@ -19,6 +19,8 @@ namespace DotNetty.Codecs.Http.Cookies
         static readonly AsciiString RFC2965Path = new AsciiString($"${CookieHeaderNames.Path}");
         static readonly AsciiString RFC2965Domain = new AsciiString($"${CookieHeaderNames.Domain}");
         static readonly AsciiString RFC2965Port = new AsciiString("$Port");
+        static readonly HashSet<char> _headerChars = new HashSet<char>(
+            new char[] { '\t', '\n', (char)0x0b, '\f', '\r', ' ', ',', ';' });
 
         //
         // Strict encoder that validates that name and value chars are in the valid scope
@@ -68,8 +70,7 @@ namespace DotNetty.Codecs.Http.Cookies
                         goto loop;
                     }
                     char c = header[i];
-                    if (c == '\t' || c == '\n' || c == 0x0b || c == '\f'
-                        || c == '\r' || c == ' ' || c == ',' || c == ';')
+                    if (_headerChars.Contains(c))
                     {
                         i++;
                         continue;
@@ -85,34 +86,34 @@ namespace DotNetty.Codecs.Http.Cookies
                 while(true)
                 {
                     char curChar = header[i];
-                    if (curChar == ';')
+                    switch (curChar)
                     {
-                        // NAME; (no value till ';')
-                        nameEnd = i;
-                        valueBegin = valueEnd = -1;
-                        break;
-                    }
-                    else if (curChar == '=')
-                    {
-                        // NAME=VALUE
-                        nameEnd = i;
-                        i++;
-                        if (i == headerLen)
-                        {
-                            // NAME= (empty value, i.e. nothing after '=')
-                            valueBegin = valueEnd = 0;
-                            break;
-                        }
+                        case ';':
+                            // NAME; (no value till ';')
+                            nameEnd = i;
+                            valueBegin = valueEnd = -1;
+                            goto loop0;
 
-                        valueBegin = i;
-                        // NAME=VALUE;
-                        int semiPos = header.IndexOf(';', i);
-                        valueEnd = i = semiPos > 0 ? semiPos : headerLen;
-                        break;
-                    }
-                    else
-                    {
-                        i++;
+                        case '=':
+                            // NAME=VALUE
+                            nameEnd = i;
+                            i++;
+                            if (i == headerLen)
+                            {
+                                // NAME= (empty value, i.e. nothing after '=')
+                                valueBegin = valueEnd = 0;
+                                goto loop0;
+                            }
+
+                            valueBegin = i;
+                            // NAME=VALUE;
+                            int semiPos = header.IndexOf(';', i);
+                            valueEnd = i = semiPos > 0 ? semiPos : headerLen;
+                            goto loop0;
+
+                        default:
+                            i++;
+                            break;
                     }
 
                     if (i == headerLen)
@@ -123,7 +124,7 @@ namespace DotNetty.Codecs.Http.Cookies
                         break;
                     }
                 }
-
+                loop0:
                 if (rfc2965Style && (CharUtil.RegionMatches(header, nameBegin, RFC2965Path, 0, RFC2965Path.Count) 
                         || CharUtil.RegionMatches(header, nameBegin, RFC2965Domain, 0, RFC2965Domain.Count) 
                         || CharUtil.RegionMatches(header, nameBegin, RFC2965Port, 0, RFC2965Port.Count)))

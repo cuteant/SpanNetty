@@ -13,7 +13,7 @@ namespace DotNetty.Transport.Channels
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
-    public class CombinedChannelDuplexHandler<TIn, TOut> : ChannelDuplexHandler
+    public partial class CombinedChannelDuplexHandler<TIn, TOut> : ChannelDuplexHandler
         where TIn : IChannelHandler
         where TOut : IChannelHandler
     {
@@ -53,7 +53,7 @@ namespace DotNetty.Transport.Channels
         {
             if (this.InboundHandler != null)
             {
-                ThrowHelper.ThrowInvalidOperationException_InitCannoBeInvokedIf(this);
+                ThrowHelper.ThrowInvalidOperationException_InitCannotBeInvokedIf(this);
             }
 
             if (inbound == null)
@@ -96,25 +96,25 @@ namespace DotNetty.Transport.Channels
             }
 
             this.outboundCtx = new DelegatingChannelHandlerContext(context, this.OutboundHandler);
-            this.inboundCtx = new DelegatingChannelHandlerContext(context, this.InboundHandler,
-                cause =>
-                {
-                    try
-                    {
-                        this.OutboundHandler.ExceptionCaught(this.outboundCtx, cause);
-                    }
-                    catch (Exception error)
-                    {
-                        if (Logger.DebugEnabled)
-                        {
-                            Logger.FreedThreadLocalBufferFromThreadFull(error, cause);
-                        }
-                        else if (Logger.WarnEnabled)
-                        {
-                            Logger.FreedThreadLocalBufferFromThread(error, cause);
-                        }
-                    }
-                });
+            this.inboundCtx = new DelegatingChannelHandlerContext(context, this.InboundHandler, OnExceptionCaught);
+                //cause =>
+                //{
+                //    try
+                //    {
+                //        this.OutboundHandler.ExceptionCaught(this.outboundCtx, cause);
+                //    }
+                //    catch (Exception error)
+                //    {
+                //        if (Logger.DebugEnabled)
+                //        {
+                //            Logger.FreedThreadLocalBufferFromThreadFull(error, cause);
+                //        }
+                //        else if (Logger.WarnEnabled)
+                //        {
+                //            Logger.FreedThreadLocalBufferFromThread(error, cause);
+                //        }
+                //    }
+                //});
 
             // The inboundCtx and outboundCtx were created and set now it's safe to call removeInboundHandler() and
             // removeOutboundHandler().

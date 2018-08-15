@@ -4,8 +4,8 @@
 namespace DotNetty.Handlers.Streams
 {
     using System;
-    using System.Collections.Generic;
     using System.Threading.Tasks;
+    using CuteAnt.Collections;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal.Logging;
@@ -16,7 +16,7 @@ namespace DotNetty.Handlers.Streams
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChunkedWriteHandler<T>>();
 
-        readonly Queue<PendingWrite> queue = new Queue<PendingWrite>();
+        readonly Deque<PendingWrite> queue = new Deque<PendingWrite>();
         volatile IChannelHandlerContext ctx;
         PendingWrite currentWrite;
 
@@ -42,7 +42,7 @@ namespace DotNetty.Handlers.Streams
         public override Task WriteAsync(IChannelHandlerContext context, object message)
         {
             var pendingWrite = new PendingWrite(message);
-            this.queue.Enqueue(pendingWrite);
+            this.queue.AddToBack(pendingWrite);
             return pendingWrite.PendingTask;
         }
 
@@ -72,7 +72,7 @@ namespace DotNetty.Handlers.Streams
                 PendingWrite current = this.currentWrite;
                 if (this.currentWrite == null)
                 {
-                    current = this.queue.Count > 0 ? this.queue.Dequeue() : null;
+                    this.queue.TryRemoveFromFront(out current);
                 }
                 else
                 {
@@ -156,7 +156,7 @@ namespace DotNetty.Handlers.Streams
             {
                 if (this.currentWrite == null)
                 {
-                    this.currentWrite = this.queue.Count > 0 ? this.queue.Dequeue() : null;
+                    this.queue.TryRemoveFromFront(out currentWrite);
                 }
 
                 if (this.currentWrite == null)

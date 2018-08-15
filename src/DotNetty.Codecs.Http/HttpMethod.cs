@@ -11,7 +11,7 @@ namespace DotNetty.Codecs.Http
     using System.Runtime.CompilerServices;
     using DotNetty.Common.Utilities;
 
-    public sealed class HttpMethod : IComparable<HttpMethod>, IComparable
+    public sealed partial class HttpMethod : IComparable<HttpMethod>, IComparable
     {
         /**
          * The OPTIONS method represents a request for information about the communication options
@@ -124,36 +124,36 @@ namespace DotNetty.Codecs.Http
             int i = 0;
             switch (bytes[i++])
             {
-                case (byte)'C':
+                case CByte:
                     match = Connect;
                     break;
-                case (byte)'D':
+                case DByte:
                     match = Delete;
                     break;
-                case (byte)'G':
+                case GByte:
                     match = Get;
                     break;
-                case (byte)'H':
+                case HByte:
                     match = Head;
                     break;
-                case (byte)'O':
+                case OByte:
                     match = Options;
                     break;
-                case (byte)'P':
+                case PByte:
                     switch (bytes[i++])
                     {
-                        case (byte)'O':
+                        case OByte:
                             match = Post;
                             break;
-                        case (byte)'U':
+                        case UByte:
                             match = Put;
                             break;
-                        case (byte)'A':
+                        case AByte:
                             match = Patch;
                             break;
                     }
                     break;
-                case (byte)'T':
+                case TByte:
                     match = Trace;
                     break;
             }

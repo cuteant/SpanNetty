@@ -106,9 +106,9 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        public sealed class TcpServerChannelUnsafe : NativeChannelUnsafe, IServerNativeUnsafe
+        public sealed partial class TcpServerChannelUnsafe : NativeChannelUnsafe, IServerNativeUnsafe
         {
-            static readonly Action<object, object> AcceptAction = (u, e) => ((TcpServerChannelUnsafe)u).Accept((Tcp)e);
+            static readonly Action<object, object> AcceptAction = OnAccept; // (u, e) => ((TcpServerChannelUnsafe)u).Accept((Tcp)e);
 
             public TcpServerChannelUnsafe() : base() // TcpServerChannel channel) : base(channel)
             {

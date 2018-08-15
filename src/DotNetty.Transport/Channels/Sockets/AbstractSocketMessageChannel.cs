@@ -9,12 +9,12 @@ namespace DotNetty.Transport.Channels.Sockets
     using System.Net.Sockets;
 
     /// <summary>
-    /// <see cref="AbstractSocketChannel"/> base class for <see cref="IChannel"/>s that operate on messages.
+    /// <see cref="AbstractSocketChannel{TChannel, TUnsafe}"/> base class for <see cref="IChannel"/>s that operate on messages.
     /// </summary>
     public abstract partial class AbstractSocketMessageChannel<TChannel, TUnsafe> : AbstractSocketChannel<TChannel, TUnsafe>
     {
         /// <summary>
-        /// Creates a new <see cref="AbstractSocketMessageChannel"/> instance.
+        /// Creates a new <see cref="AbstractSocketMessageChannel{TChannel, TUnsafe}"/> instance.
         /// </summary>
         /// <param name="parent">The parent <see cref="IChannel"/>. Pass <c>null</c> if there's no parent.</param>
         /// <param name="socket">The <see cref="Socket"/> used by the <see cref="IChannel"/> for communication.</param>

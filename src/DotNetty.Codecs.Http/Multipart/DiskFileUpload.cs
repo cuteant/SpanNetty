@@ -16,7 +16,7 @@ namespace DotNetty.Codecs.Http.Multipart
         public static string FileBaseDirectory;
         public static bool DeleteOnExitTemporaryFile = true;
         public static string FilePrefix = "FUp_";
-        public static readonly string FilePostfix = ".tmp";
+        public const string FilePostfix = ".tmp";
 
         string filename;
         string contentType;

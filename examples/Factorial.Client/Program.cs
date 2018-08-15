@@ -47,7 +47,7 @@ namespace Factorial.Client
                             pipeline.AddLast(new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(targetHost)));
                         }
 
-                        pipeline.AddLast(new LoggingHandler("CONN"));
+                        pipeline.AddLast(new MsLoggingHandler("CONN"));
                         pipeline.AddLast(new BigIntegerDecoder());
                         pipeline.AddLast(new NumberEncoder());
                         pipeline.AddLast(new FactorialClientHandler());

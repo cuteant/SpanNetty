@@ -4,6 +4,7 @@
 namespace DotNetty.Codecs.Http
 {
     using System.Collections.Generic;
+    using CuteAnt.Collections;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
@@ -11,7 +12,7 @@ namespace DotNetty.Codecs.Http
         HttpServerUpgradeHandler.ISourceCodec
     {
         /** A queue that is used for correlating a request and a response. */
-        readonly Queue<HttpMethod> queue = new Queue<HttpMethod>();
+        readonly Deque<HttpMethod> queue = new Deque<HttpMethod>();
 
         public HttpServerCodec() : this(4096, 8192, 8192)
         {
@@ -69,7 +70,7 @@ namespace DotNetty.Codecs.Http
                 {
                     if (output[i] is IHttpRequest request)
                     {
-                        this.serverCodec.queue.Enqueue(request.Method);
+                        this.serverCodec.queue.AddToBack(request.Method);
                     }
                 }
             }
@@ -100,7 +101,7 @@ namespace DotNetty.Codecs.Http
 
             protected override bool IsContentAlwaysEmpty(IHttpResponse msg)
             {
-                this.method = this.serverCodec.queue.Count > 0 ? this.serverCodec.queue.Dequeue() : null;
+                this.serverCodec.queue.TryRemoveFromFront(out this.method);
                 return HttpMethod.Head.Equals(this.method) || base.IsContentAlwaysEmpty(msg);
             }
         }

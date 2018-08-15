@@ -137,7 +137,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.HttpPostStandardRequestDecoder);
             }
-            
+
             if (this.bodyMapHttpData.TryGetValue(name, out List<IInterfaceHttpData> list))
             {
                 return list[0];
@@ -162,7 +162,8 @@ namespace DotNetty.Codecs.Http.Multipart
                 this.undecodedChunk.WriteBytes(buf);
             }
 
-            if (content is ILastHttpContent) {
+            if (content is ILastHttpContent)
+            {
                 this.isLastChunk = true;
             }
 
@@ -181,7 +182,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 this.CheckDestroyed();
 
-                if (this.currentStatus == MultiPartStatus.Epilogue) 
+                if (this.currentStatus == MultiPartStatus.Epilogue)
                 {
                     // OK except if end of list
                     if (this.bodyListHttpDataRank >= this.bodyListHttpData.Count)
@@ -198,8 +199,8 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             this.CheckDestroyed();
 
-            return this.HasNext 
-                ? this.bodyListHttpData[this.bodyListHttpDataRank++] 
+            return this.HasNext
+                ? this.bodyListHttpData[this.bodyListHttpDataRank++]
                 : null;
         }
 
@@ -254,70 +255,73 @@ namespace DotNetty.Codecs.Http.Multipart
                     switch (this.currentStatus)
                     {
                         case MultiPartStatus.Disposition:// search '='
-                            if (read == '=')
+                            switch (read)
                             {
-                                this.currentStatus = MultiPartStatus.Field;
-                                int equalpos = currentpos - 1;
-                                string key = DecodeAttribute(this.undecodedChunk.ToString(firstpos, equalpos - firstpos, this.charset),
-                                        this.charset);
-                                this.currentAttribute = this.factory.CreateAttribute(this.request, key);
-                                firstpos = currentpos;
-                            }
-                            else if (read == '&')
-                            { // special empty FIELD
-                                this.currentStatus = MultiPartStatus.Disposition;
-                                ampersandpos = currentpos - 1;
-                                string key = DecodeAttribute(
-                                        this.undecodedChunk.ToString(firstpos, ampersandpos - firstpos, this.charset), this.charset);
-                                this.currentAttribute = this.factory.CreateAttribute(this.request, key);
-                                this.currentAttribute.Value = ""; // empty
-                                this.AddHttpData(this.currentAttribute);
-                                this.currentAttribute = null;
-                                firstpos = currentpos;
-                                contRead = true;
+                                case '=':
+                                    this.currentStatus = MultiPartStatus.Field;
+                                    int equalpos = currentpos - 1;
+                                    string key = DecodeAttribute(this.undecodedChunk.ToString(firstpos, equalpos - firstpos, this.charset), this.charset);
+                                    this.currentAttribute = this.factory.CreateAttribute(this.request, key);
+                                    firstpos = currentpos;
+                                    break;
+
+                                case '&':
+                                    // special empty FIELD
+                                    this.currentStatus = MultiPartStatus.Disposition;
+                                    ampersandpos = currentpos - 1;
+                                    string key0 = DecodeAttribute(this.undecodedChunk.ToString(firstpos, ampersandpos - firstpos, this.charset), this.charset);
+                                    this.currentAttribute = this.factory.CreateAttribute(this.request, key0);
+                                    this.currentAttribute.Value = ""; // empty
+                                    this.AddHttpData(this.currentAttribute);
+                                    this.currentAttribute = null;
+                                    firstpos = currentpos;
+                                    contRead = true;
+                                    break;
                             }
                             break;
                         case MultiPartStatus.Field:// search '&' or end of line
-                            if (read == '&')
+                            switch (read)
                             {
-                                this.currentStatus = MultiPartStatus.Disposition;
-                                ampersandpos = currentpos - 1;
-                                this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
-                                firstpos = currentpos;
-                                contRead = true;
-                            }
-                            else if (read == HttpConstants.CarriageReturn)
-                            {
-                                if (this.undecodedChunk.IsReadable())
-                                {
-                                    read = (char)this.undecodedChunk.ReadByte();
-                                    currentpos++;
-                                    if (read == HttpConstants.LineFeed)
+                                case '&':
+                                    this.currentStatus = MultiPartStatus.Disposition;
+                                    ampersandpos = currentpos - 1;
+                                    this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                    firstpos = currentpos;
+                                    contRead = true;
+                                    break;
+
+                                case HttpConstants.CarriageReturnChar:
+                                    if (this.undecodedChunk.IsReadable())
                                     {
-                                        this.currentStatus = MultiPartStatus.PreEpilogue;
-                                        ampersandpos = currentpos - 2;
-                                        this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
-                                        firstpos = currentpos;
-                                        contRead = false;
+                                        read = (char)this.undecodedChunk.ReadByte();
+                                        currentpos++;
+                                        if (read == HttpConstants.LineFeed)
+                                        {
+                                            this.currentStatus = MultiPartStatus.PreEpilogue;
+                                            ampersandpos = currentpos - 2;
+                                            this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                            firstpos = currentpos;
+                                            contRead = false;
+                                        }
+                                        else
+                                        {
+                                            // Error
+                                            ThrowHelper.ThrowErrorDataDecoderException_BadEndOfLine();
+                                        }
                                     }
                                     else
                                     {
-                                        // Error
-                                        ThrowHelper.ThrowErrorDataDecoderException_BadEndOfLine();
+                                        currentpos--;
                                     }
-                                }
-                                else
-                                {
-                                    currentpos--;
-                                }
-                            }
-                            else if (read == HttpConstants.LineFeed)
-                            {
-                                this.currentStatus = MultiPartStatus.PreEpilogue;
-                                ampersandpos = currentpos - 1;
-                                this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
-                                firstpos = currentpos;
-                                contRead = false;
+                                    break;
+
+                                case HttpConstants.LineFeedChar:
+                                    this.currentStatus = MultiPartStatus.PreEpilogue;
+                                    ampersandpos = currentpos - 1;
+                                    this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                    firstpos = currentpos;
+                                    contRead = false;
+                                    break;
                             }
                             break;
                         default:
@@ -400,78 +404,80 @@ namespace DotNetty.Codecs.Http.Multipart
                     switch (this.currentStatus)
                     {
                         case MultiPartStatus.Disposition:// search '='
-                            if (read == '=')
+                            switch (read)
                             {
-                                this.currentStatus = MultiPartStatus.Field;
-                                int equalpos = currentpos - 1;
-                                string key = DecodeAttribute(this.undecodedChunk.ToString(firstpos, equalpos - firstpos, this.charset),
-                                        this.charset);
-                                this.currentAttribute = this.factory.CreateAttribute(this.request, key);
-                                firstpos = currentpos;
-                            }
-                            else if (read == '&')
-                            { // special empty FIELD
-                                this.currentStatus = MultiPartStatus.Disposition;
-                                ampersandpos = currentpos - 1;
-                                string key = DecodeAttribute(
-                                        this.undecodedChunk.ToString(firstpos, ampersandpos - firstpos, this.charset), this.charset);
-                                this.currentAttribute = this.factory.CreateAttribute(this.request, key);
-                                this.currentAttribute.Value = ""; // empty
-                                this.AddHttpData(this.currentAttribute);
-                                this.currentAttribute = null;
-                                firstpos = currentpos;
-                                contRead = true;
+                                case '=':
+                                    this.currentStatus = MultiPartStatus.Field;
+                                    int equalpos = currentpos - 1;
+                                    string key = DecodeAttribute(this.undecodedChunk.ToString(firstpos, equalpos - firstpos, this.charset), this.charset);
+                                    this.currentAttribute = this.factory.CreateAttribute(this.request, key);
+                                    firstpos = currentpos;
+                                    break;
+
+                                case '&':
+                                    // special empty FIELD
+                                    this.currentStatus = MultiPartStatus.Disposition;
+                                    ampersandpos = currentpos - 1;
+                                    string key0 = DecodeAttribute(this.undecodedChunk.ToString(firstpos, ampersandpos - firstpos, this.charset), this.charset);
+                                    this.currentAttribute = this.factory.CreateAttribute(this.request, key0);
+                                    this.currentAttribute.Value = ""; // empty
+                                    this.AddHttpData(this.currentAttribute);
+                                    this.currentAttribute = null;
+                                    firstpos = currentpos;
+                                    contRead = true;
+                                    break;
                             }
                             break;
                         case MultiPartStatus.Field:// search '&' or end of line
-                            if (read == '&')
+                            switch (read)
                             {
-                                this.currentStatus = MultiPartStatus.Disposition;
-                                ampersandpos = currentpos - 1;
-                                this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
-                                firstpos = currentpos;
-                                contRead = true;
-                            }
-                            else if (read == HttpConstants.CarriageReturn)
-                            {
-                                if (sao.Pos < sao.Limit)
-                                {
-                                    read = (char)(sao.Bytes[sao.Pos++]);
-                                    currentpos++;
-                                    if (read == HttpConstants.LineFeed)
+                                case '&':
+                                    this.currentStatus = MultiPartStatus.Disposition;
+                                    ampersandpos = currentpos - 1;
+                                    this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                    firstpos = currentpos;
+                                    contRead = true;
+                                    break;
+
+                                case HttpConstants.CarriageReturnChar:
+                                    if (sao.Pos < sao.Limit)
                                     {
-                                        this.currentStatus = MultiPartStatus.PreEpilogue;
-                                        ampersandpos = currentpos - 2;
-                                        sao.SetReadPosition(0);
-                                        this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
-                                        firstpos = currentpos;
-                                        contRead = false;
-                                        goto loop;
+                                        read = (char)(sao.Bytes[sao.Pos++]);
+                                        currentpos++;
+                                        if (read == HttpConstants.LineFeed)
+                                        {
+                                            this.currentStatus = MultiPartStatus.PreEpilogue;
+                                            ampersandpos = currentpos - 2;
+                                            sao.SetReadPosition(0);
+                                            this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                            firstpos = currentpos;
+                                            contRead = false;
+                                            goto loop;
+                                        }
+                                        else
+                                        {
+                                            // Error
+                                            sao.SetReadPosition(0);
+                                            ThrowHelper.ThrowErrorDataDecoderException_BadEndOfLine();
+                                        }
                                     }
                                     else
                                     {
-                                        // Error
-                                        sao.SetReadPosition(0);
-                                        ThrowHelper.ThrowErrorDataDecoderException_BadEndOfLine();
+                                        if (sao.Limit > 0)
+                                        {
+                                            currentpos--;
+                                        }
                                     }
-                                }
-                                else
-                                {
-                                    if (sao.Limit > 0)
-                                    {
-                                        currentpos--;
-                                    }
-                                }
-                            }
-                            else if (read == HttpConstants.LineFeed)
-                            {
-                                this.currentStatus = MultiPartStatus.PreEpilogue;
-                                ampersandpos = currentpos - 1;
-                                sao.SetReadPosition(0);
-                                this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
-                                firstpos = currentpos;
-                                contRead = false;
-                                goto loop;
+                                    break;
+
+                                case HttpConstants.LineFeedChar:
+                                    this.currentStatus = MultiPartStatus.PreEpilogue;
+                                    ampersandpos = currentpos - 1;
+                                    sao.SetReadPosition(0);
+                                    this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                    firstpos = currentpos;
+                                    contRead = false;
+                                    goto loop;
                             }
                             break;
                         default:

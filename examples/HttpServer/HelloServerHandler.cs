@@ -77,8 +77,8 @@ namespace HttpServer
                     break;
                 default:
                     var response = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.NotFound, Unpooled.Empty, false);
-                    ctx.WriteAndFlushAsync(response);
-                    ctx.CloseAsync();
+                    ctx.WriteAndFlushAsync(response).GetAwaiter().GetResult();
+                    ctx.CloseAsync().GetAwaiter().GetResult();
                     break;
             }
         }

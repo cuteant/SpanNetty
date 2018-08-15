@@ -7,5 +7,9 @@ namespace DotNetty.Transport.Channels.Sockets
         where TChannel : AbstractSocketByteChannel<TChannel, TUnsafe>
         where TUnsafe : AbstractSocketByteChannel<TChannel, TUnsafe>.SocketByteChannelUnsafe, new()
     {
+        private static void OnFlushSync(object channel)
+        {
+            ((TChannel)channel).Flush();
+        }
     }
 }

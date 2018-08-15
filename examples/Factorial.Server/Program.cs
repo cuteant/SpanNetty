@@ -34,7 +34,7 @@ namespace Factorial.Server
                     .Group(bossGroup, workerGroup)
                     .Channel<TcpServerSocketChannel>()
                     .Option(ChannelOption.SoBacklog, 100)
-                    .Handler(new LoggingHandler("LSTN"))
+                    .Handler(new MsLoggingHandler("LSTN"))
                     .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
@@ -42,7 +42,7 @@ namespace Factorial.Server
                         {
                             pipeline.AddLast(TlsHandler.Server(tlsCertificate));
                         }
-                        pipeline.AddLast(new LoggingHandler("CONN"));
+                        pipeline.AddLast(new MsLoggingHandler("CONN"));
                         pipeline.AddLast(new NumberEncoder(), new BigIntegerDecoder(), new FactorialServerHandler());
                     }));
 

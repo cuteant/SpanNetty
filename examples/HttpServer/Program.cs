@@ -12,6 +12,7 @@ namespace HttpServer
     using System.Threading.Tasks;
     using DotNetty.Codecs.Http;
     using DotNetty.Common;
+    using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
@@ -28,6 +29,8 @@ namespace HttpServer
 
         static async Task RunServerAsync()
         {
+            ExampleHelper.SetConsoleLogger();
+
             Console.WriteLine(
                 $"\n{RuntimeInformation.OSArchitecture} {RuntimeInformation.OSDescription}"
                 + $"\n{RuntimeInformation.ProcessArchitecture} {RuntimeInformation.FrameworkDescription}"
@@ -87,6 +90,7 @@ namespace HttpServer
 
                 bootstrap
                     .Option(ChannelOption.SoBacklog, 8192)
+                    .Handler(new MsLoggingHandler("LSTN"))
                     .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
@@ -94,8 +98,10 @@ namespace HttpServer
                         {
                             pipeline.AddLast(TlsHandler.Server(tlsCertificate));
                         }
-                        pipeline.AddLast("encoder", new HttpResponseEncoder());
-                        pipeline.AddLast("decoder", new HttpRequestDecoder(4096, 8192, 8192, false));
+                        pipeline.AddLast(new MsLoggingHandler("CONN"));
+                        //pipeline.AddLast("encoder", new HttpResponseEncoder());
+                        //pipeline.AddLast("decoder", new HttpRequestDecoder(4096, 8192, 8192, false));
+                        pipeline.AddLast(new HttpServerCodec(4096, 8192, 8192, false));
                         pipeline.AddLast("handler", new HelloServerHandler());
                     }));
 

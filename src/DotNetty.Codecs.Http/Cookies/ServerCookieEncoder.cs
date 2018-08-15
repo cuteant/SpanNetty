@@ -63,10 +63,10 @@ namespace DotNetty.Codecs.Http.Cookies
                 Add(buf, (string)CookieHeaderNames.MaxAge, cookie.MaxAge);
                 DateTime expires = DateTime.UtcNow.AddMilliseconds(cookie.MaxAge * 1000);
                 buf.Append(CookieHeaderNames.Expires);
-                buf.Append((char)HttpConstants.EqualsSign);
+                buf.Append(HttpConstants.EqualsSignChar);
                 DateFormatter.Append(expires, buf);
-                buf.Append((char)HttpConstants.Semicolon);
-                buf.Append((char)HttpConstants.HorizontalSpace);
+                buf.Append(HttpConstants.SemicolonChar);
+                buf.Append(HttpConstants.HorizontalSpaceChar);
             }
 
             if (cookie.Path != null)

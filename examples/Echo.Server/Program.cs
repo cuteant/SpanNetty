@@ -21,6 +21,8 @@ namespace Echo.Server
     {
         static async Task RunServerAsync()
         {
+            ExampleHelper.SetConsoleLogger();
+
             IEventLoopGroup bossGroup;
             IEventLoopGroup workerGroup;
 
@@ -56,7 +58,7 @@ namespace Echo.Server
 
                 bootstrap
                   .Option(ChannelOption.SoBacklog, 100)
-                  .Handler(new LoggingHandler(LogLevel.INFO))
+                  .Handler(new MsLoggingHandler())
                   .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                   {
                       IChannelPipeline pipeline = channel.Pipeline;
@@ -64,7 +66,7 @@ namespace Echo.Server
                       {
                           pipeline.AddLast("tls", TlsHandler.Server(tlsCertificate));
                       }
-                      pipeline.AddLast(new LoggingHandler("SRV-CONN"));
+                      pipeline.AddLast(new MsLoggingHandler("SRV-CONN"));
                       pipeline.AddLast("framing-enc", new LengthFieldPrepender(2));
                       pipeline.AddLast("framing-dec", new LengthFieldBasedFrameDecoder(ushort.MaxValue, 0, 2, 0, 2));
 

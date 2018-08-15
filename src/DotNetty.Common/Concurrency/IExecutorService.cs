@@ -17,7 +17,7 @@ namespace DotNetty.Common.Concurrency
         ///     Returns <c>true</c> if all tasks have completed following shut down.
         /// </summary>
         /// <remarks>
-        ///     Note that <see cref="IsTerminated" /> is never <c>true</c> unless <see cref="ShutdownGracefullyAsync()" /> was called first.
+        ///     Note that <see cref="IsTerminated" /> is never <c>true</c> unless <see cref="IEventExecutorGroup.ShutdownGracefullyAsync()" /> was called first.
         /// </remarks>
         bool IsTerminated { get; }
 

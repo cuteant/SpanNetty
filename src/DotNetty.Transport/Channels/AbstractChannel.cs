@@ -157,7 +157,7 @@ namespace DotNetty.Transport.Channels
 
         /// <summary>
         /// Returns a new <see cref="DefaultChannelId"/> instance. Subclasses may override this method to assign custom
-        /// <see cref="IChannelId"/>s to <see cref="IChannel"/>s that use the <see cref="AbstractChannel"/> constructor.
+        /// <see cref="IChannelId"/>s to <see cref="IChannel"/>s that use the <see cref="AbstractChannel{TChannel, TUnsafe}"/> constructor.
         /// </summary>
         /// <returns>A new <see cref="DefaultChannelId"/> instance.</returns>
         protected virtual IChannelId NewId() => DefaultChannelId.NewInstance();
@@ -842,7 +842,7 @@ namespace DotNetty.Transport.Channels
 
             /// <summary>
             /// Prepares to close the <see cref="IChannel"/>. If this method returns an <see cref="IEventExecutor"/>, the
-            /// caller must call the <see cref="IEventExecutor.Execute(DotNetty.Common.Concurrency.IRunnable)"/> method with a task that calls
+            /// caller must call the <see cref="IExecutor.Execute(DotNetty.Common.Concurrency.IRunnable)"/> method with a task that calls
             /// <see cref="AbstractChannel{TChannel, TUnsafe}.DoClose"/> on the returned <see cref="IEventExecutor"/>. If this method returns <c>null</c>,
             /// <see cref="AbstractChannel{TChannel, TUnsafe}.DoClose"/> must be called from the caller thread. (i.e. <see cref="IEventLoop"/>)
             /// </summary>
@@ -850,11 +850,11 @@ namespace DotNetty.Transport.Channels
         }
 
         /// <summary>
-        /// Checks whether a given <see cref="IEventLoop"/> is compatible with the <see cref="AbstractChannel"/>.
+        /// Checks whether a given <see cref="IEventLoop"/> is compatible with the <see cref="AbstractChannel{TChannel, TUnsafe}"/>.
         /// </summary>
         /// <param name="eventLoop">The <see cref="IEventLoop"/> to check compatibility.</param>
         /// <returns>
-        /// <c>true</c> if the given <see cref="IEventLoop"/> is compatible with this <see cref="AbstractChannel"/>
+        /// <c>true</c> if the given <see cref="IEventLoop"/> is compatible with this <see cref="AbstractChannel{TChannel, TUnsafe}"/>
         /// instance, otherwise <c>false</c>.
         /// </returns>
         protected abstract bool IsCompatible(IEventLoop eventLoop);
@@ -905,7 +905,7 @@ namespace DotNetty.Transport.Channels
 
         /// <summary>
         /// Invoked when a new message is added to a <see cref="ChannelOutboundBuffer"/> of this
-        /// <see cref="AbstractChannel"/>, so that the <see cref="IChannel"/> implementation converts the message to
+        /// <see cref="AbstractChannel{TChannel, TUnsafe}"/>, so that the <see cref="IChannel"/> implementation converts the message to
         /// another. (e.g. heap buffer -> direct buffer).
         /// </summary>
         /// <param name="msg">The message to be filtered.</param>

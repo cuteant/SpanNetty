@@ -13,7 +13,7 @@ namespace DotNetty.Codecs.Http
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
 
-    public class HttpVersion : IComparable<HttpVersion>, IComparable
+    public partial class HttpVersion : IComparable<HttpVersion>, IComparable
     {
         static readonly Regex VersionPattern = new Regex("^(\\S+)/(\\d+)\\.(\\d+)$", RegexOptions.Compiled);
 
@@ -62,18 +62,18 @@ namespace DotNetty.Codecs.Http
         {
             if (bytes.Length != 8) return null;
 
-            if (bytes[0] != (byte)'H') return null;
-            if (bytes[1] != (byte)'T') return null;
-            if (bytes[2] != (byte)'T') return null;
-            if (bytes[3] != (byte)'P') return null;
-            if (bytes[4] != (byte)'/') return null;
-            if (bytes[5] != (byte)'1') return null;
-            if (bytes[6] != (byte)'.') return null;
+            if (bytes[0] != Http11Bytes[0]) return null;
+            if (bytes[1] != Http11Bytes[1]) return null;
+            if (bytes[2] != Http11Bytes[2]) return null;
+            if (bytes[3] != Http11Bytes[3]) return null;
+            if (bytes[4] != Http11Bytes[4]) return null;
+            if (bytes[5] != Http11Bytes[5]) return null;
+            if (bytes[6] != Http11Bytes[6]) return null;
             switch (bytes[7])
             {
-                case (byte)'1':
+                case OneByte:
                     return Http11;
-                case (byte)'0':
+                case ZeroByte:
                     return Http10;
                 default:
                     return null;

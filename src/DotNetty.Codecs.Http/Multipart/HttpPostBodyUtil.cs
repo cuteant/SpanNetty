@@ -12,9 +12,9 @@ namespace DotNetty.Codecs.Http.Multipart
     {
         public static readonly int ChunkSize = 8096;
 
-        public static readonly string DefaultBinaryContentType = "application/octet-stream";
+        public const string DefaultBinaryContentType = "application/octet-stream";
 
-        public static readonly string DefaultTextContentType = "text/plain";
+        public const string DefaultTextContentType = "text/plain";
 
         public sealed class TransferEncodingMechanism
         {

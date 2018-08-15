@@ -12,6 +12,7 @@ namespace WebSockets.Server
     using System.Threading.Tasks;
     using DotNetty.Codecs.Http;
     using DotNetty.Common;
+    using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
@@ -28,6 +29,8 @@ namespace WebSockets.Server
 
         static async Task RunServerAsync()
         {
+            ExampleHelper.SetConsoleLogger();
+
             Console.WriteLine(
                 $"\n{RuntimeInformation.OSArchitecture} {RuntimeInformation.OSDescription}"
                 + $"\n{RuntimeInformation.ProcessArchitecture} {RuntimeInformation.FrameworkDescription}"
@@ -87,17 +90,20 @@ namespace WebSockets.Server
 
                 bootstrap
                     .Option(ChannelOption.SoBacklog, 8192)
-                    .ChildHandler(new ActionChannelInitializer<IChannel>(channel =>
-                    {
-                        IChannelPipeline pipeline = channel.Pipeline;
-                        if (tlsCertificate != null)
-                        {
-                            pipeline.AddLast(TlsHandler.Server(tlsCertificate));
-                        }
-                        pipeline.AddLast(new HttpServerCodec());
-                        pipeline.AddLast(new HttpObjectAggregator(65536));
-                        pipeline.AddLast(new WebSocketServerHandler());
-                    }));
+                    .Handler(new MsLoggingHandler("LSTN"))
+                    .ChildHandler(new DefaultChannelInitializer<IChannel>(ChannelInitializerImpl.Instance));
+                    //.ChildHandler(new ActionChannelInitializer<IChannel>(channel =>
+                    //{
+                    //    IChannelPipeline pipeline = channel.Pipeline;
+                    //    if (tlsCertificate != null)
+                    //    {
+                    //        pipeline.AddLast(TlsHandler.Server(tlsCertificate));
+                    //    }
+                    //    pipeline.AddLast(new MsLoggingHandler("CONN"));
+                    //    pipeline.AddLast(new HttpServerCodec());
+                    //    pipeline.AddLast(new HttpObjectAggregator(65536));
+                    //    pipeline.AddLast(new WebSocketServerHandler());
+                    //}));
 
                 int port = ServerSettings.Port;
                 IChannel bootstrapChannel = await bootstrap.BindAsync(IPAddress.Loopback, port);

@@ -243,12 +243,12 @@ namespace DotNetty.Transport.Channels
                 return true;
             }
 
-            if (!(obj is DefaultChannelId))
+            if (obj is DefaultChannelId channelId)
             {
-                return false;
+                return Equals(this.data, channelId.data);
             }
 
-            return Equals(this.data, ((DefaultChannelId)obj).data);
+            return false;
         }
 
         public override string ToString() => this.AsShortText();

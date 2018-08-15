@@ -8,6 +8,7 @@ namespace DotNetty.Codecs.Http
     using System.Diagnostics;
     using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
+    using CuteAnt.Collections;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
@@ -26,7 +27,7 @@ namespace DotNetty.Codecs.Http
         static readonly AsciiString ZeroLengthConnect = AsciiString.Cached("CONNECT");
         static readonly int ContinueCode = HttpResponseStatus.Continue.Code;
 
-        readonly Queue<ICharSequence> acceptEncodingQueue = new Queue<ICharSequence>();
+        readonly Deque<ICharSequence> acceptEncodingQueue = new Deque<ICharSequence>();
         EmbeddedChannel encoder;
         State state = State.AwaitHeaders;
 
@@ -57,7 +58,7 @@ namespace DotNetty.Codecs.Http
                 acceptedEncoding = ZeroLengthConnect;
             }
 
-            this.acceptEncodingQueue.Enqueue(acceptedEncoding);
+            this.acceptEncodingQueue.AddToBack(acceptedEncoding);
             output.Add(ReferenceCountUtil.Retain(msg));
         }
 
@@ -84,8 +85,7 @@ namespace DotNetty.Codecs.Http
                     else
                     {
                         // Get the list of encodings accepted by the peer.
-                        acceptEncoding = this.acceptEncodingQueue.Count > 0 ? this.acceptEncodingQueue.Dequeue() : null;
-                        if (acceptEncoding == null)
+                        if (!this.acceptEncodingQueue.TryRemoveFromFront(out acceptEncoding))
                         {
                             ThrowHelper.ThrowInvalidOperationException_CannotSendMore();
                         }

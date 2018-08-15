@@ -8,6 +8,7 @@ namespace QuoteOfTheMoment.Client
     using System.Text;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
+    using DotNetty.Handlers.Logging;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
@@ -30,6 +31,7 @@ namespace QuoteOfTheMoment.Client
                     .Option(ChannelOption.SoBroadcast, true)
                     .Handler(new ActionChannelInitializer<IChannel>(channel =>
                     {
+                        channel.Pipeline.AddLast(new MsLoggingHandler("CONN"));
                         channel.Pipeline.AddLast("Quote", new QuoteOfTheMomentClientHandler());
                     }));
 

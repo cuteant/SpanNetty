@@ -47,7 +47,7 @@ namespace Discard.Client
                             pipeline.AddLast(new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(targetHost)));
                         }
 
-                        pipeline.AddLast(new LoggingHandler());
+                        pipeline.AddLast(new MsLoggingHandler());
                         pipeline.AddLast(new DiscardClientHandler());
                     }));
 

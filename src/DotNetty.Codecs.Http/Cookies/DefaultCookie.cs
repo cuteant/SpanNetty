@@ -183,17 +183,17 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public int CompareTo(object obj)
         {
-            if (obj == null)
+            switch (obj)
             {
-                return 1;
-            }
+                case null:
+                    return 1;
 
-            if (obj is ICookie cookie)
-            {
-                return this.CompareTo(cookie);
-            }
+                case ICookie cookie:
+                    return this.CompareTo(cookie);
 
-            return ThrowHelper.ThrowArgumentException_CompareToCookie();
+                default:
+                    return ThrowHelper.ThrowArgumentException_CompareToCookie();
+            }
         }
 
         public override string ToString()

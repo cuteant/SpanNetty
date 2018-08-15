@@ -11,8 +11,10 @@ namespace WebSockets.Server
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http.WebSockets;
     using DotNetty.Common.Utilities;
+    using DotNetty.Handlers.Timeout;
     using DotNetty.Transport.Channels;
     using Examples.Common;
+    using Microsoft.Extensions.Logging;
 
     using static DotNetty.Codecs.Http.HttpVersion;
     using static DotNetty.Codecs.Http.HttpResponseStatus;
@@ -20,6 +22,7 @@ namespace WebSockets.Server
     public sealed class WebSocketServerHandler : SimpleChannelInboundHandler<object>
     {
         const string WebsocketPath = "/websocket";
+        static readonly ILogger s_logger = TraceLogger.GetLogger<WebSocketServerHandler>();
 
         WebSocketServerHandshaker handshaker;
 
@@ -101,8 +104,13 @@ namespace WebSockets.Server
                 return;
             }
 
-            if (frame is TextWebSocketFrame)
+            if (frame is TextWebSocketFrame textFrame)
             {
+                var msg = textFrame.Text();
+                if(msg.StartsWith("throw ", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new Exception(msg.Substring(6, msg.Length - 6));
+                }
                 // Echo the frame
                 ctx.WriteAsync(frame.Retain());
                 return;
@@ -137,7 +145,7 @@ namespace WebSockets.Server
 
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception e)
         {
-            Console.WriteLine($"{nameof(WebSocketServerHandler)} {0}", e);
+            s_logger.LogError(e, $"{nameof(WebSocketServerHandler)} caught exception:");
             ctx.CloseAsync();
         }
 
@@ -154,6 +162,24 @@ namespace WebSockets.Server
             else
             {
                 return "ws://" + location;
+            }
+        }
+
+        public override void UserEventTriggered(IChannelHandlerContext context, object evt)
+        {
+            if(evt is IdleStateEvent stateEvent)
+            {
+                switch (stateEvent.State)
+                {
+                    case IdleState.ReaderIdle:
+                        s_logger.LogWarning($"{nameof(WebSocketServerHandler)} caught idle state: {IdleState.ReaderIdle}");
+                        break;
+                    case IdleState.WriterIdle:
+                        s_logger.LogWarning($"{nameof(WebSocketServerHandler)} caught idle state: {IdleState.WriterIdle}");
+                        break;
+                    default:
+                        break;
+                }
             }
         }
     }

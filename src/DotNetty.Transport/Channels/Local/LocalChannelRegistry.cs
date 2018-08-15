@@ -42,7 +42,7 @@ namespace DotNetty.Transport.Channels.Local
             => localAddress is LocalAddress key && BoundChannels.TryGetValue(key, out var ch) ? ch : null;
 
         internal static void Unregister(LocalAddress localAddress) 
-            => BoundChannels.TryRemove(localAddress, out var _);
+            => BoundChannels.TryRemove(localAddress, out _);
     }
 }
 #endif

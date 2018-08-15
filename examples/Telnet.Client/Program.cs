@@ -10,6 +10,7 @@ namespace Telnet.Client
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using DotNetty.Codecs;
+    using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
@@ -47,6 +48,7 @@ namespace Telnet.Client
                             pipeline.AddLast(new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(targetHost)));
                         }
 
+                        pipeline.AddLast(new MsLoggingHandler("CONN"));
                         pipeline.AddLast(new DelimiterBasedFrameDecoder(8192, Delimiters.LineDelimiter()));
                         pipeline.AddLast(new StringEncoder(), new StringDecoder(), new TelnetClientHandler());
                     }));

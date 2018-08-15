@@ -85,7 +85,7 @@ namespace DotNetty.Transport.Channels
     /// operation, such as a write request and a connection attempt.  If an outbound event goes beyond the
     /// <see cref="IChannelHandler"/> at the bottom of the diagram, it is handled by an I/O thread associated with the
     /// <see cref="IChannel"/>. The I/O thread often performs the actual output operation such as
-    /// <see cref="AbstractChannel.WriteAsync"/>.
+    /// <see cref="AbstractChannel{TChannel, TUnsafe}.WriteAsync"/>.
     /// </para>
     /// <para>Forwarding an event to the next handler</para>
     /// <para>

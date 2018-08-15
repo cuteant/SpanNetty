@@ -8,7 +8,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
 
-    sealed class Utf8Validator : IByteProcessor
+    sealed partial class Utf8Validator : IByteProcessor
     {
         const int Utf8Accept = 0;
         const int Utf8Reject = 12;
@@ -68,8 +68,8 @@ namespace DotNetty.Codecs.Http.WebSockets
             return true;
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static void ThrowCorruptedFrameException() => throw new CorruptedFrameException("bytes are not UTF-8");
+        //[MethodImpl(MethodImplOptions.NoInlining)]
+        //static void ThrowCorruptedFrameException() => throw new CorruptedFrameException("bytes are not UTF-8");
 
         public bool IsChecking => this.checking;
     }

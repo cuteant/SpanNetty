@@ -7,7 +7,6 @@ namespace DotNetty.Transport.Bootstrapping
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Net;
-    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
     using CuteAnt.Collections;
     using CuteAnt.Pool;
@@ -23,7 +22,7 @@ namespace DotNetty.Transport.Bootstrapping
     /// When not used in a <see cref="ServerBootstrap"/> context, the <see cref="BindAsync(EndPoint)"/> methods
     /// are useful for connectionless transports such as datagram (UDP).
     /// </summary>
-    public abstract class AbstractBootstrap<TBootstrap, TChannel>
+    public abstract partial class AbstractBootstrap<TBootstrap, TChannel>
         where TBootstrap : AbstractBootstrap<TBootstrap, TChannel>
         where TChannel : IChannel
     {
@@ -134,8 +133,8 @@ namespace DotNetty.Transport.Bootstrapping
 
             if (value == null)
             {
-                ChannelOptionValue removed;
-                this.options.TryRemove(option, out removed);
+                //ChannelOptionValue removed;
+                this.options.TryRemove(option, out _);
             }
             else
             {
@@ -155,8 +154,8 @@ namespace DotNetty.Transport.Bootstrapping
 
             if (value == null)
             {
-                AttributeValue removed;
-                this.attrs.TryRemove(key, out removed);
+                //AttributeValue removed;
+                this.attrs.TryRemove(key, out _);
             }
             else
             {
@@ -386,18 +385,6 @@ namespace DotNetty.Transport.Bootstrapping
             {
                 if (warnEnabled) FailedToSetChannelOptionWithValueForChannel(logger, channel, option, ex);
             }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void UnknownChannelOptionForChannel(IInternalLogger logger, IChannel channel, ChannelOptionValue option)
-        {
-            logger.Warn("Unknown channel option '{}' for channel '{}'", option.Option, channel);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void FailedToSetChannelOptionWithValueForChannel(IInternalLogger logger, IChannel channel, ChannelOptionValue option, Exception ex)
-        {
-            logger.Warn("Failed to set channel option '{}' with value '{}' for channel '{}'", option.Option, option, channel, ex);
         }
 
         public override string ToString()

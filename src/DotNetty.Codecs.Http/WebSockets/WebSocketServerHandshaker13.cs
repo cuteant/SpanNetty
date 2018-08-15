@@ -8,7 +8,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
     public class WebSocketServerHandshaker13 : WebSocketServerHandshaker
     {
-        public static readonly string Websocket13AcceptGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+        public const string Websocket13AcceptGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
         readonly bool allowExtensions;
         readonly bool allowMaskMismatch;

@@ -6,6 +6,7 @@ namespace Examples.Common
     using System;
     using DotNetty.Common.Internal.Logging;
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.Logging;
     using NLog.Extensions.Logging;
 
     public static class ExampleHelper
@@ -28,6 +29,12 @@ namespace Examples.Common
 
         public static IConfigurationRoot Configuration { get; }
 
-        public static void SetConsoleLogger() => InternalLoggerFactory.DefaultFactory.AddProvider(new NLogLoggerProvider());
+        public static void SetConsoleLogger()
+        {
+            var f = new LoggerFactory();
+            f.AddNLog();
+            TraceLogger.Initialize(f);
+            InternalLoggerFactory.DefaultFactory = f;
+        }
     }
 }

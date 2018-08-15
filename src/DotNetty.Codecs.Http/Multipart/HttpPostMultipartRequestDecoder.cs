@@ -14,6 +14,8 @@ namespace DotNetty.Codecs.Http.Multipart
 
     public class HttpPostMultipartRequestDecoder : IInterfaceHttpPostRequestDecoder
     {
+        const byte MinusSign = (byte)'-';
+
         // Factory used to create InterfaceHttpData
         readonly IHttpDataFactory factory;
 
@@ -1082,74 +1084,75 @@ namespace DotNetty.Codecs.Http.Multipart
                 if (undecodedChunk.IsReadable())
                 {
                     byte nextByte = undecodedChunk.ReadByte();
-                    // first check for opening delimiter
-                    if (nextByte == HttpConstants.CarriageReturn)
+                    switch (nextByte)
                     {
-                        nextByte = undecodedChunk.ReadByte();
-                        if (nextByte == HttpConstants.LineFeed)
-                        {
-                            return sb;
-                        }
-                        else
-                        {
-                            // error since CR must be followed by LF
-                            // delimiter not found so break here !
-                            undecodedChunk.SetReaderIndex(readerIndex);
-                            ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.ReadDelimiterStandard);
-                        }
-                    }
-                    else if (nextByte == HttpConstants.LineFeed)
-                    {
-                        return sb;
-                    }
-                    else if (nextByte == '-')
-                    {
-                        sb.Append('-');
-                        // second check for closing delimiter
-                        nextByte = undecodedChunk.ReadByte();
-                        if (nextByte == '-')
-                        {
-                            sb.Append('-');
-                            // now try to find if CRLF or LF there
-                            if (undecodedChunk.IsReadable())
+                        // first check for opening delimiter
+                        case HttpConstants.CarriageReturn:
+                            nextByte = undecodedChunk.ReadByte();
+                            if (nextByte == HttpConstants.LineFeed)
                             {
-                                nextByte = undecodedChunk.ReadByte();
-                                if (nextByte == HttpConstants.CarriageReturn)
+                                return sb;
+                            }
+                            else
+                            {
+                                // error since CR must be followed by LF
+                                // delimiter not found so break here !
+                                undecodedChunk.SetReaderIndex(readerIndex);
+                                ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.ReadDelimiterStandard);
+                            }
+                            break;
+
+                        case HttpConstants.LineFeed:
+                            return sb;
+
+                        case MinusSign:
+                            sb.Append('-');
+                            // second check for closing delimiter
+                            nextByte = undecodedChunk.ReadByte();
+                            if (nextByte == '-')
+                            {
+                                sb.Append('-');
+                                // now try to find if CRLF or LF there
+                                if (undecodedChunk.IsReadable())
                                 {
                                     nextByte = undecodedChunk.ReadByte();
-                                    if (nextByte == HttpConstants.LineFeed)
+                                    if (nextByte == HttpConstants.CarriageReturn)
+                                    {
+                                        nextByte = undecodedChunk.ReadByte();
+                                        if (nextByte == HttpConstants.LineFeed)
+                                        {
+                                            return sb;
+                                        }
+                                        else
+                                        {
+                                            // error CR without LF
+                                            // delimiter not found so break here !
+                                            undecodedChunk.SetReaderIndex(readerIndex);
+                                            ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.ReadDelimiterStandard);
+                                        }
+                                    }
+                                    else if (nextByte == HttpConstants.LineFeed)
                                     {
                                         return sb;
                                     }
                                     else
                                     {
-                                        // error CR without LF
-                                        // delimiter not found so break here !
-                                        undecodedChunk.SetReaderIndex(readerIndex);
-                                        ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.ReadDelimiterStandard);
+                                        // No CRLF but ok however (Adobe Flash uploader)
+                                        // minus 1 since we read one char ahead but
+                                        // should not
+                                        undecodedChunk.SetReaderIndex(undecodedChunk.ReaderIndex - 1);
+                                        return sb;
                                     }
                                 }
-                                else if (nextByte == HttpConstants.LineFeed)
-                                {
-                                    return sb;
-                                }
-                                else
-                                {
-                                    // No CRLF but ok however (Adobe Flash uploader)
-                                    // minus 1 since we read one char ahead but
-                                    // should not
-                                    undecodedChunk.SetReaderIndex(undecodedChunk.ReaderIndex - 1);
-                                    return sb;
-                                }
+                                // FIXME what do we do here?
+                                // either considering it is fine, either waiting for
+                                // more data to come?
+                                // lets try considering it is fine...
+                                return sb;
                             }
-                            // FIXME what do we do here?
-                            // either considering it is fine, either waiting for
-                            // more data to come?
-                            // lets try considering it is fine...
-                            return sb;
-                        }
-                        // only one '-' => not enough
-                        // whatever now => error since incomplete
+                            // only one '-' => not enough
+                            // whatever now => error since incomplete
+                            break;
                     }
                 }
             }
@@ -1195,63 +1198,71 @@ namespace DotNetty.Codecs.Http.Multipart
                 if (sao.Pos < sao.Limit)
                 {
                     byte nextByte = sao.Bytes[sao.Pos++];
-                    if (nextByte == HttpConstants.CarriageReturn)
+                    switch (nextByte)
                     {
-                        // first check for opening delimiter
-                        if (sao.Pos < sao.Limit)
-                        {
-                            nextByte = sao.Bytes[sao.Pos++];
-                            if (nextByte == HttpConstants.LineFeed)
+                        case HttpConstants.CarriageReturn:
+                            // first check for opening delimiter
+                            if (sao.Pos < sao.Limit)
                             {
-                                sao.SetReadPosition(0);
-                                return sb;
+                                nextByte = sao.Bytes[sao.Pos++];
+                                if (nextByte == HttpConstants.LineFeed)
+                                {
+                                    sao.SetReadPosition(0);
+                                    return sb;
+                                }
+                                else
+                                {
+                                    // error CR without LF
+                                    // delimiter not found so break here !
+                                    undecodedChunk.SetReaderIndex(readerIndex);
+                                    ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.ReadDelimiter);
+                                }
                             }
                             else
                             {
-                                // error CR without LF
+                                // error since CR must be followed by LF
                                 // delimiter not found so break here !
                                 undecodedChunk.SetReaderIndex(readerIndex);
                                 ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.ReadDelimiter);
                             }
-                        }
-                        else
-                        {
-                            // error since CR must be followed by LF
-                            // delimiter not found so break here !
-                            undecodedChunk.SetReaderIndex(readerIndex);
-                            ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.ReadDelimiter);
-                        }
-                    }
-                    else if (nextByte == HttpConstants.LineFeed)
-                    {
-                        // same first check for opening delimiter where LF used with
-                        // no CR
-                        sao.SetReadPosition(0);
-                        return sb;
-                    }
-                    else if (nextByte == '-')
-                    {
-                        sb.Append('-');
-                        // second check for closing delimiter
-                        if (sao.Pos < sao.Limit)
-                        {
-                            nextByte = sao.Bytes[sao.Pos++];
-                            if (nextByte == '-')
+                            break;
+
+                        case HttpConstants.LineFeed:
+                            // same first check for opening delimiter where LF used with
+                            // no CR
+                            sao.SetReadPosition(0);
+                            return sb;
+
+                        case MinusSign:
+                            sb.Append('-');
+                            // second check for closing delimiter
+                            if (sao.Pos < sao.Limit)
                             {
-                                sb.Append('-');
-                                // now try to find if CRLF or LF there
-                                if (sao.Pos < sao.Limit)
+                                nextByte = sao.Bytes[sao.Pos++];
+                                if (nextByte == '-')
                                 {
-                                    nextByte = sao.Bytes[sao.Pos++];
-                                    if (nextByte == HttpConstants.CarriageReturn)
+                                    sb.Append('-');
+                                    // now try to find if CRLF or LF there
+                                    if (sao.Pos < sao.Limit)
                                     {
-                                        if (sao.Pos < sao.Limit)
+                                        nextByte = sao.Bytes[sao.Pos++];
+                                        if (nextByte == HttpConstants.CarriageReturn)
                                         {
-                                            nextByte = sao.Bytes[sao.Pos++];
-                                            if (nextByte == HttpConstants.LineFeed)
+                                            if (sao.Pos < sao.Limit)
                                             {
-                                                sao.SetReadPosition(0);
-                                                return sb;
+                                                nextByte = sao.Bytes[sao.Pos++];
+                                                if (nextByte == HttpConstants.LineFeed)
+                                                {
+                                                    sao.SetReadPosition(0);
+                                                    return sb;
+                                                }
+                                                else
+                                                {
+                                                    // error CR without LF
+                                                    // delimiter not found so break here !
+                                                    undecodedChunk.SetReaderIndex(readerIndex);
+                                                    ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.ReadDelimiter);
+                                                }
                                             }
                                             else
                                             {
@@ -1261,40 +1272,33 @@ namespace DotNetty.Codecs.Http.Multipart
                                                 ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.ReadDelimiter);
                                             }
                                         }
+                                        else if (nextByte == HttpConstants.LineFeed)
+                                        {
+                                            sao.SetReadPosition(0);
+                                            return sb;
+                                        }
                                         else
                                         {
-                                            // error CR without LF
-                                            // delimiter not found so break here !
-                                            undecodedChunk.SetReaderIndex(readerIndex);
-                                            ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.ReadDelimiter);
+                                            // No CRLF but ok however (Adobe Flash
+                                            // uploader)
+                                            // minus 1 since we read one char ahead but
+                                            // should not
+                                            sao.SetReadPosition(1);
+                                            return sb;
                                         }
                                     }
-                                    else if (nextByte == HttpConstants.LineFeed)
-                                    {
-                                        sao.SetReadPosition(0);
-                                        return sb;
-                                    }
-                                    else
-                                    {
-                                        // No CRLF but ok however (Adobe Flash
-                                        // uploader)
-                                        // minus 1 since we read one char ahead but
-                                        // should not
-                                        sao.SetReadPosition(1);
-                                        return sb;
-                                    }
+                                    // FIXME what do we do here?
+                                    // either considering it is fine, either waiting for
+                                    // more data to come?
+                                    // lets try considering it is fine...
+                                    sao.SetReadPosition(0);
+                                    return sb;
                                 }
-                                // FIXME what do we do here?
-                                // either considering it is fine, either waiting for
-                                // more data to come?
-                                // lets try considering it is fine...
-                                sao.SetReadPosition(0);
-                                return sb;
+                                // whatever now => error since incomplete
+                                // only one '-' => not enough or whatever not enough
+                                // element
                             }
-                            // whatever now => error since incomplete
-                            // only one '-' => not enough or whatever not enough
-                            // element
-                        }
+                            break;
                     }
                 }
             }

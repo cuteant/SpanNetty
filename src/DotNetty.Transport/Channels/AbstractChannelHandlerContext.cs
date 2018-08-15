@@ -15,14 +15,14 @@ namespace DotNetty.Transport.Channels
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
-    abstract class AbstractChannelHandlerContext : IChannelHandlerContext, IResourceLeakHint
+    abstract partial class AbstractChannelHandlerContext : IChannelHandlerContext, IResourceLeakHint
     {
-        static readonly Action<object> InvokeChannelReadCompleteAction = ctx => ((AbstractChannelHandlerContext)ctx).InvokeChannelReadComplete();
-        static readonly Action<object> InvokeReadAction = ctx => ((AbstractChannelHandlerContext)ctx).InvokeRead();
-        static readonly Action<object> InvokeChannelWritabilityChangedAction = ctx => ((AbstractChannelHandlerContext)ctx).InvokeChannelWritabilityChanged();
-        static readonly Action<object> InvokeFlushAction = ctx => ((AbstractChannelHandlerContext)ctx).InvokeFlush();
-        static readonly Action<object, object> InvokeUserEventTriggeredAction = (ctx, evt) => ((AbstractChannelHandlerContext)ctx).InvokeUserEventTriggered(evt);
-        static readonly Action<object, object> InvokeChannelReadAction = (ctx, msg) => ((AbstractChannelHandlerContext)ctx).InvokeChannelRead(msg);
+        static readonly Action<object> InvokeChannelReadCompleteAction = OnInvokeChannelReadComplete; // ctx => ((AbstractChannelHandlerContext)ctx).InvokeChannelReadComplete();
+        static readonly Action<object> InvokeReadAction = OnInvokeRead; // ctx => ((AbstractChannelHandlerContext)ctx).InvokeRead();
+        static readonly Action<object> InvokeChannelWritabilityChangedAction = OnInvokeChannelWritabilityChanged; // ctx => ((AbstractChannelHandlerContext)ctx).InvokeChannelWritabilityChanged();
+        static readonly Action<object> InvokeFlushAction = OnInvokeFlush; // ctx => ((AbstractChannelHandlerContext)ctx).InvokeFlush();
+        static readonly Action<object, object> InvokeUserEventTriggeredAction = OnInvokeUserEventTriggered; // (ctx, evt) => ((AbstractChannelHandlerContext)ctx).InvokeUserEventTriggered(evt);
+        static readonly Action<object, object> InvokeChannelReadAction = OnInvokeChannelRead; // (ctx, msg) => ((AbstractChannelHandlerContext)ctx).InvokeChannelRead(msg);
 
         [Flags]
         protected internal enum SkipFlags
@@ -1089,11 +1089,3 @@ namespace DotNetty.Transport.Channels
         }
     }
 }
-
-
-#if !DESKTOPCLR && (NET40 || NET45 || NET451 || NET46 || NET461 || NET462 || NET47 || NET471)
-  确保编译不出问题
-#endif
-#if !NETSTANDARD && (NETSTANDARD1_3 || NETSTANDARD1_4 || NETSTANDARD1_5 || NETSTANDARD1_6 || NETSTANDARD2_0)
-  确保编译不出问题
-#endif

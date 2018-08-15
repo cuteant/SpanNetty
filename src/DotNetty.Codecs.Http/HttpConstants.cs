@@ -6,7 +6,7 @@ namespace DotNetty.Codecs.Http
     using System.Text;
     using DotNetty.Buffers;
 
-    public static class HttpConstants
+    public static partial class HttpConstants
     {
         // Horizontal space
         public const byte HorizontalSpace = 32;
@@ -39,12 +39,12 @@ namespace DotNetty.Codecs.Http
         public static readonly Encoding DefaultEncoding = Encoding.UTF8;
 
         // Horizontal space in char
-        public static readonly char HorizontalSpaceChar = (char)HorizontalSpace;
+        public const char HorizontalSpaceChar = (char)HorizontalSpace;
 
         // For HttpObjectEncoder
-        internal static readonly int CrlfShort = (CarriageReturn << 8) | LineFeed;
+        internal const int CrlfShort = (CarriageReturn << 8) | LineFeed;
 
-        internal static readonly int ZeroCrlfMedium = ('0' << 16) | CrlfShort;
+        internal const int ZeroCrlfMedium = ('0' << 16) | CrlfShort;
 
         internal static readonly byte[] ZeroCrlfCrlf = { (byte)'0', CarriageReturn, LineFeed, CarriageReturn, LineFeed };
 

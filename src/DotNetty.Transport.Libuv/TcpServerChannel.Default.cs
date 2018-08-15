@@ -22,5 +22,13 @@ namespace DotNetty.Transport.Libuv
             this.config = new TcpServerChannelConfig(this);
             _channelFactory = new TChannelFactory();
         }
+
+        partial class TcpServerChannelUnsafe
+        {
+            private static void OnAccept(object u, object e)
+            {
+                ((TcpServerChannelUnsafe)u).Accept((Tcp)e);
+            }
+        }
     }
 }

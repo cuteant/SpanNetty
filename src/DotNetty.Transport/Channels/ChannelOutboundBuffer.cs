@@ -330,8 +330,8 @@ namespace DotNetty.Transport.Channels
         /// readable bytes of these buffers.
         /// <para>
         /// Note that the returned array is reused and thus should not escape
-        /// <see cref="AbstractChannel.DoWrite(ChannelOutboundBuffer)"/>. Refer to
-        /// <see cref="TcpSocketChannel.DoWrite(ChannelOutboundBuffer)"/> for an example.
+        /// <see cref="AbstractChannel{TChannel, TUnsafe}.DoWrite(ChannelOutboundBuffer)"/>. Refer to
+        /// <see cref="TcpSocketChannel{TChannel}.DoWrite(ChannelOutboundBuffer)"/> for an example.
         /// </para>
         /// </summary>
         /// <returns>A list of ArraySegment&lt;byte&gt; buffers.</returns>
@@ -343,8 +343,8 @@ namespace DotNetty.Transport.Channels
         /// readable bytes of these buffers.
         /// <para>
         /// Note that the returned array is reused and thus should not escape
-        /// <see cref="AbstractChannel.DoWrite(ChannelOutboundBuffer)"/>. Refer to
-        /// <see cref="TcpSocketChannel.DoWrite(ChannelOutboundBuffer)"/> for an example.
+        /// <see cref="AbstractChannel{TChannel, TUnsafe}.DoWrite(ChannelOutboundBuffer)"/>. Refer to
+        /// <see cref="TcpSocketChannel{TChannel}.DoWrite(ChannelOutboundBuffer)"/> for an example.
         /// </para>
         /// </summary>
         /// <param name="maxCount">The maximum amount of buffers that will be added to the return value.</param>

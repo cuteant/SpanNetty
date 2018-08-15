@@ -114,7 +114,7 @@ namespace DotNetty.Transport.Channels
             }
             finally
             {
-                initMap.TryRemove(ctx, out bool removed);
+                initMap.TryRemove(ctx, out _);
             }
         }
     }

@@ -74,8 +74,8 @@ namespace DotNetty.Transport.Bootstrapping
 
             if (value == null)
             {
-                ChannelOptionValue removed;
-                this.childOptions.TryRemove(childOption, out removed);
+                //ChannelOptionValue removed;
+                this.childOptions.TryRemove(childOption, out _);
             }
             else
             {
@@ -95,8 +95,8 @@ namespace DotNetty.Transport.Bootstrapping
 
             if (value == null)
             {
-                AttributeValue removed;
-                this.childAttrs.TryRemove(childKey, out removed);
+                //AttributeValue removed;
+                this.childAttrs.TryRemove(childKey, out _);
             }
             else
             {

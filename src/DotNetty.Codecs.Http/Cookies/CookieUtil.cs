@@ -96,26 +96,26 @@ namespace DotNetty.Codecs.Http.Cookies
         internal static void Add(StringBuilder sb, string name, long val)
         {
             sb.Append(name);
-            sb.Append((char)HttpConstants.EqualsSign);
+            sb.Append(HttpConstants.EqualsSignChar);
             sb.Append(val);
-            sb.Append((char)HttpConstants.Semicolon);
-            sb.Append((char)HttpConstants.HorizontalSpace);
+            sb.Append(HttpConstants.SemicolonChar);
+            sb.Append(HttpConstants.HorizontalSpaceChar);
         }
 
         internal static void Add(StringBuilder sb, string name, string val)
         {
             sb.Append(name);
-            sb.Append((char)HttpConstants.EqualsSign);
+            sb.Append(HttpConstants.EqualsSignChar);
             sb.Append(val);
-            sb.Append((char)HttpConstants.Semicolon);
-            sb.Append((char)HttpConstants.HorizontalSpace);
+            sb.Append(HttpConstants.SemicolonChar);
+            sb.Append(HttpConstants.HorizontalSpaceChar);
         }
 
         internal static void Add(StringBuilder sb, string name)
         {
             sb.Append(name);
-            sb.Append((char)HttpConstants.Semicolon);
-            sb.Append((char)HttpConstants.HorizontalSpace);
+            sb.Append(HttpConstants.SemicolonChar);
+            sb.Append(HttpConstants.HorizontalSpaceChar);
         }
 
         internal static void AddQuoted(StringBuilder sb, string name, string val)
@@ -126,12 +126,12 @@ namespace DotNetty.Codecs.Http.Cookies
             }
 
             sb.Append(name);
-            sb.Append((char)HttpConstants.EqualsSign);
-            sb.Append((char)HttpConstants.DoubleQuote);
+            sb.Append(HttpConstants.EqualsSignChar);
+            sb.Append(HttpConstants.DoubleQuoteChar);
             sb.Append(val);
-            sb.Append((char)HttpConstants.DoubleQuote);
-            sb.Append((char)HttpConstants.Semicolon);
-            sb.Append((char)HttpConstants.HorizontalSpace);
+            sb.Append(HttpConstants.DoubleQuoteChar);
+            sb.Append(HttpConstants.SemicolonChar);
+            sb.Append(HttpConstants.HorizontalSpaceChar);
         }
 
         internal static int FirstInvalidCookieNameOctet(string cs) =>  FirstInvalidOctet(cs, ValidCookieNameOctets);
@@ -167,9 +167,9 @@ namespace DotNetty.Codecs.Http.Cookies
         internal static ICharSequence UnwrapValue(ICharSequence cs)
         {
             int len = cs.Count;
-            if (len > 0 && cs[0]  == '"')
+            if (len > 0 && cs[0]  == HttpConstants.DoubleQuoteChar)
             {
-                if (len >= 2 && cs[len - 1] == '"')
+                if (len >= 2 && cs[len - 1] == HttpConstants.DoubleQuoteChar)
                 {
                     // properly balanced
                     return len == 2 ? StringCharSequence.Empty : cs.SubSequence(1, len - 1);

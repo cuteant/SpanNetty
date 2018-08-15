@@ -6,9 +6,9 @@ namespace DotNetty.Common.Internal.Logging
     using System;
     using Microsoft.Extensions.Logging;
 
-    sealed class GenericLogger : AbstractInternalLogger
+    sealed partial class GenericLogger : AbstractInternalLogger
     {
-        static readonly Func<string, Exception, string> MessageFormatterFunc = (s, e) => s;
+        static readonly Func<string, Exception, string> MessageFormatterFunc = MessageFormatterInternal;
         readonly ILogger logger;
 
         public GenericLogger(string name, ILogger logger)

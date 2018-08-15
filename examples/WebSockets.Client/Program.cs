@@ -13,6 +13,8 @@ namespace WebSockets.Client
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http.WebSockets;
     using DotNetty.Codecs.Http.WebSockets.Extensions.Compression;
+    using DotNetty.Handlers.Logging;
+    using DotNetty.Handlers.Timeout;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
@@ -90,6 +92,9 @@ namespace WebSockets.Client
                         pipeline.AddLast("tls", new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(targetHost)));
                     }
 
+                    pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 10, 0));
+
+                    pipeline.AddLast(new MsLoggingHandler("CONN"));
                     pipeline.AddLast(
                         new HttpClientCodec(),
                         new HttpObjectAggregator(8192),

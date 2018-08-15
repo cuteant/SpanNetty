@@ -17,8 +17,8 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
     public static class WebSocketRsv
     {
-        public static readonly int Rsv1 = 0x04;
-        public static readonly int Rsv2 = 0x02;
-        public static readonly int Rsv3 = 0x01;
+        public const int Rsv1 = 0x04;
+        public const int Rsv2 = 0x02;
+        public const int Rsv3 = 0x01;
     }
 }

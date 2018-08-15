@@ -12,7 +12,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<WebSocketClientHandshaker08>();
 
-        public static readonly string MagicGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+        public const string MagicGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
         AsciiString expectedChallengeResponseString;
 
