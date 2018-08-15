@@ -14,8 +14,7 @@ namespace DotNetty.Transport.Channels.Sockets
     /// <summary>
     ///     <see cref="ISocketChannel" /> which uses Socket-based implementation.
     /// </summary>
-    public class TcpSocketChannel<TChannel> : AbstractSocketByteChannel<TChannel, TcpSocketChannel<TChannel>.TcpSocketChannelUnsafe>, ISocketChannel
-        where TChannel : TcpSocketChannel<TChannel>
+    public partial class TcpSocketChannel<TChannel> : AbstractSocketByteChannel<TChannel, TcpSocketChannel<TChannel>.TcpSocketChannelUnsafe>, ISocketChannel
     {
         static readonly ChannelMetadata METADATA = new ChannelMetadata(false, 16);
 

@@ -14,9 +14,7 @@ namespace DotNetty.Transport.Channels
     /// <see cref="IChannel.DisconnectAsync()"/>, <see cref="IChannel.WriteAsync(object)"/>,
     /// <see cref="IChannel.Flush()"/>.
     /// </summary>
-    public abstract class AbstractServerChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>, IServerChannel
-        where TChannel : AbstractServerChannel<TChannel, TUnsafe>
-        where TUnsafe : AbstractServerChannel<TChannel, TUnsafe>.DefaultServerUnsafe, new()
+    public abstract partial class AbstractServerChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>, IServerChannel
     {
         static readonly ChannelMetadata METADATA = new ChannelMetadata(false, 16);
 

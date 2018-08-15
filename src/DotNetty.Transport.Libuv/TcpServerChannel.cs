@@ -13,9 +13,7 @@ namespace DotNetty.Transport.Libuv
 
     using TcpListener = Native.TcpListener;
 
-    public class TcpServerChannel<TServerChannel, TChannelFactory> : NativeChannel<TServerChannel, TcpServerChannel<TServerChannel, TChannelFactory>.TcpServerChannelUnsafe>, IServerChannel
-        where TServerChannel : TcpServerChannel<TServerChannel, TChannelFactory>
-        where TChannelFactory : ITcpChannelFactory, new()
+    public partial class TcpServerChannel<TServerChannel, TChannelFactory> : NativeChannel<TServerChannel, TcpServerChannel<TServerChannel, TChannelFactory>.TcpServerChannelUnsafe>, IServerChannel
     {
         static readonly ChannelMetadata TcpServerMetadata = new ChannelMetadata(false);
 
@@ -23,13 +21,10 @@ namespace DotNetty.Transport.Libuv
         TcpListener tcpListener;
         bool isBound;
 
-        private readonly TChannelFactory _channelFactory;
-
-        public TcpServerChannel() : base(null)
-        {
-            this.config = new TcpServerChannelConfig(this);
-            _channelFactory = new TChannelFactory();
-        }
+        //public TcpServerChannel() : base(null)
+        //{
+        //    this.config = new TcpServerChannelConfig(this);
+        //}
 
         public override IChannelConfiguration Configuration => this.config;
 

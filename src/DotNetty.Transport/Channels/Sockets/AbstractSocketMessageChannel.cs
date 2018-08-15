@@ -11,9 +11,7 @@ namespace DotNetty.Transport.Channels.Sockets
     /// <summary>
     /// <see cref="AbstractSocketChannel"/> base class for <see cref="IChannel"/>s that operate on messages.
     /// </summary>
-    public abstract class AbstractSocketMessageChannel<TChannel, TUnsafe> : AbstractSocketChannel<TChannel, TUnsafe>
-        where TChannel : AbstractSocketMessageChannel<TChannel, TUnsafe>
-        where TUnsafe : AbstractSocketMessageChannel<TChannel, TUnsafe>.SocketMessageUnsafe, new()
+    public abstract partial class AbstractSocketMessageChannel<TChannel, TUnsafe> : AbstractSocketChannel<TChannel, TUnsafe>
     {
         /// <summary>
         /// Creates a new <see cref="AbstractSocketMessageChannel"/> instance.

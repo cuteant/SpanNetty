@@ -15,4 +15,21 @@ namespace DotNetty.Transport.Channels.Sockets
         /// <summary>Create a new instance using the given <see cref="Socket"/>.</summary>
         public TcpServerSocketChannel(Socket socket) : base(socket) { }
     }
+
+    partial class TcpServerSocketChannel<TServerChannel, TChannelFactory> : AbstractSocketChannel<TServerChannel, TcpServerSocketChannel<TServerChannel, TChannelFactory>.TcpServerSocketChannelUnsafe>, IServerSocketChannel
+        where TServerChannel : TcpServerSocketChannel<TServerChannel, TChannelFactory>
+        where TChannelFactory : ITcpSocketChannelFactory, new()
+    {
+        private readonly TChannelFactory _channelFactory;
+
+        /// <summary>
+        ///     Create a new instance using the given <see cref="Socket"/>.
+        /// </summary>
+        public TcpServerSocketChannel(Socket socket)
+            : base(null, socket)
+        {
+            this.config = new TcpServerSocketChannelConfig((TServerChannel)this, socket);
+            _channelFactory = new TChannelFactory();
+        }
+    }
 }

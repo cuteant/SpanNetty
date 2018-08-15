@@ -14,9 +14,7 @@ namespace DotNetty.Transport.Channels
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
-    public abstract class AbstractChannel<TChannel, TUnsafe> : DefaultAttributeMap, IChannel
-        where TChannel : AbstractChannel<TChannel, TUnsafe>
-        where TUnsafe : AbstractChannel<TChannel, TUnsafe>.AbstractUnsafe, new()
+    public abstract partial class AbstractChannel<TChannel, TUnsafe> : DefaultAttributeMap, IChannel
     {
         protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance(typeof(TChannel));
 

@@ -14,9 +14,7 @@ namespace DotNetty.Transport.Libuv
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
-    public abstract class NativeChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>, INativeChannel
-        where TChannel : NativeChannel<TChannel, TUnsafe>
-        where TUnsafe : NativeChannel<TChannel, TUnsafe>.NativeChannelUnsafe, new()
+    public abstract partial class NativeChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>, INativeChannel
     {
         //protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<NativeChannel>();
 
@@ -348,18 +346,5 @@ namespace DotNetty.Transport.Libuv
                 this.Flush0();
             }
         }
-    }
-
-    internal interface INativeUnsafe
-    {
-        IntPtr UnsafeHandle { get; }
-
-        void FinishConnect(ConnectRequest request);
-
-        uv_buf_t PrepareRead(ReadOperation readOperation);
-
-        void FinishRead(ReadOperation readOperation);
-
-        void FinishWrite(int bytesWritten, OperationException error);
     }
 }

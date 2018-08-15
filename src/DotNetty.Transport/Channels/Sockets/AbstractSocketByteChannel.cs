@@ -12,9 +12,7 @@ namespace DotNetty.Transport.Channels.Sockets
     /// <summary>
     /// <see cref="AbstractSocketChannel"/> base class for <see cref="IChannel"/>s that operate on bytes.
     /// </summary>
-    public abstract class AbstractSocketByteChannel<TChannel, TUnsafe> : AbstractSocketChannel<TChannel, TUnsafe>
-        where TChannel : AbstractSocketByteChannel<TChannel, TUnsafe>
-        where TUnsafe : AbstractSocketByteChannel<TChannel, TUnsafe>.SocketByteChannelUnsafe, new()
+    public abstract partial class AbstractSocketByteChannel<TChannel, TUnsafe> : AbstractSocketChannel<TChannel, TUnsafe>
     {
         static readonly string ExpectedTypes =
             $" (expected: {StringUtil.SimpleClassName<IByteBuffer>()})"; //+ ", " +

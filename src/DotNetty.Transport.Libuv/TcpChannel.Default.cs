@@ -4,6 +4,7 @@
 namespace DotNetty.Transport.Libuv
 {
     using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Channels.Sockets;
     using DotNetty.Transport.Libuv.Native;
 
     public sealed class TcpChannel : TcpChannel<TcpChannel>
@@ -11,5 +12,10 @@ namespace DotNetty.Transport.Libuv
         public TcpChannel() : base() { }
 
         internal TcpChannel(IChannel parent, Tcp tcp) : base(parent, tcp) { }
+    }
+
+    partial class TcpChannel<TChannel> : NativeChannel<TChannel, TcpChannel<TChannel>.TcpChannelUnsafe>, ISocketChannel
+        where TChannel : TcpChannel<TChannel>
+    {
     }
 }

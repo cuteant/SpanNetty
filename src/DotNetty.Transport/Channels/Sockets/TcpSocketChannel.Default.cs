@@ -26,4 +26,9 @@ namespace DotNetty.Transport.Channels.Sockets
 
         internal TcpSocketChannel(IChannel parent, Socket socket, bool connected) : base(parent, socket, connected) { }
     }
+
+    partial class TcpSocketChannel<TChannel> : AbstractSocketByteChannel<TChannel, TcpSocketChannel<TChannel>.TcpSocketChannelUnsafe>, ISocketChannel
+        where TChannel : TcpSocketChannel<TChannel>
+    {
+    }
 }

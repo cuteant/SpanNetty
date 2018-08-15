@@ -13,9 +13,7 @@ namespace DotNetty.Transport.Channels.Sockets
     ///     A <see cref="IServerSocketChannel" /> implementation which uses Socket-based implementation to accept new
     ///     connections.
     /// </summary>
-    public class TcpServerSocketChannel<TServerChannel, TChannelFactory> : AbstractSocketChannel<TServerChannel, TcpServerSocketChannel<TServerChannel, TChannelFactory>.TcpServerSocketChannelUnsafe>, IServerSocketChannel
-        where TServerChannel : TcpServerSocketChannel<TServerChannel, TChannelFactory>
-        where TChannelFactory : ITcpSocketChannelFactory, new()
+    public partial class TcpServerSocketChannel<TServerChannel, TChannelFactory> : AbstractSocketChannel<TServerChannel, TcpServerSocketChannel<TServerChannel, TChannelFactory>.TcpServerSocketChannelUnsafe>, IServerSocketChannel
     {
         //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<TcpServerSocketChannel>(); ## 苦竹 屏蔽 ##
         static readonly ChannelMetadata METADATA = new ChannelMetadata(false);
@@ -25,8 +23,6 @@ namespace DotNetty.Transport.Channels.Sockets
         readonly IServerSocketChannelConfiguration config;
 
         SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe> acceptOperation;
-
-        private readonly TChannelFactory _channelFactory;
 
         /// <summary>
         ///     Create a new instance
@@ -44,15 +40,14 @@ namespace DotNetty.Transport.Channels.Sockets
         {
         }
 
-        /// <summary>
-        ///     Create a new instance using the given <see cref="Socket"/>.
-        /// </summary>
-        public TcpServerSocketChannel(Socket socket)
-            : base(null, socket)
-        {
-            this.config = new TcpServerSocketChannelConfig((TServerChannel)this, socket);
-            _channelFactory = new TChannelFactory();
-        }
+        ///// <summary>
+        /////     Create a new instance using the given <see cref="Socket"/>.
+        ///// </summary>
+        //public TcpServerSocketChannel(Socket socket)
+        //    : base(null, socket)
+        //{
+        //    this.config = new TcpServerSocketChannelConfig(this, socket);
+        //}
 
         public override IChannelConfiguration Configuration => this.config;
 

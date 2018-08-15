@@ -7,9 +7,7 @@ namespace DotNetty.Transport.Channels.Sockets
     using System.Net.Sockets;
     using DotNetty.Common.Utilities;
 
-    public class SocketChannelAsyncOperation<TChannel, TUnsafe> : SocketAsyncEventArgs
-        where TChannel : AbstractSocketChannel<TChannel, TUnsafe>
-        where TUnsafe : AbstractSocketChannel<TChannel, TUnsafe>.AbstractSocketUnsafe, new()
+    public partial class SocketChannelAsyncOperation<TChannel, TUnsafe> : SocketAsyncEventArgs
     {
         public SocketChannelAsyncOperation(TChannel channel)
             : this(channel, true)

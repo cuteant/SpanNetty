@@ -17,17 +17,7 @@ namespace DotNetty.Transport.Channels.Sockets
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
-    public sealed class SocketDatagramChannel : SocketDatagramChannel<SocketDatagramChannel>
-    {
-        public SocketDatagramChannel() : base() { }
-
-        public SocketDatagramChannel(AddressFamily addressFamily) : base(addressFamily) { }
-
-        public SocketDatagramChannel(Socket socket) : base(socket) { }
-    }
-
-    public class SocketDatagramChannel<TChannel> : AbstractSocketMessageChannel<TChannel, SocketDatagramChannel<TChannel>.DatagramChannelUnsafe>, IDatagramChannel
-        where TChannel : SocketDatagramChannel<TChannel>
+    public partial class SocketDatagramChannel<TChannel> : AbstractSocketMessageChannel<TChannel, SocketDatagramChannel<TChannel>.DatagramChannelUnsafe>, IDatagramChannel
     {
         //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<SocketDatagramChannel>();
         static readonly Action<object, object> ReceiveFromCompletedSyncCallback = OnReceiveFromCompletedSync;
@@ -36,15 +26,10 @@ namespace DotNetty.Transport.Channels.Sockets
         readonly DefaultDatagramChannelConfig config;
         readonly IPEndPoint anyRemoteEndPoint;
 
-        public SocketDatagramChannel()
-#if NET40
-            : this(new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
-#else
-            // .Net4.5+，默认为AddressFamily.InterNetworkV6，并设置 DualMode 为 true，双线绑定
-            : this(new Socket(SocketType.Dgram, ProtocolType.Udp))
-#endif
-        {
-        }
+        //public SocketDatagramChannel()
+        //    : this(new Socket(SocketType.Dgram, ProtocolType.Udp))
+        //{
+        //}
 
         public SocketDatagramChannel(AddressFamily addressFamily)
             : this(new Socket(addressFamily, SocketType.Dgram, ProtocolType.Udp))
