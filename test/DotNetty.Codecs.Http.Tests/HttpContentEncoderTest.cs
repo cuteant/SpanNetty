@@ -20,7 +20,7 @@ namespace DotNetty.Codecs.Http.Tests
                 new Result(new StringCharSequence("test"), new EmbeddedChannel(new EmbeddedMessageEncoder()));
         }
 
-        sealed class EmbeddedMessageEncoder : MessageToByteEncoder<IByteBuffer>
+        sealed class EmbeddedMessageEncoder : MessageToByteEncoder2<IByteBuffer>
         {
             protected override void Encode(IChannelHandlerContext context, IByteBuffer message, IByteBuffer output)
             {

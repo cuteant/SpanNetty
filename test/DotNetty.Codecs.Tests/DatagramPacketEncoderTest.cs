@@ -16,7 +16,7 @@ namespace DotNetty.Codecs.Tests
         [Fact]
         public void Encode()
         {
-            var channel = new EmbeddedChannel(new DatagramPacketEncoder<string>(new StringEncoder(Encoding.UTF8)));
+            var channel = new EmbeddedChannel(new DatagramPacketEncoder2<string>(new StringEncoder(Encoding.UTF8)));
             var recipient = new IPEndPoint(IPAddress.Loopback, 10000);
             var sender = new IPEndPoint(IPAddress.Loopback, 20000);
             const string Content = "netty";
@@ -40,7 +40,7 @@ namespace DotNetty.Codecs.Tests
         [Fact]
         public void UnmatchedMessageType()
         {
-            var channel = new EmbeddedChannel(new DatagramPacketEncoder<string>(new StringEncoder(Encoding.UTF8)));
+            var channel = new EmbeddedChannel(new DatagramPacketEncoder2<string>(new StringEncoder(Encoding.UTF8)));
             var recipient = new IPEndPoint(IPAddress.Loopback, 10000);
             var sender = new IPEndPoint(IPAddress.Loopback, 20000);
 
@@ -63,7 +63,7 @@ namespace DotNetty.Codecs.Tests
         [Fact]
         public void UnmatchedType()
         {
-            var channel = new EmbeddedChannel(new DatagramPacketEncoder<string>(new StringEncoder(Encoding.UTF8)));
+            var channel = new EmbeddedChannel(new DatagramPacketEncoder2<string>(new StringEncoder(Encoding.UTF8)));
 
             try
             {

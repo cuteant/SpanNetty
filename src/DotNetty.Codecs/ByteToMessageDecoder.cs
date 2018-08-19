@@ -10,7 +10,7 @@ namespace DotNetty.Codecs
     using DotNetty.Common;
     using DotNetty.Transport.Channels;
 
-    public abstract class ByteToMessageDecoder : ChannelHandlerAdapter
+    public abstract partial class ByteToMessageDecoder : ChannelHandlerAdapter
     {
         public delegate IByteBuffer CumulationFunc(IByteBufferAllocator alloc, IByteBuffer cumulation, IByteBuffer input);
 
@@ -18,29 +18,29 @@ namespace DotNetty.Codecs
         ///     Cumulates instances of <see cref="IByteBuffer" /> by merging them into one <see cref="IByteBuffer" />, using memory
         ///     copies.
         /// </summary>
-        public static readonly CumulationFunc MergeCumulator = (allocator, cumulation, input) =>
-        {
-            IByteBuffer buffer;
-            if (cumulation.WriterIndex > cumulation.MaxCapacity - input.ReadableBytes
-                || cumulation.ReferenceCount > 1)
-            {
-                // Expand cumulation (by replace it) when either there is not more room in the buffer
-                // or if the refCnt is greater then 1 which may happen when the user use Slice().Retain() or
-                // Duplicate().Retain().
-                //
-                // See:
-                // - https://github.com/netty/netty/issues/2327
-                // - https://github.com/netty/netty/issues/1764
-                buffer = ExpandCumulation(allocator, cumulation, input.ReadableBytes);
-            }
-            else
-            {
-                buffer = cumulation;
-            }
-            buffer.WriteBytes(input);
-            input.Release();
-            return buffer;
-        };
+        public static readonly CumulationFunc MergeCumulator = MergeCumulatorInternal; // (allocator, cumulation, input) =>
+        //{
+        //    IByteBuffer buffer;
+        //    if (cumulation.WriterIndex > cumulation.MaxCapacity - input.ReadableBytes
+        //        || cumulation.ReferenceCount > 1)
+        //    {
+        //        // Expand cumulation (by replace it) when either there is not more room in the buffer
+        //        // or if the refCnt is greater then 1 which may happen when the user use Slice().Retain() or
+        //        // Duplicate().Retain().
+        //        //
+        //        // See:
+        //        // - https://github.com/netty/netty/issues/2327
+        //        // - https://github.com/netty/netty/issues/1764
+        //        buffer = ExpandCumulation(allocator, cumulation, input.ReadableBytes);
+        //    }
+        //    else
+        //    {
+        //        buffer = cumulation;
+        //    }
+        //    buffer.WriteBytes(input);
+        //    input.Release();
+        //    return buffer;
+        //};
 
         /// <summary>
         ///     Cumulate instances of <see cref="IByteBuffer" /> by add them to a <see cref="CompositeByteBuffer" /> and therefore
@@ -51,40 +51,40 @@ namespace DotNetty.Codecs
         ///     use-case
         ///     and the decoder implementation this may be slower then just use the <see cref="MergeCumulator" />.
         /// </remarks>
-        public static CumulationFunc CompositionCumulation = (alloc, cumulation, input) =>
-        {
-            IByteBuffer buffer;
-            if (cumulation.ReferenceCount > 1)
-            {
-                // Expand cumulation (by replace it) when the refCnt is greater then 1 which may happen when the user
-                // use slice().retain() or duplicate().retain().
-                //
-                // See:
-                // - https://github.com/netty/netty/issues/2327
-                // - https://github.com/netty/netty/issues/1764
-                buffer = ExpandCumulation(alloc, cumulation, input.ReadableBytes);
-                buffer.WriteBytes(input);
-                input.Release();
-            }
-            else
-            {
-                CompositeByteBuffer composite;
-                var asComposite = cumulation as CompositeByteBuffer;
-                if (asComposite != null)
-                {
-                    composite = asComposite;
-                }
-                else
-                {
-                    int readable = cumulation.ReadableBytes;
-                    composite = alloc.CompositeBuffer();
-                    composite.AddComponent(cumulation).SetWriterIndex(readable);
-                }
-                composite.AddComponent(input).SetWriterIndex(composite.WriterIndex + input.ReadableBytes);
-                buffer = composite;
-            }
-            return buffer;
-        };
+        public static readonly CumulationFunc CompositionCumulation = CompositionCumulationInternal; // (alloc, cumulation, input) =>
+        //{
+        //    IByteBuffer buffer;
+        //    if (cumulation.ReferenceCount > 1)
+        //    {
+        //        // Expand cumulation (by replace it) when the refCnt is greater then 1 which may happen when the user
+        //        // use slice().retain() or duplicate().retain().
+        //        //
+        //        // See:
+        //        // - https://github.com/netty/netty/issues/2327
+        //        // - https://github.com/netty/netty/issues/1764
+        //        buffer = ExpandCumulation(alloc, cumulation, input.ReadableBytes);
+        //        buffer.WriteBytes(input);
+        //        input.Release();
+        //    }
+        //    else
+        //    {
+        //        CompositeByteBuffer composite;
+        //        var asComposite = cumulation as CompositeByteBuffer;
+        //        if (asComposite != null)
+        //        {
+        //            composite = asComposite;
+        //        }
+        //        else
+        //        {
+        //            int readable = cumulation.ReadableBytes;
+        //            composite = alloc.CompositeBuffer();
+        //            composite.AddComponent(cumulation).SetWriterIndex(readable);
+        //        }
+        //        composite.AddComponent(input).SetWriterIndex(composite.WriterIndex + input.ReadableBytes);
+        //        buffer = composite;
+        //    }
+        //    return buffer;
+        //};
 
         IByteBuffer cumulation;
         CumulationFunc cumulator = MergeCumulator;

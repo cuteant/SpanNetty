@@ -15,7 +15,7 @@ namespace DotNetty.Codecs.Http
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public class HttpObjectAggregator : MessageAggregator<IHttpObject, IHttpMessage, IHttpContent, IFullHttpMessage>
+    public class HttpObjectAggregator : MessageAggregator2<IHttpObject, IHttpMessage, IHttpContent, IFullHttpMessage>
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<HttpObjectAggregator>();
         static readonly IFullHttpResponse Continue = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.Continue, Unpooled.Empty);

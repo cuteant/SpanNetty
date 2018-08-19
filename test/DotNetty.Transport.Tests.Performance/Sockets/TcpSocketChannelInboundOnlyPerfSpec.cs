@@ -53,7 +53,7 @@ namespace DotNetty.Transport.Tests.Performance.Sockets
 
         protected virtual IChannelHandler GetEncoder() => new LengthFieldPrepender(4, false);
 
-        protected virtual IChannelHandler GetDecoder() => new LengthFieldBasedFrameDecoder(int.MaxValue, 0, 4, 0, 4);
+        protected virtual IChannelHandler GetDecoder() => new LengthFieldBasedFrameDecoder2(int.MaxValue, 0, 4, 0, 4);
 
         [PerfSetup]
         public void SetUp(BenchmarkContext context)

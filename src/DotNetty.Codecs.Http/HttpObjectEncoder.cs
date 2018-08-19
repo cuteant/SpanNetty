@@ -10,7 +10,7 @@ namespace DotNetty.Codecs.Http
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public abstract class HttpObjectEncoder<T> : MessageToMessageEncoder<object> where T : IHttpMessage
+    public abstract class HttpObjectEncoder<T> : MessageToMessageEncoder2<object> where T : IHttpMessage
     {
         const float HeadersWeightNew = 1 / 5f;
         const float HeadersWeightHistorical = 1 - HeadersWeightNew;
@@ -209,8 +209,9 @@ namespace DotNetty.Codecs.Http
 
         protected virtual bool IsContentAlwaysEmpty(T msg) => false;
 
-        public override bool AcceptOutboundMessage(object msg)
+        public override bool TryAcceptOutboundMessage(object msg, out object cast)
         {
+            cast = msg;
             switch (msg)
             {
                 case IHttpObject _:

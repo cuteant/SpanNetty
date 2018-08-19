@@ -5,14 +5,14 @@ namespace DotNetty.Codecs.Mqtt
 {
     using System;
     using System.Collections.Generic;
-    using System.Text;
+    using CuteAnt.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public sealed class MqttEncoder : MessageToMessageEncoder<Packet>
+    public sealed class MqttEncoder : MessageToMessageEncoder2<Packet>
     {
         public static readonly MqttEncoder Instance = new MqttEncoder();
         const int PacketIdLength = 2;
@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Mqtt
                     EncodePacketWithFixedHeaderOnly(bufferAllocator, packet, output);
                     break;
                 default:
-                    throw new ArgumentException("Unknown packet type: " + packet.PacketType, nameof(packet));
+                    ThrowHelper.ThrowArgumentException(packet); break;
             }
         }
 
@@ -75,7 +75,7 @@ namespace DotNetty.Codecs.Mqtt
 
             // Client id
             string clientId = packet.ClientId;
-            Util.ValidateClientId(clientId);
+            if (clientId == null) Util.ValidateClientId();
             byte[] clientIdBytes = EncodeStringInUtf8(clientId);
             payloadBufferSize += StringSizeLength + clientIdBytes.Length;
 
@@ -236,7 +236,8 @@ namespace DotNetty.Codecs.Mqtt
             IByteBuffer payload = packet.Payload ?? Unpooled.Empty;
 
             string topicName = packet.TopicName;
-            Util.ValidateTopicName(topicName);
+            if (topicName.Length == 0) Util.ValidateTopicName();
+            if (topicName.IndexOfAny(Util.TopicWildcards) > 0) Util.ValidateTopicName(topicName);
             byte[] topicNameBytes = EncodeStringInUtf8(topicName);
 
             int variableHeaderBufferSize = StringSizeLength + topicNameBytes.Length +
@@ -465,7 +466,7 @@ namespace DotNetty.Codecs.Mqtt
         static byte[] EncodeStringInUtf8(string s)
         {
             // todo: validate against extra limitations per MQTT's UTF-8 string definition
-            return Encoding.UTF8.GetBytes(s);
+            return StringHelper.UTF8NoBOM.GetBytes(s);
         }
     }
 }

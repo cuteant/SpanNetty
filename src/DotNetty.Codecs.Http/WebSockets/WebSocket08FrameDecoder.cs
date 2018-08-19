@@ -109,13 +109,13 @@ namespace DotNetty.Codecs.Http.WebSockets
 
                     if (this.frameRsv != 0 && !this.allowExtensions)
                     {
-                        this.ProtocolViolation(context, $"RSV != 0 and no extension negotiated, RSV:{this.frameRsv}");
+                        this.ProtocolViolation_RSVNoExtensionNegotiated(context, this.frameRsv);
                         return;
                     }
 
                     if (!this.allowMaskMismatch && this.expectMaskedFrames != this.frameMasked)
                     {
-                        this.ProtocolViolation(context, "received a frame that is not masked as expected");
+                        this.ProtocolViolation_RecAFrameThatIsNotMaskedAsExected(context);
                         return;
                     }
 
@@ -125,56 +125,65 @@ namespace DotNetty.Codecs.Http.WebSockets
                         // control frames MUST NOT be fragmented
                         if (!this.frameFinalFlag)
                         {
-                            this.ProtocolViolation(context, "fragmented control frame");
+                            this.ProtocolViolation_FragmentedControlFrame(context);
                             return;
                         }
 
                         // control frames MUST have payload 125 octets or less
                         if (this.framePayloadLen1 > 125)
                         {
-                            this.ProtocolViolation(context, "control frame with payload length > 125 octets");
+                            this.ProtocolViolation_ControlFrameWithPayloadLength125Octets(context);
                             return;
                         }
 
-                        // check for reserved control frame opcodes
-                        if (!(this.frameOpcode == OpcodeClose 
-                            || this.frameOpcode == OpcodePing
-                            || this.frameOpcode == OpcodePong))
+                        switch (this.frameOpcode)
                         {
-                            this.ProtocolViolation(context, $"control frame using reserved opcode {this.frameOpcode}");
-                            return;
-                        }
+                            // close frame : if there is a body, the first two bytes of the
+                            // body MUST be a 2-byte unsigned integer (in network byte
+                            // order) representing a getStatus code
+                            case OpcodeClose:
+                                if(this.framePayloadLen1 == 1)
+                                {
+                                    this.ProtocolViolation_RecCloseControlFrame(context);
+                                    return;
+                                }
+                                break;
 
-                        // close frame : if there is a body, the first two bytes of the
-                        // body MUST be a 2-byte unsigned integer (in network byte
-                        // order) representing a getStatus code
-                        if (this.frameOpcode == 8 && this.framePayloadLen1 == 1)
-                        {
-                            this.ProtocolViolation(context, "received close control frame with payload len 1");
-                            return;
+                            case OpcodePing:
+                            case OpcodePong:
+                                break;
+
+                            // check for reserved control frame opcodes
+                            default:
+                                this.ProtocolViolation_ControlFrameUsingReservedOpcode(context, this.frameOpcode);
+                                return;
                         }
                     }
                     else // data frame
                     {
-                        // check for reserved data frame opcodes
-                        if (!(this.frameOpcode == OpcodeCont || this.frameOpcode == OpcodeText
-                            || this.frameOpcode == OpcodeBinary))
+                        switch (this.frameOpcode)
                         {
-                            this.ProtocolViolation(context, $"data frame using reserved opcode {this.frameOpcode}");
-                            return;
+                            case OpcodeCont:
+                            case OpcodeText:
+                            case OpcodeBinary:
+                                break;
+                            // check for reserved data frame opcodes
+                            default:
+                                this.ProtocolViolation_DataFrameUsingReservedOpcode(context, this.frameOpcode);
+                                return;
                         }
 
                         // check opcode vs message fragmentation state 1/2
                         if (this.fragmentedFramesCount == 0 && this.frameOpcode == OpcodeCont)
                         {
-                            this.ProtocolViolation(context, "received continuation data frame outside fragmented message");
+                            this.ProtocolViolation_RecContionuationDataFrame(context);
                             return;
                         }
 
                         // check opcode vs message fragmentation state 2/2
                         if (this.fragmentedFramesCount != 0 && this.frameOpcode != OpcodeCont && this.frameOpcode != OpcodePing)
                         {
-                            this.ProtocolViolation(context, "received non-continuation data frame while inside fragmented message");
+                            this.ProtocolViolation_RecNonContionuationDataFrame(context);
                             return;
                         }
                     }
@@ -183,43 +192,45 @@ namespace DotNetty.Codecs.Http.WebSockets
                     goto case State.ReadingSize;
                 case State.ReadingSize:
                     // Read frame payload length
-                    if (this.framePayloadLen1 == 126)
+                    switch (this.framePayloadLen1)
                     {
-                        if (input.ReadableBytes < 2)
-                        {
-                            return;
-                        }
-                        this.framePayloadLength = input.ReadUnsignedShort();
-                        if (this.framePayloadLength < 126)
-                        {
-                            this.ProtocolViolation(context, "invalid data frame length (not using minimal length encoding)");
-                            return;
-                        }
-                    }
-                    else if (this.framePayloadLen1 == 127)
-                    {
-                        if (input.ReadableBytes < 8)
-                        {
-                            return;
-                        }
-                        this.framePayloadLength = input.ReadLong();
-                        // TODO: check if it's bigger than 0x7FFFFFFFFFFFFFFF, Maybe
-                        // just check if it's negative?
+                        case 126:
+                            if (input.ReadableBytes < 2)
+                            {
+                                return;
+                            }
+                            this.framePayloadLength = input.ReadUnsignedShort();
+                            if (this.framePayloadLength < 126)
+                            {
+                                this.ProtocolViolation_InvalidDataFrameLength(context);
+                                return;
+                            }
+                            break;
 
-                        if (this.framePayloadLength < 65536)
-                        {
-                            this.ProtocolViolation(context, "invalid data frame length (not using minimal length encoding)");
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        this.framePayloadLength = this.framePayloadLen1;
+                        case 127:
+                            if (input.ReadableBytes < 8)
+                            {
+                                return;
+                            }
+                            this.framePayloadLength = input.ReadLong();
+                            // TODO: check if it's bigger than 0x7FFFFFFFFFFFFFFF, Maybe
+                            // just check if it's negative?
+
+                            if (this.framePayloadLength < 65536)
+                            {
+                                this.ProtocolViolation_InvalidDataFrameLength(context);
+                                return;
+                            }
+                            break;
+
+                        default:
+                            this.framePayloadLength = this.framePayloadLen1;
+                            break;
                     }
 
                     if (this.framePayloadLength > this.maxFramePayloadLength)
                     {
-                        this.ProtocolViolation(context, $"Max frame length of {this.maxFramePayloadLength} has been exceeded.");
+                        this.ProtocolViolation_MaxFrameLengthHasBeenExceeded(context, this.maxFramePayloadLength);
                         return;
                     }
 
@@ -268,25 +279,24 @@ namespace DotNetty.Codecs.Http.WebSockets
 
                         // Processing ping/pong/close frames because they cannot be
                         // fragmented
-                        if (this.frameOpcode == OpcodePing)
+                        switch (this.frameOpcode)
                         {
-                            output.Add(new PingWebSocketFrame(this.frameFinalFlag, this.frameRsv, payloadBuffer));
-                            payloadBuffer = null;
-                            return;
-                        }
-                        if (this.frameOpcode == OpcodePong)
-                        {
-                            output.Add(new PongWebSocketFrame(this.frameFinalFlag, this.frameRsv, payloadBuffer));
-                            payloadBuffer = null;
-                            return;
-                        }
-                        if (this.frameOpcode == OpcodeClose)
-                        {
-                            this.receivedClosingHandshake = true;
-                            this.CheckCloseFrameBody(context, payloadBuffer);
-                            output.Add(new CloseWebSocketFrame(this.frameFinalFlag, this.frameRsv, payloadBuffer));
-                            payloadBuffer = null;
-                            return;
+                            case OpcodePing:
+                                output.Add(new PingWebSocketFrame(this.frameFinalFlag, this.frameRsv, payloadBuffer));
+                                payloadBuffer = null;
+                                return;
+
+                            case OpcodePong:
+                                output.Add(new PongWebSocketFrame(this.frameFinalFlag, this.frameRsv, payloadBuffer));
+                                payloadBuffer = null;
+                                return;
+
+                            case OpcodeClose:
+                                this.receivedClosingHandshake = true;
+                                this.CheckCloseFrameBody(context, payloadBuffer);
+                                output.Add(new CloseWebSocketFrame(this.frameFinalFlag, this.frameRsv, payloadBuffer));
+                                payloadBuffer = null;
+                                return;
                         }
 
                         // Processing for possible fragmented messages for text and binary
@@ -307,28 +317,25 @@ namespace DotNetty.Codecs.Http.WebSockets
                         }
 
                         // Return the frame
-                        if (this.frameOpcode == OpcodeText)
+                        switch (this.frameOpcode)
                         {
-                            output.Add(new TextWebSocketFrame(this.frameFinalFlag, this.frameRsv, payloadBuffer));
-                            payloadBuffer = null;
-                            return;
-                        }
-                        else if (this.frameOpcode == OpcodeBinary)
-                        {
-                            output.Add(new BinaryWebSocketFrame(this.frameFinalFlag, this.frameRsv, payloadBuffer));
-                            payloadBuffer = null;
-                            return;
-                        }
-                        else if (this.frameOpcode == OpcodeCont)
-                        {
-                            output.Add(new ContinuationWebSocketFrame(this.frameFinalFlag, this.frameRsv, payloadBuffer));
-                            payloadBuffer = null;
-                            return;
-                        }
-                        else
-                        {
-                            ThrowNotSupportedException(this.frameOpcode);
-                            break;
+                            case OpcodeText:
+                                output.Add(new TextWebSocketFrame(this.frameFinalFlag, this.frameRsv, payloadBuffer));
+                                payloadBuffer = null;
+                                return;
+
+                            case OpcodeBinary:
+                                output.Add(new BinaryWebSocketFrame(this.frameFinalFlag, this.frameRsv, payloadBuffer));
+                                payloadBuffer = null;
+                                return;
+
+                            case OpcodeCont:
+                                output.Add(new ContinuationWebSocketFrame(this.frameFinalFlag, this.frameRsv, payloadBuffer));
+                                payloadBuffer = null;
+                                return;
+
+                            default:
+                                ThrowNotSupportedException(this.frameOpcode); return;
                         }
                     }
                     finally
@@ -380,7 +387,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
-        void ProtocolViolation(IChannelHandlerContext ctx, string reason) => this.ProtocolViolation(ctx, new CorruptedFrameException(reason));
+        internal void ProtocolViolation0(IChannelHandlerContext ctx, string reason) => this.ProtocolViolation(ctx, new CorruptedFrameException(reason));
 
         void ProtocolViolation(IChannelHandlerContext ctx, CorruptedFrameException ex)
         {
@@ -432,7 +439,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
             if (buffer.ReadableBytes == 1)
             {
-                this.ProtocolViolation(ctx, "Invalid close frame body");
+                this.ProtocolViolation_InvalidCloseFrameBody(ctx);
             }
 
             // Save reader index
@@ -441,10 +448,9 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             // Must have 2 byte integer within the valid range
             int statusCode = buffer.ReadShort();
-            if (statusCode >= 0 && statusCode <= 999 || statusCode >= 1004 && statusCode <= 1006
-                || statusCode >= 1012 && statusCode <= 2999)
+            if (statusCode.IsInvalidCloseFrameStatusCodeRfc6455())
             {
-                this.ProtocolViolation(ctx, $"Invalid close frame getStatus code: {statusCode}");
+                this.ProtocolViolation_InvalidCloseFrameStatusCode(ctx, statusCode);
             }
 
             // May have UTF-8 message

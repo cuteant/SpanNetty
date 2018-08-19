@@ -67,8 +67,8 @@ namespace Echo.Server
                           pipeline.AddLast("tls", TlsHandler.Server(tlsCertificate));
                       }
                       pipeline.AddLast(new MsLoggingHandler("SRV-CONN"));
-                      pipeline.AddLast("framing-enc", new LengthFieldPrepender(2));
-                      pipeline.AddLast("framing-dec", new LengthFieldBasedFrameDecoder(ushort.MaxValue, 0, 2, 0, 2));
+                      pipeline.AddLast("framing-enc", new LengthFieldPrepender2(2));
+                      pipeline.AddLast("framing-dec", new LengthFieldBasedFrameDecoder2(ushort.MaxValue, 0, 2, 0, 2));
 
                       pipeline.AddLast("echo", new EchoServerHandler());
                   }));

@@ -7,7 +7,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using System.Collections.Generic;
     using DotNetty.Transport.Channels;
 
-    public abstract class WebSocketProtocolHandler : MessageToMessageDecoder<WebSocketFrame>
+    public abstract class WebSocketProtocolHandler : MessageToMessageDecoder2<WebSocketFrame>
     {
         readonly bool dropPongFrames;
 

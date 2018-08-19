@@ -18,7 +18,7 @@ namespace DotNetty.Codecs.Protobuf
     ///  | Protobuf Data |-------------->| Length | Protobuf Data |
     ///  |  (300 bytes)  |               | 0xAC02 |  (300 bytes)  |
     ///  +---------------+               +--------+---------------+
-    public class ProtobufVarint32LengthFieldPrepender : MessageToByteEncoder<IByteBuffer>
+    public class ProtobufVarint32LengthFieldPrepender : MessageToByteEncoder2<IByteBuffer>
     {
         protected override void Encode(IChannelHandlerContext context, IByteBuffer message, IByteBuffer output)
         {

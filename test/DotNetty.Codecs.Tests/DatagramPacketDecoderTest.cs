@@ -16,7 +16,7 @@ namespace DotNetty.Codecs.Tests
         [Fact]
         public void Decode()
         {
-            var channel = new EmbeddedChannel(new DatagramPacketDecoder(new StringDecoder(Encoding.UTF8)));
+            var channel = new EmbeddedChannel(new DatagramPacketDecoder2(new StringDecoder(Encoding.UTF8)));
             var recipient = new IPEndPoint(IPAddress.Loopback, 10000);
             var sender = new IPEndPoint(IPAddress.Loopback, 20000);
 

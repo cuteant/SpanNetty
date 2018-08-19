@@ -99,7 +99,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         static void SendHttpResponse(IChannelHandlerContext ctx, IHttpRequest req, IHttpResponse res)
         {
             Task task = ctx.Channel.WriteAndFlushAsync(res);
-            if (!IsKeepAlive(req) || res.Status.Code != 200)
+            if (!IsKeepAlive(req) || res.Status.Code != StatusCodes.Status200OK)
             {
                 task.ContinueWith((t, c) => ((IChannel)c).CloseAsync(),
                     ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);

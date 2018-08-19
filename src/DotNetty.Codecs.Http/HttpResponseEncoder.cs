@@ -7,7 +7,11 @@ namespace DotNetty.Codecs.Http
 
     public class HttpResponseEncoder : HttpObjectEncoder<IHttpResponse>
     {
-        public override bool AcceptOutboundMessage(object msg) => base.AcceptOutboundMessage(msg) && !(msg is IHttpRequest);
+        public override bool TryAcceptOutboundMessage(object msg, out object cast)
+        {
+            var result = base.TryAcceptOutboundMessage(msg, out cast);
+            return result && !(msg is IHttpRequest);
+        }
 
         protected internal override void EncodeInitialLine(IByteBuffer buf, IHttpResponse response)
         {
@@ -23,7 +27,7 @@ namespace DotNetty.Codecs.Http
             {
                 HttpResponseStatus status = msg.Status;
                 if (status.CodeClass == HttpStatusClass.Informational 
-                    || status.Code == HttpResponseStatus.NoContent.Code)
+                    || status.Code == StatusCodes.Status204NoContent)
                 {
 
                     // Stripping Content-Length:
@@ -45,7 +49,7 @@ namespace DotNetty.Codecs.Http
 
             if (status.CodeClass == HttpStatusClass.Informational)
             {
-                if (status.Code == HttpResponseStatus.SwitchingProtocols.Code)
+                if (status.Code == StatusCodes.Status101SwitchingProtocols)
                 {
                     // We need special handling for WebSockets version 00 as it will include an body.
                     // Fortunally this version should not really be used in the wild very often.
@@ -54,8 +58,8 @@ namespace DotNetty.Codecs.Http
                 }
                 return true;
             }
-            return status.Code == HttpResponseStatus.NoContent.Code 
-                || status.Code == HttpResponseStatus.NotModified.Code;
+            return status.Code == StatusCodes.Status204NoContent 
+                || status.Code == StatusCodes.Status304NotModified;
         }
     }
 }

@@ -449,7 +449,7 @@ namespace DotNetty.Codecs.Http
 
         protected bool IsSwitchingToNonHttp1Protocol(IHttpResponse msg)
         {
-            if (msg.Status.Code != HttpResponseStatus.SwitchingProtocols.Code)
+            if (msg.Status.Code != StatusCodes.Status101SwitchingProtocols)
             {
                 return false;
             }

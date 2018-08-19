@@ -11,7 +11,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public class WebSocket08FrameEncoder : MessageToMessageEncoder<WebSocketFrame>, IWebSocketFrameEncoder
+    public class WebSocket08FrameEncoder : MessageToMessageEncoder2<WebSocketFrame>, IWebSocketFrameEncoder
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<WebSocket08FrameEncoder>();
 

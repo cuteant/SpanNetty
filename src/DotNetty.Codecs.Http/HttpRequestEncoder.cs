@@ -17,7 +17,11 @@ namespace DotNetty.Codecs.Http
         const int SlashAndSpaceShort = (Slash << 8) | HorizontalSpace;
         const int SpaceSlashAndSpaceMedium = (HorizontalSpace << 16) | SlashAndSpaceShort;
 
-        public override bool AcceptOutboundMessage(object msg) => base.AcceptOutboundMessage(msg) && !(msg is IHttpResponse);
+        public override bool TryAcceptOutboundMessage(object msg, out object cast)
+        {
+            var result = base.TryAcceptOutboundMessage(msg, out cast);
+            return result && !(msg is IHttpResponse);
+        }
 
         protected internal override void EncodeInitialLine(IByteBuffer buf, IHttpRequest request)
         {

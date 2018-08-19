@@ -35,13 +35,13 @@ namespace DotNetty.Codecs
         {
             this.encoder.Encode(context, message.Content, output);
             if (output.Count != 1) {
-                throw new EncoderException($"{this.encoder.GetType()} must produce only one message.");
+                ThrowHelper.ThrowEncoderException_MustProduceOnlyOneMsg(this.encoder.GetType());
             }
 
             var content = output[0] as IByteBuffer;
             if (content == null)
             {
-                throw new EncoderException($"{this.encoder.GetType()} must produce only IByteBuffer.");
+                ThrowHelper.ThrowEncoderException_MustProduceOnlyByteBuf(this.encoder.GetType());
             }
 
             // Replace the ByteBuf with a DatagramPacket.

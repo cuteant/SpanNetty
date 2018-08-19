@@ -89,7 +89,7 @@ namespace DotNetty.Codecs
 
                     if (outSize == output.Count)
                     {
-                        if (oldInputLength == input.ReadableBytes && EqualityComparer<TState>.Default.Equals(oldState, this.state))
+                        if (oldInputLength == input.ReadableBytes && s_comparer.Equals(oldState, this.state))
                         {
                             ThrowHelper.ThrowDecoderException_Anything(this.GetType());
                         }
@@ -101,7 +101,7 @@ namespace DotNetty.Codecs
                         }
                     }
 
-                    if (oldReaderIndex == input.ReaderIndex && EqualityComparer<TState>.Default.Equals(oldState, this.state))
+                    if (oldReaderIndex == input.ReaderIndex && s_comparer.Equals(oldState, this.state))
                     {
                         ThrowHelper.ThrowDecoderException_Something(this.GetType());
                     }
@@ -127,5 +127,7 @@ namespace DotNetty.Codecs
         //{
         //    base.Read(context);
         //}
+
+        private static readonly IEqualityComparer<TState> s_comparer = EqualityComparer<TState>.Default;
     }
 }

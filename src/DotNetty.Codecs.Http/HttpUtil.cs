@@ -116,7 +116,7 @@ namespace DotNetty.Codecs.Http
                     break;
 
                 case IHttpResponse res:
-                    if (res.Status.Code == 101
+                    if (res.Status.Code == StatusCodes.Status101SwitchingProtocols
                         && h.Contains(HttpHeaderNames.SecWebsocketOrigin)
                         && h.Contains(HttpHeaderNames.SecWebsocketLocation))
                     {

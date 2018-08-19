@@ -42,7 +42,7 @@ namespace DotNetty.Codecs
                         output.Return();
                         output = null;
 
-                        ThrowHelper.ThrowEncoderException(this.GetType());
+                        ThrowHelper.ThrowEncoderException_MustProduceAtLeastOneMsg(this.GetType());
                     }
                 }
                 else

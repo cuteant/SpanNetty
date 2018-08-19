@@ -325,7 +325,7 @@ namespace DotNetty.Codecs
             }
 
             int actualLengthFieldOffset = input.ReaderIndex + this.lengthFieldOffset;
-            long frameLength = this.GetUnadjustedFrameLength(input, actualLengthFieldOffset, this.lengthFieldLength, this.byteOrder);
+            long frameLength = GetUnadjustedFrameLength(input, actualLengthFieldOffset, this.lengthFieldLength, this.byteOrder);
 
             if (frameLength < 0)
             {
@@ -397,7 +397,7 @@ namespace DotNetty.Codecs
         /// <param name="length">The length of the framelenght field. Expected: 1, 2, 3, 4, or 8.</param>
         /// <param name="order">The preferred <see cref="ByteOrder" /> of buffer.</param>
         /// <returns>A long integer that represents the unadjusted length of the next frame.</returns>
-        protected long GetUnadjustedFrameLength(IByteBuffer buffer, int offset, int length, ByteOrder order)
+        protected static long GetUnadjustedFrameLength(IByteBuffer buffer, int offset, int length, ByteOrder order)
         {
             switch (length)
             {
@@ -412,7 +412,7 @@ namespace DotNetty.Codecs
                 case 8:
                     return order == ByteOrder.BigEndian ? buffer.GetLong(offset) : buffer.GetLongLE(offset);
                 default:
-                    ThrowHelper.ThrowDecoderException(this.lengthFieldLength); return default;
+                    return ThrowHelper.ThrowDecoderException(length);
             }
         }
 

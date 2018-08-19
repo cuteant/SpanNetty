@@ -8,7 +8,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using DotNetty.Codecs;
     using DotNetty.Transport.Channels;
 
-    public class WebSocketFrameAggregator : MessageAggregator<WebSocketFrame, WebSocketFrame, ContinuationWebSocketFrame, WebSocketFrame>
+    public class WebSocketFrameAggregator : MessageAggregator2<WebSocketFrame, WebSocketFrame, ContinuationWebSocketFrame, WebSocketFrame>
     {
         public WebSocketFrameAggregator(int maxContentLength)
             : base(maxContentLength)

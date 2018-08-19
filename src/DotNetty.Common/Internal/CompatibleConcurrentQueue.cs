@@ -15,8 +15,8 @@ namespace DotNetty.Common.Internal
 
         void IQueue<T>.Clear()
         {
-            T item;
-            while (this.TryDequeue(out item))
+            //T item;
+            while (this.TryDequeue(out _))
             {
             }
         }

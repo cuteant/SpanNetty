@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Runtime.CompilerServices;
+
 namespace DotNetty.Codecs.Mqtt
 {
     static class Util
@@ -8,18 +10,22 @@ namespace DotNetty.Codecs.Mqtt
         public const string ProtocolName = "MQTT";
         public const int ProtocolLevel = 4;
 
-        static readonly char[] TopicWildcards = { '#', '+' };
+        internal static readonly char[] TopicWildcards = { '#', '+' };
 
+        public static void ValidateTopicName()
+        {
+            throw GetDecoderException();
+            DecoderException GetDecoderException()
+            {
+                return new DecoderException("[MQTT-4.7.3-1]");
+            }
+        }
         public static void ValidateTopicName(string topicName)
         {
-            if (topicName.Length == 0)
+            throw GetDecoderException();
+            DecoderException GetDecoderException()
             {
-                throw new DecoderException("[MQTT-4.7.3-1]");
-            }
-
-            if (topicName.IndexOfAny(TopicWildcards) > 0)
-            {
-                throw new DecoderException($"Invalid PUBLISH topic name: {topicName}");
+                return new DecoderException($"Invalid PUBLISH topic name: {topicName}");
             }
         }
 
@@ -31,11 +37,13 @@ namespace DotNetty.Codecs.Mqtt
             }
         }
 
-        public static void ValidateClientId(string clientId)
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void ValidateClientId()
         {
-            if (clientId == null)
+            throw GetDecoderException();
+            DecoderException GetDecoderException()
             {
-                throw new DecoderException("Client identifier is required.");
+                return new DecoderException("Client identifier is required.");
             }
         }
     }

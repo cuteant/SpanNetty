@@ -85,7 +85,7 @@ namespace DotNetty.Codecs.Http
         /// <returns>true if the response has a self defined message length.</returns>
         static bool IsSelfDefinedMessageLength(IHttpResponse response) => 
             IsContentLengthSet(response) || IsTransferEncodingChunked(response) || IsMultipart(response) 
-            || IsInformational(response) || response.Status.Code == HttpResponseStatus.NoContent.Code;
+            || IsInformational(response) || response.Status.Code == StatusCodes.Status204NoContent;
 
         static bool IsInformational(IHttpResponse response) => response.Status.CodeClass == HttpStatusClass.Informational;
 

@@ -76,7 +76,7 @@ namespace DotNetty.Codecs.Http
 
                     int code = res.Status.Code;
                     ICharSequence acceptEncoding;
-                    if (code == ContinueCode)
+                    if (code == StatusCodes.Status100Continue)
                     {
                         // We need to not poll the encoding when response with CONTINUE as another response will follow
                         // for the issued request. See https://github.com/netty/netty/issues/4079

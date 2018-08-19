@@ -347,7 +347,7 @@ namespace DotNetty.Codecs
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowDecoderException(int lengthFieldLength)
+        internal static long ThrowDecoderException(int lengthFieldLength)
         {
             throw GetException();
             DecoderException GetException()
@@ -367,12 +367,32 @@ namespace DotNetty.Codecs
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowEncoderException(Type type)
+        internal static void ThrowEncoderException_MustProduceAtLeastOneMsg(Type type)
         {
             throw GetException();
             EncoderException GetException()
             {
                 return new EncoderException(type.Name + " must produce at least one message.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowEncoderException_MustProduceOnlyOneMsg(Type type)
+        {
+            throw GetException();
+            EncoderException GetException()
+            {
+                return new EncoderException($"{type} must produce only one message.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowEncoderException_MustProduceOnlyByteBuf(Type type)
+        {
+            throw GetException();
+            EncoderException GetException()
+            {
+                return new EncoderException($"{type} must produce only IByteBuffer.");
             }
         }
 

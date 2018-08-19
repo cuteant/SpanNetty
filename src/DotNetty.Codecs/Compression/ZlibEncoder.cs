@@ -6,7 +6,7 @@ namespace DotNetty.Codecs.Compression
     using System.Threading.Tasks;
     using DotNetty.Buffers;
 
-    public abstract class ZlibEncoder : MessageToByteEncoder<IByteBuffer>
+    public abstract class ZlibEncoder : MessageToByteEncoder2<IByteBuffer>
     {
         public abstract bool IsClosed { get; }
 

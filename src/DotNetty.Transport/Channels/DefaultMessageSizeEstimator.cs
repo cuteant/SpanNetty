@@ -19,19 +19,21 @@ namespace DotNetty.Transport.Channels
 
             public int Size(object msg)
             {
-                if (msg is IByteBuffer)
+                switch (msg)
                 {
-                    return ((IByteBuffer)msg).ReadableBytes;
+                    case IByteBuffer byteBuffer:
+                        return byteBuffer.ReadableBytes;
+
+                    case IByteBufferHolder byteBufferHolder:
+                        return byteBufferHolder.Content.ReadableBytes;
+
+                    default:
+                        // todo: FileRegion support
+                        //if (msg instanceof FileRegion) {
+                        //    return 0;
+                        //}
+                        return this.unknownSize;
                 }
-                if (msg is IByteBufferHolder)
-                {
-                    return ((IByteBufferHolder)msg).Content.ReadableBytes;
-                }
-                // todo: FileRegion support
-                //if (msg instanceof FileRegion) {
-                //    return 0;
-                //}
-                return this.unknownSize;
             }
         }
 

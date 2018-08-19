@@ -55,8 +55,8 @@ namespace DotNetty.Tests.End2End
                 ch.Pipeline.AddLast("server logger", new LoggingHandler("SERVER"));
                 ch.Pipeline.AddLast("server tls", TlsHandler.Server(tlsCertificate));
                 ch.Pipeline.AddLast("server logger2", new LoggingHandler("SER***"));
-                ch.Pipeline.AddLast("server prepender", new LengthFieldPrepender(2));
-                ch.Pipeline.AddLast("server decoder", new LengthFieldBasedFrameDecoder(ushort.MaxValue, 0, 2, 0, 2));
+                ch.Pipeline.AddLast("server prepender", new LengthFieldPrepender2(2));
+                ch.Pipeline.AddLast("server decoder", new LengthFieldBasedFrameDecoder2(ushort.MaxValue, 0, 2, 0, 2));
                 ch.Pipeline.AddLast(new EchoChannelHandler());
             }, testPromise);
 
@@ -73,8 +73,8 @@ namespace DotNetty.Tests.End2End
                     ch.Pipeline.AddLast("client logger", new LoggingHandler("CLIENT"));
                     ch.Pipeline.AddLast("client tls", new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), clientTlsSettings));
                     ch.Pipeline.AddLast("client logger2", new LoggingHandler("CLI***"));
-                    ch.Pipeline.AddLast("client prepender", new LengthFieldPrepender(2));
-                    ch.Pipeline.AddLast("client decoder", new LengthFieldBasedFrameDecoder(ushort.MaxValue, 0, 2, 0, 2));
+                    ch.Pipeline.AddLast("client prepender", new LengthFieldPrepender2(2));
+                    ch.Pipeline.AddLast("client decoder", new LengthFieldBasedFrameDecoder2(ushort.MaxValue, 0, 2, 0, 2));
                     ch.Pipeline.AddLast(readListener);
                 }));
 

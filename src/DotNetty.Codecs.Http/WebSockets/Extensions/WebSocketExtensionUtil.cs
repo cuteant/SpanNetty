@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
         internal static string AppendExtension(string currentHeaderValue, string extensionName,
             Dictionary<string, string> extensionParameters)
         {
-            var newHeaderValue = new StringBuilder(currentHeaderValue?.Length ?? extensionName.Length + 1);
+            var newHeaderValue = CuteAnt.Pool.StringBuilderManager.Allocate(currentHeaderValue?.Length ?? extensionName.Length + 1);
             if (currentHeaderValue != null && currentHeaderValue.Trim() != string.Empty)
             {
                 newHeaderValue.Append(currentHeaderValue);
@@ -78,7 +78,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                     newHeaderValue.Append(extensionParameter.Value);
                 }
             }
-            return newHeaderValue.ToString();
+            return CuteAnt.Pool.StringBuilderManager.ReturnAndFree(newHeaderValue);
         }
     }
 }

@@ -10,7 +10,7 @@ namespace DotNetty.Codecs.Http
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Embedded;
 
-    public abstract class HttpContentDecoder : MessageToMessageDecoder<IHttpObject>
+    public abstract class HttpContentDecoder : MessageToMessageDecoder2<IHttpObject>
     {
         internal static readonly AsciiString Identity = HttpHeaderValues.Identity;
 
@@ -20,7 +20,7 @@ namespace DotNetty.Codecs.Http
 
         protected override void Decode(IChannelHandlerContext context, IHttpObject message, List<object> output)
         {
-            if (message is IHttpResponse response && response.Status.Code == 100)
+            if (message is IHttpResponse response && response.Status.Code == StatusCodes.Status100Continue)
             {
                 if (!(response is ILastHttpContent))
                 {
