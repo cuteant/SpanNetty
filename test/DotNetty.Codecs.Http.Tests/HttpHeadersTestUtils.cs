@@ -10,7 +10,11 @@ namespace DotNetty.Codecs.Http.Tests
 
     static class HttpHeadersTestUtils
     {
+#if TEST40
+        static readonly IDictionary<int, HeaderValue> ValueMap = new Dictionary<int, HeaderValue>
+#else
         static readonly IReadOnlyDictionary<int, HeaderValue> ValueMap = new Dictionary<int, HeaderValue>
+#endif
         {
             { 0, HeaderValue.Unknown },
             { 1, HeaderValue.One },

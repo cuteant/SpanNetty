@@ -19,21 +19,37 @@ namespace DotNetty.Codecs.Http.WebSockets
         public override void ChannelActive(IChannelHandlerContext context)
         {
             base.ChannelActive(context);
-            this.handshaker.HandshakeAsync(context.Channel)
-                .ContinueWith((t, state) =>
+#if NET40
+            void fireOnComplete(Task t)
+            {
+                if (t.Status == TaskStatus.RanToCompletion)
                 {
-                    var ctx = (IChannelHandlerContext)state;
-                    if (t.Status == TaskStatus.RanToCompletion)
-                    {
-                        ctx.FireUserEventTriggered(WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeIssued);
-                    }
-                    else
-                    {
-                        ctx.FireExceptionCaught(t.Exception);
-                    }
-                }, 
-                context, 
-                TaskContinuationOptions.ExecuteSynchronously);
+                    context.FireUserEventTriggered(WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeIssued);
+                }
+                else
+                {
+                    context.FireExceptionCaught(t.Exception);
+                }
+            }
+            this.handshaker.HandshakeAsync(context.Channel)
+                .ContinueWith(fireOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+#else
+            this.handshaker.HandshakeAsync(context.Channel)
+                .ContinueWith(FireOnComplete, context, TaskContinuationOptions.ExecuteSynchronously);
+#endif
+        }
+
+        static void FireOnComplete(Task t, object state)
+        {
+            var ctx = (IChannelHandlerContext)state;
+            if (t.Status == TaskStatus.RanToCompletion)
+            {
+                ctx.FireUserEventTriggered(WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeIssued);
+            }
+            else
+            {
+                ctx.FireExceptionCaught(t.Exception);
+            }
         }
 
         public override void ChannelRead(IChannelHandlerContext ctx, object msg)

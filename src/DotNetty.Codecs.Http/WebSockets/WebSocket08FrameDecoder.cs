@@ -403,14 +403,22 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     closeMessage = new CloseWebSocketFrame(1002, null);
                 }
-                ctx.WriteAndFlushAsync(closeMessage)
-                    .ContinueWith((t, c) => ((IChannel)c).CloseAsync(),
-                        ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
+#if NET40
+                void closeOnComplete(Task t) => ctx.Channel.CloseAsync();
+                ctx.WriteAndFlushAsync(closeMessage).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+#else
+                ctx.WriteAndFlushAsync(closeMessage).ContinueWith(CloseOnComplete, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
+#endif
             }
             throw ex;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static void CloseOnComplete(Task t, object c)
+        {
+            ((IChannel)c).CloseAsync();
+        }
+
+        [MethodImpl(InlineMethod.Value)]
         static int ToFrameLength(long l)
         {
             if (l > int.MaxValue)

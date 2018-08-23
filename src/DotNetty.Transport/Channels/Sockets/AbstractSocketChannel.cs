@@ -297,26 +297,18 @@ namespace DotNetty.Transport.Channels.Sockets
                         }
 
 #if NET40
-                        Action<Task> continuationAction = completed =>
+                        void continuationAction(Task completed)
                         {
                             var c = ch;
                             c.connectCancellationTask?.Cancel();
                             c.connectPromise = null;
                             c.CloseSafe();
-                        };
+                        }
                         ch.connectPromise.Task.ContinueWith(
                             continuationAction,
                             TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.ExecuteSynchronously);
 #else
-                        ch.connectPromise.Task.ContinueWith(
-                            (t, s) =>
-                            {
-                                var c = (TChannel)s;
-                                c.connectCancellationTask?.Cancel();
-                                c.connectPromise = null;
-                                c.CloseSafe();
-                            },
-                            ch,
+                        ch.connectPromise.Task.ContinueWith(CloseSafeOnComplete, ch,
                             TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.ExecuteSynchronously);
 #endif
 
@@ -328,6 +320,14 @@ namespace DotNetty.Transport.Channels.Sockets
                     this.CloseIfClosed();
                     return TaskUtil.FromException(this.AnnotateConnectException(ex, remoteAddress));
                 }
+            }
+
+            static void CloseSafeOnComplete(Task t, object s)
+            {
+                var c = (TChannel)s;
+                c.connectCancellationTask?.Cancel();
+                c.connectPromise = null;
+                c.CloseSafe();
             }
 
             void FulfillConnectPromise(bool wasActive)

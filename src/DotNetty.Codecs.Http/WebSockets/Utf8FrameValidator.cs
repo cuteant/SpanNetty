@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs.Http.WebSockets
 {
+    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
@@ -81,10 +82,19 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 if (ctx.Channel.Active)
                 {
-                    ctx.WriteAndFlushAsync(Unpooled.Empty)
-                        .ContinueWith(t => ctx.Channel.CloseAsync());
+#if NET40
+                    void closeOnComplete(Task t) => ctx.Channel.CloseAsync();
+                    ctx.WriteAndFlushAsync(Unpooled.Empty).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+#else
+                    ctx.WriteAndFlushAsync(Unpooled.Empty).ContinueWith(CloseOnComplete, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
+#endif
                 }
             }
+        }
+
+        static void CloseOnComplete(Task t, object c)
+        {
+            ((IChannel)c).CloseAsync();
         }
     }
 }

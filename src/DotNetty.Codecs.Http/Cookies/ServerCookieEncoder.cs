@@ -92,7 +92,11 @@ namespace DotNetty.Codecs.Http.Cookies
             return StripTrailingSeparator(buf);
         }
 
+#if NET40
+        static List<string> Dedup(IList<string> encoded, IDictionary<string, int> nameToLastIndex)
+#else
         static List<string> Dedup(IReadOnlyList<string> encoded, IDictionary<string, int> nameToLastIndex)
+#endif
         {
             var isLastInstance = new bool[encoded.Count];
             foreach (int idx in nameToLastIndex.Values)

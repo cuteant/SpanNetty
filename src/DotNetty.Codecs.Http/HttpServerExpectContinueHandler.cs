@@ -39,27 +39,47 @@ namespace DotNetty.Codecs.Http
                         // the expectation failed so we refuse the request.
                         IHttpResponse rejection = this.RejectResponse(req);
                         ReferenceCountUtil.Release(message);
+#if NET40
+                        context.WriteAndFlushAsync(rejection)
+                            .ContinueWith(closeOnFailure, TaskContinuationOptions.ExecuteSynchronously);
+#else
                         context.WriteAndFlushAsync(rejection)
                             .ContinueWith(CloseOnFailure, context, TaskContinuationOptions.ExecuteSynchronously);
+#endif
                         return;
                     }
 
+#if NET40
+                    context.WriteAndFlushAsync(accept)
+                        .ContinueWith(closeOnFailure, TaskContinuationOptions.ExecuteSynchronously);
+#else
                     context.WriteAndFlushAsync(accept)
                         .ContinueWith(CloseOnFailure, context, TaskContinuationOptions.ExecuteSynchronously);
+#endif
                     req.Headers.Remove(HttpHeaderNames.Expect);
                 }
                 base.ChannelRead(context, message);
             }
+#if NET40
+            void closeOnFailure(Task task)
+            {
+                if (task.IsFaulted)
+                {
+                    context.CloseAsync();
+                }
+                //return TaskUtil.Completed;
+            }
+#endif
         }
 
-        static Task CloseOnFailure(Task task, object state)
+        static void CloseOnFailure(Task task, object state)
         {
             if (task.IsFaulted)
             {
                 var context = (IChannelHandlerContext)state;
-                return context.CloseAsync();
+                context.CloseAsync();
             }
-            return TaskUtil.Completed;
+            //return TaskUtil.Completed;
         }
     }
 }

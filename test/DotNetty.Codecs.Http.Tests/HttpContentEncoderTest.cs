@@ -267,7 +267,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.False(res.Headers.TryGet(HttpHeaderNames.ContentEncoding, out _));
             Assert.Equal(0, res.Content.ReadableBytes);
             Assert.Equal("", res.Content.ToString(Encoding.ASCII));
-            Assert.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test", null));
+            AssertEx.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test", null));
 
             var next = ch.ReadOutbound<object>();
             Assert.Null(next);

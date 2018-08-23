@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs.Http.WebSockets
 {
+    using System;
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
     using DotNetty.Handlers.Tls;
@@ -67,7 +68,8 @@ namespace DotNetty.Codecs.Http.WebSockets
                 else
                 {
                     Task task = handshaker.HandshakeAsync(ctx.Channel, req);
-                    task.ContinueWith(t =>
+#if NET40
+                    void linkOutcomeContinuationAction(Task t)
                     {
                         if (t.Status != TaskStatus.RanToCompletion)
                         {
@@ -78,8 +80,11 @@ namespace DotNetty.Codecs.Http.WebSockets
                             ctx.FireUserEventTriggered(new WebSocketServerProtocolHandler.HandshakeComplete(
                                 req.Uri, req.Headers, handshaker.SelectedSubprotocol));
                         }
-                    }, 
-                    TaskContinuationOptions.ExecuteSynchronously);
+                    }
+                    task.ContinueWith(linkOutcomeContinuationAction, TaskContinuationOptions.ExecuteSynchronously);
+#else
+                    task.ContinueWith(LinkOutcomeContinuationAction, Tuple.Create(ctx, req, handshaker), TaskContinuationOptions.ExecuteSynchronously);
+#endif
 
                     WebSocketServerProtocolHandler.SetHandshaker(ctx.Channel, handshaker);
                     ctx.Channel.Pipeline.Replace(this, "WS403Responder",
@@ -92,6 +97,20 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
+        static void LinkOutcomeContinuationAction(Task t, object state)
+        {
+            var wrapper = (Tuple<IChannelHandlerContext, IFullHttpRequest, WebSocketServerHandshaker>)state;
+            if (t.Status != TaskStatus.RanToCompletion)
+            {
+                wrapper.Item1.FireExceptionCaught(t.Exception);
+            }
+            else
+            {
+                wrapper.Item1.FireUserEventTriggered(new WebSocketServerProtocolHandler.HandshakeComplete(
+                    wrapper.Item2.Uri, wrapper.Item2.Headers, wrapper.Item3.SelectedSubprotocol));
+            }
+        }
+
         bool IsNotWebSocketPath(IFullHttpRequest req) => this.checkStartsWith 
             ? !req.Uri.StartsWith(this.websocketPath, System.StringComparison.Ordinal) 
             : !string.Equals(req.Uri, this.websocketPath, System.StringComparison.Ordinal);
@@ -101,9 +120,18 @@ namespace DotNetty.Codecs.Http.WebSockets
             Task task = ctx.Channel.WriteAndFlushAsync(res);
             if (!IsKeepAlive(req) || res.Status.Code != StatusCodes.Status200OK)
             {
-                task.ContinueWith((t, c) => ((IChannel)c).CloseAsync(),
-                    ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
+#if NET40
+                void closeOnComplete(Task t) => ctx.Channel.CloseAsync();
+                task.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+#else
+                task.ContinueWith(CloseOnComplete, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
+#endif
             }
+        }
+
+        static void CloseOnComplete(Task t, object c)
+        {
+            ((IChannel)c).CloseAsync();
         }
 
         static string GetWebSocketLocation(IChannelPipeline cp, IHttpRequest req, string path)

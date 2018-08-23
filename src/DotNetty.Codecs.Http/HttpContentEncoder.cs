@@ -251,7 +251,7 @@ namespace DotNetty.Codecs.Http
             //  || ReferenceEquals(version, HttpVersion.Http10);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static void EnsureHeaders(IHttpObject msg)
         {
             if (!(msg is IHttpResponse))
@@ -260,7 +260,7 @@ namespace DotNetty.Codecs.Http
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static void EnsureContent(IHttpObject msg)
         {
             if (!(msg is IHttpContent))

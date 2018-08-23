@@ -23,7 +23,11 @@ namespace DotNetty.Common.Internal
 
         static PlatformDependent()
         {
+#if NET40
+            UseDirectBuffer = false; // NET40 + Ssl/Tls，DotNetty.Buffer.PooledUnsafeDirectByteBuffer无法正常工作，暂屏蔽
+#else
             UseDirectBuffer = !SystemPropertyUtil.GetBoolean("io.netty.noPreferDirect", false);
+#endif
             if (Logger.DebugEnabled)
             {
                 Logger.Debug("-Dio.netty.noPreferDirect: {}", !UseDirectBuffer);

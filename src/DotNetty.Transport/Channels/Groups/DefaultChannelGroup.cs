@@ -284,9 +284,20 @@ namespace DotNetty.Transport.Channels.Groups
             bool added = map.TryAdd(channel.Id, channel);
             if (added)
             {
-                channel.CloseCompletion.ContinueWith(x => this.Remove(channel));
+#if NET40
+                void continueRemoveChannelAction(Task t) => this.Remove(channel);
+                channel.CloseCompletion.ContinueWith(continueRemoveChannelAction, TaskContinuationOptions.ExecuteSynchronously);
+#else
+                channel.CloseCompletion.ContinueWith(ContinueRemoveChannelAction, Tuple.Create(this, channel), TaskContinuationOptions.ExecuteSynchronously);
+#endif
             }
             return added;
+        }
+
+        static void ContinueRemoveChannelAction(Task t, object s)
+        {
+            var wrapper = (Tuple<DefaultChannelGroup, IChannel>)s;
+            wrapper.Item1.Remove(wrapper.Item2);
         }
 
         public IChannel[] ToArray()

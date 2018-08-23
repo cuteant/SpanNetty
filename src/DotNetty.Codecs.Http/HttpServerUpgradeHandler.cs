@@ -5,6 +5,7 @@
 // ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http
 {
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.Contracts;
@@ -254,35 +255,73 @@ namespace DotNetty.Codecs.Http
             var upgradeEvent = new UpgradeEvent(upgradeProtocol, request);
 
             IUpgradeCodec finalUpgradeCodec = upgradeCodec;
-            ctx.WriteAndFlushAsync(upgradeResponse).ContinueWith(t =>
+#if NET40
+            void linkOutcomeContinuationAction(Task t)
+            {
+                try
                 {
-                    try
+                    if (t.Status == TaskStatus.RanToCompletion)
                     {
-                        if (t.Status == TaskStatus.RanToCompletion)
-                        {
-                            // Perform the upgrade to the new protocol.
-                            this.sourceCodec.UpgradeFrom(ctx);
-                            finalUpgradeCodec.UpgradeTo(ctx, request);
+                        // Perform the upgrade to the new protocol.
+                        this.sourceCodec.UpgradeFrom(ctx);
+                        finalUpgradeCodec.UpgradeTo(ctx, request);
 
-                            // Notify that the upgrade has occurred. Retain the event to offset
-                            // the release() in the finally block.
-                            ctx.FireUserEventTriggered(upgradeEvent.Retain());
+                        // Notify that the upgrade has occurred. Retain the event to offset
+                        // the release() in the finally block.
+                        ctx.FireUserEventTriggered(upgradeEvent.Retain());
 
-                            // Remove this handler from the pipeline.
-                            ctx.Channel.Pipeline.Remove(this);
-                        }
-                        else
-                        {
-                            ctx.Channel.CloseAsync();
-                        }
+                        // Remove this handler from the pipeline.
+                        ctx.Channel.Pipeline.Remove(this);
                     }
-                    finally
+                    else
                     {
-                        // Release the event if the upgrade event wasn't fired.
-                        upgradeEvent.Release();
+                        ctx.Channel.CloseAsync();
                     }
-                }, TaskContinuationOptions.ExecuteSynchronously);
+                }
+                finally
+                {
+                    // Release the event if the upgrade event wasn't fired.
+                    upgradeEvent.Release();
+                }
+            }
+            ctx.WriteAndFlushAsync(upgradeResponse).ContinueWith(linkOutcomeContinuationAction, TaskContinuationOptions.ExecuteSynchronously);
+#else
+            ctx.WriteAndFlushAsync(upgradeResponse).ContinueWith(LinkOutcomeContinuationAction,
+                Tuple.Create(ctx, request, finalUpgradeCodec, upgradeEvent, this.sourceCodec, this),
+                TaskContinuationOptions.ExecuteSynchronously);
+#endif
             return true;
+        }
+
+        static void LinkOutcomeContinuationAction(Task t, object s)
+        {
+            var wrapper = (Tuple<IChannelHandlerContext, IFullHttpRequest, IUpgradeCodec, UpgradeEvent, ISourceCodec, HttpServerUpgradeHandler>)s;
+            var ctx = wrapper.Item1;
+            try
+            {
+                if (t.Status == TaskStatus.RanToCompletion)
+                {
+                    // Perform the upgrade to the new protocol.
+                    wrapper.Item5.UpgradeFrom(ctx);
+                    wrapper.Item3.UpgradeTo(ctx, wrapper.Item2);
+
+                    // Notify that the upgrade has occurred. Retain the event to offset
+                    // the release() in the finally block.
+                    ctx.FireUserEventTriggered(wrapper.Item4.Retain());
+
+                    // Remove this handler from the pipeline.
+                    ctx.Channel.Pipeline.Remove(wrapper.Item6);
+                }
+                else
+                {
+                    ctx.Channel.CloseAsync();
+                }
+            }
+            finally
+            {
+                // Release the event if the upgrade event wasn't fired.
+                wrapper.Item4.Release();
+            }
         }
 
         static IFullHttpResponse CreateUpgradeResponse(ICharSequence upgradeProtocol)

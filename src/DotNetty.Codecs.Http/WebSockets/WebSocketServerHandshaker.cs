@@ -62,7 +62,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             return ret;
         }
 
-        public WebSocketVersion Version => this. version;
+        public WebSocketVersion Version => this.version;
 
         public int MaxFramePayloadLength => this.maxFramePayloadLength;
 
@@ -118,7 +118,8 @@ namespace DotNetty.Codecs.Http.WebSockets
                 p.AddBefore(encoderName, "wsencoder", this.NewWebSocketEncoder());
             }
 
-            channel.WriteAndFlushAsync(response).ContinueWith(t =>
+#if NET40
+            void linkOutcomeContinuationAction(Task t)
             {
                 if (t.Status == TaskStatus.RanToCompletion)
                 {
@@ -129,7 +130,25 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     completion.TrySetException(t.Exception);
                 }
-            });
+            }
+            channel.WriteAndFlushAsync(response).ContinueWith(linkOutcomeContinuationAction, TaskContinuationOptions.ExecuteSynchronously);
+#else
+            channel.WriteAndFlushAsync(response).ContinueWith(LinkOutcomeContinuationAction, Tuple.Create(completion, p, encoderName), TaskContinuationOptions.ExecuteSynchronously);
+#endif
+        }
+
+        static void LinkOutcomeContinuationAction(Task t, object state)
+        {
+            var wrapper = (Tuple<TaskCompletionSource, IChannelPipeline, string>)state;
+            if (t.Status == TaskStatus.RanToCompletion)
+            {
+                wrapper.Item2.Remove(wrapper.Item3);
+                wrapper.Item1.TryComplete();
+            }
+            else
+            {
+                wrapper.Item1.TrySetException(t.Exception);
+            }
         }
 
         public Task HandshakeAsync(IChannel channel, IHttpRequest req, HttpHeaders responseHeaders)
@@ -217,8 +236,17 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             Contract.Requires(channel != null);
 
-            return channel.WriteAndFlushAsync(frame).ContinueWith((t, s) => ((IChannel)s).CloseAsync(), 
-                    channel, TaskContinuationOptions.ExecuteSynchronously);
+#if NET40
+            void closeOnComplete(Task t) => channel.CloseAsync();
+            return channel.WriteAndFlushAsync(frame).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+#else
+            return channel.WriteAndFlushAsync(frame).ContinueWith(CloseOnComplete, channel, TaskContinuationOptions.ExecuteSynchronously);
+#endif
+        }
+
+        static void CloseOnComplete(Task t, object s)
+        {
+            ((IChannel)s).CloseAsync();
         }
 
         protected string SelectSubprotocol(string requestedSubprotocols)

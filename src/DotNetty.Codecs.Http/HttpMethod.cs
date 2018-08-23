@@ -91,7 +91,7 @@ namespace DotNetty.Codecs.Http
             };
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         public static HttpMethod ValueOf(AsciiString name)
         {
             if (name != null)
@@ -112,7 +112,7 @@ namespace DotNetty.Codecs.Http
             return new HttpMethod(name?.ToString());
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.Value)]
         static HttpMethod ValueOfInline(byte[] bytes)
         {
             if (bytes.Length <= 2)

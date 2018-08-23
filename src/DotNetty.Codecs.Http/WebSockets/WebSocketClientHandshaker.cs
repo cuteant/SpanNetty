@@ -76,37 +76,69 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 
             var completion = new TaskCompletionSource();
-            channel.WriteAndFlushAsync(request).ContinueWith((t, state) =>
+#if NET40
+            void linkOutcomeContinuationAction(Task t)
+            {
+                switch (t.Status)
                 {
-                    var tcs = (TaskCompletionSource)state;
-                    switch (t.Status)
-                    {
-                        case TaskStatus.RanToCompletion:
-                            IChannelPipeline p = channel.Pipeline;
-                            IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
-                            if (ctx == null)
-                            {
-                                tcs.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
-                                return;
-                            }
+                    case TaskStatus.RanToCompletion:
+                        IChannelPipeline p = channel.Pipeline;
+                        IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
+                        if (ctx == null)
+                        {
+                            completion.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
+                            return;
+                        }
 
-                            p.AddAfter(ctx.Name, "ws-encoder", this.NewWebSocketEncoder());
-                            tcs.TryComplete();
-                            break;
-                        case TaskStatus.Canceled:
-                            tcs.TrySetCanceled();
-                            break;
-                        case TaskStatus.Faulted:
-                            tcs.TryUnwrap(t.Exception);
-                            break;
-                        default:
-                            ThrowHelper.ThrowArgumentOutOfRangeException(); break;
-                    }
-                },
-                completion,
+                        p.AddAfter(ctx.Name, "ws-encoder", this.NewWebSocketEncoder());
+                        completion.TryComplete();
+                        break;
+                    case TaskStatus.Canceled:
+                        completion.TrySetCanceled();
+                        break;
+                    case TaskStatus.Faulted:
+                        completion.TryUnwrap(t.Exception);
+                        break;
+                    default:
+                        ThrowHelper.ThrowArgumentOutOfRangeException(); break;
+                }
+            }
+            channel.WriteAndFlushAsync(request).ContinueWith(linkOutcomeContinuationAction, TaskContinuationOptions.ExecuteSynchronously);
+#else
+            channel.WriteAndFlushAsync(request).ContinueWith(LinkOutcomeContinuationAction,
+                new Tuple<TaskCompletionSource, IChannelPipeline, WebSocketClientHandshaker>(completion, channel.Pipeline, this),
                 TaskContinuationOptions.ExecuteSynchronously);
+#endif
 
             return completion.Task;
+        }
+
+        static void LinkOutcomeContinuationAction(Task t, object state)
+        {
+            var wrapper = (Tuple<TaskCompletionSource, IChannelPipeline, WebSocketClientHandshaker>)state;
+            switch (t.Status)
+            {
+                case TaskStatus.RanToCompletion:
+                    IChannelPipeline p = wrapper.Item2;
+                    IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
+                    if (ctx == null)
+                    {
+                        wrapper.Item1.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
+                        return;
+                    }
+
+                    p.AddAfter(ctx.Name, "ws-encoder", wrapper.Item3.NewWebSocketEncoder());
+                    wrapper.Item1.TryComplete();
+                    break;
+                case TaskStatus.Canceled:
+                    wrapper.Item1.TrySetCanceled();
+                    break;
+                case TaskStatus.Faulted:
+                    wrapper.Item1.TryUnwrap(t.Exception);
+                    break;
+                default:
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
+            }
         }
 
         protected internal abstract IFullHttpRequest NewHandshakeRequest();

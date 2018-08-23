@@ -69,7 +69,11 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
         public override Task WriteAsync(IChannelHandlerContext ctx, object msg)
         {
+#if NET40
             Action<Task> continuationAction = null;
+#else
+            Action<Task, object> continuationAction = null;
+#endif
 
             if (msg is IHttpResponse response 
                 && WebSocketExtensionUtil.IsWebsocketUpgrade(response.Headers) 
@@ -88,6 +92,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                         extensionData.Name, extensionData.Parameters);
                 }
 
+#if NET40
                 continuationAction = promise =>
                 {
                     if (promise.Status == TaskStatus.RanToCompletion)
@@ -102,6 +107,9 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                     }
                     ctx.Channel.Pipeline.Remove(ctx.Name);
                 };
+#else
+                continuationAction = SwitchWebSocketExtensionHandler;
+#endif
 
                 if (headerValue != null)
                 {
@@ -112,7 +120,28 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
             return continuationAction == null
                 ? base.WriteAsync(ctx, msg)
                 : base.WriteAsync(ctx, msg)
+#if NET40
                     .ContinueWith(continuationAction, TaskContinuationOptions.ExecuteSynchronously);
+#else
+                    .ContinueWith(continuationAction, Tuple.Create(ctx, this.validExtensions), TaskContinuationOptions.ExecuteSynchronously);
+#endif
+        }
+
+        static void SwitchWebSocketExtensionHandler(Task promise, object state)
+        {
+            var stateWrapper = (Tuple<IChannelHandlerContext, List<IWebSocketServerExtension>>)state;
+            var ctx = stateWrapper.Item1;
+            if (promise.Status == TaskStatus.RanToCompletion)
+            {
+                foreach (IWebSocketServerExtension extension in stateWrapper.Item2)
+                {
+                    WebSocketExtensionDecoder decoder = extension.NewExtensionDecoder();
+                    WebSocketExtensionEncoder encoder = extension.NewExtensionEncoder();
+                    ctx.Channel.Pipeline.AddAfter(ctx.Name, decoder.GetType().Name, decoder);
+                    ctx.Channel.Pipeline.AddAfter(ctx.Name, encoder.GetType().Name, encoder);
+                }
+            }
+            ctx.Channel.Pipeline.Remove(ctx.Name);
         }
     }
 }

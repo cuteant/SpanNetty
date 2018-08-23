@@ -131,9 +131,14 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
                 else
                 {
+#if NET40
+                    void closeOnComplete(Task t) => ctx.CloseAsync();
                     ctx.WriteAndFlushAsync(Unpooled.Empty)
-                        .ContinueWith((t, c) => ((IChannelHandlerContext)c).CloseAsync(),
-                            ctx, TaskContinuationOptions.ExecuteSynchronously);
+                        .ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+#else
+                    ctx.WriteAndFlushAsync(Unpooled.Empty)
+                        .ContinueWith(CloseOnComplete, ctx, TaskContinuationOptions.ExecuteSynchronously);
+#endif
                 }
 
                 return;
@@ -148,15 +153,25 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 var response = new DefaultFullHttpResponse(Http11, HttpResponseStatus.BadRequest,
                     Unpooled.WrappedBuffer(Encoding.ASCII.GetBytes(cause.Message)));
+#if NET40
+                void closeOnComplete(Task t) => ctx.CloseAsync();
                 ctx.Channel.WriteAndFlushAsync(response)
-                    .ContinueWith((t, c) => ((IChannelHandlerContext)c).CloseAsync(),
-                        ctx, TaskContinuationOptions.ExecuteSynchronously);
+                    .ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+#else
+                ctx.Channel.WriteAndFlushAsync(response)
+                    .ContinueWith(CloseOnComplete, ctx, TaskContinuationOptions.ExecuteSynchronously);
+#endif
             }
             else
             {
                 ctx.FireExceptionCaught(cause);
                 ctx.CloseAsync();
             }
+        }
+
+        static void CloseOnComplete(Task t, object c)
+        {
+            ((IChannelHandlerContext)c).CloseAsync();
         }
 
         internal static WebSocketServerHandshaker GetHandshaker(IChannel channel) => channel.GetAttribute(HandshakerAttrKey).Get();

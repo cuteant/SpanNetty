@@ -28,53 +28,54 @@ namespace DotNetty.Transport.Channels.Groups
 
             this.Group = group;
             this.futures = new Dictionary<IChannel, Task>();
+            void ContinueAction(Task x)
+            {
+                bool success = x.Status == TaskStatus.RanToCompletion;
+                bool callSetDone;
+                lock (this)
+                {
+                    if (success)
+                    {
+                        this.successCount++;
+                    }
+                    else
+                    {
+                        this.failureCount++;
+                    }
+
+                    callSetDone = this.successCount + this.failureCount == this.futures.Count;
+                    Contract.Assert(this.successCount + this.failureCount <= this.futures.Count);
+                }
+
+                if (callSetDone)
+                {
+                    if (this.failureCount > 0)
+                    {
+                        var failed = new List<KeyValuePair<IChannel, Exception>>();
+                        foreach (KeyValuePair<IChannel, Task> ft in this.futures)
+                        {
+                            IChannel c = ft.Key;
+                            Task f = ft.Value;
+                            if (f.IsFaulted || f.IsCanceled)
+                            {
+                                if (f.Exception != null)
+                                {
+                                    failed.Add(new KeyValuePair<IChannel, Exception>(c, f.Exception.InnerException));
+                                }
+                            }
+                        }
+                        this.TrySetException(new ChannelGroupException(failed));
+                    }
+                    else
+                    {
+                        this.TrySetResult(0);
+                    }
+                }
+            }
             foreach (KeyValuePair<IChannel, Task> pair in futures)
             {
                 this.futures.Add(pair.Key, pair.Value);
-                pair.Value.ContinueWith(x =>
-                {
-                    bool success = x.Status == TaskStatus.RanToCompletion;
-                    bool callSetDone;
-                    lock (this)
-                    {
-                        if (success)
-                        {
-                            this.successCount++;
-                        }
-                        else
-                        {
-                            this.failureCount++;
-                        }
-
-                        callSetDone = this.successCount + this.failureCount == this.futures.Count;
-                        Contract.Assert(this.successCount + this.failureCount <= this.futures.Count);
-                    }
-
-                    if (callSetDone)
-                    {
-                        if (this.failureCount > 0)
-                        {
-                            var failed = new List<KeyValuePair<IChannel, Exception>>();
-                            foreach (KeyValuePair<IChannel, Task> ft in this.futures)
-                            {
-                                IChannel c = ft.Key;
-                                Task f = ft.Value;
-                                if (f.IsFaulted || f.IsCanceled)
-                                {
-                                    if (f.Exception != null)
-                                    {
-                                        failed.Add(new KeyValuePair<IChannel, Exception>(c, f.Exception.InnerException));
-                                    }
-                                }
-                            }
-                            this.TrySetException(new ChannelGroupException(failed));
-                        }
-                        else
-                        {
-                            this.TrySetResult(0);
-                        }
-                    }
-                });
+                pair.Value.ContinueWith(ContinueAction);
             }
 
             // Done on arrival?

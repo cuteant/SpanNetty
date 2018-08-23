@@ -158,29 +158,35 @@ namespace DotNetty.Codecs.Http
                 if (oversized is IFullHttpMessage ||
                     !HttpUtil.Is100ContinueExpected(oversized) && !HttpUtil.IsKeepAlive(oversized))
                 {
-                    ctx.WriteAndFlushAsync(TooLargeClose.RetainedDuplicate()).ContinueWith((t, s) =>
+#if NET40
+                    void closeOnComplete(Task t)
+                    {
+                        if (t.IsFaulted)
                         {
-                            if (t.IsFaulted)
-                            {
-                                if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
-                            }
-                            ((IChannelHandlerContext)s).CloseAsync();
-                        }, 
-                        ctx,
-                        TaskContinuationOptions.ExecuteSynchronously);
+                            if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
+                        }
+                        ctx.CloseAsync();
+                    }
+                    ctx.WriteAndFlushAsync(TooLargeClose.RetainedDuplicate()).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+#else
+                    ctx.WriteAndFlushAsync(TooLargeClose.RetainedDuplicate()).ContinueWith(CloseOnComplete, ctx, TaskContinuationOptions.ExecuteSynchronously);
+#endif
                 }
                 else
                 {
-                    ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith((t, s) =>
+#if NET40
+                    void closeOnFault(Task t)
+                    {
+                        if (t.IsFaulted)
                         {
-                            if (t.IsFaulted)
-                            {
-                                if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
-                                ((IChannelHandlerContext)s).CloseAsync();
-                            }
-                        },
-                        ctx,
-                        TaskContinuationOptions.ExecuteSynchronously);
+                            if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
+                            ctx.CloseAsync();
+                        }
+                    }
+                    ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith(closeOnFault, TaskContinuationOptions.ExecuteSynchronously);
+#else
+                    ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith(CloseOnFault, ctx, TaskContinuationOptions.ExecuteSynchronously);
+#endif
                 }
                 // If an oversized request was handled properly and the connection is still alive
                 // (i.e. rejected 100-continue). the decoder should prepare to handle a new message.
@@ -195,6 +201,24 @@ namespace DotNetty.Codecs.Http
             else
             {
                 ThrowHelper.ThrowInvalidOperationException_InvalidType(oversized);
+            }
+        }
+
+        static void CloseOnComplete(Task t, object s)
+        {
+            if (t.IsFaulted)
+            {
+                if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
+            }
+            ((IChannelHandlerContext)s).CloseAsync();
+        }
+
+        static void CloseOnFault(Task t, object s)
+        {
+            if (t.IsFaulted)
+            {
+                if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
+                ((IChannelHandlerContext)s).CloseAsync();
             }
         }
 

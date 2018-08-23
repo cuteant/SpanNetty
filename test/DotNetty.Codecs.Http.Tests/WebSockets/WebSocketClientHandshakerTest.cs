@@ -262,7 +262,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             IByteBuffer expect = Unpooled.WrappedBuffer(data);
             try
             {
-                Assert.Equal(expect, frame.Content);
+                AssertEx.Equal(expect, frame.Content);
                 Assert.True(frame.IsFinalFragment);
                 Assert.Equal(0, frame.Rsv);
             }

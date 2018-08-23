@@ -49,8 +49,8 @@ namespace DotNetty.Codecs.Http.WebSockets
             var challenge = new byte[16];
             fixed (byte* bytes = challenge)
             {
-                Unsafe.WriteUnaligned(bytes, number1);
-                Unsafe.WriteUnaligned(bytes + 4, number2);
+                //Unsafe.WriteUnaligned(bytes, number1);
+                //Unsafe.WriteUnaligned(bytes + 4, number2);
                 PlatformDependent.CopyMemory(key3, 0, bytes + 8, 8);
             }
 

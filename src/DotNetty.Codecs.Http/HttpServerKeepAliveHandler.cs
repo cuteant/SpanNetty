@@ -52,16 +52,22 @@ namespace DotNetty.Codecs.Http
             }
             if (message is ILastHttpContent && !this.ShouldKeepAlive())
             {
+#if NET40
+                void closeOnComplete(Task t) => context.CloseAsync();
+                return base.WriteAsync(context, message)
+                    .ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+#else
                 return base.WriteAsync(context, message)
                     .ContinueWith(CloseOnComplete, context, TaskContinuationOptions.ExecuteSynchronously);
+#endif
             }
             return base.WriteAsync(context, message);
         }
 
-        static Task CloseOnComplete(Task task, object state)
+        static void CloseOnComplete(Task task, object state)
         {
             var context = (IChannelHandlerContext)state;
-            return context.CloseAsync();
+            context.CloseAsync();
         }
 
         void TrackResponse(IHttpResponse response)

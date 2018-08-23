@@ -1619,11 +1619,7 @@ namespace DotNetty.Buffers.Tests
 
             Assert.Equal(0, this.buffer.ReaderIndex);
             Assert.Equal(Capacity / 2, this.buffer.WriterIndex);
-#if TEST40
-            Assert.True(copy.Slice(0, Capacity / 2).Equals(this.buffer.Slice(0, Capacity / 2)));
-#else
-            Assert.Equal(copy.Slice(0, Capacity / 2), this.buffer.Slice(0, Capacity / 2));
-#endif
+            AssertEx.Equal(copy.Slice(0, Capacity / 2), this.buffer.Slice(0, Capacity / 2));
             this.buffer.ResetReaderIndex();
             Assert.Equal(Capacity / 4, this.buffer.ReaderIndex);
             this.buffer.ResetWriterIndex();
@@ -1636,11 +1632,7 @@ namespace DotNetty.Buffers.Tests
 
             Assert.Equal(0, this.buffer.ReaderIndex);
             Assert.Equal(Capacity / 2 - 1, this.buffer.WriterIndex);
-#if TEST40
-            Assert.True(copy.Slice(1, Capacity / 2 - 1).Equals(this.buffer.Slice(0, Capacity / 2 - 1)));
-#else
-            Assert.Equal(copy.Slice(1, Capacity / 2 - 1), this.buffer.Slice(0, Capacity / 2 - 1));
-#endif
+            AssertEx.Equal(copy.Slice(1, Capacity / 2 - 1), this.buffer.Slice(0, Capacity / 2 - 1));
 
             if (this.DiscardReadBytesDoesNotMoveWritableBytes())
             {
@@ -1649,11 +1641,7 @@ namespace DotNetty.Buffers.Tests
             }
             else
             {
-#if TEST40
-                Assert.True(copy.Slice(Capacity / 2, Capacity / 2).Equals(this.buffer.Slice(Capacity / 2 - 1, Capacity / 2)));
-#else
-                Assert.Equal(copy.Slice(Capacity / 2, Capacity / 2), this.buffer.Slice(Capacity / 2 - 1, Capacity / 2));
-#endif
+                AssertEx.Equal(copy.Slice(Capacity / 2, Capacity / 2), this.buffer.Slice(Capacity / 2 - 1, Capacity / 2));
             }
 
             // Marks also should be relocated.
@@ -1686,11 +1674,7 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(Capacity / 2, this.buffer.WriterIndex);
             for (int i = 0; i < Capacity / 2; i ++)
             {
-#if TEST40
-                Assert.True(copy.Slice(Capacity / 2 - 1 + i, Capacity / 2 - i).Equals(this.buffer.Slice(i, Capacity / 2 - i)));
-#else
-                Assert.Equal(copy.Slice(Capacity / 2 - 1 + i, Capacity / 2 - i), this.buffer.Slice(i, Capacity / 2 - i));
-#endif
+                AssertEx.Equal(copy.Slice(Capacity / 2 - 1 + i, Capacity / 2 - i), this.buffer.Slice(i, Capacity / 2 - i));
             }
         }
 
