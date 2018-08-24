@@ -74,22 +74,22 @@ namespace DotNetty.Common.Internal
                 return def;
             }
 
-            value = value.Trim().ToLowerInvariant();
+            value = value.Trim();
             if (value.Length == 0)
             {
-                return true;
+                return def;
             }
 
-            if ("true".Equals(value, StringComparison.OrdinalIgnoreCase)
-                || "yes".Equals(value, StringComparison.OrdinalIgnoreCase)
-                || "1".Equals(value, StringComparison.Ordinal))
+            if (string.Equals("true", value, StringComparison.OrdinalIgnoreCase)
+                || string.Equals("yes", value, StringComparison.OrdinalIgnoreCase)
+                || string.Equals("1", value, StringComparison.Ordinal))
             {
                 return true;
             }
 
-            if ("false".Equals(value, StringComparison.OrdinalIgnoreCase)
-                || "no".Equals(value, StringComparison.OrdinalIgnoreCase)
-                || "0".Equals(value, StringComparison.Ordinal))
+            if (string.Equals("false", value, StringComparison.OrdinalIgnoreCase)
+                || string.Equals("no", value, StringComparison.OrdinalIgnoreCase)
+                || string.Equals("0", value, StringComparison.Ordinal))
             {
                 return false;
             }
@@ -119,9 +119,8 @@ namespace DotNetty.Common.Internal
                 return def;
             }
 
-            value = value.Trim().ToLowerInvariant();
-            int result;
-            if (!int.TryParse(value, out result))
+            value = value.Trim();
+            if (!int.TryParse(value, out var result))
             {
                 result = def;
 
@@ -150,8 +149,8 @@ namespace DotNetty.Common.Internal
                 return def;
             }
 
-            long result;
-            if (!long.TryParse(value, out result))
+            value = value.Trim();
+            if (!long.TryParse(value, out var result))
             {
                 result = def;
                 Log(
