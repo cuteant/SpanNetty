@@ -49,9 +49,30 @@ namespace DotNetty.Codecs
                     this.replayRequested = false;
                     int oldReaderIndex = this.checkpoint = input.ReaderIndex;
                     int outSize = output.Count;
+
+                    if (outSize > 0)
+                    {
+                        for (int i = 0; i < outSize; i++)
+                        {
+                            context.FireChannelRead(output[i]);
+                        }
+                        output.Clear();
+
+                        // Check if this handler was removed before continuing with decoding.
+                        // If it was removed, it is not safe to continue to operate on the buffer.
+                        //
+                        // See:
+                        // - https://github.com/netty/netty/issues/4635
+                        if (context.Removed)
+                        {
+                            break;
+                        }
+                        outSize = 0;
+                    }
+
                     TState oldState = this.state;
                     int oldInputLength = input.ReadableBytes;
-                    this.Decode(context, input, output);
+                    this.DecodeRemovalReentryProtection(context, input, output);
 
                     if (this.replayRequested)
                     {

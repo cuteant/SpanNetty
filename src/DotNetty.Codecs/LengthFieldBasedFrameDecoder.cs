@@ -418,9 +418,7 @@ namespace DotNetty.Codecs
 
         protected virtual IByteBuffer ExtractFrame(IChannelHandlerContext context, IByteBuffer buffer, int index, int length)
         {
-            IByteBuffer buff = buffer.Slice(index, length);
-            buff.Retain();
-            return buff;
+            return buffer.RetainedSlice(index, length);
         }
 
         void FailIfNecessary(bool firstDetectionOfTooLongFrame)
@@ -432,8 +430,7 @@ namespace DotNetty.Codecs
                 long tooLongFrameLength = this.tooLongFrameLength;
                 this.tooLongFrameLength = 0;
                 this.discardingTooLongFrame = false;
-                if (!this.failFast ||
-                    this.failFast && firstDetectionOfTooLongFrame)
+                if (!this.failFast || firstDetectionOfTooLongFrame)
                 {
                     if (tooLongFrameLength > 0)
                     {

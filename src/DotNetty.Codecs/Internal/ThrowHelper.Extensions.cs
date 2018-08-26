@@ -117,6 +117,16 @@ namespace DotNetty.Codecs
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_DiscardAfterReads()
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("discardAfterReads must be > 0");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_EmptyDelimiter()
         {
             throw GetException();

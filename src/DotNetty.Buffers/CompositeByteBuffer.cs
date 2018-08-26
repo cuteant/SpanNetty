@@ -1138,6 +1138,12 @@ namespace DotNetty.Buffers
                 IByteBuffer s = c.Buffer;
                 int adjustment = c.Offset;
                 int localLength = Math.Min(length, s.Capacity - (index - adjustment));
+                if (localLength == 0)
+                {
+                    // Skip empty buffer
+                    i++;
+                    continue;
+                }
                 int localReadBytes = await s.SetBytesAsync(index - adjustment, src, localLength, cancellationToken);
                 if (localReadBytes < 0)
                 {

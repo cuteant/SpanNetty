@@ -25,6 +25,9 @@ namespace DotNetty.Codecs
         bool discarding;
         int discardedBytes;
 
+        /** Last scan position. */
+        int offset;
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="DotNetty.Codecs.LineBasedFrameDecoder" /> class.
         /// </summary>
@@ -100,15 +103,15 @@ namespace DotNetty.Codecs
 
                     if (this.stripDelimiter)
                     {
-                        frame = buffer.ReadSlice(length);
+                        frame = buffer.ReadRetainedSlice(length);
                         buffer.SkipBytes(delimLength);
                     }
                     else
                     {
-                        frame = buffer.ReadSlice(length + delimLength);
+                        frame = buffer.ReadRetainedSlice(length + delimLength);
                     }
 
-                    return frame.Retain();
+                    return frame;
                 }
                 else
                 {
@@ -118,6 +121,7 @@ namespace DotNetty.Codecs
                         this.discardedBytes = length;
                         buffer.SetReaderIndex(buffer.WriterIndex);
                         this.discarding = true;
+                        this.offset = 0;
                         if (this.failFast)
                         {
                             this.Fail(ctx, "over " + this.discardedBytes);
@@ -158,14 +162,26 @@ namespace DotNetty.Codecs
                     $"frame length ({length}) exceeds the allowed maximum ({this.maxLength})"));
         }
 
+        /**
+         * Returns the index in the buffer of the end of line found.
+         * Returns -1 if no end of line was found in the buffer.
+         */
         int FindEndOfLine(IByteBuffer buffer)
         {
-            int i = buffer.ForEachByte(ByteProcessor.FindLF);
-            if (i > 0 && buffer.GetByte(i - 1) == '\r')
+            int totalLength = buffer.ReadableBytes;
+            int i = buffer.ForEachByte(buffer.ReaderIndex + offset, totalLength - offset, ByteProcessor.FindLF);
+            if (i >= 0)
             {
-                i--;
+                offset = 0;
+                if (i > 0 && buffer.GetByte(i - 1) == '\r')
+                {
+                    i--;
+                }
             }
-
+            else
+            {
+                offset = totalLength;
+            }
             return i;
         }
     }

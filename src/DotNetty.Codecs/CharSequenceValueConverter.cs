@@ -39,7 +39,7 @@ namespace DotNetty.Codecs
 
         public byte ConvertToByte(ICharSequence value)
         {
-            if (value is AsciiString asciiString)
+            if (value is AsciiString asciiString && value.Count == 1)
             {
                 return asciiString.ByteAt(0);
             }
@@ -77,7 +77,7 @@ namespace DotNetty.Codecs
             return long.Parse(value.ToString());
         }
 
-        public ICharSequence ConvertTimeMillis(long value) => new StringCharSequence(value.ToString());
+        public ICharSequence ConvertTimeMillis(long value) => new StringCharSequence(DateFormatter.Format(new DateTime(value * TimeSpan.TicksPerMillisecond)));
 
         public long ConvertToTimeMillis(ICharSequence value)
         {

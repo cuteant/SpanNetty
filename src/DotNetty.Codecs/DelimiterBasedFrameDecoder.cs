@@ -202,15 +202,15 @@ namespace DotNetty.Codecs
 
                 if (this.stripDelimiter)
                 {
-                    frame = buffer.ReadSlice(minFrameLength);
+                    frame = buffer.ReadRetainedSlice(minFrameLength);
                     buffer.SkipBytes(minDelimLength);
                 }
                 else
                 {
-                    frame = buffer.ReadSlice(minFrameLength + minDelimLength);
+                    frame = buffer.ReadRetainedSlice(minFrameLength + minDelimLength);
                 }
 
-                return frame.Retain();
+                return frame;
             }
             else
             {
