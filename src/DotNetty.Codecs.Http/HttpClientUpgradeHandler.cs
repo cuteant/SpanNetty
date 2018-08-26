@@ -192,7 +192,7 @@ namespace DotNetty.Codecs.Http
                 builder.Append(',');
             }
             builder.Append(HttpHeaderValues.Upgrade);
-            request.Headers.Set(HttpHeaderNames.Connection, new StringCharSequence(StringBuilderManager.ReturnAndFree(builder)));
+            request.Headers.Add(HttpHeaderNames.Connection, new StringCharSequence(StringBuilderManager.ReturnAndFree(builder)));
         }
     }
 }

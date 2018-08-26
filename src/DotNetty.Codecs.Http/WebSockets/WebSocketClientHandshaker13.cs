@@ -60,24 +60,25 @@ namespace DotNetty.Codecs.Http.WebSockets
             var request = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, path);
             HttpHeaders headers = request.Headers;
 
-            headers.Add(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket)
-                .Add(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade)
-                .Add(HttpHeaderNames.SecWebsocketKey, key)
-                .Add(HttpHeaderNames.Host, WebsocketHostValue(wsUrl))
-                .Add(HttpHeaderNames.SecWebsocketOrigin, WebsocketOriginValue(wsUrl));
-
-            string expectedSubprotocol = this.ExpectedSubprotocol;
-            if (!string.IsNullOrEmpty(expectedSubprotocol))
-            {
-                headers.Add(HttpHeaderNames.SecWebsocketProtocol, expectedSubprotocol);
-            }
-
-            headers.Add(HttpHeaderNames.SecWebsocketVersion, "13");
-
             if (this.CustomHeaders != null)
             {
                 headers.Add(this.CustomHeaders);
             }
+
+            headers.Set(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket)
+                .Set(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade)
+                .Set(HttpHeaderNames.SecWebsocketKey, key)
+                .Set(HttpHeaderNames.Host, WebsocketHostValue(wsUrl))
+                .Set(HttpHeaderNames.SecWebsocketOrigin, WebsocketOriginValue(wsUrl));
+
+            string expectedSubprotocol = this.ExpectedSubprotocol;
+            if (!string.IsNullOrEmpty(expectedSubprotocol))
+            {
+                headers.Set(HttpHeaderNames.SecWebsocketProtocol, expectedSubprotocol);
+            }
+
+            headers.Set(HttpHeaderNames.SecWebsocketVersion, "13");
+
             return request;
         }
 

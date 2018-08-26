@@ -121,7 +121,7 @@ namespace DotNetty.Codecs.Http
 
                     if (isFull)
                     {
-                        // Pass through the full response with empty content and continue waiting for the the next resp.
+                        // Pass through the full response with empty content and continue waiting for the next resp.
                         if (!((IByteBufferHolder)res).Content.IsReadable())
                         {
                             output.Add(ReferenceCountUtil.Retain(res));

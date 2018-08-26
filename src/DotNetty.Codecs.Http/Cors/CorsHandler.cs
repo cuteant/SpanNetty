@@ -19,29 +19,39 @@ namespace DotNetty.Codecs.Http.Cors
         internal static readonly AsciiString AnyOrigin = new AsciiString("*");
         internal static readonly AsciiString NullOrigin = new AsciiString("null");
 
-        readonly CorsConfig config;
+        CorsConfig config;
         IHttpRequest request;
+        readonly IList<CorsConfig> configList;
+        bool isShortCircuit;
 
         public CorsHandler(CorsConfig config)
+            : this(config != null ? new List<CorsConfig>(new[] { config }) : null, config.IsShortCircuit)
         {
-            Contract.Requires(config != null);
+        }
 
-            this.config = config;
+        public CorsHandler(IList<CorsConfig> configList, bool isShortCircuit)
+        {
+            if (null == configList) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.configList); }
+            if (configList.Count <= 0) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.configList); }
+            this.configList = configList;
+            this.isShortCircuit = isShortCircuit;
         }
 
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
-            if (this.config.IsCorsSupportEnabled && message is IHttpRequest)
+            if (message is IHttpRequest req)
             {
-                this.request = (IHttpRequest)message;
-                if (IsPreflightRequest(this.request))
+                this.request = req;
+                var origin = request.Headers.Get(HttpHeaderNames.Origin, null);
+                this.config = GetForOrigin(origin);
+                if (IsPreflightRequest(req))
                 {
-                    this.HandlePreflight(context, this.request);
+                    this.HandlePreflight(context, req);
                     return;
                 }
-                if (this.config.IsShortCircuit && !this.ValidateOrigin())
+                if (this.isShortCircuit && !(origin == null || this.config != null))
                 {
-                    Forbidden(context, this.request);
+                    Forbidden(context, req);
                     return;
                 }
             }
@@ -70,9 +80,29 @@ namespace DotNetty.Codecs.Http.Cors
 
         void SetPreflightHeaders(IHttpResponse response) => response.Headers.Add(this.config.PreflightResponseHeaders());
 
+        private CorsConfig GetForOrigin(ICharSequence requestOrigin)
+        {
+            foreach (var corsConfig in this.configList)
+            {
+                if (corsConfig.IsAnyOriginSupported)
+                {
+                    return corsConfig;
+                }
+                if (corsConfig.Origins.Contains(requestOrigin))
+                {
+                    return corsConfig;
+                }
+                if (corsConfig.IsNullOriginAllowed || NullOrigin.Equals(requestOrigin))
+                {
+                    return corsConfig;
+                }
+            }
+            return null;
+        }
+
         bool SetOrigin(IHttpResponse response)
         {
-            if (!this.request.Headers.TryGet(HttpHeaderNames.Origin, out ICharSequence origin))
+            if (!this.request.Headers.TryGet(HttpHeaderNames.Origin, out ICharSequence origin) || this.config == null)
             {
                 return false;
             }
@@ -103,26 +133,6 @@ namespace DotNetty.Codecs.Http.Cors
             if (Logger.DebugEnabled) Logger.RequestOriginWasNotAmongTheConfiguredOrigins(origin, this.config);
 
             return false;
-        }
-
-        bool ValidateOrigin()
-        {
-            if (this.config.IsAnyOriginSupported)
-            {
-                return true;
-            }
-
-            if (!this.request.Headers.TryGet(HttpHeaderNames.Origin, out ICharSequence origin))
-            {
-                // Not a CORS request so we cannot validate it. It may be a non CORS request.
-                return true;
-            }
-
-            if (NullOrigin.ContentEquals(origin) && this.config.IsNullOriginAllowed)
-            {
-                return true;
-            }
-            return this.config.Origins.Contains(origin);
         }
 
         void EchoRequestOrigin(IHttpResponse response) => SetOrigin(response, this.request.Headers.Get(HttpHeaderNames.Origin, null));
@@ -169,7 +179,7 @@ namespace DotNetty.Codecs.Http.Cors
 
         public override Task WriteAsync(IChannelHandlerContext context, object message)
         {
-            if (this.config.IsCorsSupportEnabled && message is IHttpResponse response)
+            if (this.config != null && this.config.IsCorsSupportEnabled && message is IHttpResponse response)
             {
                 if (this.SetOrigin(response))
                 {
@@ -177,7 +187,7 @@ namespace DotNetty.Codecs.Http.Cors
                     this.SetExposeHeaders(response);
                 }
             }
-            return context.WriteAndFlushAsync(message);
+            return context.WriteAsync(message);
         }
 
         static void Forbidden(IChannelHandlerContext ctx, IHttpRequest request)

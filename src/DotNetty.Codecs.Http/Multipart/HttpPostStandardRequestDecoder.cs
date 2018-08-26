@@ -344,25 +344,14 @@ namespace DotNetty.Codecs.Http.Multipart
                     }
                     firstpos = currentpos;
                     this.currentStatus = MultiPartStatus.Epilogue;
-                    this.undecodedChunk.SetReaderIndex(firstpos);
-                    return;
                 }
-                if (contRead && this.currentAttribute != null)
+                else if (contRead && this.currentAttribute != null && this.currentStatus == MultiPartStatus.Field)
                 {
                     // reset index except if to continue in case of FIELD getStatus
-                    if (this.currentStatus == MultiPartStatus.Field)
-                    {
-                        this.currentAttribute.AddContent(this.undecodedChunk.Copy(firstpos, currentpos - firstpos),
-                                                    false);
-                        firstpos = currentpos;
-                    }
-                    this.undecodedChunk.SetReaderIndex(firstpos);
+                    this.currentAttribute.AddContent(this.undecodedChunk.Copy(firstpos, currentpos - firstpos), false);
+                    firstpos = currentpos;
                 }
-                else
-                {
-                    // end of line or end of block so keep index to last valid position
-                    this.undecodedChunk.SetReaderIndex(firstpos);
-                }
+                this.undecodedChunk.SetReaderIndex(firstpos);
             }
             catch (ErrorDataDecoderException)
             {
@@ -502,25 +491,14 @@ namespace DotNetty.Codecs.Http.Multipart
                     }
                     firstpos = currentpos;
                     this.currentStatus = MultiPartStatus.Epilogue;
-                    this.undecodedChunk.SetReaderIndex(firstpos);
-                    return;
                 }
-                if (contRead && this.currentAttribute != null)
+                else if (contRead && this.currentAttribute != null && this.currentStatus == MultiPartStatus.Field)
                 {
                     // reset index except if to continue in case of FIELD getStatus
-                    if (this.currentStatus == MultiPartStatus.Field)
-                    {
-                        this.currentAttribute.AddContent(this.undecodedChunk.Copy(firstpos, currentpos - firstpos),
-                            false);
-                        firstpos = currentpos;
-                    }
-                    this.undecodedChunk.SetReaderIndex(firstpos);
+                    this.currentAttribute.AddContent(this.undecodedChunk.Copy(firstpos, currentpos - firstpos), false);
+                    firstpos = currentpos;
                 }
-                else
-                {
-                    // end of line or end of block so keep index to last valid position
-                    this.undecodedChunk.SetReaderIndex(firstpos);
-                }
+                this.undecodedChunk.SetReaderIndex(firstpos);
             }
             catch (ErrorDataDecoderException)
             {
@@ -565,7 +543,9 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void Destroy()
         {
+            // Release all data items, including those not yet pulled
             this.CleanFiles();
+
             this.destroyed = true;
 
             if (this.undecodedChunk != null && this.undecodedChunk.ReferenceCount > 0)

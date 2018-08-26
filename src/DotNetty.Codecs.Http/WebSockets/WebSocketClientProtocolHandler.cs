@@ -59,6 +59,12 @@ namespace DotNetty.Codecs.Http.WebSockets
         }
 
         public WebSocketClientProtocolHandler(WebSocketClientHandshaker handshaker, bool handleCloseFrames)
+            : this(handshaker, handleCloseFrames, true)
+        {
+        }
+
+        public WebSocketClientProtocolHandler(WebSocketClientHandshaker handshaker, bool handleCloseFrames, bool dropPongFrames)
+            : base(dropPongFrames)
         {
             this.handshaker = handshaker;
             this.handleCloseFrames = handleCloseFrames;

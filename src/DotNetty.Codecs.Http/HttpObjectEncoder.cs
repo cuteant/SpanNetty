@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Http
             {
                 if (this.state != StInit)
                 {
-                    ThrowHelper.ThrowInvalidOperationException_UnexpectedMsg(message);
+                    ThrowHelper.ThrowInvalidOperationException_UnexpectedMsg(message, this.state);
                 }
 
                 var m = (T)message;
@@ -197,7 +197,7 @@ namespace DotNetty.Codecs.Http
             {
                 // Need to produce some output otherwise an
                 // IllegalstateException will be thrown
-                output.Add(ReferenceCountUtil.Retain(message));
+                output.Add(EncodeAndRetain(message));
             }
         }
 

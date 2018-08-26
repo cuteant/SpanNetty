@@ -494,15 +494,11 @@ namespace DotNetty.Codecs.Http
             // when we produced an invalid message without consuming anything.
             buf.SkipBytes(buf.ReadableBytes);
 
-            if (this.message != null)
-            {
-                this.message.Result = DecoderResult.Failure(cause);
-            }
-            else
+            if (this.message == null)
             {
                 this.message = this.CreateInvalidMessage();
-                this.message.Result = DecoderResult.Failure(cause);
             }
+            this.message.Result = DecoderResult.Failure(cause);
 
             IHttpMessage ret = this.message;
             this.message = null;
@@ -561,6 +557,8 @@ namespace DotNetty.Codecs.Http
                     byte firstChar = line.Bytes[0];
                     if (this.name != null && (firstChar == ' ' || firstChar == '\t'))
                     {
+                        //please do not make one line from below code
+                        //as it breaks +XX:OptimizeStringConcat optimization
                         ICharSequence trimmedLine = CharUtil.Trim(line);
                         this.value = new AsciiString($"{this.value} {trimmedLine}");
                     }
@@ -646,8 +644,10 @@ namespace DotNetty.Codecs.Http
                         if (current.Count > 0)
                         {
                             int lastPos = current.Count - 1;
+                            //please do not make one line from below code
+                            //as it breaks +XX:OptimizeStringConcat optimization
                             ICharSequence lineTrimmed = CharUtil.Trim(line);
-                            current[lastPos] = new AsciiString($"{current[lastPos]} {lineTrimmed}");
+                            current[lastPos] = new AsciiString($"{current[lastPos]}{lineTrimmed}");
                         }
                     }
                     else

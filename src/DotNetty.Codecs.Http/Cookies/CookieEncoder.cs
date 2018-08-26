@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
             if ((pos = FirstInvalidCookieValueOctet(unwrappedValue)) >= 0)
             {
-                ThrowHelper.ThrowArgumentException_CookieValue(value, pos);
+                ThrowHelper.ThrowArgumentException_CookieValue(unwrappedValue, pos);
             }
         }
     }

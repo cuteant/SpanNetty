@@ -129,6 +129,13 @@ namespace DotNetty.Codecs.Http.Tests.Cookies
         }
 
         [Fact]
+        public void IllegalCharInWrappedValueAppearsInException()
+        {
+            var ex = Assert.Throws<ArgumentException>(() => ServerCookieEncoder.StrictEncoder.Encode(new DefaultCookie("name", "\"value,\"")));
+            Assert.Contains("Cookie value contains an invalid char: ", ex.Message);
+        }
+
+        [Fact]
         public void EncodingMultipleCookiesLax()
         {
             var result = new List<string>

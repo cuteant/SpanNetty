@@ -227,7 +227,7 @@ namespace DotNetty.Codecs.Http.Tests
             ch.WriteInbound(NewRequest());
 
             var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK, 
-                Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes("Hello, World")));
+                Unpooled.CopiedBuffer("Hello, World", Encoding.ASCII));
             ch.WriteOutbound(res);
 
             AssertEncodedResponse(ch);
@@ -403,7 +403,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.True(ch.WriteInbound(NewRequest()));
 
             var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK, 
-                Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes("Hello, World")));
+                Unpooled.CopiedBuffer("Hello, World", Encoding.ASCII));
             int len = res.Content.ReadableBytes;
             res.Headers.Set(HttpHeaderNames.ContentLength, len);
             res.Headers.Set(HttpHeaderNames.ContentEncoding, HttpHeaderValues.Identity);
@@ -415,6 +415,77 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal("Hello, World", response.Content.ToString(Encoding.ASCII));
             response.Release();
 
+            Assert.True(ch.FinishAndReleaseAll());
+        }
+
+        [Fact]
+        public void CustomEncoding()
+        {
+            EmbeddedChannel ch = new EmbeddedChannel(new HttpContentCompressor());
+            Assert.True(ch.WriteInbound(NewRequest()));
+
+            var res = new DefaultFullHttpResponse(
+                    HttpVersion.Http11, HttpResponseStatus.OK,
+                    Unpooled.CopiedBuffer("Hello, World", Encoding.ASCII));
+            int len = res.Content.ReadableBytes;
+            res.Headers.Set(HttpHeaderNames.ContentLength, len);
+            res.Headers.Set(HttpHeaderNames.ContentEncoding, "ascii");
+            Assert.True(ch.WriteOutbound(res));
+
+            var response = ch.ReadOutbound<IFullHttpResponse>();
+            Assert.Equal(len.ToString(), response.Headers.GetAsString(HttpHeaderNames.ContentLength));
+            Assert.Equal("ascii", response.Headers.GetAsString(HttpHeaderNames.ContentEncoding));
+            Assert.Equal("Hello, World", response.Content.ToString(Encoding.ASCII));
+            response.Release();
+
+            Assert.True(ch.FinishAndReleaseAll());
+        }
+
+        [Fact]
+        public void CompressThresholdAllCompress()
+        {
+            EmbeddedChannel ch = new EmbeddedChannel(new HttpContentCompressor());
+            Assert.True(ch.WriteInbound(NewRequest()));
+
+            var res1023 = new DefaultFullHttpResponse(
+                    HttpVersion.Http11, HttpResponseStatus.OK,
+                    Unpooled.WrappedBuffer(new byte[1023]));
+            Assert.True(ch.WriteOutbound(res1023));
+            var response1023 = ch.ReadOutbound<DefaultHttpResponse>();
+            Assert.Equal("gzip", response1023.Headers.Get(HttpHeaderNames.ContentEncoding, null).ToString());
+            ch.ReleaseOutbound();
+
+            Assert.True(ch.WriteInbound(NewRequest()));
+            var res1024 = new DefaultFullHttpResponse(
+                    HttpVersion.Http11, HttpResponseStatus.OK,
+                    Unpooled.WrappedBuffer(new byte[1024]));
+            Assert.True(ch.WriteOutbound(res1024));
+            var response1024 = ch.ReadOutbound<DefaultHttpResponse>();
+            Assert.Equal("gzip", response1024.Headers.Get(HttpHeaderNames.ContentEncoding, null).ToString());
+            Assert.True(ch.FinishAndReleaseAll());
+        }
+
+        [Fact]
+        public void CompressThresholdNotCompress()
+        {
+            EmbeddedChannel ch = new EmbeddedChannel(new HttpContentCompressor(6, 15, 8, 1024));
+            Assert.True(ch.WriteInbound(NewRequest()));
+
+            var res1023 = new DefaultFullHttpResponse(
+                    HttpVersion.Http11, HttpResponseStatus.OK,
+                    Unpooled.WrappedBuffer(new byte[1023]));
+            Assert.True(ch.WriteOutbound(res1023));
+            var response1023 = ch.ReadOutbound<DefaultHttpResponse>();
+            Assert.False(response1023.Headers.Contains(HttpHeaderNames.ContentEncoding));
+            ch.ReleaseOutbound();
+
+            Assert.True(ch.WriteInbound(NewRequest()));
+            var res1024 = new DefaultFullHttpResponse(
+                    HttpVersion.Http11, HttpResponseStatus.OK,
+                    Unpooled.WrappedBuffer(new byte[1024]));
+            Assert.True(ch.WriteOutbound(res1024));
+            var response1024 = ch.ReadOutbound<DefaultHttpResponse>();
+            Assert.Equal("gzip", response1024.Headers.Get(HttpHeaderNames.ContentEncoding, null).ToString());
             Assert.True(ch.FinishAndReleaseAll());
         }
 

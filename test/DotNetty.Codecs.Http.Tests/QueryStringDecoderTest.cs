@@ -255,6 +255,9 @@ namespace DotNetty.Codecs.Http.Tests
             var uri = new Uri("http://localhost:8080/foo?param1=value1&param2=value2&param3=value3");
             var d = new QueryStringDecoder(uri);
             Assert.Equal("/foo", d.Path);
+            Assert.Equal("/foo", d.RawPath());
+            Assert.Equal("param1=value1&param2=value2&param3=value3", d.RawQuery());
+
             IDictionary<string, List<string> > parameters = d.Parameters;
             Assert.Equal(3, parameters.Count);
 
@@ -281,6 +284,9 @@ namespace DotNetty.Codecs.Http.Tests
             var uri = new Uri("http://localhost:8080/?param1=value1&param2=value2&param3=value3");
             var d = new QueryStringDecoder(uri);
             Assert.Equal("/", d.Path);
+            Assert.Equal("/", d.RawPath());
+            Assert.Equal("param1=value1&param2=value2&param3=value3", d.RawQuery());
+
             IDictionary<string, List<string>> parameters = d.Parameters;
             Assert.Equal(3, parameters.Count);
 
@@ -309,6 +315,9 @@ namespace DotNetty.Codecs.Http.Tests
             // The path component cannot be empty string, 
             // if there are no path component, it shoudl be '/' as above UriSlashPath test
             Assert.Equal("/", d.Path);
+            Assert.Equal("/", d.RawPath());
+            Assert.Equal("param1=value1&param2=value2&param3=value3", d.RawQuery());
+
             IDictionary<string, List<string>> parameters = d.Parameters;
             Assert.Equal(3, parameters.Count);
 
@@ -335,6 +344,9 @@ namespace DotNetty.Codecs.Http.Tests
             var uri = new Uri("http://foo.com/images;num=10?query=name;value=123");
             var d = new QueryStringDecoder(uri);
             Assert.Equal("/images;num=10", d.Path);
+            Assert.Equal("/images;num=10", d.RawPath());
+            Assert.Equal("query=name;value=123", d.RawQuery());
+
             IDictionary<string, List<string>> parameters = d.Parameters;
             Assert.Equal(2, parameters.Count);
 

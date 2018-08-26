@@ -4,6 +4,7 @@
 namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
+    using System.Globalization;
     using System.Runtime.CompilerServices;
     using DotNetty.Buffers;
     using DotNetty.Common.Internal;
@@ -36,8 +37,8 @@ namespace DotNetty.Codecs.Http.WebSockets
             int product1 = number1 * spaces1;
             int product2 = number2 * spaces2;
 
-            string key1 = Convert.ToString(product1);
-            string key2 = Convert.ToString(product2);
+            string key1 = product1.ToString(CultureInfo.InvariantCulture);
+            string key2 = product2.ToString(CultureInfo.InvariantCulture);
 
             key1 = InsertRandomCharacters(key1);
             key2 = InsertRandomCharacters(key2);
@@ -46,6 +47,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             key2 = InsertSpaces(key2, spaces2);
 
             byte[] key3 = WebSocketUtil.RandomBytes(8);
+
             var challenge = new byte[16];
             fixed (byte* bytes = challenge)
             {
@@ -63,22 +65,23 @@ namespace DotNetty.Codecs.Http.WebSockets
             // Format request
             var request = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, path);
             HttpHeaders headers = request.Headers;
-            headers.Add(HttpHeaderNames.Upgrade, Websocket)
-                .Add(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade)
-                .Add(HttpHeaderNames.Host, WebsocketHostValue(wsUrl))
-                .Add(HttpHeaderNames.Origin, WebsocketOriginValue(wsUrl))
-                .Add(HttpHeaderNames.SecWebsocketKey1, key1)
-                .Add(HttpHeaderNames.SecWebsocketKey2, key2);
-
-            string expectedSubprotocol = this.ExpectedSubprotocol;
-            if (!string.IsNullOrEmpty(expectedSubprotocol))
-            {
-                headers.Add(HttpHeaderNames.SecWebsocketProtocol, expectedSubprotocol);
-            }
 
             if (this.CustomHeaders != null)
             {
                 headers.Add(this.CustomHeaders);
+            }
+
+            headers.Set(HttpHeaderNames.Upgrade, Websocket)
+                .Set(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade)
+                .Set(HttpHeaderNames.Host, WebsocketHostValue(wsUrl))
+                .Set(HttpHeaderNames.Origin, WebsocketOriginValue(wsUrl))
+                .Set(HttpHeaderNames.SecWebsocketKey1, key1)
+                .Set(HttpHeaderNames.SecWebsocketKey2, key2);
+
+            string expectedSubprotocol = this.ExpectedSubprotocol;
+            if (!string.IsNullOrEmpty(expectedSubprotocol))
+            {
+                headers.Set(HttpHeaderNames.SecWebsocketProtocol, expectedSubprotocol);
             }
 
             // Set Content-Length to workaround some known defect.

@@ -470,7 +470,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         static void SkipControlCharactersStandard(IByteBuffer undecodedChunk)
         {
-            for (; ;)
+            while(true)
             {
                 char c = (char)undecodedChunk.ReadByte();
                 if (!CharUtil.IsISOControl(c) && !char.IsWhiteSpace(c))

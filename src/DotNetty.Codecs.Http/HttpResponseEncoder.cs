@@ -38,6 +38,15 @@ namespace DotNetty.Codecs.Http
                     // See https://tools.ietf.org/html/rfc7230#section-3.3.1
                     msg.Headers.Remove(HttpHeaderNames.TransferEncoding);
                 }
+                else if (status.Code == StatusCodes.Status205ResetContent)
+                {
+                    // Stripping Transfer-Encoding:
+                    msg.Headers.Remove(HttpHeaderNames.TransferEncoding);
+
+                    // Set Content-Length: 0
+                    // https://httpstatuses.com/205
+                    msg.Headers.SetInt(HttpHeaderNames.ContentLength, 0);
+                }
             }
         }
 
@@ -58,8 +67,15 @@ namespace DotNetty.Codecs.Http
                 }
                 return true;
             }
-            return status.Code == StatusCodes.Status204NoContent 
-                || status.Code == StatusCodes.Status304NotModified;
+            switch (status.Code)
+            {
+                case StatusCodes.Status204NoContent:
+                case StatusCodes.Status304NotModified:
+                case StatusCodes.Status205ResetContent:
+                    return true;
+                default:
+                    return false;
+            }
         }
     }
 }

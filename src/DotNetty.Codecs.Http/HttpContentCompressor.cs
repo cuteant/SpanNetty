@@ -18,32 +18,42 @@ namespace DotNetty.Codecs.Http
         readonly int compressionLevel;
         readonly int windowBits;
         readonly int memLevel;
-
+        readonly int contentSizeThreshold;
         IChannelHandlerContext handlerContext;
 
-        public HttpContentCompressor() : this(6)
-        {
-        }
+        public HttpContentCompressor() : this(6) { }
 
-        public HttpContentCompressor(int compressionLevel) : this(compressionLevel, 15, 8)
-        {
-        }
+        public HttpContentCompressor(int compressionLevel) : this(compressionLevel, 15, 8, 0) { }
 
         public HttpContentCompressor(int compressionLevel, int windowBits, int memLevel)
+            : this(compressionLevel, windowBits, memLevel, 0) { }
+
+        public HttpContentCompressor(int compressionLevel, int windowBits, int memLevel, int contentSizeThreshold)
         {
             Contract.Requires(compressionLevel >= 0 && compressionLevel <= 9);
             Contract.Requires(windowBits >= 9 && windowBits <= 15);
             Contract.Requires(memLevel >= 1 && memLevel <= 9);
+            Contract.Requires(contentSizeThreshold >= 0);
 
             this.compressionLevel = compressionLevel;
             this.windowBits = windowBits;
             this.memLevel = memLevel;
+            this.contentSizeThreshold = contentSizeThreshold;
         }
 
         public override void HandlerAdded(IChannelHandlerContext context) => this.handlerContext = context;
 
         protected override Result BeginEncode(IHttpResponse headers, ICharSequence acceptEncoding)
         {
+            if (this.contentSizeThreshold > 0)
+            {
+                if (headers is IHttpContent httpContent &&
+                    httpContent.Content.ReadableBytes < this.contentSizeThreshold)
+                {
+                    return null;
+                }
+            }
+
             if (headers.Headers.Contains(HttpHeaderNames.ContentEncoding))
             {
                 // Content-Encoding was set, either as something specific or as the IDENTITY encoding
@@ -72,7 +82,7 @@ namespace DotNetty.Codecs.Http
 
             return new Result(targetContentEncoding,
               new EmbeddedChannel(
-                  this.handlerContext.Channel.Id, 
+                  this.handlerContext.Channel.Id,
                   this.handlerContext.Channel.Metadata.HasDisconnect,
                   this.handlerContext.Channel.Configuration,
                   ZlibCodecFactory.NewZlibEncoder(
@@ -101,7 +111,7 @@ namespace DotNetty.Codecs.Http
                         q = 0.0f;
                     }
                 }
-                
+
                 if (CharUtil.Contains(encoding, '*'))
                 {
                     starQ = q;

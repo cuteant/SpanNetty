@@ -7,6 +7,7 @@ namespace DotNetty.Codecs.Http.Cookies
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Diagnostics.Contracts;
+    using System.Linq;
     using System.Text;
 
     using static CookieUtil;
@@ -106,11 +107,7 @@ namespace DotNetty.Codecs.Http.Cookies
             StringBuilder buf = StringBuilder();
             if (this.Strict)
             {
-                var cookiesList = new List<ICookie>();
-                foreach (ICookie cookie in cookies)
-                {
-                    cookiesList.Add(cookie);
-                }
+                var cookiesList = cookies.ToList();
                 cookiesList.Sort(Comparer);
                 foreach (ICookie c in cookiesList)
                 {

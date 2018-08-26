@@ -510,7 +510,7 @@ namespace DotNetty.Codecs.Http
             }
 
             this.code = code;
-            this.codeAsText = new AsciiString(Convert.ToString(code));
+            this.codeAsText = new AsciiString(code.ToString(System.Globalization.CultureInfo.InvariantCulture));
             this.reasonPhrase = reasonPhrase;
             this.bytes = bytes ? Encoding.ASCII.GetBytes($"{code} {reasonPhrase}") : null;
             this.codeClass = HttpStatusClass.ValueOf(code);
@@ -539,7 +539,7 @@ namespace DotNetty.Codecs.Http
 
         public override string ToString() =>
             StringBuilderManager.ReturnAndFree(StringBuilderManager.Allocate(this.ReasonPhrase.Count + 4)
-            .Append(this.Code)
+            .Append(this.codeAsText)
             .Append(' ')
             .Append(this.ReasonPhrase));
 

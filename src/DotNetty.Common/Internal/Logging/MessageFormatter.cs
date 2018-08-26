@@ -141,6 +141,7 @@ namespace DotNetty.Common.Internal.Logging
                     // no more variables
                     if (i == 0)
                     {
+                        StringBuilderManager.Free(sbuf);
                         // this is a simple string
                         return new FormattingTuple(messagePattern, argArray,
                             throwableCandidate);
@@ -150,7 +151,7 @@ namespace DotNetty.Common.Internal.Logging
                         // add the tail string which contains no variables and return
                         // the result.
                         sbuf.Append(messagePattern.Substring(i, messagePattern.Length - i));
-                        return new FormattingTuple(sbuf.ToString(), argArray,
+                        return new FormattingTuple(StringBuilderManager.ReturnAndFree(sbuf), argArray,
                             throwableCandidate);
                     }
                 }

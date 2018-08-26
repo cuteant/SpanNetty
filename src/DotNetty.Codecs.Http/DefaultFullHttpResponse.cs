@@ -108,8 +108,12 @@ namespace DotNetty.Codecs.Http
 
         public IByteBufferHolder RetainedDuplicate() => this.Replace(this.content.RetainedDuplicate());
 
-        public IByteBufferHolder Replace(IByteBuffer newContent) => 
-            new DefaultFullHttpResponse(this.ProtocolVersion, this.Status, newContent, this.Headers, this.trailingHeaders);
+        public IByteBufferHolder Replace(IByteBuffer newContent)
+        {
+            var response = new DefaultFullHttpResponse(this.ProtocolVersion, this.Status, newContent, this.Headers.Copy(), this.trailingHeaders.Copy());
+            response.Result = this.Result;
+            return response;
+        }
 
         public override int GetHashCode()
         {

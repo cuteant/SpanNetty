@@ -308,6 +308,24 @@ namespace DotNetty.Codecs.Http.Tests
         }
 
         [Fact]
+        public void ValidRequestWith100ContinueAndDecoder()
+        {
+            EmbeddedChannel embedder = new EmbeddedChannel(new HttpRequestDecoder(), new HttpObjectAggregator(100));
+            embedder.WriteInbound(Unpooled.CopiedBuffer(
+                "GET /upload HTTP/1.1\r\n" +
+                    "Expect: 100-continue\r\n" +
+                    "Content-Length: 0\r\n\r\n", Encoding.ASCII));
+
+            var response = embedder.ReadOutbound<IFullHttpResponse>();
+            Assert.Equal(HttpResponseStatus.Continue, response.Status);
+            var request = embedder.ReadInbound<IFullHttpRequest>();
+            Assert.False(request.Headers.Contains(HttpHeaderNames.Expect));
+            request.Release();
+            response.Release();
+            Assert.False(embedder.Finish());
+        }
+
+        [Fact]
         public void OversizedRequestWith100ContinueAndDecoder()
         {
             var ch = new EmbeddedChannel(new HttpRequestDecoder(), new HttpObjectAggregator(4));

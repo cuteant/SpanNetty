@@ -137,8 +137,7 @@ namespace DotNetty.Codecs.Http.Cookies
             }
 
             loop:
-            Debug.Assert(cookieBuilder != null);
-            return cookieBuilder.Cookie();
+            return cookieBuilder?.Cookie();
         }
 
         sealed class CookieBuilder

@@ -17,6 +17,8 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         static readonly ThreadLocalMD5 LocalMd5 = new ThreadLocalMD5();
 
+        static readonly ThreadLocalRNG LocalRNG = new ThreadLocalRNG();
+
         sealed class ThreadLocalMD5 : FastThreadLocal<MD5>
         {
             protected override MD5 GetInitialValue() => MD5.Create();
@@ -27,6 +29,11 @@ namespace DotNetty.Codecs.Http.WebSockets
         sealed class ThreadLocalSha1 : FastThreadLocal<SHA1>
         {
             protected override SHA1 GetInitialValue() => SHA1.Create();
+        }
+
+        sealed class ThreadLocalRNG : FastThreadLocal<RNGCryptoServiceProvider>
+        {
+            protected override RNGCryptoServiceProvider GetInitialValue() => new RNGCryptoServiceProvider();
         }
 
         internal static byte[] Md5(byte[] data)
@@ -55,7 +62,8 @@ namespace DotNetty.Codecs.Http.WebSockets
         internal static byte[] RandomBytes(int size)
         {
             var bytes = new byte[size];
-            Random.NextBytes(bytes);
+            var rng = LocalRNG.Value;
+            rng.GetBytes(bytes);
             return bytes;
         }
 

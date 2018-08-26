@@ -145,5 +145,27 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(HttpResponseStatus.OK, response.Status);
             Assert.False(channel.Finish());
         }
+
+        [Fact]
+        public void DontStripConnectionHeaders()
+        {
+            HttpClientUpgradeHandler.ISourceCodec sourceCodec = new FakeSourceCodec();
+            HttpClientUpgradeHandler.IUpgradeCodec upgradeCodec = new FakeUpgradeCodec();
+            HttpClientUpgradeHandler handler = new HttpClientUpgradeHandler(sourceCodec, upgradeCodec, 1024);
+            UserEventCatcher catcher = new UserEventCatcher();
+            EmbeddedChannel channel = new EmbeddedChannel(catcher);
+            channel.Pipeline.AddFirst("upgrade", handler);
+
+            DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, "netty.io");
+            request.Headers.Add(HttpHeaderNames.Connection, "extra");
+            request.Headers.Add((AsciiString)"extra", "value");
+            Assert.True(channel.WriteOutbound(request));
+            var readRequest = channel.ReadOutbound<IFullHttpRequest>();
+
+            var connectionHeaders = readRequest.Headers.GetAll(HttpHeaderNames.Connection);
+            Assert.True(connectionHeaders.Contains((AsciiString)"extra"));
+            Assert.True(readRequest.Release());
+            Assert.False(channel.Finish());
+        }
     }
 }

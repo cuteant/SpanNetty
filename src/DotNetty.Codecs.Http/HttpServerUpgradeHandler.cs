@@ -254,73 +254,51 @@ namespace DotNetty.Codecs.Http
             // Create the user event to be fired once the upgrade completes.
             var upgradeEvent = new UpgradeEvent(upgradeProtocol, request);
 
-            IUpgradeCodec finalUpgradeCodec = upgradeCodec;
-#if NET40
-            void linkOutcomeContinuationAction(Task t)
-            {
-                try
-                {
-                    if (t.Status == TaskStatus.RanToCompletion)
-                    {
-                        // Perform the upgrade to the new protocol.
-                        this.sourceCodec.UpgradeFrom(ctx);
-                        finalUpgradeCodec.UpgradeTo(ctx, request);
-
-                        // Notify that the upgrade has occurred. Retain the event to offset
-                        // the release() in the finally block.
-                        ctx.FireUserEventTriggered(upgradeEvent.Retain());
-
-                        // Remove this handler from the pipeline.
-                        ctx.Pipeline.Remove(this);
-                    }
-                    else
-                    {
-                        ctx.Channel.CloseAsync();
-                    }
-                }
-                finally
-                {
-                    // Release the event if the upgrade event wasn't fired.
-                    upgradeEvent.Release();
-                }
-            }
-            ctx.WriteAndFlushAsync(upgradeResponse).ContinueWith(linkOutcomeContinuationAction, TaskContinuationOptions.ExecuteSynchronously);
-#else
-            ctx.WriteAndFlushAsync(upgradeResponse).ContinueWith(LinkOutcomeContinuationAction,
-                Tuple.Create(ctx, request, finalUpgradeCodec, upgradeEvent, this.sourceCodec, this),
-                TaskContinuationOptions.ExecuteSynchronously);
-#endif
-            return true;
-        }
-
-        static void LinkOutcomeContinuationAction(Task t, object s)
-        {
-            var wrapper = (Tuple<IChannelHandlerContext, IFullHttpRequest, IUpgradeCodec, UpgradeEvent, ISourceCodec, HttpServerUpgradeHandler>)s;
-            var ctx = wrapper.Item1;
+            // After writing the upgrade response we immediately prepare the
+            // pipeline for the next protocol to avoid a race between completion
+            // of the write future and receiving data before the pipeline is
+            // restructured.
             try
             {
-                if (t.Status == TaskStatus.RanToCompletion)
-                {
-                    // Perform the upgrade to the new protocol.
-                    wrapper.Item5.UpgradeFrom(ctx);
-                    wrapper.Item3.UpgradeTo(ctx, wrapper.Item2);
+                var writeComplete = ctx.WriteAndFlushAsync(upgradeResponse);
 
-                    // Notify that the upgrade has occurred. Retain the event to offset
-                    // the release() in the finally block.
-                    ctx.FireUserEventTriggered(wrapper.Item4.Retain());
+                // Perform the upgrade to the new protocol.
+                this.sourceCodec.UpgradeFrom(ctx);
+                upgradeCodec.UpgradeTo(ctx, request);
 
-                    // Remove this handler from the pipeline.
-                    ctx.Pipeline.Remove(wrapper.Item6);
-                }
-                else
+                // Remove this handler from the pipeline.
+                ctx.Pipeline.Remove(this);
+
+                // Notify that the upgrade has occurred. Retain the event to offset
+                // the release() in the finally block.
+                ctx.FireUserEventTriggered(upgradeEvent.Retain());
+
+                // Add the listener last to avoid firing upgrade logic after
+                // the channel is already closed since the listener may fire
+                // immediately if the write failed eagerly.
+#if NET40
+                void closeOnFailure(Task t)
                 {
-                    ctx.Channel.CloseAsync();
+                    if (t.Status != TaskStatus.RanToCompletion) { ctx.Channel.CloseAsync(); }
                 }
+                writeComplete.ContinueWith(closeOnFailure, TaskContinuationOptions.ExecuteSynchronously);
+#else
+                writeComplete.ContinueWith(CloseOnFailure, ctx, TaskContinuationOptions.ExecuteSynchronously);
+#endif
             }
             finally
             {
                 // Release the event if the upgrade event wasn't fired.
-                wrapper.Item4.Release();
+                upgradeEvent.Release();
+            }
+            return true;
+        }
+
+        static void CloseOnFailure(Task t, object s)
+        {
+            if (t.Status != TaskStatus.RanToCompletion)
+            {
+                ((IChannelHandlerContext)s).Channel.CloseAsync();
             }
         }
 

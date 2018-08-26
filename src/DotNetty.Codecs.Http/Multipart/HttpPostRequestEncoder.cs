@@ -593,15 +593,11 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             // Now consider size for chunk or not
             long realSize = this.globalBodySize;
-            if (this.isMultipart)
+            if (!this.isMultipart)
             {
-                this.iterator = new ListIterator(this.MultipartHttpDatas);
-            }
-            else 
-            { 
                 realSize -= 1; // last '&' removed
-                this.iterator = new ListIterator(this.MultipartHttpDatas);
             }
+            this.iterator = new ListIterator(this.MultipartHttpDatas);
             headers.Set(HttpHeaderNames.ContentLength, Convert.ToString(realSize));
             if (realSize > HttpPostBodyUtil.ChunkSize || this.isMultipart)
             {
@@ -761,16 +757,14 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     this.currentBuffer = Unpooled.WrappedBuffer(buffer,  
                         Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("=")));
-                    // continue
-                    size -= buffer.ReadableBytes + 1;
                 }
                 else
                 {
                     this.currentBuffer = Unpooled.WrappedBuffer(this.currentBuffer, buffer, 
                         Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("=")));
-                    // continue
-                    size -= buffer.ReadableBytes + 1;
                 }
+                // continue
+                size -= buffer.ReadableBytes + 1;
                 if (this.currentBuffer.ReadableBytes >= HttpPostBodyUtil.ChunkSize)
                 {
                     buffer = this.FillByteBuffer();

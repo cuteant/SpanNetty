@@ -90,6 +90,7 @@ namespace DotNetty.Codecs.Http
         HttpPostStandardRequestDecoder,
         ReadDelimiter,
         ReadDelimiterStandard,
+        configList,
     }
 
     #endregion
@@ -130,6 +131,16 @@ namespace DotNetty.Codecs.Http
         #endregion
 
         #region -- ArgumentException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(ExceptionArgument argument)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)} (expected: > 0)");
+            }
+        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_Empty(ExceptionArgument argument)
@@ -202,12 +213,12 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_CookieValue(string value, int pos)
+        internal static void ThrowArgumentException_CookieValue(ICharSequence unwrappedValue, int pos)
         {
             throw GetException();
             ArgumentException GetException()
             {
-                return new ArgumentException($"Cookie value contains an invalid char: {value[pos]}");
+                return new ArgumentException($"Cookie value contains an invalid char: {unwrappedValue[pos]}");
             }
         }
 
@@ -584,6 +595,16 @@ namespace DotNetty.Codecs.Http
             InvalidOperationException GetException()
             {
                 return new InvalidOperationException($"unexpected message type: {StringUtil.SimpleClassName(message)}");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_UnexpectedMsg(object message, int state)
+        {
+            throw GetException();
+            InvalidOperationException GetException()
+            {
+                return new InvalidOperationException($"unexpected message type: {StringUtil.SimpleClassName(message)}, state: {state}");
             }
         }
 

@@ -9,6 +9,7 @@ namespace DotNetty.Codecs.Http
 
     public class DefaultHttpResponse : DefaultHttpMessage, IHttpResponse
     {
+        const int HashCodePrime = 31;
         HttpResponseStatus status;
 
         public DefaultHttpResponse(HttpVersion version, HttpResponseStatus status, bool validateHeaders = true, bool singleFieldHeaders = false)
@@ -37,5 +38,22 @@ namespace DotNetty.Codecs.Http
         }
 
         public override string ToString() => StringBuilderManager.ReturnAndFree(HttpMessageUtil.AppendResponse(StringBuilderManager.Allocate(256), this));
+
+        public override int GetHashCode()
+        {
+            int result = 1;
+            result = HashCodePrime * result + this.status.GetHashCode();
+            result = HashCodePrime * result + base.GetHashCode();
+            return result;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if(obj is DefaultHttpResponse other)
+            {
+                return this.status.Equals(other.status) && base.Equals(obj);
+            }
+            return false;
+        }
     }
 }

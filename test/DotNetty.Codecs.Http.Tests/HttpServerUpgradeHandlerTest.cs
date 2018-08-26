@@ -113,13 +113,10 @@ namespace DotNetty.Codecs.Http.Tests
             IByteBuffer upgrade = Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes(UpgradeString));
 
             Assert.False(channel.WriteInbound(upgrade));
-            //Assert.Null(channel.Pipeline.Get<HttpServerCodec>());
-            //Assert.NotNull(channel.Pipeline.Get("marker"));
-
-            channel.Flush();
             Assert.Null(channel.Pipeline.Get<HttpServerCodec>());
             Assert.NotNull(channel.Pipeline.Get("marker"));
 
+            channel.Flush();
             var upgradeMessage = channel.ReadOutbound<IByteBuffer>();
             const string ExpectedHttpResponse = "HTTP/1.1 101 Switching Protocols\r\n" +
                 "connection: upgrade\r\n" +

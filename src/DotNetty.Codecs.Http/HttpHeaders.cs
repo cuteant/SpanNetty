@@ -221,6 +221,11 @@ namespace DotNetty.Codecs.Http
             return false;
         }
 
+        public string GetAsString(AsciiString name)
+        {
+            return TryGetAsString(name, out var result) ? result : null;
+        }
+
         public bool TryGetAsString(AsciiString name, out string value)
         {
             if (this.TryGet(name, out ICharSequence v))

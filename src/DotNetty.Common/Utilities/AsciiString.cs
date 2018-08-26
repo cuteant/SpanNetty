@@ -540,7 +540,7 @@ namespace DotNetty.Common.Utilities
                 return -1;
             }
             var indexOfVisitor = new IndexOfProcessor((byte)firstChar);
-            for (; ;)
+            while(true)
             {
                 int i = this.ForEachByteDesc(start, thisLen - start, indexOfVisitor);
                 if (i == -1)

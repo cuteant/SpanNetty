@@ -8,6 +8,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
 
     public class WebSocketClientHandshaker08Test : WebSocketClientHandshaker07Test
     {
-        protected override WebSocketClientHandshaker NewHandshaker(Uri uri) => new WebSocketClientHandshaker08(uri, WebSocketVersion.V08, null, false, null, 1024);
+        protected override WebSocketClientHandshaker NewHandshaker(Uri uri, string subprotocol, HttpHeaders headers) => 
+            new WebSocketClientHandshaker08(uri, WebSocketVersion.V08, subprotocol, false, headers, 1024);
     }
 }

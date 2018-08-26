@@ -86,6 +86,54 @@ namespace DotNetty.Codecs.Http.Tests.Cors
         }
 
         [Fact]
+        public void PreflightGetRequestWithCustomHeaders()
+        {
+            CorsConfig config = CorsConfigBuilder.ForOrigin(new AsciiString("http://localhost:8888"))
+                .AllowedRequestMethods(HttpMethod.Options, HttpMethod.Get, HttpMethod.Delete)
+                .AllowedRequestHeaders((AsciiString)"content-type", (AsciiString)"xheader1")
+                .Build();
+            var response = PreflightRequest(config, "http://localhost:8888", "content-type, xheader1");
+            AssertEx.Equal("http://localhost:8888", response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null));
+            Assert.Contains("OPTIONS", response.Headers.Get(HttpHeaderNames.AccessControlAllowMethods, null).ToString());
+            Assert.Contains("GET", response.Headers.Get(HttpHeaderNames.AccessControlAllowMethods, null).ToString());
+            Assert.Contains("content-type", response.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders, null).ToString());
+            Assert.Contains("xheader1", response.Headers.Get(HttpHeaderNames.AccessControlAllowHeaders, null).ToString());
+            AssertEx.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary, null));
+        }
+
+        [Fact]
+        public void PreflightRequestWithDefaultHeaders()
+        {
+            CorsConfig config = CorsConfigBuilder.ForOrigin(new AsciiString("http://localhost:8888")).Build();
+            var response = PreflightRequest(config, "http://localhost:8888", "content-type, xheader1");
+            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null).ToString());
+            Assert.NotNull(response.Headers.Get(HttpHeaderNames.Date, null));
+            AssertEx.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary, null));
+        }
+
+        [Fact]
+        public void PreflightRequestWithCustomHeader()
+        {
+            CorsConfig config = CorsConfigBuilder.ForOrigin(new AsciiString("http://localhost:8888"))
+                .PreflightResponseHeader((AsciiString)"CustomHeader", "somevalue")
+                .Build();
+            var response = PreflightRequest(config, "http://localhost:8888", "content-type, xheader1");
+            Assert.Equal("somevalue", response.Headers.Get((AsciiString)"CustomHeader", null).ToString());
+            AssertEx.Equal(HttpHeaderNames.Origin.ToString(), response.Headers.Get(HttpHeaderNames.Vary, null));
+            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null).ToString());
+
+        }
+
+        [Fact]
+        public void PreflightRequestWithUnauthorizedOrigin()
+        {
+            var origin = "http://host";
+            CorsConfig config = CorsConfigBuilder.ForOrigin((AsciiString)"http://localhost").Build();
+            var response = PreflightRequest(config, origin, "xheader1");
+            Assert.False(response.Headers.Contains(HttpHeaderNames.AccessControlAllowOrigin));
+        }
+
+        [Fact]
         public void PreflightRequestWithCustomHeaders()
         {
             const string HeaderName = "CustomHeader";
@@ -369,6 +417,49 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             Assert.False(channel.Finish());
         }
 
+        [Fact]
+        public void DifferentConfigsPerOrigin()
+        {
+            var host1 = "http://host1:80";
+            var host2 = "http://host2";
+            CorsConfig rule1 = CorsConfigBuilder.ForOrigin((AsciiString)host1).AllowedRequestMethods(HttpMethod.Get).Build();
+            CorsConfig rule2 = CorsConfigBuilder.ForOrigin((AsciiString)host2).AllowedRequestMethods(HttpMethod.Get, HttpMethod.Post)
+                    .AllowCredentials().Build();
+
+            List<CorsConfig> corsConfigs = new List<CorsConfig>(new[] { rule1, rule2 });
+
+            var preFlightHost1 = PreflightRequest(corsConfigs, host1, "", false);
+
+            Assert.Equal("GET", preFlightHost1.Headers.Get(HttpHeaderNames.AccessControlAllowMethods, null).ToString());
+            Assert.Null(preFlightHost1.Headers.GetAsString(HttpHeaderNames.AccessControlAllowCredentials));
+
+            var preFlightHost2 = PreflightRequest(corsConfigs, host2, "", false);
+            AssertValues(preFlightHost2, HttpHeaderNames.AccessControlAllowMethods.ToString(), "GET", "POST");
+            Assert.Equal("true", preFlightHost2.Headers.GetAsString(HttpHeaderNames.AccessControlAllowCredentials));
+        }
+
+        [Fact]
+        public void SpecificConfigPrecedenceOverGeneric()
+        {
+            var host1 = "http://host1";
+            var host2 = "http://host2";
+
+            CorsConfig forHost1 = CorsConfigBuilder.ForOrigin((AsciiString)host1).AllowedRequestMethods(HttpMethod.Get).MaxAge(3600L).Build();
+            CorsConfig allowAll = CorsConfigBuilder.ForAnyOrigin().AllowedRequestMethods(HttpMethod.Post, HttpMethod.Get, HttpMethod.Options)
+                    .MaxAge(1800).Build();
+
+            List<CorsConfig> rules = new List<CorsConfig>(new [] { forHost1, allowAll });
+
+            var host1Response = PreflightRequest(rules, host1, "", false);
+            Assert.Equal("GET", host1Response.Headers.Get(HttpHeaderNames.AccessControlAllowMethods, null).ToString());
+            Assert.Equal("3600", host1Response.Headers.GetAsString(HttpHeaderNames.AccessControlMaxAge));
+
+            var host2Response = PreflightRequest(rules, host2, "", false);
+            AssertValues(host2Response, HttpHeaderNames.AccessControlAllowMethods.ToString(), "POST", "GET", "OPTIONS");
+            Assert.Equal("*", host2Response.Headers.GetAsString(HttpHeaderNames.AccessControlAllowOrigin));
+            Assert.Equal("1800", host2Response.Headers.GetAsString(HttpHeaderNames.AccessControlMaxAge));
+        }
+
         static IHttpResponse SimpleRequest(CorsConfig config, string origin, string requestHeaders = null) => 
             SimpleRequest(config, origin, requestHeaders, HttpMethod.Get);
 
@@ -391,7 +482,12 @@ namespace DotNetty.Codecs.Http.Tests.Cors
 
         static IHttpResponse PreflightRequest(CorsConfig config, string origin, string requestHeaders)
         {
-            var channel = new EmbeddedChannel(new CorsHandler(config));
+            return PreflightRequest(new List<CorsConfig>(new[] { config }), origin, requestHeaders, config.IsShortCircuit);
+        }
+
+        static IHttpResponse PreflightRequest(List<CorsConfig> configs, string origin, string requestHeaders, bool isSHortCircuit)
+        {
+            var channel = new EmbeddedChannel(new CorsHandler(configs, isSHortCircuit));
             Assert.False(channel.WriteInbound(OptionsRequest(origin, requestHeaders, null)));
             var response = channel.ReadOutbound<IHttpResponse>();
             Assert.False(channel.Finish());

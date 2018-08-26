@@ -200,6 +200,14 @@ namespace DotNetty.Codecs.Http.Tests.Cookies
         }
 
         [Fact]
+        public void DecodingInvalidValuesWithCommaAtStart()
+        {
+            Assert.Null(ClientCookieDecoder.StrictDecoder.Decode(","));
+            Assert.Null(ClientCookieDecoder.StrictDecoder.Decode(",a"));
+            Assert.Null(ClientCookieDecoder.StrictDecoder.Decode(",a=a"));
+        }
+
+        [Fact]
         public void DecodingLongValue()
         {
             const string LongValue =

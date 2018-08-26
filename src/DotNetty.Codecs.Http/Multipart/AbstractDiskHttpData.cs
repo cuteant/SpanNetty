@@ -59,15 +59,18 @@ namespace DotNetty.Codecs.Http.Multipart
             Contract.Requires(buffer != null);
             try
             {
+                if (this.fileStream != null)
+                {
+                    this.Delete();
+                }
+
+                this.fileStream = this.TempFile();
+
                 this.Size = buffer.ReadableBytes;
                 this.CheckSize(this.Size);
                 if (this.DefinedSize > 0 && this.DefinedSize < this.Size)
                 {
                     ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
-                }
-                if (this.fileStream == null)
-                {
-                    this.fileStream = this.TempFile();
                 }
                 if (buffer.ReadableBytes == 0)
                 {
