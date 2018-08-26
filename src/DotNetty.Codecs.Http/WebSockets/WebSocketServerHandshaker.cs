@@ -210,14 +210,14 @@ namespace DotNetty.Codecs.Http.WebSockets
             protected override void ChannelRead0(IChannelHandlerContext ctx, IFullHttpRequest msg)
             {
                 // Remove ourself and do the actual handshake
-                ctx.Channel.Pipeline.Remove(this);
+                ctx.Pipeline.Remove(this);
                 this.serverHandshaker.Handshake(this.channel, msg, this.responseHeaders, this.completion);
             }
 
             public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
             {
                 // Remove ourself and fail the handshake promise.
-                ctx.Channel.Pipeline.Remove(this);
+                ctx.Pipeline.Remove(this);
                 this.completion.TrySetException(cause);
                 ctx.FireExceptionCaught(cause);
             }

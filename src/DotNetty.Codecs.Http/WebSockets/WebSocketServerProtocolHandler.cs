@@ -98,11 +98,11 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public override void HandlerAdded(IChannelHandlerContext ctx)
         {
-            IChannelPipeline cp = ctx.Channel.Pipeline;
+            IChannelPipeline cp = ctx.Pipeline;
             if (cp.Get<WebSocketServerProtocolHandshakeHandler>() == null)
             {
                 // Add the WebSocketHandshakeHandler before this one.
-                ctx.Channel.Pipeline.AddBefore(ctx.Name, nameof(WebSocketServerProtocolHandshakeHandler),
+                cp.AddBefore(ctx.Name, nameof(WebSocketServerProtocolHandshakeHandler),
                     new WebSocketServerProtocolHandshakeHandler(
                         this.websocketPath, 
                         this.subprotocols,
@@ -115,7 +115,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (cp.Get<Utf8FrameValidator>() == null)
             {
                 // Add the UFT8 checking before this one.
-                ctx.Channel.Pipeline.AddBefore(ctx.Name, nameof(Utf8FrameValidator), new Utf8FrameValidator());
+                cp.AddBefore(ctx.Name, nameof(Utf8FrameValidator), new Utf8FrameValidator());
             }
         }
 

@@ -74,7 +74,7 @@ namespace DotNetty.Codecs.Http
 
         public void UpgradeFrom(IChannelHandlerContext ctx)
         {
-            IChannelPipeline p = ctx.Channel.Pipeline;
+            IChannelPipeline p = ctx.Pipeline;
             p.Remove(this);
         }
 

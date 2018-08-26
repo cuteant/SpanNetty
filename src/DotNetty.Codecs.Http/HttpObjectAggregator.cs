@@ -190,7 +190,7 @@ namespace DotNetty.Codecs.Http
                 }
                 // If an oversized request was handled properly and the connection is still alive
                 // (i.e. rejected 100-continue). the decoder should prepare to handle a new message.
-                var decoder = ctx.Channel.Pipeline.Get<HttpObjectDecoder>();
+                var decoder = ctx.Pipeline.Get<HttpObjectDecoder>();
                 decoder?.Reset();
             }
             else if (oversized is IHttpResponse)

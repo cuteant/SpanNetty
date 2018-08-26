@@ -298,7 +298,7 @@ namespace DotNetty.Handlers.Tls
         {
             Contract.Requires(serverTlsSetting != null);
             var tlsHandler = new TlsHandler(this.sslStreamFactory, serverTlsSetting);
-            context.Channel.Pipeline.Replace(this, nameof(TlsHandler), tlsHandler);
+            context.Pipeline.Replace(this, nameof(TlsHandler), tlsHandler);
         }
 
         public override void Read(IChannelHandlerContext context)

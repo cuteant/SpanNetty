@@ -67,7 +67,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     this.handshaker.FinishHandshake(ctx.Channel, response);
                     ctx.FireUserEventTriggered(WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeComplete);
-                    ctx.Channel.Pipeline.Remove(this);
+                    ctx.Pipeline.Remove(this);
                     return;
                 }
 

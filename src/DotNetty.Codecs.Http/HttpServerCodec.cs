@@ -36,7 +36,7 @@ namespace DotNetty.Codecs.Http
                 new HttpServerResponseEncoder(this));
         }
 
-        public void UpgradeFrom(IChannelHandlerContext ctx) => ctx.Channel.Pipeline.Remove(this);
+        public void UpgradeFrom(IChannelHandlerContext ctx) => ctx.Pipeline.Remove(this);
 
         sealed class HttpServerRequestDecoder : HttpRequestDecoder
         {

@@ -271,7 +271,7 @@ namespace DotNetty.Codecs.Http
                         ctx.FireUserEventTriggered(upgradeEvent.Retain());
 
                         // Remove this handler from the pipeline.
-                        ctx.Channel.Pipeline.Remove(this);
+                        ctx.Pipeline.Remove(this);
                     }
                     else
                     {
@@ -310,7 +310,7 @@ namespace DotNetty.Codecs.Http
                     ctx.FireUserEventTriggered(wrapper.Item4.Retain());
 
                     // Remove this handler from the pipeline.
-                    ctx.Channel.Pipeline.Remove(wrapper.Item6);
+                    ctx.Pipeline.Remove(wrapper.Item6);
                 }
                 else
                 {

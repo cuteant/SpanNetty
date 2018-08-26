@@ -95,17 +95,18 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 #if NET40
                 continuationAction = promise =>
                 {
+                    var pipeline = ctx.Pipeline;
                     if (promise.Status == TaskStatus.RanToCompletion)
                     {
                         foreach (IWebSocketServerExtension extension in this.validExtensions)
                         {
                             WebSocketExtensionDecoder decoder = extension.NewExtensionDecoder();
                             WebSocketExtensionEncoder encoder = extension.NewExtensionEncoder();
-                            ctx.Channel.Pipeline.AddAfter(ctx.Name, decoder.GetType().Name, decoder);
-                            ctx.Channel.Pipeline.AddAfter(ctx.Name, encoder.GetType().Name, encoder);
+                            pipeline.AddAfter(ctx.Name, decoder.GetType().Name, decoder);
+                            pipeline.AddAfter(ctx.Name, encoder.GetType().Name, encoder);
                         }
                     }
-                    ctx.Channel.Pipeline.Remove(ctx.Name);
+                    pipeline.Remove(ctx.Name);
                 };
 #else
                 continuationAction = SwitchWebSocketExtensionHandler;
@@ -131,17 +132,18 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
         {
             var stateWrapper = (Tuple<IChannelHandlerContext, List<IWebSocketServerExtension>>)state;
             var ctx = stateWrapper.Item1;
+            var pipeline = ctx.Pipeline;
             if (promise.Status == TaskStatus.RanToCompletion)
             {
                 foreach (IWebSocketServerExtension extension in stateWrapper.Item2)
                 {
                     WebSocketExtensionDecoder decoder = extension.NewExtensionDecoder();
                     WebSocketExtensionEncoder encoder = extension.NewExtensionEncoder();
-                    ctx.Channel.Pipeline.AddAfter(ctx.Name, decoder.GetType().Name, decoder);
-                    ctx.Channel.Pipeline.AddAfter(ctx.Name, encoder.GetType().Name, encoder);
+                    pipeline.AddAfter(ctx.Name, decoder.GetType().Name, decoder);
+                    pipeline.AddAfter(ctx.Name, encoder.GetType().Name, encoder);
                 }
             }
-            ctx.Channel.Pipeline.Remove(ctx.Name);
+            pipeline.Remove(ctx.Name);
         }
     }
 }

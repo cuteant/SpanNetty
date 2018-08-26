@@ -54,7 +54,7 @@ namespace DotNetty.Transport.Channels
             if (this.InitChannel(ctx)) {
                 // we called InitChannel(...) so we need to call now pipeline.fireChannelRegistered() to ensure we not
                 // miss an event.
-                ctx.Channel.Pipeline.FireChannelRegistered();
+                ctx.Pipeline.FireChannelRegistered();
             } else {
                 // Called InitChannel(...) before which is the expected behavior, so just forward the event.
                 ctx.FireChannelRegistered();
@@ -106,7 +106,7 @@ namespace DotNetty.Transport.Channels
         {
             try
             {
-                IChannelPipeline pipeline = ctx.Channel.Pipeline;
+                IChannelPipeline pipeline = ctx.Pipeline;
                 if (pipeline.Context(this) != null)
                 {
                     pipeline.Remove(this);

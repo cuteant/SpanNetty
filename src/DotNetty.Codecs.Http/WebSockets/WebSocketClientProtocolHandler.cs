@@ -82,17 +82,17 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public override void HandlerAdded(IChannelHandlerContext ctx)
         {
-            IChannelPipeline cp = ctx.Channel.Pipeline;
+            var cp = ctx.Pipeline;
             if (cp.Get<WebSocketClientProtocolHandshakeHandler>() == null)
             {
                 // Add the WebSocketClientProtocolHandshakeHandler before this one.
-                ctx.Channel.Pipeline.AddBefore(ctx.Name, nameof(WebSocketClientProtocolHandshakeHandler),
+                cp.AddBefore(ctx.Name, nameof(WebSocketClientProtocolHandshakeHandler),
                     new WebSocketClientProtocolHandshakeHandler(this.handshaker));
             }
             if (cp.Get<Utf8FrameValidator>() == null)
             {
                 // Add the UFT8 checking before this one.
-                ctx.Channel.Pipeline.AddBefore(ctx.Name, nameof(Utf8FrameValidator),
+                cp.AddBefore(ctx.Name, nameof(Utf8FrameValidator),
                     new Utf8FrameValidator());
             }
         }

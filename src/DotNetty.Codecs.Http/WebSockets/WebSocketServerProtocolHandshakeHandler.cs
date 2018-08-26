@@ -58,7 +58,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
 
                 var wsFactory = new WebSocketServerHandshakerFactory(
-                    GetWebSocketLocation(ctx.Channel.Pipeline, req, this.websocketPath), this.subprotocols,
+                    GetWebSocketLocation(ctx.Pipeline, req, this.websocketPath), this.subprotocols,
                     this.allowExtensions, this.maxFramePayloadSize, this.allowMaskMismatch);
                 WebSocketServerHandshaker handshaker = wsFactory.NewHandshaker(req);
                 if (handshaker == null)
@@ -87,7 +87,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 #endif
 
                     WebSocketServerProtocolHandler.SetHandshaker(ctx.Channel, handshaker);
-                    ctx.Channel.Pipeline.Replace(this, "WS403Responder",
+                    ctx.Pipeline.Replace(this, "WS403Responder",
                         WebSocketServerProtocolHandler.ForbiddenHttpRequestResponder());
                 }
             }

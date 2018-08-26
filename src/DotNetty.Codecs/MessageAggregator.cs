@@ -123,7 +123,7 @@ namespace DotNetty.Codecs
 
                 // Send the continue response if necessary(e.g. 'Expect: 100-continue' header)
                 // Check before content length. Failing an expectation may result in a different response being sent.
-                object continueResponse = this.NewContinueResponse(m, this.MaxContentLength, context.Channel.Pipeline);
+                object continueResponse = this.NewContinueResponse(m, this.MaxContentLength, context.Pipeline);
                 if (continueResponse != null)
                 {
                     // Make sure to call this before writing, otherwise reference counts may be invalid.

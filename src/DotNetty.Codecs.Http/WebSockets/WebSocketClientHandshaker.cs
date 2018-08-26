@@ -304,7 +304,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             protected override void ChannelRead0(IChannelHandlerContext ctx, IFullHttpResponse msg)
             {
                 // Remove and do the actual handshake
-                ctx.Channel.Pipeline.Remove(this);
+                ctx.Pipeline.Remove(this);
                 try
                 {
                     this.clientHandshaker.FinishHandshake(this.channel, msg);
@@ -319,7 +319,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
             {
                 // Remove ourself and fail the handshake promise.
-                ctx.Channel.Pipeline.Remove(this);
+                ctx.Pipeline.Remove(this);
                 this.completion.TrySetException(cause);
             }
 

@@ -173,7 +173,7 @@ namespace DotNetty.Codecs.Http
             }
         }
 
-        static void RemoveThisHandler(IChannelHandlerContext ctx) => ctx.Channel.Pipeline.Remove(ctx.Name);
+        static void RemoveThisHandler(IChannelHandlerContext ctx) => ctx.Pipeline.Remove(ctx.Name);
 
         void SetUpgradeRequestHeaders(IChannelHandlerContext ctx, IHttpRequest request)
         {
