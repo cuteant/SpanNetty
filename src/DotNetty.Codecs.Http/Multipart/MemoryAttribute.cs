@@ -53,7 +53,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 Contract.Requires(value != null);
 
                 byte[] bytes = this.Charset.GetBytes(value);
-                this.CheckSize(bytes.Length);
+                CheckSize(bytes.Length, this.MaxSize);
                 IByteBuffer buffer = Unpooled.WrappedBuffer(bytes);
                 if (this.DefinedSize > 0)
                 {
@@ -66,7 +66,7 @@ namespace DotNetty.Codecs.Http.Multipart
         public override void AddContent(IByteBuffer buffer, bool last)
         {
             int localsize = buffer.ReadableBytes;
-            this.CheckSize(this.Size + localsize);
+            CheckSize(this.Size + localsize, this.MaxSize);
             if (this.DefinedSize > 0 && this.DefinedSize < this.Size + localsize)
             {
                 this.DefinedSize = this.Size + localsize;

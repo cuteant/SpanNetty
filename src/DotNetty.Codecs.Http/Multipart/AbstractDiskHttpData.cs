@@ -7,6 +7,7 @@ namespace DotNetty.Codecs.Http.Multipart
     using System.Diagnostics.Contracts;
     using System.IO;
     using System.Text;
+    using CuteAnt.Buffers;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Internal.Logging;
@@ -14,9 +15,15 @@ namespace DotNetty.Codecs.Http.Multipart
 
     public abstract class AbstractDiskHttpData : AbstractHttpData
     {
+        // We pick a value that is the largest multiple of 4096 that is still smaller than the large object heap threshold (85K).
+        // The SetContent/RenameTo buffer is short-lived and is likely to be collected at Gen0, and it offers a significant
+        // improvement in Copy performance.
+        const int c_defaultCopyBufferSize = 81920;
+
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractDiskHttpData>();
 
         FileStream fileStream;
+        long chunkPosition;
 
         protected AbstractDiskHttpData(string name, Encoding charset, long size) : base(name, charset, size)
         {
@@ -44,8 +51,8 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 newpostfix = this.Postfix;
             }
-            string directory = this.BaseDirectory == null 
-                ? Path.GetTempPath() 
+            string directory = this.BaseDirectory == null
+                ? Path.GetTempPath()
                 : Path.Combine(Path.GetTempPath(), this.BaseDirectory);
             // File.createTempFile
             string fileName = Path.Combine(directory, $"{this.Prefix}{Path.GetRandomFileName()}{newpostfix}");
@@ -67,7 +74,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 this.fileStream = this.TempFile();
 
                 this.Size = buffer.ReadableBytes;
-                this.CheckSize(this.Size);
+                CheckSize(this.Size, this.MaxSize);
                 if (this.DefinedSize > 0 && this.DefinedSize < this.Size)
                 {
                     ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
@@ -98,7 +105,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 try
                 {
                     int localsize = buffer.ReadableBytes;
-                    this.CheckSize(this.Size + localsize);
+                    CheckSize(this.Size + localsize, this.MaxSize);
                     if (this.DefinedSize > 0 && this.DefinedSize < this.Size + localsize)
                     {
                         ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
@@ -148,18 +155,25 @@ namespace DotNetty.Codecs.Http.Multipart
 
             this.fileStream = this.TempFile();
             int written = 0;
-            var bytes = new byte[4096 * 4];
-            while (true)
+            var bytes = BufferManager.Shared.Rent(c_defaultCopyBufferSize);
+            try
             {
-                int read = source.Read(bytes, 0, bytes.Length);
-                if (read <= 0)
+                while (true)
                 {
-                    break;
-                }
+                    int read = source.Read(bytes, 0, bytes.Length);
+                    if (read <= 0)
+                    {
+                        break;
+                    }
 
-                written += read;
-                this.CheckSize(written);
-                this.fileStream.Write(bytes, 0, read);
+                    written += read;
+                    CheckSize(written, this.MaxSize);
+                    this.fileStream.Write(bytes, 0, read);
+                }
+            }
+            finally
+            {
+                BufferManager.Shared.Return(bytes);
             }
             this.fileStream.Flush();
             // Reset the position to start for reads
@@ -200,7 +214,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
         }
 
-        public override byte[] GetBytes() => this.fileStream == null 
+        public override byte[] GetBytes() => this.fileStream == null
             ? ArrayExtensions.ZeroBytes : ReadFrom(this.fileStream);
 
         public override IByteBuffer GetByteBuffer()
@@ -210,7 +224,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 return Unpooled.Empty;
             }
 
-            byte[] array = ReadFrom(this.fileStream);
+            var array = ReadFrom(this.fileStream);
             return Unpooled.WrappedBuffer(array);
         }
 
@@ -218,13 +232,28 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             if (this.fileStream == null || length == 0)
             {
+                this.chunkPosition = 0L;
                 return Unpooled.Empty;
             }
-            int read = 0;
-            var bytes = new byte[length];
-            while (read < length)
+            var sizeLeft = this.fileStream.Length - this.chunkPosition;
+            if (sizeLeft == 0L)
             {
-                int readnow = this.fileStream.Read(bytes, read, length - read);
+                this.chunkPosition = 0L;
+                return Unpooled.Empty;
+            }
+            int sliceLength = length;
+            if (sizeLeft < length)
+            {
+                sliceLength = (int)sizeLeft;
+            }
+
+            var lastPosition = this.fileStream.Position;
+            this.fileStream.Seek(this.chunkPosition, SeekOrigin.Begin);
+            int read = 0;
+            var bytes = new byte[sliceLength];
+            while (read < sliceLength)
+            {
+                int readnow = this.fileStream.Read(bytes, read, sliceLength - read);
                 if (readnow <= 0)
                 {
                     break;
@@ -232,11 +261,16 @@ namespace DotNetty.Codecs.Http.Multipart
 
                 read += readnow;
             }
+            this.fileStream.Seek(lastPosition, SeekOrigin.Begin);
             if (read == 0)
             {
                 return Unpooled.Empty;
             }
-            IByteBuffer buffer = Unpooled.WrappedBuffer(bytes);
+            else
+            {
+                this.chunkPosition += read;
+            }
+            var buffer = Unpooled.WrappedBuffer(bytes);
             buffer.SetReaderIndex(0);
             buffer.SetWriterIndex(read);
             return buffer;
@@ -270,24 +304,28 @@ namespace DotNetty.Codecs.Http.Multipart
             }
 
             // must copy
-            long chunkSize = 8196;
+            var buffer = BufferManager.Shared.Rent(c_defaultCopyBufferSize);
             int position = 0;
-            while (position < this.Size)
+            var lastPosition = this.fileStream.Position;
+            this.fileStream.Seek(0, SeekOrigin.Begin);
+
+            try
             {
-                if (chunkSize < this.Size - position)
+                while (position < this.Size)
                 {
-                    chunkSize = this.Size - position;
-                }
+                    int read = this.fileStream.Read(buffer, 0, buffer.Length);
+                    if (read <= 0)
+                    {
+                        break;
+                    }
 
-                var buffer = new byte[chunkSize];
-                int read = this.fileStream.Read(buffer, 0, (int)chunkSize);
-                if (read <= 0)
-                {
-                    break;
+                    destination.Write(buffer, 0, read);
+                    position += read;
                 }
-
-                destination.Write(buffer, 0, read);
-                position += read;
+            }
+            finally
+            {
+                BufferManager.Shared.Return(buffer);
             }
 
             if (position == this.Size)
@@ -301,6 +339,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     if (Logger.WarnEnabled) Logger.FailedToDeleteFile(exception);
                 }
                 this.fileStream = destination;
+                this.fileStream.Seek(lastPosition, SeekOrigin.Begin);
                 return true;
             }
             else
@@ -313,6 +352,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     if (Logger.WarnEnabled) Logger.FailedToDeleteFile(exception);
                 }
+                this.fileStream.Seek(lastPosition, SeekOrigin.Begin);
                 return false;
             }
         }
@@ -333,7 +373,10 @@ namespace DotNetty.Codecs.Http.Multipart
             }
 
             var array = new byte[(int)srcsize];
+            var lastPosition = fileStream.Position;
+            fileStream.Seek(0, SeekOrigin.Begin);
             fileStream.Read(array, 0, array.Length);
+            fileStream.Seek(lastPosition, SeekOrigin.Begin);
             return array;
         }
 

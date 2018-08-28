@@ -9,6 +9,7 @@ namespace DotNetty.Codecs.Http.Multipart
     using System;
     using System.Diagnostics.Contracts;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Text;
     using System.Text.RegularExpressions;
     using DotNetty.Buffers;
@@ -53,9 +54,12 @@ namespace DotNetty.Codecs.Http.Multipart
             set => this.maxSize = value;
         }
 
-        public void CheckSize(long newSize)
+        public void CheckSize(long newSize) => CheckSize(newSize, this.maxSize);
+
+        [MethodImpl(InlineMethod.Value)]
+        internal static void CheckSize(long newSize, long maxSize)
         {
-            if (this.MaxSize >= 0 && newSize > this.MaxSize)
+            if (maxSize >= 0 && newSize > maxSize)
             {
                 ThrowHelper.ThrowIOException_CheckSize();
             }

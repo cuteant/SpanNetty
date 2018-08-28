@@ -7,11 +7,17 @@ namespace DotNetty.Codecs.Http.Multipart
     using System.Diagnostics.Contracts;
     using System.IO;
     using System.Text;
+    using CuteAnt.Buffers;
     using DotNetty.Buffers;
     using DotNetty.Common;
 
     public abstract class AbstractMemoryHttpData : AbstractHttpData
     {
+        // We pick a value that is the largest multiple of 4096 that is still smaller than the large object heap threshold (85K).
+        // The SetContent buffer is short-lived and is likely to be collected at Gen0, and it offers a significant
+        // improvement in Copy performance.
+        const int c_defaultCopyBufferSize = 81920;
+
         IByteBuffer byteBuf;
         int chunkPosition;
 
@@ -25,7 +31,7 @@ namespace DotNetty.Codecs.Http.Multipart
             Contract.Requires(buffer != null);
 
             long localsize = buffer.ReadableBytes;
-            this.CheckSize(localsize);
+            CheckSize(localsize, this.MaxSize);
             if (this.DefinedSize > 0 && this.DefinedSize < localsize)
             {
                 ThrowHelper.ThrowIOException_OutOfSize(localsize, this.DefinedSize);
@@ -47,19 +53,26 @@ namespace DotNetty.Codecs.Http.Multipart
             }
 
             IByteBuffer buffer = Unpooled.Buffer();
-            var bytes = new byte[4096 * 4];
+            var bytes = BufferManager.Shared.Rent(c_defaultCopyBufferSize);
             int written = 0;
-            while (true)
+            try
             {
-                int read = inputStream.Read(bytes, 0, bytes.Length);
-                if (read <= 0)
+                while (true)
                 {
-                    break;
-                }
+                    int read = inputStream.Read(bytes, 0, bytes.Length);
+                    if (read <= 0)
+                    {
+                        break;
+                    }
 
-                buffer.WriteBytes(bytes, 0, read);
-                written += read;
-                this.CheckSize(written);
+                    buffer.WriteBytes(bytes, 0, read);
+                    written += read;
+                    CheckSize(written, this.MaxSize);
+                }
+            }
+            finally
+            {
+                BufferManager.Shared.Return(bytes);
             }
             this.Size = written;
             if (this.DefinedSize > 0 && this.DefinedSize < this.Size)
@@ -77,7 +90,7 @@ namespace DotNetty.Codecs.Http.Multipart
             if (buffer != null)
             {
                 long localsize = buffer.ReadableBytes;
-                this.CheckSize(this.Size + localsize);
+                CheckSize(this.Size + localsize, this.MaxSize);
                 if (this.DefinedSize > 0 && this.DefinedSize < this.Size + localsize)
                 {
                     ThrowHelper.ThrowIOException_OutOfSize(this.Size + localsize, this.DefinedSize);

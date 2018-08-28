@@ -14,8 +14,8 @@ namespace DotNetty.Codecs.Http.Multipart
     public class DiskFileUpload : AbstractDiskHttpData, IFileUpload
     {
         public static string FileBaseDirectory;
-        public static bool DeleteOnExitTemporaryFile = true;
-        public static string FilePrefix = "FUp_";
+        public const bool DeleteOnExitTemporaryFile = true;
+        public const string FilePrefix = "FUp_";
         public const string FilePostfix = ".tmp";
 
         string filename;
