@@ -539,6 +539,7 @@ namespace DotNetty.Codecs.Http
             return skiped;
         }
 
+        private static readonly HashSet<byte> s_whiteSpaceChars = new HashSet<byte>(new[] { (byte)' ', (byte)'\t' });
         State? ReadHeaders(IByteBuffer buffer)
         {
             IHttpMessage httpMessage = this.message;
@@ -555,7 +556,7 @@ namespace DotNetty.Codecs.Http
                 do
                 {
                     byte firstChar = line.Bytes[0];
-                    if (this.name != null && (firstChar == ' ' || firstChar == '\t'))
+                    if (this.name != null && s_whiteSpaceChars.Contains(firstChar))
                     {
                         //please do not make one line from below code
                         //as it breaks +XX:OptimizeStringConcat optimization
@@ -638,7 +639,7 @@ namespace DotNetty.Codecs.Http
                 do
                 {
                     byte firstChar = line.Bytes[0];
-                    if (lastHeader != null && (firstChar == ' ' || firstChar == '\t'))
+                    if (lastHeader != null && s_whiteSpaceChars.Contains(firstChar))
                     {
                         IList<ICharSequence> current = trailingHeaders.TrailingHeaders.GetAll(lastHeader);
                         if (current.Count > 0)
@@ -692,7 +693,7 @@ namespace DotNetty.Codecs.Http
             for (int i = hex.Offset; i < hex.Count; i++)
             {
                 byte c = hex.Array[i];
-                if (c == ';' || IsWhiteSpace(c) || CharUtil.IsISOControl(c))
+                if (IsWhiteSpaceOrSemicolonOrISOControl(c))
                 {
                     hex = (AsciiString)hex.SubSequence(0, i);
                     break;
@@ -735,7 +736,7 @@ namespace DotNetty.Codecs.Http
             for (nameEnd = nameStart; nameEnd < length; nameEnd++)
             {
                 byte ch = chars[nameEnd];
-                if (ch == ':' || IsWhiteSpace(ch))
+                if (IsWhiteSpaceOrColon(ch))
                 {
                     break;
                 }
@@ -743,7 +744,7 @@ namespace DotNetty.Codecs.Http
 
             for (colonEnd = nameEnd; colonEnd < length; colonEnd++)
             {
-                if (chars[colonEnd] == ':')
+                if (chars[colonEnd] == HttpConstants.Colon)
                 {
                     colonEnd++;
                     break;
@@ -893,6 +894,35 @@ namespace DotNetty.Codecs.Http
                     return true;
             }
             return false;
+        }
+
+        [MethodImpl(InlineMethod.Value)]
+        static bool IsWhiteSpaceOrColon(byte c)
+        {
+            switch (c)
+            {
+                case HttpConstants.Colon:
+                case HttpConstants.HorizontalSpace:
+                case HttpConstants.HorizontalTab:
+                case HttpConstants.CarriageReturn:
+                    return true;
+            }
+            return false;
+        }
+
+        [MethodImpl(InlineMethod.Value)]
+        static bool IsWhiteSpaceOrSemicolonOrISOControl(byte c)
+        {
+            switch (c)
+            {
+                case HttpConstants.Semicolon:
+                case HttpConstants.HorizontalSpace:
+                case HttpConstants.HorizontalTab:
+                case HttpConstants.CarriageReturn:
+                    return true;
+                default:
+                    return CharUtil.IsISOControl(c);
+            }
         }
     }
 }

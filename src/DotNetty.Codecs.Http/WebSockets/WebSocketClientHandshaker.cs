@@ -447,7 +447,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             int index = uri.Scheme.Length + 3 + uri.Host.Length;
 
             if (index < uri.OriginalString.Length 
-                && uri.OriginalString[index] == ':')
+                && uri.OriginalString[index] == HttpConstants.ColonChar)
             {
                 return uri.Port;
             }

@@ -257,7 +257,7 @@ namespace DotNetty.Codecs.Http.Multipart
                         case MultiPartStatus.Disposition:// search '='
                             switch (read)
                             {
-                                case '=':
+                                case HttpConstants.EqualsSignChar:
                                     this.currentStatus = MultiPartStatus.Field;
                                     int equalpos = currentpos - 1;
                                     string key = DecodeAttribute(this.undecodedChunk.ToString(firstpos, equalpos - firstpos, this.charset), this.charset);
@@ -265,7 +265,7 @@ namespace DotNetty.Codecs.Http.Multipart
                                     firstpos = currentpos;
                                     break;
 
-                                case '&':
+                                case HttpConstants.AmpersandChar:
                                     // special empty FIELD
                                     this.currentStatus = MultiPartStatus.Disposition;
                                     ampersandpos = currentpos - 1;
@@ -282,7 +282,7 @@ namespace DotNetty.Codecs.Http.Multipart
                         case MultiPartStatus.Field:// search '&' or end of line
                             switch (read)
                             {
-                                case '&':
+                                case HttpConstants.AmpersandChar:
                                     this.currentStatus = MultiPartStatus.Disposition;
                                     ampersandpos = currentpos - 1;
                                     this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
@@ -395,7 +395,7 @@ namespace DotNetty.Codecs.Http.Multipart
                         case MultiPartStatus.Disposition:// search '='
                             switch (read)
                             {
-                                case '=':
+                                case HttpConstants.EqualsSignChar:
                                     this.currentStatus = MultiPartStatus.Field;
                                     int equalpos = currentpos - 1;
                                     string key = DecodeAttribute(this.undecodedChunk.ToString(firstpos, equalpos - firstpos, this.charset), this.charset);
@@ -403,7 +403,7 @@ namespace DotNetty.Codecs.Http.Multipart
                                     firstpos = currentpos;
                                     break;
 
-                                case '&':
+                                case HttpConstants.AmpersandChar:
                                     // special empty FIELD
                                     this.currentStatus = MultiPartStatus.Disposition;
                                     ampersandpos = currentpos - 1;
@@ -420,7 +420,7 @@ namespace DotNetty.Codecs.Http.Multipart
                         case MultiPartStatus.Field:// search '&' or end of line
                             switch (read)
                             {
-                                case '&':
+                                case HttpConstants.AmpersandChar:
                                     this.currentStatus = MultiPartStatus.Disposition;
                                     ampersandpos = currentpos - 1;
                                     this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));

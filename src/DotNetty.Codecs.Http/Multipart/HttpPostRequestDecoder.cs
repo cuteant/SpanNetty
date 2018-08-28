@@ -82,16 +82,16 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     return null;
                 }
-                ICharSequence boundary = headerContentType[mrank].SubstringAfter('=');
+                ICharSequence boundary = headerContentType[mrank].SubstringAfter(HttpConstants.EqualsSignChar);
                 if (boundary == null)
                 {
                     ThrowHelper.ThrowErrorDataDecoderException_NeedBoundaryValue();
                 }
-                if (boundary[0] == '"')
+                if (boundary[0] == HttpConstants.DoubleQuoteChar)
                 {
                     ICharSequence bound = CharUtil.Trim(boundary);
                     int index = bound.Count - 1;
-                    if (bound[index] == '"')
+                    if (bound[index] == HttpConstants.DoubleQuoteChar)
                     {
                         boundary = bound.SubSequence(1, index);
                     }
@@ -99,7 +99,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 AsciiString charsetHeader = HttpHeaderValues.Charset;
                 if (headerContentType[crank].RegionMatchesIgnoreCase(0, charsetHeader, 0, charsetHeader.Count))
                 {
-                    ICharSequence charset = headerContentType[crank].SubstringAfter('=');
+                    ICharSequence charset = headerContentType[crank].SubstringAfter(HttpConstants.EqualsSignChar);
                     if (charset != null)
                     {
                         return new []
@@ -150,24 +150,24 @@ namespace DotNetty.Codecs.Http.Multipart
         static ICharSequence[] SplitHeaderContentType(ICharSequence sb)
         {
             int aStart = HttpPostBodyUtil.FindNonWhitespace(sb, 0);
-            int aEnd = sb.IndexOf(';');
+            int aEnd = sb.IndexOf(HttpConstants.SemicolonChar);
             if (aEnd == -1)
             {
                 return new [] { sb,  StringCharSequence.Empty, StringCharSequence.Empty };
             }
             int bStart = HttpPostBodyUtil.FindNonWhitespace(sb, aEnd + 1);
-            if (sb[aEnd - 1] == ' ')
+            if (sb[aEnd - 1] == HttpConstants.SpaceChar)
             {
                 aEnd--;
             }
-            int bEnd = sb.IndexOf(';', bStart);
+            int bEnd = sb.IndexOf(HttpConstants.SemicolonChar, bStart);
             if (bEnd == -1)
             {
                 bEnd = HttpPostBodyUtil.FindEndOfString(sb);
                 return new [] { sb.SubSequence(aStart, aEnd), sb.SubSequence(bStart, bEnd), StringCharSequence.Empty };
             }
             int cStart = HttpPostBodyUtil.FindNonWhitespace(sb, bEnd + 1);
-            if (sb[bEnd - 1] == ' ')
+            if (sb[bEnd - 1] == HttpConstants.SpaceChar)
             {
                 bEnd--;
             }

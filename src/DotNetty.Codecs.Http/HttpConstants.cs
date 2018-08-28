@@ -8,31 +8,31 @@ namespace DotNetty.Codecs.Http
 
     public static partial class HttpConstants
     {
-        // Horizontal space
+        /// <summary>Horizontal space</summary>
         public const byte HorizontalSpace = 32;
 
-        // Horizontal tab
+        /// <summary>Horizontal tab</summary>
         public const byte HorizontalTab = 9;
 
-        // Carriage return
+        /// <summary>Carriage return</summary>
         public const byte CarriageReturn = 13;
 
-        // Equals '='
+        /// <summary>Equals '='</summary>
         public const byte EqualsSign = 61;
 
-        // Line feed character
+        /// <summary>Line feed character</summary>
         public const byte LineFeed = 10;
 
-        // Colon ':'
+        /// <summary>Colon ':'</summary>
         public const byte Colon = 58;
 
-        // Semicolon ';'
+        /// <summary>Semicolon ';'</summary>
         public const byte Semicolon = 59;
 
-        // Comma ','
+        /// <summary>Comma ','</summary>
         public const byte Comma = 44;
 
-        // Double quote '"'
+        /// <summary>Double quote '"'</summary>
         public const byte DoubleQuote = (byte)'"';
 
          // Default character set (UTF-8)

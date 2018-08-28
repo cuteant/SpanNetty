@@ -14,8 +14,6 @@ namespace DotNetty.Codecs.Http.Multipart
 
     public class HttpPostMultipartRequestDecoder : IInterfaceHttpPostRequestDecoder
     {
-        const byte MinusSign = (byte)'-';
-
         // Factory used to create InterfaceHttpData
         readonly IHttpDataFactory factory;
 
@@ -1105,13 +1103,13 @@ namespace DotNetty.Codecs.Http.Multipart
                         case HttpConstants.LineFeed:
                             return sb;
 
-                        case MinusSign:
-                            sb.Append('-');
+                        case HttpConstants.MinusSign:
+                            sb.Append(HttpConstants.MinusSignChar);
                             // second check for closing delimiter
                             nextByte = undecodedChunk.ReadByte();
-                            if (nextByte == '-')
+                            if (nextByte == HttpConstants.MinusSignChar)
                             {
-                                sb.Append('-');
+                                sb.Append(HttpConstants.MinusSignChar);
                                 // now try to find if CRLF or LF there
                                 if (undecodedChunk.IsReadable())
                                 {
@@ -1233,15 +1231,15 @@ namespace DotNetty.Codecs.Http.Multipart
                             sao.SetReadPosition(0);
                             return sb;
 
-                        case MinusSign:
-                            sb.Append('-');
+                        case HttpConstants.MinusSign:
+                            sb.Append(HttpConstants.MinusSignChar);
                             // second check for closing delimiter
                             if (sao.Pos < sao.Limit)
                             {
                                 nextByte = sao.Bytes[sao.Pos++];
-                                if (nextByte == '-')
+                                if (nextByte == HttpConstants.MinusSignChar)
                                 {
-                                    sb.Append('-');
+                                    sb.Append(HttpConstants.MinusSignChar);
                                     // now try to find if CRLF or LF there
                                     if (sao.Pos < sao.Limit)
                                     {
@@ -1422,14 +1420,14 @@ namespace DotNetty.Codecs.Http.Multipart
                 char nextChar = field[i];
                 switch (nextChar)
                 {
-                    case ':':  // Colon
-                    case ',':  // Comma
-                    case '=':  // EqualsSign
-                    case ';':  // Semicolon
-                    case '\t': // HorizontalTab
+                    case HttpConstants.ColonChar:  // Colon
+                    case HttpConstants.CommaChar:  // Comma
+                    case HttpConstants.EqualsSignChar:  // EqualsSign
+                    case HttpConstants.SemicolonChar:  // Semicolon
+                    case HttpConstants.HorizontalTabChar: // HorizontalTab
                         sb.Append(HttpConstants.HorizontalSpaceChar);
                         break;
-                    case '"':  // DoubleQuote
+                    case HttpConstants.DoubleQuoteChar:  // DoubleQuote
                         // nothing added, just removes it
                         break;
                     default:
@@ -1483,14 +1481,14 @@ namespace DotNetty.Codecs.Http.Multipart
             for (nameEnd = nameStart; nameEnd < sb.Count; nameEnd++)
             {
                 char ch = sb[nameEnd];
-                if (ch == ':' || char.IsWhiteSpace(ch))
+                if (ch == HttpConstants.ColonChar || char.IsWhiteSpace(ch))
                 {
                     break;
                 }
             }
             for (colonEnd = nameEnd; colonEnd < sb.Count; colonEnd++)
             {
-                if (sb[colonEnd] == ':')
+                if (sb[colonEnd] == HttpConstants.ColonChar)
                 {
                     colonEnd++;
                     break;
@@ -1501,13 +1499,13 @@ namespace DotNetty.Codecs.Http.Multipart
             headers.Add(sb.SubSequence(nameStart, nameEnd));
             ICharSequence svalue = (valueStart >= valueEnd) ? AsciiString.Empty : sb.SubSequence(valueStart, valueEnd);
             ICharSequence[] values;
-            if (svalue.IndexOf(';') >= 0)
+            if (svalue.IndexOf(HttpConstants.SemicolonChar) >= 0)
             {
                 values = SplitMultipartHeaderValues(svalue);
             }
             else
             {
-                values = CharUtil.Split(svalue, ',');
+                values = CharUtil.Split(svalue, HttpConstants.CommaChar);
             }
             foreach(ICharSequence value in values)
             {
@@ -1538,26 +1536,29 @@ namespace DotNetty.Codecs.Http.Multipart
                     }
                     else
                     {
-                        if (c == '\\')
+                        switch (c)
                         {
-                            escapeNext = true;
-                        }
-                        else if (c == '"')
-                        {
-                            inQuote = false;
+                            case HttpConstants.BackSlashChar:
+                                escapeNext = true;
+                                break;
+
+                            case HttpConstants.DoubleQuoteChar:
+                                inQuote = false;
+                                break;
                         }
                     }
                 }
                 else
                 {
-                    if (c == '"')
+                    switch (c)
                     {
-                        inQuote = true;
-                    }
-                    else if (c == ';')
-                    {
-                        values.Add(svalue.SubSequence(start, i));
-                        start = i + 1;
+                        case HttpConstants.DoubleQuoteChar:
+                            inQuote = true;
+                            break;
+                        case HttpConstants.SemicolonChar:
+                            values.Add(svalue.SubSequence(start, i));
+                            start = i + 1;
+                            break;
                     }
                 }
             }

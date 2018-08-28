@@ -108,7 +108,7 @@ namespace DotNetty.Codecs.Http
             {
                 return ImmutableDictionary<string, List<string>>.Empty;
             }
-            if (s[from] == '?')
+            if (s[from] == HttpConstants.QuestionMarkChar)
             {
                 from++;
             }
@@ -121,7 +121,7 @@ namespace DotNetty.Codecs.Http
             {
                 switch (s[i])
                 {
-                    case '=':
+                    case HttpConstants.EqualsSignChar:
                         if (nameStart == i)
                         {
                             nameStart = i + 1;
@@ -131,19 +131,19 @@ namespace DotNetty.Codecs.Http
                             valueStart = i + 1;
                         }
                         break;
-                    case '&':
-                    case ';':
+                    case HttpConstants.AmpersandChar:
+                    case HttpConstants.SemicolonChar:
                         if (AddParam(s, nameStart, valueStart, i, parameters, charset))
-                    {
-                        paramsLimit--;
-                        if (paramsLimit == 0)
                         {
-                            return parameters;
+                            paramsLimit--;
+                            if (paramsLimit == 0)
+                            {
+                                return parameters;
+                            }
                         }
-                    }
                         nameStart = i + 1;
                         break;
-                    case '#':
+                    case HttpConstants.NumberSignChar:
                         goto loop;
                 }
             }
@@ -190,7 +190,7 @@ namespace DotNetty.Codecs.Http
             for (int i = from; i < toExcluded; i++)
             {
                 char c = s[i];
-                if (c == '%' || c == '+' && !isPath)
+                if (c == HttpConstants.PercentChar || c == HttpConstants.PlusSignChar && !isPath)
                 {
                     firstEscaped = i;
                     break;
@@ -211,9 +211,9 @@ namespace DotNetty.Codecs.Http
             for (int i = firstEscaped; i < toExcluded; i++)
             {
                 char c = s[i];
-                if (c != '%')
+                if (c != HttpConstants.PercentChar)
                 {
-                    strBuf.Append(c != '+' || isPath ? c : StringUtil.Space);
+                    strBuf.Append(c != HttpConstants.PlusSignChar || isPath ? c : StringUtil.Space);
                     continue;
                 }
 
@@ -227,7 +227,7 @@ namespace DotNetty.Codecs.Http
                     byteBuf[idx++] = StringUtil.DecodeHexByte(s, i + 1);
                     i += 3;
                 }
-                while (i < toExcluded && s[i] == '%');
+                while (i < toExcluded && s[i] == HttpConstants.PercentChar);
                 i--;
 
                 strBuf.Append(charset.GetString(byteBuf, 0, idx));
@@ -242,9 +242,11 @@ namespace DotNetty.Codecs.Http
             for (int i = 0; i < len; i++)
             {
                 char c = uri[i];
-                if (c == '?' || c == '#')
+                switch (c)
                 {
-                    return i;
+                    case HttpConstants.QuestionMarkChar:
+                    case HttpConstants.NumberSignChar:
+                        return i;
                 }
             }
             return len;

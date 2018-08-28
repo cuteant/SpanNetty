@@ -88,13 +88,13 @@ namespace DotNetty.Codecs.Http.Cookies
                     char curChar = header[i];
                     switch (curChar)
                     {
-                        case ';':
+                        case HttpConstants.SemicolonChar:
                             // NAME; (no value till ';')
                             nameEnd = i;
                             valueBegin = valueEnd = -1;
                             goto loop0;
 
-                        case '=':
+                        case HttpConstants.EqualsSignChar:
                             // NAME=VALUE
                             nameEnd = i;
                             i++;

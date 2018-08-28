@@ -48,7 +48,7 @@ namespace DotNetty.Codecs.Http.Cookies
                         goto loop;
                     }
                     char c = header[i];
-                    if (c == ',')
+                    if (c == HttpConstants.CommaChar)
                     {
                         // Having multiple cookies in a single Set-Cookie header is
                         // deprecated, modern browsers only parse the first one
@@ -73,13 +73,13 @@ namespace DotNetty.Codecs.Http.Cookies
                     char curChar = header[i];
                     switch (curChar)
                     {
-                        case ';':
+                        case HttpConstants.SemicolonChar:
                             // NAME; (no value till ';')
                             nameEnd = i;
                             valueBegin = valueEnd = -1;
                             goto loop0;
 
-                        case '=':
+                        case HttpConstants.EqualsSignChar:
                             // NAME=VALUE
                             nameEnd = i;
                             i++;
@@ -111,7 +111,7 @@ namespace DotNetty.Codecs.Http.Cookies
                 }
 
                 loop0:
-                if (valueEnd > 0 && header[valueEnd - 1] == ',')
+                if (valueEnd > 0 && header[valueEnd - 1] == HttpConstants.CommaChar)
                 {
                     // old multiple cookies separator, skipping it
                     valueEnd--;

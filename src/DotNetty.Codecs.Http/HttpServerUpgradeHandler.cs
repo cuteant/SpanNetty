@@ -324,7 +324,7 @@ namespace DotNetty.Codecs.Http
                     // Don't include any whitespace.
                     continue;
                 }
-                if (c == ',')
+                if (c == HttpConstants.CommaChar)
                 {
                     // Add the string and reset the builder for the next protocol.
                     protocols.Add(new AsciiString(builder.ToString()));
