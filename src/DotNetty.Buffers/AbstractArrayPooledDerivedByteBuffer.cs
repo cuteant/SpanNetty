@@ -7,7 +7,7 @@ namespace DotNetty.Buffers
     using System.Diagnostics;
     using DotNetty.Common;
 
-    abstract class AbstractBufferManagerDerivedByteBuffer : AbstractReferenceCountedByteBuffer
+    abstract class AbstractArrayPooledDerivedByteBuffer : AbstractReferenceCountedByteBuffer
     {
         readonly ThreadLocalPool.Handle recyclerHandle;
         AbstractByteBuffer rootParent;
@@ -19,7 +19,7 @@ namespace DotNetty.Buffers
         //
         IByteBuffer parent;
 
-        protected AbstractBufferManagerDerivedByteBuffer(ThreadLocalPool.Handle recyclerHandle) 
+        protected AbstractArrayPooledDerivedByteBuffer(ThreadLocalPool.Handle recyclerHandle) 
             : base(0)
         {
             this.recyclerHandle = recyclerHandle;
@@ -38,7 +38,7 @@ namespace DotNetty.Buffers
 
         internal T Init<T>(
             AbstractByteBuffer unwrapped, IByteBuffer wrapped, int readerIndex, int writerIndex, int maxCapacity)
-            where T : AbstractBufferManagerDerivedByteBuffer
+            where T : AbstractArrayPooledDerivedByteBuffer
         {
             wrapped.Retain(); // Retain up front to ensure the parent is accessible before doing more work.
             this.parent = wrapped;
@@ -94,20 +94,20 @@ namespace DotNetty.Buffers
         public override IByteBuffer Slice(int index, int length)
         {
             // All reference count methods should be inherited from this object (this is the "parent").
-            return new BufferManagerNonRetainedSlicedByteBuffer(this, (AbstractByteBuffer)this.Unwrap(), index, length);
+            return new ArrayPooledNonRetainedSlicedByteBuffer(this, (AbstractByteBuffer)this.Unwrap(), index, length);
         }
 
         protected IByteBuffer Duplicate0()
         {
             // All reference count methods should be inherited from this object (this is the "parent").
-            return new BufferManagerNonRetainedDuplicateByteBuffer(this, (AbstractByteBuffer)this.Unwrap());
+            return new ArrayPooledNonRetainedDuplicateByteBuffer(this, (AbstractByteBuffer)this.Unwrap());
         }
 
-        sealed class BufferManagerNonRetainedDuplicateByteBuffer : UnpooledDuplicatedByteBuffer
+        sealed class ArrayPooledNonRetainedDuplicateByteBuffer : UnpooledDuplicatedByteBuffer
         {
             readonly IReferenceCounted referenceCountDelegate;
 
-            internal BufferManagerNonRetainedDuplicateByteBuffer(IReferenceCounted referenceCountDelegate, AbstractByteBuffer buffer)
+            internal ArrayPooledNonRetainedDuplicateByteBuffer(IReferenceCounted referenceCountDelegate, AbstractByteBuffer buffer)
                 : base(buffer)
             {
                 this.referenceCountDelegate = referenceCountDelegate;
@@ -143,27 +143,27 @@ namespace DotNetty.Buffers
 
             protected override bool Release0(int decrement) => this.referenceCountDelegate.Release(decrement);
 
-            public override IByteBuffer Duplicate() => new BufferManagerNonRetainedDuplicateByteBuffer(this.referenceCountDelegate, this);
+            public override IByteBuffer Duplicate() => new ArrayPooledNonRetainedDuplicateByteBuffer(this.referenceCountDelegate, this);
 
-            public override IByteBuffer RetainedDuplicate() => BufferManagerDuplicatedByteBuffer.NewInstance(this.UnwrapCore(), this, this.ReaderIndex, this.WriterIndex);
+            public override IByteBuffer RetainedDuplicate() => ArrayPooledDuplicatedByteBuffer.NewInstance(this.UnwrapCore(), this, this.ReaderIndex, this.WriterIndex);
 
             public override IByteBuffer Slice(int index, int length)
             {
                 this.CheckIndex0(index, length);
-                return new BufferManagerNonRetainedSlicedByteBuffer(this.referenceCountDelegate, (AbstractByteBuffer)this.Unwrap(), index, length);
+                return new ArrayPooledNonRetainedSlicedByteBuffer(this.referenceCountDelegate, (AbstractByteBuffer)this.Unwrap(), index, length);
             }
 
             // Capacity is not allowed to change for a sliced ByteBuf, so length == capacity()
             public override IByteBuffer RetainedSlice() => this.RetainedSlice(this.ReaderIndex, this.Capacity);
 
-            public override IByteBuffer RetainedSlice(int index, int length) => BufferManagerSlicedByteBuffer.NewInstance(this.UnwrapCore(), this, index, length);
+            public override IByteBuffer RetainedSlice(int index, int length) => ArrayPooledSlicedByteBuffer.NewInstance(this.UnwrapCore(), this, index, length);
         }
 
-        sealed class BufferManagerNonRetainedSlicedByteBuffer : UnpooledSlicedByteBuffer
+        sealed class ArrayPooledNonRetainedSlicedByteBuffer : UnpooledSlicedByteBuffer
         {
             readonly IReferenceCounted referenceCountDelegate;
 
-            public BufferManagerNonRetainedSlicedByteBuffer(IReferenceCounted referenceCountDelegate, AbstractByteBuffer buffer, int index, int length)
+            public ArrayPooledNonRetainedSlicedByteBuffer(IReferenceCounted referenceCountDelegate, AbstractByteBuffer buffer, int index, int length)
                 : base(buffer, index, length)
             {
                 this.referenceCountDelegate = referenceCountDelegate;
@@ -200,18 +200,18 @@ namespace DotNetty.Buffers
             protected override bool Release0(int decrement) => this.referenceCountDelegate.Release(decrement);
 
             public override IByteBuffer Duplicate() => 
-                new BufferManagerNonRetainedDuplicateByteBuffer(this.referenceCountDelegate, this.UnwrapCore())
+                new ArrayPooledNonRetainedDuplicateByteBuffer(this.referenceCountDelegate, this.UnwrapCore())
                     .SetIndex(this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
 
-            public override IByteBuffer RetainedDuplicate() => BufferManagerDuplicatedByteBuffer.NewInstance(this.UnwrapCore(), this, this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
+            public override IByteBuffer RetainedDuplicate() => ArrayPooledDuplicatedByteBuffer.NewInstance(this.UnwrapCore(), this, this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
             
             public override IByteBuffer Slice(int index, int length)
             {
                 this.CheckIndex0(index, length);
-                return new BufferManagerNonRetainedSlicedByteBuffer(this.referenceCountDelegate, this.UnwrapCore(), this.Idx(index), length);
+                return new ArrayPooledNonRetainedSlicedByteBuffer(this.referenceCountDelegate, this.UnwrapCore(), this.Idx(index), length);
             }
 
-            public override IByteBuffer RetainedSlice(int index, int length) => BufferManagerSlicedByteBuffer.NewInstance(this.UnwrapCore(), this, this.Idx(index), length);
+            public override IByteBuffer RetainedSlice(int index, int length) => ArrayPooledSlicedByteBuffer.NewInstance(this.UnwrapCore(), this, this.Idx(index), length);
         }
     }
 }

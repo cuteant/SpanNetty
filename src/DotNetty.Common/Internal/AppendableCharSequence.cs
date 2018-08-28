@@ -89,25 +89,25 @@ namespace DotNetty.Common.Internal
 
         public bool Equals(AppendableCharSequence other)
         {
-            if (other == null)
-            {
-                return false;
-            }
+            //if (other == null)
+            //{
+            //    return false;
+            //}
             if (ReferenceEquals(this, other))
             {
                 return true;
             }
 
-            return this.pos == other.pos 
+            return other != null && this.pos == other.pos 
                 && PlatformDependent.ByteArrayEquals(this.chars, 0, other.chars, 0, this.pos);
         }
 
         public override bool Equals(object obj)
         {
-            if (obj == null)
-            {
-                return false;
-            }
+            //if (obj == null)
+            //{
+            //    return false;
+            //}
             if (ReferenceEquals(this, obj))
             {
                 return true;
@@ -115,7 +115,7 @@ namespace DotNetty.Common.Internal
 
             if (obj is AppendableCharSequence other)
             {
-                return this.Equals(other);
+                return this.pos == other.pos && PlatformDependent.ByteArrayEquals(this.chars, 0, other.chars, 0, this.pos);
             }
             if (obj is ICharSequence seq)
             {

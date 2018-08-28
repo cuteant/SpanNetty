@@ -36,7 +36,7 @@ namespace DotNetty.Transport.Channels
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChannelInitializer<T>>();
 
-        readonly ConcurrentDictionary<IChannelHandlerContext, bool> initMap = new ConcurrentDictionary<IChannelHandlerContext, bool>();
+        readonly ConcurrentDictionary<IChannelHandlerContext, bool> initMap = new ConcurrentDictionary<IChannelHandlerContext, bool>(ChannelHandlerContextComparer.Default);
 
         /// <summary>
         /// This method will be called once the <see cref="IChannel"/> was registered. After the method returns this instance

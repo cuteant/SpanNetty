@@ -15,7 +15,7 @@ namespace DotNetty.Transport.Channels
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common;
 
-    sealed class DefaultChannelId : IChannelId
+    sealed class DefaultChannelId : IChannelId, IEquatable<IChannelId>
     {
         const int MachineIdLen = 8;
         const int ProcessIdLen = 4;
@@ -238,12 +238,17 @@ namespace DotNetty.Transport.Channels
 
         public override bool Equals(object obj)
         {
-            if (obj == this)
+            return obj is DefaultChannelId channelId && this.Equals(channelId);
+        }
+
+        public bool Equals(IChannelId other)
+        {
+            if (ReferenceEquals(this, other))
             {
                 return true;
             }
 
-            if (obj is DefaultChannelId channelId)
+            if (other is DefaultChannelId channelId)
             {
                 return Equals(this.data, channelId.data);
             }

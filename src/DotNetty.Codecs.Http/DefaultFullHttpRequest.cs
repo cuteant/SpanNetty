@@ -19,7 +19,7 @@ namespace DotNetty.Codecs.Http
         int hash;
 
         public DefaultFullHttpRequest(HttpVersion httpVersion, HttpMethod method, string uri) 
-            : this(httpVersion, method, uri, Unpooled.Buffer(0))
+            : this(httpVersion, method, uri, ArrayPooled.Buffer(0), true)
         {
         }
 
@@ -29,7 +29,7 @@ namespace DotNetty.Codecs.Http
         }
 
         public DefaultFullHttpRequest(HttpVersion httpVersion, HttpMethod method, string uri, bool validateHeaders)
-            : this(httpVersion, method, uri, Unpooled.Buffer(0), validateHeaders)
+            : this(httpVersion, method, uri, ArrayPooled.Buffer(0), validateHeaders)
         {
         }
 

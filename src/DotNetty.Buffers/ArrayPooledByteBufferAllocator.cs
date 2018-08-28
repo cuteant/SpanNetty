@@ -9,35 +9,35 @@ namespace DotNetty.Buffers
     /// <summary>
     ///     Unpooled implementation of <see cref="IByteBufferAllocator" />.
     /// </summary>
-    public sealed class BufferManagerByteBufferAllocator : AbstractByteBufferAllocator, IByteBufferAllocatorMetricProvider
+    public sealed class ArrayPooledByteBufferAllocator : AbstractByteBufferAllocator, IByteBufferAllocatorMetricProvider
     {
-        readonly BufferManagerByteBufferAllocatorMetric metric = new BufferManagerByteBufferAllocatorMetric();
+        readonly ArrayPooledByteBufferAllocatorMetric metric = new ArrayPooledByteBufferAllocatorMetric();
         readonly bool disableLeakDetector;
 
-        public static readonly BufferManagerByteBufferAllocator Default =
-            new BufferManagerByteBufferAllocator(PlatformDependent.DirectBufferPreferred);
+        public static readonly ArrayPooledByteBufferAllocator Default =
+            new ArrayPooledByteBufferAllocator(PlatformDependent.DirectBufferPreferred);
 
-        public BufferManagerByteBufferAllocator()
+        public ArrayPooledByteBufferAllocator()
             : this(PlatformDependent.DirectBufferPreferred, false)
         {
         }
 
-        public BufferManagerByteBufferAllocator(bool preferDirect)
+        public ArrayPooledByteBufferAllocator(bool preferDirect)
             : this(preferDirect, false)
         {
         }
 
-        public BufferManagerByteBufferAllocator(bool preferDirect, bool disableLeakDetector)
+        public ArrayPooledByteBufferAllocator(bool preferDirect, bool disableLeakDetector)
             : base(preferDirect)
         {
             this.disableLeakDetector = disableLeakDetector;
         }
 
         protected override IByteBuffer NewHeapBuffer(int initialCapacity, int maxCapacity)
-            => InstrumentedBufferManagerHeapByteBuffer.Create(this, initialCapacity, maxCapacity);
+            => InstrumentedArrayPooledHeapByteBuffer.Create(this, initialCapacity, maxCapacity);
 
         protected override IByteBuffer NewDirectBuffer(int initialCapacity, int maxCapacity)
-            => InstrumentedUBufferManagerUnsafeDirectByteBuffer.Create(this, initialCapacity, maxCapacity);
+            => InstrumentedArrayPooledUnsafeDirectByteBuffer.Create(this, initialCapacity, maxCapacity);
 
         public override CompositeByteBuffer CompositeHeapBuffer(int maxNumComponents)
         {
@@ -64,18 +64,18 @@ namespace DotNetty.Buffers
         internal void DecrementHeap(int amount) => this.metric.HeapCounter(-amount);
     }
 
-    sealed class InstrumentedBufferManagerHeapByteBuffer : BufferManagerHeapByteBuffer
+    sealed class InstrumentedArrayPooledHeapByteBuffer : ArrayPooledHeapByteBuffer
     {
-        static readonly ThreadLocalPool<InstrumentedBufferManagerHeapByteBuffer> s_recycler = new ThreadLocalPool<InstrumentedBufferManagerHeapByteBuffer>(handle => new InstrumentedBufferManagerHeapByteBuffer(handle, 0));
+        static readonly ThreadLocalPool<InstrumentedArrayPooledHeapByteBuffer> s_recycler = new ThreadLocalPool<InstrumentedArrayPooledHeapByteBuffer>(handle => new InstrumentedArrayPooledHeapByteBuffer(handle, 0));
 
-        internal static InstrumentedBufferManagerHeapByteBuffer Create(BufferManagerByteBufferAllocator allocator, int initialCapacity, int maxCapacity)
+        internal static InstrumentedArrayPooledHeapByteBuffer Create(ArrayPooledByteBufferAllocator allocator, int initialCapacity, int maxCapacity)
         {
             var buf = s_recycler.Take();
-            buf.Reuse(allocator, BufferManagerUtil.DefaultBufferPool, initialCapacity, maxCapacity);
+            buf.Reuse(allocator, ArrayPooled.DefaultArrayPool, initialCapacity, maxCapacity);
             return buf;
         }
 
-        internal InstrumentedBufferManagerHeapByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
+        internal InstrumentedArrayPooledHeapByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
             : base(recyclerHandle, maxCapacity)
         {
         }
@@ -95,18 +95,18 @@ namespace DotNetty.Buffers
         }
     }
 
-    sealed class InstrumentedUBufferManagerUnsafeDirectByteBuffer : BufferManagerUnsafeDirectByteBuffer
+    sealed class InstrumentedArrayPooledUnsafeDirectByteBuffer : ArrayPooledUnsafeDirectByteBuffer
     {
-        static readonly ThreadLocalPool<InstrumentedUBufferManagerUnsafeDirectByteBuffer> s_recycler = new ThreadLocalPool<InstrumentedUBufferManagerUnsafeDirectByteBuffer>(handle => new InstrumentedUBufferManagerUnsafeDirectByteBuffer(handle, 0));
+        static readonly ThreadLocalPool<InstrumentedArrayPooledUnsafeDirectByteBuffer> s_recycler = new ThreadLocalPool<InstrumentedArrayPooledUnsafeDirectByteBuffer>(handle => new InstrumentedArrayPooledUnsafeDirectByteBuffer(handle, 0));
 
-        internal static InstrumentedUBufferManagerUnsafeDirectByteBuffer Create(BufferManagerByteBufferAllocator allocator, int initialCapacity, int maxCapacity)
+        internal static InstrumentedArrayPooledUnsafeDirectByteBuffer Create(ArrayPooledByteBufferAllocator allocator, int initialCapacity, int maxCapacity)
         {
             var buf = s_recycler.Take();
-            buf.Reuse(allocator, BufferManagerUtil.DefaultBufferPool, initialCapacity, maxCapacity);
+            buf.Reuse(allocator, ArrayPooled.DefaultArrayPool, initialCapacity, maxCapacity);
             return buf;
         }
 
-        internal InstrumentedUBufferManagerUnsafeDirectByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
+        internal InstrumentedArrayPooledUnsafeDirectByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
             : base(recyclerHandle, maxCapacity)
         {
         }
@@ -126,7 +126,7 @@ namespace DotNetty.Buffers
         }
     }
 
-    sealed class BufferManagerByteBufferAllocatorMetric : IByteBufferAllocatorMetric
+    sealed class ArrayPooledByteBufferAllocatorMetric : IByteBufferAllocatorMetric
     {
         long usedHeapMemory;
         long userDirectMemory;

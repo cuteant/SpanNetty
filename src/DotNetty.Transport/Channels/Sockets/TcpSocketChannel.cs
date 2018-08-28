@@ -22,19 +22,19 @@ namespace DotNetty.Transport.Channels.Sockets
 
         /// <summary>Create a new instance</summary>
         public TcpSocketChannel()
-            : this(SocketEx.CreateSocket()) //new Socket(SocketType.Stream, ProtocolType.Tcp))
+            : this(null, SocketEx.CreateSocket(), false) //new Socket(SocketType.Stream, ProtocolType.Tcp))
         {
         }
 
         /// <summary>Create a new instance</summary>
         public TcpSocketChannel(AddressFamily addressFamily)
-            : this(SocketEx.CreateSocket(addressFamily)) //new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp))
+            : this(null, SocketEx.CreateSocket(addressFamily), false) //new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp))
         {
         }
 
         /// <summary>Create a new instance using the given <see cref="ISocketChannel" />.</summary>
         public TcpSocketChannel(Socket socket)
-            : this(null, socket)
+            : this(null, socket, false)
         {
         }
 

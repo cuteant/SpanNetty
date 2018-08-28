@@ -102,6 +102,7 @@ namespace HttpServer
                         //pipeline.AddLast("encoder", new HttpResponseEncoder());
                         //pipeline.AddLast("decoder", new HttpRequestDecoder(4096, 8192, 8192, false));
                         pipeline.AddLast(new HttpServerCodec(4096, 8192, 8192, false));
+                        pipeline.AddLast(new HttpServerExpectContinueHandler());
                         pipeline.AddLast("handler", new HelloServerHandler());
                     }));
 

@@ -72,17 +72,18 @@ namespace DotNetty.Buffers
             this.CheckNewCapacity(newCapacity);
 
             int oldCapacity = this.array.Length;
-            byte[] oldArray = this.array;
             if (newCapacity > oldCapacity)
             {
+                byte[] oldArray = this.array;
                 byte[] newArray = this.AllocateArray(newCapacity);
-                PlatformDependent.CopyMemory(this.array, 0, newArray, 0, oldCapacity);
+                PlatformDependent.CopyMemory(oldArray, 0, newArray, 0, oldCapacity);
 
                 this.SetArray(newArray);
                 this.FreeArray(oldArray);
             }
             else if (newCapacity < oldCapacity)
             {
+                byte[] oldArray = this.array;
                 byte[] newArray = this.AllocateArray(newCapacity);
                 int readerIndex = this.ReaderIndex;
                 if (readerIndex < newCapacity)
@@ -93,7 +94,7 @@ namespace DotNetty.Buffers
                         this.SetWriterIndex0(writerIndex = newCapacity);
                     }
 
-                    PlatformDependent.CopyMemory(this.array, readerIndex, newArray, 0, writerIndex - readerIndex);
+                    PlatformDependent.CopyMemory(oldArray, readerIndex, newArray, 0, writerIndex - readerIndex);
                 }
                 else
                 {

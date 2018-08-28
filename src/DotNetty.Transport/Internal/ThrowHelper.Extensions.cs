@@ -213,19 +213,19 @@ namespace DotNetty.Transport
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Position(long pos, long count)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"position out of range: {pos} (expected: 0 - {count - 1})");
+            }
+        }
+
         #endregion
 
         #region -- ArgumentOutOfRangeException --
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentOutOfRangeException_Position(long pos, long count)
-        {
-            throw GetArgumentOutOfRangeException();
-            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
-            {
-                return new ArgumentOutOfRangeException($"position out of range: {pos} (expected: 0 - {count - 1})");
-            }
-        }
 
         #endregion
 

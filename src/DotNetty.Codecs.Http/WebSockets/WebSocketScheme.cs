@@ -6,9 +6,10 @@
 // ReSharper disable InconsistentNaming
 namespace DotNetty.Codecs.Http.WebSockets
 {
+    using System;
     using DotNetty.Common.Utilities;
 
-    public sealed class WebSocketScheme
+    public sealed class WebSocketScheme : IEquatable<WebSocketScheme>
     {
         // Scheme for non-secure WebSocket connection.
         public static readonly WebSocketScheme WS = new WebSocketScheme(80, "ws");
@@ -29,8 +30,21 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public int Port => this.port;
 
-        public override bool Equals(object obj) => obj is WebSocketScheme other 
-            && other.port == this.port && other.name.Equals(this.name);
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(this, obj)) { return true; }
+            return obj is WebSocketScheme other
+                && other.port == this.port 
+                && other.name.Equals(this.name);
+        }
+
+        public bool Equals(WebSocketScheme other)
+        {
+            if (ReferenceEquals(this, other)) { return true; }
+            return other != null
+                && other.port == this.port
+                && other.name.Equals(this.name);
+        }
 
         public override int GetHashCode() => this.port * 31 + this.name.GetHashCode();
 

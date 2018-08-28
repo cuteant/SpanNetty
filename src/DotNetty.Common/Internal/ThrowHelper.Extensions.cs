@@ -184,7 +184,7 @@ namespace DotNetty.Common
             throw GetException();
             ArgumentOutOfRangeException GetException()
             {
-                return new ArgumentOutOfRangeException(
+                return new ArgumentOutOfRangeException(nameof(ticksPerWheel),
                     $"{nameof(ticksPerWheel)} may not be greater than 2^30: {ticksPerWheel}");
             }
         }

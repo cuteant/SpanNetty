@@ -59,8 +59,8 @@ namespace DotNetty.Codecs.Redis
 
         FixedRedisMessagePool()
         {
-            this.byteBufToSimpleStrings = new Dictionary<IByteBuffer, SimpleStringRedisMessage>(DefaultSimpleStrings.Length);
-            this.stringToSimpleStrings = new Dictionary<string, SimpleStringRedisMessage>(DefaultSimpleStrings.Length);
+            this.byteBufToSimpleStrings = new Dictionary<IByteBuffer, SimpleStringRedisMessage>(DefaultSimpleStrings.Length, ByteBufferComparer.Default);
+            this.stringToSimpleStrings = new Dictionary<string, SimpleStringRedisMessage>(DefaultSimpleStrings.Length, System.StringComparer.Ordinal);
 
             foreach (string simpleString in DefaultSimpleStrings)
             {
@@ -72,8 +72,8 @@ namespace DotNetty.Codecs.Redis
                 this.stringToSimpleStrings.Add(simpleString, cached);
             }
 
-            this.byteBufToErrors = new Dictionary<IByteBuffer, ErrorRedisMessage>(DefaultErrors.Length);
-            this.stringToErrors = new Dictionary<string, ErrorRedisMessage>(DefaultErrors.Length);
+            this.byteBufToErrors = new Dictionary<IByteBuffer, ErrorRedisMessage>(DefaultErrors.Length, ByteBufferComparer.Default);
+            this.stringToErrors = new Dictionary<string, ErrorRedisMessage>(DefaultErrors.Length, System.StringComparer.Ordinal);
             foreach (string error in DefaultErrors)
             {
                 IByteBuffer key = Unpooled.UnreleasableBuffer(
@@ -84,7 +84,7 @@ namespace DotNetty.Codecs.Redis
                 this.stringToErrors.Add(error, cached);
             }
 
-            this.byteBufToIntegers = new Dictionary<IByteBuffer, IntegerRedisMessage>();
+            this.byteBufToIntegers = new Dictionary<IByteBuffer, IntegerRedisMessage>(ByteBufferComparer.Default);
             this.longToIntegers = new Dictionary<long, IntegerRedisMessage>(SizeCachedIntegerNumber);
             this.longToByteBufs = new Dictionary<long, byte[]>(SizeCachedIntegerNumber);
 

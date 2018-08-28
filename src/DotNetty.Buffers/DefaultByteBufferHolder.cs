@@ -3,11 +3,12 @@
 
 namespace DotNetty.Buffers
 {
+    using System;
     using System.Diagnostics.Contracts;
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
 
-    public class DefaultByteBufferHolder : IByteBufferHolder
+    public class DefaultByteBufferHolder : IByteBufferHolder, IEquatable<IByteBufferHolder>
     {
         readonly IByteBuffer data;
 
@@ -84,6 +85,13 @@ namespace DotNetty.Buffers
             }
 
             return false;
+        }
+
+        public bool Equals(IByteBufferHolder other)
+        {
+            if (ReferenceEquals(this, other)) { return true; }
+            return other != null && this.data.Equals(other.Content);
+
         }
 
         public override int GetHashCode() => this.data.GetHashCode();

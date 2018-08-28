@@ -31,7 +31,7 @@ namespace DotNetty.Buffers
                     this.buffer = (AbstractByteBuffer)buffer.Unwrap();
                     break;
 
-                case AbstractBufferManagerDerivedByteBuffer _:
+                case AbstractArrayPooledDerivedByteBuffer _:
                     this.buffer = (AbstractByteBuffer)buffer.Unwrap();
                     break;
 

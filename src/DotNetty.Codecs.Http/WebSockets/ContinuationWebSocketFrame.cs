@@ -9,12 +9,12 @@ namespace DotNetty.Codecs.Http.WebSockets
     public class ContinuationWebSocketFrame : WebSocketFrame
     {
         public ContinuationWebSocketFrame()
-            : this(Unpooled.Buffer(0))
+            : base(true, 0, ArrayPooled.Buffer(0))
         {
         }
 
         public ContinuationWebSocketFrame(IByteBuffer binaryData)
-            : base(binaryData)
+            : base(true, 0, binaryData)
         {
         }
 

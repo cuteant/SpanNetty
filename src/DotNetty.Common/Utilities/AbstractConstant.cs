@@ -42,6 +42,8 @@ namespace DotNetty.Common.Utilities
                 return result;
             }
         }
+
+        public abstract bool Equals(IConstant other);
     }
 
     /// <summary>Base implementation of <see cref="IConstant" />.</summary>
@@ -59,6 +61,7 @@ namespace DotNetty.Common.Utilities
         public sealed override bool Equals(object obj) => base.Equals(obj);
 
         public bool Equals(T other) => ReferenceEquals(this, other);
+        public override bool Equals(IConstant other) => ReferenceEquals(this, other);
 
         public int CompareTo(T o)
         {

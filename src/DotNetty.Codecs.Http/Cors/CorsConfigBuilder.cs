@@ -33,7 +33,7 @@ namespace DotNetty.Codecs.Http.Cors
         internal long maxAge;
         internal readonly ISet<HttpMethod> requestMethods = new HashSet<HttpMethod>();
         internal readonly ISet<AsciiString> requestHeaders = new HashSet<AsciiString>();
-        internal readonly Dictionary<AsciiString, ICallable<object>> preflightHeaders = new Dictionary<AsciiString, ICallable<object>>();
+        internal readonly Dictionary<AsciiString, ICallable<object>> preflightHeaders = new Dictionary<AsciiString, ICallable<object>>(AsciiStringComparer.Default);
         internal bool noPreflightHeaders;
         internal bool shortCircuit;
 

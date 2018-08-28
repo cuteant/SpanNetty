@@ -91,9 +91,6 @@ namespace DotNetty.Buffers
         {
             this.CheckNewCapacity(newCapacity);
 
-            int rIdx = this.ReaderIndex;
-            int wIdx = this.WriterIndex;
-
             int oldCapacity = this.capacity;
             if (newCapacity > oldCapacity)
             {
@@ -106,13 +103,15 @@ namespace DotNetty.Buffers
             {
                 byte[] oldBuffer = this.buffer;
                 byte[] newBuffer = this.AllocateDirect(newCapacity);
-                if (rIdx < newCapacity)
+                int readerIndex = this.ReaderIndex;
+                if (readerIndex < newCapacity)
                 {
-                    if (wIdx > newCapacity)
+                    int writerIndex = this.WriterIndex;
+                    if (writerIndex > newCapacity)
                     {
-                        this.SetWriterIndex(wIdx = newCapacity);
+                        this.SetWriterIndex(writerIndex = newCapacity);
                     }
-                    PlatformDependent.CopyMemory(oldBuffer, rIdx, newBuffer, 0, wIdx - rIdx);
+                    PlatformDependent.CopyMemory(oldBuffer, readerIndex, newBuffer, 0, writerIndex - readerIndex);
                 }
                 else
                 {

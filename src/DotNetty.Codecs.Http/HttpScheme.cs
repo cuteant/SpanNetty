@@ -5,9 +5,10 @@
 // ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http
 {
+    using System;
     using DotNetty.Common.Utilities;
 
-    public sealed class HttpScheme
+    public sealed class HttpScheme : IEquatable<HttpScheme>
     {
         // Scheme for non-secure HTTP connection.
         public static readonly HttpScheme Http = new HttpScheme(80, "http");
@@ -36,6 +37,12 @@ namespace DotNetty.Codecs.Http
             }
 
             return false;
+        }
+
+        public bool Equals(HttpScheme other)
+        {
+            if (ReferenceEquals(this, other)) { return true; }
+            return other != null && other.port == this.port && other.name.Equals(this.name);
         }
 
         public override int GetHashCode() => this.port * 31 + this.name.GetHashCode();

@@ -27,8 +27,8 @@ namespace DotNetty.Transport.Bootstrapping
 
         public ServerBootstrap()
         {
-            this.childOptions = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>();
-            this.childAttrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>();
+            this.childOptions = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(ChannelOptionComparer.Default);
+            this.childAttrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(ConstantComparer.Default);
         }
 
         ServerBootstrap(ServerBootstrap bootstrap)
@@ -36,8 +36,8 @@ namespace DotNetty.Transport.Bootstrapping
         {
             this.childGroup = bootstrap.childGroup;
             this.childHandler = bootstrap.childHandler;
-            this.childOptions = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(bootstrap.childOptions);
-            this.childAttrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(bootstrap.childAttrs);
+            this.childOptions = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(bootstrap.childOptions, ChannelOptionComparer.Default);
+            this.childAttrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(bootstrap.childAttrs, ConstantComparer.Default);
         }
 
         /// <summary>

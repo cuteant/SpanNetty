@@ -27,7 +27,7 @@ namespace DotNetty.Transport.Channels.Groups
             Contract.Requires(futures != null);
 
             this.Group = group;
-            this.futures = new Dictionary<IChannel, Task>();
+            this.futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             void ContinueAction(Task x)
             {
                 bool success = x.Status == TaskStatus.RanToCompletion;

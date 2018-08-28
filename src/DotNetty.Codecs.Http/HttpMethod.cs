@@ -197,7 +197,7 @@ namespace DotNetty.Codecs.Http
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name);
             }
 
-            for (int i=0; i<name.Length;i++)
+            for (int i = 0; i < name.Length; i++)
             {
                 char c = name[i];
                 if (CharUtil.IsISOControl(c) || char.IsWhiteSpace(c))
@@ -217,10 +217,8 @@ namespace DotNetty.Codecs.Http
 
         public override bool Equals(object obj)
         {
-            if (obj is HttpMethod method)
-            {
-                return this.name.Equals(method.name);
-            }
+            if (ReferenceEquals(this, obj)) { return true; }
+            if (obj is HttpMethod other) { return this.name.Equals(other.name); }
 
             return false;
         }

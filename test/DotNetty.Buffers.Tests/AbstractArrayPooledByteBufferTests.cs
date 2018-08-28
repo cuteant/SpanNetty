@@ -11,7 +11,7 @@ namespace DotNetty.Buffers.Tests
     using DotNetty.Common.Utilities;
     using Xunit;
 
-    public abstract class AbstractBufferManagerByteBufferTests : IDisposable
+    public abstract class AbstractArrayPooledByteBufferTests : IDisposable
     {
         const int Capacity = 4096; // Must be even
         const int BlockSize = 128;
@@ -33,7 +33,7 @@ namespace DotNetty.Buffers.Tests
 
         protected virtual bool DiscardReadBytesDoesNotMoveWritableBytes() => true;
 
-        protected AbstractBufferManagerByteBufferTests()
+        protected AbstractArrayPooledByteBufferTests()
         {
             this.buffer = this.NewBuffer(Capacity);
             this.seed = Environment.TickCount;

@@ -1113,7 +1113,7 @@ namespace DotNetty.Handlers.Tls
                         break;
 
                     default:
-                        ThrowHelper.ThrowArgumentOutOfRangeException_WriteComplete(writeTask.Status); break;
+                        ThrowHelper.ThrowArgumentException_WriteComplete(writeTask.Status); break;
                 }
 
                 callback?.Invoke(promise.Task);

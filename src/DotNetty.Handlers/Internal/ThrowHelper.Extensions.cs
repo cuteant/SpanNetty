@@ -179,12 +179,12 @@ namespace DotNetty.Handlers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentOutOfRangeException_WriteComplete(TaskStatus status)
+        internal static void ThrowArgumentException_WriteComplete(TaskStatus status)
         {
             throw GetArgumentOutOfRangeException();
-            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            ArgumentException GetArgumentOutOfRangeException()
             {
-                return new ArgumentOutOfRangeException("Unexpected task status: " + status);
+                return new ArgumentException("Unexpected task status: " + status);
             }
         }
 

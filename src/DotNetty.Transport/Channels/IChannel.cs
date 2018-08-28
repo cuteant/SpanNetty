@@ -9,7 +9,7 @@ namespace DotNetty.Transport.Channels
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
 
-    public interface IChannel : IAttributeMap, IComparable<IChannel>
+    public interface IChannel : IAttributeMap, IComparable<IChannel>, IEquatable<IChannel>
     {
         IChannelId Id { get; }
 

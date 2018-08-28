@@ -9,7 +9,7 @@ namespace DotNetty.Transport.Channels.Local
 
     public static class LocalChannelRegistry
     {
-        static readonly ConcurrentDictionary<LocalAddress, IChannel> BoundChannels = new ConcurrentDictionary<LocalAddress, IChannel>();
+        static readonly ConcurrentDictionary<LocalAddress, IChannel> BoundChannels = new ConcurrentDictionary<LocalAddress, IChannel>(LocalAddressComparer.Default);
 
         internal static LocalAddress Register(IChannel channel, LocalAddress oldLocalAddress, EndPoint localAddress) 
         {

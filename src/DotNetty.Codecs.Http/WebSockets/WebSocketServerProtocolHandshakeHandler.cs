@@ -99,15 +99,15 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         static void LinkOutcomeContinuationAction(Task t, object state)
         {
-            var wrapper = (Tuple<IChannelHandlerContext, IFullHttpRequest, WebSocketServerHandshaker>)state;
+            var wrapped = (Tuple<IChannelHandlerContext, IFullHttpRequest, WebSocketServerHandshaker>)state;
             if (t.Status != TaskStatus.RanToCompletion)
             {
-                wrapper.Item1.FireExceptionCaught(t.Exception);
+                wrapped.Item1.FireExceptionCaught(t.Exception);
             }
             else
             {
-                wrapper.Item1.FireUserEventTriggered(new WebSocketServerProtocolHandler.HandshakeComplete(
-                    wrapper.Item2.Uri, wrapper.Item2.Headers, wrapper.Item3.SelectedSubprotocol));
+                wrapped.Item1.FireUserEventTriggered(new WebSocketServerProtocolHandler.HandshakeComplete(
+                    wrapped.Item2.Uri, wrapped.Item2.Headers, wrapped.Item3.SelectedSubprotocol));
             }
         }
 

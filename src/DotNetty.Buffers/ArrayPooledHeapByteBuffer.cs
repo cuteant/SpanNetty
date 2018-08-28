@@ -11,18 +11,18 @@ using DotNetty.Common.Internal;
 
 namespace DotNetty.Buffers
 {
-    partial class BufferManagerHeapByteBuffer : BufferManagerByteBuffer
+    partial class ArrayPooledHeapByteBuffer : ArrayPooledByteBuffer
     {
-        static readonly ThreadLocalPool<BufferManagerHeapByteBuffer> Recycler = new ThreadLocalPool<BufferManagerHeapByteBuffer>(handle => new BufferManagerHeapByteBuffer(handle, 0));
+        static readonly ThreadLocalPool<ArrayPooledHeapByteBuffer> Recycler = new ThreadLocalPool<ArrayPooledHeapByteBuffer>(handle => new ArrayPooledHeapByteBuffer(handle, 0));
 
-        internal static BufferManagerHeapByteBuffer NewInstance(BufferManagerByteBufferAllocator allocator, ArrayPool<byte> bufferManager, byte[] buffer, int length, int maxCapacity)
+        internal static ArrayPooledHeapByteBuffer NewInstance(ArrayPooledByteBufferAllocator allocator, ArrayPool<byte> arrayPool, byte[] buffer, int length, int maxCapacity)
         {
             var buf = Recycler.Take();
-            buf.Reuse(allocator, bufferManager, buffer, length, maxCapacity);
+            buf.Reuse(allocator, arrayPool, buffer, length, maxCapacity);
             return buf;
         }
 
-        internal BufferManagerHeapByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
+        internal ArrayPooledHeapByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
             : base(recyclerHandle, maxCapacity)
         {
         }

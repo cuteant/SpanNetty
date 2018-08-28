@@ -10,5 +10,7 @@ namespace DotNetty.Transport.Channels
         string AsShortText();
 
         string AsLongText();
+
+        int GetHashCode();
     }
 }

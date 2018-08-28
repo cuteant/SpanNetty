@@ -10,17 +10,22 @@ namespace DotNetty.Codecs.Http.WebSockets
     public class CloseWebSocketFrame : WebSocketFrame
     {
         public CloseWebSocketFrame() 
-            : base(Unpooled.Buffer(0))
+            : base(true, 0, ArrayPooled.Buffer(0))
+        {
+        }
+
+        public CloseWebSocketFrame(bool finalFragment, int rsv)
+            : base(finalFragment, rsv, ArrayPooled.Buffer(0))
+        {
+        }
+
+        public CloseWebSocketFrame(bool finalFragment, int rsv, IByteBuffer binaryData)
+            : base(finalFragment, rsv, binaryData)
         {
         }
 
         public CloseWebSocketFrame(int statusCode, ICharSequence reasonText)
             : this(true, 0, statusCode, reasonText)
-        {
-        }
-
-        public CloseWebSocketFrame(bool finalFragment, int rsv)
-            : this(finalFragment, rsv, Unpooled.Buffer(0))
         {
         }
 
@@ -36,7 +41,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 reasonText = StringCharSequence.Empty;
             }
 
-            IByteBuffer binaryData = Unpooled.Buffer(2 + reasonText.Count);
+            IByteBuffer binaryData = ArrayPooled.Buffer(2 + reasonText.Count);
             binaryData.WriteShort(statusCode);
             if (reasonText.Count > 0)
             {
@@ -45,11 +50,6 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             binaryData.SetReaderIndex(0);
             return binaryData;
-        }
-
-        public CloseWebSocketFrame(bool finalFragment, int rsv, IByteBuffer binaryData)
-            : base(finalFragment, rsv, binaryData)
-        {
         }
 
         ///<summary>

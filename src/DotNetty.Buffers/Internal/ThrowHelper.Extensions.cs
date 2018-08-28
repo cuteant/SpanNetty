@@ -186,6 +186,17 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_InvalidOffLen()
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentException("Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowIndexOutOfRangeException_IsText(int index, int length)
         {
             throw GetIndexOutOfRangeException();
@@ -219,13 +230,24 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument argument)
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"The {GetArgumentName(argument)} cannot be negative.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentOutOfRangeException_Index(int cIndex, int count)
         {
             throw GetArgumentOutOfRangeException();
 
             ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
-                return new ArgumentOutOfRangeException($"cIndex: {cIndex} (expected: >= 0 && <= numComponents({count}))");
+                return new ArgumentOutOfRangeException(nameof(cIndex), $"cIndex: {cIndex} (expected: >= 0 && <= numComponents({count}))");
             }
         }
 
@@ -236,7 +258,7 @@ namespace DotNetty.Buffers
 
             ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
-                return new ArgumentOutOfRangeException($"cIndex: {cIndex}, numComponents: {numComponents} " + $"(expected: cIndex >= 0 && cIndex + numComponents <= totalNumComponents({count}))");
+                return new ArgumentOutOfRangeException(nameof(cIndex), $"cIndex: {cIndex}, numComponents: {numComponents} " + $"(expected: cIndex >= 0 && cIndex + numComponents <= totalNumComponents({count}))");
             }
         }
 

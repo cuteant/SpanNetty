@@ -115,26 +115,26 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         static void LinkOutcomeContinuationAction(Task t, object state)
         {
-            var wrapper = (Tuple<TaskCompletionSource, IChannelPipeline, WebSocketClientHandshaker>)state;
+            var wrapped = (Tuple<TaskCompletionSource, IChannelPipeline, WebSocketClientHandshaker>)state;
             switch (t.Status)
             {
                 case TaskStatus.RanToCompletion:
-                    IChannelPipeline p = wrapper.Item2;
+                    IChannelPipeline p = wrapped.Item2;
                     IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
                     if (ctx == null)
                     {
-                        wrapper.Item1.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
+                        wrapped.Item1.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
                         return;
                     }
 
-                    p.AddAfter(ctx.Name, "ws-encoder", wrapper.Item3.NewWebSocketEncoder());
-                    wrapper.Item1.TryComplete();
+                    p.AddAfter(ctx.Name, "ws-encoder", wrapped.Item3.NewWebSocketEncoder());
+                    wrapped.Item1.TryComplete();
                     break;
                 case TaskStatus.Canceled:
-                    wrapper.Item1.TrySetCanceled();
+                    wrapped.Item1.TrySetCanceled();
                     break;
                 case TaskStatus.Faulted:
-                    wrapper.Item1.TryUnwrap(t.Exception);
+                    wrapped.Item1.TryUnwrap(t.Exception);
                     break;
                 default:
                     ThrowHelper.ThrowArgumentOutOfRangeException(); break;

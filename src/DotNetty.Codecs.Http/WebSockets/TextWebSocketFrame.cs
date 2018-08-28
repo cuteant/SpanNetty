@@ -9,17 +9,17 @@ namespace DotNetty.Codecs.Http.WebSockets
     public class TextWebSocketFrame : WebSocketFrame
     {
         public TextWebSocketFrame()
-            : base(Unpooled.Buffer(0))
+            : base(true, 0, ArrayPooled.Buffer(0))
         {
         }
 
         public TextWebSocketFrame(string text)
-            : base(FromText(text))
+            : base(true, 0, FromText(text))
         {
         }
 
         public TextWebSocketFrame(IByteBuffer binaryData)
-            : base(binaryData)
+            : base(true, 0, binaryData)
         {
         }
 

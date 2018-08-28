@@ -14,12 +14,12 @@ namespace DotNetty.Transport.Channels.Groups
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
 
-    public class DefaultChannelGroup : IChannelGroup
+    public class DefaultChannelGroup : IChannelGroup, IComparable<IChannelGroup>
     {
         static int nextId;
         readonly IEventExecutor executor;
-        readonly ConcurrentDictionary<IChannelId, IChannel> nonServerChannels = new ConcurrentDictionary<IChannelId, IChannel>();
-        readonly ConcurrentDictionary<IChannelId, IChannel> serverChannels = new ConcurrentDictionary<IChannelId, IChannel>();
+        readonly ConcurrentDictionary<IChannelId, IChannel> nonServerChannels = new ConcurrentDictionary<IChannelId, IChannel>(ChannelIdComparer.Default);
+        readonly ConcurrentDictionary<IChannelId, IChannel> serverChannels = new ConcurrentDictionary<IChannelId, IChannel>(ChannelIdComparer.Default);
 
         public DefaultChannelGroup(IEventExecutor executor)
             : this($"group-{Interlocked.Increment(ref nextId):X2}", executor)
@@ -60,7 +60,7 @@ namespace DotNetty.Transport.Channels.Groups
         {
             Contract.Requires(message != null);
             Contract.Requires(matcher != null);
-            var futures = new Dictionary<IChannel, Task>();
+            var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
                 if (matcher.Matches(c))
@@ -150,7 +150,7 @@ namespace DotNetty.Transport.Channels.Groups
         {
             Contract.Requires(message != null);
             Contract.Requires(matcher != null);
-            var futures = new Dictionary<IChannel, Task>();
+            var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
                 if (matcher.Matches(c))
@@ -168,7 +168,7 @@ namespace DotNetty.Transport.Channels.Groups
         public Task DisconnectAsync(IChannelMatcher matcher)
         {
             Contract.Requires(matcher != null);
-            var futures = new Dictionary<IChannel, Task>();
+            var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
                 if (matcher.Matches(c))
@@ -192,7 +192,7 @@ namespace DotNetty.Transport.Channels.Groups
         public Task CloseAsync(IChannelMatcher matcher)
         {
             Contract.Requires(matcher != null);
-            var futures = new Dictionary<IChannel, Task>();
+            var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
                 if (matcher.Matches(c))
@@ -216,7 +216,7 @@ namespace DotNetty.Transport.Channels.Groups
         public Task DeregisterAsync(IChannelMatcher matcher)
         {
             Contract.Requires(matcher != null);
-            var futures = new Dictionary<IChannel, Task>();
+            var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
                 if (matcher.Matches(c))
@@ -240,7 +240,7 @@ namespace DotNetty.Transport.Channels.Groups
         public Task NewCloseFuture(IChannelMatcher matcher)
         {
             Contract.Requires(matcher != null);
-            var futures = new Dictionary<IChannel, Task>();
+            var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
                 if (matcher.Matches(c))
@@ -296,8 +296,8 @@ namespace DotNetty.Transport.Channels.Groups
 
         static void ContinueRemoveChannelAction(Task t, object s)
         {
-            var wrapper = (Tuple<DefaultChannelGroup, IChannel>)s;
-            wrapper.Item1.Remove(wrapper.Item2);
+            var wrapped = (Tuple<DefaultChannelGroup, IChannel>)s;
+            wrapped.Item1.Remove(wrapped.Item2);
         }
 
         public IChannel[] ToArray()

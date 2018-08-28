@@ -3,11 +3,13 @@
 
 namespace DotNetty.Common.Utilities
 {
+    using System;
+
     /// <summary>
     ///     A singleton which is safe to compare via the <c>==</c> operator. Created and managed by
     ///     <see cref="ConstantPool" />.
     /// </summary>
-    public interface IConstant
+    public interface IConstant : IEquatable<IConstant>
     {
         /// <summary>Returns the unique number assigned to this <see cref="IConstant" />.</summary>
         int Id { get; }

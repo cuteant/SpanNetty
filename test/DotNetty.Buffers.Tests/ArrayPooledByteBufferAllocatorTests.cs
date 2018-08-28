@@ -2,11 +2,11 @@
 
 namespace DotNetty.Buffers.Tests
 {
-    public class BufferManagerByteBufferAllocatorTests : AbstractByteBufferAllocatorTests
+    public class ArrayPooledByteBufferAllocatorTests : AbstractByteBufferAllocatorTests
     {
         protected override int ExpectedCapacity { get; } = 128; // for BufferManager
 
-        protected override IByteBufferAllocator NewAllocator(bool preferDirect) => new BufferManagerByteBufferAllocator(preferDirect);
+        protected override IByteBufferAllocator NewAllocator(bool preferDirect) => new ArrayPooledByteBufferAllocator(preferDirect);
 
         protected override IByteBufferAllocator NewUnpooledAllocator() => new UnpooledByteBufferAllocator(false);
     }

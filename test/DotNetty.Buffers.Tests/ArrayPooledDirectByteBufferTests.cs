@@ -6,14 +6,14 @@ using DotNetty.Common.Utilities;
 
 namespace DotNetty.Buffers.Tests
 {
-    public sealed class BufferManagerDirectByteBufferTests : AbstractBufferManagerByteBufferTests
+    public sealed class ArrayPooledDirectByteBufferTests : AbstractArrayPooledByteBufferTests
     {
-        protected override IByteBuffer NewBuffer(int length, int maxCapacity) => BufferManagerByteBufferAllocator.Default.DirectBuffer(length, maxCapacity);
+        protected override IByteBuffer NewBuffer(int length, int maxCapacity) => ArrayPooledByteBufferAllocator.Default.DirectBuffer(length, maxCapacity);
 
         protected override void SetCharSequenceNoExpand(Encoding encoding)
         {
             var array = new byte[1];
-            var buf = BufferManagerUnsafeDirectByteBuffer.NewInstance(BufferManagerUtil.Allocator, BufferManagerUtil.DefaultBufferPool, array, array.Length, array.Length);
+            var buf = ArrayPooledUnsafeDirectByteBuffer.NewInstance(ArrayPooled.Allocator, ArrayPooled.DefaultArrayPool, array, array.Length, array.Length);
             try
             {
                 buf.SetCharSequence(0, new StringCharSequence("AB"), encoding);

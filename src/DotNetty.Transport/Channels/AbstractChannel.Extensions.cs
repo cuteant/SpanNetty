@@ -9,5 +9,6 @@ namespace DotNetty.Transport.Channels
         where TChannel : AbstractChannel<TChannel, TUnsafe>
         where TUnsafe : AbstractChannel<TChannel, TUnsafe>.AbstractUnsafe, new()
     {
+        public bool Equals(IChannel other) => ReferenceEquals(this, other);
     }
 }

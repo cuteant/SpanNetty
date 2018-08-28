@@ -9,7 +9,7 @@ namespace DotNetty.Buffers.Tests
     using Moq;
     using Xunit;
 
-    public class ReadOnlyByteBufferStreamTests
+    public partial class ReadOnlyByteBufferStreamTests
     {
         IByteBuffer testBuffer;
 

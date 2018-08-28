@@ -5,12 +5,23 @@
 // ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http
 {
+    using System;
     using System.Text;
 
-    partial class HttpVersion
+    partial class HttpVersion : IEquatable<HttpVersion>
     {
         static readonly byte[] Http11Bytes = Encoding.ASCII.GetBytes("HTTP/1.1");
         const byte OneByte = (byte)'1';
         const byte ZeroByte = (byte)'0';
+
+        public bool Equals(HttpVersion other)
+        {
+            if (ReferenceEquals(this, other)) { return true; }
+
+            return other != null
+                && this.minorVersion == other.minorVersion
+                && this.majorVersion == other.majorVersion
+                && string.Equals(this.protocolName, other.protocolName, StringComparison.Ordinal);
+        }
     }
 }

@@ -1,12 +1,11 @@
 ﻿#if NET40
 namespace DotNetty.Buffers
 {
-    partial class BufferManagerByteBuffer
+    partial class ArrayPooledDuplicatedByteBuffer
     {
         public override ref byte GetPinnableMemoryOffsetAddress(int elementOffset)
         {
-            this.EnsureAccessible();
-            return ref this.Memory[elementOffset];
+            return ref this.Unwrap().GetPinnableMemoryOffsetAddress(elementOffset);
         }
     }
 }

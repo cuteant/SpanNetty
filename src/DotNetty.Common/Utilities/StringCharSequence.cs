@@ -101,29 +101,29 @@ namespace DotNetty.Common.Utilities
 
         public bool Equals(StringCharSequence other)
         {
-            if (other == null)
-            {
-                return false;
-            }
+            //if (other == null)
+            //{
+            //    return false;
+            //}
             if (ReferenceEquals(this, other))
             {
                 return true;
             }
-            if (this.count != other.count)
-            {
-                return false;
-            }
+            //if (this.count == other.count)
+            //{
+            //    return true;
+            //}
 
-            return string.Compare(this.value, this.offset, other.value, other.offset, this.count,
+            return other != null && this.count == other.count && string.Compare(this.value, this.offset, other.value, other.offset, this.count,
                 StringComparison.Ordinal) == 0;
         }
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(obj, null))
-            {
-                return false;
-            }
+            //if (ReferenceEquals(obj, null))
+            //{
+            //    return false;
+            //}
             if (ReferenceEquals(this, obj))
             {
                 return true;
@@ -131,7 +131,7 @@ namespace DotNetty.Common.Utilities
 
             if (obj is StringCharSequence other)
             {
-                return this.Equals(other);
+                return this.count == other.count && string.Compare(this.value, this.offset, other.value, other.offset, this.count, StringComparison.Ordinal) == 0;
             }
             if (obj is ICharSequence seq)
             {

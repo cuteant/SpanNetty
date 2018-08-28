@@ -37,8 +37,8 @@ namespace DotNetty.Transport.Bootstrapping
 
         protected internal AbstractBootstrap()
         {
-            this.options = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>();
-            this.attrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>();
+            this.options = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(ChannelOptionComparer.Default);
+            this.attrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(ConstantComparer.Default);
             // Disallow extending from a different package.
         }
 
@@ -48,8 +48,8 @@ namespace DotNetty.Transport.Bootstrapping
             this.channelFactory = bootstrap.channelFactory;
             this.handler = bootstrap.handler;
             this.localAddress = bootstrap.localAddress;
-            this.options = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(bootstrap.options);
-            this.attrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(bootstrap.attrs);
+            this.options = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(bootstrap.options, ChannelOptionComparer.Default);
+            this.attrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(bootstrap.attrs, ConstantComparer.Default);
         }
 
         /// <summary>

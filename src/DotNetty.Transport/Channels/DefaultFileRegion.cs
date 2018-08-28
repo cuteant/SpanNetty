@@ -42,7 +42,7 @@ namespace DotNetty.Transport.Channels
             long totalCount = this.Count - pos;
             if (totalCount < 0)
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException_Position(pos, this.Count);
+                ThrowHelper.ThrowArgumentException_Position(pos, this.Count);
             }
 
             if (totalCount == 0)

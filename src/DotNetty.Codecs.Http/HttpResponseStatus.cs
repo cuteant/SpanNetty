@@ -16,7 +16,7 @@ namespace DotNetty.Codecs.Http
      * <a href="http://en.wikipedia.org/wiki/Real_Time_Streaming_Protocol">RTSP</a> and
      * <a href="http://en.wikipedia.org/wiki/Internet_Content_Adaptation_Protocol">ICAP</a>.
      */
-    public class HttpResponseStatus : IComparable<HttpResponseStatus>
+    public class HttpResponseStatus : IComparable<HttpResponseStatus>, IEquatable<HttpResponseStatus>
     {
         /**
           * 100 Continue
@@ -528,11 +528,13 @@ namespace DotNetty.Codecs.Http
 
         public override bool Equals(object obj)
         {
-            if (obj is HttpResponseStatus other)
-            {
-                return this.code == other.code;
-            }
-            return false;
+            if (ReferenceEquals(this, obj)) { return true; }
+            return obj is HttpResponseStatus other && this.code == other.code;
+        }
+        public bool Equals(HttpResponseStatus other)
+        {
+            if(ReferenceEquals(this, other)) { return true; }
+            return other != null && this.code == other.code;
         }
 
         public int CompareTo(HttpResponseStatus other) => this.code - other.code;

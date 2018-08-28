@@ -8,18 +8,18 @@ using DotNetty.Common;
 
 namespace DotNetty.Buffers
 {
-    unsafe partial class BufferManagerUnsafeDirectByteBuffer : BufferManagerByteBuffer
+    unsafe partial class ArrayPooledUnsafeDirectByteBuffer : ArrayPooledByteBuffer
     {
-        static readonly ThreadLocalPool<BufferManagerUnsafeDirectByteBuffer> Recycler = new ThreadLocalPool<BufferManagerUnsafeDirectByteBuffer>(handle => new BufferManagerUnsafeDirectByteBuffer(handle, 0));
+        static readonly ThreadLocalPool<ArrayPooledUnsafeDirectByteBuffer> Recycler = new ThreadLocalPool<ArrayPooledUnsafeDirectByteBuffer>(handle => new ArrayPooledUnsafeDirectByteBuffer(handle, 0));
 
-        internal static BufferManagerUnsafeDirectByteBuffer NewInstance(BufferManagerByteBufferAllocator allocator, ArrayPool<byte> bufferManager, byte[] buffer, int length, int maxCapacity)
+        internal static ArrayPooledUnsafeDirectByteBuffer NewInstance(ArrayPooledByteBufferAllocator allocator, ArrayPool<byte> arrayPool, byte[] buffer, int length, int maxCapacity)
         {
             var buf = Recycler.Take();
-            buf.Reuse(allocator, bufferManager, buffer, length, maxCapacity);
+            buf.Reuse(allocator, arrayPool, buffer, length, maxCapacity);
             return buf;
         }
 
-        internal BufferManagerUnsafeDirectByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
+        internal ArrayPooledUnsafeDirectByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
             : base(recyclerHandle, maxCapacity)
         {
         }

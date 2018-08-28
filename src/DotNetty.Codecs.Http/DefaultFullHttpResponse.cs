@@ -20,23 +20,23 @@ namespace DotNetty.Codecs.Http
         int hash;
 
         public DefaultFullHttpResponse(HttpVersion version, HttpResponseStatus status)
-            : this(version, status, Unpooled.Buffer(0))
+            : this(version, status, ArrayPooled.Buffer(0), true, false)
         {
         }
 
         public DefaultFullHttpResponse(HttpVersion version, HttpResponseStatus status, IByteBuffer content)
-            : this(version, status, content, true)
+            : this(version, status, content, true, false)
         {
         }
 
         public DefaultFullHttpResponse(HttpVersion version, HttpResponseStatus status, bool validateHeaders)
-            : this(version, status, Unpooled.Buffer(0), validateHeaders, false)
+            : this(version, status, ArrayPooled.Buffer(0), validateHeaders, false)
         {
         }
 
         public DefaultFullHttpResponse(HttpVersion version, HttpResponseStatus status, bool validateHeaders,
             bool singleFieldHeaders)
-            : this(version, status, Unpooled.Buffer(0), validateHeaders, singleFieldHeaders)
+            : this(version, status, ArrayPooled.Buffer(0), validateHeaders, singleFieldHeaders)
         {
         }
 

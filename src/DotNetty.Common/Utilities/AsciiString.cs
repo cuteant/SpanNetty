@@ -362,6 +362,7 @@ namespace DotNetty.Common.Utilities
 
         public bool ContentEqualsIgnoreCase(ICharSequence other)
         {
+            if (ReferenceEquals(this, other)) { return true; }
             if (other == null || other.Count != this.length)
             {
                 return false;
@@ -884,26 +885,26 @@ namespace DotNetty.Common.Utilities
 
         public bool Equals(AsciiString other)
         {
-            if (other == null)
-            {
-                return false;
-            }
+            //if (other == null)
+            //{
+            //    return false;
+            //}
             if (ReferenceEquals(this, other))
             {
                 return true;
             }
 
-            return this.length == other.length
+            return other != null && this.length == other.length
                 && this.GetHashCode() == other.GetHashCode()
                 && PlatformDependent.ByteArrayEquals(this.value, this.offset, other.value, other.offset, this.length);
         }
 
         public override bool Equals(object obj)
         {
-            if (obj == null)
-            {
-                return false;
-            }
+            //if (obj == null)
+            //{
+            //    return false;
+            //}
             if (ReferenceEquals(this, obj))
             {
                 return true;
@@ -911,7 +912,7 @@ namespace DotNetty.Common.Utilities
 
             if (obj is AsciiString ascii)
             {
-                return this.Equals(ascii);
+                return this.length == ascii.length && this.GetHashCode() == ascii.GetHashCode() && PlatformDependent.ByteArrayEquals(this.value, this.offset, ascii.value, ascii.offset, this.length);
             }
             if (obj is ICharSequence seq)
             {
@@ -1154,10 +1155,8 @@ namespace DotNetty.Common.Utilities
 
         public static bool ContentEqualsIgnoreCase(ICharSequence a, ICharSequence b)
         {
-            if (a == null || b == null)
-            {
-                return ReferenceEquals(a, b);
-            }
+            if (ReferenceEquals(a, b)) { return true; }
+            if (a == null || b == null) { return false; }
 
             if (a is AsciiString stringA)
             {

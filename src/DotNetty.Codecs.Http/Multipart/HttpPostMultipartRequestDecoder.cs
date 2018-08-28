@@ -30,7 +30,7 @@ namespace DotNetty.Codecs.Http.Multipart
         readonly List<IInterfaceHttpData> bodyListHttpData = new List<IInterfaceHttpData>();
 
         // HttpDatas as Map from Body
-        readonly Dictionary<AsciiString, List<IInterfaceHttpData>> bodyMapHttpData = new Dictionary<AsciiString, List<IInterfaceHttpData>>(CaseIgnoringComparator.Default);
+        readonly Dictionary<AsciiString, List<IInterfaceHttpData>> bodyMapHttpData = new Dictionary<AsciiString, List<IInterfaceHttpData>>(AsciiStringComparer.IgnoreCase);
 
         // The current channelBuffer
         IByteBuffer undecodedChunk;
@@ -91,7 +91,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             else
             {
-                this.undecodedChunk = Unpooled.Buffer();
+                this.undecodedChunk = ArrayPooled.Buffer();
                 this.ParseBody();
             }
         }
@@ -531,7 +531,7 @@ namespace DotNetty.Codecs.Http.Multipart
             int readerIndex = this.undecodedChunk.ReaderIndex;
             if (this.currentStatus == MultiPartStatus.Disposition)
             {
-                this.currentFieldAttributes = new Dictionary<AsciiString, IAttribute>(CaseIgnoringComparator.Default);
+                this.currentFieldAttributes = new Dictionary<AsciiString, IAttribute>(AsciiStringComparer.IgnoreCase);
             }
             // read many lines until empty line with newline found! Store all data
             while (!this.SkipOneLine())
@@ -956,10 +956,9 @@ namespace DotNetty.Codecs.Http.Multipart
         static StringCharSequence ReadLineStandard(IByteBuffer undecodedChunk, Encoding charset)
         {
             int readerIndex = undecodedChunk.ReaderIndex;
+            IByteBuffer line = ArrayPooled.Buffer(64);
             try
             {
-                IByteBuffer line = Unpooled.Buffer(64);
-
                 while (undecodedChunk.IsReadable())
                 {
                     byte nextByte = undecodedChunk.ReadByte();
@@ -994,6 +993,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 undecodedChunk.SetReaderIndex(readerIndex);
                 ThrowHelper.ThrowNotEnoughDataDecoderException(e);
             }
+            finally { line.Release(); }
             undecodedChunk.SetReaderIndex(readerIndex);
             return ThrowHelper.ThrowNotEnoughDataDecoderException_ReadLineStandard();
         }
@@ -1006,10 +1006,9 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             var sao = new HttpPostBodyUtil.SeekAheadOptimize(undecodedChunk);
             int readerIndex = undecodedChunk.ReaderIndex;
+            IByteBuffer line = ArrayPooled.Buffer(64);
             try
             {
-                IByteBuffer line = Unpooled.Buffer(64);
-
                 while (sao.Pos < sao.Limit)
                 {
                     byte nextByte = sao.Bytes[sao.Pos++];
@@ -1050,6 +1049,10 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 undecodedChunk.SetReaderIndex(readerIndex);
                 ThrowHelper.ThrowNotEnoughDataDecoderException(e);
+            }
+            finally
+            {
+                line.Release();
             }
             undecodedChunk.SetReaderIndex(readerIndex);
             return ThrowHelper.ThrowNotEnoughDataDecoderException_ReadLine();

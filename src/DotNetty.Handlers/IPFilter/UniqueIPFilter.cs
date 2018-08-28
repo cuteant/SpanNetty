@@ -41,8 +41,8 @@ namespace DotNetty.Handlers.IPFilter
 
         static void RemoveIpAddrAfterCloseAction(Task t, object s)
         {
-            var wrapper = (Tuple<IDictionary<IPAddress, byte>, IPAddress>)s;
-            wrapper.Item1.Remove(wrapper.Item2);
+            var wrapped = (Tuple<IDictionary<IPAddress, byte>, IPAddress>)s;
+            wrapped.Item1.Remove(wrapped.Item2);
         }
 
         public override bool IsSharable => true;

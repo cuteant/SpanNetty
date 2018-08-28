@@ -8,7 +8,7 @@ namespace DotNetty.Transport.Channels.Embedded
     /// <summary>
     ///     A dummy <see cref="IChannelId" /> implementation
     /// </summary>
-    public sealed class EmbeddedChannelId : IChannelId
+    public sealed class EmbeddedChannelId : IChannelId, IComparable<IChannelId>, IEquatable<IChannelId>
     {
         public static readonly EmbeddedChannelId Instance = new EmbeddedChannelId();
 
@@ -34,5 +34,7 @@ namespace DotNetty.Transport.Channels.Embedded
         public string AsShortText() => this.ToString();
 
         public string AsLongText() => this.ToString();
+
+        public bool Equals(IChannelId other) => ReferenceEquals(this, other);
     }
 }

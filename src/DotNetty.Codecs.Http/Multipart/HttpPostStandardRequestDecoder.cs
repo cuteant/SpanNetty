@@ -30,7 +30,7 @@ namespace DotNetty.Codecs.Http.Multipart
         readonly List<IInterfaceHttpData> bodyListHttpData = new List<IInterfaceHttpData>();
 
         //  HttpDatas as Map from Body
-        readonly Dictionary<ICharSequence, List<IInterfaceHttpData>> bodyMapHttpData = new Dictionary<ICharSequence, List<IInterfaceHttpData>>(CaseIgnoringComparator.Default);
+        readonly Dictionary<ICharSequence, List<IInterfaceHttpData>> bodyMapHttpData = new Dictionary<ICharSequence, List<IInterfaceHttpData>>(CharSequenceComparer.IgnoreCase);
 
         // The current channelBuffer
         IByteBuffer undecodedChunk;
@@ -75,7 +75,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             else
             {
-                this.undecodedChunk = Unpooled.Buffer();
+                this.undecodedChunk = ArrayPooled.Buffer();
                 this.ParseBody();
             }
         }

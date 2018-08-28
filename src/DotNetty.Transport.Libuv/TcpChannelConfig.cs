@@ -25,7 +25,7 @@ namespace DotNetty.Transport.Libuv
             // 
             // 
 
-            this.options = new Dictionary<ChannelOption, int>(5);
+            this.options = new Dictionary<ChannelOption, int>(5, ChannelOptionComparer.Default);
             this.options.Add(ChannelOption.TcpNodelay, 1); // TCP_NODELAY by default
         }
 

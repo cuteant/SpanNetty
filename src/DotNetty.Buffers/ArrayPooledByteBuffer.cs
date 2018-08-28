@@ -5,30 +5,30 @@ using DotNetty.Common.Internal;
 
 namespace DotNetty.Buffers
 {
-    abstract partial class BufferManagerByteBuffer : AbstractReferenceCountedByteBuffer
+    abstract partial class ArrayPooledByteBuffer : AbstractReferenceCountedByteBuffer
     {
         readonly ThreadLocalPool.Handle recyclerHandle;
 
         protected internal byte[] Memory;
-        protected BufferManagerByteBufferAllocator _allocator;
-        ArrayPool<byte> _bufferMannager;
+        protected ArrayPooledByteBufferAllocator _allocator;
+        ArrayPool<byte> _arrayPool;
         int _capacity;
 
-        protected BufferManagerByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
+        protected ArrayPooledByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
             : base(maxCapacity)
         {
             this.recyclerHandle = recyclerHandle;
         }
 
-        /// <summary>Method must be called before reuse this {@link BufferManagerByteBufAllocator}.</summary>
+        /// <summary>Method must be called before reuse this {@link ArrayPooledByteBufAllocator}.</summary>
         /// <param name="allocator"></param>
         /// <param name="initialCapacity"></param>
         /// <param name="maxCapacity"></param>
-        /// <param name="bufferManager"></param>
-        internal void Reuse(BufferManagerByteBufferAllocator allocator, ArrayPool<byte> bufferManager, int initialCapacity, int maxCapacity)
+        /// <param name="arrayPool"></param>
+        internal void Reuse(ArrayPooledByteBufferAllocator allocator, ArrayPool<byte> arrayPool, int initialCapacity, int maxCapacity)
         {
             _allocator = allocator;
-            _bufferMannager = bufferManager;
+            _arrayPool = arrayPool;
             SetArray(AllocateArray(initialCapacity));
 
             this.SetMaxCapacity(maxCapacity);
@@ -37,10 +37,10 @@ namespace DotNetty.Buffers
             this.DiscardMarks();
         }
 
-        internal void Reuse(BufferManagerByteBufferAllocator allocator, ArrayPool<byte> bufferManager, byte[] buffer, int length, int maxCapacity)
+        internal void Reuse(ArrayPooledByteBufferAllocator allocator, ArrayPool<byte> arrayPool, byte[] buffer, int length, int maxCapacity)
         {
             _allocator = allocator;
-            _bufferMannager = bufferManager;
+            _arrayPool = arrayPool;
             SetArray(buffer);
 
             this.SetMaxCapacity(maxCapacity);
@@ -51,7 +51,7 @@ namespace DotNetty.Buffers
 
         public override int Capacity => _capacity;
 
-        protected virtual byte[] AllocateArray(int initialCapacity) => _bufferMannager.Rent(initialCapacity);
+        protected virtual byte[] AllocateArray(int initialCapacity) => _arrayPool.Rent(initialCapacity);
 
         protected virtual void FreeArray(byte[] bytes)
         {
@@ -59,11 +59,11 @@ namespace DotNetty.Buffers
             // for unit testing
             try
             {
-                _bufferMannager.Return(bytes);
+                _arrayPool.Return(bytes);
             }
             catch { } // 防止回收非 BufferMannager 的 byte array 抛异常
 #else
-            _bufferMannager.Return(bytes);
+            _arrayPool.Return(bytes);
 #endif
         }
 
@@ -78,17 +78,18 @@ namespace DotNetty.Buffers
             this.CheckNewCapacity(newCapacity);
 
             int oldCapacity = _capacity;
-            byte[] oldArray = this.Memory;
             if (newCapacity > oldCapacity)
             {
+                byte[] oldArray = this.Memory;
                 byte[] newArray = this.AllocateArray(newCapacity);
-                PlatformDependent.CopyMemory(this.Memory, 0, newArray, 0, oldCapacity);
+                PlatformDependent.CopyMemory(oldArray, 0, newArray, 0, oldCapacity);
 
                 this.SetArray(newArray);
                 this.FreeArray(oldArray);
             }
             else if (newCapacity < oldCapacity)
             {
+                byte[] oldArray = this.Memory;
                 byte[] newArray = this.AllocateArray(newCapacity);
                 int readerIndex = this.ReaderIndex;
                 if (readerIndex < newCapacity)
@@ -99,7 +100,7 @@ namespace DotNetty.Buffers
                         this.SetWriterIndex0(writerIndex = newCapacity);
                     }
 
-                    PlatformDependent.CopyMemory(this.Memory, readerIndex, newArray, 0, writerIndex - readerIndex);
+                    PlatformDependent.CopyMemory(oldArray, readerIndex, newArray, 0, writerIndex - readerIndex);
                 }
                 else
                 {
@@ -116,7 +117,7 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer Unwrap() => null;
 
-        public sealed override IByteBuffer RetainedDuplicate() => BufferManagerDuplicatedByteBuffer.NewInstance(this, this, this.ReaderIndex, this.WriterIndex);
+        public sealed override IByteBuffer RetainedDuplicate() => ArrayPooledDuplicatedByteBuffer.NewInstance(this, this, this.ReaderIndex, this.WriterIndex);
 
         public sealed override IByteBuffer RetainedSlice()
         {
@@ -124,16 +125,16 @@ namespace DotNetty.Buffers
             return this.RetainedSlice(index, this.WriterIndex - index);
         }
 
-        public sealed override IByteBuffer RetainedSlice(int index, int length) => BufferManagerSlicedByteBuffer.NewInstance(this, this, index, length);
+        public sealed override IByteBuffer RetainedSlice(int index, int length) => ArrayPooledSlicedByteBuffer.NewInstance(this, this, index, length);
 
         protected internal sealed override void Deallocate()
         {
             var buffer = Memory;
-            if (_bufferMannager != null & buffer != null)
+            if (_arrayPool != null & buffer != null)
             {
                 FreeArray(buffer);
 
-                _bufferMannager = null;
+                _arrayPool = null;
                 Memory = null;
 
                 this.Recycle();

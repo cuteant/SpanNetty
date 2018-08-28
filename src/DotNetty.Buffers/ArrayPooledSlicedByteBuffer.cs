@@ -11,20 +11,20 @@ namespace DotNetty.Buffers
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
 
-    sealed partial class BufferManagerSlicedByteBuffer : AbstractBufferManagerDerivedByteBuffer
+    sealed partial class ArrayPooledSlicedByteBuffer : AbstractArrayPooledDerivedByteBuffer
     {
-        static readonly ThreadLocalPool<BufferManagerSlicedByteBuffer> Recycler = new ThreadLocalPool<BufferManagerSlicedByteBuffer>(handle => new BufferManagerSlicedByteBuffer(handle));
+        static readonly ThreadLocalPool<ArrayPooledSlicedByteBuffer> Recycler = new ThreadLocalPool<ArrayPooledSlicedByteBuffer>(handle => new ArrayPooledSlicedByteBuffer(handle));
 
-        internal static BufferManagerSlicedByteBuffer NewInstance(AbstractByteBuffer unwrapped, IByteBuffer wrapped, int index, int length)
+        internal static ArrayPooledSlicedByteBuffer NewInstance(AbstractByteBuffer unwrapped, IByteBuffer wrapped, int index, int length)
         {
             AbstractUnpooledSlicedByteBuffer.CheckSliceOutOfBounds(index, length, unwrapped);
             return NewInstance0(unwrapped, wrapped, index, length);
         }
 
-        static BufferManagerSlicedByteBuffer NewInstance0(AbstractByteBuffer unwrapped, IByteBuffer wrapped, int adjustment, int length)
+        static ArrayPooledSlicedByteBuffer NewInstance0(AbstractByteBuffer unwrapped, IByteBuffer wrapped, int adjustment, int length)
         {
-            BufferManagerSlicedByteBuffer slice = Recycler.Take();
-            slice.Init<BufferManagerSlicedByteBuffer>(unwrapped, wrapped, 0, length, length);
+            ArrayPooledSlicedByteBuffer slice = Recycler.Take();
+            slice.Init<ArrayPooledSlicedByteBuffer>(unwrapped, wrapped, 0, length, length);
             slice.DiscardMarks();
             slice.adjustment = adjustment;
 
@@ -33,7 +33,7 @@ namespace DotNetty.Buffers
 
         int adjustment;
 
-        BufferManagerSlicedByteBuffer(ThreadLocalPool.Handle handle)
+        ArrayPooledSlicedByteBuffer(ThreadLocalPool.Handle handle)
             : base(handle)
         {
         }
@@ -90,7 +90,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer Duplicate() => this.Duplicate0().SetIndex(this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
 
-        public override IByteBuffer RetainedDuplicate() => BufferManagerDuplicatedByteBuffer.NewInstance(this.UnwrapCore(), this, this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
+        public override IByteBuffer RetainedDuplicate() => ArrayPooledDuplicatedByteBuffer.NewInstance(this.UnwrapCore(), this, this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
 
         public override byte GetByte(int index)
         {

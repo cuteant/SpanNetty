@@ -37,9 +37,9 @@ namespace DotNetty.Buffers
                 alloc = PooledByteBufferAllocator.Default;
                 Logger.Debug("-Dio.netty.allocator.type: {}", allocType);
             }
-            else if ("bufferManager".Equals(allocType, StringComparison.OrdinalIgnoreCase))
+            else if ("arraypooled".Equals(allocType, StringComparison.OrdinalIgnoreCase))
             {
-                alloc = BufferManagerByteBufferAllocator.Default;
+                alloc = ArrayPooledByteBufferAllocator.Default;
                 Logger.Debug("-Dio.netty.allocator.type: {}", allocType);
             }
             else

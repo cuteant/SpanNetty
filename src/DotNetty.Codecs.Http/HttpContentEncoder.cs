@@ -49,11 +49,11 @@ namespace DotNetty.Codecs.Http
             ICharSequence acceptedEncoding = msg.Headers.Get(HttpHeaderNames.AcceptEncoding, HttpContentDecoder.Identity);
 
             HttpMethod meth = msg.Method;
-            if (ReferenceEquals(meth, HttpMethod.Head))
+            if (meth.Equals(HttpMethod.Head))
             {
                 acceptedEncoding = ZeroLengthHead;
             }
-            else if (ReferenceEquals(meth, HttpMethod.Connect))
+            else if (meth.Equals(HttpMethod.Connect))
             {
                 acceptedEncoding = ZeroLengthConnect;
             }
@@ -239,13 +239,13 @@ namespace DotNetty.Codecs.Http
                 case 204:
                 case 304:
                     return true;
-                case 200 when ReferenceEquals(httpMethod, ZeroLengthConnect):
+                case 200 when httpMethod.Equals(ZeroLengthConnect):
                     return true;
                 default:
                     if (code < 200) { return true; }
                     break;
             }
-            return ReferenceEquals(httpMethod, ZeroLengthHead) || ReferenceEquals(version, HttpVersion.Http10);
+            return httpMethod.Equals(ZeroLengthHead) || version.Equals(HttpVersion.Http10);
             //return code < 200 || code == 204 || code == 304
             //  || (ReferenceEquals(httpMethod, ZeroLengthHead) || ReferenceEquals(httpMethod, ZeroLengthConnect) && code == 200)
             //  || ReferenceEquals(version, HttpVersion.Http10);

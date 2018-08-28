@@ -11,7 +11,7 @@ namespace DotNetty.Codecs.Http
     using System.Runtime.CompilerServices;
     using DotNetty.Common.Utilities;
 
-    partial class HttpMethod
+    partial class HttpMethod : IEquatable<HttpMethod>
     {
         const byte CByte = (byte)'C';
         const byte DByte = (byte)'D';
@@ -22,5 +22,11 @@ namespace DotNetty.Codecs.Http
         const byte UByte = (byte)'U';
         const byte AByte = (byte)'A';
         const byte TByte = (byte)'T';
+
+        public bool Equals(HttpMethod other)
+        {
+            if (ReferenceEquals(this, other)) { return true; }
+            return other != null && this.name.Equals(other.name);
+        }
     }
 }

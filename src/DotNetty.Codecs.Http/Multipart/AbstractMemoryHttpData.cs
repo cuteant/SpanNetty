@@ -52,7 +52,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 ThrowHelper.ThrowArgumentException_Stream_NotReadable();
             }
 
-            IByteBuffer buffer = Unpooled.Buffer();
+            IByteBuffer buffer = ArrayPooled.Buffer();
             var bytes = BufferManager.Shared.Rent(c_defaultCopyBufferSize);
             int written = 0;
             try

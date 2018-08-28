@@ -1,7 +1,7 @@
 ﻿#if NET40
 namespace DotNetty.Buffers
 {
-    partial class BufferManagerSlicedByteBuffer
+    partial class ArrayPooledSlicedByteBuffer
     {
         public override ref byte GetPinnableMemoryAddress() => ref this.Unwrap().GetPinnableMemoryOffsetAddress(this.adjustment);
 

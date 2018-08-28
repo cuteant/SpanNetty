@@ -139,15 +139,15 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         static void LinkOutcomeContinuationAction(Task t, object state)
         {
-            var wrapper = (Tuple<TaskCompletionSource, IChannelPipeline, string>)state;
+            var wrapped = (Tuple<TaskCompletionSource, IChannelPipeline, string>)state;
             if (t.Status == TaskStatus.RanToCompletion)
             {
-                wrapper.Item2.Remove(wrapper.Item3);
-                wrapper.Item1.TryComplete();
+                wrapped.Item2.Remove(wrapped.Item3);
+                wrapped.Item1.TryComplete();
             }
             else
             {
-                wrapper.Item1.TrySetException(t.Exception);
+                wrapped.Item1.TrySetException(t.Exception);
             }
         }
 

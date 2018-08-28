@@ -38,6 +38,7 @@ namespace DotNetty.Common.Utilities
         public string Name => this.constant.Name;
 
         public override bool Equals(object obj) => ReferenceEquals(this, obj);
+        public bool Equals(IConstant other) => ReferenceEquals(this, other);
 
         public override int GetHashCode() => this.Id;
 

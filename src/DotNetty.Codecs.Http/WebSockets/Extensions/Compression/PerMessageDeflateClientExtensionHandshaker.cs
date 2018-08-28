@@ -79,55 +79,105 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             foreach (KeyValuePair<string, string> parameter in extensionData.Parameters)
             {
                 var parameterKey = parameter.Key;
-                if (string.Equals(ClientMaxWindow, parameterKey, StringComparison.OrdinalIgnoreCase))
+                switch (parameterKey)
                 {
-                    // allowed client_window_size_bits
-                    if (this.allowClientWindowSize)
-                    {
-                        clientWindowSize = int.Parse(parameter.Value);
-                    }
-                    else
-                    {
-                        succeed = false;
-                    }
-                }
-                else if (string.Equals(ServerMaxWindow, parameterKey, StringComparison.OrdinalIgnoreCase))
-                {
-                    // acknowledged server_window_size_bits
-                    serverWindowSize = int.Parse(parameter.Value);
-                    if (clientWindowSize > MaxWindowSize || clientWindowSize < MinWindowSize)
-                    {
-                        succeed = false;
-                    }
-                }
-                else if (string.Equals(ClientNoContext, parameterKey, StringComparison.OrdinalIgnoreCase))
-                {
-                    // allowed client_no_context_takeover
-                    if (this.allowClientNoContext)
-                    {
-                        clientNoContext = true;
-                    }
-                    else
-                    {
-                        succeed = false;
-                    }
-                }
-                else if (string.Equals(ServerNoContext, parameterKey, StringComparison.OrdinalIgnoreCase))
-                {
-                    // acknowledged server_no_context_takeover
-                    if (this.requestedServerNoContext)
-                    {
-                        serverNoContext = true;
-                    }
-                    else
-                    {
-                        succeed = false;
-                    }
-                }
-                else
-                {
-                    // unknown parameter
-                    succeed = false;
+                    case ClientMaxWindow:
+                        // allowed client_window_size_bits
+                        if (this.allowClientWindowSize)
+                        {
+                            clientWindowSize = int.Parse(parameter.Value);
+                        }
+                        else
+                        {
+                            succeed = false;
+                        }
+                        break;
+
+                    case ServerMaxWindow:
+                        // acknowledged server_window_size_bits
+                        serverWindowSize = int.Parse(parameter.Value);
+                        if (clientWindowSize > MaxWindowSize || clientWindowSize < MinWindowSize)
+                        {
+                            succeed = false;
+                        }
+                        break;
+
+                    case ClientNoContext:
+                        // allowed client_no_context_takeover
+                        if (this.allowClientNoContext)
+                        {
+                            clientNoContext = true;
+                        }
+                        else
+                        {
+                            succeed = false;
+                        }
+                        break;
+
+                    case ServerNoContext:
+                        // acknowledged server_no_context_takeover
+                        if (this.requestedServerNoContext)
+                        {
+                            serverNoContext = true;
+                        }
+                        else
+                        {
+                            succeed = false;
+                        }
+                        break;
+
+                    default:
+                        if (string.Equals(ClientMaxWindow, parameterKey, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // allowed client_window_size_bits
+                            if (this.allowClientWindowSize)
+                            {
+                                clientWindowSize = int.Parse(parameter.Value);
+                            }
+                            else
+                            {
+                                succeed = false;
+                            }
+                        }
+                        else if (string.Equals(ServerMaxWindow, parameterKey, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // acknowledged server_window_size_bits
+                            serverWindowSize = int.Parse(parameter.Value);
+                            if (clientWindowSize > MaxWindowSize || clientWindowSize < MinWindowSize)
+                            {
+                                succeed = false;
+                            }
+                        }
+                        else if (string.Equals(ClientNoContext, parameterKey, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // allowed client_no_context_takeover
+                            if (this.allowClientNoContext)
+                            {
+                                clientNoContext = true;
+                            }
+                            else
+                            {
+                                succeed = false;
+                            }
+                        }
+                        else if (string.Equals(ServerNoContext, parameterKey, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // acknowledged server_no_context_takeover
+                            if (this.requestedServerNoContext)
+                            {
+                                serverNoContext = true;
+                            }
+                            else
+                            {
+                                succeed = false;
+                            }
+                        }
+                        else
+                        {
+                            // unknown parameter
+                            succeed = false;
+                        }
+                        break;
                 }
 
                 if (!succeed)

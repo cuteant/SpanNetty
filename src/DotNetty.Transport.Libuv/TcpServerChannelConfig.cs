@@ -24,7 +24,7 @@ namespace DotNetty.Transport.Libuv
 
         public TcpServerChannelConfig(IChannel channel) : base(channel)
         {
-            this.options = new Dictionary<ChannelOption, int>(3);
+            this.options = new Dictionary<ChannelOption, int>(3, ChannelOptionComparer.Default);
 
             // 
             // Note:

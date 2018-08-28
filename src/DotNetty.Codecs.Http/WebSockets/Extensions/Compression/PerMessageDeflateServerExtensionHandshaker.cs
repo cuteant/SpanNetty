@@ -64,49 +64,93 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             foreach (KeyValuePair<string, string> parameter in extensionData.Parameters)
             {
                 var parameterKey = parameter.Key;
-                if (string.Equals(ClientMaxWindow, parameterKey, StringComparison.OrdinalIgnoreCase))
+                switch (parameterKey)
                 {
-                    // use preferred clientWindowSize because client is compatible with customization
-                    clientWindowSize = this.preferredClientWindowSize;
-                }
-                else if (string.Equals(ServerMaxWindow, parameterKey, StringComparison.OrdinalIgnoreCase))
-                {
-                    // use provided windowSize if it is allowed
-                    if (this.allowServerWindowSize)
-                    {
-                        serverWindowSize = int.Parse(parameter.Value);
-                        if (serverWindowSize > MaxWindowSize || serverWindowSize < MinWindowSize)
+                    case ClientMaxWindow:
+                        // use preferred clientWindowSize because client is compatible with customization
+                        clientWindowSize = this.preferredClientWindowSize;
+                        break;
+
+                    case ServerMaxWindow:
+                        // use provided windowSize if it is allowed
+                        if (this.allowServerWindowSize)
+                        {
+                            serverWindowSize = int.Parse(parameter.Value);
+                            if (serverWindowSize > MaxWindowSize || serverWindowSize < MinWindowSize)
+                            {
+                                deflateEnabled = false;
+                            }
+                        }
+                        else
                         {
                             deflateEnabled = false;
                         }
-                    }
-                    else
-                    {
-                        deflateEnabled = false;
-                    }
+                        break;
+
+                    case ClientNoContext:
+                        // use preferred clientNoContext because client is compatible with customization
+                        clientNoContext = this.preferredClientNoContext;
+                        break;
+
+                    case ServerNoContext:
+                        // use server no context if allowed
+                        if (this.allowServerNoContext)
+                        {
+                            serverNoContext = true;
+                        }
+                        else
+                        {
+                            deflateEnabled = false;
+                        }
+                        break;
+
+                    default:
+                        if (string.Equals(ClientMaxWindow, parameterKey, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // use preferred clientWindowSize because client is compatible with customization
+                            clientWindowSize = this.preferredClientWindowSize;
+                        }
+                        else if (string.Equals(ServerMaxWindow, parameterKey, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // use provided windowSize if it is allowed
+                            if (this.allowServerWindowSize)
+                            {
+                                serverWindowSize = int.Parse(parameter.Value);
+                                if (serverWindowSize > MaxWindowSize || serverWindowSize < MinWindowSize)
+                                {
+                                    deflateEnabled = false;
+                                }
+                            }
+                            else
+                            {
+                                deflateEnabled = false;
+                            }
+                        }
+                        else if (string.Equals(ClientNoContext, parameterKey, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // use preferred clientNoContext because client is compatible with customization
+                            clientNoContext = this.preferredClientNoContext;
+                        }
+                        else if (string.Equals(ServerNoContext, parameterKey, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // use server no context if allowed
+                            if (this.allowServerNoContext)
+                            {
+                                serverNoContext = true;
+                            }
+                            else
+                            {
+                                deflateEnabled = false;
+                            }
+                        }
+                        else
+                        {
+                            // unknown parameter
+                            deflateEnabled = false;
+                        }
+                        break;
                 }
-                else if (string.Equals(ClientNoContext, parameterKey, StringComparison.OrdinalIgnoreCase))
-                {
-                    // use preferred clientNoContext because client is compatible with customization
-                    clientNoContext = this.preferredClientNoContext;
-                }
-                else if (string.Equals(ServerNoContext, parameterKey, StringComparison.OrdinalIgnoreCase))
-                {
-                    // use server no context if allowed
-                    if (this.allowServerNoContext)
-                    {
-                        serverNoContext = true;
-                    }
-                    else
-                    {
-                        deflateEnabled = false;
-                    }
-                }
-                else
-                {
-                    // unknown parameter
-                    deflateEnabled = false;
-                }
+
                 if (!deflateEnabled)
                 {
                     break;

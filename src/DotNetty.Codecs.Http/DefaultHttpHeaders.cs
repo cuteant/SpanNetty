@@ -57,7 +57,7 @@ namespace DotNetty.Codecs.Http
 
         readonly DefaultHeaders<AsciiString, ICharSequence> headers;
 
-        public DefaultHttpHeaders() : this(true)
+        public DefaultHttpHeaders() : this(true, NameValidator(true))
         {
         }
 

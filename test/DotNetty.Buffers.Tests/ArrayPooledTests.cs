@@ -6,12 +6,12 @@ namespace DotNetty.Buffers.Tests
     using System;
     using System.Collections.Generic;
     using Xunit;
-    using static BufferManagerUtil;
+    using static ArrayPooled;
 
     /// <summary>
     /// Tests channel buffers
     /// </summary>
-    public class BufferManagerUtilTests : IDisposable
+    public class ArrayPooledTests : IDisposable
     {
         static readonly IByteBuffer[] EmptyByteBuffer = new IByteBuffer[0];
         static readonly byte[][] EmptyBytes2D = new byte[0][];
@@ -19,7 +19,7 @@ namespace DotNetty.Buffers.Tests
 
         readonly Queue<IByteBuffer> freeLaterQueue;
 
-        public BufferManagerUtilTests()
+        public ArrayPooledTests()
         {
             this.freeLaterQueue = new Queue<IByteBuffer>();
         }
