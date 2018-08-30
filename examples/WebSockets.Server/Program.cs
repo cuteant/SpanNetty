@@ -11,6 +11,8 @@ namespace WebSockets.Server
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using DotNetty.Codecs.Http;
+    using DotNetty.Codecs.Http.WebSockets;
+    using DotNetty.Codecs.Http.WebSockets.Extensions.Compression;
     using DotNetty.Common;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Timeout;
@@ -23,6 +25,8 @@ namespace WebSockets.Server
 
     class Program
     {
+        private const string WEBSOCKET_PATH = "/websocket";
+
         static Program()
         {
             ResourceLeakDetector.Level = ResourceLeakDetector.DetectionLevel.Disabled;
@@ -39,6 +43,9 @@ namespace WebSockets.Server
 
             bool useLibuv = ServerSettings.UseLibuv;
             Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
+
+            string websocketPath = ExampleHelper.Configuration["path"];
+            websocketPath = !string.IsNullOrEmpty(websocketPath) ? websocketPath : WEBSOCKET_PATH;
 
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -91,7 +98,7 @@ namespace WebSockets.Server
 
                 bootstrap
                     .Option(ChannelOption.SoBacklog, 8192)
-                    .Handler(new MsLoggingHandler("LSTN"))
+                    //.Handler(new MsLoggingHandler("LSTN"))
                     .ChildHandler(new ActionChannelInitializer<IChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
@@ -100,19 +107,23 @@ namespace WebSockets.Server
                             pipeline.AddLast(TlsHandler.Server(tlsCertificate));
                         }
 
-                        pipeline.AddLast("idleStateHandler", new IdleStateHandler(20, 0, 0));
+                        pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 0, 120));
 
-                        pipeline.AddLast(new MsLoggingHandler("CONN"));
+                        //pipeline.AddLast(new MsLoggingHandler("CONN"));
                         pipeline.AddLast(new HttpServerCodec());
                         pipeline.AddLast(new HttpObjectAggregator(65536));
-                        pipeline.AddLast(new WebSocketServerHandler());
+                        pipeline.AddLast(new WebSocketServerCompressionHandler());
+                        pipeline.AddLast(new WebSocketServerProtocolHandler(websocketPath, null, true));
+                        pipeline.AddLast(new WebSocketServerHttpHandler(websocketPath));
+                        pipeline.AddLast(new WebSocketFrameAggregator(65536));
+                        pipeline.AddLast(new WebSocketServerFrameHandler());
                     }));
 
                 int port = ServerSettings.Port;
                 IChannel bootstrapChannel = await bootstrap.BindAsync(IPAddress.Loopback, port);
 
-                Console.WriteLine("Open your web browser and navigate to " 
-                    + $"{(ServerSettings.IsSsl ? "https" : "http")}" 
+                Console.WriteLine("Open your web browser and navigate to "
+                    + $"{(ServerSettings.IsSsl ? "https" : "http")}"
                     + $"://127.0.0.1:{port}/");
                 Console.WriteLine("Listening on "
                     + $"{(ServerSettings.IsSsl ? "wss" : "ws")}"

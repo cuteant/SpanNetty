@@ -45,24 +45,24 @@ namespace DotNetty.Codecs.Http.WebSockets
             var mask = stackalloc byte[4];
 
             byte opcode = 0;
-            switch (msg)
+            switch (msg.Opcode)
             {
-                case TextWebSocketFrame _:
+                case Opcode.Text:
                     opcode = OpcodeText;
                     break;
-                case PingWebSocketFrame _:
+                case Opcode.Ping:
                     opcode = OpcodePing;
                     break;
-                case PongWebSocketFrame _:
+                case Opcode.Pong:
                     opcode = OpcodePong;
                     break;
-                case CloseWebSocketFrame _:
+                case Opcode.Close:
                     opcode = OpcodeClose;
                     break;
-                case BinaryWebSocketFrame _:
+                case Opcode.Binary:
                     opcode = OpcodeBinary;
                     break;
-                case ContinuationWebSocketFrame _:
+                case Opcode.Cont:
                     opcode = OpcodeCont;
                     break;
                 default:

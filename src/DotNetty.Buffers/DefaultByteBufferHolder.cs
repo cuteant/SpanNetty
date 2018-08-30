@@ -14,7 +14,7 @@ namespace DotNetty.Buffers
 
         public DefaultByteBufferHolder(IByteBuffer data)
         {
-            Contract.Requires(data != null);
+            if (null == data) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.data); }
 
             this.data = data;
         }

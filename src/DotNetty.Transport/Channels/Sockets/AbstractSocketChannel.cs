@@ -88,7 +88,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
                 else
                 {
-                    eventLoop.Execute(channel => ((TChannel)channel).ClearReadPending0(), this);
+                    eventLoop.Execute(ClearReadPendingAction, this);
                 }
             }
             else
@@ -279,25 +279,12 @@ namespace DotNetty.Transport.Channels.Sockets
                         if (connectTimeout > TimeSpan.Zero)
                         {
                             ch.connectCancellationTask = ch.EventLoop.Schedule(
-                                (c, a) =>
-                                {
-                                    // todo: make static / cache delegate?..
-                                    var self = (TChannel)c;
-                                    // todo: call Socket.CancelConnectAsync(...)
-                                    TaskCompletionSource promise = self.connectPromise;
-                                    var cause = new ConnectTimeoutException("connection timed out: " + a.ToString());
-                                    if (promise != null && promise.TrySetException(cause))
-                                    {
-                                        self.CloseSafe();
-                                    }
-                                },
-                                this.channel,
-                                remoteAddress,
-                                connectTimeout);
+                                ConnectTimeoutAction, this.channel,
+                                remoteAddress, connectTimeout);
                         }
 
 #if NET40
-                        void continuationAction(Task completed)
+                        void continuationAction(Task<int> t)
                         {
                             var c = ch;
                             c.connectCancellationTask?.Cancel();
@@ -308,7 +295,7 @@ namespace DotNetty.Transport.Channels.Sockets
                             continuationAction,
                             TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.ExecuteSynchronously);
 #else
-                        ch.connectPromise.Task.ContinueWith(CloseSafeOnComplete, ch,
+                        ch.connectPromise.Task.ContinueWith(CloseSafeOnCompleteAction, ch,
                             TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.ExecuteSynchronously);
 #endif
 
@@ -320,14 +307,6 @@ namespace DotNetty.Transport.Channels.Sockets
                     this.CloseIfClosed();
                     return TaskUtil.FromException(this.AnnotateConnectException(ex, remoteAddress));
                 }
-            }
-
-            static void CloseSafeOnComplete(Task t, object s)
-            {
-                var c = (TChannel)s;
-                c.connectCancellationTask?.Cancel();
-                c.connectPromise = null;
-                c.CloseSafe();
             }
 
             void FulfillConnectPromise(bool wasActive)

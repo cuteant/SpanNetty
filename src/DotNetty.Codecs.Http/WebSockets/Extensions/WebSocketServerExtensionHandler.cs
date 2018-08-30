@@ -75,28 +75,34 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
             Action<Task, object> continuationAction = null;
 #endif
 
-            if (msg is IHttpResponse response 
-                && WebSocketExtensionUtil.IsWebsocketUpgrade(response.Headers) 
-                && this.validExtensions != null)
+            if (msg is IHttpResponse response && WebSocketExtensionUtil.IsWebsocketUpgrade(response.Headers)                 )
             {
-                string headerValue = null;
-                if (response.Headers.TryGet(HttpHeaderNames.SecWebsocketExtensions, out ICharSequence value))
+                if (this.validExtensions != null)
                 {
-                    headerValue = value?.ToString();
-                }
+                    string headerValue = null;
+                    if (response.Headers.TryGet(HttpHeaderNames.SecWebsocketExtensions, out ICharSequence value))
+                    {
+                        headerValue = value?.ToString();
+                    }
 
-                foreach (IWebSocketServerExtension extension in this.validExtensions)
-                {
-                    WebSocketExtensionData extensionData = extension.NewReponseData();
-                    headerValue = WebSocketExtensionUtil.AppendExtension(headerValue,
-                        extensionData.Name, extensionData.Parameters);
+                    foreach (IWebSocketServerExtension extension in this.validExtensions)
+                    {
+                        WebSocketExtensionData extensionData = extension.NewReponseData();
+                        headerValue = WebSocketExtensionUtil.AppendExtension(headerValue,
+                            extensionData.Name, extensionData.Parameters);
+                    }
+
+                    if (headerValue != null)
+                    {
+                        response.Headers.Set(HttpHeaderNames.SecWebsocketExtensions, headerValue);
+                    }
                 }
 
 #if NET40
                 continuationAction = promise =>
                 {
                     var pipeline = ctx.Pipeline;
-                    if (promise.Status == TaskStatus.RanToCompletion)
+                    if (promise.Status == TaskStatus.RanToCompletion && this.validExtensions != null)
                     {
                         foreach (IWebSocketServerExtension extension in this.validExtensions)
                         {
@@ -112,10 +118,6 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                 continuationAction = SwitchWebSocketExtensionHandler;
 #endif
 
-                if (headerValue != null)
-                {
-                    response.Headers.Set(HttpHeaderNames.SecWebsocketExtensions, headerValue);
-                }
             }
 
             return continuationAction == null
@@ -130,12 +132,13 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
         static void SwitchWebSocketExtensionHandler(Task promise, object state)
         {
-            var stateWrapper = (Tuple<IChannelHandlerContext, List<IWebSocketServerExtension>>)state;
-            var ctx = stateWrapper.Item1;
+            var wrapped = (Tuple<IChannelHandlerContext, List<IWebSocketServerExtension>>)state;
+            var ctx = wrapped.Item1;
+            var validExtensions = wrapped.Item2;
             var pipeline = ctx.Pipeline;
-            if (promise.Status == TaskStatus.RanToCompletion)
+            if (promise.Status == TaskStatus.RanToCompletion && validExtensions != null)
             {
-                foreach (IWebSocketServerExtension extension in stateWrapper.Item2)
+                foreach (IWebSocketServerExtension extension in validExtensions)
                 {
                     WebSocketExtensionDecoder decoder = extension.NewExtensionDecoder();
                     WebSocketExtensionEncoder encoder = extension.NewExtensionEncoder();

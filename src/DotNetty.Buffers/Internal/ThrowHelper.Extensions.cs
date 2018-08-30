@@ -70,6 +70,7 @@ namespace DotNetty.Buffers
         startIndex,
         newSize,
         expression,
+        data,
     }
 
     #endregion

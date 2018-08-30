@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using DotNetty.Buffers;
 
 namespace DotNetty.Transport.Channels
 {
@@ -24,6 +23,16 @@ namespace DotNetty.Transport.Channels
                 {
                     Logger.FreedThreadLocalBufferFromThread(error, cause);
                 }
+            }
+        }
+
+        partial class DelegatingChannelHandlerContext
+        {
+            private static readonly Action<object> RemoveAction = OnRemove;
+
+            private static void OnRemove(object c)
+            {
+                ((DelegatingChannelHandlerContext)c).Remove0();
             }
         }
     }

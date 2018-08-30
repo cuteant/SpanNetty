@@ -3,7 +3,9 @@
 
 namespace DotNetty.Transport.Channels.Sockets
 {
+    using System;
     using System.Net.Sockets;
+    using DotNetty.Common.Concurrency;
 
     public sealed class TcpSocketChannel : TcpSocketChannel<TcpSocketChannel>
     {
@@ -30,5 +32,11 @@ namespace DotNetty.Transport.Channels.Sockets
     partial class TcpSocketChannel<TChannel> : AbstractSocketByteChannel<TChannel, TcpSocketChannel<TChannel>.TcpSocketChannelUnsafe>, ISocketChannel
         where TChannel : TcpSocketChannel<TChannel>
     {
+        private static readonly Action<object, object> ShutdownOutputAction = OnShutdownOutput;
+
+        private static void OnShutdownOutput(object channel, object promise)
+        {
+            ((TcpSocketChannel<TChannel>)channel).ShutdownOutput0((TaskCompletionSource)promise);
+        }
     }
 }

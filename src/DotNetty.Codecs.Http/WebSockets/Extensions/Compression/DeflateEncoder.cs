@@ -85,15 +85,15 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             }
 
             WebSocketFrame outMsg = null;
-            switch (msg)
+            switch (msg.Opcode)
             {
-                case TextWebSocketFrame _:
+                case Opcode.Text:
                     outMsg = new TextWebSocketFrame(msg.IsFinalFragment, this.Rsv(msg), compressedContent);
                     break;
-                case BinaryWebSocketFrame _:
+                case Opcode.Binary:
                     outMsg = new BinaryWebSocketFrame(msg.IsFinalFragment, this.Rsv(msg), compressedContent);
                     break;
-                case ContinuationWebSocketFrame _:
+                case Opcode.Cont:
                     outMsg = new ContinuationWebSocketFrame(msg.IsFinalFragment, this.Rsv(msg), compressedContent);
                     break;
                 default:

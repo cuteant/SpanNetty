@@ -8,17 +8,22 @@ namespace DotNetty.Codecs.Http.WebSockets
     public class BinaryWebSocketFrame : WebSocketFrame
     {
         public BinaryWebSocketFrame() 
-            : base(true, 0, ArrayPooled.Buffer(0))
+            : base(true, 0, Opcode.Binary, ArrayPooled.Buffer(0))
         {
         }
 
         public BinaryWebSocketFrame(IByteBuffer binaryData)
-            : base(true, 0, binaryData)
+            : base(true, 0, Opcode.Binary, binaryData)
+        {
+        }
+
+        public BinaryWebSocketFrame(bool finalFragment, IByteBuffer binaryData)
+            : base(finalFragment, 0, Opcode.Binary, binaryData)
         {
         }
 
         public BinaryWebSocketFrame(bool finalFragment, int rsv, IByteBuffer binaryData)
-            : base(finalFragment, rsv, binaryData)
+            : base(finalFragment, rsv, Opcode.Binary, binaryData)
         {
         }
 

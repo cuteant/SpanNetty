@@ -4,19 +4,19 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
-    using System.Diagnostics.Contracts;
-    using System.Net;
-    using System.Reflection;
-    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
-    using DotNetty.Buffers;
-    using DotNetty.Common;
     using DotNetty.Common.Concurrency;
-    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     partial class AbstractChannelHandlerContext
     {
+        static readonly Action<object> InvokeChannelRegisteredAction = OnInvokeChannelRegistered;
+        static readonly Action<object> InvokeChannelUnregisteredAction = OnInvokeChannelUnregistered;
+        static readonly Action<object> InvokeChannelActiveAction = OnInvokeChannelActive;
+        static readonly Action<object> InvokeChannelInactiveAction = OnInvokeChannelInactive;
+        static readonly Action<object, object> InvokeExceptionCaughtAction = OnInvokeExceptionCaught;
+        static readonly Action<object, object> SafeExecuteOutboundAsyncAction = OnSafeExecuteOutbound;
+
         private static void OnInvokeChannelReadComplete(object ctx)
         {
             ((AbstractChannelHandlerContext)ctx).InvokeChannelReadComplete();
@@ -45,6 +45,36 @@ namespace DotNetty.Transport.Channels
         private static void OnInvokeChannelRead(object ctx, object msg)
         {
             ((AbstractChannelHandlerContext)ctx).InvokeChannelRead(msg);
+        }
+
+        private static void OnInvokeChannelRegistered(object ctx)
+        {
+            ((AbstractChannelHandlerContext)ctx).InvokeChannelRegistered();
+        }
+
+        private static void OnInvokeChannelUnregistered(object ctx)
+        {
+            ((AbstractChannelHandlerContext)ctx).InvokeChannelUnregistered();
+        }
+
+        private static void OnInvokeChannelActive(object ctx)
+        {
+            ((AbstractChannelHandlerContext)ctx).InvokeChannelActive();
+        }
+
+        private static void OnInvokeChannelInactive(object ctx)
+        {
+            ((AbstractChannelHandlerContext)ctx).InvokeChannelInactive();
+        }
+
+        private static void OnInvokeExceptionCaught(object c, object e)
+        {
+            ((AbstractChannelHandlerContext)c).InvokeExceptionCaught((Exception)e);
+        }
+
+        private static void OnSafeExecuteOutbound(object p, object func)
+        {
+            ((Func<Task>)func)().LinkOutcome((TaskCompletionSource)p);
         }
     }
 }

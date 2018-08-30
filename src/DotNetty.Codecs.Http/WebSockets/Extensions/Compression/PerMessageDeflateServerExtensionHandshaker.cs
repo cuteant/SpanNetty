@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using DotNetty.Codecs.Compression;
 
     public sealed class PerMessageDeflateServerExtensionHandshaker : IWebSocketServerExtensionHandshaker
@@ -50,10 +51,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         public IWebSocketServerExtension HandshakeExtension(WebSocketExtensionData extensionData)
         {
-            if (!string.Equals(PerMessageDeflateExtension, extensionData.Name, StringComparison.Ordinal))
-            {
-                return null;
-            }
+            if (!IsPerMessageDeflateExtension(extensionData.Name)) { return null; }
 
             bool deflateEnabled = true;
             int clientWindowSize = MaxWindowSize;
@@ -168,6 +166,14 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             }
         }
 
+        [MethodImpl(InlineMethod.Value)]
+        internal static bool IsPerMessageDeflateExtension(string name)
+        {
+            if (string.Equals(PerMessageDeflateExtension, name, StringComparison.Ordinal)) { return true; }
+            if (string.Equals(PerMessageDeflateExtension, name, StringComparison.OrdinalIgnoreCase)) { return true; }
+            return false;
+        }
+
         sealed class WebSocketPermessageDeflateExtension : IWebSocketServerExtension
         {
             readonly int compressionLevel;
@@ -188,7 +194,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
             public int Rsv => WebSocketRsv.Rsv1;
 
-            public WebSocketExtensionEncoder NewExtensionEncoder() => 
+            public WebSocketExtensionEncoder NewExtensionEncoder() =>
                 new PerMessageDeflateEncoder(this.compressionLevel, this.clientWindowSize, this.clientNoContext);
 
             public WebSocketExtensionDecoder NewExtensionDecoder() => new PerMessageDeflateDecoder(this.serverNoContext);

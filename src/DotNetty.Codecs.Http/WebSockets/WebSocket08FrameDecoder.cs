@@ -14,7 +14,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
     using static Buffers.ByteBufferUtil;
 
-    public class WebSocket08FrameDecoder : ByteToMessageDecoder, IWebSocketFrameDecoder
+    public partial class WebSocket08FrameDecoder : ByteToMessageDecoder, IWebSocketFrameDecoder
     {
         enum State
         {
@@ -411,11 +411,6 @@ namespace DotNetty.Codecs.Http.WebSockets
 #endif
             }
             throw ex;
-        }
-
-        static void CloseOnComplete(Task t, object c)
-        {
-            ((IChannel)c).CloseAsync();
         }
 
         [MethodImpl(InlineMethod.Value)]

@@ -17,7 +17,7 @@ namespace DotNetty.Common.Concurrency
     /// <summary>
     /// <see cref="IEventExecutor"/> backed by a single thread.
     /// </summary>
-    public class SingleThreadEventExecutor : AbstractScheduledEventExecutor
+    public partial class SingleThreadEventExecutor : AbstractScheduledEventExecutor
     {
 #pragma warning disable 420 // referencing volatile fields is fine in Interlocked methods
 
@@ -160,7 +160,7 @@ namespace DotNetty.Common.Concurrency
             } 
             else
             {
-                this.Execute(() => this.shutdownHooks.Add(action));
+                this.Execute(AddShutdownHookAction, this.shutdownHooks, action);
             }
         }
 
@@ -177,7 +177,7 @@ namespace DotNetty.Common.Concurrency
             } 
             else
             {
-                this.Execute(() => this.shutdownHooks.Remove(action));
+                this.Execute(RemoveShutdownHookAction, this.shutdownHooks, action);
             }
         }
 

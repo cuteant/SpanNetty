@@ -20,7 +20,7 @@ namespace DotNetty.Transport.Channels
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels.Sockets;
 
-    public sealed class ChannelOutboundBuffer
+    public sealed partial class ChannelOutboundBuffer
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChannelOutboundBuffer>();
 
@@ -564,7 +564,7 @@ namespace DotNetty.Transport.Channels
             IChannelPipeline pipeline = this.channel.Pipeline;
             if (invokeLater)
             {
-                this.channel.EventLoop.Execute(p => ((IChannelPipeline)p).FireChannelWritabilityChanged(), pipeline);
+                this.channel.EventLoop.Execute(FireChannelWritabilityChangedAction, pipeline);
             }
             else
             {

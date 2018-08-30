@@ -370,7 +370,7 @@ namespace DotNetty.Transport.Channels
                 }
                 if (!executor.InEventLoop)
                 {
-                    executor.Execute((s, c) => ((DefaultChannelPipeline)s).CallHandlerRemoved0((AbstractChannelHandlerContext)c), this, ctx);
+                    executor.Execute(CallHandlerRemovedAction, this, ctx);
                     return ctx;
                 }
             }
@@ -710,7 +710,7 @@ namespace DotNetty.Transport.Channels
                 IEventExecutor executor = ctx.Executor;
                 if (!inEventLoop && !executor.IsInEventLoop(currentThread))
                 {
-                    executor.Execute((self, c) => ((DefaultChannelPipeline)self).DestroyUp((AbstractChannelHandlerContext)c, true), this, ctx);
+                    executor.Execute(DestroyUpAction, this, ctx);
                     break;
                 }
 
@@ -741,7 +741,7 @@ namespace DotNetty.Transport.Channels
                 }
                 else
                 {
-                    executor.Execute((self, c) => ((DefaultChannelPipeline)self).DestroyDown(Thread.CurrentThread, (AbstractChannelHandlerContext)c, true), this, ctx);
+                    executor.Execute(DestroyDownAction, this, ctx);
                     break;
                 }
 

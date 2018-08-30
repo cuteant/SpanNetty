@@ -30,14 +30,10 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
         {
             if (this.decoder == null)
             {
-                //if (!(msg is TextWebSocketFrame) && !(msg is BinaryWebSocketFrame))
-                //{
-                //    ThrowHelper.ThrowCodecException_UnexpectedInitialFrameType(msg);
-                //}
-                switch (msg)
+                switch (msg.Opcode)
                 {
-                    case TextWebSocketFrame _:
-                    case BinaryWebSocketFrame _:
+                    case Opcode.Text:
+                    case Opcode.Binary:
                         break;
                     default:
                         ThrowHelper.ThrowCodecException_UnexpectedInitialFrameType(msg);
@@ -86,15 +82,15 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             }
 
             WebSocketFrame outMsg = null;
-            switch (msg)
+            switch (msg.Opcode)
             {
-                case TextWebSocketFrame _:
+                case Opcode.Text:
                     outMsg = new TextWebSocketFrame(msg.IsFinalFragment, this.NewRsv(msg), compositeUncompressedContent);
                     break;
-                case BinaryWebSocketFrame _:
+                case Opcode.Binary:
                     outMsg = new BinaryWebSocketFrame(msg.IsFinalFragment, this.NewRsv(msg), compositeUncompressedContent);
                     break;
-                case ContinuationWebSocketFrame _:
+                case Opcode.Cont:
                     outMsg = new ContinuationWebSocketFrame(msg.IsFinalFragment, this.NewRsv(msg), compositeUncompressedContent);
                     break;
                 default:

@@ -34,21 +34,21 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         public IWebSocketClientExtension HandshakeExtension(WebSocketExtensionData extensionData)
         {
+            if (extensionData.Parameters.Count > 0) { return null; }
+
             var extensionDataName = extensionData.Name;
             switch (extensionDataName)
             {
                 case XWebkitDeflateFrameExtension:
                 case DeflateFrameExtension:
-                    if (extensionData.Parameters.Count == 0)
+                    return new DeflateFrameClientExtension(this.compressionLevel);
+
+                default:
+                    if (string.Equals(XWebkitDeflateFrameExtension, extensionDataName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(DeflateFrameExtension, extensionDataName, StringComparison.OrdinalIgnoreCase))
                     {
                         return new DeflateFrameClientExtension(this.compressionLevel);
                     }
-                    else
-                    {
-                        return null;
-                    }
-
-                default:
                     return null;
             }
         }

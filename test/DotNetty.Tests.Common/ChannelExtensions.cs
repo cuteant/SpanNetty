@@ -9,7 +9,7 @@ namespace DotNetty.Tests.Common
 
     public static class ChannelExtensions
     {
-        public static Task WriteAndFlushManyAsync(this IChannel channel, params object[] messages)
+        private static Task WriteAndFlushManyAsync(this IChannel channel, params object[] messages)
         {
             var list = new List<Task>();
             foreach (object m in messages)

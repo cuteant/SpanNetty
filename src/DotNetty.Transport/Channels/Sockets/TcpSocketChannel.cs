@@ -92,7 +92,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
             else
             {
-                loop.Execute(promise => this.ShutdownOutput0((TaskCompletionSource)promise), tcs);
+                loop.Execute(ShutdownOutputAction, this, tcs);
             }
             //}
             return tcs.Task;

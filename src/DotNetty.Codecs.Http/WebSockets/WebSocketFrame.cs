@@ -7,7 +7,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
 
-    public abstract class WebSocketFrame : DefaultByteBufferHolder
+    public abstract partial class WebSocketFrame : DefaultByteBufferHolder
     {
         // Flag to indicate if this frame is the final fragment in a message. The first fragment (frame) may also be the
         // final fragment.

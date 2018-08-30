@@ -14,7 +14,7 @@ namespace DotNetty.Transport.Channels.Groups
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
 
-    public class DefaultChannelGroup : IChannelGroup, IComparable<IChannelGroup>
+    public partial class DefaultChannelGroup : IChannelGroup, IComparable<IChannelGroup>
     {
         static int nextId;
         readonly IEventExecutor executor;
@@ -288,16 +288,10 @@ namespace DotNetty.Transport.Channels.Groups
                 void continueRemoveChannelAction(Task t) => this.Remove(channel);
                 channel.CloseCompletion.ContinueWith(continueRemoveChannelAction, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                channel.CloseCompletion.ContinueWith(ContinueRemoveChannelAction, Tuple.Create(this, channel), TaskContinuationOptions.ExecuteSynchronously);
+                channel.CloseCompletion.ContinueWith(RemoveChannelAfterCloseAction, new Tuple<DefaultChannelGroup, IChannel>(this, channel), TaskContinuationOptions.ExecuteSynchronously);
 #endif
             }
             return added;
-        }
-
-        static void ContinueRemoveChannelAction(Task t, object s)
-        {
-            var wrapped = (Tuple<DefaultChannelGroup, IChannel>)s;
-            wrapped.Item1.Remove(wrapped.Item2);
         }
 
         public IChannel[] ToArray()

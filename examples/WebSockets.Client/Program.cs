@@ -26,20 +26,19 @@ namespace WebSockets.Client
 
     class Program
     {
+        private const string WEBSOCKET_PATH = "/websocket";
+
         static async Task RunClientAsync()
         {
             var builder = new UriBuilder
             {
                 Scheme = ClientSettings.IsSsl ? "wss" : "ws",
                 Host = ClientSettings.Host.ToString(),
-                Port = ClientSettings.Port
+                Port = ClientSettings.Port,
             };
 
             string path = ExampleHelper.Configuration["path"];
-            if (!string.IsNullOrEmpty(path))
-            {
-                builder.Path = path;
-            }
+            builder.Path = !string.IsNullOrEmpty(path) ? path : WEBSOCKET_PATH;
 
             Uri uri = builder.Uri;
             ExampleHelper.SetConsoleLogger();
@@ -86,7 +85,7 @@ namespace WebSockets.Client
                 // Connect with V13 (RFC 6455 aka HyBi-17). You can change it to V08 or V00.
                 // If you change it to V00, ping is not supported and remember to change
                 // HttpResponseDecoder to WebSocketHttpResponseDecoder in the pipeline.
-                var handler =new WebSocketClientHandler(
+                var handler = new WebSocketClientHandler(
                     WebSocketClientHandshakerFactory.NewHandshaker(
                             uri, WebSocketVersion.V13, null, true, new DefaultHttpHeaders()));
 
@@ -98,13 +97,13 @@ namespace WebSockets.Client
                         pipeline.AddLast("tls", new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(targetHost)));
                     }
 
-                    pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 10, 0));
+                    pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 0, 60));
 
-                    pipeline.AddLast(new MsLoggingHandler("CONN"));
+                    //pipeline.AddLast(new MsLoggingHandler("CONN"));
                     pipeline.AddLast(
                         new HttpClientCodec(),
                         new HttpObjectAggregator(8192),
-                        WebSocketClientCompressionHandler.Instance,
+                        //WebSocketClientCompressionHandler.Instance,
                         handler);
                 }));
 
@@ -120,20 +119,38 @@ namespace WebSockets.Client
                     {
                         break;
                     }
-                    else if ("bye".Equals(msg.ToLower()))
+                    msg = msg.ToLowerInvariant();
+
+                    switch (msg)
                     {
-                        await ch.WriteAndFlushAsync(new CloseWebSocketFrame());
-                        break;
-                    }
-                    else if ("ping".Equals(msg.ToLower()))
-                    {
-                        var frame = new PingWebSocketFrame(Unpooled.WrappedBuffer(new byte[] { 8, 1, 8, 1 }));
-                        await ch.WriteAndFlushAsync(frame);
-                    }
-                    else
-                    {
-                        WebSocketFrame frame = new TextWebSocketFrame(msg);
-                        await ch.WriteAndFlushAsync(frame);
+                        case "bye":
+                            await ch.WriteAndFlushAsync(new CloseWebSocketFrame());
+                            break;
+
+                        case "ping":
+                            var ping = new PingWebSocketFrame(Unpooled.WrappedBuffer(new byte[] { 8, 1, 8, 1 }));
+                            await ch.WriteAndFlushAsync(ping);
+                            break;
+
+                        case "this is a test":
+                            await ch.WriteAndFlushManyAsync(
+                                new TextWebSocketFrame(false, "this "),
+                                new ContinuationWebSocketFrame(false, "is "),
+                                new ContinuationWebSocketFrame(false, "a "),
+                                new ContinuationWebSocketFrame(true, "test")
+                            );
+                            break;
+
+                        case "this is a error":
+                            await ch.WriteAndFlushAsync(new TextWebSocketFrame(false, "this "));
+                            await ch.WriteAndFlushAsync(new ContinuationWebSocketFrame(false, "is "));
+                            await ch.WriteAndFlushAsync(new ContinuationWebSocketFrame(false, "a "));
+                            await ch.WriteAndFlushAsync(new TextWebSocketFrame(true, "error"));
+                            break;
+
+                        default:
+                            await ch.WriteAndFlushAsync(new TextWebSocketFrame(msg));
+                            break;
                     }
                 }
 
@@ -145,6 +162,6 @@ namespace WebSockets.Client
             }
         }
 
-        static void Main() => RunClientAsync().Wait();
+        async static Task Main() => await RunClientAsync();
     }
 }

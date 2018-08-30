@@ -17,28 +17,37 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected override bool IsStartMessage(WebSocketFrame msg)
         {
-            switch (msg)
+            switch (msg.Opcode)
             {
-                case TextWebSocketFrame _:
-                case BinaryWebSocketFrame _:
+                case Opcode.Text:
+                case Opcode.Binary:
                     return true;
                 default:
                     return false;
             }
         }
 
-        protected override bool IsContentMessage(WebSocketFrame msg) => msg is ContinuationWebSocketFrame;
+        protected override bool IsContentMessage(WebSocketFrame msg) => msg.Opcode == Opcode.Cont;
 
-        protected override bool IsLastContentMessage(ContinuationWebSocketFrame msg) => this.IsContentMessage(msg) && msg.IsFinalFragment;
+        protected override bool IsLastContentMessage(ContinuationWebSocketFrame msg) => msg.Opcode == Opcode.Cont && msg.IsFinalFragment;
 
         protected override bool IsAggregated(WebSocketFrame msg)
         {
             if (msg.IsFinalFragment)
             {
-                return !this.IsContentMessage(msg);
+                return msg.Opcode != Opcode.Cont;
             }
 
-            return !this.IsStartMessage(msg) && !this.IsContentMessage(msg);
+            switch (msg.Opcode)
+            {
+                case Opcode.Text:
+                case Opcode.Binary:
+                case Opcode.Cont:
+                    return false;
+                default:
+                    return true;
+            }
+            //return !this.IsStartMessage(msg) && msg.Opcode != Opcode.Cont;
         }
 
         protected override bool IsContentLengthInvalid(WebSocketFrame start, int maxContentLength) => false;
@@ -51,11 +60,11 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected override WebSocketFrame BeginAggregation(WebSocketFrame start, IByteBuffer content)
         {
-            switch (start)
+            switch (start.Opcode)
             {
-                case TextWebSocketFrame _:
+                case Opcode.Text:
                     return new TextWebSocketFrame(true, start.Rsv, content);
-                case BinaryWebSocketFrame _:
+                case Opcode.Binary:
                     return new BinaryWebSocketFrame(true, start.Rsv, content);
                 default:
                     // Should not reach here.

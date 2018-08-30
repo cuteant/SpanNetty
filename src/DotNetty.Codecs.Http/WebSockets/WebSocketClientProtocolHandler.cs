@@ -77,7 +77,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected override void Decode(IChannelHandlerContext ctx, WebSocketFrame frame, List<object> output)
         {
-            if (this.handleCloseFrames && frame is CloseWebSocketFrame)
+            if (this.handleCloseFrames && frame.Opcode == Opcode.Close)
             {
                 ctx.CloseAsync();
                 return;

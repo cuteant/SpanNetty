@@ -12,24 +12,18 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         public override bool TryAcceptOutboundMessage(object msg, out WebSocketFrame frame)
         {
-            switch (msg)
+            frame = msg as WebSocketFrame;
+            if (null == frame) { return false; }
+
+            switch (frame.Opcode)
             {
-                case TextWebSocketFrame textFrame when textFrame.Content.ReadableBytes > 0 && (textFrame.Rsv & WebSocketRsv.Rsv1) == 0:
-                    frame = textFrame;
-                    return true;
-                case BinaryWebSocketFrame binFrame when binFrame.Content.ReadableBytes > 0 && (binFrame.Rsv & WebSocketRsv.Rsv1) == 0:
-                    frame = binFrame;
-                    return true;
-                case ContinuationWebSocketFrame conFrame when conFrame.Content.ReadableBytes > 0 && (conFrame.Rsv & WebSocketRsv.Rsv1) == 0:
-                    frame = conFrame;
-                    return true;
+                case Opcode.Text:
+                case Opcode.Binary:
+                case Opcode.Cont:
+                    return frame.Content.ReadableBytes > 0 && (frame.Rsv & WebSocketRsv.Rsv1) == 0;
                 default:
-                    frame = null;
                     return false;
             }
-            //return (msg is TextWebSocketFrame || msg is BinaryWebSocketFrame || msg is ContinuationWebSocketFrame)
-            //&& ((WebSocketFrame)msg).Content.ReadableBytes > 0
-            //&& (((WebSocketFrame)msg).Rsv & WebSocketRsv.Rsv1) == 0;
         }
 
         protected override int Rsv(WebSocketFrame msg) => msg.Rsv | WebSocketRsv.Rsv1;

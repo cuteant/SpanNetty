@@ -288,7 +288,7 @@ namespace DotNetty.Transport.Channels
         /// <summary>
         /// <see cref="IChannelUnsafe" /> implementation which sub-classes must extend and use.
         /// </summary>
-        public abstract class AbstractUnsafe : IChannelUnsafe
+        public abstract partial class AbstractUnsafe : IChannelUnsafe
         {
             protected TChannel channel; // ## 苦竹 修改 readonly ##
             ChannelOutboundBuffer outboundBuffer;
@@ -344,7 +344,7 @@ namespace DotNetty.Transport.Channels
                 {
                     try
                     {
-                        eventLoop.Execute((u, p) => ((AbstractUnsafe)u).Register0((TaskCompletionSource)p), this, promise);
+                        eventLoop.Execute(RegisterAction, this, promise);
                     }
                     catch (Exception ex)
                     {

@@ -13,7 +13,7 @@ namespace DotNetty.Common.Concurrency
     /// <summary>
     ///     Abstract base class for <see cref="IEventExecutor" />s that need to support scheduling.
     /// </summary>
-    public abstract class AbstractScheduledEventExecutor : AbstractEventExecutor
+    public abstract partial class AbstractScheduledEventExecutor : AbstractEventExecutor
     {
         protected readonly PriorityQueue<IScheduledRunnable> ScheduledTaskQueue = new PriorityQueue<IScheduledRunnable>();
 
@@ -177,7 +177,7 @@ namespace DotNetty.Common.Concurrency
             }
             else
             {
-                this.Execute((e, t) => ((AbstractScheduledEventExecutor)e).ScheduledTaskQueue.Enqueue((IScheduledRunnable)t), this, task);
+                this.Execute(EnqueueRunnableAction, this, task);
             }
             return task;
         }
@@ -190,7 +190,7 @@ namespace DotNetty.Common.Concurrency
             }
             else
             {
-                this.Execute((e, t) => ((AbstractScheduledEventExecutor)e).ScheduledTaskQueue.Remove((IScheduledRunnable)t), this, task);
+                this.Execute(RemoveRunnableAction, this, task);
             }
         }
     }

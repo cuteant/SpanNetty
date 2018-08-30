@@ -22,14 +22,15 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected override void Decode(IChannelHandlerContext ctx, WebSocketFrame frame, List<object> output)
         {
-            switch (frame)
+            switch (frame.Opcode)
             {
-                case PingWebSocketFrame _:
-                    frame.Content.Retain();
-                    ctx.Channel.WriteAndFlushAsync(new PongWebSocketFrame(frame.Content));
+                case Opcode.Ping:
+                    var contect = frame.Content;
+                    contect.Retain();
+                    ctx.Channel.WriteAndFlushAsync(new PongWebSocketFrame(contect));
                     return;
 
-                case PongWebSocketFrame _ when this.dropPongFrames:
+                case Opcode.Pong when this.dropPongFrames:
                     // Pong frames need to get ignored
                     return;
 

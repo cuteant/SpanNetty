@@ -14,7 +14,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using static HttpVersion;
     using static HttpResponseStatus;
 
-    class WebSocketServerProtocolHandshakeHandler : ChannelHandlerAdapter
+    partial class WebSocketServerProtocolHandshakeHandler : ChannelHandlerAdapter
     {
         readonly string websocketPath;
         readonly string subprotocols;
@@ -69,21 +69,21 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     Task task = handshaker.HandshakeAsync(ctx.Channel, req);
 #if NET40
-                    void linkOutcomeContinuationAction(Task t)
+                    void onFireUserEventTriggered(Task t)
                     {
-                        if (t.Status != TaskStatus.RanToCompletion)
-                        {
-                            ctx.FireExceptionCaught(t.Exception);
-                        }
-                        else
+                        if (t.Status == TaskStatus.RanToCompletion)
                         {
                             ctx.FireUserEventTriggered(new WebSocketServerProtocolHandler.HandshakeComplete(
                                 req.Uri, req.Headers, handshaker.SelectedSubprotocol));
                         }
+                        else
+                        {
+                            ctx.FireExceptionCaught(t.Exception);
+                        }
                     }
-                    task.ContinueWith(linkOutcomeContinuationAction, TaskContinuationOptions.ExecuteSynchronously);
+                    task.ContinueWith(onFireUserEventTriggered, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                    task.ContinueWith(LinkOutcomeContinuationAction, Tuple.Create(ctx, req, handshaker), TaskContinuationOptions.ExecuteSynchronously);
+                    task.ContinueWith(FireUserEventTriggeredAction, Tuple.Create(ctx, req, handshaker), TaskContinuationOptions.ExecuteSynchronously);
 #endif
 
                     WebSocketServerProtocolHandler.SetHandshaker(ctx.Channel, handshaker);
@@ -94,20 +94,6 @@ namespace DotNetty.Codecs.Http.WebSockets
             finally
             {
                 req.Release();
-            }
-        }
-
-        static void LinkOutcomeContinuationAction(Task t, object state)
-        {
-            var wrapped = (Tuple<IChannelHandlerContext, IFullHttpRequest, WebSocketServerHandshaker>)state;
-            if (t.Status != TaskStatus.RanToCompletion)
-            {
-                wrapped.Item1.FireExceptionCaught(t.Exception);
-            }
-            else
-            {
-                wrapped.Item1.FireUserEventTriggered(new WebSocketServerProtocolHandler.HandshakeComplete(
-                    wrapped.Item2.Uri, wrapped.Item2.Headers, wrapped.Item3.SelectedSubprotocol));
             }
         }
 
@@ -124,14 +110,9 @@ namespace DotNetty.Codecs.Http.WebSockets
                 void closeOnComplete(Task t) => ctx.Channel.CloseAsync();
                 task.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                task.ContinueWith(CloseOnComplete, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
+                task.ContinueWith(CloseOnCompleteAction, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
 #endif
             }
-        }
-
-        static void CloseOnComplete(Task t, object c)
-        {
-            ((IChannel)c).CloseAsync();
         }
 
         static string GetWebSocketLocation(IChannelPipeline cp, IHttpRequest req, string path)

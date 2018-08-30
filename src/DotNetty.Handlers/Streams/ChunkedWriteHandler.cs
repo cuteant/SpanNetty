@@ -15,6 +15,7 @@ namespace DotNetty.Handlers.Streams
     public class ChunkedWriteHandler<T> : ChannelDuplexHandler
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChunkedWriteHandler<T>>();
+        static readonly Action<object> InvokeDoFlushAction = OnInvokeDoFlush;
 
         readonly Deque<PendingWrite> queue = new Deque<PendingWrite>();
         volatile IChannelHandlerContext ctx;
@@ -35,7 +36,7 @@ namespace DotNetty.Handlers.Streams
             }
             else
             {
-                this.ctx.Executor.Execute(state => this.InvokeDoFlush((IChannelHandlerContext)state), this.ctx);
+                this.ctx.Executor.Execute(InvokeDoFlushAction, Tuple.Create(this, this.ctx));
             }
         }
 
@@ -67,10 +68,10 @@ namespace DotNetty.Handlers.Streams
 
         void Discard(Exception cause = null)
         {
-            while(true)
+            while (true)
             {
                 PendingWrite current = this.currentWrite;
-                if (this.currentWrite == null)
+                if (current == null)
                 {
                     this.queue.TryRemoveFromFront(out current);
                 }
@@ -85,8 +86,7 @@ namespace DotNetty.Handlers.Streams
                 }
 
                 object message = current.Message;
-                var chunks = message as IChunkedInput<T>;
-                if (chunks != null)
+                if (message is IChunkedInput<T> chunks)
                 {
                     try
                     {
@@ -167,8 +167,7 @@ namespace DotNetty.Handlers.Streams
                 PendingWrite current = this.currentWrite;
                 object pendingMessage = current.Message;
 
-                var chunks = pendingMessage as IChunkedInput<T>;
-                if (chunks != null)
+                if (pendingMessage is IChunkedInput<T> chunks)
                 {
                     bool endOfInput;
                     bool suspend;
@@ -229,63 +228,45 @@ namespace DotNetty.Handlers.Streams
                         //
                         // See https://github.com/netty/netty/issues/303
 #if NET40
-                        future.ContinueWith(_ =>
-                            {
-                                var pendingTask = current;
-                                CloseInput((IChunkedInput<T>)pendingTask.Message);
-                                pendingTask.Success();
-                            },
-                            TaskContinuationOptions.ExecuteSynchronously);
+                        void linkOutcomeWhenIsEndOfChunkedInput(Task task)
+                        {
+                            var pendingTask = current;
+                            CloseInput((IChunkedInput<T>)pendingTask.Message);
+                            pendingTask.Success();
+                        }
+                        future.ContinueWith(linkOutcomeWhenIsEndOfChunkedInput, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                        future.ContinueWith((_, state) =>
-                            {
-                                var pendingTask = (PendingWrite)state;
-                                CloseInput((IChunkedInput<T>)pendingTask.Message);
-                                pendingTask.Success();
-                            },
-                            current, 
-                            TaskContinuationOptions.ExecuteSynchronously);
+                        future.ContinueWith(LinkOutcomeWhenIsEndOfChunkedInput,
+                            current, TaskContinuationOptions.ExecuteSynchronously);
 #endif
                     }
                     else if (channel.IsWritable)
                     {
 #if NET40
-                        future.ContinueWith(task =>
+                        void linkOutcomeWhenChanelIsWritable(Task task)
+                        {
+                            var pendingTask = current;
+                            if (task.IsFaulted)
                             {
-                                var pendingTask = current;
-                                if (task.IsFaulted)
-                                {
-                                    CloseInput((IChunkedInput<T>)pendingTask.Message);
-                                    pendingTask.Fail(task.Exception);
-                                }
-                                else
-                                {
-                                    pendingTask.Progress(chunks.Progress, chunks.Length);
-                                }
-                            },
-                            TaskContinuationOptions.ExecuteSynchronously);
+                                CloseInput((IChunkedInput<T>)pendingTask.Message);
+                                pendingTask.Fail(task.Exception);
+                            }
+                            else
+                            {
+                                pendingTask.Progress(chunks.Progress, chunks.Length);
+                            }
+                        }
+                        future.ContinueWith(linkOutcomeWhenChanelIsWritable, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                        future.ContinueWith((task, state) =>
-                            {
-                                var pendingTask = (PendingWrite)state;
-                                if (task.IsFaulted)
-                                {
-                                    CloseInput((IChunkedInput<T>)pendingTask.Message);
-                                    pendingTask.Fail(task.Exception);
-                                }
-                                else
-                                {
-                                    pendingTask.Progress(chunks.Progress, chunks.Length);
-                                }
-                            },
-                            current,
+                        future.ContinueWith(LinkOutcomeWhenChanelIsWritable,
+                            Tuple.Create(current, chunks),
                             TaskContinuationOptions.ExecuteSynchronously);
 #endif
                     }
                     else
                     {
 #if NET40
-                        future.ContinueWith(task =>
+                        void linkOutcome(Task task)
                         {
                             var handler = this;
                             if (task.IsFaulted)
@@ -301,28 +282,12 @@ namespace DotNetty.Handlers.Streams
                                     handler.ResumeTransfer();
                                 }
                             }
-                        },
-                        TaskContinuationOptions.ExecuteSynchronously);
+                        }
+                        future.ContinueWith(linkOutcome, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                        future.ContinueWith((task, state) =>
-                        {
-                            var handler = (ChunkedWriteHandler<T>) state;
-                            if (task.IsFaulted)
-                            {
-                                CloseInput((IChunkedInput<T>)handler.currentWrite.Message);
-                                handler.currentWrite.Fail(task.Exception);
-                            }
-                            else
-                            {
-                                handler.currentWrite.Progress(chunks.Progress, chunks.Length);
-                                if (channel.IsWritable)
-                                {
-                                    handler.ResumeTransfer();
-                                }
-                            }
-                        },
-                        this,
-                        TaskContinuationOptions.ExecuteSynchronously);
+                        future.ContinueWith(LinkOutcome,
+                            Tuple.Create(this, chunks, channel),
+                            TaskContinuationOptions.ExecuteSynchronously);
 #endif
                     }
 
@@ -333,36 +298,23 @@ namespace DotNetty.Handlers.Streams
                 else
                 {
 #if NET40
+                    void linkNonChunkedOutcome(Task task)
+                    {
+                        var pendingTask = current;
+                        if (task.IsFaulted)
+                        {
+                            pendingTask.Fail(task.Exception);
+                        }
+                        else
+                        {
+                            pendingTask.Success();
+                        }
+                    }
                     context.WriteAsync(pendingMessage)
-                        .ContinueWith(task =>
-                            {
-                                var pendingTask = current;
-                                if (task.IsFaulted)
-                                {
-                                    pendingTask.Fail(task.Exception);
-                                }
-                                else
-                                {
-                                    pendingTask.Success();
-                                }
-                            },
-                            TaskContinuationOptions.ExecuteSynchronously);
+                        .ContinueWith(linkNonChunkedOutcome, TaskContinuationOptions.ExecuteSynchronously);
 #else
                     context.WriteAsync(pendingMessage)
-                        .ContinueWith((task, state) =>
-                            {
-                                var pendingTask = (PendingWrite)state;
-                                if (task.IsFaulted)
-                                {
-                                    pendingTask.Fail(task.Exception);
-                                }
-                                else
-                                {
-                                    pendingTask.Success();
-                                }
-                            },
-                            current,
-                            TaskContinuationOptions.ExecuteSynchronously);
+                        .ContinueWith(LinkNonChunkedOutcome, current, TaskContinuationOptions.ExecuteSynchronously);
 #endif
 
                     this.currentWrite = null;
@@ -381,7 +333,69 @@ namespace DotNetty.Handlers.Streams
                 context.Flush();
             }
         }
-        
+
+        static void LinkOutcome(Task task, object state)
+        {
+            var wrapped = (Tuple<ChunkedWriteHandler<T>, IChunkedInput<T>, IChannel>)state;
+            var handler = wrapped.Item1;
+            if (task.IsFaulted)
+            {
+                CloseInput((IChunkedInput<T>)handler.currentWrite.Message);
+                handler.currentWrite.Fail(task.Exception);
+            }
+            else
+            {
+                var chunks = wrapped.Item2;
+                handler.currentWrite.Progress(chunks.Progress, chunks.Length);
+                if (wrapped.Item3.IsWritable)
+                {
+                    handler.ResumeTransfer();
+                }
+            }
+        }
+
+        static void LinkOutcomeWhenIsEndOfChunkedInput(Task task, object state)
+        {
+            var pendingTask = (PendingWrite)state;
+            CloseInput((IChunkedInput<T>)pendingTask.Message);
+            pendingTask.Success();
+        }
+
+        static void LinkOutcomeWhenChanelIsWritable(Task task, object state)
+        {
+            var wrapped = (Tuple<PendingWrite, IChunkedInput<T>>)state;
+            var pendingTask = wrapped.Item1;
+            if (task.IsFaulted)
+            {
+                CloseInput((IChunkedInput<T>)pendingTask.Message);
+                pendingTask.Fail(task.Exception);
+            }
+            else
+            {
+                var chunks = wrapped.Item2;
+                pendingTask.Progress(chunks.Progress, chunks.Length);
+            }
+        }
+
+        static void LinkNonChunkedOutcome(Task task, object state)
+        {
+            var pendingTask = (PendingWrite)state;
+            if (task.IsFaulted)
+            {
+                pendingTask.Fail(task.Exception);
+            }
+            else
+            {
+                pendingTask.Success();
+            }
+        }
+
+        static void OnInvokeDoFlush(object state)
+        {
+            var wrapped = (Tuple<ChunkedWriteHandler<T>, IChannelHandlerContext>)state;
+            wrapped.Item1.InvokeDoFlush(wrapped.Item2);
+        }
+
         static void CloseInput(IChunkedInput<T> chunks)
         {
             try

@@ -15,7 +15,7 @@ namespace DotNetty.Handlers.Streams
 
         readonly Stream input;
         readonly int chunkSize;
-        bool closed;
+        long offset; bool closed;
 
         public ChunkedStream(Stream input) : this(input, DefaultChunkSize)
         {
@@ -30,7 +30,7 @@ namespace DotNetty.Handlers.Streams
             this.chunkSize = chunkSize;
         }
 
-        public long TransferredBytes { get; private set; }
+        public long TransferredBytes => this.offset;
 
         public bool IsEndOfInput => this.closed || (this.input.Position == this.input.Length);
 
@@ -59,7 +59,7 @@ namespace DotNetty.Handlers.Streams
                 // transfer to buffer
                 int count = buffer.SetBytesAsync(buffer.WriterIndex, this.input, readChunkSize, CancellationToken.None).Result;
                 buffer.SetWriterIndex(buffer.WriterIndex + count);
-                this.TransferredBytes += count;
+                this.offset += count;
 
                 release = false;
             }
@@ -76,6 +76,6 @@ namespace DotNetty.Handlers.Streams
 
         public long Length => -1;
 
-        public long Progress => this.TransferredBytes;
+        public long Progress => this.offset;
     }
 }

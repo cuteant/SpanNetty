@@ -7,7 +7,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using System.Threading.Tasks;
     using DotNetty.Transport.Channels;
 
-    class WebSocketClientProtocolHandshakeHandler : ChannelHandlerAdapter
+    partial class WebSocketClientProtocolHandshakeHandler : ChannelHandlerAdapter
     {
         readonly WebSocketClientHandshaker handshaker;
 
@@ -20,7 +20,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             base.ChannelActive(context);
 #if NET40
-            void fireOnComplete(Task t)
+            void fireUserEventTriggeredAction(Task t)
             {
                 if (t.Status == TaskStatus.RanToCompletion)
                 {
@@ -32,24 +32,11 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
             }
             this.handshaker.HandshakeAsync(context.Channel)
-                .ContinueWith(fireOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+                .ContinueWith(fireUserEventTriggeredAction, TaskContinuationOptions.ExecuteSynchronously);
 #else
             this.handshaker.HandshakeAsync(context.Channel)
-                .ContinueWith(FireOnComplete, context, TaskContinuationOptions.ExecuteSynchronously);
+                .ContinueWith(FireUserEventTriggeredAction, context, TaskContinuationOptions.ExecuteSynchronously);
 #endif
-        }
-
-        static void FireOnComplete(Task t, object state)
-        {
-            var ctx = (IChannelHandlerContext)state;
-            if (t.Status == TaskStatus.RanToCompletion)
-            {
-                ctx.FireUserEventTriggered(WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeIssued);
-            }
-            else
-            {
-                ctx.FireExceptionCaught(t.Exception);
-            }
         }
 
         public override void ChannelRead(IChannelHandlerContext ctx, object msg)

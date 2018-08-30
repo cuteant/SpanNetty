@@ -65,10 +65,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         public IWebSocketClientExtension HandshakeExtension(WebSocketExtensionData extensionData)
         {
-            if (!string.Equals(PerMessageDeflateExtension, extensionData.Name, StringComparison.Ordinal))
-            {
-                return null;
-            }
+            if (!IsPerMessageDeflateExtension(extensionData.Name)) { return null; }
 
             bool succeed = true;
             int clientWindowSize = MaxWindowSize;
@@ -186,7 +183,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                 }
             }
 
-            if ((this.requestedServerNoContext && !serverNoContext) 
+            if ((this.requestedServerNoContext && !serverNoContext)
                 || this.requestedServerWindowSize != serverWindowSize)
             {
                 succeed = false;

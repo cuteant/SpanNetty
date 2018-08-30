@@ -12,7 +12,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public abstract class WebSocketClientHandshaker
+    public abstract partial class WebSocketClientHandshaker
     {
         static readonly ClosedChannelException DefaultClosedChannelException = new ClosedChannelException();
 
@@ -113,34 +113,6 @@ namespace DotNetty.Codecs.Http.WebSockets
             return completion.Task;
         }
 
-        static void LinkOutcomeContinuationAction(Task t, object state)
-        {
-            var wrapped = (Tuple<TaskCompletionSource, IChannelPipeline, WebSocketClientHandshaker>)state;
-            switch (t.Status)
-            {
-                case TaskStatus.RanToCompletion:
-                    IChannelPipeline p = wrapped.Item2;
-                    IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
-                    if (ctx == null)
-                    {
-                        wrapped.Item1.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
-                        return;
-                    }
-
-                    p.AddAfter(ctx.Name, "ws-encoder", wrapped.Item3.NewWebSocketEncoder());
-                    wrapped.Item1.TryComplete();
-                    break;
-                case TaskStatus.Canceled:
-                    wrapped.Item1.TrySetCanceled();
-                    break;
-                case TaskStatus.Faulted:
-                    wrapped.Item1.TryUnwrap(t.Exception);
-                    break;
-                default:
-                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
-            }
-        }
-
         protected internal abstract IFullHttpRequest NewHandshakeRequest();
 
         public void FinishHandshake(IChannel channel, IFullHttpResponse response)
@@ -218,7 +190,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 // Delay the removal of the decoder so the user can setup the pipeline if needed to handle
                 // WebSocketFrame messages.
                 // See https://github.com/netty/netty/issues/4533
-                channel.EventLoop.Execute(() => p.Remove(codec));
+                channel.EventLoop.Execute(RemoveHandlerAction, p, codec);
             }
             else
             {
@@ -234,7 +206,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 // Delay the removal of the decoder so the user can setup the pipeline if needed to handle
                 // WebSocketFrame messages.
                 // See https://github.com/netty/netty/issues/4533
-                channel.EventLoop.Execute(() => p.Remove(context.Handler));
+                channel.EventLoop.Execute(RemoveHandlerAction, p, context.Handler);
             }
         }
 

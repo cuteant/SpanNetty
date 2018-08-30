@@ -24,9 +24,9 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected override void Encode(IChannelHandlerContext context, WebSocketFrame message, List<object> output)
         {
-            switch (message)
+            switch (message.Opcode)
             {
-                case TextWebSocketFrame _:
+                case Opcode.Text:
                     // Text frame
                     IByteBuffer data0 = message.Content;
 
@@ -34,7 +34,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     output.Add(data0.Retain());
                     output.Add(_0XFF.Duplicate());
                     break;
-                case CloseWebSocketFrame _:
+                case Opcode.Close:
                     // Close frame, needs to call duplicate to allow multiple writes.
                     // See https://github.com/netty/netty/issues/2768
                     output.Add(_0XFF_0X00.Duplicate());

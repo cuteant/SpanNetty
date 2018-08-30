@@ -380,7 +380,7 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        sealed class DelegatingChannelHandlerContext : IChannelHandlerContext
+        sealed partial class DelegatingChannelHandlerContext : IChannelHandlerContext
         {
 
             readonly IChannelHandlerContext ctx;
@@ -514,7 +514,7 @@ namespace DotNetty.Transport.Channels
                 }
                 else
                 {
-                    executor.Execute(() => this.Remove0());
+                    executor.Execute(RemoveAction, this);
                 }
             }
 

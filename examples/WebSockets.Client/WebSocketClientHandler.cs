@@ -30,6 +30,8 @@ namespace WebSockets.Client
 
         public Task HandshakeCompletion => this.completionSource.Task;
 
+        public override void ChannelReadComplete(IChannelHandlerContext context) => context.Flush();
+
         public override void ChannelActive(IChannelHandlerContext ctx) => 
             this.handshaker.HandshakeAsync(ctx.Channel).LinkOutcome(this.completionSource);
 
@@ -91,19 +93,9 @@ namespace WebSockets.Client
         {
             if (evt is IdleStateEvent stateEvent)
             {
-                switch (stateEvent.State)
-                {
-                    case IdleState.ReaderIdle:
-                        s_logger.LogWarning($"{nameof(WebSocketClientHandler)} caught idle state: {IdleState.ReaderIdle}");
-                        break;
-                    case IdleState.WriterIdle:
-                        s_logger.LogWarning($"{nameof(WebSocketClientHandler)} caught idle state: {IdleState.WriterIdle}");
-                        var frame = new PingWebSocketFrame(Unpooled.WrappedBuffer(new byte[] { 8, 1, 8, 1 }));
-                        context.Channel.WriteAndFlushAsync(frame);
-                        break;
-                    default:
-                        break;
-                }
+                s_logger.LogWarning($"{nameof(WebSocketClientHandler)} caught idle state: {stateEvent.State}");
+                var frame = new PingWebSocketFrame(Unpooled.WrappedBuffer(new byte[] { 8, 1, 8, 1 }));
+                context.Channel.WriteAndFlushAsync(frame);
             }
         }
     }

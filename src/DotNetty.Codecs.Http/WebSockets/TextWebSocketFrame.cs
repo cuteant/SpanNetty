@@ -9,32 +9,42 @@ namespace DotNetty.Codecs.Http.WebSockets
     public class TextWebSocketFrame : WebSocketFrame
     {
         public TextWebSocketFrame()
-            : base(true, 0, ArrayPooled.Buffer(0))
+            : base(true, 0, Opcode.Text, ArrayPooled.Buffer(0))
         {
         }
 
         public TextWebSocketFrame(string text)
-            : base(true, 0, FromText(text))
+            : base(true, 0, Opcode.Text, FromText(text))
         {
         }
 
         public TextWebSocketFrame(IByteBuffer binaryData)
-            : base(true, 0, binaryData)
+            : base(true, 0, Opcode.Text, binaryData)
+        {
+        }
+
+        public TextWebSocketFrame(bool finalFragment, string text)
+            : base(finalFragment, 0, Opcode.Text, FromText(text))
+        {
+        }
+
+        public TextWebSocketFrame(bool finalFragment, IByteBuffer binaryData)
+            : base(finalFragment, 0, Opcode.Text, binaryData)
         {
         }
 
         public TextWebSocketFrame(bool finalFragment, int rsv, string text)
-            : base(finalFragment, rsv, FromText(text))
+            : base(finalFragment, rsv, Opcode.Text, FromText(text))
+        {
+        }
+
+        public TextWebSocketFrame(bool finalFragment, int rsv, IByteBuffer binaryData)
+            : base(finalFragment, rsv, Opcode.Text, binaryData)
         {
         }
 
         static IByteBuffer FromText(string text) => string.IsNullOrEmpty(text)
             ? Unpooled.Empty : Unpooled.CopiedBuffer(text, Encoding.UTF8);
-
-        public TextWebSocketFrame(bool finalFragment, int rsv, IByteBuffer binaryData)
-            : base(finalFragment, rsv, binaryData)
-        {
-        }
 
         public string Text() => this.Content.ToString(Encoding.UTF8);
 

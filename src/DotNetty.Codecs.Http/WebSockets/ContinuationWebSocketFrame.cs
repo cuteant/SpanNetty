@@ -9,17 +9,27 @@ namespace DotNetty.Codecs.Http.WebSockets
     public class ContinuationWebSocketFrame : WebSocketFrame
     {
         public ContinuationWebSocketFrame()
-            : base(true, 0, ArrayPooled.Buffer(0))
+            : base(true, 0, Opcode.Cont, ArrayPooled.Buffer(0))
         {
         }
 
         public ContinuationWebSocketFrame(IByteBuffer binaryData)
-            : base(true, 0, binaryData)
+            : base(true, 0, Opcode.Cont, binaryData)
+        {
+        }
+
+        public ContinuationWebSocketFrame(bool finalFragment, IByteBuffer binaryData)
+            : base(finalFragment, 0, Opcode.Cont, binaryData)
+        {
+        }
+
+        public ContinuationWebSocketFrame(bool finalFragment, string text)
+            : this(finalFragment, 0, FromText(text))
         {
         }
 
         public ContinuationWebSocketFrame(bool finalFragment, int rsv, IByteBuffer binaryData)
-            : base(finalFragment, rsv, binaryData)
+            : base(finalFragment, rsv, Opcode.Cont, binaryData)
         {
         }
 

@@ -16,7 +16,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public abstract class WebSocketServerHandshaker
+    public abstract partial class WebSocketServerHandshaker
     {
         protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<WebSocketServerHandshaker>();
         static readonly ClosedChannelException ClosedChannelException = new ClosedChannelException();
@@ -119,7 +119,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 
 #if NET40
-            void linkOutcomeContinuationAction(Task t)
+            void removeHandlerAfterWrite(Task t)
             {
                 if (t.Status == TaskStatus.RanToCompletion)
                 {
@@ -131,24 +131,10 @@ namespace DotNetty.Codecs.Http.WebSockets
                     completion.TrySetException(t.Exception);
                 }
             }
-            channel.WriteAndFlushAsync(response).ContinueWith(linkOutcomeContinuationAction, TaskContinuationOptions.ExecuteSynchronously);
+            channel.WriteAndFlushAsync(response).ContinueWith(removeHandlerAfterWrite, TaskContinuationOptions.ExecuteSynchronously);
 #else
-            channel.WriteAndFlushAsync(response).ContinueWith(LinkOutcomeContinuationAction, Tuple.Create(completion, p, encoderName), TaskContinuationOptions.ExecuteSynchronously);
+            channel.WriteAndFlushAsync(response).ContinueWith(RemoveHandlerAfterWriteAction, Tuple.Create(completion, p, encoderName), TaskContinuationOptions.ExecuteSynchronously);
 #endif
-        }
-
-        static void LinkOutcomeContinuationAction(Task t, object state)
-        {
-            var wrapped = (Tuple<TaskCompletionSource, IChannelPipeline, string>)state;
-            if (t.Status == TaskStatus.RanToCompletion)
-            {
-                wrapped.Item2.Remove(wrapped.Item3);
-                wrapped.Item1.TryComplete();
-            }
-            else
-            {
-                wrapped.Item1.TrySetException(t.Exception);
-            }
         }
 
         public Task HandshakeAsync(IChannel channel, IHttpRequest req, HttpHeaders responseHeaders)
@@ -240,13 +226,8 @@ namespace DotNetty.Codecs.Http.WebSockets
             void closeOnComplete(Task t) => channel.CloseAsync();
             return channel.WriteAndFlushAsync(frame).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
-            return channel.WriteAndFlushAsync(frame).ContinueWith(CloseOnComplete, channel, TaskContinuationOptions.ExecuteSynchronously);
+            return channel.WriteAndFlushAsync(frame).ContinueWith(CloseOnCompleteAction, channel, TaskContinuationOptions.ExecuteSynchronously);
 #endif
-        }
-
-        static void CloseOnComplete(Task t, object s)
-        {
-            ((IChannel)s).CloseAsync();
         }
 
         protected string SelectSubprotocol(string requestedSubprotocols)

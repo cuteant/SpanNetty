@@ -3,6 +3,8 @@
 
 namespace DotNetty.Transport.Channels
 {
+    using System;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
 
     partial class AbstractChannel<TChannel, TUnsafe> : DefaultAttributeMap, IChannel
@@ -10,5 +12,15 @@ namespace DotNetty.Transport.Channels
         where TUnsafe : AbstractChannel<TChannel, TUnsafe>.AbstractUnsafe, new()
     {
         public bool Equals(IChannel other) => ReferenceEquals(this, other);
+
+        partial class AbstractUnsafe
+        {
+            static readonly Action<object, object> RegisterAction = OnRegister;
+
+            private static void OnRegister(object u, object p)
+            {
+                ((AbstractUnsafe)u).Register0((TaskCompletionSource)p);
+            }
+        }
     }
 }

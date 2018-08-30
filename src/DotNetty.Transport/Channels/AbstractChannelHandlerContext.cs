@@ -262,7 +262,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                nextExecutor.Execute(c => ((AbstractChannelHandlerContext)c).InvokeChannelRegistered(), next);
+                nextExecutor.Execute(InvokeChannelRegisteredAction, next);
             }
         }
 
@@ -300,7 +300,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                nextExecutor.Execute(c => ((AbstractChannelHandlerContext)c).InvokeChannelUnregistered(), next);
+                nextExecutor.Execute(InvokeChannelUnregisteredAction, next);
             }
         }
 
@@ -338,7 +338,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                nextExecutor.Execute(c => ((AbstractChannelHandlerContext)c).InvokeChannelActive(), next);
+                nextExecutor.Execute(InvokeChannelActiveAction, next);
             }
         }
 
@@ -376,7 +376,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                nextExecutor.Execute(c => ((AbstractChannelHandlerContext)c).InvokeChannelInactive(), next);
+                nextExecutor.Execute(InvokeChannelInactiveAction, next);
             }
         }
 
@@ -418,7 +418,7 @@ namespace DotNetty.Transport.Channels
             {
                 try
                 {
-                    nextExecutor.Execute((c, e) => ((AbstractChannelHandlerContext)c).InvokeExceptionCaught((Exception)e), next, cause);
+                    nextExecutor.Execute(InvokeExceptionCaughtAction, next, cause);
                 }
                 catch (Exception t)
                 {
@@ -944,7 +944,7 @@ namespace DotNetty.Transport.Channels
             var promise = new TaskCompletionSource();
             try
             {
-                executor.Execute((p, func) => ((Func<Task>)func)().LinkOutcome((TaskCompletionSource)p), promise, function);
+                executor.Execute(SafeExecuteOutboundAsyncAction, promise, function);
             }
             catch (Exception cause)
             {

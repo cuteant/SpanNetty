@@ -5,24 +5,24 @@ namespace DotNetty.Common
 {
     using System.Collections.Generic;
 
-    public class ThreadLocalObjectList : List<object>
+    public class ThreadLocalList<T> : List<T>
     {
         const int DefaultInitialCapacity = 8;
 
-        static readonly ThreadLocalPool<ThreadLocalObjectList> Pool = new ThreadLocalPool<ThreadLocalObjectList>(handle => new ThreadLocalObjectList(handle));
+        static readonly ThreadLocalPool<ThreadLocalList<T>> Pool = new ThreadLocalPool<ThreadLocalList<T>>(handle => new ThreadLocalList<T>(handle));
 
         readonly ThreadLocalPool.Handle returnHandle;
 
-        ThreadLocalObjectList(ThreadLocalPool.Handle returnHandle)
+        ThreadLocalList(ThreadLocalPool.Handle returnHandle)
         {
             this.returnHandle = returnHandle;
         }
 
-        public static ThreadLocalObjectList NewInstance() => Pool.Take(); //NewInstance(DefaultInitialCapacity);
+        public static ThreadLocalList<T> NewInstance() => Pool.Take();
 
-        public static ThreadLocalObjectList NewInstance(int minCapacity)
+        public static ThreadLocalList<T> NewInstance(int minCapacity)
         {
-            ThreadLocalObjectList ret = Pool.Take();
+            var ret = Pool.Take();
             if (ret.Capacity < minCapacity)
             {
                 ret.Capacity = minCapacity;

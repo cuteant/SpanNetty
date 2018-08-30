@@ -10,17 +10,17 @@ namespace DotNetty.Codecs.Http.WebSockets
     public class CloseWebSocketFrame : WebSocketFrame
     {
         public CloseWebSocketFrame() 
-            : base(true, 0, ArrayPooled.Buffer(0))
+            : base(true, 0, Opcode.Close, ArrayPooled.Buffer(0))
         {
         }
 
         public CloseWebSocketFrame(bool finalFragment, int rsv)
-            : base(finalFragment, rsv, ArrayPooled.Buffer(0))
+            : base(finalFragment, rsv, Opcode.Close, ArrayPooled.Buffer(0))
         {
         }
 
         public CloseWebSocketFrame(bool finalFragment, int rsv, IByteBuffer binaryData)
-            : base(finalFragment, rsv, binaryData)
+            : base(finalFragment, rsv, Opcode.Close, binaryData)
         {
         }
 
@@ -30,7 +30,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         }
 
         public CloseWebSocketFrame(bool finalFragment, int rsv, int statusCode, ICharSequence reasonText)
-            : base(finalFragment, rsv, NewBinaryData(statusCode, reasonText))
+            : base(finalFragment, rsv, Opcode.Close, NewBinaryData(statusCode, reasonText))
         {
         }
 

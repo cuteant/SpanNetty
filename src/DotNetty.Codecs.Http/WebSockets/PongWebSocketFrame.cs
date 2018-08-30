@@ -8,17 +8,17 @@ namespace DotNetty.Codecs.Http.WebSockets
     public class PongWebSocketFrame : WebSocketFrame
     {
         public PongWebSocketFrame()
-            : base(true, 0, ArrayPooled.Buffer(0))
+            : base(true, 0, Opcode.Pong, ArrayPooled.Buffer(0))
         {
         }
 
         public PongWebSocketFrame(IByteBuffer binaryData)
-            : base(true, 0, binaryData)
+            : base(true, 0, Opcode.Pong, binaryData)
         {
         }
 
         public PongWebSocketFrame(bool finalFragment, int rsv, IByteBuffer binaryData)
-            : base(finalFragment, rsv, binaryData)
+            : base(finalFragment, rsv, Opcode.Pong, binaryData)
         {
         }
 
