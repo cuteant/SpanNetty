@@ -16,7 +16,7 @@ namespace Factorial.Server
 
     class Program
     {
-        static async Task RunServerAsync()
+        static async Task Main(string[] args)
         {
             ExampleHelper.SetConsoleLogger();
 
@@ -57,7 +57,5 @@ namespace Factorial.Server
                 Task.WaitAll(bossGroup.ShutdownGracefullyAsync(), workerGroup.ShutdownGracefullyAsync());
             }
         }
-
-        public static void Main() => RunServerAsync().Wait();
     }
 }

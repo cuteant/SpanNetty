@@ -8,6 +8,15 @@ namespace DotNetty.Codecs.Http
 
     partial class HttpConstants
     {
+        /// <summary>不提供 Unicode 字节顺序标记，检测到无效的编码时不引发异常</summary>
+        public static readonly UTF8Encoding UTF8NoBOM = new UTF8Encoding(false);
+
+        /// <summary>不提供 Unicode 字节顺序标记，检测到无效的编码时引发异常</summary>
+        public static readonly UTF8Encoding SecureUTF8NoBOM = new UTF8Encoding(false, true);
+
+        /// <summary>提供 Unicode 字节顺序标记，检测到无效的编码时引发异常</summary>
+        public static readonly UTF8Encoding SecureUTF8 = new UTF8Encoding(true, true);
+
         /// <summary>'\''</summary>
         public const byte Quote = (byte)'\'';
 

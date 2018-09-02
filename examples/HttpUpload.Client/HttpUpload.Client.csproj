@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp2.1;net451</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.0;net451;net40</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <ServerGarbageCollection>true</ServerGarbageCollection>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net451' ">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -12,10 +12,13 @@
     <None Include="..\..\shared\dotnetty.com.pfx" Link="dotnetty.com.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\NLog.config" Link="NLog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="NLog.config">
+    <None Update="upload.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
@@ -25,8 +28,11 @@
     <ProjectReference Include="..\..\src\DotNetty.Codecs\DotNetty.Codecs.csproj" />
     <ProjectReference Include="..\..\src\DotNetty.Common\DotNetty.Common.csproj" />
     <ProjectReference Include="..\..\src\DotNetty.Handlers\DotNetty.Handlers.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
     <ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.csproj" />
     <ProjectReference Include="..\Examples.Common\Examples.Common.csproj" />
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net40' ">
+    <ProjectReference Include="..\..\src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
+  </ItemGroup>
+
 </Project>

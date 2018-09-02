@@ -51,9 +51,9 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 newpostfix = this.Postfix;
             }
-            string directory = this.BaseDirectory == null
+            string directory = string.IsNullOrWhiteSpace(this.BaseDirectory)
                 ? Path.GetTempPath()
-                : Path.Combine(Path.GetTempPath(), this.BaseDirectory);
+                : Path.IsPathRooted(this.BaseDirectory) ? this.BaseDirectory : Path.Combine(Path.GetTempPath(), this.BaseDirectory);
             // File.createTempFile
             string fileName = Path.Combine(directory, $"{this.Prefix}{Path.GetRandomFileName()}{newpostfix}");
             FileStream tmpFile = File.Create(fileName, 4096, // DefaultBufferSize

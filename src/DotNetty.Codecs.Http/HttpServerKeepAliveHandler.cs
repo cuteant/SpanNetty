@@ -28,7 +28,7 @@ namespace DotNetty.Codecs.Http
                     this.persistentConnection = IsKeepAlive(request);
                 }
             }
-            base.ChannelRead(context, message);
+            context.FireChannelRead(message);
         }
 
         public override Task WriteAsync(IChannelHandlerContext context, object message)
@@ -50,18 +50,17 @@ namespace DotNetty.Codecs.Http
                     SetKeepAlive(response, false);
                 }
             }
+            var completion = context.WriteAsync(message);
             if (message is ILastHttpContent && !this.ShouldKeepAlive())
             {
 #if NET40
                 void closeOnComplete(Task t) => context.CloseAsync();
-                return base.WriteAsync(context, message)
-                    .ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+                completion.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                return base.WriteAsync(context, message)
-                    .ContinueWith(CloseOnComplete, context, TaskContinuationOptions.ExecuteSynchronously);
+                completion.ContinueWith(CloseOnComplete, context, TaskContinuationOptions.ExecuteSynchronously);
 #endif
             }
-            return base.WriteAsync(context, message);
+            return completion;
         }
 
         static void CloseOnComplete(Task task, object state)

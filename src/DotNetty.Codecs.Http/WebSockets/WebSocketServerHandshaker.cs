@@ -10,6 +10,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using System.Collections.Generic;
     using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
+    using DotNetty.Codecs.Http.Cors;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
@@ -84,15 +85,12 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             IFullHttpResponse response = this.NewHandshakeResponse(req, responseHeaders);
             IChannelPipeline p = channel.Pipeline;
-            if (p.Get<HttpObjectAggregator>() != null)
-            {
-                p.Remove<HttpObjectAggregator>();
-            }
 
-            if (p.Get<HttpContentCompressor>() != null)
-            {
-                p.Remove<HttpContentCompressor>();
-            }
+            if (p.Get<HttpObjectAggregator>() != null) { p.Remove<HttpObjectAggregator>(); }
+            if (p.Get<HttpContentCompressor>() != null) { p.Remove<HttpContentCompressor>(); }
+            if (p.Get<CorsHandler>() != null) { p.Remove<CorsHandler>(); }
+            if (p.Get<HttpServerExpectContinueHandler>() != null) { p.Remove<HttpServerExpectContinueHandler>(); }
+            if (p.Get<HttpServerKeepAliveHandler>() != null) { p.Remove<HttpServerKeepAliveHandler>(); }
 
             IChannelHandlerContext ctx = p.Context<HttpRequestDecoder>();
             string encoderName;
@@ -106,9 +104,9 @@ namespace DotNetty.Codecs.Http.WebSockets
                     return;
                 }
 
-                p.AddBefore(ctx.Name, "wsdecoder", this.NewWebsocketDecoder());
-                p.AddBefore(ctx.Name, "wsencoder", this.NewWebSocketEncoder());
                 encoderName = ctx.Name;
+                p.AddBefore(encoderName, "wsdecoder", this.NewWebsocketDecoder());
+                p.AddBefore(encoderName, "wsencoder", this.NewWebSocketEncoder());
             }
             else
             {

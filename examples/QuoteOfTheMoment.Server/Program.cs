@@ -13,7 +13,7 @@ namespace QuoteOfTheMoment.Server
 
     class Program
     {
-        static async Task RunServerAsync()
+        static async Task Main(string[] args)
         {
             ExampleHelper.SetConsoleLogger();
 
@@ -43,7 +43,5 @@ namespace QuoteOfTheMoment.Server
                 await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
             }
         }
-
-        static void Main() => RunServerAsync().Wait();
     }
 }

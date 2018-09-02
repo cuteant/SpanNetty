@@ -19,7 +19,7 @@ namespace Telnet.Client
 
     class Program
     {
-        static async Task RunClientAsync()
+        static async Task Main(string[] args)
         {
             ExampleHelper.SetConsoleLogger();
 
@@ -84,7 +84,5 @@ namespace Telnet.Client
                 group.ShutdownGracefullyAsync().Wait(1000);
             }
         }
-
-        static void Main() => RunClientAsync().Wait();
     }
 }

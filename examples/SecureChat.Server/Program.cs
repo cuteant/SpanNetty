@@ -17,7 +17,7 @@ namespace SecureChat.Server
 
     class Program
     {
-        static async Task RunServerAsync()
+        static async Task Main(string[] args)
         {
             ExampleHelper.SetConsoleLogger();
 
@@ -65,7 +65,5 @@ namespace SecureChat.Server
                 Task.WaitAll(bossGroup.ShutdownGracefullyAsync(), workerGroup.ShutdownGracefullyAsync());
             }
         }
-
-        static void Main() => RunServerAsync().Wait();
     }
 }

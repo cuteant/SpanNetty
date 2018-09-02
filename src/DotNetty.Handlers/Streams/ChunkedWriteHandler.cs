@@ -16,6 +16,10 @@ namespace DotNetty.Handlers.Streams
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChunkedWriteHandler<T>>();
         static readonly Action<object> InvokeDoFlushAction = OnInvokeDoFlush;
+        static readonly Action<Task, object> LinkNonChunkedOutcomeAction = LinkNonChunkedOutcome;
+        static readonly Action<Task, object> LinkOutcomeWhenChanelIsWritableAction = LinkOutcomeWhenChanelIsWritable;
+        static readonly Action<Task, object> LinkOutcomeWhenIsEndOfChunkedInputAction = LinkOutcomeWhenIsEndOfChunkedInput;
+        static readonly Action<Task, object> LinkOutcomeAction = LinkOutcome;
 
         readonly Deque<PendingWrite> queue = new Deque<PendingWrite>();
         volatile IChannelHandlerContext ctx;
@@ -236,8 +240,7 @@ namespace DotNetty.Handlers.Streams
                         }
                         future.ContinueWith(linkOutcomeWhenIsEndOfChunkedInput, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                        future.ContinueWith(LinkOutcomeWhenIsEndOfChunkedInput,
-                            current, TaskContinuationOptions.ExecuteSynchronously);
+                        future.ContinueWith(LinkOutcomeWhenIsEndOfChunkedInputAction, current, TaskContinuationOptions.ExecuteSynchronously);
 #endif
                     }
                     else if (channel.IsWritable)
@@ -258,9 +261,8 @@ namespace DotNetty.Handlers.Streams
                         }
                         future.ContinueWith(linkOutcomeWhenChanelIsWritable, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                        future.ContinueWith(LinkOutcomeWhenChanelIsWritable,
-                            Tuple.Create(current, chunks),
-                            TaskContinuationOptions.ExecuteSynchronously);
+                        future.ContinueWith(LinkOutcomeWhenChanelIsWritableAction,
+                            Tuple.Create(current, chunks), TaskContinuationOptions.ExecuteSynchronously);
 #endif
                     }
                     else
@@ -285,9 +287,8 @@ namespace DotNetty.Handlers.Streams
                         }
                         future.ContinueWith(linkOutcome, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                        future.ContinueWith(LinkOutcome,
-                            Tuple.Create(this, chunks, channel),
-                            TaskContinuationOptions.ExecuteSynchronously);
+                        future.ContinueWith(LinkOutcomeAction,
+                            Tuple.Create(this, chunks, channel), TaskContinuationOptions.ExecuteSynchronously);
 #endif
                     }
 
@@ -314,7 +315,7 @@ namespace DotNetty.Handlers.Streams
                         .ContinueWith(linkNonChunkedOutcome, TaskContinuationOptions.ExecuteSynchronously);
 #else
                     context.WriteAsync(pendingMessage)
-                        .ContinueWith(LinkNonChunkedOutcome, current, TaskContinuationOptions.ExecuteSynchronously);
+                        .ContinueWith(LinkNonChunkedOutcomeAction, current, TaskContinuationOptions.ExecuteSynchronously);
 #endif
 
                     this.currentWrite = null;

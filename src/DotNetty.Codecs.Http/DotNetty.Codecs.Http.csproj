@@ -15,6 +15,13 @@
     <Description>General purpose codecs for DotNetty：the complete port of the DotNetty.Codecs assembly to support .NET 4.0 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;http</PackageTags>
   </PropertyGroup>
+  
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+    <PackageReference Include="Net40.Text.Encodings.Web" Version="$(SystemTextEncodingsWebNet40PackageVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net40' ">
+    <PackageReference Include="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebPackageVersion)" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DotNetty.Handlers\DotNetty.Handlers.csproj" />

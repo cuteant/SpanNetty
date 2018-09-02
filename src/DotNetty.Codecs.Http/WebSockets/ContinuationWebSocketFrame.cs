@@ -41,7 +41,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public string Text() => this.Content.ToString(Encoding.UTF8);
 
         static IByteBuffer FromText(string text) => string.IsNullOrEmpty(text)
-            ? Unpooled.Empty : Unpooled.CopiedBuffer(text, Encoding.UTF8);
+            ? Unpooled.Empty : ArrayPooled.CopiedBuffer(text, Encoding.UTF8);
 
         public override IByteBufferHolder Replace(IByteBuffer content) => new ContinuationWebSocketFrame(this.IsFinalFragment, this.Rsv, content);
     }

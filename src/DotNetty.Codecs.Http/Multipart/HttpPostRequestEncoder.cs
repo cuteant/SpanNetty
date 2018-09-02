@@ -19,6 +19,7 @@ namespace DotNetty.Codecs.Http.Multipart
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
     using DotNetty.Handlers.Streams;
+    using System.Text.Encodings.Web;
 
     public class HttpPostRequestEncoder : IChunkedInput<IHttpContent>
     {
@@ -83,6 +84,8 @@ namespace DotNetty.Codecs.Http.Multipart
 
         readonly EncoderMode encoderMode;
 
+        readonly TextEncoder urlEncoder;
+
         public HttpPostRequestEncoder(IHttpRequest request, bool multipart)
             : this(new DefaultHttpDataFactory(DefaultHttpDataFactory.MinSize), request, multipart, 
                   HttpConstants.DefaultEncoding, EncoderMode.RFC1738)
@@ -91,6 +94,11 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public HttpPostRequestEncoder(IHttpDataFactory factory, IHttpRequest request, bool multipart)
             : this(factory, request, multipart, HttpConstants.DefaultEncoding, EncoderMode.RFC1738)
+        {
+        }
+
+        public HttpPostRequestEncoder(IHttpDataFactory factory, IHttpRequest request, bool multipart, EncoderMode encoderMode)
+            : this(factory, request, multipart, HttpConstants.DefaultEncoding, encoderMode)
         {
         }
 
@@ -104,6 +112,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
             this.request = request;
             this.charset = charset;
+            if (charset.CodePage == 65001) { this.urlEncoder = System.Text.Encodings.Web.UrlEncoder.Default; }
             this.factory = factory;
             HttpMethod method = request.Method;
             if (method.Equals(HttpMethod.Trace))
@@ -653,7 +662,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 return string.Empty;
             }
 
-            string encoded = UrlEncoder.Encode(value, stringEncoding);
+            string encoded = this.urlEncoder != null ? this.urlEncoder.Encode(value) : Http.UrlEncoder.Encode(value, stringEncoding);
             if (this.encoderMode == EncoderMode.RFC3986)
             {
                 foreach (KeyValuePair<Regex, string> entry in PercentEncodings)

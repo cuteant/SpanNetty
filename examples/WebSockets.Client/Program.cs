@@ -28,7 +28,7 @@ namespace WebSockets.Client
     {
         private const string WEBSOCKET_PATH = "/websocket";
 
-        static async Task RunClientAsync()
+        static async Task Main(string[] args)
         {
             var builder = new UriBuilder
             {
@@ -161,7 +161,5 @@ namespace WebSockets.Client
                 await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
             }
         }
-
-        async static Task Main() => await RunClientAsync();
     }
 }

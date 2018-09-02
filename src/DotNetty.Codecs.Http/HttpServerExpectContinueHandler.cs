@@ -28,38 +28,31 @@ namespace DotNetty.Codecs.Http
 
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
-            if (message is IHttpRequest req)
+            if (message is IHttpRequest req && HttpUtil.Is100ContinueExpected(req))
             {
-                if (HttpUtil.Is100ContinueExpected(req))
+                IHttpResponse accept = this.AcceptMessage(req);
+
+                if (accept == null)
                 {
-                    IHttpResponse accept = this.AcceptMessage(req);
-
-                    if (accept == null)
-                    {
-                        // the expectation failed so we refuse the request.
-                        IHttpResponse rejection = this.RejectResponse(req);
-                        ReferenceCountUtil.Release(message);
+                    // the expectation failed so we refuse the request.
+                    IHttpResponse rejection = this.RejectResponse(req);
+                    ReferenceCountUtil.Release(message);
 #if NET40
-                        context.WriteAndFlushAsync(rejection)
-                            .ContinueWith(closeOnFailure, TaskContinuationOptions.ExecuteSynchronously);
+                    context.WriteAndFlushAsync(rejection).ContinueWith(closeOnFailure, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                        context.WriteAndFlushAsync(rejection)
-                            .ContinueWith(CloseOnFailure, context, TaskContinuationOptions.ExecuteSynchronously);
+                    context.WriteAndFlushAsync(rejection).ContinueWith(CloseOnFailure, context, TaskContinuationOptions.ExecuteSynchronously);
 #endif
-                        return;
-                    }
-
-#if NET40
-                    context.WriteAndFlushAsync(accept)
-                        .ContinueWith(closeOnFailure, TaskContinuationOptions.ExecuteSynchronously);
-#else
-                    context.WriteAndFlushAsync(accept)
-                        .ContinueWith(CloseOnFailure, context, TaskContinuationOptions.ExecuteSynchronously);
-#endif
-                    req.Headers.Remove(HttpHeaderNames.Expect);
+                    return;
                 }
-                base.ChannelRead(context, message);
+
+#if NET40
+                context.WriteAndFlushAsync(accept).ContinueWith(closeOnFailure, TaskContinuationOptions.ExecuteSynchronously);
+#else
+                context.WriteAndFlushAsync(accept).ContinueWith(CloseOnFailure, context, TaskContinuationOptions.ExecuteSynchronously);
+#endif
+                req.Headers.Remove(HttpHeaderNames.Expect);
             }
+            context.FireChannelRead(message);
 #if NET40
             void closeOnFailure(Task task)
             {

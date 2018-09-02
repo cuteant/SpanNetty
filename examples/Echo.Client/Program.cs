@@ -18,7 +18,7 @@ namespace Echo.Client
 
     class Program
     {
-        static async Task RunClientAsync()
+        static async Task Main(string[] args)
         {
             ExampleHelper.SetConsoleLogger();
 
@@ -63,11 +63,6 @@ namespace Echo.Client
             {
                 await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
             }
-        }
-
-        static void Main()
-        {
-            RunClientAsync().Wait();
         }
     }
 }

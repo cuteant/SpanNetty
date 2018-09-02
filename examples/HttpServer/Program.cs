@@ -27,7 +27,7 @@ namespace HttpServer
             ResourceLeakDetector.Level = ResourceLeakDetector.DetectionLevel.Disabled;
         }
 
-        static async Task RunServerAsync()
+        static async Task Main(string[] args)
         {
             ExampleHelper.SetConsoleLogger();
 
@@ -90,7 +90,9 @@ namespace HttpServer
 
                 bootstrap
                     .Option(ChannelOption.SoBacklog, 8192)
+#if DEBUG
                     .Handler(new MsLoggingHandler("LSTN"))
+#endif
                     .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
@@ -98,15 +100,21 @@ namespace HttpServer
                         {
                             pipeline.AddLast(TlsHandler.Server(tlsCertificate));
                         }
+#if DEBUG
                         pipeline.AddLast(new MsLoggingHandler("CONN"));
-                        //pipeline.AddLast("encoder", new HttpResponseEncoder());
-                        //pipeline.AddLast("decoder", new HttpRequestDecoder(4096, 8192, 8192, false));
-                        pipeline.AddLast(new HttpServerCodec(4096, 8192, 8192, false));
+#endif
+                        pipeline.AddLast("encoder", new HttpResponseEncoder());
+                        pipeline.AddLast("decoder", new HttpRequestDecoder(4096, 8192, 8192, false));
+                        //pipeline.AddLast(new HttpServerCodec(4096, 8192, 8192, false));
+
+                        //pipeline.AddLast(new HttpObjectAggregator(65536));
+
                         pipeline.AddLast(new HttpServerExpectContinueHandler());
+
                         pipeline.AddLast("handler", new HelloServerHandler());
                     }));
 
-                IChannel bootstrapChannel = await bootstrap.BindAsync(IPAddress.IPv6Any, ServerSettings.Port);
+                IChannel bootstrapChannel = await bootstrap.BindAsync(ServerSettings.Port);
 
                 Console.WriteLine($"Httpd started. Listening on {bootstrapChannel.LocalAddress}");
                 Console.ReadLine();
@@ -118,7 +126,5 @@ namespace HttpServer
                 group.ShutdownGracefullyAsync().Wait();
             }
         }
-
-        static void Main() => RunServerAsync().Wait();
     }
 }

@@ -287,7 +287,7 @@ namespace DotNetty.Buffers
             return null == array || length == 0 ? Empty : CopiedBuffer(new string(array, offset, length), encoding);
         }
 
-        private static IByteBuffer CopiedBuffer(string value, Encoding encoding) => ByteBufferUtil.EncodeString0(Allocator, true, value, encoding, 0);
+        public static IByteBuffer CopiedBuffer(string value, Encoding encoding) => ByteBufferUtil.EncodeString0(Allocator, true, value, encoding, 0);
 
         /// <summary>Creates a new 4-byte big-endian buffer that holds the specified 32-bit integer.</summary>
         public static IByteBuffer CopyInt(int value)

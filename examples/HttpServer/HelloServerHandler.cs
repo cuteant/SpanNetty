@@ -9,6 +9,7 @@ namespace HttpServer
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using System;
+    using System.Threading.Tasks;
     using DotNetty.Common;
 
     sealed class HelloServerHandler : ChannelHandlerAdapter
@@ -37,6 +38,7 @@ namespace HttpServer
         static readonly AsciiString DateEntity = HttpHeaderNames.Date;
         static readonly AsciiString ContentLengthEntity = HttpHeaderNames.ContentLength;
         static readonly AsciiString ServerEntity = HttpHeaderNames.Server;
+        static readonly AsciiString KeepAlive = AsciiString.Cached("keep-alive");
 
         volatile ICharSequence date = Cache.Value;
 
@@ -69,32 +71,40 @@ namespace HttpServer
             switch (uri)
             {
                 case "/plaintext":
-                    this.WriteResponse(ctx, PlaintextContentBuffer.Duplicate(), TypePlain, PlaintextClheaderValue);
+                    this.WriteResponse(ctx, PlaintextContentBuffer.Duplicate(), TypePlain, PlaintextClheaderValue, HttpUtil.IsKeepAlive(request));
                     break;
                 case "/json":
                     byte[] json = Encoding.UTF8.GetBytes(NewMessage().ToJsonFormat());
-                    this.WriteResponse(ctx, Unpooled.WrappedBuffer(json), TypeJson, JsonClheaderValue);
+                    this.WriteResponse(ctx, Unpooled.WrappedBuffer(json), TypeJson, JsonClheaderValue, HttpUtil.IsKeepAlive(request));
                     break;
                 default:
                     var response = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.NotFound, Unpooled.Empty, false);
-                    ctx.WriteAndFlushAsync(response).GetAwaiter().GetResult();
-                    ctx.CloseAsync().GetAwaiter().GetResult();
+                    ctx.WriteAsync(response).ContinueWith(CloseAfterWriteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
                     break;
             }
         }
 
-        void WriteResponse(IChannelHandlerContext ctx, IByteBuffer buf, ICharSequence contentType, ICharSequence contentLength)
+        static void CloseAfterWriteAction(Task t, object s) => ((IChannelHandlerContext)s).CloseAsync();
+
+        void WriteResponse(IChannelHandlerContext ctx, IByteBuffer buf, ICharSequence contentType, ICharSequence contentLength, bool keepAlive)
         {
             // Build the response object.
             var response = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK, buf, false);
             HttpHeaders headers = response.Headers;
             headers.Set(ContentTypeEntity, contentType);
-            headers.Set(ServerEntity, ServerName);
-            headers.Set(DateEntity, this.date);
+            //headers.Set(ServerEntity, ServerName);
+            //headers.Set(DateEntity, this.date);
             headers.Set(ContentLengthEntity, contentLength);
 
-            // Close the non-keep-alive connection after the write operation is done.
-            ctx.WriteAsync(response);
+            if (keepAlive)
+            {
+                response.Headers.Set(HttpHeaderNames.Connection, KeepAlive);
+                ctx.WriteAsync(response);
+            }
+            else
+            {
+                ctx.WriteAsync(response).ContinueWith(CloseAfterWriteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+            }
         }
 
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception) => context.CloseAsync();

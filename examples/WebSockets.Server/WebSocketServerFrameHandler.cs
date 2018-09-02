@@ -45,9 +45,19 @@ namespace WebSockets.Server
 
         public override void UserEventTriggered(IChannelHandlerContext context, object evt)
         {
-            if (evt is IdleStateEvent stateEvent)
+            switch (evt)
             {
-                s_logger.LogWarning($"{nameof(WebSocketServerFrameHandler)} caught idle state: {stateEvent.State}");
+                case IdleStateEvent stateEvent:
+                    s_logger.LogWarning($"{nameof(WebSocketServerFrameHandler)} caught idle state: {stateEvent.State}");
+                    break;
+
+                case WebSocketServerProtocolHandler.HandshakeComplete handshakeComplete:
+                    if (context.Pipeline.Get<WebSocketServerHttpHandler>() != null) { context.Pipeline.Remove<WebSocketServerHttpHandler>(); }
+                    s_logger.LogInformation($"RequestUri: {handshakeComplete.RequestUri}, \r\nHeaders:{handshakeComplete.RequestHeaders}, \r\nSubprotocol: {handshakeComplete.SelectedSubprotocol}");
+                    break;
+
+                default:
+                    break;
             }
         }
     }

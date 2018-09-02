@@ -31,7 +31,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             Contract.Requires(stringValue != null);
 
-            IByteBuffer buf = Unpooled.CopiedBuffer(this.charset.GetBytes(stringValue));
+            IByteBuffer buf = ArrayPooled.CopiedBuffer(stringValue, this.charset);
             this.value.Add(buf);
             this.size += buf.ReadableBytes;
         }
@@ -40,7 +40,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             Contract.Requires(stringValue != null);
 
-            IByteBuffer buf = Unpooled.CopiedBuffer(this.charset.GetBytes(stringValue));
+            IByteBuffer buf = ArrayPooled.CopiedBuffer(stringValue, this.charset);
             this.value[rank] = buf;
             this.size += buf.ReadableBytes;
         }
@@ -49,7 +49,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             Contract.Requires(stringValue != null);
 
-            IByteBuffer buf = Unpooled.CopiedBuffer(this.charset.GetBytes(stringValue));
+            IByteBuffer buf = ArrayPooled.CopiedBuffer(stringValue, this.charset);
             IByteBuffer old = this.value[rank];
             this.value[rank] = buf;
             if (old != null)
