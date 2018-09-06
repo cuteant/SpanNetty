@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Encodings.Web;
+using CuteAnt.Pool;
 using Microsoft.Extensions.Primitives;
 
 namespace DotNetty.Codecs.Http.Utilities
@@ -22,23 +23,11 @@ namespace DotNetty.Codecs.Http.Utilities
         /// <returns>The combined result.</returns>
         public static string AddQueryString(string uri, string name, string value)
         {
-            if (uri == null)
-            {
-                throw new ArgumentNullException(nameof(uri));
-            }
+            if (uri == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
+            if (name == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (value == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
-            if (name == null)
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
-
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
-            return AddQueryString(
-                uri, new[] { new KeyValuePair<string, string>(name, value) });
+            return AddQueryString(uri, new[] { new KeyValuePair<string, string>(name, value) });
         }
 
         /// <summary>
@@ -49,32 +38,16 @@ namespace DotNetty.Codecs.Http.Utilities
         /// <returns>The combined result.</returns>
         public static string AddQueryString(string uri, IDictionary<string, string> queryString)
         {
-            if (uri == null)
-            {
-                throw new ArgumentNullException(nameof(uri));
-            }
+            if (uri == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
+            if (queryString == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.queryString); }
 
-            if (queryString == null)
-            {
-                throw new ArgumentNullException(nameof(queryString));
-            }
-
-            return AddQueryString(uri, (IEnumerable<KeyValuePair<string, string>>)queryString);
+            return AddQueryString(uri, queryParams:queryString);
         }
 
-        private static string AddQueryString(
-            string uri,
-            IEnumerable<KeyValuePair<string, string>> queryString)
+        private static string AddQueryString(string uri, IEnumerable<KeyValuePair<string, string>> queryParams)
         {
-            if (uri == null)
-            {
-                throw new ArgumentNullException(nameof(uri));
-            }
-
-            if (queryString == null)
-            {
-                throw new ArgumentNullException(nameof(queryString));
-            }
+            //if (uri == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
+            //if (queryString == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.queryString); }
 
             var anchorIndex = uri.IndexOf('#');
             var uriToBeAppended = uri;
@@ -89,9 +62,9 @@ namespace DotNetty.Codecs.Http.Utilities
             var queryIndex = uriToBeAppended.IndexOf('?');
             var hasQuery = queryIndex != -1;
 
-            var sb = new StringBuilder();
+            var sb = StringBuilderManager.Allocate();
             sb.Append(uriToBeAppended);
-            foreach (var parameter in queryString)
+            foreach (var parameter in queryParams)
             {
                 sb.Append(hasQuery ? '&' : '?');
                 sb.Append(s_urlEncoder.Encode(parameter.Key));
@@ -101,7 +74,7 @@ namespace DotNetty.Codecs.Http.Utilities
             }
 
             sb.Append(anchorText);
-            return sb.ToString();
+            return StringBuilderManager.ReturnAndFree(sb);
         }
 
         /// <summary>

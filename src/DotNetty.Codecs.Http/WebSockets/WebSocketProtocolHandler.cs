@@ -9,7 +9,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
     public abstract class WebSocketProtocolHandler : MessageToMessageDecoder2<WebSocketFrame>
     {
-        readonly bool dropPongFrames;
+        internal readonly bool dropPongFrames;
 
         internal WebSocketProtocolHandler() : this(true)
         {

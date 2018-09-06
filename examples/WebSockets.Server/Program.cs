@@ -110,10 +110,20 @@ namespace WebSockets.Server
                         pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 0, 120));
 
                         //pipeline.AddLast(new MsLoggingHandler("CONN"));
-                        pipeline.AddLast(new HttpServerCodec());
+                        pipeline.AddLast(new HttpRequestDecoder());
+                        pipeline.AddLast(new HttpResponseEncoder());
+                        //pipeline.AddLast(new HttpServerCodec());
                         pipeline.AddLast(new HttpObjectAggregator(65536));
                         pipeline.AddLast(new WebSocketServerCompressionHandler());
-                        pipeline.AddLast(new WebSocketServerProtocolHandler(websocketPath, null, true));
+                        pipeline.AddLast(new WebSocketServerProtocolHandler(
+                            websocketPath: websocketPath,
+                            subprotocols: null, 
+                            allowExtensions: true,
+                            maxFrameSize: 65536,
+                            allowMaskMismatch: true,
+                            checkStartsWith: false,
+                            dropPongFrames: true,
+                            enableUtf8Validator: false));
                         pipeline.AddLast(new WebSocketServerHttpHandler(websocketPath));
                         pipeline.AddLast(new WebSocketFrameAggregator(65536));
                         pipeline.AddLast(new WebSocketServerFrameHandler());

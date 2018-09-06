@@ -85,9 +85,7 @@ namespace WebSockets.Client
                 // Connect with V13 (RFC 6455 aka HyBi-17). You can change it to V08 or V00.
                 // If you change it to V00, ping is not supported and remember to change
                 // HttpResponseDecoder to WebSocketHttpResponseDecoder in the pipeline.
-                var handler = new WebSocketClientHandler(
-                    WebSocketClientHandshakerFactory.NewHandshaker(
-                            uri, WebSocketVersion.V13, null, true, new DefaultHttpHeaders()));
+                var handler = new WebSocketClientHandler();
 
                 bootstrap.Handler(new ActionChannelInitializer<IChannel>(channel =>
                 {
@@ -104,6 +102,18 @@ namespace WebSockets.Client
                         new HttpClientCodec(),
                         new HttpObjectAggregator(8192),
                         //WebSocketClientCompressionHandler.Instance,
+                        new WebSocketClientProtocolHandler(
+                            webSocketUrl: uri,
+                            version: WebSocketVersion.V13,
+                            subprotocol: null,
+                            allowExtensions: true,
+                            customHeaders: new DefaultHttpHeaders(),
+                            maxFramePayloadLength: 65536,
+                            handleCloseFrames: true,
+                            performMasking: false,
+                            allowMaskMismatch: true,
+                            enableUtf8Validator: false),
+                        new WebSocketFrameAggregator(65536),
                         handler);
                 }));
 

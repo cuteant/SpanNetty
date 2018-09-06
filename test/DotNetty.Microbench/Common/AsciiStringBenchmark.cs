@@ -6,7 +6,6 @@ namespace DotNetty.Microbench.Common
     using System;
     using System.Text;
     using BenchmarkDotNet.Attributes;
-    using BenchmarkDotNet.Attributes.Jobs;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 #if DESKTOPCLR

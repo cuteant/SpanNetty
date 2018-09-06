@@ -4,7 +4,6 @@
 namespace DotNetty.Microbench.Internal
 {
     using BenchmarkDotNet.Attributes;
-    using BenchmarkDotNet.Attributes.Jobs;
     using DotNetty.Common.Internal;
 
     [CoreJob]

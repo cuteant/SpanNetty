@@ -5,7 +5,6 @@ namespace DotNetty.Microbench.Allocators
 {
     using System;
     using BenchmarkDotNet.Attributes;
-    using BenchmarkDotNet.Attributes.Jobs;
     using DotNetty.Buffers;
     using DotNetty.Common;
 

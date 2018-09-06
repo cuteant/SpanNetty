@@ -24,7 +24,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
         }
 
-        public HttpPostRequestDecoder(IHttpDataFactory factory, IHttpRequest request, Encoding encoding)
+        internal HttpPostRequestDecoder(IHttpDataFactory factory, IHttpRequest request, Encoding encoding)
         {
             Contract.Requires(factory != null);
             Contract.Requires(request != null);

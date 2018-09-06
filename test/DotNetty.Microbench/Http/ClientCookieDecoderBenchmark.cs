@@ -4,7 +4,6 @@
 namespace DotNetty.Microbench.Http
 {
     using BenchmarkDotNet.Attributes;
-    using BenchmarkDotNet.Attributes.Jobs;
     using DotNetty.Codecs.Http.Cookies;
     using DotNetty.Common;
 

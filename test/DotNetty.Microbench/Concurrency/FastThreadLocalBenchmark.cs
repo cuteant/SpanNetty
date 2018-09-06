@@ -4,7 +4,6 @@
 namespace DotNetty.Microbench.Concurrency
 {
     using BenchmarkDotNet.Attributes;
-    using BenchmarkDotNet.Attributes.Jobs;
     using DotNetty.Common;
 
     [CoreJob]

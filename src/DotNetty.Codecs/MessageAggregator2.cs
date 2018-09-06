@@ -35,10 +35,10 @@ namespace DotNetty.Codecs
     {
         const int DefaultMaxCompositebufferComponents = 1024;
 
-        int maxCumulationBufferComponents = DefaultMaxCompositebufferComponents;
+        protected int maxCumulationBufferComponents = DefaultMaxCompositebufferComponents;
 
-        TOutput currentMessage;
-        bool handlingOversizedMessage;
+        protected TOutput currentMessage;
+        protected bool handlingOversizedMessage;
 
         IChannelHandlerContext handlerContext;
 
@@ -120,7 +120,7 @@ namespace DotNetty.Codecs
                 }
 
                 var m = As<TStart>(message);
-                Contract.Assert(m != null);
+                //Contract.Assert(m != null);
 
                 // Send the continue response if necessary(e.g. 'Expect: 100-continue' header)
                 // Check before content length. Failing an expectation may result in a different response being sent.
@@ -205,7 +205,7 @@ namespace DotNetty.Codecs
                     // By convention, full message type extends first message type.
                     //@SuppressWarnings("unchecked")
                     var s = As<TStart>(this.currentMessage);
-                    Contract.Assert(s != null);
+                    //Contract.Assert(s != null);
 
                     this.InvokeHandleOversizedMessage(context, s);
                     return;
@@ -273,7 +273,7 @@ namespace DotNetty.Codecs
         [MethodImpl(InlineMethod.Value)]
         static T As<T>(object obj) => (T)obj;
 
-        static void AppendPartialContent(CompositeByteBuffer content, IByteBuffer partialContent)
+        protected static void AppendPartialContent(CompositeByteBuffer content, IByteBuffer partialContent)
         {
             if (!partialContent.IsReadable())
             {
@@ -302,7 +302,7 @@ namespace DotNetty.Codecs
         {
         }
 
-        void InvokeHandleOversizedMessage(IChannelHandlerContext ctx, TStart oversized)
+        protected void InvokeHandleOversizedMessage(IChannelHandlerContext ctx, TStart oversized)
         {
             this.handlingOversizedMessage = true;
             this.currentMessage = default;

@@ -37,7 +37,7 @@ namespace DotNetty.Codecs.Http.Multipart
             this.minSize = MinSize;
         }
 
-        public DefaultHttpDataFactory(Encoding charset) : this()
+        internal DefaultHttpDataFactory(Encoding charset) : this()
         {
             this.charset = charset;
         }
@@ -49,7 +49,7 @@ namespace DotNetty.Codecs.Http.Multipart
             this.checkSize = false;
         }
 
-        public DefaultHttpDataFactory(bool useDisk, Encoding charset) : this(useDisk)
+        internal DefaultHttpDataFactory(bool useDisk, Encoding charset) : this(useDisk)
         {
             this.charset = charset;
         }
@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http.Multipart
             this.minSize = minSize;
         }
 
-        public DefaultHttpDataFactory(long minSize, Encoding charset) : this(minSize)
+        internal DefaultHttpDataFactory(long minSize, Encoding charset) : this(minSize)
         {
             this.charset = charset;
         }

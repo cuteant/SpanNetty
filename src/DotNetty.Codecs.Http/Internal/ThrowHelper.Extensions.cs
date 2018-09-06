@@ -91,6 +91,8 @@ namespace DotNetty.Codecs.Http
         ReadDelimiter,
         ReadDelimiterStandard,
         configList,
+        uri,
+        queryString,
     }
 
     #endregion
@@ -1175,6 +1177,30 @@ namespace DotNetty.Codecs.Http
             EndOfDataDecoderException GetException()
             {
                 return new EndOfDataDecoderException(nameof(HttpPostStandardRequestDecoder));
+            }
+        }
+
+        #endregion
+
+        #region -- MessageAggregationException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowMessageAggregationException_StartMessage()
+        {
+            throw GetException();
+            MessageAggregationException GetException()
+            {
+                return new MessageAggregationException("Start message should not have any current content.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowMessageAggregationException_UnknownAggregationState()
+        {
+            throw GetException();
+            MessageAggregationException GetException()
+            {
+                return new MessageAggregationException("Unknown aggregation state.");
             }
         }
 

@@ -5,7 +5,6 @@ namespace DotNetty.Microbench.Codecs
 {
     using System;
     using BenchmarkDotNet.Attributes;
-    using BenchmarkDotNet.Attributes.Jobs;
     using DotNetty.Codecs;
 
     [CoreJob]

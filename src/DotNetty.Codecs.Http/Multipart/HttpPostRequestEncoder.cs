@@ -59,7 +59,8 @@ namespace DotNetty.Codecs.Http.Multipart
         readonly IHttpRequest request;
 
         // Default charset to use
-        readonly Encoding charset;
+        readonly Encoding charset = HttpConstants.DefaultEncoding;
+        readonly TextEncoder urlEncoder = System.Text.Encodings.Web.UrlEncoder.Default;
 
         //  Chunked false by default
         bool isChunked;
@@ -84,35 +85,23 @@ namespace DotNetty.Codecs.Http.Multipart
 
         readonly EncoderMode encoderMode;
 
-        readonly TextEncoder urlEncoder;
-
         public HttpPostRequestEncoder(IHttpRequest request, bool multipart)
-            : this(new DefaultHttpDataFactory(DefaultHttpDataFactory.MinSize), request, multipart, 
-                  HttpConstants.DefaultEncoding, EncoderMode.RFC1738)
+            : this(new DefaultHttpDataFactory(DefaultHttpDataFactory.MinSize), request, multipart, EncoderMode.RFC1738)
         {
         }
 
         public HttpPostRequestEncoder(IHttpDataFactory factory, IHttpRequest request, bool multipart)
-            : this(factory, request, multipart, HttpConstants.DefaultEncoding, EncoderMode.RFC1738)
+            : this(factory, request, multipart, EncoderMode.RFC1738)
         {
         }
 
         public HttpPostRequestEncoder(IHttpDataFactory factory, IHttpRequest request, bool multipart, EncoderMode encoderMode)
-            : this(factory, request, multipart, HttpConstants.DefaultEncoding, encoderMode)
-        {
-        }
-
-        public HttpPostRequestEncoder(
-            IHttpDataFactory factory, IHttpRequest request, bool multipart, Encoding charset, 
-            EncoderMode encoderMode)
         {
             Contract.Requires(request != null);
             Contract.Requires(factory != null);
             Contract.Requires(charset != null);
 
             this.request = request;
-            this.charset = charset;
-            if (charset.CodePage == 65001) { this.urlEncoder = System.Text.Encodings.Web.UrlEncoder.Default; }
             this.factory = factory;
             HttpMethod method = request.Method;
             if (method.Equals(HttpMethod.Trace))
@@ -205,8 +194,8 @@ namespace DotNetty.Codecs.Http.Multipart
             string contentTransferEncoding = null;
             if (contentType == null)
             {
-                scontentType = isText 
-                    ? HttpPostBodyUtil.DefaultTextContentType 
+                scontentType = isText
+                    ? HttpPostBodyUtil.DefaultTextContentType
                     : HttpPostBodyUtil.DefaultBinaryContentType;
             }
             if (!isText)
@@ -214,7 +203,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 contentTransferEncoding = HttpPostBodyUtil.TransferEncodingMechanism.Binary.Value;
             }
 
-            IFileUpload fileUpload = this.factory.CreateFileUpload(this.request, name, fileName, scontentType, 
+            IFileUpload fileUpload = this.factory.CreateFileUpload(this.request, name, fileName, scontentType,
                 contentTransferEncoding, null, fileStream.Length);
             try
             {
@@ -579,7 +568,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     // "multipart/form-data; boundary=--89421926422648"
                     string lowercased = contentType.ToString().ToLowerInvariant();
-                    if (lowercased.StartsWith(HttpHeaderValues.MultipartFormData.ToString(), StringComparison.Ordinal) 
+                    if (lowercased.StartsWith(HttpHeaderValues.MultipartFormData.ToString(), StringComparison.Ordinal)
                         || lowercased.StartsWith(HttpHeaderValues.ApplicationXWwwFormUrlencoded.ToString(), StringComparison.Ordinal))
                     {
                         // ignore
@@ -662,7 +651,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 return string.Empty;
             }
 
-            string encoded = this.urlEncoder != null ? this.urlEncoder.Encode(value) : Http.UrlEncoder.Encode(value, stringEncoding);
+            string encoded = this.urlEncoder.Encode(value);
             if (this.encoderMode == EncoderMode.RFC3986)
             {
                 foreach (KeyValuePair<Regex, string> entry in PercentEncodings)
@@ -731,8 +720,8 @@ namespace DotNetty.Codecs.Http.Multipart
                     return null;
                 }
             }
-            this.currentBuffer = this.currentBuffer == null 
-                ? buffer 
+            this.currentBuffer = this.currentBuffer == null
+                ? buffer
                 : Unpooled.WrappedBuffer(this.currentBuffer, buffer);
 
             if (this.currentBuffer.ReadableBytes < HttpPostBodyUtil.ChunkSize)
@@ -764,12 +753,12 @@ namespace DotNetty.Codecs.Http.Multipart
                 this.isKey = false;
                 if (this.currentBuffer == null)
                 {
-                    this.currentBuffer = Unpooled.WrappedBuffer(buffer,  
+                    this.currentBuffer = Unpooled.WrappedBuffer(buffer,
                         Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("=")));
                 }
                 else
                 {
-                    this.currentBuffer = Unpooled.WrappedBuffer(this.currentBuffer, buffer, 
+                    this.currentBuffer = Unpooled.WrappedBuffer(this.currentBuffer, buffer,
                         Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("=")));
                 }
                 // continue
@@ -797,7 +786,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 this.isKey = true;
                 delimiter = this.iterator.HasNext()
-                    ? Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("&")) 
+                    ? Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("&"))
                     : null;
             }
 
@@ -828,14 +817,14 @@ namespace DotNetty.Codecs.Http.Multipart
             // Put it all together: name=value&
             if (this.currentBuffer == null)
             {
-                this.currentBuffer = delimiter != null 
-                    ? Unpooled.WrappedBuffer(buffer, delimiter) 
+                this.currentBuffer = delimiter != null
+                    ? Unpooled.WrappedBuffer(buffer, delimiter)
                     : buffer;
             }
             else
             {
-                this.currentBuffer = delimiter != null 
-                    ? Unpooled.WrappedBuffer(this.currentBuffer, buffer, delimiter) 
+                this.currentBuffer = delimiter != null
+                    ? Unpooled.WrappedBuffer(this.currentBuffer, buffer, delimiter)
                     : Unpooled.WrappedBuffer(this.currentBuffer, buffer);
             }
 
@@ -889,8 +878,8 @@ namespace DotNetty.Codecs.Http.Multipart
             if (this.currentData != null)
             {
                 // continue to read data
-                IHttpContent chunk = this.isMultipart 
-                    ? this.EncodeNextChunkMultipart(size) 
+                IHttpContent chunk = this.isMultipart
+                    ? this.EncodeNextChunkMultipart(size)
                     : this.EncodeNextChunkUrlEncoded(size);
                 if (chunk != null)
                 {
@@ -1064,7 +1053,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
                     return EmptyHttpHeaders.Default;
                 }
-            } 
+            }
 
             public int ReferenceCount => this.content.ReferenceCount;
 

@@ -14,6 +14,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     {
         readonly WebSocketClientHandshaker handshaker;
         readonly bool handleCloseFrames;
+        readonly bool enableUtf8Validator;
 
         public WebSocketClientHandshaker Handshaker => this.handshaker;
 
@@ -33,41 +34,25 @@ namespace DotNetty.Codecs.Http.WebSockets
             HandshakeComplete
         }
 
-        public WebSocketClientProtocolHandler(Uri webSocketUrl, WebSocketVersion version, string subprotocol,
-            bool allowExtensions, HttpHeaders customHeaders,
-            int maxFramePayloadLength, bool handleCloseFrames,
-            bool performMasking, bool allowMaskMismatch)
-            : this(WebSocketClientHandshakerFactory.NewHandshaker(webSocketUrl, version, subprotocol,
-                allowExtensions, customHeaders, maxFramePayloadLength,
-                performMasking, allowMaskMismatch), handleCloseFrames)
-        {
-        }
-
-        public WebSocketClientProtocolHandler(Uri webSocketUrl, WebSocketVersion version, string subprotocol,
-            bool allowExtensions, HttpHeaders customHeaders,
-            int maxFramePayloadLength, bool handleCloseFrames)
-            : this(webSocketUrl, version, subprotocol, allowExtensions, customHeaders, maxFramePayloadLength,
-                handleCloseFrames, true, false)
-        {
-        }
-
-        public WebSocketClientProtocolHandler(Uri webSocketUrl, WebSocketVersion version, string subprotocol,
-            bool allowExtensions, HttpHeaders customHeaders,
-            int maxFramePayloadLength)
+        public WebSocketClientProtocolHandler(Uri webSocketUrl, WebSocketVersion version, string subprotocol, bool allowExtensions,
+            HttpHeaders customHeaders, int maxFramePayloadLength)
             : this(webSocketUrl, version, subprotocol, allowExtensions, customHeaders, maxFramePayloadLength, true)
         {
         }
 
-        public WebSocketClientProtocolHandler(WebSocketClientHandshaker handshaker, bool handleCloseFrames)
-            : this(handshaker, handleCloseFrames, true)
+        public WebSocketClientProtocolHandler(Uri webSocketUrl, WebSocketVersion version, string subprotocol, bool allowExtensions,
+            HttpHeaders customHeaders, int maxFramePayloadLength, bool handleCloseFrames)
+            : this(webSocketUrl, version, subprotocol, allowExtensions, customHeaders, maxFramePayloadLength,
+                handleCloseFrames, true, false, false)
         {
         }
 
-        public WebSocketClientProtocolHandler(WebSocketClientHandshaker handshaker, bool handleCloseFrames, bool dropPongFrames)
-            : base(dropPongFrames)
+        public WebSocketClientProtocolHandler(Uri webSocketUrl, WebSocketVersion version, string subprotocol, bool allowExtensions,
+            HttpHeaders customHeaders, int maxFramePayloadLength, bool handleCloseFrames, bool performMasking, bool allowMaskMismatch, bool enableUtf8Validator)
+            : this(WebSocketClientHandshakerFactory.NewHandshaker(webSocketUrl, version, subprotocol,
+                allowExtensions, customHeaders, maxFramePayloadLength,
+                performMasking, allowMaskMismatch), handleCloseFrames, true, enableUtf8Validator)
         {
-            this.handshaker = handshaker;
-            this.handleCloseFrames = handleCloseFrames;
         }
 
         public WebSocketClientProtocolHandler(WebSocketClientHandshaker handshaker)
@@ -75,15 +60,41 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
         }
 
+        public WebSocketClientProtocolHandler(WebSocketClientHandshaker handshaker, bool handleCloseFrames)
+            : this(handshaker, handleCloseFrames, true, true)
+        {
+        }
+
+        public WebSocketClientProtocolHandler(WebSocketClientHandshaker handshaker, bool handleCloseFrames, bool dropPongFrames, bool enableUtf8Validator)
+            : base(dropPongFrames)
+        {
+            this.handshaker = handshaker;
+            this.handleCloseFrames = handleCloseFrames;
+            this.enableUtf8Validator = enableUtf8Validator;
+        }
+
         protected override void Decode(IChannelHandlerContext ctx, WebSocketFrame frame, List<object> output)
         {
-            if (this.handleCloseFrames && frame.Opcode == Opcode.Close)
+            switch (frame.Opcode)
             {
-                ctx.CloseAsync();
-                return;
-            }
+                case Opcode.Ping:
+                    var contect = frame.Content;
+                    contect.Retain();
+                    ctx.Channel.WriteAndFlushAsync(new PongWebSocketFrame(contect));
+                    return;
 
-            base.Decode(ctx, frame, output);
+                case Opcode.Pong when this.dropPongFrames:
+                    // Pong frames need to get ignored
+                    return;
+
+                case Opcode.Close when this.handleCloseFrames:
+                    ctx.CloseAsync();
+                    return;
+
+                default:
+                    output.Add(frame.Retain());
+                    break;
+            }
         }
 
         public override void HandlerAdded(IChannelHandlerContext ctx)
@@ -95,7 +106,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 cp.AddBefore(ctx.Name, nameof(WebSocketClientProtocolHandshakeHandler),
                     new WebSocketClientProtocolHandshakeHandler(this.handshaker));
             }
-            if (cp.Get<Utf8FrameValidator>() == null)
+            if (this.enableUtf8Validator && cp.Get<Utf8FrameValidator>() == null)
             {
                 // Add the UFT8 checking before this one.
                 cp.AddBefore(ctx.Name, nameof(Utf8FrameValidator),

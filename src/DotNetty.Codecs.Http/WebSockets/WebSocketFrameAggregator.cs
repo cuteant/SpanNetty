@@ -4,6 +4,8 @@
 namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs;
     using DotNetty.Transport.Channels;
@@ -13,6 +15,25 @@ namespace DotNetty.Codecs.Http.WebSockets
         public WebSocketFrameAggregator(int maxContentLength)
             : base(maxContentLength)
         {
+        }
+
+        public override bool TryAcceptInboundMessage(object msg, out WebSocketFrame message)
+        {
+            message = msg as WebSocketFrame;
+            if (null == message) { return false; }
+
+            switch (message.Opcode)
+            {
+                case Opcode.Text:
+                case Opcode.Binary:
+                    return !message.IsFinalFragment;
+                case Opcode.Cont:
+                    return true;
+                default:
+                    return false;
+            }
+            //return (this.IsContentMessage(message) || this.IsStartMessage(message))
+            //    && !this.IsAggregated(message);
         }
 
         protected override bool IsStartMessage(WebSocketFrame msg)
@@ -33,20 +54,17 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected override bool IsAggregated(WebSocketFrame msg)
         {
-            if (msg.IsFinalFragment)
-            {
-                return msg.Opcode != Opcode.Cont;
-            }
-
             switch (msg.Opcode)
             {
                 case Opcode.Text:
                 case Opcode.Binary:
+                    return msg.IsFinalFragment;
                 case Opcode.Cont:
                     return false;
                 default:
                     return true;
             }
+            //if (msg.IsFinalFragment) { return msg.Opcode != Opcode.Cont; }
             //return !this.IsStartMessage(msg) && msg.Opcode != Opcode.Cont;
         }
 
@@ -69,6 +87,66 @@ namespace DotNetty.Codecs.Http.WebSockets
                 default:
                     // Should not reach here.
                     return ThrowHelper.ThrowException_UnkonwFrameType();
+            }
+        }
+
+        protected override void Decode(IChannelHandlerContext context, WebSocketFrame message, List<object> output)
+        {
+            switch (message.Opcode)
+            {
+                case Opcode.Text:
+                case Opcode.Binary:
+                    this.handlingOversizedMessage = false;
+                    if (this.currentMessage != null)
+                    {
+                        this.currentMessage.Release();
+                        this.currentMessage = default;
+
+                        ThrowHelper.ThrowMessageAggregationException_StartMessage();
+                    }
+
+                    // A streamed message - initialize the cumulative buffer, and wait for incoming chunks.
+                    CompositeByteBuffer content0 = context.Allocator.CompositeBuffer(this.maxCumulationBufferComponents);
+                    AppendPartialContent(content0, message.Content);
+                    this.currentMessage = this.BeginAggregation(message, content0);
+                    break;
+
+                case Opcode.Cont:
+                    if (this.currentMessage == null)
+                    {
+                        // it is possible that a TooLongFrameException was already thrown but we can still discard data
+                        // until the begging of the next request/response.
+                        return;
+                    }
+
+                    // Merge the received chunk into the content of the current message.
+                    var content = (CompositeByteBuffer)this.currentMessage.Content;
+
+                    var contMsg = (ContinuationWebSocketFrame)message;
+
+                    // Handle oversized message.
+                    if (content.ReadableBytes > this.MaxContentLength - contMsg.Content.ReadableBytes)
+                    {
+                        this.InvokeHandleOversizedMessage(context, this.currentMessage);
+                        return;
+                    }
+
+                    // Append the content of the chunk.
+                    AppendPartialContent(content, contMsg.Content);
+
+                    if (this.IsLastContentMessage(contMsg))
+                    {
+                        //this.FinishAggregation(this.currentMessage);
+
+                        // All done
+                        output.Add(this.currentMessage);
+                        this.currentMessage = default;
+                    }
+                    break;
+
+                default:
+                    ThrowHelper.ThrowMessageAggregationException_UnknownAggregationState();
+                    break;
             }
         }
     }

@@ -208,7 +208,7 @@ namespace DotNetty.Transport.Channels.Sockets
                             allocHandle.IncMessagesRead(1);
                         }
                     }
-                    catch (SocketException ex) when (ex.SocketErrorCode == SocketError.OperationAborted || ex.SocketErrorCode == SocketError.InvalidArgument)
+                    catch (SocketException ex) when (IsSocketAbortError(ex.SocketErrorCode))
                     {
                         closed = true;
                     }

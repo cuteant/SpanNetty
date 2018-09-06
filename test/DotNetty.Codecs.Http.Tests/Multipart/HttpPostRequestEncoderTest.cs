@@ -214,7 +214,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 factory,
                 request,
                 true,
-                Encoding.UTF8,
+                //Encoding.UTF8,
                 HttpPostRequestEncoder.EncoderMode.HTML5);
 
             FileStream fileStream1 = File.Open("./Multipart/file-01.txt", FileMode.Open, FileAccess.Read);
@@ -265,7 +265,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 factory,
                 request,
                 true,
-                Encoding.UTF8,
+                //Encoding.UTF8,
                 HttpPostRequestEncoder.EncoderMode.HTML5);
             FileStream fileStream1 = File.Open("./Multipart/file-01.txt", FileMode.Open, FileAccess.Read);
             this.files.Add(fileStream1);
@@ -367,7 +367,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             var factory = new DefaultHttpDataFactory(DefaultHttpDataFactory.MinSize);
             var request = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Post, "http://localhost");
             var encoder = new HttpPostRequestEncoder(factory, request, true,
-                HttpConstants.DefaultEncoding, HttpPostRequestEncoder.EncoderMode.RFC1738);
+                HttpPostRequestEncoder.EncoderMode.RFC1738);
 
             var first = new MemoryFileUpload("resources", "", "application/json", null, Encoding.UTF8, -1);
             first.MaxSize = -1;

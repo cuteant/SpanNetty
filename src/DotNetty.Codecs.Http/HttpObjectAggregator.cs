@@ -7,6 +7,7 @@ namespace DotNetty.Codecs.Http
 {
     using System;
     using System.Diagnostics;
+    using System.Globalization;
     using System.Threading.Tasks;
     using CuteAnt.Pool;
     using DotNetty.Buffers;
@@ -15,7 +16,7 @@ namespace DotNetty.Codecs.Http
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public class HttpObjectAggregator : MessageAggregator2<IHttpObject, IHttpMessage, IHttpContent, IFullHttpMessage>
+    public partial class HttpObjectAggregator : MessageAggregator2<IHttpObject, IHttpMessage, IHttpContent, IFullHttpMessage>
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<HttpObjectAggregator>();
         static readonly IFullHttpResponse Continue = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.Continue, Unpooled.Empty);
@@ -143,7 +144,7 @@ namespace DotNetty.Codecs.Http
             {
                 aggregated.Headers.Set(
                     HttpHeaderNames.ContentLength,
-                    new AsciiString(aggregated.Content.ReadableBytes.ToString()));
+                    new AsciiString(aggregated.Content.ReadableBytes.ToString(CultureInfo.InvariantCulture)));
             }
         }
 
@@ -169,7 +170,7 @@ namespace DotNetty.Codecs.Http
                     }
                     ctx.WriteAndFlushAsync(TooLargeClose.RetainedDuplicate()).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                    ctx.WriteAndFlushAsync(TooLargeClose.RetainedDuplicate()).ContinueWith(CloseOnComplete, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                    ctx.WriteAndFlushAsync(TooLargeClose.RetainedDuplicate()).ContinueWith(CloseOnCompleteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
 #endif
                 }
                 else
@@ -185,7 +186,7 @@ namespace DotNetty.Codecs.Http
                     }
                     ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith(closeOnFault, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                    ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith(CloseOnFault, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                    ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith(CloseOnFaultAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
 #endif
                 }
                 // If an oversized request was handled properly and the connection is still alive
@@ -201,24 +202,6 @@ namespace DotNetty.Codecs.Http
             else
             {
                 ThrowHelper.ThrowInvalidOperationException_InvalidType(oversized);
-            }
-        }
-
-        static void CloseOnComplete(Task t, object s)
-        {
-            if (t.IsFaulted)
-            {
-                if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
-            }
-            ((IChannelHandlerContext)s).CloseAsync();
-        }
-
-        static void CloseOnFault(Task t, object s)
-        {
-            if (t.IsFaulted)
-            {
-                if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
-                ((IChannelHandlerContext)s).CloseAsync();
             }
         }
 

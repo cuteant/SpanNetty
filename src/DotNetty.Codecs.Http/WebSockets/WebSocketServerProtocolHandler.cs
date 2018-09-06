@@ -45,6 +45,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         readonly int maxFramePayloadLength;
         readonly bool allowMaskMismatch;
         readonly bool checkStartsWith;
+        readonly bool enableUtf8Validator;
 
         public WebSocketServerProtocolHandler(string websocketPath)
             : this(websocketPath, null, false)
@@ -80,12 +81,12 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public WebSocketServerProtocolHandler(string websocketPath, string subprotocols, bool allowExtensions,
             int maxFrameSize, bool allowMaskMismatch, bool checkStartsWith)
-            : this(websocketPath, subprotocols, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith, true)
+            : this(websocketPath, subprotocols, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith, true, false)
         {
         }
 
-        public WebSocketServerProtocolHandler(string websocketPath, string subprotocols,
-            bool allowExtensions, int maxFrameSize, bool allowMaskMismatch, bool checkStartsWith, bool dropPongFrames)
+        public WebSocketServerProtocolHandler(string websocketPath, string subprotocols, bool allowExtensions, 
+            int maxFrameSize, bool allowMaskMismatch, bool checkStartsWith, bool dropPongFrames, bool enableUtf8Validator)
             : base(dropPongFrames)
         {
             this.websocketPath = websocketPath;
@@ -94,6 +95,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             this.maxFramePayloadLength = maxFrameSize;
             this.allowMaskMismatch = allowMaskMismatch;
             this.checkStartsWith = checkStartsWith;
+            this.enableUtf8Validator = enableUtf8Validator;
         }
 
         public override void HandlerAdded(IChannelHandlerContext ctx)
@@ -112,7 +114,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                         this.checkStartsWith));
             }
 
-            if (cp.Get<Utf8FrameValidator>() == null)
+            if (this.enableUtf8Validator && cp.Get<Utf8FrameValidator>() == null)
             {
                 // Add the UFT8 checking before this one.
                 cp.AddBefore(ctx.Name, nameof(Utf8FrameValidator), new Utf8FrameValidator());
@@ -121,30 +123,43 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected override void Decode(IChannelHandlerContext ctx, WebSocketFrame frame, List<object> output)
         {
-            if (frame is CloseWebSocketFrame socketFrame)
+            switch (frame.Opcode)
             {
-                WebSocketServerHandshaker handshaker = GetHandshaker(ctx.Channel);
-                if (handshaker != null)
-                {
-                    frame.Retain();
-                    handshaker.CloseAsync(ctx.Channel, socketFrame);
-                }
-                else
-                {
+                case Opcode.Ping:
+                    var contect = frame.Content;
+                    contect.Retain();
+                    ctx.Channel.WriteAndFlushAsync(new PongWebSocketFrame(contect));
+                    return;
+
+                case Opcode.Pong when this.dropPongFrames:
+                    // Pong frames need to get ignored
+                    return;
+
+                case Opcode.Close:
+                    WebSocketServerHandshaker handshaker = GetHandshaker(ctx.Channel);
+                    if (handshaker != null)
+                    {
+                        frame.Retain();
+                        handshaker.CloseAsync(ctx.Channel, (CloseWebSocketFrame)frame);
+                    }
+                    else
+                    {
 #if NET40
-                    void closeOnComplete(Task t) => ctx.CloseAsync();
-                    ctx.WriteAndFlushAsync(Unpooled.Empty)
-                        .ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+                        void closeOnComplete(Task t) => ctx.CloseAsync();
+                        ctx.WriteAndFlushAsync(Unpooled.Empty)
+                            .ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                    ctx.WriteAndFlushAsync(Unpooled.Empty)
-                        .ContinueWith(CloseOnComplete, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                        ctx.WriteAndFlushAsync(Unpooled.Empty)
+                            .ContinueWith(CloseOnComplete, ctx, TaskContinuationOptions.ExecuteSynchronously);
 #endif
-                }
+                    }
 
-                return;
+                    return;
+
+                default:
+                    output.Add(frame.Retain());
+                    break;
             }
-
-            base.Decode(ctx, frame, output);
         }
 
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
