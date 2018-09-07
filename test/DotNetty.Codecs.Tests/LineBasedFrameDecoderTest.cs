@@ -160,5 +160,25 @@
             buf.Release();
             buf2.Release();
         }
+
+        [Fact]
+        public void NotFailFast()
+        {
+            EmbeddedChannel ch = new EmbeddedChannel(new LineBasedFrameDecoder(2, false, false));
+            Assert.False(ch.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 0, 1, 2 })));
+            Assert.False(ch.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 3, 4 })));
+            Assert.Throws<TooLongFrameException>(() => ch.WriteInbound(Unpooled.WrappedBuffer(new byte[] { (byte)'\n' })));
+
+            Assert.False(ch.WriteInbound(Unpooled.WrappedBuffer(new byte[] { (byte)'5' })));
+            Assert.True(ch.WriteInbound(Unpooled.WrappedBuffer(new byte[] { (byte)'\n' })));
+
+            var expected = Unpooled.WrappedBuffer(new byte[] { (byte)'5', (byte)'\n' });
+            var buffer = ch.ReadInbound<IByteBuffer>();
+            AssertEx.Equal(expected, buffer);
+            expected.Release();
+            buffer.Release();
+
+            Assert.False(ch.Finish());
+        }
     }
 }

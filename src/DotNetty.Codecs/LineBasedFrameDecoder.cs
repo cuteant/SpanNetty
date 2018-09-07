@@ -148,6 +148,8 @@ namespace DotNetty.Codecs
                 {
                     this.discardedBytes += buffer.ReadableBytes;
                     buffer.SetReaderIndex(buffer.WriterIndex);
+                    // We skip everything in the buffer, we need to set the offset to 0 again.
+                    this.offset = 0;
                 }
                 return null;
             }
