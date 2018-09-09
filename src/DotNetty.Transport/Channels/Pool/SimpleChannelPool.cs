@@ -360,7 +360,8 @@ namespace DotNetty.Transport.Channels.Pool
         {
             while (this.TryPollChannel(out IChannel channel))
             {
-                channel.CloseAsync();
+                // Just ignore any errors that are reported back from CloseAsync().
+                channel.CloseAsync().Ignore();
             }
         }
         

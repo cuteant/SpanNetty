@@ -17,6 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CuteAnt.Core.Abstractions" Version="$(CuteAntCoreAbstractionsPackageVersion)" />
     <PackageReference Include="CuteAnt.Runtime" Version="$(CuteAntRuntimePackageVersion)" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net40' ">

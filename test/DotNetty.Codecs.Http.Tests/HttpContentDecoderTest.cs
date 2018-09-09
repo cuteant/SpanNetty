@@ -286,7 +286,7 @@ namespace DotNetty.Codecs.Http.Tests
             IByteBuffer buf = Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes(headers), GzHelloWorld);
             Assert.True(channel.WriteInbound(buf));
 
-            Queue<object> req = channel.InboundMessages;
+            var req = channel.InboundMessages;
             Assert.True(req.Count >= 1);
             object o = req.Peek();
             Assert.IsAssignableFrom<IHttpRequest>(o);
@@ -346,7 +346,7 @@ namespace DotNetty.Codecs.Http.Tests
             IByteBuffer buf = Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes(headers), GzHelloWorld);
             Assert.True(channel.WriteInbound(buf));
 
-            Queue<object> resp = channel.InboundMessages;
+            var resp = channel.InboundMessages;
             Assert.True(resp.Count >= 1);
             object o = resp.Peek();
             Assert.IsAssignableFrom<IHttpResponse>(o);
@@ -404,7 +404,7 @@ namespace DotNetty.Codecs.Http.Tests
                              "\r\n";
             Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes(headers), GzHelloWorld)));
 
-            Queue<object> req = channel.InboundMessages;
+            var req = channel.InboundMessages;
             Assert.True(req.Count > 1);
             int contentLength = 0;
             contentLength = CalculateContentLength(req, contentLength);
@@ -430,7 +430,7 @@ namespace DotNetty.Codecs.Http.Tests
                              "\r\n";
             Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes(headers), GzHelloWorld)));
 
-            Queue<object> resp = channel.InboundMessages;
+            var resp = channel.InboundMessages;
             Assert.True(resp.Count > 1);
             int contentLength = 0;
             contentLength = CalculateContentLength(resp, contentLength);
@@ -457,7 +457,7 @@ namespace DotNetty.Codecs.Http.Tests
             // This should terminate it.
             Assert.True(channel.Finish());
 
-            Queue<object> resp = channel.InboundMessages;
+            var resp = channel.InboundMessages;
             Assert.True(resp.Count > 1);
             int contentLength = 0;
             contentLength = CalculateContentLength(resp, contentLength);

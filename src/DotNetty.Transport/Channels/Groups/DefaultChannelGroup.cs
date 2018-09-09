@@ -20,20 +20,31 @@ namespace DotNetty.Transport.Channels.Groups
         readonly IEventExecutor executor;
         readonly ConcurrentDictionary<IChannelId, IChannel> nonServerChannels = new ConcurrentDictionary<IChannelId, IChannel>(ChannelIdComparer.Default);
         readonly ConcurrentDictionary<IChannelId, IChannel> serverChannels = new ConcurrentDictionary<IChannelId, IChannel>(ChannelIdComparer.Default);
+        readonly bool stayClosed;
+        volatile bool closed;
 
         public DefaultChannelGroup(IEventExecutor executor)
-            : this($"group-{Interlocked.Increment(ref nextId):X2}", executor)
+            : this(executor, false)
         {
         }
 
         public DefaultChannelGroup(string name, IEventExecutor executor)
+            : this(name, executor, false)
         {
-            if (name == null)
-            {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name);
-            }
+        }
+
+        public DefaultChannelGroup(IEventExecutor executor, bool stayClosed)
+            : this($"group-{Interlocked.Increment(ref nextId):X2}", executor, stayClosed)
+        {
+        }
+
+        public DefaultChannelGroup(string name, IEventExecutor executor, bool stayClosed)
+        {
+            if (name == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+
             this.Name = name;
             this.executor = executor;
+            this.stayClosed = stayClosed;
         }
 
         public bool IsEmpty => this.serverChannels.Count == 0 && this.nonServerChannels.Count == 0;
@@ -42,8 +53,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         public IChannel Find(IChannelId id)
         {
-            IChannel channel;
-            if (this.nonServerChannels.TryGetValue(id, out channel))
+            if (this.nonServerChannels.TryGetValue(id, out IChannel channel))
             {
                 return channel;
             }
@@ -193,6 +203,18 @@ namespace DotNetty.Transport.Channels.Groups
         {
             Contract.Requires(matcher != null);
             var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
+
+            if (this.stayClosed)
+            {
+                // It is important to set the closed to true, before closing channels.
+                // Our invariants are:
+                // closed=true happens-before ChannelGroup.close()
+                // ChannelGroup.add() happens-before checking closed==true
+                //
+                // See https://github.com/netty/netty/issues/4020
+                this.closed = true;
+            }
+
             foreach (IChannel c in this.nonServerChannels.Values)
             {
                 if (matcher.Matches(c))
@@ -264,13 +286,13 @@ namespace DotNetty.Transport.Channels.Groups
             var buffer = message as IByteBuffer;
             if (buffer != null)
             {
-                return buffer.Duplicate().Retain();
+                return buffer.RetainedDuplicate();
             }
 
             var byteBufferHolder = message as IByteBufferHolder;
             if (byteBufferHolder != null)
             {
-                return byteBufferHolder.Duplicate().Retain();
+                return byteBufferHolder.RetainedDuplicate();
             }
 
             return ReferenceCountUtil.Retain(message);
@@ -291,6 +313,24 @@ namespace DotNetty.Transport.Channels.Groups
                 channel.CloseCompletion.ContinueWith(RemoveChannelAfterCloseAction, new Tuple<DefaultChannelGroup, IChannel>(this, channel), TaskContinuationOptions.ExecuteSynchronously);
 #endif
             }
+
+            if (this.stayClosed && this.closed)
+            {
+
+                // First add channel, than check if closed.
+                // Seems inefficient at first, but this way a volatile
+                // gives us enough synchronization to be thread-safe.
+                //
+                // If true: Close right away.
+                // (Might be closed a second time by ChannelGroup.close(), but this is ok)
+                //
+                // If false: Channel will definitely be closed by the ChannelGroup.
+                // (Because closed=true always happens-before ChannelGroup.close())
+                //
+                // See https://github.com/netty/netty/issues/4020
+                channel.CloseAsync();
+            }
+
             return added;
         }
 

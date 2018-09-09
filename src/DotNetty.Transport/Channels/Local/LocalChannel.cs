@@ -33,6 +33,7 @@ namespace DotNetty.Transport.Channels.Local
         static readonly int MAX_READER_STACK_DEPTH = 8;
         internal static readonly ClosedChannelException DoWriteClosedChannelException = new ClosedChannelException();
         static readonly ClosedChannelException DoCloseClosedChannelException = new ClosedChannelException();
+        static readonly Action<object> InternalReadAction = InternalRead;
 
         readonly IQueue<object> inboundBuffer = PlatformDependent.NewMpscQueue<object>();
 
@@ -42,7 +43,6 @@ namespace DotNetty.Transport.Channels.Local
         volatile LocalAddress remoteAddress;
         volatile TaskCompletionSource connectPromise;
         volatile bool readInProgress;
-        volatile bool registerInProgress;
         volatile bool writeInProgress;
         volatile Task finishReadFuture;
 
@@ -93,19 +93,14 @@ namespace DotNetty.Transport.Channels.Local
 
         protected override EndPoint RemoteAddressInternal => this.remoteAddress;
 
-        void InternalRead()
+        static void InternalRead(object c)
         {
-            IChannelPipeline pipeline = this.Pipeline;
-            while(true)
+            var self = (LocalChannel)c;
+            // Ensure the inboundBuffer is not empty as readInbound() will always call fireChannelReadComplete()
+            if (!self.inboundBuffer.IsEmpty)
             {
-                if (!this.inboundBuffer.TryDequeue(out object m))
-                {
-                    break;
-                }
-
-                pipeline.FireChannelRead(m);
+                self.ReadInbound();
             }
-            pipeline.FireChannelReadComplete();
         }
 
         protected override void DoRegister()
@@ -118,13 +113,8 @@ namespace DotNetty.Transport.Channels.Local
             if (this.peer != null && this.Parent != null)
             {
                 // Store the peer in a local variable as it may be set to null if doClose() is called.
-                // Because of this we also set registerInProgress to true as we check for this in doClose() and make sure
-                // we delay the fireChannelInactive() to be fired after the fireChannelActive() and so keep the correct
-                // order of events.
-                //
                 // See https://github.com/netty/netty/issues/2144
                 var peer = this.peer;
-                this.registerInProgress = true;
                 this.state = State.Connected;
 
                 peer.remoteAddress = this.Parent?.LocalAddress;
@@ -137,7 +127,6 @@ namespace DotNetty.Transport.Channels.Local
                 peer.EventLoop.Execute(
                     () =>
                     {
-                        this.registerInProgress = false;
                         var promise = peer.connectPromise;
 
                         // Only trigger fireChannelActive() if the promise was not null and was not completed yet.
@@ -184,7 +173,7 @@ namespace DotNetty.Transport.Channels.Local
                     this.state = State.Closed;
 
                     // Preserve order of event and force a read operation now before the close operation is processed.
-                    this.FinishPeerRead(this);
+                    if (this.writeInProgress && peer != null) { this.FinishPeerRead(peer); }
 
                     TaskCompletionSource promise = this.connectPromise;
                     if (promise != null)
@@ -198,38 +187,30 @@ namespace DotNetty.Transport.Channels.Local
                 if (peer != null)
                 {
                     this.peer = null;
-                    // Need to execute the close in the correct EventLoop (see https://github.com/netty/netty/issues/1777).
-                    // Also check if the registration was not done yet. In this case we submit the close to the EventLoop
-                    // to make sure its run after the registration completes
-                    // (see https://github.com/netty/netty/issues/2144).
+                    // Always call peer.eventLoop().execute() even if peer.eventLoop().inEventLoop() is true.
+                    // This ensures that if both channels are on the same event loop, the peer's channelInActive
+                    // event is triggered *after* this peer's channelInActive event
                     IEventLoop peerEventLoop = peer.EventLoop;
                     bool peerIsActive = peer.Active;
-                    if (peerEventLoop.InEventLoop && !this.registerInProgress)
+                    try
                     {
-                        peer.TryClose(peerIsActive);
+                        peerEventLoop.Execute(() => peer.TryClose(peerIsActive));
                     }
-                    else
+                    catch (Exception cause)
                     {
-                        try
-                        {
-                            peerEventLoop.Execute(() => peer.TryClose(peerIsActive));
-                        }
-                        catch (Exception cause)
-                        {
-                            Logger.Warn("Releasing Inbound Queues for channels {}-{} because exception occurred!", this, peer, cause);
+                        Logger.Warn("Releasing Inbound Queues for channels {}-{} because exception occurred!", this, peer, cause);
 
-                            if (peerEventLoop.InEventLoop)
-                            {
-                                peer.ReleaseInboundBuffers();
-                            }
-                            else
-                            {
-                                // inboundBuffers is a SPSC so we may leak if the event loop is shutdown prematurely or
-                                // rejects the close Runnable but give a best effort.
-                                peer.CloseAsync();
-                            }
-                            throw;
+                        if (peerEventLoop.InEventLoop)
+                        {
+                            peer.ReleaseInboundBuffers();
                         }
+                        else
+                        {
+                            // inboundBuffers is a SPSC so we may leak if the event loop is shutdown prematurely or
+                            // rejects the close Runnable but give a best effort.
+                            peer.CloseAsync();
+                        }
+                        throw;
                     }
                 }
             }
@@ -261,6 +242,19 @@ namespace DotNetty.Transport.Channels.Local
 
         protected override void DoDeregister() => ((SingleThreadEventExecutor)this.EventLoop).RemoveShutdownHook(this.shutdownHook);
 
+        private void ReadInbound()
+        {
+            var pipeline = this.Pipeline;
+            var inboundBuffer = this.inboundBuffer;
+
+            while (inboundBuffer.TryDequeue(out object received))
+            {
+                pipeline.FireChannelRead(received);
+            }
+
+            pipeline.FireChannelReadComplete();
+        }
+
         protected override void DoBeginRead()
         {
             if (this.readInProgress)
@@ -268,9 +262,7 @@ namespace DotNetty.Transport.Channels.Local
                 return;
             }
 
-            IChannelPipeline pipeline = this.Pipeline;
-            IQueue<object> inboundBuffer = this.inboundBuffer;
-            if (inboundBuffer.IsEmpty)
+            if (this.inboundBuffer.IsEmpty)
             {
                 this.readInProgress = true;
                 return;
@@ -284,16 +276,7 @@ namespace DotNetty.Transport.Channels.Local
 
                 try
                 {
-                    while(true)
-                    {
-                        if (!inboundBuffer.TryDequeue(out object received))
-                        {
-                            break;
-                        }
-
-                        pipeline.FireChannelRead(received);
-                    }
-                    pipeline.FireChannelReadComplete();
+                    this.ReadInbound();
                 }
                 finally
                 {
@@ -304,7 +287,7 @@ namespace DotNetty.Transport.Channels.Local
             {
                 try
                 {
-                    this.EventLoop.Execute(this.InternalRead);
+                    this.EventLoop.Execute(InternalReadAction, this);
                 }
                 catch (Exception ex)
                 {
@@ -334,7 +317,7 @@ namespace DotNetty.Transport.Channels.Local
             this.writeInProgress = true;
             try
             {
-                while(true)
+                while (true)
                 {
                     object msg = buffer.Current;
                     if (msg == null)
@@ -445,15 +428,13 @@ namespace DotNetty.Transport.Channels.Local
                 }
             }
 
+            // We should only set readInProgress to false if there is any data that was read as otherwise we may miss to
+            // forward data later on.
             IChannelPipeline peerPipeline = peer.Pipeline;
-            if (peer.readInProgress)
+            if (peer.readInProgress && !peer.inboundBuffer.IsEmpty)
             {
                 peer.readInProgress = false;
-                while (peer.inboundBuffer.TryDequeue(out object received))
-                {
-                    peerPipeline.FireChannelRead(received);
-                }
-                peerPipeline.FireChannelReadComplete();
+                peer.ReadInbound();
             }
         }
 

@@ -149,7 +149,7 @@ namespace DotNetty.Transport
             throw GetArgumentException();
             ArgumentException GetArgumentException()
             {
-                return new ArgumentException($"acquireTimeoutMillis: {acquireTimeout} (expected: >= 1)");
+                return new ArgumentException($"acquireTimeoutMillis: {acquireTimeout} (expected: >= 0)");
             }
         }
 

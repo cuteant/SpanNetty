@@ -8,13 +8,16 @@ namespace DotNetty.Transport.Channels.Embedded
     using System.Diagnostics;
     using System.Diagnostics.Contracts;
     using System.Net;
+    using System.Runtime.CompilerServices;
     using System.Runtime.ExceptionServices;
     using System.Threading.Tasks;
+    using CuteAnt.AsyncEx;
+    using CuteAnt.Collections;
     using DotNetty.Common;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
-    public class EmbeddedChannel : AbstractChannel<EmbeddedChannel, EmbeddedChannel.DefaultUnsafe>
+    public class EmbeddedChannel : AbstractChannel<EmbeddedChannel, EmbeddedChannel.EmbeddedUnsafe>
     {
         static readonly EndPoint LOCAL_ADDRESS = new EmbeddedSocketAddress();
         static readonly EndPoint REMOTE_ADDRESS = new EmbeddedSocketAddress();
@@ -35,8 +38,8 @@ namespace DotNetty.Transport.Channels.Embedded
 
         readonly EmbeddedEventLoop loop = new EmbeddedEventLoop();
 
-        Queue<object> inboundMessages;
-        Queue<object> outboundMessages;
+        readonly QueueX<object> inboundMessages = new QueueX<object>();
+        readonly QueueX<object> outboundMessages = new QueueX<object>();
         Exception lastException;
         State state;
 
@@ -49,15 +52,6 @@ namespace DotNetty.Transport.Channels.Embedded
         }
 
         /// <summary>
-        ///     Create a new instance with an empty pipeline with the specified <see cref="IChannelId" />.
-        /// </summary>
-        /// <param name="channelId">The <see cref="IChannelId" /> of this channel. </param>
-        public EmbeddedChannel(IChannelId channelId)
-            : this(channelId, EMPTY_HANDLERS)
-        {
-        }
-
-        /// <summary>
         ///     Create a new instance with the pipeline initialized with the specified handlers.
         /// </summary>
         /// <param name="handlers">
@@ -65,6 +59,24 @@ namespace DotNetty.Transport.Channels.Embedded
         /// </param>
         public EmbeddedChannel(params IChannelHandler[] handlers)
             : this(EmbeddedChannelId.Instance, handlers)
+        {
+        }
+        public EmbeddedChannel(bool hasDisconnect, params IChannelHandler[] handlers)
+            : this(EmbeddedChannelId.Instance, hasDisconnect, handlers)
+        {
+        }
+
+        public EmbeddedChannel(bool hasDisconnect, bool register, params IChannelHandler[] handlers)
+            : this(EmbeddedChannelId.Instance, hasDisconnect, register, handlers)
+        {
+        }
+
+        /// <summary>
+        ///     Create a new instance with an empty pipeline with the specified <see cref="IChannelId" />.
+        /// </summary>
+        /// <param name="channelId">The <see cref="IChannelId" /> of this channel. </param>
+        public EmbeddedChannel(IChannelId channelId)
+            : this(channelId, EMPTY_HANDLERS)
         {
         }
 
@@ -84,7 +96,8 @@ namespace DotNetty.Transport.Channels.Embedded
         /// </param>
         public EmbeddedChannel(IChannelId id, bool hasDisconnect, params IChannelHandler[] handlers)
             : this(id, hasDisconnect, true, handlers)
-        { }
+        {
+        }
 
         public EmbeddedChannel(IChannelId id, bool hasDisconnect, bool register, params IChannelHandler[] handlers)
             : base(null, id)
@@ -94,8 +107,7 @@ namespace DotNetty.Transport.Channels.Embedded
             this.Setup(register, handlers);
         }
 
-        public EmbeddedChannel(IChannelId id, bool hasDisconnect, IChannelConfiguration config, 
-            params IChannelHandler[] handlers)
+        public EmbeddedChannel(IChannelId id, bool hasDisconnect, IChannelConfiguration config, params IChannelHandler[] handlers)
             : base(null, id)
         {
             Contract.Requires(config != null);
@@ -120,7 +132,7 @@ namespace DotNetty.Transport.Channels.Embedded
                     if (h == null)
                     {
                         break;
-                        
+
                     }
                     pipeline.AddLast(h);
                 }
@@ -137,7 +149,7 @@ namespace DotNetty.Transport.Channels.Embedded
         {
             Task future = this.loop.RegisterAsync(this);
             Debug.Assert(future.IsCompleted);
-            this.Pipeline.AddLast(new LastInboundHandler(this.InboundMessages, this.RecordException));
+            this.Pipeline.AddLast(new LastInboundHandler(this.inboundMessages, this.RecordException));
         }
 
         protected sealed override DefaultChannelPipeline NewChannelPipeline() => new EmbeddedChannelPipeline(this);
@@ -150,13 +162,13 @@ namespace DotNetty.Transport.Channels.Embedded
         ///     Returns the <see cref="Queue{T}" /> which holds all of the <see cref="object" />s that
         ///     were received by this <see cref="IChannel" />.
         /// </summary>
-        public Queue<object> InboundMessages => this.inboundMessages ?? (this.inboundMessages = new Queue<object>());
+        public QueueX<object> InboundMessages => this.inboundMessages;
 
         /// <summary>
         ///     Returns the <see cref="Queue{T}" /> which holds all of the <see cref="object" />s that
         ///     were written by this <see cref="IChannel" />.
         /// </summary>
-        public Queue<object> OutboundMessages => this.outboundMessages ?? (this.outboundMessages = new Queue<object>());
+        public QueueX<object> OutboundMessages => this.outboundMessages;
 
         /// <summary>
         /// Return received data from this <see cref="IChannel"/>.
@@ -183,7 +195,10 @@ namespace DotNetty.Transport.Channels.Embedded
 
         protected override void DoRegister() => this.state = State.Active;
 
-        protected override void DoDisconnect() => this.DoClose();
+        protected override void DoDisconnect()
+        {
+            if (!this.Metadata.HasDisconnect) { this.DoClose(); }
+        }
 
         protected override void DoClose() => this.state = State.Closed;
 
@@ -194,7 +209,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
         protected override void DoWrite(ChannelOutboundBuffer input)
         {
-            while(true)
+            while (true)
             {
                 object msg = input.Current;
                 if (msg == null)
@@ -203,7 +218,7 @@ namespace DotNetty.Transport.Channels.Embedded
                 }
 
                 ReferenceCountUtil.Retain(msg);
-                this.OutboundMessages.Enqueue(msg);
+                this.HandleOutboundMessage(msg);
                 input.Remove();
             }
         }
@@ -267,7 +282,7 @@ namespace DotNetty.Transport.Channels.Embedded
             this.EnsureOpen();
             if (msgs.Length == 0)
             {
-                return IsNotEmpty(this.inboundMessages);
+                return this.inboundMessages.NonEmpty;
             }
 
             IChannelPipeline p = this.Pipeline;
@@ -275,10 +290,33 @@ namespace DotNetty.Transport.Channels.Embedded
             {
                 p.FireChannelRead(m);
             }
-            p.FireChannelReadComplete();
-            this.RunPendingTasks();
+
+            this.FlushInbound(false);
+            return this.inboundMessages.NonEmpty;
+        }
+
+        public void WriteOneInbound(object msg)
+        {
+            if (this.CheckOpen(true))
+            {
+                this.Pipeline.FireChannelRead(msg);
+            }
             this.CheckException();
-            return IsNotEmpty(this.inboundMessages);
+        }
+
+        /// <summary>Flushes the inbound of this <see cref="IChannel"/>. This method is conceptually equivalent to Flush.</summary>
+        /// <param name="recordException"></param>
+        /// <returns></returns>
+        public EmbeddedChannel FlushInbound(bool recordException = true)
+        {
+            if (this.CheckOpen(recordException))
+            {
+                this.Pipeline.FireChannelReadComplete();
+                this.RunPendingTasks();
+            }
+
+            this.CheckException();
+            return this;
         }
 
         /// <summary>
@@ -291,7 +329,7 @@ namespace DotNetty.Transport.Channels.Embedded
             this.EnsureOpen();
             if (msgs.Length == 0)
             {
-                return IsNotEmpty(this.outboundMessages);
+                return this.outboundMessages.NonEmpty;
             }
 
             ThreadLocalObjectList futures = ThreadLocalObjectList.NewInstance(msgs.Length);
@@ -304,10 +342,8 @@ namespace DotNetty.Transport.Channels.Embedded
                 }
                 futures.Add(this.WriteAsync(m));
             }
-            // We need to call RunPendingTasks first as a IChannelHandler may have used IEventLoop.Execute(...) to
-            // delay the write on the next event loop run.
-            this.RunPendingTasks();
-            this.Flush();
+
+            this.FlushOutbound0();
 
             int size = futures.Count;
             for (int i = 0; i < size; i++)
@@ -327,7 +363,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
             this.RunPendingTasks();
             this.CheckException();
-            return IsNotEmpty(this.outboundMessages);
+            return this.outboundMessages.NonEmpty;
         }
 
         void RecordException(Task future)
@@ -343,6 +379,7 @@ namespace DotNetty.Transport.Channels.Embedded
             }
         }
 
+        [MethodImpl(InlineMethod.Value)]
         void RecordException(Exception cause)
         {
             if (this.lastException == null)
@@ -353,6 +390,53 @@ namespace DotNetty.Transport.Channels.Embedded
             {
                 logger.Warn("More than one exception was raised. " + "Will report only the first one and log others.", cause);
             }
+        }
+
+        /// <summary>
+        /// Writes one message to the outbound of this <see cref="IChannel"/> and does not flush it. This
+        /// method is conceptually equivalent to WriteAsync.
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <returns></returns>
+        public void WriteOneOutbound(object msg)
+        {
+            if (this.CheckOpen(true))
+            {
+                var future = this.WriteAsync(msg);
+                if (future.IsCompleted)
+                {
+                    this.RecordException(future);
+                }
+                else
+                {
+                    // The write may be delayed to run later by runPendingTasks()
+                    future.ContinueWith(t => this.RecordException(t));
+                }
+            }
+            this.CheckException();
+        }
+
+        /// <summary>Flushes the outbound of this <see cref="IChannel"/>.
+        /// This method is conceptually equivalent to <see cref="Finish()"/>.</summary>
+        /// <returns></returns>
+        public EmbeddedChannel FlushOutbound()
+        {
+            if (this.CheckOpen(true))
+            {
+                this.FlushOutbound0();
+            }
+            this.CheckException();
+            return this;
+        }
+
+        [MethodImpl(InlineMethod.Value)]
+        void FlushOutbound0()
+        {
+            // We need to call RunPendingTasks first as a IChannelHandler may have used IEventLoop.Execute(...) to
+            // delay the write on the next event loop run.
+            this.RunPendingTasks();
+
+            this.Flush();
         }
 
         /// <summary>
@@ -379,7 +463,7 @@ namespace DotNetty.Transport.Channels.Embedded
             try
             {
                 this.CheckException();
-                return IsNotEmpty(this.inboundMessages) || IsNotEmpty(this.outboundMessages);
+                return this.inboundMessages.NonEmpty || this.outboundMessages.NonEmpty;
             }
             finally
             {
@@ -403,22 +487,15 @@ namespace DotNetty.Transport.Channels.Embedded
         /// <returns><c>true</c> if any were in the outbound buffer, otherwise <c>false</c>.</returns>
         public bool ReleaseOutbound() => ReleaseAll(this.outboundMessages);
 
-        static bool ReleaseAll(Queue<object> queue)
+        static bool ReleaseAll(QueueX<object> queue)
         {
-            if (queue != null && queue.Count > 0)
+            if (queue.IsEmpty) { return false; }
+
+            while (queue.TryDequeue(out var msg))
             {
-                while(true)
-                {
-                    if (queue.Count == 0)
-                    {
-                        break;
-                    }
-                    object msg = queue.Dequeue();
-                    ReferenceCountUtil.Release(msg);
-                }
-                return true;
+                ReferenceCountUtil.Release(msg);
             }
-            return false;
+            return true;
         }
 
         void FinishPendingTasks(bool cancel)
@@ -446,11 +523,9 @@ namespace DotNetty.Transport.Channels.Embedded
         public override Task DisconnectAsync()
         {
             Task future = base.DisconnectAsync();
-            this.FinishPendingTasks(false); // todo
+            this.FinishPendingTasks(!this.Metadata.HasDisconnect);
             return future;
         }
-
-        static bool IsNotEmpty(Queue<object> queue) => queue != null && queue.Count > 0;
 
         /// <summary>
         ///     Check to see if there was any <see cref="Exception" /> and rethrow if so.
@@ -471,21 +546,67 @@ namespace DotNetty.Transport.Channels.Embedded
 #endif
         }
 
+        public Task CheckExceptionAsync()
+        {
+            var e = this.lastException;
+            if (null == e) { return TaskConstants.Completed; }
+            return AsyncUtils.FromException(e);
+        }
+
+        /// <summary>Returns <c>true</c> if the <see cref="IChannel" /> is open and records optionally
+        /// an <see cref="Exception" /> if it isn't.</summary>
+        /// <param name="recordException"></param>
+        /// <returns></returns>
+        [MethodImpl(InlineMethod.Value)]
+        bool CheckOpen(bool recordException)
+        {
+            if (!this.Open)
+            {
+                if (recordException)
+                {
+                    this.RecordException(ThrowHelper.GetClosedChannelException());
+                }
+                return false;
+            }
+
+            return true;
+        }
+
         /// <summary>
         ///     Ensure the <see cref="IChannel" /> is open and if not throw an exception.
         /// </summary>
         protected void EnsureOpen()
         {
-            if (!this.Open)
+            if (!this.CheckOpen(true))
             {
-                this.RecordException(ThrowHelper.GetClosedChannelException());
                 this.CheckException();
             }
         }
 
-        static object Poll(Queue<object> queue) => IsNotEmpty(queue) ? queue.Dequeue() : null;
+        [MethodImpl(InlineMethod.Value)]
+        static object Poll(QueueX<object> queue)
+        {
+            queue.TryDequeue(out var result);
+            return result;
+        }
 
-        public class DefaultUnsafe : AbstractUnsafe
+        /// <summary>Called for each outbound message.</summary>
+        /// <param name="msg"></param>
+        [MethodImpl(InlineMethod.Value)]
+        protected void HandleOutboundMessage(object msg)
+        {
+            this.outboundMessages.Enqueue(msg);
+        }
+
+        /// <summary>Called for each inbound message.</summary>
+        /// <param name="msg"></param>
+        [MethodImpl(InlineMethod.Value)]
+        protected void HandleInboundMessage(object msg)
+        {
+            this.inboundMessages.Enqueue(msg);
+        }
+
+        sealed class DefaultUnsafe : AbstractUnsafe
         {
             public DefaultUnsafe() //AbstractChannel channel)
                 : base() //channel)
@@ -495,12 +616,90 @@ namespace DotNetty.Transport.Channels.Embedded
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress) => TaskUtil.Completed;
         }
 
+        public sealed class EmbeddedUnsafe : IChannelUnsafe
+        {
+            readonly DefaultUnsafe innerUnsafe;
+            EmbeddedChannel embeddedChannel;
+
+            public EmbeddedUnsafe() : base() { this.innerUnsafe = new DefaultUnsafe(); }
+
+            public void Initialize(IChannel channel)
+            {
+                this.innerUnsafe.Initialize(channel);
+                this.embeddedChannel = (EmbeddedChannel)channel;
+            }
+
+            public IRecvByteBufAllocatorHandle RecvBufAllocHandle => this.innerUnsafe.RecvBufAllocHandle;
+
+            public ChannelOutboundBuffer OutboundBuffer => this.innerUnsafe.OutboundBuffer;
+
+            public void BeginRead()
+            {
+                this.innerUnsafe.BeginRead();
+                this.embeddedChannel.RunPendingTasks();
+            }
+
+            public async Task BindAsync(EndPoint localAddress)
+            {
+                await this.innerUnsafe.BindAsync(localAddress);
+                this.embeddedChannel.RunPendingTasks();
+            }
+
+            public async Task CloseAsync()
+            {
+                await this.innerUnsafe.CloseAsync();
+                this.embeddedChannel.RunPendingTasks();
+            }
+
+            public void CloseForcibly()
+            {
+                this.innerUnsafe.CloseForcibly();
+                this.embeddedChannel.RunPendingTasks();
+            }
+
+            public async Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
+            {
+                await this.innerUnsafe.ConnectAsync(remoteAddress, localAddress);
+                this.embeddedChannel.RunPendingTasks();
+            }
+
+            public async Task DeregisterAsync()
+            {
+                await this.innerUnsafe.DeregisterAsync();
+                this.embeddedChannel.RunPendingTasks();
+            }
+
+            public async Task DisconnectAsync()
+            {
+                await this.innerUnsafe.DisconnectAsync();
+                this.embeddedChannel.RunPendingTasks();
+            }
+
+            public void Flush()
+            {
+                this.innerUnsafe.Flush();
+                this.embeddedChannel.RunPendingTasks();
+            }
+
+            public async Task RegisterAsync(IEventLoop eventLoop)
+            {
+                await this.innerUnsafe.RegisterAsync(eventLoop);
+                this.embeddedChannel.RunPendingTasks();
+            }
+
+            public async Task WriteAsync(object message)
+            {
+                await this.innerUnsafe.WriteAsync(message);
+                this.embeddedChannel.RunPendingTasks();
+            }
+        }
+
         internal sealed class LastInboundHandler : ChannelHandlerAdapter
         {
-            readonly Queue<object> inboundMessages;
+            readonly QueueX<object> inboundMessages;
             readonly Action<Exception> recordException;
 
-            public LastInboundHandler(Queue<object> inboundMessages, Action<Exception> recordException)
+            public LastInboundHandler(QueueX<object> inboundMessages, Action<Exception> recordException)
             {
                 this.inboundMessages = inboundMessages;
                 this.recordException = recordException;
@@ -513,14 +712,16 @@ namespace DotNetty.Transport.Channels.Embedded
 
         sealed class EmbeddedChannelPipeline : DefaultChannelPipeline
         {
+            readonly EmbeddedChannel embeddedChannel;
             public EmbeddedChannelPipeline(EmbeddedChannel channel)
                 : base(channel)
             {
+                embeddedChannel = channel;
             }
 
-            protected override void OnUnhandledInboundException(Exception cause) => ((EmbeddedChannel)this.Channel).RecordException(cause);
+            protected override void OnUnhandledInboundException(Exception cause) => this.embeddedChannel.RecordException(cause);
 
-            protected override void OnUnhandledInboundMessage(object msg) => ((EmbeddedChannel)this.Channel).InboundMessages.Enqueue(msg);
+            protected override void OnUnhandledInboundMessage(object msg) => this.embeddedChannel.HandleInboundMessage(msg);
         }
     }
 }

@@ -76,26 +76,13 @@ namespace DotNetty.Transport.Channels.Local
                 return;
             }
 
-            IQueue<object> inboundBuffer = this.inboundBuffer;
-
-            if (inboundBuffer.IsEmpty)
+            if (this.inboundBuffer.IsEmpty)
             {
                 this.acceptInProgress = true;
                 return;
             }
 
-            IChannelPipeline pipeline = this.Pipeline;
-            while (true)
-            {
-                if (!inboundBuffer.TryDequeue(out object m))
-                {
-                    break;
-                }
-
-                pipeline.FireChannelRead(m);
-            }
-
-            pipeline.FireChannelReadComplete();
+            this.ReadInbound();
         }
 
         public LocalChannel Serve(LocalChannel peer)
@@ -112,6 +99,19 @@ namespace DotNetty.Transport.Channels.Local
             return child;
         }
 
+        private void ReadInbound()
+        {
+            var pipeline = this.Pipeline;
+            var inboundBuffer = this.inboundBuffer;
+
+            while (inboundBuffer.TryDequeue(out object m))
+            {
+                pipeline.FireChannelRead(m);
+            }
+
+            pipeline.FireChannelReadComplete();
+        }
+
         /// <summary>
         /// A factory method for <see cref="LocalChannel"/>s. Users may override it to create custom instances of <see cref="LocalChannel"/>s.
         /// </summary>
@@ -126,12 +126,7 @@ namespace DotNetty.Transport.Channels.Local
             if (this.acceptInProgress)
             {
                 this.acceptInProgress = false;
-                IChannelPipeline pipeline = this.Pipeline;
-                while (this.inboundBuffer.TryDequeue(out object m))
-                {
-                    pipeline.FireChannelRead(m);
-                }
-                pipeline.FireChannelReadComplete();
+                this.ReadInbound();
             }
         }
 

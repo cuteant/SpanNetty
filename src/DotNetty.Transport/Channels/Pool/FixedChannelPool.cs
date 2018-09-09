@@ -26,9 +26,9 @@ namespace DotNetty.Transport.Channels.Pool
 
         static readonly TimeoutException TimeoutException = new TimeoutException("Acquire operation took longer then configured maximum time");
 
-        internal static readonly InvalidOperationException PoolClosedOnReleaseException = new InvalidOperationException("FixedChannelPooled was closed");
+        internal static readonly InvalidOperationException PoolClosedOnReleaseException = new InvalidOperationException("FixedChannelPool was closed");
 
-        internal static readonly InvalidOperationException PoolClosedOnAcquireException = new InvalidOperationException("FixedChannelPooled was closed");
+        internal static readonly InvalidOperationException PoolClosedOnAcquireException = new InvalidOperationException("FixedChannelPool was closed");
 
         public enum AcquireTimeoutAction
         {
@@ -57,7 +57,7 @@ namespace DotNetty.Transport.Channels.Pool
         readonly int maxPendingAcquires;
         int acquiredChannelCount;
         int pendingAcquireCount;
-        bool closed;
+        volatile bool closed;
 
         /// <summary>
         /// Creates a new <see cref="FixedChannelPool"/> instance using the <see cref="ChannelActiveHealthChecker"/>.
@@ -216,6 +216,9 @@ namespace DotNetty.Transport.Channels.Pool
             this.maxPendingAcquires = maxPendingAcquires;
         }
 
+        /// <summary>Returns the number of acquired channels that this pool thinks it has.</summary>
+        public int AcquiredChannelCount => this.acquiredChannelCount;
+
         public override ValueTask<IChannel> AcquireAsync()
         {
             if (this.executor.InEventLoop)
@@ -268,7 +271,7 @@ namespace DotNetty.Transport.Channels.Pool
                     var task = new AcquireTask(this, promise);
                     if (this.pendingAcquireQueue.TryEnqueue(task))
                     {
-                        ++this.pendingAcquireCount;
+                        Interlocked.Increment(ref this.pendingAcquireCount);
 
                         if (this.timeoutTask != null)
                         {
@@ -353,7 +356,7 @@ namespace DotNetty.Transport.Channels.Pool
 
         void DecrementAndRunTaskQueue()
         {
-            --this.acquiredChannelCount;
+            Interlocked.Decrement(ref this.acquiredChannelCount);
 
             // We should never have a negative value.
             Contract.Assert(this.acquiredChannelCount >= 0);
@@ -377,7 +380,7 @@ namespace DotNetty.Transport.Channels.Pool
                 // Cancel the timeout if one was scheduled
                 task.TimeoutTask?.Cancel();
 
-                --this.pendingAcquireCount;
+                Interlocked.Decrement(ref this.pendingAcquireCount);
 
                 task.AcquireAsync();
             }
@@ -404,8 +407,8 @@ namespace DotNetty.Transport.Channels.Pool
                 task.Promise.TrySetException(ThrowHelper.GetClosedChannelException());
             }
 
-            this.acquiredChannelCount = 0;
-            this.pendingAcquireCount = 0;
+            Interlocked.Exchange(ref this.acquiredChannelCount, 0);
+            Interlocked.Exchange(ref this.pendingAcquireCount, 0);
             base.Dispose();
         }
 
@@ -565,7 +568,7 @@ namespace DotNetty.Transport.Channels.Pool
                     return;
                 }
 
-                this.pool.acquiredChannelCount++;
+                Interlocked.Increment(ref this.pool.acquiredChannelCount);
                 this.acquired = true;
             }
         }

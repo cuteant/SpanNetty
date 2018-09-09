@@ -31,5 +31,8 @@ namespace DotNetty.Transport.Channels
         void Flush();
 
         ChannelOutboundBuffer OutboundBuffer { get; }
+
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        void Initialize(IChannel channel);
     }
 }
