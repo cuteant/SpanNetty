@@ -4,10 +4,8 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Threading;
     using DotNetty.Buffers;
-    using DotNetty.Transport.Channels.Sockets;
 
     /// <summary>
     ///     Shared configuration for SocketAsyncChannel. Provides access to pre-configured resources like ByteBuf allocator and
@@ -17,14 +15,15 @@ namespace DotNetty.Transport.Channels
     {
         static readonly TimeSpan DefaultConnectTimeout = TimeSpan.FromSeconds(30);
 
-        volatile IByteBufferAllocator allocator = ByteBufferUtil.DefaultAllocator;
-        volatile IRecvByteBufAllocator recvByteBufAllocator = FixedRecvByteBufAllocator.Default;
-        volatile IMessageSizeEstimator messageSizeEstimator = DefaultMessageSizeEstimator.Default;
+        IByteBufferAllocator allocator = ByteBufferUtil.DefaultAllocator;
+        IRecvByteBufAllocator recvByteBufAllocator = FixedRecvByteBufAllocator.Default;
+        IMessageSizeEstimator messageSizeEstimator = DefaultMessageSizeEstimator.Default;
 
-        volatile int autoRead = 1;
-        volatile int writeSpinCount = 16;
-        volatile int writeBufferHighWaterMark = 64 * 1024;
-        volatile int writeBufferLowWaterMark = 32 * 1024;
+        int autoRead = Constants.True;
+        int autoClose = Constants.True;
+        int writeSpinCount = 16;
+        int writeBufferHighWaterMark = 64 * 1024;
+        int writeBufferLowWaterMark = 32 * 1024;
         long connectTimeout = DefaultConnectTimeout.Ticks;
 
         protected readonly IChannel Channel;
@@ -36,11 +35,10 @@ namespace DotNetty.Transport.Channels
 
         public DefaultChannelConfiguration(IChannel channel, IRecvByteBufAllocator allocator)
         {
-            Contract.Requires(channel != null);
+            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
             this.Channel = channel;
-            var maxMessagesAllocator = allocator as IMaxMessagesRecvByteBufAllocator;
-            if (maxMessagesAllocator != null)
+            if (allocator is IMaxMessagesRecvByteBufAllocator maxMessagesAllocator)
             {
                 maxMessagesAllocator.MaxMessagesPerRead = channel.Metadata.DefaultMaxMessagesPerRead;
             }
@@ -53,7 +51,7 @@ namespace DotNetty.Transport.Channels
 
         public virtual T GetOption<T>(ChannelOption<T> option)
         {
-            Contract.Requires(option != null);
+            if (null == option) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.option); }
 
             if (ChannelOption.ConnectTimeout.Equals(option))
             {
@@ -75,6 +73,10 @@ namespace DotNetty.Transport.Channels
             {
                 return (T)(object)this.AutoRead;
             }
+            if (ChannelOption.AutoClose.Equals(option))
+            {
+                return (T)(object)this.AutoClose;
+            }
             if (ChannelOption.WriteBufferHighWaterMark.Equals(option))
             {
                 return (T)(object)this.WriteBufferHighWaterMark;
@@ -87,7 +89,14 @@ namespace DotNetty.Transport.Channels
             {
                 return (T)this.MessageSizeEstimator;
             }
-            return default(T);
+            if (ChannelOption.MaxMessagesPerRead.Equals(option))
+            {
+                if (RecvByteBufAllocator is IMaxMessagesRecvByteBufAllocator)
+                {
+                    return (T)(object)this.MaxMessagesPerRead;
+                }
+            }
+            return default;
         }
 
         public bool SetOption(ChannelOption option, object value) => option.Set(this, value);
@@ -116,6 +125,10 @@ namespace DotNetty.Transport.Channels
             {
                 this.AutoRead = (bool)(object)value;
             }
+            else if (ChannelOption.AutoClose.Equals(option))
+            {
+                this.AutoClose = (bool)(object)value;
+            }
             else if (ChannelOption.WriteBufferHighWaterMark.Equals(option))
             {
                 this.WriteBufferHighWaterMark = (int)(object)value;
@@ -128,6 +141,17 @@ namespace DotNetty.Transport.Channels
             {
                 this.MessageSizeEstimator = (IMessageSizeEstimator)value;
             }
+            else if (ChannelOption.MaxMessagesPerRead.Equals(option))
+            {
+                if (RecvByteBufAllocator is IMaxMessagesRecvByteBufAllocator)
+                {
+                    this.MaxMessagesPerRead = (int)(object)value;
+                }
+                else
+                {
+                    return false;
+                }
+            }
             else
             {
                 return false;
@@ -138,7 +162,7 @@ namespace DotNetty.Transport.Channels
 
         protected virtual void Validate<T>(ChannelOption<T> option, T value)
         {
-            Contract.Requires(option != null);
+            if (null == option) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.option); }
             option.Validate(value);
         }
 
@@ -147,48 +171,48 @@ namespace DotNetty.Transport.Channels
             get { return new TimeSpan(Volatile.Read(ref this.connectTimeout)); }
             set
             {
-                Contract.Requires(value >= TimeSpan.Zero);
-                Volatile.Write(ref this.connectTimeout, value.Ticks);
+                if (value < TimeSpan.Zero) { ThrowHelper.ThrowArgumentException_MustBeGreaterThanZero(value, ExceptionArgument.value); }
+                Interlocked.Exchange(ref this.connectTimeout, value.Ticks);
             }
         }
 
         public IByteBufferAllocator Allocator
         {
-            get { return this.allocator; }
+            get { return Volatile.Read(ref this.allocator); }
             set
             {
-                Contract.Requires(value != null);
-                this.allocator = value;
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                Interlocked.Exchange(ref this.allocator, value);
             }
         }
 
         public IRecvByteBufAllocator RecvByteBufAllocator
         {
-            get { return this.recvByteBufAllocator; }
+            get { return Volatile.Read(ref this.recvByteBufAllocator); }
             set
             {
-                Contract.Requires(value != null);
-                this.recvByteBufAllocator = value;
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                Interlocked.Exchange(ref this.recvByteBufAllocator, value);
             }
         }
 
         public IMessageSizeEstimator MessageSizeEstimator
         {
-            get { return this.messageSizeEstimator; }
+            get { return Volatile.Read(ref this.messageSizeEstimator); }
             set
             {
-                Contract.Requires(value != null);
-                this.messageSizeEstimator = value;
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                Interlocked.Exchange(ref this.messageSizeEstimator, value);
             }
         }
 
         public bool AutoRead
         {
-            get { return this.autoRead == 1; }
+            get { return Constants.True == Volatile.Read(ref this.autoRead); }
             set
             {
 #pragma warning disable 420 // atomic exchange is ok
-                bool oldAutoRead = Interlocked.Exchange(ref this.autoRead, value ? 1 : 0) == 1;
+                bool oldAutoRead = Constants.True == Interlocked.Exchange(ref this.autoRead, value ? Constants.True : Constants.False);
 #pragma warning restore 420
                 if (value && !oldAutoRead)
                 {
@@ -205,39 +229,51 @@ namespace DotNetty.Transport.Channels
         {
         }
 
+        public bool AutoClose
+        {
+            get { return Constants.True == Volatile.Read(ref this.autoClose); }
+            set { Interlocked.Exchange(ref this.autoClose, value ? Constants.True : Constants.False); }
+        }
+
         public int WriteBufferHighWaterMark
         {
-            get { return this.writeBufferHighWaterMark; }
+            get { return Volatile.Read(ref this.writeBufferHighWaterMark); }
             set
             {
-                Contract.Requires(value >= 0);
-                Contract.Requires(value >= this.writeBufferLowWaterMark);
+                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+                if (value < Volatile.Read(ref this.writeBufferLowWaterMark)) { ThrowHelper.ThrowArgumentOutOfRangeException(); }
 
-                this.writeBufferHighWaterMark = value;
+                Interlocked.Exchange(ref this.writeBufferHighWaterMark, value);
             }
         }
 
         public int WriteBufferLowWaterMark
         {
-            get { return this.writeBufferLowWaterMark; }
+            get { return Volatile.Read(ref this.writeBufferLowWaterMark); }
             set
             {
-                Contract.Requires(value >= 0);
-                Contract.Requires(value <= this.writeBufferHighWaterMark);
+                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+                if (value > Volatile.Read(ref this.writeBufferHighWaterMark)) { ThrowHelper.ThrowArgumentOutOfRangeException(); }
 
-                this.writeBufferLowWaterMark = value;
+                Interlocked.Exchange(ref this.writeBufferLowWaterMark, value);
             }
         }
 
         public int WriteSpinCount
         {
-            get { return this.writeSpinCount; }
+            get { return Volatile.Read(ref this.writeSpinCount); }
             set
             {
-                Contract.Requires(value >= 1);
+                if (value < 1) { ThrowHelper.ThrowArgumentException_PositiveOrOne(value, ExceptionArgument.value); }
 
-                this.writeSpinCount = value;
+                Interlocked.Exchange(ref this.writeSpinCount, value);
             }
+        }
+
+        public int MaxMessagesPerRead
+        {
+            get { return ((IMaxMessagesRecvByteBufAllocator)RecvByteBufAllocator).MaxMessagesPerRead; }
+            set { ((IMaxMessagesRecvByteBufAllocator)RecvByteBufAllocator).MaxMessagesPerRead = value; }
         }
     }
 }

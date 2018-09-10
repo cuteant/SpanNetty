@@ -6,7 +6,6 @@ namespace DotNetty.Common.Utilities
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
 
     public class PriorityQueue<T> : IEnumerable<T>
         where T : class
@@ -18,7 +17,7 @@ namespace DotNetty.Common.Utilities
 
         public PriorityQueue(IComparer<T> comparer)
         {
-            Contract.Requires(comparer != null);
+            if (null == comparer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.comparer); }
 
             this.comparer = comparer;
             this.capacity = 11;
@@ -55,7 +54,7 @@ namespace DotNetty.Common.Utilities
 
         public void Enqueue(T item)
         {
-            Contract.Requires(item != null);
+            if (null == item) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.item); }
 
             int oldCount = this.count;
             if (oldCount == this.capacity)

@@ -6,7 +6,7 @@ namespace DotNetty.Transport.Channels.Groups
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Threading.Tasks;
 
     public class DefaultChannelGroupCompletionSource : TaskCompletionSource<int>, IChannelGroupTaskCompletionSource
@@ -23,8 +23,8 @@ namespace DotNetty.Transport.Channels.Groups
         public DefaultChannelGroupCompletionSource(IChannelGroup group, Dictionary<IChannel, Task> futures /*, IEventExecutor executor*/, object state)
             : base(state)
         {
-            Contract.Requires(group != null);
-            Contract.Requires(futures != null);
+            if (null == group) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.group); }
+            if (null == futures) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.futures); }
 
             this.Group = group;
             this.futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
@@ -44,7 +44,7 @@ namespace DotNetty.Transport.Channels.Groups
                     }
 
                     callSetDone = this.successCount + this.failureCount == this.futures.Count;
-                    Contract.Assert(this.successCount + this.failureCount <= this.futures.Count);
+                    Debug.Assert(this.successCount + this.failureCount <= this.futures.Count);
                 }
 
                 if (callSetDone)

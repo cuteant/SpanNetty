@@ -26,7 +26,7 @@ namespace DotNetty.Common.Utilities
         /// </summary>
         public AtomicReference()
         {
-            this.atomicValue = default(T);
+            this.atomicValue = default;
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace DotNetty.Common.Utilities
         public T Value
         {
             get => Volatile.Read(ref this.atomicValue);
-            set => Volatile.Write(ref this.atomicValue, value);
+            set => Interlocked.Exchange(ref this.atomicValue, value);
         }
 
         /// <summary>

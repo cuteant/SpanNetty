@@ -7,6 +7,7 @@ namespace DotNetty.Transport.Channels.Sockets
     using System.Collections.Generic;
     using System.Net;
     using System.Net.Sockets;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
@@ -385,7 +386,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         sealed class TcpSocketChannelConfig : DefaultSocketChannelConfiguration
         {
-            volatile int maxBytesPerGatheringWrite = int.MaxValue;
+            int maxBytesPerGatheringWrite = int.MaxValue;
 
             public TcpSocketChannelConfig(TChannel channel, Socket javaSocket)
                 : base(channel, javaSocket)
@@ -393,7 +394,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 this.CalculateMaxBytesPerGatheringWrite();
             }
 
-            public int GetMaxBytesPerGatheringWrite() => this.maxBytesPerGatheringWrite;
+            public int GetMaxBytesPerGatheringWrite() => Volatile.Read(ref this.maxBytesPerGatheringWrite);
 
             public override int SendBufferSize
             {
@@ -411,7 +412,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 int newSendBufferSize = this.SendBufferSize << 1;
                 if (newSendBufferSize > 0)
                 {
-                    this.maxBytesPerGatheringWrite = newSendBufferSize;
+                    Interlocked.Exchange(ref this.maxBytesPerGatheringWrite, newSendBufferSize);
                 }
             }
 

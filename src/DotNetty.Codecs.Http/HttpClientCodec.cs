@@ -247,7 +247,7 @@ namespace DotNetty.Codecs.Http
 
                 if (this.clientCodec.failOnMissingResponse)
                 {
-                    long missingResponses = Interlocked.Read(ref this.clientCodec.requestResponseCounter);
+                    long missingResponses = Volatile.Read(ref this.clientCodec.requestResponseCounter);
                     if (missingResponses > 0)
                     {
                         ctx.FireExceptionCaught(new PrematureChannelClosureException(

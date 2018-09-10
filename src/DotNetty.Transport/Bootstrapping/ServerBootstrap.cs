@@ -4,8 +4,8 @@
 namespace DotNetty.Transport.Bootstrapping
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
     using CuteAnt.Collections;
     using CuteAnt.Pool;
@@ -16,14 +16,14 @@ namespace DotNetty.Transport.Bootstrapping
     /// <summary>
     /// A <see cref="Bootstrap"/> sub-class which allows easy bootstrapping of <see cref="IServerChannel"/>.
     /// </summary>
-    public class ServerBootstrap : AbstractBootstrap<ServerBootstrap, IServerChannel>
+    public partial class ServerBootstrap : AbstractBootstrap<ServerBootstrap, IServerChannel>
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ServerBootstrap>();
 
         readonly CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue> childOptions;
         readonly CachedReadConcurrentDictionary<IConstant, AttributeValue> childAttrs;
-        volatile IEventLoopGroup childGroup;
-        volatile IChannelHandler childHandler;
+        IEventLoopGroup _childGroup;
+        IChannelHandler _childHandler;
 
         public ServerBootstrap()
         {
@@ -34,8 +34,8 @@ namespace DotNetty.Transport.Bootstrapping
         ServerBootstrap(ServerBootstrap bootstrap)
             : base(bootstrap)
         {
-            this.childGroup = bootstrap.childGroup;
-            this.childHandler = bootstrap.childHandler;
+            InternalChildGroup = bootstrap.InternalChildGroup;
+            InternalChildHandler = bootstrap.InternalChildHandler;
             this.childOptions = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(bootstrap.childOptions, ChannelOptionComparer.Default);
             this.childAttrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(bootstrap.childAttrs, ConstantComparer.Default);
         }
@@ -52,14 +52,14 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         public ServerBootstrap Group(IEventLoopGroup parentGroup, IEventLoopGroup childGroup)
         {
-            Contract.Requires(childGroup != null);
+            if (null == childGroup) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childGroup); }
 
             base.Group(parentGroup);
-            if (this.childGroup != null)
+            if (InternalChildGroup != null)
             {
                 ThrowHelper.ThrowInvalidOperationException_ChildGroupSetAlready();
             }
-            this.childGroup = childGroup;
+            InternalChildGroup = childGroup;
             return this;
         }
 
@@ -70,7 +70,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         public ServerBootstrap ChildOption<T>(ChannelOption<T> childOption, T value)
         {
-            Contract.Requires(childOption != null);
+            if (null == childOption) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childOption); }
 
             if (value == null)
             {
@@ -91,7 +91,7 @@ namespace DotNetty.Transport.Bootstrapping
         public ServerBootstrap ChildAttribute<T>(AttributeKey<T> childKey, T value)
             where T : class
         {
-            Contract.Requires(childKey != null);
+            if (null == childKey) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childKey); }
 
             if (value == null)
             {
@@ -110,9 +110,9 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         public ServerBootstrap ChildHandler(IChannelHandler childHandler)
         {
-            Contract.Requires(childHandler != null);
+            if (null == childHandler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childHandler); }
 
-            this.childHandler = childHandler;
+            InternalChildHandler = childHandler;
             return this;
         }
 
@@ -120,7 +120,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// Returns the configured <see cref="IEventLoopGroup"/> which will be used for the child channels or <c>null</c>
         /// if none is configured yet.
         /// </summary>
-        public IEventLoopGroup ChildGroup() => this.childGroup;
+        public IEventLoopGroup ChildGroup() => Volatile.Read(ref _childGroup);
 
         protected override void Init(IChannel channel)
         {
@@ -138,8 +138,8 @@ namespace DotNetty.Transport.Bootstrapping
                 p.AddLast((string)null, channelHandler);
             }
 
-            IEventLoopGroup currentChildGroup = this.childGroup;
-            IChannelHandler currentChildHandler = this.childHandler;
+            IEventLoopGroup currentChildGroup = InternalChildGroup;
+            IChannelHandler currentChildHandler = InternalChildHandler;
             ChannelOptionValue[] currentChildOptions = this.childOptions.Values.ToArray();
             AttributeValue[] currentChildAttrs = this.childAttrs.Values.ToArray();
 
@@ -153,14 +153,14 @@ namespace DotNetty.Transport.Bootstrapping
         public override ServerBootstrap Validate()
         {
             base.Validate();
-            if (this.childHandler == null)
+            if (InternalChildHandler == null)
             {
                 ThrowHelper.ThrowInvalidOperationException_ChildHandlerNotYet();
             }
-            if (this.childGroup == null)
+            if (InternalChildGroup == null)
             {
                 if (Logger.WarnEnabled) Logger.ChildGroupIsNotSetUsingParentGroupInstead();
-                this.childGroup = this.Group();
+                InternalChildGroup = this.Group();
             }
             return this;
         }
@@ -249,10 +249,11 @@ namespace DotNetty.Transport.Bootstrapping
             var buf = StringBuilderManager.Allocate().Append(base.ToString());
             buf.Length = buf.Length - 1;
             buf.Append(", ");
-            if (this.childGroup != null)
+            var childGroup = InternalChildGroup;
+            if (childGroup != null)
             {
                 buf.Append("childGroup: ")
-                    .Append(this.childGroup.GetType().Name)
+                    .Append(childGroup.GetType().Name)
                     .Append(", ");
             }
             buf.Append("childOptions: ")
@@ -268,10 +269,11 @@ namespace DotNetty.Transport.Bootstrapping
             //        buf.Append(", ");
             //    }
             //}
-            if (this.childHandler != null)
+            var childHandler = InternalChildHandler;
+            if (childHandler != null)
             {
                 buf.Append("childHandler: ");
-                buf.Append(this.childHandler);
+                buf.Append(childHandler);
                 buf.Append(", ");
             }
             if (buf[buf.Length - 1] == '(')

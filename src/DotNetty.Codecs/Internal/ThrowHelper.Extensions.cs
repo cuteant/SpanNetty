@@ -81,6 +81,16 @@ namespace DotNetty.Codecs
         newValue,
         delimiters,
         delimiter,
+        dictionary,
+        context,
+        message,
+        output,
+        cumulationFunc,
+        input,
+        decoder,
+        encoder,
+        txt,
+        cause,
     }
 
     #endregion
@@ -173,6 +183,36 @@ namespace DotNetty.Codecs
             ArgumentException GetException()
             {
                 return new ArgumentException("Can't parse more than 64 chars, looks like a user error or a malformed header");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_CompressionLevel(int compressionLevel)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("compressionLevel: " + compressionLevel + " (expected: 0-9)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_WindowBits(int windowBits)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("windowBits: " + windowBits + " (expected: 9-15)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_MemLevel(int memLevel)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("memLevel: " + memLevel + " (expected: 1-9)");
             }
         }
 

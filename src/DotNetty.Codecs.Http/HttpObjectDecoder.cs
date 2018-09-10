@@ -6,8 +6,8 @@ namespace DotNetty.Codecs.Http
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
+    using System.Threading;
     using DotNetty.Buffers;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
@@ -24,7 +24,7 @@ namespace DotNetty.Codecs.Http
         IHttpMessage message;
         long chunkSize;
         long contentLength = long.MinValue;
-        volatile bool resetRequested;
+        int resetRequested;
 
         // These will be updated by splitHeader(...)
         AsciiString name;
@@ -70,9 +70,9 @@ namespace DotNetty.Codecs.Http
             int maxInitialLineLength, int maxHeaderSize, int maxChunkSize,
             bool chunkedSupported, bool validateHeaders, int initialBufferSize)
         {
-            Contract.Requires(maxInitialLineLength > 0);
-            Contract.Requires(maxHeaderSize > 0);
-            Contract.Requires(maxChunkSize > 0);
+            if (maxInitialLineLength <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxInitialLineLength, ExceptionArgument.maxInitialLineLength); }
+            if (maxHeaderSize <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxHeaderSize, ExceptionArgument.maxHeaderSize); }
+            if (maxChunkSize <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxChunkSize, ExceptionArgument.maxChunkSize); }
 
             var seq = new AppendableCharSequence(initialBufferSize);
             this.lineParser = new LineParser(seq, maxInitialLineLength);
@@ -84,7 +84,7 @@ namespace DotNetty.Codecs.Http
 
         protected override void Decode(IChannelHandlerContext context, IByteBuffer buffer, List<object> output)
         {
-            if (this.resetRequested)
+            if (Constants.True == Volatile.Read(ref this.resetRequested))
             {
                 this.ResetNow();
             }
@@ -351,7 +351,7 @@ namespace DotNetty.Codecs.Http
         {
             base.DecodeLast(context, input, output);
 
-            if (this.resetRequested)
+            if (Constants.True == Volatile.Read(ref this.resetRequested))
             {
                 // If a reset was requested by decodeLast() we need to do it now otherwise we may produce a
                 // LastHttpContent while there was already one.
@@ -461,7 +461,7 @@ namespace DotNetty.Codecs.Http
 
         // Resets the state of the decoder so that it is ready to decode a new message.
         // This method is useful for handling a rejected request with {@code Expect: 100-continue} header.
-        public void Reset() => this.resetRequested = true;
+        public void Reset() => Interlocked.Exchange(ref this.resetRequested, Constants.True);
 
         void ResetNow()
         {
@@ -482,7 +482,7 @@ namespace DotNetty.Codecs.Http
                 }
             }
 
-            this.resetRequested = false;
+            Interlocked.Exchange(ref this.resetRequested, Constants.False);
             this.currentState = State.SkipControlChars;
         }
 

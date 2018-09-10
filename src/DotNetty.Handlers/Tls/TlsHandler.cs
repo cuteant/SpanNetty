@@ -6,9 +6,9 @@ namespace DotNetty.Handlers.Tls
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Net.Security;
+    using System.Runtime.CompilerServices;
     using System.Runtime.ExceptionServices;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading;
@@ -20,22 +20,21 @@ namespace DotNetty.Handlers.Tls
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
 
-#if !DESKTOPCLR && (NET40 || NET45 || NET451 || NET46 || NET461 || NET462 || NET47 || NET471)
-  确保编译不出问题
-#endif
-#if !NETSTANDARD && (NETSTANDARD1_3 || NETSTANDARD1_4 || NETSTANDARD1_5 || NETSTANDARD1_6 || NETSTANDARD2_0)
-  确保编译不出问题
-#endif
-
     public sealed partial class TlsHandler : ByteToMessageDecoder
     {
         #region @@ Fields @@
 
         private static readonly IInternalLogger s_logger = InternalLoggerFactory.GetInstance<TlsHandler>();
 
-        private readonly TlsSettings _settings;
         private const int c_fallbackReadBufferSize = 256;
         private const int c_unencryptedWriteBatchSize = 14 * 1024;
+
+        private readonly bool _isServer;
+        private readonly ServerTlsSettings _serverSettings;
+        private readonly ClientTlsSettings _clientSettings;
+        private readonly X509Certificate _serverCertificate;
+        private readonly Func<IChannelHandlerContext, string, X509Certificate2> _serverCertificateSelector;
+        public static readonly AttributeKey<SslStream> SslStreamAttrKey = AttributeKey<SslStream>.ValueOf("SSLSTREAM");
 
         private static readonly Exception s_channelClosedException = new IOException("Channel is closed");
 #if !NET40
@@ -46,9 +45,9 @@ namespace DotNetty.Handlers.Tls
         private readonly MediationStream _mediationStream;
         private readonly TaskCompletionSource _closeFuture;
 
-        private TlsHandlerState _state;
+        private int _state;
         private int _packetLength;
-        private volatile IChannelHandlerContext _capturedContext;
+        private IChannelHandlerContext _capturedContext;
         private BatchingPendingWriteQueue _pendingUnencryptedWrites;
         private Task _lastContextWriteTask;
         private bool _firedChannelRead;
@@ -66,10 +65,34 @@ namespace DotNetty.Handlers.Tls
 
         public TlsHandler(Func<Stream, SslStream> sslStreamFactory, TlsSettings settings)
         {
-            Contract.Requires(sslStreamFactory != null);
-            Contract.Requires(settings != null);
+            if (null == sslStreamFactory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sslStreamFactory); }
+            if (null == settings) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
 
-            _settings = settings;
+            _serverSettings = settings as ServerTlsSettings;
+            if (_serverSettings != null)
+            {
+                _isServer = true;
+
+                // capture the certificate now so it can't be switched after validation
+                _serverCertificate = _serverSettings.Certificate;
+                _serverCertificateSelector = _serverSettings.ServerCertificateSelector;
+                if (_serverCertificate == null && _serverCertificateSelector == null)
+                {
+                    ThrowHelper.ThrowArgumentException_ServerCertificateRequired();
+                }
+
+                // If a selector is provided then ignore the cert, it may be a default cert.
+                if (_serverCertificateSelector != null)
+                {
+                    // SslStream doesn't allow both.
+                    _serverCertificate = null;
+                }
+                else
+                {
+                    EnsureCertificateIsAllowedForServerAuth(ConvertToX509Certificate2(_serverCertificate));
+                }
+            }
+            _clientSettings = settings as ClientTlsSettings;
             _closeFuture = new TaskCompletionSource();
             _mediationStream = new MediationStream(this);
             _sslStream = sslStreamFactory(_mediationStream);
@@ -90,7 +113,21 @@ namespace DotNetty.Handlers.Tls
 
         public X509Certificate2 RemoteCertificate => _sslStream.RemoteCertificate as X509Certificate2 ?? new X509Certificate2(_sslStream.RemoteCertificate?.Export(X509ContentType.Cert));
 
-        private bool IsServer => _settings is ServerTlsSettings;
+        public bool IsServer => _isServer;
+
+        private IChannelHandlerContext CapturedContext
+        {
+            [MethodImpl(InlineMethod.Value)]
+            get => Volatile.Read(ref _capturedContext);
+            set => Interlocked.Exchange(ref _capturedContext, value);
+        }
+
+        private int State
+        {
+            [MethodImpl(InlineMethod.Value)]
+            get => Volatile.Read(ref _state);
+            set => Interlocked.Exchange(ref _state, value);
+        }
 
         #endregion
 
@@ -100,9 +137,9 @@ namespace DotNetty.Handlers.Tls
         {
             base.ChannelActive(context);
 
-            if (!IsServer)
+            if (!_isServer)
             {
-                EnsureAuthenticated();
+                EnsureAuthenticated(context);
             }
         }
 
@@ -160,12 +197,12 @@ namespace DotNetty.Handlers.Tls
         public override void HandlerAdded(IChannelHandlerContext context)
         {
             base.HandlerAdded(context);
-            _capturedContext = context;
+            CapturedContext = context;
             _pendingUnencryptedWrites = new BatchingPendingWriteQueue(context, c_unencryptedWriteBatchSize);
-            if (context.Channel.Active && !IsServer)
+            if (context.Channel.Active && !_isServer)
             {
                 // todo: support delayed initialization on an existing/active channel if in client mode
-                EnsureAuthenticated();
+                EnsureAuthenticated(context);
             }
         }
 
@@ -204,10 +241,8 @@ namespace DotNetty.Handlers.Tls
                 }
                 else
                 {
-                    packetLengths = new List<int>(4)
-          {
-            _packetLength
-          };
+                    packetLengths = new List<int>(4);
+                    packetLengths.Add(_packetLength);
                     offset += _packetLength;
                     totalLength = _packetLength;
                     _packetLength = 0;
@@ -235,7 +270,7 @@ namespace DotNetty.Handlers.Tls
                     break;
                 }
 
-                Contract.Assert(encryptedPacketLength > 0);
+                Debug.Assert(encryptedPacketLength > 0);
 
                 if (encryptedPacketLength > readableBytes)
                 {
@@ -318,7 +353,7 @@ namespace DotNetty.Handlers.Tls
         private void ReadIfNeeded(IChannelHandlerContext ctx)
         {
             // if handshake is not finished yet, we need more data
-            if (!ctx.Channel.Configuration.AutoRead && (!_firedChannelRead || !_state.HasAny(TlsHandlerState.AuthenticationCompleted)))
+            if (!ctx.Channel.Configuration.AutoRead && (!_firedChannelRead || !State.HasAny(TlsHandlerState.AuthenticationCompleted)))
             {
                 // No auto-read used and no message was passed through the ChannelPipeline or the handshake was not completed
                 // yet, which means we need to trigger the read to ensure we will not stall
@@ -333,7 +368,7 @@ namespace DotNetty.Handlers.Tls
         /// <summary>Unwraps inbound SSL records.</summary>
         private void Unwrap(IChannelHandlerContext ctx, IByteBuffer packet, int offset, int length, List<int> packetLengths, List<object> output)
         {
-            Contract.Requires(packetLengths.Count > 0);
+            if (packetLengths.Count <= 0) { ThrowHelper.ThrowArgumentException(); }
 
             //bool notifyClosure = false; // todo: netty/issues/137
             bool pending = false;
@@ -347,7 +382,7 @@ namespace DotNetty.Handlers.Tls
 
                 int packetIndex = 0;
 
-                while (!EnsureAuthenticated())
+                while (!EnsureAuthenticated(ctx))
                 {
                     _mediationStream.ExpandSource(packetLengths[packetIndex]);
                     if (++packetIndex == packetLengths.Count)
@@ -363,7 +398,7 @@ namespace DotNetty.Handlers.Tls
                 if (currentReadFuture != null)
                 {
                     // restoring context from previous read
-                    Contract.Assert(_pendingSslStreamReadBuffer != null);
+                    Debug.Assert(_pendingSslStreamReadBuffer != null);
 
                     outputBuffer = _pendingSslStreamReadBuffer;
                     outputBufferLength = outputBuffer.WritableBytes;
@@ -491,7 +526,7 @@ namespace DotNetty.Handlers.Tls
 
         private static void AddBufferToOutput(IByteBuffer outputBuffer, int length, List<object> output)
         {
-            Contract.Assert(length > 0);
+            Debug.Assert(length > 0);
             output.Add(outputBuffer.SetWriterIndex(outputBuffer.WriterIndex + length));
         }
 
@@ -511,10 +546,10 @@ namespace DotNetty.Handlers.Tls
 
         public override void Read(IChannelHandlerContext context)
         {
-            TlsHandlerState oldState = _state;
+            var oldState = State;
             if (!oldState.HasAny(TlsHandlerState.AuthenticationCompleted))
             {
-                _state = oldState | TlsHandlerState.ReadRequestedBeforeAuthenticated;
+                State = oldState | TlsHandlerState.ReadRequestedBeforeAuthenticated;
             }
 
             context.Read();
@@ -524,43 +559,83 @@ namespace DotNetty.Handlers.Tls
 
         #region ** EnsureAuthenticated **
 
-        private bool EnsureAuthenticated()
+        private bool EnsureAuthenticated(IChannelHandlerContext ctx)
         {
-            TlsHandlerState oldState = _state;
+            var oldState = State;
             if (!oldState.HasAny(TlsHandlerState.AuthenticationStarted))
             {
-                _state = oldState | TlsHandlerState.Authenticating;
-                if (_settings is ServerTlsSettings serverSettings)
+                State = oldState | TlsHandlerState.Authenticating;
+                if (_isServer)
                 {
-#if !NET40
-                    _sslStream.AuthenticateAsServerAsync(serverSettings.Certificate,
-                                                         serverSettings.NegotiateClientCertificate,
-                                                         serverSettings.EnabledProtocols,
-                                                         serverSettings.CheckCertificateRevocation)
+#if NETCOREAPP_2_0_GREATER
+                    // Adapt to the SslStream signature
+                    ServerCertificateSelectionCallback selector = null;
+                    if (_serverCertificateSelector != null)
+                    {
+                        selector = (sender, name) =>
+                        {
+                            ctx.GetAttribute(SslStreamAttrKey).Set(_sslStream);
+                            var cert = _serverCertificateSelector(ctx, name);
+                            if (cert != null)
+                            {
+                                EnsureCertificateIsAllowedForServerAuth(cert);
+                            }
+                            return cert;
+                        };
+                    }
+
+                    var sslOptions = new SslServerAuthenticationOptions()
+                    {
+                        ServerCertificate = _serverCertificate,
+                        ServerCertificateSelectionCallback = selector,
+                        ClientCertificateRequired = _serverSettings.NegotiateClientCertificate,
+                        EnabledSslProtocols = _serverSettings.EnabledProtocols,
+                        CertificateRevocationCheckMode = _serverSettings.CheckCertificateRevocation ? X509RevocationMode.Online : X509RevocationMode.NoCheck,
+                        ApplicationProtocols = _serverSettings.ApplicationProtocols // ?? new List<SslApplicationProtocol>()
+                    };
+                    _sslStream.AuthenticateAsServerAsync(sslOptions, CancellationToken.None)
                               .ContinueWith(s_handshakeCompletionCallback, this, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                    _sslStream.BeginAuthenticateAsServer(serverSettings.Certificate,
-                                                         serverSettings.NegotiateClientCertificate,
-                                                         serverSettings.EnabledProtocols,
-                                                         serverSettings.CheckCertificateRevocation,
+                    var serverCert = _serverCertificate;
+                    if (_serverCertificateSelector != null)
+                    {
+                        ctx.GetAttribute(SslStreamAttrKey).Set(_sslStream);
+                        var serverCert2 = _serverCertificateSelector(ctx, null);
+                        if (serverCert2 != null)
+                        {
+                            EnsureCertificateIsAllowedForServerAuth(serverCert2);
+                            serverCert = serverCert2;
+                        }
+                    }
+#if NET40
+                    _sslStream.BeginAuthenticateAsServer(serverCert,
+                                                         _serverSettings.NegotiateClientCertificate,
+                                                         _serverSettings.EnabledProtocols,
+                                                         _serverSettings.CheckCertificateRevocation,
                                                          Server_HandleHandshakeCompleted,
                                                          this);
+#else
+                    _sslStream.AuthenticateAsServerAsync(serverCert,
+                                                         _serverSettings.NegotiateClientCertificate,
+                                                         _serverSettings.EnabledProtocols,
+                                                         _serverSettings.CheckCertificateRevocation)
+                              .ContinueWith(s_handshakeCompletionCallback, this, TaskContinuationOptions.ExecuteSynchronously);
+#endif
 #endif
                 }
                 else
                 {
-                    var clientSettings = (ClientTlsSettings)_settings;
 #if !NET40
-                    _sslStream.AuthenticateAsClientAsync(clientSettings.TargetHost,
-                                                         clientSettings.X509CertificateCollection,
-                                                         clientSettings.EnabledProtocols,
-                                                         clientSettings.CheckCertificateRevocation)
+                    _sslStream.AuthenticateAsClientAsync(_clientSettings.TargetHost,
+                                                         _clientSettings.X509CertificateCollection,
+                                                         _clientSettings.EnabledProtocols,
+                                                         _clientSettings.CheckCertificateRevocation)
                               .ContinueWith(s_handshakeCompletionCallback, this, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                    _sslStream.BeginAuthenticateAsClient(clientSettings.TargetHost,
-                                                         clientSettings.X509CertificateCollection,
-                                                         clientSettings.EnabledProtocols,
-                                                         clientSettings.CheckCertificateRevocation,
+                    _sslStream.BeginAuthenticateAsClient(_clientSettings.TargetHost,
+                                                         _clientSettings.X509CertificateCollection,
+                                                         _clientSettings.EnabledProtocols,
+                                                         _clientSettings.CheckCertificateRevocation,
                                                          Client_HandleHandshakeCompleted,
                                                          this);
 #endif
@@ -579,7 +654,7 @@ namespace DotNetty.Handlers.Tls
         private static void Client_HandleHandshakeCompleted(IAsyncResult result)
         {
             var self = (TlsHandler)result.AsyncState;
-            TlsHandlerState oldState;
+            int oldState;
             try
             {
                 self._sslStream.EndAuthenticateAsClient(result);
@@ -587,35 +662,36 @@ namespace DotNetty.Handlers.Tls
             catch (Exception ex)
             {
                 // ReSharper disable once AssignNullToNotNullAttribute -- task.Exception will be present as task is faulted
-                oldState = self._state;
-                Contract.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
+                oldState = self.State;
+                Debug.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
                 self.HandleFailure(ex);
                 return;
             }
 
-            oldState = self._state;
+            oldState = self.State;
 
-            Contract.Assert(!oldState.HasAny(TlsHandlerState.AuthenticationCompleted));
-            self._state = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
+            Debug.Assert(!oldState.HasAny(TlsHandlerState.AuthenticationCompleted));
+            self.State = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
 
-            self._capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
+            var capturedContext = self.CapturedContext;
+            capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
 
-            if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !self._capturedContext.Channel.Configuration.AutoRead)
+            if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !capturedContext.Channel.Configuration.AutoRead)
             {
-                self._capturedContext.Read();
+                capturedContext.Read();
             }
 
             if (oldState.Has(TlsHandlerState.FlushedBeforeHandshake))
             {
-                self.Wrap(self._capturedContext);
-                self._capturedContext.Flush();
+                self.Wrap(capturedContext);
+                capturedContext.Flush();
             }
         }
 
         private static void Server_HandleHandshakeCompleted(IAsyncResult result)
         {
             var self = (TlsHandler)result.AsyncState;
-            TlsHandlerState oldState;
+            int oldState;
             try
             {
                 self._sslStream.EndAuthenticateAsServer(result);
@@ -623,28 +699,29 @@ namespace DotNetty.Handlers.Tls
             catch (Exception ex)
             {
                 // ReSharper disable once AssignNullToNotNullAttribute -- task.Exception will be present as task is faulted
-                oldState = self._state;
-                Contract.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
+                oldState = self.State;
+                Debug.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
                 self.HandleFailure(ex);
                 return;
             }
 
-            oldState = self._state;
+            oldState = self.State;
 
-            Contract.Assert(!oldState.HasAny(TlsHandlerState.AuthenticationCompleted));
-            self._state = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
+            Debug.Assert(!oldState.HasAny(TlsHandlerState.AuthenticationCompleted));
+            self.State = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
 
-            self._capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
+            var capturedContext = self.CapturedContext;
+            capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
 
-            if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !self._capturedContext.Channel.Configuration.AutoRead)
+            if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !capturedContext.Channel.Configuration.AutoRead)
             {
-                self._capturedContext.Read();
+                capturedContext.Read();
             }
 
             if (oldState.Has(TlsHandlerState.FlushedBeforeHandshake))
             {
-                self.Wrap(self._capturedContext);
-                self._capturedContext.Flush();
+                self.Wrap(capturedContext);
+                capturedContext.Flush();
             }
         }
 #else
@@ -655,22 +732,23 @@ namespace DotNetty.Handlers.Tls
             {
                 case TaskStatus.RanToCompletion:
                     {
-                        TlsHandlerState oldState = self._state;
+                        var oldState = self.State;
 
-                        Contract.Assert(!oldState.HasAny(TlsHandlerState.AuthenticationCompleted));
-                        self._state = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
+                        Debug.Assert(!oldState.HasAny(TlsHandlerState.AuthenticationCompleted));
+                        self.State = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
 
-                        self._capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
+                        var capturedContext = self.CapturedContext;
+                        capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
 
-                        if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !self._capturedContext.Channel.Configuration.AutoRead)
+                        if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !capturedContext.Channel.Configuration.AutoRead)
                         {
-                            self._capturedContext.Read();
+                            capturedContext.Read();
                         }
 
                         if (oldState.Has(TlsHandlerState.FlushedBeforeHandshake))
                         {
-                            self.Wrap(self._capturedContext);
-                            self._capturedContext.Flush();
+                            self.Wrap(capturedContext);
+                            capturedContext.Flush();
                         }
                         break;
                     }
@@ -678,13 +756,13 @@ namespace DotNetty.Handlers.Tls
                 case TaskStatus.Faulted:
                     {
                         // ReSharper disable once AssignNullToNotNullAttribute -- task.Exception will be present as task is faulted
-                        TlsHandlerState oldState = self._state;
-                        Contract.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
+                        var oldState = self.State;
+                        Debug.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
                         self.HandleFailure(task.Exception);
                         break;
                     }
                 default:
-          			ThrowHelper.ThrowArgumentOutOfRangeException_HandshakeCompleted(task.Status); break;
+                    ThrowHelper.ThrowArgumentOutOfRangeException_HandshakeCompleted(task.Status); break;
             }
         }
 #endif
@@ -713,9 +791,9 @@ namespace DotNetty.Handlers.Tls
                 _pendingUnencryptedWrites.Add(Unpooled.Empty);
             }
 
-            if (!EnsureAuthenticated())
+            if (!EnsureAuthenticated(context))
             {
-                _state |= TlsHandlerState.FlushedBeforeHandshake;
+                State |= TlsHandlerState.FlushedBeforeHandshake;
                 return;
             }
 
@@ -736,7 +814,7 @@ namespace DotNetty.Handlers.Tls
 
         private void Wrap(IChannelHandlerContext context)
         {
-            Contract.Assert(context == _capturedContext);
+            Debug.Assert(context == CapturedContext);
 
             IByteBuffer buf = null;
             try
@@ -793,17 +871,18 @@ namespace DotNetty.Handlers.Tls
         private void FinishWrap(byte[] buffer, int offset, int count)
         {
             IByteBuffer output;
+            var capturedContext = CapturedContext;
             if (count == 0)
             {
                 output = Unpooled.Empty;
             }
             else
             {
-                output = _capturedContext.Allocator.Buffer(count);
+                output = capturedContext.Allocator.Buffer(count);
                 output.WriteBytes(buffer, offset, count);
             }
 
-            _lastContextWriteTask = _capturedContext.WriteAsync(output);
+            _lastContextWriteTask = capturedContext.WriteAsync(output);
         }
 
         #endregion
@@ -812,8 +891,9 @@ namespace DotNetty.Handlers.Tls
 
         private Task FinishWrapNonAppDataAsync(byte[] buffer, int offset, int count)
         {
-            var future = _capturedContext.WriteAndFlushAsync(Unpooled.WrappedBuffer(buffer, offset, count));
-            this.ReadIfNeeded(_capturedContext);
+            var capturedContext = CapturedContext;
+            var future = capturedContext.WriteAndFlushAsync(Unpooled.WrappedBuffer(buffer, offset, count));
+            this.ReadIfNeeded(capturedContext);
             return future;
         }
 
@@ -869,12 +949,14 @@ namespace DotNetty.Handlers.Tls
 
         private void NotifyHandshakeFailure(Exception cause)
         {
-            if (!_state.HasAny(TlsHandlerState.AuthenticationCompleted))
+            var oldState = State;
+            if (!oldState.HasAny(TlsHandlerState.AuthenticationCompleted))
             {
                 // handshake was not completed yet => TlsHandler react to failure by closing the channel
-                _state = (_state | TlsHandlerState.FailedAuthentication) & ~TlsHandlerState.Authenticating;
-                _capturedContext.FireUserEventTriggered(new TlsHandshakeCompletionEvent(cause));
-                CloseAsync(_capturedContext);
+                State = (oldState | TlsHandlerState.FailedAuthentication) & ~TlsHandlerState.Authenticating;
+                var capturedContext = CapturedContext;
+                capturedContext.FireUserEventTriggered(new TlsHandshakeCompletionEvent(cause));
+                CloseAsync(capturedContext);
             }
         }
 
@@ -891,7 +973,7 @@ namespace DotNetty.Handlers.Tls
             private int _inputLength;
             private TaskCompletionSource<int> _readCompletionSource;
             private ArraySegment<byte> _sslOwnedBuffer;
-#if NETSTANDARD
+#if !DESKTOPCLR
             private int _readByteCount;
 #else
             private SynchronousAsyncResult<int> _syncReadResult;
@@ -923,7 +1005,7 @@ namespace DotNetty.Handlers.Tls
 
             public void ExpandSource(int count)
             {
-                Contract.Assert(_input != null);
+                Debug.Assert(_input != null);
 
                 _inputLength += count;
 
@@ -935,7 +1017,7 @@ namespace DotNetty.Handlers.Tls
                 }
                 _sslOwnedBuffer = default(ArraySegment<byte>);
 
-#if NETSTANDARD
+#if !DESKTOPCLR
                 _readByteCount = this.ReadFromInput(sslBuffer.Array, sslBuffer.Offset, sslBuffer.Count);
                 // hack: this tricks SslStream's continuation to run synchronously instead of dispatching to TP. Remove once Begin/EndRead are available. 
                 new Task(
@@ -961,7 +1043,7 @@ namespace DotNetty.Handlers.Tls
 #endif
             }
 
-#if NETSTANDARD
+#if !DESKTOPCLR
 
             public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
             {
@@ -972,7 +1054,7 @@ namespace DotNetty.Handlers.Tls
                     return Task.FromResult(read);
                 }
 
-                Contract.Assert(_sslOwnedBuffer.Array == null);
+                Debug.Assert(_sslOwnedBuffer.Array == null);
                 // take note of buffer - we will pass bytes there once available
                 _sslOwnedBuffer = new ArraySegment<byte>(buffer, offset, count);
                 _readCompletionSource = new TaskCompletionSource<int>();
@@ -991,7 +1073,7 @@ namespace DotNetty.Handlers.Tls
                     return res;
                 }
 
-                Contract.Assert(_sslOwnedBuffer.Array == null);
+                Debug.Assert(_sslOwnedBuffer.Array == null);
                 // take note of buffer - we will pass bytes there once available
                 _sslOwnedBuffer = new ArraySegment<byte>(buffer, offset, count);
                 _readCompletionSource = new TaskCompletionSource<int>(state);
@@ -1008,7 +1090,7 @@ namespace DotNetty.Handlers.Tls
                 }
 
                 Debug.Assert(_readCompletionSource == null || _readCompletionSource.Task == asyncResult);
-                Contract.Assert(!((Task<int>)asyncResult).IsCanceled);
+                Debug.Assert(!((Task<int>)asyncResult).IsCanceled);
 
                 try
                 {
@@ -1069,7 +1151,7 @@ namespace DotNetty.Handlers.Tls
                     default:
                         if (callback != null || state != task.AsyncState)
                         {
-                            Contract.Assert(_writeCompletion == null);
+                            Debug.Assert(_writeCompletion == null);
                             _writeCallback = callback;
                             var tcs = new TaskCompletionSource(state);
                             _writeCompletion = tcs;
@@ -1144,7 +1226,7 @@ namespace DotNetty.Handlers.Tls
 
             private int ReadFromInput(byte[] destination, int destinationOffset, int destinationCapacity)
             {
-                Contract.Assert(destination != null);
+                Debug.Assert(destination != null);
 
                 byte[] source = _input;
                 int readableBytes = this.SourceReadableBytes;
@@ -1235,16 +1317,16 @@ namespace DotNetty.Handlers.Tls
 
     #region == enum TlsHandlerState ==
 
-    [Flags]
-    internal enum TlsHandlerState
+    //[Flags]
+    internal static class TlsHandlerState
     {
-        Authenticating = 1,
-        Authenticated = 1 << 1,
-        FailedAuthentication = 1 << 2,
-        ReadRequestedBeforeAuthenticated = 1 << 3,
-        FlushedBeforeHandshake = 1 << 4,
-        AuthenticationStarted = Authenticating | Authenticated | FailedAuthentication,
-        AuthenticationCompleted = Authenticated | FailedAuthentication
+        public const int Authenticating = 1;
+        public const int Authenticated = 1 << 1;
+        public const int FailedAuthentication = 1 << 2;
+        public const int ReadRequestedBeforeAuthenticated = 1 << 3;
+        public const int FlushedBeforeHandshake = 1 << 4;
+        public const int AuthenticationStarted = Authenticating | Authenticated | FailedAuthentication;
+        public const int AuthenticationCompleted = Authenticated | FailedAuthentication;
     }
 
     #endregion
@@ -1253,9 +1335,9 @@ namespace DotNetty.Handlers.Tls
 
     internal static class TlsHandlerStateExtensions
     {
-        public static bool Has(this TlsHandlerState value, TlsHandlerState testValue) => (value & testValue) == testValue;
+        public static bool Has(this int value, int testValue) => (value & testValue) == testValue;
 
-        public static bool HasAny(this TlsHandlerState value, TlsHandlerState testValue) => (value & testValue) != 0;
+        public static bool HasAny(this int value, int testValue) => (value & testValue) != 0;
     }
 
     #endregion

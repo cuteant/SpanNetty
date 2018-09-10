@@ -6,7 +6,6 @@
 namespace DotNetty.Codecs.Http.Cookies
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Text;
 
     using static CookieUtil;
@@ -27,8 +26,8 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public DefaultCookie(string name, string value)
         {
-            Contract.Requires(!string.IsNullOrEmpty(name?.Trim()));
-            Contract.Requires(value != null);
+            if (string.IsNullOrEmpty(name?.Trim())) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             this.name = name;
             this.value = value;
@@ -41,7 +40,7 @@ namespace DotNetty.Codecs.Http.Cookies
             get => this.value;
             set
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.value = value;
             }
         }

@@ -8,7 +8,7 @@ namespace DotNetty.Buffers
     using System.Collections;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Runtime.CompilerServices;
@@ -50,8 +50,8 @@ namespace DotNetty.Buffers
         public CompositeByteBuffer(IByteBufferAllocator allocator, bool direct, int maxNumComponents)
             : base(AbstractByteBufferAllocator.DefaultMaxCapacity)
         {
-            Contract.Requires(allocator != null);
-            Contract.Requires(maxNumComponents >= 2);
+            if (null == allocator) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.allocator); }
+            if (maxNumComponents < 2) { ThrowHelper.ThrowArgumentException_CheckMaxNumComponents(maxNumComponents); }
 
             this.allocator = allocator;
             this.direct = direct;
@@ -67,8 +67,8 @@ namespace DotNetty.Buffers
         internal CompositeByteBuffer(IByteBufferAllocator allocator, bool direct, int maxNumComponents, IByteBuffer[] buffers, int offset, int length)
             : base(AbstractByteBufferAllocator.DefaultMaxCapacity)
         {
-            Contract.Requires(allocator != null);
-            Contract.Requires(maxNumComponents >= 2);
+            if (null == allocator) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.allocator); }
+            if (maxNumComponents < 2) { ThrowHelper.ThrowArgumentException_CheckMaxNumComponents(maxNumComponents); }
 
             this.allocator = allocator;
             this.direct = direct;
@@ -84,8 +84,8 @@ namespace DotNetty.Buffers
             IByteBufferAllocator allocator, bool direct, int maxNumComponents, IEnumerable<IByteBuffer> buffers)
             : base(AbstractByteBufferAllocator.DefaultMaxCapacity)
         {
-            Contract.Requires(allocator != null);
-            Contract.Requires(maxNumComponents >= 2);
+            if (null == allocator) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.allocator); }
+            if (maxNumComponents < 2) { ThrowHelper.ThrowArgumentException_CheckMaxNumComponents(maxNumComponents); }
 
             this.allocator = allocator;
             this.direct = direct;
@@ -144,7 +144,7 @@ namespace DotNetty.Buffers
 
         public virtual CompositeByteBuffer AddComponent(bool increaseWriterIndex, IByteBuffer buffer)
         {
-            Contract.Requires(buffer != null);
+            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
             this.AddComponent0(increaseWriterIndex, this.components.Count, buffer);
             this.ConsolidateIfNeeded();
             return this;
@@ -166,7 +166,7 @@ namespace DotNetty.Buffers
 
         public virtual CompositeByteBuffer AddComponent(bool increaseWriterIndex, int cIndex, IByteBuffer buffer)
         {
-            Contract.Requires(buffer != null);
+            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
             this.AddComponent0(increaseWriterIndex, cIndex, buffer);
             this.ConsolidateIfNeeded();
             return this;
@@ -238,7 +238,7 @@ namespace DotNetty.Buffers
 
         int AddComponents0(bool increaseWriterIndex, int cIndex, IByteBuffer[] buffers, int offset, int len)
         {
-            Contract.Requires(buffers != null);
+            if (null == buffers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffers); }
             int i = offset;
             try
             {
@@ -300,7 +300,7 @@ namespace DotNetty.Buffers
 
         int AddComponents0(bool increaseIndex, int cIndex, IEnumerable<IByteBuffer> buffers)
         {
-            Contract.Requires(buffers != null);
+            if (null == buffers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffers); }
 
             if (buffers is IByteBuffer buffer)
             {
@@ -545,7 +545,7 @@ namespace DotNetty.Buffers
             int offset = 0;
             foreach (ArraySegment<byte> buf in buffers)
             {
-                Contract.Assert(merged.Length - offset >= buf.Count);
+                Debug.Assert(merged.Length - offset >= buf.Count);
 
                 PlatformDependent.CopyMemory(buf.Array, buf.Offset, merged, offset, buf.Count);
                 offset += buf.Count;
@@ -1305,7 +1305,7 @@ namespace DotNetty.Buffers
                 }
                 else
                 {
-                    Contract.Assert(c.Length != 0);
+                    Debug.Assert(c.Length != 0);
                     return c;
                 }
             }

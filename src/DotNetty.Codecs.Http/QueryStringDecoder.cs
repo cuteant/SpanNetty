@@ -8,7 +8,6 @@ namespace DotNetty.Codecs.Http
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Diagnostics.Contracts;
     using System.Text;
     using CuteAnt.Pool;
     using DotNetty.Common.Utilities;
@@ -42,9 +41,9 @@ namespace DotNetty.Codecs.Http
 
         public QueryStringDecoder(string uri, Encoding charset, bool hasPath, int maxParams)
         {
-            Contract.Requires(uri != null);
-            Contract.Requires(charset != null);
-            Contract.Requires(maxParams > 0);
+            if (null == uri) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
+            if (null == charset) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
+            if (maxParams <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxParams, ExceptionArgument.maxParams); }
 
             this.uri = uri;
             this.charset = charset;
@@ -64,9 +63,9 @@ namespace DotNetty.Codecs.Http
 
         public QueryStringDecoder(Uri uri, Encoding charset, int maxParams)
         {
-            Contract.Requires(uri != null);
-            Contract.Requires(charset != null);
-            Contract.Requires(maxParams > 0);
+            if (null == uri) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
+            if (null == charset) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
+            if (maxParams <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxParams, ExceptionArgument.maxParams); }
 
             string rawPath = uri.AbsolutePath;
             // Also take care of cut of things like "http://localhost"

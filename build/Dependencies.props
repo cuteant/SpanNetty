@@ -1,0 +1,33 @@
+<Project>
+  <!-- Shared Package Versions -->
+  <PropertyGroup>
+    <!-- Microsoft packages -->
+    <MicrosoftBuildPackageVersion>15.6.82</MicrosoftBuildPackageVersion>
+    <MicrosoftBuildRuntimePackageVersion>15.6.82</MicrosoftBuildRuntimePackageVersion>
+    <MicrosoftBuildTasksCorePackageVersion>15.6.82</MicrosoftBuildTasksCorePackageVersion>
+    <MicrosoftBuildUtilitiesCorePackageVersion>15.6.82</MicrosoftBuildUtilitiesCorePackageVersion>
+
+    <FSharpCorePackageVersion>4.5.2</FSharpCorePackageVersion>
+
+    <MicrosoftBclPackageVersion>1.1.10</MicrosoftBclPackageVersion>
+    <MicrosoftBclAsyncPackageVersion>1.0.168</MicrosoftBclAsyncPackageVersion>
+    <MicrosoftBclBuildPackageVersion>1.0.21</MicrosoftBclBuildPackageVersion>
+
+    <MicrosoftAzureKeyVaultPackageVersion>3.0.0</MicrosoftAzureKeyVaultPackageVersion>
+
+    <MicrosoftApplicationInsightsAspNetCorePackageVersion>2.4.1</MicrosoftApplicationInsightsAspNetCorePackageVersion>
+    <MicrosoftApplicationInsightsPackageVersion>2.7.2</MicrosoftApplicationInsightsPackageVersion>
+    <MicrosoftApplicationInsightsWebPackageVersion>2.7.2</MicrosoftApplicationInsightsWebPackageVersion>
+
+    <MicrosoftIdentityModelLoggingPackageVersion>5.2.4</MicrosoftIdentityModelLoggingPackageVersion>
+    <MicrosoftIdentityModelProtocolsPackageVersion>5.2.4</MicrosoftIdentityModelProtocolsPackageVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>5.2.4</MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>
+    <MicrosoftIdentityModelProtocolsWsFederationPackageVersion>5.2.4</MicrosoftIdentityModelProtocolsWsFederationPackageVersion>
+    <MicrosoftIdentityModelTokensPackageVersion>5.2.4</MicrosoftIdentityModelTokensPackageVersion>
+    <MicrosoftIdentityModelTokensSamlPackageVersion>5.2.4</MicrosoftIdentityModelTokensSamlPackageVersion>
+    <MicrosoftIdentityModelXmlPackageVersion>5.2.4</MicrosoftIdentityModelXmlPackageVersion>
+    <SystemIdentityModelTokensJwtPackageVersion>5.2.4</SystemIdentityModelTokensJwtPackageVersion>
+
+    <MonoPosixNETStandardPackageVersion>1.0.0</MonoPosixNETStandardPackageVersion>
+  </PropertyGroup>
+</Project>

@@ -9,109 +9,109 @@ using System.Threading.Tasks;
 
 namespace DotNetty.Common.Concurrency
 {
-  public sealed class TaskCompletionSource : TaskCompletionSource<int>
-  {
-    public static readonly TaskCompletionSource Void = CreateVoidTcs();
-
-    public TaskCompletionSource(object state)
-      : base(state)
+    public sealed class TaskCompletionSource : TaskCompletionSource<int>
     {
-    }
+        public static readonly TaskCompletionSource Void = CreateVoidTcs();
 
-    public TaskCompletionSource()
-    {
-    }
+        public TaskCompletionSource(object state)
+          : base(state)
+        {
+        }
 
-    public bool TryComplete()
-    {
+        public TaskCompletionSource()
+        {
+        }
+
+        public bool TryComplete()
+        {
 #if NET40
-      // TaskCompletionSource TrySetResult SetResult twice
-      //var result = this.TrySetResult(0);
-      //SetResultAsync(this, 0);
-      FakeSynchronizationContext.Execute(() => this.SetResult(0));
-      return true;
+            // TaskCompletionSource TrySetResult SetResult twice
+            //var result = this.TrySetResult(0);
+            //SetResultAsync(this, 0);
+            FakeSynchronizationContext.Execute(() => this.SetResult(0));
+            return true;
 #else
-      return this.TrySetResult(0);
+            return this.TrySetResult(0);
 #endif
-    }
+        }
 
-    public void Complete()
-    {
+        public void Complete()
+        {
 #if NET40
-      // TaskCompletionSource TrySetResult SetResult twice
-      //var result = this.TrySetResult(0);
-      //SetResultAsync(this, 0);
-      FakeSynchronizationContext.Execute(() => this.SetResult(0));
+            // TaskCompletionSource TrySetResult SetResult twice
+            //var result = this.TrySetResult(0);
+            //SetResultAsync(this, 0);
+            FakeSynchronizationContext.Execute(() => this.SetResult(0));
 #else
-      this.SetResult(0);
+            this.SetResult(0);
 #endif
+        }
+
+        // todo: support cancellation token where used
+        public bool SetUncancellable() => true;
+
+        public override string ToString() => "TaskCompletionSource[status: " + this.Task.Status.ToString() + "]";
+
+        static TaskCompletionSource CreateVoidTcs()
+        {
+            var tcs = new TaskCompletionSource();
+            tcs.TryComplete();
+            return tcs;
+        }
     }
-
-    // todo: support cancellation token where used
-    public bool SetUncancellable() => true;
-
-    public override string ToString() => "TaskCompletionSource[status: " + this.Task.Status.ToString() + "]";
-
-    static TaskCompletionSource CreateVoidTcs()
-    {
-      var tcs = new TaskCompletionSource();
-      tcs.TryComplete();
-      return tcs;
-    }
-  }
 
 #if NET40
-  /// <summary>FakeSynchronizationContext: http://stackoverflow.com/questions/21845495/synchronous-or-asynchronous-continuation-upon-taskcompletionsource-trysetresult </summary>
-  public sealed class FakeSynchronizationContext : SynchronizationContext
-  {
-    private static readonly ThreadLocal<FakeSynchronizationContext> s_context =
-        new ThreadLocal<FakeSynchronizationContext>(() => new FakeSynchronizationContext());
-
-    private FakeSynchronizationContext() { }
-
-    public static FakeSynchronizationContext Instance { get { return s_context.Value; } }
-
-    public static void Execute(Action action)
+    /// <summary>FakeSynchronizationContext: http://stackoverflow.com/questions/21845495/synchronous-or-asynchronous-continuation-upon-taskcompletionsource-trysetresult </summary>
+    public sealed class FakeSynchronizationContext : SynchronizationContext
     {
-      var savedContext = SynchronizationContext.Current;
-      SynchronizationContext.SetSynchronizationContext(FakeSynchronizationContext.Instance);
-      try
-      {
-        action();
-      }
-      catch { }
-      finally
-      {
-        SynchronizationContext.SetSynchronizationContext(savedContext);
-      }
-    }
+        private static readonly ThreadLocal<FakeSynchronizationContext> s_context =
+            new ThreadLocal<FakeSynchronizationContext>(() => new FakeSynchronizationContext());
 
-    // SynchronizationContext methods
+        private FakeSynchronizationContext() { }
 
-    public override SynchronizationContext CreateCopy()
-    {
-      return this;
-    }
+        public static FakeSynchronizationContext Instance { get { return s_context.Value; } }
 
-    public override void OperationStarted()
-    {
-      throw new NotImplementedException("OperationStarted");
-    }
+        public static void Execute(Action action)
+        {
+            var savedContext = SynchronizationContext.Current;
+            SynchronizationContext.SetSynchronizationContext(FakeSynchronizationContext.Instance);
+            try
+            {
+                action();
+            }
+            catch { }
+            finally
+            {
+                SynchronizationContext.SetSynchronizationContext(savedContext);
+            }
+        }
 
-    public override void OperationCompleted()
-    {
-      throw new NotImplementedException("OperationCompleted");
-    }
+        // SynchronizationContext methods
 
-    public override void Post(SendOrPostCallback d, object state)
-    {
-      throw new NotImplementedException("Post");
-    }
+        public override SynchronizationContext CreateCopy()
+        {
+            return this;
+        }
 
-    public override void Send(SendOrPostCallback d, object state)
-    {
-      throw new NotImplementedException("Send");
+        public override void OperationStarted()
+        {
+            throw new NotImplementedException("OperationStarted");
+        }
+
+        public override void OperationCompleted()
+        {
+            throw new NotImplementedException("OperationCompleted");
+        }
+
+        public override void Post(SendOrPostCallback d, object state)
+        {
+            throw new NotImplementedException("Post");
+        }
+
+        public override void Send(SendOrPostCallback d, object state)
+        {
+            throw new NotImplementedException("Send");
+        }
     }
-  }
 #endif
 }

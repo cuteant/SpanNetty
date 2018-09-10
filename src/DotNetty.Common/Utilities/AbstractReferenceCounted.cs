@@ -1,7 +1,6 @@
 ﻿
 namespace DotNetty.Common.Utilities
 {
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
     using System.Threading;
 
@@ -9,35 +8,31 @@ namespace DotNetty.Common.Utilities
     {
         int referenceCount = 1;
 
-        public int ReferenceCount => this.referenceCount;
+        public int ReferenceCount => Volatile.Read(ref this.referenceCount);
 
         public IReferenceCounted Retain() => this.RetainCore(1);
 
         public IReferenceCounted Retain(int increment)
         {
-            Contract.Requires(increment > 0);
+            if (increment <= 0) { ThrowHelper.ThrowArgumentException_Positive(increment, ExceptionArgument.increment); }
 
             return this.RetainCore(increment);
         }
 
         protected virtual IReferenceCounted RetainCore(int increment)
         {
-            while (true)
+            var refCnt = Volatile.Read(ref this.referenceCount);
+            int oldRefCnt;
+            do
             {
-                int count = this.referenceCount;
-                int nextCount = count + increment;
+                oldRefCnt = refCnt;
+                int nextCount = refCnt + increment;
 
-                // Ensure we not resurrect (which means the refCnt was 0) and also that we encountered an overflow.
-                if (nextCount <= increment)
-                {
-                    ThrowIllegalReferenceCountException(count, increment);
-                }
+                // Ensure we don't resurrect (which means the refCnt was 0) and also that we encountered an overflow.
+                if (nextCount <= increment) { ThrowIllegalReferenceCountException(refCnt, increment); }
 
-                if (Interlocked.CompareExchange(ref this.referenceCount, nextCount, count) == count)
-                {
-                    break;
-                }
-            }
+                refCnt = Interlocked.CompareExchange(ref this.referenceCount, nextCount, refCnt);
+            } while (refCnt != oldRefCnt);
 
             return this;
         }
@@ -50,29 +45,30 @@ namespace DotNetty.Common.Utilities
 
         public bool Release(int decrement)
         {
-            Contract.Requires(decrement > 0);
+            if (decrement <= 0) { ThrowHelper.ThrowArgumentException_Positive(decrement, ExceptionArgument.decrement); }
 
             return this.ReleaseCore(decrement);
         }
 
         bool ReleaseCore(int decrement)
         {
-            while (true)
+            var refCnt = Volatile.Read(ref this.referenceCount);
+            int oldRefCnt;
+            do
             {
-                int count = this.referenceCount;
-                if (count < decrement)
-                {
-                    ThrowIllegalReferenceCountException(count, decrement);
-                }
+                oldRefCnt = refCnt;
 
-                if (Interlocked.CompareExchange(ref this.referenceCount, count - decrement, count) == decrement)
-                {
-                    this.Deallocate();
-                    return  true;
-                }
+                if (refCnt < decrement) { ThrowIllegalReferenceCountException(refCnt, decrement); }
 
-                return false;
+                refCnt = Interlocked.CompareExchange(ref this.referenceCount, refCnt - decrement, refCnt);
+            } while (refCnt != oldRefCnt);
+
+            if (refCnt == decrement)
+            {
+                this.Deallocate();
+                return true;
             }
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

@@ -6,7 +6,6 @@ namespace DotNetty.Codecs.Http.Multipart
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Text;
     using DotNetty.Buffers;
@@ -60,9 +59,9 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public HttpPostStandardRequestDecoder(IHttpDataFactory factory, IHttpRequest request, Encoding charset)
         {
-            Contract.Requires(request != null);
-            Contract.Requires(charset != null);
-            Contract.Requires(factory != null);
+            if (null == request) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.request); }
+            if (null == charset) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
+            if (null == factory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
 
             this.factory = factory;
             this.request = request;
@@ -102,7 +101,7 @@ namespace DotNetty.Codecs.Http.Multipart
             get => this.discardThreshold;
             set
             {
-                Contract.Requires(value >= 0);
+                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
                 this.discardThreshold = value;
             }
         }

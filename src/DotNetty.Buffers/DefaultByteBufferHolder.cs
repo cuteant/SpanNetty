@@ -4,9 +4,7 @@
 namespace DotNetty.Buffers
 {
     using System;
-    using System.Diagnostics.Contracts;
     using DotNetty.Common;
-    using DotNetty.Common.Utilities;
 
     public class DefaultByteBufferHolder : IByteBufferHolder, IEquatable<IByteBufferHolder>
     {

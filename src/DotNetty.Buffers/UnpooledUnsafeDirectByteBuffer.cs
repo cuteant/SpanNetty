@@ -5,7 +5,6 @@
 namespace DotNetty.Buffers
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Runtime.CompilerServices;
     using System.Threading;
@@ -23,9 +22,9 @@ namespace DotNetty.Buffers
         public UnpooledUnsafeDirectByteBuffer(IByteBufferAllocator alloc, int initialCapacity, int maxCapacity)
             : base(maxCapacity)
         {
-            Contract.Requires(alloc != null);
-            Contract.Requires(initialCapacity >= 0);
-            Contract.Requires(maxCapacity >= 0);
+            if (null == alloc) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.alloc); }
+            if (initialCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(initialCapacity, ExceptionArgument.initialCapacity); }
+            if (maxCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxCapacity, ExceptionArgument.maxCapacity); }
 
             if (initialCapacity > maxCapacity)
             {
@@ -39,8 +38,8 @@ namespace DotNetty.Buffers
         protected UnpooledUnsafeDirectByteBuffer(IByteBufferAllocator alloc, byte[] initialBuffer, int maxCapacity, bool doFree)
             : base(maxCapacity)
         {
-            Contract.Requires(alloc != null);
-            Contract.Requires(initialBuffer != null);
+            if (null == alloc) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.alloc); }
+            if (null == initialBuffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.initialBuffer); }
 
             int initialCapacity = initialBuffer.Length;
             if (initialCapacity > maxCapacity)

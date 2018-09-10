@@ -20,9 +20,17 @@ namespace DotNetty.Transport.Channels
         /// <param name="logger">The <see cref="IInternalLogger"/> to use to log a failure message.</param>
         public static void SafeSetSuccess(TaskCompletionSource promise, IInternalLogger logger)
         {
-            if (promise != TaskCompletionSource.Void && !promise.TryComplete())
+            if (promise != TaskCompletionSource.Void && !promise.TryComplete() && logger.WarnEnabled)
             {
-                if (logger.WarnEnabled) logger.FailedToMarkAPromiseAsSuccess(promise);
+                var err = promise.Task.Exception?.InnerException;
+                if (null == err)
+                {
+                    logger.FailedToMarkAPromiseAsSuccess(promise);
+                }
+                else
+                {
+                    logger.FailedToMarkAPromiseAsSuccessFailed(promise, err);
+                }
             }
         }
 
@@ -35,9 +43,17 @@ namespace DotNetty.Transport.Channels
         /// <param name="logger">The <see cref="IInternalLogger"/> to use to log a failure message.</param>
         public static void SafeSetFailure(TaskCompletionSource promise, Exception cause, IInternalLogger logger)
         {
-            if (promise != TaskCompletionSource.Void && !promise.TrySetException(cause))
+            if (promise != TaskCompletionSource.Void && !promise.TrySetException(cause) && logger.WarnEnabled)
             {
-                if (logger.WarnEnabled) logger.FailedToMarkAPromiseAsFailure(promise, cause);
+                var err = promise.Task.Exception?.InnerException;
+                if (null == err)
+                {
+                    logger.FailedToMarkAPromiseAsFailure(promise, cause);
+                }
+                else
+                {
+                    logger.FailedToMarkAPromiseAsFailureFailed(promise, cause, err);
+                }
             }
         }
 

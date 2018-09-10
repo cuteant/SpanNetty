@@ -5,7 +5,6 @@
 namespace DotNetty.Codecs.Http.WebSockets.Extensions
 {
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
 
     public sealed class WebSocketExtensionData
     {
@@ -14,8 +13,8 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
         public WebSocketExtensionData(string name, IDictionary<string, string> parameters)
         {
-            Contract.Requires(name != null);
-            Contract.Requires(parameters != null);
+            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (null == parameters) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parameters); }
 
             this.name = name;
             this.parameters = new Dictionary<string, string>(parameters, System.StringComparer.Ordinal);

@@ -1,11 +1,11 @@
-﻿#if !NET40
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Transport.Channels.Local
 {
     using System;
     using System.Net;
+    using System.Threading;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
 
@@ -16,26 +16,27 @@ namespace DotNetty.Transport.Channels.Local
     {
         readonly IQueue<object> inboundBuffer = PlatformDependent.NewMpscQueue<object>();
 
-        volatile int state; // 0 - open, 1 - active, 2 - closed
-        volatile LocalAddress localAddress;
-        volatile bool acceptInProgress;
+        int state; // 0 - open, 1 - active, 2 - closed
+        LocalAddress localAddress;
+        int acceptInProgress;
 
         readonly Action shutdownHook;
 
         public LocalServerChannel()
         {
             this.shutdownHook = () => this.Unsafe.CloseAsync();
-            //this.Configuration.Allocator(new PreferHeapByteBufAllocator(config.getAllocator()));
-            this.Configuration = new DefaultChannelConfiguration(this);
+            var config = new DefaultChannelConfiguration(this);
+            config.Allocator = new PreferHeapByteBufAllocator(config.Allocator);
+            this.Configuration = config;
         }
 
         public override IChannelConfiguration Configuration { get; }
 
-        public override bool Open => this.state < 2;
+        public override bool Open => Volatile.Read(ref this.state) < 2;
 
-        public override bool Active => this.state == 1;
+        public override bool Active => Volatile.Read(ref this.state) == 1;
 
-        protected override EndPoint LocalAddressInternal => this.localAddress;
+        protected override EndPoint LocalAddressInternal => Volatile.Read(ref this.localAddress);
 
         protected override bool IsCompatible(IEventLoop eventLoop) => eventLoop is SingleThreadEventLoop;
 
@@ -48,21 +49,22 @@ namespace DotNetty.Transport.Channels.Local
 
         protected override void DoBind(EndPoint localAddress)
         {
-            this.localAddress = LocalChannelRegistry.Register(this, this.localAddress, localAddress);
-            this.state = 1;
+            Interlocked.Exchange(ref this.localAddress, LocalChannelRegistry.Register(this, Volatile.Read(ref this.localAddress), localAddress));
+            Interlocked.Exchange(ref this.state, 1);
         }
 
         protected override void DoClose()
         {
-            if (this.state <= 1)
+            if (Volatile.Read(ref this.state) <= 1)
             {
                 // Update all internal state before the closeFuture is notified.
-                if (this.localAddress != null)
+                var thisLocalAddr = Volatile.Read(ref this.localAddress);
+                if (thisLocalAddr != null)
                 {
-                    LocalChannelRegistry.Unregister(this.localAddress);
-                    this.localAddress = null;
+                    LocalChannelRegistry.Unregister(thisLocalAddr);
+                    Interlocked.Exchange(ref this.localAddress, null);
                 }
-                this.state = 2;
+                Interlocked.Exchange(ref this.state, 2);
             }
         }
 
@@ -71,14 +73,14 @@ namespace DotNetty.Transport.Channels.Local
 
         protected override void DoBeginRead()
         {
-            if (this.acceptInProgress)
+            if (Constants.True == Volatile.Read(ref this.acceptInProgress))
             {
                 return;
             }
 
             if (this.inboundBuffer.IsEmpty)
             {
-                this.acceptInProgress = true;
+                Interlocked.Exchange(ref this.acceptInProgress, Constants.True);
                 return;
             }
 
@@ -101,9 +103,17 @@ namespace DotNetty.Transport.Channels.Local
 
         private void ReadInbound()
         {
+            // TODO Respect MAX_MESSAGES_PER_READ in LocalChannel / LocalServerChannel.
+            //var handle = this.Unsafe.RecvBufAllocHandle;
+            //handle.Reset(this.Configuration);
             var pipeline = this.Pipeline;
             var inboundBuffer = this.inboundBuffer;
 
+            //do
+            //{
+            //    if (!inboundBuffer.TryDequeue(out object received)) { break; }
+            //    pipeline.FireChannelRead(received);
+            //} while (handle.ContinueReading());
             while (inboundBuffer.TryDequeue(out object m))
             {
                 pipeline.FireChannelRead(m);
@@ -123,9 +133,9 @@ namespace DotNetty.Transport.Channels.Local
         {
             this.inboundBuffer.TryEnqueue(child);
 
-            if (this.acceptInProgress)
+            if (Constants.True == Volatile.Read(ref this.acceptInProgress))
             {
-                this.acceptInProgress = false;
+                Interlocked.Exchange(ref this.acceptInProgress, Constants.False);
                 this.ReadInbound();
             }
         }
@@ -133,4 +143,3 @@ namespace DotNetty.Transport.Channels.Local
         public class LocalServerUnsafe : DefaultServerUnsafe { }
     }
 }
-#endif

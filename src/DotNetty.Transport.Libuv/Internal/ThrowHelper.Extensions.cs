@@ -77,6 +77,9 @@ namespace DotNetty.Transport.Libuv
         startIndex,
         newSize,
         expression,
+        parent,
+        task,
+        eventLoopGroup,
     }
 
     #endregion
@@ -92,6 +95,46 @@ namespace DotNetty.Transport.Libuv
 
     partial class ThrowHelper
     {
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(long value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(long value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_RegChannel()
         {

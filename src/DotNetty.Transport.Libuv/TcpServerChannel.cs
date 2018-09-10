@@ -129,6 +129,7 @@ namespace DotNetty.Transport.Libuv
                     if (connError != null)
                     {
                         if (Logger.InfoEnabled) Logger.AcceptClientConnectionFailed(connError);
+                        this.channel.Pipeline.FireExceptionCaught(connError);
                     }
                     try
                     {

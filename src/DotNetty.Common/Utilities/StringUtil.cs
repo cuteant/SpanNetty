@@ -5,7 +5,6 @@ namespace DotNetty.Common.Utilities
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
     using System.Text;
     using DotNetty.Common.Internal;
@@ -166,7 +165,7 @@ namespace DotNetty.Common.Utilities
 
         public static T ToHexString<T>(T dst, byte[] src, int offset, int length) where T : IAppendable
         {
-            Contract.Requires(length >= 0);
+            if (length < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(length, ExceptionArgument.length); }
 
             if (length == 0)
             {
@@ -279,7 +278,7 @@ namespace DotNetty.Common.Utilities
         /// <returns>the escaped value if necessary, or the value unchanged</returns>
         public static ICharSequence EscapeCsv(ICharSequence value, bool trimWhiteSpace = false)
         {
-            Contract.Requires(value != null);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             int length = value.Count;
             if (length == 0)
@@ -390,7 +389,7 @@ namespace DotNetty.Common.Utilities
 
         public static ICharSequence UnescapeCsv(ICharSequence value)
         {
-            Contract.Requires(value != null);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             int length = value.Count;
             if (length == 0)
             {

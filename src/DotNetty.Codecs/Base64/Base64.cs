@@ -4,7 +4,7 @@
 namespace DotNetty.Codecs.Base64
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using DotNetty.Buffers;
 
     public static class Base64
@@ -154,7 +154,7 @@ namespace DotNetty.Codecs.Base64
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dialect_alphabet);
             }
-            Contract.Assert(dialect.alphabet.Length == 64, "alphabet.Length must be 64!");
+            Debug.Assert(dialect.alphabet.Length == 64, "alphabet.Length must be 64!");
             if ((offset < src.ReaderIndex) || (offset + length > src.ReaderIndex + src.ReadableBytes))
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.offset);
@@ -320,7 +320,7 @@ namespace DotNetty.Codecs.Base64
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.offset);
             }
-            Contract.Assert(dialect.decodabet.Length == 127, "decodabet.Length must be 127!");
+            Debug.Assert(dialect.decodabet.Length == 127, "decodabet.Length must be 127!");
             if (length <= 0)
             {
                 return Unpooled.Empty;

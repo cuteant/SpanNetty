@@ -3,7 +3,6 @@
 
 namespace DotNetty.Transport.Channels
 {
-    using System.Diagnostics.Contracts;
     using DotNetty.Buffers;
 
     public sealed class DefaultMessageSizeEstimator : IMessageSizeEstimator
@@ -27,20 +26,19 @@ namespace DotNetty.Transport.Channels
                     case IByteBufferHolder byteBufferHolder:
                         return byteBufferHolder.Content.ReadableBytes;
 
+                    case IFileRegion fileRegion:
+                        return 0;
+
                     default:
-                        // todo: FileRegion support
-                        //if (msg instanceof FileRegion) {
-                        //    return 0;
-                        //}
                         return this.unknownSize;
                 }
             }
         }
 
         /// <summary>
-        /// Returns the default implementation, which returns <c>0</c> for unknown messages.
+        /// Returns the default implementation, which returns <c>8</c> for unknown messages.
         /// </summary>
-        public static readonly IMessageSizeEstimator Default = new DefaultMessageSizeEstimator(0);
+        public static readonly IMessageSizeEstimator Default = new DefaultMessageSizeEstimator(8);
 
         readonly IMessageSizeEstimatorHandle handle;
 
@@ -50,7 +48,7 @@ namespace DotNetty.Transport.Channels
         /// <param name="unknownSize">The size which is returned for unknown messages.</param>
         public DefaultMessageSizeEstimator(int unknownSize)
         {
-            Contract.Requires(unknownSize >= 0);
+            if (unknownSize < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(unknownSize, ExceptionArgument.unknownSize); }
             this.handle = new HandleImpl(unknownSize);
         }
 

@@ -9,7 +9,6 @@ namespace DotNetty.Codecs.Http.Multipart
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Text;
     using System.Text.RegularExpressions;
@@ -97,9 +96,9 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public HttpPostRequestEncoder(IHttpDataFactory factory, IHttpRequest request, bool multipart, EncoderMode encoderMode)
         {
-            Contract.Requires(request != null);
-            Contract.Requires(factory != null);
-            Contract.Requires(charset != null);
+            if (null == request) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.request); }
+            if (null == factory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
+            if (null == charset) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
 
             this.request = request;
             this.factory = factory;
@@ -155,7 +154,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void SetBodyHttpDatas(List<IInterfaceHttpData> list)
         {
-            Contract.Requires(list != null);
+            if (null == list) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.list); }
 
             this.globalBodySize = 0;
             this.bodyListDatas.Clear();
@@ -170,7 +169,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void AddBodyAttribute(string name, string value)
         {
-            Contract.Requires(name != null);
+            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
             IAttribute data = this.factory.CreateAttribute(this.request, name, value ?? StringUtil.EmptyString);
             this.AddBodyHttpData(data);
         }
@@ -183,8 +182,8 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void AddBodyFileUpload(string name, string fileName, FileStream fileStream, string contentType, bool isText)
         {
-            Contract.Requires(name != null);
-            Contract.Requires(fileStream != null);
+            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (null == fileStream) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.fileStream); }
 
             if (fileName == null)
             {
@@ -231,7 +230,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void AddBodyHttpData(IInterfaceHttpData data)
         {
-            Contract.Requires(data != null);
+            if (null == data) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.data); }
             if (this.headerFinalized)
             {
                 ThrowHelper.ThrowErrorDataEncoderException_CannotAddValue();

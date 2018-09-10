@@ -6,7 +6,6 @@ namespace DotNetty.Codecs.Http
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
     using CuteAnt.Pool;
     using DotNetty.Common.Utilities;
@@ -65,8 +64,8 @@ namespace DotNetty.Codecs.Http
         public HttpClientUpgradeHandler(ISourceCodec sourceCodec, IUpgradeCodec upgradeCodec, int maxContentLength)
             : base(maxContentLength)
         {
-            Contract.Requires(sourceCodec != null);
-            Contract.Requires(upgradeCodec != null);
+            if (null == sourceCodec) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sourceCodec); }
+            if (null == upgradeCodec) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.upgradeCodec); }
 
             this.sourceCodec = sourceCodec;
             this.upgradeCodec = upgradeCodec;

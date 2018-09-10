@@ -7,7 +7,6 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using CuteAnt.Pool;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
@@ -158,8 +157,8 @@ namespace DotNetty.Buffers
             int tinyCacheSize, int smallCacheSize, int normalCacheSize)
             : base(preferDirect)
         {
-            Contract.Requires(nHeapArena >= 0);
-            Contract.Requires(nDirectArena >= 0);
+            if (nHeapArena < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(nHeapArena, ExceptionArgument.nHeapArena); }
+            if (nDirectArena < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(nHeapArena, ExceptionArgument.nDirectArena); }
 
             this.threadCache = new PoolThreadLocalCache(this);
             this.tinyCacheSize = tinyCacheSize;
@@ -212,8 +211,8 @@ namespace DotNetty.Buffers
 
         static int ValidateAndCalculatePageShifts(int pageSize)
         {
-            Contract.Requires(pageSize >= MinPageSize);
-            Contract.Requires((pageSize & pageSize - 1) == 0, "Expected power of 2");
+            if (pageSize < MinPageSize) { ThrowHelper.ThrowArgumentOutOfRangeException(); }
+            if ((pageSize & pageSize - 1) != 0) { ThrowHelper.ThrowArgumentException_ExpectedPowerOf2(); }
 
             // Logarithm base 2. At this point we know that pageSize is a power of two.
             return (sizeof(int) * 8 - 1) - pageSize.NumberOfLeadingZeros();
@@ -221,7 +220,7 @@ namespace DotNetty.Buffers
 
         static int ValidateAndCalculateChunkSize(int pageSize, int maxOrder)
         {
-            Contract.Requires(maxOrder <= 14);
+            if (maxOrder > 14) { ThrowHelper.ThrowArgumentException_CheckMaxOrder14(maxOrder); }
 
             // Ensure the resulting chunkSize does not overflow.
             int chunkSize = pageSize;

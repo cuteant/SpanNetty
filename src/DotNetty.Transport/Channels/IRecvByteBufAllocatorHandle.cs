@@ -3,7 +3,6 @@
 
 namespace DotNetty.Transport.Channels
 {
-    using System.Diagnostics.Contracts;
     using DotNetty.Buffers;
 
     public interface IRecvByteBufAllocatorHandle
@@ -50,7 +49,7 @@ namespace DotNetty.Transport.Channels
         /// <summary>Get or set how many bytes the read operation will (or did) attempt to read.</summary>
         int AttemptedBytesRead { get; set; }
 
-        /// <summary>Determine if the current read loop should should continue.</summary>
+        /// <summary>Determine if the current read loop should continue.</summary>
         /// <returns><c>true</c> if the read loop should continue reading. <c>false</c> if the read loop is complete.</returns>
         bool ContinueReading();
 

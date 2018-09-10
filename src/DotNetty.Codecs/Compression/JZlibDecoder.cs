@@ -4,7 +4,7 @@
 namespace DotNetty.Codecs.Compression
 {
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using System.Threading;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
@@ -12,7 +12,7 @@ namespace DotNetty.Codecs.Compression
     {
         readonly Inflater z = new Inflater();
         readonly byte[] dictionary;
-        volatile bool finished;
+        int finished;
 
         public JZlibDecoder() : this(ZlibWrapper.ZlibOrNone)
         {
@@ -29,7 +29,7 @@ namespace DotNetty.Codecs.Compression
 
         public JZlibDecoder(byte[] dictionary)
         {
-            Contract.Requires(dictionary != null);
+            if (null == dictionary) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dictionary); }
             this.dictionary = dictionary;
 
             int resultCode;
@@ -40,11 +40,11 @@ namespace DotNetty.Codecs.Compression
             }
         }
 
-        public override bool IsClosed => this.finished;
+        public override bool IsClosed => Constants.True == Volatile.Read(ref this.finished);
 
         protected internal override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
-            if (this.finished)
+            if (Constants.True == Volatile.Read(ref this.finished))
             {
                 // Skip data received after finished.
                 input.SkipBytes(input.ReadableBytes);
@@ -115,7 +115,7 @@ namespace DotNetty.Codecs.Compression
                         }
                         if (resultCode == JZlib.Z_STREAM_END)
                         {
-                            this.finished = true; // Do not decode anymore.
+                            Interlocked.Exchange(ref this.finished, Constants.True); // Do not decode anymore.
                             this.z.InflateEnd();
                             break;
                         }

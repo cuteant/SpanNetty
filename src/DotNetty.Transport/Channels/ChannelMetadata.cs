@@ -3,8 +3,6 @@
 
 namespace DotNetty.Transport.Channels
 {
-    using System.Diagnostics.Contracts;
-
     /// <summary>Represents the properties of a <see cref="IChannel" /> implementation.</summary>
     public sealed class ChannelMetadata
     {
@@ -31,7 +29,7 @@ namespace DotNetty.Transport.Channels
         /// </param>
         public ChannelMetadata(bool hasDisconnect, int defaultMaxMessagesPerRead)
         {
-            Contract.Requires(defaultMaxMessagesPerRead > 0);
+            if (defaultMaxMessagesPerRead <= 0) { ThrowHelper.ThrowArgumentException_Positive(defaultMaxMessagesPerRead, ExceptionArgument.defaultMaxMessagesPerRead); }
             this.HasDisconnect = hasDisconnect;
             this.DefaultMaxMessagesPerRead = defaultMaxMessagesPerRead;
         }

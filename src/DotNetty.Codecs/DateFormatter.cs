@@ -5,7 +5,6 @@ namespace DotNetty.Codecs
 {
     using System;
     using System.Collections;
-    using System.Diagnostics.Contracts;
     using System.Text;
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
@@ -58,7 +57,7 @@ namespace DotNetty.Codecs
 
         public static DateTime? ParseHttpDate(ICharSequence txt, int start, int end)
         {
-            Contract.Requires(txt != null);
+            if (null == txt) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.txt); }
 
             int length = end - start;
             if (length == 0)

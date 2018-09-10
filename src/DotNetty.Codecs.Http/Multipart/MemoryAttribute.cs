@@ -4,11 +4,9 @@
 namespace DotNetty.Codecs.Http.Multipart
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Text;
     using DotNetty.Buffers;
-    using DotNetty.Transport.Channels;
 
     public class MemoryAttribute : AbstractMemoryHttpData, IAttribute
     {
@@ -50,7 +48,7 @@ namespace DotNetty.Codecs.Http.Multipart
             get => this.GetByteBuffer().ToString(this.Charset);
             set
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
                 byte[] bytes = this.Charset.GetBytes(value);
                 CheckSize(bytes.Length, this.MaxSize);

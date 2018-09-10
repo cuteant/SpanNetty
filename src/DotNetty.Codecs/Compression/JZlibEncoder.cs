@@ -4,7 +4,7 @@
 namespace DotNetty.Codecs.Compression
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
@@ -15,8 +15,8 @@ namespace DotNetty.Codecs.Compression
         readonly int wrapperOverhead;
         readonly Deflater z = new Deflater();
 
-        volatile bool finished;
-        volatile IChannelHandlerContext ctx;
+        int finished;
+        IChannelHandlerContext ctx;
 
         public JZlibEncoder() : this(6)
         {
@@ -58,9 +58,9 @@ namespace DotNetty.Codecs.Compression
          */
         public JZlibEncoder(ZlibWrapper wrapper, int compressionLevel, int windowBits, int memLevel)
         {
-            Contract.Requires(compressionLevel >= 0 && compressionLevel <= 9);
-            Contract.Requires(windowBits >= 9 && windowBits <= 15);
-            Contract.Requires(memLevel >= 1 && memLevel <= 9);
+            if (compressionLevel < 0 || compressionLevel > 9) { ThrowHelper.ThrowArgumentException_CompressionLevel(compressionLevel); }
+            if (windowBits < 9 || windowBits > 15) { ThrowHelper.ThrowArgumentException_WindowBits(windowBits); }
+            if (memLevel < 1 || memLevel > 9) { ThrowHelper.ThrowArgumentException_MemLevel(memLevel); }
 
             int resultCode = this.z.Init(
                 compressionLevel, windowBits, memLevel,
@@ -83,9 +83,9 @@ namespace DotNetty.Codecs.Compression
 
         public JZlibEncoder(int compressionLevel, int windowBits, int memLevel, byte[] dictionary)
         {
-            Contract.Requires(compressionLevel >= 0 && compressionLevel <= 9);
-            Contract.Requires(windowBits >= 9 && windowBits <= 15);
-            Contract.Requires(memLevel >= 1 && memLevel <= 9);
+            if (compressionLevel < 0 || compressionLevel > 9) { ThrowHelper.ThrowArgumentException_CompressionLevel(compressionLevel); }
+            if (windowBits < 9 || windowBits > 15) { ThrowHelper.ThrowArgumentException_WindowBits(windowBits); }
+            if (memLevel < 1 || memLevel > 9) { ThrowHelper.ThrowArgumentException_MemLevel(memLevel); }
 
             int resultCode = this.z.DeflateInit(
                     compressionLevel, windowBits, memLevel,
@@ -113,7 +113,7 @@ namespace DotNetty.Codecs.Compression
 
         IChannelHandlerContext CurrentContext()
         {
-            IChannelHandlerContext context = this.ctx;
+            IChannelHandlerContext context = Volatile.Read(ref this.ctx);
             if (context == null)
             {
                 throw new InvalidOperationException("not added to a pipeline");
@@ -122,11 +122,11 @@ namespace DotNetty.Codecs.Compression
             return context;
         }
 
-        public override bool IsClosed => this.finished;
+        public override bool IsClosed => Constants.True == Volatile.Read(ref this.finished);
 
         protected override void Encode(IChannelHandlerContext context, IByteBuffer message, IByteBuffer output)
         {
-            if (this.finished)
+            if (Constants.True == Volatile.Read(ref this.finished))
             {
                 output.WriteBytes(message);
                 return;
@@ -195,12 +195,10 @@ namespace DotNetty.Codecs.Compression
 
         Task FinishEncode(IChannelHandlerContext context)
         {
-            if (this.finished)
+            if (Constants.True == Interlocked.Exchange(ref this.finished, Constants.True))
             {
                 return TaskUtil.Completed;
             }
-
-            this.finished = true;
 
             IByteBuffer footer;
             try
@@ -253,6 +251,6 @@ namespace DotNetty.Codecs.Compression
 
         static void CloseOnComplete(Task t, object s) => ((IChannelHandlerContext)s).CloseAsync();
 
-        public override void HandlerAdded(IChannelHandlerContext context) => this.ctx = context;
+        public override void HandlerAdded(IChannelHandlerContext context) => Interlocked.Exchange(ref this.ctx, context);
     }
 }

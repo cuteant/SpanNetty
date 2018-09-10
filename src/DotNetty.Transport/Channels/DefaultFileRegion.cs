@@ -4,7 +4,6 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using DotNetty.Common;
     using DotNetty.Common.Internal.Logging;
@@ -18,9 +17,11 @@ namespace DotNetty.Transport.Channels
 
         public DefaultFileRegion(FileStream file, long position, long count)
         {
-            Contract.Requires(file != null && file.CanRead);
-            Contract.Requires(position >= 0 && count >= 0);
-           
+            if (null == file) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.file); }
+            if (!file.CanRead) { ThrowHelper.ThrowArgumentException(); }
+            if (position < 0) { ThrowHelper.ThrowArgumentException_FileRegionPosition(position); }
+            if (count < 0) { ThrowHelper.ThrowArgumentException_FileRegionCount(count); }
+
             this.file = file;
             this.Position = position;
             this.Count = count;
@@ -36,8 +37,8 @@ namespace DotNetty.Transport.Channels
 
         public long TransferTo(Stream target, long pos)
         {
-            Contract.Requires(target != null);
-            Contract.Requires(pos >= 0);
+            if (null == target) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.target); }
+            if (pos < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(pos, ExceptionArgument.pos); }
 
             long totalCount = this.Count - pos;
             if (totalCount < 0)

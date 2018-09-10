@@ -5,12 +5,9 @@
 // ReSharper disable ConvertToAutoPropertyWhenPossible
 namespace DotNetty.Codecs.Http.Multipart
 {
-    using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Text;
     using DotNetty.Buffers;
-    using DotNetty.Transport.Channels;
 
     public class MemoryFileUpload : AbstractMemoryHttpData, IFileUpload
     {
@@ -22,8 +19,8 @@ namespace DotNetty.Codecs.Http.Multipart
             string contentTransferEncoding, Encoding charset, long size)
             : base(name, charset, size)
         {
-            Contract.Requires(fileName != null);
-            Contract.Requires(contentType != null);
+            if (null == fileName) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.fileName); }
+            if (null == contentType) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentType); }
 
             this.fileName = fileName;
             this.contentType = contentType;
@@ -37,7 +34,7 @@ namespace DotNetty.Codecs.Http.Multipart
             get => this.fileName;
             set
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.fileName = value;
             }
         }
@@ -70,7 +67,7 @@ namespace DotNetty.Codecs.Http.Multipart
             get => this.contentType;
             set
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.contentType = value;
             }
         }

@@ -5,7 +5,7 @@ namespace DotNetty.Common
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Threading;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
@@ -19,7 +19,7 @@ namespace DotNetty.Common
         static readonly IQueue<Entry> PendingEntries = PlatformDependent.NewMpscQueue<Entry>();
         static readonly Watcher watcher = new Watcher();
         static int started;
-        static volatile Thread watcherThread;
+        static Thread watcherThread;
 
         static ThreadDeathWatcher()
         {
@@ -36,10 +36,10 @@ namespace DotNetty.Common
         /// </summary>
         public static void Watch(Thread thread, Action task)
         {
-            Contract.Requires(thread != null);
-            Contract.Requires(task != null);
-            Contract.Requires(thread.IsAlive);
-
+            if (null == thread) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.thread); }
+            if (null == task) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task); }
+            //if (!thread.IsAlive) { ThrowHelper.ThrowArgumentException(); }
+            
             Schedule(thread, task, true);
         }
 
@@ -48,8 +48,8 @@ namespace DotNetty.Common
         /// </summary>
         public static void Unwatch(Thread thread, Action task)
         {
-            Contract.Requires(thread != null);
-            Contract.Requires(task != null);
+            if (null == thread) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.thread); }
+            if (null == task) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task); }
 
             Schedule(thread, task, false);
         }
@@ -58,11 +58,11 @@ namespace DotNetty.Common
         {
             PendingEntries.TryEnqueue(new Entry(thread, task, isWatch));
 
-            if (Interlocked.CompareExchange(ref started, 1, 0) == 0)
+            if (Interlocked.CompareExchange(ref started, Constants.True, Constants.False) == Constants.False)
             {
                 var watcherThread = new Thread(s => ((IRunnable)s).Run());
                 watcherThread.Start(watcher);
-                ThreadDeathWatcher.watcherThread = watcherThread;
+                Interlocked.Exchange(ref ThreadDeathWatcher.watcherThread, watcherThread);
             }
         }
 
@@ -77,7 +77,7 @@ namespace DotNetty.Common
         /// <returns><c>true</c> if and only if the watcher thread has been terminated.</returns>
         public static bool AwaitInactivity(TimeSpan timeout)
         {
-            Thread watcherThread = ThreadDeathWatcher.watcherThread;
+            Thread watcherThread = Volatile.Read(ref ThreadDeathWatcher.watcherThread);
             if (watcherThread != null)
             {
                 watcherThread.Join(timeout);
@@ -111,8 +111,8 @@ namespace DotNetty.Common
                         // Mark the current worker thread as stopped.
                         // The following CAS must always success and must be uncontended,
                         // because only one watcher thread should be running at the same time.
-                        bool stopped = Interlocked.CompareExchange(ref started, 0, 1) == 1;
-                        Contract.Assert(stopped);
+                        bool stopped = Interlocked.CompareExchange(ref started, Constants.False, Constants.True) == Constants.True;
+                        Debug.Assert(stopped);
 
                         // Check if there are pending entries added by watch() while we do CAS above.
                         if (PendingEntries.IsEmpty)
@@ -125,7 +125,7 @@ namespace DotNetty.Common
                         }
 
                         // There are pending entries again, added by watch()
-                        if (Interlocked.CompareExchange(ref started, 1, 0) != 0)
+                        if (Interlocked.CompareExchange(ref started, Constants.True, Constants.False) != Constants.False)
                         {
                             // watch() started a new watcher thread and set 'started' to true.
                             // -> terminate this thread so that the new watcher reads from pendingEntries exclusively.

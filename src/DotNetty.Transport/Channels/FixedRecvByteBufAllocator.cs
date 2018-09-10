@@ -3,8 +3,6 @@
 
 namespace DotNetty.Transport.Channels
 {
-    using System.Diagnostics.Contracts;
-
     /// <summary>
     ///     The <see cref="IRecvByteBufAllocator" /> that always yields the same buffer
     ///     size prediction. This predictor ignores the feedback from the I/O thread.
@@ -26,7 +24,7 @@ namespace DotNetty.Transport.Channels
             public override int Guess() => this.bufferSize;
         }
 
-        readonly IRecvByteBufAllocatorHandle handle;
+        readonly int bufferSize;
 
         /// <summary>
         ///     Creates a new predictor that always returns the same prediction of
@@ -34,11 +32,11 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         public FixedRecvByteBufAllocator(int bufferSize)
         {
-            Contract.Requires(bufferSize > 0);
+            if (bufferSize <= 0) { ThrowHelper.ThrowArgumentException_Positive(bufferSize, ExceptionArgument.bufferSize); }
 
-            this.handle = new HandleImpl(this, bufferSize);
+            this.bufferSize = bufferSize;
         }
 
-        public override IRecvByteBufAllocatorHandle NewHandle() => this.handle;
+        public override IRecvByteBufAllocatorHandle NewHandle() => new HandleImpl(this, this.bufferSize);
     }
 }

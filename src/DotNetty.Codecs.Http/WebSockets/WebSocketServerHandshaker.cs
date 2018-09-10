@@ -8,7 +8,6 @@ namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
     using DotNetty.Codecs.Http.Cors;
     using DotNetty.Common.Concurrency;
@@ -218,7 +217,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public virtual Task CloseAsync(IChannel channel, CloseWebSocketFrame frame)
         {
-            Contract.Requires(channel != null);
+            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
 #if NET40
             void closeOnComplete(Task t) => channel.CloseAsync();

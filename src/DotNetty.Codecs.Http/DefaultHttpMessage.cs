@@ -6,8 +6,6 @@
 // ReSharper disable ConvertToAutoPropertyWithPrivateSetter
 namespace DotNetty.Codecs.Http
 {
-    using System.Diagnostics.Contracts;
-
     public abstract class DefaultHttpMessage : DefaultHttpObject, IHttpMessage
     {
         const int HashCodePrime = 31;
@@ -20,7 +18,7 @@ namespace DotNetty.Codecs.Http
 
         protected DefaultHttpMessage(HttpVersion version, bool validateHeaders, bool singleFieldHeaders)
         {
-            Contract.Requires(version != null);
+            if (null == version) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.version); }
 
             this.version = version;
             this.headers = singleFieldHeaders 
@@ -30,8 +28,8 @@ namespace DotNetty.Codecs.Http
 
         protected DefaultHttpMessage(HttpVersion version, HttpHeaders headers)
         {
-            Contract.Requires(version != null);
-            Contract.Requires(headers != null);
+            if (null == version) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.version); }
+            if (null == headers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
 
             this.version = version;
             this.headers = headers;
@@ -65,7 +63,7 @@ namespace DotNetty.Codecs.Http
 
         public IHttpMessage SetProtocolVersion(HttpVersion value)
         {
-            Contract.Requires(value != null);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             this.version = value;
             return this;
         }

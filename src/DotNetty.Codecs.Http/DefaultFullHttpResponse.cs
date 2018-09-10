@@ -5,7 +5,6 @@
 // ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http
 {
-    using System.Diagnostics.Contracts;
     using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common;
@@ -50,7 +49,7 @@ namespace DotNetty.Codecs.Http
             IByteBuffer content, bool validateHeaders, bool singleFieldHeaders)
             : base(version, status, validateHeaders, singleFieldHeaders)
         {
-            Contract.Requires(content != null);
+            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
 
             this.content = content;
             this.trailingHeaders = singleFieldHeaders 
@@ -61,8 +60,8 @@ namespace DotNetty.Codecs.Http
         public DefaultFullHttpResponse(HttpVersion version, HttpResponseStatus status, IByteBuffer content, HttpHeaders headers, HttpHeaders trailingHeaders)
             : base(version, status, headers)
         {
-            Contract.Requires(content != null);
-            Contract.Requires(trailingHeaders != null);
+            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
+            if (null == trailingHeaders) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.trailingHeaders); }
 
             this.content = content;
             this.trailingHeaders = trailingHeaders;

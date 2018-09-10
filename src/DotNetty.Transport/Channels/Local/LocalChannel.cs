@@ -1,18 +1,16 @@
-﻿#if !NET40
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Transport.Channels.Local
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
-    using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
     /// <summary>
@@ -20,15 +18,14 @@ namespace DotNetty.Transport.Channels.Local
     /// </summary>
     public class LocalChannel : AbstractChannel<LocalChannel, LocalChannel.LocalUnsafe>
     {
-        enum State
+        static class State
         {
-            Open,
-            Bound,
-            Connected,
-            Closed
+            public const int Open = 0;
+            public const int Bound = 1;
+            public const int Connected = 2;
+            public const int Closed = 3;
         }
 
-        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<LocalChannel>();
         static readonly ChannelMetadata METADATA = new ChannelMetadata(false);
         static readonly int MAX_READER_STACK_DEPTH = 8;
         internal static readonly ClosedChannelException DoWriteClosedChannelException = new ClosedChannelException();
@@ -37,14 +34,14 @@ namespace DotNetty.Transport.Channels.Local
 
         readonly IQueue<object> inboundBuffer = PlatformDependent.NewMpscQueue<object>();
 
-        volatile State state;
-        volatile LocalChannel peer;
-        volatile LocalAddress localAddress;
-        volatile LocalAddress remoteAddress;
-        volatile TaskCompletionSource connectPromise;
-        volatile bool readInProgress;
-        volatile bool writeInProgress;
-        volatile Task finishReadFuture;
+        int state;
+        LocalChannel peer;
+        LocalAddress localAddress;
+        LocalAddress remoteAddress;
+        TaskCompletionSource connectPromise;
+        int readInProgress;
+        int writeInProgress;
+        Task finishReadFuture;
 
         readonly Action shutdownHook;
 
@@ -56,7 +53,6 @@ namespace DotNetty.Transport.Channels.Local
         internal LocalChannel(LocalServerChannel parent, LocalChannel peer)
             : base(parent)
         {
-            //this.Configuration.Allocator(new PreferHeapByteBufAllocator(config.getAllocator()));
             this.peer = peer;
             if (parent != null)
             {
@@ -67,7 +63,9 @@ namespace DotNetty.Transport.Channels.Local
                 this.remoteAddress = peer.LocalAddress;
             }
 
-            this.Configuration = new DefaultChannelConfiguration(this);
+            var config = new DefaultChannelConfiguration(this);
+            config.Allocator = new PreferHeapByteBufAllocator(config.Allocator);
+            this.Configuration = config;
             this.shutdownHook = () => this.Unsafe.CloseAsync();
         }
 
@@ -81,17 +79,17 @@ namespace DotNetty.Transport.Channels.Local
 
         public new LocalAddress RemoteAddress => (LocalAddress)base.RemoteAddress;
 
-        public override bool Open => this.state != State.Closed;
+        public override bool Open => Volatile.Read(ref this.state) != State.Closed;
 
-        public override bool Active => this.state == State.Connected;
+        public override bool Active => Volatile.Read(ref this.state) == State.Connected;
 
         //protected override IChannelUnsafe NewUnsafe() => new LocalUnsafe(this);
 
         protected override bool IsCompatible(IEventLoop loop) => loop is SingleThreadEventLoop;
 
-        protected override EndPoint LocalAddressInternal => this.localAddress;
+        protected override EndPoint LocalAddressInternal => Volatile.Read(ref this.localAddress);
 
-        protected override EndPoint RemoteAddressInternal => this.remoteAddress;
+        protected override EndPoint RemoteAddressInternal => Volatile.Read(ref this.remoteAddress);
 
         static void InternalRead(object c)
         {
@@ -110,15 +108,15 @@ namespace DotNetty.Transport.Channels.Local
             // deregistered / registered later again.
             //
             // See https://github.com/netty/netty/issues/2400
-            if (this.peer != null && this.Parent != null)
+            if (Volatile.Read(ref this.peer) != null && this.Parent != null)
             {
                 // Store the peer in a local variable as it may be set to null if doClose() is called.
                 // See https://github.com/netty/netty/issues/2144
-                var peer = this.peer;
-                this.state = State.Connected;
+                var peer = Volatile.Read(ref this.peer);
+                Interlocked.Exchange(ref this.state, State.Connected);
 
-                peer.remoteAddress = this.Parent?.LocalAddress;
-                peer.state = State.Connected;
+                Interlocked.Exchange(ref peer.remoteAddress, this.Parent?.LocalAddress);
+                Interlocked.Exchange(ref peer.state, State.Connected);
 
                 // Always call peer.eventLoop().execute() even if peer.eventLoop().InEventLoop is true.
                 // This ensures that if both channels are on the same event loop, the peer's channelActive
@@ -127,7 +125,7 @@ namespace DotNetty.Transport.Channels.Local
                 peer.EventLoop.Execute(
                     () =>
                     {
-                        var promise = peer.connectPromise;
+                        var promise = Volatile.Read(ref peer.connectPromise);
 
                         // Only trigger fireChannelActive() if the promise was not null and was not completed yet.
                         // connectPromise may be set to null if doClose() was called in the meantime.
@@ -143,50 +141,51 @@ namespace DotNetty.Transport.Channels.Local
 
         protected override void DoBind(EndPoint localAddress)
         {
-            this.localAddress = LocalChannelRegistry.Register(this, this.localAddress, localAddress);
-            this.state = State.Bound;
+            Interlocked.Exchange(ref this.localAddress, LocalChannelRegistry.Register(this, Volatile.Read(ref this.localAddress), localAddress));
+            Interlocked.Exchange(ref this.state, State.Bound);
         }
 
         protected override void DoDisconnect() => this.DoClose();
 
         protected override void DoClose()
         {
-            var peer = this.peer;
-            var oldState = this.state;
+            var peer = Volatile.Read(ref this.peer);
+            var oldState = Volatile.Read(ref this.state);
 
             try
             {
                 if (oldState != State.Closed)
                 {
                     // Update all internal state before the closeFuture is notified.
-                    if (this.localAddress != null)
+                    var thisLocalAddr = Volatile.Read(ref this.localAddress);
+                    if (thisLocalAddr != null)
                     {
                         if (this.Parent == null)
                         {
-                            LocalChannelRegistry.Unregister(this.localAddress);
+                            LocalChannelRegistry.Unregister(thisLocalAddr);
                         }
-                        this.localAddress = null;
+                        Interlocked.Exchange(ref this.localAddress, null);
                     }
 
                     // State change must happen before finishPeerRead to ensure writes are released either in doWrite or
                     // channelRead.
-                    this.state = State.Closed;
+                    Interlocked.Exchange(ref this.state, State.Closed);
 
                     // Preserve order of event and force a read operation now before the close operation is processed.
-                    if (this.writeInProgress && peer != null) { this.FinishPeerRead(peer); }
+                    if (Constants.True == Volatile.Read(ref this.writeInProgress) && peer != null) { this.FinishPeerRead(peer); }
 
-                    TaskCompletionSource promise = this.connectPromise;
+                    TaskCompletionSource promise = Volatile.Read(ref this.connectPromise);
                     if (promise != null)
                     {
                         // Use tryFailure() instead of setFailure() to avoid the race against cancel().
                         promise.TrySetException(DoCloseClosedChannelException);
-                        this.connectPromise = null;
+                        Interlocked.Exchange(ref this.connectPromise, null);
                     }
                 }
 
                 if (peer != null)
                 {
-                    this.peer = null;
+                    Interlocked.Exchange(ref this.peer, null);
                     // Always call peer.eventLoop().execute() even if peer.eventLoop().inEventLoop() is true.
                     // This ensures that if both channels are on the same event loop, the peer's channelInActive
                     // event is triggered *after* this peer's channelInActive event
@@ -244,9 +243,17 @@ namespace DotNetty.Transport.Channels.Local
 
         private void ReadInbound()
         {
+            // TODO Respect MAX_MESSAGES_PER_READ in LocalChannel / LocalServerChannel.
+            //var handle = this.Unsafe.RecvBufAllocHandle;
+            //handle.Reset(this.Configuration);
             var pipeline = this.Pipeline;
             var inboundBuffer = this.inboundBuffer;
 
+            //do
+            //{
+            //    if (!inboundBuffer.TryDequeue(out object received)) { break; }
+            //    pipeline.FireChannelRead(received);
+            //} while (handle.ContinueReading());
             while (inboundBuffer.TryDequeue(out object received))
             {
                 pipeline.FireChannelRead(received);
@@ -257,14 +264,14 @@ namespace DotNetty.Transport.Channels.Local
 
         protected override void DoBeginRead()
         {
-            if (this.readInProgress)
+            if (Constants.True == Volatile.Read(ref this.readInProgress))
             {
                 return;
             }
 
             if (this.inboundBuffer.IsEmpty)
             {
-                this.readInProgress = true;
+                Interlocked.Exchange(ref this.readInProgress, Constants.True);
                 return;
             }
 
@@ -291,9 +298,9 @@ namespace DotNetty.Transport.Channels.Local
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warn("Closing Local channels {}-{} because exception occurred!", this, this.peer, ex);
+                    Logger.Warn("Closing Local channels {}-{} because exception occurred!", this, Volatile.Read(ref this.peer), ex);
                     this.CloseAsync();
-                    this.peer.CloseAsync();
+                    Volatile.Read(ref this.peer).CloseAsync();
                     throw;
                 }
             }
@@ -301,7 +308,7 @@ namespace DotNetty.Transport.Channels.Local
 
         protected override void DoWrite(ChannelOutboundBuffer buffer)
         {
-            switch (this.state)
+            switch (Volatile.Read(ref this.state))
             {
                 case State.Open:
                 case State.Bound:
@@ -312,9 +319,9 @@ namespace DotNetty.Transport.Channels.Local
                     break;
             }
 
-            var peer = this.peer;
+            var peer = Volatile.Read(ref this.peer);
 
-            this.writeInProgress = true;
+            Interlocked.Exchange(ref this.writeInProgress, Constants.True);
             try
             {
                 while (true)
@@ -329,7 +336,7 @@ namespace DotNetty.Transport.Channels.Local
                     {
                         // It is possible the peer could have closed while we are writing, and in this case we should
                         // simulate real socket behavior and ensure the write operation is failed.
-                        if (peer.state == State.Connected)
+                        if (Volatile.Read(ref peer.state) == State.Connected)
                         {
                             peer.inboundBuffer.TryEnqueue(ReferenceCountUtil.Retain(msg));
                             buffer.Remove();
@@ -352,7 +359,7 @@ namespace DotNetty.Transport.Channels.Local
                 // 2. promise X is completed when in.remove() is called, and a listener on this promise calls close()
                 // 3. Then the close event will be executed for the peer before the write events, when the write events
                 // actually happened before the close event.
-                this.writeInProgress = false;
+                Interlocked.Exchange(ref this.writeInProgress, Constants.False);
             }
 
             this.FinishPeerRead(peer);
@@ -361,7 +368,7 @@ namespace DotNetty.Transport.Channels.Local
         void FinishPeerRead(LocalChannel peer)
         {
             // If the peer is also writing, then we must schedule the event on the event loop to preserve read order.
-            if (peer.EventLoop == this.EventLoop && !peer.writeInProgress)
+            if (peer.EventLoop == this.EventLoop && Constants.False == Volatile.Read(ref peer.writeInProgress))
             {
                 this.FinishPeerRead0(peer);
             }
@@ -377,14 +384,14 @@ namespace DotNetty.Transport.Channels.Local
             // we keep track of the task, and coordinate later that our read can't happen until the peer is done.
             try
             {
-                if (peer.writeInProgress)
+                if (Constants.True == Volatile.Read(ref peer.writeInProgress))
                 {
-                    peer.finishReadFuture = peer.EventLoop.SubmitAsync(
+                    Interlocked.Exchange(ref peer.finishReadFuture, peer.EventLoop.SubmitAsync(
                         () =>
                         {
                             this.FinishPeerRead0(peer);
                             return (object)null;
-                        });
+                        }));
                 }
                 else
                 {
@@ -402,8 +409,8 @@ namespace DotNetty.Transport.Channels.Local
 
         void ReleaseInboundBuffers()
         {
-            Contract.Assert(this.EventLoop == null || this.EventLoop.InEventLoop);
-            this.readInProgress = false;
+            Debug.Assert(this.EventLoop == null || this.EventLoop.InEventLoop);
+            Interlocked.Exchange(ref this.readInProgress, Constants.False);
             var inboundBuffer = this.inboundBuffer;
             while (inboundBuffer.TryDequeue(out object msg))
             {
@@ -413,7 +420,7 @@ namespace DotNetty.Transport.Channels.Local
 
         void FinishPeerRead0(LocalChannel peer)
         {
-            Task peerFinishReadFuture = peer.finishReadFuture;
+            Task peerFinishReadFuture = Volatile.Read(ref peer.finishReadFuture);
             if (peerFinishReadFuture != null)
             {
                 if (!peerFinishReadFuture.IsCompleted)
@@ -431,9 +438,9 @@ namespace DotNetty.Transport.Channels.Local
             // We should only set readInProgress to false if there is any data that was read as otherwise we may miss to
             // forward data later on.
             IChannelPipeline peerPipeline = peer.Pipeline;
-            if (peer.readInProgress && !peer.inboundBuffer.IsEmpty)
+            if (Constants.True == Volatile.Read(ref peer.readInProgress) && !peer.inboundBuffer.IsEmpty)
             {
-                peer.readInProgress = false;
+                Interlocked.Exchange(ref peer.readInProgress, Constants.False);
                 peer.ReadInbound();
             }
         }
@@ -452,7 +459,7 @@ namespace DotNetty.Transport.Channels.Local
             {
                 var promise = new TaskCompletionSource();
 
-                if (this.channel.state == State.Connected)
+                if (Volatile.Read(ref this.channel.state) == State.Connected)
                 {
                     var cause = new AlreadyConnectedException();
                     Util.SafeSetFailure(promise, cause, Logger);
@@ -460,14 +467,14 @@ namespace DotNetty.Transport.Channels.Local
                     return promise.Task;
                 }
 
-                if (this.channel.connectPromise != null)
+                if (Volatile.Read(ref this.channel.connectPromise) != null)
                 {
                     ThrowHelper.ThrowConnectionPendingException();
                 }
 
-                this.channel.connectPromise = promise;
+                Interlocked.Exchange(ref this.channel.connectPromise, promise);
 
-                if (this.channel.state != State.Bound)
+                if (Volatile.Read(ref this.channel.state) != State.Bound)
                 {
                     // Not bound yet and no localAddress specified - get one.
                     if (localAddress == null)
@@ -499,10 +506,9 @@ namespace DotNetty.Transport.Channels.Local
                     return promise.Task;
                 }
 
-                this.channel.peer = ((LocalServerChannel)boundChannel).Serve(this.channel);
+                Interlocked.Exchange(ref this.channel.peer, ((LocalServerChannel)boundChannel).Serve(this.channel));
                 return promise.Task;
             }
         }
     }
 }
-#endif

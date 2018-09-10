@@ -8,7 +8,7 @@ namespace DotNetty.Common.Utilities
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
     using CuteAnt.Text;
@@ -125,7 +125,7 @@ namespace DotNetty.Common.Utilities
         PreciseTimeSpan StartTime
         {
             get => PreciseTimeSpan.FromTicks(Volatile.Read(ref this.startTimeVolatile));
-            set => Volatile.Write(ref this.startTimeVolatile, value.Ticks);
+            set => Interlocked.Exchange(ref this.startTimeVolatile, value.Ticks);
         }
 
         int WorkerState => Volatile.Read(ref this.workerStateVolatile);
@@ -414,7 +414,7 @@ namespace DotNetty.Common.Utilities
                     try
                     {
                         long sleepTimeMs = sleepTime.Ticks / TimeSpan.TicksPerMillisecond; // we've already rounded so no worries about the remainder > 0 here
-                        Contract.Assert(sleepTimeMs <= int.MaxValue);
+                        Debug.Assert(sleepTimeMs <= int.MaxValue);
 #if NET40
                         delay = TaskEx.Delay((int)sleepTimeMs, this.owner.CancellationToken);
 #else
@@ -444,7 +444,7 @@ namespace DotNetty.Common.Utilities
             internal readonly HashedWheelTimer timer;
             internal readonly TimeSpan Deadline;
 
-            volatile int state = StInit;
+            int state = StInit;
 
             // remainingRounds will be calculated and set by Worker.transferTimeoutsToBuckets() before the
             // HashedWheelTimeout will be added to the correct HashedWheelBucket.
@@ -503,7 +503,7 @@ namespace DotNetty.Common.Utilities
                 return Interlocked.CompareExchange(ref this.state, state, expected) == expected;
             }
 
-            internal int State => this.state;
+            internal int State => Volatile.Read(ref this.state);
 
             public bool Canceled => this.State == StCanceled;
 
@@ -583,7 +583,7 @@ namespace DotNetty.Common.Utilities
             /// </summary>
             public void AddTimeout(HashedWheelTimeout timeout)
             {
-                Contract.Assert(timeout.Bucket == null);
+                Debug.Assert(timeout.Bucket == null);
                 timeout.Bucket = this;
                 if (this.head == null)
                 {

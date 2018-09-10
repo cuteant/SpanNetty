@@ -4,7 +4,7 @@
 namespace DotNetty.Buffers
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Runtime.CompilerServices;
     using System.Text;
     using CuteAnt.Pool;
@@ -705,7 +705,7 @@ namespace DotNetty.Buffers
             bool release = true;
 
             IByteBuffer dst = enforceHeap ? alloc.HeapBuffer(length) : alloc.Buffer(length);
-            Contract.Assert(dst.HasArray, "Operation expects allocator to operate array-based buffers.");
+            Debug.Assert(dst.HasArray, "Operation expects allocator to operate array-based buffers.");
 
             try
             {
@@ -886,7 +886,7 @@ namespace DotNetty.Buffers
 
             public static string DoHexDump(IByteBuffer buffer, int fromIndex, int length)
             {
-                Contract.Requires(length >= 0);
+                if (length < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(length, ExceptionArgument.length); }
                 if (length == 0)
                 {
                     return "";
@@ -908,7 +908,7 @@ namespace DotNetty.Buffers
 
             public static string DoHexDump(byte[] array, int fromIndex, int length)
             {
-                Contract.Requires(length >= 0);
+                if (length < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(length, ExceptionArgument.length); }
 
                 if (length == 0)
                 {
@@ -1031,8 +1031,8 @@ namespace DotNetty.Buffers
 
         public static bool IsText(IByteBuffer buf, int index, int length, Encoding encoding)
         {
-            Contract.Requires(buf != null);
-            Contract.Requires(encoding != null);
+            if (null == buf) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buf); }
+            if (null == encoding) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoding); }
 
             int maxIndex = buf.ReaderIndex + buf.ReadableBytes;
             if (index < 0 || length < 0 || index > maxIndex - length)

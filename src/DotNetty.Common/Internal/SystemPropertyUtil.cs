@@ -4,7 +4,6 @@
 namespace DotNetty.Common.Internal
 {
     using System;
-    using System.Diagnostics.Contracts;
     using DotNetty.Common.Internal.Logging;
 
     /// <summary>
@@ -40,7 +39,7 @@ namespace DotNetty.Common.Internal
         /// </returns>
         public static string Get(string key, string def)
         {
-            Contract.Requires(!string.IsNullOrEmpty(key));
+            if (string.IsNullOrEmpty(key)) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
 
             try
             {

@@ -4,7 +4,6 @@
 namespace DotNetty.Buffers
 {
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
     using CuteAnt.Pool;
     using DotNetty.Common.Internal;
@@ -111,7 +110,7 @@ namespace DotNetty.Buffers
 
         internal PoolChunk(PoolArena<T> arena, T memory, int pageSize, int maxOrder, int pageShifts, int chunkSize, int offset)
         {
-            Contract.Requires(maxOrder < 30, "maxOrder should be < 30, but is: " + maxOrder);
+            if (maxOrder >= 30) { ThrowHelper.ThrowArgumentException_CheckMaxOrder30(maxOrder); }
 
             this.Unpooled = false;
             this.Arena = arena;
@@ -126,7 +125,7 @@ namespace DotNetty.Buffers
             this.subpageOverflowMask = ~(pageSize - 1);
             this.freeBytes = chunkSize;
 
-            Contract.Assert(maxOrder < 30, "maxOrder should be < 30, but is: " + maxOrder);
+            Debug.Assert(maxOrder < 30, "maxOrder should be < 30, but is: " + maxOrder);
             this.maxSubpageAllocs = 1 << maxOrder;
 
             // Generate the memory map.
@@ -426,13 +425,13 @@ namespace DotNetty.Buffers
 
         void InitBufWithSubpage(PooledByteBuffer<T> buf, long handle, int bitmapIdx, int reqCapacity)
         {
-            Contract.Assert(bitmapIdx != 0);
+            Debug.Assert(bitmapIdx != 0);
 
             int memoryMapIdx = MemoryMapIdx(handle);
 
             PoolSubpage<T> subpage = this.subpages[this.SubpageIdx(memoryMapIdx)];
-            Contract.Assert(subpage.DoNotDestroy);
-            Contract.Assert(reqCapacity <= subpage.ElemSize);
+            Debug.Assert(subpage.DoNotDestroy);
+            Debug.Assert(reqCapacity <= subpage.ElemSize);
 
             buf.Init(
                 this, handle,

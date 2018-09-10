@@ -16,15 +16,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3D04C4DC-6F8
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{B6984E67-A4D0-459E-B3C9-01CA4DBBE241}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CuteAnt.Extensions.Reflection.Sources", "..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.Reflection.Sources\CuteAnt.Extensions.Reflection.Sources.shproj", "{C7F8DBE6-77B7-494D-AF00-018F7579548C}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Common", "src\DotNetty.Common\DotNetty.Common.csproj", "{3B9613C3-0FE1-4F7A-AD5A-454952629867}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Buffers", "src\DotNetty.Buffers\DotNetty.Buffers.csproj", "{0040F4F7-B6F8-4823-A6F6-1ABC16C20098}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Transport", "src\DotNetty.Transport\DotNetty.Transport.csproj", "{C2A9F2F6-363A-4AE0-8080-6830CB204996}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Nito.AsyncEx.ExceptionEnlightenment.Sources", "..\CuteAnt.Extensions.Common\src\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.shproj", "{D90E9B82-6317-4055-82E3-FE8625C143E9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs", "src\DotNetty.Codecs\DotNetty.Codecs.csproj", "{D02DB5E8-FD54-46C4-8793-F117B7165D7D}"
 EndProject
@@ -59,10 +55,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Http", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Http.Tests", "test\DotNetty.Codecs.Http.Tests.Net40\DotNetty.Codecs.Http.Tests.csproj", "{761127C4-4B9B-4A49-B75C-3C56CDA04091}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Transport.Libuv", "src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj", "{50E717BD-B5DF-4A10-85A0-C737AE57566F}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CuteAnt.Extensions.Reflection.Sources", "shared\CuteAnt.Extensions.Reflection.Sources\CuteAnt.Extensions.Reflection.Sources.shproj", "{C7F8DBE6-77B7-494D-AF00-018F7579548C}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Nito.AsyncEx.ExceptionEnlightenment.Sources", "shared\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.shproj", "{D90E9B82-6317-4055-82E3-FE8625C143E9}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		..\CuteAnt.Extensions.Common\src\CuteAnt.Extensions.Reflection.Sources\CuteAnt.Extensions.Reflection.Sources.projitems*{c7f8dbe6-77b7-494d-af00-018f7579548c}*SharedItemsImports = 13
-		..\CuteAnt.Extensions.Common\src\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems*{d90e9b82-6317-4055-82e3-fe8625c143e9}*SharedItemsImports = 13
+		shared\CuteAnt.Extensions.Reflection.Sources\CuteAnt.Extensions.Reflection.Sources.projitems*{c7f8dbe6-77b7-494d-af00-018f7579548c}*SharedItemsImports = 13
+		shared\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems*{d90e9b82-6317-4055-82e3-fe8625c143e9}*SharedItemsImports = 13
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -363,16 +365,30 @@ Global
 		{761127C4-4B9B-4A49-B75C-3C56CDA04091}.Release|x64.Build.0 = Release|Any CPU
 		{761127C4-4B9B-4A49-B75C-3C56CDA04091}.Release|x86.ActiveCfg = Release|Any CPU
 		{761127C4-4B9B-4A49-B75C-3C56CDA04091}.Release|x86.Build.0 = Release|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Debug|ARM.Build.0 = Debug|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Debug|x64.Build.0 = Debug|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Debug|x86.Build.0 = Debug|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Release|ARM.ActiveCfg = Release|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Release|ARM.Build.0 = Release|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Release|x64.ActiveCfg = Release|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Release|x64.Build.0 = Release|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Release|x86.ActiveCfg = Release|Any CPU
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{C7F8DBE6-77B7-494D-AF00-018F7579548C} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
 		{3B9613C3-0FE1-4F7A-AD5A-454952629867} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{0040F4F7-B6F8-4823-A6F6-1ABC16C20098} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{C2A9F2F6-363A-4AE0-8080-6830CB204996} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
-		{D90E9B82-6317-4055-82E3-FE8625C143E9} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
 		{D02DB5E8-FD54-46C4-8793-F117B7165D7D} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{B4E683BC-92EA-4ADC-8B99-BA7208507D80} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{D8AE3ECA-1BE6-44C5-9174-7C92CCFBEFC2} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
@@ -388,6 +404,9 @@ Global
 		{FAFCF780-29A8-4563-8FE7-9C04C2A28A25} = {01F3CC7E-F996-411E-AFD6-72673A826549}
 		{DD67ADA4-127E-44A2-ADE5-36BD58E7E49C} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{761127C4-4B9B-4A49-B75C-3C56CDA04091} = {01F3CC7E-F996-411E-AFD6-72673A826549}
+		{50E717BD-B5DF-4A10-85A0-C737AE57566F} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
+		{C7F8DBE6-77B7-494D-AF00-018F7579548C} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
+		{D90E9B82-6317-4055-82E3-FE8625C143E9} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A659CEFB-DDB3-49BE-AEDD-FF2F1B3297DB}

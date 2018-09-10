@@ -5,7 +5,6 @@ namespace DotNetty.Codecs
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Net;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
@@ -18,7 +17,7 @@ namespace DotNetty.Codecs
 
         public DatagramPacketEncoder(MessageToMessageEncoder<T> encoder)
         {
-            Contract.Requires(encoder != null);
+            if (null == encoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoder); }
 
             this.encoder = encoder;
         }

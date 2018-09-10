@@ -4,7 +4,6 @@
 namespace DotNetty.Handlers.Streams
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Threading;
     using DotNetty.Buffers;
@@ -23,8 +22,8 @@ namespace DotNetty.Handlers.Streams
 
         public ChunkedStream(Stream input, int chunkSize)
         {
-            Contract.Requires(input != null);
-            Contract.Requires(chunkSize > 0);
+            if (null == input) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.input); }
+            if (chunkSize <= 0) { ThrowHelper.ThrowArgumentException_Positive(chunkSize, ExceptionArgument.chunkSize); }
 
             this.input = input;
             this.chunkSize = chunkSize;

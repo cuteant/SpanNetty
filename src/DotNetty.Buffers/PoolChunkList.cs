@@ -7,9 +7,7 @@ namespace DotNetty.Buffers
     using System.Collections;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Linq;
-    using System.Text;
     using CuteAnt.Pool;
     using DotNetty.Common.Utilities;
 
@@ -30,7 +28,7 @@ namespace DotNetty.Buffers
 
         public PoolChunkList(PoolArena<T> arena, PoolChunkList<T> nextList, int minUsage, int maxUsage, int chunkSize)
         {
-            Contract.Assert(minUsage <= maxUsage);
+            Debug.Assert(minUsage <= maxUsage);
             this.arena = arena;
             this.nextList = nextList;
             this.minUsage = minUsage;
@@ -111,7 +109,7 @@ namespace DotNetty.Buffers
 
         bool Move(PoolChunk<T> chunk)
         {
-            Contract.Assert(chunk.Usage < this.maxUsage);
+            Debug.Assert(chunk.Usage < this.maxUsage);
 
             if (chunk.Usage < this.minUsage)
             {

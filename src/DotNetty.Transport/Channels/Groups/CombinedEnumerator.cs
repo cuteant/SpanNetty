@@ -5,7 +5,6 @@ namespace DotNetty.Transport.Channels.Groups
 {
     using System.Collections;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
 
     public sealed class CombinedEnumerator<T> : IEnumerator<T>
     {
@@ -15,8 +14,8 @@ namespace DotNetty.Transport.Channels.Groups
 
         public CombinedEnumerator(IEnumerator<T> e1, IEnumerator<T> e2)
         {
-            Contract.Requires(e1 != null);
-            Contract.Requires(e2 != null);
+            if (null == e1) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e1); }
+            if (null == e2) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e2); }
             this.e1 = e1;
             this.e2 = e2;
             this.currentEnumerator = e1;

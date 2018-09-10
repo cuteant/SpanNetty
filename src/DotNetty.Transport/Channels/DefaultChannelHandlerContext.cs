@@ -3,7 +3,6 @@
 
 namespace DotNetty.Transport.Channels
 {
-    using System.Diagnostics.Contracts;
     using DotNetty.Common.Concurrency;
 
     sealed class DefaultChannelHandlerContext : AbstractChannelHandlerContext
@@ -12,7 +11,7 @@ namespace DotNetty.Transport.Channels
             DefaultChannelPipeline pipeline, IEventExecutor executor, string name, IChannelHandler handler)
             : base(pipeline, executor, name, GetSkipPropagationFlags(handler))
         {
-            Contract.Requires(handler != null);
+            if (null == handler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
 
             this.Handler = handler;
         }

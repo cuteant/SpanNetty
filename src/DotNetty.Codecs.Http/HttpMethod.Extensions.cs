@@ -1,15 +1,9 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ForCanBeConvertedToForeach
-// ReSharper disable ConvertToAutoPropertyWhenPossible
 namespace DotNetty.Codecs.Http
 {
     using System;
-    using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
-    using System.Runtime.CompilerServices;
-    using DotNetty.Common.Utilities;
 
     partial class HttpMethod : IEquatable<HttpMethod>
     {

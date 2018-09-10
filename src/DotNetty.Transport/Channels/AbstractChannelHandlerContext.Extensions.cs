@@ -4,6 +4,8 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
@@ -16,6 +18,19 @@ namespace DotNetty.Transport.Channels
         static readonly Action<object> InvokeChannelInactiveAction = OnInvokeChannelInactive;
         static readonly Action<object, object> InvokeExceptionCaughtAction = OnInvokeExceptionCaught;
         static readonly Action<object, object> SafeExecuteOutboundAsyncAction = OnSafeExecuteOutbound;
+
+        internal AbstractChannelHandlerContext Next
+        {
+            [MethodImpl(InlineMethod.Value)]
+            get => Volatile.Read(ref _next);
+            set => Interlocked.Exchange(ref _next, value);
+        }
+        internal AbstractChannelHandlerContext Prev
+        {
+            [MethodImpl(InlineMethod.Value)]
+            get => Volatile.Read(ref _prev);
+            set => Interlocked.Exchange(ref _prev, value);
+        }
 
         private static void OnInvokeChannelReadComplete(object ctx)
         {
@@ -80,7 +95,7 @@ namespace DotNetty.Transport.Channels
 }
 
 
-#if !DESKTOPCLR && (NET40 || NET45 || NET451 || NET46 || NET461 || NET462 || NET47 || NET471)
+#if !DESKTOPCLR && (NET40 || NET45 || NET451 || NET46 || NET461 || NET462 || NET47 || NET471 || NET472)
   确保编译不出问题
 #endif
 #if !NETSTANDARD && (NETSTANDARD1_3 || NETSTANDARD1_4 || NETSTANDARD1_5 || NETSTANDARD1_6 || NETSTANDARD2_0)

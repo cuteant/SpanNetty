@@ -4,6 +4,7 @@
 namespace DotNetty.Handlers.Streams
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using CuteAnt.Collections;
     using DotNetty.Buffers;
@@ -22,25 +23,23 @@ namespace DotNetty.Handlers.Streams
         static readonly Action<Task, object> LinkOutcomeAction = LinkOutcome;
 
         readonly Deque<PendingWrite> queue = new Deque<PendingWrite>();
-        volatile IChannelHandlerContext ctx;
+        IChannelHandlerContext ctx;
         PendingWrite currentWrite;
 
-        public override void HandlerAdded(IChannelHandlerContext context) => this.ctx = context;
+        public override void HandlerAdded(IChannelHandlerContext context) => Interlocked.Exchange(ref this.ctx, context);
 
         public void ResumeTransfer()
         {
-            if (this.ctx == null)
-            {
-                return;
-            }
+            var ctx = Volatile.Read(ref this.ctx);
+            if (null == ctx) { return; }
 
-            if (this.ctx.Executor.InEventLoop)
+            if (ctx.Executor.InEventLoop)
             {
-                this.InvokeDoFlush(this.ctx);
+                this.InvokeDoFlush(ctx);
             }
             else
             {
-                this.ctx.Executor.Execute(InvokeDoFlushAction, Tuple.Create(this, this.ctx));
+                ctx.Executor.Execute(InvokeDoFlushAction, Tuple.Create(this, ctx));
             }
         }
 

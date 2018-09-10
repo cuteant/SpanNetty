@@ -3,9 +3,8 @@
 
 namespace DotNetty.Codecs
 {
-    using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
@@ -119,7 +118,7 @@ namespace DotNetty.Codecs
                 }
 
                 var m = As<TStart>(message);
-                Contract.Assert(m != null);
+                Debug.Assert(m != null);
 
                 // Send the continue response if necessary(e.g. 'Expect: 100-continue' header)
                 // Check before content length. Failing an expectation may result in a different response being sent.
@@ -204,7 +203,7 @@ namespace DotNetty.Codecs
                     // By convention, full message type extends first message type.
                     //@SuppressWarnings("unchecked")
                     var s = As<TStart>(this.currentMessage);
-                    Contract.Assert(s != null);
+                    Debug.Assert(s != null);
 
                     this.InvokeHandleOversizedMessage(context, s);
                     return;

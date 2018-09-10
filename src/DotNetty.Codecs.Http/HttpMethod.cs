@@ -7,7 +7,6 @@ namespace DotNetty.Codecs.Http
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
     using DotNetty.Common.Utilities;
 
@@ -189,7 +188,7 @@ namespace DotNetty.Codecs.Http
         //
         public HttpMethod(string name)
         {
-            Contract.Requires(name != null);
+            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
 
             name = name.Trim();
             if (string.IsNullOrEmpty(name))

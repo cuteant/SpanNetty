@@ -3,7 +3,7 @@
 
 namespace DotNetty.Common.Internal
 {
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Threading;
 
     public class WorkStealingQueue<T> : IDeque<T>
@@ -48,9 +48,10 @@ namespace DotNetty.Common.Internal
                         // for the head to end up > than the tail, since you can't set any more bits than all of 
                         // them.
                         //
-                        this.headIndex = this.headIndex & this.mask;
-                        this.tailIndex = tail = this.tailIndex & this.mask;
-                        Contract.Assert(this.headIndex <= this.tailIndex);
+                        Interlocked.Exchange(ref this.headIndex , this.headIndex & this.mask);
+                        tail = this.tailIndex & this.mask;
+                        Interlocked.Exchange(ref this.tailIndex , tail);
+                        Debug.Assert(this.headIndex <= this.tailIndex);
                     }
                 }
                 finally
@@ -65,8 +66,8 @@ namespace DotNetty.Common.Internal
             // When there are at least 2 elements' worth of space, we can take the fast path.
             if (tail < this.headIndex + this.mask)
             {
-                Volatile.Write(ref this.array[tail & this.mask], item);
-                this.tailIndex = tail + 1;
+                Interlocked.Exchange(ref this.array[tail & this.mask], item);
+                Interlocked.Exchange(ref this.tailIndex, tail + 1);
             }
             else
             {
@@ -90,14 +91,14 @@ namespace DotNetty.Common.Internal
                         }
 
                         // Reset the field values, incl. the mask.
-                        this.array = newArray;
-                        this.headIndex = 0;
-                        this.tailIndex = tail = count;
-                        this.mask = (this.mask << 1) | 1;
+                        Interlocked.Exchange(ref this.array, newArray);
+                        Interlocked.Exchange(ref this.headIndex, 0);
+                        Interlocked.Exchange(ref this.tailIndex, tail = count);
+                        Interlocked.Exchange(ref this.mask, (this.mask << 1) | 1);
                     }
 
-                    Volatile.Write(ref this.array[tail & this.mask], item);
-                    this.tailIndex = tail + 1;
+                    Interlocked.Exchange(ref this.array[tail & this.mask], item);
+                    Interlocked.Exchange(ref this.tailIndex, tail + 1);
                 }
                 finally
                 {
@@ -164,7 +165,7 @@ namespace DotNetty.Common.Internal
                         continue;
                     }
 
-                    this.array[idx] = null;
+                    Interlocked.Exchange(ref this.array[idx], null);
                     return true;
                 }
                 else
@@ -187,13 +188,13 @@ namespace DotNetty.Common.Internal
                                 continue;
                             }
 
-                            this.array[idx] = null;
+                            Interlocked.Exchange(ref this.array[idx], null);
                             return true;
                         }
                         else
                         {
                             // We lost the ----, element was stolen, restore the tail.
-                            this.tailIndex = tail + 1;
+                            Interlocked.Exchange(ref this.tailIndex, tail + 1);
                             item = null;
                             return false;
                         }
@@ -241,13 +242,13 @@ namespace DotNetty.Common.Internal
                                 continue;
                             }
 
-                            this.array[idx] = null;
+                            Interlocked.Exchange(ref this.array[idx], null);
                             return true;
                         }
                         else
                         {
                             // Failed, restore head.
-                            this.headIndex = head;
+                            Interlocked.Exchange(ref this.headIndex, head);
                             item = null;
                         }
                     }
@@ -266,7 +267,8 @@ namespace DotNetty.Common.Internal
 
         public void Clear()
         {
-            this.headIndex = this.tailIndex = StartIndex;
+            Interlocked.Exchange(ref this.headIndex, StartIndex);
+            Interlocked.Exchange(ref this.tailIndex, StartIndex);
         }
     }
 }

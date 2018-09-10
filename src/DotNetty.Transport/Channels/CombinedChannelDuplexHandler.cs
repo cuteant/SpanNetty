@@ -4,9 +4,10 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Net;
     using System.Runtime.CompilerServices;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
@@ -21,7 +22,7 @@ namespace DotNetty.Transport.Channels
 
         DelegatingChannelHandlerContext inboundCtx;
         DelegatingChannelHandlerContext outboundCtx;
-        volatile bool handlerAdded;
+        int handlerAdded;
 
         protected CombinedChannelDuplexHandler()
         {
@@ -30,8 +31,8 @@ namespace DotNetty.Transport.Channels
 
         public CombinedChannelDuplexHandler(TIn inboundHandler, TOut outboundHandler)
         {
-            Contract.Requires(inboundHandler != null);
-            Contract.Requires(outboundHandler != null);
+            if (null == inboundHandler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.inboundHandler); }
+            if (null == outboundHandler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.outboundHandler); }
 
             this.EnsureNotSharable();
             this.Init(inboundHandler, outboundHandler);
@@ -70,7 +71,7 @@ namespace DotNetty.Transport.Channels
         [MethodImpl(InlineMethod.Value)]
         void CheckAdded()
         {
-            if (!this.handlerAdded)
+            if (Constants.False == Volatile.Read(ref this.handlerAdded))
             {
                 ThrowHelper.ThrowInvalidOperationException_HandlerNotAddedToPipeYet();
             }
@@ -118,7 +119,7 @@ namespace DotNetty.Transport.Channels
 
             // The inboundCtx and outboundCtx were created and set now it's safe to call removeInboundHandler() and
             // removeOutboundHandler().
-            this.handlerAdded = true;
+            Interlocked.Exchange(ref this.handlerAdded, Constants.True);
 
             try
             {
@@ -144,7 +145,7 @@ namespace DotNetty.Transport.Channels
 
         public override void ChannelRegistered(IChannelHandlerContext context)
         {
-            Contract.Assert(context == this.inboundCtx.InnerContext);
+            Debug.Assert(context == this.inboundCtx.InnerContext);
 
             if (!this.inboundCtx.Removed)
             {
@@ -158,7 +159,7 @@ namespace DotNetty.Transport.Channels
 
         public override void ChannelUnregistered(IChannelHandlerContext context)
         {
-            Contract.Assert(context == this.inboundCtx.InnerContext);
+            Debug.Assert(context == this.inboundCtx.InnerContext);
 
             if (!this.inboundCtx.Removed)
             {
@@ -172,7 +173,7 @@ namespace DotNetty.Transport.Channels
 
         public override void ChannelActive(IChannelHandlerContext context)
         {
-            Contract.Assert(context == this.inboundCtx.InnerContext);
+            Debug.Assert(context == this.inboundCtx.InnerContext);
 
             if (!this.inboundCtx.Removed)
             {
@@ -186,7 +187,7 @@ namespace DotNetty.Transport.Channels
 
         public override void ChannelInactive(IChannelHandlerContext context)
         {
-            Contract.Assert(context == this.inboundCtx.InnerContext);
+            Debug.Assert(context == this.inboundCtx.InnerContext);
 
             if (!this.inboundCtx.Removed)
             {
@@ -200,7 +201,7 @@ namespace DotNetty.Transport.Channels
 
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
-            Contract.Assert(context == this.inboundCtx.InnerContext);
+            Debug.Assert(context == this.inboundCtx.InnerContext);
 
             if (!this.inboundCtx.Removed)
             {
@@ -214,7 +215,7 @@ namespace DotNetty.Transport.Channels
 
         public override void UserEventTriggered(IChannelHandlerContext context, object evt)
         {
-            Contract.Assert(context == this.inboundCtx.InnerContext);
+            Debug.Assert(context == this.inboundCtx.InnerContext);
 
             if (!this.inboundCtx.Removed)
             {
@@ -228,7 +229,7 @@ namespace DotNetty.Transport.Channels
 
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
-            Contract.Assert(context == this.inboundCtx.InnerContext);
+            Debug.Assert(context == this.inboundCtx.InnerContext);
 
             if (!this.inboundCtx.Removed)
             {
@@ -242,7 +243,7 @@ namespace DotNetty.Transport.Channels
 
         public override void ChannelReadComplete(IChannelHandlerContext context)
         {
-            Contract.Assert(context == this.inboundCtx.InnerContext);
+            Debug.Assert(context == this.inboundCtx.InnerContext);
 
             if (!this.inboundCtx.Removed)
             {
@@ -256,7 +257,7 @@ namespace DotNetty.Transport.Channels
 
         public override void ChannelWritabilityChanged(IChannelHandlerContext context)
         {
-            Contract.Assert(context == this.inboundCtx.InnerContext);
+            Debug.Assert(context == this.inboundCtx.InnerContext);
 
             if (!this.inboundCtx.Removed)
             {
@@ -270,7 +271,7 @@ namespace DotNetty.Transport.Channels
 
         public override Task BindAsync(IChannelHandlerContext context, EndPoint localAddress)
         {
-            Contract.Assert(context == this.outboundCtx.InnerContext);
+            Debug.Assert(context == this.outboundCtx.InnerContext);
 
             if (!this.outboundCtx.Removed)
             {
@@ -284,7 +285,7 @@ namespace DotNetty.Transport.Channels
 
         public override Task ConnectAsync(IChannelHandlerContext context, EndPoint remoteAddress, EndPoint localAddress)
         {
-            Contract.Assert(context == this.outboundCtx.InnerContext);
+            Debug.Assert(context == this.outboundCtx.InnerContext);
 
             if (!this.outboundCtx.Removed)
             {
@@ -298,7 +299,7 @@ namespace DotNetty.Transport.Channels
 
         public override Task DisconnectAsync(IChannelHandlerContext context)
         {
-            Contract.Assert(context == this.outboundCtx.InnerContext);
+            Debug.Assert(context == this.outboundCtx.InnerContext);
 
             if (!this.outboundCtx.Removed)
             {
@@ -312,7 +313,7 @@ namespace DotNetty.Transport.Channels
 
         public override Task CloseAsync(IChannelHandlerContext context)
         {
-            Contract.Assert(context == this.outboundCtx.InnerContext);
+            Debug.Assert(context == this.outboundCtx.InnerContext);
 
             if (!this.outboundCtx.Removed)
             {
@@ -326,7 +327,7 @@ namespace DotNetty.Transport.Channels
 
         public override Task DeregisterAsync(IChannelHandlerContext context)
         {
-            Contract.Assert(context == this.outboundCtx.InnerContext);
+            Debug.Assert(context == this.outboundCtx.InnerContext);
 
             if (!this.outboundCtx.Removed)
             {
@@ -340,7 +341,7 @@ namespace DotNetty.Transport.Channels
 
         public override void Read(IChannelHandlerContext context)
         {
-            Contract.Assert(context == this.outboundCtx.InnerContext);
+            Debug.Assert(context == this.outboundCtx.InnerContext);
 
             if (!this.outboundCtx.Removed)
             {
@@ -354,7 +355,7 @@ namespace DotNetty.Transport.Channels
 
         public override Task WriteAsync(IChannelHandlerContext context, object message)
         {
-            Contract.Assert(context == this.outboundCtx.InnerContext);
+            Debug.Assert(context == this.outboundCtx.InnerContext);
 
             if (!this.outboundCtx.Removed)
             {
@@ -368,7 +369,7 @@ namespace DotNetty.Transport.Channels
 
         public override void Flush(IChannelHandlerContext context)
         {
-            Contract.Assert(context == this.outboundCtx.InnerContext);
+            Debug.Assert(context == this.outboundCtx.InnerContext);
 
             if (!this.outboundCtx.Removed)
             {

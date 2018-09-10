@@ -4,7 +4,6 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Net;
     using System.Net.NetworkInformation;
     using DotNetty.Buffers;
@@ -59,6 +58,7 @@ namespace DotNetty.Transport.Channels
         public static readonly ChannelOption<IByteBufferAllocator> Allocator = ValueOf<IByteBufferAllocator>("ALLOCATOR");
         public static readonly ChannelOption<IRecvByteBufAllocator> RcvbufAllocator = ValueOf<IRecvByteBufAllocator>("RCVBUF_ALLOCATOR");
         public static readonly ChannelOption<IMessageSizeEstimator> MessageSizeEstimator = ValueOf<IMessageSizeEstimator>("MESSAGE_SIZE_ESTIMATOR");
+        public static readonly ChannelOption<int> MaxMessagesPerRead = ValueOf<int>("MAX_MESSAGES_PER_READ");
 
         public static readonly ChannelOption<TimeSpan> ConnectTimeout = ValueOf<TimeSpan>("CONNECT_TIMEOUT");
         public static readonly ChannelOption<int> WriteSpinCount = ValueOf<int>("WRITE_SPIN_COUNT");
@@ -67,6 +67,7 @@ namespace DotNetty.Transport.Channels
 
         public static readonly ChannelOption<bool> AllowHalfClosure = ValueOf<bool>("ALLOW_HALF_CLOSURE");
         public static readonly ChannelOption<bool> AutoRead = ValueOf<bool>("AUTO_READ");
+        public static readonly ChannelOption<bool> AutoClose = ValueOf<bool>("AUTO_CLOSE");
 
         public static readonly ChannelOption<bool> SoBroadcast = ValueOf<bool>("SO_BROADCAST");
         public static readonly ChannelOption<bool> SoKeepalive = ValueOf<bool>("SO_KEEPALIVE");
@@ -101,7 +102,10 @@ namespace DotNetty.Transport.Channels
         {
         }
 
-        public void Validate(T value) => Contract.Requires(value != null);
+        public void Validate(T value)
+        {
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+        }
 
         public override bool Set(IChannelConfiguration configuration, object value) => configuration.SetOption(this, (T)value);
     }

@@ -5,7 +5,6 @@ namespace DotNetty.Common.Utilities
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
 
     /// <summary>
     ///     A pool of <see cref="IConstant" />s.
@@ -19,8 +18,8 @@ namespace DotNetty.Common.Utilities
         /// <summary>Shortcut of <c>this.ValueOf(firstNameComponent.Name + "#" + secondNameComponent)</c>.</summary>
         public IConstant ValueOf<T>(Type firstNameComponent, string secondNameComponent)
         {
-            Contract.Requires(firstNameComponent != null);
-            Contract.Requires(secondNameComponent != null);
+            if (null == firstNameComponent) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.firstNameComponent); }
+            if (null == secondNameComponent) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.secondNameComponent); }
 
             return this.ValueOf<T>(firstNameComponent.Name + '#' + secondNameComponent);
         }
@@ -54,7 +53,7 @@ namespace DotNetty.Common.Utilities
         /// <summary>Returns <c>true</c> if a <see cref="AttributeKey{T}" /> exists for the given <c>name</c>.</summary>
         public bool Exists(string name)
         {
-            CheckNotNullAndNotEmpty(name);
+            if (string.IsNullOrEmpty(name)) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
             lock (this.constants)
             {
                 return this.constants.ContainsKey(name);
@@ -89,7 +88,7 @@ namespace DotNetty.Common.Utilities
             }
         }
 
-        static void CheckNotNullAndNotEmpty(string name) => Contract.Requires(!string.IsNullOrEmpty(name));
+        //static void CheckNotNullAndNotEmpty(string name) => Contract.Requires(!string.IsNullOrEmpty(name));
 
         protected abstract IConstant NewConstant<T>(int id, string name);
 

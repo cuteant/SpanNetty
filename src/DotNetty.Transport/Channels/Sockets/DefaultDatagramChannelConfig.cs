@@ -4,7 +4,6 @@
 namespace DotNetty.Transport.Channels.Sockets
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Net;
     using System.Net.NetworkInformation;
     using System.Net.Sockets;
@@ -18,7 +17,7 @@ namespace DotNetty.Transport.Channels.Sockets
         public DefaultDatagramChannelConfig(IDatagramChannel channel, Socket socket)
             : base(channel, new FixedRecvByteBufAllocator(DefaultFixedBufferSize))
         {
-            Contract.Requires(socket != null);
+            if (null == socket) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.socket); }
 
             this.socket = socket;
         }
@@ -378,7 +377,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
             set
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
                 try
                 {
@@ -427,7 +426,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
             set
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
                 try
                 {
@@ -471,7 +470,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         internal int GetNetworkInterfaceIndex(NetworkInterface networkInterface)
         {
-            Contract.Requires(networkInterface != null);
+            if (null == networkInterface) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.networkInterface); }
 
             NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
             for (int index = 0; index < interfaces.Length; index++)

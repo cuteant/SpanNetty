@@ -1,5 +1,4 @@
-﻿#if !NET40
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Transport.Channels.Pool
@@ -12,11 +11,11 @@ namespace DotNetty.Transport.Channels.Pool
         int acquiredCount;
         int releasedCount;
         
-        public int ChannelCount => this.channelCount;
+        public int ChannelCount => Volatile.Read(ref this.channelCount);
 
-        public int AcquiredCount => this.acquiredCount;
+        public int AcquiredCount => Volatile.Read(ref this.acquiredCount);
 
-        public int ReleasedCount => this.releasedCount;
+        public int ReleasedCount => Volatile.Read(ref this.releasedCount);
 
         public void ChannelCreated(IChannel ch) => Interlocked.Increment(ref this.channelCount);
 
@@ -25,4 +24,3 @@ namespace DotNetty.Transport.Channels.Pool
         public void ChannelAcquired(IChannel ch) => Interlocked.Increment(ref this.acquiredCount);
     }
 }
-#endif

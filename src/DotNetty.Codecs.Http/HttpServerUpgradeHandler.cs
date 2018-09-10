@@ -1,14 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoPropertyWhenPossible
-// ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http
 {
-    using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
     using CuteAnt.Pool;
     using DotNetty.Buffers;
@@ -133,8 +129,8 @@ namespace DotNetty.Codecs.Http
         public HttpServerUpgradeHandler(ISourceCodec sourceCodec, IUpgradeCodecFactory upgradeCodecFactory, int maxContentLength)
             : base(maxContentLength)
         {
-            Contract.Requires(sourceCodec != null);
-            Contract.Requires(upgradeCodecFactory != null);
+            if (null == sourceCodec) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sourceCodec); }
+            if (null == upgradeCodecFactory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.upgradeCodecFactory); }
 
             this.sourceCodec = sourceCodec;
             this.upgradeCodecFactory = upgradeCodecFactory;

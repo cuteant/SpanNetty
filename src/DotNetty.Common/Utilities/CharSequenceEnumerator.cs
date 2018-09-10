@@ -6,7 +6,6 @@ namespace DotNetty.Common.Utilities
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
 
     struct CharSequenceEnumerator : IEnumerator<char>
     {
@@ -16,7 +15,7 @@ namespace DotNetty.Common.Utilities
 
         internal CharSequenceEnumerator(ICharSequence charSequence)
         {
-            Contract.Requires(charSequence != null);
+            if (null == charSequence) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charSequence); }
 
             this.charSequence = charSequence;
             this.index = -1;

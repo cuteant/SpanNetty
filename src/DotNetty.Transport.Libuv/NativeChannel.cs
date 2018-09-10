@@ -6,36 +6,34 @@ namespace DotNetty.Transport.Libuv
     using System;
     using System.Diagnostics;
     using System.Net;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
-    using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
     public abstract partial class NativeChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>, INativeChannel
     {
-        //protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<NativeChannel>();
-
-        [Flags]
-        protected enum StateFlags
+        //[Flags]
+        protected static class StateFlags
         {
-            Open = 1,
-            ReadScheduled = 1 << 1,
-            WriteScheduled = 1 << 2,
-            Active = 1 << 3
+            public const int Open = 1;
+            public const int ReadScheduled = 1 << 1;
+            public const int WriteScheduled = 1 << 2;
+            public const int Active = 1 << 3;
         }
 
         internal bool ReadPending;
-        volatile StateFlags state;
+        int _state;
 
         TaskCompletionSource connectPromise;
         IScheduledTask connectCancellationTask;
 
         protected NativeChannel(IChannel parent) : base(parent)
         {
-            this.state = StateFlags.Open;
+            this.State = StateFlags.Open;
         }
 
         public override bool Open => this.IsInState(StateFlags.Open);
@@ -44,26 +42,26 @@ namespace DotNetty.Transport.Libuv
 
         protected override bool IsCompatible(IEventLoop eventLoop) => eventLoop is LoopExecutor;
 
-        protected bool IsInState(StateFlags stateToCheck) => (this.state & stateToCheck) == stateToCheck;
+        protected bool IsInState(int stateToCheck) => (this.State & stateToCheck) == stateToCheck;
 
-        protected void SetState(StateFlags stateToSet) => this.state |= stateToSet;
+        protected void SetState(int stateToSet) => this.State |= stateToSet;
 
-        protected StateFlags ResetState(StateFlags stateToReset)
+        protected int ResetState(int stateToReset)
         {
-            StateFlags oldState = this.state;
+            var oldState = this.State;
             if ((oldState & stateToReset) != 0)
             {
-                this.state = oldState & ~stateToReset;
+                this.State = oldState & ~stateToReset;
             }
             return oldState;
         }
 
-        protected bool TryResetState(StateFlags stateToReset)
+        protected bool TryResetState(int stateToReset)
         {
-            StateFlags oldState = this.state;
+            var oldState = this.State;
             if ((oldState & stateToReset) != 0)
             {
-                this.state = oldState & ~stateToReset;
+                this.State = oldState & ~stateToReset;
                 return true;
             }
             return false;
@@ -329,6 +327,7 @@ namespace DotNetty.Transport.Libuv
                     if (error != null)
                     {
                         input.FailFlushed(error, true);
+                        ch.Pipeline.FireExceptionCaught(error);
                         CloseSafe(ch, this.CloseAsync(ThrowHelper.GetChannelException_FailedToWrite(error), false));
                     }
                     else

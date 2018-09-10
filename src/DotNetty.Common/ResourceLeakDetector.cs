@@ -7,7 +7,6 @@ namespace DotNetty.Common
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
     using System.Text;
     using System.Threading;
@@ -99,8 +98,8 @@ namespace DotNetty.Common
 
         public ResourceLeakDetector(string resourceType, int samplingInterval)
         {
-            Contract.Requires(resourceType != null);
-            Contract.Requires(samplingInterval > 0);
+            if (null == resourceType) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.resourceType); }
+            if (samplingInterval <= 0) { ThrowHelper.ThrowArgumentException_Positive(samplingInterval, ExceptionArgument.samplingInterval); }
 
             this.resourceType = resourceType;
             this.samplingInterval = samplingInterval;
@@ -207,25 +206,26 @@ namespace DotNetty.Common
                 {
                     string stackTrace = Environment.StackTrace;
 
+                    var thisHead = Volatile.Read(ref this.head);
                     RecordEntry oldHead;
                     RecordEntry prevHead;
                     RecordEntry newHead;
                     bool dropped;
                     do
                     {
-                        if ((prevHead = oldHead = this.head) == null)
+                        if ((prevHead = oldHead = thisHead) == null)
                         {
                             // already closed.
                             return;
                         }
-                        int numElements = oldHead.Pos + 1;
+                        int numElements = thisHead.Pos + 1;
                         if (numElements >= TargetRecords)
                         {
                             int backOffFactor = Math.Min(numElements - TargetRecords, 30);
                             dropped = PlatformDependent.GetThreadLocalRandom().Next(1 << backOffFactor) != 0;
                             if (dropped)
                             {
-                                prevHead = oldHead.Next;
+                                prevHead = thisHead.Next;
                             }
                         }
                         else
@@ -233,8 +233,9 @@ namespace DotNetty.Common
                             dropped = false;
                         }
                         newHead = hint != null ? new RecordEntry(prevHead, stackTrace, hint) : new RecordEntry(prevHead, stackTrace);
+                        thisHead = Interlocked.CompareExchange(ref this.head, newHead, thisHead);
                     }
-                    while (Interlocked.CompareExchange(ref this.head, newHead, oldHead) != oldHead);
+                    while (thisHead != oldHead);
                     if (dropped)
                     {
                         Interlocked.Increment(ref this.droppedRecords);
@@ -264,7 +265,7 @@ namespace DotNetty.Common
             // This is called from GCNotice finalizer 
             internal void CloseFinal(object trackedObject)
             {
-                if (this.owner.gcNotificationMap.Remove(trackedObject) 
+                if (this.owner.gcNotificationMap.Remove(trackedObject)
                     && Volatile.Read(ref this.head) != null)
                 {
                     this.owner.ReportLeak(this);
@@ -277,7 +278,7 @@ namespace DotNetty.Common
                 if (oldHead == null)
                 {
                     // Already closed
-                    return  string.Empty;
+                    return string.Empty;
                 }
 
                 long dropped = Interlocked.Read(ref this.droppedRecords);

@@ -4,7 +4,6 @@
 namespace DotNetty.Common.Internal
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Threading;
 
     public static class PlatformProvider
@@ -30,8 +29,8 @@ namespace DotNetty.Common.Internal
 
             set
             {
-                Contract.Requires(value != null);
-                Volatile.Write(ref defaultPlatform, value);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                Interlocked.Exchange(ref defaultPlatform, value);
             }
         }
     }

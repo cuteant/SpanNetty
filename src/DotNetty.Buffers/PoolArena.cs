@@ -6,7 +6,6 @@ namespace DotNetty.Buffers
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
     using System.Text;
@@ -366,7 +365,7 @@ namespace DotNetty.Buffers
 
         internal int NormalizeCapacity(int reqCapacity)
         {
-            Contract.Requires(reqCapacity >= 0 && reqCapacity >= this.ChunkSize);
+            if (reqCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(reqCapacity, ExceptionArgument.reqCapacity); }
 
             if (reqCapacity >= this.ChunkSize)
             {
@@ -406,7 +405,7 @@ namespace DotNetty.Buffers
 
         internal void Reallocate(PooledByteBuffer<T> buf, int newCapacity, bool freeOldMemory)
         {
-            Contract.Requires(newCapacity >= 0 && newCapacity <= buf.MaxCapacity);
+            if(newCapacity < 0 || newCapacity > buf.MaxCapacity) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             int oldCapacity = buf.Length;
             if (oldCapacity == newCapacity)

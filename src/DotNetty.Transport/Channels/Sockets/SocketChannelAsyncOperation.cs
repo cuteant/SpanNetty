@@ -3,7 +3,6 @@
 
 namespace DotNetty.Transport.Channels.Sockets
 {
-    using System.Diagnostics.Contracts;
     using System.Net.Sockets;
     using DotNetty.Common.Utilities;
 
@@ -16,7 +15,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public SocketChannelAsyncOperation(TChannel channel, bool setEmptyBuffer)
         {
-            Contract.Requires(channel != null);
+            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
             this.Channel = channel;
             this.Completed += AbstractSocketChannel<TChannel, TUnsafe>.IoCompletedCallback;

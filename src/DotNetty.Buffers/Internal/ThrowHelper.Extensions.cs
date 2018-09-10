@@ -10,6 +10,10 @@ namespace DotNetty.Buffers
     internal enum ExceptionArgument
     {
         array,
+        maxCachedBufferCapacity,
+        freeSweepAllocationThreshold,
+        nHeapArena,
+        nDirectArena,
         assembly,
         buffer,
         destination,
@@ -24,6 +28,7 @@ namespace DotNetty.Buffers
         values,
         valueFactory,
         name,
+        reqCapacity,
         item,
         options,
         list,
@@ -71,6 +76,23 @@ namespace DotNetty.Buffers
         newSize,
         expression,
         data,
+        maxCapacity,
+        newMaxCapacity,
+        minWritableBytes,
+        src,
+        increment,
+        decrement,
+        buf,
+        encoding,
+        allocator,
+        buffers,
+        trackedByteBuf,
+        leak,
+        alloc,
+        initialArray,
+        initialBuffer,
+        initialCapacity,
+        dst,
     }
 
     #endregion
@@ -93,6 +115,96 @@ namespace DotNetty.Buffers
             Exception GetException()
             {
                 return new Exception("should not reach here");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(long value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(long value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_InitialCapacityMaxCapacity(int initialCapacity, int maxCapacity)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException($"initialCapacity({initialCapacity}) > maxCapacity({maxCapacity})");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_ExpectedPowerOf2()
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("Expected power of 2", "pageSize");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_CheckMaxOrder30(int maxOrder)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("maxOrder should be < 30, but is: " + maxOrder, nameof(maxOrder));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_CheckMaxOrder14(int maxOrder)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("maxOrder: " + maxOrder + " (expected: 0-14)", nameof(maxOrder));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_CheckMaxNumComponents(int maxNumComponents)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("maxNumComponents: " + maxNumComponents + " (expected: >= 2)");
             }
         }
 

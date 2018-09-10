@@ -4,6 +4,8 @@
 namespace DotNetty.Transport.Channels.Sockets
 {
     using System;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
 
@@ -14,6 +16,13 @@ namespace DotNetty.Transport.Channels.Sockets
         private static readonly Action<object> ClearReadPendingAction = OnClearReadPending;
         private static readonly Action<object, object> ConnectTimeoutAction = OnConnectTimeout;
         private static readonly Action<Task<int>, object> CloseSafeOnCompleteAction = OnCloseSafeOnComplete;
+
+        private int State
+        {
+            [MethodImpl(InlineMethod.Value)]
+            get => Volatile.Read(ref _state);
+            set => Interlocked.Exchange(ref _state, value);
+        }
 
         private static void OnConnectCompletedSync(object u, object e) => ((ISocketChannelUnsafe)u).FinishConnect((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
 

@@ -3,7 +3,6 @@
 
 namespace DotNetty.Transport.Channels
 {
-    using System.Diagnostics.Contracts;
     using System.Net;
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
@@ -17,8 +16,8 @@ namespace DotNetty.Transport.Channels
 
         public DefaultAddressedEnvelope(T content, EndPoint sender, EndPoint recipient)
         {
-            Contract.Requires(content != null);
-            Contract.Requires(sender != null || recipient != null);
+            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
+            if (null == sender && null == recipient) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.senderAndRecipient); }
 
             this.Content = content;
             this.Sender = sender;

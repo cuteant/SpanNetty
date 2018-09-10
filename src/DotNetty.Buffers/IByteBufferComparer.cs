@@ -17,7 +17,7 @@ namespace DotNetty.Buffers
 
         public int GetHashCode(IByteBuffer obj)
         {
-            if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
+            //if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
 
             return ByteBufferUtil.HashCode(obj);
         }

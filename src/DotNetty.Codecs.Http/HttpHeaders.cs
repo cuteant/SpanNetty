@@ -6,7 +6,6 @@ namespace DotNetty.Codecs.Http
 {
     using System.Collections;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using DotNetty.Common.Utilities;
 
     using static Common.Utilities.AsciiString;
@@ -56,7 +55,7 @@ namespace DotNetty.Codecs.Http
 
         public virtual HttpHeaders Add(HttpHeaders headers)
         {
-            Contract.Requires(headers != null);
+            if (null == headers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
 
             foreach (HeaderEntry<AsciiString, ICharSequence> pair in headers)
             {
@@ -75,7 +74,7 @@ namespace DotNetty.Codecs.Http
 
         public virtual HttpHeaders Set(HttpHeaders headers)
         {
-            Contract.Requires(headers != null);
+            if (null == headers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
 
             this.Clear();
 
@@ -93,7 +92,7 @@ namespace DotNetty.Codecs.Http
 
         public HttpHeaders SetAll(HttpHeaders headers)
         {
-            Contract.Requires(headers != null);
+            if (null == headers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
 
             if (headers.IsEmpty)
             {

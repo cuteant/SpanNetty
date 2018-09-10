@@ -5,7 +5,6 @@ namespace DotNetty.Codecs.Redis
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Redis.Messages;
     using DotNetty.Transport.Channels;
@@ -20,7 +19,7 @@ namespace DotNetty.Codecs.Redis
 
         public RedisEncoder(IRedisMessagePool messagePool)
         {
-            Contract.Requires(messagePool != null);
+            if (null == messagePool) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.messagePool); }
 
             this.messagePool = messagePool;
         }

@@ -4,7 +4,7 @@
 namespace DotNetty.Common.Utilities
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
 
     using static ByteProcessorUtils;
 
@@ -46,7 +46,7 @@ namespace DotNetty.Common.Utilities
 
         public ByteProcessor(Func<byte, bool> customHandler)
         {
-            Contract.Assert(customHandler != null, "'customHandler' is required parameter.");
+            Debug.Assert(customHandler != null, "'customHandler' is required parameter.");
             this.customHandler = customHandler;
         }
 

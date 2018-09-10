@@ -2,10 +2,10 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp2.0;net451;net40</TargetFrameworks>
+    <TargetFrameworks>netcoreapp2.1;net471;net451;net40</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net451' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'net451' ">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>
@@ -21,6 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\DotNetty.Buffers\DotNetty.Buffers.csproj" />
+    <ProjectReference Include="..\..\src\DotNetty.Client\DotNetty.Client.csproj" />
     <ProjectReference Include="..\..\src\DotNetty.Codecs.Http\DotNetty.Codecs.Http.csproj" />
     <ProjectReference Include="..\..\src\DotNetty.Codecs\DotNetty.Codecs.csproj" />
     <ProjectReference Include="..\..\src\DotNetty.Common\DotNetty.Common.csproj" />

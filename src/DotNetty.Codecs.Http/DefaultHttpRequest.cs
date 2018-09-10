@@ -6,7 +6,6 @@
 namespace DotNetty.Codecs.Http
 {
     using System;
-    using System.Diagnostics.Contracts;
     using CuteAnt.Pool;
     
     public class DefaultHttpRequest : DefaultHttpMessage, IHttpRequest
@@ -24,8 +23,8 @@ namespace DotNetty.Codecs.Http
         public DefaultHttpRequest(HttpVersion version, HttpMethod method, string uri, bool validateHeaders)
             : base(version, validateHeaders, false)
         {
-            Contract.Requires(method != null);
-            Contract.Requires(uri != null);
+            if (null == method) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.method); }
+            if (null == uri) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
 
             this.method = method;
             this.uri = uri;
@@ -34,8 +33,8 @@ namespace DotNetty.Codecs.Http
         public DefaultHttpRequest(HttpVersion version, HttpMethod method, string uri, HttpHeaders headers) 
             : base(version, headers)
         {
-            Contract.Requires(method != null);
-            Contract.Requires(uri != null);
+            if (null == method) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.method); }
+            if (null == uri) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
 
             this.method = method;
             this.uri = uri;
@@ -47,14 +46,14 @@ namespace DotNetty.Codecs.Http
 
         public IHttpRequest SetMethod(HttpMethod value)
         {
-            Contract.Requires(value != null);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             this.method = value;
             return this;
         }
 
         public IHttpRequest SetUri(string value)
         {
-            Contract.Requires(value != null);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             this.uri = value;
             return this;
         }

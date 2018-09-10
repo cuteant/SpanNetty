@@ -1,0 +1,27 @@
+<Project>
+  <!-- Shared Package Versions -->
+  <PropertyGroup>
+
+    <MicrosoftCodeAnalysisCSharpNet45PackageVersion>1.3.2</MicrosoftCodeAnalysisCSharpNet45PackageVersion>
+    <MicrosoftCodeAnalysisCompilersPackageVersion>2.9.0</MicrosoftCodeAnalysisCompilersPackageVersion>
+    <MicrosoftCodeAnalysisCommonPackageVersion>2.9.0</MicrosoftCodeAnalysisCommonPackageVersion>
+    <MicrosoftCodeAnalysisCSharpPackageVersion>2.9.0</MicrosoftCodeAnalysisCSharpPackageVersion>
+    <MicrosoftCodeAnalysisCSharpFeaturesPackageVersion>2.9.0</MicrosoftCodeAnalysisCSharpFeaturesPackageVersion>
+    <MicrosoftCodeAnalysisCSharpScriptingPackageVersion>2.9.0</MicrosoftCodeAnalysisCSharpScriptingPackageVersion>
+    <MicrosoftCodeAnalysisCSharpWorkspacesPackageVersion>2.9.0</MicrosoftCodeAnalysisCSharpWorkspacesPackageVersion>
+    <MicrosoftCodeAnalysisFeaturesPackageVersion>2.9.0</MicrosoftCodeAnalysisFeaturesPackageVersion>
+    <MicrosoftCodeAnalysisScriptingPackageVersion>2.9.0</MicrosoftCodeAnalysisScriptingPackageVersion>
+    <MicrosoftCodeAnalysisScriptingCommonPackageVersion>2.9.0</MicrosoftCodeAnalysisScriptingCommonPackageVersion>
+    <MicrosoftCodeAnalysisVisualBasicPackageVersion>2.9.0</MicrosoftCodeAnalysisVisualBasicPackageVersion>
+    <MicrosoftCodeAnalysisWorkspacesCommonPackageVersion>2.9.0</MicrosoftCodeAnalysisWorkspacesCommonPackageVersion>
+
+    <MicrosoftCodeAnalysisAnalyzersPackageVersion>2.6.1</MicrosoftCodeAnalysisAnalyzersPackageVersion>
+    <MicrosoftCodeAnalysisFxCopAnalyzersPackageVersion>2.6.1</MicrosoftCodeAnalysisFxCopAnalyzersPackageVersion>
+
+    <MicrosoftNetCompilersPackageVersion>2.9.0</MicrosoftNetCompilersPackageVersion>
+
+    <MicrosoftNetRoslynDiagnosticsPackageVersion>2.6.1</MicrosoftNetRoslynDiagnosticsPackageVersion>
+
+    <StyleCopAnalyzersPackageVersion>1.1.0-beta009</StyleCopAnalyzersPackageVersion>
+  </PropertyGroup>
+</Project>

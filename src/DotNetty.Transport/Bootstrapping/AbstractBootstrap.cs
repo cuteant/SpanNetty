@@ -5,8 +5,8 @@ namespace DotNetty.Transport.Bootstrapping
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Net;
+    using System.Threading;
     using System.Threading.Tasks;
     using CuteAnt.Collections;
     using CuteAnt.Pool;
@@ -28,12 +28,12 @@ namespace DotNetty.Transport.Bootstrapping
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractBootstrap<TBootstrap, TChannel>>();
 
-        volatile IEventLoopGroup group;
-        volatile Func<TChannel> channelFactory;
-        volatile EndPoint localAddress;
+        IEventLoopGroup _group;
+        Func<TChannel> _channelFactory;
+        EndPoint _localAddress;
         readonly CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue> options;
         readonly CachedReadConcurrentDictionary<IConstant, AttributeValue> attrs;
-        volatile IChannelHandler handler;
+        IChannelHandler _handler;
 
         protected internal AbstractBootstrap()
         {
@@ -44,10 +44,10 @@ namespace DotNetty.Transport.Bootstrapping
 
         protected internal AbstractBootstrap(AbstractBootstrap<TBootstrap, TChannel> bootstrap)
         {
-            this.group = bootstrap.group;
-            this.channelFactory = bootstrap.channelFactory;
-            this.handler = bootstrap.handler;
-            this.localAddress = bootstrap.localAddress;
+            InternalGroup = bootstrap.InternalGroup;
+            InternalChannelFactory = bootstrap.InternalChannelFactory;
+            InternalHandler = bootstrap.InternalHandler;
+            InternalLocalAddress = bootstrap.InternalLocalAddress;
             this.options = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(bootstrap.options, ChannelOptionComparer.Default);
             this.attrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(bootstrap.attrs, ConstantComparer.Default);
         }
@@ -59,13 +59,13 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="AbstractBootstrap{TBootstrap,TChannel}"/> instance.</returns>
         public virtual TBootstrap Group(IEventLoopGroup group)
         {
-            Contract.Requires(group != null);
+            if (null == group) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.group); }
 
-            if (this.group != null)
+            if (InternalGroup != null)
             {
                 ThrowHelper.ThrowInvalidOperationException_GroupHasAlreadyBeenSet();
             }
-            this.group = group;
+            InternalGroup = group;
             return (TBootstrap)this;
         }
 
@@ -78,8 +78,8 @@ namespace DotNetty.Transport.Bootstrapping
 
         public TBootstrap ChannelFactory(Func<TChannel> channelFactory)
         {
-            Contract.Requires(channelFactory != null);
-            this.channelFactory = channelFactory;
+            if (null == channelFactory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channelFactory); }
+            InternalChannelFactory = channelFactory;
             return (TBootstrap)this;
         }
 
@@ -90,7 +90,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="AbstractBootstrap{TBootstrap,TChannel}"/> instance.</returns>
         public TBootstrap LocalAddress(EndPoint localAddress)
         {
-            this.localAddress = localAddress;
+            InternalLocalAddress = localAddress;
             return (TBootstrap)this;
         }
 
@@ -129,7 +129,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <param name="value">The value to set the given option.</param>
         public TBootstrap Option<T>(ChannelOption<T> option, T value)
         {
-            Contract.Requires(option != null);
+            if (null == option) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.option); }
 
             if (value == null)
             {
@@ -150,7 +150,7 @@ namespace DotNetty.Transport.Bootstrapping
         public TBootstrap Attribute<T>(AttributeKey<T> key, T value)
             where T : class
         {
-            Contract.Requires(key != null);
+            if (null == key) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
 
             if (value == null)
             {
@@ -169,11 +169,11 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         public virtual TBootstrap Validate()
         {
-            if (this.group == null)
+            if (InternalGroup == null)
             {
                 ThrowHelper.ThrowInvalidOperationException_GroupNotSet();
             }
-            if (this.channelFactory == null)
+            if (InternalChannelFactory == null)
             {
                 ThrowHelper.ThrowInvalidOperationException_ChannelOrFactoryNotSet();
             }
@@ -203,7 +203,7 @@ namespace DotNetty.Transport.Bootstrapping
         public Task<IChannel> BindAsync()
         {
             this.Validate();
-            EndPoint address = this.localAddress;
+            EndPoint address = InternalLocalAddress;
             if (address == null)
             {
                 ThrowHelper.ThrowInvalidOperationException_LocalAddrMustBeSetBeforehand();
@@ -245,7 +245,7 @@ namespace DotNetty.Transport.Bootstrapping
         public Task<IChannel> BindAsync(EndPoint localAddress)
         {
             this.Validate();
-            Contract.Requires(localAddress != null);
+            if (null == localAddress) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.localAddress); }
 
             return this.DoBindAsync(localAddress);
         }
@@ -260,7 +260,7 @@ namespace DotNetty.Transport.Bootstrapping
 
         protected async Task<IChannel> InitAndRegisterAsync()
         {
-            IChannel channel = this.channelFactory();
+            IChannel channel = InternalChannelFactory();
             try
             {
                 this.Init(channel);
@@ -337,19 +337,19 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="AbstractBootstrap{TBootstrap,TChannel}"/> instance.</returns>
         public TBootstrap Handler(IChannelHandler handler)
         {
-            Contract.Requires(handler != null);
-            this.handler = handler;
+            if (null == handler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
+            InternalHandler = handler;
             return (TBootstrap)this;
         }
 
-        protected EndPoint LocalAddress() => this.localAddress;
+        protected EndPoint LocalAddress() => Volatile.Read(ref _localAddress);
 
-        protected IChannelHandler Handler() => this.handler;
+        protected IChannelHandler Handler() => Volatile.Read(ref _handler);
 
         /// <summary>
         /// Returns the configured <see cref="IEventLoopGroup"/> or <c>null</c> if none is configured yet.
         /// </summary>
-        public IEventLoopGroup Group() => this.group;
+        public IEventLoopGroup Group() => Volatile.Read(ref _group);
 
         protected ICollection<ChannelOptionValue> Options => this.options.Values;
 
@@ -392,22 +392,28 @@ namespace DotNetty.Transport.Bootstrapping
             var buf = StringBuilderManager.Allocate()
                 .Append(this.GetType().Name)
                 .Append('(');
-            if (this.group != null)
+
+            var group = InternalGroup;
+            if (group != null)
             {
                 buf.Append("group: ")
-                    .Append(this.group.GetType().Name)
+                    .Append(group.GetType().Name)
                     .Append(", ");
             }
-            if (this.channelFactory != null)
+
+            var channelFactory = InternalChannelFactory;
+            if (channelFactory != null)
             {
                 buf.Append("channelFactory: ")
-                    .Append(this.channelFactory)
+                    .Append(channelFactory)
                     .Append(", ");
             }
-            if (this.localAddress != null)
+
+            var localAddress = InternalLocalAddress;
+            if (localAddress != null)
             {
                 buf.Append("localAddress: ")
-                    .Append(this.localAddress)
+                    .Append(localAddress)
                     .Append(", ");
             }
 
@@ -425,12 +431,14 @@ namespace DotNetty.Transport.Bootstrapping
                     .Append(", ");
             }
 
-            if (this.handler != null)
+            var handler = InternalHandler;
+            if (handler != null)
             {
                 buf.Append("handler: ")
-                    .Append(this.handler)
+                    .Append(handler)
                     .Append(", ");
             }
+
             if (buf[buf.Length - 1] == '(')
             {
                 buf.Append(')');

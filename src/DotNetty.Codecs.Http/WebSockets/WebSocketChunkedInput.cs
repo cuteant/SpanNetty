@@ -3,7 +3,6 @@
 
 namespace DotNetty.Codecs.Http.WebSockets
 {
-    using System.Diagnostics.Contracts;
     using DotNetty.Buffers;
     using DotNetty.Handlers.Streams;
 
@@ -19,7 +18,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public WebSocketChunkedInput(IChunkedInput<IByteBuffer> input, int rsv)
         {
-            Contract.Requires(input != null);
+            if (null == input) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.input); }
 
             this.input = input;
             this.rsv = rsv;

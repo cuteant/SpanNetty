@@ -7,7 +7,6 @@ namespace DotNetty.Common.Internal
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
     using System.Text;
     using DotNetty.Common.Utilities;
@@ -35,14 +34,14 @@ namespace DotNetty.Common.Internal
 
         public AppendableCharSequence(int length)
         {
-            Contract.Requires(length > 0);
+            if (length <= 0) { ThrowHelper.ThrowArgumentException_Positive(length, ExceptionArgument.length); }
 
             this.chars = new byte[length];
         }
 
         public AppendableCharSequence(byte[] chars)
         {
-            Contract.Requires(chars.Length > 0);
+            if (null == chars || chars.Length <= 0) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.chars); }
 
             this.chars = chars;
             this.pos = chars.Length;
@@ -58,7 +57,7 @@ namespace DotNetty.Common.Internal
         {
             get
             {
-                Contract.Requires(index <= this.pos);
+                if (index > this.pos) { ThrowHelper.ThrowIndexOutOfRangeException(); }
                 return AsciiString.ByteToChar(this.chars[index]);
             }
         }
@@ -150,7 +149,7 @@ namespace DotNetty.Common.Internal
 
         public IAppendable Append(ICharSequence sequence, int start, int end)
         {
-            Contract.Requires(sequence.Count >= end);
+            if (sequence.Count < end) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             int length = end - start;
             if (length > this.chars.Length - this.pos)
@@ -184,7 +183,7 @@ namespace DotNetty.Common.Internal
 
         public string ToString(int start)
         {
-            Contract.Requires(start >= 0 && start < this.pos);
+            if (start < 0 || start >= this.pos) { ThrowHelper.ThrowIndexOutOfRangeException(); }
             return Encoding.ASCII.GetString(this.chars, start, this.pos);
         }
 

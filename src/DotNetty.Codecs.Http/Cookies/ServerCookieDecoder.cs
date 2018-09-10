@@ -5,7 +5,6 @@ namespace DotNetty.Codecs.Http.Cookies
 {
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Diagnostics.Contracts;
     using DotNetty.Common.Utilities;
 
     // http://tools.ietf.org/html/rfc6265 
@@ -39,7 +38,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public ISet<ICookie> Decode(string header)
         {
-            Contract.Requires(header != null);
+            if (null == header) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.header); }
 
             int headerLen = header.Length;
             if (headerLen == 0)

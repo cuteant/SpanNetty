@@ -3,7 +3,6 @@
 
 namespace DotNetty.Codecs.Protobuf
 {
-    using System.Diagnostics.Contracts;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
@@ -22,9 +21,9 @@ namespace DotNetty.Codecs.Protobuf
     {
         protected override void Encode(IChannelHandlerContext context, IByteBuffer message, IByteBuffer output)
         {
-            Contract.Requires(context != null);
-            Contract.Requires(message != null);
-            Contract.Requires(output != null);
+            if (null == context) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.context); }
+            if (null == message) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.message); }
+            if (null == output) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
 
             int bodyLength = message.ReadableBytes;
             int headerLength = ComputeRawVarint32Size(bodyLength);
@@ -36,7 +35,7 @@ namespace DotNetty.Codecs.Protobuf
 
         internal static void WriteRawVarint32(IByteBuffer output, int value)
         {
-            Contract.Requires(output != null);
+            if (null == output) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
 
             while (true)
             {

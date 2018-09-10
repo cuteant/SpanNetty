@@ -74,6 +74,15 @@ namespace DotNetty.Handlers
         startIndex,
         newSize,
         expression,
+        sslStreamFactory,
+        settings,
+        doBindAction,
+        input,
+        chunkSize,
+        serverTlsSettingMap,
+        hostName,
+        serverTlsSetting,
+        exception,
     }
 
     #endregion
@@ -90,12 +99,61 @@ namespace DotNetty.Handlers
     partial class ThrowHelper
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(long value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(long value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_ServerCertificateRequired()
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("The server certificate parameter is required.", "settings");
+            }
+        }
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_CannotDetermineToAcceptOrRejectAChannel(IChannelHandlerContext ctx)
         {
             throw GetArgumentException();
             ArgumentException GetArgumentException()
             {
-                return new ArgumentException(nameof(ctx), "cannot determine to accept or reject a channel: " + ctx.Channel);
+                return new ArgumentException("cannot determine to accept or reject a channel: " + ctx.Channel, nameof(ctx));
             }
         }
 
@@ -199,7 +257,7 @@ namespace DotNetty.Handlers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowInvalidOperationException_SSLAuth(X509Certificate2 certificate)
+        internal static void ThrowInvalidOperationException_InvalidServerCertificateEku(X509Certificate2 certificate)
         {
             throw GetInvalidOperationException();
             InvalidOperationException GetInvalidOperationException()

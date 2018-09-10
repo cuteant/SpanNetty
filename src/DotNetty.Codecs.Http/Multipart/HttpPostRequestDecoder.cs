@@ -4,7 +4,6 @@
 namespace DotNetty.Codecs.Http.Multipart
 {
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Text;
     using DotNetty.Common.Utilities;
 
@@ -26,9 +25,9 @@ namespace DotNetty.Codecs.Http.Multipart
 
         internal HttpPostRequestDecoder(IHttpDataFactory factory, IHttpRequest request, Encoding encoding)
         {
-            Contract.Requires(factory != null);
-            Contract.Requires(request != null);
-            Contract.Requires(encoding != null);
+            if (null == factory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
+            if (null == request) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.request); }
+            if (null == encoding) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoding); }
 
             // Fill default values
             if (IsMultipartRequest(request))

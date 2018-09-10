@@ -3,7 +3,6 @@
 
 namespace DotNetty.Common.Internal
 {
-    using System.Diagnostics.Contracts;
     using System.Threading;
 
     /// <summary>
@@ -43,7 +42,7 @@ namespace DotNetty.Common.Internal
         /// <seealso cref="IQueue{T}.TryEnqueue"/>
         public override bool TryEnqueue(T e)
         {
-            Contract.Requires(e != null);
+            if (null == e) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e); }
 
             // use a cached view on consumer index (potentially updated in loop)
             long mask = this.Mask;
@@ -88,7 +87,7 @@ namespace DotNetty.Common.Internal
         /// <returns><c>1</c> if next element cannot be filled, <c>-1</c> if CAS failed, and <c>0</c> if successful.</returns>
         public int WeakEnqueue(T e)
         {
-            Contract.Requires(e != null);
+            if (null == e) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e); }
 
             long mask = this.Mask;
             long capacity = mask + 1;
@@ -297,7 +296,7 @@ namespace DotNetty.Common.Internal
         protected long ConsumerIndexCache
         {
             get { return Volatile.Read(ref this.headCache); }
-            set { Volatile.Write(ref this.headCache, value); }
+            set { Interlocked.Exchange(ref this.headCache, value); }
         }
     }
 
@@ -328,7 +327,7 @@ namespace DotNetty.Common.Internal
         protected long ConsumerIndex
         {
             get { return Volatile.Read(ref this.consumerIndex); }
-            set { Volatile.Write(ref this.consumerIndex, value); } // todo: revisit: UNSAFE.putOrderedLong -- StoreStore fence
+            set { Interlocked.Exchange(ref this.consumerIndex, value); } // todo: revisit: UNSAFE.putOrderedLong -- StoreStore fence
         }
     }
 }

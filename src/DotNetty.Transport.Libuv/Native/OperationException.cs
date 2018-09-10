@@ -5,21 +5,20 @@
 namespace DotNetty.Transport.Libuv.Native
 {
     using System;
+    using CuteAnt.Collections;
 
     public sealed class OperationException : Exception
     {
-        public OperationException(int errorCode, string errorName, string description) 
+        static readonly CachedReadConcurrentDictionary<string, ErrorCode> s_errorCodeCache = new CachedReadConcurrentDictionary<string, ErrorCode>(StringComparer.Ordinal);
+        static readonly Func<string, ErrorCode> s_convertErrorCodeFunc = ConvertErrorCode;
+
+        public OperationException(int errorCode, string errorName, string description)
         {
             this.Code = errorCode;
             this.Name = errorName;
             this.Description = description;
-                
-            if (!Enum.TryParse(errorName, out ErrorCode value))
-            {
-                value = ErrorCode.UNKNOWN;
-            }
 
-            this.ErrorCode = value;
+            this.ErrorCode = s_errorCodeCache.GetOrAdd(errorName, s_convertErrorCodeFunc);
         }
 
         public int Code { get; }
@@ -31,6 +30,15 @@ namespace DotNetty.Transport.Libuv.Native
         public ErrorCode ErrorCode { get; }
 
         public override string Message => $"{this.Name} ({this.ErrorCode}) : {this.Description}";
+
+        static ErrorCode ConvertErrorCode(string errorName)
+        {
+            if (!Enum.TryParse(errorName, true, out ErrorCode value))
+            {
+                value = ErrorCode.UNKNOWN;
+            }
+            return value;
+        }
     }
 
     enum uv_err_code
@@ -111,84 +119,5 @@ namespace DotNetty.Transport.Libuv.Native
         UV_EOF = -4095,
         UV_ENXIO,
         UV_EMLINK,
-    }
-
-    public enum ErrorCode
-    {
-        E2BIG,
-        EACCES,
-        EADDRINUSE,
-        EADDRNOTAVAIL,
-        EAFNOSUPPORT,
-        EAGAIN,
-        EAI_ADDRFAMILY,
-        EAI_AGAIN,
-        EAI_BADFLAGS,
-        EAI_BADHINTS,
-        EAI_CANCELED,
-        EAI_FAIL,
-        EAI_FAMILY,
-        EAI_MEMORY,
-        EAI_NODATA,
-        EAI_NONAME,
-        EAI_OVERFLOW,
-        EAI_PROTOCOL,
-        EAI_SERVICE,
-        EAI_SOCKTYPE,
-        EALREADY,
-        EBADF,
-        EBUSY,
-        ECANCELED,
-        ECHARSET,
-        ECONNABORTED,
-        ECONNREFUSED,
-        ECONNRESET,
-        EDESTADDRREQ,
-        EEXIST,
-        EFAULT,
-        EFBIG,
-        EHOSTUNREACH,
-        EINTR,
-        EINVAL,
-        EIO,
-        EISCONN,
-        EISDIR,
-        ELOOP,
-        EMFILE,
-        EMSGSIZE,
-        ENAMETOOLONG,
-        ENETDOWN,
-        ENETUNREACH,
-        ENFILE,
-        ENOBUFS,
-        ENODEV,
-        ENOENT,
-        ENOMEM,
-        ENONET,
-        ENOPROTOOPT,
-        ENOSPC,
-        ENOSYS,
-        ENOTCONN,
-        ENOTDIR,
-        ENOTEMPTY,
-        ENOTSOCK,
-        ENOTSUP,
-        EPERM,
-        EPIPE,
-        EPROTO,
-        EPROTONOSUPPORT,
-        EPROTOTYPE,
-        ERANGE,
-        EROFS,
-        ESHUTDOWN,
-        ESPIPE,
-        ESRCH,
-        ETIMEDOUT,
-        ETXTBSY,
-        EXDEV,
-        UNKNOWN,
-        EOF,
-        ENXIO,
-        EMLINK,
     }
 }

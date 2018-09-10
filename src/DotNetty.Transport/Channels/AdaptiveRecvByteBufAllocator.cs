@@ -5,7 +5,6 @@ namespace DotNetty.Transport.Channels
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using DotNetty.Common.Utilities;
 
     /// <summary>
@@ -47,7 +46,7 @@ namespace DotNetty.Transport.Channels
 
         static int GetSizeTableIndex(int size)
         {
-            for (int low = 0, high = SizeTable.Length - 1;;)
+            for (int low = 0, high = SizeTable.Length - 1; ;)
             {
                 if (high < low)
                 {
@@ -98,6 +97,23 @@ namespace DotNetty.Transport.Channels
                 this.nextReceiveBufferSize = SizeTable[this.index];
             }
 
+            public override int LastBytesRead
+            {
+                get => base.LastBytesRead;
+                set
+                {
+                    // If we read as much as we asked for we should check if we need to ramp up the size of our next guess.
+                    // This helps adjust more quickly when large amounts of data is pending and can avoid going back to
+                    // the selector to check for more data. Going back to the selector can add significant latency for large
+                    // data transfers.
+                    if (value == this.AttemptedBytesRead)
+                    {
+                        this.Record(value);
+                    }
+                    base.LastBytesRead = value;
+                }
+            }
+
             public override int Guess() => this.nextReceiveBufferSize;
 
             void Record(int actualReadBytes)
@@ -146,9 +162,9 @@ namespace DotNetty.Transport.Channels
         /// <param name="maximum">the inclusive upper bound of the expected buffer size</param>
         public AdaptiveRecvByteBufAllocator(int minimum, int initial, int maximum)
         {
-            Contract.Requires(minimum > 0);
-            Contract.Requires(initial >= minimum);
-            Contract.Requires(maximum >= initial);
+            if (minimum <= 0) { ThrowHelper.ThrowArgumentException_Positive(minimum, ExceptionArgument.minimum); }
+            if (initial < minimum) { ThrowHelper.ThrowArgumentOutOfRangeException(); }
+            if (maximum < initial) { ThrowHelper.ThrowArgumentOutOfRangeException(); }
 
             int min = GetSizeTableIndex(minimum);
             if (SizeTable[min] < minimum)

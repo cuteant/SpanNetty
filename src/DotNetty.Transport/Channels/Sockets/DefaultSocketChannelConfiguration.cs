@@ -5,8 +5,8 @@ namespace DotNetty.Transport.Channels.Sockets
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Net.Sockets;
+    using System.Threading;
 
     /// <summary>
     /// The default <see cref="ISocketChannelConfiguration"/> implementation.
@@ -14,12 +14,12 @@ namespace DotNetty.Transport.Channels.Sockets
     public class DefaultSocketChannelConfiguration : DefaultChannelConfiguration, ISocketChannelConfiguration
     {
         protected readonly Socket Socket;
-        volatile bool allowHalfClosure;
+        int allowHalfClosure;
 
         public DefaultSocketChannelConfiguration(ISocketChannel channel, Socket socket)
             : base(channel)
         {
-            Contract.Requires(socket != null);
+            if (null == socket) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.socket); }
             this.Socket = socket;
 
             // Enable TCP_NODELAY by default if possible.
@@ -107,7 +107,7 @@ namespace DotNetty.Transport.Channels.Sockets
             //}
             else if (ChannelOption.AllowHalfClosure.Equals(option))
             {
-                this.allowHalfClosure = (bool)(object)value;
+                this.AllowHalfClosure = (bool)(object)value;
             }
             else
             {
@@ -119,8 +119,8 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public bool AllowHalfClosure
         {
-            get { return this.allowHalfClosure; }
-            set { this.allowHalfClosure = value; }
+            get { return Constants.True == Volatile.Read(ref this.allowHalfClosure); }
+            set { Interlocked.Exchange(ref this.allowHalfClosure, value ? Constants.True : Constants.False); }
         }
 
         public int ReceiveBufferSize

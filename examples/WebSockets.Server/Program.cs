@@ -9,11 +9,13 @@ namespace WebSockets.Server
     using System.Runtime;
     using System.Runtime.InteropServices;
     using System.Security.Cryptography.X509Certificates;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http.WebSockets;
     using DotNetty.Codecs.Http.WebSockets.Extensions.Compression;
     using DotNetty.Common;
+    using DotNetty.Handlers;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Timeout;
     using DotNetty.Handlers.Tls;
@@ -77,6 +79,9 @@ namespace WebSockets.Server
             }
             try
             {
+                int port = ServerSettings.Port;
+                IChannel bootstrapChannel = null;
+
                 var bootstrap = new ServerBootstrap();
                 bootstrap.Group(bossGroup, workGroup);
 
@@ -98,7 +103,10 @@ namespace WebSockets.Server
 
                 bootstrap
                     .Option(ChannelOption.SoBacklog, 8192)
+
                     //.Handler(new MsLoggingHandler("LSTN"))
+                    .Handler(new ServerChannelRebindHandler(DoBind))
+
                     .ChildHandler(new ActionChannelInitializer<IChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
@@ -117,7 +125,7 @@ namespace WebSockets.Server
                         pipeline.AddLast(new WebSocketServerCompressionHandler());
                         pipeline.AddLast(new WebSocketServerProtocolHandler(
                             websocketPath: websocketPath,
-                            subprotocols: null, 
+                            subprotocols: null,
                             allowExtensions: true,
                             maxFrameSize: 65536,
                             allowMaskMismatch: true,
@@ -129,8 +137,16 @@ namespace WebSockets.Server
                         pipeline.AddLast(new WebSocketServerFrameHandler());
                     }));
 
-                int port = ServerSettings.Port;
-                IChannel bootstrapChannel = await bootstrap.BindAsync(IPAddress.Loopback, port);
+                bootstrapChannel = await bootstrap.BindAsync(IPAddress.Loopback, port);
+
+                async void DoBind()
+                {
+                    await bootstrapChannel.CloseAsync();
+                    Console.WriteLine("rebind......");
+                    var ch = await bootstrap.BindAsync(IPAddress.Loopback, port);
+                    Console.WriteLine("rebind complate");
+                    Interlocked.Exchange(ref bootstrapChannel, ch);
+                }
 
                 Console.WriteLine("Open your web browser and navigate to "
                     + $"{(ServerSettings.IsSsl ? "https" : "http")}"
@@ -141,11 +157,14 @@ namespace WebSockets.Server
                 Console.ReadLine();
 
                 await bootstrapChannel.CloseAsync();
+                Console.WriteLine("close completion");
+                Console.WriteLine("按任意键退出");
+                Console.ReadKey();
             }
             finally
             {
-                workGroup.ShutdownGracefullyAsync().Wait();
-                bossGroup.ShutdownGracefullyAsync().Wait();
+                await workGroup.ShutdownGracefullyAsync();// (TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
+                await bossGroup.ShutdownGracefullyAsync();// (TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
             }
         }
     }

@@ -5,7 +5,6 @@
 namespace DotNetty.Buffers
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
@@ -19,8 +18,8 @@ namespace DotNetty.Buffers
         protected internal UnpooledHeapByteBuffer(IByteBufferAllocator alloc, int initialCapacity, int maxCapacity)
             : base(maxCapacity)
         {
-            Contract.Requires(alloc != null);
-            Contract.Requires(initialCapacity <= maxCapacity);
+            if (null == alloc) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.alloc); }
+            if (initialCapacity > maxCapacity) { ThrowHelper.ThrowArgumentException_InitialCapacityMaxCapacity(initialCapacity, maxCapacity); }
 
             this.allocator = alloc;
             this.SetArray(this.NewArray(initialCapacity));
@@ -30,8 +29,8 @@ namespace DotNetty.Buffers
         protected internal UnpooledHeapByteBuffer(IByteBufferAllocator alloc, byte[] initialArray, int maxCapacity)
             : base(maxCapacity)
         {
-            Contract.Requires(alloc != null);
-            Contract.Requires(initialArray != null);
+            if (null == alloc) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.alloc); }
+            if (null == initialArray) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.initialArray); }
 
             if (initialArray.Length > maxCapacity)
             {

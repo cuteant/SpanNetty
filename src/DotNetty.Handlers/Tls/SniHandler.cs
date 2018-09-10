@@ -5,7 +5,6 @@ namespace DotNetty.Handlers.Tls
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Globalization;
     using System.IO;
     using System.Net.Security;
@@ -20,6 +19,9 @@ namespace DotNetty.Handlers.Tls
         // Maximal number of ssl records to inspect before fallback to the default server TLS setting (aligned with netty) 
         const int MAX_SSL_RECORDS = 4;
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance(typeof(SniHandler));
+#if DESKTOPCLR
+        static readonly CultureInfo UnitedStatesCultureInfo = new CultureInfo("en-US");
+#endif
         readonly Func<Stream, SslStream> sslStreamFactory;
         readonly ServerTlsSniSettings serverTlsSniSettings;
 
@@ -34,8 +36,8 @@ namespace DotNetty.Handlers.Tls
 
         public SniHandler(Func<Stream, SslStream> sslStreamFactory, ServerTlsSniSettings settings)
         {
-            Contract.Requires(settings != null);
-            Contract.Requires(sslStreamFactory != null);
+            if (null == settings) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
+            if (null == sslStreamFactory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sslStreamFactory); }
             this.sslStreamFactory = sslStreamFactory;
             this.serverTlsSniSettings = settings;
         }
@@ -214,11 +216,11 @@ namespace DotNetty.Handlers.Tls
                                                 };
 
                                                 hostname = idn.GetAscii(hostname);
-#if NETSTANDARD
+#if !DESKTOPCLR
                                                 // TODO: netcore does not have culture sensitive tolower()
                                                 hostname = hostname.ToLowerInvariant();
 #else
-                                                hostname = hostname.ToLower(new CultureInfo("en-US"));
+                                                hostname = hostname.ToLower(UnitedStatesCultureInfo);
 #endif
                                                 this.Select(context, hostname);
                                                 return;
@@ -272,7 +274,7 @@ namespace DotNetty.Handlers.Tls
 
         async void Select(IChannelHandlerContext context, string hostName)
         {
-            Contract.Requires(hostName != null);
+            if (null == hostName) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.hostName); }
             this.suppressRead = true;
             try
             {
@@ -296,7 +298,7 @@ namespace DotNetty.Handlers.Tls
 
         void ReplaceHandler(IChannelHandlerContext context, ServerTlsSettings serverTlsSetting)
         {
-            Contract.Requires(serverTlsSetting != null);
+            if (null == serverTlsSetting) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.serverTlsSetting); }
             var tlsHandler = new TlsHandler(this.sslStreamFactory, serverTlsSetting);
             context.Pipeline.Replace(this, nameof(TlsHandler), tlsHandler);
         }

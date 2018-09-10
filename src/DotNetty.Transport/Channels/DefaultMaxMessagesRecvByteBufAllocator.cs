@@ -3,7 +3,7 @@
 
 namespace DotNetty.Transport.Channels
 {
-    using System.Diagnostics.Contracts;
+    using System.Threading;
     using DotNetty.Buffers;
 
     /// <summary>
@@ -13,7 +13,8 @@ namespace DotNetty.Transport.Channels
     /// </summary>
     public abstract class DefaultMaxMessagesRecvByteBufAllocator : IMaxMessagesRecvByteBufAllocator
     {
-        volatile int maxMessagesPerRead;
+        int maxMessagesPerRead;
+        int respectMaybeMoreData = Constants.True;
 
         protected DefaultMaxMessagesRecvByteBufAllocator()
             : this(1)
@@ -27,12 +28,18 @@ namespace DotNetty.Transport.Channels
 
         public int MaxMessagesPerRead
         {
-            get { return this.maxMessagesPerRead; }
+            get { return Volatile.Read(ref this.maxMessagesPerRead); }
             set
             {
-                Contract.Requires(value > 0);
-                this.maxMessagesPerRead = value;
+                if (value <= 0) { ThrowHelper.ThrowArgumentException_Positive(value, ExceptionArgument.value); }
+                Interlocked.Exchange(ref this.maxMessagesPerRead, value);
             }
+        }
+
+        public bool RespectMaybeMoreData
+        {
+            get => Constants.True == Volatile.Read(ref this.respectMaybeMoreData);
+            set => Interlocked.Exchange(ref this.respectMaybeMoreData, value ? Constants.True : Constants.False);
         }
 
         public abstract IRecvByteBufAllocatorHandle NewHandle();
@@ -44,6 +51,7 @@ namespace DotNetty.Transport.Channels
             protected readonly T Owner;
             IChannelConfiguration config;
             int maxMessagePerRead;
+            bool respectMaybeMoreData;
             int totalMessages;
             int totalBytesRead;
             int lastBytesRead;
@@ -60,6 +68,7 @@ namespace DotNetty.Transport.Channels
             {
                 this.config = config;
                 this.maxMessagePerRead = this.Owner.MaxMessagesPerRead;
+                this.respectMaybeMoreData = this.Owner.RespectMaybeMoreData;
                 this.totalMessages = this.totalBytesRead = 0;
             }
 
@@ -67,18 +76,15 @@ namespace DotNetty.Transport.Channels
 
             public void IncMessagesRead(int amt) => this.totalMessages += amt;
 
-            public int LastBytesRead
+            public virtual int LastBytesRead
             {
                 get { return this.lastBytesRead; }
                 set
                 {
                     this.lastBytesRead = value;
-                    // Ignore if bytes is negative, the interface contract states it will be detected externally after call.
-                    // The value may be "invalid" after this point, but it doesn't matter because reading will be stopped.
-                    this.totalBytesRead += value;
-                    if (this.totalBytesRead < 0)
+                    if (value > 0)
                     {
-                        this.totalBytesRead = int.MaxValue;
+                        this.totalBytesRead += value;
                     }
                 }
             }
@@ -86,7 +92,7 @@ namespace DotNetty.Transport.Channels
             public virtual bool ContinueReading()
             {
                 return this.config.AutoRead
-                    && this.AttemptedBytesRead == this.lastBytesRead
+                    && (!this.respectMaybeMoreData || this.AttemptedBytesRead == this.lastBytesRead)
                     && this.totalMessages < this.maxMessagePerRead
                     && this.totalBytesRead < int.MaxValue;
             }
@@ -97,7 +103,7 @@ namespace DotNetty.Transport.Channels
 
             public virtual int AttemptedBytesRead { get; set; }
 
-            protected int TotalBytesRead() => this.totalBytesRead;
+            protected int TotalBytesRead() => this.totalBytesRead >= 0 ? this.totalBytesRead : int.MaxValue;
         }
     }
 }

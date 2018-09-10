@@ -4,7 +4,6 @@
 namespace DotNetty.Codecs
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
@@ -16,7 +15,7 @@ namespace DotNetty.Codecs
 
         public override Task WriteAsync(IChannelHandlerContext context, object message)
         {
-            Contract.Requires(context != null);
+            if (null == context) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.context); }
 
             IByteBuffer buffer = null;
             Task result;
@@ -70,7 +69,7 @@ namespace DotNetty.Codecs
 
         protected virtual IByteBuffer AllocateBuffer(IChannelHandlerContext context)
         {
-            Contract.Requires(context != null);
+            if (null == context) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.context); }
 
             return context.Allocator.Buffer();
         }

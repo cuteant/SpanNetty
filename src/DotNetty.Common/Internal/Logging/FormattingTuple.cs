@@ -4,7 +4,6 @@
 namespace DotNetty.Common.Internal.Logging
 {
     using System;
-    using System.Diagnostics.Contracts;
 
     /// <summary>
     /// Holds the results of formatting done by <see cref="MessageFormatter"/>.
@@ -34,7 +33,7 @@ namespace DotNetty.Common.Internal.Logging
 
         static object[] GetTrimmedCopy(object[] argArray)
         {
-            Contract.Requires(argArray != null && argArray.Length > 0);
+            if(null == argArray || argArray.Length<=0) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.argArray); }
 
             int trimemdLen = argArray.Length - 1;
             var trimmed = new object[trimemdLen];

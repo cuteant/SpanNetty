@@ -6,7 +6,6 @@ namespace DotNetty.Transport.Channels.Embedded
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Net;
     using System.Runtime.CompilerServices;
     using System.Runtime.ExceptionServices;
@@ -110,7 +109,7 @@ namespace DotNetty.Transport.Channels.Embedded
         public EmbeddedChannel(IChannelId id, bool hasDisconnect, IChannelConfiguration config, params IChannelHandler[] handlers)
             : base(null, id)
         {
-            Contract.Requires(config != null);
+            if (null == config) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.config); }
 
             this.Metadata = GetMetadata(hasDisconnect);
             this.Configuration = config;
@@ -121,7 +120,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
         void Setup(bool register, params IChannelHandler[] handlers)
         {
-            Contract.Requires(handlers != null);
+            if (null == handlers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handlers); }
 
             IChannelPipeline p = this.Pipeline;
             p.AddLast(new ActionChannelInitializer<IChannel>(channel =>

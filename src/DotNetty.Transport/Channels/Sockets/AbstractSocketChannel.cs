@@ -5,25 +5,23 @@ namespace DotNetty.Transport.Channels.Sockets
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Net;
     using System.Net.Sockets;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
-    using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
     public abstract partial class AbstractSocketChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>
     {
-        //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractSocketChannel>(); ## 苦竹 屏蔽 ##
-
-        [Flags]
-        protected enum StateFlags
+        //[Flags]
+        protected static class StateFlags
         {
-            Open = 1,
-            ReadScheduled = 1 << 1,
-            WriteScheduled = 1 << 2,
-            Active = 1 << 3
+            public const int Open = 1;
+            public const int ReadScheduled = 1 << 1;
+            public const int WriteScheduled = 1 << 2;
+            public const int Active = 1 << 3;
             // todo: add input shutdown and read pending here as well?
         }
 
@@ -35,9 +33,9 @@ namespace DotNetty.Transport.Channels.Sockets
         protected readonly Socket Socket;
         SocketChannelAsyncOperation<TChannel, TUnsafe> readOperation;
         SocketChannelAsyncOperation<TChannel, TUnsafe> writeOperation;
-        volatile bool inputShutdown;
+        int inputShutdown;
         internal bool ReadPending;
-        volatile StateFlags state;
+        int _state;
 
         TaskCompletionSource connectPromise;
         IScheduledTask connectCancellationTask;
@@ -46,7 +44,7 @@ namespace DotNetty.Transport.Channels.Sockets
             : base(parent)
         {
             this.Socket = socket;
-            this.state = StateFlags.Open;
+            this.State = StateFlags.Open;
 
             try
             {
@@ -102,41 +100,41 @@ namespace DotNetty.Transport.Channels.Sockets
 
         void ClearReadPending0() => this.ReadPending = false;
 
-        protected bool InputShutdown => this.inputShutdown;
+        protected bool InputShutdown => Constants.True == Volatile.Read(ref this.inputShutdown);
 
-        protected void ShutdownInput() => this.inputShutdown = true;
+        protected void ShutdownInput() => Interlocked.Exchange(ref this.inputShutdown, Constants.True);
 
-        protected void SetState(StateFlags stateToSet) => this.state |= stateToSet;
+        protected void SetState(int stateToSet) => this.State |= stateToSet;
 
         /// <returns>state before modification</returns>
-        protected StateFlags ResetState(StateFlags stateToReset)
+        protected int ResetState(int stateToReset)
         {
-            StateFlags oldState = this.state;
+            var oldState = this.State;
             if ((oldState & stateToReset) != 0)
             {
-                this.state = oldState & ~stateToReset;
+                this.State = oldState & ~stateToReset;
             }
             return oldState;
         }
 
-        protected bool TryResetState(StateFlags stateToReset)
+        protected bool TryResetState(int stateToReset)
         {
-            StateFlags oldState = this.state;
+            var oldState = this.State;
             if ((oldState & stateToReset) != 0)
             {
-                this.state = oldState & ~stateToReset;
+                this.State = oldState & ~stateToReset;
                 return true;
             }
             return false;
         }
 
-        protected bool IsInState(StateFlags stateToCheck) => (this.state & stateToCheck) == stateToCheck;
+        protected bool IsInState(int stateToCheck) => (this.State & stateToCheck) == stateToCheck;
 
         protected SocketChannelAsyncOperation<TChannel, TUnsafe> ReadOperation => this.readOperation ?? (this.readOperation = new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, true));
 
         SocketChannelAsyncOperation<TChannel, TUnsafe> WriteOperation => this.writeOperation ?? (this.writeOperation = new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, false));
 
-        protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(ArraySegment<byte> buffer)
+        protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(in ArraySegment<byte> buffer)
         {
             var operation = this.WriteOperation;
             operation.SetBuffer(buffer.Array, buffer.Offset, buffer.Count);
@@ -154,7 +152,7 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             var operation = this.writeOperation;
 
-            Contract.Assert(operation != null);
+            Debug.Assert(operation != null);
 
             if (operation.BufferList == null)
             {
@@ -251,7 +249,7 @@ namespace DotNetty.Transport.Channels.Sockets
             public sealed override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
             {
                 // todo: handle cancellation
-                var ch = this.Channel;
+                var ch = this.channel;
                 if (!ch.Open)
                 {
                     return this.CreateClosedChannelExceptionTask();
@@ -311,14 +309,15 @@ namespace DotNetty.Transport.Channels.Sockets
 
             void FulfillConnectPromise(bool wasActive)
             {
+                var ch = this.channel;
                 // Regardless if the connection attempt was cancelled, channelActive() event should be triggered,
                 // because what happened is what happened.
-                if (!wasActive && this.channel.Active)
+                if (!wasActive && ch.Active)
                 {
-                    this.channel.Pipeline.FireChannelActive();
+                    ch.Pipeline.FireChannelActive();
                 }
 
-                TaskCompletionSource promise = this.Channel.connectPromise;
+                TaskCompletionSource promise = ch.connectPromise;
                 // If promise is null, then it the channel was Closed via cancellation and the promise has been notified already.
                 if (promise != null)
                 {
@@ -336,7 +335,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
             void FulfillConnectPromise(Exception cause)
             {
-                TaskCompletionSource promise = this.Channel.connectPromise;
+                TaskCompletionSource promise = this.channel.connectPromise;
                 if (promise == null)
                 {
                     // Closed via cancellation and the promise has been notified already.
@@ -350,9 +349,9 @@ namespace DotNetty.Transport.Channels.Sockets
 
             public void FinishConnect(SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
             {
-                Contract.Assert(this.channel.EventLoop.InEventLoop);
+                var ch = this.channel;
+                Debug.Assert(ch.EventLoop.InEventLoop);
 
-                var ch = this.Channel;
                 try
                 {
                     bool wasActive = ch.Active;
@@ -381,25 +380,22 @@ namespace DotNetty.Transport.Channels.Sockets
                 // Flush immediately only when there's no pending flush.
                 // If there's a pending flush operation, event loop will call FinishWrite() later,
                 // and thus there's no need to call it now.
-                if (this.IsFlushPending())
-                {
-                    return;
-                }
-                base.Flush0();
+                if (!this.IsFlushPending()) { base.Flush0(); }
             }
 
             public void FinishWrite(SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
             {
-                bool resetWritePending = this.Channel.TryResetState(StateFlags.WriteScheduled);
+                var ch = this.channel;
+                bool resetWritePending = ch.TryResetState(StateFlags.WriteScheduled);
 
-                Contract.Assert(resetWritePending);
+                Debug.Assert(resetWritePending);
 
                 ChannelOutboundBuffer input = this.OutboundBuffer;
                 try
                 {
                     operation.Validate();
                     int sent = operation.BytesTransferred;
-                    this.Channel.ResetWriteOperation();
+                    ch.ResetWriteOperation();
                     if (sent > 0)
                     {
                         input.RemoveBytes(sent);
@@ -407,7 +403,8 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
                 catch (Exception ex)
                 {
-                    Util.CompleteChannelCloseTaskSafely(this.channel, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex), false));
+                    ch.Pipeline.FireExceptionCaught(ex);
+                    Util.CompleteChannelCloseTaskSafely(ch, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex), false));
                 }
 
                 // Double check if there's no pending flush
@@ -415,14 +412,14 @@ namespace DotNetty.Transport.Channels.Sockets
                 this.Flush0(); // todo: does it make sense now that we've actually written out everything that was flushed previously? concurrent flush handling?
             }
 
-            bool IsFlushPending() => this.Channel.IsInState(StateFlags.WriteScheduled);
+            bool IsFlushPending() => this.channel.IsInState(StateFlags.WriteScheduled);
         }
 
         protected override bool IsCompatible(IEventLoop eventLoop) => true;
 
         protected override void DoBeginRead()
         {
-            if (this.inputShutdown)
+            if (Constants.True == Volatile.Read(ref this.inputShutdown))
             {
                 return;
             }
@@ -436,7 +433,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
             if (!this.IsInState(StateFlags.ReadScheduled))
             {
-                this.state |= StateFlags.ReadScheduled;
+                this.State |= StateFlags.ReadScheduled;
                 this.ScheduleSocketRead();
             }
         }

@@ -4,10 +4,11 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Net;
     using System.Reflection;
     using System.Runtime.CompilerServices;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common;
@@ -172,44 +173,49 @@ namespace DotNetty.Transport.Channels
             return handlerType.GetMethod(methodName, newParamTypes).GetCustomAttribute<SkipAttribute>(false) != null;
         }
 
-        internal volatile AbstractChannelHandlerContext Next;
-        internal volatile AbstractChannelHandlerContext Prev;
+        AbstractChannelHandlerContext _next;
+        AbstractChannelHandlerContext _prev;
 
         internal readonly SkipFlags SkipPropagationFlags;
 
-        enum HandlerState
+        static class HandlerState
         {
             /// <summary>Neither <see cref="IChannelHandler.HandlerAdded"/> nor <see cref="IChannelHandler.HandlerRemoved"/> was called.</summary>
-            Init = 0,
+            public const int Init = 0;
+            /// <summary><see cref="IChannelHandler.HandlerAdded"/> is about to be called.</summary>
+            public const int AddPending = 1;
             /// <summary><see cref="IChannelHandler.HandlerAdded"/> was called.</summary>
-            Added = 1,
+            public const int AddComplete = 2;
             /// <summary><see cref="IChannelHandler.HandlerRemoved"/> was called.</summary>
-            Removed = 2
+            public const int RemoveComplete = 3;
         }
 
         internal readonly DefaultChannelPipeline pipeline;
+        readonly bool ordered;
 
         // Will be set to null if no child executor should be used, otherwise it will be set to the
         // child executor.
         internal readonly IEventExecutor executor;
-        HandlerState handlerState = HandlerState.Init;
+        int handlerState = HandlerState.Init;
 
         protected AbstractChannelHandlerContext(DefaultChannelPipeline pipeline, IEventExecutor executor,
             string name, SkipFlags skipPropagationDirections)
         {
-            Contract.Requires(pipeline != null);
-            Contract.Requires(name != null);
+            if (null == pipeline) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.pipeline); }
+            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
 
             this.pipeline = pipeline;
             this.Name = name;
             this.executor = executor;
             this.SkipPropagationFlags = skipPropagationDirections;
+            // Its ordered if its driven by the EventLoop or the given Executor is an instanceof OrderedEventExecutor.
+            this.ordered = executor == null || executor is IOrderedEventExecutor;
         }
 
         public IChannel Channel => this.pipeline.Channel;
 
         public IChannelPipeline Pipeline => this.pipeline;
-        
+
         public IByteBufferAllocator Allocator => this.Channel.Allocator;
 
         public abstract IChannelHandler Handler { get; }
@@ -222,15 +228,43 @@ namespace DotNetty.Transport.Channels
         ///     event.
         ///     This is needed as <see cref="DefaultChannelPipeline" /> may already put the <see cref="IChannelHandler" /> in the
         ///     linked-list
-        ///     but not called
+        ///     but not called <see cref="IChannelHandler.HandlerAdded(IChannelHandlerContext)" />
         /// </summary>
-        public bool Added => handlerState == HandlerState.Added;
+        private bool InvokeHandler
+        {
+            [MethodImpl(InlineMethod.Value)]
+            get
+            {
+                // Store in local variable to reduce volatile reads.
+                var thisState = Volatile.Read(ref this.handlerState);
+                return thisState == HandlerState.AddComplete || (!this.ordered && thisState == HandlerState.AddPending);
+            }
+        }
 
-        public bool Removed => handlerState == HandlerState.Removed;
+        public bool Removed => Volatile.Read(ref handlerState) == HandlerState.RemoveComplete;
 
-        internal void SetAdded() => handlerState = HandlerState.Added;
+        internal void SetAddComplete()
+        {
+            var prevState = Volatile.Read(ref this.handlerState);
+            int oldState;
+            do
+            {
+                if (prevState == HandlerState.RemoveComplete) { break; }
+                oldState = prevState;
+                // Ensure we never update when the handlerState is REMOVE_COMPLETE already.
+                // oldState is usually ADD_PENDING but can also be REMOVE_COMPLETE when an EventExecutor is used that is not
+                // exposing ordering guarantees.
+                prevState = Interlocked.CompareExchange(ref this.handlerState, HandlerState.AddComplete, prevState);
+            } while (prevState != oldState);
+        }
 
-        internal void SetRemoved() => handlerState = HandlerState.Removed;
+        internal void SetRemoved() => Interlocked.Exchange(ref handlerState, HandlerState.RemoveComplete);
+
+        internal void SetAddPending()
+        {
+            var updated = HandlerState.Init == Interlocked.CompareExchange(ref this.handlerState, HandlerState.AddPending, HandlerState.Init);
+            Debug.Assert(updated); // This should always be true as it MUST be called before setAddComplete() or setRemoved().
+        }
 
         public IEventExecutor Executor => this.executor ?? this.Channel.EventLoop;
 
@@ -268,7 +302,7 @@ namespace DotNetty.Transport.Channels
 
         void InvokeChannelRegistered()
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -306,7 +340,7 @@ namespace DotNetty.Transport.Channels
 
         void InvokeChannelUnregistered()
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -344,7 +378,7 @@ namespace DotNetty.Transport.Channels
 
         void InvokeChannelActive()
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -382,7 +416,7 @@ namespace DotNetty.Transport.Channels
 
         void InvokeChannelInactive()
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -407,7 +441,7 @@ namespace DotNetty.Transport.Channels
 
         internal static void InvokeExceptionCaught(AbstractChannelHandlerContext next, Exception cause)
         {
-            Contract.Requires(cause != null);
+            if (null == cause) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
 
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
@@ -434,7 +468,7 @@ namespace DotNetty.Transport.Channels
 
         void InvokeExceptionCaught(Exception cause)
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -464,7 +498,7 @@ namespace DotNetty.Transport.Channels
 
         internal static void InvokeUserEventTriggered(AbstractChannelHandlerContext next, object evt)
         {
-            Contract.Requires(evt != null);
+            if (null == evt) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.evt); }
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
             {
@@ -478,7 +512,7 @@ namespace DotNetty.Transport.Channels
 
         void InvokeUserEventTriggered(object evt)
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -503,7 +537,7 @@ namespace DotNetty.Transport.Channels
 
         internal static void InvokeChannelRead(AbstractChannelHandlerContext next, object msg)
         {
-            Contract.Requires(msg != null);
+            if (null == msg) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
 
             object m = next.pipeline.Touch(msg, next);
             IEventExecutor nextExecutor = next.Executor;
@@ -519,7 +553,7 @@ namespace DotNetty.Transport.Channels
 
         void InvokeChannelRead(object msg)
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -542,7 +576,8 @@ namespace DotNetty.Transport.Channels
             return this;
         }
 
-        internal static void InvokeChannelReadComplete(AbstractChannelHandlerContext next) {
+        internal static void InvokeChannelReadComplete(AbstractChannelHandlerContext next)
+        {
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
             {
@@ -557,7 +592,7 @@ namespace DotNetty.Transport.Channels
 
         void InvokeChannelReadComplete()
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -596,7 +631,7 @@ namespace DotNetty.Transport.Channels
 
         void InvokeChannelWritabilityChanged()
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -615,7 +650,7 @@ namespace DotNetty.Transport.Channels
 
         public Task BindAsync(EndPoint localAddress)
         {
-            Contract.Requires(localAddress != null);
+            if (null == localAddress) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.localAddress); }
             // todo: check for cancellation
             //if (!validatePromise(ctx, promise, false)) {
             //    // promise cancelled
@@ -624,14 +659,14 @@ namespace DotNetty.Transport.Channels
 
             AbstractChannelHandlerContext next = this.FindContextOutbound();
             IEventExecutor nextExecutor = next.Executor;
-            return nextExecutor.InEventLoop 
-                ? next.InvokeBindAsync(localAddress) 
+            return nextExecutor.InEventLoop
+                ? next.InvokeBindAsync(localAddress)
                 : SafeExecuteOutboundAsync(nextExecutor, () => next.InvokeBindAsync(localAddress));
         }
 
         Task InvokeBindAsync(EndPoint localAddress)
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -651,7 +686,7 @@ namespace DotNetty.Transport.Channels
         public Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
         {
             AbstractChannelHandlerContext next = this.FindContextOutbound();
-            Contract.Requires(remoteAddress != null);
+            if (null == remoteAddress) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
             // todo: check for cancellation
 
             IEventExecutor nextExecutor = next.Executor;
@@ -662,7 +697,7 @@ namespace DotNetty.Transport.Channels
 
         Task InvokeConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -694,7 +729,7 @@ namespace DotNetty.Transport.Channels
 
         Task InvokeDisconnectAsync()
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -720,7 +755,7 @@ namespace DotNetty.Transport.Channels
 
         Task InvokeCloseAsync()
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -746,7 +781,7 @@ namespace DotNetty.Transport.Channels
 
         Task InvokeDeregisterAsync()
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -778,7 +813,7 @@ namespace DotNetty.Transport.Channels
 
         void InvokeRead()
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 try
                 {
@@ -797,12 +832,12 @@ namespace DotNetty.Transport.Channels
 
         public Task WriteAsync(object msg)
         {
-            Contract.Requires(msg != null);
+            if (null == msg) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
             // todo: check for cancellation
             return this.WriteAsync(msg, false);
         }
 
-        Task InvokeWriteAsync(object msg) => this.Added ? this.InvokeWriteAsync0(msg) : this.WriteAsync(msg);
+        Task InvokeWriteAsync(object msg) => this.InvokeHandler ? this.InvokeWriteAsync0(msg) : this.WriteAsync(msg);
 
         Task InvokeWriteAsync0(object msg)
         {
@@ -833,7 +868,7 @@ namespace DotNetty.Transport.Channels
 
         void InvokeFlush()
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 this.InvokeFlush0();
             }
@@ -857,7 +892,7 @@ namespace DotNetty.Transport.Channels
 
         public Task WriteAndFlushAsync(object message)
         {
-            Contract.Requires(message != null);
+            if (null == message) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.message); }
             // todo: check for cancellation
 
             return this.WriteAsync(message, true);
@@ -865,7 +900,7 @@ namespace DotNetty.Transport.Channels
 
         Task InvokeWriteAndFlushAsync(object msg)
         {
-            if (this.Added)
+            if (this.InvokeHandler)
             {
                 Task task = this.InvokeWriteAsync0(msg);
                 this.InvokeFlush0();
@@ -888,7 +923,7 @@ namespace DotNetty.Transport.Channels
             else
             {
                 var promise = new TaskCompletionSource();
-                AbstractWriteTask task = flush 
+                AbstractWriteTask task = flush
                     ? WriteAndFlushTask.NewInstance(next, m, promise)
                     : (AbstractWriteTask)WriteTask.NewInstance(next, m, promise);
                 SafeExecuteOutbound(nextExecutor, task, promise, msg);
@@ -1000,6 +1035,9 @@ namespace DotNetty.Transport.Channels
 
                 if (EstimateTaskSizeOnSubmit)
                 {
+                    task.size = ctx.pipeline.EstimatorHandle.Size(msg) + WriteTaskOverhead;
+                    ctx.pipeline.IncrementPendingOutboundBytes(task.size);
+
                     ChannelOutboundBuffer buffer = ctx.Channel.Unsafe.OutboundBuffer;
 
                     // Check for null as it may be set to null if the channel is closed already
@@ -1028,11 +1066,10 @@ namespace DotNetty.Transport.Channels
             {
                 try
                 {
-                    ChannelOutboundBuffer buffer = this.ctx.Channel.Unsafe.OutboundBuffer;
                     // Check for null as it may be set to null if the channel is closed already
                     if (EstimateTaskSizeOnSubmit)
                     {
-                        buffer?.DecrementPendingOutboundBytes(this.size);
+                        ctx.pipeline.DecrementPendingOutboundBytes(this.size);
                     }
                     this.WriteAsync(this.ctx, this.msg).LinkOutcome(this.promise);
                 }
@@ -1048,7 +1085,8 @@ namespace DotNetty.Transport.Channels
 
             protected virtual Task WriteAsync(AbstractChannelHandlerContext ctx, object msg) => ctx.InvokeWriteAsync(msg);
         }
-        sealed class WriteTask : AbstractWriteTask {
+        sealed class WriteTask : AbstractWriteTask
+        {
 
             static readonly ThreadLocalPool<WriteTask> Recycler = new ThreadLocalPool<WriteTask>(handle => new WriteTask(handle));
 
@@ -1066,12 +1104,13 @@ namespace DotNetty.Transport.Channels
         }
 
         sealed class WriteAndFlushTask : AbstractWriteTask
-    {
+        {
 
             static readonly ThreadLocalPool<WriteAndFlushTask> Recycler = new ThreadLocalPool<WriteAndFlushTask>(handle => new WriteAndFlushTask(handle));
 
             public static WriteAndFlushTask NewInstance(
-                    AbstractChannelHandlerContext ctx, object msg,  TaskCompletionSource promise) {
+                    AbstractChannelHandlerContext ctx, object msg, TaskCompletionSource promise)
+            {
                 WriteAndFlushTask task = Recycler.Take();
                 Init(task, ctx, msg, promise);
                 return task;

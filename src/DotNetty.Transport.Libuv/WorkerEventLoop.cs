@@ -8,7 +8,6 @@ namespace DotNetty.Transport.Libuv
 {
     using System;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
@@ -24,7 +23,7 @@ namespace DotNetty.Transport.Libuv
         public WorkerEventLoop(WorkerEventLoopGroup parent)
             : base(parent, null)
         {
-            Contract.Requires(parent != null);
+            if (null == parent) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parent); }
 
             string name = parent.PipeName;
             if (string.IsNullOrEmpty(name))

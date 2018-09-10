@@ -4,7 +4,6 @@
 namespace DotNetty.Common.Concurrency
 {
     using System;
-    using System.Diagnostics.Contracts;
 #if !NET40
     using System.Runtime.CompilerServices;
 #else
@@ -52,7 +51,7 @@ namespace DotNetty.Common.Concurrency
 
         int IComparable<IScheduledRunnable>.CompareTo(IScheduledRunnable other)
         {
-            Contract.Requires(other != null);
+            if (null == other) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
             return this.Deadline.CompareTo(other.Deadline);
         }

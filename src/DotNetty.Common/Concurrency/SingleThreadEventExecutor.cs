@@ -6,7 +6,6 @@ namespace DotNetty.Common.Concurrency
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -15,9 +14,9 @@ namespace DotNetty.Common.Concurrency
     using Thread = XThread;
 
     /// <summary>
-    /// <see cref="IEventExecutor"/> backed by a single thread.
+    /// <see cref="IOrderedEventExecutor"/> backed by a single thread.
     /// </summary>
-    public partial class SingleThreadEventExecutor : AbstractScheduledEventExecutor
+    public partial class SingleThreadEventExecutor : AbstractScheduledEventExecutor, IOrderedEventExecutor
     {
 #pragma warning disable 420 // referencing volatile fields is fine in Interlocked methods
 
@@ -35,7 +34,7 @@ namespace DotNetty.Common.Concurrency
 
         readonly IQueue<IRunnable> taskQueue;
         readonly Thread thread;
-        volatile int executionState = ST_NOT_STARTED;
+        int executionState = ST_NOT_STARTED;
         readonly PreciseTimeSpan preciseBreakoutInterval;
         PreciseTimeSpan lastExecutionTime;
         readonly ManualResetEventSlim emptyEvent = new ManualResetEventSlim(false, 1);
@@ -90,41 +89,39 @@ namespace DotNetty.Common.Concurrency
         {
             this.SetCurrentExecutor(this);
 
-            Task.Factory.StartNew(
-                () =>
+            Task.Factory.StartNew(LoopCore, CancellationToken.None, TaskCreationOptions.None, this.scheduler);
+        }
+
+        void LoopCore()
+        {
+            try
+            {
+                Interlocked.CompareExchange(ref this.executionState, ST_STARTED, ST_NOT_STARTED);
+                while (!this.ConfirmShutdown())
                 {
-                    try
-                    {
-                        Interlocked.CompareExchange(ref this.executionState, ST_STARTED, ST_NOT_STARTED);
-                        while (!this.ConfirmShutdown())
-                        {
-                            this.RunAllTasks(this.preciseBreakoutInterval);
-                        }
-                        this.CleanupAndTerminate(true);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.ExecutionLoopFailed(this.thread, ex);
-                        this.executionState = ST_TERMINATED;
-                        this.terminationCompletionSource.TrySetException(ex);
-                    }
-                },
-                CancellationToken.None,
-                TaskCreationOptions.None,
-                this.scheduler);
+                    this.RunAllTasks(this.preciseBreakoutInterval);
+                }
+                this.CleanupAndTerminate(true);
+            }
+            catch (Exception ex)
+            {
+                Logger.ExecutionLoopFailed(this.thread, ex);
+                Interlocked.Exchange(ref this.executionState, ST_TERMINATED);
+                this.terminationCompletionSource.TrySetException(ex);
+            }
         }
 
         /// <inheritdoc cref="IEventExecutor"/>
-        public override bool IsShuttingDown => this.executionState >= ST_SHUTTING_DOWN;
+        public override bool IsShuttingDown => Volatile.Read(ref this.executionState) >= ST_SHUTTING_DOWN;
 
         /// <inheritdoc cref="IEventExecutor"/>
         public override Task TerminationCompletion => this.terminationCompletionSource.Task;
 
         /// <inheritdoc cref="IEventExecutor"/>
-        public override bool IsShutdown => this.executionState >= ST_SHUTDOWN;
+        public override bool IsShutdown => Volatile.Read(ref this.executionState) >= ST_SHUTDOWN;
 
         /// <inheritdoc cref="IEventExecutor"/>
-        public override bool IsTerminated => this.executionState == ST_TERMINATED;
+        public override bool IsTerminated => Volatile.Read(ref this.executionState) == ST_TERMINATED;
 
         /// <inheritdoc cref="IEventExecutor"/>
         public override bool IsInEventLoop(Thread t) => this.thread == t;
@@ -142,7 +139,7 @@ namespace DotNetty.Common.Concurrency
 
         protected void WakeUp(bool inEventLoop)
         {
-            if (!inEventLoop || (this.executionState == ST_SHUTTING_DOWN))
+            if (!inEventLoop || (Volatile.Read(ref this.executionState) == ST_SHUTTING_DOWN))
             {
                 this.Execute(WAKEUP_TASK);
             }
@@ -152,12 +149,12 @@ namespace DotNetty.Common.Concurrency
         /// Adds an <see cref="Action"/> which will be executed on shutdown of this instance.
         /// </summary>
         /// <param name="action">The <see cref="Action"/> to run on shutdown.</param>
-        public void AddShutdownHook(Action action) 
+        public void AddShutdownHook(Action action)
         {
-            if (this.InEventLoop) 
+            if (this.InEventLoop)
             {
                 this.shutdownHooks.Add(action);
-            } 
+            }
             else
             {
                 this.Execute(AddShutdownHookAction, this.shutdownHooks, action);
@@ -169,59 +166,59 @@ namespace DotNetty.Common.Concurrency
         /// executed on shutdown of this instance.
         /// </summary>
         /// <param name="action">The <see cref="Action"/> to remove.</param>
-        public void RemoveShutdownHook(Action action) 
+        public void RemoveShutdownHook(Action action)
         {
-            if (this.InEventLoop) 
+            if (this.InEventLoop)
             {
                 this.shutdownHooks.Remove(action);
-            } 
+            }
             else
             {
                 this.Execute(RemoveShutdownHookAction, this.shutdownHooks, action);
             }
         }
 
-        bool RunShutdownHooks() 
+        bool RunShutdownHooks()
         {
             bool ran = false;
-            
+
             // Note shutdown hooks can add / remove shutdown hooks.
-            while (this.shutdownHooks.Count > 0) 
+            while (this.shutdownHooks.Count > 0)
             {
                 var copy = this.shutdownHooks.ToArray();
                 this.shutdownHooks.Clear();
 
                 for (var i = 0; i < copy.Length; i++)
                 {
-                    try 
+                    try
                     {
                         copy[i]();
-                    } 
-                    catch (Exception ex) 
+                    }
+                    catch (Exception ex)
                     {
                         Logger.ShutdownHookRaisedAnException(ex);
-                    } 
-                    finally 
+                    }
+                    finally
                     {
                         ran = true;
                     }
                 }
             }
 
-            if (ran) 
+            if (ran)
             {
                 this.lastExecutionTime = PreciseTimeSpan.FromStart;
             }
 
             return ran;
         }
-        
+
 
         /// <inheritdoc cref="IEventExecutor"/>
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
         {
-            Contract.Requires(quietPeriod >= TimeSpan.Zero);
-            Contract.Requires(timeout >= quietPeriod);
+            if (quietPeriod < TimeSpan.Zero) { ThrowHelper.ThrowArgumentException_MustBeGreaterThanOrEquelToZero(quietPeriod); }
+            if (timeout < quietPeriod) { ThrowHelper.ThrowArgumentException_MustBeGreaterThanQuietPeriod(timeout, quietPeriod); }
 
             if (this.IsShuttingDown)
             {
@@ -230,8 +227,9 @@ namespace DotNetty.Common.Concurrency
 
             bool inEventLoop = this.InEventLoop;
             bool wakeup;
+            int thisState = Volatile.Read(ref this.executionState);
             int oldState;
-            while (true)
+            do
             {
                 if (this.IsShuttingDown)
                 {
@@ -239,7 +237,7 @@ namespace DotNetty.Common.Concurrency
                 }
                 int newState;
                 wakeup = true;
-                oldState = this.executionState;
+                oldState = thisState;
                 if (inEventLoop)
                 {
                     newState = ST_SHUTTING_DOWN;
@@ -258,11 +256,8 @@ namespace DotNetty.Common.Concurrency
                             break;
                     }
                 }
-                if (Interlocked.CompareExchange(ref this.executionState, newState, oldState) == oldState)
-                {
-                    break;
-                }
-            }
+                thisState = Interlocked.CompareExchange(ref this.executionState, newState, oldState);
+            } while (thisState != oldState);
             this.gracefulShutdownQuietPeriod = PreciseTimeSpan.FromTimeSpan(quietPeriod);
             this.gracefulShutdownTimeout = PreciseTimeSpan.FromTimeSpan(timeout);
 
@@ -287,7 +282,7 @@ namespace DotNetty.Common.Concurrency
                 return false;
             }
 
-            Contract.Assert(this.InEventLoop, "must be invoked from an event loop");
+            Debug.Assert(this.InEventLoop, "must be invoked from an event loop");
 
             this.CancelScheduledTasks();
 
@@ -334,21 +329,23 @@ namespace DotNetty.Common.Concurrency
 
         protected void CleanupAndTerminate(bool success)
         {
-            while (true)
+            var thisState = Volatile.Read(ref this.executionState);
+            int oldState;
+            do
             {
-                int oldState = this.executionState;
-                if ((oldState >= ST_SHUTTING_DOWN) || (Interlocked.CompareExchange(ref this.executionState, ST_SHUTTING_DOWN, oldState) == oldState))
-                {
-                    break;
-                }
-            }
+                oldState = thisState;
+
+                if ((oldState >= ST_SHUTTING_DOWN)) { break; }
+
+                thisState = Interlocked.CompareExchange(ref this.executionState, ST_SHUTTING_DOWN, oldState);
+            } while (thisState != oldState);
 
             // Check if confirmShutdown() was called at the end of the loop.
             if (success && (this.gracefulShutdownStartTime == PreciseTimeSpan.Zero))
             {
                 Logger.BuggyImplementation();
-                    //$"Buggy {typeof(IEventExecutor).Name} implementation; {typeof(SingleThreadEventExecutor).Name}.ConfirmShutdown() must be called "
-                    //+ "before run() implementation terminates.");
+                //$"Buggy {typeof(IEventExecutor).Name} implementation; {typeof(SingleThreadEventExecutor).Name}.ConfirmShutdown() must be called "
+                //+ "before run() implementation terminates.");
             }
 
             try
@@ -468,7 +465,7 @@ namespace DotNetty.Common.Concurrency
 
         IRunnable PollTask()
         {
-            Contract.Assert(this.InEventLoop);
+            Debug.Assert(this.InEventLoop);
 
             IRunnable task;
             if (!this.taskQueue.TryDequeue(out task))

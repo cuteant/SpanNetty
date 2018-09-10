@@ -5,7 +5,6 @@ namespace DotNetty.Codecs
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
@@ -16,7 +15,7 @@ namespace DotNetty.Codecs
 
         public DatagramPacketDecoder(MessageToMessageDecoder<IByteBuffer> decoder)
         {
-            Contract.Requires(decoder != null);
+            if (null == decoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoder); }
 
             this.decoder = decoder;
         }

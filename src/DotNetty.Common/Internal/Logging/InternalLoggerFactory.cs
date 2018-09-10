@@ -4,7 +4,6 @@
 namespace DotNetty.Common.Internal.Logging
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Threading;
     using Microsoft.Extensions.Logging;
 
@@ -70,9 +69,9 @@ namespace DotNetty.Common.Internal.Logging
             }
             set
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
-                Volatile.Write(ref defaultFactory, value);
+                Interlocked.Exchange(ref defaultFactory, value);
             }
         }
 

@@ -4,6 +4,8 @@
 namespace DotNetty.Transport.Libuv
 {
     using System;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
@@ -11,6 +13,12 @@ namespace DotNetty.Transport.Libuv
         where TChannel : NativeChannel<TChannel, TUnsafe>
         where TUnsafe : NativeChannel<TChannel, TUnsafe>.NativeChannelUnsafe, new()
     {
+        private int State
+        {
+            [MethodImpl(InlineMethod.Value)]
+            get => Volatile.Read(ref _state);
+            set => Interlocked.Exchange(ref _state, value);
+        }
     }
 
     internal interface INativeUnsafe

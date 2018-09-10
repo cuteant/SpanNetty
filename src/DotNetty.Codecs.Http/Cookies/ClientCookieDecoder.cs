@@ -5,8 +5,6 @@ namespace DotNetty.Codecs.Http.Cookies
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using DotNetty.Common.Utilities;
 
     public sealed class ClientCookieDecoder : CookieDecoder
@@ -27,7 +25,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public ICookie Decode(string header)
         {
-            Contract.Requires(header != null);
+            if (null == header) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.header); }
 
             int headerLen = header.Length;
             if (headerLen == 0)

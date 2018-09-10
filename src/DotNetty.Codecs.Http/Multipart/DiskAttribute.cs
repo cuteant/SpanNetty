@@ -4,11 +4,9 @@
 namespace DotNetty.Codecs.Http.Multipart
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Text;
     using DotNetty.Buffers;
-    using DotNetty.Transport.Channels;
 
     public class DiskAttribute : AbstractDiskHttpData, IAttribute
     {
@@ -59,7 +57,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             set
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
                 byte[] bytes = this.Charset.GetBytes(value);
                 CheckSize(bytes.Length, this.MaxSize);

@@ -11,7 +11,6 @@ namespace DotNetty.Transport.Channels
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Threading;
     using DotNetty.Buffers;
     using DotNetty.Common;
@@ -45,7 +44,7 @@ namespace DotNetty.Transport.Channels
 
         long totalPendingSize;
 
-        volatile int unwritable;
+        int unwritable;
 
         internal ChannelOutboundBuffer(IChannel channel)
         {
@@ -65,14 +64,13 @@ namespace DotNetty.Transport.Channels
             if (this.tailEntry == null)
             {
                 this.flushedEntry = null;
-                this.tailEntry = entry;
             }
             else
             {
                 Entry tail = this.tailEntry;
                 tail.Next = entry;
-                this.tailEntry = entry;
             }
+            this.tailEntry = entry;
             if (this.unflushedEntry == null)
             {
                 this.unflushedEntry = entry;
@@ -80,7 +78,7 @@ namespace DotNetty.Transport.Channels
 
             // increment pending bytes after adding message to the unflushed arrays.
             // See https://github.com/netty/netty/issues/1619
-            this.IncrementPendingOutboundBytes(size, false);
+            this.IncrementPendingOutboundBytes(entry.PendingSize, false);
         }
 
         /// <summary>
@@ -134,7 +132,7 @@ namespace DotNetty.Transport.Channels
             }
 
             long newWriteBufferSize = Interlocked.Add(ref this.totalPendingSize, size);
-            if (newWriteBufferSize >= this.channel.Configuration.WriteBufferHighWaterMark)
+            if (newWriteBufferSize > this.channel.Configuration.WriteBufferHighWaterMark)
             {
                 this.SetUnwritable(invokeLater);
             }
@@ -155,8 +153,7 @@ namespace DotNetty.Transport.Channels
             }
 
             long newWriteBufferSize = Interlocked.Add(ref this.totalPendingSize, -size);
-            if (notifyWritability && (newWriteBufferSize == 0
-                || newWriteBufferSize <= this.channel.Configuration.WriteBufferLowWaterMark))
+            if (notifyWritability && newWriteBufferSize <= this.channel.Configuration.WriteBufferLowWaterMark)
             {
                 this.SetWritable(invokeLater);
             }
@@ -175,7 +172,7 @@ namespace DotNetty.Transport.Channels
         {
             // todo: support progress report?
             //Entry e = this.flushedEntry;
-            //Contract.Assert(e != null);
+            //Debug.Assert(e != null);
             //var p = e.promise;
             //if (p is ChannelProgressivePromise)
             //{
@@ -288,7 +285,7 @@ namespace DotNetty.Transport.Channels
                 object msg = this.Current;
                 if (!(msg is IByteBuffer buf))
                 {
-                    Contract.Assert(writtenBytes == 0);
+                    Debug.Assert(writtenBytes == 0);
                     break;
                 }
 
@@ -372,12 +369,13 @@ namespace DotNetty.Transport.Channels
                     {
                         if (maxBytes - readableBytes < ioBufferSize && nioBufferCount != 0)
                         {
-                            // If the nioBufferSize + readableBytes will overflow an Integer we stop populate the
-                            // ByteBuffer array. This is done as bsd/osx don't allow to write more bytes then
-                            // Integer.MAX_VALUE with one writev(...) call and so will return 'EINVAL', which will
-                            // raise an IOException. On Linux it may work depending on the
-                            // architecture and kernel but to be safe we also enforce the limit here.
-                            // This said writing more the Integer.MAX_VALUE is not a good idea anyway.
+                            // If the nioBufferSize + readableBytes will overflow maxBytes, and there is at least one entry
+                            // we stop populate the ByteBuffer array. This is done for 2 reasons:
+                            // 1. bsd/osx don't allow to write more bytes then Integer.MAX_VALUE with one writev(...) call
+                            // and so will return 'EINVAL', which will raise an IOException. On Linux it may work depending
+                            // on the architecture and kernel but to be safe we also enforce the limit here.
+                            // 2. There is no sense in putting more data in the array than is likely to be accepted by the
+                            // OS.
                             //
                             // See also:
                             // - https://www.freebsd.org/cgi/man.cgi?query=write&sektion=2
@@ -451,7 +449,7 @@ namespace DotNetty.Transport.Channels
         /// did not exceed the write watermark of the <see cref="IChannel"/> and no user-defined writability flag
         /// (<see cref="SetUserDefinedWritability(int, bool)"/>) has been set to <c>false</c>.
         /// </summary>
-        public bool IsWritable => this.unwritable == 0;
+        public bool IsWritable => Volatile.Read(ref this.unwritable) == 0;
 
         /// <summary>
         /// Returns <c>true</c> if and only if the user-defined writability flag at the specified index is set to
@@ -461,7 +459,7 @@ namespace DotNetty.Transport.Channels
         /// <returns>
         /// <c>true</c> if the user-defined writability flag at the specified index is set to <c>true</c>.
         /// </returns>
-        public bool GetUserDefinedWritability(int index) => (this.unwritable & WritabilityMask(index)) == 0;
+        public bool GetUserDefinedWritability(int index) => (Volatile.Read(ref this.unwritable) & WritabilityMask(index)) == 0;
 
         /// <summary>
         /// Sets a user-defined writability flag at the specified index.
@@ -501,13 +499,15 @@ namespace DotNetty.Transport.Channels
         void ClearUserDefinedWritability(int index)
         {
             int mask = WritabilityMask(index);
+            var prevValue = Volatile.Read(ref this.unwritable);
             while (true)
             {
-                int oldValue = this.unwritable;
-                int newValue = oldValue | mask;
-                if (Interlocked.CompareExchange(ref this.unwritable, newValue, oldValue) == oldValue)
+                int oldValue = prevValue;
+                int newValue = prevValue | mask;
+                prevValue = Interlocked.CompareExchange(ref this.unwritable, newValue, prevValue);
+                if (prevValue == oldValue)
                 {
-                    if (oldValue == 0 && newValue != 0)
+                    if (prevValue == 0 && newValue != 0)
                     {
                         this.FireChannelWritabilityChanged(true);
                     }
@@ -527,13 +527,15 @@ namespace DotNetty.Transport.Channels
 
         void SetWritable(bool invokeLater)
         {
+            var prevValue = Volatile.Read(ref this.unwritable);
             while (true)
             {
-                int oldValue = this.unwritable;
-                int newValue = oldValue & ~1;
-                if (Interlocked.CompareExchange(ref this.unwritable, newValue, oldValue) == oldValue)
+                int oldValue = prevValue;
+                int newValue = prevValue & ~1;
+                prevValue = Interlocked.CompareExchange(ref this.unwritable, newValue, prevValue);
+                if (prevValue == oldValue)
                 {
-                    if (oldValue != 0 && newValue == 0)
+                    if (prevValue != 0 && newValue == 0)
                     {
                         this.FireChannelWritabilityChanged(invokeLater);
                     }
@@ -544,13 +546,15 @@ namespace DotNetty.Transport.Channels
 
         void SetUnwritable(bool invokeLater)
         {
+            var prevValue = Volatile.Read(ref this.unwritable);
             while (true)
             {
-                int oldValue = this.unwritable;
-                int newValue = oldValue | 1;
-                if (Interlocked.CompareExchange(ref this.unwritable, newValue, oldValue) == oldValue)
+                int oldValue = prevValue;
+                int newValue = prevValue | 1;
+                prevValue = Interlocked.CompareExchange(ref this.unwritable, newValue, prevValue);
+                if (prevValue == oldValue)
                 {
-                    if (oldValue == 0 && newValue != 0)
+                    if (prevValue == 0 && newValue != 0)
                     {
                         this.FireChannelWritabilityChanged(invokeLater);
                     }
@@ -703,7 +707,7 @@ namespace DotNetty.Transport.Channels
         /// </returns>
         public long BytesBeforeUnwritable()
         {
-            long bytes = this.channel.Configuration.WriteBufferHighWaterMark - this.totalPendingSize;
+            long bytes = this.channel.Configuration.WriteBufferHighWaterMark - Volatile.Read(ref this.totalPendingSize);
             // If bytes is negative we know we are not writable, but if bytes is non-negative we have to check writability.
             // Note that totalPendingSize and isWritable() use different volatile variables that are not synchronized
             // together. totalPendingSize will be updated before isWritable().
@@ -724,7 +728,7 @@ namespace DotNetty.Transport.Channels
         /// </returns>
         public long BytesBeforeWritable()
         {
-            long bytes = this.totalPendingSize - this.channel.Configuration.WriteBufferLowWaterMark;
+            long bytes = Volatile.Read(ref this.totalPendingSize) - this.channel.Configuration.WriteBufferLowWaterMark;
             // If bytes is negative we know we are writable, but if bytes is non-negative we have to check writability.
             // Note that totalPendingSize and isWritable() use different volatile variables that are not synchronized
             // together. totalPendingSize will be updated before isWritable().
@@ -745,7 +749,7 @@ namespace DotNetty.Transport.Channels
         /// </param>
         public void ForEachFlushedMessage(IMessageProcessor processor)
         {
-            Contract.Requires(processor != null);
+            if (null == processor) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.processor); }
 
             Entry entry = this.flushedEntry;
             if (entry == null)

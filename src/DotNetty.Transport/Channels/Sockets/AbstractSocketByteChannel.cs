@@ -44,8 +44,9 @@ namespace DotNetty.Transport.Channels.Sockets
 
             void CloseOnRead()
             {
-                this.Channel.ShutdownInput();
-                if (this.channel.Open)
+                var ch = this.channel;
+                ch.ShutdownInput();
+                if (ch.Open)
                 {
                     // todo: support half-closure
                     //if (bool.TrueString.Equals(this.channel.Configuration.getOption(ChannelOption.ALLOW_HALF_CLOSURE))) {
@@ -64,7 +65,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     if (byteBuf.IsReadable())
                     {
-                        this.Channel.ReadPending = false;
+                        this.channel.ReadPending = false;
                         pipeline.FireChannelRead(byteBuf);
                     }
                     else
@@ -83,7 +84,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
             public override void FinishRead(SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
             {
-                var ch = this.Channel;
+                var ch = this.channel;
                 if ((ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active) == 0)
                 {
                     return; // read was signaled as a result of channel closure
@@ -115,7 +116,7 @@ namespace DotNetty.Transport.Channels.Sockets
                         }
 
                         allocHandle.IncMessagesRead(1);
-                        this.Channel.ReadPending = false;
+                        ch.ReadPending = false;
 
                         pipeline.FireChannelRead(byteBuf);
                         byteBuf = null;

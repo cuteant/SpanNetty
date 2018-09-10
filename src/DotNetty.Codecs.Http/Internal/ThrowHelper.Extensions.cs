@@ -2,7 +2,6 @@
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using DotNetty.Codecs;
 using DotNetty.Codecs.Compression;
 using DotNetty.Codecs.Http.Cookies;
 using DotNetty.Codecs.Http.Multipart;
@@ -18,6 +17,7 @@ namespace DotNetty.Codecs.Http
     internal enum ExceptionArgument
     {
         array,
+        channel,
         assembly,
         buffer,
         destination,
@@ -93,6 +93,39 @@ namespace DotNetty.Codecs.Http
         configList,
         uri,
         queryString,
+        header,
+        cookie,
+        cookies,
+        inputStream,
+        filename,
+        contentType,
+        request,
+        charset,
+        factory,
+        encoding,
+        fileStream,
+        data,
+        stringValue,
+        fileName,
+        extensionHandshakers,
+        parameters,
+        input,
+        trailingHeader,
+        content,
+        trailingHeaders,
+        version,
+        headers,
+        status,
+        upgradeCodec,
+        sourceCodec,
+        contentEncoder,
+        targetContentEncoding,
+        upgradeCodecFactory,
+        maxParams,
+        maxInitialLineLength,
+        maxHeaderSize,
+        maxChunkSize,
+        contentSizeThreshold,
     }
 
     #endregion
@@ -133,6 +166,46 @@ namespace DotNetty.Codecs.Http
         #endregion
 
         #region -- ArgumentException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(long value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(long value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_Positive(ExceptionArgument argument)
@@ -341,6 +414,26 @@ namespace DotNetty.Codecs.Http
             ArgumentException GetException()
             {
                 return new ArgumentException($"compressionLevel: {compressionLevel} (expected: 0-9)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_WindowBits(int windowBits)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("windowBits: " + windowBits + " (expected: 9-15)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_MemLevel(int memLevel)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("memLevel: " + memLevel + " (expected: 1-9)");
             }
         }
 

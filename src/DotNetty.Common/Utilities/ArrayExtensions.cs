@@ -4,7 +4,7 @@
 namespace DotNetty.Common.Utilities
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using DotNetty.Common.Internal;
 
     /// <summary>
     ///     Extension methods used for slicing byte arrays
@@ -15,7 +15,7 @@ namespace DotNetty.Common.Utilities
 
         public static T[] Slice<T>(this T[] array, int length)
         {
-            Contract.Requires(array != null);
+            if (null == array) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.array); }
 
             if (length > array.Length)
             {
@@ -26,7 +26,7 @@ namespace DotNetty.Common.Utilities
 
         public static T[] Slice<T>(this T[] array, int index, int length)
         {
-            Contract.Requires(array != null);
+            if (null == array) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.array); }
 
             if (index + length > array.Length)
             {
@@ -41,8 +41,9 @@ namespace DotNetty.Common.Utilities
 
         public static void SetRange<T>(this T[] array, int index, T[] src, int srcIndex, int srcLength)
         {
-            Contract.Requires(array != null);
-            Contract.Requires(src != null);
+            if (null == array) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.array); }
+            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+
             if (index + srcLength > array.Length)
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException_SetRange_Index(index, srcLength, array.Length);
@@ -65,7 +66,10 @@ namespace DotNetty.Common.Utilities
 
         public static void Fill<T>(this T[] array, int offset, int count, T value)
         {
-            Contract.Requires(count + offset <= array.Length);
+            if (MathUtil.IsOutOfBounds(offset, count, array.Length))
+            {
+                ThrowHelper.ThrowIndexOutOfRangeException_Index(offset, count, array.Length);
+            }
 
             for (int i = offset; i < count + offset; i++)
             {

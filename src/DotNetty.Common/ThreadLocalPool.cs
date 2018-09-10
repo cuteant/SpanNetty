@@ -4,7 +4,6 @@
 namespace DotNetty.Common
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
     using System.Threading;
     using Thread = DotNetty.Common.Concurrency.XThread;
@@ -27,7 +26,7 @@ namespace DotNetty.Common
             public void Release<T>(T value)
                 where T : class
             {
-                Contract.Requires(value == this.Value, "value differs from one backed by this handle.");
+                if (value != this.Value) { ThrowHelper.ThrowArgumentException_ValueDiffers(); }
 
                 Stack stack = this.Stack;
                 Thread thread = Thread.CurrentThread;
@@ -65,7 +64,7 @@ namespace DotNetty.Common
                 internal int WriteIndex
                 {
                     get { return Volatile.Read(ref this.writeIndex); }
-                    set { Volatile.Write(ref this.writeIndex, value); }
+                    set { Interlocked.Exchange(ref this.writeIndex, value); }
                 }
 
                 internal Link()
@@ -83,7 +82,7 @@ namespace DotNetty.Common
 
             internal WeakOrderQueue(Stack stack, Thread thread)
             {
-                Contract.Requires(stack != null);
+                if (null == stack) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stack); }
 
                 this.ownerThread = new WeakReference<Thread>(thread);
                 this.head = this.tail = new Link();
@@ -96,7 +95,7 @@ namespace DotNetty.Common
 
             internal void Add(Handle handle)
             {
-                Contract.Requires(handle != null);
+                if (null == handle) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handle); }
 
                 handle.lastRecycledId = this.id;
 
@@ -115,7 +114,7 @@ namespace DotNetty.Common
             internal bool Transfer(Stack dst)
             {
                 // This method must be called by owner thread.
-                Contract.Requires(dst != null);
+                if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
 
                 Link head = this.head;
                 if (head == null)
@@ -204,7 +203,7 @@ namespace DotNetty.Common
             internal WeakOrderQueue HeadQueue
             {
                 get { return Volatile.Read(ref this.headQueue); }
-                set { Volatile.Write(ref this.headQueue, value); }
+                set { Interlocked.Exchange(ref this.headQueue, value); }
             }
 
             internal int Size => this.size;
@@ -239,7 +238,7 @@ namespace DotNetty.Common
 
             internal void Push(Handle item)
             {
-                Contract.Requires(item != null);
+                if (null == item) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.item); }
                 if ((item.recycleId | item.lastRecycledId) != 0)
                 {
                     ThrowHelper.ThrowInvalidOperationException_ReleasedAlready();
@@ -332,7 +331,7 @@ namespace DotNetty.Common
                         // We never unlink the first queue, as we don't want to synchronize on updating the head.
                         if (!cursor.IsEmpty)
                         {
-                            while(true)
+                            while (true)
                             {
                                 if (cursor.Transfer(this))
                                 {
@@ -378,7 +377,7 @@ namespace DotNetty.Common
 
         public ThreadLocalPool(int maxCapacity)
         {
-            Contract.Requires(maxCapacity > 0);
+            if (maxCapacity <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxCapacity, ExceptionArgument.maxCapacity); }
             this.MaxCapacity = maxCapacity;
         }
 
@@ -405,7 +404,7 @@ namespace DotNetty.Common
         public ThreadLocalPool(Func<Handle, T> valueFactory, int maxCapacity, bool preCreate)
             : base(maxCapacity)
         {
-            Contract.Requires(valueFactory != null);
+            if (null == valueFactory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.valueFactory); }
 
             this.preCreate = preCreate;
 

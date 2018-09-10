@@ -6,15 +6,12 @@
 // ReSharper disable ConvertToAutoPropertyWithPrivateSetter
 namespace DotNetty.Codecs.Http.Multipart
 {
-    using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Runtime.CompilerServices;
     using System.Text;
     using System.Text.RegularExpressions;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
-    using DotNetty.Transport.Channels;
 
     public abstract class AbstractHttpData : AbstractReferenceCounted, IHttpData
     {
@@ -30,7 +27,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         protected AbstractHttpData(string name, Encoding charset, long size)
         {
-            Contract.Requires(name != null);
+            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
 
             name = StripPattern.Replace(name, " ");
             name = ReplacePattern.Replace(name, "");
@@ -76,7 +73,7 @@ namespace DotNetty.Codecs.Http.Multipart
             get => this.charset;
             set
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.charset = value;
             }
         }

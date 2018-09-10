@@ -173,13 +173,25 @@ namespace DotNetty.Transport
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void FailedToMarkAPromiseAsSuccess(this IInternalLogger logger, TaskCompletionSource promise)
         {
-            logger.Warn($"Failed to mark a promise as success because it is done already: {promise}");
+            logger.Warn($"Failed to mark a promise as success because it has succeeded already: {promise}");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void FailedToMarkAPromiseAsSuccessFailed(this IInternalLogger logger, TaskCompletionSource promise, Exception err)
+        {
+            logger.Warn($"Failed to mark a promise as success because it has failed already: {promise}, unnotified cause {err.ToString()}");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void FailedToMarkAPromiseAsFailure(this IInternalLogger logger, TaskCompletionSource promise, Exception cause)
         {
-            logger.Warn($"Failed to mark a promise as failure because it's done already: {promise}", cause);
+            logger.Warn($"Failed to mark a promise as failure because it has succeeded already: {promise}", cause);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void FailedToMarkAPromiseAsFailureFailed(this IInternalLogger logger, TaskCompletionSource promise, Exception cause, Exception err)
+        {
+            logger.Warn($"Failed to mark a promise as failure because it has failed already: {promise}, unnotified cause {err.ToString()}", cause);
         }
     }
 }

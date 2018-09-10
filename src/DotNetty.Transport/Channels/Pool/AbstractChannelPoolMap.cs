@@ -1,22 +1,29 @@
-﻿#if !NET40
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Transport.Channels.Pool
 {
     using System.Collections.Concurrent;
-    using System.Diagnostics.Contracts;
+    using System.Collections.Generic;
 
     public abstract class AbstractChannelPoolMap<TKey, TPool> : IChannelPoolMap<TKey, TPool>
-        //, Iterable<Entry<K, P>> 
         where TPool : IChannelPool
-
     {
-        readonly ConcurrentDictionary<TKey, TPool> map = new ConcurrentDictionary<TKey, TPool>();
+        readonly ConcurrentDictionary<TKey, TPool> map;
+
+        public AbstractChannelPoolMap()
+        {
+            this.map = new ConcurrentDictionary<TKey, TPool>();
+        }
+
+        public AbstractChannelPoolMap(IEqualityComparer<TKey> comparer)
+        {
+            this.map = new ConcurrentDictionary<TKey, TPool>(comparer);
+        }
 
         public TPool Get(TKey key)
         {
-            Contract.Requires(key != null);
+            if (null == key) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
 
             if (!this.map.TryGetValue(key, out TPool pool))
             {
@@ -40,7 +47,7 @@ namespace DotNetty.Transport.Channels.Pool
         /// <returns><c>true</c> if removed, otherwise <c>false</c>.</returns>
         public bool Remove(TKey key)
         {
-            Contract.Requires(key != null);
+            if (null == key) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
             if (this.map.TryRemove(key, out TPool pool))
             {
                 pool.Dispose();
@@ -65,7 +72,7 @@ namespace DotNetty.Transport.Channels.Pool
 
         public bool Contains(TKey key)
         {
-            Contract.Requires(key != null);
+            if (null == key) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
             return this.map.ContainsKey(key);
         }
 
@@ -83,4 +90,3 @@ namespace DotNetty.Transport.Channels.Pool
         }
     }
 }
-#endif

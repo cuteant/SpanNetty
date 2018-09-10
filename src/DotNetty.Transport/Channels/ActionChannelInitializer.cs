@@ -4,7 +4,6 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
-    using System.Diagnostics.Contracts;
     using DotNetty.Common.Utilities;
 
     public sealed class ActionChannelInitializer<T> : ChannelInitializer<T>
@@ -14,7 +13,7 @@ namespace DotNetty.Transport.Channels
 
         public ActionChannelInitializer(Action<T> initializationAction)
         {
-            Contract.Requires(initializationAction != null);
+            if (null == initializationAction) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.initializationAction); }
 
             this.initializationAction = initializationAction;
         }

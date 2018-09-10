@@ -5,7 +5,7 @@ namespace DotNetty.Transport.Channels
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Threading.Tasks;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
@@ -33,7 +33,7 @@ namespace DotNetty.Transport.Channels
 
         public BatchingPendingWriteQueue(IChannelHandlerContext ctx, int maxSize)
         {
-            Contract.Requires(ctx != null);
+            if (null == ctx) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ctx); }
 
             this.ctx = ctx;
             this.maxSize = maxSize;
@@ -46,7 +46,7 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                Contract.Assert(this.ctx.Executor.InEventLoop);
+                Debug.Assert(this.ctx.Executor.InEventLoop);
 
                 return this.head == null;
             }
@@ -57,7 +57,7 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                Contract.Assert(this.ctx.Executor.InEventLoop);
+                Debug.Assert(this.ctx.Executor.InEventLoop);
 
                 return this.size;
             }
@@ -66,8 +66,8 @@ namespace DotNetty.Transport.Channels
         /// <summary>Add the given <c>msg</c> and returns <see cref="Task" /> for completion of processing <c>msg</c>.</summary>
         public Task Add(object msg)
         {
-            Contract.Assert(this.ctx.Executor.InEventLoop);
-            Contract.Requires(msg != null);
+            Debug.Assert(this.ctx.Executor.InEventLoop);
+            if (null == msg) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
 
             int messageSize = this.estimatorHandle.Size(msg);
             if (messageSize < 0)
@@ -112,8 +112,8 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         public void RemoveAndFailAll(Exception cause)
         {
-            Contract.Assert(this.ctx.Executor.InEventLoop);
-            Contract.Requires(cause != null);
+            Debug.Assert(this.ctx.Executor.InEventLoop);
+            if (null == cause) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
 
             // Guard against re-entrance by directly reset
             PendingWrite write = this.head;
@@ -139,8 +139,8 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         public void RemoveAndFail(Exception cause)
         {
-            Contract.Assert(this.ctx.Executor.InEventLoop);
-            Contract.Requires(cause != null);
+            Debug.Assert(this.ctx.Executor.InEventLoop);
+            if (null == cause) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
 
             PendingWrite write = this.head;
 
@@ -164,7 +164,7 @@ namespace DotNetty.Transport.Channels
         /// </returns>
         public Task RemoveAndWriteAllAsync()
         {
-            Contract.Assert(this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx.Executor.InEventLoop);
 
             if (this.size == 1)
             {
@@ -202,7 +202,8 @@ namespace DotNetty.Transport.Channels
 #endif
         }
 
-        void AssertEmpty() => Contract.Assert(this.tail == null && this.head == null && this.size == 0);
+        [Conditional("DEBUG")]
+        void AssertEmpty() => Debug.Assert(this.tail == null && this.head == null && this.size == 0);
 
         /// <summary>
         ///     Removes a pending write operation and performs it via
@@ -214,7 +215,7 @@ namespace DotNetty.Transport.Channels
         /// </returns>
         public Task RemoveAndWriteAsync()
         {
-            Contract.Assert(this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx.Executor.InEventLoop);
 
             PendingWrite write = this.head;
             if (write == null)
@@ -234,7 +235,7 @@ namespace DotNetty.Transport.Channels
         /// <returns><see cref="TaskCompletionSource" /> of the pending write or <c>null</c> if the queue is empty.</returns>
         public TaskCompletionSource Remove()
         {
-            Contract.Assert(this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx.Executor.InEventLoop);
 
             PendingWrite write = this.head;
             if (write == null)
@@ -254,7 +255,7 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                Contract.Assert(this.ctx.Executor.InEventLoop);
+                Debug.Assert(this.ctx.Executor.InEventLoop);
 
                 return this.head?.Messages;
             }
@@ -264,7 +265,7 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                Contract.Assert(this.ctx.Executor.InEventLoop);
+                Debug.Assert(this.ctx.Executor.InEventLoop);
 
                 return this.head?.Size;
             }
@@ -303,7 +304,7 @@ namespace DotNetty.Transport.Channels
                 {
                     this.head = next;
                     this.size--;
-                    Contract.Assert(this.size > 0);
+                    Debug.Assert(this.size > 0);
                 }
             }
 

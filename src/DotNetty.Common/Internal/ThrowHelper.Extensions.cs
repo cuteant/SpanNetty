@@ -12,8 +12,12 @@ namespace DotNetty.Common
     internal enum ExceptionArgument
     {
         array,
+        chars,
         assembly,
+        argArray,
         buffer,
+        increment,
+        decrement,
         destination,
         key,
         obj,
@@ -73,6 +77,26 @@ namespace DotNetty.Common
         newSize,
         expression,
         task,
+        action,
+        dst,
+        e,
+        src,
+        seq,
+        charSequence,
+        sequence,
+        delimiters,
+        firstNameComponent,
+        secondNameComponent,
+        comparer,
+        builder,
+        start,
+        end,
+        resourceType,
+        samplingInterval,
+        thread,
+        stack,
+        handle,
+        maxCapacity,
     }
 
     #endregion
@@ -115,7 +139,7 @@ namespace DotNetty.Common
         #region -- ArgumentException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowArgumentException(string name)
+        internal static void ThrowArgumentException(string name)
         {
             throw GetException();
             ArgumentException GetException()
@@ -125,7 +149,47 @@ namespace DotNetty.Common
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowArgumentException_MustBeGreaterThanZero(TimeSpan tickInterval)
+        internal static void ThrowArgumentException_Positive(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(long value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(long value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_MustBeGreaterThanZero(TimeSpan tickInterval)
         {
             throw GetException();
             ArgumentException GetException()
@@ -135,7 +199,7 @@ namespace DotNetty.Common
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowArgumentException_MustBeGreaterThanZero(int ticksPerWheel)
+        internal static void ThrowArgumentException_MustBeGreaterThanZero(int ticksPerWheel)
         {
             throw GetException();
             ArgumentException GetException()
@@ -145,7 +209,37 @@ namespace DotNetty.Common
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowArgumentException_MustBeLessThanOrEqualTo()
+        internal static void ThrowArgumentException_MustBeGreaterThanOrEquelToZero(TimeSpan quietPeriod)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{nameof(quietPeriod)} must be greater than 0: {quietPeriod}");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_MustBeGreaterThanQuietPeriod(TimeSpan timeout, TimeSpan quietPeriod)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("timeout: " + timeout + " (expected >= quietPeriod (" + quietPeriod + "))");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_ValueDiffers()
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("value differs from one backed by this handle.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_MustBeLessThanOrEqualTo()
         {
             throw GetException();
             ArgumentException GetException()
@@ -179,7 +273,7 @@ namespace DotNetty.Common
         #region -- ArgumentOutOfRangeException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ThrowArgumentOutOfRangeException_MustBeGreaterThan(int ticksPerWheel)
+        internal static void ThrowArgumentOutOfRangeException_MustBeGreaterThan(int ticksPerWheel)
         {
             throw GetException();
             ArgumentOutOfRangeException GetException()
@@ -188,6 +282,37 @@ namespace DotNetty.Common
                     $"{nameof(ticksPerWheel)} may not be greater than 2^30: {ticksPerWheel}");
             }
         }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_StartIndex(ExceptionArgument argument)
+        {
+            throw GetArgumentOutOfRangeException();
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), "StartIndex cannot be less than zero.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_EndIndexLessThanStartIndex()
+        {
+            throw GetArgumentOutOfRangeException();
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException("end", "EndIndex cannot be less than StartIndex.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument argument)
+        {
+            throw GetArgumentOutOfRangeException();
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)} must be less than length of char sequence.");
+            }
+        }
+
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentOutOfRangeException_Slice(int length, int totalLength)
@@ -382,6 +507,27 @@ namespace DotNetty.Common
         #endregion
 
         #region -- IndexOutOfRangeException --
+
+        internal static void ThrowIndexOutOfRangeException_Start(int start, int length, int count)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("expected: 0 <= start({0}) <= start + length({1}) <= value.length({2})", start, length, count));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_Index(int index, int length, int capacity)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("index: {0}, length: {1} (expected: range(0, {2}))", index, length, capacity));
+            }
+        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowIndexOutOfRangeException_ParseChar(int start)

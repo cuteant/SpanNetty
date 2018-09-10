@@ -4,7 +4,6 @@
 namespace DotNetty.Buffers
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Text;
     using System.Threading;
@@ -23,7 +22,7 @@ namespace DotNetty.Buffers
 
         public EmptyByteBuffer(IByteBufferAllocator allocator)
         {
-            Contract.Requires(allocator != null);
+            if (null == allocator) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.allocator); }
 
             this.Allocator = allocator;
         }
@@ -81,7 +80,7 @@ namespace DotNetty.Buffers
 
         public IByteBuffer EnsureWritable(int minWritableBytes)
         {
-            Contract.Requires(minWritableBytes >= 0);
+            if (minWritableBytes < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(minWritableBytes, ExceptionArgument.minWritableBytes); }
 
             if (minWritableBytes != 0)
             {
@@ -92,7 +91,7 @@ namespace DotNetty.Buffers
 
         public int EnsureWritable(int minWritableBytes, bool force)
         {
-            Contract.Requires(minWritableBytes >= 0);
+            if (minWritableBytes < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(minWritableBytes, ExceptionArgument.minWritableBytes); }
 
             if (minWritableBytes == 0)
             {

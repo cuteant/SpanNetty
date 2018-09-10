@@ -3,8 +3,6 @@
 
 namespace DotNetty.Codecs.Http.Multipart
 {
-    using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Text;
     using CuteAnt.Buffers;
@@ -28,7 +26,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override void SetContent(IByteBuffer buffer)
         {
-            Contract.Requires(buffer != null);
+            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 
             long localsize = buffer.ReadableBytes;
             CheckSize(localsize, this.MaxSize);
@@ -45,7 +43,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override void SetContent(Stream inputStream)
         {
-            Contract.Requires(inputStream != null);
+            if (null == inputStream) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.inputStream); }
 
             if (!inputStream.CanRead)
             {
@@ -193,7 +191,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override bool RenameTo(FileStream destination)
         {
-            Contract.Requires(destination != null);
+            if (null == destination) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.destination); }
 
             if (!destination.CanWrite)
             {

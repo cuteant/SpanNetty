@@ -31,18 +31,5 @@ namespace DotNetty.Transport.Channels.Sockets
             this.config = new TcpServerSocketChannelConfig((TServerChannel)this, socket);
             _channelFactory = new TChannelFactory();
         }
-
-        private static bool IsSocketAbortError(SocketError errorCode)
-        {
-            switch (errorCode)
-            {
-                case SocketError.OperationAborted:
-                case SocketError.InvalidArgument:
-                case SocketError.Interrupted:
-                    return true;
-                default:
-                    return false;
-            }
-        }
     }
 }

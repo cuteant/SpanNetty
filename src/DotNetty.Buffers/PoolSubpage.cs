@@ -4,7 +4,6 @@
 namespace DotNetty.Buffers
 {
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using DotNetty.Common.Utilities;
 
     sealed class PoolSubpage<T> : IPoolSubpageMetric
@@ -92,7 +91,7 @@ namespace DotNetty.Buffers
             int bitmapIdx = this.GetNextAvail();
             int q = bitmapIdx.RightUShift(6);
             int r = bitmapIdx & 63;
-            Contract.Assert((this.bitmap[q].RightUShift(r) & 1) == 0);
+            Debug.Assert((this.bitmap[q].RightUShift(r) & 1) == 0);
             this.bitmap[q] |= 1L << r;
 
             if (--this.numAvail == 0)

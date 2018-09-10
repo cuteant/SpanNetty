@@ -4,8 +4,8 @@
 namespace DotNetty.Transport.Channels.Sockets
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Net.Sockets;
+    using System.Threading;
 
     /// <summary>
     /// The default <see cref="IServerSocketChannelConfiguration"/> implementation.
@@ -13,7 +13,7 @@ namespace DotNetty.Transport.Channels.Sockets
     public class DefaultServerSocketChannelConfig : DefaultChannelConfiguration, IServerSocketChannelConfiguration
     {
         protected readonly Socket Socket;
-        volatile int backlog = 200; //todo: NetUtil.SOMAXCONN;
+        int backlog = 200; //todo: NetUtil.SOMAXCONN;
 
         /// <summary>
         ///     Creates a new instance.
@@ -21,7 +21,7 @@ namespace DotNetty.Transport.Channels.Sockets
         public DefaultServerSocketChannelConfig(IServerSocketChannel channel, Socket socket)
             : base(channel)
         {
-            Contract.Requires(socket != null);
+            if (null == socket) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.socket); }
 
             this.Socket = socket;
         }
@@ -146,12 +146,12 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public int Backlog
         {
-            get { return this.backlog; }
+            get { return Volatile.Read(ref this.backlog); }
             set
             {
-                Contract.Requires(value >= 0);
+                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
 
-                this.backlog = value;
+                Interlocked.Exchange(ref this.backlog, value);
             }
         }
 

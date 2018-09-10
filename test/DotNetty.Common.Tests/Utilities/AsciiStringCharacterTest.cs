@@ -25,9 +25,9 @@ namespace DotNetty.Common.Tests.Utilities
             var encodingList = new[]
             {
                 Encoding.ASCII,
-                Encoding.BigEndianUnicode, 
-                Encoding.UTF32, 
-                Encoding.UTF7, 
+                Encoding.BigEndianUnicode,
+                Encoding.UTF32,
+                Encoding.UTF7,
                 Encoding.UTF8,
                 Encoding.Unicode
             };
@@ -285,6 +285,42 @@ namespace DotNetty.Common.Tests.Utilities
             Assert.Equal(1, ((AsciiString)"aabaabaa").IndexOf('a', 1));
             Assert.Equal(3, ((AsciiString)"aabaabaa").IndexOf('a', 2));
             Assert.Equal(3, ((AsciiString)"aabdabaa").IndexOf('d', 1));
+            Assert.Equal(1, new AsciiString("abcd", 1, 2).IndexOf('c', 0));
+            Assert.Equal(2, new AsciiString("abcd", 1, 3).IndexOf('d', 2));
+            Assert.Equal(0, new AsciiString("abcd", 1, 2).IndexOf('b', 0));
+            Assert.Equal(-1, new AsciiString("abcd", 0, 2).IndexOf('c', 0));
+            Assert.Equal(-1, new AsciiString("abcd", 1, 3).IndexOf('a', 0));
+        }
+
+        [Fact]
+        public void IndexOfCharSequence()
+        {
+            Assert.Equal(0, new AsciiString("abcd").IndexOf(new AsciiString("abcd"), 0));
+            Assert.Equal(0, new AsciiString("abcd").IndexOf(new AsciiString("abc"), 0));
+            Assert.Equal(1, new AsciiString("abcd").IndexOf(new AsciiString("bcd"), 0));
+            Assert.Equal(1, new AsciiString("abcd").IndexOf(new AsciiString("bc"), 0));
+            Assert.Equal(1, new AsciiString("abcdabcd").IndexOf(new AsciiString("bcd"), 0));
+            Assert.Equal(0, new AsciiString("abcd", 1, 2).IndexOf(new AsciiString("bc"), 0));
+            Assert.Equal(0, new AsciiString("abcd", 1, 3).IndexOf(new AsciiString("bcd"), 0));
+            Assert.Equal(1, new AsciiString("abcdabcd", 4, 4).IndexOf(new AsciiString("bcd"), 0));
+            Assert.Equal(3, new AsciiString("012345").IndexOf((AsciiString)"345", 3));
+            Assert.Equal(3, new AsciiString("012345").IndexOf((AsciiString)"345", 0));
+
+            // Test with empty string
+            Assert.Equal(0, new AsciiString("abcd").IndexOf(new AsciiString(""), 0));
+            Assert.Equal(1, new AsciiString("abcd").IndexOf(new AsciiString(""), 1));
+            Assert.Equal(3, new AsciiString("abcd", 1, 3).IndexOf(new AsciiString(""), 4));
+
+            // Test not found
+            Assert.Equal(-1, new AsciiString("abcd").IndexOf(new AsciiString("abcde"), 0));
+            Assert.Equal(-1, new AsciiString("abcdbc").IndexOf(new AsciiString("bce"), 0));
+            Assert.Equal(-1, new AsciiString("abcd", 1, 3).IndexOf(new AsciiString("abc"), 0));
+            Assert.Equal(-1, new AsciiString("abcd", 1, 2).IndexOf(new AsciiString("bd"), 0));
+            Assert.Equal(-1, new AsciiString("012345").IndexOf((AsciiString)"345", 4));
+            Assert.Equal(-1, new AsciiString("012345").IndexOf((AsciiString)"abc", 3));
+            Assert.Equal(-1, new AsciiString("012345").IndexOf((AsciiString)"abc", 0));
+            Assert.Equal(-1, new AsciiString("012345").IndexOf((AsciiString)"abcdefghi", 0));
+            Assert.Equal(-1, new AsciiString("012345").IndexOf((AsciiString)"abcdefghi", 4));
         }
 
         [Fact]
@@ -301,6 +337,51 @@ namespace DotNetty.Common.Tests.Utilities
         }
 
         [Fact]
+        public void LastIndexOfCharSequence()
+        {
+            Assert.Equal(0, new AsciiString("abcd").LastIndexOf(new AsciiString("abcd"), 0));
+            Assert.Equal(0, new AsciiString("abcd").LastIndexOf(new AsciiString("abc"), 0));
+            Assert.Equal(1, new AsciiString("abcd").LastIndexOf(new AsciiString("bcd"), 0));
+            Assert.Equal(1, new AsciiString("abcd").LastIndexOf(new AsciiString("bc"), 0));
+            Assert.Equal(5, new AsciiString("abcdabcd").LastIndexOf(new AsciiString("bcd"), 0));
+            Assert.Equal(0, new AsciiString("abcd", 1, 2).LastIndexOf(new AsciiString("bc"), 0));
+            Assert.Equal(0, new AsciiString("abcd", 1, 3).LastIndexOf(new AsciiString("bcd"), 0));
+            Assert.Equal(1, new AsciiString("abcdabcd", 4, 4).LastIndexOf(new AsciiString("bcd"), 0));
+            Assert.Equal(3, new AsciiString("012345").LastIndexOf((AsciiString)"345", 3));
+            Assert.Equal(3, new AsciiString("012345").LastIndexOf((AsciiString)"345", 0));
+
+            // Test with empty string
+            Assert.Equal(0, new AsciiString("abcd").LastIndexOf(new AsciiString(""), 0));
+            Assert.Equal(1, new AsciiString("abcd").LastIndexOf(new AsciiString(""), 1));
+            Assert.Equal(3, new AsciiString("abcd", 1, 3).LastIndexOf(new AsciiString(""), 4));
+
+            // Test not found
+            Assert.Equal(-1, new AsciiString("abcd").LastIndexOf(new AsciiString("abcde"), 0));
+            Assert.Equal(-1, new AsciiString("abcdbc").LastIndexOf(new AsciiString("bce"), 0));
+            Assert.Equal(-1, new AsciiString("abcd", 1, 3).LastIndexOf(new AsciiString("abc"), 0));
+            Assert.Equal(-1, new AsciiString("abcd", 1, 2).LastIndexOf(new AsciiString("bd"), 0));
+            Assert.Equal(-1, new AsciiString("012345").LastIndexOf((AsciiString)"345", 4));
+            Assert.Equal(-1, new AsciiString("012345").LastIndexOf((AsciiString)"abc", 3));
+            Assert.Equal(-1, new AsciiString("012345").LastIndexOf((AsciiString)"abc", 0));
+            Assert.Equal(-1, new AsciiString("012345").LastIndexOf((AsciiString)"abcdefghi", 0));
+            Assert.Equal(-1, new AsciiString("012345").LastIndexOf((AsciiString)"abcdefghi", 4));
+        }
+
+        [Fact]
+        public void Replace()
+        {
+            AsciiString abcd = new AsciiString("abcd");
+            Assert.Equal(new AsciiString("adcd"), abcd.Replace('b', 'd'));
+            Assert.Equal(new AsciiString("dbcd"), abcd.Replace('a', 'd'));
+            Assert.Equal(new AsciiString("abca"), abcd.Replace('d', 'a'));
+            Assert.Same(abcd, abcd.Replace('x', 'a'));
+            Assert.Equal(new AsciiString("cc"), new AsciiString("abcd", 1, 2).Replace('b', 'c'));
+            Assert.Equal(new AsciiString("bb"), new AsciiString("abcd", 1, 2).Replace('c', 'b'));
+            Assert.Equal(new AsciiString("bddd"), new AsciiString("abcdc", 1, 4).Replace('c', 'd'));
+            Assert.Equal(new AsciiString("xbcxd"), new AsciiString("abcada", 0, 5).Replace('a', 'x'));
+        }
+
+        [Fact]
         public void SubStringHashCode()
         {
             var value1 = new AsciiString("123");
@@ -308,6 +389,21 @@ namespace DotNetty.Common.Tests.Utilities
 
             //two "123"s
             Assert.Equal(AsciiString.GetHashCode(value1), AsciiString.GetHashCode(value2));
+        }
+
+        [Fact]
+        public void IndexOf()
+        {
+            AsciiString foo = AsciiString.Of("This is a test");
+            int i1 = foo.IndexOf(' ', 0);
+            Assert.Equal(4, i1);
+            int i2 = foo.IndexOf(' ', i1 + 1);
+            Assert.Equal(7, i2);
+            int i3 = foo.IndexOf(' ', i2 + 1);
+            Assert.Equal(9, i3);
+            Assert.True(i3 + 1 < foo.Count);
+            int i4 = foo.IndexOf(' ', i3 + 1);
+            Assert.Equal(i4, -1);
         }
     }
 }

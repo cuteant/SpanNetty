@@ -1,0 +1,47 @@
+<Project>
+  <!-- Shared Package Versions -->
+  <PropertyGroup>
+    <!-- Test related packages -->
+    <MicrosoftNetTestSdkPackageVersion>15.8.0</MicrosoftNetTestSdkPackageVersion>
+
+    <BenchmarkDotNetPackageVersion>0.11.1</BenchmarkDotNetPackageVersion>
+    <BenchmarkDotNetDiagnosticsWindowsPackageVersion>0.11.1</BenchmarkDotNetDiagnosticsWindowsPackageVersion>
+    <NBenchPackageVersion>1.2.2</NBenchPackageVersion>
+    <NBenchRunnerPackageVersion>1.2.2</NBenchRunnerPackageVersion>
+
+    <FluentAssertions4PackageVersion>4.19.4</FluentAssertions4PackageVersion>
+    <FluentAssertions5PackageVersion>5.4.1</FluentAssertions5PackageVersion>
+    <FluentAssertionsPackageVersion>5.4.1</FluentAssertionsPackageVersion>
+    <MoqPackageVersion>4.9.0</MoqPackageVersion>
+    <NSubstitutePackageVersion>3.1.0</NSubstitutePackageVersion>
+    <ShouldlyPackageVersion>2.8.3</ShouldlyPackageVersion>
+
+    <xUnitPackageVersion>2.4.0</xUnitPackageVersion>
+    <xUnitAnalyzersPackageVersion>0.10.0</xUnitAnalyzersPackageVersion>
+    <xUnitDotNetPackageVersion>2.4.0</xUnitDotNetPackageVersion>
+    <xUnitRunnerVsPackageVersion>2.4.0</xUnitRunnerVsPackageVersion>
+    <xUnitRunnerConsolePackageVersion>2.4.0</xUnitRunnerConsolePackageVersion>
+    <xUnitRunnerUtilityPackageVersion>2.4.0</xUnitRunnerUtilityPackageVersion>
+    <xUnitSkippableFactPackageVersion>1.3.3</xUnitSkippableFactPackageVersion>
+    <xUnitPerformanceCorePackageVersion>1.0.0-beta-build0015</xUnitPerformanceCorePackageVersion>
+
+    <xUnitAnalyzersDevPackageVersion>0.9.0-build1183</xUnitAnalyzersDevPackageVersion>
+    <xUnitDevPackageVersion>2.4.0-beta.2.build3984</xUnitDevPackageVersion>
+    <xUnitDotNetDevPackageVersion>2.4.0-beta.2.build3984</xUnitDotNetDevPackageVersion>
+    <xUnitRunnerVsDevPackageVersion>2.4.0-beta.2.build3984</xUnitRunnerVsDevPackageVersion>
+    <xUnitRunnerUtilityDevPackageVersion>2.4.0-beta.2.build3984</xUnitRunnerUtilityDevPackageVersion>
+
+    <NUnit2PackageVersion>2.6.4</NUnit2PackageVersion>
+    <NUnit2TestAdapterPackageVersion>2.1.1</NUnit2TestAdapterPackageVersion>
+    <NUnitPackageVersion>3.10.1</NUnitPackageVersion>
+    <NUnitLitePackageVersion>3.10.1</NUnitLitePackageVersion>
+    <NUnit3TestAdapterPackageVersion>3.10.0</NUnit3TestAdapterPackageVersion>
+    <MonoCecilPackageVersion>0.10.0</MonoCecilPackageVersion>
+
+    <NUnitDevPackageVersion>3.11.0-dev-05430</NUnitDevPackageVersion>
+    <NUnit3TestAdapterDevPackageVersion>3.11.0-dev-00847</NUnit3TestAdapterDevPackageVersion>
+
+    <SimpleFixtureNSubstitutePackageVersion>3.0.2</SimpleFixtureNSubstitutePackageVersion>
+    <SimpleFixturexUnitPackageVersion>3.0.2</SimpleFixturexUnitPackageVersion>
+  </PropertyGroup>
+</Project>

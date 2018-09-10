@@ -6,7 +6,6 @@ namespace DotNetty.Codecs.Http.Cookies
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Text;
 
@@ -32,7 +31,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public string Encode(ICookie cookie)
         {
-            Contract.Requires(cookie != null);
+            if (null == cookie) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cookie); }
 
             StringBuilder buf = StringBuilder();
             this.Encode(buf, cookie);
@@ -102,7 +101,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public string Encode(IEnumerable<ICookie> cookies)
         {
-            Contract.Requires(cookies != null);
+            if (null == cookies) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cookies); }
 
             StringBuilder buf = StringBuilder();
             if (this.Strict)

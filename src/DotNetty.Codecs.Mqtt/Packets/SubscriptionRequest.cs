@@ -4,13 +4,12 @@
 namespace DotNetty.Codecs.Mqtt.Packets
 {
     using System;
-    using System.Diagnostics.Contracts;
 
     public class SubscriptionRequest : IEquatable<SubscriptionRequest>
     {
         public SubscriptionRequest(string topicFilter, QualityOfService qualityOfService)
         {
-            Contract.Requires(!string.IsNullOrEmpty(topicFilter));
+            if (string.IsNullOrEmpty(topicFilter)) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.topicFilter); }
 
             this.TopicFilter = topicFilter;
             this.QualityOfService = qualityOfService;

@@ -1,5 +1,4 @@
-﻿#if !NET40
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace DotNetty.Transport.Channels.Local
 {
@@ -16,10 +15,9 @@ namespace DotNetty.Transport.Channels.Local
 
         public int GetHashCode(LocalAddress obj)
         {
-            if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
+            //if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
 
             return obj.GetHashCode();
         }
     }
 }
-#endif

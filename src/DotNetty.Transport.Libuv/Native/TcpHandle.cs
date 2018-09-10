@@ -5,7 +5,6 @@ namespace DotNetty.Transport.Libuv.Native
 {
     using System;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Net;
     using System.Runtime.InteropServices;
 
@@ -65,7 +64,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         public int SendBufferSize(int value)
         {
-            Contract.Requires(value >= 0);
+            if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
 
             this.Validate();
             var size = (IntPtr)value;
@@ -77,7 +76,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         public int ReceiveBufferSize(int value)
         {
-            Contract.Requires(value >= 0);
+            if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
 
             this.Validate();
             var size = (IntPtr)value;

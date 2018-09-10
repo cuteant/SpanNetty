@@ -5,7 +5,6 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Text;
     using DotNetty.Common.Internal;
 
@@ -334,7 +333,7 @@ namespace DotNetty.Buffers
 
         public static IByteBuffer CopiedBuffer(char[] array, int offset, int length, Encoding encoding)
         {
-            Contract.Requires(array != null);
+            if (null == array) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.array); }
             return length == 0 ? Empty : CopiedBuffer(new string(array, offset, length), encoding);
         }
 

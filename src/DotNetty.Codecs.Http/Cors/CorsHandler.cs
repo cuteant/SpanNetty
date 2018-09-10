@@ -4,7 +4,6 @@
 namespace DotNetty.Codecs.Http.Cors
 {
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;

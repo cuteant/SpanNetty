@@ -5,7 +5,7 @@ namespace DotNetty.Transport.Channels.Sockets
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Net.Sockets;
 
     /// <summary>
@@ -38,9 +38,9 @@ namespace DotNetty.Transport.Channels.Sockets
 
             public override void FinishRead(SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
             {
-                Contract.Assert(this.channel.EventLoop.InEventLoop);
+                Debug.Assert(this.channel.EventLoop.InEventLoop);
 
-                var ch = this.Channel;
+                var ch = this.channel;
                 if ((ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active) == 0)
                 {
                     return; // read was signaled as a result of channel closure
@@ -48,7 +48,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 IChannelConfiguration config = ch.Configuration;
 
                 IChannelPipeline pipeline = ch.Pipeline;
-                IRecvByteBufAllocatorHandle allocHandle = this.Channel.Unsafe.RecvBufAllocHandle;
+                IRecvByteBufAllocatorHandle allocHandle = ch.Unsafe.RecvBufAllocHandle;
                 allocHandle.Reset(config);
 
                 bool closed = false;

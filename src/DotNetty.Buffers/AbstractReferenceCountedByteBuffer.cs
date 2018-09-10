@@ -5,51 +5,46 @@
 
 namespace DotNetty.Buffers
 {
-    using System.Diagnostics.Contracts;
     using System.Threading;
     using DotNetty.Common;
-    using DotNetty.Common.Utilities;
 
     public abstract class AbstractReferenceCountedByteBuffer : AbstractByteBuffer
     {
-        volatile int referenceCount = 1;
+        int referenceCount = 1;
 
         protected AbstractReferenceCountedByteBuffer(int maxCapacity)
             : base(maxCapacity)
         {
         }
 
-        public override int ReferenceCount => this.referenceCount;
+        public override int ReferenceCount => Volatile.Read(ref this.referenceCount);
 
         //An unsafe operation intended for use by a subclass that sets the reference count of the buffer directly
-        protected internal void SetReferenceCount(int value) => this.referenceCount = value;
+        protected internal void SetReferenceCount(int value) => Interlocked.Exchange(ref this.referenceCount, value);
 
         public override IReferenceCounted Retain() => this.Retain0(1);
 
         public override IReferenceCounted Retain(int increment)
         {
-            Contract.Requires(increment > 0);
+            if (increment <= 0) { ThrowHelper.ThrowArgumentException_Positive(increment, ExceptionArgument.increment); }
 
             return this.Retain0(increment);
         }
 
         IReferenceCounted Retain0(int increment)
         {
-            while (true)
+            int refCnt = Volatile.Read(ref this.referenceCount);
+            int oldRefCnt;
+            do
             {
-                int refCnt = this.referenceCount;
+                oldRefCnt = refCnt;
                 int nextCnt = refCnt + increment;
 
                 // Ensure we not resurrect (which means the refCnt was 0) and also that we encountered an overflow.
-                if (nextCnt <= increment)
-                {
-                    ThrowHelper.ThrowIllegalReferenceCountException(refCnt, increment);
-                }
-                if (Interlocked.CompareExchange(ref this.referenceCount, refCnt + increment, refCnt) == refCnt)
-                {
-                    break;
-                }
-            }
+                if (nextCnt <= increment) { ThrowHelper.ThrowIllegalReferenceCountException(refCnt, increment); }
+
+                refCnt = Interlocked.CompareExchange(ref this.referenceCount, nextCnt, refCnt);
+            } while (refCnt != oldRefCnt);
 
             return this;
         }
@@ -62,32 +57,30 @@ namespace DotNetty.Buffers
 
         public override bool Release(int decrement)
         {
-            Contract.Requires(decrement > 0);
+            if (decrement <= 0) { ThrowHelper.ThrowArgumentException_Positive(decrement, ExceptionArgument.decrement); }
 
             return this.Release0(decrement);
         }
 
         bool Release0(int decrement)
         {
-            while (true)
+            int refCnt = Volatile.Read(ref this.referenceCount);
+            int oldRefCnt;
+            do
             {
-                int refCnt = this.ReferenceCount;
-                if (refCnt < decrement)
-                {
-                    ThrowHelper.ThrowIllegalReferenceCountException(refCnt, -decrement);
-                }
+                oldRefCnt = refCnt;
 
-                if (Interlocked.CompareExchange(ref this.referenceCount, refCnt - decrement, refCnt) == refCnt)
-                {
-                    if (refCnt == decrement)
-                    {
-                        this.Deallocate();
-                        return true;
-                    }
+                if (refCnt < decrement) { ThrowHelper.ThrowIllegalReferenceCountException(refCnt, -decrement); }
 
-                    return false;
-                }
+                refCnt = Interlocked.CompareExchange(ref this.referenceCount, refCnt - decrement, refCnt);
+            } while (refCnt != oldRefCnt);
+
+            if (refCnt == decrement)
+            {
+                this.Deallocate();
+                return true;
             }
+            return false;
         }
 
         protected internal abstract void Deallocate();

@@ -4,7 +4,6 @@
 namespace DotNetty.Buffers
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Text;
     using System.Threading;
@@ -23,7 +22,7 @@ namespace DotNetty.Buffers
 
         protected WrappedByteBuffer(IByteBuffer buf)
         {
-            Contract.Requires(buf != null);
+            if (null == buf) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buf); }
 
             this.Buf = buf;
         }

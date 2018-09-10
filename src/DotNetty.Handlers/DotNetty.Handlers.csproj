@@ -3,11 +3,11 @@
   <Import Project="..\nuget.props" />
   
   <ImportGroup Condition=" '$(TargetFramework)' == 'net40' ">
-    <Import Project="..\..\..\CuteAnt.Extensions.Common\src\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems" Label="Shared" />
+    <Import Project="..\..\shared\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems" Label="Shared" />
   </ImportGroup>
   
   <PropertyGroup>
-    <TargetFrameworks>net471;net451;net40;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net471;net451;net40;netstandard2.0;netcoreapp2.1</TargetFrameworks>
     <RootNamespace>DotNetty.Handlers</RootNamespace>
     <AssemblyName>DotNetty.Handlers</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
@@ -22,6 +22,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DotNetty.Codecs\DotNetty.Codecs.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'net40' ">
+    <ProjectReference Include="..\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
   </ItemGroup>
 
   <ItemGroup>

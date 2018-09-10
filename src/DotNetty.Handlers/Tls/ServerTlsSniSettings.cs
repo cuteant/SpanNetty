@@ -4,14 +4,13 @@
 namespace DotNetty.Handlers.Tls
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
 
     public sealed class ServerTlsSniSettings
     {
         public ServerTlsSniSettings(Func<string, Task<ServerTlsSettings>> serverTlsSettingMap, string defaultServerHostName = null)
         {
-            Contract.Requires(serverTlsSettingMap != null);
+            if (null == serverTlsSettingMap) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.serverTlsSettingMap); }
             this.ServerTlsSettingMap = serverTlsSettingMap;
             this.DefaultServerHostName = defaultServerHostName;
         }

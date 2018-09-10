@@ -3,7 +3,6 @@
 
 namespace DotNetty.Common.Utilities
 {
-    using System.Diagnostics.Contracts;
     using System.Threading;
 
     /// <summary>
@@ -17,14 +16,14 @@ namespace DotNetty.Common.Utilities
         const int Mask = BucketSize - 1;
 
         // Initialize lazily to reduce memory consumption; updated by AtomicReferenceFieldUpdater above.
-        volatile DefaultAttribute[] attributes;
+        DefaultAttribute[] attributes;
 
         public IAttribute<T> GetAttribute<T>(AttributeKey<T> key)
             where T : class
         {
-            Contract.Requires(key != null);
+            if (null == key) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
 
-            DefaultAttribute[] attrs = this.attributes;
+            DefaultAttribute[] attrs = Volatile.Read(ref this.attributes);
             if (attrs == null)
             {
                 attrs = new DefaultAttribute[BucketSize];
@@ -78,9 +77,9 @@ namespace DotNetty.Common.Utilities
         public bool HasAttribute<T>(AttributeKey<T> key)
             where T : class
         {
-            Contract.Requires(key != null);
+            if (null == key) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
 
-            DefaultAttribute[] attrs = this.attributes;
+            DefaultAttribute[] attrs = Volatile.Read(ref this.attributes);
             if (attrs == null)
             {
                 // no attribute exists
@@ -129,7 +128,8 @@ namespace DotNetty.Common.Utilities
             public DefaultAttribute Next;
 
             // Will be set to true one the attribute is removed via GetAndRemove() or Remove()
-            public volatile bool Removed;
+            protected int removed = Constants.False;
+            public bool Removed => Constants.True == Volatile.Read(ref this.removed);
 
             public abstract IConstant GetKey();
 
@@ -165,7 +165,7 @@ namespace DotNetty.Common.Utilities
 
             public T Get() => Volatile.Read(ref this.value);
 
-            public void Set(T value) => Volatile.Write(ref this.value, value);
+            public void Set(T value) => Interlocked.Exchange(ref this.value, value);
 
             public T GetAndSet(T value) => Interlocked.Exchange(ref this.value, value);
 
@@ -179,12 +179,12 @@ namespace DotNetty.Common.Utilities
                         return old;
                     }
                 }
-                return default(T);
+                return default;
             }
 
             public T GetAndRemove()
             {
-                this.Removed = true;
+                Interlocked.Exchange(ref this.removed, Constants.True);
                 T oldValue = this.GetAndSet(null);
                 this.Remove0();
                 return oldValue;
@@ -194,7 +194,7 @@ namespace DotNetty.Common.Utilities
 
             public void Remove()
             {
-                this.Removed = true;
+                Interlocked.Exchange(ref this.removed, Constants.True);
                 this.Set(null);
                 this.Remove0();
             }

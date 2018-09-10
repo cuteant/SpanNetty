@@ -5,7 +5,7 @@ namespace DotNetty.Transport.Channels
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Threading.Tasks;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
@@ -22,21 +22,20 @@ namespace DotNetty.Transport.Channels
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<PendingWriteQueue>();
 
         readonly IChannelHandlerContext ctx;
-        readonly ChannelOutboundBuffer buffer;
-        readonly IMessageSizeEstimatorHandle estimatorHandle;
+        readonly PendingBytesTracker tracker;
 
         // head and tail pointers for the linked-list structure. If empty head and tail are null.
         PendingWrite head;
         PendingWrite tail;
         int size;
+        long bytes;
 
         public PendingWriteQueue(IChannelHandlerContext ctx)
         {
-            Contract.Requires(ctx != null);
+            if (null == ctx) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ctx); }
 
+            this.tracker = PendingBytesTracker.NewTracker(ctx.Channel);
             this.ctx = ctx;
-            this.buffer = ctx.Channel.Unsafe.OutboundBuffer;
-            this.estimatorHandle = ctx.Channel.Configuration.MessageSizeEstimator.NewHandle();
         }
 
         /// <summary>
@@ -46,7 +45,7 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                Contract.Assert(this.ctx.Executor.InEventLoop);
+                Debug.Assert(this.ctx.Executor.InEventLoop);
 
                 return this.head == null;
             }
@@ -59,9 +58,23 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                Contract.Assert(this.ctx.Executor.InEventLoop);
+                Debug.Assert(this.ctx.Executor.InEventLoop);
 
                 return this.size;
+            }
+        }
+
+        /// <summary>
+        /// Returns the total number of bytes that are pending because of pending messages. This is only an estimate so
+        /// it should only be treated as a hint.
+        /// </summary>
+        public long Bytes
+        {
+            get
+            {
+                Debug.Assert(this.ctx.Executor.InEventLoop);
+
+                return this.bytes;
             }
         }
 
@@ -72,10 +85,12 @@ namespace DotNetty.Transport.Channels
         /// <returns>An await-able task.</returns>
         public Task Add(object msg)
         {
-            Contract.Assert(this.ctx.Executor.InEventLoop);
-            Contract.Requires(msg != null);
+            Debug.Assert(this.ctx.Executor.InEventLoop);
+            if (null == msg) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
 
-            int messageSize = this.estimatorHandle.Size(msg);
+            // It is possible for writes to be triggered from removeAndFailAll(). To preserve ordering,
+            // we should add them to the queue and let removeAndFailAll() fail them later.
+            int messageSize = this.tracker.Size(msg);
             if (messageSize < 0)
             {
                 // Size may be unknow so just use 0
@@ -94,10 +109,8 @@ namespace DotNetty.Transport.Channels
                 this.tail = write;
             }
             this.size++;
-            // We need to guard against null as channel.Unsafe.OutboundBuffer may returned null
-            // if the channel was already closed when constructing the PendingWriteQueue.
-            // See https://github.com/netty/netty/issues/3967
-            this.buffer?.IncrementPendingOutboundBytes(write.Size);
+            this.bytes += messageSize;
+            this.tracker.IncrementPendingOutboundBytes(write.Size);
             return promise.Task;
         }
 
@@ -108,22 +121,25 @@ namespace DotNetty.Transport.Channels
         /// <param name="cause">The <see cref="Exception"/> to fail with.</param>
         public void RemoveAndFailAll(Exception cause)
         {
-            Contract.Assert(this.ctx.Executor.InEventLoop);
-            Contract.Requires(cause != null);
+            Debug.Assert(this.ctx.Executor.InEventLoop);
+            if (null == cause) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
 
-            // Guard against re-entrance by directly reset
-            PendingWrite write = this.head;
-            this.head = this.tail = null;
-            this.size = 0;
-
-            while (write != null)
+            // It is possible for some of the failed promises to trigger more writes. The new writes
+            // will "revive" the queue, so we need to clean them up until the queue is empty.
+            for (PendingWrite write = this.head; write != null; write = this.head)
             {
-                PendingWrite next = write.Next;
-                ReferenceCountUtil.SafeRelease(write.Msg);
-                TaskCompletionSource promise = write.Promise;
-                this.Recycle(write, false);
-                Util.SafeSetFailure(promise, cause, Logger);
-                write = next;
+                this.head = this.tail = null;
+                this.size = 0;
+                this.bytes = 0;
+                while (write != null)
+                {
+                    PendingWrite next = write.Next;
+                    ReferenceCountUtil.SafeRelease(write.Msg);
+                    TaskCompletionSource promise = write.Promise;
+                    this.Recycle(write, false);
+                    Util.SafeSetFailure(promise, cause, Logger);
+                    write = next;
+                }
             }
             this.AssertEmpty();
         }
@@ -135,8 +151,8 @@ namespace DotNetty.Transport.Channels
         /// <param name="cause">The <see cref="Exception"/> to fail with.</param>
         public void RemoveAndFail(Exception cause)
         {
-            Contract.Assert(this.ctx.Executor.InEventLoop);
-            Contract.Requires(cause != null);
+            Debug.Assert(this.ctx.Executor.InEventLoop);
+            if (null == cause) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
 
             PendingWrite write = this.head;
 
@@ -156,35 +172,32 @@ namespace DotNetty.Transport.Channels
         /// <returns>An await-able task.</returns>
         public Task RemoveAndWriteAllAsync()
         {
-            Contract.Assert(this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx.Executor.InEventLoop);
 
-            if (this.size == 1)
-            {
-                // No need to use ChannelPromiseAggregator for this case.
-                return this.RemoveAndWriteAsync();
-            }
-            PendingWrite write = this.head;
-            if (write == null)
-            {
-                // empty so just return null
-                return null;
-            }
+            if (IsEmpty) { return TaskUtil.Completed; }
 
             // Guard against re-entrance by directly reset
-            this.head = this.tail = null;
             int currentSize = this.size;
-            this.size = 0;
-
             var tasks = new List<Task>(currentSize);
-            while (write != null)
+
+            // It is possible for some of the written promises to trigger more writes. The new writes
+            // will "revive" the queue, so we need to write them up until the queue is empty.
+            for (PendingWrite write = this.head; write != null; write = this.head)
             {
-                PendingWrite next = write.Next;
-                object msg = write.Msg;
-                TaskCompletionSource promise = write.Promise;
-                this.Recycle(write, false);
-                this.ctx.WriteAsync(msg).LinkOutcome(promise);
-                tasks.Add(promise.Task);
-                write = next;
+                this.head = this.tail = null;
+                this.size = 0;
+                this.bytes = 0;
+
+                while (write != null)
+                {
+                    PendingWrite next = write.Next;
+                    object msg = write.Msg;
+                    TaskCompletionSource promise = write.Promise;
+                    this.Recycle(write, false);
+                    if (promise != TaskCompletionSource.Void) { tasks.Add(promise.Task); }
+                    this.ctx.WriteAsync(msg).LinkOutcome(promise);
+                    write = next;
+                }
             }
             this.AssertEmpty();
 #if NET40
@@ -194,7 +207,8 @@ namespace DotNetty.Transport.Channels
 #endif
         }
 
-        void AssertEmpty() => Contract.Assert(this.tail == null && this.head == null && this.size == 0);
+        [Conditional("DEBUG")]
+        void AssertEmpty() => Debug.Assert(this.tail == null && this.head == null && this.size == 0);
 
         /// <summary>
         /// Removes a pending write operation and performs it via <see cref="IChannelHandlerContext.WriteAsync"/>.
@@ -202,7 +216,7 @@ namespace DotNetty.Transport.Channels
         /// <returns>An await-able task.</returns>
         public Task RemoveAndWriteAsync()
         {
-            Contract.Assert(this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx.Executor.InEventLoop);
 
             PendingWrite write = this.head;
             if (write == null)
@@ -225,7 +239,7 @@ namespace DotNetty.Transport.Channels
         /// </returns>
         public TaskCompletionSource Remove()
         {
-            Contract.Assert(this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx.Executor.InEventLoop);
 
             PendingWrite write = this.head;
             if (write == null)
@@ -245,7 +259,7 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                Contract.Assert(this.ctx.Executor.InEventLoop);
+                Debug.Assert(this.ctx.Executor.InEventLoop);
 
                 return this.head?.Msg;
             }
@@ -264,20 +278,19 @@ namespace DotNetty.Transport.Channels
                     // Guard against re-entrance by directly reset
                     this.head = this.tail = null;
                     this.size = 0;
+                    this.bytes = 0;
                 }
                 else
                 {
                     this.head = next;
                     this.size--;
-                    Contract.Assert(this.size > 0);
+                    this.bytes -= writeSize;
+                    Debug.Assert(this.size > 0 && this.bytes >= 0);
                 }
             }
 
             write.Recycle();
-            // We need to guard against null as channel.unsafe().outboundBuffer() may returned null
-            // if the channel was already closed when constructing the PendingWriteQueue.
-            // See https://github.com/netty/netty/issues/3967
-            this.buffer?.DecrementPendingOutboundBytes(writeSize);
+            this.tracker.DecrementPendingOutboundBytes(writeSize);
         }
 
         /// <summary>

@@ -3,8 +3,6 @@
 
 namespace DotNetty.Codecs.Http
 {
-    using System.Diagnostics.Contracts;
-
     public class DefaultHttpObject : IHttpObject
     {
         const int HashCodePrime = 31;
@@ -19,7 +17,7 @@ namespace DotNetty.Codecs.Http
             get => this.decoderResult;
             set
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.decoderResult = value;
             }
         }

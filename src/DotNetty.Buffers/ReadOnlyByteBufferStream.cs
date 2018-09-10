@@ -4,7 +4,6 @@
 namespace DotNetty.Buffers
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using CuteAnt.Runtime;
     using DotNetty.Common.Utilities;
@@ -21,7 +20,7 @@ namespace DotNetty.Buffers
 
         public ReadOnlyByteBufferStream(IByteBuffer buffer, bool releaseReferenceOnClosure)
         {
-            Contract.Requires(buffer != null);
+            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 
             this.buffer = buffer;
             this.releaseReferenceOnClosure = releaseReferenceOnClosure;

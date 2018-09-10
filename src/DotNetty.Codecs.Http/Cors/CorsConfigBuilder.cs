@@ -7,7 +7,6 @@ namespace DotNetty.Codecs.Http.Cors
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Diagnostics.Contracts;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
 
@@ -114,7 +113,7 @@ namespace DotNetty.Codecs.Http.Cors
 
         public CorsConfigBuilder PreflightResponseHeader(AsciiString name, params object[] values)
         {
-            Contract.Requires(values != null);
+            if (null == values) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.values); }
 
             if (values.Length == 1)
             {
@@ -170,7 +169,7 @@ namespace DotNetty.Codecs.Http.Cors
 
             internal ConstantValueGenerator(object value)
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.value = value;
             }
 

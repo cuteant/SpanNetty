@@ -5,8 +5,6 @@ namespace DotNetty.Transport.Libuv
 {
     using System;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
-    using System.Runtime.InteropServices;
     using System.Threading.Tasks;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
@@ -19,7 +17,7 @@ namespace DotNetty.Transport.Libuv
         internal DispatcherEventLoop(IEventLoopGroup parent, string threadName = null)
             : base(parent, threadName)
         {
-            Contract.Requires(parent != null);
+            if (null == parent) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parent); }
 
             string pipeName = "DotNetty_" + Guid.NewGuid().ToString("n");
             this.PipeName = (PlatformApi.IsWindows

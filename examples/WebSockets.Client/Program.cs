@@ -97,7 +97,7 @@ namespace WebSockets.Client
 
                     pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 0, 60));
 
-                    //pipeline.AddLast(new MsLoggingHandler("CONN"));
+                    pipeline.AddLast(new MsLoggingHandler("CONN"));
                     pipeline.AddLast(
                         new HttpClientCodec(),
                         new HttpObjectAggregator(8192),
@@ -117,54 +117,63 @@ namespace WebSockets.Client
                         handler);
                 }));
 
-                IChannel ch = await bootstrap.ConnectAsync(new IPEndPoint(ClientSettings.Host, ClientSettings.Port));
-                await handler.HandshakeCompletion;
-
-                Console.WriteLine("WebSocket handshake completed.\n");
-                Console.WriteLine("\t[bye]:Quit \n\t [ping]:Send ping frame\n\t Enter any text and Enter: Send text frame");
-                while (true)
+                try
                 {
-                    string msg = Console.ReadLine();
-                    if (msg == null)
+                    IChannel ch = await bootstrap.ConnectAsync(new IPEndPoint(ClientSettings.Host, ClientSettings.Port));
+                    await handler.HandshakeCompletion;
+
+                    Console.WriteLine("WebSocket handshake completed.\n");
+                    Console.WriteLine("\t[bye]:Quit \n\t [ping]:Send ping frame\n\t Enter any text and Enter: Send text frame");
+                    while (true)
                     {
-                        break;
+                        string msg = Console.ReadLine();
+                        if (msg == null)
+                        {
+                            break;
+                        }
+                        msg = msg.ToLowerInvariant();
+
+                        switch (msg)
+                        {
+                            case "bye":
+                                await ch.WriteAndFlushAsync(new CloseWebSocketFrame());
+                                goto CloseLable;
+
+                            case "ping":
+                                var ping = new PingWebSocketFrame(Unpooled.WrappedBuffer(new byte[] { 8, 1, 8, 1 }));
+                                await ch.WriteAndFlushAsync(ping);
+                                break;
+
+                            case "this is a test":
+                                await ch.WriteAndFlushManyAsync(
+                                    new TextWebSocketFrame(false, "this "),
+                                    new ContinuationWebSocketFrame(false, "is "),
+                                    new ContinuationWebSocketFrame(false, "a "),
+                                    new ContinuationWebSocketFrame(true, "test")
+                                );
+                                break;
+
+                            case "this is a error":
+                                await ch.WriteAndFlushAsync(new TextWebSocketFrame(false, "this "));
+                                await ch.WriteAndFlushAsync(new ContinuationWebSocketFrame(false, "is "));
+                                await ch.WriteAndFlushAsync(new ContinuationWebSocketFrame(false, "a "));
+                                await ch.WriteAndFlushAsync(new TextWebSocketFrame(true, "error"));
+                                break;
+
+                            default:
+                                await ch.WriteAndFlushAsync(new TextWebSocketFrame(msg));
+                                break;
+                        }
                     }
-                    msg = msg.ToLowerInvariant();
-
-                    switch (msg)
-                    {
-                        case "bye":
-                            await ch.WriteAndFlushAsync(new CloseWebSocketFrame());
-                            break;
-
-                        case "ping":
-                            var ping = new PingWebSocketFrame(Unpooled.WrappedBuffer(new byte[] { 8, 1, 8, 1 }));
-                            await ch.WriteAndFlushAsync(ping);
-                            break;
-
-                        case "this is a test":
-                            await ch.WriteAndFlushManyAsync(
-                                new TextWebSocketFrame(false, "this "),
-                                new ContinuationWebSocketFrame(false, "is "),
-                                new ContinuationWebSocketFrame(false, "a "),
-                                new ContinuationWebSocketFrame(true, "test")
-                            );
-                            break;
-
-                        case "this is a error":
-                            await ch.WriteAndFlushAsync(new TextWebSocketFrame(false, "this "));
-                            await ch.WriteAndFlushAsync(new ContinuationWebSocketFrame(false, "is "));
-                            await ch.WriteAndFlushAsync(new ContinuationWebSocketFrame(false, "a "));
-                            await ch.WriteAndFlushAsync(new TextWebSocketFrame(true, "error"));
-                            break;
-
-                        default:
-                            await ch.WriteAndFlushAsync(new TextWebSocketFrame(msg));
-                            break;
-                    }
+                    CloseLable:
+                    await ch.CloseAsync();
                 }
-
-                await ch.CloseAsync();
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                    Console.WriteLine("按任意键退出");
+                    Console.ReadKey();
+                }
             }
             finally
             {

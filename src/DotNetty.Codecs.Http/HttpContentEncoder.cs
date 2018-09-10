@@ -6,7 +6,6 @@ namespace DotNetty.Codecs.Http
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
     using CuteAnt.Collections;
     using DotNetty.Buffers;
@@ -371,8 +370,8 @@ namespace DotNetty.Codecs.Http
         {
             public Result(ICharSequence targetContentEncoding, EmbeddedChannel contentEncoder)
             {
-                Contract.Requires(targetContentEncoding != null);
-                Contract.Requires(contentEncoder != null);
+                if (null == targetContentEncoding) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.targetContentEncoding); }
+                if (null == contentEncoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentEncoder); }
 
                 this.TargetContentEncoding = targetContentEncoding;
                 this.ContentEncoder = contentEncoder;

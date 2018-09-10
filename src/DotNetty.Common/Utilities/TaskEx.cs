@@ -178,5 +178,14 @@ namespace DotNetty.Common.Utilities
                     TaskScheduler.Default);
             }
         }
+
+        public static async Task<bool> WaitAsync(Task task, TimeSpan timeout)
+        {
+#if NET40
+            return await TaskEx.WhenAny(task, TaskEx.Delay(timeout)).ConfigureAwait(false) == task;
+#else
+            return await Task.WhenAny(task, Task.Delay(timeout)).ConfigureAwait(false) == task;
+#endif
+        }
     }
 }

@@ -4,7 +4,6 @@
 namespace DotNetty.Buffers
 {
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using DotNetty.Common;
 
     class SimpleLeakAwareByteBuffer : WrappedByteBuffer
@@ -15,8 +14,8 @@ namespace DotNetty.Buffers
         internal SimpleLeakAwareByteBuffer(IByteBuffer wrapped, IByteBuffer trackedByteBuf, IResourceLeakTracker leak)
             : base(wrapped)
         {
-            Contract.Requires(trackedByteBuf != null);
-            Contract.Requires(leak != null);
+            if (null == trackedByteBuf) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.trackedByteBuf); }
+            if (null == leak) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.leak); }
 
             this.trackedByteBuf = trackedByteBuf;
             this.Leak = leak;

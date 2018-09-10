@@ -86,7 +86,10 @@ namespace DotNetty.Handlers.Logging
         /// <inheritdoc />
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
         {
-            Logger.LogError(cause, "Channel {0} caught exception", ctx.Channel);
+            if (Logger.IsEnabled(MsLogLevel.Warning))
+            {
+                Logger.LogError(cause, "Channel {0} caught exception", ctx.Channel);
+            }
             ctx.FireExceptionCaught(cause);
         }
 

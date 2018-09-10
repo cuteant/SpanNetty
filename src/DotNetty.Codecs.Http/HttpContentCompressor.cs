@@ -4,7 +4,6 @@
 namespace DotNetty.Codecs.Http
 {
     using System;
-    using System.Diagnostics.Contracts;
     using DotNetty.Codecs.Compression;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
@@ -30,10 +29,10 @@ namespace DotNetty.Codecs.Http
 
         public HttpContentCompressor(int compressionLevel, int windowBits, int memLevel, int contentSizeThreshold)
         {
-            Contract.Requires(compressionLevel >= 0 && compressionLevel <= 9);
-            Contract.Requires(windowBits >= 9 && windowBits <= 15);
-            Contract.Requires(memLevel >= 1 && memLevel <= 9);
-            Contract.Requires(contentSizeThreshold >= 0);
+            if (compressionLevel < 0 || compressionLevel > 9) { ThrowHelper.ThrowArgumentException_CompressionLevel(compressionLevel); }
+            if (windowBits < 9 || windowBits > 15) { ThrowHelper.ThrowArgumentException_WindowBits(windowBits); }
+            if (memLevel < 1 || memLevel > 9) { ThrowHelper.ThrowArgumentException_MemLevel(memLevel); }
+            if (contentSizeThreshold < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(contentSizeThreshold, ExceptionArgument.contentSizeThreshold); }
 
             this.compressionLevel = compressionLevel;
             this.windowBits = windowBits;

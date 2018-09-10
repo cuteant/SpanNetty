@@ -3,7 +3,6 @@
 
 namespace DotNetty.Codecs.Http
 {
-    using System.Diagnostics.Contracts;
     using System.Text;
 
     /// <summary>
@@ -32,7 +31,7 @@ namespace DotNetty.Codecs.Http
 
         public void AddParam(string name, string value)
         {
-            Contract.Requires(name != null);
+            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
             if (this.hasParams)
             {
                 this.uriBuilder.Append('&');

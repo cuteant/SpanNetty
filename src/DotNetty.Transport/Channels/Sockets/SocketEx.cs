@@ -3,9 +3,9 @@ using System.Net.Sockets;
 
 namespace DotNetty.Transport.Channels.Sockets
 {
-    internal static class SocketEx
+    public static class SocketEx
     {
-        public static Socket CreateSocket()
+        internal static Socket CreateSocket()
         {
 #if NET40
             var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -16,14 +16,14 @@ namespace DotNetty.Transport.Channels.Sockets
 #endif
             return socket;
         }
-        public static Socket CreateSocket(AddressFamily addressFamily)
+        internal static Socket CreateSocket(AddressFamily addressFamily)
         {
             var socket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
             socket.EnableFastpath();
             return socket;
         }
 
-        public static void SafeClose(this Socket socket)
+        internal static void SafeClose(this Socket socket)
         {
             if (socket == null)
             {
@@ -71,7 +71,7 @@ namespace DotNetty.Transport.Channels.Sockets
         /// for more information.</summary>
         /// <param name="socket">The socket for which FastPath should be enabled.</param>
         /// <remarks>Code take from Orleans(See https://github.com/dotnet/orleans/blob/master/src/Orleans.Core/Messaging/SocketExtensions.cs). </remarks>
-        public static void EnableFastpath(this Socket socket)
+        internal static void EnableFastpath(this Socket socket)
         {
 #if NET40
             // nothing to do
@@ -91,6 +91,41 @@ namespace DotNetty.Transport.Channels.Sockets
                 // prior to Windows 8 / Windows Server 2012), handle the exception
             }
 #endif
+        }
+
+        public static bool IsSocketAbortError(this SocketError errorCode)
+        {
+            switch (errorCode)
+            {
+                case SocketError.OperationAborted:
+                case SocketError.InvalidArgument:
+                case SocketError.Interrupted:
+
+                case SocketError.Shutdown:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static bool IsSocketResetError(this SocketError errorCode)
+        {
+            switch (errorCode)
+            {
+                case SocketError.ConnectionAborted:
+                case SocketError.ConnectionReset:
+                case SocketError.ConnectionRefused:
+
+                case SocketError.OperationAborted:
+                case SocketError.InvalidArgument:
+                case SocketError.Interrupted:
+
+                case SocketError.Shutdown:
+                case SocketError.TimedOut:
+                    return true;
+                default:
+                    return false;
+            }
         }
     }
 }

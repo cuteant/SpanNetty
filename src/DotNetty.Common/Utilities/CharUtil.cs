@@ -5,7 +5,6 @@ namespace DotNetty.Common.Utilities
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
 
     public static partial class CharUtil
@@ -39,8 +38,8 @@ namespace DotNetty.Common.Utilities
 
         public static int ParseInt(ICharSequence seq, int start, int end, int radix)
         {
-            Contract.Requires(seq != null);
-            Contract.Requires(radix >= MinRadix && radix <= MaxRadix);
+            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
+            if (radix < MinRadix || radix > MaxRadix) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             if (start == end)
             {
@@ -61,8 +60,8 @@ namespace DotNetty.Common.Utilities
 
         public static int ParseInt(ICharSequence seq, int start, int end, int radix, bool negative)
         {
-            Contract.Requires(seq != null);
-            Contract.Requires(radix >= MinRadix && radix <= MaxRadix);
+            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
+            if (radix < MinRadix || radix > MaxRadix) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             int max = int.MinValue / radix;
             int result = 0;
@@ -173,14 +172,15 @@ namespace DotNetty.Common.Utilities
 
         public static ICharSequence[] Split(ICharSequence sequence, int startIndex, params char[] delimiters)
         {
-            Contract.Requires(sequence != null);
-            Contract.Requires(delimiters != null);
-            Contract.Requires(startIndex >= 0 && startIndex < sequence.Count);
+            if (null == sequence) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sequence); }
+            if (null == delimiters) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.delimiters); }
+            int length = sequence.Count;
+            if (length <= 0) { return new[] { sequence }; }
+            if ( startIndex < 0 || startIndex >= length) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             List<ICharSequence> result = InternalThreadLocalMap.Get().CharSequenceList();
 
             int i = startIndex;
-            int length = sequence.Count;
 
             while (i < length)
             {
@@ -278,7 +278,8 @@ namespace DotNetty.Common.Utilities
 
         public static bool RegionMatches(string value, int thisStart, ICharSequence other, int start, int length)
         {
-            Contract.Requires(value != null && other != null);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (null == other) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
             if (start < 0
                 || other.Count - start < length)
@@ -312,7 +313,8 @@ namespace DotNetty.Common.Utilities
 
         public static bool RegionMatchesIgnoreCase(string value, int thisStart, ICharSequence other, int start, int length)
         {
-            Contract.Requires(value != null && other != null);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (null == other) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
             if (thisStart < 0
                 || length > value.Length - thisStart)
@@ -343,7 +345,8 @@ namespace DotNetty.Common.Utilities
 
         public static bool RegionMatches(IReadOnlyList<char> value, int thisStart, ICharSequence other, int start, int length)
         {
-            Contract.Requires(value != null && other != null);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (null == other) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
             if (start < 0 || other.Count - start < length)
             {
@@ -375,7 +378,8 @@ namespace DotNetty.Common.Utilities
 
         public static bool RegionMatchesIgnoreCase(IReadOnlyList<char> value, int thisStart, ICharSequence other, int start, int length)
         {
-            Contract.Requires(value != null && other != null);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (null == other) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
             if (thisStart < 0 || length > value.Count - thisStart)
             {
@@ -411,7 +415,7 @@ namespace DotNetty.Common.Utilities
 
         public static ICharSequence Trim(ICharSequence sequence)
         {
-            Contract.Requires(sequence != null);
+            if (null == sequence) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sequence); }
 
             int length = sequence.Count;
             int start = IndexOfFirstNonWhiteSpace(sequence);
@@ -430,7 +434,7 @@ namespace DotNetty.Common.Utilities
 
         static int IndexOfFirstNonWhiteSpace(IReadOnlyList<char> value)
         {
-            Contract.Requires(value != null);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             int i = 0;
             while (i < value.Count && char.IsWhiteSpace(value[i]))
@@ -572,8 +576,8 @@ namespace DotNetty.Common.Utilities
 
         public static int CodePointAt(IReadOnlyList<char> seq, int index)
         {
-            Contract.Requires(seq != null);
-            Contract.Requires(index >= 0 && index < seq.Count);
+            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
+            if( index < 0 || index >= seq.Count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             char high = seq[index++];
             if (index >= seq.Count)

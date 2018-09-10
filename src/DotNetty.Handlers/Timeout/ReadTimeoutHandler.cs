@@ -4,11 +4,8 @@
 namespace DotNetty.Handlers.Timeout
 {
     using System;
-    using System.Threading;
-    using DotNetty.Common.Utilities;
-    using DotNetty.Common.Concurrency;
+    using System.Diagnostics;
     using DotNetty.Transport.Channels;
-    using System.Diagnostics.Contracts;
 
     /// <summary>
     /// Raises a <see cref="ReadTimeoutException"/> when no data was read within a certain
@@ -77,7 +74,7 @@ namespace DotNetty.Handlers.Timeout
 
         protected override void ChannelIdle(IChannelHandlerContext context, IdleStateEvent stateEvent)
         {
-            Contract.Requires(stateEvent.State == IdleState.ReaderIdle);
+            Debug.Assert(stateEvent.State == IdleState.ReaderIdle);
             this.ReadTimedOut(context);
         }
 

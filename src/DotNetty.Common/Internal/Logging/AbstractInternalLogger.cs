@@ -4,7 +4,6 @@
 namespace DotNetty.Common.Internal.Logging
 {
     using System;
-    using System.Diagnostics.Contracts;
 
     /// <summary>
     /// A skeletal implementation of <see cref="IInternalLogger"/>. This class implements
@@ -21,7 +20,7 @@ namespace DotNetty.Common.Internal.Logging
         /// <param name="name">A friendly name for the new logger instance.</param>
         protected AbstractInternalLogger(string name)
         {
-            Contract.Requires(name != null);
+            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
 
             this.Name = name;
         }

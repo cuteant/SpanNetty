@@ -3,7 +3,6 @@
 
 namespace DotNetty.Common.Internal
 {
-    using System.Diagnostics.Contracts;
     using System.Threading;
 
     sealed class SpscLinkedQueue<T> : BaseLinkedQueue<T>, ILinkedQueue<T>
@@ -18,7 +17,7 @@ namespace DotNetty.Common.Internal
 
         public override bool Offer(T e)
         {
-            Contract.Requires(e != null);
+            if (null == e) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e); }
 
             var nextNode = new LinkedQueueNode<T>(e);
             LinkedQueueNode<T> producerNode = this.LpProducerNode();
@@ -203,7 +202,7 @@ namespace DotNetty.Common.Internal
 
         public void SpValue(T newValue) => this.value = newValue;
 
-        public void SoNext(LinkedQueueNode<T> n) => Volatile.Write(ref this.next, n);
+        public void SoNext(LinkedQueueNode<T> n) => Interlocked.Exchange(ref this.next, n);
 
         public LinkedQueueNode<T> LvNext() => Volatile.Read(ref this.next);
     }

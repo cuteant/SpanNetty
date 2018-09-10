@@ -4,9 +4,10 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Net;
     using System.Net.Sockets;
+    using System.Threading;
     using System.Threading.Tasks;
     using CuteAnt.Text;
     using DotNetty.Buffers;
@@ -25,10 +26,11 @@ namespace DotNetty.Transport.Channels
         readonly DefaultChannelPipeline pipeline;
         readonly TaskCompletionSource closeFuture = new TaskCompletionSource();
 
-        volatile EndPoint localAddress;
-        volatile EndPoint remoteAddress;
-        volatile IEventLoop eventLoop;
-        volatile bool registered;
+        EndPoint localAddress;
+        EndPoint remoteAddress;
+        IEventLoop eventLoop;
+        int registered;
+        int closeInitiated;
 
         /// <summary>Cache for the string representation of this channel</summary>
         bool strValActive;
@@ -83,7 +85,7 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                IEventLoop eventLoop = this.eventLoop;
+                IEventLoop eventLoop = Volatile.Read(ref this.eventLoop);
                 if (eventLoop == null)
                 {
                     ThrowHelper.ThrowInvalidOperationException_ChannelNotReg();
@@ -102,7 +104,7 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                EndPoint address = this.localAddress;
+                EndPoint address = Volatile.Read(ref this.localAddress);
                 return address ?? this.CacheLocalAddress();
             }
         }
@@ -111,20 +113,22 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                EndPoint address = this.remoteAddress;
+                EndPoint address = Volatile.Read(ref this.remoteAddress);
                 return address ?? this.CacheRemoteAddress();
             }
         }
 
         protected abstract EndPoint LocalAddressInternal { get; }
 
-        protected void InvalidateLocalAddress() => this.localAddress = null;
+        protected void InvalidateLocalAddress() => Interlocked.Exchange(ref this.localAddress, null);
 
         protected EndPoint CacheLocalAddress()
         {
             try
             {
-                return this.localAddress = this.LocalAddressInternal;
+                var localAddr = this.LocalAddressInternal;
+                Interlocked.Exchange(ref this.localAddress, localAddr);
+                return localAddr;
             }
             catch (Exception)
             {
@@ -138,13 +142,15 @@ namespace DotNetty.Transport.Channels
         /// <summary>
         /// Resets the stored <see cref="RemoteAddress"/>.
         /// </summary>
-        protected void InvalidateRemoteAddress() => this.remoteAddress = null;
+        protected void InvalidateRemoteAddress() => Interlocked.Exchange(ref this.remoteAddress, null);
 
         protected EndPoint CacheRemoteAddress()
         {
             try
             {
-                return this.remoteAddress = this.RemoteAddressInternal;
+                var remoteAddr = this.RemoteAddressInternal;
+                Interlocked.Exchange(ref this.remoteAddress, remoteAddr);
+                return remoteAddr;
             }
             catch (Exception)
             {
@@ -153,7 +159,7 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        public bool Registered => this.registered;
+        public bool Registered => Constants.True == Volatile.Read(ref this.registered);
 
         /// <summary>
         /// Returns a new <see cref="DefaultChannelId"/> instance. Subclasses may override this method to assign custom
@@ -239,26 +245,14 @@ namespace DotNetty.Transport.Channels
             EndPoint localAddr = this.LocalAddress;
             if (remoteAddr != null)
             {
-                EndPoint srcAddr;
-                EndPoint dstAddr;
-                if (this.Parent == null)
-                {
-                    srcAddr = localAddr;
-                    dstAddr = remoteAddr;
-                }
-                else
-                {
-                    srcAddr = remoteAddr;
-                    dstAddr = localAddr;
-                }
-
                 var buf = StringBuilderCache.Acquire(96)
                     .Append("[id: 0x")
                     .Append(this.Id.AsShortText())
-                    .Append(", ")
-                    .Append(srcAddr)
-                    .Append(active ? " => " : " :> ")
-                    .Append(dstAddr)
+                    .Append(", L:")
+                    .Append(localAddr)
+                    .Append(active ? " - " : " ! ")
+                    .Append("R:")
+                    .Append(remoteAddr)
                     .Append(']');
                 this.strVal = StringBuilderCache.GetStringAndRelease(buf);
             }
@@ -267,7 +261,7 @@ namespace DotNetty.Transport.Channels
                 var buf = StringBuilderCache.Acquire(64)
                     .Append("[id: 0x")
                     .Append(this.Id.AsShortText())
-                    .Append(", ")
+                    .Append(", L:")
                     .Append(localAddr)
                     .Append(']');
                 this.strVal = StringBuilderCache.GetStringAndRelease(buf);
@@ -309,30 +303,32 @@ namespace DotNetty.Transport.Channels
             public virtual void Initialize(IChannel channel)
             {
                 this.channel = (TChannel)channel;
-                this.outboundBuffer = new ChannelOutboundBuffer(channel);
+                Interlocked.Exchange(ref this.outboundBuffer, new ChannelOutboundBuffer(channel));
             }
 
             public TChannel Channel => this.channel;
 
-            public ChannelOutboundBuffer OutboundBuffer => this.outboundBuffer;
+            public ChannelOutboundBuffer OutboundBuffer => Volatile.Read(ref this.outboundBuffer);
 
-            void AssertEventLoop() => Contract.Assert(!this.channel.registered || this.channel.eventLoop.InEventLoop);
+            [Conditional("DEBUG")]
+            void AssertEventLoop() => Debug.Assert(Constants.False == Volatile.Read(ref this.channel.registered) || Volatile.Read(ref this.channel.eventLoop).InEventLoop);
 
             public Task RegisterAsync(IEventLoop eventLoop)
             {
-                Contract.Requires(eventLoop != null);
+                if (null == eventLoop) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventLoop); }
 
-                if (this.channel.Registered)
+                var ch = this.channel;
+                if (ch.Registered)
                 {
                     return ThrowHelper.ThrowInvalidOperationException_RegisteredToEventLoopAlready();
                 }
 
-                if (!this.channel.IsCompatible(eventLoop))
+                if (!ch.IsCompatible(eventLoop))
                 {
                     return ThrowHelper.ThrowInvalidOperationException_IncompatibleEventLoopType(eventLoop);
                 }
 
-                this.channel.eventLoop = eventLoop;
+                Interlocked.Exchange(ref ch.eventLoop, eventLoop);
 
                 var promise = new TaskCompletionSource();
 
@@ -348,9 +344,9 @@ namespace DotNetty.Transport.Channels
                     }
                     catch (Exception ex)
                     {
-                        if (Logger.WarnEnabled) Logger.ForceClosingAChannel(this.channel, ex);
+                        if (Logger.WarnEnabled) Logger.ForceClosingAChannel(ch, ex);
                         this.CloseForcibly();
-                        this.channel.closeFuture.Complete();
+                        ch.closeFuture.Complete();
                         Util.SafeSetFailure(promise, ex, Logger);
                     }
                 }
@@ -360,6 +356,7 @@ namespace DotNetty.Transport.Channels
 
             void Register0(TaskCompletionSource promise)
             {
+                var ch = this.channel;
                 try
                 {
                     // check if the channel is still open as it could be closed input the mean time when the register
@@ -370,21 +367,25 @@ namespace DotNetty.Transport.Channels
                         return;
                     }
                     bool firstRegistration = this.neverRegistered;
-                    this.channel.DoRegister();
+                    ch.DoRegister();
                     this.neverRegistered = false;
-                    this.channel.registered = true;
+                    Interlocked.Exchange(ref ch.registered, Constants.True);
+
+                    // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
+                    // user may already fire events through the pipeline in the ChannelFutureListener.
+                    ch.pipeline.InvokeHandlerAddedIfNeeded();
 
                     Util.SafeSetSuccess(promise, Logger);
-                    this.channel.pipeline.FireChannelRegistered();
+                    ch.pipeline.FireChannelRegistered();
                     // Only fire a channelActive if the channel has never been registered. This prevents firing
                     // multiple channel actives if the channel is deregistered and re-registered.
-                    if (this.channel.Active)
+                    if (ch.Active)
                     {
                         if (firstRegistration)
                         {
-                            this.channel.pipeline.FireChannelActive();
+                            ch.pipeline.FireChannelActive();
                         }
-                        else if (this.channel.Configuration.AutoRead)
+                        else if (ch.Configuration.AutoRead)
                         {
                             // This channel was registered before and autoRead() is set. This means we need to begin read
                             // again so that we process inbound data.
@@ -398,7 +399,7 @@ namespace DotNetty.Transport.Channels
                 {
                     // Close the channel directly to avoid FD leak.
                     this.CloseForcibly();
-                    this.channel.closeFuture.Complete();
+                    ch.closeFuture.Complete();
                     Util.SafeSetFailure(promise, t, Logger);
                 }
             }
@@ -407,8 +408,9 @@ namespace DotNetty.Transport.Channels
             {
                 this.AssertEventLoop();
 
+                var ch = this.channel;
                 // todo: cancellation support
-                if ( /*!promise.setUncancellable() || */!this.channel.Open)
+                if ( /*!promise.setUncancellable() || */!ch.Open)
                 {
                     return this.CreateClosedChannelExceptionTask();
                 }
@@ -427,10 +429,10 @@ namespace DotNetty.Transport.Channels
                 //            "address (" + localAddress + ") anyway as requested.");
                 //}
 
-                bool wasActive = this.channel.Active;
+                bool wasActive = ch.Active;
                 try
                 {
-                    this.channel.DoBind(localAddress);
+                    ch.DoBind(localAddress);
                 }
                 catch (Exception t)
                 {
@@ -438,9 +440,9 @@ namespace DotNetty.Transport.Channels
                     return TaskUtil.FromException(t);
                 }
 
-                if (!wasActive && this.channel.Active)
+                if (!wasActive && ch.Active)
                 {
-                    this.InvokeLater(() => this.channel.pipeline.FireChannelActive());
+                    this.InvokeLater(() => ch.pipeline.FireChannelActive());
                 }
 
                 return TaskUtil.Completed;
@@ -452,10 +454,11 @@ namespace DotNetty.Transport.Channels
             {
                 this.AssertEventLoop();
 
-                bool wasActive = this.channel.Active;
+                var ch = this.channel;
+                bool wasActive = ch.Active;
                 try
                 {
-                    this.channel.DoDisconnect();
+                    ch.DoDisconnect();
                 }
                 catch (Exception t)
                 {
@@ -463,9 +466,9 @@ namespace DotNetty.Transport.Channels
                     return TaskUtil.FromException(t);
                 }
 
-                if (wasActive && !this.channel.Active)
+                if (wasActive && !ch.Active)
                 {
-                    this.InvokeLater(() => this.channel.pipeline.FireChannelInactive());
+                    this.InvokeLater(() => ch.pipeline.FireChannelInactive());
                 }
 
                 this.CloseIfClosed(); // doDisconnect() might have closed the channel
@@ -488,27 +491,24 @@ namespace DotNetty.Transport.Channels
                     return promise.Task;
                 }
 
-                ChannelOutboundBuffer outboundBuffer = this.outboundBuffer;
-                if (outboundBuffer == null)
+                var ch = this.channel;
+                if (Constants.True == Interlocked.Exchange(ref ch.closeInitiated, Constants.True))
                 {
-                    // Only needed if no VoidChannelPromise.
-                    if (promise != TaskCompletionSource.Void)
+                    var closeCompletion = ch.CloseCompletion;
+                    if (closeCompletion.IsCompleted)
                     {
-                        // This means close() was called before so we just register a listener and return
-                        return this.channel.closeFuture.Task;
+                        // Closed already.
+                        Util.SafeSetSuccess(promise, Logger);
+                    }
+                    else if (promise != TaskCompletionSource.Void) // Only needed if no VoidChannelPromise.
+                    {
+                        closeCompletion.LinkOutcome(promise);
                     }
                     return promise.Task;
                 }
 
-                if (this.channel.closeFuture.Task.IsCompleted)
-                {
-                    // Closed already.
-                    Util.SafeSetSuccess(promise, Logger);
-                    return promise.Task;
-                }
-
-                bool wasActive = this.channel.Active;
-                this.outboundBuffer = null; // Disallow adding any messages and flushes to outboundBuffer.
+                bool wasActive = ch.Active;
+                var outboundBuffer = Interlocked.Exchange(ref this.outboundBuffer, null); // Disallow adding any messages and flushes to outboundBuffer.
                 IEventExecutor closeExecutor = null; // todo closeExecutor();
                 if (closeExecutor != null)
                 {
@@ -524,9 +524,12 @@ namespace DotNetty.Transport.Channels
                             // Call invokeLater so closeAndDeregister is executed input the EventLoop again!
                             this.InvokeLater(() =>
                             {
-                                // Fail all the queued messages
-                                outboundBuffer.FailFlushed(cause, notify);
-                                outboundBuffer.Close(ThrowHelper.GetClosedChannelException());
+                                if (outboundBuffer != null)
+                                {
+                                    // Fail all the queued messages
+                                    outboundBuffer.FailFlushed(cause, notify);
+                                    outboundBuffer.Close(ThrowHelper.GetClosedChannelException());
+                                }
                                 this.FireChannelInactiveAndDeregister(wasActive);
                             });
                         }
@@ -541,9 +544,12 @@ namespace DotNetty.Transport.Channels
                     }
                     finally
                     {
-                        // Fail all the queued messages.
-                        outboundBuffer.FailFlushed(cause, notify);
-                        outboundBuffer.Close(ThrowHelper.GetClosedChannelException());
+                        if (outboundBuffer != null)
+                        {
+                            // Fail all the queued messages.
+                            outboundBuffer.FailFlushed(cause, notify);
+                            outboundBuffer.Close(ThrowHelper.GetClosedChannelException());
+                        }
                     }
                     if (this.inFlush0)
                     {
@@ -560,15 +566,16 @@ namespace DotNetty.Transport.Channels
 
             void DoClose0(TaskCompletionSource promise)
             {
+                var ch = this.channel;
                 try
                 {
-                    this.channel.DoClose();
-                    this.channel.closeFuture.Complete();
+                    ch.DoClose();
+                    ch.closeFuture.Complete();
                     Util.SafeSetSuccess(promise, Logger);
                 }
                 catch (Exception t)
                 {
-                    this.channel.closeFuture.Complete();
+                    ch.closeFuture.Complete();
                     Util.SafeSetFailure(promise, t, Logger);
                 }
             }
@@ -610,7 +617,8 @@ namespace DotNetty.Transport.Channels
                 //    return;
                 //}
 
-                if (!this.channel.registered)
+                var ch = this.channel;
+                if (Constants.False == Volatile.Read(ref ch.registered))
                 {
                     return TaskUtil.Completed;
                 }
@@ -630,7 +638,7 @@ namespace DotNetty.Transport.Channels
                 {
                     try
                     {
-                        this.channel.DoDeregister();
+                        ch.DoDeregister();
                     }
                     catch (Exception t)
                     {
@@ -640,16 +648,16 @@ namespace DotNetty.Transport.Channels
                     {
                         if (fireChannelInactive)
                         {
-                            this.channel.pipeline.FireChannelInactive();
+                            ch.pipeline.FireChannelInactive();
                         }
                         // Some transports like local and AIO does not allow the deregistration of
                         // an open channel.  Their doDeregister() calls close(). Consequently,
                         // close() calls deregister() again - no need to fire channelUnregistered, so check
                         // if it was registered.
-                        if (this.channel.registered)
+                        if (Constants.True == Volatile.Read(ref ch.registered))
                         {
-                            this.channel.registered = false;
-                            this.channel.pipeline.FireChannelUnregistered();
+                            Interlocked.Exchange(ref ch.registered, Constants.False);
+                            ch.pipeline.FireChannelUnregistered();
                         }
                         Util.SafeSetSuccess(promise, Logger);
                     }
@@ -662,18 +670,19 @@ namespace DotNetty.Transport.Channels
             {
                 this.AssertEventLoop();
 
-                if (!this.channel.Active)
+                var ch = this.channel;
+                if (!ch.Active)
                 {
                     return;
                 }
 
                 try
                 {
-                    this.channel.DoBeginRead();
+                    ch.DoBeginRead();
                 }
                 catch (Exception e)
                 {
-                    this.InvokeLater(() => this.channel.pipeline.FireExceptionCaught(e));
+                    this.InvokeLater(() => ch.pipeline.FireExceptionCaught(e));
                     this.CloseSafe();
                 }
             }
@@ -682,7 +691,7 @@ namespace DotNetty.Transport.Channels
             {
                 this.AssertEventLoop();
 
-                ChannelOutboundBuffer outboundBuffer = this.outboundBuffer;
+                ChannelOutboundBuffer outboundBuffer = Volatile.Read(ref this.outboundBuffer);
                 if (outboundBuffer == null)
                 {
                     // If the outboundBuffer is null we know the channel was closed and so
@@ -698,8 +707,9 @@ namespace DotNetty.Transport.Channels
                 int size;
                 try
                 {
-                    msg = this.channel.FilterOutboundMessage(msg);
-                    size = this.channel.pipeline.EstimatorHandle.Size(msg);
+                    var ch = this.channel;
+                    msg = ch.FilterOutboundMessage(msg);
+                    size = ch.pipeline.EstimatorHandle.Size(msg);
                     if (size < 0)
                     {
                         size = 0;
@@ -721,7 +731,7 @@ namespace DotNetty.Transport.Channels
             {
                 this.AssertEventLoop();
 
-                ChannelOutboundBuffer outboundBuffer = this.outboundBuffer;
+                ChannelOutboundBuffer outboundBuffer = Volatile.Read(ref this.outboundBuffer);
                 if (outboundBuffer == null)
                 {
                     return;
@@ -739,7 +749,7 @@ namespace DotNetty.Transport.Channels
                     return;
                 }
 
-                ChannelOutboundBuffer outboundBuffer = this.outboundBuffer;
+                ChannelOutboundBuffer outboundBuffer = Volatile.Read(ref this.outboundBuffer);
                 if (outboundBuffer == null || outboundBuffer.IsEmpty)
                 {
                     return;
@@ -747,12 +757,13 @@ namespace DotNetty.Transport.Channels
 
                 this.inFlush0 = true;
 
+                var ch = this.channel;
                 // Mark all pending write requests as failure if the channel is inactive.
                 if (!this.CanWrite)
                 {
                     try
                     {
-                        if (this.channel.Open)
+                        if (ch.Open)
                         {
                             outboundBuffer.FailFlushed(NotYetConnectedException, true);
                         }
@@ -771,11 +782,33 @@ namespace DotNetty.Transport.Channels
 
                 try
                 {
-                    this.channel.DoWrite(outboundBuffer);
+                    ch.DoWrite(outboundBuffer);
                 }
                 catch (Exception ex)
                 {
-                    Util.CompleteChannelCloseTaskSafely(this.channel, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex), false));
+                    if (ch.Configuration.AutoClose)
+                    {
+                        /*
+                         * Just call {@link #close(ChannelPromise, Throwable, boolean)} here which will take care of
+                         * failing all flushed messages and also ensure the actual close of the underlying transport
+                         * will happen before the promises are notified.
+                         *
+                         * This is needed as otherwise {@link #isActive()} , {@link #isOpen()} and {@link #isWritable()}
+                         * may still return {@code true} even if the channel should be closed as result of the exception.
+                         */
+                        Util.CompleteChannelCloseTaskSafely(ch, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex), false));
+                    }
+                    else
+                    {
+                        try
+                        {
+                            Util.CompleteChannelCloseTaskSafely(ch, this.ShutdownOutputAsync(ex));
+                        }
+                        catch(Exception ex2)
+                        {
+                            Util.CompleteChannelCloseTaskSafely(ch, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex2), false));
+                        }
+                    }
                 }
                 finally
                 {

@@ -4,11 +4,11 @@
 namespace DotNetty.Common.Internal
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
 
-    class DefaultPlatform : IPlatform
+    sealed class DefaultPlatform : IPlatform
     {
-        int processId;
+        readonly int processId;
 
         public DefaultPlatform()
         {
@@ -21,7 +21,7 @@ namespace DotNetty.Common.Internal
 
             // DotNetty expects process id to be no greater than 0x400000, so clear this higher bits:
             processId = processId & 0x3FFFFF;
-            Contract.Assert(processId <= 0x400000);
+            Debug.Assert(processId <= 0x400000);
         }
 
         int IPlatform.GetCurrentProcessId() => processId;

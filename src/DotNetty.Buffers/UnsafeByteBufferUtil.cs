@@ -4,7 +4,6 @@
 namespace DotNetty.Buffers
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Runtime.CompilerServices;
     using System.Text;
@@ -235,7 +234,7 @@ namespace DotNetty.Buffers
 
         internal static void GetBytes(AbstractByteBuffer buf, byte* addr, int index, IByteBuffer dst, int dstIndex, int length)
         {
-            Contract.Requires(dst != null);
+            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
 
             if (MathUtil.IsOutOfBounds(dstIndex, length, dst.Capacity))
             {
@@ -269,7 +268,7 @@ namespace DotNetty.Buffers
 
         internal static void GetBytes(AbstractByteBuffer buf, byte* addr, int index, byte[] dst, int dstIndex, int length)
         {
-            Contract.Requires(dst != null);
+            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
 
             if (MathUtil.IsOutOfBounds(dstIndex, length, dst.Length))
             {
@@ -283,7 +282,7 @@ namespace DotNetty.Buffers
 
         internal static void SetBytes(AbstractByteBuffer buf, byte* addr, int index, IByteBuffer src, int srcIndex, int length)
         {
-            Contract.Requires(src != null);
+            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
 
             if (MathUtil.IsOutOfBounds(srcIndex, length, src.Capacity))
             {

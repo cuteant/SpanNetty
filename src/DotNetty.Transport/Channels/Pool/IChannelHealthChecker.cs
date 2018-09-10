@@ -1,5 +1,4 @@
-﻿#if !NET40
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Transport.Channels.Pool
@@ -17,7 +16,10 @@ namespace DotNetty.Transport.Channels.Pool
         /// </summary>
         /// <param name="channel">The <see cref="IChannel"/> to check for healthiness.</param>
         /// <returns><c>true</c> if the given <see cref="IChannel"/> is healthy, otherwise <c>false</c>.</returns>
+#if NET40
+        Task<bool> IsHealthyAsync(IChannel channel);
+#else
         ValueTask<bool> IsHealthyAsync(IChannel channel);
+#endif
     }
 }
-#endif

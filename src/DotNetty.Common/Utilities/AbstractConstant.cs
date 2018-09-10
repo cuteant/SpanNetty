@@ -29,11 +29,11 @@ namespace DotNetty.Common.Utilities
             get
             {
                 long result;
-                if ((result = Volatile.Read(ref this.volatileUniquifier)) == 0)
+                if ((result = Volatile.Read(ref this.volatileUniquifier)) == Constants.Zero64)
                 {
                     result = Interlocked.Increment(ref nextUniquifier);
-                    long previousUniquifier = Interlocked.CompareExchange(ref this.volatileUniquifier, result, 0);
-                    if (previousUniquifier != 0)
+                    long previousUniquifier = Interlocked.CompareExchange(ref this.volatileUniquifier, result, Constants.Zero64);
+                    if (previousUniquifier != Constants.Zero64)
                     {
                         result = previousUniquifier;
                     }

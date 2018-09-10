@@ -5,7 +5,6 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
@@ -55,8 +54,8 @@ namespace DotNetty.Buffers
             int tinyCacheSize, int smallCacheSize, int normalCacheSize,
             int maxCachedBufferCapacity, int freeSweepAllocationThreshold)
         {
-            Contract.Requires(maxCachedBufferCapacity >= 0);
-            Contract.Requires(freeSweepAllocationThreshold > 0);
+            if (maxCachedBufferCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxCachedBufferCapacity, ExceptionArgument.maxCachedBufferCapacity); }
+            if (freeSweepAllocationThreshold <= 0) { ThrowHelper.ThrowArgumentException_Positive(freeSweepAllocationThreshold, ExceptionArgument.freeSweepAllocationThreshold); }
 
             this.freeSweepAllocationThreshold = freeSweepAllocationThreshold;
             this.HeapArena = heapArena;

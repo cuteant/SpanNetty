@@ -107,8 +107,8 @@ namespace DotNetty.Buffers
             return WrappedBuffer(arrayPool, array).Slice(offset, length);
         }
 
-        public static IByteBuffer WrappedBuffer(ArraySegment<byte> buffer) => WrappedBuffer(buffer.Array, buffer.Offset, buffer.Count);
-        public static IByteBuffer WrappedBuffer(ArrayPool<byte> arrayPool, ArraySegment<byte> buffer) => WrappedBuffer(arrayPool, buffer.Array, buffer.Offset, buffer.Count);
+        public static IByteBuffer WrappedBuffer(in ArraySegment<byte> buffer) => WrappedBuffer(buffer.Array, buffer.Offset, buffer.Count);
+        public static IByteBuffer WrappedBuffer(ArrayPool<byte> arrayPool, in ArraySegment<byte> buffer) => WrappedBuffer(arrayPool, buffer.Array, buffer.Offset, buffer.Count);
 
         public static IByteBuffer WrappedBuffer(IList<ArraySegment<byte>> buffers)
         {

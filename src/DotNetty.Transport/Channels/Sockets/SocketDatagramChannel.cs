@@ -5,7 +5,6 @@ namespace DotNetty.Transport.Channels.Sockets
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Net;
     using System.Net.NetworkInformation;
     using System.Net.Sockets;
@@ -14,7 +13,6 @@ namespace DotNetty.Transport.Channels.Sockets
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
-    using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
     public partial class SocketDatagramChannel<TChannel> : AbstractSocketMessageChannel<TChannel, SocketDatagramChannel<TChannel>.DatagramChannelUnsafe>, IDatagramChannel
@@ -138,7 +136,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override int DoReadMessages(List<object> buf)
         {
-            Contract.Requires(buf != null);
+            if (null == buf) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buf); }
 
             var operation = this.ReadOperation;
             var data = (IByteBuffer)operation.UserToken;
@@ -279,7 +277,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         IByteBuffer CreateNewDirectBuffer(IByteBuffer buffer)
         {
-            Contract.Requires(buffer != null);
+            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 
             int readableBytes = buffer.ReadableBytes;
             if (readableBytes == 0)
@@ -298,8 +296,8 @@ namespace DotNetty.Transport.Channels.Sockets
 
         IByteBuffer CreateNewDirectBuffer(IReferenceCounted holder, IByteBuffer buffer)
         {
-            Contract.Requires(holder != null);
-            Contract.Requires(buffer != null);
+            if (null == holder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.holder); }
+            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 
             int readableBytes = buffer.ReadableBytes;
             if (readableBytes == 0)
@@ -322,7 +320,7 @@ namespace DotNetty.Transport.Channels.Sockets
         //
         static bool IsSingleBuffer(IByteBuffer buffer)
         {
-            Contract.Requires(buffer != null);
+            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
             return buffer.IoBufferCount == 1;
         }
 

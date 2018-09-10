@@ -6,7 +6,7 @@
 namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
@@ -23,11 +23,11 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         readonly WebSocketVersion version;
 
-        volatile bool handshakeComplete;
+        int handshakeComplete;
 
         readonly string expectedSubprotocol;
 
-        volatile string actualSubprotocol;
+        string actualSubprotocol;
 
         protected readonly HttpHeaders CustomHeaders;
 
@@ -49,16 +49,16 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public int MaxFramePayloadLength => this.maxFramePayloadLength;
 
-        public bool IsHandshakeComplete => this.handshakeComplete;
+        public bool IsHandshakeComplete => Constants.True == Volatile.Read(ref this.handshakeComplete);
 
-        void SetHandshakeComplete() => this.handshakeComplete = true;
+        void SetHandshakeComplete() => Interlocked.Exchange(ref this.handshakeComplete, Constants.True);
 
         public string ExpectedSubprotocol => this.expectedSubprotocol;
 
         public string ActualSubprotocol
         { 
-            get => this.actualSubprotocol;
-            private set => this.actualSubprotocol = value;
+            get => Volatile.Read(ref this.actualSubprotocol);
+            private set => Interlocked.Exchange(ref this.actualSubprotocol, value);
         }
 
         public Task HandshakeAsync(IChannel channel)
@@ -311,7 +311,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public Task CloseAsync(IChannel channel, CloseWebSocketFrame frame)
         {
-            Contract.Requires(channel != null);
+            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
             return channel.WriteAndFlushAsync(frame);
         }
 

@@ -5,7 +5,6 @@ namespace DotNetty.Codecs.Redis.Messages
 {
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Diagnostics.Contracts;
     using System.Text;
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
@@ -17,7 +16,7 @@ namespace DotNetty.Codecs.Redis.Messages
 
         public ArrayRedisMessage(IList<IRedisMessage> childMessages)
         {
-            Contract.Requires(childMessages != null);
+            if (null == childMessages) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childMessages); }
             // do not retain here. children are already retained when created.
             this.Children = childMessages;
         }

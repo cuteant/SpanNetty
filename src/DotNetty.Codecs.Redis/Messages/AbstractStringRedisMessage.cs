@@ -3,7 +3,6 @@
 
 namespace DotNetty.Codecs.Redis.Messages
 {
-    using System.Diagnostics.Contracts;
     using System.Text;
     using DotNetty.Common.Utilities;
 
@@ -11,7 +10,7 @@ namespace DotNetty.Codecs.Redis.Messages
     {
         protected AbstractStringRedisMessage(string content)
         {
-            Contract.Requires(content != null);
+            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
 
             this.Content = content;
         }

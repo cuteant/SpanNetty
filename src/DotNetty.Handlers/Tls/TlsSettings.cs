@@ -13,8 +13,10 @@ namespace DotNetty.Handlers.Tls
             this.CheckCertificateRevocation = checkCertificateRevocation;
         }
 
+        /// <summary>Specifies allowable SSL protocols.</summary>
         public SslProtocols EnabledProtocols { get; }
 
+        /// <summary>Specifies whether the certificate revocation list is checked during authentication.</summary>
         public bool CheckCertificateRevocation { get; }
     }
 }

@@ -4,7 +4,6 @@
 namespace DotNetty.Handlers.Tls
 {
     using System;
-    using System.Diagnostics.Contracts;
 
     public sealed class TlsHandshakeCompletionEvent
     {
@@ -26,8 +25,7 @@ namespace DotNetty.Handlers.Tls
         /// </summary>
         public TlsHandshakeCompletionEvent(Exception exception)
         {
-            Contract.Requires(exception != null);
-
+            if (null == exception) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.exception); }
             this.exception = exception;
         }
 

@@ -4,7 +4,7 @@
 namespace DotNetty.Transport.Channels.Sockets
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Net;
     using System.Net.Sockets;
     //using DotNetty.Common.Internal.Logging;
@@ -76,13 +76,14 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             if (this.TryResetState(StateFlags.Open | StateFlags.Active))
             {
-                this.Socket.Dispose();
+                this.Socket.SafeClose(); // this.Socket.Dispose();
             }
         }
 
         protected override void ScheduleSocketRead()
         {
-            bool closed = false;
+            var closed = false;
+            var aborted = false;
             var operation = this.AcceptOperation;
             while (!closed)
             {
@@ -95,9 +96,11 @@ namespace DotNetty.Transport.Channels.Sockets
                     }
                     return;
                 }
-                catch (SocketException ex) when (ex.SocketErrorCode == SocketError.OperationAborted || ex.SocketErrorCode == SocketError.InvalidArgument)
+                catch (SocketException ex) when (ex.SocketErrorCode.IsSocketAbortError())
                 {
-                    closed = true;
+                    this.Socket.SafeClose(); // Unbind......
+                    this.Pipeline.FireExceptionCaught(ex);
+                    aborted = true;
                 }
                 catch (SocketException ex)
                 {
@@ -115,9 +118,10 @@ namespace DotNetty.Transport.Channels.Sockets
                     closed = true;
                 }
             }
-            if (closed && this.Open)
+            if (this.Open)
             {
-                this.Unsafe.CloseSafe();
+                if (closed) { this.Unsafe.CloseSafe(); }
+                else if (aborted) { this.CloseSafe(); }
             }
         }
 
@@ -159,19 +163,20 @@ namespace DotNetty.Transport.Channels.Sockets
 
             public override void FinishRead(SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe> operation)
             {
-                Contract.Assert(this.channel.EventLoop.InEventLoop);
+                Debug.Assert(this.channel.EventLoop.InEventLoop);
 
-                var ch = this.Channel;
+                var ch = this.channel;
                 if ((ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active) == 0)
                 {
                     return; // read was signaled as a result of channel closure
                 }
                 IChannelConfiguration config = ch.Configuration;
                 IChannelPipeline pipeline = ch.Pipeline;
-                IRecvByteBufAllocatorHandle allocHandle = this.Channel.Unsafe.RecvBufAllocHandle;
+                IRecvByteBufAllocatorHandle allocHandle = ch.Unsafe.RecvBufAllocHandle;
                 allocHandle.Reset(config);
 
-                bool closed = false;
+                var closed = false;
+                var aborted = false;
                 Exception exception = null;
 
                 try
@@ -208,9 +213,11 @@ namespace DotNetty.Transport.Channels.Sockets
                             allocHandle.IncMessagesRead(1);
                         }
                     }
-                    catch (SocketException ex) when (IsSocketAbortError(ex.SocketErrorCode))
+                    catch (SocketException ex) when (ex.SocketErrorCode.IsSocketAbortError())
                     {
-                        closed = true;
+                        ch.Socket.SafeClose(); // Unbind......
+                        exception = ex;
+                        aborted = true;
                     }
                     catch (SocketException ex) when (ex.SocketErrorCode == SocketError.WouldBlock)
                     {
@@ -219,7 +226,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     {
                         // socket exceptions here are internal to channel's operation and should not go through the pipeline
                         // especially as they have no effect on overall channel's operation
-                         if (Logger.InfoEnabled) Logger.ExceptionOnAccept(ex);
+                        if (Logger.InfoEnabled) Logger.ExceptionOnAccept(ex);
                     }
                     catch (ObjectDisposedException)
                     {
@@ -241,9 +248,10 @@ namespace DotNetty.Transport.Channels.Sockets
                         pipeline.FireExceptionCaught(exception);
                     }
 
-                    if (closed && ch.Open)
+                    if (ch.Open)
                     {
-                        this.CloseSafe();
+                        if (closed) { this.CloseSafe(); }
+                        else if (aborted) { ch.CloseSafe(); }
                     }
                 }
                 finally

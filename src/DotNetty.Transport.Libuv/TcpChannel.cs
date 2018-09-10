@@ -116,7 +116,7 @@ namespace DotNetty.Transport.Libuv
             if (!this.IsInState(StateFlags.ReadScheduled))
             {
                 this.SetState(StateFlags.ReadScheduled);
-                this.tcp.ReadStart((TcpChannelUnsafe)this.Unsafe);
+                this.tcp.ReadStart(this.Unsafe);
             }
         }
 
@@ -141,7 +141,7 @@ namespace DotNetty.Transport.Libuv
                 this.SetState(StateFlags.WriteScheduled);
                 var loopExecutor = (LoopExecutor)this.EventLoop;
                 WriteRequest request = loopExecutor.WriteRequestPool.Take();
-                request.DoWrite((TcpChannelUnsafe)this.Unsafe, input);
+                request.DoWrite(this.Unsafe, input);
             }
         }
 

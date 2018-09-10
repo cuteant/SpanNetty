@@ -4,7 +4,6 @@
 namespace DotNetty.Codecs
 {
     using System;
-    using System.Diagnostics.Contracts;
     using CuteAnt.Pool;
     using DotNetty.Common.Utilities;
 
@@ -18,7 +17,7 @@ namespace DotNetty.Codecs
 
         public static DecoderResult Failure(Exception cause)
         {
-            Contract.Requires(cause != null);
+            if (null == cause) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
             return new DecoderResult(cause);
         }
 
@@ -26,7 +25,7 @@ namespace DotNetty.Codecs
 
         protected DecoderResult(Exception cause)
         {
-            Contract.Requires(cause != null);
+            if (null == cause) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
             this.cause = cause;
         }
 

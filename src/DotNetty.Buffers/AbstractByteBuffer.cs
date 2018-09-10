@@ -5,7 +5,7 @@
 namespace DotNetty.Buffers
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.IO;
     using System.Runtime.CompilerServices;
     using System.Text;
@@ -47,7 +47,7 @@ namespace DotNetty.Buffers
 
         protected AbstractByteBuffer(int maxCapacity)
         {
-            Contract.Requires(maxCapacity >= 0);
+            if (maxCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxCapacity, ExceptionArgument.maxCapacity); }
 
             this.maxCapacity = maxCapacity;
         }
@@ -60,7 +60,7 @@ namespace DotNetty.Buffers
 
         protected void SetMaxCapacity(int newMaxCapacity)
         {
-            Contract.Requires(newMaxCapacity >= 0);
+            if (newMaxCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(newMaxCapacity, ExceptionArgument.newMaxCapacity); }
 
             this.maxCapacity = newMaxCapacity;
         }
@@ -266,7 +266,7 @@ namespace DotNetty.Buffers
 
         public virtual int EnsureWritable(int minWritableBytes, bool force)
         {
-            Contract.Ensures(minWritableBytes >= 0);
+            if (minWritableBytes < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(minWritableBytes, ExceptionArgument.minWritableBytes); }
 
             this.EnsureAccessible();
             if (minWritableBytes <= this.WritableBytes)
@@ -681,7 +681,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetBytes(int index, IByteBuffer src, int length)
         {
-            Contract.Requires(src != null);
+            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
 
             this.CheckIndex(index, length);
             if (length > src.ReadableBytes)
@@ -1212,7 +1212,7 @@ namespace DotNetty.Buffers
             int writerIdx = this.writerIndex;
             int wrote = await this.SetBytesAsync(writerIdx, stream, length, cancellationToken);
 
-            Contract.Assert(writerIdx == this.writerIndex);
+            Debug.Assert(writerIdx == this.writerIndex);
             this.writerIndex = writerIdx + wrote;
         }
 

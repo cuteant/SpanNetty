@@ -15,7 +15,7 @@ namespace DotNetty.Transport.Channels
 
         public int GetHashCode(IChannel obj)
         {
-            if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
+            //if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
             return obj.Id.GetHashCode();
         }
     }

@@ -16,7 +16,7 @@ namespace DotNetty.Common.Utilities
 
         public int GetHashCode(IConstant obj)
         {
-            if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
+            //if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
             return RuntimeHelpers.GetHashCode(obj);
         }
     }

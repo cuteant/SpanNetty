@@ -11,6 +11,7 @@ namespace DotNetty.Codecs.Mqtt
     /// <summary>The convention for this enum is using the argument name as the enum name</summary>
     internal enum ExceptionArgument
     {
+        topicFilter,
     }
 
     #endregion

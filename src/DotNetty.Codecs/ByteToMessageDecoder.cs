@@ -5,7 +5,6 @@ namespace DotNetty.Codecs
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Transport.Channels;
@@ -124,7 +123,7 @@ namespace DotNetty.Codecs
 
         public void SetCumulator(CumulationFunc cumulationFunc)
         {
-            Contract.Requires(cumulationFunc != null);
+            if (null == cumulationFunc) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cumulationFunc); }
 
             this.cumulator = cumulationFunc;
         }
@@ -391,9 +390,9 @@ namespace DotNetty.Codecs
 
         protected virtual void CallDecode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
-            Contract.Requires(context != null);
-            Contract.Requires(input != null);
-            Contract.Requires(output != null);
+            if (null == context) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.context); }
+            if (null == input) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.input); }
+            if (null == output) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
 
             try
             {

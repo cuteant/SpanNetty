@@ -4,12 +4,9 @@
 // ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http.Multipart
 {
-    using System;
-    using System.Diagnostics.Contracts;
     using System.IO;
     using System.Text;
     using DotNetty.Buffers;
-    using DotNetty.Transport.Channels;
 
     public class DiskFileUpload : AbstractDiskHttpData, IFileUpload
     {
@@ -26,8 +23,8 @@ namespace DotNetty.Codecs.Http.Multipart
             string contentTransferEncoding, Encoding charset, long size)
             : base(name, charset, size)
         {
-            Contract.Requires(filename != null);
-            Contract.Requires(contentType != null);
+            if (null == filename) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.filename); }
+            if (null == contentType) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentType); }
 
             this.filename = filename;
             this.contentType = contentType;
@@ -41,7 +38,7 @@ namespace DotNetty.Codecs.Http.Multipart
             get => this.filename;
             set
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.filename = value;
             }
         }
@@ -67,7 +64,7 @@ namespace DotNetty.Codecs.Http.Multipart
             get => this.contentType;
             set
             {
-                Contract.Requires(value != null);
+                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.contentType = value;
             }
         }

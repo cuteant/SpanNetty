@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 using DotNetty.Buffers;
 using DotNetty.Common.Utilities;
 using DotNetty.Transport.Channels;
-#if !NET40
 using DotNetty.Transport.Channels.Local;
 using DotNetty.Transport.Channels.Pool;
-#endif
+using DotNetty.Transport.Channels.Sockets;
 
 namespace DotNetty.Transport
 {
@@ -86,6 +85,51 @@ namespace DotNetty.Transport
         inbound,
         outbound,
         initialization,
+        estimatorHandle,
+        group,
+        channelFactory,
+        option,
+        localAddress,
+        handler,
+        resolver,
+        remoteAddress,
+        childGroup,
+        childOption,
+        childKey,
+        childHandler,
+        config,
+        handlers,
+        e1,
+        e2,
+        message,
+        matcher,
+        futures,
+        channel,
+        healthChecker,
+        bootstrap,
+        socket,
+        networkInterface,
+        holder,
+        buf,
+        eventLoop,
+        pipeline,
+        cause,
+        evt,
+        msg,
+        initializationAction,
+        minimum,
+        ctx,
+        defaultMaxMessagesPerRead,
+        processor,
+        outboundHandler,
+        inboundHandler,
+        content,
+        senderAndRecipient,
+        newHandler,
+        unknownSize,
+        bufferSize,
+        pos,
+        file,
     }
 
     #endregion
@@ -102,6 +146,76 @@ namespace DotNetty.Transport
     partial class ThrowHelper
     {
         #region -- ArgumentException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(long value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(long value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static int ThrowArgumentException_PositiveOrOne(int value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 1)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_FileRegionPosition(long position)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("position must be >= 0 but was " + position);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_FileRegionCount(long count)
+        {
+            throw GetArgumentException();
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("count must be >= 0 but was " + count);
+            }
+        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_Excs()
@@ -140,6 +254,16 @@ namespace DotNetty.Transport
             ArgumentException GetArgumentException()
             {
                 return new ArgumentException($"Channel {channel} was not acquired from this ChannelPool");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_MustBeGreaterThanZero(TimeSpan value, ExceptionArgument argument)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"{GetArgumentName(argument)} must be greater than 0: {value}");
             }
         }
 
@@ -231,12 +355,10 @@ namespace DotNetty.Transport
 
         #region -- InvalidOperationException --
 
-#if !NET40
-        static readonly InvalidOperationException s_fullException = new InvalidOperationException("ChannelPool full");
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowInvalidOperationException_ChannelPoolFull()
         {
-            throw s_fullException;
+            throw SimpleChannelPool.FullException;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -256,7 +378,6 @@ namespace DotNetty.Transport
         {
             throw FixedChannelPool.PoolClosedOnAcquireException;
         }
-#endif
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowInvalidOperationException()
@@ -616,38 +737,41 @@ namespace DotNetty.Transport
             return TaskUtil.FromException(GetClosedChannelException());
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static ClosedChannelException GetClosedChannelException()
         {
             return new ClosedChannelException();
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static ClosedChannelException GetClosedChannelException_FailedToWrite(Exception ex)
         {
             return new ClosedChannelException("Failed to write", ex);
         }
 
-#if !NET40
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowDoWriteClosedChannelException()
         {
             throw LocalChannel.DoWriteClosedChannelException;
         }
-#endif
 
         #endregion
 
         #region -- ChannelPipelineException --
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static ChannelPipelineException GetChannelPipelineException_HandlerAddedThrowRemovedExc(AbstractChannelHandlerContext ctx, Exception ex)
         {
             return new ChannelPipelineException($"{ctx.Handler.GetType().Name}.HandlerAdded() has thrown an exception; removed.", ex);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static ChannelPipelineException GetChannelPipelineException_HandlerAddedThrowAlsoFailedToRemovedExc(AbstractChannelHandlerContext ctx, Exception ex)
         {
             return new ChannelPipelineException($"{ctx.Handler.GetType().Name}.HandlerAdded() has thrown an exception; also failed to remove.", ex);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static ChannelPipelineException GetChannelPipelineException_HandlerRemovedThrowExc(AbstractChannelHandlerContext ctx, Exception ex)
         {
             return new ChannelPipelineException($"{ctx.Handler.GetType().Name}.HandlerRemoved() has thrown an exception.", ex);
@@ -657,7 +781,13 @@ namespace DotNetty.Transport
 
         #region -- Others --
 
-        // 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static ChannelOutputShutdownException GetChannelOutputShutdownException(Exception cause = null)
+        {
+            const string errMsg = "Channel output shutdown";
+            return cause != null ? new ChannelOutputShutdownException(errMsg, cause) : new ChannelOutputShutdownException(errMsg);
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowNotImplementedException_OnlyIByteBufferImpl()
         {

@@ -5,7 +5,6 @@ namespace DotNetty.Transport.Bootstrapping
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Net;
     using System.Threading.Tasks;
     using CuteAnt.Pool;
@@ -21,14 +20,14 @@ namespace DotNetty.Transport.Bootstrapping
     /// in combination with connectionless transports such as datagram (UDP). For regular TCP connections,
     /// please use the provided <see cref="ConnectAsync(EndPoint,EndPoint)"/> methods.
     /// </summary>
-    public class Bootstrap : AbstractBootstrap<Bootstrap, IChannel>
+    public partial class Bootstrap : AbstractBootstrap<Bootstrap, IChannel>
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Bootstrap>();
 
         static readonly INameResolver DefaultResolver = new DefaultNameResolver();
 
-        volatile INameResolver resolver = DefaultResolver;
-        volatile EndPoint remoteAddress;
+        INameResolver _resolver = DefaultResolver;
+        EndPoint _remoteAddress;
 
         public Bootstrap()
         {
@@ -37,8 +36,8 @@ namespace DotNetty.Transport.Bootstrapping
         Bootstrap(Bootstrap bootstrap)
             : base(bootstrap)
         {
-            this.resolver = bootstrap.resolver;
-            this.remoteAddress = bootstrap.remoteAddress;
+            InternalResolver = bootstrap.InternalResolver;
+            InternalRemoteAddress = bootstrap.InternalRemoteAddress;
         }
 
         /// <summary>
@@ -48,8 +47,8 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="Bootstrap"/> instance.</returns>
         public Bootstrap Resolver(INameResolver resolver)
         {
-            Contract.Requires(resolver != null);
-            this.resolver = resolver;
+            if (null == resolver) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.resolver); }
+            InternalResolver = resolver;
             return this;
         }
 
@@ -60,7 +59,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="Bootstrap"/> instance.</returns>
         public Bootstrap RemoteAddress(EndPoint remoteAddress)
         {
-            this.remoteAddress = remoteAddress;
+            InternalRemoteAddress = remoteAddress;
             return this;
         }
 
@@ -72,7 +71,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="Bootstrap"/> instance.</returns>
         public Bootstrap RemoteAddress(string inetHost, int inetPort)
         {
-            this.remoteAddress = new DnsEndPoint(inetHost, inetPort);
+            InternalRemoteAddress = new DnsEndPoint(inetHost, inetPort);
             return this;
         }
 
@@ -84,7 +83,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="Bootstrap"/> instance.</returns>
         public Bootstrap RemoteAddress(IPAddress inetHost, int inetPort)
         {
-            this.remoteAddress = new IPEndPoint(inetHost, inetPort);
+            InternalRemoteAddress = new IPEndPoint(inetHost, inetPort);
             return this;
         }
 
@@ -95,7 +94,7 @@ namespace DotNetty.Transport.Bootstrapping
         public Task<IChannel> ConnectAsync()
         {
             this.Validate();
-            EndPoint remoteAddress = this.remoteAddress;
+            EndPoint remoteAddress = InternalRemoteAddress;
             if (remoteAddress == null)
             {
                 ThrowHelper.ThrowInvalidOperationException_RemoteAddrNotSet();
@@ -127,7 +126,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="IChannel"/>.</returns>
         public Task<IChannel> ConnectAsync(EndPoint remoteAddress)
         {
-            Contract.Requires(remoteAddress != null);
+            if (null == remoteAddress) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
 
             this.Validate();
             return this.DoResolveAndConnectAsync(remoteAddress, this.LocalAddress());
@@ -141,7 +140,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="IChannel"/>.</returns>
         public Task<IChannel> ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
         {
-            Contract.Requires(remoteAddress != null);
+            if (null == remoteAddress) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
 
             this.Validate();
             return this.DoResolveAndConnectAsync(remoteAddress, localAddress);
@@ -157,7 +156,8 @@ namespace DotNetty.Transport.Bootstrapping
         {
             IChannel channel = await this.InitAndRegisterAsync();
 
-            if (this.resolver.IsResolved(remoteAddress))
+            var resolver = InternalResolver;
+            if (resolver.IsResolved(remoteAddress))
             {
                 // Resolver has no idea about what to do with the specified remote address or it's resolved already.
                 await DoConnectAsync(channel, remoteAddress, localAddress);
@@ -167,7 +167,7 @@ namespace DotNetty.Transport.Bootstrapping
             EndPoint resolvedAddress;
             try
             {
-                resolvedAddress = await this.resolver.ResolveAsync(remoteAddress);
+                resolvedAddress = await resolver.ResolveAsync(remoteAddress);
             }
             catch (Exception)
             {
@@ -256,7 +256,8 @@ namespace DotNetty.Transport.Bootstrapping
 
         public override string ToString()
         {
-            if (this.remoteAddress == null)
+            var remoteAddress = InternalRemoteAddress;
+            if (remoteAddress == null)
             {
                 return base.ToString();
             }
@@ -265,7 +266,7 @@ namespace DotNetty.Transport.Bootstrapping
             buf.Length = buf.Length - 1;
 
             return StringBuilderManager.ReturnAndFree(buf.Append(", remoteAddress: ")
-                .Append(this.remoteAddress)
+                .Append(remoteAddress)
                 .Append(')'));
         }
     }

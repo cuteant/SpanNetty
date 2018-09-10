@@ -6,7 +6,6 @@ namespace DotNetty.Codecs.Http.Cookies
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Diagnostics.Contracts;
     using System.Text;
 
     using static CookieUtil;
@@ -40,7 +39,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public string Encode(ICookie cookie)
         {
-            Contract.Requires(cookie != null);
+            if (null == cookie) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cookie); }
 
             string name = cookie.Name ?? nameof(cookie);
             string value = cookie.Value ?? "";
@@ -147,7 +146,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public IList<string> Encode(ICollection<ICookie> cookies)
         {
-            Contract.Requires(cookies != null);
+            if (null == cookies) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cookies); }
             if (cookies.Count == 0)
             {
                 return ImmutableList<string>.Empty;

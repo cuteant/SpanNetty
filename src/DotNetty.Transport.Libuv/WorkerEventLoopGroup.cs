@@ -7,12 +7,10 @@ namespace DotNetty.Transport.Libuv
 {
     using System;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
-    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
@@ -40,7 +38,7 @@ namespace DotNetty.Transport.Libuv
 
         public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int eventLoopCount)
         {
-            Contract.Requires(eventLoopGroup != null);
+            if (null == eventLoopGroup) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventLoopGroup); }
 
             this.dispatcherLoop = eventLoopGroup.Dispatcher;
             this.PipeName = this.dispatcherLoop.PipeName;

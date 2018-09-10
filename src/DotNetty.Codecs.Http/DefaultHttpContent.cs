@@ -5,7 +5,6 @@
 // ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http
 {
-    using System.Diagnostics.Contracts;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
@@ -16,7 +15,7 @@ namespace DotNetty.Codecs.Http
 
         public DefaultHttpContent(IByteBuffer content)
         {
-            Contract.Requires(content != null);
+            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
 
             this.content = content;
         }

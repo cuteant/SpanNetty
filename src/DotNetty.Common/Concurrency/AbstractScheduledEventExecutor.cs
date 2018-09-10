@@ -4,7 +4,7 @@
 namespace DotNetty.Common.Concurrency
 {
     using System;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
@@ -40,7 +40,7 @@ namespace DotNetty.Common.Concurrency
         /// </summary>
         protected virtual void CancelScheduledTasks()
         {
-            Contract.Assert(this.InEventLoop);
+            Debug.Assert(this.InEventLoop);
             PriorityQueue<IScheduledRunnable> scheduledTaskQueue = this.ScheduledTaskQueue;
             if (IsNullOrEmpty(scheduledTaskQueue))
             {
@@ -60,7 +60,7 @@ namespace DotNetty.Common.Concurrency
 
         protected IScheduledRunnable PollScheduledTask(PreciseTimeSpan nanoTime)
         {
-            Contract.Assert(this.InEventLoop);
+            Debug.Assert(this.InEventLoop);
 
             IScheduledRunnable scheduledTask = this.ScheduledTaskQueue.Peek();
             if (scheduledTask == null)
@@ -96,35 +96,35 @@ namespace DotNetty.Common.Concurrency
 
         public override IScheduledTask Schedule(IRunnable action, TimeSpan delay)
         {
-            Contract.Requires(action != null);
+            if (null == action) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
             return this.Schedule(new RunnableScheduledTask(this, action, PreciseTimeSpan.Deadline(delay)));
         }
 
         public override IScheduledTask Schedule(Action action, TimeSpan delay)
         {
-            Contract.Requires(action != null);
+            if (null == action) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
             return this.Schedule(new ActionScheduledTask(this, action, PreciseTimeSpan.Deadline(delay)));
         }
 
         public override IScheduledTask Schedule(Action<object> action, object state, TimeSpan delay)
         {
-            Contract.Requires(action != null);
+            if (null == action) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
             return this.Schedule(new StateActionScheduledTask(this, action, state, PreciseTimeSpan.Deadline(delay)));
         }
 
         public override IScheduledTask Schedule(Action<object, object> action, object context, object state, TimeSpan delay)
         {
-            Contract.Requires(action != null);
+            if (null == action) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
             return this.Schedule(new StateActionWithContextScheduledTask(this, action, context, state, PreciseTimeSpan.Deadline(delay)));
         }
 
         public override Task ScheduleAsync(Action action, TimeSpan delay, CancellationToken cancellationToken)
         {
-            Contract.Requires(action != null);
+            if (null == action) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
             if (cancellationToken.IsCancellationRequested)
             {

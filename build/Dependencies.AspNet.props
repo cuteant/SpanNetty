@@ -1,0 +1,50 @@
+<Project>
+  <!-- Shared Package Versions -->
+  <PropertyGroup>
+    <!-- AspNet related packages -->
+    <MicrosoftAspNetCorsPackageVersion>5.2.4</MicrosoftAspNetCorsPackageVersion>
+
+    <MicrosoftAspNetMvcPackageVersion>5.2.4</MicrosoftAspNetMvcPackageVersion>
+
+    <MicrosoftAspNetRazorPackageVersion>3.2.4</MicrosoftAspNetRazorPackageVersion>
+    <MicrosoftAspNetWebPagesPackageVersion>3.2.4</MicrosoftAspNetWebPagesPackageVersion>
+
+    <MicrosoftAspNetWebApiClientPackageVersion>5.2.4</MicrosoftAspNetWebApiClientPackageVersion>
+    <MicrosoftAspNetWebApiCorePackageVersion>5.2.4</MicrosoftAspNetWebApiCorePackageVersion>
+    <MicrosoftAspNetWebApiCorsPackageVersion>5.2.4</MicrosoftAspNetWebApiCorsPackageVersion>
+    <MicrosoftAspNetWebApiPackageVersion>5.2.4</MicrosoftAspNetWebApiPackageVersion>
+    <MicrosoftAspNetWebApiCorsPackageVersion>5.2.4</MicrosoftAspNetWebApiCorsPackageVersion>
+    <MicrosoftAspNetWebApiOwinPackageVersion>5.2.4</MicrosoftAspNetWebApiOwinPackageVersion>
+    <MicrosoftAspNetWebApiTracingPackageVersion>5.2.4</MicrosoftAspNetWebApiTracingPackageVersion>
+    <MicrosoftAspNetWebApiWebHostPackageVersion>5.2.4</MicrosoftAspNetWebApiWebHostPackageVersion>
+
+    <MicrosoftAspNetCoreMvcWebApiCompatShimPackageVersion>2.0.3</MicrosoftAspNetCoreMvcWebApiCompatShimPackageVersion>
+    <MicrosoftAspNetCoreOwinPackageVersion>2.0.2</MicrosoftAspNetCoreOwinPackageVersion>
+    <MicrosoftAspNetIdentityAspNetCoreCompatPackageVersion>0.3.2</MicrosoftAspNetIdentityAspNetCoreCompatPackageVersion>
+    <MicrosoftAspNetIdentityEntityFrameworkPackageVersion>2.2.1</MicrosoftAspNetIdentityEntityFrameworkPackageVersion>
+
+    <!-- Owin related packages -->
+    <CuteAntOwinPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinPackageVersion>
+    <CuteAntOwinCompressionPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinCompressionPackageVersion>
+    <CuteAntOwinCorsPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinCorsPackageVersion>
+    <CuteAntOwinDiagnosticsPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinDiagnosticsPackageVersion>
+    <CuteAntOwinFileSystemsPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinFileSystemsPackageVersion>
+    <CuteAntOwinHostHttpListenerPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinHostHttpListenerPackageVersion>
+    <CuteAntOwinHostSystemWebPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinHostSystemWebPackageVersion>
+    <CuteAntOwinHostingPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinHostingPackageVersion>
+    <CuteAntOwinSecurityPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinSecurityPackageVersion>
+    <CuteAntOwinSecurityCookiesPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinSecurityCookiesPackageVersion>
+    <CuteAntOwinSecurityJwtPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinSecurityJwtPackageVersion>
+    <CuteAntOwinSecurityMicrosoftAccountPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinSecurityMicrosoftAccountPackageVersion>
+    <CuteAntOwinSecurityOAuthPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinSecurityOAuthPackageVersion>
+    <CuteAntOwinSecurityOpenIdConnectPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinSecurityOpenIdConnectPackageVersion>
+    <CuteAntOwinSecurityQQPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinSecurityQQPackageVersion>
+    <CuteAntOwinSecurityWeiboPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinSecurityWeiboPackageVersion>
+    <CuteAntOwinSecurityWeixinPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinSecurityWeixinPackageVersion>
+    <CuteAntOwinSecurityWsFederationPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinSecurityWsFederationPackageVersion>
+    <CuteAntOwinSelfHostPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinSelfHostPackageVersion>
+    <CuteAntOwinStaticFilesPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinStaticFilesPackageVersion>
+    <CuteAntOwinTestingPackageVersion>2.1.0-preview2-180222-01</CuteAntOwinTestingPackageVersion>
+    <MicrosoftAspNetWebApiOwinUnofficialPackageVersion>2.1.0-preview2-180222-01</MicrosoftAspNetWebApiOwinUnofficialPackageVersion>
+  </PropertyGroup>
+</Project>

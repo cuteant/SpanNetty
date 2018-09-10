@@ -7,7 +7,6 @@ namespace DotNetty.Transport.Channels.Groups
     using System.Collections;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
@@ -21,7 +20,7 @@ namespace DotNetty.Transport.Channels.Groups
         readonly ConcurrentDictionary<IChannelId, IChannel> nonServerChannels = new ConcurrentDictionary<IChannelId, IChannel>(ChannelIdComparer.Default);
         readonly ConcurrentDictionary<IChannelId, IChannel> serverChannels = new ConcurrentDictionary<IChannelId, IChannel>(ChannelIdComparer.Default);
         readonly bool stayClosed;
-        volatile bool closed;
+        int closed;
 
         public DefaultChannelGroup(IEventExecutor executor)
             : this(executor, false)
@@ -68,8 +67,8 @@ namespace DotNetty.Transport.Channels.Groups
 
         public Task WriteAsync(object message, IChannelMatcher matcher)
         {
-            Contract.Requires(message != null);
-            Contract.Requires(matcher != null);
+            if (null == message) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.message); }
+            if (null == matcher) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
             var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
@@ -158,8 +157,8 @@ namespace DotNetty.Transport.Channels.Groups
 
         public Task WriteAndFlushAsync(object message, IChannelMatcher matcher)
         {
-            Contract.Requires(message != null);
-            Contract.Requires(matcher != null);
+            if (null == message) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.message); }
+            if (null == matcher) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
             var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
@@ -177,7 +176,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         public Task DisconnectAsync(IChannelMatcher matcher)
         {
-            Contract.Requires(matcher != null);
+            if (null == matcher) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
             var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
@@ -201,7 +200,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         public Task CloseAsync(IChannelMatcher matcher)
         {
-            Contract.Requires(matcher != null);
+            if (null == matcher) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
             var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
 
             if (this.stayClosed)
@@ -212,7 +211,7 @@ namespace DotNetty.Transport.Channels.Groups
                 // ChannelGroup.add() happens-before checking closed==true
                 //
                 // See https://github.com/netty/netty/issues/4020
-                this.closed = true;
+                Interlocked.Exchange(ref this.closed, Constants.True);
             }
 
             foreach (IChannel c in this.nonServerChannels.Values)
@@ -237,7 +236,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         public Task DeregisterAsync(IChannelMatcher matcher)
         {
-            Contract.Requires(matcher != null);
+            if (null == matcher) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
             var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
@@ -261,7 +260,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         public Task NewCloseFuture(IChannelMatcher matcher)
         {
-            Contract.Requires(matcher != null);
+            if (null == matcher) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
             var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
@@ -283,14 +282,12 @@ namespace DotNetty.Transport.Channels.Groups
 
         static object SafeDuplicate(object message)
         {
-            var buffer = message as IByteBuffer;
-            if (buffer != null)
+            if (message is IByteBuffer buffer)
             {
                 return buffer.RetainedDuplicate();
             }
 
-            var byteBufferHolder = message as IByteBufferHolder;
-            if (byteBufferHolder != null)
+            if (message is IByteBufferHolder byteBufferHolder)
             {
                 return byteBufferHolder.RetainedDuplicate();
             }
@@ -314,7 +311,7 @@ namespace DotNetty.Transport.Channels.Groups
 #endif
             }
 
-            if (this.stayClosed && this.closed)
+            if (this.stayClosed && (Constants.True == Volatile.Read(ref this.closed)))
             {
 
                 // First add channel, than check if closed.
@@ -361,15 +358,13 @@ namespace DotNetty.Transport.Channels.Groups
 
         public bool Remove(object o)
         {
-            var id = o as IChannelId;
-            if (id != null)
+            if (o is IChannelId id)
             {
                 return this.Remove(id);
             }
             else
             {
-                var channel = o as IChannel;
-                if (channel != null)
+                if (o is IChannel channel)
                 {
                     return this.Remove(channel);
                 }

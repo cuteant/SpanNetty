@@ -4,7 +4,6 @@
 namespace DotNetty.Codecs.Http.WebSockets.Extensions
 {
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
@@ -15,7 +14,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
         public WebSocketClientExtensionHandler(params IWebSocketClientExtensionHandshaker[] extensionHandshakers)
         {
-            Contract.Requires(extensionHandshakers != null && extensionHandshakers.Length > 0);
+            if (null == extensionHandshakers || extensionHandshakers.Length <= 0) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.extensionHandshakers); }
             this.extensionHandshakers = new List<IWebSocketClientExtensionHandshaker>(extensionHandshakers);
         }
 
@@ -44,7 +43,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
         public override void ChannelRead(IChannelHandlerContext ctx, object msg)
         {
-            if (msg is IHttpResponse response 
+            if (msg is IHttpResponse response
                 && WebSocketExtensionUtil.IsWebsocketUpgrade(response.Headers))
             {
                 string extensionsHeader = null;

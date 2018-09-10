@@ -6,7 +6,6 @@
 namespace DotNetty.Codecs.Http
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Runtime.CompilerServices;
     using System.Text;
     using System.Text.RegularExpressions;
@@ -103,7 +102,7 @@ namespace DotNetty.Codecs.Http
 
         public HttpVersion(string text, bool keepAliveDefault)
         {
-            Contract.Requires(text != null);
+            if (null == text) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.text); }
 
             text = text.Trim().ToUpperInvariant();
             if (string.IsNullOrEmpty(text))

@@ -15,5 +15,7 @@ namespace DotNetty.Transport.Channels
         ///     If this value is greater than 1, an event loop might attempt to read multiple times to procure multiple messages.
         /// </summary>
         int MaxMessagesPerRead { get; set; }
+
+        bool RespectMaybeMoreData { get; set; }
     }
 }

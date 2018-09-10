@@ -23,7 +23,7 @@
         /// <param name="buffer">The source buffer.</param>
         /// <param name="offset">Computed via <see cref="ConcurrentCircularArrayQueue{T}.CalcElementOffset"/></param>
         /// <param name="e"></param>
-        public static void SoElement<T>(T[] buffer, long offset, T e) where T : class => Volatile.Write(ref buffer[offset], e);
+        public static void SoElement<T>(T[] buffer, long offset, T e) where T : class => Interlocked.Exchange(ref buffer[offset], e);
 
         /// <summary>
         /// A plain load (no ordering/fences) of an element from a given offset.

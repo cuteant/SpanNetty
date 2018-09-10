@@ -19,10 +19,11 @@ namespace DotNetty.Common.Utilities
 
         public int GetHashCode(ICharSequence obj)
         {
-            if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
+            //if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
             return obj.GetHashCode();
         }
     }
+
     sealed class ICharSequenceIgnoreCaseComparer : IEqualityComparer<ICharSequence>
     {
         public bool Equals(ICharSequence x, ICharSequence y)
@@ -34,7 +35,7 @@ namespace DotNetty.Common.Utilities
 
         public int GetHashCode(ICharSequence obj)
         {
-            if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
+            //if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
             return obj.HashCode(true);
         }
     }

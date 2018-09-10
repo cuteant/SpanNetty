@@ -4,16 +4,16 @@
     <SourceRoot>$(MSBuildThisFileDirectory)</SourceRoot>
   </PropertyGroup>
 
-  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.props" />
-  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.3rdParty.props" />
-  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.AspNet.props" />
-  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.AspNetCore.Dev.props" />
-  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.CuteAnt.props" />
-  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.Extensions.Dev.props" />
-  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.NetCore.props" />
-  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.Roslyn.props" />
-  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.System.props" />
-  <Import Project="$(SourceRoot)/../CuteAnt.Extensions.Common/build/Dependencies.Testing.props" />
+  <Import Project="$(SourceRoot)//build/Dependencies.props" />
+  <Import Project="$(SourceRoot)//build/Dependencies.3rdParty.props" />
+  <Import Project="$(SourceRoot)//build/Dependencies.AspNet.props" />
+  <Import Project="$(SourceRoot)//build/Dependencies.AspNetCore.Dev.props" />
+  <Import Project="$(SourceRoot)//build/Dependencies.CuteAnt.props" />
+  <Import Project="$(SourceRoot)//build/Dependencies.Extensions.Dev.props" />
+  <Import Project="$(SourceRoot)//build/Dependencies.NetCore.props" />
+  <Import Project="$(SourceRoot)//build/Dependencies.Roslyn.props" />
+  <Import Project="$(SourceRoot)//build/Dependencies.System.props" />
+  <Import Project="$(SourceRoot)//build/Dependencies.Testing.props" />
 
   <!-- Ensure changes to this file cause project rebuilds. -->
   <PropertyGroup>
@@ -68,8 +68,25 @@
     <DefineConstants>$(DefineConstants);DESKTOPCLR;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER</DefineConstants>
     <ImportLibs>netfx</ImportLibs>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
+    <DefineConstants>$(DefineConstants);DESKTOPCLR;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER;NET_4_7_1_GREATER</DefineConstants>
+    <ImportLibs>netfx</ImportLibs>
+  </PropertyGroup>
 
 
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net472|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net472|AnyCPU'">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net471|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>

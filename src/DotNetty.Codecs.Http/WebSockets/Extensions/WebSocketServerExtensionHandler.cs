@@ -5,7 +5,6 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
@@ -18,7 +17,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
         public WebSocketServerExtensionHandler(params IWebSocketServerExtensionHandshaker[] extensionHandshakers)
         {
-            Contract.Requires(extensionHandshakers != null && extensionHandshakers.Length > 0);
+            if (null == extensionHandshakers || extensionHandshakers.Length <= 0) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.extensionHandshakers); }
 
             this.extensionHandshakers = new List<IWebSocketServerExtensionHandshaker>(extensionHandshakers);
         }

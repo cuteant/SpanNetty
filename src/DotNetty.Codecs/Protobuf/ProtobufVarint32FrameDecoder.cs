@@ -4,7 +4,6 @@
 namespace DotNetty.Codecs.Protobuf
 {
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
@@ -55,7 +54,7 @@ namespace DotNetty.Codecs.Protobuf
 
         static int ReadRawVarint32(IByteBuffer buffer)
         {
-            Contract.Requires(buffer != null);
+            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 
             if (!buffer.IsReadable())
             {

@@ -8,7 +8,7 @@ namespace DotNetty.Common.Utilities
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using DotNetty.Common.Internal;
 
     public sealed partial class StringCharSequence : ICharSequence, IEquatable<StringCharSequence>
     {
@@ -20,7 +20,7 @@ namespace DotNetty.Common.Utilities
 
         public StringCharSequence(string value)
         {
-            Contract.Requires(value != null);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             this.value = value;
             this.offset = 0;
@@ -29,9 +29,11 @@ namespace DotNetty.Common.Utilities
 
         public StringCharSequence(string value, int offset, int count)
         {
-            Contract.Requires(value != null);
-            Contract.Requires(offset >= 0 && count >= 0);
-            Contract.Requires(offset <= value.Length - count);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (MathUtil.IsOutOfBounds(offset, count, value.Length))
+            {
+                ThrowHelper.ThrowIndexOutOfRangeException_Index(offset, count, value.Length);
+            }
 
             this.value = value;
             this.offset = offset;
@@ -42,13 +44,13 @@ namespace DotNetty.Common.Utilities
 
         public static explicit operator string(StringCharSequence charSequence)
         {
-            Contract.Requires(charSequence != null);
+            if (null == charSequence) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charSequence); }
             return charSequence.ToString();
         }
 
         public static explicit operator StringCharSequence(string value)
         {
-            Contract.Requires(value != null);
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             return value.Length > 0 ? new StringCharSequence(value) : Empty;
         }
@@ -57,11 +59,10 @@ namespace DotNetty.Common.Utilities
 
         public ICharSequence SubSequence(int start, int end)
         {
-            Contract.Requires(start >= 0 && end >= start);
-            Contract.Requires(end <= this.count);
+            if (start < 0 || end < start || end > this.count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             return end == start
-                ? Empty 
+                ? Empty
                 : new StringCharSequence(this.value, this.offset + start, end - start);
         }
 
@@ -69,10 +70,10 @@ namespace DotNetty.Common.Utilities
         {
             get
             {
-                Contract.Requires(index >= 0 && index < this.count);
+                if (index < 0 || index >= this.count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
                 return this.value[this.offset + index];
             }
-        } 
+        }
 
         public bool RegionMatches(int thisStart, ICharSequence seq, int start, int length) =>
             CharUtil.RegionMatches(this, thisStart, seq, start, length);
@@ -82,7 +83,12 @@ namespace DotNetty.Common.Utilities
 
         public int IndexOf(char ch, int start = 0)
         {
-            Contract.Requires(start >= 0 && start < this.count);
+            if(this.count <= 0) { return -1; }
+
+            if (start < 0 || start >= this.count)
+            {
+                ThrowHelper.ThrowIndexOutOfRangeException();
+            }
 
             int index = this.value.IndexOf(ch, this.offset + start);
             return index < 0 ? index : index - this.offset;
@@ -92,7 +98,8 @@ namespace DotNetty.Common.Utilities
 
         public string ToString(int start)
         {
-            Contract.Requires(start >= 0 && start < this.count);
+            if (this.count <= 0) { return string.Empty; }
+            if (start < 0 || start >= this.count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             return this.value.Substring(this.offset + start, this.count);
         }
@@ -141,8 +148,8 @@ namespace DotNetty.Common.Utilities
             return false;
         }
 
-        public int HashCode(bool ignoreCase) => ignoreCase 
-            ? StringComparer.OrdinalIgnoreCase.GetHashCode(this.ToString()) 
+        public int HashCode(bool ignoreCase) => ignoreCase
+            ? StringComparer.OrdinalIgnoreCase.GetHashCode(this.ToString())
             : StringComparer.Ordinal.GetHashCode(this.ToString());
 
         public override int GetHashCode() => this.HashCode(false);

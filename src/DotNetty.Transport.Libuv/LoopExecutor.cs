@@ -8,7 +8,6 @@ namespace DotNetty.Transport.Libuv
 {
     using System;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Channels;
@@ -44,7 +43,7 @@ namespace DotNetty.Transport.Libuv
         readonly Async asyncHandle;
         readonly Timer timerHandle;
 
-        volatile int executionState = NotStartedState;
+        int executionState = NotStartedState;
 
         long lastExecutionTime;
         long gracefulShutdownStartTime;
@@ -88,9 +87,10 @@ namespace DotNetty.Transport.Libuv
 
         protected void Start()
         {
-            if (this.executionState > NotStartedState)
+            var currState = Volatile.Read(ref this.executionState);
+            if (currState > NotStartedState)
             {
-                ThrowHelper.ThrowInvalidOperationException_ExecutionState(this.executionState);
+                ThrowHelper.ThrowInvalidOperationException_ExecutionState(currState);
             }
             this.thread.Start(this);
         }
@@ -150,9 +150,10 @@ namespace DotNetty.Transport.Libuv
             {
                 this.UpdateLastExecutionTime();
                 this.Initialize();
-                if (Interlocked.CompareExchange(ref this.executionState, StartedState, NotStartedState) != NotStartedState)
+                var oldState = Interlocked.CompareExchange(ref this.executionState, StartedState, NotStartedState);
+                if (oldState != NotStartedState)
                 {
-                    ThrowHelper.ThrowInvalidOperationException_ExecutionState0(this.executionState);
+                    ThrowHelper.ThrowInvalidOperationException_ExecutionState0(oldState);
                 }
                 this.loopRunStart.Set();
                 this.loop.Run(uv_run_mode.UV_RUN_DEFAULT);
@@ -418,11 +419,11 @@ namespace DotNetty.Transport.Libuv
 
         public override Task TerminationCompletion => this.terminationCompletionSource.Task;
 
-        public override bool IsShuttingDown => this.executionState >= ShuttingDownState;
+        public override bool IsShuttingDown => Volatile.Read(ref this.executionState) >= ShuttingDownState;
 
-        public override bool IsShutdown => this.executionState >= ShutdownState;
+        public override bool IsShutdown => Volatile.Read(ref this.executionState) >= ShutdownState;
 
-        public override bool IsTerminated => this.executionState == TerminatedState;
+        public override bool IsTerminated => Volatile.Read(ref this.executionState) == TerminatedState;
 
         public override bool IsInEventLoop(XThread t) => this.thread == t;
 
@@ -440,7 +441,7 @@ namespace DotNetty.Transport.Libuv
 
         public override void Execute(IRunnable task)
         {
-            Contract.Requires(task != null);
+            if (null == task) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task); }
 
             bool inEventLoop = this.InEventLoop;
             if (inEventLoop)
@@ -474,8 +475,8 @@ namespace DotNetty.Transport.Libuv
 
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
         {
-            Contract.Requires(quietPeriod >= TimeSpan.Zero);
-            Contract.Requires(timeout >= quietPeriod);
+            if (quietPeriod < TimeSpan.Zero) { ThrowHelper.ThrowArgumentException(); }
+            if (timeout < quietPeriod) { ThrowHelper.ThrowArgumentException(); }
 
             if (this.IsShuttingDown)
             {
@@ -487,8 +488,9 @@ namespace DotNetty.Transport.Libuv
 
             bool inEventLoop = this.InEventLoop;
             bool wakeUpLoop;
+            int prevState = Volatile.Read(ref this.executionState);
             int oldState;
-            while(true)
+            do
             {
                 if (this.IsShuttingDown)
                 {
@@ -496,30 +498,27 @@ namespace DotNetty.Transport.Libuv
                 }
                 int newState;
                 wakeUpLoop = true;
-                oldState = this.executionState;
+                oldState = prevState;
                 if (inEventLoop)
                 {
                     newState = ShuttingDownState;
                 }
                 else
                 {
-                    switch (oldState)
+                    switch (prevState)
                     {
                         case NotStartedState:
                         case StartedState:
                             newState = ShuttingDownState;
                             break;
                         default:
-                            newState = oldState;
+                            newState = prevState;
                             wakeUpLoop = false;
                             break;
                     }
                 }
-                if (Interlocked.CompareExchange(ref this.executionState, newState, oldState) == oldState)
-                {
-                    break;
-                }
-            }
+                prevState = Interlocked.CompareExchange(ref this.executionState, newState, prevState);
+            } while (prevState != oldState);
 
             this.gracefulShutdownQuietPeriod = (long)quietPeriod.TotalMilliseconds;
             this.gracefulShutdownTimeout = (long)timeout.TotalMilliseconds;
