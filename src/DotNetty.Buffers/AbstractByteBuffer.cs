@@ -278,7 +278,7 @@ namespace DotNetty.Buffers
             {
                 if (!force || this.Capacity == this.MaxCapacity)
                 {
-                        return 1;
+                    return 1;
                 }
 
                 this.AdjustCapacity(this.MaxCapacity);
@@ -471,7 +471,7 @@ namespace DotNetty.Buffers
                 {
                     return UnsafeByteBufferUtil.GetString((byte*)(ptr + index), length, encoding);
                 }
-                else 
+                else
                 {
                     fixed (byte* p = &this.GetPinnableMemoryAddress())
                         return UnsafeByteBufferUtil.GetString(p + index, length, encoding);
@@ -744,84 +744,88 @@ namespace DotNetty.Buffers
 
         int SetString0(int index, string value, Encoding encoding, bool expand)
         {
-            if (ReferenceEquals(encoding, Encoding.UTF8))
+            switch (encoding.CodePage)
             {
-                int length = ByteBufferUtil.Utf8MaxBytes(value);
-                if (expand)
-                {
-                    this.EnsureWritable0(length);
-                    this.CheckIndex0(index, length);
-                }
-                else
-                {
-                    this.CheckIndex(index, length);
-                }
-                return ByteBufferUtil.WriteUtf8(this, index, value, value.Length);
+                case Constants.UTF8CodePage:
+                    int len = ByteBufferUtil.Utf8MaxBytes(value);
+                    if (expand)
+                    {
+                        this.EnsureWritable0(len);
+                        this.CheckIndex0(index, len);
+                    }
+                    else
+                    {
+                        this.CheckIndex(index, len);
+                    }
+                    return ByteBufferUtil.WriteUtf8(this, index, value, value.Length);
+
+                case Constants.ASCIICodePage:
+                    int length = value.Length;
+                    if (expand)
+                    {
+                        this.EnsureWritable0(length);
+                        this.CheckIndex0(index, length);
+                    }
+                    else
+                    {
+                        this.CheckIndex(index, length);
+                    }
+                    return ByteBufferUtil.WriteAscii(this, index, value, length);
+
+                default:
+                    byte[] bytes = encoding.GetBytes(value);
+                    if (expand)
+                    {
+                        this.EnsureWritable0(bytes.Length);
+                        // setBytes(...) will take care of checking the indices.
+                    }
+                    this.SetBytes(index, bytes);
+                    return bytes.Length;
             }
-            if (ReferenceEquals(encoding, Encoding.ASCII))
-            {
-                int length = value.Length;
-                if (expand)
-                {
-                    this.EnsureWritable0(length);
-                    this.CheckIndex0(index, length);
-                }
-                else
-                {
-                    this.CheckIndex(index, length);
-                }
-                return ByteBufferUtil.WriteAscii(this, index, value, length);
-            }
-            byte[] bytes = encoding.GetBytes(value);
-            if (expand)
-            {
-                this.EnsureWritable0(bytes.Length);
-                // setBytes(...) will take care of checking the indices.
-            }
-            this.SetBytes(index, bytes);
-            return bytes.Length;
         }
 
         public virtual int SetCharSequence(int index, ICharSequence sequence, Encoding encoding) => this.SetCharSequence0(index, sequence, encoding, false);
 
         int SetCharSequence0(int index, ICharSequence sequence, Encoding encoding, bool expand)
         {
-            if (ReferenceEquals(encoding, Encoding.UTF8))
+            switch (encoding.CodePage)
             {
-                int length = ByteBufferUtil.Utf8MaxBytes(sequence);
-                if (expand)
-                {
-                    this.EnsureWritable0(length);
-                    this.CheckIndex0(index, length);
-                }
-                else
-                {
-                    this.CheckIndex(index, length);
-                }
-                return ByteBufferUtil.WriteUtf8(this, index, sequence, sequence.Count);
+                case Constants.UTF8CodePage:
+                    int len = ByteBufferUtil.Utf8MaxBytes(sequence);
+                    if (expand)
+                    {
+                        this.EnsureWritable0(len);
+                        this.CheckIndex0(index, len);
+                    }
+                    else
+                    {
+                        this.CheckIndex(index, len);
+                    }
+                    return ByteBufferUtil.WriteUtf8(this, index, sequence, sequence.Count);
+
+                case Constants.ASCIICodePage:
+                    int length = sequence.Count;
+                    if (expand)
+                    {
+                        this.EnsureWritable0(length);
+                        this.CheckIndex0(index, length);
+                    }
+                    else
+                    {
+                        this.CheckIndex(index, length);
+                    }
+                    return ByteBufferUtil.WriteAscii(this, index, sequence, length);
+
+                default:
+                    byte[] bytes = encoding.GetBytes(sequence.ToString());
+                    if (expand)
+                    {
+                        this.EnsureWritable0(bytes.Length);
+                        // setBytes(...) will take care of checking the indices.
+                    }
+                    this.SetBytes(index, bytes);
+                    return bytes.Length;
             }
-            if (ReferenceEquals(encoding, Encoding.ASCII))
-            {
-                int length = sequence.Count;
-                if (expand)
-                {
-                    this.EnsureWritable0(length);
-                    this.CheckIndex0(index, length);
-                }
-                else
-                {
-                    this.CheckIndex(index, length);
-                }
-                return ByteBufferUtil.WriteAscii(this, index, sequence, length);
-            }
-            byte[] bytes = encoding.GetBytes(sequence.ToString());
-            if (expand)
-            {
-                this.EnsureWritable0(bytes.Length);
-                // setBytes(...) will take care of checking the indices.
-            }
-            this.SetBytes(index, bytes);
-            return bytes.Length;
         }
 
         public virtual byte ReadByte()

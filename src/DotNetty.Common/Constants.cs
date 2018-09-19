@@ -11,5 +11,9 @@
         public const byte Zero8 = 0;
 
         public const long Zero64 = 0L;
+
+        public const int ASCIICodePage = 20127;
+
+        public const int UTF8CodePage = 65001;
     }
 }

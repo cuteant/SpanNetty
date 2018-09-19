@@ -1039,43 +1039,42 @@ namespace DotNetty.Buffers
             {
                 ThrowHelper.ThrowIndexOutOfRangeException_IsText(index, length);
             }
-            if (ReferenceEquals(Encoding.UTF8, encoding))
+            switch (encoding.CodePage)
             {
-                return IsUtf8(buf, index, length);
-            }
-            else if (ReferenceEquals(Encoding.ASCII, encoding))
-            {
-                return IsAscii(buf, index, length);
-            }
-            else
-            {
-                try
-                {
-                    if (buf.IoBufferCount == 1)
+                case Constants.UTF8CodePage:
+                    return IsUtf8(buf, index, length);
+
+                case Constants.ASCIICodePage:
+                    return IsAscii(buf, index, length);
+
+                default:
+                    try
                     {
-                        ArraySegment<byte> segment = buf.GetIoBuffer();
-                        encoding.GetChars(segment.Array, segment.Offset, segment.Count);
-                    }
-                    else
-                    {
-                        IByteBuffer heapBuffer = buf.Allocator.HeapBuffer(length);
-                        try
+                        if (buf.IoBufferCount == 1)
                         {
-                            heapBuffer.WriteBytes(buf, index, length);
-                            ArraySegment<byte> segment = heapBuffer.GetIoBuffer();
+                            ArraySegment<byte> segment = buf.GetIoBuffer();
                             encoding.GetChars(segment.Array, segment.Offset, segment.Count);
                         }
-                        finally
+                        else
                         {
-                            heapBuffer.Release();
+                            IByteBuffer heapBuffer = buf.Allocator.HeapBuffer(length);
+                            try
+                            {
+                                heapBuffer.WriteBytes(buf, index, length);
+                                ArraySegment<byte> segment = heapBuffer.GetIoBuffer();
+                                encoding.GetChars(segment.Array, segment.Offset, segment.Count);
+                            }
+                            finally
+                            {
+                                heapBuffer.Release();
+                            }
                         }
+                        return true;
                     }
-                    return true;
-                }
-                catch
-                {
-                    return false;
-                }
+                    catch
+                    {
+                        return false;
+                    }
             }
         }
 
