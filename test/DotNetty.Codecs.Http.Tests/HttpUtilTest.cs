@@ -73,6 +73,23 @@ namespace DotNetty.Codecs.Http.Tests
         }
 
         [Fact]
+        public void GetCharsetIfNotLastParameter()
+        {
+            var NORMAL_CONTENT_TYPE_WITH_PARAMETERS = "application/soap-xml; charset=utf-8; "
+                + "action=\"http://www.soap-service.by/foo/add\"";
+
+            var message = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Post,
+                "http://localhost:7788/foo");
+            message.Headers.Set(HttpHeaderNames.ContentType, NORMAL_CONTENT_TYPE_WITH_PARAMETERS);
+
+            Assert.Equal(Encoding.UTF8, HttpUtil.GetCharset(message));
+            Assert.Equal(Encoding.UTF8, HttpUtil.GetCharset((AsciiString)NORMAL_CONTENT_TYPE_WITH_PARAMETERS));
+
+            AssertEx.Equal("utf-8", HttpUtil.GetCharsetAsSequence(message));
+            AssertEx.Equal("utf-8", HttpUtil.GetCharsetAsSequence((AsciiString)NORMAL_CONTENT_TYPE_WITH_PARAMETERS));
+        }
+
+        [Fact]
         public void GetCharsetDefaultValue()
         {
             const string SimpleContentType = "text/html";
@@ -251,6 +268,18 @@ namespace DotNetty.Codecs.Http.Tests
         {
             Assert.Equal(expected, HttpUtil.IsUnsupportedExpectation(message));
             ReferenceCountUtil.Release(message);
+        }
+
+        [Fact]
+        public void KeepAliveIfConnectionHeaderAbsent()
+        {
+            var http11Message = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Get,
+                "http:localhost/http_1_1");
+            Assert.True(HttpUtil.IsKeepAlive(http11Message));
+
+            var http10Message = new DefaultHttpRequest(HttpVersion.Http10, HttpMethod.Get,
+                "http:localhost/http_1_0");
+            Assert.False(HttpUtil.IsKeepAlive(http10Message));
         }
     }
 }

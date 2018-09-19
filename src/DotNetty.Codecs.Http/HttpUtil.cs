@@ -257,13 +257,18 @@ namespace DotNetty.Codecs.Http
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentTypeValue);
             }
             int indexOfCharset = AsciiString.IndexOfIgnoreCaseAscii(contentTypeValue, CharsetEquals, 0);
-            if (indexOfCharset != AsciiString.IndexNotFound)
+            if (AsciiString.IndexNotFound == indexOfCharset) { return null; }
+            int indexOfEncoding = indexOfCharset + CharsetEquals.Count;
+            if (indexOfEncoding < contentTypeValue.Count)
             {
-                int indexOfEncoding = indexOfCharset + CharsetEquals.Count;
-                if (indexOfEncoding < contentTypeValue.Count)
+                var charsetCandidate = contentTypeValue.SubSequence(indexOfEncoding, contentTypeValue.Count);
+                int indexOfSemicolon = AsciiString.IndexOfIgnoreCaseAscii(charsetCandidate, Semicolon, 0);
+                if (AsciiString.IndexNotFound == indexOfSemicolon)
                 {
-                    return contentTypeValue.SubSequence(indexOfEncoding, contentTypeValue.Count);
+                    return charsetCandidate;
                 }
+
+                return charsetCandidate.SubSequence(0, indexOfSemicolon);
             }
             return null;
         }
