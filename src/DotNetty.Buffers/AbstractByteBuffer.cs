@@ -24,8 +24,11 @@ namespace DotNetty.Buffers
     public abstract partial class AbstractByteBuffer : IByteBuffer
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractByteBuffer>();
-        const string PropMode = "io.netty.buffer.bytebuf.checkAccessible";
+        const string LegacyPropCheckAccessible = "io.netty.buffer.bytebuf.checkAccessible";
+        const string PropCheckAccessible = "io.netty.buffer.checkAccessible";
         static readonly bool CheckAccessible;
+        const string PropCheckBounds = "io.netty.buffer.checkBounds";
+        static readonly bool CheckBounds;
 
         internal static readonly ResourceLeakDetector LeakDetector = ResourceLeakDetector.Create<IByteBuffer>();
 
@@ -38,10 +41,19 @@ namespace DotNetty.Buffers
 
         static AbstractByteBuffer()
         {
-            CheckAccessible = SystemPropertyUtil.GetBoolean(PropMode, true);
+            if (SystemPropertyUtil.Contains(PropCheckAccessible))
+            {
+                CheckAccessible = SystemPropertyUtil.GetBoolean(PropCheckAccessible, true);
+            }
+            else
+            {
+                CheckAccessible = SystemPropertyUtil.GetBoolean(LegacyPropCheckAccessible, true);
+            }
+            CheckBounds = SystemPropertyUtil.GetBoolean(PropCheckBounds, true);
             if (Logger.DebugEnabled)
             {
-                Logger.Debug("-D{}: {}", PropMode, CheckAccessible);
+                Logger.Debug("-D{}: {}", PropCheckAccessible, CheckAccessible);
+                Logger.Debug("-D{}: {}", PropCheckBounds, CheckBounds);
             }
         }
 
@@ -71,10 +83,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetReaderIndex(int index)
         {
-            if (index < 0 || index > this.writerIndex)
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_ReaderIndex(index, this.WriterIndex);
-            }
+            if (CheckBounds) { CheckIndexBounds(index, this.writerIndex); }
 
             this.readerIndex = index;
             return this;
@@ -84,10 +93,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetWriterIndex(int index)
         {
-            if (index < this.readerIndex || index > this.Capacity)
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_WriterIndex(index, this.readerIndex, this.Capacity);
-            }
+            if (CheckBounds) { CheckIndexBounds(this.readerIndex, index, this.Capacity); }
 
             this.SetWriterIndex0(index);
             return this;
@@ -100,10 +106,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetIndex(int readerIdx, int writerIdx)
         {
-            if (readerIdx < 0 || readerIdx > writerIdx || writerIdx > this.Capacity)
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_ReaderWriterIndex(readerIdx, writerIdx, this.Capacity);
-            }
+            if (CheckBounds) { CheckIndexBounds(readerIdx, writerIdx, this.Capacity); }
 
             this.SetIndex0(readerIdx, writerIdx);
             return this;
@@ -252,9 +255,9 @@ namespace DotNetty.Buffers
                 return;
             }
 
-            if (minWritableBytes > this.MaxCapacity - this.writerIndex)
+            if (CheckBounds)
             {
-                ThrowHelper.ThrowIndexOutOfRangeException_WriterIndex(minWritableBytes, this.writerIndex, this.MaxCapacity, this);
+                CheckMinWritableBounds(minWritableBytes, this.writerIndex, this.MaxCapacity, this);
             }
 
             // Normalize the current capacity to the power of 2.
@@ -684,10 +687,8 @@ namespace DotNetty.Buffers
             if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
 
             this.CheckIndex(index, length);
-            if (length > src.ReadableBytes)
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_ReadableBytes(length, src);
-            }
+            if (CheckBounds) { CheckReadableBounds(src, length); }
+
             this.SetBytes(index, src, src.ReaderIndex, length);
             src.SetReaderIndex(src.ReaderIndex + length);
             return this;
@@ -1019,10 +1020,8 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer ReadBytes(IByteBuffer dst, int length)
         {
-            if (length > dst.WritableBytes)
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_WritableBytes(length, dst);
-            }
+            if (CheckBounds) { CheckWritableBounds(dst, length); }
+
             this.ReadBytes(dst, dst.WriterIndex, length);
             dst.SetWriterIndex(dst.WriterIndex + length);
             return this;
@@ -1188,10 +1187,8 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer WriteBytes(IByteBuffer src, int length)
         {
-            if (length > src.ReadableBytes)
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_ReadableBytes(length, src);
-            }
+            if (CheckBounds) { CheckReadableBounds(src, length); }
+
             this.WriteBytes(src, src.ReaderIndex, length);
             src.SetReaderIndex(src.ReaderIndex + length);
             return this;
@@ -1286,7 +1283,11 @@ namespace DotNetty.Buffers
 
         public abstract IByteBuffer Copy(int index, int length);
 
-        public virtual IByteBuffer Duplicate() => new UnpooledDuplicatedByteBuffer(this);
+        public virtual IByteBuffer Duplicate()
+        {
+            this.EnsureAccessible();
+            return new UnpooledDuplicatedByteBuffer(this);
+        }
 
         public virtual IByteBuffer RetainedDuplicate() => (IByteBuffer)this.Duplicate().Retain();
 
@@ -1294,7 +1295,11 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer RetainedSlice() => (IByteBuffer)this.Slice().Retain();
 
-        public virtual IByteBuffer Slice(int index, int length) => new UnpooledSlicedByteBuffer(this, index, length);
+        public virtual IByteBuffer Slice(int index, int length)
+        {
+            this.EnsureAccessible();
+            return new UnpooledSlicedByteBuffer(this, index, length);
+        }
 
         public virtual IByteBuffer RetainedSlice(int index, int length) => (IByteBuffer)this.Slice(index, length).Retain();
 
@@ -1419,30 +1424,21 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.Value)]
         protected void CheckIndex0(int index, int fieldLength)
         {
-            if (MathUtil.IsOutOfBounds(index, fieldLength, this.Capacity))
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_Index(index, fieldLength, this.Capacity);
-            }
+            if (CheckBounds) { CheckRangeBounds(index, fieldLength, this.Capacity); }
         }
 
         [MethodImpl(InlineMethod.Value)]
         protected void CheckSrcIndex(int index, int length, int srcIndex, int srcCapacity)
         {
             this.CheckIndex(index, length);
-            if (MathUtil.IsOutOfBounds(srcIndex, length, srcCapacity))
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_SrcIndex(srcIndex, length, srcCapacity);
-            }
+            if (CheckBounds) { CheckRangeBounds(srcIndex, length, srcCapacity); }
         }
 
         [MethodImpl(InlineMethod.Value)]
         protected void CheckDstIndex(int index, int length, int dstIndex, int dstCapacity)
         {
             this.CheckIndex(index, length);
-            if (MathUtil.IsOutOfBounds(dstIndex, length, dstCapacity))
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_DstIndex(dstIndex, length, dstCapacity);
-            }
+            if (CheckBounds) { CheckRangeBounds(dstIndex, length, dstCapacity); }
         }
 
         protected void CheckReadableBytes(int minimumReadableBytes)
@@ -1458,7 +1454,7 @@ namespace DotNetty.Buffers
         protected void CheckNewCapacity(int newCapacity)
         {
             this.EnsureAccessible();
-            if (newCapacity < 0 || newCapacity > this.MaxCapacity)
+            if (CheckBounds && (newCapacity < 0 || newCapacity > this.MaxCapacity))
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException_Capacity(newCapacity, this.MaxCapacity);
             }
@@ -1468,9 +1464,9 @@ namespace DotNetty.Buffers
         void CheckReadableBytes0(int minimumReadableBytes)
         {
             this.EnsureAccessible();
-            if (this.readerIndex > this.writerIndex - minimumReadableBytes)
+            if (CheckBounds)
             {
-                ThrowHelper.ThrowIndexOutOfRangeException_ReaderIndex(minimumReadableBytes, this.readerIndex, this.writerIndex, this);
+                CheckMinReadableBounds(minimumReadableBytes, this.readerIndex, this.writerIndex, this);
             }
         }
 

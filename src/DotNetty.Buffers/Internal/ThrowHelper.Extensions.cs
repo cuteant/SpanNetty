@@ -376,6 +376,17 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_CheckIndexBounds(int readerIndex, int writerIndex, int capacity)
+        {
+            throw GetIndexOutOfRangeException();
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                throw new IndexOutOfRangeException(
+                    $"readerIndex: {readerIndex}, writerIndex: {writerIndex} (expected: 0 <= readerIndex <= writerIndex <= capacity({capacity}))");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowIllegalReferenceCountException(int refCnt, int increment)
         {
             throw GetIllegalReferenceCountException();

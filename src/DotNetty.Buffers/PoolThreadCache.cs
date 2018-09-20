@@ -42,6 +42,7 @@ namespace DotNetty.Buffers
         readonly int numShiftsNormalHeap;
         readonly int freeSweepAllocationThreshold;
 
+        int freed = Constants.False;
         int allocations;
 
         readonly Thread deathWatchThread;

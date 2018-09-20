@@ -87,7 +87,7 @@ namespace DotNetty.Buffers
             int intCount = (int)((uint)aLen >> 2);
             int byteCount = aLen & 3;
 
-            int hashCode = 1;
+            int hashCode = EmptyByteBuffer.EmptyByteBufferHashCode;
             int arrayIndex = buffer.ReaderIndex;
             for (int i = intCount; i > 0; i--)
             {
@@ -321,6 +321,11 @@ namespace DotNetty.Buffers
             {
                 switch (buf)
                 {
+                    case WrappedCompositeByteBuffer byteBuffers:
+                        // WrappedCompositeByteBuf is a sub-class of AbstractByteBuf so it needs special handling.
+                        buf = buf.Unwrap();
+                        break;
+
                     case AbstractByteBuffer byteBuf:
                         byteBuf.EnsureWritable0(reserveBytes);
                         int written = WriteUtf8(byteBuf, byteBuf.WriterIndex, seq, seq.Count);
@@ -595,10 +600,15 @@ namespace DotNetty.Buffers
             }
             else
             {
-                while(true)
+                while (true)
                 {
                     switch (buf)
                     {
+                        case WrappedCompositeByteBuffer byteBuffers:
+                            // WrappedCompositeByteBuf is a sub-class of AbstractByteBuf so it needs special handling.
+                            buf = buf.Unwrap();
+                            break;
+
                         case AbstractByteBuffer byteBuf:
                             byteBuf.EnsureWritable0(len);
                             int written = WriteAscii(byteBuf, byteBuf.WriterIndex, seq, len);

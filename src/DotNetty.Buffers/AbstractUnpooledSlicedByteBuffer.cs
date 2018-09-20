@@ -6,6 +6,7 @@ namespace DotNetty.Buffers
     using System;
     using System.IO;
     using System.Runtime.CompilerServices;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Internal;
@@ -186,6 +187,12 @@ namespace DotNetty.Buffers
             this.CheckIndex0(index, 1);
             this.Unwrap().SetByte(this.Idx(index), value);
             return this;
+        }
+
+        public override ICharSequence GetCharSequence(int index, int length, Encoding encoding)
+        {
+            this.CheckIndex0(index, length);
+            return Unwrap().GetCharSequence(this.Idx(index), length, encoding);
         }
 
         protected internal override void _SetByte(int index, int value) => this.Unwrap().SetByte(this.Idx(index), value);

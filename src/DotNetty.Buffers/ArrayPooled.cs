@@ -139,7 +139,11 @@ namespace DotNetty.Buffers
         /// be visible to the returned buffer.</summary>
         /// <param name="buffers">The buffers to wrap. Reference count ownership of all variables is transfered to this method.</param>
         /// <returns>The readable portion of the buffers. The caller is responsible for releasing this buffer.</returns>
-        public static IByteBuffer WrappedBuffer(params IByteBuffer[] buffers) => WrappedBuffer(AbstractByteBufferAllocator.DefaultMaxComponents, buffers);
+        public static IByteBuffer WrappedBuffer(params IByteBuffer[] buffers)
+        {
+            if (null == buffers) { return Empty; }
+            return WrappedBuffer(buffers.Length, buffers);
+        }
 
         /// <summary>Creates a new big-endian composite buffer which wraps the readable bytes of the specified
         /// buffers without copying them. A modification on the content of the specified buffers will

@@ -17,6 +17,7 @@ namespace DotNetty.Buffers
     /// </summary>
     public sealed partial class EmptyByteBuffer : IByteBuffer
     {
+        public const int EmptyByteBufferHashCode = 1;
         static readonly ArraySegment<byte> EmptyBuffer = new ArraySegment<byte>(ArrayExtensions.ZeroBytes);
         static readonly ArraySegment<byte>[] EmptyBuffers = { EmptyBuffer };
 
@@ -450,7 +451,7 @@ namespace DotNetty.Buffers
             return this.ToString(encoding);
         }
 
-        public override int GetHashCode() => 0;
+        public override int GetHashCode() => EmptyByteBufferHashCode;
 
         public bool Equals(IByteBuffer buffer) => buffer != null && !buffer.IsReadable();
 

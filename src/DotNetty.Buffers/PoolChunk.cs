@@ -71,10 +71,10 @@ namespace DotNetty.Buffers
     ///     Note:
     ///     -----
     ///     In the implementation for improving cache coherence,
-    ///     we store 2 pieces of information (i.e, 2 byte vals) as a short value in memoryMap
-    ///     memoryMap[id]= (depth_of_id, x)
-    ///     where as per convention defined above
-    ///     the second value (i.e, x) indicates that the first node which is free to be allocated is at depth x (from root)
+    ///     we store 2 pieces of information depth_of_id and x as two byte values in memoryMap and depthMap respectively
+    ///
+    ///     memoryMap[id] = depth_of_id is defined above
+    ///     depthMap[id] = x  indicates that the first node which is free to be allocated is at depth x(from root)
     /// </summary>
     sealed class PoolChunk<T> : IPoolChunkMetric
     {

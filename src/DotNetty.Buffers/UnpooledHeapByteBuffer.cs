@@ -59,9 +59,9 @@ namespace DotNetty.Buffers
 
         public override int Capacity
         {
+            [System.Runtime.CompilerServices.MethodImpl(InlineMethod.Value)]
             get
             {
-                this.EnsureAccessible();
                 return this.array.Length;
             }
         }
@@ -377,7 +377,7 @@ namespace DotNetty.Buffers
         protected internal override void Deallocate()
         {
             this.FreeArray(this.array);
-            this.array = null;
+            this.array = EmptyArrays.EmptyBytes;
         }
 
         public override IByteBuffer Unwrap() => null;

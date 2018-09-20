@@ -93,12 +93,14 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer Slice(int index, int length)
         {
+            this.EnsureAccessible();
             // All reference count methods should be inherited from this object (this is the "parent").
             return new PooledNonRetainedSlicedByteBuffer(this, (AbstractByteBuffer)this.Unwrap(), index, length);
         }
 
         protected IByteBuffer Duplicate0()
         {
+            this.EnsureAccessible();
             // All reference count methods should be inherited from this object (this is the "parent").
             return new PooledNonRetainedDuplicateByteBuffer(this, (AbstractByteBuffer)this.Unwrap());
         }
@@ -143,13 +145,17 @@ namespace DotNetty.Buffers
 
             protected override bool Release0(int decrement) => this.referenceCountDelegate.Release(decrement);
 
-            public override IByteBuffer Duplicate() => new PooledNonRetainedDuplicateByteBuffer(this.referenceCountDelegate, this);
+            public override IByteBuffer Duplicate()
+            {
+                this.EnsureAccessible();
+                return new PooledNonRetainedDuplicateByteBuffer(this.referenceCountDelegate, this);
+            }
 
             public override IByteBuffer RetainedDuplicate() => PooledDuplicatedByteBuffer.NewInstance(this.UnwrapCore(), this, this.ReaderIndex, this.WriterIndex);
 
             public override IByteBuffer Slice(int index, int length)
             {
-                this.CheckIndex0(index, length);
+                this.CheckIndex(index, length);
                 return new PooledNonRetainedSlicedByteBuffer(this.referenceCountDelegate, (AbstractByteBuffer)this.Unwrap(), index, length);
             }
 
@@ -199,15 +205,18 @@ namespace DotNetty.Buffers
 
             protected override bool Release0(int decrement) => this.referenceCountDelegate.Release(decrement);
 
-            public override IByteBuffer Duplicate() => 
-                new PooledNonRetainedDuplicateByteBuffer(this.referenceCountDelegate, this.UnwrapCore())
+            public override IByteBuffer Duplicate()
+            {
+                this.EnsureAccessible();
+                return new PooledNonRetainedDuplicateByteBuffer(this.referenceCountDelegate, this.UnwrapCore())
                     .SetIndex(this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
+            }
 
             public override IByteBuffer RetainedDuplicate() => PooledDuplicatedByteBuffer.NewInstance(this.UnwrapCore(), this, this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
             
             public override IByteBuffer Slice(int index, int length)
             {
-                this.CheckIndex0(index, length);
+                this.CheckIndex(index, length);
                 return new PooledNonRetainedSlicedByteBuffer(this.referenceCountDelegate, this.UnwrapCore(), this.Idx(index), length);
             }
 
