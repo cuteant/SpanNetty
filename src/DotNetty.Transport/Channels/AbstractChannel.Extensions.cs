@@ -12,7 +12,7 @@ namespace DotNetty.Transport.Channels
 
     partial class AbstractChannel<TChannel, TUnsafe> : DefaultAttributeMap, IChannel
         where TChannel : AbstractChannel<TChannel, TUnsafe>
-        where TUnsafe : IChannelUnsafe, new()
+        where TUnsafe : AbstractChannel<TChannel, TUnsafe>.AbstractUnsafe, new()
     {
         public bool Equals(IChannel other) => ReferenceEquals(this, other);
 

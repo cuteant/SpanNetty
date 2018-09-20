@@ -300,9 +300,9 @@ namespace DotNetty.Transport.Channels
             //    return ((PausableChannelEventExecutor) eventLoop().asInvoker()).unwrapInvoker();
             //}
             public AbstractUnsafe() { }
-            public virtual void Initialize(IChannel channel)
+            public virtual void Initialize(TChannel channel)
             {
-                this.channel = (TChannel)channel;
+                this.channel = channel;
                 Interlocked.Exchange(ref this.outboundBuffer, new ChannelOutboundBuffer(channel));
             }
 

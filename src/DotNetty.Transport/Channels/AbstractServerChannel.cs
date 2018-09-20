@@ -42,7 +42,7 @@ namespace DotNetty.Transport.Channels
         {
             Task err;
 
-            public override void Initialize(IChannel channel)
+            public override void Initialize(TChannel channel)
             {
                 base.Initialize(channel);
                 this.err = TaskUtil.FromException(new NotSupportedException());

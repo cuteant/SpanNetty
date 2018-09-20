@@ -183,7 +183,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
         protected override EndPoint RemoteAddressInternal => this.Active ? REMOTE_ADDRESS : null;
 
-        //protected override IChannelUnsafe NewUnsafe() => new DefaultUnsafe(this); ## 苦竹 屏蔽 ##
+        //protected override IChannelUnsafe NewUnsafe() => new EmbeddedUnsafe(this); ## 苦竹 屏蔽 ##
 
         protected override bool IsCompatible(IEventLoop eventLoop) => eventLoop is EmbeddedEventLoop;
 
@@ -605,9 +605,9 @@ namespace DotNetty.Transport.Channels.Embedded
             this.inboundMessages.Enqueue(msg);
         }
 
-        sealed class DefaultUnsafe : AbstractUnsafe
+        public sealed class EmbeddedUnsafe : AbstractUnsafe
         {
-            public DefaultUnsafe() //AbstractChannel channel)
+            public EmbeddedUnsafe() //AbstractChannel channel)
                 : base() //channel)
             {
             }
@@ -615,18 +615,19 @@ namespace DotNetty.Transport.Channels.Embedded
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress) => TaskUtil.Completed;
         }
 
-        public sealed class EmbeddedUnsafe : IChannelUnsafe
+        // todo
+        public sealed class WrappingEmbeddedUnsafe : IChannelUnsafe
         {
-            readonly DefaultUnsafe innerUnsafe;
+            readonly EmbeddedUnsafe innerUnsafe;
             EmbeddedChannel embeddedChannel;
 
-            public EmbeddedUnsafe() : base() { this.innerUnsafe = new DefaultUnsafe(); }
+            public WrappingEmbeddedUnsafe(EmbeddedUnsafe innerUnsafe) : base() { this.innerUnsafe = innerUnsafe; }
 
-            public void Initialize(IChannel channel)
-            {
-                this.innerUnsafe.Initialize(channel);
-                this.embeddedChannel = (EmbeddedChannel)channel;
-            }
+            //public void Initialize(IChannel channel)
+            //{
+            //    this.innerUnsafe.Initialize(channel);
+            //    this.embeddedChannel = (EmbeddedChannel)channel;
+            //}
 
             public IRecvByteBufAllocatorHandle RecvBufAllocHandle => this.innerUnsafe.RecvBufAllocHandle;
 
