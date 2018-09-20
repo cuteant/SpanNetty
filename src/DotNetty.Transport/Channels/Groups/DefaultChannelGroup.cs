@@ -282,17 +282,17 @@ namespace DotNetty.Transport.Channels.Groups
 
         static object SafeDuplicate(object message)
         {
-            if (message is IByteBuffer buffer)
+            switch (message)
             {
-                return buffer.RetainedDuplicate();
-            }
+                case IByteBuffer buffer:
+                    return buffer.RetainedDuplicate();
 
-            if (message is IByteBufferHolder byteBufferHolder)
-            {
-                return byteBufferHolder.RetainedDuplicate();
-            }
+                case IByteBufferHolder byteBufferHolder:
+                    return byteBufferHolder.RetainedDuplicate();
 
-            return ReferenceCountUtil.Retain(message);
+                default:
+                    return ReferenceCountUtil.Retain(message);
+            }
         }
 
         public override string ToString() => $"{this.GetType().Name}(name: {this.Name}, size: {this.Count})";

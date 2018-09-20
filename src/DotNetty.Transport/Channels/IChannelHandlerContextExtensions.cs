@@ -13,7 +13,7 @@
         {
             if (null == messages || messages.Count <= 0) { return TaskUtil.Completed; }
 
-            var taskList = ThreadLocalList<Task>.NewInstance(); ;
+            var taskList = ThreadLocalList<Task>.NewInstance();
             foreach (object m in messages)
             {
                 taskList.Add(context.WriteAsync(m));

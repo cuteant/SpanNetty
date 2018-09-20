@@ -76,7 +76,7 @@ namespace DotNetty.Codecs.Http
 
         static HttpMethod()
         {
-            MethodMap = new Dictionary<string, HttpMethod>(StringComparer.OrdinalIgnoreCase)
+            MethodMap = new Dictionary<string, HttpMethod>(StringComparer.Ordinal)
             {
                 { Options.ToString(), Options },
                 { Get.ToString(), Get },
@@ -102,10 +102,13 @@ namespace DotNetty.Codecs.Http
                 }
 
                 // Fall back to slow path
-                if (MethodMap.TryGetValue(name.ToString(), out result))
+                var methodName = name.ToString();
+                if (MethodMap.TryGetValue(methodName, out result))
                 {
                     return result;
                 }
+
+                return s_methodCache.GetOrAdd(methodName, s_convertToHttpMethodFunc);
             }
             // Really slow path and error handling
             return new HttpMethod(name?.ToString());

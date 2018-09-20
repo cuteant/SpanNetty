@@ -481,13 +481,15 @@ namespace DotNetty.Transport.Channels
         void SetUserDefinedWritability(int index)
         {
             int mask = ~WritabilityMask(index);
+            var prevValue = Volatile.Read(ref this.unwritable);
             while (true)
             {
-                int oldValue = this.unwritable;
-                int newValue = oldValue & mask;
-                if (Interlocked.CompareExchange(ref this.unwritable, newValue, oldValue) == oldValue)
+                int oldValue = prevValue;
+                int newValue = prevValue & mask;
+                prevValue = Interlocked.CompareExchange(ref this.unwritable, newValue, prevValue);
+                if (prevValue == oldValue)
                 {
-                    if (oldValue != 0 && newValue == 0)
+                    if (prevValue != 0 && newValue == 0)
                     {
                         this.FireChannelWritabilityChanged(true);
                     }

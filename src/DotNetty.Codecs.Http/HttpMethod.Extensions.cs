@@ -4,6 +4,7 @@
 namespace DotNetty.Codecs.Http
 {
     using System;
+    using CuteAnt.Collections;
 
     partial class HttpMethod : IEquatable<HttpMethod>
     {
@@ -16,6 +17,22 @@ namespace DotNetty.Codecs.Http
         const byte UByte = (byte)'U';
         const byte AByte = (byte)'A';
         const byte TByte = (byte)'T';
+
+        static readonly CachedReadConcurrentDictionary<string, HttpMethod> s_methodCache = 
+            new CachedReadConcurrentDictionary<string, HttpMethod>(StringComparer.Ordinal);
+        static readonly Func<string, HttpMethod> s_convertToHttpMethodFunc = ConvertToHttpMethod;
+
+        private static HttpMethod ConvertToHttpMethod(string name)
+        {
+            var methodName = name.ToUpperInvariant();
+
+            if (MethodMap.TryGetValue(methodName, out var result))
+            {
+                return result;
+            }
+
+            return new HttpMethod(methodName);
+        }
 
         public bool Equals(HttpMethod other)
         {

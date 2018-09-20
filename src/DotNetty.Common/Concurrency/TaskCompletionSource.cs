@@ -3,6 +3,7 @@
 
 #if NET40
 using System;
+using System.Collections.Generic;
 using System.Threading;
 #endif
 using System.Threading.Tasks;
@@ -28,8 +29,9 @@ namespace DotNetty.Common.Concurrency
             // TaskCompletionSource TrySetResult SetResult twice
             //var result = this.TrySetResult(0);
             //SetResultAsync(this, 0);
-            FakeSynchronizationContext.Execute(() => this.SetResult(0));
-            return true;
+            var result = false;
+            FakeSynchronizationContext.Execute(() => result = this.TrySetResult(0));
+            return result;
 #else
             return this.TrySetResult(0);
 #endif
@@ -58,6 +60,51 @@ namespace DotNetty.Common.Concurrency
             tcs.TryComplete();
             return tcs;
         }
+
+//#if NET40 || NET451
+//        public bool TrySetCanceled(System.Threading.CancellationToken cancellationToken)
+//        {
+//            return this.TrySetCanceled();
+//        }
+//#endif
+
+#if NET40
+        public new void SetCanceled()
+        {
+            FakeSynchronizationContext.Execute(() => base.SetCanceled());
+        }
+
+        public new void SetException(Exception exception)
+        {
+            FakeSynchronizationContext.Execute(() => base.SetException(exception));
+        }
+
+        public new void SetException(IEnumerable<Exception> exceptions)
+        {
+            FakeSynchronizationContext.Execute(() => base.SetException(exceptions));
+        }
+
+        public new bool TrySetCanceled()
+        {
+            var result = false;
+            FakeSynchronizationContext.Execute(() => result = base.TrySetCanceled());
+            return result;
+        }
+
+        public new bool TrySetException(Exception exception)
+        {
+            var result = false;
+            FakeSynchronizationContext.Execute(() => result = base.TrySetException(exception));
+            return result;
+        }
+
+        public new bool TrySetException(IEnumerable<Exception> exceptions)
+        {
+            var result = false;
+            FakeSynchronizationContext.Execute(() => result = base.TrySetException(exceptions));
+            return result;
+        }
+#endif
     }
 
 #if NET40
