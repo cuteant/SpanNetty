@@ -9,7 +9,12 @@ namespace DotNetty.Transport.Channels.Sockets
     {
         private static void OnFlushSync(object channel)
         {
-            ((TChannel)channel).Flush();
+            ((TChannel)channel).Unsafe.InternalFlush0();
+        }
+
+        partial class SocketByteChannelUnsafe
+        {
+            internal void InternalFlush0() => this.Flush0();
         }
     }
 }

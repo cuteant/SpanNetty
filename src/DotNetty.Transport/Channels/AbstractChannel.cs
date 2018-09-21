@@ -786,8 +786,8 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    if (ch.Configuration.AutoClose)
-                    {
+                    //if (ch.Configuration.AutoClose)
+                    //{
                         /*
                          * Just call {@link #close(ChannelPromise, Throwable, boolean)} here which will take care of
                          * failing all flushed messages and also ensure the actual close of the underlying transport
@@ -797,18 +797,18 @@ namespace DotNetty.Transport.Channels
                          * may still return {@code true} even if the channel should be closed as result of the exception.
                          */
                         Util.CompleteChannelCloseTaskSafely(ch, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex), false));
-                    }
-                    else
-                    {
-                        try
-                        {
-                            Util.CompleteChannelCloseTaskSafely(ch, this.ShutdownOutputAsync(ex));
-                        }
-                        catch(Exception ex2)
-                        {
-                            Util.CompleteChannelCloseTaskSafely(ch, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex2), false));
-                        }
-                    }
+                    //}
+                    //else
+                    //{
+                    //    try
+                    //    {
+                    //        Util.CompleteChannelCloseTaskSafely(ch, this.ShutdownOutputAsync(ex));
+                    //    }
+                    //    catch(Exception ex2)
+                    //    {
+                    //        Util.CompleteChannelCloseTaskSafely(ch, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex2), false));
+                    //    }
+                    //}
                 }
                 finally
                 {

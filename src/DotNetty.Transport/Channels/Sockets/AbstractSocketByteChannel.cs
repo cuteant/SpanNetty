@@ -33,7 +33,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         //protected override IChannelUnsafe NewUnsafe() => new SocketByteChannelUnsafe(this); ## 苦竹 屏蔽 ##
 
-        public class SocketByteChannelUnsafe : AbstractSocketUnsafe
+        public partial class SocketByteChannelUnsafe : AbstractSocketUnsafe
         {
             public SocketByteChannelUnsafe() //(AbstractSocketByteChannel channel)
                 : base() //channel)

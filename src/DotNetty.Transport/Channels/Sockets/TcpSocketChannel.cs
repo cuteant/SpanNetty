@@ -253,6 +253,9 @@ namespace DotNetty.Transport.Channels.Sockets
         protected override void DoWrite(ChannelOutboundBuffer input)
         {
             List<ArraySegment<byte>> sharedBufferList = null;
+            var socketConfig = (TcpSocketChannelConfig)this.config;
+            Socket socket = this.Socket;
+            var writeSpinCount = socketConfig.WriteSpinCount;
             try
             {
                 while (true)
@@ -267,11 +270,10 @@ namespace DotNetty.Transport.Channels.Sockets
                     bool done = false;
 
                     // Ensure the pending writes are made of ByteBufs only.
-                    int maxBytesPerGatheringWrite = ((TcpSocketChannelConfig)this.config).GetMaxBytesPerGatheringWrite();
+                    int maxBytesPerGatheringWrite = socketConfig.GetMaxBytesPerGatheringWrite();
                     sharedBufferList = input.GetSharedBufferList(1024, maxBytesPerGatheringWrite);
                     int nioBufferCnt = sharedBufferList.Count;
                     long expectedWrittenBytes = input.NioBufferSize;
-                    Socket socket = this.Socket;
 
                     List<ArraySegment<byte>> bufferList = sharedBufferList;
                     // Always us nioBuffers() to workaround data-corruption.
@@ -283,7 +285,7 @@ namespace DotNetty.Transport.Channels.Sockets
                             base.DoWrite(input);
                             return;
                         default:
-                            for (int i = this.Configuration.WriteSpinCount - 1; i >= 0; i--)
+                            for (int i = writeSpinCount - 1; i >= 0; i--)
                             {
                                 long localWrittenBytes = socket.Send(bufferList, SocketFlags.None, out SocketError errorCode);
                                 if (errorCode != SocketError.Success && errorCode != SocketError.WouldBlock)
