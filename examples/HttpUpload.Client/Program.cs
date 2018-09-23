@@ -16,6 +16,7 @@ namespace HttpUpload.Client
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http.Multipart;
     using DotNetty.Codecs.Http.Cookies;
+    using DotNetty.Codecs.Http.Utilities;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Streams;
     using DotNetty.Handlers.Timeout;
@@ -105,9 +106,7 @@ namespace HttpUpload.Client
                         pipeline.AddLast("tls", new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(targetHost)));
                     }
 
-                    pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 0, 60));
-
-                    pipeline.AddLast(new MsLoggingHandler("CONN"));
+                    //pipeline.AddLast(new MsLoggingHandler("CONN"));
 
                     pipeline.AddLast("codec", new HttpClientCodec());
 
@@ -137,7 +136,7 @@ namespace HttpUpload.Client
                     return;
                 }
 
-                using(var file = new FileStream("upload.txt", FileMode.Open, FileAccess.Read))
+                using (var file = new FileStream("upload.txt", FileMode.Open, FileAccess.Read))
                 {
                     // Simple Post form: factory used for big attributes
                     var bodylist = await FormpostAsync(bootstrap, uriSimple, file, factory, headers);
@@ -174,18 +173,26 @@ namespace HttpUpload.Client
             IChannel channel = await bootstrap.ConnectAsync(new IPEndPoint(ClientSettings.Host, ClientSettings.Port));
 
             // Prepare the HTTP request.
-            QueryStringEncoder encoder = new QueryStringEncoder(get);
-            // add Form attribute
-            encoder.AddParam("getform", "GET");
-            encoder.AddParam("info", "first value");
-            encoder.AddParam("secondinfo", "secondvalue ���&");
-            // not the big one since it is not compatible with GET size
-            // encoder.AddParam("thirdinfo", textArea);
-            encoder.AddParam("thirdinfo", "third value\r\ntest second line\r\n\r\nnew line\r\n");
-            encoder.AddParam("Send", "Send");
 
-            var uriGet = new Uri(encoder.ToString());
-            var request = new DefaultHttpRequest(DotNetty.Codecs.Http.HttpVersion.Http11, HttpMethod.Get, uriGet.ToString());
+            //QueryStringEncoder encoder = new QueryStringEncoder(get);
+            //// add Form attribute
+            //encoder.AddParam("getform", "GET");
+            //encoder.AddParam("info", "first value");
+            //encoder.AddParam("secondinfo", "secondvalue ���&");
+            //// not the big one since it is not compatible with GET size
+            //// encoder.AddParam("thirdinfo", textArea);
+            //encoder.AddParam("thirdinfo", "third value\r\ntest second line\r\n\r\nnew line\r\n");
+            //encoder.AddParam("Send", "Send");
+            //var uriGet = new Uri(encoder.ToString());
+            var queryParams = new Dictionary<string, string>()
+            {
+                { "getform", "GET" },
+                { "info", "first value" },
+                { "secondinfo", "secondvalue ���&" },
+                { "thirdinfo", "third value\r\ntest second line\r\n\r\nnew line\r\n" },
+                { "Send", "Send" },
+            };
+            var request = new DefaultHttpRequest(DotNetty.Codecs.Http.HttpVersion.Http11, HttpMethod.Get, QueryHelpers.AddQueryString(get, queryParams));
             var headers = request.Headers;
             headers.Set(HttpHeaderNames.Host, ClientSettings.Host);
             headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.Close);

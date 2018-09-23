@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         // Default charset to use
         readonly Encoding charset = HttpConstants.DefaultEncoding;
-        readonly TextEncoder urlEncoder = System.Text.Encodings.Web.UrlEncoder.Default;
+        readonly HtmlEncoder htmlEncoder = HtmlEncoder.Default;
 
         //  Chunked false by default
         bool isChunked;
@@ -650,7 +650,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 return string.Empty;
             }
 
-            string encoded = this.urlEncoder.Encode(value);
+            string encoded = this.htmlEncoder.Encode(value);
             if (this.encoderMode == EncoderMode.RFC3986)
             {
                 foreach (KeyValuePair<Regex, string> entry in PercentEncodings)

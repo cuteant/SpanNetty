@@ -12,7 +12,7 @@ namespace DotNetty.Codecs.Http.Utilities
 {
     public static class QueryHelpers
     {
-        static readonly TextEncoder s_urlEncoder = System.Text.Encodings.Web.UrlEncoder.Default;
+        static readonly System.Text.Encodings.Web.UrlEncoder s_urlEncoder = System.Text.Encodings.Web.UrlEncoder.Default;
 
         /// <summary>
         /// Append the given query key and value to the URI.

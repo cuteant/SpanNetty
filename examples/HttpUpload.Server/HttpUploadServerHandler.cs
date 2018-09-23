@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Text;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
@@ -32,10 +33,10 @@
             DiskFileUpload.DeleteOnExitTemporaryFile = true; // should delete file
                                                              // on exit (in normal
                                                              // exit)
-            DiskFileUpload.FileBaseDirectory = @"e:\temp"; // system temp directory
+            //DiskFileUpload.FileBaseDirectory = @"e:\temp"; // system temp directory
             DiskAttribute.DeleteOnExitTemporaryFile = true; // should delete file on
                                                             // exit (in normal exit)
-            DiskAttribute.DiskBaseDirectory = @"e:\temp"; // system temp directory
+            //DiskAttribute.DiskBaseDirectory = @"e:\temp"; // system temp directory
         }
 
         public override void ChannelActive(IChannelHandlerContext context)
@@ -51,11 +52,15 @@
         {
             if (msg is IHttpRequest request)
             {
+                s_logger.LogTrace("=========The Request Header========");
+                s_logger.LogDebug(request.ToString());
+                s_logger.LogTrace("===================================");
                 this.request = request;
-                if (!request.Uri.StartsWith("/form"))
+                var uriPath = GetPath(request.Uri);
+                if (!uriPath.StartsWith("/form"))
                 {
                     // Write Menu
-                    WriteMenu(ctx);
+                    WriteMenuAsync(ctx);
                     return;
                 }
                 this.responseContent.Clear();
@@ -119,8 +124,7 @@
                 {
                     s_logger.LogError(e1.ToString());
                     this.responseContent.Append(e1.Message);
-                    WriteResponse(ctx.Channel);
-                    ctx.Channel.CloseAsync();
+                    WriteResponseAsync(ctx.Channel).ContinueWith(t => ctx.Channel.CloseAsync(), TaskContinuationOptions.ExecuteSynchronously);
                     return;
                 }
 
@@ -149,8 +153,7 @@
                     {
                         s_logger.LogError(e1.ToString());
                         this.responseContent.Append(e1.Message);
-                        WriteResponse(ctx.Channel);
-                        ctx.Channel.CloseAsync();
+                        WriteResponseAsync(ctx.Channel).ContinueWith(t => ctx.Channel.CloseAsync(), TaskContinuationOptions.ExecuteSynchronously);
                         return;
                     }
                     this.responseContent.Append('o');
@@ -160,7 +163,7 @@
                     // example of reading only if at the end
                     if (chunk is ILastHttpContent)
                     {
-                        WriteResponse(ctx.Channel);
+                        WriteResponseAsync(ctx.Channel);
                         readingChunks = false;
 
                         Reset();
@@ -169,7 +172,7 @@
             }
             else
             {
-                WriteResponse(ctx.Channel);
+                WriteResponseAsync(ctx.Channel);
             }
         }
 
@@ -323,7 +326,7 @@
             }
         }
 
-        private Task WriteResponse(IChannel channel)
+        private Task WriteResponseAsync(IChannel channel)
         {
             // Convert the response content to a ChannelBuffer.
             var buf = Unpooled.CopiedBuffer(this.responseContent.ToString(), Encoding.UTF8);
@@ -374,7 +377,7 @@
             return future;
         }
 
-        private Task WriteMenu(IChannelHandlerContext ctx)
+        private Task WriteMenuAsync(IChannelHandlerContext ctx)
         {
             // print several HTML forms
             // Convert the response content to a ChannelBuffer.
@@ -463,6 +466,89 @@
         {
             s_logger.LogError(exception, this.responseContent.ToString());
             context.CloseAsync();
+        }
+
+        private static string GetPath(string uriString)
+        {
+            Debug.Assert(uriString != null, "uriString must not be null");
+            Debug.Assert(uriString.Length > 0, "uriString must not be empty");
+
+            int pathStartIndex = 0;
+
+            // Perf. improvement: nearly all strings are relative Uris. So just look if the
+            // string starts with '/'. If so, we have a relative Uri and the path starts at position 0.
+            // (http.sys already trimmed leading whitespaces)
+            if (uriString[0] != '/')
+            {
+                // We can't check against cookedUriScheme, since http.sys allows for request http://myserver/ to
+                // use a request line 'GET https://myserver/' (note http vs. https). Therefore check if the
+                // Uri starts with either http:// or https://.
+                int authorityStartIndex = 0;
+                if (uriString.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                {
+                    authorityStartIndex = 7;
+                }
+                else if (uriString.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    authorityStartIndex = 8;
+                }
+
+                if (authorityStartIndex > 0)
+                {
+                    // we have an absolute Uri. Find out where the authority ends and the path begins.
+                    // Note that Uris like "http://server?query=value/1/2" are invalid according to RFC2616
+                    // and http.sys behavior: If the Uri contains a query, there must be at least one '/'
+                    // between the authority and the '?' character: It's safe to just look for the first
+                    // '/' after the authority to determine the beginning of the path.
+                    pathStartIndex = uriString.IndexOf('/', authorityStartIndex);
+                    if (pathStartIndex == -1)
+                    {
+                        // e.g. for request lines like: 'GET http://myserver' (no final '/')
+                        pathStartIndex = uriString.Length;
+                    }
+                }
+                else
+                {
+                    // RFC2616: Request-URI = "*" | absoluteURI | abs_path | authority
+                    // 'authority' can only be used with CONNECT which is never received by HttpListener.
+                    // I.e. if we don't have an absolute path (must start with '/') and we don't have
+                    // an absolute Uri (must start with http:// or https://), then 'uriString' must be '*'.
+                    Debug.Assert((uriString.Length == 1) && (uriString[0] == '*'), "Unknown request Uri string format",
+                        "Request Uri string is not an absolute Uri, absolute path, or '*': {0}", uriString);
+
+                    // Should we ever get here, be consistent with 2.0/3.5 behavior: just add an initial
+                    // slash to the string and treat it as a path:
+                    uriString = "/" + uriString;
+                }
+            }
+
+            // Find end of path: The path is terminated by
+            // - the first '?' character
+            // - the first '#' character: This is never the case here, since http.sys won't accept 
+            //   Uris containing fragments. Also, RFC2616 doesn't allow fragments in request Uris.
+            // - end of Uri string
+            int queryIndex = uriString.IndexOf('?');
+            if (queryIndex == -1)
+            {
+                queryIndex = uriString.Length;
+            }
+
+            // will always return a != null string.
+            return AddSlashToAsteriskOnlyPath(uriString.Substring(pathStartIndex, queryIndex - pathStartIndex));
+        }
+
+        private static string AddSlashToAsteriskOnlyPath(string path)
+        {
+            Debug.Assert(path != null, "'path' must not be null");
+
+            // If a request like "OPTIONS * HTTP/1.1" is sent to the listener, then the request Uri
+            // should be "http[s]://server[:port]/*" to be compatible with pre-4.0 behavior.
+            if ((path.Length == 1) && (path[0] == '*'))
+            {
+                return "/*";
+            }
+
+            return path;
         }
     }
 }

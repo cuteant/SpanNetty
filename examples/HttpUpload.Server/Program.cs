@@ -102,11 +102,11 @@ namespace HttpUpload.Server
 
                         //pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 0, 120));
 
-                        pipeline.AddLast(new MsLoggingHandler("CONN"));
+                        //pipeline.AddLast(new MsLoggingHandler("CONN"));
                         pipeline.AddLast(new HttpRequestDecoder());
                         pipeline.AddLast(new HttpResponseEncoder());
 
-                        pipeline.AddLast(new HttpServerKeepAliveHandler());
+                        //pipeline.AddLast(new HttpServerKeepAliveHandler());
 
                         // Remove the following line if you don't want automatic content compression.
                         pipeline.AddLast(new HttpContentCompressor());
