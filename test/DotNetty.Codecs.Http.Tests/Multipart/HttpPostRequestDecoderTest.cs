@@ -7,6 +7,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
     using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http.Multipart;
+    using DotNetty.Codecs.Http.Utilities;
     using DotNetty.Common.Utilities;
     using Xunit;
 
@@ -461,7 +462,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             const string Boundary = "74e78d11b0214bdcbc2f86491eeb4902";
             const string Charset = "utf-8";
             const string Filename = "attached_файл.txt";
-            string filenameEncoded = UrlEncoder.Encode(Filename, Encoding.UTF8);
+            string filenameEncoded = HttpUtility.UrlEncode(Filename, Encoding.UTF8);
 
             string body = "--" + Boundary + "\r\n" +
                 "Content-Disposition: form-data; name=\"file\"; filename*=" + Charset + "''" + filenameEncoded + "\r\n" +
@@ -495,7 +496,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             const string Charset = "utf-8";
             const string Filename = "attached_файл.txt";
             const string Language = "anything";
-            string filenameEncoded = UrlEncoder.Encode(Filename, Encoding.UTF8);
+            string filenameEncoded = HttpUtility.UrlEncode(Filename, Encoding.UTF8);
 
             string body = "--" + Boundary + "\r\n" +
                 "Content-Disposition: form-data; name=\"file\"; filename*=" +

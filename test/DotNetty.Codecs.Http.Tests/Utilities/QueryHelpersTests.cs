@@ -4,9 +4,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
-using DotNetty.Codecs.Http.Utilities;
 
-namespace DotNetty.Codecs.Http.Tests
+namespace DotNetty.Codecs.Http.Utilities.Tests
 {
     public class QueryHelperTests
     {

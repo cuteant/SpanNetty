@@ -126,6 +126,7 @@ namespace DotNetty.Codecs.Http
         maxHeaderSize,
         maxChunkSize,
         contentSizeThreshold,
+        output,
     }
 
     #endregion
