@@ -125,7 +125,7 @@ namespace DotNetty.Buffers.Tests
 
             // single read is too big for the output buffer
             var e = Assert.Throws<ArgumentException>(() => stream.Read(output, 0, 4));
-            Assert.Equal("The sum of offset and count is larger than the output length", e.Message);
+            Assert.Equal("Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.", e.Message);
         }
 
         [Fact]

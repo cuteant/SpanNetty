@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !NET40
+#if !TEST40
 namespace DotNetty.Buffers.Tests
 {
     using System;
@@ -78,11 +78,7 @@ namespace DotNetty.Buffers.Tests
 
             // single read is too big for the output buffer
             var e = await Assert.ThrowsAsync<ArgumentException>(async () => await stream.ReadAsync(output, 0, 4));
-#if TEST40
-            Assert.Equal("The sum of offset and count is larger than the output length", e.Message);
-#else
             Assert.Equal("Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.", e.Message);
-#endif
         }
 
         [Fact]

@@ -10,6 +10,8 @@ namespace DotNetty.Buffers
     internal enum ExceptionArgument
     {
         array,
+        bufferSize,
+        output,
         maxCachedBufferCapacity,
         freeSweepAllocationThreshold,
         nHeapArena,
@@ -269,16 +271,6 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_Sum()
-        {
-            throw GetArgumentException();
-            ArgumentException GetArgumentException()
-            {
-                return new ArgumentException($"The sum of offset and count is larger than the output length");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_InitialCapacity(int initialCapacity, int maxCapacity)
         {
             throw GetArgumentException();
@@ -394,6 +386,72 @@ namespace DotNetty.Buffers
             IllegalReferenceCountException GetIllegalReferenceCountException()
             {
                 return new IllegalReferenceCountException(refCnt, increment);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowObjectDisposedException_StreamIsClosed()
+        {
+            throw GetObjectDisposedException();
+
+            ObjectDisposedException GetObjectDisposedException()
+            {
+                return new ObjectDisposedException(null, "Cannot access a closed Stream.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowObjectDisposedException_StreamIsClosed(ExceptionArgument argument)
+        {
+            throw GetObjectDisposedException();
+
+            ObjectDisposedException GetObjectDisposedException()
+            {
+                return new ObjectDisposedException(GetArgumentName(argument), "Cannot access a closed Stream.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_NeedPosNum(ExceptionArgument argument, int value)
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), value, "Positive number required.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotSupportedException_UnreadableStream()
+        {
+            throw GetNotSupportedException();
+
+            NotSupportedException GetNotSupportedException()
+            {
+                return new NotSupportedException("Stream does not support reading.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotSupportedException_UnseekableStream()
+        {
+            throw GetNotSupportedException();
+
+            NotSupportedException GetNotSupportedException()
+            {
+                return new NotSupportedException("Stream does not support seeking.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotSupportedException_UnwritableStream()
+        {
+            throw GetNotSupportedException();
+
+            NotSupportedException GetNotSupportedException()
+            {
+                return new NotSupportedException("Stream does not support writing.");
             }
         }
     }
