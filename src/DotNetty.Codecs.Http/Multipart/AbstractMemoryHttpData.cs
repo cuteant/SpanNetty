@@ -106,7 +106,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 else
                 {
-                    CompositeByteBuffer compositeBuffer = Unpooled.CompositeBuffer(int.MaxValue);
+                    CompositeByteBuffer compositeBuffer = ArrayPooled.CompositeBuffer(int.MaxValue);
                     compositeBuffer.AddComponents(true, this.byteBuf, buffer);
                     compositeBuffer.SetWriterIndex((int)this.Size);
                     this.byteBuf = compositeBuffer;

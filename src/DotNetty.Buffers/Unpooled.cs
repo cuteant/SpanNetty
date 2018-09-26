@@ -36,7 +36,7 @@ namespace DotNetty.Buffers
         ///     A modification on the specified array's content will be visible to the returned buffer.
         /// </summary>
         public static IByteBuffer WrappedBuffer(byte[] array) =>
-            array.Length == 0 ? Empty  : new UnpooledHeapByteBuffer(Allocator, array, array.Length);
+            array.Length == 0 ? Empty : new UnpooledHeapByteBuffer(Allocator, array, array.Length);
 
         /// <summary>
         ///     Creates a new big-endian buffer which wraps the sub-region of the
@@ -572,5 +572,32 @@ namespace DotNetty.Buffers
         ///     Return a unreleasable view on the given {@link ByteBuf} which will just ignore release and retain calls.
         /// </summary>
         public static IByteBuffer UnreleasableBuffer(IByteBuffer buffer) => new UnreleasableByteBuffer(buffer);
+
+        /// <summary>Encode the given <see cref="string" /> using the given <see cref="Encoding" /> into a new
+        /// <see cref="IByteBuffer" /> which is allocated via the <see cref="IByteBufferAllocator" />.</summary>
+        /// <param name="src">src The <see cref="string" /> to encode.</param>
+        /// <param name="encoding">charset The specified <see cref="Encoding" /></param>
+        /// <param name="extraCapacity">the extra capacity to alloc except the space for decoding.</param>
+        public static IByteBuffer EncodeString(string src, Encoding encoding, int extraCapacity = 0) => ByteBufferUtil.EncodeString0(Allocator, false, src, encoding, extraCapacity);
+
+        /// <summary>Read the given amount of bytes into a new <see cref="IByteBuffer"/> that is allocated from the <see cref="IByteBufferAllocator"/>.</summary>
+        public static IByteBuffer ReadBytes(IByteBuffer buffer, int length)
+        {
+            bool release = true;
+            IByteBuffer dst = Allocator.Buffer(length);
+            try
+            {
+                buffer.ReadBytes(dst);
+                release = false;
+                return dst;
+            }
+            finally
+            {
+                if (release)
+                {
+                    dst.Release();
+                }
+            }
+        }
     }
 }

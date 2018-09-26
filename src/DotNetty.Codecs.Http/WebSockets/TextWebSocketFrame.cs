@@ -44,7 +44,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         }
 
         static IByteBuffer FromText(string text) => string.IsNullOrEmpty(text)
-            ? Unpooled.Empty : ArrayPooled.CopiedBuffer(text, Encoding.UTF8);
+            ? Unpooled.Empty : ArrayPooled.EncodeString(text, Encoding.UTF8);
 
         public string Text() => this.Content.ToString(Encoding.UTF8);
 

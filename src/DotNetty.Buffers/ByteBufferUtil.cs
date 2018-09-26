@@ -262,7 +262,7 @@ namespace DotNetty.Buffers
         }
 
         /// <summary>
-        ///     Read the given amount of bytes into a new {@link ByteBuf} that is allocated from the {@link ByteBufAllocator}.
+        ///     Read the given amount of bytes into a new <see cref="IByteBuffer"/> that is allocated from the <see cref="IByteBufferAllocator"/>.
         /// </summary>
         public static IByteBuffer ReadBytes(IByteBufferAllocator alloc, IByteBuffer buffer, int length)
         {
@@ -308,8 +308,9 @@ namespace DotNetty.Buffers
         public static IByteBuffer WriteUtf8(IByteBufferAllocator alloc, ICharSequence seq)
         {
             // UTF-8 uses max. 3 bytes per char, so calculate the worst case.
-            IByteBuffer buf = alloc.Buffer(Utf8MaxBytes(seq));
-            WriteUtf8(buf, seq);
+            var maxByteCount = Utf8MaxBytes(seq);
+            IByteBuffer buf = alloc.Buffer(maxByteCount);
+            ReserveAndWriteUtf8(buf, seq, maxByteCount);
             return buf;
         }
 
@@ -411,8 +412,9 @@ namespace DotNetty.Buffers
         public static IByteBuffer WriteUtf8(IByteBufferAllocator alloc, string value)
         {
             // UTF-8 uses max. 3 bytes per char, so calculate the worst case.
-            IByteBuffer buf = alloc.Buffer(Utf8MaxBytes(value));
-            WriteUtf8(buf, value);
+            var maxByteCount = Utf8MaxBytes(value);
+            IByteBuffer buf = alloc.Buffer(maxByteCount);
+            ReserveAndWriteUtf8(buf, value, maxByteCount);
             return buf;
         }
 
@@ -427,7 +429,7 @@ namespace DotNetty.Buffers
         /// <returns> This method returns the actual number of bytes written.</returns>
         public static int ReserveAndWriteUtf8(IByteBuffer buf, string value, int reserveBytes)
         {
-            while(true)
+            while (true)
             {
                 switch (buf)
                 {
@@ -513,9 +515,9 @@ namespace DotNetty.Buffers
             return writerIndex - oldWriterIndex;
         }
 
-        internal static int Utf8MaxBytes(ICharSequence seq) => Utf8MaxBytes(seq.Count);
+        internal static int Utf8MaxBytes(ICharSequence seq) => seq.Count * MaxBytesPerCharUtf8;
 
-        public static int Utf8MaxBytes(string seq) => Utf8MaxBytes(seq.Length);
+        public static int Utf8MaxBytes(string seq) => seq.Length * MaxBytesPerCharUtf8;
 
         internal static int Utf8MaxBytes(int seqLength) => seqLength * MaxBytesPerCharUtf8;
 
@@ -1038,6 +1040,8 @@ namespace DotNetty.Buffers
                 }
             }
         }
+
+        public static bool IsText(IByteBuffer buf, Encoding charset) => IsText(buf, buf.ReaderIndex, buf.ReadableBytes, charset);
 
         public static bool IsText(IByteBuffer buf, int index, int length, Encoding encoding)
         {

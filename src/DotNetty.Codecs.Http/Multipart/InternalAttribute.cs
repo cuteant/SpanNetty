@@ -97,7 +97,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public IByteBuffer ToByteBuffer()
         {
-            CompositeByteBuffer compositeBuffer = Unpooled.CompositeBuffer();
+            CompositeByteBuffer compositeBuffer = ArrayPooled.CompositeBuffer();
             compositeBuffer.AddComponents(this.value);
             compositeBuffer.SetWriterIndex(this.size);
             compositeBuffer.SetReaderIndex(0);
