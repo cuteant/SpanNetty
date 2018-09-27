@@ -203,6 +203,28 @@
         //        assertFalse(channel.writeInbound(Unpooled.wrappedBuffer(new byte[] { (byte) 2 })));
         //        assertFalse(channel.finish());
         //    }
+
+        [Fact]
+        public void ReleaseWhenMergeCumulateThrows()
+        {
+            var error = new Exception();
+            var input = Unpooled.Buffer().WriteZero(12);
+            var cumulation = new UnpooledHeapByteBufThrowExceptionWhenWriteBytes(UnpooledByteBufferAllocator.Default, 0, 64, error);
+            var expected = Assert.Throws<Exception>(()=> ByteToMessageDecoder.MergeCumulator(UnpooledByteBufferAllocator.Default, cumulation, input));
+            Assert.Same(error, expected);
+            Assert.Equal(0, input.ReferenceCount);
+        }
+
+        [Fact]
+        public void ReleaseWhenCompositeCumulateThrows()
+        {
+            var error = new Exception();
+            var input = Unpooled.Buffer().WriteZero(12);
+            var cumulation = new CompositeByteBufferThrowExceptionWhenAddComponent(UnpooledByteBufferAllocator.Default, false, 64, error);
+            var expected = Assert.Throws<Exception>(() => ByteToMessageDecoder.CompositionCumulation(UnpooledByteBufferAllocator.Default, cumulation, input));
+            Assert.Same(error, expected);
+            Assert.Equal(0, input.ReferenceCount);
+        }
     }
 
     class ActionByteToMessageDecoder : ByteToMessageDecoder
@@ -338,4 +360,33 @@
         }
     }
 
+    class UnpooledHeapByteBufThrowExceptionWhenWriteBytes : UnpooledHeapByteBuffer
+    {
+        readonly Exception exception;
+        public UnpooledHeapByteBufThrowExceptionWhenWriteBytes(IByteBufferAllocator alloc, int initialCapacity, int maxCapacity, Exception exception)
+            :base(alloc, initialCapacity, maxCapacity)
+        {
+            this.exception = exception;
+        }
+
+        public override IByteBuffer WriteBytes(IByteBuffer src)
+        {
+            throw this.exception;
+        }
+    }
+
+    class CompositeByteBufferThrowExceptionWhenAddComponent : CompositeByteBuffer
+    {
+        readonly Exception exception;
+        public CompositeByteBufferThrowExceptionWhenAddComponent(IByteBufferAllocator allocator, bool direct, int maxNumComponents, Exception exception)
+            :base(allocator, direct, maxNumComponents)
+        {
+            this.exception = exception;
+        }
+
+        public override CompositeByteBuffer AddComponent(bool increaseWriterIndex, IByteBuffer buffer)
+        {
+            throw this.exception;
+        }
+    }
 }

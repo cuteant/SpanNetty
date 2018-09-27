@@ -21,25 +21,33 @@ namespace DotNetty.Codecs
         public static readonly CumulationFunc MergeCumulator = MergeCumulatorInternal;
         private static IByteBuffer MergeCumulatorInternal(IByteBufferAllocator alloc, IByteBuffer cumulation, IByteBuffer input)
         {
-            IByteBuffer buffer;
-            if (cumulation.WriterIndex > cumulation.MaxCapacity - input.ReadableBytes || cumulation.ReferenceCount > 1)
+            try
             {
-                // Expand cumulation (by replace it) when either there is not more room in the buffer
-                // or if the refCnt is greater then 1 which may happen when the user use Slice().Retain() or
-                // Duplicate().Retain().
-                //
-                // See:
-                // - https://github.com/netty/netty/issues/2327
-                // - https://github.com/netty/netty/issues/1764
-                buffer = ExpandCumulation(alloc, cumulation, input.ReadableBytes);
+                IByteBuffer buffer;
+                if (cumulation.WriterIndex > cumulation.MaxCapacity - input.ReadableBytes || cumulation.ReferenceCount > 1)
+                {
+                    // Expand cumulation (by replace it) when either there is not more room in the buffer
+                    // or if the refCnt is greater then 1 which may happen when the user use Slice().Retain() or
+                    // Duplicate().Retain().
+                    //
+                    // See:
+                    // - https://github.com/netty/netty/issues/2327
+                    // - https://github.com/netty/netty/issues/1764
+                    buffer = ExpandCumulation(alloc, cumulation, input.ReadableBytes);
+                }
+                else
+                {
+                    buffer = cumulation;
+                }
+                buffer.WriteBytes(input);
+                return buffer;
             }
-            else
+            finally
             {
-                buffer = cumulation;
+                // We must release in in all cases as otherwise it may produce a leak if writeBytes(...) throw
+                // for whatever release (for example because of OutOfMemoryError)
+                input.Release();
             }
-            buffer.WriteBytes(input);
-            input.Release();
-            return buffer;
         }
 
         /// <summary>
@@ -54,35 +62,44 @@ namespace DotNetty.Codecs
         public static readonly CumulationFunc CompositionCumulation = CompositionCumulationInternal;
         private static IByteBuffer CompositionCumulationInternal(IByteBufferAllocator alloc, IByteBuffer cumulation, IByteBuffer input)
         {
-            IByteBuffer buffer;
-            if (cumulation.ReferenceCount > 1)
+            try
             {
-                // Expand cumulation (by replace it) when the refCnt is greater then 1 which may happen when the user
-                // use slice().retain() or duplicate().retain().
-                //
-                // See:
-                // - https://github.com/netty/netty/issues/2327
-                // - https://github.com/netty/netty/issues/1764
-                buffer = ExpandCumulation(alloc, cumulation, input.ReadableBytes);
-                buffer.WriteBytes(input);
-                input.Release();
-            }
-            else
-            {
-                CompositeByteBuffer composite;
-                if (cumulation is CompositeByteBuffer asComposite)
+                IByteBuffer buffer;
+                if (cumulation.ReferenceCount > 1)
                 {
-                    composite = asComposite;
+                    // Expand cumulation (by replace it) when the refCnt is greater then 1 which may happen when the
+                    // user use slice().retain() or duplicate().retain().
+                    //
+                    // See:
+                    // - https://github.com/netty/netty/issues/2327
+                    // - https://github.com/netty/netty/issues/1764
+                    buffer = ExpandCumulation(alloc, cumulation, input.ReadableBytes);
+                    buffer.WriteBytes(input);
                 }
                 else
                 {
-                    composite = alloc.CompositeBuffer(int.MaxValue);
-                    composite.AddComponent(true, cumulation);
+                    CompositeByteBuffer composite;
+                    if (cumulation is CompositeByteBuffer asComposite)
+                    {
+                        composite = asComposite;
+                    }
+                    else
+                    {
+                        composite = alloc.CompositeBuffer(int.MaxValue);
+                        composite.AddComponent(true, cumulation);
+                    }
+                    composite.AddComponent(true, input);
+                    input = null;
+                    buffer = composite;
                 }
-                composite.AddComponent(true, input);
-                buffer = composite;
+                return buffer;
             }
-            return buffer;
+            finally
+            {
+                // We must release if the ownership was not transfered as otherwise it may produce a leak if
+                // writeBytes(...) throw for whatever release (for example because of OutOfMemoryError).
+                input?.Release();
+            }
         }
 
         const byte STATE_INIT = 0;
