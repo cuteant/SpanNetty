@@ -26,7 +26,7 @@ namespace DotNetty.Common.Internal
 #if NET40
             UseDirectBuffer = false; // NET40 + Ssl/Tls，DotNetty.Buffer.PooledUnsafeDirectByteBuffer无法正常工作，暂屏蔽
 #else
-            UseDirectBuffer = !SystemPropertyUtil.GetBoolean("io.netty.noPreferDirect", false);
+            UseDirectBuffer = !SystemPropertyUtil.GetBoolean("io.netty.noPreferDirect", true);
 #endif
             if (Logger.DebugEnabled)
             {
