@@ -485,7 +485,7 @@ namespace DotNetty.Common
             InvalidOperationException GetException()
             {
                 return new InvalidOperationException(
-                    string.Format("timeout.deadline (%d) > deadline (%d)", timeoutDeadline, deadline));
+                    string.Format("timeout.deadline {0} > deadline {1}", timeoutDeadline, deadline));
             }
         }
 
