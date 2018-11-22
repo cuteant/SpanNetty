@@ -11,16 +11,11 @@ namespace DotNetty.Buffers
     using Thread = DotNetty.Common.Concurrency.XThread;
 
     /// <summary>
-    ///     Acts a Thread cache for allocations. This implementation is moduled after
-    ///     <a href="http://people.freebsd.org/~jasone/jemalloc/bsdcan2006/jemalloc.pdf">jemalloc</a> and the descripted
-    ///     technics of
-    ///     <a
-    ///         href="https://www.facebook.com/notes/facebook-engineering/scalable-memory-allocation-using-jemalloc/
-    /// 480222803919">
-    ///         Scalable
-    ///         memory allocation using jemalloc
-    ///     </a>
-    ///     .
+    /// Acts a Thread cache for allocations. This implementation is moduled after
+    /// <a href="http://people.freebsd.org/~jasone/jemalloc/bsdcan2006/jemalloc.pdf">jemalloc</a> and the descripted
+    /// technics of
+    /// <a href="https://www.facebook.com/notes/facebook-engineering/scalable-memory-allocation-using-jemalloc/480222803919">
+    /// Scalable memory allocation using jemalloc</a>.
     /// </summary>
     sealed class PoolThreadCache<T>
     {
@@ -42,7 +37,7 @@ namespace DotNetty.Buffers
         readonly int numShiftsNormalHeap;
         readonly int freeSweepAllocationThreshold;
 
-        int freed = Constants.False;
+        //int freed = Constants.False; // TODO
         int allocations;
 
         readonly Thread deathWatchThread;

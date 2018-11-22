@@ -827,5 +827,52 @@ namespace DotNetty.Buffers.Tests
             buffer.Release();
             copy.Release();
         }
+
+        [Fact]
+        public void TestDecomposeMultiple()
+        {
+            TestDecompose(150, 500, 3);
+        }
+
+        [Fact]
+        public void TestDecomposeOne()
+        {
+            TestDecompose(310, 50, 1);
+        }
+
+        [Fact]
+        public void TestDecomposeNone()
+        {
+            TestDecompose(310, 0, 0);
+        }
+
+        static void TestDecompose(int offset, int length, int expectedListSize)
+        {
+            byte[] bytes = new byte[1024];
+            var seed = Environment.TickCount;
+            var random = new Random(seed);
+            random.NextBytes(bytes);
+            IByteBuffer buf = Unpooled.WrappedBuffer(bytes);
+
+            var composite = Unpooled.CompositeBuffer();
+            composite.AddComponents(true,
+                                    buf.RetainedSlice(100, 200),
+                                    buf.RetainedSlice(300, 400),
+                                    buf.RetainedSlice(700, 100));
+
+            var slice = composite.Slice(offset, length);
+            var bufferList = composite.Decompose(offset, length);
+            Assert.Equal(expectedListSize, bufferList.Count);
+            var wrapped = Unpooled.WrappedBuffer(bufferList.ToArray());
+
+            AssertEx.Equal(slice, wrapped);
+            composite.Release();
+            buf.Release();
+
+            foreach (var buffer in bufferList)
+            {
+                Assert.Equal(0, buffer.ReferenceCount);
+            }
+        }
     }
 }

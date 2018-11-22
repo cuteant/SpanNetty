@@ -41,5 +41,13 @@ namespace DotNetty.Common.Internal
             i += (i >> 16);
             return (i & 0x0000003F);
         }
+
+        [MethodImpl(InlineMethod.Value)]
+        public static int Compare(long x, long y)
+        {
+            if (x < y) { return -1; }
+            if (x > y) { return 1; }
+            return 0;
+        }
     }
 }

@@ -268,6 +268,16 @@ namespace DotNetty.Common
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PriorityQueueIndex<T>(int index, T item)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"item.priorityQueueIndex(): {index} (expected: -1) + item: {item}");
+            }
+        }
+
         #endregion
 
         #region -- ArgumentOutOfRangeException --

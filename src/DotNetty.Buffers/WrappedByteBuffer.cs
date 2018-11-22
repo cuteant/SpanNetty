@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Buffers
@@ -16,7 +16,7 @@ namespace DotNetty.Buffers
     /// It's important that the {@link #readerIndex()} and {@link #writerIndex()} will not do any adjustments on the
     /// indices on the fly because of internal optimizations made by {@link ByteBufUtil#writeAscii(ByteBuf, CharSequence)}
     /// and {@link ByteBufUtil#writeUtf8(ByteBuf, CharSequence)}.
-    partial class WrappedByteBuffer : IByteBuffer
+    public abstract partial class WrappedByteBuffer : IByteBuffer
     {
         protected readonly IByteBuffer Buf;
 

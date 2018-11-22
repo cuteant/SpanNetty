@@ -297,45 +297,45 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        public override Task DisconnectAsync(IChannelHandlerContext context)
+        public override void Disconnect(IChannelHandlerContext context, IPromise promise)
         {
             Debug.Assert(context == this.outboundCtx.InnerContext);
 
             if (!this.outboundCtx.Removed)
             {
-                return this.OutboundHandler.DisconnectAsync(this.outboundCtx);
+                this.OutboundHandler.Disconnect(this.outboundCtx, promise);
             }
             else
             {
-                return this.outboundCtx.DisconnectAsync();
+                this.outboundCtx.DisconnectAsync(promise);
             }
         }
 
-        public override Task CloseAsync(IChannelHandlerContext context)
+        public override void Close(IChannelHandlerContext context, IPromise promise)
         {
             Debug.Assert(context == this.outboundCtx.InnerContext);
 
             if (!this.outboundCtx.Removed)
             {
-                return this.OutboundHandler.CloseAsync(this.outboundCtx);
+                this.OutboundHandler.Close(this.outboundCtx, promise);
             }
             else
             {
-                return this.outboundCtx.CloseAsync();
+                this.outboundCtx.CloseAsync(promise);
             }
         }
 
-        public override Task DeregisterAsync(IChannelHandlerContext context)
+        public override void Deregister(IChannelHandlerContext context, IPromise promise)
         {
             Debug.Assert(context == this.outboundCtx.InnerContext);
 
             if (!this.outboundCtx.Removed)
             {
-                return this.OutboundHandler.DeregisterAsync(this.outboundCtx);
+                this.OutboundHandler.Deregister(this.outboundCtx, promise);
             }
             else
             {
-                return this.outboundCtx.DeregisterAsync();
+                this.outboundCtx.DeregisterAsync(promise);
             }
         }
 
@@ -353,17 +353,17 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        public override Task WriteAsync(IChannelHandlerContext context, object message)
+        public override void Write(IChannelHandlerContext context, object message, IPromise promise)
         {
             Debug.Assert(context == this.outboundCtx.InnerContext);
 
             if (!this.outboundCtx.Removed)
             {
-                return this.OutboundHandler.WriteAsync(this.outboundCtx, message);
+                this.OutboundHandler.Write(this.outboundCtx, message, promise);
             }
             else
             {
-                return this.outboundCtx.WriteAsync(message);
+                this.outboundCtx.WriteAsync(message, promise);
             }
         }
 
@@ -482,9 +482,15 @@ namespace DotNetty.Transport.Channels
 
             public Task DisconnectAsync() => this.ctx.DisconnectAsync();
 
+            public Task DisconnectAsync(IPromise promise) => this.ctx.DisconnectAsync(promise);
+
             public Task CloseAsync() => this.ctx.CloseAsync();
 
+            public Task CloseAsync(IPromise promise) => this.ctx.CloseAsync(promise);
+
             public Task DeregisterAsync() => this.ctx.DeregisterAsync();
+
+            public Task DeregisterAsync(IPromise promise) => this.ctx.DeregisterAsync(promise);
 
             public IChannelHandlerContext Read()
             {
@@ -494,6 +500,8 @@ namespace DotNetty.Transport.Channels
 
             public Task WriteAsync(object message) => this.ctx.WriteAsync(message);
 
+            public Task WriteAsync(object message, IPromise promise) => this.ctx.WriteAsync(message, promise);
+
             public IChannelHandlerContext Flush()
             {
                 this.ctx.Flush();
@@ -502,9 +510,17 @@ namespace DotNetty.Transport.Channels
 
             public Task WriteAndFlushAsync(object message) => this.ctx.WriteAndFlushAsync(message);
 
+            public Task WriteAndFlushAsync(object message, IPromise promise) => this.ctx.WriteAndFlushAsync(message, promise);
+
             public IAttribute<T> GetAttribute<T>(AttributeKey<T> key) where T : class => this.ctx.GetAttribute(key);
 
             public bool HasAttribute<T>(AttributeKey<T> key) where T : class => this.ctx.HasAttribute(key);
+
+            public IPromise NewPromise() => this.ctx.NewPromise();
+
+            public IPromise NewPromise(object state) => this.ctx.NewPromise(state);
+
+            public IPromise VoidPromise() => this.ctx.VoidPromise();
 
             internal void Remove()
             {

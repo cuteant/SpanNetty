@@ -18,6 +18,9 @@ namespace DotNetty.Transport.Channels
         static readonly Action<object> InvokeChannelInactiveAction = OnInvokeChannelInactive;
         static readonly Action<object, object> InvokeExceptionCaughtAction = OnInvokeExceptionCaught;
         static readonly Action<object, object> SafeExecuteOutboundAsyncAction = OnSafeExecuteOutbound;
+        static readonly Action<object, object> InvokeCloseAction = OnInvokeClose;
+        static readonly Action<object, object> InvokeDisconnectAction = OnInvokeDisconnect;
+        static readonly Action<object, object> InvokeDeregisterAction = OnInvokeDeregister;
 
         internal AbstractChannelHandlerContext Next
         {
@@ -45,6 +48,21 @@ namespace DotNetty.Transport.Channels
         private static void OnInvokeChannelWritabilityChanged(object ctx)
         {
             ((AbstractChannelHandlerContext)ctx).InvokeChannelWritabilityChanged();
+        }
+
+        private static void OnInvokeDeregister(object ctx, object promise)
+        {
+            ((AbstractChannelHandlerContext)ctx).InvokeDeregister((IPromise)promise);
+        }
+
+        private static void OnInvokeDisconnect(object ctx, object promise)
+        {
+            ((AbstractChannelHandlerContext)ctx).InvokeDisconnect((IPromise)promise);
+        }
+
+        private static void OnInvokeClose(object ctx, object promise)
+        {
+            ((AbstractChannelHandlerContext)ctx).InvokeClose((IPromise)promise);
         }
 
         private static void OnInvokeFlush(object ctx)
@@ -89,7 +107,7 @@ namespace DotNetty.Transport.Channels
 
         private static void OnSafeExecuteOutbound(object p, object func)
         {
-            ((Func<Task>)func)().LinkOutcome((TaskCompletionSource)p);
+            ((Func<Task>)func)().LinkOutcome((IPromise)p);
         }
     }
 }

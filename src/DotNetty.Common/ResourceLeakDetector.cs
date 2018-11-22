@@ -315,7 +315,7 @@ namespace DotNetty.Common
                 if (duped > 0)
                 {
                     buf.Append(": ")
-                        .Append(dropped)
+                        .Append(duped)
                         .Append(" leak records were discarded because they were duplicates")
                         .Append(StringUtil.Newline);
                 }

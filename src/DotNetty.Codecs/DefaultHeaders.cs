@@ -21,14 +21,14 @@ namespace DotNetty.Codecs
     public class DefaultHeaders<TKey, TValue> : IHeaders<TKey, TValue>
         where TKey : class
     {
-        const int HashCodeSeed = unchecked((int)0xc2b2ae35);
+        internal const int HashCodeSeed = unchecked((int)0xc2b2ae35);
 
         static readonly DefaultHashingStrategy<TValue> DefaultValueHashingStrategy = new DefaultHashingStrategy<TValue>();
         static readonly DefaultHashingStrategy<TKey> DefaultKeyHashingStragety = new DefaultHashingStrategy<TKey>();
-        static readonly NullNameValidator<TKey> DefaultKeyNameValidator = new NullNameValidator<TKey>();
+        static readonly NullNameValidator<TKey> DefaultKeyNameValidator = NullNameValidator<TKey>.Instance;
 
         readonly HeaderEntry<TKey, TValue>[] entries;
-        readonly HeaderEntry<TKey, TValue> head;
+        protected readonly HeaderEntry<TKey, TValue> head;
 
         readonly byte hashMask;
         protected readonly IValueConverter<TValue> ValueConverter;
@@ -424,7 +424,7 @@ namespace DotNetty.Codecs
 
         public bool Remove(TKey name) => this.TryGetAndRemove(name, out _);
 
-        public IHeaders<TKey, TValue> Clear()
+        public virtual IHeaders<TKey, TValue> Clear()
         {
             Array.Clear(this.entries, 0, this.entries.Length);
             this.head.Before = this.head.After = this.head;
@@ -865,7 +865,7 @@ namespace DotNetty.Codecs
 
         public override string ToString() => HeadersUtils.ToString(this, this.size);
 
-        protected HeaderEntry<TKey, TValue> NewHeaderEntry(int h, TKey name, TValue value, HeaderEntry<TKey, TValue> next) =>
+        protected virtual HeaderEntry<TKey, TValue> NewHeaderEntry(int h, TKey name, TValue value, HeaderEntry<TKey, TValue> next) =>
             new HeaderEntry<TKey, TValue>(h, name, value, next, this.head);
 
         [MethodImpl(InlineMethod.Value)]
@@ -1062,23 +1062,27 @@ namespace DotNetty.Codecs
         }
     }
 
-    public sealed class HeaderEntry<TKey, TValue>
+    public class HeaderEntry<TKey, TValue>
         where TKey : class
     {
         internal readonly int Hash;
         // ReSharper disable InconsistentNaming
         internal readonly TKey key;
-        internal TValue value;
+        internal protected TValue value;
         // ReSharper restore InconsistentNaming
-
-        internal HeaderEntry<TKey, TValue> Next;
-        internal HeaderEntry<TKey, TValue> Before;
-        internal HeaderEntry<TKey, TValue> After;
+        readonly bool isReadonly;
 
         public HeaderEntry(int hash, TKey key)
         {
             this.Hash = hash;
             this.key = key;
+        }
+
+        public HeaderEntry(TKey key, TValue value, bool isReadonly)
+        {
+            this.key = key;
+            this.value = value;
+            this.isReadonly = isReadonly;
         }
 
         internal HeaderEntry()
@@ -1104,11 +1108,16 @@ namespace DotNetty.Codecs
             this.After.Before = this;
         }
 
-        internal void Remove()
+        public virtual void Remove()
         {
+            if (this.isReadonly) { ThrowHelper.ThrowNotSupportedException_Readonly(); }
             this.Before.After = this.After;
             this.After.Before = this.Before;
         }
+
+        public HeaderEntry<TKey, TValue> After { get; protected internal set; }
+        public HeaderEntry<TKey, TValue> Before { get; protected internal set; }
+        public HeaderEntry<TKey, TValue> Next { get; protected internal set; }
 
         public TKey Key => this.key;
 
@@ -1116,11 +1125,18 @@ namespace DotNetty.Codecs
 
         public TValue SetValue(TValue newValue)
         {
+            if (this.isReadonly) { ThrowHelper.ThrowNotSupportedException_Readonly(); }
             if (ReferenceEquals(newValue, null)) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.newValue);
 
             TValue oldValue = this.value;
             this.value = newValue;
             return oldValue;
+        }
+
+        protected void PointNeighborsToThis()
+        {
+            this.Before.After = this;
+            this.After.Before = this;
         }
 
         public override string ToString() => $"{this.key}={this.value}";

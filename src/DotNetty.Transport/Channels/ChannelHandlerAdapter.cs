@@ -6,7 +6,7 @@ namespace DotNetty.Transport.Channels
     using System;
     using System.Net;
     using System.Threading.Tasks;
-    using DotNetty.Common.Utilities;
+    using DotNetty.Common.Concurrency;
 
     public class ChannelHandlerAdapter : IChannelHandler
     {
@@ -47,7 +47,7 @@ namespace DotNetty.Transport.Channels
         public virtual void UserEventTriggered(IChannelHandlerContext context, object evt) => context.FireUserEventTriggered(evt);
 
         [Skip]
-        public virtual Task WriteAsync(IChannelHandlerContext context, object message) => context.WriteAsync(message);
+        public virtual void Write(IChannelHandlerContext context, object message, IPromise promise) => context.WriteAsync(message, promise);
 
         [Skip]
         public virtual void Flush(IChannelHandlerContext context) => context.Flush();
@@ -59,16 +59,16 @@ namespace DotNetty.Transport.Channels
         public virtual Task ConnectAsync(IChannelHandlerContext context, EndPoint remoteAddress, EndPoint localAddress) => context.ConnectAsync(remoteAddress, localAddress);
 
         [Skip]
-        public virtual Task DisconnectAsync(IChannelHandlerContext context) => context.DisconnectAsync();
+        public virtual void Disconnect(IChannelHandlerContext context, IPromise promise) => context.DisconnectAsync(promise);
 
         [Skip]
-        public virtual Task CloseAsync(IChannelHandlerContext context) => context.CloseAsync();
+        public virtual void Close(IChannelHandlerContext context, IPromise promise) => context.CloseAsync(promise);
 
         [Skip]
         public virtual void ExceptionCaught(IChannelHandlerContext context, Exception exception) => context.FireExceptionCaught(exception);
 
         [Skip]
-        public virtual Task DeregisterAsync(IChannelHandlerContext context) => context.DeregisterAsync();
+        public virtual void Deregister(IChannelHandlerContext context, IPromise promise) => context.DeregisterAsync(promise);
 
         [Skip]
         public virtual void Read(IChannelHandlerContext context) => context.Read();

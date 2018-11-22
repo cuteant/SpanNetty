@@ -120,7 +120,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
             if (this.Open)
             {
-                if (closed) { this.Unsafe.CloseSafe(); }
+                if (closed) { this.Unsafe.Close(this.Unsafe.VoidPromise()); }
                 else if (aborted) { this.CloseSafe(); }
             }
         }
@@ -250,7 +250,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
                     if (ch.Open)
                     {
-                        if (closed) { this.CloseSafe(); }
+                        if (closed) { this.Close(this.VoidPromise()); }
                         else if (aborted) { ch.CloseSafe(); }
                     }
                 }

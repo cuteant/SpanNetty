@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using DotNetty.Buffers;
+using DotNetty.Common.Concurrency;
 using DotNetty.Common.Utilities;
 using DotNetty.Transport.Channels;
 using DotNetty.Transport.Channels.Local;
@@ -130,6 +131,9 @@ namespace DotNetty.Transport
         bufferSize,
         pos,
         file,
+        promise,
+        aggregatePromise,
+        bytes,
     }
 
     #endregion
@@ -344,6 +348,26 @@ namespace DotNetty.Transport
             ArgumentException GetException()
             {
                 return new ArgumentException($"position out of range: {pos} (expected: 0 - {count - 1})");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_VoidPromiseIsNotAllowed()
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("Void promise is not allowed for this operation");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PromiseAlreadyCompleted(IPromise promise)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException($"Promise {promise} already completed");
             }
         }
 
@@ -596,6 +620,26 @@ namespace DotNetty.Transport
             InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("incompatible event loop type: " + eventLoop.GetType().Name);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task ThrowInvalidOperationException_CoalescingBufferQueuePending(Exception pending)
+        {
+            return TaskUtil.FromException(GetInvalidOperationException());
+            InvalidOperationException GetInvalidOperationException()
+            {
+                throw new InvalidOperationException(pending.Message, pending);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Task ThrowInvalidOperationException_BufferQueueLengthOverflow(int readableBytes, int increment)
+        {
+            return TaskUtil.FromException(GetInvalidOperationException());
+            InvalidOperationException GetInvalidOperationException()
+            {
+                throw new InvalidOperationException("buffer queue length overflow: " + readableBytes + " + " + increment);
             }
         }
 

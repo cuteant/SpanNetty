@@ -14,26 +14,26 @@ namespace DotNetty.Transport.Channels.Sockets
 
         Task JoinGroup(IPEndPoint multicastAddress);
 
-        Task JoinGroup(IPEndPoint multicastAddress, TaskCompletionSource promise);
+        Task JoinGroup(IPEndPoint multicastAddress, IPromise promise);
 
         Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface);
 
-        Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, TaskCompletionSource promise);
+        Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPromise promise);
 
         Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source);
 
-        Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source, TaskCompletionSource promise);
+        Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source, IPromise promise);
 
         Task LeaveGroup(IPEndPoint multicastAddress);
 
-        Task LeaveGroup(IPEndPoint multicastAddress, TaskCompletionSource promise);
+        Task LeaveGroup(IPEndPoint multicastAddress, IPromise promise);
 
         Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface);
 
-        Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, TaskCompletionSource promise);
+        Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPromise promise);
 
         Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source);
 
-        Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source, TaskCompletionSource promise);
+        Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source, IPromise promise);
     }
 }

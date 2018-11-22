@@ -7,6 +7,8 @@ namespace DotNetty.Codecs
 
     public sealed class NullNameValidator<T> : INameValidator<T>
     {
+        public static readonly NullNameValidator<T> Instance = new NullNameValidator<T>();
+
         public void ValidateName(T name)
         {
             if (name == null)

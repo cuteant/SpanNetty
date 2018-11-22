@@ -97,6 +97,8 @@ namespace DotNetty.Codecs.Http
 
         public static readonly AsciiString IfUnmodifiedSince = AsciiString.Cached("if-unmodified-since");
 
+        public static readonly AsciiString KeepAlive = AsciiString.Cached("keep-alive");
+
         public static readonly AsciiString LastModified = AsciiString.Cached("last-modified");
 
         public static readonly AsciiString Location = AsciiString.Cached("location");
@@ -110,6 +112,8 @@ namespace DotNetty.Codecs.Http
         public static readonly AsciiString ProxyAuthenticate = AsciiString.Cached("proxy-authenticate");
 
         public static readonly AsciiString ProxyAuthorization = AsciiString.Cached("proxy-authorization");
+
+        public static readonly AsciiString ProxyConnection = AsciiString.Cached("proxy-connection");
 
         public static readonly AsciiString Range = AsciiString.Cached("range");
 

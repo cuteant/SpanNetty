@@ -8,6 +8,7 @@ namespace DotNetty.Handlers.Logging
     using System.Threading.Tasks;
     using CuteAnt.Pool;
     using DotNetty.Buffers;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
 
@@ -173,31 +174,31 @@ namespace DotNetty.Handlers.Logging
             return ctx.ConnectAsync(remoteAddress, localAddress);
         }
 
-        public override Task DisconnectAsync(IChannelHandlerContext ctx)
+        public override void Disconnect(IChannelHandlerContext ctx, IPromise promise)
         {
             if (this.Logger.IsEnabled(this.InternalLevel))
             {
                 this.Logger.Log(this.InternalLevel, this.Format(ctx, "DISCONNECT"));
             }
-            return ctx.DisconnectAsync();
+            ctx.DisconnectAsync(promise);
         }
 
-        public override Task CloseAsync(IChannelHandlerContext ctx)
+        public override void Close(IChannelHandlerContext ctx, IPromise promise)
         {
             if (this.Logger.IsEnabled(this.InternalLevel))
             {
                 this.Logger.Log(this.InternalLevel, this.Format(ctx, "CLOSE"));
             }
-            return ctx.CloseAsync();
+            ctx.CloseAsync(promise);
         }
 
-        public override Task DeregisterAsync(IChannelHandlerContext ctx)
+        public override void Deregister(IChannelHandlerContext ctx, IPromise promise)
         {
             if (this.Logger.IsEnabled(this.InternalLevel))
             {
                 this.Logger.Log(this.InternalLevel, this.Format(ctx, "DEREGISTER"));
             }
-            return ctx.DeregisterAsync();
+            ctx.DeregisterAsync(promise);
         }
 
         public override void ChannelRead(IChannelHandlerContext ctx, object message)
@@ -251,13 +252,13 @@ namespace DotNetty.Handlers.Logging
             ctx.Read();
         }
 
-        public override Task WriteAsync(IChannelHandlerContext ctx, object msg)
+        public override void Write(IChannelHandlerContext ctx, object msg, IPromise promise)
         {
             if (this.Logger.IsEnabled(this.InternalLevel))
             {
                 this.Logger.Log(this.InternalLevel, this.Format(ctx, "WRITE", msg));
             }
-            return ctx.WriteAsync(msg);
+            ctx.WriteAsync(msg, promise);
         }
 
         public override void Flush(IChannelHandlerContext ctx)

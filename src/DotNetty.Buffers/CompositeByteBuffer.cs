@@ -458,45 +458,33 @@ namespace DotNetty.Buffers
             }
 
             int componentId = this.ToComponentIndex(offset);
-            var slice = new List<IByteBuffer>(this.components.Count);
-
-            // The first component
-            ComponentEntry firstC = this.components[componentId];
-            IByteBuffer first = firstC.Buffer.Duplicate();
-            first.SetReaderIndex(offset - firstC.Offset);
-
-            IByteBuffer buffer = first;
             int bytesToSlice = length;
+            // The first component
+            var firstC = this.components[componentId];
+            int firstBufOffset = offset - firstC.Offset;
+
+            var slice = firstC.Buffer.Slice(firstBufOffset + firstC.Buffer.ReaderIndex,
+                                            Math.Min(firstC.Length - firstBufOffset, bytesToSlice));
+            bytesToSlice -= slice.ReadableBytes;
+
+            if (bytesToSlice == 0)
+            {
+                return new List<IByteBuffer> { slice };
+            }
+
+            var sliceList = new List<IByteBuffer>(this.components.Count - componentId);
+            sliceList.Add(slice);
+
+            // Add all the slices until there is nothing more left and then return the List.
             do
             {
-                int readableBytes = buffer.ReadableBytes;
-                if (bytesToSlice <= readableBytes)
-                {
-                    // Last component
-                    buffer.SetWriterIndex(buffer.ReaderIndex + bytesToSlice);
-                    slice.Add(buffer);
-                    break;
-                }
-                else
-                {
-                    // Not the last component
-                    slice.Add(buffer);
-                    bytesToSlice -= readableBytes;
-                    componentId++;
+                var component = this.components[++componentId];
+                slice = component.Buffer.Slice(component.Buffer.ReaderIndex, Math.Min(component.Length, bytesToSlice));
+                bytesToSlice -= slice.ReadableBytes;
+                sliceList.Add(slice);
+            } while (bytesToSlice > 0);
 
-                    // Fetch the next component.
-                    buffer = this.components[componentId].Buffer.Duplicate();
-                }
-            }
-            while (bytesToSlice > 0);
-
-            // Slice all components because only readable bytes are interesting.
-            for (int i = 0; i < slice.Count; i++)
-            {
-                slice[i] = slice[i].Slice();
-            }
-
-            return slice;
+            return sliceList;
         }
 
         public override int IoBufferCount

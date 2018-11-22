@@ -3,33 +3,51 @@
 
 namespace DotNetty.Transport.Channels
 {
+    using System.ComponentModel;
     using System.Net;
     using System.Threading.Tasks;
+    using DotNetty.Buffers;
+    using DotNetty.Common.Concurrency;
 
     public interface IChannelUnsafe
     {
+        /// <summary>
+        /// Gets the assigned <see cref="IRecvByteBufAllocatorHandle"/> which will be used to allocate <see cref="IByteBuffer"/>'s when
+        /// receiving data.
+        /// </summary>
         IRecvByteBufAllocatorHandle RecvBufAllocHandle { get; }
 
+        /// <summary>
+        /// Register the <see cref="IChannel"/> and notify
+        /// the <see cref="Task"/> once the registration was complete.
+        /// </summary>
+        /// <param name="eventLoop"></param>
+        /// <returns></returns>
         Task RegisterAsync(IEventLoop eventLoop);
 
-        Task DeregisterAsync();
+        void Deregister(IPromise promise);
 
         Task BindAsync(EndPoint localAddress);
 
         Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress);
 
-        Task DisconnectAsync();
+        void Disconnect(IPromise promise);
 
-        Task CloseAsync();
+        void Close(IPromise promise);
 
         void CloseForcibly();
 
         void BeginRead();
 
-        Task WriteAsync(object message);
+        void Write(object message, IPromise promise);
 
         void Flush();
 
         ChannelOutboundBuffer OutboundBuffer { get; }
+
+        IPromise VoidPromise();
+
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        void Initialize(IChannel channel);
     }
 }

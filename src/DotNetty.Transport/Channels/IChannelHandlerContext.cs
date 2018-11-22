@@ -67,16 +67,20 @@ namespace DotNetty.Transport.Channels
 
         IChannelHandlerContext Read();
 
-        Task WriteAsync(object message); // todo: optimize: add flag saying if handler is interested in task, do not produce task if it isn't needed
+        Task WriteAsync(object message);
+
+        Task WriteAsync(object message, IPromise promise);
 
         IChannelHandlerContext Flush();
-        
+
         /// <summary>
         ///  Return the assigned <see cref="IChannelPipeline"/>
         /// </summary>
         IChannelPipeline Pipeline { get; }
 
         Task WriteAndFlushAsync(object message);
+
+        Task WriteAndFlushAsync(object message, IPromise promise);
 
         /// <summary>
         /// Request to bind to the given <see cref="EndPoint"/>.
@@ -118,7 +122,7 @@ namespace DotNetty.Transport.Channels
         /// <summary>
         /// Request to disconnect from the remote peer.
         /// <para>
-        /// This will result in having the <see cref="IChannelHandler.DisconnectAsync"/> method called of the next
+        /// This will result in having the <see cref="IChannelHandler.Disconnect(IChannelHandlerContext, IPromise)"/> method called of the next
         /// <see cref="IChannelHandler"/> contained in the <see cref="IChannelPipeline"/> of the
         /// <see cref="IChannel"/>.
         /// </para>
@@ -126,17 +130,29 @@ namespace DotNetty.Transport.Channels
         /// <returns>An await-able task.</returns>
         Task DisconnectAsync();
 
+        Task DisconnectAsync(IPromise promise);
+
         Task CloseAsync();
+
+        Task CloseAsync(IPromise promise);
 
         /// <summary>
         /// Request to deregister from the previous assigned <see cref="IEventExecutor"/>.
         /// <para>
-        /// This will result in having the <see cref="IChannelHandler.DeregisterAsync"/> method called of the next
+        /// This will result in having the <see cref="IChannelHandler.Deregister(IChannelHandlerContext, IPromise)"/> method called of the next
         /// <see cref="IChannelHandler"/> contained in the <see cref="IChannelPipeline"/> of the
         /// <see cref="IChannel"/>.
         /// </para>
         /// </summary>
         /// <returns>An await-able task.</returns>
         Task DeregisterAsync();
+
+        Task DeregisterAsync(IPromise promise);
+
+        IPromise NewPromise();
+
+        IPromise NewPromise(object state);
+
+        IPromise VoidPromise();
     }
 }

@@ -115,7 +115,37 @@ namespace DotNetty.Transport.Channels
             return asLongText;
         }
 
-        public int CompareTo(IChannelId other) => 0;
+        public int CompareTo(IChannelId other)
+        {
+            if (ReferenceEquals(this, other))
+            {
+                // short circuit
+                return 0;
+            }
+            if (other is DefaultChannelId otherId)
+            {
+                // lexicographic comparison
+                byte[] otherData = otherId.data;
+                int len1 = data.Length;
+                int len2 = otherData.Length;
+                int len = Math.Min(len1, len2);
+
+                for (int k = 0; k < len; k++)
+                {
+                    byte x = data[k];
+                    byte y = otherData[k];
+                    if (x != y)
+                    {
+                        // treat these as unsigned bytes for comparison
+                        return (x & 0xff) - (y & 0xff);
+                    }
+                }
+                return len1 - len2;
+            }
+
+            return StringComparer.Ordinal.Compare(AsLongText(), other.AsLongText());
+
+        }
 
         static byte[] ParseMachineId(string value)
         {
@@ -250,7 +280,7 @@ namespace DotNetty.Transport.Channels
 
             if (other is DefaultChannelId channelId)
             {
-                return Equals(this.data, channelId.data);
+                return this.hashCode == channelId.hashCode && Equals(this.data, channelId.data);
             }
 
             return false;

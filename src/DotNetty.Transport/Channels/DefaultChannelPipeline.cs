@@ -32,6 +32,7 @@ namespace DotNetty.Transport.Channels
         }
 
         readonly IChannel channel;
+        readonly VoidChannelPromise voidPromise;
 
         readonly AbstractChannelHandlerContext head;
         readonly AbstractChannelHandlerContext tail;
@@ -61,6 +62,7 @@ namespace DotNetty.Transport.Channels
             if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
             this.channel = channel;
+            this.voidPromise = new VoidChannelPromise(channel, true);
 
             this.tail = new TailContext(this);
             this.head = new HeadContext(this);
@@ -880,9 +882,15 @@ namespace DotNetty.Transport.Channels
 
         public Task DisconnectAsync() => this.tail.DisconnectAsync();
 
+        public Task DisconnectAsync(IPromise promise) => this.tail.DisconnectAsync(promise);
+
         public Task CloseAsync() => this.tail.CloseAsync();
 
+        public Task CloseAsync(IPromise promise) => this.tail.CloseAsync(promise);
+
         public Task DeregisterAsync() => this.tail.DeregisterAsync();
+
+        public Task DeregisterAsync(IPromise promise) => this.tail.DeregisterAsync(promise);
 
         public IChannelPipeline Read()
         {
@@ -892,6 +900,8 @@ namespace DotNetty.Transport.Channels
 
         public Task WriteAsync(object msg) => this.tail.WriteAsync(msg);
 
+        public Task WriteAsync(object msg, IPromise promise) => this.tail.WriteAsync(msg, promise);
+
         public IChannelPipeline Flush()
         {
             this.tail.Flush();
@@ -899,6 +909,14 @@ namespace DotNetty.Transport.Channels
         }
 
         public Task WriteAndFlushAsync(object msg) => this.tail.WriteAndFlushAsync(msg);
+
+        public Task WriteAndFlushAsync(object msg, IPromise promise) => this.tail.WriteAndFlushAsync(msg, promise);
+
+        public IPromise NewPromise() => new TaskCompletionSource();
+
+        public IPromise NewPromise(object state) => new TaskCompletionSource(state);
+
+        public IPromise VoidPromise() => this.voidPromise;
 
         string FilterName(string name, IChannelHandler handler)
         {
@@ -1144,13 +1162,13 @@ namespace DotNetty.Transport.Channels
             public void HandlerRemoved(IChannelHandlerContext context) { }
 
             [Skip]
-            public Task DeregisterAsync(IChannelHandlerContext context) => context.DeregisterAsync();
+            public void Deregister(IChannelHandlerContext context, IPromise promise) => context.DeregisterAsync(promise);
 
             [Skip]
-            public Task DisconnectAsync(IChannelHandlerContext context) => context.DisconnectAsync();
+            public void Disconnect(IChannelHandlerContext context, IPromise promise) => context.DisconnectAsync(promise);
 
             [Skip]
-            public Task CloseAsync(IChannelHandlerContext context) => context.CloseAsync();
+            public void Close(IChannelHandlerContext context, IPromise promise) => context.CloseAsync(promise);
 
             [Skip]
             public void Read(IChannelHandlerContext context) => context.Read();
@@ -1158,7 +1176,7 @@ namespace DotNetty.Transport.Channels
             public void UserEventTriggered(IChannelHandlerContext context, object evt) => this.pipeline.OnUnhandledInboundUserEventTriggered(evt);
 
             [Skip]
-            public Task WriteAsync(IChannelHandlerContext ctx, object message) => ctx.WriteAsync(message);
+            public void Write(IChannelHandlerContext ctx, object message, IPromise promise) => ctx.WriteAsync(message, promise);
 
             [Skip]
             public void Flush(IChannelHandlerContext context) => context.Flush();
@@ -1192,15 +1210,15 @@ namespace DotNetty.Transport.Channels
 
             public Task ConnectAsync(IChannelHandlerContext context, EndPoint remoteAddress, EndPoint localAddress) => this.channelUnsafe.ConnectAsync(remoteAddress, localAddress);
 
-            public Task DisconnectAsync(IChannelHandlerContext context) => this.channelUnsafe.DisconnectAsync();
+            public void Disconnect(IChannelHandlerContext context, IPromise promise) => this.channelUnsafe.Disconnect(promise);
 
-            public Task CloseAsync(IChannelHandlerContext context) => this.channelUnsafe.CloseAsync();
+            public void Close(IChannelHandlerContext context, IPromise promise) => this.channelUnsafe.Close(promise);
 
-            public Task DeregisterAsync(IChannelHandlerContext context) => this.channelUnsafe.DeregisterAsync();
+            public void Deregister(IChannelHandlerContext context, IPromise promise) => this.channelUnsafe.Deregister(promise);
 
             public void Read(IChannelHandlerContext context) => this.channelUnsafe.BeginRead();
 
-            public Task WriteAsync(IChannelHandlerContext context, object message) => this.channelUnsafe.WriteAsync(message);
+            public void Write(IChannelHandlerContext context, object message, IPromise promise) => this.channelUnsafe.Write(message, promise);
 
             [Skip]
             public void HandlerAdded(IChannelHandlerContext context) { }

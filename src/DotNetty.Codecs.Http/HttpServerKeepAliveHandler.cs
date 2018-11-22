@@ -4,6 +4,7 @@
 namespace DotNetty.Codecs.Http
 {
     using System.Threading.Tasks;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
@@ -31,7 +32,7 @@ namespace DotNetty.Codecs.Http
             context.FireChannelRead(message);
         }
 
-        public override Task WriteAsync(IChannelHandlerContext context, object message)
+        public override void Write(IChannelHandlerContext context, object message, IPromise promise)
         {
             // modify message on way out to add headers if needed
             if (message is IHttpResponse response)
@@ -50,17 +51,18 @@ namespace DotNetty.Codecs.Http
                     SetKeepAlive(response, false);
                 }
             }
-            var completion = context.WriteAsync(message);
+
             if (message is ILastHttpContent && !this.ShouldKeepAlive())
             {
+                promise = promise.Unvoid();
 #if NET40
                 void closeOnComplete(Task t) => context.CloseAsync();
-                completion.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+                promise.Task.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                completion.ContinueWith(CloseOnComplete, context, TaskContinuationOptions.ExecuteSynchronously);
+                promise.Task.ContinueWith(CloseOnComplete, context, TaskContinuationOptions.ExecuteSynchronously);
 #endif
             }
-            return completion;
+            base.Write(context, message, promise);
         }
 
         static void CloseOnComplete(Task task, object state)

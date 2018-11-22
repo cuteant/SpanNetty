@@ -20,7 +20,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         static void LinkOutcomeContinuation(Task t, object state)
         {
-            var wrapped = (Tuple<TaskCompletionSource, IChannelPipeline, WebSocketClientHandshaker>)state;
+            var wrapped = (Tuple<IPromise, IChannelPipeline, WebSocketClientHandshaker>)state;
             switch (t.Status)
             {
                 case TaskStatus.RanToCompletion:

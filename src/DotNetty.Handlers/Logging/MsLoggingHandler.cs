@@ -8,6 +8,7 @@ namespace DotNetty.Handlers.Logging
     using System.Threading.Tasks;
     using CuteAnt.Pool;
     using DotNetty.Buffers;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
     using MsLogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -124,33 +125,33 @@ namespace DotNetty.Handlers.Logging
         }
 
         /// <inheritdoc />
-        public override Task DisconnectAsync(IChannelHandlerContext ctx)
+        public override void Disconnect(IChannelHandlerContext ctx, IPromise promise)
         {
             if (Logger.IsEnabled(MsLogLevel.Information))
             {
                 Logger.LogInformation("Channel {0} disconnect", ctx.Channel);
             }
-            return ctx.DisconnectAsync();
+            ctx.DisconnectAsync(promise);
         }
 
         /// <inheritdoc />
-        public override Task CloseAsync(IChannelHandlerContext ctx)
+        public override void Close(IChannelHandlerContext ctx, IPromise promise)
         {
             if (Logger.IsEnabled(MsLogLevel.Information))
             {
                 Logger.LogInformation("Channel {0} close", ctx.Channel);
             }
-            return ctx.CloseAsync();
+            ctx.CloseAsync(promise);
         }
 
         /// <inheritdoc />
-        public override Task DeregisterAsync(IChannelHandlerContext ctx)
+        public override void Deregister(IChannelHandlerContext ctx, IPromise promise)
         {
             if (Logger.IsEnabled(MsLogLevel.Debug))
             {
                 Logger.LogDebug("Channel {0} deregister", ctx.Channel);
             }
-            return ctx.DeregisterAsync();
+            ctx.DeregisterAsync(promise);
         }
 
         /// <inheritdoc />
@@ -212,13 +213,13 @@ namespace DotNetty.Handlers.Logging
         }
 
         /// <inheritdoc />
-        public override Task WriteAsync(IChannelHandlerContext ctx, object msg)
+        public override void Write(IChannelHandlerContext ctx, object msg, IPromise promise)
         {
             if (Logger.IsEnabled(MsLogLevel.Trace))
             {
                 Logger.LogTrace("Channel {0} writing: {1}", ctx.Channel, FormatMessage(msg));
             }
-            return ctx.WriteAsync(msg);
+            ctx.WriteAsync(msg, promise);
         }
 
         /// <inheritdoc />

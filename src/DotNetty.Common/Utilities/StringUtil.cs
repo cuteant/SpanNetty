@@ -530,6 +530,8 @@ namespace DotNetty.Common.Utilities
 
         public static int Length(string s) => s?.Length ?? 0;
 
+        public static bool IsEmpty(string s) => 0u >= (uint)s.Length ? true : false;
+
         public static int IndexOfNonWhiteSpace(IReadOnlyList<char> seq, int offset)
         {
             for (; offset < seq.Count; ++offset)

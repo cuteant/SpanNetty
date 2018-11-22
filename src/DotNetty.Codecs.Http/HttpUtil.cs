@@ -13,9 +13,35 @@ namespace DotNetty.Codecs.Http
         static readonly AsciiString CharsetEquals = new AsciiString(HttpHeaderValues.Charset + "=");
         static readonly AsciiString Semicolon = AsciiString.Cached(";");
 
+        ///// <summary>
+        ///// Determine if a uri is in origin-form according to
+        ///// <a href="https://tools.ietf.org/html/rfc7230#section-5.3">rfc7230, 5.3</a>.
+        ///// </summary>
+        ///// <param name="uri"></param>
+        ///// <returns></returns>
+        //public static bool IsOriginForm(Uri uri)
+        //{
+        //    return uri.Scheme == null && /*uri.getSchemeSpecificPart() == null &&*/ uri.PathAndQuery == null &&
+        //           uri.Host == null && uri.Authority == null;
+        //}
+
+        ///// <summary>
+        ///// Determine if a uri is in asterisk-form according to
+        ///// <a href="https://tools.ietf.org/html/rfc7230#section-5.3">rfc7230, 5.3</a>.
+        ///// </summary>
+        ///// <param name="uri"></param>
+        ///// <returns></returns>
+        //public static bool IsAsteriskForm(Uri uri)
+        //{
+        //    return string.Equals("*", uri.AbsolutePath, StringComparison.Ordinal) &&
+        //           uri.Scheme == null && /*uri.getSchemeSpecificPart() == null &&*/ uri.Host == null && uri.PathAndQuery == null &&
+        //           uri.Port == 0 && uri.Authority == null && uri.Query == null &&
+        //           uri.Fragment == null;
+        //}
+
         public static bool IsKeepAlive(IHttpMessage message)
         {
-            if (message.Headers.TryGet(HttpHeaderNames.Connection, out ICharSequence connection) 
+            if (message.Headers.TryGet(HttpHeaderNames.Connection, out ICharSequence connection)
                 && HttpHeaderValues.Close.ContentEqualsIgnoreCase(connection))
             {
                 return false;
@@ -97,7 +123,7 @@ namespace DotNetty.Codecs.Http
             return defaultValue;
         }
 
-        public static int GetContentLength(IHttpMessage message, int defaultValue) => 
+        public static int GetContentLength(IHttpMessage message, int defaultValue) =>
             (int)Math.Min(int.MaxValue, GetContentLength(message, (long)defaultValue));
 
         static int GetWebSocketContentLength(IHttpMessage message)
@@ -152,7 +178,7 @@ namespace DotNetty.Codecs.Http
                 return false;
             }
 
-            return message.Headers.TryGet(HttpHeaderNames.Expect, out ICharSequence expectValue) 
+            return message.Headers.TryGet(HttpHeaderNames.Expect, out ICharSequence expectValue)
                 && !HttpHeaderValues.Continue.ContentEqualsIgnoreCase(expectValue);
         }
 
@@ -215,8 +241,8 @@ namespace DotNetty.Codecs.Http
 
         public static Encoding GetCharset(IHttpMessage message, Encoding defaultCharset)
         {
-            return message.Headers.TryGet(HttpHeaderNames.ContentType, out ICharSequence contentTypeValue) 
-                ? GetCharset(contentTypeValue, defaultCharset) 
+            return message.Headers.TryGet(HttpHeaderNames.ContentType, out ICharSequence contentTypeValue)
+                ? GetCharset(contentTypeValue, defaultCharset)
                 : defaultCharset;
         }
 
@@ -247,7 +273,7 @@ namespace DotNetty.Codecs.Http
             }
         }
 
-        public static ICharSequence GetCharsetAsSequence(IHttpMessage message) 
+        public static ICharSequence GetCharsetAsSequence(IHttpMessage message)
             => message.Headers.TryGet(HttpHeaderNames.ContentType, out ICharSequence contentTypeValue) ? GetCharsetAsSequence(contentTypeValue) : null;
 
         public static ICharSequence GetCharsetAsSequence(ICharSequence contentTypeValue)
@@ -273,7 +299,7 @@ namespace DotNetty.Codecs.Http
             return null;
         }
 
-        public static ICharSequence GetMimeType(IHttpMessage message) => 
+        public static ICharSequence GetMimeType(IHttpMessage message) =>
             message.Headers.TryGet(HttpHeaderNames.ContentType, out ICharSequence contentTypeValue) ? GetMimeType(contentTypeValue) : null;
 
         public static ICharSequence GetMimeType(ICharSequence contentTypeValue)

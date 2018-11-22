@@ -66,7 +66,7 @@ namespace DotNetty.Transport.Channels.Local
             var config = new DefaultChannelConfiguration(this);
             config.Allocator = new PreferHeapByteBufAllocator(config.Allocator);
             this.Configuration = config;
-            this.shutdownHook = () => this.Unsafe.CloseAsync();
+            this.shutdownHook = () => this.Unsafe.Close(this.Unsafe.VoidPromise());
         }
 
         public override ChannelMetadata Metadata => METADATA;
@@ -231,7 +231,7 @@ namespace DotNetty.Transport.Channels.Local
         {
             if (isActive)
             {
-                this.Unsafe.CloseAsync();
+                this.Unsafe.Close(this.Unsafe.VoidPromise());
             }
             else
             {

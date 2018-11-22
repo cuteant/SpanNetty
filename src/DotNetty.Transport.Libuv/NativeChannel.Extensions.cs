@@ -19,6 +19,11 @@ namespace DotNetty.Transport.Libuv
             get => Volatile.Read(ref _state);
             set => Interlocked.Exchange(ref _state, value);
         }
+
+        partial class NativeChannelUnsafe
+        {
+            static readonly Action<object, object> CancelConnectAction = CancelConnect;
+        }
     }
 
     internal interface INativeUnsafe

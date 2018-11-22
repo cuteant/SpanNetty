@@ -407,13 +407,19 @@ namespace DotNetty.Codecs
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static Task ThrowEncoderException(Exception ex)
+        internal static void ThrowEncoderException(Exception ex)
         {
-            return TaskUtil.FromException(GetException());
+            throw GetException();
             EncoderException GetException()
             {
                 return new EncoderException(ex);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static EncoderException GetEncoderException(Exception ex)
+        {
+            return new EncoderException(ex);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -510,6 +516,16 @@ namespace DotNetty.Codecs
         internal static TooLongFrameException GetTooLongFrameException(int maxContentLength)
         {
             return new TooLongFrameException($"content length exceeded {maxContentLength} bytes.");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotSupportedException_Readonly()
+        {
+            throw GetException();
+            NotSupportedException GetException()
+            {
+                return new NotSupportedException("read only");
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft. All rights reserved.
+﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 namespace DotNetty.Transport.Channels
@@ -27,7 +27,7 @@ namespace DotNetty.Transport.Channels
     /// which is placed right next to it. A <see cref="IChannelHandler"/> can also trigger an arbitrary I/O event if
     /// necessary. To forward or trigger an event, a <see cref="IChannelHandler"/> calls the event propagation methods
     /// defined in <see cref="IChannelHandlerContext"/>, such as <see cref="IChannelHandlerContext.FireChannelRead"/>
-    /// and <see cref="IChannelHandlerContext.WriteAsync"/>.
+    /// and <see cref="IChannelHandlerContext.WriteAsync(object, IPromise)"/>.
     /// </para>
     /// <para>
     ///     <pre>
@@ -85,7 +85,7 @@ namespace DotNetty.Transport.Channels
     /// operation, such as a write request and a connection attempt.  If an outbound event goes beyond the
     /// <see cref="IChannelHandler"/> at the bottom of the diagram, it is handled by an I/O thread associated with the
     /// <see cref="IChannel"/>. The I/O thread often performs the actual output operation such as
-    /// <see cref="AbstractChannel{TChannel, TUnsafe}.WriteAsync"/>.
+    /// <see cref="AbstractChannel{TChannel, TUnsafe}.WriteAsync(object, IPromise)"/>.
     /// </para>
     /// <para>Forwarding an event to the next handler</para>
     /// <para>
@@ -111,11 +111,11 @@ namespace DotNetty.Transport.Channels
     ///                 <li><see cref="IChannelHandlerContext.BindAsync"/></li>
     ///                 <li><see cref="IChannelHandlerContext.ConnectAsync(EndPoint)"/></li>
     ///                 <li><see cref="IChannelHandlerContext.ConnectAsync(EndPoint, EndPoint)"/></li>
-    ///                 <li><see cref="IChannelHandlerContext.WriteAsync"/></li>
+    ///                 <li><see cref="IChannelHandlerContext.WriteAsync(object, IPromise)"/></li>
     ///                 <li><see cref="IChannelHandlerContext.Flush"/></li>
     ///                 <li><see cref="IChannelHandlerContext.Read"/></li>
-    ///                 <li><see cref="IChannelHandlerContext.DisconnectAsync"/></li>
-    ///                 <li><see cref="IChannelHandlerContext.CloseAsync"/></li>
+    ///                 <li><see cref="IChannelHandlerContext.DisconnectAsync(IPromise)"/></li>
+    ///                 <li><see cref="IChannelHandlerContext.CloseAsync(IPromise)"/></li>
     ///             </ul>
     ///         </li>
     ///     </ul>
@@ -632,7 +632,7 @@ namespace DotNetty.Transport.Channels
         /// <summary>
         /// Request to disconnect from the remote peer.
         /// <para>
-        /// This will result in having the <see cref="IChannelHandler.DisconnectAsync"/> method called of the next
+        /// This will result in having the <see cref="IChannelHandler.Disconnect(IChannelHandlerContext, IPromise)"/> method called of the next
         /// <see cref="IChannelHandler"/> contained in the  <see cref="IChannelPipeline"/> of the
         /// <see cref="IChannel"/>.
         /// </para>
@@ -640,10 +640,12 @@ namespace DotNetty.Transport.Channels
         /// <returns>An await-able task.</returns>
         Task DisconnectAsync();
 
+        Task DisconnectAsync(IPromise promise);
+
         /// <summary>
         /// Request to close the <see cref="IChannel"/>. After it is closed it is not possible to reuse it again.
         /// <para>
-        /// This will result in having the <see cref="IChannelHandler.CloseAsync"/> method called of the next
+        /// This will result in having the <see cref="IChannelHandler.Close(IChannelHandlerContext, IPromise)"/> method called of the next
         /// <see cref="IChannelHandler"/> contained in the  <see cref="IChannelPipeline"/> of the
         /// <see cref="IChannel"/>.
         /// </para>
@@ -651,17 +653,21 @@ namespace DotNetty.Transport.Channels
         /// <returns>An await-able task.</returns>
         Task CloseAsync();
 
+        Task CloseAsync(IPromise promise);
+
         /// <summary>
         /// Request to deregister the <see cref="IChannel"/> bound this <see cref="IChannelPipeline"/> from the
         /// previous assigned <see cref="IEventExecutor"/>.
         /// <para>
-        /// This will result in having the <see cref="IChannelHandler.DeregisterAsync"/> method called of the next
+        /// This will result in having the <see cref="IChannelHandler.Deregister(IChannelHandlerContext, IPromise)"/> method called of the next
         /// <see cref="IChannelHandler"/> contained in the  <see cref="IChannelPipeline"/> of the
         /// <see cref="IChannel"/>.
         /// </para>
         /// </summary>
         /// <returns>An await-able task.</returns>
         Task DeregisterAsync();
+
+        Task DeregisterAsync(IPromise promise);
 
         /// <summary>
         /// Request to Read data from the <see cref="IChannel"/> into the first inbound buffer, triggers an
@@ -685,6 +691,8 @@ namespace DotNetty.Transport.Channels
         /// <returns>An await-able task.</returns>
         Task WriteAsync(object msg);
 
+        Task WriteAsync(object msg, IPromise promise);
+
         /// <summary>
         /// Request to flush all pending messages.
         /// </summary>
@@ -692,8 +700,16 @@ namespace DotNetty.Transport.Channels
         IChannelPipeline Flush();
 
         /// <summary>
-        /// Shortcut for calling both <see cref="WriteAsync"/> and <see cref="Flush"/>.
+        /// Shortcut for calling both <see cref="WriteAsync(object)"/> and <see cref="Flush"/>.
         /// </summary>
         Task WriteAndFlushAsync(object msg);
+
+        Task WriteAndFlushAsync(object msg, IPromise promise);
+
+        IPromise NewPromise();
+
+        IPromise NewPromise(object state);
+
+        IPromise VoidPromise();
     }
 }

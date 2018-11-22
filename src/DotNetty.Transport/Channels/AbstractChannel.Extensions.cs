@@ -12,7 +12,7 @@ namespace DotNetty.Transport.Channels
 
     partial class AbstractChannel<TChannel, TUnsafe> : DefaultAttributeMap, IChannel
         where TChannel : AbstractChannel<TChannel, TUnsafe>
-        where TUnsafe : AbstractChannel<TChannel, TUnsafe>.AbstractUnsafe, new()
+        where TUnsafe : IChannelUnsafe, new()
     {
         public bool Equals(IChannel other) => ReferenceEquals(this, other);
 
@@ -22,7 +22,18 @@ namespace DotNetty.Transport.Channels
 
             private static void OnRegister(object u, object p)
             {
-                ((AbstractUnsafe)u).Register0((TaskCompletionSource)p);
+                ((AbstractUnsafe)u).Register0((IPromise)p);
+            }
+
+            /// <summary>
+            /// Shutdown the output portion of the corresponding <see cref="IChannel"/>.
+            /// For example this will clean up the <see cref="ChannelOutboundBuffer"/> and not allow any more writes.
+            /// </summary>
+            /// <param name="promise"></param>
+            public void ShutdownOutput(IPromise promise)
+            {
+                this.AssertEventLoop();
+                ShutdownOutput(promise, null);
             }
 
             /// <summary>
@@ -30,19 +41,16 @@ namespace DotNetty.Transport.Channels
             /// For example this will clean up the <see cref="ChannelOutboundBuffer"/> and not allow any more writes.
             /// </summary>
             /// <param name="cause">The cause which may provide rational for the shutdown.</param>
-            public Task ShutdownOutputAsync(Exception cause = null)
+            /// <param name="promise"></param>
+            public void ShutdownOutput(IPromise promise, Exception cause)
             {
-                var promise = new TaskCompletionSource();
-                if (!promise.SetUncancellable())
-                {
-                    return promise.Task;
-                }
+                if (!promise.SetUncancellable()) { return; }
 
                 var outboundBuffer = Interlocked.Exchange(ref this.outboundBuffer, null); // Disallow adding any messages and flushes to outboundBuffer.
                 if (outboundBuffer == null)
                 {
-                    promise.TrySetException(ThrowHelper.GetClosedChannelException());
-                    return promise.Task;
+                    promise.TrySetException(CloseClosedChannelException);
+                    return;
                 }
 
                 var shutdownCause = ThrowHelper.GetChannelOutputShutdownException(cause);
@@ -85,8 +93,6 @@ namespace DotNetty.Transport.Channels
                         this.CloseOutboundBufferForShutdown(this.channel.pipeline, outboundBuffer, shutdownCause);
                     }
                 }
-
-                return promise.Task;
             }
 
             private void CloseOutboundBufferForShutdown(IChannelPipeline pipeline, ChannelOutboundBuffer buffer, Exception cause)

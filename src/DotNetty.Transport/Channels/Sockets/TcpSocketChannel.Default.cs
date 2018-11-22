@@ -36,7 +36,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         private static void OnShutdownOutput(object channel, object promise)
         {
-            ((TcpSocketChannel<TChannel>)channel).ShutdownOutput0((TaskCompletionSource)promise);
+            ((TcpSocketChannel<TChannel>)channel).ShutdownOutput0((IPromise)promise);
         }
     }
 }

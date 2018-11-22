@@ -7,6 +7,7 @@ namespace DotNetty.Codecs.Compression
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
@@ -107,9 +108,31 @@ namespace DotNetty.Codecs.Compression
             this.wrapperOverhead = ZlibUtil.WrapperOverhead(ZlibWrapper.Zlib);
         }
 
-        public override Task CloseAsync() => this.CloseAsync(this.CurrentContext());
+        public override Task CloseAsync() => this.CloseAsync(this.CurrentContext().NewPromise());
 
-        public override Task CloseAsync(IChannelHandlerContext context) => this.FinishEncode(context);
+        public override Task CloseAsync(IPromise promise)
+        {
+            var ctx = this.CurrentContext();
+            var executor = ctx.Executor;
+            if (executor.InEventLoop)
+            {
+                return this.FinishEncode(ctx, promise);
+            }
+            else
+            {
+                var p = ctx.NewPromise();
+                executor.Execute(InvokeFinishEncode, this, Tuple.Create(p, promise));
+                return p.Task;
+            }
+        }
+
+        static void InvokeFinishEncode(object e, object p)
+        {
+            var self = (JZlibEncoder)e;
+            var promise = (Tuple<IPromise, IPromise>)p;
+            var f = self.FinishEncode(self.CurrentContext(), promise.Item1);
+            f.LinkOutcome(promise.Item2);
+        }
 
         IChannelHandlerContext CurrentContext()
         {
@@ -193,11 +216,27 @@ namespace DotNetty.Codecs.Compression
             }
         }
 
-        Task FinishEncode(IChannelHandlerContext context)
+        public override void Close(IChannelHandlerContext context, IPromise promise)
+        {
+            var completion = this.FinishEncode(context, context.NewPromise());
+#if NET40
+            void closeOnComplete(Task t) => context.CloseAsync();
+            completion.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+#else
+            completion.ContinueWith(CloseOnComplete, Tuple.Create(context, promise), TaskContinuationOptions.ExecuteSynchronously);
+#endif
+            if (!completion.IsCompleted)
+            {
+                ctx.Executor.Schedule(CloseHandlerContext, context, promise, TimeSpan.FromSeconds(10));
+            }
+        }
+
+        Task FinishEncode(IChannelHandlerContext context, IPromise promise)
         {
             if (Constants.True == Interlocked.Exchange(ref this.finished, Constants.True))
             {
-                return TaskUtil.Completed;
+                promise.TryComplete();
+                return promise.Task;
             }
 
             IByteBuffer footer;
@@ -218,9 +257,9 @@ namespace DotNetty.Codecs.Compression
                 int resultCode = this.z.Deflate(JZlib.Z_FINISH);
                 if (resultCode != JZlib.Z_OK && resultCode != JZlib.Z_STREAM_END)
                 {
-                    context.FireExceptionCaught(
-                        new CompressionException($"Compression failure ({resultCode}) {this.z.msg}"));
-                    return context.CloseAsync();
+                    var err = new CompressionException($"Compression failure ({resultCode}) {this.z.msg}");
+                    promise.TrySetException(err);
+                    return promise.Task;
                 }
                 else if (this.z.next_out_index != 0)
                 {
@@ -231,7 +270,7 @@ namespace DotNetty.Codecs.Compression
                     footer = Unpooled.Empty;
                 }
             }
-            finally 
+            finally
             {
                 this.z.DeflateEnd();
 
@@ -239,17 +278,19 @@ namespace DotNetty.Codecs.Compression
                 this.z.next_out = null;
             }
 
-            var completion = context.WriteAndFlushAsync(footer);
-#if NET40
-            void closeOnComplete(Task t) => context.CloseAsync();
-            completion.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
-#else
-            completion.ContinueWith(CloseOnComplete, context, TaskContinuationOptions.ExecuteSynchronously);
-#endif
-            return completion;
+            return context.WriteAndFlushAsync(footer, promise);
         }
 
-        static void CloseOnComplete(Task t, object s) => ((IChannelHandlerContext)s).CloseAsync();
+        static void CloseOnComplete(Task t, object s)
+        {
+            var wrapped = (Tuple<IChannelHandlerContext, IPromise>)s;
+            if (t.IsFaulted)
+            {
+                wrapped.Item1.FireExceptionCaught(t.Exception.InnerException);
+            }
+            wrapped.Item1.CloseAsync(wrapped.Item2);
+        }
+        static void CloseHandlerContext(object ctx, object p) => ((IChannelHandlerContext)ctx).CloseAsync((IPromise)p);
 
         public override void HandlerAdded(IChannelHandlerContext context) => Interlocked.Exchange(ref this.ctx, context);
     }

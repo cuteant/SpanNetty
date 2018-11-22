@@ -195,9 +195,9 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             public int Rsv => WebSocketRsv.Rsv1;
 
             public WebSocketExtensionEncoder NewExtensionEncoder() =>
-                new PerMessageDeflateEncoder(this.compressionLevel, this.clientWindowSize, this.clientNoContext);
+                new PerMessageDeflateEncoder(this.compressionLevel, this.serverWindowSize, this.serverNoContext);
 
-            public WebSocketExtensionDecoder NewExtensionDecoder() => new PerMessageDeflateDecoder(this.serverNoContext);
+            public WebSocketExtensionDecoder NewExtensionDecoder() => new PerMessageDeflateDecoder(this.clientNoContext);
 
             public WebSocketExtensionData NewReponseData()
             {

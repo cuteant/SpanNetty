@@ -75,7 +75,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
             }
 
-            var completion = new TaskCompletionSource();
+            var completion = channel.NewPromise();
 #if NET40
             void linkOutcomeContinuationAction(Task t)
             {
@@ -106,7 +106,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             channel.WriteAndFlushAsync(request).ContinueWith(linkOutcomeContinuationAction, TaskContinuationOptions.ExecuteSynchronously);
 #else
             channel.WriteAndFlushAsync(request).ContinueWith(LinkOutcomeContinuationAction,
-                new Tuple<TaskCompletionSource, IChannelPipeline, WebSocketClientHandshaker>(completion, channel.Pipeline, this),
+                new Tuple<IPromise, IChannelPipeline, WebSocketClientHandshaker>(completion, channel.Pipeline, this),
                 TaskContinuationOptions.ExecuteSynchronously);
 #endif
 
@@ -212,7 +212,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public Task ProcessHandshakeAsync(IChannel channel, IHttpResponse response)
         {
-            var completionSource = new TaskCompletionSource();
+            var completionSource = channel.NewPromise();
             if (response is IFullHttpResponse res)
             {
                 try
@@ -264,9 +264,9 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             readonly WebSocketClientHandshaker clientHandshaker;
             readonly IChannel channel;
-            readonly TaskCompletionSource completion;
+            readonly IPromise completion;
 
-            public Handshaker(WebSocketClientHandshaker clientHandshaker, IChannel channel, TaskCompletionSource completion)
+            public Handshaker(WebSocketClientHandshaker clientHandshaker, IChannel channel, IPromise completion)
             {
                 this.clientHandshaker = clientHandshaker;
                 this.channel = channel;

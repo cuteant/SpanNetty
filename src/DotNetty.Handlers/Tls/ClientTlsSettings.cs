@@ -8,6 +8,7 @@ namespace DotNetty.Handlers.Tls
     using System.Net.Security;
     using System.Security.Authentication;
     using System.Security.Cryptography.X509Certificates;
+    using DotNetty.Transport.Channels;
 #if NET40
     using System.Collections.ObjectModel;
 #endif
@@ -63,5 +64,13 @@ namespace DotNetty.Handlers.Tls
         public bool AllowCertificateChainErrors { get; set; }
 
         public Func<X509Certificate, X509Chain, SslPolicyErrors, bool> ServerCertificateValidation { get; set; }
+
+#if NETCOREAPP_2_0_GREATER
+        public System.Collections.Generic.List<SslApplicationProtocol> ApplicationProtocols { get; set; }
+
+        public Func<IChannelHandlerContext, string, X509CertificateCollection, X509Certificate, string[], X509Certificate2> UserCertSelector { get; set; }
+#else
+        public Func<SslStream, string, X509CertificateCollection, X509Certificate, string[], X509Certificate2> UserCertSelector { get; set; }
+#endif
     }
 }

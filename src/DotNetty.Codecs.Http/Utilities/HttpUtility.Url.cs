@@ -613,8 +613,8 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public static NameValueCollection ParseQueryString(string query, Encoding encoding)
         {
-            if (query == null) { throw new ArgumentNullException(nameof(query)); }
-            if (encoding == null) { throw new ArgumentNullException(nameof(encoding)); }
+            if (query == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.query); }
+            if (encoding == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoding); }
 
             HttpQSCollection result = new HttpQSCollection();
             int queryLength = query.Length;

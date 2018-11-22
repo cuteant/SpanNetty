@@ -94,7 +94,7 @@ namespace DotNetty.Transport.Channels
                 return this.config.AutoRead
                     && (!this.respectMaybeMoreData || this.AttemptedBytesRead == this.lastBytesRead)
                     && this.totalMessages < this.maxMessagePerRead
-                    && this.totalBytesRead < int.MaxValue;
+                    && this.totalBytesRead > 0;
             }
 
             public virtual void ReadComplete()

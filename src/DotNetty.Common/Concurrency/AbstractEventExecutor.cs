@@ -114,6 +114,10 @@ namespace DotNetty.Common.Concurrency
         /// <inheritdoc cref="IScheduledExecutorService"/>
         public abstract Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout);
 
+        public IPromise NewPromise() => new TaskCompletionSource();
+
+        public IPromise NewPromise(object state) => new TaskCompletionSource(state);
+
         /// <inheritdoc cref="IEventExecutor"/>
         protected void SetCurrentExecutor(IEventExecutor executor) => ExecutionEnvironment.SetCurrentExecutor(executor);
 

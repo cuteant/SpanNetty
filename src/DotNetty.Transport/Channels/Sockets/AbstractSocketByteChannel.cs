@@ -53,7 +53,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     //    key.interestOps(key.interestOps() & ~readInterestOp);
                     //    this.channel.Pipeline.FireUserEventTriggered(ChannelInputShutdownEvent.INSTANCE);
                     //} else {
-                    this.CloseSafe();
+                    this.Close(this.VoidPromise());
                     //}
                 }
             }
@@ -112,6 +112,11 @@ namespace DotNetty.Transport.Channels.Sockets
                             byteBuf.Release();
                             byteBuf = null;
                             close = allocHandle.LastBytesRead < 0;
+                            if (close)
+                            {
+                                // There is nothing left to read as we received an EOF.
+                                ch.ReadPending = false;
+                            }
                             break;
                         }
 

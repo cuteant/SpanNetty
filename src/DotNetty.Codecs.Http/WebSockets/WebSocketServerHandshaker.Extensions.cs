@@ -15,7 +15,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         static void RemoveHandlerAfterWrite(Task t, object state)
         {
-            var wrapped = (Tuple<TaskCompletionSource, IChannelPipeline, string>)state;
+            var wrapped = (Tuple<IPromise, IChannelPipeline, string>)state;
             if (t.Status == TaskStatus.RanToCompletion)
             {
                 wrapped.Item2.Remove(wrapped.Item3);

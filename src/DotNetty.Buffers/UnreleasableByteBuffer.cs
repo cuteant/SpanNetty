@@ -3,9 +3,9 @@ namespace DotNetty.Buffers
 {
     using DotNetty.Common;
 
-    sealed class UnreleasableByteBuffer : WrappedByteBuffer
+    public sealed class UnreleasableByteBuffer : WrappedByteBuffer
     {
-        internal UnreleasableByteBuffer(IByteBuffer buf) : base(buf)
+        public UnreleasableByteBuffer(IByteBuffer buf) : base(buf)
         {
         }
 

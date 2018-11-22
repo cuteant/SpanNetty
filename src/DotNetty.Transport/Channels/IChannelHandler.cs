@@ -6,6 +6,7 @@ namespace DotNetty.Transport.Channels
     using System;
     using System.Net;
     using System.Threading.Tasks;
+    using DotNetty.Common.Concurrency;
 
     public interface IChannelHandler
     {
@@ -39,7 +40,7 @@ namespace DotNetty.Transport.Channels
 
         void HandlerRemoved(IChannelHandlerContext context);
 
-        Task WriteAsync(IChannelHandlerContext context, object message);
+        void Write(IChannelHandlerContext context, object message, IPromise promise);
 
         void Flush(IChannelHandlerContext context);
 
@@ -70,14 +71,15 @@ namespace DotNetty.Transport.Channels
         /// <param name="context">
         /// The <see cref="IChannelHandlerContext"/> for which the disconnect operation is made.
         /// </param>
+        /// <param name="promise"></param>
         /// <returns>An await-able task.</returns>
-        Task DisconnectAsync(IChannelHandlerContext context);
+        void Disconnect(IChannelHandlerContext context, IPromise promise);
 
-        Task CloseAsync(IChannelHandlerContext context);
+        void Close(IChannelHandlerContext context, IPromise promise);
 
         void ExceptionCaught(IChannelHandlerContext context, Exception exception);
 
-        Task DeregisterAsync(IChannelHandlerContext context);
+        void Deregister(IChannelHandlerContext context, IPromise promise);
 
         void Read(IChannelHandlerContext context);
 

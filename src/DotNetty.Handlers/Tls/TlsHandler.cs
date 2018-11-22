@@ -9,7 +9,6 @@ namespace DotNetty.Handlers.Tls
     using System.IO;
     using System.Net.Security;
     using System.Runtime.CompilerServices;
-    using System.Runtime.ExceptionServices;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading;
     using System.Threading.Tasks;
@@ -19,6 +18,9 @@ namespace DotNetty.Handlers.Tls
     using DotNetty.Common.Utilities;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
+#if DESKTOPCLR
+    using System.Runtime.ExceptionServices;
+#endif
 
     public sealed partial class TlsHandler : ByteToMessageDecoder
     {
@@ -34,6 +36,11 @@ namespace DotNetty.Handlers.Tls
         private readonly ClientTlsSettings _clientSettings;
         private readonly X509Certificate _serverCertificate;
         private readonly Func<IChannelHandlerContext, string, X509Certificate2> _serverCertificateSelector;
+#if NETCOREAPP_2_0_GREATER
+        private readonly bool _hasHttp2Protocol;
+        private readonly Func<IChannelHandlerContext, string, X509CertificateCollection, X509Certificate, string[], X509Certificate2> _userCertSelector;
+#endif
+
         public static readonly AttributeKey<SslStream> SslStreamAttrKey = AttributeKey<SslStream>.ValueOf("SSLSTREAM");
 
         private static readonly Exception s_channelClosedException = new IOException("Channel is closed");
@@ -81,6 +88,14 @@ namespace DotNetty.Handlers.Tls
                     ThrowHelper.ThrowArgumentException_ServerCertificateRequired();
                 }
 
+#if NETCOREAPP_2_0_GREATER
+                var serverApplicationProtocols = _serverSettings.ApplicationProtocols;
+                if (serverApplicationProtocols != null)
+                {
+                    _hasHttp2Protocol = serverApplicationProtocols.Contains(SslApplicationProtocol.Http2);
+                }
+#endif
+
                 // If a selector is provided then ignore the cert, it may be a default cert.
                 if (_serverCertificateSelector != null)
                 {
@@ -93,6 +108,14 @@ namespace DotNetty.Handlers.Tls
                 }
             }
             _clientSettings = settings as ClientTlsSettings;
+#if NETCOREAPP_2_0_GREATER
+            if (_clientSettings != null)
+            {
+                var clientApplicationProtocols = _clientSettings.ApplicationProtocols;
+                _hasHttp2Protocol = clientApplicationProtocols != null && clientApplicationProtocols.Contains(SslApplicationProtocol.Http2);
+                _userCertSelector = _clientSettings.UserCertSelector;
+            }
+#endif
             _closeFuture = new TaskCompletionSource();
             _mediationStream = new MediationStream(this);
             _sslStream = sslStreamFactory(_mediationStream);
@@ -128,6 +151,10 @@ namespace DotNetty.Handlers.Tls
             get => Volatile.Read(ref _state);
             set => Interlocked.Exchange(ref _state, value);
         }
+
+#if NETCOREAPP_2_0_GREATER
+        public SslApplicationProtocol NegotiatedApplicationProtocol => _sslStream.NegotiatedApplicationProtocol;
+#endif
 
         #endregion
 
@@ -572,7 +599,7 @@ namespace DotNetty.Handlers.Tls
                     ServerCertificateSelectionCallback selector = null;
                     if (_serverCertificateSelector != null)
                     {
-                        selector = (sender, name) =>
+                        X509Certificate LocalServerCertificateSelection(object sender, string name)
                         {
                             ctx.GetAttribute(SslStreamAttrKey).Set(_sslStream);
                             var cert = _serverCertificateSelector(ctx, name);
@@ -581,7 +608,8 @@ namespace DotNetty.Handlers.Tls
                                 EnsureCertificateIsAllowedForServerAuth(cert);
                             }
                             return cert;
-                        };
+                        }
+                        selector = new ServerCertificateSelectionCallback(LocalServerCertificateSelection);
                     }
 
                     var sslOptions = new SslServerAuthenticationOptions()
@@ -593,6 +621,11 @@ namespace DotNetty.Handlers.Tls
                         CertificateRevocationCheckMode = _serverSettings.CheckCertificateRevocation ? X509RevocationMode.Online : X509RevocationMode.NoCheck,
                         ApplicationProtocols = _serverSettings.ApplicationProtocols // ?? new List<SslApplicationProtocol>()
                     };
+                    if (_hasHttp2Protocol)
+                    {
+                        // https://tools.ietf.org/html/rfc7540#section-9.2.1
+                        sslOptions.AllowRenegotiation = false;
+                    }
                     _sslStream.AuthenticateAsServerAsync(sslOptions, CancellationToken.None)
                               .ContinueWith(s_handshakeCompletionCallback, this, TaskContinuationOptions.ExecuteSynchronously);
 #else
@@ -625,19 +658,46 @@ namespace DotNetty.Handlers.Tls
                 }
                 else
                 {
-#if !NET40
-                    _sslStream.AuthenticateAsClientAsync(_clientSettings.TargetHost,
-                                                         _clientSettings.X509CertificateCollection,
-                                                         _clientSettings.EnabledProtocols,
-                                                         _clientSettings.CheckCertificateRevocation)
+#if NETCOREAPP_2_0_GREATER
+                    LocalCertificateSelectionCallback selector = null;
+                    if (_userCertSelector != null)
+                    {
+                        X509Certificate LocalCertificateSelection(object sender, string targetHost, X509CertificateCollection localCertificates, X509Certificate remoteCertificate, string[] acceptableIssuers)
+                        {
+                            ctx.GetAttribute(SslStreamAttrKey).Set(_sslStream);
+                            return _userCertSelector(ctx, targetHost, localCertificates, remoteCertificate, acceptableIssuers);
+                        }
+                        selector = new LocalCertificateSelectionCallback(LocalCertificateSelection);
+                    }
+                    var sslOptions = new SslClientAuthenticationOptions()
+                    {
+                        TargetHost = _clientSettings.TargetHost,
+                        ClientCertificates = _clientSettings.X509CertificateCollection,
+                        EnabledSslProtocols = _clientSettings.EnabledProtocols,
+                        CertificateRevocationCheckMode = _clientSettings.CheckCertificateRevocation ? X509RevocationMode.Online : X509RevocationMode.NoCheck,
+                        LocalCertificateSelectionCallback = selector,
+                        ApplicationProtocols = _clientSettings.ApplicationProtocols
+                    };
+                    if (_hasHttp2Protocol)
+                    {
+                        // https://tools.ietf.org/html/rfc7540#section-9.2.1
+                        sslOptions.AllowRenegotiation = false;
+                    }
+                    _sslStream.AuthenticateAsClientAsync(sslOptions, CancellationToken.None)
                               .ContinueWith(s_handshakeCompletionCallback, this, TaskContinuationOptions.ExecuteSynchronously);
-#else
+#elif NET40
                     _sslStream.BeginAuthenticateAsClient(_clientSettings.TargetHost,
                                                          _clientSettings.X509CertificateCollection,
                                                          _clientSettings.EnabledProtocols,
                                                          _clientSettings.CheckCertificateRevocation,
                                                          Client_HandleHandshakeCompleted,
                                                          this);
+#else
+                    _sslStream.AuthenticateAsClientAsync(_clientSettings.TargetHost,
+                                                         _clientSettings.X509CertificateCollection,
+                                                         _clientSettings.EnabledProtocols,
+                                                         _clientSettings.CheckCertificateRevocation)
+                              .ContinueWith(s_handshakeCompletionCallback, this, TaskContinuationOptions.ExecuteSynchronously);
 #endif
                 }
                 return false;
@@ -771,13 +831,14 @@ namespace DotNetty.Handlers.Tls
 
         #region -- WriteAsync --
 
-        public override Task WriteAsync(IChannelHandlerContext context, object message)
+        public override void Write(IChannelHandlerContext context, object message, IPromise promise)
         {
-            if (!(message is IByteBuffer))
+            if (message is IByteBuffer)
             {
-                return TaskUtil.FromException(new UnsupportedMessageTypeException(message, typeof(IByteBuffer)));
+                _pendingUnencryptedWrites.Add(message, promise);
+                return;
             }
-            return _pendingUnencryptedWrites.Add(message);
+            promise.TrySetException(ThrowHelper.GetUnsupportedMessageTypeException(message));
         }
 
         #endregion
@@ -788,7 +849,11 @@ namespace DotNetty.Handlers.Tls
         {
             if (_pendingUnencryptedWrites.IsEmpty)
             {
-                _pendingUnencryptedWrites.Add(Unpooled.Empty);
+                // It's important to NOT use a voidPromise here as the user
+                // may want to add a ChannelFutureListener to the ChannelPromise later.
+                //
+                // See https://github.com/netty/netty/issues/3364
+                _pendingUnencryptedWrites.Add(Unpooled.Empty, context.NewPromise());
             }
 
             if (!EnsureAuthenticated(context))
@@ -843,7 +908,7 @@ namespace DotNetty.Handlers.Tls
                     buf.ReadBytes(_sslStream, buf.ReadableBytes); // this leads to FinishWrap being called 0+ times
                     buf.Release();
 
-                    TaskCompletionSource promise = _pendingUnencryptedWrites.Remove();
+                    var promise = _pendingUnencryptedWrites.Remove();
                     Task task = _lastContextWriteTask;
                     if (task != null)
                     {
@@ -868,7 +933,7 @@ namespace DotNetty.Handlers.Tls
 
         #region ** FinishWrap **
 
-        private void FinishWrap(byte[] buffer, int offset, int count)
+        private void FinishWrap(byte[] buffer, int offset, int count, IPromise promise)
         {
             IByteBuffer output;
             var capturedContext = CapturedContext;
@@ -882,17 +947,17 @@ namespace DotNetty.Handlers.Tls
                 output.WriteBytes(buffer, offset, count);
             }
 
-            _lastContextWriteTask = capturedContext.WriteAsync(output);
+            _lastContextWriteTask = capturedContext.WriteAsync(output, promise);
         }
 
         #endregion
 
         #region ** FinishWrapNonAppDataAsync **
 
-        private Task FinishWrapNonAppDataAsync(byte[] buffer, int offset, int count)
+        private Task FinishWrapNonAppDataAsync(byte[] buffer, int offset, int count, IPromise promise)
         {
             var capturedContext = CapturedContext;
-            var future = capturedContext.WriteAndFlushAsync(Unpooled.WrappedBuffer(buffer, offset, count));
+            var future = capturedContext.WriteAndFlushAsync(Unpooled.WrappedBuffer(buffer, offset, count), promise);
             this.ReadIfNeeded(capturedContext);
             return future;
         }
@@ -901,11 +966,11 @@ namespace DotNetty.Handlers.Tls
 
         #region -- CloseAsync --
 
-        public override Task CloseAsync(IChannelHandlerContext context)
+        public override void Close(IChannelHandlerContext context, IPromise promise)
         {
             _closeFuture.TryComplete();
             _sslStream.Dispose();
-            return base.CloseAsync(context);
+            base.Close(context, promise);
         }
 
         #endregion
@@ -956,7 +1021,7 @@ namespace DotNetty.Handlers.Tls
                 State = (oldState | TlsHandlerState.FailedAuthentication) & ~TlsHandlerState.Authenticating;
                 var capturedContext = CapturedContext;
                 capturedContext.FireUserEventTriggered(new TlsHandshakeCompletionEvent(cause));
-                CloseAsync(capturedContext);
+                this.Close(capturedContext, capturedContext.NewPromise());
             }
         }
 
@@ -978,7 +1043,7 @@ namespace DotNetty.Handlers.Tls
 #else
             private SynchronousAsyncResult<int> _syncReadResult;
             private AsyncCallback _readCallback;
-            private TaskCompletionSource _writeCompletion;
+            private IPromise _writeCompletion;
             private AsyncCallback _writeCallback;
 #endif
 
@@ -1020,16 +1085,7 @@ namespace DotNetty.Handlers.Tls
 #if !DESKTOPCLR
                 _readByteCount = this.ReadFromInput(sslBuffer.Array, sslBuffer.Offset, sslBuffer.Count);
                 // hack: this tricks SslStream's continuation to run synchronously instead of dispatching to TP. Remove once Begin/EndRead are available. 
-                new Task(
-                    ms =>
-                    {
-                        var self = (MediationStream)ms;
-                        TaskCompletionSource<int> p = self._readCompletionSource;
-                        self._readCompletionSource = null;
-                        p.TrySetResult(self._readByteCount);
-                    },
-                    this)
-                    .RunSynchronously(TaskScheduler.Default);
+                new Task(ReadCompletionAction, this).RunSynchronously(TaskScheduler.Default);
 #else
                 int read = ReadFromInput(sslBuffer.Array, sslBuffer.Offset, sslBuffer.Count);
 
@@ -1044,6 +1100,14 @@ namespace DotNetty.Handlers.Tls
             }
 
 #if !DESKTOPCLR
+            static readonly Action<object> ReadCompletionAction = ReadCompletion;
+            static void ReadCompletion(object ms)
+            {
+                var self = (MediationStream)ms;
+                TaskCompletionSource<int> p = self._readCompletionSource;
+                self._readCompletionSource = null;
+                p.TrySetResult(self._readByteCount);
+            }
 
             public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
             {
@@ -1060,7 +1124,6 @@ namespace DotNetty.Handlers.Tls
                 _readCompletionSource = new TaskCompletionSource<int>();
                 return _readCompletionSource.Task;
             }
-
 #else
             public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
             {
@@ -1117,11 +1180,11 @@ namespace DotNetty.Handlers.Tls
             }
 #endif
 
-            public override void Write(byte[] buffer, int offset, int count) => _owner.FinishWrap(buffer, offset, count);
+            public override void Write(byte[] buffer, int offset, int count) => _owner.FinishWrap(buffer, offset, count, _owner.CapturedContext.NewPromise());
 
 #if !NET40
             public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-                => _owner.FinishWrapNonAppDataAsync(buffer, offset, count);
+                => _owner.FinishWrapNonAppDataAsync(buffer, offset, count, _owner.CapturedContext.NewPromise());
 
 #endif
 
@@ -1133,7 +1196,7 @@ namespace DotNetty.Handlers.Tls
             public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
             {
 #if NET40
-                Task task = _owner.FinishWrapNonAppDataAsync(buffer, offset, count);
+                Task task = _owner.FinishWrapNonAppDataAsync(buffer, offset, count, _owner.CapturedContext.NewPromise());
 #else
                 Task task = this.WriteAsync(buffer, offset, count);
 #endif
@@ -1153,7 +1216,7 @@ namespace DotNetty.Handlers.Tls
                         {
                             Debug.Assert(_writeCompletion == null);
                             _writeCallback = callback;
-                            var tcs = new TaskCompletionSource(state);
+                            var tcs = _owner.CapturedContext.NewPromise(state);
                             _writeCompletion = tcs;
 #if !NET40
                             task.ContinueWith(s_writeCompleteCallback, this, TaskContinuationOptions.ExecuteSynchronously);
@@ -1335,8 +1398,10 @@ namespace DotNetty.Handlers.Tls
 
     internal static class TlsHandlerStateExtensions
     {
+        [MethodImpl(InlineMethod.Value)]
         public static bool Has(this int value, int testValue) => (value & testValue) == testValue;
 
+        [MethodImpl(InlineMethod.Value)]
         public static bool HasAny(this int value, int testValue) => (value & testValue) != 0;
     }
 

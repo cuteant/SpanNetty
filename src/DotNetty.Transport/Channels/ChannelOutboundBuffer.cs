@@ -53,12 +53,12 @@ namespace DotNetty.Transport.Channels
 
         /// <summary>
         /// Adds the given message to this <see cref="ChannelOutboundBuffer"/>. The given
-        /// <see cref="TaskCompletionSource"/> will be notified once the message was written.
+        /// <see cref="IPromise"/> will be notified once the message was written.
         /// </summary>
         /// <param name="msg">The message to add to the buffer.</param>
         /// <param name="size">The size of the message.</param>
-        /// <param name="promise">The <see cref="TaskCompletionSource"/> to notify once the message is written.</param>
-        public void AddMessage(object msg, int size, TaskCompletionSource promise)
+        /// <param name="promise">The <see cref="IPromise"/> to notify once the message is written.</param>
+        public void AddMessage(object msg, int size, IPromise promise)
         {
             Entry entry = Entry.NewInstance(msg, size, promise);
             if (this.tailEntry == null)
@@ -166,7 +166,7 @@ namespace DotNetty.Transport.Channels
         public object Current => this.flushedEntry?.Message;
 
         /// <summary>
-        /// Notify the <see cref="TaskCompletionSource"/> of the current message about writing progress.
+        /// Notify the <see cref="IPromise"/> of the current message about writing progress.
         /// </summary>
         public void Progress(long amount)
         {
@@ -183,7 +183,7 @@ namespace DotNetty.Transport.Channels
         }
 
         /// <summary>
-        /// Removes the current message, marks its <see cref="TaskCompletionSource"/> as complete, and returns
+        /// Removes the current message, marks its <see cref="IPromise"/> as complete, and returns
         /// <c>true</c>. If no flushed message exists at the time this method is called, it returns <c>false</c> to
         /// signal that no more messages are ready to be handled.
         /// </summary>
@@ -198,7 +198,7 @@ namespace DotNetty.Transport.Channels
             }
             object msg = e.Message;
 
-            TaskCompletionSource promise = e.Promise;
+            IPromise promise = e.Promise;
             int size = e.PendingSize;
 
             this.RemoveEntry(e);
@@ -218,7 +218,7 @@ namespace DotNetty.Transport.Channels
         }
 
         /// <summary>
-        /// Removes the current message, marks its <see cref="TaskCompletionSource"/> as complete using the given
+        /// Removes the current message, marks its <see cref="IPromise"/> as complete using the given
         /// <see cref="Exception"/>, and returns <c>true</c>. If no flushed message exists at the time this method is
         /// called, it returns <c>false</c> to signal that no more messages are ready to be handled.
         /// </summary>
@@ -236,7 +236,7 @@ namespace DotNetty.Transport.Channels
             }
             object msg = e.Message;
 
-            TaskCompletionSource promise = e.Promise;
+            IPromise promise = e.Promise;
             int size = e.PendingSize;
 
             this.RemoveEntry(e);
@@ -685,7 +685,7 @@ namespace DotNetty.Transport.Channels
 
         internal void Close(ClosedChannelException cause) => this.Close(cause, false);
 
-        static void SafeSuccess(TaskCompletionSource promise)
+        static void SafeSuccess(IPromise promise)
         {
             // TODO:ChannelPromise
             // Only log if the given promise is not of type VoidChannelPromise as trySuccess(...) is expected to return
@@ -693,7 +693,7 @@ namespace DotNetty.Transport.Channels
             Util.SafeSetSuccess(promise, Logger);
         }
 
-        static void SafeFail(TaskCompletionSource promise, Exception cause)
+        static void SafeFail(IPromise promise, Exception cause)
         {
             // TODO:ChannelPromise
             // Only log if the given promise is not of type VoidChannelPromise as tryFailure(...) is expected to return
@@ -711,17 +711,16 @@ namespace DotNetty.Transport.Channels
         /// <returns>
         /// The number of bytes that can be written before <see cref="IsWritable"/> returns <c>false</c>.
         /// </returns>
-        public long BytesBeforeUnwritable()
+        public long BytesBeforeUnwritable
         {
-            long bytes = this.channel.Configuration.WriteBufferHighWaterMark - Volatile.Read(ref this.totalPendingSize);
-            // If bytes is negative we know we are not writable, but if bytes is non-negative we have to check writability.
-            // Note that totalPendingSize and isWritable() use different volatile variables that are not synchronized
-            // together. totalPendingSize will be updated before isWritable().
-            if (bytes > 0)
+            get
             {
-                return this.IsWritable ? bytes : 0;
+                long bytes = this.channel.Configuration.WriteBufferHighWaterMark - Volatile.Read(ref this.totalPendingSize);
+                // If bytes is negative we know we are not writable, but if bytes is non-negative we have to check writability.
+                // Note that totalPendingSize and isWritable() use different volatile variables that are not synchronized
+                // together. totalPendingSize will be updated before isWritable().
+                return bytes > 0 && this.IsWritable ? bytes : 0;
             }
-            return 0;
         }
 
         /// <summary>
@@ -732,17 +731,16 @@ namespace DotNetty.Transport.Channels
         /// <returns>
         /// The number of bytes that can be written before <see cref="IsWritable"/> returns <c>true</c>.
         /// </returns>
-        public long BytesBeforeWritable()
+        public long BytesBeforeWritable
         {
-            long bytes = Volatile.Read(ref this.totalPendingSize) - this.channel.Configuration.WriteBufferLowWaterMark;
-            // If bytes is negative we know we are writable, but if bytes is non-negative we have to check writability.
-            // Note that totalPendingSize and isWritable() use different volatile variables that are not synchronized
-            // together. totalPendingSize will be updated before isWritable().
-            if (bytes > 0)
+            get
             {
-                return this.IsWritable ? 0 : bytes;
+                long bytes = Volatile.Read(ref this.totalPendingSize) - this.channel.Configuration.WriteBufferLowWaterMark;
+                // If bytes is negative we know we are writable, but if bytes is non-negative we have to check writability.
+                // Note that totalPendingSize and isWritable() use different volatile variables that are not synchronized
+                // together. totalPendingSize will be updated before isWritable().
+                return bytes > 0 && !this.IsWritable ? bytes : 0;
             }
-            return 0;
         }
 
         /// <summary>
@@ -798,7 +796,7 @@ namespace DotNetty.Transport.Channels
             public object Message;
             public ArraySegment<byte>[] Buffers;
             public ArraySegment<byte> Buffer;
-            public TaskCompletionSource Promise;
+            public IPromise Promise;
             public int PendingSize;
             public int Count = -1;
             public bool Cancelled;
@@ -808,7 +806,7 @@ namespace DotNetty.Transport.Channels
                 this.handle = handle;
             }
 
-            public static Entry NewInstance(object msg, int size, TaskCompletionSource promise)
+            public static Entry NewInstance(object msg, int size, IPromise promise)
             {
                 Entry entry = Pool.Take();
                 entry.Message = msg;

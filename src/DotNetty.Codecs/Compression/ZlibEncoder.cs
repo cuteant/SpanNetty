@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Compression
 {
     using System.Threading.Tasks;
     using DotNetty.Buffers;
+    using DotNetty.Common.Concurrency;
 
     public abstract class ZlibEncoder : MessageToByteEncoder2<IByteBuffer>
     {
@@ -17,5 +18,7 @@ namespace DotNetty.Codecs.Compression
          * operation completes.
          */
         public abstract Task CloseAsync();
+
+        public abstract Task CloseAsync(IPromise promise);
     }
 }

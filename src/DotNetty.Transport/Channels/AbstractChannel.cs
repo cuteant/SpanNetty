@@ -19,12 +19,17 @@ namespace DotNetty.Transport.Channels
     {
         protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance(typeof(TChannel));
 
-        static readonly NotYetConnectedException NotYetConnectedException = new NotYetConnectedException();
+        static readonly ClosedChannelException Flush0ClosedChannelException = new ClosedChannelException();
+        static readonly ClosedChannelException EnsureOpenClosedChannelException = new ClosedChannelException();
+        static readonly ClosedChannelException CloseClosedChannelException = new ClosedChannelException();
+        protected static readonly ClosedChannelException WriteClosedChannelException = new ClosedChannelException();
+        static readonly NotYetConnectedException Flush0NotYetConnectedException = new NotYetConnectedException();
 
         readonly TUnsafe channelUnsafe;
 
         readonly DefaultChannelPipeline pipeline;
-        readonly TaskCompletionSource closeFuture = new TaskCompletionSource();
+        readonly VoidChannelPromise unsafeVoidPromise;
+        readonly IPromise closeFuture;
 
         EndPoint localAddress;
         EndPoint remoteAddress;
@@ -47,6 +52,8 @@ namespace DotNetty.Transport.Channels
             this.Id = this.NewId();
             this.channelUnsafe = this.NewUnsafe();
             this.pipeline = this.NewChannelPipeline();
+            this.unsafeVoidPromise = new VoidChannelPromise(this, false);
+            this.closeFuture = this.NewPromise();
         }
 
         /// <summary>
@@ -60,6 +67,8 @@ namespace DotNetty.Transport.Channels
             this.Id = id;
             this.channelUnsafe = this.NewUnsafe();
             this.pipeline = this.NewChannelPipeline();
+            this.unsafeVoidPromise = new VoidChannelPromise(this, false);
+            this.closeFuture = this.NewPromise();
         }
 
         public IChannelId Id { get; }
@@ -70,6 +79,28 @@ namespace DotNetty.Transport.Channels
             {
                 ChannelOutboundBuffer buf = this.channelUnsafe.OutboundBuffer;
                 return buf != null && buf.IsWritable;
+            }
+        }
+
+        public long BytesBeforeUnwritable
+        {
+            get
+            {
+                ChannelOutboundBuffer buf = this.channelUnsafe.OutboundBuffer;
+                // isWritable() is currently assuming if there is no outboundBuffer then the channel is not writable.
+                // We should be consistent with that here.
+                return buf != null ? buf.BytesBeforeUnwritable : 0;
+            }
+        }
+
+        public long BytesBeforeWritable
+        {
+            get
+            {
+                ChannelOutboundBuffer buf = this.channelUnsafe.OutboundBuffer;
+                // isWritable() is currently assuming if there is no outboundBuffer then the channel is not writable.
+                // We should be consistent with that here.
+                return buf != null ? buf.BytesBeforeWritable : long.MaxValue;
             }
         }
 
@@ -179,9 +210,15 @@ namespace DotNetty.Transport.Channels
 
         public virtual Task DisconnectAsync() => this.pipeline.DisconnectAsync();
 
+        public virtual Task DisconnectAsync(IPromise promise) => this.pipeline.DisconnectAsync(promise);
+
         public virtual Task CloseAsync() => this.pipeline.CloseAsync();
 
+        public virtual Task CloseAsync(IPromise promise) => this.pipeline.CloseAsync(promise);
+
         public Task DeregisterAsync() => this.pipeline.DeregisterAsync();
+
+        public Task DeregisterAsync(IPromise promise) => this.pipeline.DeregisterAsync(promise);
 
         public IChannel Flush()
         {
@@ -197,7 +234,17 @@ namespace DotNetty.Transport.Channels
 
         public Task WriteAsync(object msg) => this.pipeline.WriteAsync(msg);
 
+        public Task WriteAsync(object message, IPromise promise) => this.pipeline.WriteAsync(message, promise);
+
         public Task WriteAndFlushAsync(object message) => this.pipeline.WriteAndFlushAsync(message);
+
+        public Task WriteAndFlushAsync(object message, IPromise promise) => this.pipeline.WriteAndFlushAsync(message, promise);
+
+        public IPromise NewPromise() => new TaskCompletionSource();
+
+        public IPromise NewPromise(object state) => new TaskCompletionSource(state);
+
+        public IPromise VoidPromise() => this.pipeline.VoidPromise();
 
         public Task CloseCompletion => this.closeFuture.Task;
 
@@ -300,9 +347,9 @@ namespace DotNetty.Transport.Channels
             //    return ((PausableChannelEventExecutor) eventLoop().asInvoker()).unwrapInvoker();
             //}
             public AbstractUnsafe() { }
-            public virtual void Initialize(TChannel channel)
+            public virtual void Initialize(IChannel channel)
             {
-                this.channel = channel;
+                this.channel = (TChannel)channel;
                 Interlocked.Exchange(ref this.outboundBuffer, new ChannelOutboundBuffer(channel));
             }
 
@@ -330,7 +377,7 @@ namespace DotNetty.Transport.Channels
 
                 Interlocked.Exchange(ref ch.eventLoop, eventLoop);
 
-                var promise = new TaskCompletionSource();
+                var promise = ch.NewPromise();
 
                 if (eventLoop.InEventLoop)
                 {
@@ -354,7 +401,7 @@ namespace DotNetty.Transport.Channels
                 return promise.Task;
             }
 
-            void Register0(TaskCompletionSource promise)
+            void Register0(IPromise promise)
             {
                 var ch = this.channel;
                 try
@@ -450,9 +497,11 @@ namespace DotNetty.Transport.Channels
 
             public abstract Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress);
 
-            public Task DisconnectAsync()
+            public void Disconnect(IPromise promise)
             {
                 this.AssertEventLoop();
+
+                if (!promise.SetUncancellable()) { return; }
 
                 var ch = this.channel;
                 bool wasActive = ch.Active;
@@ -462,8 +511,9 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception t)
                 {
+                    Util.SafeSetFailure(promise, t, Logger);
                     this.CloseIfClosed();
-                    return TaskUtil.FromException(t);
+                    return;
                 }
 
                 if (wasActive && !ch.Active)
@@ -471,25 +521,21 @@ namespace DotNetty.Transport.Channels
                     this.InvokeLater(() => ch.pipeline.FireChannelInactive());
                 }
 
-                this.CloseIfClosed(); // doDisconnect() might have closed the channel
+                Util.SafeSetSuccess(promise, Logger);
 
-                return TaskUtil.Completed;
+                this.CloseIfClosed(); // doDisconnect() might have closed the channel
             }
 
-            public Task CloseAsync() /*CancellationToken cancellationToken) */
+            public void Close(IPromise promise) /*CancellationToken cancellationToken) */
             {
                 this.AssertEventLoop();
 
-                return this.CloseAsync(ThrowHelper.GetClosedChannelException(), false);
+                this.Close(promise, CloseClosedChannelException, CloseClosedChannelException, false);
             }
 
-            protected Task CloseAsync(Exception cause, bool notify)
+            protected void Close(IPromise promise, Exception cause, ClosedChannelException closeCause, bool notify)
             {
-                var promise = new TaskCompletionSource();
-                if (!promise.SetUncancellable())
-                {
-                    return promise.Task;
-                }
+                if (!promise.SetUncancellable()) { return; }
 
                 var ch = this.channel;
                 if (Constants.True == Interlocked.Exchange(ref ch.closeInitiated, Constants.True))
@@ -500,16 +546,16 @@ namespace DotNetty.Transport.Channels
                         // Closed already.
                         Util.SafeSetSuccess(promise, Logger);
                     }
-                    else if (promise != TaskCompletionSource.Void) // Only needed if no VoidChannelPromise.
+                    else if (!promise.IsVoid) // Only needed if no VoidChannelPromise.
                     {
                         closeCompletion.LinkOutcome(promise);
                     }
-                    return promise.Task;
+                    return;
                 }
 
                 bool wasActive = ch.Active;
                 var outboundBuffer = Interlocked.Exchange(ref this.outboundBuffer, null); // Disallow adding any messages and flushes to outboundBuffer.
-                IEventExecutor closeExecutor = null; // todo closeExecutor();
+                IEventExecutor closeExecutor = this.PrepareToClose();
                 if (closeExecutor != null)
                 {
                     closeExecutor.Execute(() =>
@@ -528,7 +574,7 @@ namespace DotNetty.Transport.Channels
                                 {
                                     // Fail all the queued messages
                                     outboundBuffer.FailFlushed(cause, notify);
-                                    outboundBuffer.Close(ThrowHelper.GetClosedChannelException());
+                                    outboundBuffer.Close(closeCause);
                                 }
                                 this.FireChannelInactiveAndDeregister(wasActive);
                             });
@@ -548,7 +594,7 @@ namespace DotNetty.Transport.Channels
                         {
                             // Fail all the queued messages.
                             outboundBuffer.FailFlushed(cause, notify);
-                            outboundBuffer.Close(ThrowHelper.GetClosedChannelException());
+                            outboundBuffer.Close(closeCause);
                         }
                     }
                     if (this.inFlush0)
@@ -560,11 +606,9 @@ namespace DotNetty.Transport.Channels
                         this.FireChannelInactiveAndDeregister(wasActive);
                     }
                 }
-
-                return promise.Task;
             }
 
-            void DoClose0(TaskCompletionSource promise)
+            void DoClose0(IPromise promise)
             {
                 var ch = this.channel;
                 try
@@ -580,7 +624,7 @@ namespace DotNetty.Transport.Channels
                 }
             }
 
-            void FireChannelInactiveAndDeregister(bool wasActive) => this.DeregisterAsync(wasActive && !this.channel.Active);
+            void FireChannelInactiveAndDeregister(bool wasActive) => this.Deregister(this.VoidPromise(), wasActive && !this.channel.Active);
 
             public void CloseForcibly()
             {
@@ -603,27 +647,25 @@ namespace DotNetty.Transport.Channels
             /// directly, which might lead to an unfortunate nesting of independent inbound/outbound
             /// events. See the comments input <see cref="InvokeLater"/> for more details.
             /// </summary>
-            public Task DeregisterAsync()
+            public void Deregister(IPromise promise)
             {
                 this.AssertEventLoop();
 
-                return this.DeregisterAsync(false);
+                this.Deregister(promise, false);
             }
 
-            Task DeregisterAsync(bool fireChannelInactive)
+            void Deregister(IPromise promise, bool fireChannelInactive)
             {
-                //if (!promise.setUncancellable())
-                //{
-                //    return;
-                //}
+                if (!promise.SetUncancellable())
+                {
+                    return;
+                }
 
                 var ch = this.channel;
                 if (Constants.False == Volatile.Read(ref ch.registered))
                 {
-                    return TaskUtil.Completed;
+                    Util.SafeSetSuccess(promise, Logger);
                 }
-
-                var promise = new TaskCompletionSource();
 
                 // As a user may call deregister() from within any method while doing processing in the ChannelPipeline,
                 // we need to ensure we do the actual deregister operation later. This is needed as for example,
@@ -662,8 +704,6 @@ namespace DotNetty.Transport.Channels
                         Util.SafeSetSuccess(promise, Logger);
                     }
                 });
-
-                return promise.Task;
             }
 
             public void BeginRead()
@@ -683,11 +723,11 @@ namespace DotNetty.Transport.Channels
                 catch (Exception e)
                 {
                     this.InvokeLater(() => ch.pipeline.FireExceptionCaught(e));
-                    this.CloseSafe();
+                    this.Close(this.VoidPromise());
                 }
             }
 
-            public Task WriteAsync(object msg)
+            public void Write(object msg, IPromise promise)
             {
                 this.AssertEventLoop();
 
@@ -698,10 +738,10 @@ namespace DotNetty.Transport.Channels
                     // need to fail the future right away. If it is not null the handling of the rest
                     // will be done input flush0()
                     // See https://github.com/netty/netty/issues/2362
-
+                    Util.SafeSetFailure(promise, WriteClosedChannelException, Logger);
                     // release message now to prevent resource-leak
                     ReferenceCountUtil.Release(msg);
-                    return TaskUtil.FromException(ThrowHelper.GetClosedChannelException());
+                    return;
                 }
 
                 int size;
@@ -717,14 +757,12 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception t)
                 {
+                    Util.SafeSetFailure(promise, t, Logger);
                     ReferenceCountUtil.Release(msg);
-
-                    return TaskUtil.FromException(t);
+                    return;
                 }
 
-                var promise = new TaskCompletionSource();
                 outboundBuffer.AddMessage(msg, size, promise);
-                return promise.Task;
             }
 
             public void Flush()
@@ -765,12 +803,12 @@ namespace DotNetty.Transport.Channels
                     {
                         if (ch.Open)
                         {
-                            outboundBuffer.FailFlushed(NotYetConnectedException, true);
+                            outboundBuffer.FailFlushed(Flush0NotYetConnectedException, true);
                         }
                         else
                         {
                             // Do not trigger channelWritabilityChanged because the channel is closed already.
-                            outboundBuffer.FailFlushed(ThrowHelper.GetClosedChannelException(), false);
+                            outboundBuffer.FailFlushed(Flush0ClosedChannelException, false);
                         }
                     }
                     finally
@@ -788,25 +826,25 @@ namespace DotNetty.Transport.Channels
                 {
                     //if (ch.Configuration.AutoClose)
                     //{
-                        /*
-                         * Just call {@link #close(ChannelPromise, Throwable, boolean)} here which will take care of
-                         * failing all flushed messages and also ensure the actual close of the underlying transport
-                         * will happen before the promises are notified.
-                         *
-                         * This is needed as otherwise {@link #isActive()} , {@link #isOpen()} and {@link #isWritable()}
-                         * may still return {@code true} even if the channel should be closed as result of the exception.
-                         */
-                        Util.CompleteChannelCloseTaskSafely(ch, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex), false));
+                    /*
+                     * Just call {@link #close(ChannelPromise, Throwable, boolean)} here which will take care of
+                     * failing all flushed messages and also ensure the actual close of the underlying transport
+                     * will happen before the promises are notified.
+                     *
+                     * This is needed as otherwise {@link #isActive()} , {@link #isOpen()} and {@link #isWritable()}
+                     * may still return {@code true} even if the channel should be closed as result of the exception.
+                     */
+                    this.Close(this.VoidPromise(), ex, Flush0ClosedChannelException, false);
                     //}
                     //else
                     //{
                     //    try
                     //    {
-                    //        Util.CompleteChannelCloseTaskSafely(ch, this.ShutdownOutputAsync(ex));
+                    //        shutdownOutput(voidPromise(), t);
                     //    }
                     //    catch(Exception ex2)
                     //    {
-                    //        Util.CompleteChannelCloseTaskSafely(ch, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex2), false));
+                    //        close(voidPromise(), t2, FLUSH0_CLOSED_CHANNEL_EXCEPTION, false);
                     //    }
                     //}
                 }
@@ -818,14 +856,20 @@ namespace DotNetty.Transport.Channels
 
             protected virtual bool CanWrite => this.channel.Active;
 
-            protected bool EnsureOpen(TaskCompletionSource promise)
+            public IPromise VoidPromise()
+            {
+                this.AssertEventLoop();
+                return this.channel.unsafeVoidPromise;
+            }
+
+            protected bool EnsureOpen(IPromise promise)
             {
                 if (this.channel.Open)
                 {
                     return true;
                 }
 
-                Util.SafeSetFailure(promise, ThrowHelper.GetClosedChannelException(), Logger);
+                Util.SafeSetFailure(promise, EnsureOpenClosedChannelException, Logger);
                 return false;
             }
 
@@ -837,7 +881,7 @@ namespace DotNetty.Transport.Channels
                 {
                     return;
                 }
-                this.CloseSafe();
+                this.Close(this.VoidPromise());
             }
 
             void InvokeLater(Action task)

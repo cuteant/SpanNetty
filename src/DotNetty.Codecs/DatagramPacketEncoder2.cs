@@ -8,6 +8,7 @@ namespace DotNetty.Codecs
     using System.Net;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
 
@@ -55,11 +56,11 @@ namespace DotNetty.Codecs
         public override Task ConnectAsync(IChannelHandlerContext context, EndPoint remoteAddress, EndPoint localAddress) =>
             this.encoder.ConnectAsync(context, remoteAddress, localAddress);
 
-        public override Task DisconnectAsync(IChannelHandlerContext context) => this.encoder.DisconnectAsync(context);
+        public override void Disconnect(IChannelHandlerContext context, IPromise promise) => this.encoder.Disconnect(context, promise);
 
-        public override Task CloseAsync(IChannelHandlerContext context) => this.encoder.CloseAsync(context);
+        public override void Close(IChannelHandlerContext context, IPromise promise) => this.encoder.Close(context, promise);
 
-        public override Task DeregisterAsync(IChannelHandlerContext context) => this.encoder.DeregisterAsync(context);
+        public override void Deregister(IChannelHandlerContext context, IPromise promise) => this.encoder.Deregister(context, promise);
 
         public override void Read(IChannelHandlerContext context) => this.encoder.Read(context);
 

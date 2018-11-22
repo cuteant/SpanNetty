@@ -30,11 +30,11 @@ namespace DotNetty.Buffers
             }
         }
 
-        public IByteBufferHolder Copy() => this.Replace(this.data.Copy());
+        public virtual IByteBufferHolder Copy() => this.Replace(this.data.Copy());
 
-        public IByteBufferHolder Duplicate() => this.Replace(this.data.Duplicate());
+        public virtual IByteBufferHolder Duplicate() => this.Replace(this.data.Duplicate());
 
-        public IByteBufferHolder RetainedDuplicate() => this.Replace(this.data.RetainedDuplicate());
+        public virtual IByteBufferHolder RetainedDuplicate() => this.Replace(this.data.RetainedDuplicate());
 
         public virtual IByteBufferHolder Replace(IByteBuffer content) => new DefaultByteBufferHolder(content);
 

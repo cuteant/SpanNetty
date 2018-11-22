@@ -192,7 +192,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             if (succeed)
             {
                 return new WebSocketPermessageDeflateExtension(serverNoContext, serverWindowSize,
-                    clientNoContext, this.compressionLevel);
+                    clientNoContext, clientWindowSize, this.compressionLevel);
             }
             else
             {
@@ -205,23 +205,25 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             readonly bool serverNoContext;
             readonly int serverWindowSize;
             readonly bool clientNoContext;
+            readonly int clientWindowSize;
             readonly int compressionLevel;
 
             public int Rsv => WebSocketRsv.Rsv1;
 
             public WebSocketPermessageDeflateExtension(bool serverNoContext, int serverWindowSize,
-                bool clientNoContext, int compressionLevel)
+                bool clientNoContext, int clientWindowSize, int compressionLevel)
             {
                 this.serverNoContext = serverNoContext;
                 this.serverWindowSize = serverWindowSize;
                 this.clientNoContext = clientNoContext;
+                this.clientWindowSize = clientWindowSize;
                 this.compressionLevel = compressionLevel;
             }
 
             public WebSocketExtensionEncoder NewExtensionEncoder() =>
-                new PerMessageDeflateEncoder(this.compressionLevel, this.serverWindowSize, this.serverNoContext);
+                new PerMessageDeflateEncoder(this.compressionLevel, this.clientWindowSize, this.clientNoContext);
 
-            public WebSocketExtensionDecoder NewExtensionDecoder() => new PerMessageDeflateDecoder(this.clientNoContext);
+            public WebSocketExtensionDecoder NewExtensionDecoder() => new PerMessageDeflateDecoder(this.serverNoContext);
         }
     }
 }

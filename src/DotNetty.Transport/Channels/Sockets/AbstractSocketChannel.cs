@@ -37,7 +37,7 @@ namespace DotNetty.Transport.Channels.Sockets
         internal bool ReadPending;
         int _state;
 
-        TaskCompletionSource connectPromise;
+        IPromise connectPromise;
         IScheduledTask connectCancellationTask;
 
         protected AbstractSocketChannel(IChannel parent, Socket socket)
@@ -265,12 +265,12 @@ namespace DotNetty.Transport.Channels.Sockets
                     bool wasActive = this.channel.Active;
                     if (ch.DoConnect(remoteAddress, localAddress))
                     {
-                        this.FulfillConnectPromise(wasActive);
+                        this.FulfillConnectPromise(ch.connectPromise, wasActive);
                         return TaskUtil.Completed;
                     }
                     else
                     {
-                        ch.connectPromise = new TaskCompletionSource(remoteAddress);
+                        ch.connectPromise = ch.NewPromise(remoteAddress);
 
                         // Schedule connect timeout.
                         TimeSpan connectTimeout = ch.Configuration.ConnectTimeout;
@@ -282,7 +282,7 @@ namespace DotNetty.Transport.Channels.Sockets
                         }
 
 #if NET40
-                        void continuationAction(Task<int> t)
+                        void continuationAction(Task t)
                         {
                             var c = ch;
                             c.connectCancellationTask?.Cancel();
@@ -307,36 +307,40 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
             }
 
-            void FulfillConnectPromise(bool wasActive)
+            void FulfillConnectPromise(IPromise promise, bool wasActive)
             {
+                if (null == promise)
+                {
+                    // Closed via cancellation and the promise has been notified already.
+                    return;
+                }
+
                 var ch = this.channel;
+
+                // Get the state as trySuccess() may trigger an ChannelFutureListener that will close the Channel.
+                // We still need to ensure we call fireChannelActive() in this case.
+                bool active = ch.Active;
+
+                // trySuccess() will return false if a user cancelled the connection attempt.
+                bool promiseSet = promise.TryComplete();
+
                 // Regardless if the connection attempt was cancelled, channelActive() event should be triggered,
                 // because what happened is what happened.
-                if (!wasActive && ch.Active)
+                if (!wasActive && active)
                 {
                     ch.Pipeline.FireChannelActive();
                 }
 
-                TaskCompletionSource promise = ch.connectPromise;
-                // If promise is null, then it the channel was Closed via cancellation and the promise has been notified already.
-                if (promise != null)
+                // If a user cancelled the connection attempt, close the channel, which is followed by channelInactive().
+                if (!promiseSet)
                 {
-                    // trySuccess() will return false if a user cancelled the connection attempt.
-                    bool promiseSet = promise.TryComplete();
-
-                    // If a user cancelled the connection attempt, close the channel, which is followed by channelInactive().
-                    if (!promiseSet)
-                    {
-                        this.CloseSafe();
-                    }
-
+                    this.Close(this.VoidPromise());
                 }
             }
 
-            void FulfillConnectPromise(Exception cause)
+            void FulfillConnectPromise(IPromise promise, Exception cause)
             {
-                TaskCompletionSource promise = this.channel.connectPromise;
-                if (promise == null)
+                if (null == promise)
                 {
                     // Closed via cancellation and the promise has been notified already.
                     return;
@@ -356,13 +360,13 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     bool wasActive = ch.Active;
                     ch.DoFinishConnect(operation);
-                    this.FulfillConnectPromise(wasActive);
+                    this.FulfillConnectPromise(ch.connectPromise, wasActive);
                 }
                 catch (Exception ex)
                 {
-                    TaskCompletionSource promise = ch.connectPromise;
+                    var promise = ch.connectPromise;
                     var remoteAddress = (EndPoint)promise?.Task.AsyncState;
-                    this.FulfillConnectPromise(this.AnnotateConnectException(ex, remoteAddress));
+                    this.FulfillConnectPromise(ch.connectPromise, this.AnnotateConnectException(ex, remoteAddress));
                 }
                 finally
                 {
@@ -404,7 +408,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 catch (Exception ex)
                 {
                     ch.Pipeline.FireExceptionCaught(ex);
-                    Util.CompleteChannelCloseTaskSafely(ch, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex), false));
+                    this.Close(this.VoidPromise(), ThrowHelper.GetClosedChannelException_FailedToWrite(ex), WriteClosedChannelException, false);
                 }
 
                 // Double check if there's no pending flush
@@ -452,7 +456,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override void DoClose()
         {
-            TaskCompletionSource promise = this.connectPromise;
+            var promise = this.connectPromise;
             if (promise != null)
             {
                 // Use TrySetException() instead of SetException() to avoid the race against cancellation due to timeout.

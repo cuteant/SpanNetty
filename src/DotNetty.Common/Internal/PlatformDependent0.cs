@@ -49,7 +49,53 @@ namespace DotNetty.Common.Internal
         }
 
         [MethodImpl(InlineMethod.Value)]
-        internal static unsafe int HashCodeAscii(byte* bytes,  int length)
+        internal static unsafe int ByteArrayEqualsConstantTime(byte* bytes1, int startPos1, byte* bytes2, int startPos2, int length)
+        {
+            long result = 0;
+            byte* baseOffset1 = bytes1 + startPos1;
+            byte* baseOffset2 = bytes2 + startPos2;
+            int remainingBytes = length & 7;
+            byte* end = baseOffset1 + remainingBytes;
+            for (byte* i = baseOffset1 - 8 + length, j = baseOffset2 - 8 + length; i >= end; i -= 8, j -= 8)
+            {
+                result |= Unsafe.ReadUnaligned<long>(i) ^ Unsafe.ReadUnaligned<long>(j);
+            }
+
+            switch (remainingBytes)
+            {
+                case 7:
+                    return ConstantTimeUtils.EqualsConstantTime(result |
+                        (uint)(Unsafe.ReadUnaligned<int>(baseOffset1 + 3) ^ Unsafe.ReadUnaligned<int>(baseOffset2 + 3)) |
+                        (uint)(Unsafe.ReadUnaligned<short>(baseOffset1 + 1) ^ Unsafe.ReadUnaligned<short>(baseOffset2 + 1)) |
+                        (uint)(Unsafe.ReadUnaligned<byte>(baseOffset1) ^ Unsafe.ReadUnaligned<byte>(baseOffset2)), 0);
+                case 6:
+                    return ConstantTimeUtils.EqualsConstantTime(result |
+                        (uint)(Unsafe.ReadUnaligned<int>(baseOffset1 + 2) ^ Unsafe.ReadUnaligned<int>(baseOffset2 + 2)) |
+                        (uint)(Unsafe.ReadUnaligned<short>(baseOffset1) ^ Unsafe.ReadUnaligned<short>(baseOffset2)), 0);
+                case 5:
+                    return ConstantTimeUtils.EqualsConstantTime(result |
+                        (uint)(Unsafe.ReadUnaligned<int>(baseOffset1 + 1) ^ Unsafe.ReadUnaligned<int>(baseOffset2 + 1)) |
+                        (uint)(Unsafe.ReadUnaligned<byte>(baseOffset1) ^ Unsafe.ReadUnaligned<byte>(baseOffset2)), 0);
+                case 4:
+                    return ConstantTimeUtils.EqualsConstantTime(result |
+                        (uint)(Unsafe.ReadUnaligned<int>(baseOffset1) ^ Unsafe.ReadUnaligned<int>(baseOffset2)), 0);
+                case 3:
+                    return ConstantTimeUtils.EqualsConstantTime(result |
+                        (uint)(Unsafe.ReadUnaligned<short>(baseOffset1 + 1) ^ Unsafe.ReadUnaligned<short>(baseOffset2 + 1)) |
+                        (uint)(Unsafe.ReadUnaligned<byte>(baseOffset1) ^ Unsafe.ReadUnaligned<byte>(baseOffset2)), 0);
+                case 2:
+                    return ConstantTimeUtils.EqualsConstantTime(result |
+                        (uint)(Unsafe.ReadUnaligned<short>(baseOffset1) ^ Unsafe.ReadUnaligned<short>(baseOffset2)), 0);
+                case 1:
+                    return ConstantTimeUtils.EqualsConstantTime(result |
+                        (uint)(Unsafe.ReadUnaligned<byte>(baseOffset1) ^ Unsafe.ReadUnaligned<byte>(baseOffset2)), 0);
+                default:
+                    return ConstantTimeUtils.EqualsConstantTime(result, 0);
+            }
+        }
+
+        [MethodImpl(InlineMethod.Value)]
+        internal static unsafe int HashCodeAscii(byte* bytes, int length)
         {
             int hash = HashCodeAsciiSeed;
             int remainingBytes = length & 7;
@@ -104,7 +150,7 @@ namespace DotNetty.Common.Internal
         static int HashCodeAsciiSanitize(int value) => value & 0x1f1f1f1f;
 
         [MethodImpl(InlineMethod.Value)]
-        static int HashCodeAsciiSanitize(short value) =>  value & 0x1f1f;
+        static int HashCodeAsciiSanitize(short value) => value & 0x1f1f;
 
         [MethodImpl(InlineMethod.Value)]
         static int HashCodeAsciiSanitize(byte value) => value & 0x1f;

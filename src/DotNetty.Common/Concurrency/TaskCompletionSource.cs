@@ -1,110 +1,149 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if NET40
 using System;
 using System.Collections.Generic;
 using System.Threading;
-#endif
 using System.Threading.Tasks;
 
 namespace DotNetty.Common.Concurrency
 {
-    public sealed class TaskCompletionSource : TaskCompletionSource<int>
+    public class TaskCompletionSource : IPromise
     {
-        public static readonly TaskCompletionSource Void = CreateVoidTcs();
-
-        public TaskCompletionSource(object state)
-          : base(state)
-        {
-        }
+        private readonly TaskCompletionSource<int> tcs;
+        private int uncancellable = Constants.False;
 
         public TaskCompletionSource()
         {
+            this.tcs = new TaskCompletionSource<int>();
         }
 
-        public bool TryComplete()
+        public TaskCompletionSource(object state)
+        {
+            this.tcs = new TaskCompletionSource<int>(state);
+        }
+
+        public Task Task => this.tcs.Task;
+
+        public bool IsVoid => false;
+
+        public bool IsSuccess
+        {
+            get
+            {
+                var task = this.Task;
+                return task.IsCompleted && !task.IsFaulted && !task.IsCanceled;
+            }
+        }
+
+        public bool IsCompleted => this.Task.IsCompleted;
+
+        public bool IsFaulted => this.Task.IsFaulted;
+
+        public bool IsCanceled => this.Task.IsCanceled;
+
+        public virtual bool TryComplete()
         {
 #if NET40
-            // TaskCompletionSource TrySetResult SetResult twice
-            //var result = this.TrySetResult(0);
-            //SetResultAsync(this, 0);
             var result = false;
-            FakeSynchronizationContext.Execute(() => result = this.TrySetResult(0));
+            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetResult(0));
             return result;
 #else
-            return this.TrySetResult(0);
+            return this.tcs.TrySetResult(0);
 #endif
         }
 
-        public void Complete()
+        public virtual void Complete()
         {
 #if NET40
-            // TaskCompletionSource TrySetResult SetResult twice
-            //var result = this.TrySetResult(0);
-            //SetResultAsync(this, 0);
-            FakeSynchronizationContext.Execute(() => this.SetResult(0));
+            FakeSynchronizationContext.Execute(() => this.tcs.SetResult(0));
 #else
-            this.SetResult(0);
+            this.tcs.SetResult(0);
+#endif
+        }
+        public virtual void SetCanceled()
+        {
+            if (Constants.True == Volatile.Read(ref this.uncancellable)) { return; }
+#if NET40
+            FakeSynchronizationContext.Execute(() => this.tcs.SetCanceled());
+#else
+            this.tcs.SetCanceled();
 #endif
         }
 
-        // todo: support cancellation token where used
-        public bool SetUncancellable() => true;
+        public virtual void SetException(Exception exception)
+        {
+            if (exception is AggregateException aggregateException)
+            {
+                this.SetException(aggregateException.InnerExceptions);
+                return;
+            }
+#if NET40
+            FakeSynchronizationContext.Execute(() => this.tcs.SetException(exception));
+#else
+            this.tcs.SetException(exception);
+#endif
+        }
+
+        public virtual void SetException(IEnumerable<Exception> exceptions)
+        {
+#if NET40
+            FakeSynchronizationContext.Execute(() => this.tcs.SetException(exceptions));
+#else
+            this.tcs.SetException(exceptions);
+#endif
+        }
+
+        public virtual bool TrySetCanceled()
+        {
+            if (Constants.True == Volatile.Read(ref this.uncancellable)) { return false; }
+#if NET40
+            var result = false;
+            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetCanceled());
+            return result;
+#else
+            return this.tcs.TrySetCanceled();
+#endif
+        }
+
+        public virtual bool TrySetException(Exception exception)
+        {
+            if (exception is AggregateException aggregateException)
+            {
+                return this.TrySetException(aggregateException.InnerExceptions);
+            }
+#if NET40
+            var result = false;
+            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetException(exception));
+            return result;
+#else
+            return this.tcs.TrySetException(exception);
+#endif
+        }
+
+        public virtual bool TrySetException(IEnumerable<Exception> exceptions)
+        {
+#if NET40
+            var result = false;
+            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetException(exceptions));
+            return result;
+#else
+            return this.tcs.TrySetException(exceptions);
+#endif
+        }
+
+        public bool SetUncancellable()
+        {
+            if (Constants.False == Interlocked.CompareExchange(ref this.uncancellable, Constants.True, Constants.False))
+            {
+                return true;
+            }
+            return !this.IsCompleted;
+        }
 
         public override string ToString() => "TaskCompletionSource[status: " + this.Task.Status.ToString() + "]";
 
-        static TaskCompletionSource CreateVoidTcs()
-        {
-            var tcs = new TaskCompletionSource();
-            tcs.TryComplete();
-            return tcs;
-        }
-
-//#if NET40 || NET451
-//        public bool TrySetCanceled(System.Threading.CancellationToken cancellationToken)
-//        {
-//            return this.TrySetCanceled();
-//        }
-//#endif
-
-#if NET40
-        public new void SetCanceled()
-        {
-            FakeSynchronizationContext.Execute(() => base.SetCanceled());
-        }
-
-        public new void SetException(Exception exception)
-        {
-            FakeSynchronizationContext.Execute(() => base.SetException(exception));
-        }
-
-        public new void SetException(IEnumerable<Exception> exceptions)
-        {
-            FakeSynchronizationContext.Execute(() => base.SetException(exceptions));
-        }
-
-        public new bool TrySetCanceled()
-        {
-            var result = false;
-            FakeSynchronizationContext.Execute(() => result = base.TrySetCanceled());
-            return result;
-        }
-
-        public new bool TrySetException(Exception exception)
-        {
-            var result = false;
-            FakeSynchronizationContext.Execute(() => result = base.TrySetException(exception));
-            return result;
-        }
-
-        public new bool TrySetException(IEnumerable<Exception> exceptions)
-        {
-            var result = false;
-            FakeSynchronizationContext.Execute(() => result = base.TrySetException(exceptions));
-            return result;
-        }
-#endif
+        public IPromise Unvoid() => this;
     }
 
 #if NET40

@@ -82,11 +82,12 @@ namespace DotNetty.Transport.Channels
         /// Adds the given message to this <see cref="PendingWriteQueue"/>.
         /// </summary>
         /// <param name="msg">The message to add to the <see cref="PendingWriteQueue"/>.</param>
-        /// <returns>An await-able task.</returns>
-        public Task Add(object msg)
+        /// <param name="promise"></param>
+        public void Add(object msg, IPromise promise)
         {
             Debug.Assert(this.ctx.Executor.InEventLoop);
             if (null == msg) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
+            if (null == promise) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.promise); }
 
             // It is possible for writes to be triggered from removeAndFailAll(). To preserve ordering,
             // we should add them to the queue and let removeAndFailAll() fail them later.
@@ -96,7 +97,7 @@ namespace DotNetty.Transport.Channels
                 // Size may be unknow so just use 0
                 messageSize = 0;
             }
-            var promise = new TaskCompletionSource();
+
             PendingWrite write = PendingWrite.NewInstance(msg, messageSize, promise);
             PendingWrite currentTail = this.tail;
             if (currentTail == null)
@@ -111,7 +112,6 @@ namespace DotNetty.Transport.Channels
             this.size++;
             this.bytes += messageSize;
             this.tracker.IncrementPendingOutboundBytes(write.Size);
-            return promise.Task;
         }
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace DotNetty.Transport.Channels
                 {
                     PendingWrite next = write.Next;
                     ReferenceCountUtil.SafeRelease(write.Msg);
-                    TaskCompletionSource promise = write.Promise;
+                    IPromise promise = write.Promise;
                     this.Recycle(write, false);
                     Util.SafeSetFailure(promise, cause, Logger);
                     write = next;
@@ -161,13 +161,13 @@ namespace DotNetty.Transport.Channels
                 return;
             }
             ReferenceCountUtil.SafeRelease(write.Msg);
-            TaskCompletionSource promise = write.Promise;
+            IPromise promise = write.Promise;
             Util.SafeSetFailure(promise, cause, Logger);
             this.Recycle(write, true);
         }
 
         /// <summary>
-        /// Removes all pending write operation and performs them via <see cref="IChannelHandlerContext.WriteAsync"/>
+        /// Removes all pending write operation and performs them via <see cref="IChannelHandlerContext.WriteAsync(object, IPromise)"/>
         /// </summary>
         /// <returns>An await-able task.</returns>
         public Task RemoveAndWriteAllAsync()
@@ -192,10 +192,10 @@ namespace DotNetty.Transport.Channels
                 {
                     PendingWrite next = write.Next;
                     object msg = write.Msg;
-                    TaskCompletionSource promise = write.Promise;
+                    IPromise promise = write.Promise;
                     this.Recycle(write, false);
-                    if (promise != TaskCompletionSource.Void) { tasks.Add(promise.Task); }
-                    this.ctx.WriteAsync(msg).LinkOutcome(promise);
+                    if (!promise.IsVoid) { tasks.Add(promise.Task); }
+                    this.ctx.WriteAsync(msg, promise);
                     write = next;
                 }
             }
@@ -211,7 +211,7 @@ namespace DotNetty.Transport.Channels
         void AssertEmpty() => Debug.Assert(this.tail == null && this.head == null && this.size == 0);
 
         /// <summary>
-        /// Removes a pending write operation and performs it via <see cref="IChannelHandlerContext.WriteAsync"/>.
+        /// Removes a pending write operation and performs it via <see cref="IChannelHandlerContext.WriteAsync(object, IPromise)"/>.
         /// </summary>
         /// <returns>An await-able task.</returns>
         public Task RemoveAndWriteAsync()
@@ -224,10 +224,9 @@ namespace DotNetty.Transport.Channels
                 return null;
             }
             object msg = write.Msg;
-            TaskCompletionSource promise = write.Promise;
+            IPromise promise = write.Promise;
             this.Recycle(write, true);
-            this.ctx.WriteAsync(msg).LinkOutcome(promise);
-            return promise.Task;
+            return this.ctx.WriteAsync(msg, promise);
         }
 
         /// <summary>
@@ -235,9 +234,9 @@ namespace DotNetty.Transport.Channels
         /// <see cref="ReferenceCountUtil.SafeRelease(object)"/>.
         /// </summary>
         /// <returns>
-        /// The <see cref="TaskCompletionSource" /> of the pending write, or <c>null</c> if the queue is empty.
+        /// The <see cref="IPromise" /> of the pending write, or <c>null</c> if the queue is empty.
         /// </returns>
-        public TaskCompletionSource Remove()
+        public IPromise Remove()
         {
             Debug.Assert(this.ctx.Executor.InEventLoop);
 
@@ -246,7 +245,7 @@ namespace DotNetty.Transport.Channels
             {
                 return null;
             }
-            TaskCompletionSource promise = write.Promise;
+            IPromise promise = write.Promise;
             ReferenceCountUtil.SafeRelease(write.Msg);
             this.Recycle(write, true);
             return promise;
@@ -303,7 +302,7 @@ namespace DotNetty.Transport.Channels
             readonly ThreadLocalPool.Handle handle;
             public PendingWrite Next;
             public long Size;
-            public TaskCompletionSource Promise;
+            public IPromise Promise;
             public object Msg;
 
             PendingWrite(ThreadLocalPool.Handle handle)
@@ -311,7 +310,7 @@ namespace DotNetty.Transport.Channels
                 this.handle = handle;
             }
 
-            public static PendingWrite NewInstance(object msg, int size, TaskCompletionSource promise)
+            public static PendingWrite NewInstance(object msg, int size, IPromise promise)
             {
                 PendingWrite write = Pool.Take();
                 write.Size = size;

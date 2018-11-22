@@ -24,7 +24,7 @@ namespace DotNetty.Transport.Channels.Local
 
         public LocalServerChannel()
         {
-            this.shutdownHook = () => this.Unsafe.CloseAsync();
+            this.shutdownHook = () => this.Unsafe.Close(this.Unsafe.VoidPromise());
             var config = new DefaultChannelConfiguration(this);
             config.Allocator = new PreferHeapByteBufAllocator(config.Allocator);
             this.Configuration = config;

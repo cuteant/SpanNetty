@@ -37,10 +37,10 @@
     <SystemReflectionMetadataPackageVersion>1.6.0</SystemReflectionMetadataPackageVersion>
 
     <SystemBuffersPackageVersion>4.5.0</SystemBuffersPackageVersion>
-    <SystemDiagnosticsDiagnosticSourcePackageVersion>4.5.0</SystemDiagnosticsDiagnosticSourcePackageVersion>
-    <SystemIOPipelinesPackageVersion>4.5.1</SystemIOPipelinesPackageVersion>
+    <SystemDiagnosticsDiagnosticSourcePackageVersion>4.5.1</SystemDiagnosticsDiagnosticSourcePackageVersion>
+    <SystemIOPipelinesPackageVersion>4.5.2</SystemIOPipelinesPackageVersion>
     <SystemMemoryPackageVersion>4.5.1</SystemMemoryPackageVersion>
-    <SystemNetHttpPackageVersion>4.3.3</SystemNetHttpPackageVersion>
+    <SystemNetHttpPackageVersion>4.3.4</SystemNetHttpPackageVersion>
     <SystemNumericsVectorsPackageVersion>4.5.0</SystemNumericsVectorsPackageVersion>
 
     <SystemReflectionDispatchProxyPackageVersion>4.5.1</SystemReflectionDispatchProxyPackageVersion>
@@ -49,7 +49,7 @@
     <SystemReflectionExtensionsPackageVersion>4.3.0</SystemReflectionExtensionsPackageVersion>
     <SystemReflectionTypeExtensionsPackageVersion>4.5.1</SystemReflectionTypeExtensionsPackageVersion>
 
-    <SystemRuntimeCompilerServicesUnsafePackageVersion>4.5.1</SystemRuntimeCompilerServicesUnsafePackageVersion>
+    <SystemRuntimeCompilerServicesUnsafePackageVersion>4.5.2</SystemRuntimeCompilerServicesUnsafePackageVersion>
 
     <SystemPrivateServiceModelPackageVersion>4.5.3</SystemPrivateServiceModelPackageVersion>
     <SystemServiceModelDuplexPackageVersion>4.5.3</SystemServiceModelDuplexPackageVersion>

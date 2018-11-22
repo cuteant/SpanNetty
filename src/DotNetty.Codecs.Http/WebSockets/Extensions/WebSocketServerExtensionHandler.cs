@@ -6,6 +6,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
@@ -66,7 +67,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
             base.ChannelRead(ctx, msg);
         }
 
-        public override Task WriteAsync(IChannelHandlerContext ctx, object msg)
+        public override void Write(IChannelHandlerContext ctx, object msg, IPromise promise)
         {
 #if NET40
             Action<Task> continuationAction = null;
@@ -98,10 +99,10 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                 }
 
 #if NET40
-                continuationAction = promise =>
+                continuationAction = t =>
                 {
                     var pipeline = ctx.Pipeline;
-                    if (promise.Status == TaskStatus.RanToCompletion && this.validExtensions != null)
+                    if (t.Status == TaskStatus.RanToCompletion && this.validExtensions != null)
                     {
                         foreach (IWebSocketServerExtension extension in this.validExtensions)
                         {
@@ -119,14 +120,17 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
             }
 
-            return continuationAction == null
-                ? base.WriteAsync(ctx, msg)
-                : base.WriteAsync(ctx, msg)
+            if(continuationAction != null)
+            {
+                promise = promise.Unvoid();
+                promise.Task
 #if NET40
                     .ContinueWith(continuationAction, TaskContinuationOptions.ExecuteSynchronously);
 #else
                     .ContinueWith(continuationAction, Tuple.Create(ctx, this.validExtensions), TaskContinuationOptions.ExecuteSynchronously);
 #endif
+            }
+            base.Write(ctx, msg, promise);
         }
 
         static void SwitchWebSocketExtensionHandler(Task promise, object state)

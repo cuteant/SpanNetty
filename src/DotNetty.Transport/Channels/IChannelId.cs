@@ -5,12 +5,16 @@ namespace DotNetty.Transport.Channels
 {
     using System;
 
-    public interface IChannelId : IComparable<IChannelId>
+    public interface IChannelId : IEquatable<IChannelId>, IComparable<IChannelId>
     {
+        /// <summary>
+        /// Returns the short but globally non-unique string representation of the <see cref="IChannelId"/>.
+        /// </summary>
         string AsShortText();
 
+        /// <summary>
+        /// Returns the long yet globally unique string representation of the <see cref="IChannelId"/>.
+        /// </summary>
         string AsLongText();
-
-        int GetHashCode();
     }
 }

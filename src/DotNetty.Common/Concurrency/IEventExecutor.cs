@@ -27,5 +27,9 @@ namespace DotNetty.Common.Concurrency
         ///     <c>false></c> otherwise.
         /// </summary>
         bool IsInEventLoop(Thread thread);
+
+        IPromise NewPromise();
+
+        IPromise NewPromise(object state);
     }
 }

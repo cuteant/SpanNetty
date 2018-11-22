@@ -15,7 +15,7 @@ namespace DotNetty.Codecs.Http
     {
         const int HighestInvalidValueCharMask = ~15;
         internal static readonly INameValidator<ICharSequence> HttpNameValidator = new HeaderNameValidator();
-        internal static readonly INameValidator<ICharSequence> NotNullValidator = new NullNameValidator<ICharSequence>();
+        public static readonly INameValidator<ICharSequence> NotNullValidator = NullNameValidator<ICharSequence>.Instance;
 
         sealed class NameProcessor : IByteProcessor
         {

@@ -2,28 +2,27 @@
   <!-- Shared Package Versions -->
   <PropertyGroup>
     <!-- Test related packages -->
-    <MicrosoftNetTestSdkPackageVersion>15.8.0</MicrosoftNetTestSdkPackageVersion>
+    <MicrosoftNetTestSdkPackageVersion>15.9.0</MicrosoftNetTestSdkPackageVersion>
 
-    <BenchmarkDotNetPackageVersion>0.11.1</BenchmarkDotNetPackageVersion>
-    <BenchmarkDotNetDiagnosticsWindowsPackageVersion>0.11.1</BenchmarkDotNetDiagnosticsWindowsPackageVersion>
+    <BenchmarkDotNetPackageVersion>0.11.2</BenchmarkDotNetPackageVersion>
+    <BenchmarkDotNetDiagnosticsWindowsPackageVersion>0.11.2</BenchmarkDotNetDiagnosticsWindowsPackageVersion>
     <NBenchPackageVersion>1.2.2</NBenchPackageVersion>
     <NBenchRunnerPackageVersion>1.2.2</NBenchRunnerPackageVersion>
 
     <FluentAssertions4PackageVersion>4.19.4</FluentAssertions4PackageVersion>
-    <FluentAssertions5PackageVersion>5.4.1</FluentAssertions5PackageVersion>
-    <FluentAssertionsPackageVersion>5.4.1</FluentAssertionsPackageVersion>
-    <MoqPackageVersion>4.9.0</MoqPackageVersion>
+    <FluentAssertions5PackageVersion>5.5.1</FluentAssertions5PackageVersion>
+    <FluentAssertionsPackageVersion>5.5.1</FluentAssertionsPackageVersion>
+    <MoqPackageVersion>4.10.0</MoqPackageVersion>
     <NSubstitutePackageVersion>3.1.0</NSubstitutePackageVersion>
-    <ShouldlyPackageVersion>2.8.3</ShouldlyPackageVersion>
+    <ShouldlyPackageVersion>3.0.2</ShouldlyPackageVersion>
 
-    <xUnitPackageVersion>2.4.0</xUnitPackageVersion>
+    <xUnitPackageVersion>2.4.1</xUnitPackageVersion>
     <xUnitAnalyzersPackageVersion>0.10.0</xUnitAnalyzersPackageVersion>
-    <xUnitDotNetPackageVersion>2.4.0</xUnitDotNetPackageVersion>
-    <xUnitRunnerVsPackageVersion>2.4.0</xUnitRunnerVsPackageVersion>
-    <xUnitRunnerConsolePackageVersion>2.4.0</xUnitRunnerConsolePackageVersion>
-    <xUnitRunnerUtilityPackageVersion>2.4.0</xUnitRunnerUtilityPackageVersion>
-    <xUnitSkippableFactPackageVersion>1.3.3</xUnitSkippableFactPackageVersion>
-    <xUnitPerformanceCorePackageVersion>1.0.0-beta-build0015</xUnitPerformanceCorePackageVersion>
+    <xUnitDotNetPackageVersion>2.4.1</xUnitDotNetPackageVersion>
+    <xUnitRunnerVsPackageVersion>2.4.1</xUnitRunnerVsPackageVersion>
+    <xUnitRunnerConsolePackageVersion>2.4.1</xUnitRunnerConsolePackageVersion>
+    <xUnitRunnerUtilityPackageVersion>2.4.1</xUnitRunnerUtilityPackageVersion>
+    <xUnitSkippableFactPackageVersion>1.3.12</xUnitSkippableFactPackageVersion>
 
     <xUnitAnalyzersDevPackageVersion>0.9.0-build1183</xUnitAnalyzersDevPackageVersion>
     <xUnitDevPackageVersion>2.4.0-beta.2.build3984</xUnitDevPackageVersion>
@@ -33,10 +32,10 @@
 
     <NUnit2PackageVersion>2.6.4</NUnit2PackageVersion>
     <NUnit2TestAdapterPackageVersion>2.1.1</NUnit2TestAdapterPackageVersion>
-    <NUnitPackageVersion>3.10.1</NUnitPackageVersion>
-    <NUnitLitePackageVersion>3.10.1</NUnitLitePackageVersion>
-    <NUnit3TestAdapterPackageVersion>3.10.0</NUnit3TestAdapterPackageVersion>
-    <MonoCecilPackageVersion>0.10.0</MonoCecilPackageVersion>
+    <NUnitPackageVersion>3.11.0</NUnitPackageVersion>
+    <NUnitLitePackageVersion>3.11.0</NUnitLitePackageVersion>
+    <NUnit3TestAdapterPackageVersion>3.11.0</NUnit3TestAdapterPackageVersion>
+    <MonoCecilPackageVersion>0.10.1</MonoCecilPackageVersion>
 
     <NUnitDevPackageVersion>3.11.0-dev-05430</NUnitDevPackageVersion>
     <NUnit3TestAdapterDevPackageVersion>3.11.0-dev-00847</NUnit3TestAdapterDevPackageVersion>

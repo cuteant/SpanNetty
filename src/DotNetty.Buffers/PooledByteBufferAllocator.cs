@@ -63,10 +63,13 @@ namespace DotNetty.Buffers
             // todo: Determine reasonable default for heapArenaCount
             // Assuming each arena has 3 chunks, the pool should not consume more than 50% of max memory.
 
-            // Use 2 * cores by default to reduce contention as we use 2 * cores for the number of EventLoops
-            // in NIO and EPOLL as well. If we choose a smaller number we will run into hotspots as allocation and
-            // deallocation needs to be synchronized on the PoolArena.
-            // See https://github.com/netty/netty/issues/3888
+            /*
+             * We use 2 * available processors by default to reduce contention as we use 2 * available processors for the
+             * number of EventLoops in NIO and EPOLL as well. If we choose a smaller number we will run into hot spots as
+             * allocation and de-allocation needs to be synchronized on the PoolArena.
+             *
+             * See https://github.com/netty/netty/issues/3888.
+             */
             int defaultMinNumArena = Environment.ProcessorCount * 2;
             DefaultNumHeapArena = Math.Max(0, SystemPropertyUtil.GetInt("io.netty.allocator.numHeapArenas", defaultMinNumArena));
             DefaultNumDirectArena = Math.Max(0, SystemPropertyUtil.GetInt("io.netty.allocator.numDirectArenas", defaultMinNumArena));

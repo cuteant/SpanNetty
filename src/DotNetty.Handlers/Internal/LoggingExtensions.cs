@@ -1,4 +1,4 @@
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -8,6 +8,7 @@ using DotNetty.Common.Internal.Logging;
 using DotNetty.Common.Utilities;
 using DotNetty.Handlers.Flow;
 using DotNetty.Handlers.Streams;
+using DotNetty.Transport.Channels;
 
 namespace DotNetty.Handlers
 {
@@ -41,6 +42,18 @@ namespace DotNetty.Handlers
         public static void FailedToCloseAChunkedInput(this IInternalLogger logger, Exception exception)
         {
             logger.Warn("Failed to close a chunked input.", exception);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void TlsHandshakeFailure(this IInternalLogger logger, IChannelHandlerContext ctx, Exception cause)
+        {
+            logger.Warn("{} TLS handshake failed:", ctx.Channel, cause);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void FailedToSelectAppProtocol(this IInternalLogger logger, IChannelHandlerContext ctx, Exception cause)
+        {
+            logger.Warn("{} Failed to select the application-level protocol:", ctx.Channel, cause);
         }
     }
 }

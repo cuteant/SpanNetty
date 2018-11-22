@@ -58,7 +58,7 @@ namespace DotNetty.Transport.Bootstrapping
 
         private static void OnBindlocalAddress(object state)
         {
-            var wrapped = (Tuple<IChannel, EndPoint, TaskCompletionSource>)state;
+            var wrapped = (Tuple<IChannel, EndPoint, IPromise>)state;
             try
             {
                 wrapped.Item1.BindAsync(wrapped.Item2).LinkOutcome(wrapped.Item3);

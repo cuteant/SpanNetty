@@ -1,4 +1,4 @@
-// Copyright (c) .NET Foundation. All rights reserved.
+﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
@@ -171,27 +171,33 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void FailedToMarkAPromiseAsSuccess(this IInternalLogger logger, TaskCompletionSource promise)
+        public static void FailedToMarkAPromiseAsSuccess(this IInternalLogger logger, IPromise promise)
         {
             logger.Warn($"Failed to mark a promise as success because it has succeeded already: {promise}");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void FailedToMarkAPromiseAsSuccessFailed(this IInternalLogger logger, TaskCompletionSource promise, Exception err)
+        public static void FailedToMarkAPromiseAsSuccessFailed(this IInternalLogger logger, IPromise promise, Exception err)
         {
             logger.Warn($"Failed to mark a promise as success because it has failed already: {promise}, unnotified cause {err.ToString()}");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void FailedToMarkAPromiseAsFailure(this IInternalLogger logger, TaskCompletionSource promise, Exception cause)
+        public static void FailedToMarkAPromiseAsFailure(this IInternalLogger logger, IPromise promise, Exception cause)
         {
             logger.Warn($"Failed to mark a promise as failure because it has succeeded already: {promise}", cause);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void FailedToMarkAPromiseAsFailureFailed(this IInternalLogger logger, TaskCompletionSource promise, Exception cause, Exception err)
+        public static void FailedToMarkAPromiseAsFailureFailed(this IInternalLogger logger, IPromise promise, Exception cause, Exception err)
         {
             logger.Warn($"Failed to mark a promise as failure because it has failed already: {promise}, unnotified cause {err.ToString()}", cause);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void ThrowableBeingSuppressedBecauseIsAlreadyPending(this IInternalLogger logger, Exception pending, Exception err)
+        {
+            logger.Info($"Throwable being suppressed because Throwable {pending.ToString()} is already pending", err);
         }
     }
 }

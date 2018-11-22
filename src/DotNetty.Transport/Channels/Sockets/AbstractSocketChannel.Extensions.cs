@@ -15,7 +15,7 @@ namespace DotNetty.Transport.Channels.Sockets
     {
         private static readonly Action<object> ClearReadPendingAction = OnClearReadPending;
         private static readonly Action<object, object> ConnectTimeoutAction = OnConnectTimeout;
-        private static readonly Action<Task<int>, object> CloseSafeOnCompleteAction = OnCloseSafeOnComplete;
+        private static readonly Action<Task, object> CloseSafeOnCompleteAction = OnCloseSafeOnComplete;
 
         private int State
         {
@@ -36,7 +36,7 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             var self = (TChannel)c;
             // todo: call Socket.CancelConnectAsync(...)
-            TaskCompletionSource promise = self.connectPromise;
+            var promise = self.connectPromise;
             var cause = new ConnectTimeoutException("connection timed out: " + a.ToString());
             if (promise != null && promise.TrySetException(cause))
             {
@@ -44,7 +44,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        private static void OnCloseSafeOnComplete(Task<int> t, object s)
+        private static void OnCloseSafeOnComplete(Task t, object s)
         {
             var c = (TChannel)s;
             c.connectCancellationTask?.Cancel();

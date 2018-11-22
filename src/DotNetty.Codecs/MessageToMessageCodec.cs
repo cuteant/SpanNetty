@@ -4,7 +4,7 @@
 namespace DotNetty.Codecs
 {
     using System.Collections.Generic;
-    using System.Threading.Tasks;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Channels;
 
     public abstract class MessageToMessageCodec<TInbound, TOutbound> : ChannelDuplexHandler
@@ -50,8 +50,8 @@ namespace DotNetty.Codecs
         public sealed override void ChannelRead(IChannelHandlerContext context, object message) => 
             this.decoder.ChannelRead(context, message);
 
-        public sealed override Task WriteAsync(IChannelHandlerContext context, object message) => 
-            this.encoder.WriteAsync(context, message);
+        public sealed override void Write(IChannelHandlerContext context, object message, IPromise promise) => 
+            this.encoder.Write(context, message, promise);
 
         public virtual bool AcceptInboundMessage(object msg) => msg is TInbound;
 

@@ -127,6 +127,7 @@ namespace DotNetty.Codecs.Http
         maxChunkSize,
         contentSizeThreshold,
         output,
+        query,
     }
 
     #endregion
@@ -585,13 +586,9 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static Task ThrowInvalidOperationException_Attempting()
+        internal static InvalidOperationException GetInvalidOperationException_Attempting()
         {
-            return TaskUtil.FromException(GetException());
-            InvalidOperationException GetException()
-            {
-                return new InvalidOperationException("Attempting to write HTTP request with upgrade in progress");
-            }
+            return new InvalidOperationException("Attempting to write HTTP request with upgrade in progress");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

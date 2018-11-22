@@ -21,6 +21,8 @@ namespace DotNetty.Transport.Channels.Groups
 
         Task WriteAsync(object message, IChannelMatcher matcher);
 
+        Task WriteAsync(object message, IChannelMatcher matcher, bool voidPromise);
+
         IChannelGroup Flush();
 
         IChannelGroup Flush(IChannelMatcher matcher);
@@ -28,6 +30,8 @@ namespace DotNetty.Transport.Channels.Groups
         Task WriteAndFlushAsync(object message);
 
         Task WriteAndFlushAsync(object message, IChannelMatcher matcher);
+
+        Task WriteAndFlushAsync(object message, IChannelMatcher matcher, bool voidPromise);
 
         Task DisconnectAsync();
 

@@ -39,7 +39,7 @@ namespace DotNetty.Common.Concurrency
         PreciseTimeSpan lastExecutionTime;
         readonly ManualResetEventSlim emptyEvent = new ManualResetEventSlim(false, 1);
         readonly TaskScheduler scheduler;
-        readonly TaskCompletionSource terminationCompletionSource;
+        readonly IPromise terminationCompletionSource;
         PreciseTimeSpan gracefulShutdownStartTime;
         PreciseTimeSpan gracefulShutdownQuietPeriod;
         PreciseTimeSpan gracefulShutdownTimeout;
@@ -64,7 +64,7 @@ namespace DotNetty.Common.Concurrency
         protected SingleThreadEventExecutor(IEventExecutorGroup parent, string threadName, TimeSpan breakoutInterval, IQueue<IRunnable> taskQueue)
             : base(parent)
         {
-            this.terminationCompletionSource = new TaskCompletionSource();
+            this.terminationCompletionSource = this.NewPromise();
             this.taskQueue = taskQueue;
             this.preciseBreakoutInterval = PreciseTimeSpan.FromTimeSpan(breakoutInterval);
             this.scheduler = new ExecutorTaskScheduler(this);
@@ -455,7 +455,7 @@ namespace DotNetty.Common.Concurrency
                 if (!this.taskQueue.TryEnqueue(scheduledTask))
                 {
                     // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
-                    this.ScheduledTaskQueue.Enqueue(scheduledTask);
+                    this.ScheduledTaskQueue.TryEnqueue(scheduledTask);
                     return false;
                 }
                 scheduledTask = this.PollScheduledTask(nanoTime);
@@ -473,8 +473,7 @@ namespace DotNetty.Common.Concurrency
                 this.emptyEvent.Reset();
                 if (!this.taskQueue.TryDequeue(out task) && !this.IsShuttingDown) // revisit queue as producer might have put a task in meanwhile
                 {
-                    IScheduledRunnable nextScheduledTask = this.ScheduledTaskQueue.Peek();
-                    if (nextScheduledTask != null)
+                    if (this.ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledTask))
                     {
                         PreciseTimeSpan wakeupTimeout = nextScheduledTask.Deadline - PreciseTimeSpan.FromStart;
                         if (wakeupTimeout.Ticks > 0)

@@ -7,6 +7,5 @@ namespace DotNetty.Common.Utilities
 
     partial interface ICharSequence : IDisposable, IEquatable<ICharSequence>
     {
-        int GetHashCode();
     }
 }

@@ -2,21 +2,21 @@
   <!-- Shared Package Versions -->
   <PropertyGroup>
     <!-- AspNet related packages -->
-    <MicrosoftAspNetCorsPackageVersion>5.2.4</MicrosoftAspNetCorsPackageVersion>
+    <MicrosoftAspNetCorsPackageVersion>5.2.6</MicrosoftAspNetCorsPackageVersion>
 
-    <MicrosoftAspNetMvcPackageVersion>5.2.4</MicrosoftAspNetMvcPackageVersion>
+    <MicrosoftAspNetMvcPackageVersion>5.2.6</MicrosoftAspNetMvcPackageVersion>
 
-    <MicrosoftAspNetRazorPackageVersion>3.2.4</MicrosoftAspNetRazorPackageVersion>
-    <MicrosoftAspNetWebPagesPackageVersion>3.2.4</MicrosoftAspNetWebPagesPackageVersion>
+    <MicrosoftAspNetRazorPackageVersion>3.2.6</MicrosoftAspNetRazorPackageVersion>
+    <MicrosoftAspNetWebPagesPackageVersion>3.2.6</MicrosoftAspNetWebPagesPackageVersion>
 
-    <MicrosoftAspNetWebApiClientPackageVersion>5.2.4</MicrosoftAspNetWebApiClientPackageVersion>
-    <MicrosoftAspNetWebApiCorePackageVersion>5.2.4</MicrosoftAspNetWebApiCorePackageVersion>
-    <MicrosoftAspNetWebApiCorsPackageVersion>5.2.4</MicrosoftAspNetWebApiCorsPackageVersion>
-    <MicrosoftAspNetWebApiPackageVersion>5.2.4</MicrosoftAspNetWebApiPackageVersion>
-    <MicrosoftAspNetWebApiCorsPackageVersion>5.2.4</MicrosoftAspNetWebApiCorsPackageVersion>
-    <MicrosoftAspNetWebApiOwinPackageVersion>5.2.4</MicrosoftAspNetWebApiOwinPackageVersion>
-    <MicrosoftAspNetWebApiTracingPackageVersion>5.2.4</MicrosoftAspNetWebApiTracingPackageVersion>
-    <MicrosoftAspNetWebApiWebHostPackageVersion>5.2.4</MicrosoftAspNetWebApiWebHostPackageVersion>
+    <MicrosoftAspNetWebApiClientPackageVersion>5.2.6</MicrosoftAspNetWebApiClientPackageVersion>
+    <MicrosoftAspNetWebApiCorePackageVersion>5.2.6</MicrosoftAspNetWebApiCorePackageVersion>
+    <MicrosoftAspNetWebApiCorsPackageVersion>5.2.6</MicrosoftAspNetWebApiCorsPackageVersion>
+    <MicrosoftAspNetWebApiPackageVersion>5.2.6</MicrosoftAspNetWebApiPackageVersion>
+    <MicrosoftAspNetWebApiCorsPackageVersion>5.2.6</MicrosoftAspNetWebApiCorsPackageVersion>
+    <MicrosoftAspNetWebApiOwinPackageVersion>5.2.6</MicrosoftAspNetWebApiOwinPackageVersion>
+    <MicrosoftAspNetWebApiTracingPackageVersion>5.2.6</MicrosoftAspNetWebApiTracingPackageVersion>
+    <MicrosoftAspNetWebApiWebHostPackageVersion>5.2.6</MicrosoftAspNetWebApiWebHostPackageVersion>
 
     <MicrosoftAspNetCoreMvcWebApiCompatShimPackageVersion>2.0.3</MicrosoftAspNetCoreMvcWebApiCompatShimPackageVersion>
     <MicrosoftAspNetCoreOwinPackageVersion>2.0.2</MicrosoftAspNetCoreOwinPackageVersion>

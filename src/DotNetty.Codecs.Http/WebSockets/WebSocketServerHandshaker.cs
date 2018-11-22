@@ -70,12 +70,12 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public Task HandshakeAsync(IChannel channel, IFullHttpRequest req, HttpHeaders responseHeaders)
         {
-            var completion = new TaskCompletionSource();
+            var completion = channel.NewPromise();
             this.Handshake(channel, req, responseHeaders, completion);
             return completion.Task;
         }
 
-        public void Handshake(IChannel channel, IFullHttpRequest req, HttpHeaders responseHeaders, TaskCompletionSource completion)
+        public void Handshake(IChannel channel, IFullHttpRequest req, HttpHeaders responseHeaders, IPromise completion)
         {
             if (Logger.DebugEnabled)
             {
@@ -162,7 +162,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             // TODO: Make handshake work without HttpObjectAggregator at all.
             string aggregatorName = "httpAggregator";
             p.AddAfter(ctx.Name, aggregatorName, new HttpObjectAggregator(8192));
-            var completion = new TaskCompletionSource();
+            var completion = channel.NewPromise();
             p.AddAfter(aggregatorName, "handshaker", new Handshaker(this, channel, responseHeaders, completion));
             try
             {
@@ -180,9 +180,9 @@ namespace DotNetty.Codecs.Http.WebSockets
             readonly WebSocketServerHandshaker serverHandshaker;
             readonly IChannel channel;
             readonly HttpHeaders responseHeaders;
-            readonly TaskCompletionSource completion;
+            readonly IPromise completion;
 
-            public Handshaker(WebSocketServerHandshaker serverHandshaker, IChannel channel, HttpHeaders responseHeaders, TaskCompletionSource completion)
+            public Handshaker(WebSocketServerHandshaker serverHandshaker, IChannel channel, HttpHeaders responseHeaders, IPromise completion)
             {
                 this.serverHandshaker = serverHandshaker;
                 this.channel = channel;

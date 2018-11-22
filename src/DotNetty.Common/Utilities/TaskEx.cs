@@ -7,9 +7,12 @@ namespace DotNetty.Common.Utilities
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal.Logging;
 
     public static class TaskUtil
     {
+        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance(typeof(TaskUtil));
+
         public static readonly Task<int> Zero = CuteAnt.AsyncEx.TaskConstants.Int32Zero;
 
         public static readonly Task Completed = CuteAnt.AsyncEx.TaskConstants.Completed;
@@ -41,45 +44,98 @@ namespace DotNetty.Common.Utilities
             return CuteAnt.AsyncEx.AsyncUtils.FromException<T>(exception); //tcs.Task;
         }
 
-        static readonly Action<Task, object> LinkOutcomeContinuationAction = (t, tcs) =>
+        static readonly Action<Task, object> LinkOutcomeContinuationAction = LinkOutcomeContinuation;
+        private static void LinkOutcomeContinuation(Task t, object tcs)
         {
             switch (t.Status)
             {
                 case TaskStatus.RanToCompletion:
-                    ((TaskCompletionSource)tcs).TryComplete();
+                    ((IPromise)tcs).TryComplete();
                     break;
                 case TaskStatus.Canceled:
-                    ((TaskCompletionSource)tcs).TrySetCanceled();
+                    ((IPromise)tcs).TrySetCanceled();
                     break;
                 case TaskStatus.Faulted:
-                    ((TaskCompletionSource)tcs).TryUnwrap(t.Exception);
+                    ((IPromise)tcs).TryUnwrap(t.Exception);
                     break;
                 default:
                     ThrowHelper.ThrowArgumentOutOfRangeException(); break;
             }
-        };
+        }
 
-        public static void LinkOutcome(this Task task, TaskCompletionSource taskCompletionSource)
+        public static void LinkOutcome(this Task task, IPromise promise)
         {
             switch (task.Status)
             {
                 case TaskStatus.RanToCompletion:
-                    taskCompletionSource.TryComplete();
+                    promise.TryComplete();
                     break;
                 case TaskStatus.Canceled:
-                    taskCompletionSource.TrySetCanceled();
+                    promise.TrySetCanceled();
                     break;
                 case TaskStatus.Faulted:
-                    taskCompletionSource.TryUnwrap(task.Exception);
+                    promise.TryUnwrap(task.Exception);
                     break;
                 default:
 #if !NET40
                     task.ContinueWith(
                         LinkOutcomeContinuationAction,
-                        taskCompletionSource,
+                        promise,
                         TaskContinuationOptions.ExecuteSynchronously);
 #else
-                    Action<Task> continuationAction = completed => LinkOutcomeContinuationAction(completed, taskCompletionSource);
+                    Action<Task> continuationAction = completed => LinkOutcomeContinuation(completed, promise);
+                    task.ContinueWith(
+                        continuationAction,
+                        TaskContinuationOptions.ExecuteSynchronously);
+#endif
+                    break;
+            }
+        }
+
+        static readonly Action<Task, object> CascadeToContinuationAction = CascadeToContinuation;
+        private static void CascadeToContinuation(Task t, object s)
+        {
+            var wrapped = (Tuple<IPromise, IInternalLogger>)s;
+            switch (t.Status)
+            {
+                case TaskStatus.RanToCompletion:
+                    wrapped.Item1.TryComplete(wrapped.Item2);
+                    break;
+                case TaskStatus.Canceled:
+                    wrapped.Item1.TrySetCanceled(wrapped.Item2);
+                    break;
+                case TaskStatus.Faulted:
+                    wrapped.Item1.TrySetException(t.Exception, wrapped.Item2);
+                    break;
+                default:
+                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
+            }
+        }
+
+        public static void CascadeTo(this Task task, IPromise promise, IInternalLogger logger = null)
+        {
+            logger = logger ?? Logger;
+            var internalLogger = !promise.IsVoid ? logger : null;
+
+            switch (task.Status)
+            {
+                case TaskStatus.RanToCompletion:
+                    promise.TryComplete(internalLogger);
+                    break;
+                case TaskStatus.Canceled:
+                    promise.TrySetCanceled(internalLogger);
+                    break;
+                case TaskStatus.Faulted:
+                    promise.TrySetException(task.Exception, internalLogger);
+                    break;
+                default:
+#if !NET40
+                    task.ContinueWith(
+                        CascadeToContinuationAction,
+                        Tuple.Create(promise, internalLogger),
+                        TaskContinuationOptions.ExecuteSynchronously);
+#else
+                    Action<Task> continuationAction = completed => CascadeToContinuation(completed, Tuple.Create(promise, internalLogger));
                     task.ContinueWith(
                         continuationAction,
                         TaskContinuationOptions.ExecuteSynchronously);
@@ -146,6 +202,18 @@ namespace DotNetty.Common.Utilities
             }
         }
 
+        public static void TryUnwrap(this IPromise promise, Exception exception)
+        {
+            if (exception is AggregateException aggregateException)
+            {
+                promise.TrySetException(aggregateException.InnerExceptions);
+            }
+            else
+            {
+                promise.TrySetException(exception);
+            }
+        }
+
         public static Exception Unwrap(this Exception exception)
         {
             if (exception is AggregateException aggregateException)
@@ -157,6 +225,8 @@ namespace DotNetty.Common.Utilities
         }
 
         private static readonly Action<Task> IgnoreTaskContinuation = t => { var ignored = t.Exception; };
+
+        public static bool IsSuccess(this Task task) => task.IsCompleted && !task.IsFaulted && !task.IsCanceled;
 
         /// <summary>Observes and ignores a potential exception on a given Task.
         /// If a Task fails and throws an exception which is never observed, it will be caught by the .NET finalizer thread.

@@ -4,8 +4,9 @@
 namespace DotNetty.Common.Concurrency
 {
     using System;
+    using DotNetty.Common.Utilities;
 
-    public interface IScheduledRunnable : IRunnable, IScheduledTask, IComparable<IScheduledRunnable>
+    public interface IScheduledRunnable : IRunnable, IScheduledTask, IComparable<IScheduledRunnable>, IPriorityQueueNode<IScheduledRunnable>
     {
     }
 }

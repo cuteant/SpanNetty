@@ -318,7 +318,7 @@ namespace DotNetty.Buffers
 
         public static int ReserveAndWriteUtf8(IByteBuffer buf, ICharSequence seq, int reserveBytes)
         {
-            while(true)
+            while (true)
             {
                 switch (buf)
                 {
@@ -656,7 +656,7 @@ namespace DotNetty.Buffers
         {
             // ASCII uses 1 byte per char
             int len = value.Length;
-            while(true)
+            while (true)
             {
                 switch (buf)
                 {
@@ -764,6 +764,69 @@ namespace DotNetty.Buffers
                     buffer.Release();
                 }
             }
+        }
+
+        /// <summary>
+        /// Create a copy of the underlying storage from <paramref name="buf"/> into a byte array.
+        /// The copy will start at <see cref="IByteBuffer.ReaderIndex"/> and copy <see cref="IByteBuffer.ReadableBytes"/> bytes.
+        /// </summary>
+        /// <param name="buf"></param>
+        /// <returns></returns>
+        public static byte[] GetBytes(IByteBuffer buf)
+        {
+            return GetBytes(buf, buf.ReaderIndex, buf.ReadableBytes, true);
+        }
+
+        /// <summary>
+        /// Create a copy of the underlying storage from <paramref name="buf"/> into a byte array.
+        /// The copy will start at <paramref name="start"/> and copy <paramref name="length"/> bytes.
+        /// </summary>
+        /// <param name="buf"></param>
+        /// <param name="start"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
+        public static byte[] GetBytes(IByteBuffer buf, int start, int length)
+        {
+            return GetBytes(buf, start, length, true);
+        }
+
+        /// <summary>
+        /// Return an array of the underlying storage from <paramref name="buf"/> into a byte array.
+        /// The copy will start at {@code start} and copy {@code length} bytes.
+        /// If <paramref name="copy"/> is true a copy will be made of the memory.
+        /// If <paramref name="copy"/> is false the underlying storage will be shared, if possible.
+        /// </summary>
+        /// <param name="buf"></param>
+        /// <param name="start"></param>
+        /// <param name="length"></param>
+        /// <param name="copy"></param>
+        /// <returns></returns>
+        public static byte[] GetBytes(IByteBuffer buf, int start, int length, bool copy)
+        {
+            var capacity = buf.Capacity;
+            if (MathUtil.IsOutOfBounds(start, length, capacity))
+            {
+                ThrowHelper.ThrowIndexOutOfRangeException_Expected(start, length, capacity);
+            }
+
+            if (buf.HasArray)
+            {
+                if (copy || start != 0 || length != capacity)
+                {
+                    int baseOffset = buf.ArrayOffset + start;
+                    var bytes = new byte[length];
+                    PlatformDependent.CopyMemory(buf.Array, baseOffset, bytes, 0, length);
+                    return bytes;
+                }
+                else
+                {
+                    return buf.Array;
+                }
+            }
+
+            byte[] v = new byte[length];
+            buf.GetBytes(start, v);
+            return v;
         }
 
         public static void Copy(AsciiString src, IByteBuffer dst) => Copy(src, 0, dst, src.Count);

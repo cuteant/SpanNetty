@@ -7,7 +7,7 @@
     <MicrosoftBuildTasksCorePackageVersion>15.6.82</MicrosoftBuildTasksCorePackageVersion>
     <MicrosoftBuildUtilitiesCorePackageVersion>15.6.82</MicrosoftBuildUtilitiesCorePackageVersion>
 
-    <FSharpCorePackageVersion>4.5.2</FSharpCorePackageVersion>
+    <FSharpCorePackageVersion>4.5.3</FSharpCorePackageVersion>
 
     <MicrosoftBclPackageVersion>1.1.10</MicrosoftBclPackageVersion>
     <MicrosoftBclAsyncPackageVersion>1.0.168</MicrosoftBclAsyncPackageVersion>
@@ -15,18 +15,18 @@
 
     <MicrosoftAzureKeyVaultPackageVersion>3.0.0</MicrosoftAzureKeyVaultPackageVersion>
 
-    <MicrosoftApplicationInsightsAspNetCorePackageVersion>2.4.1</MicrosoftApplicationInsightsAspNetCorePackageVersion>
-    <MicrosoftApplicationInsightsPackageVersion>2.7.2</MicrosoftApplicationInsightsPackageVersion>
-    <MicrosoftApplicationInsightsWebPackageVersion>2.7.2</MicrosoftApplicationInsightsWebPackageVersion>
+    <MicrosoftApplicationInsightsAspNetCorePackageVersion>2.5.1</MicrosoftApplicationInsightsAspNetCorePackageVersion>
+    <MicrosoftApplicationInsightsPackageVersion>2.8.1</MicrosoftApplicationInsightsPackageVersion>
+    <MicrosoftApplicationInsightsWebPackageVersion>2.8.1</MicrosoftApplicationInsightsWebPackageVersion>
 
-    <MicrosoftIdentityModelLoggingPackageVersion>5.2.4</MicrosoftIdentityModelLoggingPackageVersion>
-    <MicrosoftIdentityModelProtocolsPackageVersion>5.2.4</MicrosoftIdentityModelProtocolsPackageVersion>
-    <MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>5.2.4</MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>
-    <MicrosoftIdentityModelProtocolsWsFederationPackageVersion>5.2.4</MicrosoftIdentityModelProtocolsWsFederationPackageVersion>
-    <MicrosoftIdentityModelTokensPackageVersion>5.2.4</MicrosoftIdentityModelTokensPackageVersion>
-    <MicrosoftIdentityModelTokensSamlPackageVersion>5.2.4</MicrosoftIdentityModelTokensSamlPackageVersion>
-    <MicrosoftIdentityModelXmlPackageVersion>5.2.4</MicrosoftIdentityModelXmlPackageVersion>
-    <SystemIdentityModelTokensJwtPackageVersion>5.2.4</SystemIdentityModelTokensJwtPackageVersion>
+    <MicrosoftIdentityModelLoggingPackageVersion>5.3.0</MicrosoftIdentityModelLoggingPackageVersion>
+    <MicrosoftIdentityModelProtocolsPackageVersion>5.3.0</MicrosoftIdentityModelProtocolsPackageVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>5.3.0</MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>
+    <MicrosoftIdentityModelProtocolsWsFederationPackageVersion>5.3.0</MicrosoftIdentityModelProtocolsWsFederationPackageVersion>
+    <MicrosoftIdentityModelTokensPackageVersion>5.3.0</MicrosoftIdentityModelTokensPackageVersion>
+    <MicrosoftIdentityModelTokensSamlPackageVersion>5.3.0</MicrosoftIdentityModelTokensSamlPackageVersion>
+    <MicrosoftIdentityModelXmlPackageVersion>5.3.0</MicrosoftIdentityModelXmlPackageVersion>
+    <SystemIdentityModelTokensJwtPackageVersion>5.3.0</SystemIdentityModelTokensJwtPackageVersion>
 
     <MonoPosixNETStandardPackageVersion>1.0.0</MonoPosixNETStandardPackageVersion>
   </PropertyGroup>

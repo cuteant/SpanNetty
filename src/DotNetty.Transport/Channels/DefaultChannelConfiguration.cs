@@ -196,7 +196,7 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        public IMessageSizeEstimator MessageSizeEstimator
+        public virtual IMessageSizeEstimator MessageSizeEstimator
         {
             get { return Volatile.Read(ref this.messageSizeEstimator); }
             set
@@ -235,7 +235,7 @@ namespace DotNetty.Transport.Channels
             set { Interlocked.Exchange(ref this.autoClose, value ? Constants.True : Constants.False); }
         }
 
-        public int WriteBufferHighWaterMark
+        public virtual int WriteBufferHighWaterMark
         {
             get { return Volatile.Read(ref this.writeBufferHighWaterMark); }
             set
@@ -247,7 +247,7 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        public int WriteBufferLowWaterMark
+        public virtual int WriteBufferLowWaterMark
         {
             get { return Volatile.Read(ref this.writeBufferLowWaterMark); }
             set

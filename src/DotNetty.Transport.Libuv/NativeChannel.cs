@@ -28,7 +28,7 @@ namespace DotNetty.Transport.Libuv
         internal bool ReadPending;
         int _state;
 
-        TaskCompletionSource connectPromise;
+        IPromise connectPromise;
         IScheduledTask connectCancellationTask;
 
         protected NativeChannel(IChannel parent) : base(parent)
@@ -89,7 +89,7 @@ namespace DotNetty.Transport.Libuv
 
         protected override void DoClose()
         {
-            TaskCompletionSource promise = this.connectPromise;
+            var promise = this.connectPromise;
             if (promise != null)
             {
                 promise.TrySetException(ThrowHelper.GetClosedChannelException());
@@ -111,7 +111,7 @@ namespace DotNetty.Transport.Libuv
         bool INativeChannel.IsBound => this.IsBound;
         internal abstract bool IsBound { get; }
 
-        public abstract class NativeChannelUnsafe : AbstractUnsafe, INativeUnsafe
+        public abstract partial class NativeChannelUnsafe : AbstractUnsafe, INativeUnsafe
         {
             protected NativeChannelUnsafe() : base() //(NativeChannel channel) : base(channel)
             {
@@ -132,14 +132,14 @@ namespace DotNetty.Transport.Libuv
                         ThrowHelper.ThrowInvalidOperationException_ConnAttempt();
                     }
 
-                    ch.connectPromise = new TaskCompletionSource(remoteAddress);
+                    ch.connectPromise = ch.NewPromise(remoteAddress);
 
                     // Schedule connect timeout.
                     TimeSpan connectTimeout = ch.Configuration.ConnectTimeout;
                     if (connectTimeout > TimeSpan.Zero)
                     {
                         ch.connectCancellationTask = ch.EventLoop
-                            .Schedule(CancelConnect, ch, remoteAddress, connectTimeout);
+                            .Schedule(CancelConnectAction, ch, remoteAddress, connectTimeout);
                     }
 
                     ch.DoConnect(remoteAddress, localAddress);
@@ -156,7 +156,7 @@ namespace DotNetty.Transport.Libuv
             {
                 var ch = (TChannel)context;
                 var address = (IPEndPoint)state;
-                TaskCompletionSource promise = ch.connectPromise;
+                var promise = ch.connectPromise;
                 var cause = new ConnectTimeoutException($"connection timed out: {address}");
                 if (promise != null && promise.TrySetException(cause))
                 {
@@ -170,7 +170,7 @@ namespace DotNetty.Transport.Libuv
                 var ch = this.channel;
                 ch.connectCancellationTask?.Cancel();
 
-                TaskCompletionSource promise = ch.connectPromise;
+                var promise = ch.connectPromise;
                 bool success = false;
                 try
                 {
@@ -253,6 +253,13 @@ namespace DotNetty.Transport.Libuv
                 {
                     // nothing was read -> release the buffer.
                     buffer.Release();
+                    buffer = null;
+                    close = allocHandle.LastBytesRead < 0;
+                    if (close)
+                    {
+                        // There is nothing left to read as we received an EOF.
+                        ch.ReadPending = false;
+                    }
                 }
                 else
                 {
@@ -272,7 +279,7 @@ namespace DotNetty.Transport.Libuv
                     {
                         pipeline.FireExceptionCaught(ThrowHelper.GetChannelException(error));
                     }
-                    this.CloseSafe();
+                    if (ch.Open) { this.Close(this.VoidPromise()); } // ## 苦竹 修改 this.CloseSafe(); ##
                 }
                 else
                 {
@@ -328,7 +335,7 @@ namespace DotNetty.Transport.Libuv
                     {
                         input.FailFlushed(error, true);
                         ch.Pipeline.FireExceptionCaught(error);
-                        CloseSafe(ch, this.CloseAsync(ThrowHelper.GetChannelException_FailedToWrite(error), false));
+                        this.Close(this.VoidPromise(), ThrowHelper.GetChannelException_FailedToWrite(error), WriteClosedChannelException , false);
                     }
                     else
                     {
@@ -340,7 +347,7 @@ namespace DotNetty.Transport.Libuv
                 }
                 catch (Exception ex)
                 {
-                    CloseSafe(ch, this.CloseAsync(ThrowHelper.GetClosedChannelException_FailedToWrite(ex), false));
+                    this.Close(this.VoidPromise(), ThrowHelper.GetClosedChannelException_FailedToWrite(ex), WriteClosedChannelException, false);
                 }
                 this.Flush0();
             }

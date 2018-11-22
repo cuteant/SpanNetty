@@ -2,6 +2,8 @@
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using DotNetty.Buffers;
+using DotNetty.Codecs;
 using DotNetty.Handlers.IPFilter;
 using DotNetty.Handlers.Timeout;
 using DotNetty.Transport.Channels;
@@ -83,6 +85,9 @@ namespace DotNetty.Handlers
         hostName,
         serverTlsSetting,
         exception,
+        protocol,
+        ipAddress,
+        rules,
     }
 
     #endregion
@@ -265,6 +270,12 @@ namespace DotNetty.Handlers
                 return new InvalidOperationException(
                   $"Certificate {certificate.Thumbprint} cannot be used as an SSL server certificate. It has an Extended Key Usage extension but the usages do not include Server Authentication (OID 1.3.6.1.5.5.7.3.1).");
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static UnsupportedMessageTypeException GetUnsupportedMessageTypeException(object message)
+        {
+            return new UnsupportedMessageTypeException(message, typeof(IByteBuffer));
         }
     }
 }

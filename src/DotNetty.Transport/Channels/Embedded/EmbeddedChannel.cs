@@ -13,10 +13,11 @@ namespace DotNetty.Transport.Channels.Embedded
     using CuteAnt.AsyncEx;
     using CuteAnt.Collections;
     using DotNetty.Common;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
-    public class EmbeddedChannel : AbstractChannel<EmbeddedChannel, EmbeddedChannel.EmbeddedUnsafe>
+    public class EmbeddedChannel : AbstractChannel<EmbeddedChannel, EmbeddedChannel.WrappingEmbeddedUnsafe>
     {
         static readonly EndPoint LOCAL_ADDRESS = new EmbeddedSocketAddress();
         static readonly EndPoint REMOTE_ADDRESS = new EmbeddedSocketAddress();
@@ -87,8 +88,8 @@ namespace DotNetty.Transport.Channels.Embedded
         /// <summary>Create a new instance with the pipeline initialized with the specified handlers.</summary>
         /// <param name="id">The <see cref="IChannelId" /> of this channel.</param>
         /// <param name="hasDisconnect">
-        ///     <c>false</c> if this <see cref="IChannel" /> will delegate <see cref="DisconnectAsync" />
-        ///     to <see cref="CloseAsync" />, <c>true</c> otherwise.
+        ///     <c>false</c> if this <see cref="IChannel" /> will delegate <see cref="DisconnectAsync()" />
+        ///     to <see cref="CloseAsync()" />, <c>true</c> otherwise.
         /// </param>
         /// <param name="handlers">
         ///     The <see cref="IChannelHandler" />s that will be added to the <see cref="IChannelPipeline" />
@@ -128,11 +129,7 @@ namespace DotNetty.Transport.Channels.Embedded
                 IChannelPipeline pipeline = channel.Pipeline;
                 foreach (IChannelHandler h in handlers)
                 {
-                    if (h == null)
-                    {
-                        break;
-
-                    }
+                    if (h == null) { break; }
                     pipeline.AddLast(h);
                 }
             }));
@@ -148,7 +145,11 @@ namespace DotNetty.Transport.Channels.Embedded
         {
             Task future = this.loop.RegisterAsync(this);
             Debug.Assert(future.IsCompleted);
-            this.Pipeline.AddLast(new LastInboundHandler(this.inboundMessages, this.RecordException));
+            if (!future.IsSuccess())
+            {
+                throw future.Exception.InnerException;
+            }
+            this.Pipeline.AddLast(new LastInboundHandler(this));
         }
 
         protected sealed override DefaultChannelPipeline NewChannelPipeline() => new EmbeddedChannelPipeline(this);
@@ -172,12 +173,36 @@ namespace DotNetty.Transport.Channels.Embedded
         /// <summary>
         /// Return received data from this <see cref="IChannel"/>.
         /// </summary>
-        public T ReadInbound<T>() => (T)Poll(this.inboundMessages);
+        public T ReadInbound<T>()
+        {
+#if DEBUG
+            var message = (T)Poll(this.inboundMessages);
+            if (message != null)
+            {
+                ReferenceCountUtil.Touch(message, "Caller of readInbound() will handle the message from this point");
+            }
+            return message;
+#else
+            return (T)Poll(this.inboundMessages);
+#endif
+        }
 
         /// <summary>
         /// Read data from the outbound. This may return <c>null</c> if nothing is readable.
         /// </summary>
-        public T ReadOutbound<T>() => (T)Poll(this.outboundMessages);
+        public T ReadOutbound<T>()
+        {
+#if DEBUG
+            var message = (T)Poll(this.outboundMessages);
+            if (message != null)
+            {
+                ReferenceCountUtil.Touch(message, "Caller of readOutbound() will handle the message from this point.");
+            }
+            return message;
+#else
+            return (T)Poll(this.outboundMessages);
+#endif
+        }
 
         protected override EndPoint LocalAddressInternal => this.Active ? LOCAL_ADDRESS : null;
 
@@ -290,23 +315,32 @@ namespace DotNetty.Transport.Channels.Embedded
                 p.FireChannelRead(m);
             }
 
-            this.FlushInbound(false);
+            this.FlushInbound(false, this.VoidPromise());
             return this.inboundMessages.NonEmpty;
         }
 
-        public void WriteOneInbound(object msg)
+        public Task WriteOneInbound(object msg) => this.WriteOneInbound(msg, this.NewPromise());
+
+        public Task WriteOneInbound(object msg, IPromise promise)
         {
             if (this.CheckOpen(true))
             {
                 this.Pipeline.FireChannelRead(msg);
             }
-            this.CheckException();
+            this.CheckException(promise);
+            return promise.Task;
         }
 
         /// <summary>Flushes the inbound of this <see cref="IChannel"/>. This method is conceptually equivalent to Flush.</summary>
-        /// <param name="recordException"></param>
+        public EmbeddedChannel FlushInbound()
+        {
+            this.FlushInbound(true, this.VoidPromise());
+            return this;
+        }
+
+        /// <summary>Flushes the inbound of this <see cref="IChannel"/>. This method is conceptually equivalent to Flush.</summary>
         /// <returns></returns>
-        public EmbeddedChannel FlushInbound(bool recordException = true)
+        public void FlushInbound(bool recordException, IPromise promise)
         {
             if (this.CheckOpen(recordException))
             {
@@ -314,8 +348,7 @@ namespace DotNetty.Transport.Channels.Embedded
                 this.RunPendingTasks();
             }
 
-            this.CheckException();
-            return this;
+            this.CheckException(promise);
         }
 
         /// <summary>
@@ -333,36 +366,41 @@ namespace DotNetty.Transport.Channels.Embedded
 
             ThreadLocalObjectList futures = ThreadLocalObjectList.NewInstance(msgs.Length);
 
-            foreach (object m in msgs)
+            try
             {
-                if (m == null)
+                foreach (object m in msgs)
                 {
-                    break;
+                    if (m == null)
+                    {
+                        break;
+                    }
+                    futures.Add(this.WriteAsync(m));
                 }
-                futures.Add(this.WriteAsync(m));
+
+                this.FlushOutbound0();
+
+                int size = futures.Count;
+                for (int i = 0; i < size; i++)
+                {
+                    var future = (Task)futures[i];
+                    if (future.IsCompleted)
+                    {
+                        this.RecordException(future);
+                    }
+                    else
+                    {
+                        // The write may be delayed to run later by RunPendingTasks()
+                        future.ContinueWith(t => this.RecordException(t));
+                    }
+                }
+
+                this.CheckException();
+                return this.outboundMessages.NonEmpty;
             }
-
-            this.FlushOutbound0();
-
-            int size = futures.Count;
-            for (int i = 0; i < size; i++)
+            finally
             {
-                var future = (Task)futures[i];
-                if (future.IsCompleted)
-                {
-                    this.RecordException(future);
-                }
-                else
-                {
-                    // The write may be delayed to run later by runPendingTasks()
-                    future.ContinueWith(t => this.RecordException(t));
-                }
+                futures.Return();
             }
-            futures.Return();
-
-            this.RunPendingTasks();
-            this.CheckException();
-            return this.outboundMessages.NonEmpty;
         }
 
         void RecordException(Task future)
@@ -395,24 +433,16 @@ namespace DotNetty.Transport.Channels.Embedded
         /// Writes one message to the outbound of this <see cref="IChannel"/> and does not flush it. This
         /// method is conceptually equivalent to WriteAsync.
         /// </summary>
-        /// <param name="msg"></param>
-        /// <returns></returns>
-        public void WriteOneOutbound(object msg)
+        public Task WriteOneOutbound(object msg) => this.WriteOneOutbound(msg, this.NewPromise());
+
+        public Task WriteOneOutbound(object msg, IPromise promise)
         {
             if (this.CheckOpen(true))
             {
-                var future = this.WriteAsync(msg);
-                if (future.IsCompleted)
-                {
-                    this.RecordException(future);
-                }
-                else
-                {
-                    // The write may be delayed to run later by runPendingTasks()
-                    future.ContinueWith(t => this.RecordException(t));
-                }
+                return this.WriteAsync(msg, promise);
             }
-            this.CheckException();
+            this.CheckException(promise);
+            return promise.Task;
         }
 
         /// <summary>Flushes the outbound of this <see cref="IChannel"/>.
@@ -424,7 +454,7 @@ namespace DotNetty.Transport.Channels.Embedded
             {
                 this.FlushOutbound0();
             }
-            this.CheckException();
+            this.CheckException(this.VoidPromise());
             return this;
         }
 
@@ -509,10 +539,15 @@ namespace DotNetty.Transport.Channels.Embedded
 
         public override Task CloseAsync()
         {
+            return this.CloseAsync(this.NewPromise());
+        }
+
+        public override Task CloseAsync(IPromise promise)
+        {
             // We need to call RunPendingTasks() before calling super.CloseAsync() as there may be something in the queue
             // that needs to be run before the actual close takes place.
             this.RunPendingTasks();
-            Task future = base.CloseAsync();
+            Task future = base.CloseAsync(promise);
 
             // Now finish everything else and cancel all scheduled tasks that were not ready set.
             this.FinishPendingTasks(true);
@@ -521,7 +556,12 @@ namespace DotNetty.Transport.Channels.Embedded
 
         public override Task DisconnectAsync()
         {
-            Task future = base.DisconnectAsync();
+            return this.DisconnectAsync(this.NewPromise());
+        }
+
+        public override Task DisconnectAsync(IPromise promise)
+        {
+            Task future = base.DisconnectAsync(promise);
             this.FinishPendingTasks(!this.Metadata.HasDisconnect);
             return future;
         }
@@ -529,27 +569,30 @@ namespace DotNetty.Transport.Channels.Embedded
         /// <summary>
         ///     Check to see if there was any <see cref="Exception" /> and rethrow if so.
         /// </summary>
-        public void CheckException()
+        public void CheckException(IPromise promise)
         {
             Exception e = this.lastException;
             if (e == null)
             {
+                promise.TryComplete();
                 return;
             }
 
             this.lastException = null;
+            if (promise.IsVoid)
+            {
 #if NET40
-            throw ExceptionEnlightenment.PrepareForRethrow(e);
+                throw ExceptionEnlightenment.PrepareForRethrow(e);
 #else
-            ExceptionDispatchInfo.Capture(e).Throw();
+                ExceptionDispatchInfo.Capture(e).Throw();
 #endif
+            }
+            promise.TrySetException(e);
         }
 
-        public Task CheckExceptionAsync()
+        public void CheckException()
         {
-            var e = this.lastException;
-            if (null == e) { return TaskConstants.Completed; }
-            return AsyncUtils.FromException(e);
+            this.CheckException(this.VoidPromise());
         }
 
         /// <summary>Returns <c>true</c> if the <see cref="IChannel" /> is open and records optionally
@@ -591,18 +634,23 @@ namespace DotNetty.Transport.Channels.Embedded
 
         /// <summary>Called for each outbound message.</summary>
         /// <param name="msg"></param>
-        [MethodImpl(InlineMethod.Value)]
-        protected void HandleOutboundMessage(object msg)
+        protected virtual void HandleOutboundMessage(object msg)
         {
             this.outboundMessages.Enqueue(msg);
         }
 
         /// <summary>Called for each inbound message.</summary>
         /// <param name="msg"></param>
-        [MethodImpl(InlineMethod.Value)]
-        protected void HandleInboundMessage(object msg)
+        protected virtual void HandleInboundMessage(object msg)
         {
             this.inboundMessages.Enqueue(msg);
+        }
+
+        protected override WrappingEmbeddedUnsafe NewUnsafe()
+        {
+            var @unsafe = new WrappingEmbeddedUnsafe();
+            @unsafe.Initialize(this);
+            return @unsafe;
         }
 
         public sealed class EmbeddedUnsafe : AbstractUnsafe
@@ -615,19 +663,19 @@ namespace DotNetty.Transport.Channels.Embedded
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress) => TaskUtil.Completed;
         }
 
-        // todo
         public sealed class WrappingEmbeddedUnsafe : IChannelUnsafe
         {
-            readonly EmbeddedUnsafe innerUnsafe;
+            EmbeddedUnsafe innerUnsafe;
             EmbeddedChannel embeddedChannel;
 
-            public WrappingEmbeddedUnsafe(EmbeddedUnsafe innerUnsafe) : base() { this.innerUnsafe = innerUnsafe; }
+            public WrappingEmbeddedUnsafe() { }
 
-            //public void Initialize(IChannel channel)
-            //{
-            //    this.innerUnsafe.Initialize(channel);
-            //    this.embeddedChannel = (EmbeddedChannel)channel;
-            //}
+            public void Initialize(IChannel channel)
+            {
+                this.embeddedChannel = (EmbeddedChannel)channel;
+                this.innerUnsafe = new EmbeddedUnsafe();
+                this.innerUnsafe.Initialize(embeddedChannel);
+            }
 
             public IRecvByteBufAllocatorHandle RecvBufAllocHandle => this.innerUnsafe.RecvBufAllocHandle;
 
@@ -639,21 +687,15 @@ namespace DotNetty.Transport.Channels.Embedded
                 this.embeddedChannel.RunPendingTasks();
             }
 
+            public async Task RegisterAsync(IEventLoop eventLoop)
+            {
+                await this.innerUnsafe.RegisterAsync(eventLoop);
+                this.embeddedChannel.RunPendingTasks();
+            }
+
             public async Task BindAsync(EndPoint localAddress)
             {
                 await this.innerUnsafe.BindAsync(localAddress);
-                this.embeddedChannel.RunPendingTasks();
-            }
-
-            public async Task CloseAsync()
-            {
-                await this.innerUnsafe.CloseAsync();
-                this.embeddedChannel.RunPendingTasks();
-            }
-
-            public void CloseForcibly()
-            {
-                this.innerUnsafe.CloseForcibly();
                 this.embeddedChannel.RunPendingTasks();
             }
 
@@ -663,15 +705,33 @@ namespace DotNetty.Transport.Channels.Embedded
                 this.embeddedChannel.RunPendingTasks();
             }
 
-            public async Task DeregisterAsync()
+            public void Disconnect(IPromise promise)
             {
-                await this.innerUnsafe.DeregisterAsync();
+                this.innerUnsafe.Disconnect(promise);
                 this.embeddedChannel.RunPendingTasks();
             }
 
-            public async Task DisconnectAsync()
+            public void Close(IPromise promise)
             {
-                await this.innerUnsafe.DisconnectAsync();
+                this.innerUnsafe.Close(promise);
+                this.embeddedChannel.RunPendingTasks();
+            }
+
+            public void CloseForcibly()
+            {
+                this.innerUnsafe.CloseForcibly();
+                this.embeddedChannel.RunPendingTasks();
+            }
+
+            public void Deregister(IPromise promise)
+            {
+                this.innerUnsafe.Deregister(promise);
+                this.embeddedChannel.RunPendingTasks();
+            }
+
+            public void Write(object message, IPromise promise)
+            {
+                this.innerUnsafe.Write(message, promise);
                 this.embeddedChannel.RunPendingTasks();
             }
 
@@ -681,33 +741,24 @@ namespace DotNetty.Transport.Channels.Embedded
                 this.embeddedChannel.RunPendingTasks();
             }
 
-            public async Task RegisterAsync(IEventLoop eventLoop)
+            public IPromise VoidPromise()
             {
-                await this.innerUnsafe.RegisterAsync(eventLoop);
-                this.embeddedChannel.RunPendingTasks();
-            }
-
-            public async Task WriteAsync(object message)
-            {
-                await this.innerUnsafe.WriteAsync(message);
-                this.embeddedChannel.RunPendingTasks();
+                return this.innerUnsafe.VoidPromise();
             }
         }
 
         internal sealed class LastInboundHandler : ChannelHandlerAdapter
         {
-            readonly QueueX<object> inboundMessages;
-            readonly Action<Exception> recordException;
+            readonly EmbeddedChannel embeddedChannel;
 
-            public LastInboundHandler(QueueX<object> inboundMessages, Action<Exception> recordException)
+            public LastInboundHandler(EmbeddedChannel channel)
             {
-                this.inboundMessages = inboundMessages;
-                this.recordException = recordException;
+                this.embeddedChannel = channel;
             }
 
-            public override void ChannelRead(IChannelHandlerContext context, object message) => this.inboundMessages.Enqueue(message);
+            public override void ChannelRead(IChannelHandlerContext context, object message) => this.embeddedChannel.HandleInboundMessage(message);
 
-            public override void ExceptionCaught(IChannelHandlerContext context, Exception exception) => this.recordException(exception);
+            public override void ExceptionCaught(IChannelHandlerContext context, Exception exception) => this.embeddedChannel.RecordException(exception);
         }
 
         sealed class EmbeddedChannelPipeline : DefaultChannelPipeline
@@ -716,7 +767,7 @@ namespace DotNetty.Transport.Channels.Embedded
             public EmbeddedChannelPipeline(EmbeddedChannel channel)
                 : base(channel)
             {
-                embeddedChannel = channel;
+                this.embeddedChannel = channel;
             }
 
             protected override void OnUnhandledInboundException(Exception cause) => this.embeddedChannel.RecordException(cause);
