@@ -2,7 +2,7 @@
 namespace DotNetty.Codecs.Http2.Tests
 {
     using DotNetty.Buffers;
-    using DotNetty.Tests.Common;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
     /// <summary>

@@ -64,17 +64,18 @@ namespace DotNetty.Common.Internal
                     return PlatformDependent0.ByteArrayEquals(array1, startPos1, array2, startPos2, length);
         }
 
-#if !NET40
         public static unsafe int ByteArrayEqualsConstantTime(byte[] bytes1, int startPos1, byte[] bytes2, int startPos2, int length)
         {
             if (length <= 0) { return 1; }
 
-            //return ConstantTimeUtils.EqualsConstantTime(bytes1, startPos1, bytes2, startPos2, length);
+#if NET40
+            return ConstantTimeUtils.EqualsConstantTime(bytes1, startPos1, bytes2, startPos2, length);
+#else
             fixed (byte* array1 = bytes1)
                 fixed (byte* array2 = bytes2)
                     return PlatformDependent0.ByteArrayEqualsConstantTime(array1, startPos1, array2, startPos2, length);
-        }
 #endif
+        }
 
         [MethodImpl(InlineMethod.Value)]
         public static unsafe int HashCodeAscii(byte[] bytes, int startPos, int length)

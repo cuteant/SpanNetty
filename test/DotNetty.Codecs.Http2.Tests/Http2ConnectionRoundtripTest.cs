@@ -17,11 +17,14 @@ namespace DotNetty.Codecs.Http2.Tests
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Local;
     using DotNetty.Transport.Channels.Sockets;
+#if !TEST40
     using DotNetty.Transport.Libuv;
+#endif
     using Moq;
     using Xunit;
     using Xunit.Abstractions;
 
+#if !TEST40
     public sealed class LibuvHttp2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
     {
         public LibuvHttp2ConnectionRoundtripTest(ITestOutputHelper output) : base(output) { }
@@ -52,6 +55,7 @@ namespace DotNetty.Codecs.Http2.Tests
             base.StressTest();
         }
     }
+#endif
 
     public sealed class SocketHttp2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
     {
@@ -69,6 +73,7 @@ namespace DotNetty.Codecs.Http2.Tests
         }
     }
 
+#if !TEST40
     public sealed class Http2ConnectionRoundtripTest : AbstractHttp2ConnectionRoundtripTest
     {
         public Http2ConnectionRoundtripTest(ITestOutputHelper output) : base(output) { }
@@ -92,6 +97,7 @@ namespace DotNetty.Codecs.Http2.Tests
             this.clientChannel = ccf.GetAwaiter().GetResult();
         }
     }
+#endif
 
     [Collection("BootstrapEnv")]
     public abstract class AbstractHttp2ConnectionRoundtripTest : TestBase, IDisposable
@@ -1343,10 +1349,15 @@ namespace DotNetty.Codecs.Http2.Tests
 
         protected virtual void StartBootstrap()
         {
-            this.serverChannel = this.sb.BindAsync(IPAddress.IPv6Loopback, Port).GetAwaiter().GetResult();
+#if !TEST40
+            var loopback = IPAddress.IPv6Loopback;
+#else
+            var loopback = IPAddress.Loopback;
+#endif
+            this.serverChannel = this.sb.BindAsync(loopback, Port).GetAwaiter().GetResult();
 
             var port = ((IPEndPoint)this.serverChannel.LocalAddress).Port;
-            var ccf = this.cb.ConnectAsync(IPAddress.IPv6Loopback, port);
+            var ccf = this.cb.ConnectAsync(loopback, port);
             this.clientChannel = ccf.GetAwaiter().GetResult();
         }
 

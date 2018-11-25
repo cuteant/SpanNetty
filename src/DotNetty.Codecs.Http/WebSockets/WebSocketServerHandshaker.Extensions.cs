@@ -23,7 +23,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
             else
             {
-                wrapped.Item1.TrySetException(t.Exception);
+                wrapped.Item1.TrySetException(t.Exception.InnerExceptions);
             }
         }
 

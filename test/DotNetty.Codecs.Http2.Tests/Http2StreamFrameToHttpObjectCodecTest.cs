@@ -104,7 +104,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.False(headersFrame.IsEndStream);
 
             var trailersFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
-            Assert.Equal("value", trailersFrame.Headers.Get((AsciiString)"key", null));
+            AssertEx.Equal("value", trailersFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(trailersFrame.IsEndStream);
 
             Assert.Null(ch.ReadOutbound<object>());
@@ -137,7 +137,7 @@ namespace DotNetty.Codecs.Http2.Tests
             }
 
             var trailersFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
-            Assert.Equal("value", trailersFrame.Headers.Get((AsciiString)"key", null));
+            AssertEx.Equal("value", trailersFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(trailersFrame.IsEndStream);
 
             Assert.Null(ch.ReadOutbound<object>());
@@ -237,7 +237,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.True(ch.WriteOutbound(trailers));
 
             var headerFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
-            Assert.Equal("value", headerFrame.Headers.Get((AsciiString)"key", null));
+            AssertEx.Equal("value", headerFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(headerFrame.IsEndStream);
 
             Assert.Null(ch.ReadOutbound<object>());
@@ -266,7 +266,7 @@ namespace DotNetty.Codecs.Http2.Tests
             }
 
             var headerFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
-            Assert.Equal("value", headerFrame.Headers.Get((AsciiString)"key", null));
+            AssertEx.Equal("value", headerFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(headerFrame.IsEndStream);
 
             Assert.Null(ch.ReadOutbound<object>());
@@ -363,7 +363,7 @@ namespace DotNetty.Codecs.Http2.Tests
             try
             {
                 Assert.Equal(0, trailers.Content.ReadableBytes);
-                Assert.Equal("value", trailers.TrailingHeaders.Get((AsciiString)"key", null));
+                AssertEx.Equal("value", trailers.TrailingHeaders.Get((AsciiString)"key", null));
                 Assert.False(trailers is IFullHttpRequest);
             }
             finally
@@ -503,9 +503,9 @@ namespace DotNetty.Codecs.Http2.Tests
                 frames.TryDequeue(out var streamFrame);
                 var headersFrame = (IHttp2HeadersFrame)streamFrame;
                 var headers = headersFrame.Headers;
-                Assert.Equal("http", headers.Scheme);
-                Assert.Equal("GET", headers.Method);
-                Assert.Equal("/hello/world", headers.Path);
+                AssertEx.Equal("http", headers.Scheme);
+                AssertEx.Equal("GET", headers.Method);
+                AssertEx.Equal("/hello/world", headers.Path);
                 Assert.True(headersFrame.IsEndStream);
                 Assert.False(frames.TryDequeue(out _));
             }
@@ -526,9 +526,9 @@ namespace DotNetty.Codecs.Http2.Tests
             var headersFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
             IHttp2Headers headers = headersFrame.Headers;
 
-            Assert.Equal("http", headers.Scheme);
-            Assert.Equal("PUT", headers.Method);
-            Assert.Equal("/hello/world", headers.Path);
+            AssertEx.Equal("http", headers.Scheme);
+            AssertEx.Equal("PUT", headers.Method);
+            AssertEx.Equal("/hello/world", headers.Path);
             Assert.False(headersFrame.IsEndStream);
 
             var dataFrame = ch.ReadOutbound<IHttp2DataFrame>();
@@ -560,13 +560,13 @@ namespace DotNetty.Codecs.Http2.Tests
             var headersFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
             IHttp2Headers headers = headersFrame.Headers;
 
-            Assert.Equal("http", headers.Scheme);
-            Assert.Equal("PUT", headers.Method);
-            Assert.Equal("/hello/world", headers.Path);
+            AssertEx.Equal("http", headers.Scheme);
+            AssertEx.Equal("PUT", headers.Method);
+            AssertEx.Equal("/hello/world", headers.Path);
             Assert.False(headersFrame.IsEndStream);
 
             IHttp2HeadersFrame trailersFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
-            Assert.Equal("value", trailersFrame.Headers.Get((AsciiString)"key", null));
+            AssertEx.Equal("value", trailersFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(trailersFrame.IsEndStream);
 
             Assert.Null(ch.ReadOutbound<object>());
@@ -588,9 +588,9 @@ namespace DotNetty.Codecs.Http2.Tests
             var headersFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
             IHttp2Headers headers = headersFrame.Headers;
 
-            Assert.Equal("http", headers.Scheme);
-            Assert.Equal("PUT", headers.Method);
-            Assert.Equal("/hello/world", headers.Path);
+            AssertEx.Equal("http", headers.Scheme);
+            AssertEx.Equal("PUT", headers.Method);
+            AssertEx.Equal("/hello/world", headers.Path);
             Assert.False(headersFrame.IsEndStream);
 
             var dataFrame = ch.ReadOutbound<IHttp2DataFrame>();
@@ -605,7 +605,7 @@ namespace DotNetty.Codecs.Http2.Tests
             }
 
             IHttp2HeadersFrame trailersFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
-            Assert.Equal("value", trailersFrame.Headers.Get((AsciiString)"key", null));
+            AssertEx.Equal("value", trailersFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(trailersFrame.IsEndStream);
 
             Assert.Null(ch.ReadOutbound<object>());
@@ -622,9 +622,9 @@ namespace DotNetty.Codecs.Http2.Tests
             var headersFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
             IHttp2Headers headers = headersFrame.Headers;
 
-            Assert.Equal("http", headers.Scheme);
-            Assert.Equal("GET", headers.Method);
-            Assert.Equal("/hello/world", headers.Path);
+            AssertEx.Equal("http", headers.Scheme);
+            AssertEx.Equal("GET", headers.Method);
+            AssertEx.Equal("/hello/world", headers.Path);
             Assert.False(headersFrame.IsEndStream);
 
             Assert.Null(ch.ReadOutbound<object>());
@@ -709,7 +709,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.True(ch.WriteOutbound(trailers));
 
             IHttp2HeadersFrame headerFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
-            Assert.Equal("value", headerFrame.Headers.Get((AsciiString)"key", null));
+            AssertEx.Equal("value", headerFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(headerFrame.IsEndStream);
 
             Assert.Null(ch.ReadOutbound<object>());
@@ -738,7 +738,7 @@ namespace DotNetty.Codecs.Http2.Tests
             }
 
             IHttp2HeadersFrame headerFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
-            Assert.Equal("value", headerFrame.Headers.Get((AsciiString)"key", null));
+            AssertEx.Equal("value", headerFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(headerFrame.IsEndStream);
 
             Assert.Null(ch.ReadOutbound<object>());
@@ -883,7 +883,7 @@ namespace DotNetty.Codecs.Http2.Tests
             try
             {
                 Assert.Equal(0, trailers.Content.ReadableBytes);
-                Assert.Equal("value", trailers.TrailingHeaders.Get((AsciiString)"key", null));
+                AssertEx.Equal("value", trailers.TrailingHeaders.Get((AsciiString)"key", null));
                 Assert.False(trailers is IFullHttpRequest);
             }
             finally

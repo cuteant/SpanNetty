@@ -3,7 +3,7 @@ namespace DotNetty.Codecs.Http2.Tests
 {
     using System;
     using DotNetty.Common.Concurrency;
-    using DotNetty.Tests.Common;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using Moq;
     using Xunit;

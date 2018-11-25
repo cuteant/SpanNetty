@@ -19,11 +19,14 @@ namespace DotNetty.Codecs.Http2.Tests
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Local;
     using DotNetty.Transport.Channels.Sockets;
+#if !TEST40
     using DotNetty.Transport.Libuv;
+#endif
     using Moq;
     using Xunit;
     using Xunit.Abstractions;
 
+#if !TEST40
     public sealed class LibuvHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
     {
         public LibuvHttpToHttp2ConnectionHandlerTest(ITestOutputHelper output) : base(output) { }
@@ -43,6 +46,7 @@ namespace DotNetty.Codecs.Http2.Tests
             bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
         }
     }
+#endif
 
     public sealed class SocketHttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
     {
@@ -60,6 +64,7 @@ namespace DotNetty.Codecs.Http2.Tests
         }
     }
 
+#if !TEST40
     public sealed class HttpToHttp2ConnectionHandlerTest : AbstractHttpToHttp2ConnectionHandlerTest
     {
         public HttpToHttp2ConnectionHandlerTest(ITestOutputHelper output) : base(output) { }
@@ -83,6 +88,7 @@ namespace DotNetty.Codecs.Http2.Tests
             this.clientChannel = ccf.GetAwaiter().GetResult();
         }
     }
+#endif
 
     /**
      * Testing the {@link HttpToHttp2ConnectionHandler} for {@link IFullHttpRequest} objects into HTTP/2 frames
@@ -701,10 +707,15 @@ namespace DotNetty.Codecs.Http2.Tests
 
         protected virtual void StartBootstrap()
         {
-            this.serverChannel = this.sb.BindAsync(IPAddress.IPv6Loopback, Port).GetAwaiter().GetResult();
+#if !TEST40
+            var loopback = IPAddress.IPv6Loopback;
+#else
+            var loopback = IPAddress.Loopback;
+#endif
+            this.serverChannel = this.sb.BindAsync(loopback, Port).GetAwaiter().GetResult();
 
             var port = ((IPEndPoint)this.serverChannel.LocalAddress).Port;
-            var ccf = this.cb.ConnectAsync(IPAddress.IPv6Loopback, port);
+            var ccf = this.cb.ConnectAsync(loopback, port);
             this.clientChannel = ccf.GetAwaiter().GetResult();
         }
 

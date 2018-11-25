@@ -443,7 +443,7 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<int>(id => id == STREAM_ID),
                     It.Is<Http2Error>(v => v == ERROR_CODE),
                     It.Is<IByteBuffer>(v => captor.Capture(v))));
-            Assert.Equal(data, captor.GetValue());
+            AssertEx.Equal(data, captor.GetValue());
         }
 
         [Fact]

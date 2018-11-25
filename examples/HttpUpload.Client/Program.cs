@@ -60,6 +60,9 @@ namespace HttpUpload.Client
             var uriFile = new Uri(postFile);
 
             bool useLibuv = ClientSettings.UseLibuv;
+#if NET40
+            useLibuv = false;
+#endif
             Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
 
             IEventLoopGroup group;

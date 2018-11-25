@@ -125,7 +125,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
                 else
                 {
-                    completion.TrySetException(t.Exception);
+                    completion.TrySetException(t.Exception.InnerExceptions);
                 }
             }
             channel.WriteAndFlushAsync(response).ContinueWith(removeHandlerAfterWrite, TaskContinuationOptions.ExecuteSynchronously);

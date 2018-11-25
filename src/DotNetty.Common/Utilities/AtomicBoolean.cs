@@ -1,5 +1,5 @@
 ﻿
-namespace DotNetty.Tests.Common
+namespace DotNetty.Common.Utilities
 {
     using System.Threading;
 
@@ -10,6 +10,8 @@ namespace DotNetty.Tests.Common
 
         int value;
 
+        public AtomicBoolean() => this.Value = false;
+
         public AtomicBoolean(bool v) => this.Value = v;
 
         public bool Value
@@ -17,5 +19,9 @@ namespace DotNetty.Tests.Common
             get => True == Volatile.Read(ref this.value);
             set => Interlocked.Exchange(ref this.value, value ? True : False);
         }
+
+        public static implicit operator bool(AtomicBoolean aBool) => aBool.Value;
+
+        public static implicit operator AtomicBoolean(bool newValue) => new AtomicBoolean(newValue);
     }
 }

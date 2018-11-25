@@ -23,11 +23,19 @@ namespace DotNetty.Codecs.Http2
         /// to the JSSE cipher suites prefixed with SSL_".
         /// Both variants are used to support JVMs supporting the one or the other.
         /// </summary>
+#if NET40
+        public static readonly string[] Ciphers;
+#else
         public static readonly IReadOnlyList<string> Ciphers;
+#endif
 
         static Http2SecurityUtil()
         {
+#if NET40
+            Ciphers = new string[]
+#else
             Ciphers = new List<string>
+#endif
             {
                 /* openssl = ECDHE-ECDSA-AES256-GCM-SHA384 */
                 "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",

@@ -56,7 +56,7 @@ namespace DotNetty.Common.Utilities
                     ((IPromise)tcs).TrySetCanceled();
                     break;
                 case TaskStatus.Faulted:
-                    ((IPromise)tcs).TryUnwrap(t.Exception);
+                    ((IPromise)tcs).TrySetException(t.Exception.InnerExceptions);
                     break;
                 default:
                     ThrowHelper.ThrowArgumentOutOfRangeException(); break;
@@ -74,7 +74,7 @@ namespace DotNetty.Common.Utilities
                     promise.TrySetCanceled();
                     break;
                 case TaskStatus.Faulted:
-                    promise.TryUnwrap(task.Exception);
+                    promise.TrySetException(task.Exception.InnerExceptions);
                     break;
                 default:
 #if !NET40
@@ -199,18 +199,6 @@ namespace DotNetty.Common.Utilities
             else
             {
                 completionSource.TrySetException(exception);
-            }
-        }
-
-        public static void TryUnwrap(this IPromise promise, Exception exception)
-        {
-            if (exception is AggregateException aggregateException)
-            {
-                promise.TrySetException(aggregateException.InnerExceptions);
-            }
-            else
-            {
-                promise.TrySetException(exception);
             }
         }
 

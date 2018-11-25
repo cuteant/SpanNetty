@@ -1254,7 +1254,7 @@ namespace DotNetty.Handlers.Tls
                         break;
 
                     case TaskStatus.Faulted:
-                        promise.TrySetException(writeTask.Exception);
+                        promise.TrySetException(writeTask.Exception.InnerExceptions);
                         break;
 
                     default:

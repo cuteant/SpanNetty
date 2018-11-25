@@ -95,7 +95,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01 // stream id = 1
             };
             this.expectedOutbound = Unpooled.CopiedBuffer(expectedFrameBytes, expectedPayload);
-            Assert.Equal(this.expectedOutbound, this.outbound);
+            AssertEx.Equal(this.expectedOutbound, this.outbound);
         }
 
         [Fact]
@@ -118,7 +118,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01 // stream id = 1
             };
             this.expectedOutbound = Unpooled.CopiedBuffer(expectedFrameBytes, expectedPayload);
-            Assert.Equal(this.expectedOutbound, this.outbound);
+            AssertEx.Equal(this.expectedOutbound, this.outbound);
         }
 
         [Fact]
@@ -141,7 +141,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01 // stream id = 1
             };
             this.expectedOutbound = Unpooled.CopiedBuffer(expectedFrameBytes, expectedPayload);
-            Assert.Equal(this.expectedOutbound, this.outbound);
+            AssertEx.Equal(this.expectedOutbound, this.outbound);
         }
 
         /**
@@ -202,7 +202,7 @@ namespace DotNetty.Codecs.Http2.Tests
             };
 
             this.expectedOutbound = Unpooled.WrappedBuffer(expectedFrameBytes);
-            Assert.Equal(this.expectedOutbound, this.outbound);
+            AssertEx.Equal(this.expectedOutbound, this.outbound);
         }
 
         [Fact]
@@ -221,7 +221,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00 // stream id
             };
             this.expectedOutbound = Unpooled.CopiedBuffer(expectedFrameHeaderBytes, payload);
-            Assert.Equal(this.expectedOutbound, this.outbound);
+            AssertEx.Equal(this.expectedOutbound, this.outbound);
         }
 
         private byte[] HeaderPayload(int streamId, IHttp2Headers headers, byte padding)

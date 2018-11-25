@@ -17,8 +17,10 @@ namespace Http2Helloworld.Server
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
-    using DotNetty.Transport.Libuv;
     using Examples.Common;
+#if !NET40
+    using DotNetty.Transport.Libuv;
+#endif
 
     class Program
     {
@@ -31,18 +33,25 @@ namespace Http2Helloworld.Server
         {
             ExampleHelper.SetConsoleLogger();
 
+#if !NET40
             Console.WriteLine(
                 $"\n{RuntimeInformation.OSArchitecture} {RuntimeInformation.OSDescription}"
                 + $"\n{RuntimeInformation.ProcessArchitecture} {RuntimeInformation.FrameworkDescription}"
                 + $"\nProcessor Count : {Environment.ProcessorCount}\n");
+#endif
 
             bool useLibuv = ServerSettings.UseLibuv;
+#if NET40
+            useLibuv = false;
+#endif
             Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
 
+#if !NET40
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
             }
+#endif
 
             Console.WriteLine($"Server garbage collection : {(GCSettings.IsServerGC ? "Enabled" : "Disabled")}");
             Console.WriteLine($"Current latency mode for garbage collection: {GCSettings.LatencyMode}");
@@ -50,6 +59,7 @@ namespace Http2Helloworld.Server
 
             IEventLoopGroup bossGroup;
             IEventLoopGroup workGroup;
+#if !NET40
             if (useLibuv)
             {
                 var dispatcher = new DispatcherEventLoopGroup();
@@ -57,6 +67,7 @@ namespace Http2Helloworld.Server
                 workGroup = new WorkerEventLoopGroup(dispatcher);
             }
             else
+#endif
             {
                 bossGroup = new MultithreadEventLoopGroup(1);
                 workGroup = new MultithreadEventLoopGroup();
@@ -75,6 +86,7 @@ namespace Http2Helloworld.Server
                 var bootstrap = new ServerBootstrap();
                 bootstrap.Group(bossGroup, workGroup);
 
+#if !NET40
                 if (useLibuv)
                 {
                     bootstrap.Channel<TcpServerChannel>();
@@ -87,6 +99,7 @@ namespace Http2Helloworld.Server
                     }
                 }
                 else
+#endif
                 {
                     bootstrap.Channel<TcpServerSocketChannel>();
                 }

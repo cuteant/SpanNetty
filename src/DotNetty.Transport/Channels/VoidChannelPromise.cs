@@ -106,7 +106,7 @@ namespace DotNetty.Transport.Channels
 #if NET40
                 void fireExceptionOnFailure(Task t)
                 {
-                    if (t.IsFaulted && this.channel.Registered)
+                    if (t.IsFaulted)// && this.channel.Registered)
                     {
                         this.channel.Pipeline.FireExceptionCaught(t.Exception.InnerException);
                     }

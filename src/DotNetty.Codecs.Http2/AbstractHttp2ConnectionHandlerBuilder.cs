@@ -120,8 +120,11 @@ namespace DotNetty.Codecs.Http2
             get => this.gracefulShutdownTimeout;
             set
             {
-
+#if NET40
+                if (value < TimeSpan.FromMilliseconds(-1))
+#else
                 if (value < Timeout.InfiniteTimeSpan)
+#endif
                 {
                     ThrowHelper.ThrowArgumentException_InvalidGracefulShutdownTimeout(value);
                 }

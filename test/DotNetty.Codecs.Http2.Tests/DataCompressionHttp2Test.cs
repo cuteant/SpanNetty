@@ -18,7 +18,9 @@ namespace DotNetty.Codecs.Http2.Tests
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
+#if !TEST40
     using DotNetty.Transport.Libuv;
+#endif
     using Moq;
     using Xunit;
     using Xunit.Abstractions;
@@ -40,6 +42,7 @@ namespace DotNetty.Codecs.Http2.Tests
     //    }
     //}
 
+#if !TEST40
     public class LibuvDataCompressionHttp2Test : AbstractDataCompressionHttp2Test
     {
         public LibuvDataCompressionHttp2Test(ITestOutputHelper output) : base(output) { }
@@ -58,6 +61,7 @@ namespace DotNetty.Codecs.Http2.Tests
             bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
         }
     }
+#endif
 
     //public sealed class TlsSocketDataCompressionHttp2Test : SocketDataCompressionHttp2Test
     //{
@@ -419,10 +423,15 @@ namespace DotNetty.Codecs.Http2.Tests
                 ch.Pipeline.AddLast(new TestChannelHandlerAdapter(prefaceWrittenLatch));
             }));
 
-            this.serverChannel = this.sb.BindAsync(IPAddress.IPv6Loopback, Port).GetAwaiter().GetResult();
+#if !TEST40
+            var loopback = IPAddress.IPv6Loopback;
+#else
+            var loopback = IPAddress.Loopback;
+#endif
+            this.serverChannel = this.sb.BindAsync(loopback, Port).GetAwaiter().GetResult();
 
             var port = ((IPEndPoint)this.serverChannel.LocalAddress).Port;
-            var ccf = this.cb.ConnectAsync(IPAddress.IPv6Loopback, port);
+            var ccf = this.cb.ConnectAsync(loopback, port);
             this.clientChannel = ccf.GetAwaiter().GetResult();
             Assert.True(prefaceWrittenLatch.Wait(TimeSpan.FromSeconds(5)));
             Assert.True(serverChannelLatch.Wait(TimeSpan.FromSeconds(5)));

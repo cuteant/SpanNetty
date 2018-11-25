@@ -64,11 +64,11 @@ namespace DotNetty.Common.Concurrency
         public virtual void SetCanceled()
         {
             if (Constants.True == Volatile.Read(ref this.uncancellable)) { return; }
-#if NET40
-            FakeSynchronizationContext.Execute(() => this.tcs.SetCanceled());
-#else
+//#if NET40
+//            FakeSynchronizationContext.Execute(() => this.tcs.SetCanceled());
+//#else
             this.tcs.SetCanceled();
-#endif
+//#endif
         }
 
         public virtual void SetException(Exception exception)
@@ -78,32 +78,32 @@ namespace DotNetty.Common.Concurrency
                 this.SetException(aggregateException.InnerExceptions);
                 return;
             }
-#if NET40
-            FakeSynchronizationContext.Execute(() => this.tcs.SetException(exception));
-#else
+//#if NET40
+//            FakeSynchronizationContext.Execute(() => this.tcs.SetException(exception));
+//#else
             this.tcs.SetException(exception);
-#endif
+//#endif
         }
 
         public virtual void SetException(IEnumerable<Exception> exceptions)
         {
-#if NET40
-            FakeSynchronizationContext.Execute(() => this.tcs.SetException(exceptions));
-#else
+//#if NET40
+//            FakeSynchronizationContext.Execute(() => this.tcs.SetException(exceptions));
+//#else
             this.tcs.SetException(exceptions);
-#endif
+//#endif
         }
 
         public virtual bool TrySetCanceled()
         {
             if (Constants.True == Volatile.Read(ref this.uncancellable)) { return false; }
-#if NET40
-            var result = false;
-            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetCanceled());
-            return result;
-#else
+//#if NET40
+//            var result = false;
+//            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetCanceled());
+//            return result;
+//#else
             return this.tcs.TrySetCanceled();
-#endif
+//#endif
         }
 
         public virtual bool TrySetException(Exception exception)
@@ -112,24 +112,24 @@ namespace DotNetty.Common.Concurrency
             {
                 return this.TrySetException(aggregateException.InnerExceptions);
             }
-#if NET40
-            var result = false;
-            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetException(exception));
-            return result;
-#else
+//#if NET40
+//            var result = false;
+//            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetException(exception));
+//            return result;
+//#else
             return this.tcs.TrySetException(exception);
-#endif
+//#endif
         }
 
         public virtual bool TrySetException(IEnumerable<Exception> exceptions)
         {
-#if NET40
-            var result = false;
-            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetException(exceptions));
-            return result;
-#else
+//#if NET40
+//            var result = false;
+//            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetException(exceptions));
+//            return result;
+//#else
             return this.tcs.TrySetException(exceptions);
-#endif
+//#endif
         }
 
         public bool SetUncancellable()

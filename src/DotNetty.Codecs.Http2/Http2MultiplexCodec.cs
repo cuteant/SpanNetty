@@ -198,7 +198,11 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
+#if NET40
+                future.ContinueWith(t => RegisterDone(t, ch), TaskContinuationOptions.ExecuteSynchronously);
+#else
                 future.ContinueWith(RegisterDoneAction, ch, TaskContinuationOptions.ExecuteSynchronously);
+#endif
             }
         }
 
@@ -222,7 +226,11 @@ namespace DotNetty.Codecs.Http2
                 }
                 else
                 {
+#if NET40
+                    future.ContinueWith(t => RegisterDone(t, channel), TaskContinuationOptions.ExecuteSynchronously);
+#else
                     future.ContinueWith(RegisterDoneAction, channel, TaskContinuationOptions.ExecuteSynchronously);
+#endif
                 }
             }
             else if (Http2StreamState.Closed == streamState)
@@ -1076,8 +1084,13 @@ namespace DotNetty.Codecs.Http2
                                 }
                                 else
                                 {
+#if NET40
+                                    future.ContinueWith(t => FirstWriteCompleteAfterWrite(t, Tuple.Create(this, promise)),
+                                        TaskContinuationOptions.ExecuteSynchronously);
+#else
                                     future.ContinueWith(FirstWriteCompleteAfterWriteAction,
                                         Tuple.Create(this, promise), TaskContinuationOptions.ExecuteSynchronously);
+#endif
                                 }
                                 return;
                             }
@@ -1096,8 +1109,13 @@ namespace DotNetty.Codecs.Http2
                         }
                         else
                         {
+#if NET40
+                            writeTask.ContinueWith(t => WriteCompleteContinute(t, Tuple.Create(this, promise)),
+                                TaskContinuationOptions.ExecuteSynchronously);
+#else
                             writeTask.ContinueWith(WriteCompleteContinuteAction,
                                 Tuple.Create(this, promise), TaskContinuationOptions.ExecuteSynchronously);
+#endif
                         }
                     }
                     catch (Exception t)

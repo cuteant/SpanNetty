@@ -97,7 +97,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                         completion.TrySetCanceled();
                         break;
                     case TaskStatus.Faulted:
-                        completion.TryUnwrap(t.Exception);
+                        completion.TrySetException(t.Exception.InnerExceptions);
                         break;
                     default:
                         ThrowHelper.ThrowArgumentOutOfRangeException(); break;

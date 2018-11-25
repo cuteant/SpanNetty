@@ -1,5 +1,5 @@
 ﻿
-namespace DotNetty.Tests.Common
+namespace DotNetty.Common.Utilities
 {
     using System.Threading;
 
@@ -42,5 +42,9 @@ namespace DotNetty.Tests.Common
         {
             return Interlocked.CompareExchange(ref this.value, next, current) == current;
         }
+
+        public static implicit operator int(AtomicInteger aInt) => aInt.Value;
+
+        public static implicit operator AtomicInteger(int newValue) => new AtomicInteger(newValue);
     }
 }

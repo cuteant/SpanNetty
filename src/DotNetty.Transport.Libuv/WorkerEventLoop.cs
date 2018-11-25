@@ -55,7 +55,7 @@ namespace DotNetty.Transport.Libuv
             {
                 if (Logger.WarnEnabled) Logger.FailedToCreateConnectRequestToDispatcher(exception);
                 request?.Dispose();
-                this.connectCompletion.TryUnwrap(exception);
+                this.connectCompletion.TrySetException(exception);
             }
         }
 
@@ -68,7 +68,7 @@ namespace DotNetty.Transport.Libuv
                 if (request.Error != null)
                 {
                     if (Logger.WarnEnabled) Logger.FailedToConnectToDispatcher(request);
-                    this.connectCompletion.TryUnwrap(request.Error);
+                    this.connectCompletion.TrySetException(request.Error);
                 }
                 else
                 {

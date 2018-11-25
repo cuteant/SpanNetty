@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     wrapped.Item1.TrySetCanceled();
                     break;
                 case TaskStatus.Faulted:
-                    wrapped.Item1.TryUnwrap(t.Exception);
+                    wrapped.Item1.TrySetException(t.Exception.InnerExceptions);
                     break;
                 default:
                     ThrowHelper.ThrowArgumentOutOfRangeException(); break;

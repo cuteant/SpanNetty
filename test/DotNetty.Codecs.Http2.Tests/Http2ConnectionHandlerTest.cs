@@ -819,7 +819,7 @@ namespace DotNetty.Codecs.Http2.Tests
                     return aggregatedPromise.Task;
                 });
             this.handler.GoAwayAsync(this.ctx.Object, STREAM_ID, errorCode, data, Http2TestUtil.NewVoidPromise(this.channel.Object));
-            this.pipeline.Verify(x => x.FireExceptionCaught(It.Is<Exception>(v => v == cause)));
+            this.pipeline.Verify(x => x.FireExceptionCaught(It.Is<Exception>(v => ReferenceEquals(v, cause))));
         }
 
         [Fact]

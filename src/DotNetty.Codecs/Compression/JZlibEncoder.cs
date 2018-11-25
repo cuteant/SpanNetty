@@ -220,7 +220,7 @@ namespace DotNetty.Codecs.Compression
         {
             var completion = this.FinishEncode(context, context.NewPromise());
 #if NET40
-            void closeOnComplete(Task t) => context.CloseAsync();
+            void closeOnComplete(Task t) => context.CloseAsync(promise);
             completion.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
             completion.ContinueWith(CloseOnComplete, Tuple.Create(context, promise), TaskContinuationOptions.ExecuteSynchronously);

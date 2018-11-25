@@ -85,10 +85,10 @@ namespace DotNetty.Codecs.Http2.Tests
 
             // Make sure the headers are what we expect them to be, and no leaking behind the scenes.
             Assert.Equal(4, headers.Size);
-            Assert.Equal("value1", headers.Get((AsciiString)"name1", null));
-            Assert.Equal("value2", headers.Get((AsciiString)"name2", null));
-            Assert.Equal("nothing", headers.Scheme);
-            Assert.Equal("foo", headers.Authority);
+            AssertEx.Equal("value1", headers.Get((AsciiString)"name1", null));
+            AssertEx.Equal("value2", headers.Get((AsciiString)"name2", null));
+            AssertEx.Equal("nothing", headers.Scheme);
+            AssertEx.Equal("foo", headers.Authority);
         }
 
         [Fact]
@@ -102,8 +102,8 @@ namespace DotNetty.Codecs.Http2.Tests
             headers.Set(other);
             VerifyPseudoHeadersFirst(headers);
             Assert.Equal(other.Size, headers.Size);
-            Assert.Equal("foo", headers.Authority);
-            Assert.Equal("value2", headers.Get((AsciiString)"name2", null));
+            AssertEx.Equal("foo", headers.Authority);
+            AssertEx.Equal("value2", headers.Get((AsciiString)"name2", null));
         }
 
         [Fact]

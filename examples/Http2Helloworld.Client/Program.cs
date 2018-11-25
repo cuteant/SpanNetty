@@ -30,6 +30,9 @@ namespace Http2Helloworld.Client
             ExampleHelper.SetConsoleLogger();
 
             bool useLibuv = ClientSettings.UseLibuv;
+#if NET40
+            useLibuv = false;
+#endif
             Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
 
             IEventLoopGroup group;

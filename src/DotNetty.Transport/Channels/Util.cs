@@ -43,7 +43,6 @@ namespace DotNetty.Transport.Channels
         /// <param name="logger">The <see cref="IInternalLogger"/> to use to log a failure message.</param>
         public static void SafeSetFailure(IPromise promise, Exception cause, IInternalLogger logger)
         {
-            if (cause is AggregateException aggregateException) { cause = aggregateException.InnerException; }
             if (!promise.IsVoid && !promise.TrySetException(cause) && logger.WarnEnabled)
             {
                 var err = promise.Task.Exception?.InnerException;

@@ -169,7 +169,7 @@ namespace DotNetty.Codecs.Http2
                     {
                         streamChannel.Unsafe.CloseForcibly();
                     }
-                    wrapped.Item1.TryUnwrap(future.Exception);
+                    wrapped.Item1.TrySetException(future.Exception.InnerExceptions);
                     break;
                 default:
                     ThrowHelper.ThrowArgumentOutOfRangeException(); break;
@@ -195,11 +195,16 @@ namespace DotNetty.Codecs.Http2
                     {
                         streamChannel.Unsafe.CloseForcibly();
                     }
-                    promise.TryUnwrap(future.Exception);
+                    promise.TrySetException(future.Exception.InnerExceptions);
                     break;
                 default:
+#if NET40
+                    future.ContinueWith(t => LinkOutcomeContinuation(t, Tuple.Create(promise, streamChannel)),
+                        TaskContinuationOptions.ExecuteSynchronously);
+#else
                     future.ContinueWith(LinkOutcomeContinuationAction,
                         Tuple.Create(promise, streamChannel), TaskContinuationOptions.ExecuteSynchronously);
+#endif
                     break;
             }
         }
