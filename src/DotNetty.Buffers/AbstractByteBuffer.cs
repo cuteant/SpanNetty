@@ -26,7 +26,7 @@ namespace DotNetty.Buffers
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractByteBuffer>();
         const string LegacyPropCheckAccessible = "io.netty.buffer.bytebuf.checkAccessible";
         const string PropCheckAccessible = "io.netty.buffer.checkAccessible";
-        static readonly bool CheckAccessible;
+        protected static readonly bool CheckAccessible; // accessed from CompositeByteBuf
         const string PropCheckBounds = "io.netty.buffer.checkBounds";
         static readonly bool CheckBounds;
 
@@ -501,6 +501,12 @@ namespace DotNetty.Buffers
             if (length == 0)
             {
                 return StringCharSequence.Empty;
+            }
+
+            if (Constants.ASCIICodePage == encoding.CodePage)// || Constants.ISO88591CodePage == encoding.CodePage)
+            {
+                // ByteBufUtil.getBytes(...) will return a new copy which the AsciiString uses directly
+                return new AsciiString(ByteBufferUtil.GetBytes(this, index, length, true), false);
             }
 
             if (this.HasMemoryAddress)
@@ -1340,7 +1346,7 @@ namespace DotNetty.Buffers
             return this.ForEachByteAsc0(index, index + length, processor);
         }
 
-        int ForEachByteAsc0(int start, int end, IByteProcessor processor)
+        internal protected virtual int ForEachByteAsc0(int start, int end, IByteProcessor processor)
         {
             for (; start < end; ++start)
             {
@@ -1365,7 +1371,7 @@ namespace DotNetty.Buffers
             return this.ForEachByteDesc0(index + length - 1, index, processor);
         }
 
-        int ForEachByteDesc0(int rStart, int rEnd, IByteProcessor processor)
+        internal protected virtual int ForEachByteDesc0(int rStart, int rEnd, IByteProcessor processor)
         {
             for (; rStart >= rEnd; --rStart)
             {

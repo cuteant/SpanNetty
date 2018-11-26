@@ -32,7 +32,7 @@ namespace DotNetty.Buffers
             return slice;
         }
 
-        int adjustment;
+        internal int adjustment;
 
         PooledSlicedByteBuffer(ThreadLocalPool.Handle handle)
             : base(handle)

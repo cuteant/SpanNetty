@@ -14,6 +14,8 @@
 
         public const int ASCIICodePage = 20127;
 
+        public const int ISO88591CodePage = 28591;
+
         public const int UTF8CodePage = 65001;
     }
 }

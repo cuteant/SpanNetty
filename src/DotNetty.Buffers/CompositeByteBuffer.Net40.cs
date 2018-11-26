@@ -7,7 +7,7 @@ namespace DotNetty.Buffers
     {
         public override ref byte GetPinnableMemoryOffsetAddress(int elementOffset)
         {
-            switch (this.components.Count)
+            switch (this.componentCount)
             {
                 case 1:
                     return ref this.components[0].Buffer.GetPinnableMemoryOffsetAddress(elementOffset);

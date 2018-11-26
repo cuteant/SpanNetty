@@ -59,7 +59,7 @@ namespace DotNetty.Buffers.Tests
                 this.buffer = null;
             }
 
-            for (;;)
+            for (; ; )
             {
                 IByteBuffer buf = null;
                 if (this.buffers.Count > 0)
@@ -305,14 +305,14 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void RandomByteAccess()
         {
-            for (int i = 0; i < this.buffer.Capacity; i ++)
+            for (int i = 0; i < this.buffer.Capacity; i++)
             {
                 byte value = (byte)this.random.Next();
                 this.buffer.SetByte(i, value);
             }
 
             this.random = new Random(this.seed);
-            for (int i = 0; i < this.buffer.Capacity; i ++)
+            for (int i = 0; i < this.buffer.Capacity; i++)
             {
                 byte value = (byte)this.random.Next();
                 Assert.Equal(value, this.buffer.GetByte(i));
@@ -631,7 +631,7 @@ namespace DotNetty.Buffers.Tests
         public void SequentialByteAccess()
         {
             this.buffer.SetWriterIndex(0);
-            for (int i = 0; i < this.buffer.Capacity; i ++)
+            for (int i = 0; i < this.buffer.Capacity; i++)
             {
                 byte value = (byte)this.random.Next();
                 Assert.Equal(i, this.buffer.WriterIndex);
@@ -644,7 +644,7 @@ namespace DotNetty.Buffers.Tests
             Assert.False(this.buffer.IsWritable());
 
             this.random = new Random(this.seed);
-            for (int i = 0; i < this.buffer.Capacity; i ++)
+            for (int i = 0; i < this.buffer.Capacity; i++)
             {
                 byte value = (byte)this.random.Next();
                 Assert.Equal(i, this.buffer.ReaderIndex);
@@ -1023,7 +1023,7 @@ namespace DotNetty.Buffers.Tests
                 this.random.NextBytes(expectedValue);
                 int valueOffset = this.random.Next(BlockSize);
                 this.buffer.GetBytes(i, value, valueOffset, BlockSize);
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue[j], value[j]);
                 }
@@ -1047,7 +1047,7 @@ namespace DotNetty.Buffers.Tests
             {
                 this.random.NextBytes(expectedValueContent);
                 this.buffer.GetBytes(i, value);
-                for (int j = 0; j < BlockSize; j ++)
+                for (int j = 0; j < BlockSize; j++)
                 {
                     Assert.Equal(expectedValue.GetByte(j), value[j]);
                 }
@@ -1072,7 +1072,7 @@ namespace DotNetty.Buffers.Tests
                 this.random.NextBytes(expectedValueContent);
                 int valueOffset = this.random.Next(BlockSize);
                 this.buffer.GetBytes(i, value, valueOffset, BlockSize);
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue.GetByte(j), value[j]);
                 }
@@ -1103,7 +1103,7 @@ namespace DotNetty.Buffers.Tests
                 this.buffer.GetBytes(i, value);
                 Assert.Equal(0, value.ReaderIndex);
                 Assert.Equal(BlockSize, value.WriterIndex);
-                for (int j = 0; j < BlockSize; j ++)
+                for (int j = 0; j < BlockSize; j++)
                 {
                     Assert.Equal(expectedValue.GetByte(j), value.GetByte(j));
                 }
@@ -1129,7 +1129,7 @@ namespace DotNetty.Buffers.Tests
                 this.random.NextBytes(expectedValueContent);
                 int valueOffset = this.random.Next(BlockSize);
                 this.buffer.GetBytes(i, value, valueOffset, BlockSize);
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue.GetByte(j), value.GetByte(j));
                 }
@@ -1159,7 +1159,7 @@ namespace DotNetty.Buffers.Tests
                 expectedValue.SetBytes(0, tmp, 0, expectedValue.Capacity);
                 int valueOffset = this.random.Next(BlockSize);
                 this.buffer.GetBytes(i, value, valueOffset, BlockSize);
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue.GetByte(j), value.GetByte(j));
                 }
@@ -1183,7 +1183,7 @@ namespace DotNetty.Buffers.Tests
                 this.random.NextBytes(expectedValue);
                 int valueOffset = this.random.Next(BlockSize);
                 this.buffer.GetBytes(i, value, valueOffset, BlockSize);
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue[j], value[j]);
                 }
@@ -1211,7 +1211,7 @@ namespace DotNetty.Buffers.Tests
                 Assert.Equal(i, this.buffer.ReaderIndex);
                 Assert.Equal(Capacity, this.buffer.WriterIndex);
                 this.buffer.ReadBytes(value);
-                for (int j = 0; j < BlockSize; j ++)
+                for (int j = 0; j < BlockSize; j++)
                 {
                     Assert.Equal(expectedValue[j], value[j]);
                 }
@@ -1241,7 +1241,7 @@ namespace DotNetty.Buffers.Tests
                 Assert.Equal(i, this.buffer.ReaderIndex);
                 Assert.Equal(Capacity, this.buffer.WriterIndex);
                 this.buffer.ReadBytes(value, valueOffset, BlockSize);
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue[j], value[j]);
                 }
@@ -1274,7 +1274,7 @@ namespace DotNetty.Buffers.Tests
                 Assert.Equal(i, this.buffer.ReaderIndex);
                 Assert.Equal(Capacity, this.buffer.WriterIndex);
                 this.buffer.ReadBytes(value, valueOffset, BlockSize);
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue.GetByte(j), value.GetByte(j));
                 }
@@ -1314,7 +1314,7 @@ namespace DotNetty.Buffers.Tests
                 value.SetReaderIndex(valueOffset);
                 value.SetWriterIndex(valueOffset);
                 this.buffer.ReadBytes(value, BlockSize);
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue.GetByte(j), value.GetByte(j));
                 }
@@ -1351,7 +1351,7 @@ namespace DotNetty.Buffers.Tests
                 Assert.Equal(i, this.buffer.ReaderIndex);
                 Assert.Equal(Capacity, this.buffer.WriterIndex);
                 this.buffer.ReadBytes(value, valueOffset, BlockSize);
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue.GetByte(j), value.GetByte(j));
                 }
@@ -1394,7 +1394,7 @@ namespace DotNetty.Buffers.Tests
                 value.SetReaderIndex(valueOffset);
                 value.SetWriterIndex(valueOffset);
                 this.buffer.ReadBytes(value, BlockSize);
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue.GetByte(j), value.GetByte(j));
                 }
@@ -1432,7 +1432,7 @@ namespace DotNetty.Buffers.Tests
                 Assert.Equal(i, this.buffer.ReaderIndex);
                 Assert.Equal(Capacity, this.buffer.WriterIndex);
                 this.buffer.ReadBytes(value, valueOffset, BlockSize);
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue.GetByte(j), value.GetByte(j));
                 }
@@ -1476,7 +1476,7 @@ namespace DotNetty.Buffers.Tests
                 value.SetReaderIndex(valueOffset);
                 value.SetWriterIndex(valueOffset);
                 this.buffer.ReadBytes(value, BlockSize);
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue.GetByte(j), value.GetByte(j));
                 }
@@ -1504,7 +1504,7 @@ namespace DotNetty.Buffers.Tests
                 int valueOffset = this.random.Next(BlockSize);
                 this.buffer.ReadBytes(value, valueOffset, BlockSize);
 
-                for (int j = valueOffset; j < valueOffset + BlockSize; j ++)
+                for (int j = valueOffset; j < valueOffset + BlockSize; j++)
                 {
                     Assert.Equal(expectedValue[j], value[j]);
                 }
@@ -1673,7 +1673,7 @@ namespace DotNetty.Buffers.Tests
         public void DiscardReadBytes2()
         {
             this.buffer.SetWriterIndex(0);
-            for (int i = 0; i < this.buffer.Capacity; i ++)
+            for (int i = 0; i < this.buffer.Capacity; i++)
             {
                 this.buffer.WriteByte((byte)i);
             }
@@ -1684,7 +1684,7 @@ namespace DotNetty.Buffers.Tests
             this.buffer.DiscardReadBytes();
             Assert.Equal(0, this.buffer.ReaderIndex);
             Assert.Equal(Capacity / 2, this.buffer.WriterIndex);
-            for (int i = 0; i < Capacity / 2; i ++)
+            for (int i = 0; i < Capacity / 2; i++)
             {
 #if TEST40
                 Assert.True(copy.Slice(Capacity / 2 - 1 + i, Capacity / 2 - i).Equals(this.buffer.Slice(i, Capacity / 2 - i)));
@@ -1697,7 +1697,7 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void Copy()
         {
-            for (int i = 0; i < this.buffer.Capacity; i ++)
+            for (int i = 0; i < this.buffer.Capacity; i++)
             {
                 byte value = (byte)this.random.Next();
                 this.buffer.SetByte(i, value);
@@ -1728,7 +1728,7 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void Duplicate()
         {
-            for (int i = 0; i < this.buffer.Capacity; i ++)
+            for (int i = 0; i < this.buffer.Capacity; i++)
             {
                 byte value = (byte)this.random.Next();
                 this.buffer.SetByte(i, value);
@@ -1813,7 +1813,7 @@ namespace DotNetty.Buffers.Tests
 
             Assert.Equal(this.buffer, Unpooled.WrappedBuffer(value), EqualityComparer<IByteBuffer>.Default);
 
-            value[0] ++;
+            value[0]++;
             Assert.False(this.buffer.Equals(Unpooled.WrappedBuffer(value)));
         }
 
@@ -2011,7 +2011,7 @@ namespace DotNetty.Buffers.Tests
         public void ForEachByte()
         {
             this.buffer.Clear();
-            for (int i = 0; i < Capacity; i ++)
+            for (int i = 0; i < Capacity; i++)
             {
                 this.buffer.WriteByte(i + 1);
             }
@@ -2044,7 +2044,7 @@ namespace DotNetty.Buffers.Tests
         public void ForEachByteAbort()
         {
             this.buffer.Clear();
-            for (int i = 0; i < Capacity; i ++)
+            for (int i = 0; i < Capacity; i++)
             {
                 this.buffer.WriteByte(i + 1);
             }
@@ -2068,7 +2068,7 @@ namespace DotNetty.Buffers.Tests
         public void ForEachByteDesc()
         {
             this.buffer.Clear();
-            for (int i = 0; i < Capacity; i ++)
+            for (int i = 0; i < Capacity; i++)
             {
                 this.buffer.WriteByte(i + 1);
             }
@@ -2083,7 +2083,7 @@ namespace DotNetty.Buffers.Tests
 #else
                 Volatile.Write(ref lastIndex, i1);
 #endif
-              i1--;
+                i1--;
                 return true;
             })));
 
@@ -2612,7 +2612,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer buf = this.NewBuffer(16);
             var sequence = new StringCharSequence("AB");
             int bytes = buf.SetCharSequence(1, sequence, encoding);
-            Assert.Equal(sequence, buf.GetCharSequence(1, bytes, encoding));
+            AssertEx.Equal(sequence, buf.GetCharSequence(1, bytes, encoding));
             buf.Release();
         }
 
@@ -2625,10 +2625,24 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void WriteReadUtf16CharSequence() => this.WriteReadCharSequence(Encoding.Unicode);
 
+        static readonly ICharSequence EXTENDED_ASCII_CHARS, ASCII_CHARS;
+
+        static AbstractArrayPooledByteBufferTests()
+        {
+            var chars = new char[256];
+            for (var c = 0; c < 256; c++)
+            {
+                chars[c] = (char)c;
+            }
+            EXTENDED_ASCII_CHARS = new StringCharSequence(new string(chars));
+            ASCII_CHARS = new AsciiString(new string(chars, 0, 128));
+        }
+
         void WriteReadCharSequence(Encoding encoding)
         {
-            IByteBuffer buf = this.NewBuffer(16);
-            var sequence = new StringCharSequence("AB");
+            IByteBuffer buf = this.NewBuffer(1024);
+            ICharSequence sequence = Encoding.ASCII.Equals(encoding)
+                    ? ASCII_CHARS : EXTENDED_ASCII_CHARS;
             buf.SetWriterIndex(1);
             int bytes = buf.WriteCharSequence(sequence, encoding);
             buf.SetReaderIndex(1);
@@ -2971,13 +2985,13 @@ namespace DotNetty.Buffers.Tests
             expected1.WriteBytes(new byte[] { 6, 7, 8 });
             expected2.WriteBytes(new byte[] { 7, 8 });
             IByteBuffer slice1 = retainedSlice1 ? buf.RetainedSlice(buf.ReaderIndex + 5, 3)
-                : (IByteBuffer) buf.Slice(buf.ReaderIndex + 5, 3).Retain();
+                : (IByteBuffer)buf.Slice(buf.ReaderIndex + 5, 3).Retain();
             Assert.Equal(0, slice1.CompareTo(expected1));
             // Simulate a handler that releases the original buffer, and propagates a slice.
             buf.Release();
 
             IByteBuffer slice2 = retainedSlice2 ? slice1.RetainedSlice(slice1.ReaderIndex + 1, 2)
-                : (IByteBuffer) slice1.Slice(slice1.ReaderIndex + 1, 2).Retain();
+                : (IByteBuffer)slice1.Slice(slice1.ReaderIndex + 1, 2).Retain();
             Assert.Equal(0, slice2.CompareTo(expected2));
 
             // Cleanup the expected buffers used for testing.
@@ -3083,13 +3097,13 @@ namespace DotNetty.Buffers.Tests
             buf.WriteBytes(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 });
             expected.WriteBytes(buf, buf.ReaderIndex, buf.ReadableBytes);
             IByteBuffer dup1 = retainedDuplicate1 ? buf.RetainedDuplicate()
-                : (IByteBuffer) buf.Duplicate().Retain();
+                : (IByteBuffer)buf.Duplicate().Retain();
             Assert.Equal(0, dup1.CompareTo(expected));
             // Simulate a handler that releases the original buffer, and propagates a slice.
             buf.Release();
 
             IByteBuffer dup2 = retainedDuplicate2 ? dup1.RetainedDuplicate()
-                : (IByteBuffer) dup1.Duplicate().Retain();
+                : (IByteBuffer)dup1.Duplicate().Retain();
             Assert.Equal(0, dup2.CompareTo(expected));
 
             // Cleanup the expected buffers used for testing.
@@ -3158,7 +3172,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer buf = this.NewBuffer(128).ResetWriterIndex();
             IByteBuffer expected = this.NewBuffer(128).ResetWriterIndex();
             var bytes = new byte[128];
-            for(int idx = 0; idx < 128; idx++)
+            for (int idx = 0; idx < 128; idx++)
             {
                 bytes[idx] = (byte)(idx + 1);
             }
@@ -3369,9 +3383,9 @@ namespace DotNetty.Buffers.Tests
 #if TEST40
                       Interlocked.Exchange(ref cnt, buf.ReferenceCount);
 #else
-                      Volatile.Write(ref cnt, buf.ReferenceCount);
+                        Volatile.Write(ref cnt, buf.ReferenceCount);
 #endif
-                      latch.Set();
+                        latch.Set();
                     });
                     t2.Start();
                     // Keep Thread alive a bit so the ThreadLocal caches are not freed
@@ -3392,7 +3406,7 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void EmptyIoBuffers()
         {
-            IByteBuffer buf =this.NewBuffer(8);
+            IByteBuffer buf = this.NewBuffer(8);
             buf.Clear();
             Assert.False(buf.IsReadable());
             ArraySegment<byte>[] nioBuffers = buf.GetIoBuffers();

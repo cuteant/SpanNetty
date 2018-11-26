@@ -10,7 +10,18 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void NormalizeCapacity()
         {
-            var arena = new HeapArena(null, 0, 0, 9, 999999);
+            NormalizeCapacity0(true);
+        }
+
+        [Fact]
+        public void NormalizeCapacityHeap()
+        {
+            NormalizeCapacity0(false);
+        }
+
+        private void NormalizeCapacity0(bool preferDirect)
+        {
+            PoolArena<byte[]> arena = preferDirect ? new DirectArena(null, 0, 0, 9, 999999) : (PoolArena<byte[]>)new HeapArena(null, 0, 0, 9, 999999);
             int[] reqCapacities = { 0, 15, 510, 1024, 1023, 1025 };
             int[] expectedResult = { 0, 16, 512, 1024, 1024, 2048 };
             for (int i = 0; i < reqCapacities.Length; i++)

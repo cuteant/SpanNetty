@@ -296,8 +296,9 @@ namespace DotNetty.Buffers
 
         static int LastIndexOf(IByteBuffer buffer, int fromIndex, int toIndex, byte value)
         {
-            fromIndex = Math.Min(fromIndex, buffer.Capacity);
-            if (fromIndex < 0 || buffer.Capacity == 0)
+            int capacity = buffer.Capacity;
+            fromIndex = Math.Min(fromIndex, capacity);
+            if (fromIndex < 0 || capacity == 0)
             {
                 return -1;
             }

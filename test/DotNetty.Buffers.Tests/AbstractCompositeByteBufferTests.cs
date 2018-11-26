@@ -155,7 +155,7 @@ namespace DotNetty.Buffers.Tests
             buf.AddComponent(Unpooled.WrappedBuffer(new byte[] { 5, 6 }));
             Assert.Equal(3, buf.NumComponents);
 
-            // NOTE: hard-coding 6 here, since it seems like addComponent doesn't bump the writer index.
+            // NOTE: hard-coding 6 here, since it seems like AddComponent doesn't bump the writer index.
             // I'm unsure as to whether or not this is correct behavior
             ArraySegment<byte> nioBuffer = buf.GetIoBuffer(0, 6);
             Assert.Equal(6, nioBuffer.Count);
@@ -342,8 +342,8 @@ namespace DotNetty.Buffers.Tests
             b.Release();
 
             a = Unpooled.WrappedBuffer(Unpooled.WrappedBuffer(new byte[] { 1, 2, 3 }));
-            b = Unpooled.WrappedBuffer(new [] {
-                Unpooled.WrappedBuffer(new byte[] { 1, 2, 3 }) 
+            b = Unpooled.WrappedBuffer(new[] {
+                Unpooled.WrappedBuffer(new byte[] { 1, 2, 3 })
             });
             AssertEx.Equal(a, b);
 
@@ -361,7 +361,7 @@ namespace DotNetty.Buffers.Tests
             b.Release();
 
             a = Unpooled.WrappedBuffer(Unpooled.WrappedBuffer(new byte[] { 1, 2, 3 }));
-            b = Unpooled.WrappedBuffer(Unpooled.WrappedBuffer(new [] {
+            b = Unpooled.WrappedBuffer(Unpooled.WrappedBuffer(new[] {
                 Unpooled.WrappedBuffer(new byte[] { 1, 2, 3 })
             }));
             AssertEx.Equal(a, b);
@@ -588,7 +588,7 @@ namespace DotNetty.Buffers.Tests
             CompositeByteBuffer bufB = Unpooled.CompositeBuffer();
             bufB.AddComponents((IByteBuffer)bufA);
 
-            // Ensure that bufA.refCnt() did not change.
+            // Ensure that bufA.ReferenceCount did not change.
             Assert.Equal(1, bufA.ReferenceCount);
 
             // Ensure that c[123]'s refCnt did not change.
@@ -596,11 +596,11 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(2, c2.ReferenceCount);
             Assert.Equal(3, c3.ReferenceCount);
 
-            // This should decrease bufA.refCnt().
+            // This should decrease bufA.ReferenceCount.
             bufB.Release();
             Assert.Equal(0, bufB.ReferenceCount);
 
-            // Ensure bufA.refCnt() changed.
+            // Ensure bufA.ReferenceCount changed.
             Assert.Equal(0, bufA.ReferenceCount);
 
             // Ensure that c[123]'s refCnt also changed due to the deallocation of bufA.
@@ -783,6 +783,34 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
+        public void InsertEmptyBufferInMiddle()
+        {
+            CompositeByteBuffer cbuf = Unpooled.CompositeBuffer();
+            IByteBuffer buf1 = Unpooled.Buffer().WriteByte(1);
+            cbuf.AddComponent(true, buf1);
+            IByteBuffer buf2 = Unpooled.Buffer().WriteByte(2);
+            cbuf.AddComponent(true, buf2);
+
+            // insert empty one between the first two
+            cbuf.AddComponent(true, 1, Unpooled.Empty);
+
+            Assert.Equal(2, cbuf.ReadableBytes);
+            Assert.Equal((byte)1, cbuf.ReadByte());
+            Assert.Equal((byte)2, cbuf.ReadByte());
+
+            Assert.Equal(2, cbuf.Capacity);
+            Assert.Equal(3, cbuf.NumComponents);
+
+            byte[] dest = new byte[2];
+            // should skip over the empty one, not throw a java.lang.Error :)
+            cbuf.GetBytes(0, dest);
+
+            Assert.Equal(new byte[] { 1, 2 }, dest);
+
+            cbuf.Release();
+        }
+
+        [Fact]
         public void ReleasesItsComponents()
         {
             IByteBuffer buffer = PooledByteBufferAllocator.Default.Buffer(); // 1
@@ -809,6 +837,64 @@ namespace DotNetty.Buffers.Tests
             // last remaining ref to buffer
             ReferenceCountUtil.Release(buffer);
             Assert.Equal(0, buffer.ReferenceCount);
+        }
+
+        [Fact]
+        public void ReleasesItsComponents2()
+        {
+            // It is important to use a pooled allocator here to ensure
+            // the slices returned by readRetainedSlice are of type
+            // PooledSlicedByteBuf, which maintains an independent refcount
+            // (so that we can be sure to cover this case)
+            IByteBuffer buffer = PooledByteBufferAllocator.Default.Buffer(); // 1
+
+            buffer.WriteBytes(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+
+            // use readRetainedSlice this time - produces different kind of slices
+            IByteBuffer s1 = buffer.ReadRetainedSlice(2); // 2
+            IByteBuffer s2 = s1.ReadRetainedSlice(2); // 3
+            IByteBuffer s3 = s2.ReadRetainedSlice(2); // 4
+            IByteBuffer s4 = s3.ReadRetainedSlice(2); // 5
+
+            IByteBuffer composite = Unpooled.CompositeBuffer()
+                .AddComponent(s1)
+                .AddComponents(s2, s3, s4);
+            //.order(ByteOrder.LITTLE_ENDIAN);
+
+            Assert.Equal(1, composite.ReferenceCount);
+            Assert.Equal(2, buffer.ReferenceCount);
+
+            // releasing composite should release the 4 components
+            composite.Release();
+            Assert.Equal(0, composite.ReferenceCount);
+            Assert.Equal(1, buffer.ReferenceCount);
+
+            // last remaining ref to buffer
+            buffer.Release();
+            Assert.Equal(0, buffer.ReferenceCount);
+        }
+
+        [Fact]
+        public void ReleasesOnShrink()
+        {
+            IByteBuffer b1 = Unpooled.Buffer(2).WriteShort(1);
+            IByteBuffer b2 = Unpooled.Buffer(2).WriteShort(2);
+
+            // composite takes ownership of s1 and s2
+            IByteBuffer composite = Unpooled.CompositeBuffer()
+                .AddComponents(b1, b2);
+
+            Assert.Equal(4, composite.Capacity);
+
+            // reduce capacity down to two, will drop the second component
+            composite.AdjustCapacity(2);
+            Assert.Equal(2, composite.Capacity);
+
+            // releasing composite should release the components
+            composite.Release();
+            Assert.Equal(0, composite.ReferenceCount);
+            Assert.Equal(0, b1.ReferenceCount);
+            Assert.Equal(0, b2.ReferenceCount);
         }
 
         [Fact]

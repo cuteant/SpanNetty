@@ -2639,7 +2639,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer buf = this.NewBuffer(16);
             var sequence = new StringCharSequence("AB");
             int bytes = buf.SetCharSequence(1, sequence, encoding);
-            Assert.Equal(sequence, buf.GetCharSequence(1, bytes, encoding));
+            AssertEx.Equal(sequence, buf.GetCharSequence(1, bytes, encoding));
             buf.Release();
         }
 
@@ -2690,10 +2690,24 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void WriteReadUtf16CharSequence() => this.WriteReadCharSequence(Encoding.Unicode);
 
+        static readonly ICharSequence EXTENDED_ASCII_CHARS, ASCII_CHARS;
+
+        static AbstractByteBufferTests()
+        {
+            var chars = new char[256];
+            for (var c = 0; c < 256; c++)
+            {
+                chars[c] = (char)c;
+            }
+            EXTENDED_ASCII_CHARS = new StringCharSequence(new string(chars));
+            ASCII_CHARS = new AsciiString(new string(chars, 0, 128));
+        }
+
         void WriteReadCharSequence(Encoding encoding)
         {
-            IByteBuffer buf = this.NewBuffer(16);
-            var sequence = new StringCharSequence("AB");
+            IByteBuffer buf = this.NewBuffer(2048);
+            ICharSequence sequence = Encoding.ASCII.Equals(encoding)
+                    ? ASCII_CHARS : EXTENDED_ASCII_CHARS;
             buf.SetWriterIndex(1);
             int bytes = buf.WriteCharSequence(sequence, encoding);
             buf.SetReaderIndex(1);

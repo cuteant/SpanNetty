@@ -173,7 +173,7 @@ namespace DotNetty.Buffers
                     {
                         IByteBuffer buf = buffers[i];
                         if (buf.IsReadable())
-                            return new CompositeByteBuffer(Allocator, false, maxNumComponents, buffers, i, buffers.Length);
+                            return new CompositeByteBuffer(Allocator, false, maxNumComponents, buffers, i);
                         else
                             buf.Release();
                     }

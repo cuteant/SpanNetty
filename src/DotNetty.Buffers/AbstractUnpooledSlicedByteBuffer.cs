@@ -332,7 +332,7 @@ namespace DotNetty.Buffers
         }
 
         // Returns the index with the needed adjustment.
-        protected int Idx(int index) => index + this.adjustment;
+        internal protected int Idx(int index) => index + this.adjustment;
 
         internal static void CheckSliceOutOfBounds(int index, int length, IByteBuffer buffer)
         {
