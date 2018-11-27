@@ -7,11 +7,16 @@ namespace DotNetty.Codecs.Http2.Tests
     using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
+    using DotNetty.Handlers.Tls;
+    using DotNetty.Tests.Common;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Embedded;
     using DotNetty.Common.Utilities;
     using Xunit;
     using DotNetty.Common.Concurrency;
+    using System.Net.Security;
+    using System.Security.Authentication;
+    using System.Security.Cryptography.X509Certificates;
 
     public class Http2StreamFrameToHttpObjectCodecTest
     {
@@ -962,6 +967,67 @@ namespace DotNetty.Codecs.Http2.Tests
                 goaway.Release();
                 frame.Release();
             }
+        }
+
+        sealed class TestChannelOutboundHandlerAdapter0 : ChannelHandlerAdapter
+        {
+            readonly ConcurrentQueue<IHttp2StreamFrame> frames;
+
+            public TestChannelOutboundHandlerAdapter0(ConcurrentQueue<IHttp2StreamFrame> frames) => this.frames = frames;
+
+            public override void Write(IChannelHandlerContext ctx, object msg, IPromise promise)
+            {
+                if (msg is IHttp2StreamFrame http2StreamFrame)
+                {
+                    frames.Enqueue(http2StreamFrame);
+                    promise.Complete();
+                }
+                else
+                {
+                    ctx.WriteAsync(msg, promise);
+                }
+            }
+        }
+
+        [Fact]
+        public void TestIsSharableBetweenChannels()
+        {
+            var frames = new ConcurrentQueue<IHttp2StreamFrame>();
+            IChannelHandler sharedHandler = new Http2StreamFrameToHttpObjectCodec(false);
+
+            X509Certificate2 tlsCertificate = TestResourceHelper.GetTestCertificate();
+            string targetHost = tlsCertificate.GetNameInfo(X509NameType.DnsName, false);
+            TlsHandler tlsHandler = new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(targetHost));
+            EmbeddedChannel tlsCh = new EmbeddedChannel(tlsHandler, new TestChannelOutboundHandlerAdapter0(frames), sharedHandler);
+            EmbeddedChannel plaintextCh = new EmbeddedChannel(new TestChannelOutboundHandlerAdapter0(frames), sharedHandler);
+
+            var req = new DefaultFullHttpRequest(
+                HttpVersion.Http11, HttpMethod.Get, "/hello/world");
+            Assert.True(tlsCh.WriteOutbound(req));
+            Assert.True(tlsCh.FinishAndReleaseAll());
+
+            frames.TryDequeue(out var headersFrame);
+            var headers = ((IHttp2HeadersFrame)headersFrame).Headers;
+
+            Assert.Equal("https", headers.Scheme.ToString());
+            Assert.Equal("GET", headers.Method.ToString());
+            Assert.Equal("/hello/world", headers.Path.ToString());
+            Assert.True(((IHttp2HeadersFrame)headersFrame).IsEndStream);
+            Assert.False(frames.TryDequeue(out _));
+
+            // Run the plaintext channel
+            req = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, "/hello/world");
+            Assert.False(plaintextCh.WriteOutbound(req));
+            Assert.False(plaintextCh.FinishAndReleaseAll());
+
+            frames.TryDequeue(out headersFrame);
+            headers = ((IHttp2HeadersFrame)headersFrame).Headers;
+
+            Assert.Equal("http", headers.Scheme.ToString());
+            Assert.Equal("GET", headers.Method.ToString());
+            Assert.Equal("/hello/world", headers.Path.ToString());
+            Assert.True(((IHttp2HeadersFrame)headersFrame).IsEndStream);
+            Assert.False(frames.TryDequeue(out _));
         }
     }
 }

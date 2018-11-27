@@ -8,6 +8,7 @@ namespace DotNetty.Codecs.Http2
     using DotNetty.Codecs.Http;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Channels;
+    using DotNetty.Common.Utilities;
 
     /// <summary>
     /// This handler converts from <see cref="IHttp2StreamFrame"/> to <see cref="IHttpObject"/>,
@@ -20,10 +21,11 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class Http2StreamFrameToHttpObjectCodec : MessageToMessageCodec2<IHttp2StreamFrame, IHttpObject>
     {
+        private static readonly AttributeKey<HttpScheme> SchemeAttrKey =
+            AttributeKey<HttpScheme>.ValueOf("STREAMFRAMECODEC_SCHEME");
+
         private readonly bool isServer;
         private readonly bool validateHeaders;
-
-        private HttpScheme scheme;
 
         public Http2StreamFrameToHttpObjectCodec(bool isServer)
             : this(isServer, true)
@@ -34,8 +36,9 @@ namespace DotNetty.Codecs.Http2
         {
             this.isServer = isServer;
             this.validateHeaders = validateHeaders;
-            this.scheme = HttpScheme.Http;
         }
+
+        public override bool IsSharable => true;
 
         public override bool TryAcceptInboundMessage(object msg, out IHttp2StreamFrame cast)
         {
@@ -148,7 +151,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     if (res is IFullHttpResponse)
                     {
-                        var headers = this.ToHttp2Headers(res);
+                        var headers = this.ToHttp2Headers(ctx, res);
                         output.Add(new DefaultHttp2HeadersFrame(headers, false));
                         return;
                     }
@@ -158,7 +161,7 @@ namespace DotNetty.Codecs.Http2
 
             if (msg is IHttpMessage httpMsg)
             {
-                var headers = this.ToHttp2Headers(httpMsg);
+                var headers = this.ToHttp2Headers(ctx, httpMsg);
                 var noMoreFrames = false;
                 if (msg is IFullHttpMessage fullHttpMsg)
                 {
@@ -178,11 +181,11 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        private IHttp2Headers ToHttp2Headers(IHttpMessage msg)
+        private IHttp2Headers ToHttp2Headers(IChannelHandlerContext ctx, IHttpMessage msg)
         {
             if (msg is IHttpRequest)
             {
-                msg.Headers.Set(HttpConversionUtil.ExtensionHeaderNames.Scheme, scheme.Name);
+                msg.Headers.Set(HttpConversionUtil.ExtensionHeaderNames.Scheme, ConnectionScheme(ctx));
             }
 
             return HttpConversionUtil.ToHttp2Headers(msg, this.validateHeaders);
@@ -212,23 +215,45 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        public override void HandlerAdded(IChannelHandlerContext context)
+        public override void HandlerAdded(IChannelHandlerContext ctx)
         {
-            base.HandlerAdded(context);
+            base.HandlerAdded(ctx);
 
-            // this handler is typically used on an Http2StreamChannel. at this
+            // this handler is typically used on an Http2StreamChannel. At this
             // stage, ssl handshake should've been established. checking for the
             // presence of SslHandler in the parent's channel pipeline to
             // determine the HTTP scheme should suffice, even for the case where
             // SniHandler is used.
-            this.scheme = IsSsl(context) ? HttpScheme.Https : HttpScheme.Http;
+            IAttribute<HttpScheme> schemeAttribute = ConnectionSchemeAttribute(ctx);
+            if (schemeAttribute.Get() == null)
+            {
+                HttpScheme scheme = IsSsl(ctx) ? HttpScheme.Https : HttpScheme.Http;
+                schemeAttribute.Set(scheme);
+            }
         }
 
         protected static bool IsSsl(IChannelHandlerContext ctx)
         {
-            var ch = ctx.Channel;
-            var connChannel = (ch is IHttp2StreamChannel) ? ch.Parent : ch;
+            var connChannel = ConnectionChannel(ctx);
             return null != connChannel.Pipeline.Get<TlsHandler>();
+        }
+
+        private static HttpScheme ConnectionScheme(IChannelHandlerContext ctx)
+        {
+            HttpScheme scheme = ConnectionSchemeAttribute(ctx).Get();
+            return scheme == null ? HttpScheme.Http : scheme;
+        }
+
+        private static IAttribute<HttpScheme> ConnectionSchemeAttribute(IChannelHandlerContext ctx)
+        {
+            var ch = ConnectionChannel(ctx);
+            return ch.GetAttribute(SchemeAttrKey);
+        }
+
+        private static IChannel ConnectionChannel(IChannelHandlerContext ctx)
+        {
+            var ch = ctx.Channel;
+            return ch is IHttp2StreamChannel ? ch.Parent : ch;
         }
     }
 }
