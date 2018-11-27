@@ -406,27 +406,9 @@ namespace DotNetty.Transport.Channels
                         }
                         else
                         {
-                            ArraySegment<byte>[] nioBufs = entry.Buffers;
-                            if (nioBufs == null)
-                            {
-                                // cached ByteBuffers as they may be expensive to create in terms
-                                // of Object allocation
-                                entry.Buffers = nioBufs = buf.GetIoBuffers();
-                            }
-                            for (int i = 0; i < nioBufs.Length && nioBufferCount < maxCount; i++)
-                            {
-                                ArraySegment<byte> nioBuf = nioBufs[i];
-                                if (nioBuf.Array == null)
-                                {
-                                    break;
-                                }
-                                else if (nioBuf.Count == 0)
-                                {
-                                    continue;
-                                }
-                                nioBuffers.Add(nioBuf);
-                                nioBufferCount++;
-                            }
+                            // The code exists in an extra method to ensure the method is not too big to inline as this
+                            // branch is not very likely to get hit very frequently.
+                            nioBufferCount = GetSharedBufferList(entry, buf, nioBuffers, nioBufferCount, maxCount);
                         }
                         if (nioBufferCount == maxCount)
                         {
@@ -439,6 +421,32 @@ namespace DotNetty.Transport.Channels
             this.nioBufferSize = ioBufferSize;
 
             return nioBuffers;
+        }
+
+        static int GetSharedBufferList(Entry entry, IByteBuffer buf, List<ArraySegment<byte>> nioBuffers, int nioBufferCount, int maxCount)
+        {
+            ArraySegment<byte>[] nioBufs = entry.Buffers;
+            if (nioBufs == null)
+            {
+                // cached ByteBuffers as they may be expensive to create in terms
+                // of Object allocation
+                entry.Buffers = nioBufs = buf.GetIoBuffers();
+            }
+            for (int i = 0; i < nioBufs.Length && nioBufferCount < maxCount; i++)
+            {
+                ArraySegment<byte> nioBuf = nioBufs[i];
+                if (nioBuf.Array == null)
+                {
+                    break;
+                }
+                else if (nioBuf.Count == 0)
+                {
+                    continue;
+                }
+                nioBuffers.Add(nioBuf);
+                nioBufferCount++;
+            }
+            return nioBufferCount;
         }
 
         /// <summary>
@@ -608,7 +616,7 @@ namespace DotNetty.Transport.Channels
             try
             {
                 this.inFail = true;
-                while(true)
+                while (true)
                 {
                     if (!this.Remove0(cause, notify))
                     {
