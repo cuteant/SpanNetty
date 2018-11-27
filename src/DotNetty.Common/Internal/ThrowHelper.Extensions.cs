@@ -97,6 +97,7 @@ namespace DotNetty.Common
         stack,
         handle,
         maxCapacity,
+        aggregatePromise
     }
 
     #endregion
@@ -455,6 +456,26 @@ namespace DotNetty.Common
             InvalidOperationException GetException()
             {
                 return new InvalidOperationException("released already");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_AlreadyFinished()
+        {
+            throw GetException();
+            InvalidOperationException GetException()
+            {
+                return new InvalidOperationException("Already finished");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_AddingPromisesIsNotAllowedAfterFinishedAdding()
+        {
+            throw GetException();
+            InvalidOperationException GetException()
+            {
+                return new InvalidOperationException("Adding promises is not allowed after finished adding");
             }
         }
 

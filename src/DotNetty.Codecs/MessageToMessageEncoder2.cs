@@ -74,18 +74,37 @@ namespace DotNetty.Codecs
                     {
                         // Check if we can use a voidPromise for our extra writes to reduce GC-Pressure
                         // See https://github.com/netty/netty/issues/2525
-                        var voidPromise = ctx.VoidPromise();
-                        var isVoidPromise = ReferenceEquals(promise, voidPromise);
-                        for (int i = 0; i < lastItemIndex; i++)
+                        if (promise == ctx.VoidPromise())
                         {
-                            // we don't care about output from these messages as failure while sending one of these messages will fail all messages up to the last message - which will be observed by the caller in Task result.
-                            ctx.WriteAsync(output[i], isVoidPromise ? voidPromise : ctx.NewPromise());
+                            WriteVoidPromise(ctx, output);
                         }
-                        ctx.WriteAsync(output[lastItemIndex], promise);
+                        else
+                        {
+                            WritePromiseCombiner(ctx, output, promise);
+                        }
                     }
                     output.Return();
                 }
             }
+        }
+
+        static void WriteVoidPromise(IChannelHandlerContext ctx, List<object> output)
+        {
+            IPromise voidPromise = ctx.VoidPromise();
+            for (int i = 0; i < output.Count; i++)
+            {
+                ctx.WriteAsync(output[i], voidPromise);
+            }
+        }
+
+        static void WritePromiseCombiner(IChannelHandlerContext ctx, List<object> output, IPromise promise)
+        {
+            PromiseCombiner combiner = new PromiseCombiner();
+            for (int i = 0; i < output.Count; i++)
+            {
+                combiner.Add(ctx.WriteAsync(output[i]));
+            }
+            combiner.Finish(promise);
         }
 
         /// <summary>
