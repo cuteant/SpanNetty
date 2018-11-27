@@ -1253,10 +1253,10 @@ namespace DotNetty.Transport.Channels
                 this.ReadIfIsAutoRead();
             }
 
-            [Skip]
+            //[Skip]
             public void ChannelInactive(IChannelHandlerContext context) => context.FireChannelInactive();
 
-            [Skip]
+            //[Skip]
             public void ChannelRead(IChannelHandlerContext ctx, object msg) => ctx.FireChannelRead(msg);
 
             public void ChannelReadComplete(IChannelHandlerContext ctx)
@@ -1274,10 +1274,10 @@ namespace DotNetty.Transport.Channels
                 }
             }
 
-            [Skip]
+            //[Skip]
             public void UserEventTriggered(IChannelHandlerContext context, object evt) => this.FireUserEventTriggered(evt);
 
-            [Skip]
+            //[Skip]
             public void ChannelWritabilityChanged(IChannelHandlerContext context) => context.FireChannelWritabilityChanged();
         }
 
