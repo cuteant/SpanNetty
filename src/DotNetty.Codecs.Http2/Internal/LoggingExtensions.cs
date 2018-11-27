@@ -46,7 +46,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void IgnoringFrameForStreamRst(this IInternalLogger logger, IChannelHandlerContext ctx, Http2FrameTypes frameName, bool isResetSent, int lastStreamKnownByPeer)
         {
-            logger.Info("{} ignoring {} frame for stream {} {}", ctx.Channel, frameName,
+            logger.Info("{} ignoring {} frame for stream {}", ctx.Channel, frameName,
                     isResetSent ? "RST_STREAM sent." :
                         ("Stream created after GOAWAY sent. Last known stream by peer " +
                          lastStreamKnownByPeer));
