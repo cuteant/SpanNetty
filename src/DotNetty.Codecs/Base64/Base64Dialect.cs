@@ -3,7 +3,7 @@
 
 namespace DotNetty.Codecs.Base64
 {
-    public struct Base64Dialect
+    public readonly struct Base64Dialect
     {
         /// <summary>
         ///     http://www.faqs.org/rfcs/rfc3548.html

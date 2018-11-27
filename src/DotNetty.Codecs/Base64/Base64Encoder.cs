@@ -18,7 +18,7 @@ namespace DotNetty.Codecs.Base64
         {
         }
 
-        public Base64Encoder(bool breakLines, Base64Dialect dialect)
+        public Base64Encoder(bool breakLines, in Base64Dialect dialect)
         {
             this.breakLines = breakLines;
             this.dialect = dialect;

@@ -6,7 +6,7 @@ namespace DotNetty.Common
     using System;
     using System.Diagnostics;
 
-    public struct PreciseTimeSpan : IComparable<PreciseTimeSpan>, IEquatable<PreciseTimeSpan>
+    public readonly struct PreciseTimeSpan : IComparable<PreciseTimeSpan>, IEquatable<PreciseTimeSpan>
     {
         static readonly long StartTime = Stopwatch.GetTimestamp();
         static readonly double PrecisionRatio = (double)Stopwatch.Frequency / TimeSpan.TicksPerSecond;
@@ -34,7 +34,7 @@ namespace DotNetty.Common
 
         public static PreciseTimeSpan Deadline(TimeSpan deadline) => new PreciseTimeSpan(GetTimeChangeSinceStart() + TicksToPreciseTicks(deadline.Ticks));
 
-        public static PreciseTimeSpan Deadline(PreciseTimeSpan deadline) => new PreciseTimeSpan(GetTimeChangeSinceStart() + deadline.ticks);
+        public static PreciseTimeSpan Deadline(in PreciseTimeSpan deadline) => new PreciseTimeSpan(GetTimeChangeSinceStart() + deadline.ticks);
 
         static long TicksToPreciseTicks(long ticks) => Stopwatch.IsHighResolution ? (long)(ticks * PrecisionRatio) : ticks;
 

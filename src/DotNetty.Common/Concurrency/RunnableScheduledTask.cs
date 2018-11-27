@@ -7,7 +7,7 @@ namespace DotNetty.Common.Concurrency
     {
         readonly IRunnable action;
 
-        public RunnableScheduledTask(AbstractScheduledEventExecutor executor, IRunnable action, PreciseTimeSpan deadline)
+        public RunnableScheduledTask(AbstractScheduledEventExecutor executor, IRunnable action, in PreciseTimeSpan deadline)
             : base(executor, deadline, executor.NewPromise())
         {
             this.action = action;

@@ -12,7 +12,7 @@ namespace DotNetty.Common.Concurrency
         readonly object context;
 
         public StateActionWithContextScheduledAsyncTask(AbstractScheduledEventExecutor executor, Action<object, object> action, object context, object state,
-            PreciseTimeSpan deadline, CancellationToken cancellationToken)
+            in PreciseTimeSpan deadline, CancellationToken cancellationToken)
             : base(executor, deadline, executor.NewPromise(state), cancellationToken)
         {
             this.action = action;

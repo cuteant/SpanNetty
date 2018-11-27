@@ -58,7 +58,7 @@ namespace DotNetty.Common.Concurrency
 
         internal protected IScheduledRunnable PollScheduledTask() => this.PollScheduledTask(GetNanos());
 
-        protected IScheduledRunnable PollScheduledTask(PreciseTimeSpan nanoTime)
+        protected IScheduledRunnable PollScheduledTask(in PreciseTimeSpan nanoTime)
         {
             Debug.Assert(this.InEventLoop);
 

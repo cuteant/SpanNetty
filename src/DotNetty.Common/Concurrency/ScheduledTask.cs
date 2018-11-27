@@ -23,7 +23,7 @@ namespace DotNetty.Common.Concurrency
         int volatileCancellationState;
         int queueIndex = PriorityQueue<IScheduledRunnable>.IndexNotInQueue;
 
-        protected ScheduledTask(AbstractScheduledEventExecutor executor, PreciseTimeSpan deadline, IPromise promise)
+        protected ScheduledTask(AbstractScheduledEventExecutor executor, in PreciseTimeSpan deadline, IPromise promise)
         {
             this.Executor = executor;
             this.Promise = promise;

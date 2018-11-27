@@ -11,7 +11,7 @@ namespace DotNetty.Common.Concurrency
         readonly object context;
 
         public StateActionWithContextScheduledTask(AbstractScheduledEventExecutor executor, Action<object, object> action, object context, object state,
-            PreciseTimeSpan deadline)
+            in PreciseTimeSpan deadline)
             : base(executor, deadline, executor.NewPromise(state))
         {
             this.action = action;

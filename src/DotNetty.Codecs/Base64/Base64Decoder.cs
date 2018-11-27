@@ -16,7 +16,7 @@ namespace DotNetty.Codecs.Base64
         {
         }
 
-        public Base64Decoder(Base64Dialect dialect)
+        public Base64Decoder(in Base64Dialect dialect)
         {
             this.dialect = dialect;
         }
