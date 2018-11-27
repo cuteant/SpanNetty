@@ -932,7 +932,7 @@ namespace DotNetty.Codecs.Http2.Tests
         }
 
         [Fact]
-        public void HeadersWriteShouldHalfCloseAfterOnError()
+        public void HeadersWriteShouldHalfCloseAfterOnErrorForPreCreatedStream()
         {
             IPromise promise = NewPromise();
             var ex = new Http2RuntimeException();
@@ -955,11 +955,55 @@ namespace DotNetty.Codecs.Http2.Tests
                 });
 
             this.WriteAllFlowControlledFrames();
-            this.CreateStream(STREAM_ID, false);
+            var stream = this.CreateStream(STREAM_ID, false);
             this.encoder.WriteHeadersAsync(this.ctx.Object, STREAM_ID, EmptyHttp2Headers.Instance, 0, true, promise);
 
             Assert.True(promise.IsCompleted);
             Assert.False(promise.IsSuccess);
+            Assert.False(stream.IsHeadersSent);
+            //InOrder inOrder = inOrder(lifecycleManager);
+            //inOrder.verify(lifecycleManager).onError(eq(ctx), eq(true), eq(ex));
+            //inOrder.verify(lifecycleManager).closeStreamLocal(eq(stream(STREAM_ID)), eq(promise));
+            this.lifecycleManager.Verify(
+                x => x.OnError(
+                    It.Is<IChannelHandlerContext>(v => v == this.ctx.Object),
+                    It.Is<bool>(v => v == true),
+                    It.Is<Exception>(v => v == ex)));
+            this.lifecycleManager.Verify(
+                x => x.CloseStreamLocal(
+                    It.Is<IHttp2Stream>(v => v == this.Stream(STREAM_ID)),
+                    It.Is<Task>(v => v == promise.Task)));
+        }
+
+        [Fact]
+        public void HeadersWriteShouldHalfCloseAfterOnErrorForImplicitlyCreatedStream()
+        {
+            IPromise promise = NewPromise();
+            var ex = new Http2RuntimeException();
+            // Fake an encoding error, like HPACK's HeaderListSizeException
+            this.writer
+                .Setup(x => x.WriteHeadersAsync(
+                    It.Is<IChannelHandlerContext>(v => v == this.ctx.Object),
+                    It.Is<int>(v => v == STREAM_ID),
+                    It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
+                    It.Is<int>(v => v == 0),
+                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
+                    It.Is<bool>(v => v == false),
+                    It.Is<int>(v => v == 0),
+                    It.Is<bool>(v => v == true),
+                    It.Is<IPromise>(v => v == promise)))
+                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, short, bool, int, bool, IPromise>((c, id, headers, streamDependency, weight, exclusive, padding, endOfStream, p) =>
+                {
+                    p.SetException(ex);
+                    return p.Task;
+                });
+
+            this.WriteAllFlowControlledFrames();
+            this.encoder.WriteHeadersAsync(this.ctx.Object, STREAM_ID, EmptyHttp2Headers.Instance, 0, true, promise);
+
+            Assert.True(promise.IsCompleted);
+            Assert.False(promise.IsSuccess);
+            Assert.False(this.Stream(STREAM_ID).IsHeadersSent);
             //InOrder inOrder = inOrder(lifecycleManager);
             //inOrder.verify(lifecycleManager).onError(eq(ctx), eq(true), eq(ex));
             //inOrder.verify(lifecycleManager).closeStreamLocal(eq(stream(STREAM_ID)), eq(promise));
