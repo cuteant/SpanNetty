@@ -492,18 +492,8 @@ namespace DotNetty.Buffers
                         buffer._SetByte(writerIndex++, WriteUtfUnknown);
                         break;
                     }
-                    if (!char.IsLowSurrogate(c2))
-                    {
-                        buffer._SetByte(writerIndex++, WriteUtfUnknown);
-                        buffer._SetByte(writerIndex++, char.IsHighSurrogate(c2) ? WriteUtfUnknown : c2);
-                        continue;
-                    }
-                    int codePoint = CharUtil.ToCodePoint(c, c2);
-                    // See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf#G2630.
-                    buffer._SetByte(writerIndex++, (byte)(0xf0 | (codePoint >> 18)));
-                    buffer._SetByte(writerIndex++, (byte)(0x80 | ((codePoint >> 12) & 0x3f)));
-                    buffer._SetByte(writerIndex++, (byte)(0x80 | ((codePoint >> 6) & 0x3f)));
-                    buffer._SetByte(writerIndex++, (byte)(0x80 | (codePoint & 0x3f)));
+                    // Extra method to allow inlining the rest of writeUtf8 which is the most likely code path.
+                    writerIndex = WriteUtf8Surrogate(buffer, writerIndex, c, c2);
                 }
                 else
                 {
@@ -514,6 +504,23 @@ namespace DotNetty.Buffers
             }
 
             return writerIndex - oldWriterIndex;
+        }
+
+        static int WriteUtf8Surrogate(AbstractByteBuffer buffer, int writerIndex, char c, char c2)
+        {
+            if (!char.IsLowSurrogate(c2))
+            {
+                buffer._SetByte(writerIndex++, WriteUtfUnknown);
+                buffer._SetByte(writerIndex++, char.IsHighSurrogate(c2) ? WriteUtfUnknown : c2);
+                return writerIndex;
+            }
+            int codePoint = CharUtil.ToCodePoint(c, c2);
+            // See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf#G2630.
+            buffer._SetByte(writerIndex++, (byte)(0xf0 | (codePoint >> 18)));
+            buffer._SetByte(writerIndex++, (byte)(0x80 | ((codePoint >> 12) & 0x3f)));
+            buffer._SetByte(writerIndex++, (byte)(0x80 | ((codePoint >> 6) & 0x3f)));
+            buffer._SetByte(writerIndex++, (byte)(0x80 | (codePoint & 0x3f)));
+            return writerIndex;
         }
 
         internal static int Utf8MaxBytes(ICharSequence seq) => seq.Count * MaxBytesPerCharUtf8;
