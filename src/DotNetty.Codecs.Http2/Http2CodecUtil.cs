@@ -51,7 +51,7 @@ namespace DotNetty.Codecs.Http2
         public const short MinWeight = 1;
 
         static readonly IByteBuffer ConnectionPreface =
-            UnreleasableBuffer(DirectBuffer(24).WriteBytes(Encoding.UTF8.GetBytes("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n")));
+            UnreleasableBuffer(DirectBuffer(24).WriteBytes(Encoding.UTF8.GetBytes("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n")).AsReadOnly());
 
         const int MaxPaddingLengthLength = 1;
 

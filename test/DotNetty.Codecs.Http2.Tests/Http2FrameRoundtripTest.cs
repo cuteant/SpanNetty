@@ -63,7 +63,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 foreach (var buf in this.needReleasing)
                 {
                     int expectedFinalRefCount = 0;
-                    if (/*buf.isReadOnly() ||*/ buf is EmptyByteBuffer || buf is UnreleasableByteBuffer)
+                    if (buf.IsReadOnly || buf is EmptyByteBuffer)
                     {
                         // Special case for when we're writing slices of the padding buffer.
                         expectedFinalRefCount = 1;

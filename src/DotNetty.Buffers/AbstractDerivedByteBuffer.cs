@@ -62,6 +62,8 @@ namespace DotNetty.Buffers
 
         protected virtual bool Release0(int decrement) => this.Unwrap().Release(decrement);
 
+        public override bool IsReadOnly => this.Unwrap().IsReadOnly;
+
         public override ArraySegment<byte> GetIoBuffer(int index, int length) => this.Unwrap().GetIoBuffer(index, length);
 
         public override ArraySegment<byte>[] GetIoBuffers(int index, int length) => this.Unwrap().GetIoBuffers(index, length);

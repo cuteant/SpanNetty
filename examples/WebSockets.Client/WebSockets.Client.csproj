@@ -21,7 +21,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\DotNetty.Buffers\DotNetty.Buffers.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Client\DotNetty.Client.csproj" />
     <ProjectReference Include="..\..\src\DotNetty.Codecs.Http\DotNetty.Codecs.Http.csproj" />
     <ProjectReference Include="..\..\src\DotNetty.Codecs\DotNetty.Codecs.csproj" />
     <ProjectReference Include="..\..\src\DotNetty.Common\DotNetty.Common.csproj" />

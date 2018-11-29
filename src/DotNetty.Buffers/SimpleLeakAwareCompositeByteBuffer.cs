@@ -60,6 +60,8 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer ReadSlice(int length) => this.NewLeakAwareByteBuffer(base.ReadSlice(length));
 
+        public override IByteBuffer AsReadOnly() => this.NewLeakAwareByteBuffer(base.AsReadOnly());
+
         SimpleLeakAwareByteBuffer NewLeakAwareByteBuffer(IByteBuffer wrapped) => this.NewLeakAwareByteBuffer(wrapped, this.Unwrap(), this.Leak);
 
         protected virtual SimpleLeakAwareByteBuffer NewLeakAwareByteBuffer(IByteBuffer wrapped, IByteBuffer trackedByteBuf, IResourceLeakTracker leakTracker) =>

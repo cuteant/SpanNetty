@@ -24,7 +24,8 @@ namespace DotNetty.Codecs
             try
             {
                 IByteBuffer buffer;
-                if (cumulation.WriterIndex > cumulation.MaxCapacity - input.ReadableBytes || cumulation.ReferenceCount > 1)
+                if (cumulation.WriterIndex > cumulation.MaxCapacity - input.ReadableBytes ||
+                    cumulation.ReferenceCount > 1 || cumulation.IsReadOnly)
                 {
                     // Expand cumulation (by replace it) when either there is not more room in the buffer
                     // or if the refCnt is greater then 1 which may happen when the user use Slice().Retain() or

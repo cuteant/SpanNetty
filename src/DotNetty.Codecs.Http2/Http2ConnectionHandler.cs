@@ -33,7 +33,7 @@ namespace DotNetty.Codecs.Http2
         private static readonly IHttp2Headers HEADERS_TOO_LARGE_HEADERS = ReadOnlyHttp2Headers.ServerHeaders(false,
             HttpResponseStatus.RequestHeaderFieldsTooLarge.CodeAsText);
         private static readonly IByteBuffer HTTP_1_X_BUF = Unpooled.UnreleasableBuffer(
-            Unpooled.WrappedBuffer(new byte[] { (byte)'H', (byte)'T', (byte)'T', (byte)'P', (byte)'/', (byte)'1', (byte)'.' }));
+            Unpooled.WrappedBuffer(new byte[] { (byte)'H', (byte)'T', (byte)'T', (byte)'P', (byte)'/', (byte)'1', (byte)'.' }).AsReadOnly());
 
         private readonly IHttp2ConnectionDecoder decoder;
         private readonly IHttp2ConnectionEncoder encoder;

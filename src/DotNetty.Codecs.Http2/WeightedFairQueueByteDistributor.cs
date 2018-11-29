@@ -6,8 +6,6 @@ namespace DotNetty.Codecs.Http2
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
-    using System.Linq;
     using System.Text;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;

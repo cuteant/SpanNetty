@@ -108,6 +108,12 @@ namespace DotNetty.Buffers.Tests
             Assert.True(buffer.Release());
         }
 
+        [Fact]
+        public void WrapReadOnly()
+        {
+            this.AssertWrapped(this.NewBuffer(8).AsReadOnly());
+        }
+
         protected void AssertWrapped(IByteBuffer buf)
         {
             try

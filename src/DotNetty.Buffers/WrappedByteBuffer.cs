@@ -18,7 +18,7 @@ namespace DotNetty.Buffers
     /// and {@link ByteBufUtil#writeUtf8(ByteBuf, CharSequence)}.
     public abstract partial class WrappedByteBuffer : IByteBuffer
     {
-        protected readonly IByteBuffer Buf;
+        internal protected readonly IByteBuffer Buf;
 
         protected WrappedByteBuffer(IByteBuffer buf)
         {
@@ -46,6 +46,10 @@ namespace DotNetty.Buffers
         public IByteBufferAllocator Allocator => this.Buf.Allocator;
 
         public IByteBuffer Unwrap() => this.Buf;
+
+        public bool IsReadOnly => this.Buf.IsReadOnly;
+
+        public virtual IByteBuffer AsReadOnly() => this.Buf.AsReadOnly();
 
         public bool IsDirect => this.Buf.IsDirect;
 

@@ -40,6 +40,10 @@ namespace DotNetty.Buffers
 
         public bool IsDirect => true;
 
+        public bool IsReadOnly => false;
+
+        public IByteBuffer AsReadOnly() => Unpooled.UnmodifiableBuffer(this);
+
         public int ReaderIndex => 0;
 
         public IByteBuffer SetReaderIndex(int readerIndex) => this.CheckIndex(readerIndex);

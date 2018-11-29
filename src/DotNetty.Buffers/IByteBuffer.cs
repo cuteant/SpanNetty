@@ -37,6 +37,10 @@ namespace DotNetty.Buffers
 
         bool IsDirect { get; }
 
+        bool IsReadOnly { get; }
+
+        IByteBuffer AsReadOnly();
+
         int ReaderIndex { get; }
 
         int WriterIndex { get; }

@@ -759,6 +759,12 @@ namespace DotNetty.Buffers
             return base.GetBytes(index, destination, length);
         }
 
+        public override IByteBuffer AsReadOnly()
+        {
+            RecordLeakNonRefCountingOperation(this.Leak);
+            return base.AsReadOnly();
+        }
+
         public override IReferenceCounted Retain()
         {
             this.Leak.Record();

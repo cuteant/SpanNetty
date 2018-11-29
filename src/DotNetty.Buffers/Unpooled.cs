@@ -347,6 +347,8 @@ namespace DotNetty.Buffers
 
         public static IByteBuffer CopiedBuffer(string value, Encoding encoding) => ByteBufferUtil.EncodeString0(Allocator, true, value, encoding, 0);
 
+        public static IByteBuffer UnmodifiableBuffer(IByteBuffer buffer) => new ReadOnlyByteBuffer(buffer);
+
         /// <summary>
         ///     Creates a new 4-byte big-endian buffer that holds the specified 32-bit integer.
         /// </summary>
@@ -572,6 +574,31 @@ namespace DotNetty.Buffers
         ///     Return a unreleasable view on the given {@link ByteBuf} which will just ignore release and retain calls.
         /// </summary>
         public static IByteBuffer UnreleasableBuffer(IByteBuffer buffer) => new UnreleasableByteBuffer(buffer);
+
+        public static IByteBuffer WrappedUnmodifiableBuffer(params IByteBuffer[] buffers)
+        {
+            return WrappedUnmodifiableBuffer(false, buffers);
+        }
+
+        public static IByteBuffer WrappedUnmodifiableBuffer(bool copy, params IByteBuffer[] buffers)
+        {
+            if (null == buffers) { return Empty; }
+            switch (buffers.Length)
+            {
+                case 0:
+                    return Empty;
+                case 1:
+                    return buffers[0].AsReadOnly();
+                default:
+                    if (copy)
+                    {
+                        var newBufs = new IByteBuffer[buffers.Length];
+                        Array.Copy(buffers, 0, newBufs, 0, buffers.Length);
+                        buffers = newBufs;
+                    }
+                    return new FixedCompositeByteBuf(Allocator, buffers);
+            }
+        }
 
         /// <summary>Encode the given <see cref="string" /> using the given <see cref="Encoding" /> into a new
         /// <see cref="IByteBuffer" /> which is allocated via the <see cref="IByteBufferAllocator" />.</summary>

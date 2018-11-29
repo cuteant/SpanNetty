@@ -522,6 +522,10 @@ namespace DotNetty.Buffers
             return this;
         }
 
+        public override bool IsReadOnly => this.wrapped.IsReadOnly;
+
+        public override IByteBuffer AsReadOnly() => this.wrapped.AsReadOnly();
+
         public override ICharSequence GetCharSequence(int index, int length, Encoding encoding) => this.wrapped.GetCharSequence(index, length, encoding);
 
         public override ICharSequence ReadCharSequence(int length, Encoding encoding) => this.wrapped.ReadCharSequence(length, encoding);

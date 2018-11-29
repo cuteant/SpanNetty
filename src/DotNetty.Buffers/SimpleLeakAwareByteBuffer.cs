@@ -42,6 +42,8 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer ReadSlice(int length) => this.NewSharedLeakAwareByteBuffer(base.ReadSlice(length));
 
+        public override IByteBuffer AsReadOnly() => this.NewSharedLeakAwareByteBuffer(base.AsReadOnly());
+
         public override IReferenceCounted Touch() => this;
 
         public override IReferenceCounted Touch(object hint) => this;

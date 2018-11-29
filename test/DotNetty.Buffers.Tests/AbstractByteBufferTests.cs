@@ -86,12 +86,13 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void ComparableInterfaceNotViolated()
         {
+            Assert.False(this.buffer.IsReadOnly);
             this.buffer.SetWriterIndex(this.buffer.ReaderIndex);
             Assert.True(this.buffer.WritableBytes >= 4);
 
             this.buffer.WriteLong(0);
             IByteBuffer buffer2 = this.NewBuffer(Capacity);
-
+            Assert.False(buffer2.IsReadOnly);
             buffer2.SetWriterIndex(buffer2.ReaderIndex);
             // Write an unsigned integer that will cause buffer.getUnsignedInt() - buffer2.getUnsignedInt() to underflow the
             // int type and wrap around on the negative side.

@@ -77,6 +77,8 @@ namespace DotNetty.Buffers
 
         public sealed override bool IsDirect => this.Unwrap().IsDirect;
 
+        public override bool IsReadOnly => this.Unwrap().IsReadOnly;
+
         public override bool HasArray => this.Unwrap().HasArray;
 
         public override byte[] Array => this.Unwrap().Array;

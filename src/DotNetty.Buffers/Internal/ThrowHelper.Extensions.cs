@@ -111,12 +111,22 @@ namespace DotNetty.Buffers
     partial class ThrowHelper
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static T ThrowGetException_ShouldNotReachHere<T>()
+        internal static T ThrowException_ShouldNotReachHere<T>()
         {
             throw GetException();
             Exception GetException()
             {
                 return new Exception("should not reach here");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static T ThrowInvalidOperationException_ShouldNotReachHere<T>()
+        {
+            throw GetException();
+            InvalidOperationException GetException()
+            {
+                return new InvalidOperationException("should not reach here");
             }
         }
 
@@ -423,6 +433,17 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotSupportedException()
+        {
+            throw GetNotSupportedException();
+
+            NotSupportedException GetNotSupportedException()
+            {
+                return new NotSupportedException();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowNotSupportedException_UnreadableStream()
         {
             throw GetNotSupportedException();
@@ -452,6 +473,28 @@ namespace DotNetty.Buffers
             NotSupportedException GetNotSupportedException()
             {
                 return new NotSupportedException("Stream does not support writing.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowReadOnlyBufferException()
+        {
+            throw GetException();
+
+            ReadOnlyBufferException GetException()
+            {
+                return new ReadOnlyBufferException();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static T ThrowReadOnlyBufferException<T>()
+        {
+            throw GetException();
+
+            ReadOnlyBufferException GetException()
+            {
+                return new ReadOnlyBufferException();
             }
         }
     }

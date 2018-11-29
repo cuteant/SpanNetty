@@ -27,5 +27,14 @@ namespace DotNetty.Buffers.Tests
             Assert.True(buffer.Unwrap().Release());
             Assert.Equal(0, buffer.ReferenceCount);
         }
+
+        [Fact]
+        public void WrappedReadOnly()
+        {
+            var buf = Unpooled.UnreleasableBuffer(Unpooled.Buffer(1).AsReadOnly());
+            Assert.Same(buf, buf.AsReadOnly());
+
+            Assert.True(buf.Unwrap().Release());
+        }
     }
 }

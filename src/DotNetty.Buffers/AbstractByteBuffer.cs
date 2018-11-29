@@ -63,6 +63,13 @@ namespace DotNetty.Buffers
 
             this.maxCapacity = maxCapacity;
         }
+        public virtual bool IsReadOnly => false;
+
+        public virtual IByteBuffer AsReadOnly()
+        {
+            if (this.IsReadOnly) { return this; }
+            return Unpooled.UnmodifiableBuffer(this);
+        }
 
         public abstract int Capacity { get; }
 

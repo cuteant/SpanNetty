@@ -32,7 +32,7 @@ namespace DotNetty.Codecs.Http2
         /// Buffer for any streams and corresponding frames that could not be created due to the maximum
         /// concurrent stream limit being hit.
         /// </summary>
-        private readonly Dictionary<int, PendingStream> pendingStreams = new Dictionary<int, PendingStream>();
+        private readonly SortedDictionary<int, PendingStream> pendingStreams = new SortedDictionary<int, PendingStream>();
         private int maxConcurrentStreams;
         private bool closed;
 
@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http2
 
         public override Task WriteHeadersAsync(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int streamDependency, short weight, bool exclusive, int padding, bool endOfStream, IPromise promise)
         {
-            if (closed)
+            if (this.closed)
             {
                 promise.SetException(new Http2ChannelClosedException());
                 return promise.Task;
@@ -77,7 +77,7 @@ namespace DotNetty.Codecs.Http2
             if (!this.pendingStreams.TryGetValue(streamId, out var pendingStream))
             {
                 pendingStream = new PendingStream(ctx, streamId);
-                pendingStreams.Add(streamId, pendingStream);
+                this.pendingStreams.Add(streamId, pendingStream);
             }
             pendingStream.frames.Add(new HeadersFrame(this, headers, streamDependency, weight, exclusive,
                     padding, endOfStream, promise));
@@ -145,9 +145,9 @@ namespace DotNetty.Codecs.Http2
         {
             try
             {
-                if (!closed)
+                if (!this.closed)
                 {
-                    closed = true;
+                    this.closed = true;
 
                     // Fail all buffered streams.
                     Http2ChannelClosedException e = new Http2ChannelClosedException();

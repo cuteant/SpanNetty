@@ -5,16 +5,19 @@ namespace DotNetty.Buffers
 
     public sealed class UnreleasableByteBuffer : WrappedByteBuffer
     {
-        public UnreleasableByteBuffer(IByteBuffer buf) : base(buf)
+        public UnreleasableByteBuffer(IByteBuffer buf)
+            : base(buf is UnreleasableByteBuffer unreleasable ? unreleasable.Unwrap() : buf)
         {
         }
+
+        public override IByteBuffer AsReadOnly() => this.Buf.IsReadOnly ? this : new UnreleasableByteBuffer(this.Buf.AsReadOnly());
 
         public override IByteBuffer ReadSlice(int length) => new UnreleasableByteBuffer(this.Buf.ReadSlice(length));
 
         // We could call buf.readSlice(..), and then call buf.release(). However this creates a leak in unit tests
         // because the release method on UnreleasableByteBuf will never allow the leak record to be cleaned up.
         // So we just use readSlice(..) because the end result should be logically equivalent.
-        public override IByteBuffer ReadRetainedSlice(int length) =>this.ReadSlice(length);
+        public override IByteBuffer ReadRetainedSlice(int length) => this.ReadSlice(length);
 
         public override IByteBuffer Slice() => new UnreleasableByteBuffer(this.Buf.Slice());
 

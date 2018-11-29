@@ -44,6 +44,12 @@ namespace DotNetty.Buffers
             return base.ReadSlice(length);
         }
 
+        public override IByteBuffer AsReadOnly()
+        {
+            RecordLeakNonRefCountingOperation(this.Leak);
+            return base.AsReadOnly();
+        }
+
         public override IByteBuffer DiscardReadBytes()
         {
             RecordLeakNonRefCountingOperation(this.Leak);

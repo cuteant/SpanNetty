@@ -93,6 +93,7 @@ namespace DotNetty.Buffers
         }
 
         static readonly ArraySegment<byte> EmptyNioBuffer = Unpooled.Empty.GetIoBuffer();
+        static readonly IByteBuffer[] Empty = { Unpooled.Empty };
 
         readonly IByteBufferAllocator allocator;
         readonly bool direct;
@@ -121,7 +122,7 @@ namespace DotNetty.Buffers
         }
 
         public CompositeByteBuffer(IByteBufferAllocator allocator, bool direct, int maxNumComponents, params IByteBuffer[] buffers)
-            : this(allocator, direct, maxNumComponents, buffers, 0)
+            : this(allocator, direct, maxNumComponents, buffers ?? Empty, 0)
         {
         }
 
@@ -491,7 +492,7 @@ namespace DotNetty.Buffers
         {
             this.EnsureAccessible();
 
-            var size = this.NumComponents;
+            var size = this.componentCount;
             for (var idx = 0; idx < size; idx++)
             {
                 yield return this.components[idx].Slice();
@@ -662,31 +663,39 @@ namespace DotNetty.Buffers
                 return new[] { EmptyNioBuffer };
             }
 
-            var buffers = new List<ArraySegment<byte>>(this.componentCount);
-            int i = this.ToComponentIndex0(index);
-            while (length > 0)
+            var buffers = ThreadLocalList<ArraySegment<byte>>.NewInstance(this.componentCount);
+            try
             {
-                ComponentEntry c = this.components[i];
-                IByteBuffer s = c.Buffer;
-                int localLength = Math.Min(length, c.EndOffset - index);
-                switch (s.IoBufferCount)
+                int i = this.ToComponentIndex0(index);
+                while (length > 0)
                 {
-                    case 0:
-                        throw new NotSupportedException();
-                    case 1:
-                        buffers.Add(s.GetIoBuffer(c.Idx(index), localLength));
-                        break;
-                    default:
-                        buffers.AddRange(s.GetIoBuffers(c.Idx(index), localLength));
-                        break;
+                    ComponentEntry c = this.components[i];
+                    IByteBuffer s = c.Buffer;
+                    int localLength = Math.Min(length, c.EndOffset - index);
+                    switch (s.IoBufferCount)
+                    {
+                        case 0:
+                            ThrowHelper.ThrowNotSupportedException();
+                            break;
+                        case 1:
+                            buffers.Add(s.GetIoBuffer(c.Idx(index), localLength));
+                            break;
+                        default:
+                            buffers.AddRange(s.GetIoBuffers(c.Idx(index), localLength));
+                            break;
+                    }
+
+                    index += localLength;
+                    length -= localLength;
+                    i++;
                 }
 
-                index += localLength;
-                length -= localLength;
-                i++;
+                return buffers.ToArray();
             }
-
-            return buffers.ToArray();
+            finally
+            {
+                buffers.Return();
+            }
         }
 
 
@@ -905,7 +914,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            return ThrowHelper.ThrowGetException_ShouldNotReachHere<int>();
+            return ThrowHelper.ThrowException_ShouldNotReachHere<int>();
         }
 
         public virtual int ToByteIndex(int cIndex)
@@ -1440,7 +1449,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            return ThrowHelper.ThrowGetException_ShouldNotReachHere<ComponentEntry>();
+            return ThrowHelper.ThrowException_ShouldNotReachHere<ComponentEntry>();
         }
 
         /// <summary>

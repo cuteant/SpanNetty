@@ -28,9 +28,9 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         static readonly IByteBuffer ZeroBuffer =
 #if NET40
-            Unpooled.UnreleasableBuffer(Unpooled.Buffer(Http2CodecUtil.MaxUnsignedByte).WriteZero(Http2CodecUtil.MaxUnsignedByte));
+            Unpooled.UnreleasableBuffer(Unpooled.Buffer(Http2CodecUtil.MaxUnsignedByte).WriteZero(Http2CodecUtil.MaxUnsignedByte).AsReadOnly());
 #else
-            Unpooled.UnreleasableBuffer(Unpooled.DirectBuffer(Http2CodecUtil.MaxUnsignedByte).WriteZero(Http2CodecUtil.MaxUnsignedByte));
+            Unpooled.UnreleasableBuffer(Unpooled.DirectBuffer(Http2CodecUtil.MaxUnsignedByte).WriteZero(Http2CodecUtil.MaxUnsignedByte).AsReadOnly());
 #endif
 
         readonly IHttp2HeadersEncoder headersEncoder;
