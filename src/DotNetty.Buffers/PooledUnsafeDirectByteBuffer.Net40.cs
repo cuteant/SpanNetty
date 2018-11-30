@@ -3,7 +3,6 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.IO;
-    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common;
@@ -94,23 +93,29 @@ namespace DotNetty.Buffers
         {
             this.CheckIndex(index, length);
             fixed (byte* bytes = &this.Memory[this.Idx(index)])
+            {
                 UnsafeByteBufferUtil.GetBytes(this, bytes, index, dst, dstIndex, length);
-            return this;
+                return this;
+            }
         }
 
         public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
             this.CheckIndex(index, length);
             fixed (byte* bytes = &this.Memory[this.Idx(index)])
+            {
                 UnsafeByteBufferUtil.GetBytes(this, bytes, index, dst, dstIndex, length);
-            return this;
+                return this;
+            }
         }
 
         public override IByteBuffer GetBytes(int index, Stream output, int length)
         {
             fixed (byte* bytes = &this.Memory[this.Idx(index)])
+            {
                 UnsafeByteBufferUtil.GetBytes(this, bytes, index, output, length);
-            return this;
+                return this;
+            }
         }
 
         protected internal override void _SetByte(int index, int value) => this.Memory[this.Idx(index)] = unchecked((byte)value);
@@ -167,16 +172,20 @@ namespace DotNetty.Buffers
         {
             this.CheckIndex(index, length);
             fixed (byte* bytes = &this.Memory[this.Idx(index)])
+            {
                 UnsafeByteBufferUtil.SetBytes(this, bytes, index, src, srcIndex, length);
-            return this;
+                return this;
+            }
         }
 
         public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
             this.CheckIndex(index, length);
             fixed (byte* bytes = &this.Memory[this.Idx(index)])
+            {
                 UnsafeByteBufferUtil.SetBytes(this, bytes, index, src, srcIndex, length);
-            return this;
+                return this;
+            }
         }
 
         public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
@@ -184,8 +193,10 @@ namespace DotNetty.Buffers
             this.CheckIndex(index, length);
             int read;
             fixed (byte* bytes = &this.Memory[this.Idx(index)])
+            {
                 read = UnsafeByteBufferUtil.SetBytes(this, bytes, index, src, length);
-            return TaskEx.FromResult(read);
+                return TaskEx.FromResult(read);
+            }
         }
 
         public override IByteBuffer Copy(int index, int length)
@@ -219,19 +230,9 @@ namespace DotNetty.Buffers
 
         public override int ArrayOffset => this.Offset;
 
-        public override bool HasMemoryAddress => true;
+        public override bool HasMemoryAddress => false;
 
-        public override ref byte GetPinnableMemoryAddress()
-        {
-            this.EnsureAccessible();
-            return ref this.Memory[this.Offset];
-        }
-
-        public override ref byte GetPinnableMemoryOffsetAddress(int elementOffset)
-        {
-            this.EnsureAccessible();
-            return ref this.Memory[this.Idx(elementOffset)];
-        }
+        public override ref byte GetPinnableMemoryAddress() => throw new NotSupportedException();
 
         public override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
 

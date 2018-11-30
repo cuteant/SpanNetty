@@ -3,11 +3,9 @@ namespace DotNetty.Buffers
 {
     partial class UnpooledHeapByteBuffer
     {
-        public override ref byte GetPinnableMemoryOffsetAddress(int elementOffset)
-        {
-            this.EnsureAccessible();
-            return ref this.array[elementOffset];
-        }
+        public override bool HasMemoryAddress => false;
+
+        public override ref byte GetPinnableMemoryAddress() => throw new System.NotSupportedException();
     }
 }
 #endif

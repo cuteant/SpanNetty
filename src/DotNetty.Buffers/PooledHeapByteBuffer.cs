@@ -168,6 +168,7 @@ namespace DotNetty.Buffers
 
         public override int ArrayOffset => this.Offset;
 
+#if !NET40
         public override bool HasMemoryAddress => true;
 
         public override ref byte GetPinnableMemoryAddress()
@@ -175,6 +176,7 @@ namespace DotNetty.Buffers
             this.EnsureAccessible();
             return ref this.Memory[this.Offset];
         }
+#endif
 
         public override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
 

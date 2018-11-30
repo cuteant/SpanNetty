@@ -3,7 +3,7 @@
 
 namespace DotNetty.Buffers
 {
-    class UnpooledSlicedByteBuffer : AbstractUnpooledSlicedByteBuffer
+    partial class UnpooledSlicedByteBuffer : AbstractUnpooledSlicedByteBuffer
     {
         internal UnpooledSlicedByteBuffer(AbstractByteBuffer buffer, int index, int length)
             : base(buffer, index, length)

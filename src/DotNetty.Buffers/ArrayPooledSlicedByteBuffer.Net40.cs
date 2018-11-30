@@ -3,12 +3,7 @@ namespace DotNetty.Buffers
 {
     partial class ArrayPooledSlicedByteBuffer
     {
-        public override ref byte GetPinnableMemoryAddress() => ref this.Unwrap().GetPinnableMemoryOffsetAddress(this.adjustment);
-
-        public override ref byte GetPinnableMemoryOffsetAddress(int elementOffset)
-        {
-            return ref this.Unwrap().GetPinnableMemoryOffsetAddress(elementOffset);
-        }
+        public override ref byte GetPinnableMemoryAddress() => throw new System.NotSupportedException();
     }
 }
 #endif

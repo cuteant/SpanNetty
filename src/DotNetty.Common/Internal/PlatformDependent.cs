@@ -26,7 +26,7 @@ namespace DotNetty.Common.Internal
 #if NET40
             UseDirectBuffer = false; // NET40 + Ssl/Tls，DotNetty.Buffer.PooledUnsafeDirectByteBuffer无法正常工作，暂屏蔽
 #else
-            UseDirectBuffer = !SystemPropertyUtil.GetBoolean("io.netty.noPreferDirect", true);
+            UseDirectBuffer = !SystemPropertyUtil.GetBoolean("io.netty.noPreferDirect", false);
 #endif
             if (Logger.DebugEnabled)
             {
@@ -297,6 +297,27 @@ namespace DotNetty.Common.Internal
             {
                 Unsafe.InitBlockUnaligned(ref src[srcIndex], value, unchecked((uint)length));
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe ref byte Add(ref byte source, int offset)
+        {
+            ref byte zero = ref Unsafe.AsRef<byte>(null);
+            if (!Unsafe.AreSame(ref source, ref zero))
+            {
+                return ref Unsafe.Add(ref source, offset);
+            }
+            return ref zero;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe ref byte AsRef(this byte[] source, int offset = 0)
+        {
+            if ((uint)offset < (uint)source.Length)
+            {
+                return ref source[offset];
+            }
+            return ref Unsafe.AsRef<byte>(null);
         }
 #endif
     }
