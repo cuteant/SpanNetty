@@ -155,7 +155,7 @@ namespace DotNetty.Codecs.Http2
                         ctx.WriteAsync(lastFrame, promiseAggregator.NewPromise());
 
                         // Write the payload.
-                        lastFrame = data.ReadSlice(this.maxFrameSize);
+                        lastFrame = data.ReadableBytes != this.maxFrameSize ? data.ReadSlice(this.maxFrameSize) : data;
                         data = null;
                         ctx.WriteAsync(lastFrame, promiseAggregator.NewPromise());
                     }

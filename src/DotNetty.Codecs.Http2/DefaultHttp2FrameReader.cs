@@ -13,8 +13,6 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class DefaultHttp2FrameReader : IHttp2FrameReader, IHttp2FrameSizePolicy, IHttp2FrameReaderConfiguration
     {
-        delegate void FragmentProcessor(bool endOfHeaders, IByteBuffer fragment, HeadersBlockBuilder headerBlockBuilder, IHttp2FrameListener listener);
-
         readonly IHttp2HeadersDecoder headersDecoder;
 
         /// <summary>
@@ -218,8 +216,8 @@ namespace DotNetty.Codecs.Http2
                 return;
             }
 
-            // Get a view of the buffer for the size of the payload.
-            IByteBuffer payload = input.ReadSlice(this.payloadLength);
+            // Only process up to payloadLength bytes.
+            int payloadEndIndex = input.ReaderIndex + payloadLength;
 
             // We have consumed the data, next time we read we will be expecting to read a frame header.
             this.readingHeaders = true;
@@ -228,39 +226,40 @@ namespace DotNetty.Codecs.Http2
             switch (this.frameType)
             {
                 case Http2FrameTypes.Data:
-                    this.ReadDataFrame(ctx, payload, listener);
+                    this.ReadDataFrame(ctx, input, payloadEndIndex, listener);
                     break;
                 case Http2FrameTypes.Headers:
-                    this.ReadHeadersFrame(ctx, payload, listener);
+                    this.ReadHeadersFrame(ctx, input, payloadEndIndex, listener);
                     break;
                 case Http2FrameTypes.Priority:
-                    this.ReadPriorityFrame(ctx, payload, listener);
+                    this.ReadPriorityFrame(ctx, input, listener);
                     break;
                 case Http2FrameTypes.RstStream:
-                    this.ReadRstStreamFrame(ctx, payload, listener);
+                    this.ReadRstStreamFrame(ctx, input, listener);
                     break;
                 case Http2FrameTypes.Settings:
-                    this.ReadSettingsFrame(ctx, payload, listener);
+                    this.ReadSettingsFrame(ctx, input, listener);
                     break;
                 case Http2FrameTypes.PushPromise:
-                    this.ReadPushPromiseFrame(ctx, payload, listener);
+                    this.ReadPushPromiseFrame(ctx, input, payloadEndIndex, listener);
                     break;
                 case Http2FrameTypes.Ping:
-                    this.ReadPingFrame(ctx, payload.ReadLong(), listener);
+                    this.ReadPingFrame(ctx, input.ReadLong(), listener);
                     break;
                 case Http2FrameTypes.GoAway:
-                    ReadGoAwayFrame(ctx, payload, listener);
+                    ReadGoAwayFrame(ctx, input, payloadEndIndex, listener);
                     break;
                 case Http2FrameTypes.WindowUpdate:
-                    this.ReadWindowUpdateFrame(ctx, payload, listener);
+                    this.ReadWindowUpdateFrame(ctx, input, listener);
                     break;
                 case Http2FrameTypes.Continuation:
-                    this.ReadContinuationFrame(payload, listener);
+                    this.ReadContinuationFrame(input, payloadEndIndex, listener);
                     break;
                 default:
-                    this.ReadUnknownFrame(ctx, payload, listener);
+                    this.ReadUnknownFrame(ctx, input, payloadEndIndex, listener);
                     break;
             }
+            input.SetReaderIndex(payloadEndIndex);
         }
 
         void VerifyDataFrame()
@@ -412,79 +411,110 @@ namespace DotNetty.Codecs.Http2
             this.VerifyNotProcessingHeaders();
         }
 
-        void ReadDataFrame(IChannelHandlerContext ctx, IByteBuffer payload, IHttp2FrameListener listener)
+        void ReadDataFrame(IChannelHandlerContext ctx, IByteBuffer payload, int payloadEndIndex, IHttp2FrameListener listener)
         {
             int padding = this.ReadPadding(payload);
             this.VerifyPadding(padding);
 
             // Determine how much data there is to read by removing the trailing
             // padding.
-            int dataLength = LengthWithoutTrailingPadding(payload.ReadableBytes, padding);
+            int dataLength = LengthWithoutTrailingPadding(payloadEndIndex - payload.ReaderIndex, padding);
 
             IByteBuffer data = payload.ReadSlice(dataLength);
             listener.OnDataRead(ctx, this.streamId, data, padding, this.flags.EndOfStream());
-            payload.SkipBytes(payload.ReadableBytes);
         }
 
-        void ReadHeadersFrame(IChannelHandlerContext ctx, IByteBuffer payload, IHttp2FrameListener listener)
+        sealed class PriorityHeadersFrameHeadersContinuation : HeadersContinuation
+        {
+            readonly int streamDependency;
+            readonly short weight;
+            readonly bool exclusive;
+            readonly Http2Flags headersFlags;
+
+            public PriorityHeadersFrameHeadersContinuation(DefaultHttp2FrameReader reader,
+                IChannelHandlerContext ctx, int streamId, int padding, int streamDependency,
+                short weight, bool exclusive, Http2Flags headersFlags)
+                : base(reader, ctx, streamId, padding)
+            {
+                this.streamDependency = streamDependency;
+                this.weight = weight;
+                this.exclusive = exclusive;
+                this.headersFlags = headersFlags;
+            }
+
+            public override void ProcessFragment(bool endOfHeaders, IByteBuffer fragment, int len, IHttp2FrameListener listener)
+            {
+                this.builder.AddFragment(fragment, len, this.ctx.Allocator, endOfHeaders);
+                if (endOfHeaders)
+                {
+                    listener.OnHeadersRead(this.ctx, this.streamId, this.builder.Headers(), this.streamDependency,
+                        this.weight, this.exclusive, this.padding, this.headersFlags.EndOfStream());
+                }
+            }
+        }
+
+        sealed class HeadersFrameHeadersContinuation : HeadersContinuation
+        {
+            readonly Http2Flags headersFlags;
+
+            public HeadersFrameHeadersContinuation(DefaultHttp2FrameReader reader,
+                IChannelHandlerContext ctx, int streamId, int padding, Http2Flags headersFlags)
+                : base(reader, ctx, streamId, padding)
+            {
+                this.headersFlags = headersFlags;
+            }
+
+            public override void ProcessFragment(bool endOfHeaders, IByteBuffer fragment, int len, IHttp2FrameListener listener)
+            {
+                this.builder.AddFragment(fragment, len, this.ctx.Allocator, endOfHeaders);
+                if (endOfHeaders)
+                {
+                    listener.OnHeadersRead(this.ctx, this.streamId, this.builder.Headers(), this.padding, this.headersFlags.EndOfStream());
+                }
+            }
+        }
+
+        void ReadHeadersFrame(IChannelHandlerContext ctx, IByteBuffer payload, int payloadEndIndex, IHttp2FrameListener listener)
         {
             int headersStreamId = this.streamId;
             Http2Flags headersFlags = this.flags;
             int padding = this.ReadPadding(payload);
             this.VerifyPadding(padding);
 
-            IByteBuffer fragment;
-
             // The callback that is invoked is different depending on whether priority information
             // is present in the headers frame.
-            if (this.flags.PriorityPresent())
+            if (headersFlags.PriorityPresent())
             {
                 long word1 = payload.ReadUnsignedInt();
                 bool exclusive = (word1 & 0x80000000L) != 0;
                 int streamDependency = (int)(word1 & 0x7FFFFFFFL);
-                if (streamDependency == this.streamId)
+                if (streamDependency == headersStreamId)
                 {
-                    ThrowHelper.ThrowStreamError_AStreamCannotDependOnItself(this.streamId);
+                    ThrowHelper.ThrowStreamError_AStreamCannotDependOnItself(headersStreamId);
                 }
 
                 short weight = (short)(payload.ReadByte() + 1);
-                fragment = payload.ReadSlice(LengthWithoutTrailingPadding(payload.ReadableBytes, padding));
+                int lenToRead = LengthWithoutTrailingPadding(payloadEndIndex - payload.ReaderIndex, padding);
 
                 // Create a handler that invokes the listener when the header block is complete.
-                this.headersContinuation = new HeadersContinuation(headersStreamId, this, ProcessWithPriority);
+                this.headersContinuation = new PriorityHeadersFrameHeadersContinuation(this,
+                    ctx, headersStreamId, padding, streamDependency, weight, exclusive, headersFlags);
 
                 // Process the initial fragment, invoking the listener's callback if end of headers.
-                this.headersContinuation.ProcessFragment(this.flags.EndOfHeaders(), fragment, listener);
-                this.ResetHeadersContinuationIfEnd(this.flags.EndOfHeaders());
+                this.headersContinuation.ProcessFragment(headersFlags.EndOfHeaders(), payload, lenToRead, listener);
+                this.ResetHeadersContinuationIfEnd(headersFlags.EndOfHeaders());
                 return;
-
-                void ProcessWithPriority(bool endOfHeaders, IByteBuffer buffer, HeadersBlockBuilder headerBlockBuilder, IHttp2FrameListener lsnr)
-                {
-                    headerBlockBuilder.AddFragment(buffer, ctx.Allocator, endOfHeaders);
-                    if (endOfHeaders)
-                    {
-                        lsnr.OnHeadersRead(ctx, this.streamId, headerBlockBuilder.Headers(), streamDependency, weight, exclusive, padding, headersFlags.EndOfStream());
-                    }
-                }
             }
 
             // The priority fields are not present in the frame. Prepare a continuation that invokes
             // the listener callback without priority information.
-            this.headersContinuation = new HeadersContinuation(headersStreamId, this, ProcessWithoutPriority);
+            this.headersContinuation = new HeadersFrameHeadersContinuation(this,
+                ctx, headersStreamId, padding, headersFlags);
 
             // Process the initial fragment, invoking the listener's callback if end of headers.
-            fragment = payload.ReadSlice(LengthWithoutTrailingPadding(payload.ReadableBytes, padding));
-            this.headersContinuation.ProcessFragment(this.flags.EndOfHeaders(), fragment, listener);
-            this.ResetHeadersContinuationIfEnd(this.flags.EndOfHeaders());
-
-            void ProcessWithoutPriority(bool endOfHeaders, IByteBuffer buffer, HeadersBlockBuilder headerBlockBuilder, IHttp2FrameListener lsnr)
-            {
-                headerBlockBuilder.AddFragment(buffer, ctx.Allocator, endOfHeaders);
-                if (endOfHeaders)
-                {
-                    lsnr.OnHeadersRead(ctx, headersStreamId, headerBlockBuilder.Headers(), padding, headersFlags.EndOfStream());
-                }
-            }
+            int dataLength = LengthWithoutTrailingPadding(payloadEndIndex - payload.ReaderIndex, padding);
+            this.headersContinuation.ProcessFragment(headersFlags.EndOfHeaders(), payload, dataLength, listener);
+            this.ResetHeadersContinuationIfEnd(headersFlags.EndOfHeaders());
         }
 
         void ResetHeadersContinuationIfEnd(bool endOfHeaders)
@@ -554,29 +584,43 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        void ReadPushPromiseFrame(IChannelHandlerContext ctx, IByteBuffer payload, IHttp2FrameListener listener)
+        sealed class PushPromiseFrameHeadersContinuation : HeadersContinuation
+        {
+            readonly int promisedStreamId;
+
+            public PushPromiseFrameHeadersContinuation(DefaultHttp2FrameReader reader,
+                IChannelHandlerContext ctx, int streamId, int padding, int promisedStreamId)
+                : base(reader, ctx, streamId, padding)
+            {
+                this.promisedStreamId = promisedStreamId;
+            }
+
+            public override void ProcessFragment(bool endOfHeaders, IByteBuffer fragment, int len, IHttp2FrameListener listener)
+            {
+                this.builder.AddFragment(fragment, len, this.ctx.Allocator, endOfHeaders);
+                if (endOfHeaders)
+                {
+                    listener.OnPushPromiseRead(this.ctx, this.streamId, this.promisedStreamId, this.builder.Headers(), this.padding);
+                }
+            }
+        }
+
+        void ReadPushPromiseFrame(IChannelHandlerContext ctx, IByteBuffer payload, int payloadEndIndex, IHttp2FrameListener listener)
         {
             int pushPromiseStreamId = this.streamId;
             int padding = this.ReadPadding(payload);
             this.VerifyPadding(padding);
             int promisedStreamId = Http2CodecUtil.ReadUnsignedInt(payload);
 
-            // Process the initial fragment, invoking the listener's callback if end of headers.
-            IByteBuffer fragment = payload.ReadSlice(LengthWithoutTrailingPadding(payload.ReadableBytes, padding));
-
             // Create a handler that invokes the listener when the header block is complete.
-            this.headersContinuation = new HeadersContinuation(pushPromiseStreamId, this, ProcessPushPromise);
-            this.headersContinuation.ProcessFragment(this.flags.EndOfHeaders(), fragment, listener);
-            this.ResetHeadersContinuationIfEnd(this.flags.EndOfHeaders());
+            this.headersContinuation = new PushPromiseFrameHeadersContinuation(this,
+                ctx, pushPromiseStreamId, padding, promisedStreamId);
 
-            void ProcessPushPromise(bool endOfHeaders, IByteBuffer buffer, HeadersBlockBuilder headerBlockBuilder, IHttp2FrameListener lsnr)
-            {
-                headerBlockBuilder.AddFragment(fragment, ctx.Allocator, endOfHeaders);
-                if (endOfHeaders)
-                {
-                    lsnr.OnPushPromiseRead(ctx, pushPromiseStreamId, promisedStreamId, headerBlockBuilder.Headers(), padding);
-                }
-            }
+            // Process the initial fragment, invoking the listener's callback if end of headers.
+            int dataLength = LengthWithoutTrailingPadding(payloadEndIndex - payload.ReaderIndex, padding);
+
+            this.headersContinuation.ProcessFragment(this.flags.EndOfHeaders(), payload, dataLength, listener);
+            this.ResetHeadersContinuationIfEnd(this.flags.EndOfHeaders());
         }
 
         void ReadPingFrame(IChannelHandlerContext ctx, long data, IHttp2FrameListener listener)
@@ -591,11 +635,11 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        static void ReadGoAwayFrame(IChannelHandlerContext ctx, IByteBuffer payload, IHttp2FrameListener listener)
+        static void ReadGoAwayFrame(IChannelHandlerContext ctx, IByteBuffer payload, int payloadEndIndex, IHttp2FrameListener listener)
         {
             int lastStreamId = Http2CodecUtil.ReadUnsignedInt(payload);
             var errorCode = (Http2Error)payload.ReadUnsignedInt();
-            IByteBuffer debugData = payload.ReadSlice(payload.ReadableBytes);
+            IByteBuffer debugData = payload.ReadSlice(payloadEndIndex - payload.ReaderIndex);
             listener.OnGoAwayRead(ctx, lastStreamId, errorCode, debugData);
         }
 
@@ -610,17 +654,16 @@ namespace DotNetty.Codecs.Http2
             listener.OnWindowUpdateRead(ctx, this.streamId, windowSizeIncrement);
         }
 
-        void ReadContinuationFrame(IByteBuffer payload, IHttp2FrameListener listener)
+        void ReadContinuationFrame(IByteBuffer payload, int payloadEndIndex, IHttp2FrameListener listener)
         {
             // Process the initial fragment, invoking the listener's callback if end of headers.
-            IByteBuffer continuationFragment = payload.ReadSlice(payload.ReadableBytes);
-            this.headersContinuation.ProcessFragment(this.flags.EndOfHeaders(), continuationFragment, listener);
+            this.headersContinuation.ProcessFragment(flags.EndOfHeaders(), payload, payloadEndIndex - payload.ReaderIndex, listener);
             this.ResetHeadersContinuationIfEnd(this.flags.EndOfHeaders());
         }
 
-        void ReadUnknownFrame(IChannelHandlerContext ctx, IByteBuffer payload, IHttp2FrameListener listener)
+        void ReadUnknownFrame(IChannelHandlerContext ctx, IByteBuffer payload, int payloadEndIndex, IHttp2FrameListener listener)
         {
-            payload = payload.ReadSlice(payload.ReadableBytes);
+            payload = payload.ReadSlice(payloadEndIndex - payload.ReaderIndex);
             listener.OnUnknownFrame(ctx, this.frameType, this.streamId, this.flags, payload);
         }
 
@@ -664,17 +707,19 @@ namespace DotNetty.Codecs.Http2
         /// multiple frames. The implementation of this interface will perform the final callback to the
         /// <see cref="IHttp2FrameListener"/> once the end of headers is reached.
         /// </summary>
-        sealed class HeadersContinuation
+        abstract class HeadersContinuation
         {
-            readonly int streamId;
-            readonly HeadersBlockBuilder builder;
-            readonly FragmentProcessor processor;
+            protected readonly IChannelHandlerContext ctx;
+            protected readonly int streamId;
+            protected readonly HeadersBlockBuilder builder;
+            protected int padding;
 
-            public HeadersContinuation(int streamId, DefaultHttp2FrameReader reader, FragmentProcessor processor)
+            public HeadersContinuation(DefaultHttp2FrameReader reader, IChannelHandlerContext ctx, int streamId, int padding)
             {
-                this.streamId = streamId;
-                this.processor = processor;
                 this.builder = new HeadersBlockBuilder(reader);
+                this.ctx = ctx;
+                this.streamId = streamId;
+                this.padding = padding;
             }
 
             /// <summary>
@@ -687,9 +732,9 @@ namespace DotNetty.Codecs.Http2
             /// </summary>
             /// <param name="endOfHeaders">whether the fragment is the last in the header block.</param>
             /// <param name="fragment">the fragment of the header block to be added.</param>
+            /// <param name="len"></param>
             /// <param name="listener">the listener to be notified if the header block is completed.</param>
-            internal void ProcessFragment(bool endOfHeaders, IByteBuffer fragment, IHttp2FrameListener listener)
-                => this.processor(endOfHeaders, fragment, this.builder, listener);
+            public abstract void ProcessFragment(bool endOfHeaders, IByteBuffer fragment, int len, IHttp2FrameListener listener);
 
             /// <summary>
             /// Free any allocated resources.
@@ -728,15 +773,16 @@ namespace DotNetty.Codecs.Http2
             /// Adds a fragment to the block.
             /// </summary>
             /// <param name="fragment">the fragment of the headers block to be added.</param>
+            /// <param name="len"></param>
             /// <param name="alloc">allocator for new blocks if needed.</param>
             /// <param name="endOfHeaders">flag indicating whether the current frame is the end of the headers.
             /// This is used for an optimization for when the first fragment is the full
             /// block. In that case, the buffer is used directly without copying.</param>
-            internal void AddFragment(IByteBuffer fragment, IByteBufferAllocator alloc, bool endOfHeaders)
+            internal void AddFragment(IByteBuffer fragment, int len, IByteBufferAllocator alloc, bool endOfHeaders)
             {
                 if (this.headerBlock == null)
                 {
-                    if (fragment.ReadableBytes > this.reader.headersDecoder.Configuration.MaxHeaderListSizeGoAway)
+                    if (len > this.reader.headersDecoder.Configuration.MaxHeaderListSizeGoAway)
                     {
                         this.HeaderSizeExceeded();
                     }
@@ -745,33 +791,30 @@ namespace DotNetty.Codecs.Http2
                     {
                         // Optimization - don't bother copying, just use the buffer as-is. Need
                         // to retain since we release when the header block is built.
-                        this.headerBlock = (IByteBuffer)fragment.Retain();
+                        this.headerBlock = fragment.ReadRetainedSlice(len);
                     }
                     else
                     {
-                        this.headerBlock = alloc.Buffer(fragment.ReadableBytes);
-                        this.headerBlock.WriteBytes(fragment);
+                        this.headerBlock = alloc.Buffer(len).WriteBytes(fragment, len);
                     }
-
                     return;
                 }
 
-                if (this.reader.headersDecoder.Configuration.MaxHeaderListSizeGoAway - fragment.ReadableBytes < this.headerBlock.ReadableBytes)
+                if (this.reader.headersDecoder.Configuration.MaxHeaderListSizeGoAway - len < this.headerBlock.ReadableBytes)
                 {
                     this.HeaderSizeExceeded();
                 }
 
-                if (this.headerBlock.IsWritable(fragment.ReadableBytes))
+                if (this.headerBlock.IsWritable(len))
                 {
                     // The buffer can hold the requested bytes, just write it directly.
-                    this.headerBlock.WriteBytes(fragment);
+                    this.headerBlock.WriteBytes(fragment, len);
                 }
                 else
                 {
                     // Allocate a new buffer that is big enough to hold the entire header block so far.
-                    IByteBuffer buf = alloc.Buffer(this.headerBlock.ReadableBytes + fragment.ReadableBytes);
-                    buf.WriteBytes(this.headerBlock);
-                    buf.WriteBytes(fragment);
+                    IByteBuffer buf = alloc.Buffer(this.headerBlock.ReadableBytes + len);
+                    buf.WriteBytes(this.headerBlock).WriteBytes(fragment, len);
                     this.headerBlock.Release();
                     this.headerBlock = buf;
                 }

@@ -1,1 +1,1 @@
-dotnet test
+dotnet test -- RunConfiguration.TargetPlatform=x64
