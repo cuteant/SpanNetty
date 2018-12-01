@@ -27,11 +27,7 @@ namespace DotNetty.Codecs.Http2
         /// before using their slice.
         /// </summary>
         static readonly IByteBuffer ZeroBuffer =
-#if NET40
-            Unpooled.UnreleasableBuffer(Unpooled.Buffer(Http2CodecUtil.MaxUnsignedByte).WriteZero(Http2CodecUtil.MaxUnsignedByte).AsReadOnly());
-#else
             Unpooled.UnreleasableBuffer(Unpooled.DirectBuffer(Http2CodecUtil.MaxUnsignedByte).WriteZero(Http2CodecUtil.MaxUnsignedByte).AsReadOnly());
-#endif
 
         readonly IHttp2HeadersEncoder headersEncoder;
         int maxFrameSize;

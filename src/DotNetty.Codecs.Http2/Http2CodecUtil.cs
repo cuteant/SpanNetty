@@ -280,11 +280,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public static IByteBuffer DirectBuffer(int initialCapacity)
         {
-#if NET40
-            return Unpooled.Buffer(initialCapacity);
-#else
             return Unpooled.DirectBuffer(initialCapacity);
-#endif
         }
 
         [MethodImpl(InlineMethod.Value)]

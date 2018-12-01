@@ -216,15 +216,23 @@ namespace DotNetty.Buffers
             IByteBuffer tmpBuf = buf.Allocator.HeapBuffer(length);
             try
             {
+                int readTotal = 0;
+                int readBytes;
                 byte[] tmp = tmpBuf.Array;
                 int offset = tmpBuf.ArrayOffset;
-                int readBytes = input.Read(tmp, offset, length);
-                if (readBytes > 0)
+                do
                 {
-                    PlatformDependent.CopyMemory(tmp, offset, addr, readBytes);
+                    readBytes = input.Read(tmp, offset + readTotal, length - readTotal);
+                    readTotal += readBytes;
+                }
+                while (readBytes > 0 && readTotal < length);
+
+                if (readTotal > 0)
+                {
+                    PlatformDependent.CopyMemory(tmp, offset, addr, readTotal);
                 }
 
-                return readBytes;
+                return readTotal;
             }
             finally
             {

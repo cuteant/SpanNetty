@@ -12,25 +12,13 @@ namespace DotNetty.Codecs.Http.WebSockets
     public class WebSocket00FrameEncoder : MessageToMessageEncoder2<WebSocketFrame>, IWebSocketFrameEncoder
     {
         static readonly IByteBuffer _0X00 = Unpooled.UnreleasableBuffer(
-#if NET40
-            Unpooled.Buffer(1, 1).WriteByte(0x00));
-#else
             Unpooled.DirectBuffer(1, 1).WriteByte(0x00));
-#endif
 
         static readonly IByteBuffer _0XFF = Unpooled.UnreleasableBuffer(
-#if NET40
-            Unpooled.Buffer(1, 1).WriteByte(0xFF));
-#else
             Unpooled.DirectBuffer(1, 1).WriteByte(0xFF));
-#endif
 
         static readonly IByteBuffer _0XFF_0X00 = Unpooled.UnreleasableBuffer(
-#if NET40
-            Unpooled.Buffer(2, 2).WriteByte(0xFF).WriteByte(0x00));
-#else
             Unpooled.DirectBuffer(2, 2).WriteByte(0xFF).WriteByte(0x00));
-#endif
 
         public override bool IsSharable => true;
 

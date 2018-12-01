@@ -144,5 +144,18 @@ namespace DotNetty.Buffers
             PlatformDependent.Clear(this.Memory, index, length);
             return this;
         }
+
+        public override IByteBuffer WriteZero(int length)
+        {
+            if (length == 0) { return this; }
+
+            this.EnsureWritable(length);
+            int wIndex = this.WriterIndex;
+            this.CheckIndex0(wIndex, length);
+            PlatformDependent.Clear(this.Memory, wIndex, length);
+            this.SetWriterIndex(wIndex + length);
+
+            return this;
+        }
     }
 }

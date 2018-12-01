@@ -8,9 +8,7 @@ namespace DotNetty.Buffers
     using DotNetty.Common;
     using DotNetty.Common.Internal;
 
-    // https://www.codeproject.com/articles/1129443/subverting-net-type-safety-with-system-runtime-com
-
-    sealed unsafe class PooledUnsafeDirectByteBuffer : PooledByteBuffer<byte[]>
+    sealed class PooledUnsafeDirectByteBuffer : PooledByteBuffer<byte[]>
     {
         static readonly ThreadLocalPool<PooledUnsafeDirectByteBuffer> Recycler = new ThreadLocalPool<PooledUnsafeDirectByteBuffer>(handle => new PooledUnsafeDirectByteBuffer(handle, 0));
 
@@ -38,173 +36,6 @@ namespace DotNetty.Buffers
         }
 
         public override bool IsDirect => true;
-
-        protected internal override byte _GetByte(int index) => this.Memory[this.Idx(index)];
-
-        protected internal override short _GetShort(int index)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                return UnsafeByteBufferUtil.GetShort(bytes);
-        }
-
-        protected internal override short _GetShortLE(int index)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                return UnsafeByteBufferUtil.GetShortLE(bytes);
-        }
-
-        protected internal override int _GetUnsignedMedium(int index)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                return UnsafeByteBufferUtil.GetUnsignedMedium(bytes);
-        }
-
-        protected internal override int _GetUnsignedMediumLE(int index)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                return UnsafeByteBufferUtil.GetUnsignedMediumLE(bytes);
-        }
-
-        protected internal override int _GetInt(int index)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                return UnsafeByteBufferUtil.GetInt(bytes);
-        }
-
-        protected internal override int _GetIntLE(int index)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                return UnsafeByteBufferUtil.GetIntLE(bytes);
-        }
-
-        protected internal override long _GetLong(int index)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                return UnsafeByteBufferUtil.GetLong(bytes);
-        }
-
-        protected internal override long _GetLongLE(int index)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                return UnsafeByteBufferUtil.GetLongLE(bytes);
-        }
-
-        public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
-        {
-            this.CheckIndex(index, length);
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-            {
-                UnsafeByteBufferUtil.GetBytes(this, bytes, index, dst, dstIndex, length);
-                return this;
-            }
-        }
-
-        public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
-        {
-            this.CheckIndex(index, length);
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-            {
-                UnsafeByteBufferUtil.GetBytes(this, bytes, index, dst, dstIndex, length);
-                return this;
-            }
-        }
-
-        public override IByteBuffer GetBytes(int index, Stream output, int length)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-            {
-                UnsafeByteBufferUtil.GetBytes(this, bytes, index, output, length);
-                return this;
-            }
-        }
-
-        protected internal override void _SetByte(int index, int value) => this.Memory[this.Idx(index)] = unchecked((byte)value);
-
-        protected internal override void _SetShort(int index, int value)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                UnsafeByteBufferUtil.SetShort(bytes, value);
-        }
-
-        protected internal override void _SetShortLE(int index, int value)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                UnsafeByteBufferUtil.SetShortLE(bytes, value);
-        }
-
-        protected internal override void _SetMedium(int index, int value)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                UnsafeByteBufferUtil.SetMedium(bytes, value);
-        }
-
-        protected internal override void _SetMediumLE(int index, int value)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                UnsafeByteBufferUtil.SetMediumLE(bytes, value);
-        }
-
-        protected internal override void _SetInt(int index, int value)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                UnsafeByteBufferUtil.SetInt(bytes, value);
-        }
-
-        protected internal override void _SetIntLE(int index, int value)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                UnsafeByteBufferUtil.SetIntLE(bytes, value);
-        }
-
-        protected internal override void _SetLong(int index, long value)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                UnsafeByteBufferUtil.SetLong(bytes, value);
-        }
-
-        protected internal override void _SetLongLE(int index, long value)
-        {
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                UnsafeByteBufferUtil.SetLongLE(bytes, value);
-        }
-
-        public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
-        {
-            this.CheckIndex(index, length);
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-            {
-                UnsafeByteBufferUtil.SetBytes(this, bytes, index, src, srcIndex, length);
-                return this;
-            }
-        }
-
-        public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
-        {
-            this.CheckIndex(index, length);
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-            {
-                UnsafeByteBufferUtil.SetBytes(this, bytes, index, src, srcIndex, length);
-                return this;
-            }
-        }
-
-        public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
-        {
-            this.CheckIndex(index, length);
-            int read;
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-            {
-                read = UnsafeByteBufferUtil.SetBytes(this, bytes, index, src, length);
-                return TaskEx.FromResult(read);
-            }
-        }
-
-        public override IByteBuffer Copy(int index, int length)
-        {
-            this.CheckIndex(index, length);
-            fixed (byte* bytes = &this.Memory[this.Idx(index)])
-                return UnsafeByteBufferUtil.Copy(this, bytes, index, length);
-        }
 
         public override int IoBufferCount => 1;
 
@@ -236,19 +67,132 @@ namespace DotNetty.Buffers
 
         public override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
 
+        protected internal override byte _GetByte(int index) => HeapByteBufferUtil.GetByte(this.Memory, this.Idx(index));
+
+        protected internal override short _GetShort(int index) => HeapByteBufferUtil.GetShort(this.Memory, this.Idx(index));
+
+        protected internal override short _GetShortLE(int index) => HeapByteBufferUtil.GetShortLE(this.Memory, this.Idx(index));
+
+        protected internal override int _GetUnsignedMedium(int index) => HeapByteBufferUtil.GetUnsignedMedium(this.Memory, this.Idx(index));
+
+        protected internal override int _GetUnsignedMediumLE(int index) => HeapByteBufferUtil.GetUnsignedMediumLE(this.Memory, this.Idx(index));
+
+        protected internal override int _GetInt(int index) => HeapByteBufferUtil.GetInt(this.Memory, this.Idx(index));
+
+        protected internal override int _GetIntLE(int index) => HeapByteBufferUtil.GetIntLE(this.Memory, this.Idx(index));
+
+        protected internal override long _GetLong(int index) => HeapByteBufferUtil.GetLong(this.Memory, this.Idx(index));
+
+        protected internal override long _GetLongLE(int index) => HeapByteBufferUtil.GetLongLE(this.Memory, this.Idx(index));
+
+        public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
+        {
+            this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
+            if (dst.HasArray)
+            {
+                this.GetBytes(index, dst.Array, dst.ArrayOffset + dstIndex, length);
+            }
+            else
+            {
+                dst.SetBytes(dstIndex, this.Memory, this.Idx(index), length);
+            }
+            return this;
+        }
+
+        public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
+        {
+            this.CheckDstIndex(index, length, dstIndex, dst.Length);
+            PlatformDependent.CopyMemory(this.Memory, this.Idx(index), dst, dstIndex, length);
+            return this;
+        }
+
+        public override IByteBuffer GetBytes(int index, Stream destination, int length)
+        {
+            this.CheckIndex(index, length);
+            destination.Write(this.Memory, this.Idx(index), length);
+            return this;
+        }
+
+        protected internal override void _SetByte(int index, int value) => HeapByteBufferUtil.SetByte(this.Memory, this.Idx(index), value);
+
+        protected internal override void _SetShort(int index, int value) => HeapByteBufferUtil.SetShort(this.Memory, this.Idx(index), value);
+
+        protected internal override void _SetShortLE(int index, int value) => HeapByteBufferUtil.SetShortLE(this.Memory, this.Idx(index), value);
+
+        protected internal override void _SetMedium(int index, int value) => HeapByteBufferUtil.SetMedium(this.Memory, this.Idx(index), value);
+
+        protected internal override void _SetMediumLE(int index, int value) => HeapByteBufferUtil.SetMediumLE(this.Memory, this.Idx(index), value);
+
+        protected internal override void _SetInt(int index, int value) => HeapByteBufferUtil.SetInt(this.Memory, this.Idx(index), value);
+
+        protected internal override void _SetIntLE(int index, int value) => HeapByteBufferUtil.SetIntLE(this.Memory, this.Idx(index), value);
+
+        protected internal override void _SetLong(int index, long value) => HeapByteBufferUtil.SetLong(this.Memory, this.Idx(index), value);
+
+        protected internal override void _SetLongLE(int index, long value) => HeapByteBufferUtil.SetLongLE(this.Memory, this.Idx(index), value);
+
+        public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
+        {
+            this.CheckSrcIndex(index, length, srcIndex, src.Capacity);
+            if (src.HasArray)
+            {
+                this.SetBytes(index, src.Array, src.ArrayOffset + srcIndex, length);
+            }
+            else
+            {
+                src.GetBytes(srcIndex, this.Memory, this.Idx(index), length);
+            }
+            return this;
+        }
+
+        public override async Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
+        {
+            int readTotal = 0;
+            int read;
+            int offset = this.ArrayOffset + index;
+            do
+            {
+                read = await src.ReadAsync(this.Array, offset + readTotal, length - readTotal, cancellationToken);
+                readTotal += read;
+            }
+            while (read > 0 && readTotal < length);
+
+            return readTotal;
+        }
+
+        public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
+        {
+            this.CheckSrcIndex(index, length, srcIndex, src.Length);
+            PlatformDependent.CopyMemory(src, srcIndex, this.Memory, this.Idx(index), length);
+            return this;
+        }
+
+        public override IByteBuffer Copy(int index, int length)
+        {
+            this.CheckIndex(index, length);
+            IByteBuffer copy = this.Allocator.HeapBuffer(length, this.MaxCapacity);
+            copy.WriteBytes(this.Memory, this.Idx(index), length);
+            return copy;
+        }
+
+
         public override IByteBuffer SetZero(int index, int length)
         {
             this.CheckIndex(index, length);
-            PlatformDependent.Clear(this.Memory, this.Offset + index, length);
+            PlatformDependent.Clear(this.Memory, this.Idx(index), length);
             return this;
         }
 
         public override IByteBuffer WriteZero(int length)
         {
+            if (length == 0) { return this; }
+
             this.EnsureWritable(length);
             int wIndex = this.WriterIndex;
-            PlatformDependent.Clear(this.Memory, this.Offset + wIndex, length);
+            this.CheckIndex0(wIndex, length);
+            PlatformDependent.Clear(this.Memory, this.Idx(wIndex), length);
             this.SetWriterIndex(wIndex + length);
+
             return this;
         }
     }

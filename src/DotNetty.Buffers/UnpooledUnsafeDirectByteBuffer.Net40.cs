@@ -3,194 +3,128 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.IO;
-    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Common.Internal;
 
-    unsafe partial class UnpooledUnsafeDirectByteBuffer
+    partial class UnpooledUnsafeDirectByteBuffer
     {
         public override bool HasMemoryAddress => false;
 
         public override ref byte GetPinnableMemoryAddress() => throw new NotSupportedException();
 
-        protected internal override short _GetShort(int index)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                return UnsafeByteBufferUtil.GetShort(addr);
-        }
+        protected internal override short _GetShort(int index) => HeapByteBufferUtil.GetShort(this.buffer, index);
 
-        protected internal override short _GetShortLE(int index)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                return UnsafeByteBufferUtil.GetShortLE(addr);
-        }
+        protected internal override short _GetShortLE(int index) => HeapByteBufferUtil.GetShortLE(this.buffer, index);
 
-        protected internal override int _GetUnsignedMedium(int index)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                return UnsafeByteBufferUtil.GetUnsignedMedium(addr);
-        }
+        protected internal override int _GetUnsignedMedium(int index) => HeapByteBufferUtil.GetUnsignedMedium(this.buffer, index);
 
-        protected internal override int _GetUnsignedMediumLE(int index)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                return UnsafeByteBufferUtil.GetUnsignedMediumLE(addr);
-        }
+        protected internal override int _GetUnsignedMediumLE(int index) => HeapByteBufferUtil.GetUnsignedMediumLE(this.buffer, index);
 
-        protected internal override int _GetInt(int index)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                return UnsafeByteBufferUtil.GetInt(addr);
-        }
+        protected internal override int _GetInt(int index) => HeapByteBufferUtil.GetInt(this.buffer, index);
 
-        protected internal override int _GetIntLE(int index)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                return UnsafeByteBufferUtil.GetIntLE(addr);
-        }
+        protected internal override int _GetIntLE(int index) => HeapByteBufferUtil.GetIntLE(this.buffer, index);
 
-        protected internal override long _GetLong(int index)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                return UnsafeByteBufferUtil.GetLong(addr);
-        }
+        protected internal override long _GetLong(int index) => HeapByteBufferUtil.GetLong(this.buffer, index);
 
-        protected internal override long _GetLongLE(int index)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                return UnsafeByteBufferUtil.GetLongLE(addr);
-        }
+        protected internal override long _GetLongLE(int index) => HeapByteBufferUtil.GetLongLE(this.buffer, index);
 
         public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
-            this.CheckIndex(index, length);
-            fixed (byte* addr = &this.buffer[index])
+            this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
+            if (dst.HasArray)
             {
-                UnsafeByteBufferUtil.GetBytes(this, addr, index, dst, dstIndex, length);
-                return this;
+                this.GetBytes(index, dst.Array, dst.ArrayOffset + dstIndex, length);
             }
+            else
+            {
+                dst.SetBytes(dstIndex, this.buffer, index, length);
+            }
+
+            return this;
         }
 
         public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
+            this.CheckDstIndex(index, length, dstIndex, dst.Length);
+            PlatformDependent.CopyMemory(this.buffer, index, dst, dstIndex, length);
+            return this;
+        }
+
+        public override IByteBuffer GetBytes(int index, Stream destination, int length)
+        {
             this.CheckIndex(index, length);
-            fixed (byte* addr = &this.buffer[index])
-            {
-                UnsafeByteBufferUtil.GetBytes(this, addr, index, dst, dstIndex, length);
-                return this;
-            }
+            destination.Write(this.Array, this.ArrayOffset + index, length);
+            return this;
         }
 
-        protected internal override void _SetShort(int index, int value)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                UnsafeByteBufferUtil.SetShort(addr, value);
-        }
+        protected internal override void _SetShort(int index, int value) => HeapByteBufferUtil.SetShort(this.buffer, index, value);
 
-        protected internal override void _SetShortLE(int index, int value)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                UnsafeByteBufferUtil.SetShortLE(addr, value);
-        }
+        protected internal override void _SetShortLE(int index, int value) => HeapByteBufferUtil.SetShortLE(this.buffer, index, value);
 
-        protected internal override void _SetMedium(int index, int value)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                UnsafeByteBufferUtil.SetMedium(addr, value);
-        }
+        protected internal override void _SetMedium(int index, int value) => HeapByteBufferUtil.SetMedium(this.buffer, index, value);
 
-        protected internal override void _SetMediumLE(int index, int value)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                UnsafeByteBufferUtil.SetMediumLE(addr, value);
-        }
+        protected internal override void _SetMediumLE(int index, int value) => HeapByteBufferUtil.SetMediumLE(this.buffer, index, value);
 
-        protected internal override void _SetInt(int index, int value)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                UnsafeByteBufferUtil.SetInt(addr, value);
-        }
+        protected internal override void _SetInt(int index, int value) => HeapByteBufferUtil.SetInt(this.buffer, index, value);
 
-        protected internal override void _SetIntLE(int index, int value)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                UnsafeByteBufferUtil.SetIntLE(addr, value);
-        }
+        protected internal override void _SetIntLE(int index, int value) => HeapByteBufferUtil.SetIntLE(this.buffer, index, value);
 
-        protected internal override void _SetLong(int index, long value)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                UnsafeByteBufferUtil.SetLong(addr, value);
-        }
+        protected internal override void _SetLong(int index, long value) => HeapByteBufferUtil.SetLong(this.buffer, index, value);
 
-        protected internal override void _SetLongLE(int index, long value)
-        {
-            fixed (byte* addr = &this.buffer[index])
-                UnsafeByteBufferUtil.SetLongLE(addr, value);
-        }
+        protected internal override void _SetLongLE(int index, long value) => HeapByteBufferUtil.SetLongLE(this.buffer, index, value);
 
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
-            this.CheckIndex(index, length);
-            fixed (byte* addr = &this.buffer[index])
+            this.CheckSrcIndex(index, length, srcIndex, src.Capacity);
+            if (src.HasArray)
             {
-                UnsafeByteBufferUtil.SetBytes(this, addr, index, src, srcIndex, length);
-                return this;
+                this.SetBytes(index, src.Array, src.ArrayOffset + srcIndex, length);
             }
-        }
-
-        public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
-        {
-            this.CheckIndex(index, length);
-            if (length != 0)
+            else
             {
-                fixed (byte* addr = &this.buffer[index])
-                {
-                    UnsafeByteBufferUtil.SetBytes(this, addr, index, src, srcIndex, length);
-                    return this;
-                }
+                src.GetBytes(srcIndex, this.buffer, index, length);
             }
             return this;
         }
 
-        public override IByteBuffer GetBytes(int index, Stream output, int length)
+        public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
-            this.CheckIndex(index, length);
-            fixed (byte* addr = &this.buffer[index])
-            {
-                UnsafeByteBufferUtil.GetBytes(this, addr, index, output, length);
-                return this;
-            }
+            this.CheckSrcIndex(index, length, srcIndex, src.Length);
+            PlatformDependent.CopyMemory(src, srcIndex, this.buffer, index, length);
+            return this;
         }
 
-        public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
+        public override async Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
-            this.CheckIndex(index, length);
+            this.EnsureAccessible();
+            int readTotal = 0;
             int read;
-            fixed (byte* addr = &this.buffer[index])
+            int offset = this.ArrayOffset + index;
+            do
             {
-                read = UnsafeByteBufferUtil.SetBytes(this, addr, index, src, length);
-
-                // See https://github.com/Azure/DotNetty/issues/436
-                return TaskEx.FromResult(read);
+                read = await src.ReadAsync(this.Array, offset + readTotal, length - readTotal, cancellationToken);
+                readTotal += read;
             }
-        }
+            while (read > 0 && readTotal < length);
 
-        public override IByteBuffer Copy(int index, int length)
-        {
-            this.CheckIndex(index, length);
-            fixed (byte* addr = &this.buffer[index])
-                return UnsafeByteBufferUtil.Copy(this, addr, index, length);
+            return readTotal;
         }
 
         public override IByteBuffer SetZero(int index, int length)
         {
             this.CheckIndex(index, length);
-            fixed (byte* addr = &this.buffer[index])
-            {
-                UnsafeByteBufferUtil.SetZero(addr, length);
-                return this;
-            }
+            PlatformDependent.Clear(this.buffer, index, length);
+            return this;
+        }
+
+        public override IByteBuffer Copy(int index, int length)
+        {
+            this.CheckIndex(index, length);
+            var copiedArray = new byte[length];
+            PlatformDependent.CopyMemory(this.buffer, index, copiedArray, 0, length);
+
+            return new UnpooledHeapByteBuffer(this.Allocator, copiedArray, this.MaxCapacity);
         }
 
         public override IByteBuffer WriteZero(int length)
@@ -200,8 +134,7 @@ namespace DotNetty.Buffers
             this.EnsureWritable(length);
             int wIndex = this.WriterIndex;
             this.CheckIndex0(wIndex, length);
-            fixed (byte* addr = &this.buffer[wIndex])
-                UnsafeByteBufferUtil.SetZero(addr, length);
+            PlatformDependent.Clear(this.buffer, wIndex, length);
             this.SetWriterIndex(wIndex + length);
 
             return this;
