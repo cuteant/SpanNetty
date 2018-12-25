@@ -51,11 +51,17 @@ namespace DotNetty.Transport.Channels
         {
             // Normally this method will never be called as handlerAdded(...) should call initChannel(...) and remove
             // the handler.
-            if (this.InitChannel(ctx)) {
+            if (this.InitChannel(ctx))
+            {
                 // we called InitChannel(...) so we need to call now pipeline.fireChannelRegistered() to ensure we not
                 // miss an event.
                 ctx.Pipeline.FireChannelRegistered();
-            } else {
+
+                // We are done with init the Channel, removing all the state for the Channel now.
+                this.RemoveState(ctx);
+            }
+            else
+            {
                 // Called InitChannel(...) before which is the expected behavior, so just forward the event.
                 ctx.FireChannelRegistered();
             }
@@ -75,17 +81,27 @@ namespace DotNetty.Transport.Channels
                 // The good thing about calling InitChannel(...) in HandlerAdded(...) is that there will be no ordering
                 // surprises if a ChannelInitializer will add another ChannelInitializer. This is as all handlers
                 // will be added in the expected order.
-                this.InitChannel(ctx);
+                if (this.InitChannel(ctx))
+                {
+
+                    // We are done with init the Channel, removing the initializer now.
+                    this.RemoveState(ctx);
+                }
             }
+        }
+
+        public override void HandlerRemoved(IChannelHandlerContext ctx)
+        {
+            this.initMap.TryRemove(ctx, out _);
         }
 
         bool InitChannel(IChannelHandlerContext ctx)
         {
-            if (initMap.TryAdd(ctx, true)) // Guard against re-entrance.
+            if (this.initMap.TryAdd(ctx, true)) // Guard against re-entrance.
             {
                 try
                 {
-                    this.InitChannel((T) ctx.Channel);
+                    this.InitChannel((T)ctx.Channel);
                 }
                 catch (Exception cause)
                 {
@@ -95,26 +111,29 @@ namespace DotNetty.Transport.Channels
                 }
                 finally
                 {
-                    this.Remove(ctx);
+                    var pipeline = ctx.Pipeline;
+                    if (pipeline.Context(this) != null)
+                    {
+                        pipeline.Remove(this);
+                    }
                 }
                 return true;
             }
             return false;
         }
 
-        void Remove(IChannelHandlerContext ctx)
+        void RemoveState(IChannelHandlerContext ctx)
         {
-            try
+            // The removal may happen in an async fashion if the EventExecutor we use does something funky.
+            if (ctx.Removed)
             {
-                IChannelPipeline pipeline = ctx.Pipeline;
-                if (pipeline.Context(this) != null)
-                {
-                    pipeline.Remove(this);
-                }
+                this.initMap.TryRemove(ctx, out _);
             }
-            finally
+            else
             {
-                initMap.TryRemove(ctx, out _);
+                // The context is not removed yet which is most likely the case because a custom EventExecutor is used.
+                // Let's schedule it on the EventExecutor to give it some more time to be completed in case it is offloaded.
+                ctx.Executor.Execute(() => this.initMap.TryRemove(ctx, out _));
             }
         }
     }
