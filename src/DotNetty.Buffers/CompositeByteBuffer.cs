@@ -108,7 +108,7 @@ namespace DotNetty.Buffers
             : base(AbstractByteBufferAllocator.DefaultMaxCapacity)
         {
             if (null == allocator) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.allocator); }
-            if (maxNumComponents < 2) { ThrowHelper.ThrowArgumentException_CheckMaxNumComponents(maxNumComponents); }
+            if (maxNumComponents < 1) { ThrowHelper.ThrowArgumentException_CheckMaxNumComponents(maxNumComponents); }
 
             this.allocator = allocator;
             this.direct = direct;

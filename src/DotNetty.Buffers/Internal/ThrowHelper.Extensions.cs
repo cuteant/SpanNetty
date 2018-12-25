@@ -216,7 +216,7 @@ namespace DotNetty.Buffers
             throw GetArgumentException();
             ArgumentException GetArgumentException()
             {
-                return new ArgumentException("maxNumComponents: " + maxNumComponents + " (expected: >= 2)");
+                return new ArgumentException("maxNumComponents: " + maxNumComponents + " (expected: >= 1)");
             }
         }
 

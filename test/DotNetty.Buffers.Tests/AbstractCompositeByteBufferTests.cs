@@ -11,6 +11,8 @@ namespace DotNetty.Buffers.Tests
 
     public abstract class AbstractCompositeByteBufferTests : AbstractByteBufferTests
     {
+        private static readonly IByteBufferAllocator ALLOC = UnpooledByteBufferAllocator.Default;
+
         protected override IByteBuffer NewBuffer(int length, int maxCapacity)
         {
             this.AssumedMaxCapacity = maxCapacity == int.MaxValue;
@@ -959,6 +961,44 @@ namespace DotNetty.Buffers.Tests
             {
                 Assert.Equal(0, buffer.ReferenceCount);
             }
+        }
+
+        [Fact]
+        public void TestComponentsLessThanLowerBound()
+        {
+            try
+            {
+                new CompositeByteBuffer(ALLOC, true, 0);
+                Assert.False(true);
+            }
+            catch (ArgumentException e)
+            {
+                Assert.Equal("maxNumComponents: 0 (expected: >= 1)", e.Message);
+            }
+        }
+
+        [Fact]
+        public void TestComponentsEqualToLowerBound()
+        {
+            AssertCompositeBufCreated(1);
+        }
+
+        [Fact]
+        public void TestComponentsGreaterThanLowerBound()
+        {
+            AssertCompositeBufCreated(5);
+        }
+
+        /**
+         * Assert that a new {@linkplain CompositeByteBuf} was created successfully with the desired number of max
+         * components.
+         */
+        static void AssertCompositeBufCreated(int expectedMaxComponents)
+        {
+            var buf = new CompositeByteBuffer(ALLOC, true, expectedMaxComponents);
+
+            Assert.Equal(expectedMaxComponents, buf.MaxNumComponents);
+            Assert.True(buf.Release());
         }
     }
 }
