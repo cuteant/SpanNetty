@@ -15,7 +15,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public static bool IsInvalidCloseFrameStatusCodeRfc6455(this int statusCode)
         {
             return _invalidCloseFrameStatusCodeCache.GetOrAdd(statusCode,
-                code => code >= 0 && code <= 999 || code >= 1004 && code <= 1006 || code >= 1012 && code <= 2999);
+                code => code >= 0 && code <= 999 || code >= 1004 && code <= 1006 || code >= 1015 && code <= 2999);
         }
 
         public static void ProtocolViolation_InvalidCloseFrameBody(this WebSocket08FrameDecoder decoder, IChannelHandlerContext ctx)
