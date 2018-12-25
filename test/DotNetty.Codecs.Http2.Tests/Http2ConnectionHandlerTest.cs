@@ -61,6 +61,10 @@ namespace DotNetty.Codecs.Http2.Tests
             this.encoder = new Mock<IHttp2ConnectionEncoder>();
             this.frameWriter = new Mock<IHttp2FrameWriter>();
 
+            this.channel.Setup(x => x.Metadata).Returns(new ChannelMetadata(false));
+            var config = new DefaultChannelConfiguration(this.channel.Object);
+            this.channel.Setup(x => x.Configuration).Returns(config);
+
             promise = new TaskCompletionSource();
             voidPromise = new TaskCompletionSource();
             var fakeException = new Http2RuntimeException("Fake exception");
@@ -828,6 +832,15 @@ namespace DotNetty.Codecs.Http2.Tests
             this.handler = this.NewHandler();
             this.handler.ChannelReadComplete(this.ctx.Object);
             this.ctx.Verify(x => x.Flush(), Times.Once);
+        }
+
+        [Fact]
+        public void ChannelReadCompleteCallsReadWhenAutoReadFalse()
+        {
+            this.channel.Object.Configuration.AutoRead = false;
+            this.handler = this.NewHandler();
+            this.handler.ChannelReadComplete(this.ctx.Object);
+            this.ctx.Verify(x => x.Read(), Times.Once());
         }
 
         [Fact]

@@ -555,9 +555,20 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        protected virtual void ChannelReadComplete0(IChannelHandlerContext ctx)
+        protected void ChannelReadComplete0(IChannelHandlerContext ctx)
         {
-            base.ChannelReadComplete(ctx);
+            // Discard bytes of the cumulation buffer if needed.
+            this.DiscardSomeReadBytes();
+
+            // Ensure we never stale the HTTP/2 Channel. Flow-control is enforced by HTTP/2.
+            //
+            // See https://tools.ietf.org/html/rfc7540#section-5.2.2
+            if (!ctx.Channel.Configuration.AutoRead)
+            {
+                ctx.Read();
+            }
+
+            ctx.FireChannelReadComplete();
         }
 
         /// <summary>
