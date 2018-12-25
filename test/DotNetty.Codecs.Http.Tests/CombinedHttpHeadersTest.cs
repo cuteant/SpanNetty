@@ -56,6 +56,31 @@ namespace DotNetty.Codecs.Http.Tests
         }
 
         [Fact]
+        public void DontCombineSetCookieHeaders()
+        {
+            CombinedHttpHeaders headers = NewCombinedHttpHeaders();
+            headers.Add(HttpHeaderNames.SetCookie, "a");
+            CombinedHttpHeaders otherHeaders = NewCombinedHttpHeaders();
+            otherHeaders.Add(HttpHeaderNames.SetCookie, "b");
+            otherHeaders.Add(HttpHeaderNames.SetCookie, "c");
+            headers.Add(otherHeaders);
+            Assert.Equal(3, headers.GetAll(HttpHeaderNames.SetCookie).Count);
+        }
+
+        [Fact]
+        public void DontCombineSetCookieHeadersRegardlessOfCase()
+        {
+            CombinedHttpHeaders headers = NewCombinedHttpHeaders();
+            headers.Add(AsciiString.Of("Set-Cookie"), "a");
+            CombinedHttpHeaders otherHeaders = NewCombinedHttpHeaders();
+            otherHeaders.Add(AsciiString.Of("set-cookie"), "b");
+            otherHeaders.Add(AsciiString.Of("SET-COOKIE"), "c");
+            headers.Add(otherHeaders);
+            var list = headers.GetAll(HttpHeaderNames.SetCookie);
+            Assert.Equal(3, headers.GetAll(HttpHeaderNames.SetCookie).Count);
+        }
+
+        [Fact]
         public void SetCombinedHeadersWhenNotEmpty()
         {
             CombinedHttpHeaders headers = NewCombinedHttpHeaders();
@@ -309,6 +334,16 @@ namespace DotNetty.Codecs.Http.Tests
         }
 
         [Fact]
+        public void GetAllDontCombineSetCookie()
+        {
+            CombinedHttpHeaders headers = NewCombinedHttpHeaders();
+            headers.Add(HttpHeaderNames.SetCookie, "a");
+            headers.Add(HttpHeaderNames.SetCookie, "b");
+            Assert.Equal(2, headers.GetAll(HttpHeaderNames.SetCookie).Count);
+            Assert.Equal(new List<string>(new[] { "a", "b" }), headers.GetAll(HttpHeaderNames.SetCookie).Select(_ => _.ToString()).ToList());
+        }
+
+        [Fact]
         public void OwsTrimming()
         {
             CombinedHttpHeaders headers = NewCombinedHttpHeaders();
@@ -350,6 +385,21 @@ namespace DotNetty.Codecs.Http.Tests
             var list = new List<ICharSequence>(headers.ValueCharSequenceIterator(new AsciiString("foo")));
             Assert.Empty(list);
             AssertValueIterator(headers.ValueCharSequenceIterator(HeaderName));
+        }
+
+        [Fact]
+        public void NonCombinableHeaderIterator()
+        {
+            CombinedHttpHeaders headers = NewCombinedHttpHeaders();
+            headers.Add(HttpHeaderNames.SetCookie, "c");
+            headers.Add(HttpHeaderNames.SetCookie, "b");
+            headers.Add(HttpHeaderNames.SetCookie, "a");
+
+            var strItr = headers.ValueCharSequenceIterator(HttpHeaderNames.SetCookie).ToList();
+            Assert.Equal(3, strItr.Count);
+            Assert.Equal("a", strItr[0]);
+            Assert.Equal("b", strItr[1]);
+            Assert.Equal("c", strItr[2]);
         }
 
         static void AssertValueIterator(IEnumerable<ICharSequence> values)

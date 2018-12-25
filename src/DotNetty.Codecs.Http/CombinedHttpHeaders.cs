@@ -7,18 +7,19 @@ namespace DotNetty.Codecs.Http
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using DotNetty.Common.Utilities;
 
     using static Common.Utilities.StringUtil;
 
     public sealed class CombinedHttpHeaders : DefaultHttpHeaders
     {
-        public CombinedHttpHeaders(bool validate) 
-            : base(new CombinedHttpHeadersImpl(AsciiString.CaseSensitiveHasher, ValueConverter(validate), NameValidator(validate)))
+        public CombinedHttpHeaders(bool validate)
+            : base(new CombinedHttpHeadersImpl(AsciiString.CaseInsensitiveHasher, ValueConverter(validate), NameValidator(validate)))
         {
         }
 
-        public override bool ContainsValue(AsciiString name, ICharSequence value, bool ignoreCase) => 
+        public override bool ContainsValue(AsciiString name, ICharSequence value, bool ignoreCase) =>
             base.ContainsValue(name, TrimOws(value), ignoreCase);
 
         sealed class CombinedHttpHeadersImpl : DefaultHeaders<AsciiString, ICharSequence>
@@ -26,7 +27,7 @@ namespace DotNetty.Codecs.Http
             // An estimate of the size of a header value.
             const int ValueLengthEstimate = 10;
 
-            public CombinedHttpHeadersImpl(IHashingStrategy<AsciiString> nameHashingStrategy, 
+            public CombinedHttpHeadersImpl(IHashingStrategy<AsciiString> nameHashingStrategy,
                 IValueConverter<ICharSequence> valueConverter, INameValidator<ICharSequence> nameValidator)
                 : base(nameHashingStrategy, valueConverter, nameValidator)
             {
@@ -34,8 +35,13 @@ namespace DotNetty.Codecs.Http
 
             public override IEnumerable<ICharSequence> ValueIterator(AsciiString name)
             {
+                var itr = base.ValueIterator(name);
+                if (!itr.Any() || CannotBeCombined(name))
+                {
+                    return itr;
+                }
                 ICharSequence value = null;
-                foreach (ICharSequence v in base.ValueIterator(name))
+                foreach (ICharSequence v in itr)
                 {
                     if (value != null)
                     {
@@ -43,13 +49,13 @@ namespace DotNetty.Codecs.Http
                     }
                     value = v;
                 }
-                return value != null ? UnescapeCsvFields(value) : Enumerable.Empty<ICharSequence>();
+                return UnescapeCsvFields(value);
             }
 
             public override IList<ICharSequence> GetAll(AsciiString name)
             {
                 IList<ICharSequence> values = base.GetAll(name);
-                if (values.Count == 0)
+                if (values.Count == 0 || CannotBeCombined(name))
                 {
                     return values;
                 }
@@ -119,19 +125,19 @@ namespace DotNetty.Codecs.Http
                 return this.Add(headers);
             }
 
-            public override IHeaders<AsciiString, ICharSequence> Add(AsciiString name, ICharSequence value) => 
+            public override IHeaders<AsciiString, ICharSequence> Add(AsciiString name, ICharSequence value) =>
                 this.AddEscapedValue(name, EscapeCsv(value));
 
-            public override IHeaders<AsciiString, ICharSequence> Add(AsciiString name, IEnumerable<ICharSequence> values) => 
+            public override IHeaders<AsciiString, ICharSequence> Add(AsciiString name, IEnumerable<ICharSequence> values) =>
                 this.AddEscapedValue(name, CommaSeparate(values));
 
-            public override IHeaders<AsciiString, ICharSequence> AddObject(AsciiString name, object value) => 
+            public override IHeaders<AsciiString, ICharSequence> AddObject(AsciiString name, object value) =>
                 this.AddEscapedValue(name, EscapeCsv(this.ValueConverter.ConvertObject(value)));
 
-            public override IHeaders<AsciiString, ICharSequence> AddObject(AsciiString name, IEnumerable<object> values) => 
+            public override IHeaders<AsciiString, ICharSequence> AddObject(AsciiString name, IEnumerable<object> values) =>
                 this.AddEscapedValue(name, this.CommaSeparate(values));
 
-            public override IHeaders<AsciiString, ICharSequence> AddObject(AsciiString name, params object[] values) => 
+            public override IHeaders<AsciiString, ICharSequence> AddObject(AsciiString name, params object[] values) =>
                 this.AddEscapedValue(name, this.CommaSeparate(values));
 
             public override IHeaders<AsciiString, ICharSequence> Set(AsciiString name, IEnumerable<ICharSequence> values)
@@ -153,9 +159,15 @@ namespace DotNetty.Codecs.Http
                 return this;
             }
 
+            [MethodImpl(InlineMethod.Value)]
+            static bool CannotBeCombined(ICharSequence name)
+            {
+                return HttpHeaderNames.SetCookie.ContentEqualsIgnoreCase(name);
+            }
+
             CombinedHttpHeadersImpl AddEscapedValue(AsciiString name, ICharSequence escapedValue)
             {
-                if (!this.TryGet(name, out ICharSequence currentValue))
+                if (!this.TryGet(name, out ICharSequence currentValue) || CannotBeCombined(name))
                 {
                     base.Add(name, escapedValue);
                 }
