@@ -9,9 +9,15 @@ namespace DotNetty.Codecs
     using DotNetty.Transport.Channels;
 
     /// <summary>
-    ///     A decoder that splits the received {@link ByteBuf}s on line endings.
+    ///     A decoder that splits the received <see cref="IByteBuffer"/>s on line endings.
     ///     Both {@code "\n"} and {@code "\r\n"} are handled.
-    ///     For a more general delimiter-based decoder, see {@link DelimiterBasedFrameDecoder}.
+    ///     <para>
+    ///     The byte stream is expected to be in UTF-8 character encoding or ASCII. The current implementation
+    ///     uses direct {@code byte} to {@code char} cast and then compares that {@code char} to a few low range
+    ///     ASCII characters like {@code '\n'} or {@code '\r'}. UTF-8 is not using low range [0..0x7F]
+    ///     byte values for multibyte codepoint representations therefore fully supported by this implementation.
+    ///     </para>
+    ///     For a more general delimiter-based decoder, see <see cref="DelimiterBasedFrameDecoder"/>.
     /// </summary>
     public class LineBasedFrameDecoder : ByteToMessageDecoder
     {
