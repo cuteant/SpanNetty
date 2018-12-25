@@ -215,6 +215,72 @@ namespace DotNetty.Codecs.Http2.Tests
             VerifyFramesMultiplexedToCorrectChannel(this.inboundStream, inboundHandler, 2);
         }
 
+        class ChannelHandlerForUseReadWithoutAutoRead : ChannelHandlerAdapter
+        {
+            readonly bool readComplete;
+
+            public ChannelHandlerForUseReadWithoutAutoRead(bool readComplete) => this.readComplete = readComplete;
+
+            public override void ChannelRead(IChannelHandlerContext ctx, object msg)
+            {
+                ctx.FireChannelRead(msg);
+                if (!this.readComplete)
+                {
+                    ctx.Read();
+                }
+            }
+
+            public override void ChannelReadComplete(IChannelHandlerContext ctx)
+            {
+                ctx.FireChannelReadComplete();
+                if (this.readComplete)
+                {
+                    ctx.Read();
+                }
+            }
+        }
+
+        [Fact]
+        public void ReadInChannelReadWithoutAutoRead()
+        {
+            this.UseReadWithoutAutoRead(false);
+        }
+
+        [Fact]
+        public void ReadInChannelReadCompleteWithoutAutoRead()
+        {
+            this.UseReadWithoutAutoRead(true);
+        }
+
+        private void UseReadWithoutAutoRead(bool readComplete)
+        {
+            LastInboundHandler inboundHandler = this.StreamActiveAndWriteHeaders(inboundStream);
+            var childChannel = inboundHandler.Channel;
+            Assert.True(childChannel.Configuration.AutoRead);
+            childChannel.Configuration.AutoRead = false;
+            Assert.False(childChannel.Configuration.AutoRead);
+
+            var headersFrame = inboundHandler.ReadInbound<IHttp2HeadersFrame>();
+            Assert.NotNull(headersFrame);
+
+            // Add a handler which will request reads.
+            childChannel.Pipeline.AddFirst(new ChannelHandlerForUseReadWithoutAutoRead(readComplete));
+
+            codec.OnHttp2Frame(
+                    new DefaultHttp2DataFrame(BB("hello world"), false) { Stream = this.inboundStream });
+            codec.OnHttp2Frame(new DefaultHttp2DataFrame(BB("foo"), false) { Stream = this.inboundStream });
+            codec.OnHttp2Frame(new DefaultHttp2DataFrame(BB("bar"), true) { Stream = this.inboundStream });
+            codec.OnChannelReadComplete();
+
+            codec.OnHttp2Frame(
+                    new DefaultHttp2DataFrame(BB("hello world"), false) { Stream = this.inboundStream });
+            codec.OnHttp2Frame(new DefaultHttp2DataFrame(BB("foo"), false) { Stream = this.inboundStream });
+            codec.OnHttp2Frame(new DefaultHttp2DataFrame(BB("bar"), true) { Stream = this.inboundStream });
+            codec.OnChannelReadComplete();
+
+            VerifyFramesMultiplexedToCorrectChannel(inboundStream, inboundHandler, 6);
+        }
+
         /**
          * A child channel for a HTTP/2 stream in IDLE state (that is no headers sent or received),
          * should not emit a RST_STREAM frame on close, as this is a connection error of type protocol error.

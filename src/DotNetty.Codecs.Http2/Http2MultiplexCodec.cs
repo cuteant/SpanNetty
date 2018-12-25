@@ -431,6 +431,27 @@ namespace DotNetty.Codecs.Http2
             return !Http2CodecUtil.IsStreamIdValid(stream.Id) || this.IsWritable(stream);
         }
 
+        /// <summary>
+        /// The current status of the read-processing for a <see cref="IHttp2StreamChannel"/>.
+        /// </summary>
+        enum ReadStatus
+        {
+            /// <summary>
+            /// No read in progress and no read was requested (yet)
+            /// </summary>
+            Idle,
+
+            /// <summary>
+            /// Reading in progress
+            /// </summary>
+            InProgress,
+
+            /// <summary>
+            /// A read operation was requested.
+            /// </summary>
+            Requested
+        }
+
         // TODO: Handle writability changes due writing from outside the eventloop.
         internal sealed partial class DefaultHttp2StreamChannel : DefaultAttributeMap, IHttp2StreamChannel
         {
@@ -465,12 +486,13 @@ namespace DotNetty.Codecs.Http2
             }
 
             /// <summary>
-            /// This variable represents if a read is in progress for the current channel. Note that depending upon the
-            /// <see cref="IRecvByteBufAllocator"/> behavior a read may extend beyond the <see cref="Http2ChannelUnsafe.BeginRead"/>
-            /// method scope. The <see cref="Http2ChannelUnsafe.BeginRead"/> loop may drain all pending data, and then if the
-            /// parent channel is reading this channel may still accept frames.
+            /// This variable represents if a read is in progress for the current channel or was requested.
+            /// Note that depending upon the <see cref="IRecvByteBufAllocator"/> behavior a read may extend beyond the
+            /// <see cref="Http2ChannelUnsafe.BeginRead"/> method scope. The <see cref="Http2ChannelUnsafe.BeginRead"/> loop may
+            /// drain all pending data, and then if the parent channel is reading this channel may still accept frames.
             /// </summary>
-            private bool readInProgress;
+            private ReadStatus readStatus = ReadStatus.Idle;
+
             private Deque<object> inboundBuffer;
 
             /// <summary>
@@ -686,10 +708,10 @@ namespace DotNetty.Codecs.Http2
                 {
                     ReferenceCountUtil.Release(frame);
                 }
-                else if (readInProgress)
+                else if (this.readStatus != ReadStatus.Idle)
                 {
-                    // If readInProgress there cannot be anything in the queue, otherwise we would have drained it from the
-                    // queue and processed it during the read cycle.
+                    // If a read is in progress or has been requested, there cannot be anything in the queue,
+                    // otherwise we would have drained it from the queue and processed it during the read cycle.
                     Debug.Assert(this.inboundBuffer == null || this.inboundBuffer.IsEmpty);
                     var allocHandle = this.channelUnsafe.RecvBufAllocHandle;
                     this.channelUnsafe.DoRead0(frame, allocHandle);
@@ -720,7 +742,7 @@ namespace DotNetty.Codecs.Http2
             internal void FireChildReadComplete()
             {
                 Debug.Assert(this.EventLoop.InEventLoop);
-                Debug.Assert(readInProgress);
+                Debug.Assert(this.readStatus != ReadStatus.Idle);
                 this.channelUnsafe.NotifyReadComplete(this.channelUnsafe.RecvBufAllocHandle);
             }
 
@@ -942,12 +964,22 @@ namespace DotNetty.Codecs.Http2
                 public void BeginRead()
                 {
                     var ch = this.channel;
-                    if (ch.readInProgress || !ch.Active)
+                    if (!ch.Active)
                     {
                         return;
                     }
-                    ch.readInProgress = true;
-                    this.DoBeginRead();
+                    switch (ch.readStatus)
+                    {
+                        case ReadStatus.Idle:
+                            ch.readStatus = ReadStatus.InProgress;
+                            this.DoBeginRead();
+                            break;
+                        case ReadStatus.InProgress:
+                            ch.readStatus = ReadStatus.Requested;
+                            break;
+                        default:
+                            break;
+                    }
                 }
 
                 internal void DoBeginRead()
@@ -997,7 +1029,14 @@ namespace DotNetty.Codecs.Http2
                 {
                     var ch = this.channel;
                     Debug.Assert(ch.next == null && ch.previous == null);
-                    ch.readInProgress = false;
+                    if (ch.readStatus == ReadStatus.Requested)
+                    {
+                        ch.readStatus = ReadStatus.InProgress;
+                    }
+                    else
+                    {
+                        ch.readStatus = ReadStatus.Idle;
+                    }
                     allocHandle.ReadComplete();
                     ch.pipeline.FireChannelReadComplete();
                     // Reading data may result in frames being written (e.g. WINDOW_UPDATE, RST, etc..). If the parent
