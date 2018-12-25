@@ -4,7 +4,6 @@ namespace DotNetty.Handlers.IPFilter
 {
     using System;
     using System.Collections.Concurrent;
-    using System.Collections.Generic;
     using System.Net;
     using System.Threading.Tasks;
     using DotNetty.Transport.Channels;
@@ -17,20 +16,19 @@ namespace DotNetty.Handlers.IPFilter
     {
         const byte Filler = 0;
         //using dictionary as set. value always equals Filler.
-        readonly IDictionary<IPAddress, byte> connected = new ConcurrentDictionary<IPAddress, byte>();
+        readonly ConcurrentDictionary<IPAddress, byte> connected = new ConcurrentDictionary<IPAddress, byte>();
 
         protected override bool Accept(IChannelHandlerContext ctx, IPEndPoint remoteAddress)
         {
             IPAddress remoteIp = remoteAddress.Address;
-            if (this.connected.ContainsKey(remoteIp))
+            if (!this.connected.TryAdd(remoteIp, Filler))
             {
                 return false;
             }
             else
             {
-                this.connected.Add(remoteIp, Filler);
 #if NET40
-                void removeIpAddrAfterCloseAction(Task t) => this.connected.Remove(remoteIp);
+                void removeIpAddrAfterCloseAction(Task t) => this.connected.TryRemove(remoteIp, out _);
                 ctx.Channel.CloseCompletion.ContinueWith(removeIpAddrAfterCloseAction, TaskContinuationOptions.ExecuteSynchronously);
 #else
                 ctx.Channel.CloseCompletion.ContinueWith(RemoveIpAddrAfterCloseAction, Tuple.Create(this.connected, remoteIp), TaskContinuationOptions.ExecuteSynchronously);
@@ -41,8 +39,8 @@ namespace DotNetty.Handlers.IPFilter
 
         static void RemoveIpAddrAfterCloseAction(Task t, object s)
         {
-            var wrapped = (Tuple<IDictionary<IPAddress, byte>, IPAddress>)s;
-            wrapped.Item1.Remove(wrapped.Item2);
+            var wrapped = (Tuple<ConcurrentDictionary<IPAddress, byte>, IPAddress>)s;
+            wrapped.Item1.TryRemove(wrapped.Item2, out _);
         }
 
         public override bool IsSharable => true;

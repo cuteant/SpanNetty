@@ -23,7 +23,7 @@ namespace DotNetty.Handlers.Timeout
     /// {
     ///     IChannelPipeline pipeline = channel.Pipeline;
     ///     
-    ///     pipeline.AddLast("readTimeoutHandler", new <see cref="ReadTimeoutHandler"/>(30);
+    ///     pipeline.AddLast("readTimeoutHandler", new <see cref="ReadTimeoutHandler"/>(30));
     ///     pipeline.AddLast("myHandler", new MyHandler());
     /// } 
     /// </c>
