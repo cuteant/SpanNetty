@@ -7,9 +7,9 @@
   <Import Project="$(SourceRoot)//build/Dependencies.props" />
   <Import Project="$(SourceRoot)//build/Dependencies.3rdParty.props" />
   <Import Project="$(SourceRoot)//build/Dependencies.AspNet.props" />
-  <Import Project="$(SourceRoot)//build/Dependencies.AspNetCore.Dev.props" />
+  <Import Project="$(SourceRoot)//build/Dependencies.AspNetCore.props" />
   <Import Project="$(SourceRoot)//build/Dependencies.CuteAnt.props" />
-  <Import Project="$(SourceRoot)//build/Dependencies.Extensions.Dev.props" />
+  <Import Project="$(SourceRoot)//build/Dependencies.Extensions.props" />
   <Import Project="$(SourceRoot)//build/Dependencies.NetCore.props" />
   <Import Project="$(SourceRoot)//build/Dependencies.Roslyn.props" />
   <Import Project="$(SourceRoot)//build/Dependencies.System.props" />
@@ -40,6 +40,9 @@
     <ImportLibs>netcore</ImportLibs>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.2' ">
+    <DefineConstants>$(DefineConstants);NETCOREAPP;NETCOREAPP_2_0_GREATER;NETCOREAPP_2_1_GREATER;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
     <DefineConstants>$(DefineConstants);NETCOREAPP;NETCOREAPP_2_0_GREATER;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER</DefineConstants>
   </PropertyGroup>
@@ -68,25 +71,8 @@
     <DefineConstants>$(DefineConstants);DESKTOPCLR;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER</DefineConstants>
     <ImportLibs>netfx</ImportLibs>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net472'">
-    <DefineConstants>$(DefineConstants);DESKTOPCLR;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER;NET_4_7_1_GREATER</DefineConstants>
-    <ImportLibs>netfx</ImportLibs>
-  </PropertyGroup>
 
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net472|AnyCPU'">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net472|AnyCPU'">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net471|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
@@ -258,6 +244,19 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netcoreapp2.1|AnyCPU'">
+    <DebugType>portable</DebugType>
+    <Optimize>true</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netcoreapp2.2|AnyCPU'">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>false</Optimize>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netcoreapp2.2|AnyCPU'">
     <DebugType>portable</DebugType>
     <Optimize>true</Optimize>
     <ErrorReport>prompt</ErrorReport>

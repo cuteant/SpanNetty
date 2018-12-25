@@ -7,7 +7,7 @@
     <MicrosoftBuildTasksCorePackageVersion>15.6.82</MicrosoftBuildTasksCorePackageVersion>
     <MicrosoftBuildUtilitiesCorePackageVersion>15.6.82</MicrosoftBuildUtilitiesCorePackageVersion>
 
-    <FSharpCorePackageVersion>4.5.3</FSharpCorePackageVersion>
+    <FSharpCorePackageVersion>4.5.4</FSharpCorePackageVersion>
 
     <MicrosoftBclPackageVersion>1.1.10</MicrosoftBclPackageVersion>
     <MicrosoftBclAsyncPackageVersion>1.0.168</MicrosoftBclAsyncPackageVersion>

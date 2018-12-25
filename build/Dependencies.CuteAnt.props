@@ -2,19 +2,18 @@
   <!-- Shared Package Versions -->
   <PropertyGroup Label="Package Versions">
     <!-- core packages -->
-    <CuteAntAsyncExPackageVersion>2.1.0-rtm-180626-01</CuteAntAsyncExPackageVersion>
-    <CuteAntCoreAbstractionsPackageVersion>2.1.0-rtm-180626-07</CuteAntCoreAbstractionsPackageVersion>
-    <CuteAntCorePackageVersion>2.1.0-rtm-180626-01</CuteAntCorePackageVersion>
-    <CuteAntRuntimePackageVersion>2.1.0-rtm-180626-01</CuteAntRuntimePackageVersion>
+    <CuteAntAsyncExPackageVersion>2.2.0-rtm-181220-01</CuteAntAsyncExPackageVersion>
+    <CuteAntCoreAbstractionsPackageVersion>2.2.0-rtm-181220-01</CuteAntCoreAbstractionsPackageVersion>
+    <CuteAntCorePackageVersion>2.2.0-rtm-181220-01</CuteAntCorePackageVersion>
+    <CuteAntRuntimePackageVersion>2.2.0-rtm-181220-01</CuteAntRuntimePackageVersion>
 
     <FastExpressionCompilerUnofficialPackageVersion>1.7.2-rc1-180512-01</FastExpressionCompilerUnofficialPackageVersion>
-    <PollyUnofficialPackageVersion>6.0.1</PollyUnofficialPackageVersion>
+    <PollyUnofficialPackageVersion>6.1.2</PollyUnofficialPackageVersion>
 
     <EasyEventStoreAbstractionsPackageVersion>4.0.4-beta-171115</EasyEventStoreAbstractionsPackageVersion>
     <EasyEventStoreAutoSubscribingPackageVersion>4.0.4-beta-171115</EasyEventStoreAutoSubscribingPackageVersion>
     <EasyEventStoreCorePackageVersion>4.0.4-beta-171115</EasyEventStoreCorePackageVersion>
 
-    <CronosUnofficialPackageVersion>0.6.3-preview2-180227-01</CronosUnofficialPackageVersion>
     <HangfireAspNetUnofficialPackageVersion>1.6.17-preview2-180227-01</HangfireAspNetUnofficialPackageVersion>
     <HangfireAspNetCoreUnofficialPackageVersion>1.6.17-preview2-180227-01</HangfireAspNetCoreUnofficialPackageVersion>
     <HangfireCoreUnofficialPackageVersion>1.6.17-preview2-180227-01</HangfireCoreUnofficialPackageVersion>
@@ -34,22 +33,22 @@
     <CuteAntCacheManagerSerializationProtobufPackageVersion>2.1.0-rc1-180512-01</CuteAntCacheManagerSerializationProtobufPackageVersion>
 
     <!-- Configuration related packages -->
-    <YamlExtensionsConfigurationPackageVersion>2.1.0-rtm-180626-01</YamlExtensionsConfigurationPackageVersion>
+    <YamlExtensionsConfigurationPackageVersion>2.2.0-rtm-181205-01</YamlExtensionsConfigurationPackageVersion>
 
     <!-- Database related packages -->
-    <ConsulExtensionsPackageVersion>2.1.0-rtm-180715-01</ConsulExtensionsPackageVersion>
+    <ConsulExtensionsPackageVersion>2.2.0-rtm-181220-01</ConsulExtensionsPackageVersion>
     <CuteAntExtensionsRedisPackageVersion>2.1.0-rc1-180512-01</CuteAntExtensionsRedisPackageVersion>
-    <CuteAntIdUtilsPackageVersion>2.1.0-rtm-180712-01</CuteAntIdUtilsPackageVersion>
-    <CuteAntWingsPackageVersion>2.1.0-rtm-180715-01</CuteAntWingsPackageVersion>
-    <CuteAntWingsAbstractionsPackageVersion>2.1.0-rtm-180715-01</CuteAntWingsAbstractionsPackageVersion>
-    <CuteAntWingsMySqlPackageVersion>2.1.0-rtm-180715-01</CuteAntWingsMySqlPackageVersion>
-    <CuteAntWingsMySqlConnectorPackageVersion>2.1.0-rtm-180715-01</CuteAntWingsMySqlConnectorPackageVersion>
-    <CuteAntWingsOraclePackageVersion>2.1.0-rtm-180715-01</CuteAntWingsOraclePackageVersion>
-    <CuteAntWingsPostgreSQLPackageVersion>2.1.0-rtm-180715-01</CuteAntWingsPostgreSQLPackageVersion>
-    <CuteAntWingsShardingPackageVersion>2.1.0-rtm-180715-01</CuteAntWingsShardingPackageVersion>
-    <CuteAntWingsSqlitePackageVersion>2.1.0-rtm-180715-01</CuteAntWingsSqlitePackageVersion>
-    <CuteAntWingsSqlServerPackageVersion>2.1.0-rtm-180715-01</CuteAntWingsSqlServerPackageVersion>
-    <CuteAntWingsSqlServerConvertersPackageVersion>2.1.0-rtm-180715-01</CuteAntWingsSqlServerConvertersPackageVersion>
+    <CuteAntIdUtilsPackageVersion>2.2.0-rtm-181220-01</CuteAntIdUtilsPackageVersion>
+    <CuteAntWingsPackageVersion>2.2.0-rtm-181220-01</CuteAntWingsPackageVersion>
+    <CuteAntWingsAbstractionsPackageVersion>2.2.0-rtm-181220-01</CuteAntWingsAbstractionsPackageVersion>
+    <CuteAntWingsMySqlPackageVersion>2.2.0-rtm-181220-01</CuteAntWingsMySqlPackageVersion>
+    <CuteAntWingsMySqlConnectorPackageVersion>2.2.0-rtm-181220-01</CuteAntWingsMySqlConnectorPackageVersion>
+    <CuteAntWingsOraclePackageVersion>2.2.0-rtm-181220-01</CuteAntWingsOraclePackageVersion>
+    <CuteAntWingsPostgreSQLPackageVersion>2.2.0-rtm-181220-01</CuteAntWingsPostgreSQLPackageVersion>
+    <CuteAntWingsShardingPackageVersion>2.2.0-rtm-181220-01</CuteAntWingsShardingPackageVersion>
+    <CuteAntWingsSqlitePackageVersion>2.2.0-rtm-181220-01</CuteAntWingsSqlitePackageVersion>
+    <CuteAntWingsSqlServerPackageVersion>2.2.0-rtm-181220-01</CuteAntWingsSqlServerPackageVersion>
+    <CuteAntWingsSqlServerConvertersPackageVersion>2.2.0-rtm-181220-01</CuteAntWingsSqlServerConvertersPackageVersion>
 
     <!-- Hosting related packages -->
     <CuteAntHostingPackageVersion>2.1.0-rc1-180512-01</CuteAntHostingPackageVersion>
@@ -68,11 +67,11 @@
     <AutofacUnofficialPackageVersion>4.8.1</AutofacUnofficialPackageVersion>
 
     <!-- Logging related packages -->
-    <NLogExtensionsLoggingUnofficialPackageVersion>2.1.0-rtm-180626-01</NLogExtensionsLoggingUnofficialPackageVersion>
-    <NLogWebAspNetCoreUnofficialPackageVersion>2.1.0-rtm-180626-01</NLogWebAspNetCoreUnofficialPackageVersion>
-    <NLogWebUnofficialPackageVersion>2.1.0-rtm-180626-01</NLogWebUnofficialPackageVersion>
-    <SerilogExtensionsLoggingFileUnofficialPackageVersion>2.1.0-rtm-180626-01</SerilogExtensionsLoggingFileUnofficialPackageVersion>
-    <SerilogExtensionsLoggingUnofficialPackageVersion>2.1.0-rtm-180626-01</SerilogExtensionsLoggingUnofficialPackageVersion>
+    <NLogExtensionsLoggingUnofficialPackageVersion>2.2.0-rtm-181205-01</NLogExtensionsLoggingUnofficialPackageVersion>
+    <NLogWebAspNetCoreUnofficialPackageVersion>2.2.0-rtm-181205-01</NLogWebAspNetCoreUnofficialPackageVersion>
+    <NLogWebUnofficialPackageVersion>2.2.0-rtm-181205-01</NLogWebUnofficialPackageVersion>
+    <SerilogExtensionsLoggingFileUnofficialPackageVersion>2.2.0-rtm-181205-01</SerilogExtensionsLoggingFileUnofficialPackageVersion>
+    <SerilogExtensionsLoggingUnofficialPackageVersion>2.2.0-rtm-181205-01</SerilogExtensionsLoggingUnofficialPackageVersion>
 
     <!-- Network related packages -->
     <DotNettyBuffersUnofficialPackageVersion>0.5.0-rtm-180820-01</DotNettyBuffersUnofficialPackageVersion>
@@ -91,25 +90,26 @@
     <GrpcReflectionUnofficialPackageVersion>1.13.0-rtm-180722-01</GrpcReflectionUnofficialPackageVersion>
 
     <!-- Serialization related packages -->
-    <CuteAntExtensionsSerializationPackageVersion>2.1.0-rtm-180626-01</CuteAntExtensionsSerializationPackageVersion>
-    <CuteAntExtensionsSerializationAbstractionsPackageVersion>2.1.0-rtm-180626-01</CuteAntExtensionsSerializationAbstractionsPackageVersion>
-    <CuteAntExtensionsSerializationCorePackageVersion>2.1.0-rtm-180626-01</CuteAntExtensionsSerializationCorePackageVersion>
-    <CuteAntExtensionsSerializationHyperionPackageVersion>2.1.0-rtm-180626-01</CuteAntExtensionsSerializationHyperionPackageVersion>
-    <CuteAntExtensionsSerializationMessagePackPackageVersion>2.1.0-rtm-180626-01</CuteAntExtensionsSerializationMessagePackPackageVersion>
-    <CuteAntExtensionsSerializationProtobufPackageVersion>2.1.0-rtm-180626-01</CuteAntExtensionsSerializationProtobufPackageVersion>
-    <CuteAntExtensionsSerializationServiceStackPackageVersion>2.1.0-rtm-180626-01</CuteAntExtensionsSerializationServiceStackPackageVersion>
-    <CuteAntExtensionsSerializationUtf8JsonPackageVersion>2.1.0-rtm-180626-01</CuteAntExtensionsSerializationUtf8JsonPackageVersion>
-    <HyperionUnofficialPackageVersion>0.9.8-rtm-180626-01</HyperionUnofficialPackageVersion>
-    <MessagePackAbstractionsPackageVersion>1.7.3-rtm-180626-01</MessagePackAbstractionsPackageVersion>
-    <MessagePackHyperionPackageVersion>1.7.3-rtm-180626-01</MessagePackHyperionPackageVersion>
-    <MessagePackImmutableCollectionUnofficialPackageVersion>1.7.3-rtm-180626-01</MessagePackImmutableCollectionUnofficialPackageVersion>
-    <MessagePackLZ4UnofficialPackageVersion>1.7.3-rtm-180626-01</MessagePackLZ4UnofficialPackageVersion>
-    <MessagePackUnofficialPackageVersion>1.7.3-rtm-180626-01</MessagePackUnofficialPackageVersion>
-    <ProtobufNetAbstractionsPackageVersion>2.3.7-rtm-180626-01</ProtobufNetAbstractionsPackageVersion>
-    <ProtobufNetUnofficialPackageVersion>2.3.7-rtm-180626-01</ProtobufNetUnofficialPackageVersion>
-    <ServiceStackTextUnofficialPackageVersion>5.1.0-rtm-180626-01</ServiceStackTextUnofficialPackageVersion>
-    <Utf8JsonAbstractionsUnofficialPackageVersion>1.3.6-rtm-180626-01</Utf8JsonAbstractionsUnofficialPackageVersion>
-    <Utf8JsonImmutableCollectionUnofficialPackageVersion>1.3.6-rtm-180626-01</Utf8JsonImmutableCollectionUnofficialPackageVersion>
-    <Utf8JsonUnofficialPackageVersion>1.3.6-rtm-180626-01</Utf8JsonUnofficialPackageVersion>
+    <CuteAntExtensionsSerializationPackageVersion>2.2.0-rtm-181220-01</CuteAntExtensionsSerializationPackageVersion>
+    <CuteAntExtensionsSerializationAbstractionsPackageVersion>2.2.0-rtm-181220-01</CuteAntExtensionsSerializationAbstractionsPackageVersion>
+    <CuteAntExtensionsSerializationCorePackageVersion>2.2.0-rtm-181220-01</CuteAntExtensionsSerializationCorePackageVersion>
+    <CuteAntExtensionsSerializationHyperionPackageVersion>2.2.0-rtm-181220-01</CuteAntExtensionsSerializationHyperionPackageVersion>
+    <CuteAntExtensionsSerializationMessagePackPackageVersion>2.2.0-rtm-181220-01</CuteAntExtensionsSerializationMessagePackPackageVersion>
+    <CuteAntExtensionsSerializationProtobufPackageVersion>2.2.0-rtm-181220-01</CuteAntExtensionsSerializationProtobufPackageVersion>
+    <CuteAntExtensionsSerializationServiceStackPackageVersion>2.2.0-rtm-181220-02</CuteAntExtensionsSerializationServiceStackPackageVersion>
+    <CuteAntExtensionsSerializationUtf8JsonPackageVersion>2.2.0-rtm-181220-01</CuteAntExtensionsSerializationUtf8JsonPackageVersion>
+    <HyperionUnofficialPackageVersion>0.9.8-rtm-181220-01</HyperionUnofficialPackageVersion>
+    <MessagePackAbstractionsPackageVersion>1.7.3-rtm-181220-01</MessagePackAbstractionsPackageVersion>
+    <MessagePackHyperionPackageVersion>1.7.3-rtm-181220-01</MessagePackHyperionPackageVersion>
+    <MessagePackImmutableCollectionUnofficialPackageVersion>1.7.3-rtm-181220-01</MessagePackImmutableCollectionUnofficialPackageVersion>
+    <MessagePackLZ4UnofficialPackageVersion>1.7.3-rtm-181220-01</MessagePackLZ4UnofficialPackageVersion>
+    <MessagePackUnofficialPackageVersion>1.7.3-rtm-181220-01</MessagePackUnofficialPackageVersion>
+    <ProtobufNetAbstractionsPackageVersion>2.3.7-rtm-181220-01</ProtobufNetAbstractionsPackageVersion>
+    <ProtobufNetUnofficialPackageVersion>2.3.7-rtm-181220-01</ProtobufNetUnofficialPackageVersion>
+    <ServiceStackTextNet40PackageVersion>5.5.0-rtm-181220-01</ServiceStackTextNet40PackageVersion>
+    <ServiceStackTextUnofficialPackageVersion>5.5.0-rtm-181220-01</ServiceStackTextUnofficialPackageVersion>
+    <Utf8JsonAbstractionsUnofficialPackageVersion>1.3.6-rtm-181220-01</Utf8JsonAbstractionsUnofficialPackageVersion>
+    <Utf8JsonImmutableCollectionUnofficialPackageVersion>1.3.6-rtm-181220-01</Utf8JsonImmutableCollectionUnofficialPackageVersion>
+    <Utf8JsonUnofficialPackageVersion>1.3.6-rtm-181220-01</Utf8JsonUnofficialPackageVersion>
   </PropertyGroup>
 </Project>

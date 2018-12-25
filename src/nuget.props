@@ -5,7 +5,7 @@
     <Product>DotNetty</Product>
     <PackageIconUrl></PackageIconUrl>
     <PackageProjectUrl>https://github.com/cuteant/dotnetty-net40-fork</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/cuteant/dotnetty-net40-fork/blob/dev-net40/LICENSE.txt</PackageLicenseUrl>
+    <PackageLicense>https://github.com/cuteant/dotnetty-net40-fork/blob/dev-net40/LICENSE.txt</PackageLicense>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/cuteant/dotnetty-net40-fork</RepositoryUrl>
     <NeutralLanguage>en-US</NeutralLanguage>

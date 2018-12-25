@@ -4,7 +4,7 @@
     <AssemblyVersion>0.6.0.0</AssemblyVersion>
     <VersionPrefix Condition=" '$(VersionPrefix)'=='' ">0.6.0</VersionPrefix>
     <VersionSuffix Condition=" '$(VersionSuffix)'=='' ">rtm</VersionSuffix>
-    <VersionDateSuffix Condition=" '$(VersionDateSuffix)'=='' ">1801201-01</VersionDateSuffix>
+    <VersionDateSuffix Condition=" '$(VersionDateSuffix)'=='' ">181220-01</VersionDateSuffix>
     <VersionSuffix Condition=" '$(VersionDateSuffix)'!='' ">$(VersionSuffix)-$(VersionDateSuffix)</VersionSuffix>
   </PropertyGroup>
   <Choose>
@@ -28,44 +28,39 @@
         <FileVersion>0.6.0.1200</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition=" '$(TargetFramework)' == 'net46' ">
+    <When Condition=" '$(TargetFramework)' == 'net47' ">
       <PropertyGroup>
         <FileVersion>0.6.0.2000</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition=" '$(TargetFramework)' == 'net461' ">
+    <When Condition=" '$(TargetFramework)' == 'net471' ">
       <PropertyGroup>
         <FileVersion>0.6.0.2100</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition=" '$(TargetFramework)' == 'net462' ">
+    <When Condition=" '$(TargetFramework)' == 'net472' ">
       <PropertyGroup>
         <FileVersion>0.6.0.2200</FileVersion>
       </PropertyGroup>
     </When>
-    <When Condition=" '$(TargetFramework)' == 'net47' ">
-      <PropertyGroup>
-        <FileVersion>0.6.0.3000</FileVersion>
-      </PropertyGroup>
-    </When>
-    <When Condition=" '$(TargetFramework)' == 'net471' ">
-      <PropertyGroup>
-        <FileVersion>0.6.0.3100</FileVersion>
-      </PropertyGroup>
-    </When>
-    <When Condition=" '$(TargetFramework)' == 'net472' ">
-      <PropertyGroup>
-        <FileVersion>0.6.0.3200</FileVersion>
-      </PropertyGroup>
-    </When>
-    <When Condition=" '$(TargetFramework)' == 'netcoreapp2.0' or '$(TargetFramework)' == 'netstandard2.0' ">
+    <When Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
       <PropertyGroup>
         <FileVersion>0.6.0.5000</FileVersion>
       </PropertyGroup>
     </When>
+    <When Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
+      <PropertyGroup>
+        <FileVersion>0.6.0.6000</FileVersion>
+      </PropertyGroup>
+    </When>
     <When Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
       <PropertyGroup>
-        <FileVersion>0.6.0.5100</FileVersion>
+        <FileVersion>0.6.0.6100</FileVersion>
+      </PropertyGroup>
+    </When>
+    <When Condition=" '$(TargetFramework)' == 'netcoreapp2.2' ">
+      <PropertyGroup>
+        <FileVersion>0.6.0.6200</FileVersion>
       </PropertyGroup>
     </When>
     <Otherwise>

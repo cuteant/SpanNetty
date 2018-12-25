@@ -13,7 +13,7 @@
     <SystemConfigurationConfigurationManagerPackageVersion>4.5.0</SystemConfigurationConfigurationManagerPackageVersion>
     <SystemDataDataSetExtensionsPackageVersion>4.5.0</SystemDataDataSetExtensionsPackageVersion>
     <SystemDataOdbcPackageVersion>4.5.0</SystemDataOdbcPackageVersion>
-    <SystemDataSqlClientPackageVersion>4.5.1</SystemDataSqlClientPackageVersion>
+    <SystemDataSqlClientPackageVersion>4.6.0</SystemDataSqlClientPackageVersion>
     <SystemDiagnosticsEventLogPackageVersion>4.5.0</SystemDiagnosticsEventLogPackageVersion>
     <SystemDiagnosticsPerformanceCounterPackageVersion>4.5.0</SystemDiagnosticsPerformanceCounterPackageVersion>
     <SystemDirectoryServicesPackageVersion>4.5.0</SystemDirectoryServicesPackageVersion>
