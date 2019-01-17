@@ -220,6 +220,9 @@ namespace DotNetty.Common.Tests.Utilities
             Assert.False(AsciiString.ContentEqualsIgnoreCase(null, (StringCharSequence)"foo"));
             Assert.False(AsciiString.ContentEqualsIgnoreCase((StringCharSequence)"bar", null));
             Assert.True(AsciiString.ContentEqualsIgnoreCase((StringCharSequence)"FoO", (StringCharSequence)"fOo"));
+            Assert.False(AsciiString.ContentEqualsIgnoreCase((StringCharSequence)"FoO", (StringCharSequence)"bar"));
+            Assert.False(AsciiString.ContentEqualsIgnoreCase((StringCharSequence)"Foo", (StringCharSequence)"foobar"));
+            Assert.False(AsciiString.ContentEqualsIgnoreCase((StringCharSequence)"foobar", (StringCharSequence)"Foo"));
 
             // Test variations (Ascii + String, Ascii + Ascii, String + Ascii)
             Assert.True(AsciiString.ContentEqualsIgnoreCase((AsciiString)"FoO", (StringCharSequence)"fOo"));

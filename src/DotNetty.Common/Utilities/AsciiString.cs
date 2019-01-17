@@ -1187,9 +1187,9 @@ namespace DotNetty.Common.Utilities
             {
                 return false;
             }
-            for (int i = 0, j = 0; i < a.Count; ++i, ++j)
+            for (int i = 0; i < a.Count; ++i)
             {
-                if (!EqualsIgnoreCase(a[i], b[j]))
+                if (!EqualsIgnoreCase(a[i], b[i]))
                 {
                     return false;
                 }
