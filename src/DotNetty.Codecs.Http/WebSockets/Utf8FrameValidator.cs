@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs.Http.WebSockets
 {
+    using System;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
@@ -34,7 +35,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                             this.fragmentedFramesCount = 0;
 
                             // Check UTF-8 correctness for this payload
-                            CheckUtf8String(ctx, frame.Content, this.utf8Validator);
+                            this.utf8Validator.Check(frame.Content);
 
                             // This does a second check to make sure UTF-8
                             // correctness for entire text message
@@ -47,7 +48,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                             if (this.utf8Validator.IsChecking)
                             {
                                 // Check UTF-8 correctness for this payload
-                                CheckUtf8String(ctx, frame.Content, this.utf8Validator);
+                                this.utf8Validator.Check(frame.Content);
 
                                 // This does a second check to make sure UTF-8
                                 // correctness for entire text message
@@ -65,7 +66,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                         // First text or binary frame for a fragmented set
                         if (frame.Opcode == Opcode.Text)
                         {
-                            CheckUtf8String(ctx, frame.Content, this.utf8Validator);
+                            this.utf8Validator.Check(frame.Content);
                         }
                     }
                     else
@@ -73,7 +74,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                         // Subsequent frames - only check if init frame is text
                         if (this.utf8Validator.IsChecking)
                         {
-                            CheckUtf8String(ctx, frame.Content, this.utf8Validator);
+                            this.utf8Validator.Check(frame.Content);
                         }
                     }
 
@@ -85,24 +86,18 @@ namespace DotNetty.Codecs.Http.WebSockets
             base.ChannelRead(ctx, message);
         }
 
-        static void CheckUtf8String(IChannelHandlerContext ctx, IByteBuffer buffer, Utf8Validator utf8Validator)
+        public override void ExceptionCaught(IChannelHandlerContext ctx, Exception exception)
         {
-            try
+            if (exception is CorruptedFrameException && ctx.Channel.Open)
             {
-                utf8Validator.Check(buffer);
-            }
-            catch (CorruptedFrameException)
-            {
-                if (ctx.Channel.Active)
-                {
 #if NET40
-                    void closeOnComplete(Task t) => ctx.Channel.CloseAsync();
-                    ctx.WriteAndFlushAsync(Unpooled.Empty).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
+                void closeOnComplete(Task t) => ctx.Channel.CloseAsync();
+                ctx.WriteAndFlushAsync(Unpooled.Empty).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                    ctx.WriteAndFlushAsync(Unpooled.Empty).ContinueWith(CloseOnComplete, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
+                ctx.WriteAndFlushAsync(Unpooled.Empty).ContinueWith(CloseOnComplete, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
 #endif
-                }
             }
+            base.ExceptionCaught(ctx, exception);
         }
 
         static void CloseOnComplete(Task t, object c) => ((IChannel)c).CloseAsync();
