@@ -38,8 +38,8 @@
 
     <SystemBuffersPackageVersion>4.5.0</SystemBuffersPackageVersion>
     <SystemDiagnosticsDiagnosticSourcePackageVersion>4.5.1</SystemDiagnosticsDiagnosticSourcePackageVersion>
-    <SystemIOPipelinesPackageVersion>4.5.2</SystemIOPipelinesPackageVersion>
-    <SystemMemoryPackageVersion>4.5.1</SystemMemoryPackageVersion>
+    <SystemIOPipelinesPackageVersion>4.5.3</SystemIOPipelinesPackageVersion>
+    <SystemMemoryPackageVersion>4.5.2</SystemMemoryPackageVersion>
     <SystemNetHttpPackageVersion>4.3.4</SystemNetHttpPackageVersion>
     <SystemNumericsVectorsPackageVersion>4.5.0</SystemNumericsVectorsPackageVersion>
 

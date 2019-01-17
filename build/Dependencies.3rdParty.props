@@ -29,11 +29,11 @@
     <ConsulPackageVersion>0.7.2.6</ConsulPackageVersion>
     <DapperPackageVersion>1.50.5</DapperPackageVersion>
     <MicrosoftSqlServerTypesPackageVersion>14.0.1016.290</MicrosoftSqlServerTypesPackageVersion>
-    <MongoDBBsonStrongNamePackageVersion>2.6.0</MongoDBBsonStrongNamePackageVersion>
-    <MongoDBDriverCoreStrongNamePackageVersion>2.6.0</MongoDBDriverCoreStrongNamePackageVersion>
-    <MongoDBDriverStrongNamePackageVersion>2.6.0</MongoDBDriverStrongNamePackageVersion>
-    <MongoDBDriverGridFSStrongNamePackageVersion>2.6.0</MongoDBDriverGridFSStrongNamePackageVersion>
-    <mongocsharpdriverStrongNamePackageVersion>2.6.0</mongocsharpdriverStrongNamePackageVersion>
+    <MongoDBBsonStrongNamePackageVersion>2.7.2</MongoDBBsonStrongNamePackageVersion>
+    <MongoDBDriverCoreStrongNamePackageVersion>2.7.2</MongoDBDriverCoreStrongNamePackageVersion>
+    <MongoDBDriverStrongNamePackageVersion>2.7.2</MongoDBDriverStrongNamePackageVersion>
+    <MongoDBDriverGridFSStrongNamePackageVersion>2.7.2</MongoDBDriverGridFSStrongNamePackageVersion>
+    <mongocsharpdriverStrongNamePackageVersion>2.7.2</mongocsharpdriverStrongNamePackageVersion>
     <MySqlDataPackageVersion>8.0.13</MySqlDataPackageVersion>
     <MySqlConnectorPackageVersion>0.48.2</MySqlConnectorPackageVersion>
     <NpgsqlPackageVersion>4.0.4</NpgsqlPackageVersion>
@@ -41,6 +41,12 @@
     <StackExchangeRedisPackageVersion>2.0.519</StackExchangeRedisPackageVersion>
     <StackExchangeRedisStrongNamePackageVersion>2.0.519</StackExchangeRedisStrongNamePackageVersion>
     <SystemDataSQLiteCorePackageVersion>1.0.109.2</SystemDataSQLiteCorePackageVersion>
+
+    <!-- Hosting related packages -->
+    <TopshelfPackageVersion>4.1.0.180-develop</TopshelfPackageVersion>
+    <TopshelfExtensionsConfigurationPackageVersion>4.1.0.180-develop</TopshelfExtensionsConfigurationPackageVersion>
+    <TopshelfNLogPackageVersion>4.1.0.180-develop</TopshelfNLogPackageVersion>
+    <TopshelfSerilogPackageVersion>4.1.0.180-develop</TopshelfSerilogPackageVersion>
 
     <!-- Logging related packages -->
     <NLogPackageVersion>4.5.11</NLogPackageVersion>

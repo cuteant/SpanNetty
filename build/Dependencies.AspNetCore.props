@@ -44,7 +44,7 @@
 
     <MicrosoftAspNetCoreDiagnosticsPackageVersion>2.2.0</MicrosoftAspNetCoreDiagnosticsPackageVersion>
     <MicrosoftAspNetCoreDiagnosticsAbstractionsPackageVersion>2.2.0</MicrosoftAspNetCoreDiagnosticsAbstractionsPackageVersion>
-    <MicrosoftAspNetCoreDiagnosticsEntityFrameworkCorePackageVersion>2.2.0</MicrosoftAspNetCoreDiagnosticsEntityFrameworkCorePackageVersion>
+    <MicrosoftAspNetCoreDiagnosticsEntityFrameworkCorePackageVersion>2.2.1</MicrosoftAspNetCoreDiagnosticsEntityFrameworkCorePackageVersion>
 
     <MicrosoftAspNetCoreHostFilteringPackageVersion>2.2.0</MicrosoftAspNetCoreHostFilteringPackageVersion>
     <MicrosoftAspNetCoreHostingPackageVersion>2.2.0</MicrosoftAspNetCoreHostingPackageVersion>
@@ -108,14 +108,15 @@
     <MicrosoftAspNetCoreRoutingAbstractionsPackageVersion>2.2.0</MicrosoftAspNetCoreRoutingAbstractionsPackageVersion>
 
     <MicrosoftAspNetCoreServerHttpSysPackageVersion>2.2.0</MicrosoftAspNetCoreServerHttpSysPackageVersion>
-    <MicrosoftAspNetCoreServerIISIntegrationPackageVersion>2.2.0</MicrosoftAspNetCoreServerIISIntegrationPackageVersion>
+    <MicrosoftAspNetCoreServerIISPackageVersion>2.2.1</MicrosoftAspNetCoreServerIISPackageVersion>
+    <MicrosoftAspNetCoreServerIISIntegrationPackageVersion>2.2.1</MicrosoftAspNetCoreServerIISIntegrationPackageVersion>
 
     <MicrosoftAspNetCoreServerKestrelPackageVersion>2.2.0</MicrosoftAspNetCoreServerKestrelPackageVersion>
     <MicrosoftAspNetCoreServerKestrelCorePackageVersion>2.2.0</MicrosoftAspNetCoreServerKestrelCorePackageVersion>
     <MicrosoftAspNetCoreServerKestrelHttpsPackageVersion>2.2.0</MicrosoftAspNetCoreServerKestrelHttpsPackageVersion>
     <MicrosoftAspNetCoreServerKestrelTransportAbstractionsPackageVersion>2.2.0</MicrosoftAspNetCoreServerKestrelTransportAbstractionsPackageVersion>
     <MicrosoftAspNetCoreServerKestrelTransportLibuvPackageVersion>2.2.0</MicrosoftAspNetCoreServerKestrelTransportLibuvPackageVersion>
-    <MicrosoftAspNetCoreServerKestrelTransportSocketsPackageVersion>2.2.0</MicrosoftAspNetCoreServerKestrelTransportSocketsPackageVersion>
+    <MicrosoftAspNetCoreServerKestrelTransportSocketsPackageVersion>2.2.1</MicrosoftAspNetCoreServerKestrelTransportSocketsPackageVersion>
 
     <MicrosoftAspNetCoreSessionPackageVersion>2.2.0</MicrosoftAspNetCoreSessionPackageVersion>
 
@@ -133,25 +134,25 @@
     <MicrosoftAspNetCoreSpaServicesExtensionsPackageVersion>2.2.0</MicrosoftAspNetCoreSpaServicesExtensionsPackageVersion>
 
     <MicrosoftAspNetCoreStaticFilesPackageVersion>2.2.0</MicrosoftAspNetCoreStaticFilesPackageVersion>
-    <MicrosoftAspNetCoreWebSocketsPackageVersion>2.2.0</MicrosoftAspNetCoreWebSocketsPackageVersion>
+    <MicrosoftAspNetCoreWebSocketsPackageVersion>2.2.1</MicrosoftAspNetCoreWebSocketsPackageVersion>
     <MicrosoftAspNetCoreWebUtilitiesPackageVersion>2.2.0</MicrosoftAspNetCoreWebUtilitiesPackageVersion>
 
     <MicrosoftAspNetCoreTestHostPackageVersion>2.2.0</MicrosoftAspNetCoreTestHostPackageVersion>
     <MicrosoftCodeAnalysisRazorPackageVersion>2.2.0</MicrosoftCodeAnalysisRazorPackageVersion>
 
-    <MicrosoftDataSqliteCorePackageVersion>2.2.0</MicrosoftDataSqliteCorePackageVersion>
-    <MicrosoftDataSqlitePackageVersion>2.2.0</MicrosoftDataSqlitePackageVersion>
+    <MicrosoftDataSqliteCorePackageVersion>2.2.1</MicrosoftDataSqliteCorePackageVersion>
+    <MicrosoftDataSqlitePackageVersion>2.2.1</MicrosoftDataSqlitePackageVersion>
 
-    <MicrosoftEntityFrameworkCorePackageVersion>2.2.0</MicrosoftEntityFrameworkCorePackageVersion>
-    <MicrosoftEntityFrameworkCoreAbstractionsPackageVersion>2.2.0</MicrosoftEntityFrameworkCoreAbstractionsPackageVersion>
-    <MicrosoftEntityFrameworkCoreAnalyzersPackageVersion>2.2.0</MicrosoftEntityFrameworkCoreAnalyzersPackageVersion>
-    <MicrosoftEntityFrameworkCoreDesignPackageVersion>2.2.0</MicrosoftEntityFrameworkCoreDesignPackageVersion>
-    <MicrosoftEntityFrameworkCoreInMemoryPackageVersion>2.2.0</MicrosoftEntityFrameworkCoreInMemoryPackageVersion>
-    <MicrosoftEntityFrameworkCoreRelationalPackageVersion>2.2.0</MicrosoftEntityFrameworkCoreRelationalPackageVersion>
-    <MicrosoftEntityFrameworkCoreSqlitePackageVersion>2.2.0</MicrosoftEntityFrameworkCoreSqlitePackageVersion>
-    <MicrosoftEntityFrameworkCoreSqliteCorePackageVersion>2.2.0</MicrosoftEntityFrameworkCoreSqliteCorePackageVersion>
-    <MicrosoftEntityFrameworkCoreSqlServerPackageVersion>2.2.0</MicrosoftEntityFrameworkCoreSqlServerPackageVersion>
-    <MicrosoftEntityFrameworkCoreToolsPackageVersion>2.2.0</MicrosoftEntityFrameworkCoreToolsPackageVersion>
+    <MicrosoftEntityFrameworkCorePackageVersion>2.2.1</MicrosoftEntityFrameworkCorePackageVersion>
+    <MicrosoftEntityFrameworkCoreAbstractionsPackageVersion>2.2.1</MicrosoftEntityFrameworkCoreAbstractionsPackageVersion>
+    <MicrosoftEntityFrameworkCoreAnalyzersPackageVersion>2.2.1</MicrosoftEntityFrameworkCoreAnalyzersPackageVersion>
+    <MicrosoftEntityFrameworkCoreDesignPackageVersion>2.2.1</MicrosoftEntityFrameworkCoreDesignPackageVersion>
+    <MicrosoftEntityFrameworkCoreInMemoryPackageVersion>2.2.1</MicrosoftEntityFrameworkCoreInMemoryPackageVersion>
+    <MicrosoftEntityFrameworkCoreRelationalPackageVersion>2.2.1</MicrosoftEntityFrameworkCoreRelationalPackageVersion>
+    <MicrosoftEntityFrameworkCoreSqlitePackageVersion>2.2.1</MicrosoftEntityFrameworkCoreSqlitePackageVersion>
+    <MicrosoftEntityFrameworkCoreSqliteCorePackageVersion>2.2.1</MicrosoftEntityFrameworkCoreSqliteCorePackageVersion>
+    <MicrosoftEntityFrameworkCoreSqlServerPackageVersion>2.2.1</MicrosoftEntityFrameworkCoreSqlServerPackageVersion>
+    <MicrosoftEntityFrameworkCoreToolsPackageVersion>2.2.1</MicrosoftEntityFrameworkCoreToolsPackageVersion>
 
     <MicrosoftExtensionsIdentityCorePackageVersion>2.2.0</MicrosoftExtensionsIdentityCorePackageVersion>
     <MicrosoftExtensionsIdentityStoresPackageVersion>2.2.0</MicrosoftExtensionsIdentityStoresPackageVersion>
