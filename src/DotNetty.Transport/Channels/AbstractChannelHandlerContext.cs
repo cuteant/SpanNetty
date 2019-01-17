@@ -243,19 +243,20 @@ namespace DotNetty.Transport.Channels
 
         public bool Removed => Volatile.Read(ref handlerState) == HandlerState.RemoveComplete;
 
-        internal void SetAddComplete()
+        internal bool SetAddComplete()
         {
             var prevState = Volatile.Read(ref this.handlerState);
             int oldState;
             do
             {
-                if (prevState == HandlerState.RemoveComplete) { break; }
+                if (prevState == HandlerState.RemoveComplete) { return false; }
                 oldState = prevState;
                 // Ensure we never update when the handlerState is REMOVE_COMPLETE already.
                 // oldState is usually ADD_PENDING but can also be REMOVE_COMPLETE when an EventExecutor is used that is not
                 // exposing ordering guarantees.
                 prevState = Interlocked.CompareExchange(ref this.handlerState, HandlerState.AddComplete, prevState);
             } while (prevState != oldState);
+            return true;
         }
 
         internal void SetRemoved() => Interlocked.Exchange(ref handlerState, HandlerState.RemoveComplete);
@@ -264,6 +265,33 @@ namespace DotNetty.Transport.Channels
         {
             var updated = HandlerState.Init == Interlocked.CompareExchange(ref this.handlerState, HandlerState.AddPending, HandlerState.Init);
             Debug.Assert(updated); // This should always be true as it MUST be called before setAddComplete() or setRemoved().
+        }
+
+        internal void CallHandlerAdded()
+        {
+            // We must call setAddComplete before calling handlerAdded. Otherwise if the handlerAdded method generates
+            // any pipeline events ctx.handler() will miss them because the state will not allow it.
+            if (this.SetAddComplete())
+            {
+                this.Handler.HandlerAdded(this);
+            }
+        }
+
+        internal void CallHandlerRemoved()
+        {
+            try
+            {
+                // Only call handlerRemoved(...) if we called handlerAdded(...) before.
+                if (Volatile.Read(ref this.handlerState) == HandlerState.AddComplete)
+                {
+                    this.Handler.HandlerRemoved(this);
+                }
+            }
+            finally
+            {
+                // Mark the handler as removed in any case.
+                this.SetRemoved();
+            }
         }
 
         public IEventExecutor Executor => this.executor ?? this.Channel.EventLoop;

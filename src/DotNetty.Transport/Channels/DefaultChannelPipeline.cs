@@ -569,10 +569,7 @@ namespace DotNetty.Transport.Channels
         {
             try
             {
-                // We must call setAddComplete before calling handlerAdded. Otherwise if the handlerAdded method generates
-                // any pipeline events ctx.handler() will miss them because the state will not allow it.
-                ctx.SetAddComplete();
-                ctx.Handler.HandlerAdded(ctx);
+                ctx.CallHandlerAdded();
             }
             catch (Exception ex)
             {
@@ -580,14 +577,7 @@ namespace DotNetty.Transport.Channels
                 try
                 {
                     Remove0(ctx);
-                    try
-                    {
-                        ctx.Handler.HandlerRemoved(ctx);
-                    }
-                    finally
-                    {
-                        ctx.SetRemoved();
-                    }
+                    ctx.CallHandlerRemoved();
                     removed = true;
                 }
                 catch (Exception ex2)
@@ -614,14 +604,7 @@ namespace DotNetty.Transport.Channels
             // Notify the complete removal.
             try
             {
-                try
-                {
-                    ctx.Handler.HandlerRemoved(ctx);
-                }
-                finally
-                {
-                    ctx.SetRemoved();
-                }
+                ctx.CallHandlerRemoved();
             }
             catch (Exception ex)
             {
