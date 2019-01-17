@@ -97,7 +97,7 @@ namespace DotNetty.Codecs
             }
             finally
             {
-                // We must release if the ownership was not transfered as otherwise it may produce a leak if
+                // We must release if the ownership was not transferred as otherwise it may produce a leak if
                 // writeBytes(...) throw for whatever release (for example because of OutOfMemoryError).
                 input?.Release();
             }

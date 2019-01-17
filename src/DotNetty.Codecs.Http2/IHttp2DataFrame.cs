@@ -17,7 +17,7 @@ namespace DotNetty.Codecs.Http2
         int Padding { get; }
 
         /// <summary>
-        /// Returns the number of bytes that are flow-controlled initialy, so even if the <see cref="IByteBufferHolder.Content"/> is consumed
+        /// Returns the number of bytes that are flow-controlled initially, so even if the <see cref="IByteBufferHolder.Content"/> is consumed
         /// this will not change.
         /// </summary>
         /// <returns></returns>

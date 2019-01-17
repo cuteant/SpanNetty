@@ -260,7 +260,7 @@ namespace DotNetty.Codecs.Http
         /// <summary>
         /// Deep copy of the headers.
         /// </summary>
-        /// <returns>A deap copy of this.</returns>
+        /// <returns>A deep copy of this.</returns>
         public virtual HttpHeaders Copy()
         {
             var copy = new DefaultHttpHeaders();

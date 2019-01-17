@@ -11,7 +11,7 @@ namespace DotNetty.Transport.Channels
         /// <summary>Returns the offset in the file where the transfer began.</summary>
         long Position { get; }
 
-        /// <summary>Returns the bytes which was transfered already.</summary>
+        /// <summary>Returns the bytes which was transferred already.</summary>
         long Transferred { get; }
 
         /// <summary>Returns the number of bytes to transfer.</summary>

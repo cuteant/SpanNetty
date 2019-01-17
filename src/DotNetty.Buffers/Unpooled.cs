@@ -62,7 +62,7 @@ namespace DotNetty.Buffers
         ///     Creates a new buffer which wraps the specified buffer's readable bytes.
         ///     A modification on the specified buffer's content will be visible to the returned buffer.
         /// </summary>
-        /// <param name="buffer">The buffer to wrap. Reference count ownership of this variable is transfered to this method.</param>
+        /// <param name="buffer">The buffer to wrap. Reference count ownership of this variable is transferred to this method.</param>
         /// <returns>The readable portion of the buffer, or an empty buffer if there is no readable portion.</returns>
         public static IByteBuffer WrappedBuffer(IByteBuffer buffer)
         {
@@ -91,7 +91,7 @@ namespace DotNetty.Buffers
         ///     Creates a new big-endian composite buffer which wraps the readable bytes of the specified buffers without copying them. 
         ///     A modification on the content of the specified buffers will be visible to the returned buffer.
         /// </summary>
-        /// <param name="buffers">The buffers to wrap. Reference count ownership of all variables is transfered to this method.</param>
+        /// <param name="buffers">The buffers to wrap. Reference count ownership of all variables is transferred to this method.</param>
         /// <returns>The readable portion of the buffers. The caller is responsible for releasing this buffer.</returns>
         public static IByteBuffer WrappedBuffer(params IByteBuffer[] buffers)
         {
@@ -145,7 +145,7 @@ namespace DotNetty.Buffers
         ///     A modification on the content of the specified buffers will be visible to the returned buffer.
         /// </summary>
         /// <param name="maxNumComponents">Advisement as to how many independent buffers are allowed to exist before consolidation occurs.</param>
-        /// <param name="buffers">The buffers to wrap. Reference count ownership of all variables is transfered to this method.</param>
+        /// <param name="buffers">The buffers to wrap. Reference count ownership of all variables is transferred to this method.</param>
         /// <returns>The readable portion of the buffers. The caller is responsible for releasing this buffer.</returns>
         public static IByteBuffer WrappedBuffer(int maxNumComponents, params IByteBuffer[] buffers)
         {
