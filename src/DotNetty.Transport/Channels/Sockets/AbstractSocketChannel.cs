@@ -134,7 +134,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         SocketChannelAsyncOperation<TChannel, TUnsafe> WriteOperation => this.writeOperation ?? (this.writeOperation = new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, false));
 
-        protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(in ArraySegment<byte> buffer)
+        protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(ArraySegment<byte> buffer)
         {
             var operation = this.WriteOperation;
             operation.SetBuffer(buffer.Array, buffer.Offset, buffer.Count);

@@ -250,7 +250,7 @@ namespace DotNetty.Codecs.Http2
         }
 
         public bool Distribute(int maxBytes, Action<IHttp2Stream, int> writer) => this.Distribute(maxBytes, new ActionStreamByteDistributorWriter(writer));
-        public bool Distribute(int maxBytes, in IStreamByteDistributorWriter writer)
+        public bool Distribute(int maxBytes, IStreamByteDistributorWriter writer)
         {
             // As long as there is some active frame we should write at least 1 time.
             if (this.connectionState.activeCountForTree == 0) { return false; }
@@ -285,7 +285,7 @@ namespace DotNetty.Codecs.Http2
             this.allocationQuantum = allocationQuantum;
         }
 
-        int Distribute(int maxBytes, in IStreamByteDistributorWriter writer, State state)
+        int Distribute(int maxBytes, IStreamByteDistributorWriter writer, State state)
         {
             if (state.IsActive())
             {
@@ -320,7 +320,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="writer"></param>
         /// <param name="state"></param>
         /// <returns></returns>
-        int DistributeToChildren(int maxBytes, in IStreamByteDistributorWriter writer, State state)
+        int DistributeToChildren(int maxBytes, IStreamByteDistributorWriter writer, State state)
         {
             long oldTotalQueuedWeights = state.totalQueuedWeights;
             State childState = state.PollPseudoTimeQueue();
@@ -694,7 +694,7 @@ namespace DotNetty.Codecs.Http2
                 this.children = new Dictionary<int, State>(InitialChildrenMapSize);
             }
 
-            internal void Write(int numBytes, in IStreamByteDistributorWriter writer)
+            internal void Write(int numBytes, IStreamByteDistributorWriter writer)
             {
                 Debug.Assert(this.stream != null);
                 try

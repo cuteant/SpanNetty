@@ -45,7 +45,7 @@ namespace DotNetty.Codecs.Http2
         /// otherwise <c>false</c>.</returns>
         /// <exception cref="Http2Exception">If an internal exception occurs and internal connection state would otherwise be
         /// corrupted.</exception>
-        bool Distribute(int maxBytes, in IStreamByteDistributorWriter writer);
+        bool Distribute(int maxBytes, IStreamByteDistributorWriter writer);
         bool Distribute(int maxBytes, Action<IHttp2Stream, int> writer);
     }
 }

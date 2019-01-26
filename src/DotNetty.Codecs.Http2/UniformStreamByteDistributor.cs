@@ -10,7 +10,7 @@ namespace DotNetty.Codecs.Http2
     /// <summary>
     /// A <see cref="IStreamByteDistributor"/> that ignores stream priority and uniformly allocates bytes to all
     /// streams. This class uses a minimum chunk size that will be allocated to each stream. While
-    /// fewer streams may be written to in each call to <see cref="Distribute(int, in IStreamByteDistributorWriter)"/>, doing this
+    /// fewer streams may be written to in each call to <see cref="Distribute(int, IStreamByteDistributorWriter)"/>, doing this
     /// should improve the goodput on each written stream.
     /// </summary>
     public sealed class UniformStreamByteDistributor : Http2ConnectionAdapter, IStreamByteDistributor
@@ -77,7 +77,7 @@ namespace DotNetty.Codecs.Http2
             throw new NotImplementedException();
         }
 
-        public bool Distribute(int maxBytes, in IStreamByteDistributorWriter writer)
+        public bool Distribute(int maxBytes, IStreamByteDistributorWriter writer)
         {
             var size = queue.Count;
             if (size == 0)
