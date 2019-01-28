@@ -401,6 +401,8 @@ namespace DotNetty.Transport.Channels.Pool
             }
 
             public bool TryDequeue(out T item) => this.TryPop(out item);
+
+            public bool NonEmpty => !this.IsEmpty;
         }
     }
 }

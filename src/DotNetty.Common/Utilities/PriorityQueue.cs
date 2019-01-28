@@ -43,6 +43,8 @@ namespace DotNetty.Common.Utilities
 
         public bool IsEmpty => this.count == 0;
 
+        public bool NonEmpty => this.count > 0;
+
         public T Dequeue() => this.TryDequeue(out T item) ? item : null;
 
         public bool TryDequeue(out T item)

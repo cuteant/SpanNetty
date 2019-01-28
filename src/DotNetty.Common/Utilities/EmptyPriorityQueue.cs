@@ -34,6 +34,8 @@ namespace DotNetty.Common.Utilities
 
         public bool IsEmpty => true;
 
+        public bool NonEmpty => false;
+
         public void Clear()
         {
         }

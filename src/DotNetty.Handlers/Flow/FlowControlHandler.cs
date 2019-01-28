@@ -80,7 +80,7 @@ namespace DotNetty.Handlers.Flow
         {
             if (this.queue != null)
             {
-                if (!this.queue.IsEmpty)
+                if (this.queue.NonEmpty)
                 {
                     if (Logger.TraceEnabled) Logger.NonEmptyQueue(this.queue);
 

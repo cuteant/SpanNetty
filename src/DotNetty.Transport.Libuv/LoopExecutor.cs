@@ -236,7 +236,7 @@ namespace DotNetty.Transport.Libuv
             finally
             {
                 Interlocked.Exchange(ref this.executionState, TerminatedState);
-                if (!this.taskQueue.IsEmpty && Logger.WarnEnabled)
+                if (this.taskQueue.NonEmpty && Logger.WarnEnabled)
                 {
                     Logger.TerminatedWithNonEmptyTaskQueue(this.taskQueue.Count);
                 }
@@ -338,7 +338,7 @@ namespace DotNetty.Transport.Libuv
             }
 
             long nextTimeout = DefaultBreakoutTime;
-            if (!this.taskQueue.IsEmpty)
+            if (this.taskQueue.NonEmpty)
             {
                 this.timerHandle.Start(nextTimeout, 0);
             }

@@ -15,6 +15,8 @@ namespace DotNetty.Common.Internal
 
         bool IsEmpty { get; }
 
+        bool NonEmpty { get; }
+
         void Clear();
     }
 }

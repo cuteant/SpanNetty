@@ -238,6 +238,8 @@ namespace DotNetty.Common.Internal
                 return this.ConsumerIndex == this.ProducerIndex;
             }
         }
+
+        public override bool NonEmpty => this.ConsumerIndex != this.ProducerIndex;
     }
 
     abstract class MpscArrayQueueL1Pad<T> : ConcurrentCircularArrayQueue<T>

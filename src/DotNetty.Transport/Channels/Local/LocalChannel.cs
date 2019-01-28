@@ -95,7 +95,7 @@ namespace DotNetty.Transport.Channels.Local
         {
             var self = (LocalChannel)c;
             // Ensure the inboundBuffer is not empty as readInbound() will always call fireChannelReadComplete()
-            if (!self.inboundBuffer.IsEmpty)
+            if (self.inboundBuffer.NonEmpty)
             {
                 self.ReadInbound();
             }
@@ -438,7 +438,7 @@ namespace DotNetty.Transport.Channels.Local
             // We should only set readInProgress to false if there is any data that was read as otherwise we may miss to
             // forward data later on.
             IChannelPipeline peerPipeline = peer.Pipeline;
-            if (Constants.True == Volatile.Read(ref peer.readInProgress) && !peer.inboundBuffer.IsEmpty)
+            if (Constants.True == Volatile.Read(ref peer.readInProgress) && peer.inboundBuffer.NonEmpty)
             {
                 Interlocked.Exchange(ref peer.readInProgress, Constants.False);
                 peer.ReadInbound();

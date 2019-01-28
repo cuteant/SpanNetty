@@ -71,7 +71,7 @@ namespace DotNetty.Common.Internal
 
         public override void Clear()
         {
-            while (this.TryDequeue(out T _) || !this.IsEmpty)
+            while (this.TryDequeue(out T _) || this.NonEmpty)
             {
                 // looping
             }

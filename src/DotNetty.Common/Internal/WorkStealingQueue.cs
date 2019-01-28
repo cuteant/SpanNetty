@@ -24,6 +24,8 @@ namespace DotNetty.Common.Internal
 
         public bool IsEmpty => this.headIndex >= this.tailIndex;
 
+        public bool NonEmpty => this.tailIndex > this.headIndex;
+
         public bool TryEnqueue(T item)
         {
             int tail = this.tailIndex;
