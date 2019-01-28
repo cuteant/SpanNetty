@@ -2,19 +2,19 @@
   <!-- Shared Package Versions -->
   <PropertyGroup Label="Package Versions">
     <!-- core packages -->
-    <CuteAntAsyncExPackageVersion>2.2.0-rtm-181220-01</CuteAntAsyncExPackageVersion>
-    <CuteAntCoreAbstractionsPackageVersion>2.2.0-rtm-181220-01</CuteAntCoreAbstractionsPackageVersion>
-    <CuteAntCorePackageVersion>2.2.0-rtm-181220-02</CuteAntCorePackageVersion>
-    <CuteAntRuntimePackageVersion>2.2.0-rtm-181220-01</CuteAntRuntimePackageVersion>
+    <CuteAntAsyncExPackageVersion>2.2.0-rtm-190127-01</CuteAntAsyncExPackageVersion>
+    <CuteAntCoreAbstractionsPackageVersion>2.2.0-rtm-190127-01</CuteAntCoreAbstractionsPackageVersion>
+    <CuteAntCorePackageVersion>2.2.0-rtm-190127-01</CuteAntCorePackageVersion>
+    <CuteAntRuntimePackageVersion>2.2.0-rtm-190127-01</CuteAntRuntimePackageVersion>
 
     <PollyUnofficialPackageVersion>6.1.2</PollyUnofficialPackageVersion>
 
-    <EasyEventStoreAbstractionsPackageVersion>4.0.4-beta-171115</EasyEventStoreAbstractionsPackageVersion>
-    <EasyEventStoreAutoSubscribingPackageVersion>4.0.4-beta-171115</EasyEventStoreAutoSubscribingPackageVersion>
-    <EasyEventStoreCorePackageVersion>4.0.4-beta-171115</EasyEventStoreCorePackageVersion>
+    <EasyEventStoreAbstractionsPackageVersion>5.0.0-rc2-190122-01</EasyEventStoreAbstractionsPackageVersion>
+    <EasyEventStoreAutoSubscribingPackageVersion>5.0.0-rc2-190122-01</EasyEventStoreAutoSubscribingPackageVersion>
+    <EasyEventStoreCorePackageVersion>5.0.0-rc2-190122-01</EasyEventStoreCorePackageVersion>
 
-    <FastExpressionCompilerUnofficialPackageVersion>2.0.0-preview-190102-01</FastExpressionCompilerUnofficialPackageVersion>
-    <FastExpressionCompilerLightExpressionUnofficialPackageVersion>2.0.0-preview-190102-01</FastExpressionCompilerLightExpressionUnofficialPackageVersion>
+    <GrEmitSignedPackageVersion>3.0.9</GrEmitSignedPackageVersion>
+    <GrobExpCompilerSignedPackageVersion>1.2.6</GrobExpCompilerSignedPackageVersion>
 
     <HangfireAspNetUnofficialPackageVersion>1.6.17-preview2-180227-01</HangfireAspNetUnofficialPackageVersion>
     <HangfireAspNetCoreUnofficialPackageVersion>1.6.17-preview2-180227-01</HangfireAspNetCoreUnofficialPackageVersion>
@@ -114,26 +114,24 @@
     <GrpcReflectionUnofficialPackageVersion>1.13.0-rtm-180722-01</GrpcReflectionUnofficialPackageVersion>
 
     <!-- Serialization related packages -->
-    <CuteAntExtensionsSerializationPackageVersion>2.2.0-rtm-190106-01</CuteAntExtensionsSerializationPackageVersion>
-    <CuteAntExtensionsSerializationAbstractionsPackageVersion>2.2.0-rtm-190106-01</CuteAntExtensionsSerializationAbstractionsPackageVersion>
-    <CuteAntExtensionsSerializationCorePackageVersion>2.2.0-rtm-190106-01</CuteAntExtensionsSerializationCorePackageVersion>
-    <CuteAntExtensionsSerializationHyperionPackageVersion>2.2.0-rtm-190106-01</CuteAntExtensionsSerializationHyperionPackageVersion>
-    <CuteAntExtensionsSerializationMessagePackPackageVersion>2.2.0-rtm-190106-01</CuteAntExtensionsSerializationMessagePackPackageVersion>
-    <CuteAntExtensionsSerializationProtobufPackageVersion>2.2.0-rtm-190106-01</CuteAntExtensionsSerializationProtobufPackageVersion>
-    <CuteAntExtensionsSerializationServiceStackPackageVersion>2.2.0-rtm-190106-02</CuteAntExtensionsSerializationServiceStackPackageVersion>
-    <CuteAntExtensionsSerializationUtf8JsonPackageVersion>2.2.0-rtm-190106-01</CuteAntExtensionsSerializationUtf8JsonPackageVersion>
-    <HyperionUnofficialPackageVersion>0.9.8-rtm-190106-01</HyperionUnofficialPackageVersion>
-    <MessagePackAbstractionsPackageVersion>1.7.3-rtm-190106-01</MessagePackAbstractionsPackageVersion>
-    <MessagePackHyperionPackageVersion>1.7.3-rtm-190106-01</MessagePackHyperionPackageVersion>
-    <MessagePackImmutableCollectionUnofficialPackageVersion>1.7.3-rtm-190106-01</MessagePackImmutableCollectionUnofficialPackageVersion>
-    <MessagePackLZ4UnofficialPackageVersion>1.7.3-rtm-190106-01</MessagePackLZ4UnofficialPackageVersion>
-    <MessagePackUnofficialPackageVersion>1.7.3-rtm-190106-01</MessagePackUnofficialPackageVersion>
-    <ProtobufNetAbstractionsPackageVersion>2.3.7-rtm-190106-01</ProtobufNetAbstractionsPackageVersion>
-    <ProtobufNetUnofficialPackageVersion>2.3.7-rtm-190106-01</ProtobufNetUnofficialPackageVersion>
-    <ServiceStackTextNet40PackageVersion>5.5.0-rtm-190106-01</ServiceStackTextNet40PackageVersion>
-    <ServiceStackTextUnofficialPackageVersion>5.5.0-rtm-190106-01</ServiceStackTextUnofficialPackageVersion>
-    <Utf8JsonAbstractionsUnofficialPackageVersion>1.3.6-rtm-190106-01</Utf8JsonAbstractionsUnofficialPackageVersion>
-    <Utf8JsonImmutableCollectionUnofficialPackageVersion>1.3.6-rtm-190106-01</Utf8JsonImmutableCollectionUnofficialPackageVersion>
-    <Utf8JsonUnofficialPackageVersion>1.3.6-rtm-190106-01</Utf8JsonUnofficialPackageVersion>
+    <CuteAntExtensionsSerializationPackageVersion>2.2.0-rtm-190127-01</CuteAntExtensionsSerializationPackageVersion>
+    <CuteAntExtensionsSerializationAbstractionsPackageVersion>2.2.0-rtm-190127-01</CuteAntExtensionsSerializationAbstractionsPackageVersion>
+    <CuteAntExtensionsSerializationCorePackageVersion>2.2.0-rtm-190127-01</CuteAntExtensionsSerializationCorePackageVersion>
+    <CuteAntExtensionsSerializationHyperionPackageVersion>2.2.0-rtm-190127-01</CuteAntExtensionsSerializationHyperionPackageVersion>
+    <CuteAntExtensionsSerializationMessagePackPackageVersion>2.2.0-rtm-190127-01</CuteAntExtensionsSerializationMessagePackPackageVersion>
+    <CuteAntExtensionsSerializationProtobufPackageVersion>2.2.0-rtm-190127-01</CuteAntExtensionsSerializationProtobufPackageVersion>
+    <CuteAntExtensionsSerializationServiceStackPackageVersion>2.2.0-rtm-190127-01</CuteAntExtensionsSerializationServiceStackPackageVersion>
+    <CuteAntExtensionsSerializationUtf8JsonPackageVersion>2.2.0-rtm-190127-01</CuteAntExtensionsSerializationUtf8JsonPackageVersion>
+    <HyperionUnofficialPackageVersion>0.9.8-rtm-190127-01</HyperionUnofficialPackageVersion>
+    <MessagePackAbstractionsPackageVersion>1.7.3-rtm-190127-01</MessagePackAbstractionsPackageVersion>
+    <MessagePackHyperionPackageVersion>1.7.3-rtm-190127-01</MessagePackHyperionPackageVersion>
+    <MessagePackImmutableCollectionUnofficialPackageVersion>1.7.3-rtm-190127-01</MessagePackImmutableCollectionUnofficialPackageVersion>
+    <MessagePackLZ4UnofficialPackageVersion>1.7.3-rtm-190127-01</MessagePackLZ4UnofficialPackageVersion>
+    <MessagePackUnofficialPackageVersion>1.7.3-rtm-190127-01</MessagePackUnofficialPackageVersion>
+    <ServiceStackTextNet40PackageVersion>5.5.0-rtm-190127-01</ServiceStackTextNet40PackageVersion>
+    <ServiceStackTextUnofficialPackageVersion>5.5.0-rtm-190127-01</ServiceStackTextUnofficialPackageVersion>
+    <Utf8JsonAbstractionsUnofficialPackageVersion>1.3.6-rtm-190127-01</Utf8JsonAbstractionsUnofficialPackageVersion>
+    <Utf8JsonImmutableCollectionUnofficialPackageVersion>1.3.6-rtm-190127-01</Utf8JsonImmutableCollectionUnofficialPackageVersion>
+    <Utf8JsonUnofficialPackageVersion>1.3.6-rtm-190127-01</Utf8JsonUnofficialPackageVersion>
   </PropertyGroup>
 </Project>
