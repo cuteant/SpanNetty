@@ -1010,7 +1010,7 @@ namespace DotNetty.Codecs.Http2
         private static readonly Action<Task, object> CloseOnFailureAction = CloseOnFailure;
         private static void CloseOnFailure(Task t, object s)
         {
-            if (t.Status != TaskStatus.RanToCompletion)
+            if (!t.IsSuccess())
             {
                 ((IChannelHandlerContext)s).Channel.CloseAsync();
             }

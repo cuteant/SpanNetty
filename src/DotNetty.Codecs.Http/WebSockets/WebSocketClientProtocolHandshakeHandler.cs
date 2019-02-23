@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
     using System.Threading.Tasks;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
     partial class WebSocketClientProtocolHandshakeHandler : ChannelHandlerAdapter
@@ -20,9 +21,9 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             base.ChannelActive(context);
 #if NET40
-            void fireUserEventTriggeredAction(Task t)
+            Action<Task> fireUserEventTriggeredAction = (Task t) =>
             {
-                if (t.Status == TaskStatus.RanToCompletion)
+                if (t.IsSuccess())
                 {
                     context.FireUserEventTriggered(WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeIssued);
                 }
@@ -30,7 +31,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     context.FireExceptionCaught(t.Exception);
                 }
-            }
+            };
             this.handshaker.HandshakeAsync(context.Channel)
                 .ContinueWith(fireUserEventTriggeredAction, TaskContinuationOptions.ExecuteSynchronously);
 #else

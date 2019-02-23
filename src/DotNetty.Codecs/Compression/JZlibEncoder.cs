@@ -223,11 +223,11 @@ namespace DotNetty.Codecs.Compression
             void closeOnComplete(Task t) => context.CloseAsync(promise);
             completion.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
-            completion.ContinueWith(CloseOnComplete, Tuple.Create(context, promise), TaskContinuationOptions.ExecuteSynchronously);
+            completion.ContinueWith(CloseOnCompleteAction, Tuple.Create(context, promise), TaskContinuationOptions.ExecuteSynchronously);
 #endif
             if (!completion.IsCompleted)
             {
-                ctx.Executor.Schedule(CloseHandlerContext, context, promise, TimeSpan.FromSeconds(10));
+                ctx.Executor.Schedule(CloseHandlerContextAction, context, promise, TimeSpan.FromSeconds(10));
             }
         }
 
@@ -281,6 +281,7 @@ namespace DotNetty.Codecs.Compression
             return context.WriteAndFlushAsync(footer, promise);
         }
 
+        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
         static void CloseOnComplete(Task t, object s)
         {
             var wrapped = (Tuple<IChannelHandlerContext, IPromise>)s;
@@ -290,6 +291,8 @@ namespace DotNetty.Codecs.Compression
             }
             wrapped.Item1.CloseAsync(wrapped.Item2);
         }
+
+        static readonly Action<object, object> CloseHandlerContextAction = CloseHandlerContext;
         static void CloseHandlerContext(object ctx, object p) => ((IChannelHandlerContext)ctx).CloseAsync((IPromise)p);
 
         public override void HandlerAdded(IChannelHandlerContext context) => Interlocked.Exchange(ref this.ctx, context);

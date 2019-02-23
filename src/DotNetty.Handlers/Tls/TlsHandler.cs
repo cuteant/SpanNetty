@@ -788,41 +788,33 @@ namespace DotNetty.Handlers.Tls
         private static void HandleHandshakeCompleted(Task task, object state)
         {
             var self = (TlsHandler)state;
-            switch (task.Status)
+            if (task.IsCanceled || task.IsFaulted)
             {
-                case TaskStatus.RanToCompletion:
-                    {
-                        var oldState = self.State;
+                // ReSharper disable once AssignNullToNotNullAttribute -- task.Exception will be present as task is faulted
+                var oldState = self.State;
+                Debug.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
+                self.HandleFailure(task.Exception);
+            }
+            else //if (task.IsCompleted)
+            {
+                var oldState = self.State;
 
-                        Debug.Assert(!oldState.HasAny(TlsHandlerState.AuthenticationCompleted));
-                        self.State = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
+                Debug.Assert(!oldState.HasAny(TlsHandlerState.AuthenticationCompleted));
+                self.State = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
 
-                        var capturedContext = self.CapturedContext;
-                        capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
+                var capturedContext = self.CapturedContext;
+                capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
 
-                        if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !capturedContext.Channel.Configuration.AutoRead)
-                        {
-                            capturedContext.Read();
-                        }
+                if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !capturedContext.Channel.Configuration.AutoRead)
+                {
+                    capturedContext.Read();
+                }
 
-                        if (oldState.Has(TlsHandlerState.FlushedBeforeHandshake))
-                        {
-                            self.Wrap(capturedContext);
-                            capturedContext.Flush();
-                        }
-                        break;
-                    }
-                case TaskStatus.Canceled:
-                case TaskStatus.Faulted:
-                    {
-                        // ReSharper disable once AssignNullToNotNullAttribute -- task.Exception will be present as task is faulted
-                        var oldState = self.State;
-                        Debug.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
-                        self.HandleFailure(task.Exception);
-                        break;
-                    }
-                default:
-                    ThrowHelper.ThrowArgumentOutOfRangeException_HandshakeCompleted(task.Status); break;
+                if (oldState.Has(TlsHandlerState.FlushedBeforeHandshake))
+                {
+                    self.Wrap(capturedContext);
+                    capturedContext.Flush();
+                }
             }
         }
 #endif
@@ -1200,36 +1192,36 @@ namespace DotNetty.Handlers.Tls
 #else
                 Task task = this.WriteAsync(buffer, offset, count);
 #endif
-                switch (task.Status)
+                if (task.IsSuccess())
                 {
-                    case TaskStatus.RanToCompletion:
-                        // write+flush completed synchronously (and successfully)
-                        var result = new SynchronousAsyncResult<int>
-                        {
-                            AsyncState = state
-                        };
-                        callback?.Invoke(result);
-                        return result;
-
-                    default:
-                        if (callback != null || state != task.AsyncState)
-                        {
-                            Debug.Assert(_writeCompletion == null);
-                            _writeCallback = callback;
-                            var tcs = _owner.CapturedContext.NewPromise(state);
-                            _writeCompletion = tcs;
+                    // write+flush completed synchronously (and successfully)
+                    var result = new SynchronousAsyncResult<int>
+                    {
+                        AsyncState = state
+                    };
+                    callback?.Invoke(result);
+                    return result;
+                }
+                else
+                {
+                    if (callback != null || state != task.AsyncState)
+                    {
+                        Debug.Assert(_writeCompletion == null);
+                        _writeCallback = callback;
+                        var tcs = _owner.CapturedContext.NewPromise(state);
+                        _writeCompletion = tcs;
 #if !NET40
-                            task.ContinueWith(s_writeCompleteCallback, this, TaskContinuationOptions.ExecuteSynchronously);
+                        task.ContinueWith(s_writeCompleteCallback, this, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                            Action<Task> continuationAction = completed => HandleChannelWriteComplete(completed, this);
-                            task.ContinueWith(continuationAction, TaskContinuationOptions.ExecuteSynchronously);
+                        Action<Task> continuationAction = completed => HandleChannelWriteComplete(completed, this);
+                        task.ContinueWith(continuationAction, TaskContinuationOptions.ExecuteSynchronously);
 #endif
-                            return tcs.Task;
-                        }
-                        else
-                        {
-                            return task;
-                        }
+                        return tcs.Task;
+                    }
+                    else
+                    {
+                        return task;
+                    }
                 }
             }
 
@@ -1243,23 +1235,33 @@ namespace DotNetty.Handlers.Tls
                 var promise = self._writeCompletion;
                 self._writeCompletion = null;
 
-                switch (writeTask.Status)
+#if NETCOREAPP
+                if (writeTask.IsCompletedSuccessfully)
                 {
-                    case TaskStatus.RanToCompletion:
-                        promise.TryComplete();
-                        break;
-
-                    case TaskStatus.Canceled:
-                        promise.TrySetCanceled();
-                        break;
-
-                    case TaskStatus.Faulted:
-                        promise.TrySetException(writeTask.Exception.InnerExceptions);
-                        break;
-
-                    default:
-                        ThrowHelper.ThrowArgumentException_WriteComplete(writeTask.Status); break;
+                    promise.TryComplete();
                 }
+                else if (writeTask.IsCanceled)
+                {
+                    promise.TrySetCanceled();
+                }
+                else if (writeTask.IsFaulted)
+                {
+                    promise.TrySetException(writeTask.Exception.InnerExceptions);
+                }
+#else
+                if (writeTask.IsCanceled)
+                {
+                    promise.TrySetCanceled();
+                }
+                else if (writeTask.IsFaulted)
+                {
+                    promise.TrySetException(writeTask.Exception.InnerExceptions);
+                }
+                else if (writeTask.IsCompleted)
+                {
+                    promise.TryComplete();
+                }
+#endif
 
                 callback?.Invoke(promise.Task);
             }

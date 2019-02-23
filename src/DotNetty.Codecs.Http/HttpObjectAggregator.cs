@@ -160,14 +160,14 @@ namespace DotNetty.Codecs.Http
                     !HttpUtil.Is100ContinueExpected(oversized) && !HttpUtil.IsKeepAlive(oversized))
                 {
 #if NET40
-                    void closeOnComplete(Task t)
+                    Action<Task> closeOnComplete = (Task t) =>
                     {
                         if (t.IsFaulted)
                         {
                             if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
                         }
                         ctx.CloseAsync();
-                    }
+                    };
                     ctx.WriteAndFlushAsync(TooLargeClose.RetainedDuplicate()).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
                     ctx.WriteAndFlushAsync(TooLargeClose.RetainedDuplicate()).ContinueWith(CloseOnCompleteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
@@ -176,14 +176,14 @@ namespace DotNetty.Codecs.Http
                 else
                 {
 #if NET40
-                    void closeOnFault(Task t)
+                    Action<Task> closeOnFault = (Task t) =>
                     {
                         if (t.IsFaulted)
                         {
                             if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
                             ctx.CloseAsync();
                         }
-                    }
+                    };
                     ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith(closeOnFault, TaskContinuationOptions.ExecuteSynchronously);
 #else
                     ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith(CloseOnFaultAction, ctx, TaskContinuationOptions.ExecuteSynchronously);

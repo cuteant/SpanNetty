@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
     using System.Threading.Tasks;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
     partial class WebSocketClientProtocolHandshakeHandler
@@ -14,7 +15,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         static void OnFireUserEventTriggered(Task t, object state)
         {
             var ctx = (IChannelHandlerContext)state;
-            if (t.Status == TaskStatus.RanToCompletion)
+            if (t.IsSuccess())
             {
                 ctx.FireUserEventTriggered(WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeIssued);
             }

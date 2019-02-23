@@ -446,17 +446,17 @@ namespace DotNetty.Codecs.Http2
 
         private static void NotifyHeaderWritePromise(Task future, IPromise promise)
         {
-            switch (future.Status)
+            if (future.IsCanceled)
             {
-                case TaskStatus.RanToCompletion:
-                    promise.TryComplete();
-                    break;
-                case TaskStatus.Canceled:
-                    promise.TrySetCanceled();
-                    break;
-                case TaskStatus.Faulted:
-                    promise.TrySetException(future.Exception);
-                    break;
+                promise.TrySetCanceled();
+            }
+            else if (future.IsFaulted)
+            {
+                promise.TrySetException(future.Exception);
+            }
+            else //if (future.IsCompleted)
+            {
+                promise.TryComplete();
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿namespace DotNetty.Transport.Channels
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using DotNetty.Common;
@@ -27,11 +28,12 @@
             return writeCloseCompletion;
 #else
             var writeCloseCompletion = Task.WhenAll(taskList);
-            writeCloseCompletion.ContinueWith(ReturnAfterWriteAction, taskList, TaskContinuationOptions.ExecuteSynchronously);
+            writeCloseCompletion.ContinueWith(s_returnAfterWriteAction, taskList, TaskContinuationOptions.ExecuteSynchronously);
             return writeCloseCompletion;
 #endif
         }
 
+        private static readonly Action<Task, object> s_returnAfterWriteAction = ReturnAfterWriteAction;
         private static void ReturnAfterWriteAction(Task t, object s) => ((ThreadLocalList<Task>)s).Return();
     }
 }

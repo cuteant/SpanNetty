@@ -116,9 +116,9 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 
 #if NET40
-            void removeHandlerAfterWrite(Task t)
+            Action<Task> removeHandlerAfterWrite = (Task t) =>
             {
-                if (t.Status == TaskStatus.RanToCompletion)
+                if (t.IsSuccess())
                 {
                     p.Remove(encoderName);
                     completion.TryComplete();
@@ -127,7 +127,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     completion.TrySetException(t.Exception.InnerExceptions);
                 }
-            }
+            };
             channel.WriteAndFlushAsync(response).ContinueWith(removeHandlerAfterWrite, TaskContinuationOptions.ExecuteSynchronously);
 #else
             channel.WriteAndFlushAsync(response).ContinueWith(RemoveHandlerAfterWriteAction, Tuple.Create(completion, p, encoderName), TaskContinuationOptions.ExecuteSynchronously);
@@ -220,7 +220,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
 #if NET40
-            void closeOnComplete(Task t) => channel.CloseAsync();
+            Action<Task> closeOnComplete = (Task t) => channel.CloseAsync();
             return channel.WriteAndFlushAsync(frame).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
             return channel.WriteAndFlushAsync(frame).ContinueWith(CloseOnCompleteAction, channel, TaskContinuationOptions.ExecuteSynchronously);

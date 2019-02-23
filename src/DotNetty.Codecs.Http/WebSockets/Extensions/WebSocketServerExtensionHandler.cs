@@ -102,7 +102,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                 continuationAction = t =>
                 {
                     var pipeline = ctx.Pipeline;
-                    if (t.Status == TaskStatus.RanToCompletion && this.validExtensions != null)
+                    if (t.IsSuccess() && this.validExtensions != null)
                     {
                         foreach (IWebSocketServerExtension extension in this.validExtensions)
                         {
@@ -115,7 +115,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                     pipeline.Remove(ctx.Name);
                 };
 #else
-                continuationAction = SwitchWebSocketExtensionHandler;
+                continuationAction = s_switchWebSocketExtensionHandlerAction;
 #endif
 
             }
@@ -133,13 +133,14 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
             base.Write(ctx, msg, promise);
         }
 
+        static readonly Action<Task, object> s_switchWebSocketExtensionHandlerAction = SwitchWebSocketExtensionHandler;
         static void SwitchWebSocketExtensionHandler(Task promise, object state)
         {
             var wrapped = (Tuple<IChannelHandlerContext, List<IWebSocketServerExtension>>)state;
             var ctx = wrapped.Item1;
             var validExtensions = wrapped.Item2;
             var pipeline = ctx.Pipeline;
-            if (promise.Status == TaskStatus.RanToCompletion && validExtensions != null)
+            if (promise.IsSuccess() && validExtensions != null)
             {
                 foreach (IWebSocketServerExtension extension in validExtensions)
                 {

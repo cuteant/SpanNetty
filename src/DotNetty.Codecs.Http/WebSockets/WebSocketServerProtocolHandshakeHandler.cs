@@ -69,9 +69,9 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     Task task = handshaker.HandshakeAsync(ctx.Channel, req);
 #if NET40
-                    void onFireUserEventTriggered(Task t)
+                    Action<Task> onFireUserEventTriggered = (Task t) =>
                     {
-                        if (t.Status == TaskStatus.RanToCompletion)
+                        if (t.IsSuccess())
                         {
                             ctx.FireUserEventTriggered(new WebSocketServerProtocolHandler.HandshakeComplete(
                                 req.Uri, req.Headers, handshaker.SelectedSubprotocol));
@@ -80,7 +80,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                         {
                             ctx.FireExceptionCaught(t.Exception);
                         }
-                    }
+                    };
                     task.ContinueWith(onFireUserEventTriggered, TaskContinuationOptions.ExecuteSynchronously);
 #else
                     task.ContinueWith(FireUserEventTriggeredAction, Tuple.Create(ctx, req, handshaker), TaskContinuationOptions.ExecuteSynchronously);
@@ -107,7 +107,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (!IsKeepAlive(req) || res.Status.Code != StatusCodes.Status200OK)
             {
 #if NET40
-                void closeOnComplete(Task t) => ctx.Channel.CloseAsync();
+                Action<Task> closeOnComplete = (Task t) => ctx.Channel.CloseAsync();
                 task.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
                 task.ContinueWith(CloseOnCompleteAction, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);

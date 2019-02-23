@@ -1176,7 +1176,7 @@ namespace DotNetty.Codecs.Http2
 
                 private void FirstWriteComplete(Task future, IPromise promise)
                 {
-                    if (future.Status == TaskStatus.RanToCompletion)
+                    if (future.IsSuccess())
                     {
                         // As we just finished our first write which made the stream-id valid we need to re-evaluate
                         // the writability of the channel.
@@ -1202,7 +1202,7 @@ namespace DotNetty.Codecs.Http2
 
                 private void WriteComplete(Task future, IPromise promise)
                 {
-                    if (future.Status == TaskStatus.RanToCompletion)
+                    if (future.IsSuccess())
                     {
                         promise.Complete();
                     }

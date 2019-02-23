@@ -21,29 +21,29 @@ namespace DotNetty.Codecs.Http.WebSockets
         static void LinkOutcomeContinuation(Task t, object state)
         {
             var wrapped = (Tuple<IPromise, IChannelPipeline, WebSocketClientHandshaker>)state;
-            switch (t.Status)
+            if (t.IsCanceled)
             {
-                case TaskStatus.RanToCompletion:
-                    IChannelPipeline p = wrapped.Item2;
-                    IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
-                    if (ctx == null)
-                    {
-                        wrapped.Item1.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
-                        return;
-                    }
-
-                    p.AddAfter(ctx.Name, "ws-encoder", wrapped.Item3.NewWebSocketEncoder());
-                    wrapped.Item1.TryComplete();
-                    break;
-                case TaskStatus.Canceled:
-                    wrapped.Item1.TrySetCanceled();
-                    break;
-                case TaskStatus.Faulted:
-                    wrapped.Item1.TrySetException(t.Exception.InnerExceptions);
-                    break;
-                default:
-                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
+                wrapped.Item1.TrySetCanceled(); return;
             }
+            else if (t.IsFaulted)
+            {
+                wrapped.Item1.TrySetException(t.Exception.InnerExceptions); return;
+            }
+            else if (t.IsCompleted)
+            {
+                IChannelPipeline p = wrapped.Item2;
+                IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
+                if (ctx == null)
+                {
+                    wrapped.Item1.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
+                    return;
+                }
+
+                p.AddAfter(ctx.Name, "ws-encoder", wrapped.Item3.NewWebSocketEncoder());
+                wrapped.Item1.TryComplete();
+                return;
+            }
+            ThrowHelper.ThrowArgumentOutOfRangeException();
         }
     }
 }

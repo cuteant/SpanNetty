@@ -31,12 +31,13 @@ namespace DotNetty.Handlers.IPFilter
                 void removeIpAddrAfterCloseAction(Task t) => this.connected.TryRemove(remoteIp, out _);
                 ctx.Channel.CloseCompletion.ContinueWith(removeIpAddrAfterCloseAction, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                ctx.Channel.CloseCompletion.ContinueWith(RemoveIpAddrAfterCloseAction, Tuple.Create(this.connected, remoteIp), TaskContinuationOptions.ExecuteSynchronously);
+                ctx.Channel.CloseCompletion.ContinueWith(s_removeIpAddrAfterCloseAction, Tuple.Create(this.connected, remoteIp), TaskContinuationOptions.ExecuteSynchronously);
 #endif
             }
             return true;
         }
 
+        static readonly Action<Task, object> s_removeIpAddrAfterCloseAction = RemoveIpAddrAfterCloseAction;
         static void RemoveIpAddrAfterCloseAction(Task t, object s)
         {
             var wrapped = (Tuple<ConcurrentDictionary<IPAddress, byte>, IPAddress>)s;

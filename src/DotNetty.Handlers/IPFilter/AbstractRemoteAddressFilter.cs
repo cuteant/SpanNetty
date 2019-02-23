@@ -63,7 +63,7 @@ namespace DotNetty.Handlers.IPFilter
                     void closeOnComplete(Task t) => ctx.CloseAsync();
                     rejectedTask.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                    rejectedTask.ContinueWith(CloseOnComplete, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                    rejectedTask.ContinueWith(CloseOnCompleteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
 #endif
                 }
                 else
@@ -74,6 +74,7 @@ namespace DotNetty.Handlers.IPFilter
             return true;
         }
 
+        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
         static void CloseOnComplete(Task t, object s)
         {
             ((IChannelHandlerContext)s).CloseAsync();

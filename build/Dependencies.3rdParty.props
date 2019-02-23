@@ -17,6 +17,12 @@
     <!-- Castle packages -->
     <CastleCorePackageVersion>4.3.1</CastleCorePackageVersion>
 
+    <!-- Ioc related packages -->
+    <AutofacPackageVersion>4.9.1</AutofacPackageVersion>
+    <AutofacConfigurationPackageVersion>4.1.0</AutofacConfigurationPackageVersion>
+    <AutofacExtensionsDependencyInjectionPackageVersion>4.3.1</AutofacExtensionsDependencyInjectionPackageVersion>
+    <AutofacExtrasDynamicProxyPackageVersion>4.5.0</AutofacExtrasDynamicProxyPackageVersion>
+
     <!-- Compression related packages -->
     <BrotliNativePackageVersion>0.0.1</BrotliNativePackageVersion>
     <K4osCompressionLZ4PackageVersion>1.1.1</K4osCompressionLZ4PackageVersion>
@@ -27,15 +33,15 @@
 
     <!-- Database related packages -->
     <ConsulPackageVersion>0.7.2.6</ConsulPackageVersion>
-    <DapperPackageVersion>1.50.5</DapperPackageVersion>
+    <DapperPackageVersion>1.50.7</DapperPackageVersion>
     <MicrosoftSqlServerTypesPackageVersion>14.0.1016.290</MicrosoftSqlServerTypesPackageVersion>
     <MongoDBBsonStrongNamePackageVersion>2.7.2</MongoDBBsonStrongNamePackageVersion>
     <MongoDBDriverCoreStrongNamePackageVersion>2.7.2</MongoDBDriverCoreStrongNamePackageVersion>
     <MongoDBDriverStrongNamePackageVersion>2.7.2</MongoDBDriverStrongNamePackageVersion>
     <MongoDBDriverGridFSStrongNamePackageVersion>2.7.2</MongoDBDriverGridFSStrongNamePackageVersion>
     <mongocsharpdriverStrongNamePackageVersion>2.7.2</mongocsharpdriverStrongNamePackageVersion>
-    <MySqlDataPackageVersion>8.0.13</MySqlDataPackageVersion>
-    <MySqlConnectorPackageVersion>0.48.2</MySqlConnectorPackageVersion>
+    <MySqlDataPackageVersion>8.0.15</MySqlDataPackageVersion>
+    <MySqlConnectorPackageVersion>0.49.3</MySqlConnectorPackageVersion>
     <NpgsqlPackageVersion>4.0.4</NpgsqlPackageVersion>
     <OracleManagedDataAccessPackageVersion>18.3.0</OracleManagedDataAccessPackageVersion>
     <StackExchangeRedisPackageVersion>2.0.519</StackExchangeRedisPackageVersion>
@@ -43,42 +49,43 @@
     <SystemDataSQLiteCorePackageVersion>1.0.109.2</SystemDataSQLiteCorePackageVersion>
 
     <!-- Hosting related packages -->
-    <TopshelfPackageVersion>4.1.0.180-develop</TopshelfPackageVersion>
-    <TopshelfExtensionsConfigurationPackageVersion>4.1.0.180-develop</TopshelfExtensionsConfigurationPackageVersion>
-    <TopshelfNLogPackageVersion>4.1.0.180-develop</TopshelfNLogPackageVersion>
-    <TopshelfSerilogPackageVersion>4.1.0.180-develop</TopshelfSerilogPackageVersion>
+    <TopshelfPackageVersion>4.2.0.200-develop</TopshelfPackageVersion>
+    <TopshelfExtensionsConfigurationPackageVersion>4.2.0.200-develop</TopshelfExtensionsConfigurationPackageVersion>
+    <TopshelfNLogPackageVersion>4.2.0.200-develop</TopshelfNLogPackageVersion>
+    <TopshelfSerilogPackageVersion>4.2.0.200-develop</TopshelfSerilogPackageVersion>
 
     <!-- Logging related packages -->
     <NLogPackageVersion>4.5.11</NLogPackageVersion>
     <NLogDevPackageVersion>4.5.11</NLogDevPackageVersion>
-    <SerilogPackageVersion>2.7.1</SerilogPackageVersion>
-    <SerilogDevPackageVersion>2.7.1</SerilogDevPackageVersion>
+    <SerilogPackageVersion>2.8.0</SerilogPackageVersion>
+    <SerilogDevPackageVersion>2.8.0</SerilogDevPackageVersion>
     <SerilogEnrichersEnvironmentPackageVersion>2.1.3-dev-00752</SerilogEnrichersEnvironmentPackageVersion>
     <SerilogEnrichersProcessPackageVersion>2.0.1</SerilogEnrichersProcessPackageVersion>
-    <SerilogEnrichersThreadPackageVersion>3.0.1-dev-00728</SerilogEnrichersThreadPackageVersion>
+    <SerilogEnrichersThreadPackageVersion>3.0.1-dev-00731</SerilogEnrichersThreadPackageVersion>
     <SerilogExtensionsLoggingFilePackageVersion>2.0.0-dev-00024</SerilogExtensionsLoggingFilePackageVersion>
-    <SerilogFiltersExpressionsPackageVersion>2.0.0</SerilogFiltersExpressionsPackageVersion>
-    <SerilogFormattingCompactPackageVersion>1.0.1-dev-00922</SerilogFormattingCompactPackageVersion>
+    <SerilogFiltersExpressionsPackageVersion>2.0.1-dev-00044</SerilogFiltersExpressionsPackageVersion>
+    <SerilogFormattingCompactPackageVersion>1.0.1-dev-00925</SerilogFormattingCompactPackageVersion>
     <SerilogFormattingCompactReaderPackageVersion>1.0.3</SerilogFormattingCompactReaderPackageVersion>
-    <SerilogSettingsAppSettingsPackageVersion>2.2.1-dev-00052</SerilogSettingsAppSettingsPackageVersion>
-    <SerilogSettingsConfigurationPackageVersion>3.0.1</SerilogSettingsConfigurationPackageVersion>
-    <SerilogSinksApplicationInsightsPackageVersion>2.6.0</SerilogSinksApplicationInsightsPackageVersion>
+    <SerilogSettingsAppSettingsPackageVersion>2.2.2</SerilogSettingsAppSettingsPackageVersion>
+    <SerilogSettingsConfigurationPackageVersion>3.0.2-dev-00187</SerilogSettingsConfigurationPackageVersion>
+    <SerilogSinksApplicationInsightsPackageVersion>3.0.1</SerilogSinksApplicationInsightsPackageVersion>
     <SerilogSinksAsyncPackageVersion>1.3.1-dev-00063</SerilogSinksAsyncPackageVersion>
     <SerilogSinksColoredConsolePackageVersion>3.0.1</SerilogSinksColoredConsolePackageVersion>
-    <SerilogSinksConsolePackageVersion>3.1.2-dev-00779</SerilogSinksConsolePackageVersion>
+    <SerilogSinksConsolePackageVersion>3.1.2-dev-00788</SerilogSinksConsolePackageVersion>
     <SerilogSinksDebugPackageVersion>1.0.2-dev-00020</SerilogSinksDebugPackageVersion>
     <SerilogSinksEmailPackageVersion>2.3.1-dev-00092</SerilogSinksEmailPackageVersion>
     <SerilogSinksEventLogPackageVersion>3.1.0</SerilogSinksEventLogPackageVersion>
-    <SerilogSinksFilePackageVersion>4.0.1-dev-00801</SerilogSinksFilePackageVersion>
+    <SerilogSinksFilePackageVersion>4.1.0-dev-00806</SerilogSinksFilePackageVersion>
     <SerilogSinksLiteratePackageVersion>3.0.1-dev-00044</SerilogSinksLiteratePackageVersion>
     <SerilogSinksObservablePackageVersion>2.0.3-dev-00712</SerilogSinksObservablePackageVersion>
-    <SerilogSinksPeriodicBatchingPackageVersion>2.1.1</SerilogSinksPeriodicBatchingPackageVersion>
+    <SerilogSinksPeriodicBatchingPackageVersion>2.2.0-dev-00740</SerilogSinksPeriodicBatchingPackageVersion>
     <SerilogSinksRollingFilePackageVersion>3.3.1-dev-00771</SerilogSinksRollingFilePackageVersion>
     <SerilogSinksTextWriterPackageVersion>2.1.0</SerilogSinksTextWriterPackageVersion>
     <SerilogSinksTracePackageVersion>3.0.0-dev-00732</SerilogSinksTracePackageVersion>
 
     <!-- Network related packages -->
     <BouncyCastlePackageVersion>1.8.4</BouncyCastlePackageVersion>
+    <PortableBouncyCastlePackageVersion>1.8.5</PortableBouncyCastlePackageVersion>
     <DotNettyBuffersPackageVersion>0.5.0</DotNettyBuffersPackageVersion>
     <DotNettyCodecsHttpPackageVersion>0.5.0</DotNettyCodecsHttpPackageVersion>
     <DotNettyCodecsMqttPackageVersion>0.5.0</DotNettyCodecsMqttPackageVersion>
@@ -94,14 +101,13 @@
     <GrpcHealthCheckPackageVersion>1.17.1</GrpcHealthCheckPackageVersion>
     <GrpcReflectionPackageVersion>1.17.1</GrpcReflectionPackageVersion>
     <GrpcToolsPackageVersion>1.17.1</GrpcToolsPackageVersion>
-    <PortableBouncyCastlePackageVersion>1.8.4</PortableBouncyCastlePackageVersion>
 
     <DnsClientPackageVersion>1.2.0</DnsClientPackageVersion>
 
     <LibuvPackageVersion>1.10.0</LibuvPackageVersion>
 
-    <MimeKitPackageVersion>2.1.0</MimeKitPackageVersion>
-    <MailKitPackageVersion>2.1.0.2</MailKitPackageVersion>
+    <MimeKitPackageVersion>2.1.2</MimeKitPackageVersion>
+    <MailKitPackageVersion>2.1.2</MailKitPackageVersion>
 
     <!-- Serialization related packages -->
     <GoogleProtobufPackageVersion>3.6.1</GoogleProtobufPackageVersion>
@@ -112,7 +118,7 @@
     <NewtonsoftJsonBsonPackageVersion>1.0.1</NewtonsoftJsonBsonPackageVersion>
     <NewtonsoftJsonPackageVersion>12.0.1</NewtonsoftJsonPackageVersion>
     <ProtobufNetPackageVersion>2.4.0</ProtobufNetPackageVersion>
-    <YamlDotNetPackageVersion>5.3.0</YamlDotNetPackageVersion>
-    <YamlDotNetSignedPackageVersion>5.3.0</YamlDotNetSignedPackageVersion>
+    <YamlDotNetPackageVersion>5.4.0</YamlDotNetPackageVersion>
+    <YamlDotNetSignedPackageVersion>5.4.0</YamlDotNetSignedPackageVersion>
   </PropertyGroup>
 </Project>

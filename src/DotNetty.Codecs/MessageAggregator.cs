@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs
 {
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading.Tasks;
@@ -132,17 +133,17 @@ namespace DotNetty.Codecs
                     Task task = context
                         .WriteAndFlushAsync(continueResponse)
 #if NET40
-                        .ContinueWith(t => ContinueResponseWriteAction(t, context), TaskContinuationOptions.ExecuteSynchronously);
+                        .ContinueWith(t => s_continueResponseWriteAction(t, context), TaskContinuationOptions.ExecuteSynchronously);
 #else
-                        .ContinueWith(ContinueResponseWriteAction, context, TaskContinuationOptions.ExecuteSynchronously);
+                        .ContinueWith(s_continueResponseWriteAction, context, TaskContinuationOptions.ExecuteSynchronously);
 #endif
 
                     if (closeAfterWrite)
                     {
 #if NET40
-                        task.ContinueWith(t => CloseAfterWriteAction(t, context), TaskContinuationOptions.ExecuteSynchronously);
+                        task.ContinueWith(t => s_closeAfterWriteAction(t, context), TaskContinuationOptions.ExecuteSynchronously);
 #else
-                        task.ContinueWith(CloseAfterWriteAction, context, TaskContinuationOptions.ExecuteSynchronously);
+                        task.ContinueWith(s_closeAfterWriteAction, context, TaskContinuationOptions.ExecuteSynchronously);
 #endif
                         return;
                     }
@@ -253,12 +254,14 @@ namespace DotNetty.Codecs
             }
         }
 
+        static readonly Action<Task, object> s_closeAfterWriteAction = CloseAfterWriteAction;
         static void CloseAfterWriteAction(Task task, object state)
         {
             var ctx = (IChannelHandlerContext)state;
             ctx.Channel.CloseAsync();
         }
 
+        static readonly Action<Task, object> s_continueResponseWriteAction = ContinueResponseWriteAction;
         static void ContinueResponseWriteAction(Task task, object state)
         {
             if (task.IsFaulted)

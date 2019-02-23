@@ -405,14 +405,9 @@ namespace DotNetty.Transport.Channels.Embedded
 
         void RecordException(Task future)
         {
-            switch (future.Status)
+            if (future.IsCanceled || future.IsFaulted)
             {
-                case TaskStatus.Canceled:
-                case TaskStatus.Faulted:
-                    this.RecordException(future.Exception);
-                    break;
-                default:
-                    break;
+                this.RecordException(future.Exception);
             }
         }
 

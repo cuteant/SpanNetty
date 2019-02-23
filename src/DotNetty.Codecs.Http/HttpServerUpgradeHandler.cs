@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs.Http
 {
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading.Tasks;
@@ -273,13 +274,13 @@ namespace DotNetty.Codecs.Http
                 // the channel is already closed since the listener may fire
                 // immediately if the write failed eagerly.
 #if NET40
-                void closeOnFailure(Task t)
+                Action<Task> closeOnFailure = (Task t) =>
                 {
-                    if (t.Status != TaskStatus.RanToCompletion) { ctx.Channel.CloseAsync(); }
-                }
+                    if (!t.IsSuccess()) { ctx.Channel.CloseAsync(); }
+                };
                 writeComplete.ContinueWith(closeOnFailure, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                writeComplete.ContinueWith(CloseOnFailure, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                writeComplete.ContinueWith(CloseOnFailureAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
 #endif
             }
             finally
@@ -290,9 +291,10 @@ namespace DotNetty.Codecs.Http
             return true;
         }
 
+        static readonly Action<Task, object> CloseOnFailureAction = CloseOnFailure;
         static void CloseOnFailure(Task t, object s)
         {
-            if (t.Status != TaskStatus.RanToCompletion)
+            if (!t.IsSuccess())
             {
                 ((IChannelHandlerContext)s).Channel.CloseAsync();
             }

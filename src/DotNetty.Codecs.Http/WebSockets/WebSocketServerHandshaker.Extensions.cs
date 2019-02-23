@@ -6,6 +6,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using System;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
     partial class WebSocketServerHandshaker
@@ -16,7 +17,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         static void RemoveHandlerAfterWrite(Task t, object state)
         {
             var wrapped = (Tuple<IPromise, IChannelPipeline, string>)state;
-            if (t.Status == TaskStatus.RanToCompletion)
+            if (t.IsSuccess())
             {
                 wrapped.Item2.Remove(wrapped.Item3);
                 wrapped.Item1.TryComplete();

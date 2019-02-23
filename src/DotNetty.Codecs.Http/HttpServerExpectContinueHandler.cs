@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs.Http
 {
+    using System;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
@@ -31,6 +32,16 @@ namespace DotNetty.Codecs.Http
             if (message is IHttpRequest req && HttpUtil.Is100ContinueExpected(req))
             {
                 IHttpResponse accept = this.AcceptMessage(req);
+#if NET40
+                Action<Task> closeOnFailure = (Task task) =>
+                {
+                    if (task.IsFaulted)
+                    {
+                        context.CloseAsync();
+                    }
+                    //return TaskUtil.Completed;
+                };
+#endif
 
                 if (accept == null)
                 {
@@ -40,7 +51,7 @@ namespace DotNetty.Codecs.Http
 #if NET40
                     context.WriteAndFlushAsync(rejection).ContinueWith(closeOnFailure, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                    context.WriteAndFlushAsync(rejection).ContinueWith(CloseOnFailure, context, TaskContinuationOptions.ExecuteSynchronously);
+                    context.WriteAndFlushAsync(rejection).ContinueWith(CloseOnFailureAction, context, TaskContinuationOptions.ExecuteSynchronously);
 #endif
                     return;
                 }
@@ -48,23 +59,14 @@ namespace DotNetty.Codecs.Http
 #if NET40
                 context.WriteAndFlushAsync(accept).ContinueWith(closeOnFailure, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                context.WriteAndFlushAsync(accept).ContinueWith(CloseOnFailure, context, TaskContinuationOptions.ExecuteSynchronously);
+                context.WriteAndFlushAsync(accept).ContinueWith(CloseOnFailureAction, context, TaskContinuationOptions.ExecuteSynchronously);
 #endif
                 req.Headers.Remove(HttpHeaderNames.Expect);
             }
             context.FireChannelRead(message);
-#if NET40
-            void closeOnFailure(Task task)
-            {
-                if (task.IsFaulted)
-                {
-                    context.CloseAsync();
-                }
-                //return TaskUtil.Completed;
-            }
-#endif
         }
 
+        static readonly Action<Task, object> CloseOnFailureAction = CloseOnFailure;
         static void CloseOnFailure(Task task, object state)
         {
             if (task.IsFaulted)

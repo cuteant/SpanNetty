@@ -205,7 +205,7 @@ namespace DotNetty.Transport.Bootstrapping
                         TaskContinuationOptions.NotOnRanToCompletion | TaskContinuationOptions.ExecuteSynchronously);
 #else
                     this.childGroup.RegisterAsync(child).ContinueWith(
-                        CloseAfterRegisterAction, child,
+                        s_closeAfterRegisterAction, child,
                         TaskContinuationOptions.NotOnRanToCompletion | TaskContinuationOptions.ExecuteSynchronously);
 #endif
                 }
@@ -215,6 +215,7 @@ namespace DotNetty.Transport.Bootstrapping
                 }
             }
 
+            static readonly Action<Task, object> s_closeAfterRegisterAction = CloseAfterRegisterAction;
             static void CloseAfterRegisterAction(Task future, object state)
             {
                 ForceClose((IChannel)state, future.Exception);

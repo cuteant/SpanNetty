@@ -152,61 +152,58 @@ namespace DotNetty.Codecs.Http2
         {
             var wrapped = (Tuple<TaskCompletionSource<IHttp2StreamChannel>, IHttp2StreamChannel>)state;
             var streamChannel = wrapped.Item2;
-            switch (future.Status)
+            if (future.IsCanceled)
             {
-                case TaskStatus.RanToCompletion:
-                    wrapped.Item1.TrySetResult(streamChannel);
-                    break;
-                case TaskStatus.Canceled:
-                    wrapped.Item1.TrySetCanceled();
-                    break;
-                case TaskStatus.Faulted:
-                    if (streamChannel.Registered)
-                    {
-                        streamChannel.CloseAsync();
-                    }
-                    else
-                    {
-                        streamChannel.Unsafe.CloseForcibly();
-                    }
-                    wrapped.Item1.TrySetException(future.Exception.InnerExceptions);
-                    break;
-                default:
-                    ThrowHelper.ThrowArgumentOutOfRangeException(); break;
+                wrapped.Item1.TrySetCanceled();
+            }
+            else if (future.IsFaulted)
+            {
+                wrapped.Item1.TrySetResult(streamChannel);
+            }
+            else //if (future.IsCompleted)
+            {
+                if (streamChannel.Registered)
+                {
+                    streamChannel.CloseAsync();
+                }
+                else
+                {
+                    streamChannel.Unsafe.CloseForcibly();
+                }
+                wrapped.Item1.TrySetException(future.Exception.InnerExceptions);
             }
         }
 
         private static void LinkOutcome(Task future, TaskCompletionSource<IHttp2StreamChannel> promise, IHttp2StreamChannel streamChannel)
         {
-            switch (future.Status)
+            if (future.IsCanceled)
             {
-                case TaskStatus.RanToCompletion:
-                    promise.TrySetResult(streamChannel);
-                    break;
-                case TaskStatus.Canceled:
-                    promise.TrySetCanceled();
-                    break;
-                case TaskStatus.Faulted:
-                    if (streamChannel.Registered)
-                    {
-                        streamChannel.CloseAsync();
-                    }
-                    else
-                    {
-                        streamChannel.Unsafe.CloseForcibly();
-                    }
-                    promise.TrySetException(future.Exception.InnerExceptions);
-                    break;
-                default:
-#if NET40
-                    future.ContinueWith(t => LinkOutcomeContinuation(t, Tuple.Create(promise, streamChannel)),
-                        TaskContinuationOptions.ExecuteSynchronously);
-#else
-                    future.ContinueWith(LinkOutcomeContinuationAction,
-                        Tuple.Create(promise, streamChannel), TaskContinuationOptions.ExecuteSynchronously);
-#endif
-                    break;
+                promise.TrySetCanceled(); return;
             }
+            else if (future.IsFaulted)
+            {
+                if (streamChannel.Registered)
+                {
+                    streamChannel.CloseAsync();
+                }
+                else
+                {
+                    streamChannel.Unsafe.CloseForcibly();
+                }
+                promise.TrySetException(future.Exception.InnerExceptions);
+                return;
+            }
+            else if (future.IsCompleted)
+            {
+                promise.TrySetResult(streamChannel); return;
+            }
+#if NET40
+            future.ContinueWith(t => LinkOutcomeContinuation(t, Tuple.Create(promise, streamChannel)),
+                TaskContinuationOptions.ExecuteSynchronously);
+#else
+            future.ContinueWith(LinkOutcomeContinuationAction,
+                Tuple.Create(promise, streamChannel), TaskContinuationOptions.ExecuteSynchronously);
+#endif
         }
 
         void Init(IChannel channel)

@@ -91,15 +91,16 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (exception is CorruptedFrameException && ctx.Channel.Open)
             {
 #if NET40
-                void closeOnComplete(Task t) => ctx.Channel.CloseAsync();
+                Action<Task> closeOnComplete = (Task t) => ctx.Channel.CloseAsync();
                 ctx.WriteAndFlushAsync(Unpooled.Empty).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                ctx.WriteAndFlushAsync(Unpooled.Empty).ContinueWith(CloseOnComplete, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
+                ctx.WriteAndFlushAsync(Unpooled.Empty).ContinueWith(CloseOnCompleteAction, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
 #endif
             }
             base.ExceptionCaught(ctx, exception);
         }
 
+        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
         static void CloseOnComplete(Task t, object c) => ((IChannel)c).CloseAsync();
     }
 }

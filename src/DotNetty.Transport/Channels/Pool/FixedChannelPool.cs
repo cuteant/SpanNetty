@@ -10,6 +10,7 @@ namespace DotNetty.Transport.Channels.Pool
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Bootstrapping;
 
     /// <summary>
@@ -580,14 +581,14 @@ namespace DotNetty.Transport.Channels.Pool
 
                         if (Constants.True == Volatile.Read(ref this.pool.closed)) 
                         {
-                            if (t.Status == TaskStatus.RanToCompletion) 
+                            if (t.IsSuccess())
                             {
                                 // Since the pool is closed, we have no choice but to close the channel
                                 t.Result.CloseAsync();
                             }
                             promise.TrySetException(PoolClosedOnAcquireException);
                         }
-                        else if (t.Status == TaskStatus.RanToCompletion)
+                        else if (t.IsSuccess())
                         {
                             promise.TrySetResult(future.Result);
                         }

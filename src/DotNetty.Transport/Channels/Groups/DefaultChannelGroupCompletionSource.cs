@@ -8,6 +8,7 @@ namespace DotNetty.Transport.Channels.Groups
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading.Tasks;
+    using DotNetty.Common.Utilities;
 
     public class DefaultChannelGroupCompletionSource : TaskCompletionSource<int>, IChannelGroupTaskCompletionSource
     {
@@ -28,9 +29,11 @@ namespace DotNetty.Transport.Channels.Groups
 
             this.Group = group;
             this.futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
-            void ContinueAction(Task x)
+#pragma warning disable IDE0039 // 使用本地函数
+            Action<Task> continueAction = (Task x) =>
+#pragma warning restore IDE0039 // 使用本地函数
             {
-                bool success = x.Status == TaskStatus.RanToCompletion;
+                bool success = x.IsSuccess();
                 bool callSetDone;
                 lock (this)
                 {
@@ -71,11 +74,11 @@ namespace DotNetty.Transport.Channels.Groups
                         this.TrySetResult(0);
                     }
                 }
-            }
+            };
             foreach (KeyValuePair<IChannel, Task> pair in futures)
             {
                 this.futures.Add(pair.Key, pair.Value);
-                pair.Value.ContinueWith(ContinueAction);
+                pair.Value.ContinueWith(continueAction);
             }
 
             // Done on arrival?
@@ -97,7 +100,15 @@ namespace DotNetty.Transport.Channels.Groups
             }
         }
 
-        public bool IsSucess() => this.Task.IsCompleted && !this.Task.IsFaulted && !this.Task.IsCanceled;
+        public bool IsSucess()
+        {
+#if NETCOREAPP
+            return this.Task.IsCompletedSuccessfully;
+#else
+            var task = this.Task;
+            return task.IsCompleted && !task.IsFaulted && !task.IsCanceled;
+#endif
+        }
 
         public bool IsPartialFailure()
         {

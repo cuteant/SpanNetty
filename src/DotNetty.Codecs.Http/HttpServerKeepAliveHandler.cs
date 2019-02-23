@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs.Http
 {
+    using System;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
@@ -56,15 +57,16 @@ namespace DotNetty.Codecs.Http
             {
                 promise = promise.Unvoid();
 #if NET40
-                void closeOnComplete(Task t) => context.CloseAsync();
+                Action<Task> closeOnComplete = (Task t) => context.CloseAsync();
                 promise.Task.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                promise.Task.ContinueWith(CloseOnComplete, context, TaskContinuationOptions.ExecuteSynchronously);
+                promise.Task.ContinueWith(CloseOnCompleteAction, context, TaskContinuationOptions.ExecuteSynchronously);
 #endif
             }
             base.Write(context, message, promise);
         }
 
+        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
         static void CloseOnComplete(Task task, object state)
         {
             var context = (IChannelHandlerContext)state;

@@ -202,27 +202,23 @@ namespace DotNetty.Codecs.Http2
                     var future = this.frameWriter.WriteHeadersAsync(ctx, streamId, headers, streamDependency,
                                                                     weight, exclusive, padding, endOfStream, promise);
                     // Writing headers may fail during the encode state if they violate HPACK limits.
-                    var futureStatus = future.Status;
-                    switch (futureStatus)
+                    if (future.IsFaulted || future.IsCanceled)
                     {
-                        case TaskStatus.Canceled:
-                        case TaskStatus.Faulted:
-                            this.lifecycleManager.OnError(ctx, true, future.Exception.InnerException);
-                            break;
-
-                        default:
-                            // Synchronously set the headersSent flag to ensure that we do not subsequently write
-                            // other headers containing pseudo-header fields.
-                            //
-                            // This just sets internal stream state which is used elsewhere in the codec and doesn't
-                            // necessarily mean the write will complete successfully.
-                            stream.HeadersSent(isInformational);
-                            if (futureStatus != TaskStatus.RanToCompletion)
-                            {
-                                // Either the future is not done or failed in the meantime.
-                                NotifyLifecycleManagerOnError(future, this.lifecycleManager, ctx);
-                            }
-                            break;
+                        this.lifecycleManager.OnError(ctx, true, future.Exception.InnerException);
+                    }
+                    else
+                    {
+                        // Synchronously set the headersSent flag to ensure that we do not subsequently write
+                        // other headers containing pseudo-header fields.
+                        //
+                        // This just sets internal stream state which is used elsewhere in the codec and doesn't
+                        // necessarily mean the write will complete successfully.
+                        stream.HeadersSent(isInformational);
+                        if (!future.IsCompleted)
+                        {
+                            // Either the future is not done or failed in the meantime.
+                            NotifyLifecycleManagerOnError(future, this.lifecycleManager, ctx);
+                        }
                     }
 
                     if (endOfStream)
@@ -311,26 +307,21 @@ namespace DotNetty.Codecs.Http2
                 promise = promise.Unvoid();
                 var future = this.frameWriter.WritePushPromiseAsync(ctx, streamId, promisedStreamId, headers, padding, promise);
                 // Writing headers may fail during the encode state if they violate HPACK limits.
-                var futureStatus = future.Status;
-                switch (futureStatus)
+                if (future.IsFaulted || future.IsCanceled)
                 {
-                    case TaskStatus.Canceled:
-                    case TaskStatus.Faulted:
-                        this.lifecycleManager.OnError(ctx, true, future.Exception.InnerException);
-                        break;
-
-                    default:
-                        // This just sets internal stream state which is used elsewhere in the codec and doesn't
-                        // necessarily mean the write will complete successfully.
-                        stream.PushPromiseSent();
-                        if (futureStatus != TaskStatus.RanToCompletion)
-                        {
-                            // Either the future is not done or failed in the meantime.
-                            NotifyLifecycleManagerOnError(future, this.lifecycleManager, ctx);
-                        }
-                        break;
+                    this.lifecycleManager.OnError(ctx, true, future.Exception.InnerException);
                 }
-
+                else
+                {
+                    // This just sets internal stream state which is used elsewhere in the codec and doesn't
+                    // necessarily mean the write will complete successfully.
+                    stream.PushPromiseSent();
+                    if (!future.IsCompleted)
+                    {
+                        // Either the future is not done or failed in the meantime.
+                        NotifyLifecycleManagerOnError(future, this.lifecycleManager, ctx);
+                    }
+                }
                 return future;
             }
             catch (Exception t)
@@ -542,16 +533,11 @@ namespace DotNetty.Codecs.Http2
                 var f = this.encoder.frameWriter.WriteHeadersAsync(ctx, stream.Id, headers, streamDependency, weight, exclusive,
                                                                    padding, endOfStream, promise);
                 // Writing headers may fail during the encode state if they violate HPACK limits.
-                switch (f.Status)
+                if (f.IsSuccess())
                 {
-                    case TaskStatus.Canceled:
-                    case TaskStatus.Faulted:
-                        break;
-                    default:
-                        // This just sets internal stream state which is used elsewhere in the codec and doesn't
-                        // necessarily mean the write will complete successfully.
-                        this.stream.HeadersSent(isInformational);
-                        break;
+                    // This just sets internal stream state which is used elsewhere in the codec and doesn't
+                    // necessarily mean the write will complete successfully.
+                    this.stream.HeadersSent(isInformational);
                 }
             }
 
@@ -599,13 +585,13 @@ namespace DotNetty.Codecs.Http2
             protected void AddListener(IPromise p)
             {
 #if NET40
-                void continuationAction(Task task)
+                Action<Task> continuationAction = (Task task) =>
                 {
                     if (task.IsFaulted)
                     {
                         this.Error(this.encoder.FlowController.ChannelHandlerContext, task.Exception.InnerException);
                     }
-                }
+                };
                 p.Task.ContinueWith(continuationAction, TaskContinuationOptions.ExecuteSynchronously);
 #else
                 p.Task.ContinueWith(LinkOutcomeContinuationAction, this, TaskContinuationOptions.ExecuteSynchronously);

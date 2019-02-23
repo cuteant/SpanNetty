@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs.Http.Cors
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
@@ -208,14 +209,15 @@ namespace DotNetty.Codecs.Http.Cors
             if (!keepAlive)
             {
 #if NET40
-                void closeOnComplete(Task t) => ctx.CloseAsync();
+                Action<Task> closeOnComplete = (Task t) => ctx.CloseAsync();
                 task.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                task.ContinueWith(CloseOnComplete, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                task.ContinueWith(CloseOnCompleteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
 #endif
             }
         }
 
+        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
         static void CloseOnComplete(Task task, object state)
         {
             var ctx = (IChannelHandlerContext)state;

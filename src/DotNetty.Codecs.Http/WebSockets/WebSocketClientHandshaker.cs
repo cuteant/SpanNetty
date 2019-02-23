@@ -77,32 +77,32 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             var completion = channel.NewPromise();
 #if NET40
-            void linkOutcomeContinuationAction(Task t)
+            Action<Task> linkOutcomeContinuationAction = (Task t) =>
             {
-                switch (t.Status)
+                if (t.IsCanceled)
                 {
-                    case TaskStatus.RanToCompletion:
-                        IChannelPipeline p = channel.Pipeline;
-                        IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
-                        if (ctx == null)
-                        {
-                            completion.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
-                            return;
-                        }
-
-                        p.AddAfter(ctx.Name, "ws-encoder", this.NewWebSocketEncoder());
-                        completion.TryComplete();
-                        break;
-                    case TaskStatus.Canceled:
-                        completion.TrySetCanceled();
-                        break;
-                    case TaskStatus.Faulted:
-                        completion.TrySetException(t.Exception.InnerExceptions);
-                        break;
-                    default:
-                        ThrowHelper.ThrowArgumentOutOfRangeException(); break;
+                    completion.TrySetCanceled(); return;
                 }
-            }
+                else if (t.IsFaulted)
+                {
+                    completion.TrySetException(t.Exception.InnerExceptions); return;
+                }
+                else if (t.IsCompleted)
+                {
+                    IChannelPipeline p = channel.Pipeline;
+                    IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
+                    if (ctx == null)
+                    {
+                        completion.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
+                        return;
+                    }
+
+                    p.AddAfter(ctx.Name, "ws-encoder", this.NewWebSocketEncoder());
+                    completion.TryComplete();
+                    return;
+                }
+                ThrowHelper.ThrowArgumentOutOfRangeException();
+            };
             channel.WriteAndFlushAsync(request).ContinueWith(linkOutcomeContinuationAction, TaskContinuationOptions.ExecuteSynchronously);
 #else
             channel.WriteAndFlushAsync(request).ContinueWith(LinkOutcomeContinuationAction,
