@@ -66,7 +66,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public string Encode(params ICookie[] cookies)
         {
-            if (cookies == null || cookies.Length == 0)
+            if (cookies == null || 0u >= (uint)cookies.Length)
             {
                 return null;
             }

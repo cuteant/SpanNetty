@@ -316,7 +316,7 @@ namespace DotNetty.Codecs.Mqtt
         static void DecodePublishPacket(IByteBuffer buffer, PublishPacket packet, ref int remainingLength)
         {
             string topicName = DecodeString(buffer, ref remainingLength, 1);
-            if (topicName.Length == 0) Util.ValidateTopicName();
+            if (0u >= (uint)topicName.Length) Util.ValidateTopicName();
             if (topicName.IndexOfAny(Util.TopicWildcards) > 0) Util.ValidateTopicName(topicName);
 
             packet.TopicName = topicName;

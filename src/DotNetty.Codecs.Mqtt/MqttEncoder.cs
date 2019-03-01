@@ -236,7 +236,7 @@ namespace DotNetty.Codecs.Mqtt
             IByteBuffer payload = packet.Payload ?? Unpooled.Empty;
 
             string topicName = packet.TopicName;
-            if (topicName.Length == 0) Util.ValidateTopicName();
+            if (0u >= (uint)topicName.Length) Util.ValidateTopicName();
             if (topicName.IndexOfAny(Util.TopicWildcards) > 0) Util.ValidateTopicName(topicName);
             byte[] topicNameBytes = EncodeStringInUtf8(topicName);
 

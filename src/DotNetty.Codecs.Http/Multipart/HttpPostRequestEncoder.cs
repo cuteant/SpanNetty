@@ -475,7 +475,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     // Data to multipart list
                     internalAttribute.AddValue($"--{this.MultipartMixedBoundary}\r\n");
 
-                    if (fileUpload.FileName.Length == 0)
+                    if (0u >= (uint)fileUpload.FileName.Length)
                     {
                         // Content-Disposition: attachment
                         internalAttribute.AddValue($"{HttpHeaderNames.ContentDisposition}: {HttpHeaderValues.Attachment}\r\n");
@@ -490,7 +490,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     internalAttribute.AddValue($"--{this.MultipartDataBoundary}\r\n");
 
-                    if (fileUpload.FileName.Length == 0)
+                    if (0u >= (uint)fileUpload.FileName.Length)
                     {
                         // Content-Disposition: form-data; name="files";
                         internalAttribute.AddValue($"{HttpHeaderNames.ContentDisposition}: {HttpHeaderValues.FormData}; {HttpHeaderValues.Name}=\"{fileUpload.Name}\"\r\n");

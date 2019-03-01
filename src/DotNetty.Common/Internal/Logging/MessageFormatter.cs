@@ -98,7 +98,7 @@ namespace DotNetty.Common.Internal.Logging
 
         public static Exception GetThrowableCandidate(object[] argArray)
         {
-            if (argArray == null || argArray.Length == 0)
+            if (argArray == null || 0u >= (uint)argArray.Length)
             {
                 return null;
             }

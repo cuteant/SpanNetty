@@ -74,7 +74,7 @@ namespace DotNetty.Common.Internal
             }
 
             value = value.Trim();
-            if (value.Length == 0)
+            if (0u >= (uint)value.Length)
             {
                 return def;
             }

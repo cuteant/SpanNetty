@@ -176,7 +176,7 @@ namespace DotNetty.Codecs.Http2
 
         public int Size => (this.pseudoHeaders.Length + this.otherHeaders.Length).RightUShift(1);
 
-        public bool IsEmpty => this.pseudoHeaders.Length == 0 && this.otherHeaders.Length == 0;
+        public bool IsEmpty => 0u >= (uint)this.pseudoHeaders.Length && 0u >= (uint)this.otherHeaders.Length;
 
         public bool Contains(ICharSequence name, ICharSequence value, bool caseInsensitive)
         {

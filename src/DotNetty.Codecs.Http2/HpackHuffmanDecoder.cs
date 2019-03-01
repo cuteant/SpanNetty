@@ -234,7 +234,7 @@ namespace DotNetty.Codecs.Http2
             [MethodImpl(InlineMethod.Value)]
             void Append(int i)
             {
-                if (this.bytes.Length == this.index)
+                if ((uint)this.bytes.Length == (uint)this.index)
                 {
                     // Choose an expanding strategy depending on how big the buffer already is.
                     // 1024 was choosen as a good guess and we may be able to investigate more if there are better choices.

@@ -22,7 +22,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
         public static List<WebSocketExtensionData> ExtractExtensions(string extensionHeader)
         {
             string[] rawExtensions = extensionHeader.Split(ExtensionSeparator);
-            if (rawExtensions.Length > 0)
+            if (0u < (uint)rawExtensions.Length)
             {
                 var extensions = new List<WebSocketExtensionData>(rawExtensions.Length);
                 foreach (string rawExtension in rawExtensions)
@@ -30,7 +30,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                     string[] extensionParameters = rawExtension.Split(ParameterSeparator);
                     string name = extensionParameters[0].Trim();
                     Dictionary<string, string> parameters;
-                    if (extensionParameters.Length > 1)
+                    if ((uint)extensionParameters.Length > 1u)
                     {
                         parameters = new Dictionary<string, string>(extensionParameters.Length - 1, System.StringComparer.Ordinal);
                         for (int i = 1; i < extensionParameters.Length; i++)

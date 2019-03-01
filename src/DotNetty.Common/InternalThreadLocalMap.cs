@@ -185,7 +185,7 @@ namespace DotNetty.Common
         public object GetIndexedVariable(int index)
         {
             object[] lookup = this.indexedVariables;
-            return index < lookup.Length ? lookup[index] : Unset;
+            return (uint)index < (uint)lookup.Length ? lookup[index] : Unset;
         }
 
         /// <summary>
@@ -197,7 +197,7 @@ namespace DotNetty.Common
         public bool SetIndexedVariable(int index, object value)
         {
             object[] lookup = this.indexedVariables;
-            if (index < lookup.Length)
+            if ((uint)index < (uint)lookup.Length)
             {
                 object oldValue = lookup[index];
                 lookup[index] = value;
@@ -232,7 +232,7 @@ namespace DotNetty.Common
         public object RemoveIndexedVariable(int index)
         {
             object[] lookup = this.indexedVariables;
-            if (index < lookup.Length)
+            if ((uint)index < (uint)lookup.Length)
             {
                 object v = lookup[index];
                 lookup[index] = Unset;
@@ -247,7 +247,7 @@ namespace DotNetty.Common
         public bool IsIndexedVariableSet(int index)
         {
             object[] lookup = this.indexedVariables;
-            return index < lookup.Length && lookup[index] != Unset;
+            return (uint)index < (uint)lookup.Length && lookup[index] != Unset;
         }
     }
 }

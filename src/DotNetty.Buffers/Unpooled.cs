@@ -188,7 +188,7 @@ namespace DotNetty.Buffers
         /// <returns>The new buffer that copies the contents of array.</returns>
         public static IByteBuffer CopiedBuffer(byte[] array)
         {
-            if (array.Length == 0)
+            if (0u >= (uint)array.Length)
             {
                 return Empty;
             }
@@ -258,7 +258,7 @@ namespace DotNetty.Buffers
                 case 0:
                     return Empty;
                 case 1:
-                    return arrays[0].Length == 0 ? Empty : CopiedBuffer(arrays[0]);
+                    return 0u >= (uint)arrays[0].Length ? Empty : CopiedBuffer(arrays[0]);
             }
 
             // Merge the specified arrays into one array.
@@ -364,7 +364,7 @@ namespace DotNetty.Buffers
         /// </summary>
         public static IByteBuffer CopyInt(params int[] values)
         {
-            if (values == null || values.Length == 0)
+            if (null == values || 0u >= (uint)values.Length)
             {
                 return Empty;
             }
@@ -393,7 +393,7 @@ namespace DotNetty.Buffers
         /// </summary>
         public static IByteBuffer CopyShort(params short[] values)
         {
-            if (values == null || values.Length == 0)
+            if (null == values || 0u >= (uint)values.Length)
             {
                 return Empty;
             }
@@ -412,7 +412,7 @@ namespace DotNetty.Buffers
         /// </summary>
         public static IByteBuffer CopyShort(params int[] values)
         {
-            if (values == null || values.Length == 0)
+            if (null == values || 0u >= (uint)values.Length)
             {
                 return Empty;
             }
@@ -440,7 +440,7 @@ namespace DotNetty.Buffers
         /// </summary>
         public static IByteBuffer CopyMedium(params int[] values)
         {
-            if (values == null || values.Length == 0)
+            if (null == values || 0u >= (uint)values.Length)
             {
                 return Empty;
             }
@@ -469,7 +469,7 @@ namespace DotNetty.Buffers
         /// </summary>
         public static IByteBuffer CopyLong(params long[] values)
         {
-            if (values == null || values.Length == 0)
+            if (null == values || 0u >= (uint)values.Length)
             {
                 return Empty;
             }
@@ -498,7 +498,7 @@ namespace DotNetty.Buffers
         /// </summary>
         public static IByteBuffer CopyBoolean(params bool[] values)
         {
-            if (values == null || values.Length == 0)
+            if (null == values || 0u >= (uint)values.Length)
             {
                 return Empty;
             }
@@ -527,7 +527,7 @@ namespace DotNetty.Buffers
         /// </summary>
         public static IByteBuffer CopyFloat(params float[] values)
         {
-            if (values == null || values.Length == 0)
+            if (null == values || 0u >= (uint)values.Length)
             {
                 return Empty;
             }
@@ -556,7 +556,7 @@ namespace DotNetty.Buffers
         /// </summary>
         public static IByteBuffer CopyDouble(params double[] values)
         {
-            if (values == null || values.Length == 0)
+            if (null == values || 0u >= (uint)values.Length)
             {
                 return Empty;
             }

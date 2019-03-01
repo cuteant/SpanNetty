@@ -406,9 +406,9 @@ namespace DotNetty.Transport.Channels.Sockets
                         SocketOptionName.MulticastInterface);
                     int index = IPAddress.NetworkToHostOrder(value);
 
-                    if (interfaces.Length > 0
+                    if (0u < (uint)interfaces.Length
                         && index >= 0
-                        && index < interfaces.Length)
+                        && (uint)index < (uint)interfaces.Length)
                     {
                         return interfaces[index];
                     }

@@ -64,7 +64,7 @@ namespace DotNetty.Codecs
             if (delimiters == null)
                 ThrowHelper.ThrowNullReferenceException(ExceptionArgument.delimiters);
 
-            if (delimiters.Length == 0)
+            if (0u >= (uint)delimiters.Length)
                 ThrowHelper.ThrowArgumentException_EmptyDelimiters();
 
             if (IsLineBased(delimiters) && !this.IsSubclass())

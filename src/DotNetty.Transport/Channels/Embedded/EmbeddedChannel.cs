@@ -304,7 +304,7 @@ namespace DotNetty.Transport.Channels.Embedded
         public bool WriteInbound(params object[] msgs)
         {
             this.EnsureOpen();
-            if (msgs.Length == 0)
+            if (0u >= (uint)msgs.Length)
             {
                 return this.inboundMessages.NonEmpty;
             }
@@ -359,7 +359,7 @@ namespace DotNetty.Transport.Channels.Embedded
         public bool WriteOutbound(params object[] msgs)
         {
             this.EnsureOpen();
-            if (msgs.Length == 0)
+            if (0u >= (uint)msgs.Length)
             {
                 return this.outboundMessages.NonEmpty;
             }

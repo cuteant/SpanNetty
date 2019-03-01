@@ -18,7 +18,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
         public WebSocketServerExtensionHandler(params IWebSocketServerExtensionHandshaker[] extensionHandshakers)
         {
-            if (null == extensionHandshakers || extensionHandshakers.Length <= 0) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.extensionHandshakers); }
+            if (null == extensionHandshakers || 0u >= (uint)extensionHandshakers.Length) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.extensionHandshakers); }
 
             this.extensionHandshakers = new List<IWebSocketServerExtensionHandshaker>(extensionHandshakers);
         }

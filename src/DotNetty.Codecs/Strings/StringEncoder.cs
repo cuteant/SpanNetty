@@ -63,7 +63,7 @@ namespace DotNetty.Codecs
 
         protected internal override void Encode(IChannelHandlerContext context, string message, List<object> output)
         {
-            if (message.Length == 0)
+            if (0u >= (uint)message.Length)
             {
                 return;
             }

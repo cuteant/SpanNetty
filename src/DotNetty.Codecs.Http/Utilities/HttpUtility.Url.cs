@@ -35,7 +35,7 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public static void UrlEncode(TextWriter output, char[] value, int startIndex, int characterCount)
         {
-            if (null == value || value.Length <= 0) { return; }
+            if (null == value || 0u >= (uint)value.Length) { return; }
 
             s_urlEncoder.Encode(output, value, startIndex, characterCount);
         }
@@ -511,11 +511,11 @@ namespace DotNetty.Codecs.Http.Utilities
                 return false;
                 //throw new ArgumentNullException(nameof(bytes));
             }
-            if (offset < 0 || offset > bytes.Length)
+            if (offset < 0 || (uint)offset > (uint)bytes.Length)
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.offset);
             }
-            if (count < 0 || offset + count > bytes.Length)
+            if (count < 0 || (uint)(offset + count) > (uint)bytes.Length)
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count);
             }

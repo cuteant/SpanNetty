@@ -29,7 +29,7 @@ namespace DotNetty.Buffers
         public FixedCompositeByteBuf(IByteBufferAllocator allocator, params IByteBuffer[] buffers)
             : base(AbstractByteBufferAllocator.DefaultMaxCapacity)
         {
-            if (null == buffers || buffers.Length == 0)
+            if (null == buffers || 0u >= (uint)buffers.Length)
             {
                 this.buffers = Empty;
                 this.nioBufferCount = 1;

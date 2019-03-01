@@ -143,7 +143,7 @@ namespace DotNetty.Common
             string records = resourceLeak.ToString();
             if (this.reportedLeaks.TryAdd(records, true))
             {
-                if (records.Length == 0)
+                if (0u >= (uint)records.Length)
                 {
                     this.ReportUntracedLeak(this.resourceType);
                 }

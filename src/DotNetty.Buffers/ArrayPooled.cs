@@ -51,7 +51,7 @@ namespace DotNetty.Buffers
         {
             if (null == array) { return Empty; }
 
-            return array.Length == 0 ? Empty :
+            return 0u >= (uint)array.Length ? Empty :
                 PlatformDependent.DirectBufferPreferred
                     ? ArrayPooledUnsafeDirectByteBuffer.NewInstance(Allocator, DefaultArrayPool, array, array.Length, array.Length)
                     : (IByteBuffer)ArrayPooledHeapByteBuffer.NewInstance(Allocator, DefaultArrayPool, array, array.Length, array.Length);
@@ -62,7 +62,7 @@ namespace DotNetty.Buffers
             if (null == array) { return Empty; }
             if (null == arrayPool) { arrayPool = DefaultArrayPool; }
 
-            return array.Length == 0 ? Empty :
+            return 0u >= (uint)array.Length ? Empty :
                 PlatformDependent.DirectBufferPreferred
                     ? ArrayPooledUnsafeDirectByteBuffer.NewInstance(Allocator, arrayPool, array, array.Length, array.Length)
                     : (IByteBuffer)ArrayPooledHeapByteBuffer.NewInstance(Allocator, arrayPool, array, array.Length, array.Length);
@@ -194,7 +194,7 @@ namespace DotNetty.Buffers
         /// <returns>The new buffer that copies the contents of array.</returns>
         public static IByteBuffer CopiedBuffer(byte[] array)
         {
-            if (array == null || array.Length == 0) { return Empty; }
+            if (array == null || 0u >= (uint)array.Length) { return Empty; }
 
             var newArray = DefaultArrayPool.Rent(array.Length);
             PlatformDependent.CopyMemory(array, 0, newArray, 0, array.Length);
@@ -304,7 +304,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a big-endian buffer that holds a sequence of the specified 32-bit integers.</summary>
         public static IByteBuffer CopyInt(params int[] values)
         {
-            if (null == values || values.Length == 0) { return Empty; }
+            if (null == values || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 4);
             foreach (int v in values) { buffer.WriteInt(v); }
@@ -323,7 +323,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified 16-bit integers.</summary>
         public static IByteBuffer CopyShort(params short[] values)
         {
-            if (null == values || values.Length == 0) { return Empty; }
+            if (null == values || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 2);
             foreach (short v in values) { buffer.WriteShort(v); }
@@ -334,7 +334,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified 16-bit integers.</summary>
         public static IByteBuffer CopyShort(params int[] values)
         {
-            if (null == values || values.Length == 0) { return Empty; }
+            if (null == values || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 2);
             foreach (int v in values) { buffer.WriteShort(v); }
@@ -352,7 +352,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified 24-bit integers.</summary>
         public static IByteBuffer CopyMedium(params int[] values)
         {
-            if (null == values || values.Length == 0) { return Empty; }
+            if (null == values || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 3);
             foreach (int v in values) { buffer.WriteMedium(v); }
@@ -371,7 +371,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified 64-bit integers.</summary>
         public static IByteBuffer CopyLong(params long[] values)
         {
-            if (null == values || values.Length == 0) { return Empty; }
+            if (null == values || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 8);
             foreach (long v in values) { buffer.WriteLong(v); }
@@ -390,7 +390,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified boolean values.</summary>
         public static IByteBuffer CopyBoolean(params bool[] values)
         {
-            if (null == values || values.Length == 0) { return Empty; }
+            if (null == values || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length);
             foreach (bool v in values) { buffer.WriteBoolean(v); }
@@ -409,7 +409,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified 32-bit floating point numbers.</summary>
         public static IByteBuffer CopyFloat(params float[] values)
         {
-            if (null == values || values.Length == 0) { return Empty; }
+            if (null == values || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 4);
             foreach (float v in values) { buffer.WriteFloat(v); }
@@ -428,7 +428,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified 64-bit floating point numbers.</summary>
         public static IByteBuffer CopyDouble(params double[] values)
         {
-            if (null == values || values.Length == 0) { return Empty; }
+            if (null == values || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 8);
             foreach (double v in values) { buffer.WriteDouble(v); }

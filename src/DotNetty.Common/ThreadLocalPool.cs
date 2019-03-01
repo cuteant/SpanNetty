@@ -142,7 +142,7 @@ namespace DotNetty.Common
                 int dstSize = dst.size;
                 int expectedCapacity = dstSize + srcSize;
 
-                if (expectedCapacity > dst.elements.Length)
+                if ((uint)expectedCapacity > (uint)dst.elements.Length)
                 {
                     int actualCapacity = dst.IncreaseCapacity(expectedCapacity);
                     srcEnd = Math.Min(srcStart + actualCapacity - dstSize, srcEnd);

@@ -18,7 +18,7 @@ namespace DotNetty.Buffers
 
         public bool IsEmpty(byte[] bytes)
         {
-            return bytes.Length == 0;
+            return 0u >= (uint)bytes.Length;
         }
 
         public IByteBuffer Wrap(byte[] bytes)

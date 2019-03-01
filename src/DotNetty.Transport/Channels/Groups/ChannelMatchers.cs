@@ -30,11 +30,11 @@ namespace DotNetty.Transport.Channels.Groups
 
         public static IChannelMatcher Compose(params IChannelMatcher[] matchers)
         {
-            if (matchers.Length < 1)
+            if (0u >= (uint)matchers.Length)
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.matchers);
             }
-            if (matchers.Length == 1)
+            if (1 == matchers.Length)
             {
                 return matchers[0];
             }

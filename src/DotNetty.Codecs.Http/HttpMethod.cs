@@ -162,9 +162,9 @@ namespace DotNetty.Codecs.Http
             if (match != null)
             {
                 byte[] array = match.name.Array;
-                if (bytes.Length == array.Length)
+                if ((uint)bytes.Length == (uint)array.Length)
                 {
-                    for (; i < bytes.Length; i++)
+                    for (; (uint)i < (uint)bytes.Length; i++)
                     {
                         if (bytes[i] != array[i])
                         {

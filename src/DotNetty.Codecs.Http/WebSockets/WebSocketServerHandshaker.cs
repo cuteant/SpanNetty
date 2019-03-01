@@ -229,7 +229,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected string SelectSubprotocol(string requestedSubprotocols)
         {
-            if (requestedSubprotocols == null || this.subprotocols.Length == 0)
+            if (requestedSubprotocols == null || 0u >= (uint)this.subprotocols.Length)
             {
                 return null;
             }

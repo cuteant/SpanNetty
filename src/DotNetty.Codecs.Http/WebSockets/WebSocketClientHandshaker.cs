@@ -130,13 +130,13 @@ namespace DotNetty.Codecs.Http.WebSockets
             string expectedProtocol = this.expectedSubprotocol ?? "";
             bool protocolValid = false;
 
-            if (expectedProtocol.Length == 0 && receivedProtocol == null)
+            if (0u >= (uint)expectedProtocol.Length && receivedProtocol == null)
             {
                 // No subprotocol required and none received
                 protocolValid = true;
                 this.ActualSubprotocol = this.expectedSubprotocol; // null or "" - we echo what the user requested
             }
-            else if (expectedProtocol.Length > 0 && !string.IsNullOrEmpty(receivedProtocol))
+            else if ((uint)expectedProtocol.Length > 0u && !string.IsNullOrEmpty(receivedProtocol))
             {
                 // We require a subprotocol and received one -> verify it
                 foreach (string protocol in expectedProtocol.Split(','))
@@ -418,8 +418,9 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             int index = uri.Scheme.Length + 3 + uri.Host.Length;
 
-            if (index < uri.OriginalString.Length 
-                && uri.OriginalString[index] == HttpConstants.ColonChar)
+            var originalString = uri.OriginalString;
+            if ((uint)index < (uint)originalString.Length 
+                && originalString[index] == HttpConstants.ColonChar)
             {
                 return uri.Port;
             }

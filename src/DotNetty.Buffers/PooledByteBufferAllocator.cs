@@ -310,7 +310,7 @@ namespace DotNetty.Buffers
 
             PoolArena<T> LeastUsedArena<T>(PoolArena<T>[] arenas)
             {
-                if (arenas == null || arenas.Length == 0)
+                if (arenas == null || 0u >= (uint)arenas.Length)
                 {
                     return null;
                 }
