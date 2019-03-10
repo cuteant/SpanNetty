@@ -2,7 +2,7 @@
   <!-- Shared Package Versions -->
   <PropertyGroup>
     <!-- Test related packages -->
-    <MicrosoftNetTestSdkPackageVersion>15.9.0</MicrosoftNetTestSdkPackageVersion>
+    <MicrosoftNetTestSdkPackageVersion>16.0.0</MicrosoftNetTestSdkPackageVersion>
 
     <BenchmarkDotNetPackageVersion>0.11.3</BenchmarkDotNetPackageVersion>
     <BenchmarkDotNetDiagnosticsWindowsPackageVersion>0.11.3</BenchmarkDotNetDiagnosticsWindowsPackageVersion>
@@ -34,8 +34,8 @@
     <NUnit2TestAdapterPackageVersion>2.1.1</NUnit2TestAdapterPackageVersion>
     <NUnitPackageVersion>3.11.0</NUnitPackageVersion>
     <NUnitLitePackageVersion>3.11.0</NUnitLitePackageVersion>
-    <NUnit3TestAdapterPackageVersion>3.11.0</NUnit3TestAdapterPackageVersion>
-    <MonoCecilPackageVersion>0.10.1</MonoCecilPackageVersion>
+    <NUnit3TestAdapterPackageVersion>3.13.0</NUnit3TestAdapterPackageVersion>
+    <MonoCecilPackageVersion>0.10.3</MonoCecilPackageVersion>
 
     <NUnitDevPackageVersion>3.11.0-dev-05430</NUnitDevPackageVersion>
     <NUnit3TestAdapterDevPackageVersion>3.11.0-dev-00847</NUnit3TestAdapterDevPackageVersion>

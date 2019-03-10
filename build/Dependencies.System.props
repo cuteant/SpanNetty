@@ -73,25 +73,22 @@
     <SystemValueTuplePackageVersion>4.5.0</SystemValueTuplePackageVersion>
 
     <!-- CoreFxLab packages -->
-    <SystemBinaryBase64PackageVersion>0.1.0-preview2-180313-3</SystemBinaryBase64PackageVersion>
-    <SystemBuffersExperimentalPackageVersion>0.1.0-preview2-180313-3</SystemBuffersExperimentalPackageVersion>
-    <SystemBuffersPrimitivesPackageVersion>0.1.0-preview2-180313-3</SystemBuffersPrimitivesPackageVersion>
-    <SystemCollectionsGenericMultiValueDictionaryPackageVersion>0.1.0-preview2-180313-3</SystemCollectionsGenericMultiValueDictionaryPackageVersion>
-    <SystemCollectionsSequencesPackageVersion>0.1.0-preview2-180313-3</SystemCollectionsSequencesPackageVersion>
-    <SystemIOPipelinesCompressionPackageVersion>0.1.0-preview2-180313-3</SystemIOPipelinesCompressionPackageVersion>
-    <SystemIOPipelinesExtensionsPackageVersion>0.1.0-preview2-180313-3</SystemIOPipelinesExtensionsPackageVersion>
-    <SystemIOPipelinesTextPrimitivesPackageVersion>0.1.0-preview2-180313-3</SystemIOPipelinesTextPrimitivesPackageVersion>
-    <SystemNumericsDec64PackageVersion>0.1.0-preview2-180313-3</SystemNumericsDec64PackageVersion>
-    <SystemNumericsMatricesPackageVersion>0.1.0-preview2-180313-3</SystemNumericsMatricesPackageVersion>
-    <SystemNumericsTensorsPackageVersion>0.1.0-preview2-180313-3</SystemNumericsTensorsPackageVersion>
-    <SystemTextEncodingsWebUtf8PackageVersion>0.1.0-preview2-180313-3</SystemTextEncodingsWebUtf8PackageVersion>
-    <SystemTextFormattingPackageVersion>0.1.0-preview2-180313-3</SystemTextFormattingPackageVersion>
-    <SystemTextFormattingGlobalizationPackageVersion>0.1.0-preview2-180313-3</SystemTextFormattingGlobalizationPackageVersion>
-    <SystemTextJsonPackageVersion>0.1.0-preview2-180313-3</SystemTextJsonPackageVersion>
-    <SystemTextJsonDynamicPackageVersion>0.1.0-preview2-180313-3</SystemTextJsonDynamicPackageVersion>
-    <SystemTextPrimitivesPackageVersion>0.1.0-preview2-180313-3</SystemTextPrimitivesPackageVersion>
-    <SystemTextUtf8StringPackageVersion>0.1.0-preview2-180313-3</SystemTextUtf8StringPackageVersion>
-    <SystemTimePackageVersion>0.1.0-preview2-180313-3</SystemTimePackageVersion>
+    <MicrosoftExperimentalCollectionsPackageVersion>1.0.6-e190309-1</MicrosoftExperimentalCollectionsPackageVersion>
+    <SystemBinaryBase64PackageVersion>0.1.1-e190309-1</SystemBinaryBase64PackageVersion>
+    <SystemBuffersExperimentalPackageVersion>0.1.1-e190309-1</SystemBuffersExperimentalPackageVersion>
+    <SystemBuffersPrimitivesPackageVersion>0.1.1-e190309-1</SystemBuffersPrimitivesPackageVersion>
+    <SystemBuffersReaderWriterPackageVersion>0.1.1-e190309-1</SystemBuffersReaderWriterPackageVersion>
+    <SystemCollectionsSequencesPackageVersion>0.1.1-e190309-1</SystemCollectionsSequencesPackageVersion>
+    <SystemTextCaseFoldingPackageVersion>0.1.1-e190309-1</SystemTextCaseFoldingPackageVersion>
+    <SystemTextEncodingsWebUtf8PackageVersion>0.1.1-e190309-1</SystemTextEncodingsWebUtf8PackageVersion>
+    <SystemTextFormattingPackageVersion>0.1.1-e190309-1</SystemTextFormattingPackageVersion>
+    <SystemTextFormattingGlobalizationPackageVersion>0.1.1-e190309-1</SystemTextFormattingGlobalizationPackageVersion>
+    <SystemTextJsonLabPackageVersion>0.1.1-e190309-1</SystemTextJsonLabPackageVersion>
+    <SystemTextJsonLabDynamicPackageVersion>0.1.1-e190309-1</SystemTextJsonLabDynamicPackageVersion>
+    <SystemTextJsonLabSerializationPackageVersion>0.1.1-e190309-1</SystemTextJsonLabSerializationPackageVersion>
+    <SystemTextPrimitivesPackageVersion>0.1.1-e190309-1</SystemTextPrimitivesPackageVersion>
+    <SystemTextUtf8StringPackageVersion>0.1.1-e190309-1</SystemTextUtf8StringPackageVersion>
+    <SystemTimePackageVersion>0.1.1-e190309-1</SystemTimePackageVersion>
 
     <!-- .NetFx40 packages -->
     <SystemBuffersNet40PackageVersion>2.1.0</SystemBuffersNet40PackageVersion>

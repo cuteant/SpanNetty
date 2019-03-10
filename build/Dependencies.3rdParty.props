@@ -33,7 +33,8 @@
 
     <!-- Database related packages -->
     <ConsulPackageVersion>0.7.2.6</ConsulPackageVersion>
-    <DapperPackageVersion>1.50.7</DapperPackageVersion>
+    <DapperPackageVersion>1.60.1</DapperPackageVersion>
+    <DapperStrongNamePackageVersion>1.60.1</DapperStrongNamePackageVersion>
     <MicrosoftSqlServerTypesPackageVersion>14.0.1016.290</MicrosoftSqlServerTypesPackageVersion>
     <MongoDBBsonStrongNamePackageVersion>2.7.2</MongoDBBsonStrongNamePackageVersion>
     <MongoDBDriverCoreStrongNamePackageVersion>2.7.2</MongoDBDriverCoreStrongNamePackageVersion>
@@ -42,7 +43,7 @@
     <mongocsharpdriverStrongNamePackageVersion>2.7.2</mongocsharpdriverStrongNamePackageVersion>
     <MySqlDataPackageVersion>8.0.15</MySqlDataPackageVersion>
     <MySqlConnectorPackageVersion>0.49.3</MySqlConnectorPackageVersion>
-    <NpgsqlPackageVersion>4.0.4</NpgsqlPackageVersion>
+    <NpgsqlPackageVersion>4.0.5</NpgsqlPackageVersion>
     <OracleManagedDataAccessPackageVersion>18.3.0</OracleManagedDataAccessPackageVersion>
     <StackExchangeRedisPackageVersion>2.0.519</StackExchangeRedisPackageVersion>
     <StackExchangeRedisStrongNamePackageVersion>2.0.519</StackExchangeRedisStrongNamePackageVersion>
@@ -95,14 +96,15 @@
     <DotNettyHandlersPackageVersion>0.5.0</DotNettyHandlersPackageVersion>
     <DotNettyTransportLibuvPackageVersion>0.5.0</DotNettyTransportLibuvPackageVersion>
     <DotNettyTransportPackageVersion>0.5.0</DotNettyTransportPackageVersion>
-    <GrpcPackageVersion>1.17.1</GrpcPackageVersion>
-    <GrpcCorePackageVersion>1.17.1</GrpcCorePackageVersion>
-    <GrpcCoreTestingPackageVersion>1.17.1</GrpcCoreTestingPackageVersion>
-    <GrpcHealthCheckPackageVersion>1.17.1</GrpcHealthCheckPackageVersion>
-    <GrpcReflectionPackageVersion>1.17.1</GrpcReflectionPackageVersion>
-    <GrpcToolsPackageVersion>1.17.1</GrpcToolsPackageVersion>
+    <GrpcPackageVersion>1.18.0</GrpcPackageVersion>
+    <GrpcCorePackageVersion>1.18.0</GrpcCorePackageVersion>
+    <GrpcCoreTestingPackageVersion>1.18.0</GrpcCoreTestingPackageVersion>
+    <GrpcHealthCheckPackageVersion>1.18.0</GrpcHealthCheckPackageVersion>
+    <GrpcReflectionPackageVersion>1.18.0</GrpcReflectionPackageVersion>
+    <GrpcToolsPackageVersion>1.18.0</GrpcToolsPackageVersion>
 
     <DnsClientPackageVersion>1.2.0</DnsClientPackageVersion>
+    <RabbitMQClientPackageVersion>5.1.0</RabbitMQClientPackageVersion>
 
     <LibuvPackageVersion>1.10.0</LibuvPackageVersion>
 
@@ -118,6 +120,7 @@
     <NewtonsoftJsonBsonPackageVersion>1.0.1</NewtonsoftJsonBsonPackageVersion>
     <NewtonsoftJsonPackageVersion>12.0.1</NewtonsoftJsonPackageVersion>
     <ProtobufNetPackageVersion>2.4.0</ProtobufNetPackageVersion>
+    <ProtobufNetDataPackageVersion>3.0.0</ProtobufNetDataPackageVersion>
     <YamlDotNetPackageVersion>5.4.0</YamlDotNetPackageVersion>
     <YamlDotNetSignedPackageVersion>5.4.0</YamlDotNetSignedPackageVersion>
   </PropertyGroup>
