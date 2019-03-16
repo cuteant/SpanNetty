@@ -43,12 +43,12 @@ namespace DotNetty.Buffers
             return base.GetSequence(index, count);
         }
 
-        public override Span<byte> Free
+        public override Memory<byte> FreeMemory
         {
             get
             {
                 RecordLeakNonRefCountingOperation(this.Leak);
-                return base.Free;
+                return base.FreeMemory;
             }
         }
 
@@ -61,6 +61,15 @@ namespace DotNetty.Buffers
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.GetMemory(index, count);
+        }
+
+        public override Span<byte> Free
+        {
+            get
+            {
+                RecordLeakNonRefCountingOperation(this.Leak);
+                return base.Free;
+            }
         }
 
         public override Span<byte> GetSpan(int sizeHintt = 0)

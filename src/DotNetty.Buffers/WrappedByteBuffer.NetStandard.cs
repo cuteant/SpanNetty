@@ -18,13 +18,13 @@ namespace DotNetty.Buffers
         public virtual ReadOnlySequence<byte> GetSequence() => this.Buf.GetSequence();
         public virtual ReadOnlySequence<byte> GetSequence(int index, int count) => this.Buf.GetSequence(index, count);
 
-        public virtual Span<byte> Free => this.Buf.Free;
-
         public void Advance(int count) => this.Buf.Advance(count);
 
+        public virtual Memory<byte> FreeMemory => this.Buf.FreeMemory;
         public virtual Memory<byte> GetMemory(int sizeHintt = 0) => this.Buf.GetMemory(sizeHintt);
         public virtual Memory<byte> GetMemory(int index, int count) => this.Buf.GetMemory(index, count);
 
+        public virtual Span<byte> Free => this.Buf.Free;
         public virtual Span<byte> GetSpan(int sizeHintt = 0) => this.Buf.GetSpan(sizeHintt);
         public virtual Span<byte> GetSpan(int index, int count) => this.Buf.GetSpan(index, count);
     }

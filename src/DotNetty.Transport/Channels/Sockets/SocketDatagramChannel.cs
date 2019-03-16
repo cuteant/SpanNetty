@@ -110,7 +110,7 @@ namespace DotNetty.Transport.Channels.Sockets
             operation.UserToken = buffer;
 
 #if NETCOREAPP
-            operation.SetBuffer(buffer.GetMemory());
+            operation.SetBuffer(buffer.FreeMemory);
 #else
             ArraySegment<byte> bytes = buffer.GetIoBuffer(0, buffer.WritableBytes);
             operation.SetBuffer(bytes.Array, bytes.Offset, bytes.Count);

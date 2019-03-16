@@ -20,8 +20,6 @@ namespace DotNetty.Buffers
         public virtual ReadOnlySequence<byte> GetSequence() => this.GetSequence(this.readerIndex, this.ReadableBytes);
         public abstract ReadOnlySequence<byte> GetSequence(int index, int count);
 
-        public virtual Span<byte> Free => this.GetSpan(this.writerIndex, this.WritableBytes);
-
         public virtual void Advance(int count)
         {
             if (count < 0) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count);
@@ -33,6 +31,8 @@ namespace DotNetty.Buffers
             this.writerIndex = writerIdx + count;
         }
 
+        public virtual Memory<byte> FreeMemory => this.GetMemory(this.writerIndex, this.WritableBytes);
+
         public virtual Memory<byte> GetMemory(int sizeHintt = 0)
         {
             CheckAndResizeBuffer(sizeHintt);
@@ -40,6 +40,8 @@ namespace DotNetty.Buffers
         }
 
         public abstract Memory<byte> GetMemory(int index, int count);
+
+        public virtual Span<byte> Free => this.GetSpan(this.writerIndex, this.WritableBytes);
 
         public virtual Span<byte> GetSpan(int sizeHintt = 0)
         {
@@ -59,13 +61,12 @@ namespace DotNetty.Buffers
                 sizeHint = c_minimumBufferSize;
             }
 
-            var capacity = this.Capacity;
-            int availableSpace = capacity - this.writerIndex;
+            int availableSpace = this.WritableBytes;
 
             if (sizeHint > availableSpace)
             {
+                var capacity = this.Capacity;
                 int growBy = Math.Max(sizeHint, capacity);
-
                 int newSize = checked(capacity + growBy);
 
                 AdjustCapacity(newSize);

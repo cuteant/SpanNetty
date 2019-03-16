@@ -15,9 +15,11 @@ namespace DotNetty.Buffers
         ReadOnlySequence<byte> GetSequence();
         ReadOnlySequence<byte> GetSequence(int index, int count);
 
-        Span<byte> Free { get; }
+        Memory<byte> FreeMemory { get; }
 
         Memory<byte> GetMemory(int index, int count);
+
+        Span<byte> Free { get; }
 
         Span<byte> GetSpan(int index, int count);
     }

@@ -18,6 +18,7 @@ namespace DotNetty.Buffers
         public ReadOnlySequence<byte> GetSequence() => ReadOnlySequence<byte>.Empty;
         public ReadOnlySequence<byte> GetSequence(int index, int count) => ReadOnlySequence<byte>.Empty;
 
+        public Memory<byte> FreeMemory => Memory<byte>.Empty;
         public Memory<byte> GetMemory(int sizeHintt = 0) => Memory<byte>.Empty;
         public Memory<byte> GetMemory(int index, int count) => Memory<byte>.Empty;
 
