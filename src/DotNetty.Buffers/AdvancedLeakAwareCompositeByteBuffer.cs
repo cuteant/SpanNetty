@@ -13,7 +13,7 @@ namespace DotNetty.Buffers
 
     using static AdvancedLeakAwareByteBuffer;
 
-    sealed class AdvancedLeakAwareCompositeByteBuffer : SimpleLeakAwareCompositeByteBuffer
+    sealed partial class AdvancedLeakAwareCompositeByteBuffer : SimpleLeakAwareCompositeByteBuffer
     {
         internal AdvancedLeakAwareCompositeByteBuffer(CompositeByteBuffer wrapped, IResourceLeakTracker leak)
             : base(wrapped, leak)

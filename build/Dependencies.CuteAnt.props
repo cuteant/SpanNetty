@@ -5,14 +5,17 @@
     <CuteAntAsyncExPackageVersion>2.2.0-rtm-190309-01</CuteAntAsyncExPackageVersion>
     <CuteAntCoreAbstractionsPackageVersion>2.2.0-rtm-190309-01</CuteAntCoreAbstractionsPackageVersion>
     <CuteAntCorePackageVersion>2.2.0-rtm-190309-01</CuteAntCorePackageVersion>
-    <CuteAntRuntimePackageVersion>2.2.0-rtm-190309-01</CuteAntRuntimePackageVersion>
+    <CuteAntRuntimePackageVersion>2.2.0-rtm-190310-01</CuteAntRuntimePackageVersion>
+
+    <CuteAntBuffersPackageVersion>2.2.0-rtm-190309-01</CuteAntBuffersPackageVersion>
+    <CuteAntIOPipelinesPackageVersion>2.2.0-rtm-190309-01</CuteAntIOPipelinesPackageVersion>
 
     <PollyUnofficialPackageVersion>6.1.2</PollyUnofficialPackageVersion>
     <ReactiveStreamsSignedPackageVersion>1.0.2</ReactiveStreamsSignedPackageVersion>
 
-    <EasyEventStoreAbstractionsPackageVersion>5.0.1-rc1-190307-01</EasyEventStoreAbstractionsPackageVersion>
-    <EasyEventStoreAutoSubscribingPackageVersion>5.0.1-rc1-190307-01</EasyEventStoreAutoSubscribingPackageVersion>
-    <EasyEventStoreCorePackageVersion>5.0.1-rc1-190307-01</EasyEventStoreCorePackageVersion>
+    <EasyEventStoreAbstractionsPackageVersion>5.0.1-rc1-190309-01</EasyEventStoreAbstractionsPackageVersion>
+    <EasyEventStoreAutoSubscribingPackageVersion>5.0.1-rc1-190309-01</EasyEventStoreAutoSubscribingPackageVersion>
+    <EasyEventStoreCorePackageVersion>5.0.1-rc1-190309-01</EasyEventStoreCorePackageVersion>
 
     <GrEmitSignedPackageVersion>3.0.9</GrEmitSignedPackageVersion>
     <GrobExpCompilerSignedPackageVersion>1.2.6</GrobExpCompilerSignedPackageVersion>
@@ -44,17 +47,17 @@
     <!-- Database related packages -->
     <ConsulExtensionsPackageVersion>2.2.0-rtm-181220-01</ConsulExtensionsPackageVersion>
     <CuteAntExtensionsRedisPackageVersion>2.1.0-rc1-180512-01</CuteAntExtensionsRedisPackageVersion>
-    <CuteAntIdUtilsPackageVersion>2.2.0-rtm-190301-01</CuteAntIdUtilsPackageVersion>
-    <CuteAntWingsPackageVersion>2.2.0-rtm-190303-01</CuteAntWingsPackageVersion>
-    <CuteAntWingsAbstractionsPackageVersion>2.2.0-rtm-190303-01</CuteAntWingsAbstractionsPackageVersion>
-    <CuteAntWingsMySqlPackageVersion>2.2.0-rtm-190303-01</CuteAntWingsMySqlPackageVersion>
-    <CuteAntWingsMySqlConnectorPackageVersion>2.2.0-rtm-190303-01</CuteAntWingsMySqlConnectorPackageVersion>
-    <CuteAntWingsOraclePackageVersion>2.2.0-rtm-190303-01</CuteAntWingsOraclePackageVersion>
-    <CuteAntWingsPostgreSQLPackageVersion>2.2.0-rtm-190303-01</CuteAntWingsPostgreSQLPackageVersion>
-    <CuteAntWingsShardingPackageVersion>2.2.0-rtm-190303-01</CuteAntWingsShardingPackageVersion>
-    <CuteAntWingsSqlitePackageVersion>2.2.0-rtm-190303-01</CuteAntWingsSqlitePackageVersion>
-    <CuteAntWingsSqlServerPackageVersion>2.2.0-rtm-190303-01</CuteAntWingsSqlServerPackageVersion>
-    <CuteAntWingsSqlServerConvertersPackageVersion>2.2.0-rtm-190303-01</CuteAntWingsSqlServerConvertersPackageVersion>
+    <CuteAntIdUtilsPackageVersion>2.2.0-rtm-190309-01</CuteAntIdUtilsPackageVersion>
+    <CuteAntWingsPackageVersion>2.2.0-rtm-190309-01</CuteAntWingsPackageVersion>
+    <CuteAntWingsAbstractionsPackageVersion>2.2.0-rtm-190309-01</CuteAntWingsAbstractionsPackageVersion>
+    <CuteAntWingsMySqlPackageVersion>2.2.0-rtm-190309-01</CuteAntWingsMySqlPackageVersion>
+    <CuteAntWingsMySqlConnectorPackageVersion>2.2.0-rtm-190309-01</CuteAntWingsMySqlConnectorPackageVersion>
+    <CuteAntWingsOraclePackageVersion>2.2.0-rtm-190309-01</CuteAntWingsOraclePackageVersion>
+    <CuteAntWingsPostgreSQLPackageVersion>2.2.0-rtm-190309-01</CuteAntWingsPostgreSQLPackageVersion>
+    <CuteAntWingsShardingPackageVersion>2.2.0-rtm-190309-01</CuteAntWingsShardingPackageVersion>
+    <CuteAntWingsSqlitePackageVersion>2.2.0-rtm-190309-01</CuteAntWingsSqlitePackageVersion>
+    <CuteAntWingsSqlServerPackageVersion>2.2.0-rtm-190309-01</CuteAntWingsSqlServerPackageVersion>
+    <CuteAntWingsSqlServerConvertersPackageVersion>2.2.0-rtm-190309-01</CuteAntWingsSqlServerConvertersPackageVersion>
 
     <!-- Hosting related packages -->
     <CuteAntHostingPackageVersion>2.1.0-rc1-180512-01</CuteAntHostingPackageVersion>
@@ -109,37 +112,37 @@
     <AkkaStreamsUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaStreamsUnofficialPackageVersion>
     <AkkaStreamsTestKitUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaStreamsTestKitUnofficialPackageVersion>
 
-    <DotNettyBuffersUnofficialPackageVersion>0.6.0-rtm-190222-01</DotNettyBuffersUnofficialPackageVersion>
-    <DotNettyCodecsHttpUnofficialPackageVersion>0.6.0-rtm-190222-01</DotNettyCodecsHttpUnofficialPackageVersion>
-    <DotNettyCodecsHttp2UnofficialPackageVersion>0.6.0-rtm-190222-01</DotNettyCodecsHttp2UnofficialPackageVersion>
-    <DotNettyCodecsMqttUnofficialPackageVersion>0.6.0-rtm-190222-01</DotNettyCodecsMqttUnofficialPackageVersion>
-    <DotNettyCodecsRedisUnofficialPackageVersion>0.6.0-rtm-190222-01</DotNettyCodecsRedisUnofficialPackageVersion>
-    <DotNettyCodecsUnofficialPackageVersion>0.6.0-rtm-190222-01</DotNettyCodecsUnofficialPackageVersion>
-    <DotNettyCommonUnofficialPackageVersion>0.6.0-rtm-190222-01</DotNettyCommonUnofficialPackageVersion>
-    <DotNettyHandlersUnofficialPackageVersion>0.6.0-rtm-190222-01</DotNettyHandlersUnofficialPackageVersion>
-    <DotNettyTransportLibuvUnofficialPackageVersion>0.6.0-rtm-190222-01</DotNettyTransportLibuvUnofficialPackageVersion>
-    <DotNettyTransportUnofficialPackageVersion>0.6.0-rtm-190222-01</DotNettyTransportUnofficialPackageVersion>
+    <DotNettyBuffersUnofficialPackageVersion>0.6.0-rtm-190309-01</DotNettyBuffersUnofficialPackageVersion>
+    <DotNettyCodecsHttpUnofficialPackageVersion>0.6.0-rtm-190309-01</DotNettyCodecsHttpUnofficialPackageVersion>
+    <DotNettyCodecsHttp2UnofficialPackageVersion>0.6.0-rtm-190309-01</DotNettyCodecsHttp2UnofficialPackageVersion>
+    <DotNettyCodecsMqttUnofficialPackageVersion>0.6.0-rtm-190309-01</DotNettyCodecsMqttUnofficialPackageVersion>
+    <DotNettyCodecsRedisUnofficialPackageVersion>0.6.0-rtm-190309-01</DotNettyCodecsRedisUnofficialPackageVersion>
+    <DotNettyCodecsUnofficialPackageVersion>0.6.0-rtm-190309-01</DotNettyCodecsUnofficialPackageVersion>
+    <DotNettyCommonUnofficialPackageVersion>0.6.0-rtm-190309-01</DotNettyCommonUnofficialPackageVersion>
+    <DotNettyHandlersUnofficialPackageVersion>0.6.0-rtm-190309-01</DotNettyHandlersUnofficialPackageVersion>
+    <DotNettyTransportLibuvUnofficialPackageVersion>0.6.0-rtm-190309-01</DotNettyTransportLibuvUnofficialPackageVersion>
+    <DotNettyTransportUnofficialPackageVersion>0.6.0-rtm-190309-01</DotNettyTransportUnofficialPackageVersion>
 
     <!-- Serialization related packages -->
-    <CuteAntExtensionsSerializationPackageVersion>2.2.0-rtm-190309-01</CuteAntExtensionsSerializationPackageVersion>
-    <CuteAntExtensionsSerializationAbstractionsPackageVersion>2.2.0-rtm-190309-01</CuteAntExtensionsSerializationAbstractionsPackageVersion>
-    <CuteAntExtensionsSerializationCorePackageVersion>2.2.0-rtm-190309-01</CuteAntExtensionsSerializationCorePackageVersion>
-    <CuteAntExtensionsSerializationHyperionPackageVersion>2.2.0-rtm-190309-01</CuteAntExtensionsSerializationHyperionPackageVersion>
-    <CuteAntExtensionsSerializationMessagePackPackageVersion>2.2.0-rtm-190309-01</CuteAntExtensionsSerializationMessagePackPackageVersion>
-    <CuteAntExtensionsSerializationProtobufPackageVersion>2.2.0-rtm-190309-01</CuteAntExtensionsSerializationProtobufPackageVersion>
-    <CuteAntExtensionsSerializationServiceStackPackageVersion>2.2.0-rtm-190309-01</CuteAntExtensionsSerializationServiceStackPackageVersion>
-    <CuteAntExtensionsSerializationUtf8JsonPackageVersion>2.2.0-rtm-190309-01</CuteAntExtensionsSerializationUtf8JsonPackageVersion>
-    <CuteAntJsonExtensionsPackageVersion>2.2.0-rtm-190309-01</CuteAntJsonExtensionsPackageVersion>
-    <HyperionUnofficialPackageVersion>0.9.8-rtm-190309-01</HyperionUnofficialPackageVersion>
-    <MessagePackAbstractionsPackageVersion>1.7.3-rtm-190309-01</MessagePackAbstractionsPackageVersion>
-    <MessagePackHyperionPackageVersion>1.7.3-rtm-190309-01</MessagePackHyperionPackageVersion>
-    <MessagePackImmutableCollectionUnofficialPackageVersion>1.7.3-rtm-190309-01</MessagePackImmutableCollectionUnofficialPackageVersion>
-    <MessagePackLZ4UnofficialPackageVersion>1.7.3-rtm-190309-01</MessagePackLZ4UnofficialPackageVersion>
-    <MessagePackUnofficialPackageVersion>1.7.3-rtm-190309-01</MessagePackUnofficialPackageVersion>
-    <ServiceStackTextNet40PackageVersion>5.5.0-rtm-190309-01</ServiceStackTextNet40PackageVersion>
-    <ServiceStackTextUnofficialPackageVersion>5.5.0-rtm-190309-01</ServiceStackTextUnofficialPackageVersion>
-    <Utf8JsonAbstractionsUnofficialPackageVersion>1.3.6-rtm-190309-01</Utf8JsonAbstractionsUnofficialPackageVersion>
-    <Utf8JsonImmutableCollectionUnofficialPackageVersion>1.3.6-rtm-190309-01</Utf8JsonImmutableCollectionUnofficialPackageVersion>
-    <Utf8JsonUnofficialPackageVersion>1.3.6-rtm-190309-01</Utf8JsonUnofficialPackageVersion>
+    <CuteAntExtensionsSerializationPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationPackageVersion>
+    <CuteAntExtensionsSerializationAbstractionsPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationAbstractionsPackageVersion>
+    <CuteAntExtensionsSerializationCorePackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationCorePackageVersion>
+    <CuteAntExtensionsSerializationHyperionPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationHyperionPackageVersion>
+    <CuteAntExtensionsSerializationMessagePackPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationMessagePackPackageVersion>
+    <CuteAntExtensionsSerializationProtobufPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationProtobufPackageVersion>
+    <CuteAntExtensionsSerializationServiceStackPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationServiceStackPackageVersion>
+    <CuteAntExtensionsSerializationUtf8JsonPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationUtf8JsonPackageVersion>
+    <CuteAntJsonExtensionsPackageVersion>2.2.0-rtm-190310-01</CuteAntJsonExtensionsPackageVersion>
+    <HyperionUnofficialPackageVersion>0.9.8-rtm-190310-01</HyperionUnofficialPackageVersion>
+    <MessagePackAbstractionsPackageVersion>1.7.3-rtm-190310-01</MessagePackAbstractionsPackageVersion>
+    <MessagePackHyperionPackageVersion>1.7.3-rtm-190310-01</MessagePackHyperionPackageVersion>
+    <MessagePackImmutableCollectionUnofficialPackageVersion>1.7.3-rtm-190310-01</MessagePackImmutableCollectionUnofficialPackageVersion>
+    <MessagePackLZ4UnofficialPackageVersion>1.7.3-rtm-190310-01</MessagePackLZ4UnofficialPackageVersion>
+    <MessagePackUnofficialPackageVersion>1.7.3-rtm-190310-01</MessagePackUnofficialPackageVersion>
+    <ServiceStackTextNet40PackageVersion>5.5.0-rtm-190310-01</ServiceStackTextNet40PackageVersion>
+    <ServiceStackTextUnofficialPackageVersion>5.5.0-rtm-190310-01</ServiceStackTextUnofficialPackageVersion>
+    <Utf8JsonAbstractionsUnofficialPackageVersion>1.3.6-rtm-190310-01</Utf8JsonAbstractionsUnofficialPackageVersion>
+    <Utf8JsonImmutableCollectionUnofficialPackageVersion>1.3.6-rtm-190310-01</Utf8JsonImmutableCollectionUnofficialPackageVersion>
+    <Utf8JsonUnofficialPackageVersion>1.3.6-rtm-190310-01</Utf8JsonUnofficialPackageVersion>
   </PropertyGroup>
 </Project>

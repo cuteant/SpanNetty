@@ -109,8 +109,12 @@ namespace DotNetty.Transport.Channels.Sockets
             handle.AttemptedBytesRead = buffer.WritableBytes;
             operation.UserToken = buffer;
 
+#if NETCOREAPP
+            operation.SetBuffer(buffer.GetMemory());
+#else
             ArraySegment<byte> bytes = buffer.GetIoBuffer(0, buffer.WritableBytes);
             operation.SetBuffer(bytes.Array, bytes.Offset, bytes.Count);
+#endif
 
             bool pending;
 #if NETSTANDARD
@@ -189,7 +193,11 @@ namespace DotNetty.Transport.Channels.Sockets
                 return;
             }
 
+#if NETCOREAPP
+            var operation = this.PrepareWriteOperation(data.GetReadableMemory(data.ReaderIndex, length));
+#else
             var operation = this.PrepareWriteOperation(data.GetIoBuffer(data.ReaderIndex, length));
+#endif
             operation.RemoteEndPoint = envelope.Recipient;
             this.SetState(StateFlags.WriteScheduled);
             bool pending = this.Socket.SendToAsync(operation);

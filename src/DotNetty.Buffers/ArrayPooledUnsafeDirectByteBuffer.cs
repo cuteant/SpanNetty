@@ -33,16 +33,6 @@ namespace DotNetty.Buffers
 
         protected internal override void _SetByte(int index, int value) => this.Memory[index] = unchecked((byte)value);
 
-        public override int IoBufferCount => 1;
-
-        public override ArraySegment<byte> GetIoBuffer(int index, int length)
-        {
-            this.CheckIndex(index, length);
-            return new ArraySegment<byte>(this.Memory, index, length);
-        }
-
-        public override ArraySegment<byte>[] GetIoBuffers(int index, int length) => new[] { this.GetIoBuffer(index, length) };
-
 #if !NET40
         protected internal override short _GetShort(int index)
         {

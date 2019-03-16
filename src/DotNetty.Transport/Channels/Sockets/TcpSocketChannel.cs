@@ -197,7 +197,11 @@ namespace DotNetty.Transport.Channels.Sockets
                 return -1; // prevents ObjectDisposedException from being thrown in case connection has been lost in the meantime
             }
 
+#if NETCOREAPP
+            int received = this.Socket.Receive(byteBuf.GetSpan(), SocketFlags.None, out SocketError errorCode);
+#else
             int received = this.Socket.Receive(byteBuf.Array, byteBuf.ArrayOffset + byteBuf.WriterIndex, byteBuf.WritableBytes, SocketFlags.None, out SocketError errorCode);
+#endif
 
             switch (errorCode)
             {

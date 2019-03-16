@@ -12,7 +12,7 @@ namespace DotNetty.Buffers
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
 
-    class WrappedCompositeByteBuffer : CompositeByteBuffer
+    partial class WrappedCompositeByteBuffer : CompositeByteBuffer
     {
         readonly CompositeByteBuffer wrapped;
 

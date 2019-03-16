@@ -4,6 +4,7 @@
 namespace DotNetty.Buffers.Tests
 {
     using System;
+    using System.Buffers;
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
@@ -146,6 +147,31 @@ namespace DotNetty.Buffers.Tests
             protected internal override void Deallocate()
             {
                 // NOOP
+            }
+
+            public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override ReadOnlySpan<byte> GetReadableSpan(int index, int count)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override ReadOnlySequence<byte> GetSequence(int index, int count)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override Memory<byte> GetMemory(int index, int count)
+            {
+                throw new NotImplementedException();
+            }
+
+            public override Span<byte> GetSpan(int index, int count)
+            {
+                throw new NotImplementedException();
             }
         }
     }

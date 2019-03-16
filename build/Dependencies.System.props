@@ -45,6 +45,7 @@
 
     <SystemReflectionDispatchProxyPackageVersion>4.5.1</SystemReflectionDispatchProxyPackageVersion>
     <SystemReflectionEmitPackageVersion>4.3.0</SystemReflectionEmitPackageVersion>
+    <SystemReflectionEmitILGenerationPackageVersion>4.3.0</SystemReflectionEmitILGenerationPackageVersion>
     <SystemReflectionEmitLightweightPackageVersion>4.3.0</SystemReflectionEmitLightweightPackageVersion>
     <SystemReflectionExtensionsPackageVersion>4.3.0</SystemReflectionExtensionsPackageVersion>
     <SystemReflectionTypeExtensionsPackageVersion>4.5.1</SystemReflectionTypeExtensionsPackageVersion>
@@ -116,6 +117,7 @@
     <SystemDiagnosticsStackTracePackageVersion>4.3.0</SystemDiagnosticsStackTracePackageVersion>
     <SystemDiagnosticsTraceSourcePackageVersion>4.3.0</SystemDiagnosticsTraceSourcePackageVersion>
     <SystemDrawingPrimitivesPackageVersion>4.3.0</SystemDrawingPrimitivesPackageVersion>
+    <SystemDynamicRuntimePackageVersion>4.3.0</SystemDynamicRuntimePackageVersion>
     <SystemGlobalizationExtensionsPackageVersion>4.3.0</SystemGlobalizationExtensionsPackageVersion>
     <SystemIOMemoryMappedFilesPackageVersion>4.3.0</SystemIOMemoryMappedFilesPackageVersion>
     <SystemNetNameResolutionPackageVersion>4.3.0</SystemNetNameResolutionPackageVersion>

@@ -3,6 +3,7 @@
 
 namespace DotNetty.Transport.Channels.Sockets
 {
+    using System;
     using System.Net.Sockets;
     using DotNetty.Common.Utilities;
 
@@ -21,7 +22,11 @@ namespace DotNetty.Transport.Channels.Sockets
             this.Completed += AbstractSocketChannel<TChannel, TUnsafe>.IoCompletedCallback;
             if (setEmptyBuffer)
             {
+#if NETCOREAPP
+                this.SetBuffer(Memory<byte>.Empty);
+#else
                 this.SetBuffer(ArrayExtensions.ZeroBytes, 0, 0);
+#endif
             }
         }
 

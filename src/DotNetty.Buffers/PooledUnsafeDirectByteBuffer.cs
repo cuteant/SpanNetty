@@ -11,7 +11,7 @@ namespace DotNetty.Buffers
     using System.Threading.Tasks;
     using DotNetty.Common;
 
-    sealed unsafe class PooledUnsafeDirectByteBuffer : PooledByteBuffer<byte[]>
+    sealed unsafe partial class PooledUnsafeDirectByteBuffer : PooledByteBuffer<byte[]>
     {
         static readonly ThreadLocalPool<PooledUnsafeDirectByteBuffer> Recycler = new ThreadLocalPool<PooledUnsafeDirectByteBuffer>(handle => new PooledUnsafeDirectByteBuffer(handle, 0));
 

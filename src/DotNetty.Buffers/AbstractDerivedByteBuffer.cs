@@ -11,7 +11,7 @@ namespace DotNetty.Buffers
     ///     Abstract base class for <see cref="T:DotNetty.Buffers.IByteBuffer" /> implementations that wrap another
     ///     <see cref="T:DotNetty.Buffers.IByteBuffer" />.
     /// </summary>
-    public abstract class AbstractDerivedByteBuffer : AbstractByteBuffer
+    public abstract partial class AbstractDerivedByteBuffer : AbstractByteBuffer
     {
         protected AbstractDerivedByteBuffer(int maxCapacity)
             : base(maxCapacity)

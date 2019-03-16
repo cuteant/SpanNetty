@@ -237,7 +237,11 @@ namespace DotNetty.Transport.Channels.Sockets
                     {
                         input.Remove();
                     }
+#if NETCOREAPP
+                    else if (this.IncompleteWrite(scheduleAsync, this.PrepareWriteOperation(buf.GetReadableMemory())))
+#else
                     else if (this.IncompleteWrite(scheduleAsync, this.PrepareWriteOperation(buf.GetIoBuffer())))
+#endif
                     {
                         break;
                     }

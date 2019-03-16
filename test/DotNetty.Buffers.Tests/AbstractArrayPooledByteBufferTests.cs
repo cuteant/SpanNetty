@@ -3446,7 +3446,11 @@ namespace DotNetty.Buffers.Tests
 
             IByteBuffer buf = this.NewBuffer(3, 1024);
             Assert.Equal(1024, buf.MaxCapacity);
+#if NETCOREAPP
+            Assert.Equal(16, buf.Capacity);
+#else
             Assert.Equal(128, buf.Capacity);
+#endif
             try
             {
                 Assert.Throws<ArgumentOutOfRangeException>(() => buf.AdjustCapacity(-1));
@@ -3467,7 +3471,11 @@ namespace DotNetty.Buffers.Tests
 
             IByteBuffer buf = this.NewBuffer(3, 1024);
             Assert.Equal(1024, buf.MaxCapacity);
+#if NETCOREAPP
+            Assert.Equal(16, buf.Capacity);
+#else
             Assert.Equal(128, buf.Capacity);
+#endif
             try
             {
                 buf.AdjustCapacity(130);
@@ -3490,7 +3498,11 @@ namespace DotNetty.Buffers.Tests
 
             IByteBuffer buf = this.NewBuffer(3, 1024);
             Assert.Equal(1024, buf.MaxCapacity);
+#if NETCOREAPP
+            Assert.Equal(16, buf.Capacity);
+#else
             Assert.Equal(128, buf.Capacity);
+#endif
             try
             {
                 buf.AdjustCapacity(130);

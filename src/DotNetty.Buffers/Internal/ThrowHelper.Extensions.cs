@@ -121,6 +121,16 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException(int capacity)
+        {
+            throw GetException();
+            InvalidOperationException GetException()
+            {
+                return new InvalidOperationException($"Cannot advance past the end of the buffer, which has a size of {capacity}.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static T ThrowInvalidOperationException_ShouldNotReachHere<T>()
         {
             throw GetException();

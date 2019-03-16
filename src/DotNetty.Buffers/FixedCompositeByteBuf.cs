@@ -16,7 +16,7 @@ namespace DotNetty.Buffers
     /// <see cref="IByteBuffer"/> implementation which allows to wrap an array of <see cref="IByteBuffer"/> in a read-only mode.
     /// This is useful to write an array of <see cref="IByteBuffer"/>s.
     /// </summary>
-    public sealed class FixedCompositeByteBuf : AbstractReferenceCountedByteBuffer
+    public sealed partial class FixedCompositeByteBuf : AbstractReferenceCountedByteBuffer
     {
         static readonly IByteBuffer[] Empty = { Unpooled.Empty };
 

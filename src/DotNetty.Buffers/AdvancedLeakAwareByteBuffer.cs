@@ -13,7 +13,7 @@ namespace DotNetty.Buffers
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
-    sealed class AdvancedLeakAwareByteBuffer : SimpleLeakAwareByteBuffer
+    sealed partial class AdvancedLeakAwareByteBuffer : SimpleLeakAwareByteBuffer
     {
         const string PropAcquireAndReleaseOnly = "io.netty.leakDetection.acquireAndReleaseOnly";
         static readonly bool AcquireAndReleaseOnly;

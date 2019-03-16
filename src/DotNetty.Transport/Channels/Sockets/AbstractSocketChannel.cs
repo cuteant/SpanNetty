@@ -12,6 +12,9 @@ namespace DotNetty.Transport.Channels.Sockets
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
+#if NETCOREAPP
+    using System.Runtime.InteropServices;
+#endif
 
     public abstract partial class AbstractSocketChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>
     {
@@ -134,12 +137,21 @@ namespace DotNetty.Transport.Channels.Sockets
 
         SocketChannelAsyncOperation<TChannel, TUnsafe> WriteOperation => this.writeOperation ?? (this.writeOperation = new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, false));
 
+#if NETCOREAPP
+        protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(ReadOnlyMemory<byte> buffer)
+        {
+            var operation = this.WriteOperation;
+            operation.SetBuffer(MemoryMarshal.AsMemory(buffer));
+            return operation;
+        }
+#else
         protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(in ArraySegment<byte> buffer)
         {
             var operation = this.WriteOperation;
             operation.SetBuffer(buffer.Array, buffer.Offset, buffer.Count);
             return operation;
         }
+#endif
 
         protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(IList<ArraySegment<byte>> buffers)
         {

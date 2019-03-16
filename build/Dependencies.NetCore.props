@@ -3,7 +3,7 @@
   <PropertyGroup>
     <NETCoreApp2RuntimeFrameworkVersion>2.0.9</NETCoreApp2RuntimeFrameworkVersion>
     <MicrosoftNETCoreApp20PackageVersion>2.0.9</MicrosoftNETCoreApp20PackageVersion>
-    <MicrosoftNETCoreApp21PackageVersion>2.1.8</MicrosoftNETCoreApp21PackageVersion>
-    <MicrosoftNETCoreApp22PackageVersion>2.2.2</MicrosoftNETCoreApp22PackageVersion>
+    <MicrosoftNETCoreApp21PackageVersion>2.1.9</MicrosoftNETCoreApp21PackageVersion>
+    <MicrosoftNETCoreApp22PackageVersion>2.2.3</MicrosoftNETCoreApp22PackageVersion>
   </PropertyGroup>
 </Project>
