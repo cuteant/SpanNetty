@@ -10,7 +10,7 @@ namespace DotNetty.Buffers
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
 #if !NET40
-    using DotNetty.Common.Internal;
+    using System.Runtime.CompilerServices;
 #endif
     using static AbstractUnpooledSlicedByteBuffer;
 
@@ -48,7 +48,7 @@ namespace DotNetty.Buffers
         public override int ArrayOffset => this.Idx(this.Unwrap().ArrayOffset);
 
 #if !NET40
-        public override ref byte GetPinnableMemoryAddress() => ref PlatformDependent.Add(ref this.Unwrap().GetPinnableMemoryAddress(), this.adjustment);
+        public override ref byte GetPinnableMemoryAddress() => ref Unsafe.Add(ref this.Unwrap().GetPinnableMemoryAddress(), this.adjustment);
 #endif
 
         public override IntPtr AddressOfPinnedMemory()

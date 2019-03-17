@@ -6,7 +6,6 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using DotNetty.Common.Internal;
 #endif
 
 namespace DotNetty.Buffers
@@ -203,7 +202,7 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(InlineMethod.Value)]
-        ref byte Addr(int index) => ref this.Memory.AsRef(index);
+        ref byte Addr(int index) => ref this.Memory[index];
 
         public override IByteBuffer SetZero(int index, int length)
         {

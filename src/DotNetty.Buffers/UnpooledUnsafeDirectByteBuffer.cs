@@ -178,7 +178,7 @@ namespace DotNetty.Buffers
         public override ref byte GetPinnableMemoryAddress()
         {
             this.EnsureAccessible();
-            return ref this.buffer.AsRef();
+            return ref this.buffer[0];
         }
 
         protected internal override short _GetShort(int index)
@@ -352,7 +352,7 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(InlineMethod.Value)]
-        ref byte Addr(int index) => ref this.buffer.AsRef(index);
+        ref byte Addr(int index) => ref this.buffer[index];
 
         public override IByteBuffer SetZero(int index, int length)
         {

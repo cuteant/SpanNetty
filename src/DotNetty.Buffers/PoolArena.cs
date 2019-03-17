@@ -790,16 +790,21 @@ namespace DotNetty.Buffers
         sealed class MemoryChunk : IDisposable
         {
             internal byte[] Bytes;
+#if !NET40
             GCHandle handle;
+#endif
 
             internal MemoryChunk(int size)
             {
                 this.Bytes = new byte[size];
+#if !NET40
                 this.handle = GCHandle.Alloc(this.Bytes, GCHandleType.Pinned);
+#endif
             }
 
             void Release()
             {
+#if !NET40
                 if (this.handle.IsAllocated)
                 {
                     try
@@ -811,6 +816,7 @@ namespace DotNetty.Buffers
                         // Free is not thread safe
                     }
                 }
+#endif
                 this.Bytes = null;
             }
 

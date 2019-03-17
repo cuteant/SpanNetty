@@ -138,10 +138,10 @@ namespace DotNetty.Transport.Channels.Sockets
         SocketChannelAsyncOperation<TChannel, TUnsafe> WriteOperation => this.writeOperation ?? (this.writeOperation = new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, false));
 
 #if NETCOREAPP
-        protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(ReadOnlyMemory<byte> buffer)
+        protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(Memory<byte> buffer)
         {
             var operation = this.WriteOperation;
-            operation.SetBuffer(MemoryMarshal.AsMemory(buffer));
+            operation.SetBuffer(buffer);
             return operation;
         }
 #else

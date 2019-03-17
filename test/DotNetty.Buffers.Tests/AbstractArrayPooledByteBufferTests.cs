@@ -3446,7 +3446,7 @@ namespace DotNetty.Buffers.Tests
 
             IByteBuffer buf = this.NewBuffer(3, 1024);
             Assert.Equal(1024, buf.MaxCapacity);
-#if NETCOREAPP
+#if NETCOREAPP_2_1_GREATER
             Assert.Equal(16, buf.Capacity);
 #else
             Assert.Equal(128, buf.Capacity);
@@ -3471,7 +3471,7 @@ namespace DotNetty.Buffers.Tests
 
             IByteBuffer buf = this.NewBuffer(3, 1024);
             Assert.Equal(1024, buf.MaxCapacity);
-#if NETCOREAPP
+#if NETCOREAPP_2_1_GREATER
             Assert.Equal(16, buf.Capacity);
 #else
             Assert.Equal(128, buf.Capacity);
@@ -3498,7 +3498,7 @@ namespace DotNetty.Buffers.Tests
 
             IByteBuffer buf = this.NewBuffer(3, 1024);
             Assert.Equal(1024, buf.MaxCapacity);
-#if NETCOREAPP
+#if NETCOREAPP_2_1_GREATER
             Assert.Equal(16, buf.Capacity);
 #else
             Assert.Equal(128, buf.Capacity);
@@ -3513,28 +3513,6 @@ namespace DotNetty.Buffers.Tests
             {
                 buf.Release();
             }
-        }
-
-        [Fact]
-        public void ReadZeroBytesAtEnd()
-        {
-            IByteBuffer buf = this.NewBuffer(3);
-            buf.SetWriterIndex(buf.Capacity);
-            buf.SkipBytes(buf.ReadableBytes);
-            buf.ReadBytes(new byte[0]);
-            buf.Release();
-        }
-
-        [Fact]
-        public void GetMemoryAddressWithZeroLengthBuffer()
-        {
-            IByteBuffer buf = this.NewBuffer(0, 1);
-            if (buf.HasMemoryAddress)
-            {
-                buf.AddressOfPinnedMemory();
-                buf.GetPinnableMemoryAddress();
-            }
-            buf.Release();
         }
 
         protected IByteBuffer ReleaseLater(IByteBuffer buf)

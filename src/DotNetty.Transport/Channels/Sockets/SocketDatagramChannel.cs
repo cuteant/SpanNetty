@@ -194,7 +194,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
 
 #if NETCOREAPP
-            var operation = this.PrepareWriteOperation(data.GetReadableMemory(data.ReaderIndex, length));
+            var operation = this.PrepareWriteOperation(data.GetMemory(data.ReaderIndex, length));
 #else
             var operation = this.PrepareWriteOperation(data.GetIoBuffer(data.ReaderIndex, length));
 #endif
