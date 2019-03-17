@@ -404,8 +404,13 @@ namespace DotNetty.Handlers.Tls
 
             try
             {
+#if NETCOREAPP
+                ReadOnlyMemory<byte> inputIoBuffer = packet.GetReadableMemory(offset, length);
+                _mediationStream.SetSource(inputIoBuffer);
+#else
                 ArraySegment<byte> inputIoBuffer = packet.GetIoBuffer(offset, length);
                 _mediationStream.SetSource(inputIoBuffer.Array, inputIoBuffer.Offset);
+#endif
 
                 int packetIndex = 0;
 
@@ -418,7 +423,7 @@ namespace DotNetty.Handlers.Tls
                     }
                 }
 
-                Task<int> currentReadFuture = _pendingSslStreamReadFuture;
+                var currentReadFuture = _pendingSslStreamReadFuture;
 
                 int outputBufferLength;
 
@@ -561,11 +566,19 @@ namespace DotNetty.Handlers.Tls
 
         #region ** ReadFromSslStreamAsync **
 
+#if NETCOREAPP
+        private Task<int> ReadFromSslStreamAsync(IByteBuffer outputBuffer, int outputBufferLength)
+        {
+            Memory<byte> outlet = outputBuffer.GetMemory(outputBuffer.WriterIndex, outputBufferLength);
+            return _sslStream.ReadAsync(outlet).AsTask();
+        }
+#else
         private Task<int> ReadFromSslStreamAsync(IByteBuffer outputBuffer, int outputBufferLength)
         {
             ArraySegment<byte> outlet = outputBuffer.GetIoBuffer(outputBuffer.WriterIndex, outputBufferLength);
             return _sslStream.ReadAsync(outlet.Array, outlet.Offset, outlet.Count);
         }
+#endif
 
         #endregion
 
@@ -925,6 +938,27 @@ namespace DotNetty.Handlers.Tls
 
         #region ** FinishWrap **
 
+#if NETCOREAPP
+        private void FinishWrap(ReadOnlySpan<byte> buffer, IPromise promise)
+        {
+            IByteBuffer output;
+            var capturedContext = CapturedContext;
+            if (buffer.IsEmpty)
+            {
+                output = Unpooled.Empty;
+            }
+            else
+            {
+                var bufLen = buffer.Length;
+                output = capturedContext.Allocator.Buffer(bufLen);
+                buffer.CopyTo(output.Free);
+                output.Advance(bufLen);
+            }
+
+            _lastContextWriteTask = capturedContext.WriteAsync(output, promise);
+        }
+#endif
+
         private void FinishWrap(byte[] buffer, int offset, int count, IPromise promise)
         {
             IByteBuffer output;
@@ -945,6 +979,16 @@ namespace DotNetty.Handlers.Tls
         #endregion
 
         #region ** FinishWrapNonAppDataAsync **
+
+#if NETCOREAPP
+        private Task FinishWrapNonAppDataAsync(ReadOnlyMemory<byte> buffer, IPromise promise)
+        {
+            var capturedContext = CapturedContext;
+            var future = capturedContext.WriteAndFlushAsync(Unpooled.WrappedBuffer(buffer.ToArray()), promise);
+            this.ReadIfNeeded(capturedContext);
+            return future;
+        }
+#endif
 
         private Task FinishWrapNonAppDataAsync(byte[] buffer, int offset, int count, IPromise promise)
         {
@@ -1021,23 +1065,12 @@ namespace DotNetty.Handlers.Tls
 
         #region ** class MediationStream **
 
-        private sealed class MediationStream : Stream
+        private sealed partial class MediationStream : Stream
         {
             private readonly TlsHandler _owner;
-            private byte[] _input;
-            private int _inputStartOffset;
             private int _inputOffset;
             private int _inputLength;
             private TaskCompletionSource<int> _readCompletionSource;
-            private ArraySegment<byte> _sslOwnedBuffer;
-#if !DESKTOPCLR
-            private int _readByteCount;
-#else
-            private SynchronousAsyncResult<int> _syncReadResult;
-            private AsyncCallback _readCallback;
-            private IPromise _writeCompletion;
-            private AsyncCallback _writeCallback;
-#endif
 
             public MediationStream(TlsHandler owner)
             {
@@ -1045,261 +1078,6 @@ namespace DotNetty.Handlers.Tls
             }
 
             public int SourceReadableBytes => _inputLength - _inputOffset;
-
-            public void SetSource(byte[] source, int offset)
-            {
-                _input = source;
-                _inputStartOffset = offset;
-                _inputOffset = 0;
-                _inputLength = 0;
-            }
-
-            public void ResetSource()
-            {
-                _input = null;
-                _inputLength = 0;
-            }
-
-            public void ExpandSource(int count)
-            {
-                Debug.Assert(_input != null);
-
-                _inputLength += count;
-
-                ArraySegment<byte> sslBuffer = _sslOwnedBuffer;
-                if (sslBuffer.Array == null)
-                {
-                    // there is no pending read operation - keep for future
-                    return;
-                }
-                _sslOwnedBuffer = default(ArraySegment<byte>);
-
-#if !DESKTOPCLR
-                _readByteCount = this.ReadFromInput(sslBuffer.Array, sslBuffer.Offset, sslBuffer.Count);
-                // hack: this tricks SslStream's continuation to run synchronously instead of dispatching to TP. Remove once Begin/EndRead are available. 
-                new Task(ReadCompletionAction, this).RunSynchronously(TaskScheduler.Default);
-#else
-                int read = ReadFromInput(sslBuffer.Array, sslBuffer.Offset, sslBuffer.Count);
-
-                TaskCompletionSource<int> promise = _readCompletionSource;
-                _readCompletionSource = null;
-                promise.TrySetResult(read);
-
-                AsyncCallback callback = _readCallback;
-                _readCallback = null;
-                callback?.Invoke(promise.Task);
-#endif
-            }
-
-#if !DESKTOPCLR
-            static readonly Action<object> ReadCompletionAction = ReadCompletion;
-            static void ReadCompletion(object ms)
-            {
-                var self = (MediationStream)ms;
-                TaskCompletionSource<int> p = self._readCompletionSource;
-                self._readCompletionSource = null;
-                p.TrySetResult(self._readByteCount);
-            }
-
-            public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-            {
-                if (this.SourceReadableBytes > 0)
-                {
-                    // we have the bytes available upfront - write out synchronously
-                    int read = ReadFromInput(buffer, offset, count);
-                    return Task.FromResult(read);
-                }
-
-                Debug.Assert(_sslOwnedBuffer.Array == null);
-                // take note of buffer - we will pass bytes there once available
-                _sslOwnedBuffer = new ArraySegment<byte>(buffer, offset, count);
-                _readCompletionSource = new TaskCompletionSource<int>();
-                return _readCompletionSource.Task;
-            }
-#else
-            public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-            {
-                if (this.SourceReadableBytes > 0)
-                {
-                    // we have the bytes available upfront - write out synchronously
-                    int read = ReadFromInput(buffer, offset, count);
-                    var res = this.PrepareSyncReadResult(read, state);
-                    callback?.Invoke(res);
-                    return res;
-                }
-
-                Debug.Assert(_sslOwnedBuffer.Array == null);
-                // take note of buffer - we will pass bytes there once available
-                _sslOwnedBuffer = new ArraySegment<byte>(buffer, offset, count);
-                _readCompletionSource = new TaskCompletionSource<int>(state);
-                _readCallback = callback;
-                return _readCompletionSource.Task;
-            }
-
-            public override int EndRead(IAsyncResult asyncResult)
-            {
-                SynchronousAsyncResult<int> syncResult = _syncReadResult;
-                if (ReferenceEquals(asyncResult, syncResult))
-                {
-                    return syncResult.Result;
-                }
-
-                Debug.Assert(_readCompletionSource == null || _readCompletionSource.Task == asyncResult);
-                Debug.Assert(!((Task<int>)asyncResult).IsCanceled);
-
-                try
-                {
-                    return ((Task<int>)asyncResult).Result;
-                }
-                catch (AggregateException ex)
-                {
-#if !NET40
-                    ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
-#else
-                    throw ExceptionEnlightenment.PrepareForRethrow(ex.InnerException);
-#endif
-                    throw; // unreachable
-                }
-            }
-
-            private IAsyncResult PrepareSyncReadResult(int readBytes, object state)
-            {
-                // it is safe to reuse sync result object as it can't lead to leak (no way to attach to it via handle)
-                SynchronousAsyncResult<int> result = _syncReadResult ?? (_syncReadResult = new SynchronousAsyncResult<int>());
-                result.Result = readBytes;
-                result.AsyncState = state;
-                return result;
-            }
-#endif
-
-            public override void Write(byte[] buffer, int offset, int count) => _owner.FinishWrap(buffer, offset, count, _owner.CapturedContext.NewPromise());
-
-#if !NET40
-            public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-                => _owner.FinishWrapNonAppDataAsync(buffer, offset, count, _owner.CapturedContext.NewPromise());
-
-#endif
-
-#if DESKTOPCLR
-#if !NET40
-            private static readonly Action<Task, object> s_writeCompleteCallback = HandleChannelWriteComplete;
-#endif
-
-            public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-            {
-#if NET40
-                Task task = _owner.FinishWrapNonAppDataAsync(buffer, offset, count, _owner.CapturedContext.NewPromise());
-#else
-                Task task = this.WriteAsync(buffer, offset, count);
-#endif
-                if (task.IsSuccess())
-                {
-                    // write+flush completed synchronously (and successfully)
-                    var result = new SynchronousAsyncResult<int>
-                    {
-                        AsyncState = state
-                    };
-                    callback?.Invoke(result);
-                    return result;
-                }
-                else
-                {
-                    if (callback != null || state != task.AsyncState)
-                    {
-                        Debug.Assert(_writeCompletion == null);
-                        _writeCallback = callback;
-                        var tcs = _owner.CapturedContext.NewPromise(state);
-                        _writeCompletion = tcs;
-#if !NET40
-                        task.ContinueWith(s_writeCompleteCallback, this, TaskContinuationOptions.ExecuteSynchronously);
-#else
-                        Action<Task> continuationAction = completed => HandleChannelWriteComplete(completed, this);
-                        task.ContinueWith(continuationAction, TaskContinuationOptions.ExecuteSynchronously);
-#endif
-                        return tcs.Task;
-                    }
-                    else
-                    {
-                        return task;
-                    }
-                }
-            }
-
-            private static void HandleChannelWriteComplete(Task writeTask, object state)
-            {
-                var self = (MediationStream)state;
-
-                AsyncCallback callback = self._writeCallback;
-                self._writeCallback = null;
-
-                var promise = self._writeCompletion;
-                self._writeCompletion = null;
-
-#if NETCOREAPP
-                if (writeTask.IsCompletedSuccessfully)
-                {
-                    promise.TryComplete();
-                }
-                else if (writeTask.IsCanceled)
-                {
-                    promise.TrySetCanceled();
-                }
-                else if (writeTask.IsFaulted)
-                {
-                    promise.TrySetException(writeTask.Exception.InnerExceptions);
-                }
-#else
-                if (writeTask.IsCanceled)
-                {
-                    promise.TrySetCanceled();
-                }
-                else if (writeTask.IsFaulted)
-                {
-                    promise.TrySetException(writeTask.Exception.InnerExceptions);
-                }
-                else if (writeTask.IsCompleted)
-                {
-                    promise.TryComplete();
-                }
-#endif
-
-                callback?.Invoke(promise.Task);
-            }
-
-            public override void EndWrite(IAsyncResult asyncResult)
-            {
-                if (asyncResult is SynchronousAsyncResult<int>)
-                {
-                    return;
-                }
-
-                try
-                {
-                    ((Task)asyncResult).Wait();
-                }
-                catch (AggregateException ex)
-                {
-#if !NET40
-                    ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
-#else
-                    throw ExceptionEnlightenment.PrepareForRethrow(ex.InnerException);
-#endif
-                    throw;
-                }
-            }
-#endif
-
-            private int ReadFromInput(byte[] destination, int destinationOffset, int destinationCapacity)
-            {
-                Debug.Assert(destination != null);
-
-                byte[] source = _input;
-                int readableBytes = this.SourceReadableBytes;
-                int length = Math.Min(readableBytes, destinationCapacity);
-                Buffer.BlockCopy(source, _inputStartOffset + _inputOffset, destination, destinationOffset, length);
-                _inputOffset += length;
-                return length;
-            }
 
             public override void Flush()
             {

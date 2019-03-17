@@ -22,7 +22,7 @@ namespace DotNetty.Buffers
         {
             this.CheckIndex(index, count);
             index = this.Idx(index);
-            return new ReadOnlySpan<byte>(Unsafe.AsPointer(ref this.Memory[this.Offset]), count);
+            return new ReadOnlySpan<byte>(Unsafe.AsPointer(ref this.Memory[index]), count);
         }
 
         public override ReadOnlySequence<byte> GetSequence(int index, int count)
@@ -41,7 +41,7 @@ namespace DotNetty.Buffers
         {
             this.CheckIndex(index, count);
             index = this.Idx(index);
-            return new Span<byte>(Unsafe.AsPointer(ref this.Memory[this.Offset]), count);
+            return new Span<byte>(Unsafe.AsPointer(ref this.Memory[index]), count);
         }
     }
 }

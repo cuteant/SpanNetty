@@ -231,7 +231,8 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
-            this.CheckIndex(index, length);
+            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
             fixed (byte* addr = &this.Addr(index))
             {
                 UnsafeByteBufferUtil.GetBytes(this, addr, index, dst, dstIndex, length);
@@ -241,7 +242,8 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
-            this.CheckIndex(index, length);
+            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            this.CheckDstIndex(index, length, dstIndex, dst.Length);
             fixed (byte* addr = &this.Addr(index))
             {
                 UnsafeByteBufferUtil.GetBytes(this, addr, index, dst, dstIndex, length);
@@ -299,7 +301,8 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
-            this.CheckIndex(index, length);
+            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            this.CheckSrcIndex(index, length, srcIndex, src.Capacity);
             fixed (byte* addr = &this.Addr(index))
             {
                 UnsafeByteBufferUtil.SetBytes(this, addr, index, src, srcIndex, length);
@@ -309,7 +312,8 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
-            this.CheckIndex(index, length);
+            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            this.CheckSrcIndex(index, length, srcIndex, src.Length);
             if (length != 0)
             {
                 fixed (byte* addr = &this.Addr(index))
@@ -323,25 +327,52 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer GetBytes(int index, Stream output, int length)
         {
+            if (null == output) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
             this.CheckIndex(index, length);
-            fixed (byte* addr = &this.Addr(index))
-            {
-                UnsafeByteBufferUtil.GetBytes(this, addr, index, output, length);
-                return this;
-            }
+            //fixed (byte* addr = &this.Addr(index))
+            //{
+            //    UnsafeByteBufferUtil.GetBytes(this, addr, index, output, length);
+            //    return this;
+            //}
+            // UnsafeByteBufferUtil.GetBytes 多一遍内存拷贝，最终还是调用 stream.write，没啥必要
+#if NETCOREAPP
+            output.Write(new ReadOnlySpan<byte>(this.buffer, index, length));
+#else
+            output.Write(this.buffer, index, length);
+#endif
+            return this;
         }
 
         public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
+            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckIndex(index, length);
-            int read;
-            fixed (byte* addr = &this.Addr(index))
-            {
-                read = UnsafeByteBufferUtil.SetBytes(this, addr, index, src, length);
+            //int read;
+            //fixed (byte* addr = &this.Addr(index))
+            //{
+            //    read = UnsafeByteBufferUtil.SetBytes(this, addr, index, src, length);
 
-                // See https://github.com/Azure/DotNetty/issues/436
-                return Task.FromResult(read);
+            //    // See https://github.com/Azure/DotNetty/issues/436
+            //    return Task.FromResult(read);
+            //}
+            int readTotal = 0;
+            int read;
+            do
+            {
+#if NETCOREAPP
+                read = src.Read(new Span<byte>(this.buffer, index + readTotal, length - readTotal));
+#else
+                read = src.Read(this.buffer, index + readTotal, length - readTotal);
+#endif
+                readTotal += read;
             }
+            while (read > 0 && readTotal < length);
+
+#if NET40
+            return TaskEx.FromResult(readTotal);
+#else
+            return Task.FromResult(readTotal);
+#endif
         }
 
         public override IByteBuffer Copy(int index, int length)

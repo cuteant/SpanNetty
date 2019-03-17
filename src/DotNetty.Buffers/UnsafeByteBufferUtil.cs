@@ -175,10 +175,10 @@ namespace DotNetty.Buffers
 
         internal static void SetZero(byte[] array, int index, int length)
         {
-            if (length == 0)
-            {
-                return;
-            }
+            //if (length == 0)
+            //{
+            //    return;
+            //}
             PlatformDependent.SetMemory(array, index, length, Zero);
         }
 
@@ -227,10 +227,10 @@ namespace DotNetty.Buffers
                 }
                 while (readBytes > 0 && readTotal < length);
 
-                if (readTotal > 0)
-                {
+                //if (readTotal > 0)
+                //{
                     PlatformDependent.CopyMemory(tmp, offset, addr, readTotal);
-                }
+                //}
 
                 return readTotal;
             }
@@ -242,12 +242,12 @@ namespace DotNetty.Buffers
 
         internal static void GetBytes(AbstractByteBuffer buf, byte* addr, int index, IByteBuffer dst, int dstIndex, int length)
         {
-            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            //if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
 
-            if (MathUtil.IsOutOfBounds(dstIndex, length, dst.Capacity))
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_DstIndex(dstIndex);
-            }
+            //if (MathUtil.IsOutOfBounds(dstIndex, length, dst.Capacity))
+            //{
+            //    ThrowHelper.ThrowIndexOutOfRangeException_DstIndex(dstIndex);
+            //}
 
             if (dst.HasMemoryAddress)
             {
@@ -276,26 +276,26 @@ namespace DotNetty.Buffers
 
         internal static void GetBytes(AbstractByteBuffer buf, byte* addr, int index, byte[] dst, int dstIndex, int length)
         {
-            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            //if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
 
-            if (MathUtil.IsOutOfBounds(dstIndex, length, dst.Length))
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_DstIndex(dstIndex);
-            }
-            if (length != 0)
-            {
+            //if (MathUtil.IsOutOfBounds(dstIndex, length, dst.Length))
+            //{
+            //    ThrowHelper.ThrowIndexOutOfRangeException_DstIndex(dstIndex);
+            //}
+            //if (length != 0)
+            //{
                 PlatformDependent.CopyMemory(addr, dst, dstIndex, length);
-            }
+            //}
         }
 
         internal static void SetBytes(AbstractByteBuffer buf, byte* addr, int index, IByteBuffer src, int srcIndex, int length)
         {
-            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            //if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
 
-            if (MathUtil.IsOutOfBounds(srcIndex, length, src.Capacity))
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_SrcIndex(srcIndex);
-            }
+            //if (MathUtil.IsOutOfBounds(srcIndex, length, src.Capacity))
+            //{
+            //    ThrowHelper.ThrowIndexOutOfRangeException_SrcIndex(srcIndex);
+            //}
 
             if (length != 0)
             {
@@ -350,10 +350,10 @@ namespace DotNetty.Buffers
 
         internal static void SetZero(byte* addr, int length)
         {
-            if (length == 0)
-            {
-                return;
-            }
+            //if (length == 0)
+            //{
+            //    return;
+            //}
             PlatformDependent.SetMemory(addr, length, Zero);
         }
 

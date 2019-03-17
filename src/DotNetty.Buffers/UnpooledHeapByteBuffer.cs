@@ -133,6 +133,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
+            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
             this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
             if (dst.HasArray)
             {
@@ -148,6 +149,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
+            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
             this.CheckDstIndex(index, length, dstIndex, dst.Length);
             PlatformDependent.CopyMemory(this.array, index, dst, dstIndex, length);
             return this;
@@ -155,13 +157,19 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer GetBytes(int index, Stream destination, int length)
         {
+            if (null == destination) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.destination); }
             this.CheckIndex(index, length);
-            destination.Write(this.Array, this.ArrayOffset + index, length);
+#if NETCOREAPP
+            destination.Write(new ReadOnlySpan<byte>(this.array, index, length));
+#else
+            destination.Write(this.array, index, length);
+#endif
             return this;
         }
 
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
+            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckSrcIndex(index, length, srcIndex, src.Capacity);
             if (src.HasArray)
             {
@@ -176,25 +184,35 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
+            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckSrcIndex(index, length, srcIndex, src.Length);
             PlatformDependent.CopyMemory(src, srcIndex, this.array, index, length);
             return this;
         }
 
-        public override async Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
+        public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
-            this.EnsureAccessible();
+            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            this.CheckIndex(index, length);
+
             int readTotal = 0;
             int read;
-            int offset = this.ArrayOffset + index;
             do
             {
-                read = await src.ReadAsync(this.Array, offset + readTotal, length - readTotal, cancellationToken);
+#if NETCOREAPP
+                read = src.Read(new Span<byte>(this.array, index + readTotal, length - readTotal));
+#else
+                read = src.Read(this.array, index + readTotal, length - readTotal);
+#endif
                 readTotal += read;
             }
             while (read > 0 && readTotal < length);
 
-            return readTotal;
+#if NET40
+            return TaskEx.FromResult(readTotal);
+#else
+            return Task.FromResult(readTotal);
+#endif
         }
 
         public override int IoBufferCount => 1;

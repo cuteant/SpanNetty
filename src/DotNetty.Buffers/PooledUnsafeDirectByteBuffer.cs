@@ -69,21 +69,31 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
-            this.CheckIndex(index, length);
+            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
             UnsafeByteBufferUtil.GetBytes(this, this.Addr(index), index, dst, dstIndex, length);
             return this;
         }
 
         public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
-            this.CheckIndex(index, length);
+            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            this.CheckDstIndex(index, length, dstIndex, dst.Length);
             UnsafeByteBufferUtil.GetBytes(this, this.Addr(index), index, dst, dstIndex, length);
             return this;
         }
 
         public override IByteBuffer GetBytes(int index, Stream output, int length)
         {
-            UnsafeByteBufferUtil.GetBytes(this, this.Addr(index), index, output, length);
+            if (null == output) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
+            this.CheckIndex(index, length);
+            //UnsafeByteBufferUtil.GetBytes(this, this.Addr(index), index, output, length);
+            // UnsafeByteBufferUtil.GetBytes 多一遍内存拷贝，最终还是调用 stream.write，没啥必要
+#if NETCOREAPP
+            output.Write(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref this.Memory[this.Idx(index)]), length));
+#else
+            output.Write(this.Memory, this.Idx(index), length);
+#endif
             return this;
         }
 
@@ -107,23 +117,47 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
-            this.CheckIndex(index, length);
+            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            this.CheckSrcIndex(index, length, srcIndex, src.Capacity);
             UnsafeByteBufferUtil.SetBytes(this, this.Addr(index), index, src, srcIndex, length);
             return this;
         }
 
         public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
-            this.CheckIndex(index, length);
+            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            this.CheckSrcIndex(index, length, srcIndex, src.Length);
             UnsafeByteBufferUtil.SetBytes(this, this.Addr(index), index, src, srcIndex, length);
             return this;
         }
 
         public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
+            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckIndex(index, length);
-            int read = UnsafeByteBufferUtil.SetBytes(this, this.Addr(index), index, src, length);
-            return Task.FromResult(read);
+            //int read = UnsafeByteBufferUtil.SetBytes(this, this.Addr(index), index, src, length);
+            //return Task.FromResult(read);
+            int readTotal = 0;
+            int read;
+#if !NETCOREAPP
+            int offset = this.Idx(index);
+#endif
+            do
+            {
+#if NETCOREAPP
+                read = src.Read(new Span<byte>(Unsafe.AsPointer(ref this.Memory[this.Idx(index + readTotal)]), length - readTotal));
+#else
+                read = src.Read(this.Memory, offset + readTotal, length - readTotal);
+#endif
+                readTotal += read;
+            }
+            while (read > 0 && readTotal < length);
+
+#if NET40
+            return TaskEx.FromResult(readTotal);
+#else
+            return Task.FromResult(readTotal);
+#endif
         }
 
         public override IByteBuffer Copy(int index, int length)
