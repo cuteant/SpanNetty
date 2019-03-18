@@ -19,9 +19,7 @@ namespace DotNetty.Handlers.Tls
         // Maximal number of ssl records to inspect before fallback to the default server TLS setting (aligned with netty) 
         const int MAX_SSL_RECORDS = 4;
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance(typeof(SniHandler));
-#if DESKTOPCLR
         static readonly CultureInfo UnitedStatesCultureInfo = new CultureInfo("en-US");
-#endif
         readonly Func<Stream, SslStream> sslStreamFactory;
         readonly ServerTlsSniSettings serverTlsSniSettings;
 
@@ -215,13 +213,7 @@ namespace DotNetty.Handlers.Tls
                                                     AllowUnassigned = true
                                                 };
 
-                                                hostname = idn.GetAscii(hostname);
-#if !DESKTOPCLR
-                                                // TODO: netcore does not have culture sensitive tolower()
-                                                hostname = hostname.ToLowerInvariant();
-#else
-                                                hostname = hostname.ToLower(UnitedStatesCultureInfo);
-#endif
+                                                hostname = idn.GetAscii(hostname).ToLower(UnitedStatesCultureInfo);
                                                 this.Select(context, hostname);
                                                 return;
                                             }

@@ -8,6 +8,7 @@
 namespace DotNetty.Transport.Libuv.Native
 {
     using System;
+    using System.Buffers;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
@@ -26,16 +27,12 @@ namespace DotNetty.Transport.Libuv.Native
 
         static WriteRequest()
         {
-#if NETSTANDARD
             BufferSize = Marshal.SizeOf<uv_buf_t>();
-#else
-            BufferSize = Marshal.SizeOf(typeof(uv_buf_t));
-#endif
         }
 
         readonly int maxBytes;
         readonly ThreadLocalPool.Handle recyclerHandle;
-        readonly List<GCHandle> handles;
+        readonly List<MemoryHandle> handles;
 
         IntPtr bufs;
         GCHandle pin;
@@ -55,7 +52,7 @@ namespace DotNetty.Transport.Libuv.Native
             this.maxBytes = MaximumBytes;
             this.bufs = addr + offset;
             this.pin = GCHandle.Alloc(addr, GCHandleType.Pinned);
-            this.handles = new List<GCHandle>();
+            this.handles = new List<MemoryHandle>();
         }
 
         internal void DoWrite(INativeUnsafe channelUnsafe, ChannelOutboundBuffer input)
@@ -69,73 +66,47 @@ namespace DotNetty.Transport.Libuv.Native
 
         bool Add(IByteBuffer buf)
         {
-            if (this.count == MaximumLimit)
-            {
-                return false;
-            }
+            if (this.count == MaximumLimit) { return false; }
 
             int len = buf.ReadableBytes;
-            if (len == 0)
+            if (len == 0) { return true; }
+
+            if (this.maxBytes - len < this.size && this.count > 0) { return false; }
+
+            if (buf.IoBufferCount == 1)
             {
+                var memory = buf.GetReadableMemory();
+                var memoryHandle = memory.Pin();
+                this.handles.Add(memoryHandle);
+                this.Add(memoryHandle, memory.Length);
                 return true;
             }
 
-            if (this.maxBytes - len < this.size && this.count > 0)
+            return AddMany(buf);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        bool AddMany(IByteBuffer buf)
+        {
+            if (MaximumLimit - buf.IoBufferCount < this.count) { return false; }
+
+            var segments = buf.GetSequence();
+            foreach (var memory in segments)
             {
-                return false;
-            }
-
-            IntPtr addr = IntPtr.Zero;
-            if (buf.HasMemoryAddress)
-            {
-                addr = buf.AddressOfPinnedMemory();
-            }
-
-            if (addr != IntPtr.Zero)
-            {
-                this.Add(addr, buf.ReaderIndex, len);
-            }
-            else
-            {
-                int bufferCount = buf.IoBufferCount;
-                if (MaximumLimit - bufferCount < this.count)
-                {
-                    return false;
-                }
-
-                if (bufferCount == 1)
-                {
-                    ArraySegment<byte> arraySegment = buf.GetIoBuffer();
-
-                    byte[] array = arraySegment.Array;
-                    GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
-                    this.handles.Add(handle);
-
-                    addr = handle.AddrOfPinnedObject();
-                    this.Add(addr, arraySegment.Offset, arraySegment.Count);
-                }
-                else
-                {
-                    ArraySegment<byte>[] segments = buf.GetIoBuffers();
-                    for (int i = 0; i < segments.Length; i++)
-                    {
-                        GCHandle handle = GCHandle.Alloc(segments[i].Array, GCHandleType.Pinned);
-                        this.handles.Add(handle);
-
-                        addr = handle.AddrOfPinnedObject();
-                        this.Add(addr, segments[i].Offset, segments[i].Count);
-                    }
-                }
+                var memoryHandle = memory.Pin();
+                this.handles.Add(memoryHandle);
+                this.Add(memoryHandle, memory.Length);
             }
             return true;
         }
 
-        void Add(IntPtr addr, int offset, int len)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        unsafe void Add(MemoryHandle memoryHandle, int len)
         {
             IntPtr baseOffset = this.MemoryAddress(this.count);
             this.size += len;
             ++this.count;
-            uv_buf_t.InitMemory(baseOffset, addr + offset, len);
+            uv_buf_t.InitMemory(baseOffset, (IntPtr)memoryHandle.Pointer, len);
         }
 
         unsafe void DoWrite()
@@ -148,7 +119,7 @@ namespace DotNetty.Transport.Libuv.Native
                 WriteCallback);
 
             if (result < 0)
-            { 
+            {
                 this.Release();
                 NativeMethods.ThrowOperationException((uv_err_code)result);
             }
@@ -158,14 +129,12 @@ namespace DotNetty.Transport.Libuv.Native
 
         void Release()
         {
-            if (this.handles.Count > 0)
+            var handleCount = this.handles.Count;
+            if (handleCount > 0)
             {
-                for (int i = 0; i < this.handles.Count; i++)
+                for (int i = 0; i < handleCount; i++)
                 {
-                    if (this.handles[i].IsAllocated)
-                    {
-                        this.handles[i].Free();
-                    }
+                    this.handles[i].Dispose();
                 }
                 this.handles.Clear();
             }

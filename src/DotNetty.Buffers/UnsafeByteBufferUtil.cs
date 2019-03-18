@@ -359,13 +359,13 @@ namespace DotNetty.Buffers
 
         internal static string GetString(byte* src, int length, Encoding encoding)
         {
-#if NETSTANDARD
-            return encoding.GetString(src, length);
-#else
+#if NET40 || NET451
             int charCount = encoding.GetCharCount(src, length);
             char* chars = stackalloc char[charCount];
             encoding.GetChars(src, length, chars, charCount);
             return new string(chars, 0, charCount);
+#else
+            return encoding.GetString(src, length);
 #endif
         }
 

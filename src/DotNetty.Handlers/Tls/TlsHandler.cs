@@ -18,9 +18,6 @@ namespace DotNetty.Handlers.Tls
     using DotNetty.Common.Utilities;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
-#if DESKTOPCLR
-    using System.Runtime.ExceptionServices;
-#endif
 
     public sealed partial class TlsHandler : ByteToMessageDecoder
     {

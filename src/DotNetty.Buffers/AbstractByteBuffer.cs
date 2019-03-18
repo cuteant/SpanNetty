@@ -133,11 +133,23 @@ namespace DotNetty.Buffers
 
         public virtual bool IsWritable(int size) => this.Capacity - this.writerIndex >= size;
 
-        public virtual int ReadableBytes => this.writerIndex - this.readerIndex;
+        public virtual int ReadableBytes
+        {
+            [MethodImpl(InlineMethod.Value)]
+            get => this.writerIndex - this.readerIndex;
+        }
 
-        public virtual int WritableBytes => this.Capacity - this.writerIndex;
+        public virtual int WritableBytes
+        {
+            [MethodImpl(InlineMethod.Value)]
+            get => this.Capacity - this.writerIndex;
+        }
 
-        public virtual int MaxWritableBytes => this.MaxCapacity - this.writerIndex;
+        public virtual int MaxWritableBytes
+        {
+            [MethodImpl(InlineMethod.Value)]
+            get => this.MaxCapacity - this.writerIndex;
+        }
 
         public virtual IByteBuffer MarkReaderIndex()
         {
