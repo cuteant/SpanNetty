@@ -328,7 +328,7 @@ namespace System.Reflection
       {
         if (type == thisOrBaseType) { return true; }
 
-        type = type.GetTypeInfo().BaseType;
+        type = type.BaseType;
       }
       return false;
     }
@@ -343,7 +343,7 @@ namespace System.Reflection
       {
         if (type.IsGenericType) { return true; }
 
-        type = type.GetTypeInfo().BaseType;
+        type = type.BaseType;
       }
       return false;
     }
@@ -358,7 +358,7 @@ namespace System.Reflection
       {
         if (type.IsGenericType) { return type; }
 
-        type = type.GetTypeInfo().BaseType;
+        type = type.BaseType;
       }
       return null;
     }
@@ -627,15 +627,13 @@ namespace System.Reflection
 
     #region -- GenericTypeArguments --
 
+#if NET40
     [MethodImpl(AggressiveInlining)]
     public static Type[] GenericTypeArguments(this Type type)
     {
-#if NET40
       return type.IsGenericType && !type.IsGenericTypeDefinition ? type.GetGenericArguments() : Type.EmptyTypes;
-#else
-      return type.GenericTypeArguments;
-#endif
     }
+#endif
 
     #endregion
 
