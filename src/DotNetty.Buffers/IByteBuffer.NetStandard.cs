@@ -22,6 +22,18 @@ namespace DotNetty.Buffers
         Span<byte> Free { get; }
 
         Span<byte> GetSpan(int index, int count);
+
+        int GetBytes(int index, Span<byte> destination);
+        int GetBytes(int index, Memory<byte> destination);
+
+        int ReadBytes(Span<byte> destination);
+        int ReadBytes(Memory<byte> destination);
+
+        IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src);
+        IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src);
+
+        IByteBuffer WriteBytes(ReadOnlySpan<byte> src);
+        IByteBuffer WriteBytes(ReadOnlyMemory<byte> src);
     }
 }
 #endif

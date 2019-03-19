@@ -27,6 +27,18 @@ namespace DotNetty.Buffers
         public Span<byte> Free => Span<byte>.Empty;
         public Span<byte> GetSpan(int sizeHintt = 0) => Span<byte>.Empty;
         public Span<byte> GetSpan(int index, int count) => Span<byte>.Empty;
+
+        public int GetBytes(int index, Span<byte> destination) => 0;
+        public int GetBytes(int index, Memory<byte> destination) => 0;
+
+        public int ReadBytes(Span<byte> destination) => 0;
+        public int ReadBytes(Memory<byte> destination) => 0;
+
+        public IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src) => this.CheckIndex(index, src.Length);
+        public IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src) => this.CheckIndex(index, src.Length);
+
+        public IByteBuffer WriteBytes(ReadOnlySpan<byte> src) => this.CheckLength(src.Length);
+        public IByteBuffer WriteBytes(ReadOnlyMemory<byte> src) => this.CheckLength(src.Length);
     }
 }
 #endif

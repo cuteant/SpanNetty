@@ -82,6 +82,50 @@ namespace DotNetty.Buffers
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.GetSpan(index, count);
         }
+
+        public override int GetBytes(int index, Span<byte> destination)
+        {
+            RecordLeakNonRefCountingOperation(this.Leak);
+            return base.GetBytes(index, destination);
+        }
+        public override int GetBytes(int index, Memory<byte> destination)
+        {
+            RecordLeakNonRefCountingOperation(this.Leak);
+            return base.GetBytes(index, destination);
+        }
+
+        public override int ReadBytes(Span<byte> destination)
+        {
+            RecordLeakNonRefCountingOperation(this.Leak);
+            return base.ReadBytes(destination);
+        }
+        public override int ReadBytes(Memory<byte> destination)
+        {
+            RecordLeakNonRefCountingOperation(this.Leak);
+            return base.ReadBytes(destination);
+        }
+
+        public override IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src)
+        {
+            RecordLeakNonRefCountingOperation(this.Leak);
+            return base.SetBytes(index, src);
+        }
+        public override IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src)
+        {
+            RecordLeakNonRefCountingOperation(this.Leak);
+            return base.SetBytes(index, src);
+        }
+
+        public override IByteBuffer WriteBytes(ReadOnlySpan<byte> src)
+        {
+            RecordLeakNonRefCountingOperation(this.Leak);
+            return base.WriteBytes(src);
+        }
+        public override IByteBuffer WriteBytes(ReadOnlyMemory<byte> src)
+        {
+            RecordLeakNonRefCountingOperation(this.Leak);
+            return base.WriteBytes(src);
+        }
     }
 }
 #endif

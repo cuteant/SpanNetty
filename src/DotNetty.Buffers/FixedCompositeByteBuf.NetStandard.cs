@@ -6,43 +6,73 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.Buffers;
-    using System.Linq;
+    using System.Diagnostics;
     using DotNetty.Common;
 
     partial class FixedCompositeByteBuf
     {
-        public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count)
+        protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count)
         {
-            switch (this.buffers.Length)
+            if (0u >= (uint)count) { return ReadOnlyMemory<byte>.Empty; }
+
+            if (this.buffers.Length == 1)
             {
-                case 0:
-                    return ReadOnlyMemory<byte>.Empty;
-                case 1:
-                    return this.Buffer(0).GetReadableMemory(index, count);
-                default:
-                    throw new NotSupportedException();
+                var buf = this.Buffer(0);
+                if (buf.IoBufferCount == 1)
+                {
+                    return buf.GetReadableMemory(index, count);
+                }
             }
+
+            var merged = new Memory<byte>(new byte[count]);
+            var bufs = this.GetSequence(index, count);
+
+            int offset = 0;
+            foreach (ReadOnlyMemory<byte> buf in bufs)
+            {
+                Debug.Assert(merged.Length - offset >= buf.Length);
+
+                buf.CopyTo(merged.Slice(offset));
+                offset += buf.Length;
+            }
+
+            return merged;
         }
 
-        public override ReadOnlySpan<byte> GetReadableSpan(int index, int count)
+        protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count)
         {
-            switch (this.buffers.Length)
+            if (0u >= (uint)count) { return ReadOnlySpan<byte>.Empty; }
+
+            if (this.buffers.Length == 1)
             {
-                case 0:
-                    return ReadOnlySpan<byte>.Empty;
-                case 1:
-                    return this.Buffer(0).GetReadableSpan(index, count);
-                default:
-                    throw new NotSupportedException();
+                var buf = this.Buffer(0);
+                if (buf.IoBufferCount == 1)
+                {
+                    return buf.GetReadableSpan(index, count);
+                }
             }
+
+            var merged = new Memory<byte>(new byte[count]);
+            var bufs = this.GetSequence(index, count);
+
+            int offset = 0;
+            foreach (ReadOnlyMemory<byte> buf in bufs)
+            {
+                Debug.Assert(merged.Length - offset >= buf.Length);
+
+                buf.CopyTo(merged.Slice(offset));
+                offset += buf.Length;
+            }
+
+            return merged.Span;
         }
 
         public override ReadOnlySequence<byte> GetSequence(int index, int count)
         {
             this.CheckIndex(index, count);
-            if (count == 0) { return ReadOnlySequence<byte>.Empty; }
+            if (0u >= (uint)count) { return ReadOnlySequence<byte>.Empty; }
 
-            var array = ThreadLocalList<ArraySegment<byte>>.NewInstance(this.nioBufferCount);
+            var array = ThreadLocalList<ReadOnlyMemory<byte>>.NewInstance(this.nioBufferCount);
             try
             {
                 var c = this.FindComponent(index);
@@ -58,10 +88,14 @@ namespace DotNetty.Buffers
                             ThrowHelper.ThrowNotSupportedException();
                             break;
                         case 1:
-                            array.Add(s.GetIoBuffer(index - adjustment, localLength));
+                            array.Add(s.GetReadableMemory(index - adjustment, localLength));
                             break;
                         default:
-                            array.AddRange(s.GetIoBuffers(index - adjustment, localLength));
+                            var sequence = s.GetSequence(index - adjustment, localLength);
+                            foreach (var memory in sequence)
+                            {
+                                array.Add(memory);
+                            }
                             break;
                     }
 
@@ -72,7 +106,7 @@ namespace DotNetty.Buffers
                     s = this.Buffer(++i);
                 }
 
-                return ReadOnlyBufferSegment.Create(array.Select(_ => (ReadOnlyMemory<byte>)_));
+                return ReadOnlyBufferSegment.Create(array);
             }
             finally
             {
@@ -80,30 +114,42 @@ namespace DotNetty.Buffers
             }
         }
 
-        public override Memory<byte> GetMemory(int index, int count)
+        public override Memory<byte> GetMemory(int sizeHintt = 0)
         {
-            switch (this.buffers.Length)
-            {
-                case 0:
-                    return Memory<byte>.Empty;
-                case 1:
-                    return this.Buffer(0).GetMemory(index, count);
-                default:
-                    throw new NotSupportedException();
-            }
+            throw new ReadOnlyBufferException();
         }
 
-        public override Span<byte> GetSpan(int index, int count)
+        protected internal override Memory<byte> _GetMemory(int index, int count)
         {
-            switch (this.buffers.Length)
-            {
-                case 0:
-                    return Span<byte>.Empty;
-                case 1:
-                    return this.Buffer(0).GetSpan(index, count);
-                default:
-                    throw new NotSupportedException();
-            }
+            throw new ReadOnlyBufferException();
+        }
+
+        public override Span<byte> GetSpan(int sizeHintt = 0)
+        {
+            throw new ReadOnlyBufferException();
+        }
+
+        protected internal override Span<byte> _GetSpan(int index, int count)
+        {
+            throw new ReadOnlyBufferException();
+        }
+
+        public override IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src)
+        {
+            throw new ReadOnlyBufferException();
+        }
+        public override IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src)
+        {
+            throw new ReadOnlyBufferException();
+        }
+
+        public override IByteBuffer WriteBytes(ReadOnlySpan<byte> src)
+        {
+            throw new ReadOnlyBufferException();
+        }
+        public override IByteBuffer WriteBytes(ReadOnlyMemory<byte> src)
+        {
+            throw new ReadOnlyBufferException();
         }
     }
 }

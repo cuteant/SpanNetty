@@ -9,18 +9,14 @@ namespace DotNetty.Buffers
 
     partial class PooledHeapByteBuffer
     {
-        public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count)
+        protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count)
         {
-            this.CheckIndex(index, count);
-            index = index + this.Offset;
-            return new ReadOnlyMemory<byte>(this.Memory, index, count);
+            return new ReadOnlyMemory<byte>(this.Memory, this.Idx(index), count);
         }
 
-        public override ReadOnlySpan<byte> GetReadableSpan(int index, int count)
+        protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count)
         {
-            this.CheckIndex(index, count);
-            index = index + this.Offset;
-            return new ReadOnlySpan<byte>(this.Memory, index, count);
+            return new ReadOnlySpan<byte>(this.Memory, this.Idx(index), count);
         }
 
         public override ReadOnlySequence<byte> GetSequence(int index, int count)
@@ -28,18 +24,14 @@ namespace DotNetty.Buffers
             return ReadOnlyBufferSegment.Create(new[] { GetReadableMemory(index, count) });
         }
 
-        public override Memory<byte> GetMemory(int index, int count)
+        protected internal override Memory<byte> _GetMemory(int index, int count)
         {
-            this.CheckIndex(index, count);
-            index = index + this.Offset;
-            return new Memory<byte>(this.Memory, index, count);
+            return new Memory<byte>(this.Memory, this.Idx(index), count);
         }
 
-        public override Span<byte> GetSpan(int index, int count)
+        protected internal override Span<byte> _GetSpan(int index, int count)
         {
-            this.CheckIndex(index, count);
-            index = index + this.Offset;
-            return new Span<byte>(this.Memory, index, count);
+            return new Span<byte>(this.Memory, this.Idx(index), count);
         }
     }
 }

@@ -5,13 +5,11 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
-#if !NET40
-    using System.Runtime.CompilerServices;
-#endif
     using static AbstractUnpooledSlicedByteBuffer;
 
     sealed partial class PooledSlicedByteBuffer : AbstractPooledDerivedByteBuffer
@@ -310,6 +308,7 @@ namespace DotNetty.Buffers
             return ret - this.adjustment;
         }
 
+        [MethodImpl(InlineMethod.Value)]
         int Idx(int index) => index + this.adjustment;
     }
 }

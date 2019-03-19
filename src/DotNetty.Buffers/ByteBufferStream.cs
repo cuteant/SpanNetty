@@ -64,6 +64,7 @@ namespace DotNetty.Buffers
 
         #region -- ReaderPosition --
 
+        /// <summary>Only for reader position</summary>
         public override long Position
         {
             get
@@ -78,18 +79,21 @@ namespace DotNetty.Buffers
             }
         }
 
+        /// <summary>Only for reader position</summary>
         public void MarkPosition()
         {
             EnsureNotClosed();
             _buffer.MarkReaderIndex();
         }
 
+        /// <summary>Only for reader position</summary>
         public void ResetPosition()
         {
             EnsureNotClosed();
             _buffer.ResetReaderIndex();
         }
 
+        /// <summary>Only for reader position</summary>
         public override long Seek(long offset, SeekOrigin origin)
         {
             EnsureNotClosed();
@@ -113,7 +117,7 @@ namespace DotNetty.Buffers
 
         #region -- WriterPosition --
 
-        public long WriterPosition
+        public int WriterPosition
         {
             get
             {
@@ -123,7 +127,7 @@ namespace DotNetty.Buffers
             set
             {
                 EnsureNotClosed();
-                _buffer.SetWriterIndex((int)value);
+                _buffer.SetWriterIndex(value);
             }
         }
 
@@ -230,6 +234,22 @@ namespace DotNetty.Buffers
             }
         }
 
+#if NETCOREAPP
+        public override int Read(Span<byte> buffer)
+        {
+            EnsureNotClosed();
+
+            return _buffer.ReadBytes(buffer);
+        }
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            EnsureNotClosed();
+
+            return new ValueTask<int>(_buffer.ReadBytes(buffer));
+        }
+#endif
+
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (buffer == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
@@ -240,6 +260,7 @@ namespace DotNetty.Buffers
             EnsureNotClosed();
 
             int read = Math.Min(count, _buffer.ReadableBytes);
+            if (0u >= (uint)read) { return 0; }
             _buffer.ReadBytes(buffer, offset, read);
             return read;
         }
@@ -349,6 +370,25 @@ namespace DotNetty.Buffers
             {
                 return AsyncUtils.FromException(exception);
             }
+        }
+#endif
+
+#if NETCOREAPP
+        public override void Write(ReadOnlySpan<byte> buffer)
+        {
+            EnsureNotClosed();
+            EnsureWriteable();
+
+            _buffer.WriteBytes(buffer);
+        }
+
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            EnsureNotClosed();
+            EnsureWriteable();
+
+            _buffer.WriteBytes(buffer);
+            return default;
         }
 #endif
 

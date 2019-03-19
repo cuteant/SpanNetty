@@ -274,13 +274,15 @@ namespace DotNetty.Buffers
                 return;
             }
 
+            var writerIdx = this.writerIndex;
+            var maxCapacity = this.MaxCapacity;
             if (CheckBounds)
             {
-                CheckMinWritableBounds(minWritableBytes, this.writerIndex, this.MaxCapacity, this);
+                CheckMinWritableBounds(minWritableBytes, writerIdx, maxCapacity, this);
             }
 
             // Normalize the current capacity to the power of 2.
-            int newCapacity = this.Allocator.CalculateNewCapacity(this.writerIndex + minWritableBytes, this.MaxCapacity);
+            int newCapacity = this.Allocator.CalculateNewCapacity(writerIdx + minWritableBytes, maxCapacity);
 
             // Adjust to the new capacity.
             this.AdjustCapacity(newCapacity);
@@ -296,19 +298,21 @@ namespace DotNetty.Buffers
                 return 0;
             }
 
-            if (minWritableBytes > this.MaxCapacity - this.writerIndex)
+            var writerIdx = this.writerIndex;
+            var maxCapacity = this.MaxCapacity;
+            if (minWritableBytes > maxCapacity - writerIdx)
             {
-                if (!force || this.Capacity == this.MaxCapacity)
+                if (!force || this.Capacity == maxCapacity)
                 {
                     return 1;
                 }
 
-                this.AdjustCapacity(this.MaxCapacity);
+                this.AdjustCapacity(maxCapacity);
                 return 3;
             }
 
             // Normalize the current capacity to the power of 2.
-            int newCapacity = this.Allocator.CalculateNewCapacity(this.writerIndex + minWritableBytes, this.MaxCapacity);
+            int newCapacity = this.Allocator.CalculateNewCapacity(writerIdx + minWritableBytes, maxCapacity);
 
             // Adjust to the new capacity.
             this.AdjustCapacity(newCapacity);
@@ -1091,16 +1095,18 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer WriteShort(int value)
         {
             this.EnsureWritable0(2);
-            this._SetShort(this.writerIndex, value);
-            this.writerIndex += 2;
+            int writerIdx = this.writerIndex;
+            this._SetShort(writerIdx, value);
+            this.writerIndex = writerIdx + 2;
             return this;
         }
 
         public virtual IByteBuffer WriteShortLE(int value)
         {
             this.EnsureWritable0(2);
-            this._SetShortLE(this.writerIndex, value);
-            this.writerIndex += 2;
+            int writerIdx = this.writerIndex;
+            this._SetShortLE(writerIdx, value);
+            this.writerIndex = writerIdx + 2;
             return this;
         }
 
@@ -1123,48 +1129,54 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer WriteMedium(int value)
         {
             this.EnsureWritable0(3);
-            this._SetMedium(this.writerIndex, value);
-            this.writerIndex += 3;
+            int writerIdx = this.writerIndex;
+            this._SetMedium(writerIdx, value);
+            this.writerIndex = writerIdx + 3;
             return this;
         }
 
         public virtual IByteBuffer WriteMediumLE(int value)
         {
             this.EnsureWritable0(3);
-            this._SetMediumLE(this.writerIndex, value);
-            this.writerIndex += 3;
+            int writerIdx = this.writerIndex;
+            this._SetMediumLE(writerIdx, value);
+            this.writerIndex = writerIdx + 3;
             return this;
         }
 
         public virtual IByteBuffer WriteInt(int value)
         {
             this.EnsureWritable0(4);
-            this._SetInt(this.writerIndex, value);
-            this.writerIndex += 4;
+            int writerIdx = this.writerIndex;
+            this._SetInt(writerIdx, value);
+            this.writerIndex = writerIdx + 4;
             return this;
         }
 
         public virtual IByteBuffer WriteIntLE(int value)
         {
             this.EnsureWritable0(4);
-            this._SetIntLE(this.writerIndex, value);
-            this.writerIndex += 4;
+            int writerIdx = this.writerIndex;
+            this._SetIntLE(writerIdx, value);
+            this.writerIndex = writerIdx + 4;
             return this;
         }
 
         public virtual IByteBuffer WriteLong(long value)
         {
             this.EnsureWritable0(8);
-            this._SetLong(this.writerIndex, value);
-            this.writerIndex += 8;
+            int writerIdx = this.writerIndex;
+            this._SetLong(writerIdx, value);
+            this.writerIndex = writerIdx + 8;
             return this;
         }
 
         public virtual IByteBuffer WriteLongLE(long value)
         {
             this.EnsureWritable0(8);
-            this._SetLongLE(this.writerIndex, value);
-            this.writerIndex += 8;
+            int writerIdx = this.writerIndex;
+            this._SetLongLE(writerIdx, value);
+            this.writerIndex = writerIdx + 8;
             return this;
         }
 
@@ -1193,8 +1205,9 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer WriteBytes(byte[] src, int srcIndex, int length)
         {
             this.EnsureWritable(length);
-            this.SetBytes(this.writerIndex, src, srcIndex, length);
-            this.writerIndex += length;
+            int writerIdx = this.writerIndex;
+            this.SetBytes(writerIdx, src, srcIndex, length);
+            this.writerIndex = writerIdx + length;
             return this;
         }
 
@@ -1222,8 +1235,9 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer WriteBytes(IByteBuffer src, int srcIndex, int length)
         {
             this.EnsureWritable(length);
-            this.SetBytes(this.writerIndex, src, srcIndex, length);
-            this.writerIndex += length;
+            int writerIdx = this.writerIndex;
+            this.SetBytes(writerIdx, src, srcIndex, length);
+            this.writerIndex = writerIdx + length;
             return this;
         }
 
@@ -1292,15 +1306,17 @@ namespace DotNetty.Buffers
 
         public virtual int WriteCharSequence(ICharSequence sequence, Encoding encoding)
         {
-            int written = this.SetCharSequence0(this.writerIndex, sequence, encoding, true);
-            this.writerIndex += written;
+            int writerIdx = this.writerIndex;
+            int written = this.SetCharSequence0(writerIdx, sequence, encoding, true);
+            this.writerIndex = writerIdx + written;
             return written;
         }
 
         public virtual int WriteString(string value, Encoding encoding)
         {
-            int written = this.SetString0(this.writerIndex, value, encoding, true);
-            this.writerIndex += written;
+            int writerIdx = this.writerIndex;
+            int written = this.SetString0(writerIdx, value, encoding, true);
+            this.writerIndex = writerIdx + written;
             return written;
         }
 

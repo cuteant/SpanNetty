@@ -5,6 +5,7 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.Diagnostics;
+    using System.Runtime.CompilerServices;
     using DotNetty.Common;
 
     abstract class AbstractArrayPooledDerivedByteBuffer : AbstractReferenceCountedByteBuffer
@@ -32,8 +33,10 @@ namespace DotNetty.Buffers
             this.parent = newParent;
         }
 
-        public sealed override IByteBuffer Unwrap() => this.UnwrapCore();
+        [MethodImpl(InlineMethod.Value)]
+        public sealed override IByteBuffer Unwrap() => this.rootParent;//this.UnwrapCore();
 
+        [MethodImpl(InlineMethod.Value)]
         protected AbstractByteBuffer UnwrapCore() => this.rootParent;
 
         internal T Init<T>(

@@ -14,7 +14,7 @@ namespace DotNetty.Buffers
 
     abstract partial class AbstractUnpooledSlicedByteBuffer : AbstractDerivedByteBuffer
     {
-        readonly IByteBuffer buffer;
+        readonly AbstractByteBuffer buffer;
         readonly int adjustment;
 
         protected AbstractUnpooledSlicedByteBuffer(IByteBuffer buffer, int index, int length)
@@ -30,12 +30,12 @@ namespace DotNetty.Buffers
                     break;
 
                 case UnpooledDuplicatedByteBuffer _:
-                    this.buffer = buffer.Unwrap();
+                    this.buffer = (AbstractByteBuffer)buffer.Unwrap();
                     this.adjustment = index;
                     break;
 
                 default:
-                    this.buffer = buffer;
+                    this.buffer = (AbstractByteBuffer)buffer;
                     this.adjustment = index;
                     break;
             }
@@ -45,7 +45,11 @@ namespace DotNetty.Buffers
 
         internal int Length => this.Capacity;
 
+        [MethodImpl(InlineMethod.Value)]
         public override IByteBuffer Unwrap() => this.buffer;
+
+        [MethodImpl(InlineMethod.Value)]
+        protected AbstractByteBuffer UnwrapCore() => this.buffer;
 
         public override IByteBufferAllocator Allocator => this.Unwrap().Allocator;
 
@@ -286,7 +290,7 @@ namespace DotNetty.Buffers
         public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
             this.CheckIndex0(index, length);
-            return this.Unwrap().SetBytesAsync(index + this.adjustment, src, length, cancellationToken);
+            return this.Unwrap().SetBytesAsync(this.Idx(index), src, length, cancellationToken);
         }
 
         public override int IoBufferCount => this.Unwrap().IoBufferCount;
@@ -294,13 +298,13 @@ namespace DotNetty.Buffers
         public override ArraySegment<byte> GetIoBuffer(int index, int length)
         {
             this.CheckIndex0(index, length);
-            return this.Unwrap().GetIoBuffer(index + this.adjustment, length);
+            return this.Unwrap().GetIoBuffer(this.Idx(index), length);
         }
 
         public override ArraySegment<byte>[] GetIoBuffers(int index, int length)
         {
             this.CheckIndex0(index, length);
-            return this.Unwrap().GetIoBuffers(index + this.adjustment, length);
+            return this.Unwrap().GetIoBuffers(this.Idx(index), length);
         }
 
         public override int ForEachByte(int index, int length, IByteProcessor processor)
@@ -332,6 +336,7 @@ namespace DotNetty.Buffers
         }
 
         // Returns the index with the needed adjustment.
+        [MethodImpl(InlineMethod.Value)]
         internal protected int Idx(int index) => index + this.adjustment;
 
         internal static void CheckSliceOutOfBounds(int index, int length, IByteBuffer buffer)

@@ -5,6 +5,7 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -45,6 +46,7 @@ namespace DotNetty.Buffers
 
         public IByteBufferAllocator Allocator => this.Buf.Allocator;
 
+        [MethodImpl(InlineMethod.Value)]
         public IByteBuffer Unwrap() => this.Buf;
 
         public bool IsReadOnly => this.Buf.IsReadOnly;

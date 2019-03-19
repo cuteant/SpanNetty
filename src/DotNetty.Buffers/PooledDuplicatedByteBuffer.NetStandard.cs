@@ -9,15 +9,23 @@ namespace DotNetty.Buffers
 
     partial class PooledDuplicatedByteBuffer
     {
-        public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count) => this.Unwrap().GetReadableMemory(index, count);
+        protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count) => this.UnwrapCore()._GetReadableMemory(index, count);
 
-        public override ReadOnlySpan<byte> GetReadableSpan(int index, int count) => this.Unwrap().GetReadableSpan(index, count);
+        protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count) => this.UnwrapCore()._GetReadableSpan(index, count);
 
         public override ReadOnlySequence<byte> GetSequence(int index, int count) => this.Unwrap().GetSequence(index, count);
 
-        public override Memory<byte> GetMemory(int index, int count) => this.Unwrap().GetMemory(index, count);
+        protected internal override Memory<byte> _GetMemory(int index, int count) => this.UnwrapCore()._GetMemory(index, count);
 
-        public override Span<byte> GetSpan(int index, int count) => this.Unwrap().GetSpan(index, count);
+        protected internal override Span<byte> _GetSpan(int index, int count) => this.UnwrapCore()._GetSpan(index, count);
+
+        public override int GetBytes(int index, Memory<byte> destination) => this.Unwrap().GetBytes(index, destination);
+
+        public override int GetBytes(int index, Span<byte> destination) => this.Unwrap().GetBytes(index, destination);
+
+        public override IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src) { this.Unwrap().SetBytes(index, src); return this; }
+
+        public override IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src) { this.Unwrap().SetBytes(index, src); return this; }
     }
 }
 #endif

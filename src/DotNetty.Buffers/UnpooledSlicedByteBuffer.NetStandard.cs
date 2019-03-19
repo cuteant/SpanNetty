@@ -5,33 +5,27 @@
 namespace DotNetty.Buffers
 {
     using System;
-    using System.Buffers;
 
-    partial class UnpooledHeapByteBuffer
+    partial class UnpooledSlicedByteBuffer
     {
         protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count)
         {
-            return new ReadOnlyMemory<byte>(this.array, index, count);
+            return this.UnwrapCore()._GetReadableMemory(this.Idx(index), count);
         }
 
         protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count)
         {
-            return new ReadOnlySpan<byte>(this.array, index, count);
-        }
-
-        public override ReadOnlySequence<byte> GetSequence(int index, int count)
-        {
-            return ReadOnlyBufferSegment.Create(new[] { GetReadableMemory(index, count) });
+            return this.UnwrapCore()._GetReadableSpan(this.Idx(index), count);
         }
 
         protected internal override Memory<byte> _GetMemory(int index, int count)
         {
-            return new Memory<byte>(this.array, index, count);
+            return this.UnwrapCore()._GetMemory(this.Idx(index), count);
         }
 
         protected internal override Span<byte> _GetSpan(int index, int count)
         {
-            return new Span<byte>(this.array, index, count);
+            return this.UnwrapCore()._GetSpan(this.Idx(index), count);
         }
     }
 }

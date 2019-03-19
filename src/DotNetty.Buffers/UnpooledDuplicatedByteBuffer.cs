@@ -5,6 +5,7 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
@@ -44,10 +45,12 @@ namespace DotNetty.Buffers
             this.MarkIndex(); // Mark read and writer index
         }
 
-        public override IByteBuffer Unwrap() => this.UnwrapCore();
+        [MethodImpl(InlineMethod.Value)]
+        public override IByteBuffer Unwrap() => this.buffer;//this.UnwrapCore();
 
         public override IByteBuffer Copy(int index, int length) => this.Unwrap().Copy(index, length);
 
+        [MethodImpl(InlineMethod.Value)]
         protected AbstractByteBuffer UnwrapCore() => this.buffer;
 
         public override IByteBufferAllocator Allocator => this.Unwrap().Allocator;

@@ -7,7 +7,7 @@ namespace DotNetty.Buffers
     using System;
     using System.Buffers;
 
-    partial class ArrayPooledDuplicatedByteBuffer
+    partial class UnpooledDuplicatedByteBuffer
     {
         protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count) => this.UnwrapCore()._GetReadableMemory(index, count);
 

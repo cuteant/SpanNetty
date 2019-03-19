@@ -1,33 +1,13 @@
-AbstractByteBuffer
-	AbstractDerivedByteBuffer
-	AbstractReferenceCountedByteBuffer
+AbstractArrayPooledDerivedByteBuffer
+    - ArrayPooledDuplicatedByteBuffer
+    - ArrayPooledSlicedByteBuffer
 
 AbstractDerivedByteBuffer
-	AbstractUnpooledSlicedByteBuffer
-	UnpooledDuplicatedByteBuffer
+    - AbstractUnpooledSlicedByteBuffer
+        - UnpooledSlicedByteBuffer
+    - ReadOnlyByteBuffer
+    - UnpooledDuplicatedByteBuffer
 
 AbstractPooledDerivedByteBuffer
-	PooledDuplicatedByteBuffer
-	PooledSlicedByteBuffer
-
-AbstractUnpooledSlicedByteBuffer
-	UnpooledSlicedByteBuffer
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    - PooledDuplicatedByteBuffer
+    - PooledSlicedByteBuffer

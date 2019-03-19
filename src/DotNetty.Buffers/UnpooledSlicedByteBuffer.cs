@@ -12,8 +12,6 @@ namespace DotNetty.Buffers
 
         public override int Capacity => this.MaxCapacity;
 
-        protected AbstractByteBuffer UnwrapCore() => (AbstractByteBuffer)this.Unwrap();
-
         protected internal override byte _GetByte(int index) => this.UnwrapCore()._GetByte(this.Idx(index));
 
         protected internal override short _GetShort(int index) => this.UnwrapCore()._GetShort(this.Idx(index));

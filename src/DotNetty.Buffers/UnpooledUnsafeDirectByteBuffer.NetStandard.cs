@@ -9,15 +9,13 @@ namespace DotNetty.Buffers
 
     partial class UnpooledUnsafeDirectByteBuffer
     {
-        public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count)
+        protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count)
         {
-            this.CheckIndex(index, count);
             return new ReadOnlyMemory<byte>(this.buffer, index, count);
         }
 
-        public override ReadOnlySpan<byte> GetReadableSpan(int index, int count)
+        protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count)
         {
-            this.CheckIndex(index, count);
             return new ReadOnlySpan<byte>(this.buffer, index, count);
         }
 
@@ -26,15 +24,13 @@ namespace DotNetty.Buffers
             return ReadOnlyBufferSegment.Create(new[] { GetReadableMemory(index, count) });
         }
 
-        public override Memory<byte> GetMemory(int index, int count)
+        protected internal override Memory<byte> _GetMemory(int index, int count)
         {
-            this.CheckIndex(index, count);
             return new Memory<byte>(this.buffer, index, count);
         }
 
-        public override Span<byte> GetSpan(int index, int count)
+        protected internal override Span<byte> _GetSpan(int index, int count)
         {
-            this.CheckIndex(index, count);
             return new Span<byte>(this.buffer, index, count);
         }
     }

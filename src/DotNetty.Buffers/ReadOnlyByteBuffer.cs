@@ -3,6 +3,7 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace DotNetty.Buffers
     /// recommended to use <see cref="Unpooled.UnmodifiableBuffer(IByteBuffer)"/>
     /// instead of calling the constructor explicitly.
     /// </summary>
-    public class ReadOnlyByteBuffer : AbstractDerivedByteBuffer
+    public partial class ReadOnlyByteBuffer : AbstractDerivedByteBuffer
     {
         readonly IByteBuffer buffer;
 
@@ -52,6 +53,7 @@ namespace DotNetty.Buffers
 
         public override int EnsureWritable(int minWritableBytes, bool force) => 1;
 
+        [MethodImpl(InlineMethod.Value)]
         public override IByteBuffer Unwrap() => this.buffer;
 
         public override IByteBufferAllocator Allocator => this.Unwrap().Allocator;

@@ -154,12 +154,18 @@ namespace DotNetty.Buffers.Tests
             {
                 throw new NotImplementedException();
             }
-
+            protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count)
+            {
+                throw new NotImplementedException();
+            }
             public override ReadOnlySpan<byte> GetReadableSpan(int index, int count)
             {
                 throw new NotImplementedException();
             }
-
+            protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count)
+            {
+                throw new NotImplementedException();
+            }
             public override ReadOnlySequence<byte> GetSequence(int index, int count)
             {
                 throw new NotImplementedException();
@@ -169,8 +175,15 @@ namespace DotNetty.Buffers.Tests
             {
                 throw new NotImplementedException();
             }
-
+            protected internal override Memory<byte> _GetMemory(int index, int count)
+            {
+                throw new NotImplementedException();
+            }
             public override Span<byte> GetSpan(int index, int count)
+            {
+                throw new NotImplementedException();
+            }
+            protected internal override Span<byte> _GetSpan(int index, int count)
             {
                 throw new NotImplementedException();
             }

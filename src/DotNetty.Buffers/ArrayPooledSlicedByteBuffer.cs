@@ -307,6 +307,7 @@ namespace DotNetty.Buffers
             return ret - this.adjustment;
         }
 
+        [MethodImpl(InlineMethod.Value)]
         int Idx(int index) => index + this.adjustment;
     }
 }

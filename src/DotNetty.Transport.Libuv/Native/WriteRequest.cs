@@ -52,7 +52,7 @@ namespace DotNetty.Transport.Libuv.Native
             this.maxBytes = MaximumBytes;
             this.bufs = addr + offset;
             this.pin = GCHandle.Alloc(addr, GCHandleType.Pinned);
-            this.handles = new List<MemoryHandle>();
+            this.handles = new List<MemoryHandle>(MaximumLimit + 1);
         }
 
         internal void DoWrite(INativeUnsafe channelUnsafe, ChannelOutboundBuffer input)
@@ -69,16 +69,14 @@ namespace DotNetty.Transport.Libuv.Native
             if (this.count == MaximumLimit) { return false; }
 
             int len = buf.ReadableBytes;
-            if (len == 0) { return true; }
+            if (0u >= (uint)len) { return true; }
 
             if (this.maxBytes - len < this.size && this.count > 0) { return false; }
 
             if (buf.IoBufferCount == 1)
             {
                 var memory = buf.GetReadableMemory();
-                var memoryHandle = memory.Pin();
-                this.handles.Add(memoryHandle);
-                this.Add(memoryHandle, memory.Length);
+                this.Add(memory.Pin(), memory.Length);
                 return true;
             }
 
@@ -93,9 +91,7 @@ namespace DotNetty.Transport.Libuv.Native
             var segments = buf.GetSequence();
             foreach (var memory in segments)
             {
-                var memoryHandle = memory.Pin();
-                this.handles.Add(memoryHandle);
-                this.Add(memoryHandle, memory.Length);
+                this.Add(memory.Pin(), memory.Length);
             }
             return true;
         }
@@ -103,6 +99,7 @@ namespace DotNetty.Transport.Libuv.Native
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         unsafe void Add(MemoryHandle memoryHandle, int len)
         {
+            this.handles.Add(memoryHandle);
             IntPtr baseOffset = this.MemoryAddress(this.count);
             this.size += len;
             ++this.count;

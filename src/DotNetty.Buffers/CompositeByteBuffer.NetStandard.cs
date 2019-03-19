@@ -6,45 +6,85 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.Buffers;
-    using System.Linq;
+    using System.Diagnostics;
     using DotNetty.Common;
 
     public partial class CompositeByteBuffer
     {
-        public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count)
+        protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count)
         {
+            if (0u >= (uint)count) { return ReadOnlyMemory<byte>.Empty; }
+
             switch (this.componentCount)
             {
                 case 0:
                     return ReadOnlyMemory<byte>.Empty;
                 case 1:
                     ComponentEntry c = this.components[0];
-                    return c.Buffer.GetReadableMemory(index, count);
-                default:
-                    throw new NotSupportedException();
+                    IByteBuffer buf = c.Buffer;
+                    if (buf.IoBufferCount == 1)
+                    {
+                        return buf.GetReadableMemory(c.Idx(index), count);
+                    }
+                    break;
             }
+
+            var merged = new Memory<byte>(new byte[count]);
+            var buffers = this.GetSequence(index, count);
+
+            int offset = 0;
+            foreach (ReadOnlyMemory<byte> buf in buffers)
+            {
+                Debug.Assert(merged.Length - offset >= buf.Length);
+
+                buf.CopyTo(merged.Slice(offset));
+                offset += buf.Length;
+            }
+
+            return merged;
         }
 
-        public override ReadOnlySpan<byte> GetReadableSpan(int index, int count)
+        protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count)
         {
+            if (0u >= (uint)count) { return ReadOnlySpan<byte>.Empty; }
+
             switch (this.componentCount)
             {
                 case 0:
                     return ReadOnlySpan<byte>.Empty;
                 case 1:
+                    //ComponentEntry c = this.components[0];
+                    //return c.Buffer.GetReadableSpan(index, count);
                     ComponentEntry c = this.components[0];
-                    return c.Buffer.GetReadableSpan(index, count);
-                default:
-                    throw new NotSupportedException();
+                    IByteBuffer buf = c.Buffer;
+                    if (buf.IoBufferCount == 1)
+                    {
+                        return buf.GetReadableSpan(c.Idx(index), count);
+                    }
+                    break;
             }
+
+            var merged = new Memory<byte>(new byte[count]);
+            var buffers = this.GetSequence(index, count);
+
+            int offset = 0;
+            foreach (ReadOnlyMemory<byte> buf in buffers)
+            {
+                Debug.Assert(merged.Length - offset >= buf.Length);
+
+                buf.CopyTo(merged.Slice(offset));
+                offset += buf.Length;
+            }
+
+            return merged.Span;
         }
 
         public override ReadOnlySequence<byte> GetSequence(int index, int count)
         {
             this.CheckIndex(index, count);
-            if (count == 0) { return ReadOnlySequence<byte>.Empty; }
+            if (0u >= (uint)count) { return ReadOnlySequence<byte>.Empty; }
 
-            var buffers = ThreadLocalList<ArraySegment<byte>>.NewInstance(this.componentCount);
+            var buffers = ThreadLocalList<ReadOnlyMemory<byte>>.NewInstance(this.componentCount);
             try
             {
                 int i = this.ToComponentIndex0(index);
@@ -59,10 +99,14 @@ namespace DotNetty.Buffers
                             ThrowHelper.ThrowNotSupportedException();
                             break;
                         case 1:
-                            buffers.Add(s.GetIoBuffer(c.Idx(index), localLength));
+                            buffers.Add(s.GetReadableMemory(c.Idx(index), localLength));
                             break;
                         default:
-                            buffers.AddRange(s.GetIoBuffers(c.Idx(index), localLength));
+                            var sequence = s.GetSequence(c.Idx(index), localLength);
+                            foreach (var memory in sequence)
+                            {
+                                buffers.Add(memory);
+                            }
                             break;
                     }
 
@@ -71,7 +115,7 @@ namespace DotNetty.Buffers
                     i++;
                 }
 
-                return ReadOnlyBufferSegment.Create(buffers.Select(_ => (ReadOnlyMemory<byte>)_));
+                return ReadOnlyBufferSegment.Create(buffers);
             }
             finally
             {
@@ -79,8 +123,10 @@ namespace DotNetty.Buffers
             }
         }
 
-        public override Memory<byte> GetMemory(int index, int count)
+        protected internal override Memory<byte> _GetMemory(int index, int count)
         {
+            if (0u >= (uint)count) { return Memory<byte>.Empty; }
+
             switch (this.componentCount)
             {
                 case 0:
@@ -93,8 +139,10 @@ namespace DotNetty.Buffers
             }
         }
 
-        public override Span<byte> GetSpan(int index, int count)
+        protected internal override Span<byte> _GetSpan(int index, int count)
         {
+            if (0u >= (uint)count) { return Span<byte>.Empty; }
+
             switch (this.componentCount)
             {
                 case 0:
@@ -105,6 +153,48 @@ namespace DotNetty.Buffers
                 default:
                     throw new NotSupportedException();
             }
+        }
+
+        public override IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src)
+        {
+            var length = src.Length;
+            this.CheckIndex(index, length);
+            if (0u >= (uint)length) { return this; }
+
+            var srcIndex = 0;
+            int i = this.ToComponentIndex0(index);
+            while (length > 0)
+            {
+                ComponentEntry c = this.components[i];
+                int localLength = Math.Min(length, c.EndOffset - index);
+                c.Buffer.SetBytes(c.Idx(index), src.Slice(srcIndex, localLength));
+                index += localLength;
+                srcIndex += localLength;
+                length -= localLength;
+                i++;
+            }
+            return this;
+        }
+
+        public override IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src)
+        {
+            var length = src.Length;
+            this.CheckIndex(index, length);
+            if (0u >= (uint)length) { return this; }
+
+            var srcIndex = 0;
+            int i = this.ToComponentIndex0(index);
+            while (length > 0)
+            {
+                ComponentEntry c = this.components[i];
+                int localLength = Math.Min(length, c.EndOffset - index);
+                c.Buffer.SetBytes(c.Idx(index), src.Slice(srcIndex, localLength));
+                index += localLength;
+                srcIndex += localLength;
+                length -= localLength;
+                i++;
+            }
+            return this;
         }
     }
 }

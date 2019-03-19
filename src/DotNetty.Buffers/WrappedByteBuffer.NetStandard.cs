@@ -27,6 +27,18 @@ namespace DotNetty.Buffers
         public virtual Span<byte> Free => this.Buf.Free;
         public virtual Span<byte> GetSpan(int sizeHintt = 0) => this.Buf.GetSpan(sizeHintt);
         public virtual Span<byte> GetSpan(int index, int count) => this.Buf.GetSpan(index, count);
+
+        public virtual int GetBytes(int index, Span<byte> destination) => this.Buf.GetBytes(index, destination);
+        public virtual int GetBytes(int index, Memory<byte> destination) => this.Buf.GetBytes(index, destination);
+
+        public virtual int ReadBytes(Span<byte> destination) => this.Buf.ReadBytes(destination);
+        public virtual int ReadBytes(Memory<byte> destination) => this.Buf.ReadBytes(destination);
+
+        public virtual IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src) => this.Buf.SetBytes(index, src);
+        public virtual IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src) => this.Buf.SetBytes(index, src);
+
+        public virtual IByteBuffer WriteBytes(ReadOnlySpan<byte> src) => this.Buf.WriteBytes(src);
+        public virtual IByteBuffer WriteBytes(ReadOnlyMemory<byte> src) => this.Buf.WriteBytes(src);
     }
 }
 #endif

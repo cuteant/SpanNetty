@@ -385,6 +385,7 @@ namespace DotNetty.Buffers
         public override ArraySegment<byte> GetIoBuffer(int index, int length)
         {
             this.CheckIndex(index, length);
+            if (0u >= (uint)length) { return default; }
 
             if (this.buffers.Length == 1)
             {
@@ -396,6 +397,7 @@ namespace DotNetty.Buffers
             }
 
             var merged = new byte[length];
+#if NET40
             ArraySegment<byte>[] bufs = this.GetIoBuffers(index, length);
 
             int offset = 0;
@@ -406,14 +408,26 @@ namespace DotNetty.Buffers
                 PlatformDependent.CopyMemory(buf.Array, buf.Offset, merged, offset, buf.Count);
                 offset += buf.Count;
             }
+#else
+            var memory = new Memory<byte>(merged);
+            var bufs = this.GetSequence(index, length);
 
+            int offset = 0;
+            foreach (ReadOnlyMemory<byte> buf in bufs)
+            {
+                Debug.Assert(merged.Length - offset >= buf.Length);
+
+                buf.CopyTo(memory.Slice(offset));
+                offset += buf.Length;
+            }
+#endif
             return new ArraySegment<byte>(merged);
         }
 
         public override ArraySegment<byte>[] GetIoBuffers(int index, int length)
         {
             this.CheckIndex(index, length);
-            if (length == 0) { return EmptyArray<ArraySegment<byte>>.Instance; }
+            if (0u >= (uint)length) { return EmptyArray<ArraySegment<byte>>.Instance; }
 
             var array = ThreadLocalList<ArraySegment<byte>>.NewInstance(this.nioBufferCount);
             try

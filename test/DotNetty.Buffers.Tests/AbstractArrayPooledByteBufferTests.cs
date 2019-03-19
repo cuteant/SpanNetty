@@ -11,7 +11,7 @@ namespace DotNetty.Buffers.Tests
     using DotNetty.Common.Utilities;
     using Xunit;
 
-    public abstract class AbstractArrayPooledByteBufferTests : IDisposable
+    public abstract partial class AbstractArrayPooledByteBufferTests : IDisposable
     {
         const int Capacity = 4096; // Must be even
         const int BlockSize = 128;
