@@ -38,11 +38,11 @@ namespace DotNetty.Buffers
         public override int ReadBytes(Span<byte> destination) => this.wrapped.ReadBytes(destination);
         public override int ReadBytes(Memory<byte> destination) => this.wrapped.ReadBytes(destination);
 
-        public override IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src) => this.wrapped.SetBytes(index, src);
-        public override IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src) => this.wrapped.SetBytes(index, src);
+        public override IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src) { this.wrapped.SetBytes(index, src); return this; }
+        public override IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src) { this.wrapped.SetBytes(index, src); return this; }
 
-        public override IByteBuffer WriteBytes(ReadOnlySpan<byte> src) => this.wrapped.WriteBytes(src);
-        public override IByteBuffer WriteBytes(ReadOnlyMemory<byte> src) => this.wrapped.WriteBytes(src);
+        public override IByteBuffer WriteBytes(ReadOnlySpan<byte> src) { this.wrapped.WriteBytes(src); return this; }
+        public override IByteBuffer WriteBytes(ReadOnlyMemory<byte> src) { this.wrapped.WriteBytes(src); return this; }
     }
 }
 #endif
