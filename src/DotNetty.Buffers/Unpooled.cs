@@ -45,7 +45,7 @@ namespace DotNetty.Buffers
         /// </summary>
         public static IByteBuffer WrappedBuffer(byte[] array, int offset, int length)
         {
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return Empty;
             }
@@ -212,7 +212,7 @@ namespace DotNetty.Buffers
         /// <returns>The new buffer that copies the contents of array.</returns>
         public static IByteBuffer CopiedBuffer(byte[] array, int offset, int length)
         {
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return Empty;
             }
@@ -272,7 +272,7 @@ namespace DotNetty.Buffers
                 length += a.Length;
             }
 
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return Empty;
             }
@@ -322,7 +322,7 @@ namespace DotNetty.Buffers
                 length += bLen;
             }
 
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return Empty;
             }
@@ -342,7 +342,7 @@ namespace DotNetty.Buffers
         public static IByteBuffer CopiedBuffer(char[] array, int offset, int length, Encoding encoding)
         {
             if (null == array) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.array); }
-            return length == 0 ? Empty : CopiedBuffer(new string(array, offset, length), encoding);
+            return 0u >= (uint)length ? Empty : CopiedBuffer(new string(array, offset, length), encoding);
         }
 
         public static IByteBuffer CopiedBuffer(string value, Encoding encoding) => ByteBufferUtil.EncodeString0(Allocator, true, value, encoding, 0);

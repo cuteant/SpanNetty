@@ -13,6 +13,9 @@ namespace DotNetty.Buffers
     using CuteAnt.Pool;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
+#if !NET40
+    using System.Buffers;
+#endif
 
     enum SizeClass
     {
@@ -405,7 +408,7 @@ namespace DotNetty.Buffers
 
         internal void Reallocate(PooledByteBuffer<T> buf, int newCapacity, bool freeOldMemory)
         {
-            if(newCapacity < 0 || newCapacity > buf.MaxCapacity) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            if (newCapacity < 0 || newCapacity > buf.MaxCapacity) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             int oldCapacity = buf.Length;
             if (oldCapacity == newCapacity)
@@ -708,10 +711,10 @@ namespace DotNetty.Buffers
         internal override bool IsDirect => false;
 
         protected override PoolChunk<byte[]> NewChunk(int pageSize, int maxOrder, int pageShifts, int chunkSize) =>
-            new PoolChunk<byte[]>(this, NewByteArray(chunkSize), pageSize, maxOrder, pageShifts, chunkSize, 0);
+            new PoolChunk<byte[]>(this, NewByteArray(chunkSize), pageSize, maxOrder, pageShifts, chunkSize, 0, IntPtr.Zero);
 
         protected override PoolChunk<byte[]> NewUnpooledChunk(int capacity) =>
-            new PoolChunk<byte[]>(this, NewByteArray(capacity), capacity, 0);
+            new PoolChunk<byte[]>(this, NewByteArray(capacity), capacity, 0, IntPtr.Zero);
 
         protected internal override void DestroyChunk(PoolChunk<byte[]> chunk)
         {
@@ -723,16 +726,20 @@ namespace DotNetty.Buffers
 
         protected override void MemoryCopy(byte[] src, int srcOffset, byte[] dst, int dstOffset, int length)
         {
-            if (length == 0)
-            {
-                return;
-            }
+            //if (0u >= (uint)length)
+            //{
+            //    return;
+            //}
 
             PlatformDependent.CopyMemory(src, srcOffset, dst, dstOffset, length);
         }
     }
 
-    //TODO: Maybe use Memory or OwnedMemory as direct arena/byte buffer type parameter in NETStandard 2.0
+    // TODO: Maybe use Memory or OwnedMemory as direct arena/byte buffer type parameter in NETStandard 2.0
+    // 鉴于几个方面考虑还是暂时不需要包装 IMemoryOwner<byte> 或 MemoryManager<byte>
+    // 1、IByteBuffer直接操作数组性能更高，参考 System.IO.Pipelines 和 System.Buffers 的内部实现
+    // 2、IByetBuffer实现 IReferenceCounted 接口，IMemoryOwner的管理会更加混乱
+    // 3、现在 IByteBuffer 已经实现了 IBufferWriter<byte> 接口
     sealed class DirectArena : PoolArena<byte[]>
     {
         readonly List<MemoryChunk> memoryChunks;
@@ -751,7 +758,7 @@ namespace DotNetty.Buffers
         {
             MemoryChunk memoryChunk = NewMemoryChunk(chunkSize);
             this.memoryChunks.Add(memoryChunk);
-            var chunk = new PoolChunk<byte[]>(this, memoryChunk.Bytes, pageSize, maxOrder, pageShifts, chunkSize, 0);
+            var chunk = new PoolChunk<byte[]>(this, memoryChunk.Bytes, pageSize, maxOrder, pageShifts, chunkSize, 0, memoryChunk.NativePointer);
             return chunk;
         }
 
@@ -759,7 +766,7 @@ namespace DotNetty.Buffers
         {
             MemoryChunk memoryChunk = NewMemoryChunk(capacity);
             this.memoryChunks.Add(memoryChunk);
-            var chunk = new PoolChunk<byte[]>(this, memoryChunk.Bytes, capacity, 0);
+            var chunk = new PoolChunk<byte[]>(this, memoryChunk.Bytes, capacity, 0, memoryChunk.NativePointer);
             return chunk;
         }
 
@@ -793,12 +800,16 @@ namespace DotNetty.Buffers
 #if !NET40
             GCHandle handle;
 #endif
+            internal IntPtr NativePointer;
 
             internal MemoryChunk(int size)
             {
                 this.Bytes = new byte[size];
 #if !NET40
                 this.handle = GCHandle.Alloc(this.Bytes, GCHandleType.Pinned);
+                NativePointer = this.handle.AddrOfPinnedObject();
+#else
+                NativePointer = IntPtr.Zero;
 #endif
             }
 
@@ -816,6 +827,7 @@ namespace DotNetty.Buffers
                         // Free is not thread safe
                     }
                 }
+                this.NativePointer = IntPtr.Zero;
 #endif
                 this.Bytes = null;
             }
@@ -831,5 +843,81 @@ namespace DotNetty.Buffers
                 this.Release();
             }
         }
+
+#if !NET40
+        sealed class OwnedPinnedBlock : MemoryManager<byte>, IPoolMemoryOwner<byte>
+        {
+            private byte[] _array;
+            private IntPtr _origin;
+            private readonly int _offset;
+            private readonly int _length;
+
+            private volatile int _disposed;
+
+            public unsafe OwnedPinnedBlock(byte[] array, void* origin, int offset, int length)
+            {
+                _array = array;
+                _origin = new IntPtr(Unsafe.Add<byte>(origin, offset));
+                _offset = offset;
+                _length = length;
+            }
+
+            public IntPtr Origin => _origin;
+
+            public byte[] Array => _array;
+
+            public int Offset => _offset;
+
+            public int Length => _length;
+
+            protected override bool TryGetArray(out ArraySegment<byte> segment)
+            {
+                segment = new ArraySegment<byte>(_array, _offset, _length);
+                return true; ;
+            }
+
+            public unsafe override Span<byte> GetSpan()
+            {
+                if (IsDisposed) { ThrowObjectDisposedException(); }
+                return new Span<byte>(_origin.ToPointer(), _length);
+            }
+
+            public unsafe override MemoryHandle Pin(int elementIndex = 0)
+            {
+                if (IsDisposed) { ThrowObjectDisposedException(); }
+                if (elementIndex != 0 && ((uint)elementIndex - 1) >= (uint)_length)
+                {
+                    ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.elementIndex);
+                }
+                return new MemoryHandle(Unsafe.Add<byte>(_origin.ToPointer(), elementIndex), default, this);
+            }
+
+            public override void Unpin()
+            {
+                // no-op
+            }
+
+            public bool IsDisposed => Constants.True == _disposed;
+
+            protected override void Dispose(bool disposing)
+            {
+                if (Interlocked.Exchange(ref _disposed, Constants.True) == Constants.True) { return; }
+
+                _array = null;
+                _origin = IntPtr.Zero;
+            }
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            private static void ThrowObjectDisposedException()
+            {
+                throw GetObjectDisposedException();
+
+                ObjectDisposedException GetObjectDisposedException()
+                {
+                    return new ObjectDisposedException(nameof(OwnedPinnedBlock));
+                }
+            }
+        }
+#endif
     }
 }

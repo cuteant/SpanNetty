@@ -55,7 +55,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_HeaderValue(byte value)
+        internal static void ThrowArgumentException_HeaderValue(uint value)
         {
             throw GetArgumentException();
 
@@ -77,7 +77,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_HeaderValueNonAscii(byte value)
+        internal static void ThrowArgumentException_HeaderValueNonAscii(uint value)
         {
             throw GetArgumentException();
 

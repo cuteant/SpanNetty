@@ -49,7 +49,7 @@ namespace DotNetty.Codecs.Mqtt
         static TopicFilterErrorStatus GetTopicFilterErrorStatus(string topicFilter)
         {
             int length = topicFilter.Length;
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return TopicFilterErrorStatus.MQTT_473_1;
             }

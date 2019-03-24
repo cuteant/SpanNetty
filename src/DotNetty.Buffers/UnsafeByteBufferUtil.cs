@@ -173,9 +173,10 @@ namespace DotNetty.Buffers
             }
         }
 
+        [MethodImpl(InlineMethod.Value)]
         internal static void SetZero(byte[] array, int index, int length)
         {
-            //if (length == 0)
+            //if (0u >= (uint)length)
             //{
             //    return;
             //}
@@ -185,60 +186,59 @@ namespace DotNetty.Buffers
         internal static IByteBuffer Copy(AbstractByteBuffer buf, byte* addr, int index, int length)
         {
             IByteBuffer copy = buf.Allocator.DirectBuffer(length, buf.MaxCapacity);
-            if (length != 0)
+            if (0u >= (uint)length) { return copy; }
+
+            if (copy.HasMemoryAddress)
             {
-                if (copy.HasMemoryAddress)
+                IntPtr ptr = copy.AddressOfPinnedMemory();
+                if (ptr != IntPtr.Zero)
                 {
-                    IntPtr ptr = copy.AddressOfPinnedMemory();
-                    if (ptr != IntPtr.Zero)
-                    {
-                        PlatformDependent.CopyMemory(addr, (byte*)ptr, length);
-                    }
-                    else
-                    {
-                        fixed (byte* dst = &copy.GetPinnableMemoryAddress())
-                        {
-                            PlatformDependent.CopyMemory(addr, dst, length);
-                        }
-                    }
-                    copy.SetIndex(0, length);
+                    PlatformDependent.CopyMemory(addr, (byte*)ptr, length);
                 }
                 else
                 {
-                    copy.WriteBytes(buf, index, length);
+                    fixed (byte* dst = &copy.GetPinnableMemoryAddress())
+                    {
+                        PlatformDependent.CopyMemory(addr, dst, length);
+                    }
                 }
+                copy.SetIndex(0, length);
+            }
+            else
+            {
+                copy.WriteBytes(buf, index, length);
             }
             return copy;
         }
 
-        internal static int SetBytes(AbstractByteBuffer buf, byte* addr, int index, Stream input, int length)
-        {
-            IByteBuffer tmpBuf = buf.Allocator.HeapBuffer(length);
-            try
-            {
-                int readTotal = 0;
-                int readBytes;
-                byte[] tmp = tmpBuf.Array;
-                int offset = tmpBuf.ArrayOffset;
-                do
-                {
-                    readBytes = input.Read(tmp, offset + readTotal, length - readTotal);
-                    readTotal += readBytes;
-                }
-                while (readBytes > 0 && readTotal < length);
+        //internal static int SetBytes(AbstractByteBuffer buf, byte* addr, int index, Stream input, int length)
+        //{
+        //    IByteBuffer tmpBuf = buf.Allocator.HeapBuffer(length);
+        //    try
+        //    {
+        //        int readTotal = 0;
+        //        int readBytes;
+        //        byte[] tmp = tmpBuf.Array;
+        //        int offset = tmpBuf.ArrayOffset;
+        //        do
+        //        {
+        //            readBytes = input.Read(tmp, offset + readTotal, length - readTotal);
+        //            readTotal += readBytes;
+        //        }
+        //        while (readBytes > 0 && readTotal < length);
 
-                //if (readTotal > 0)
-                //{
-                    PlatformDependent.CopyMemory(tmp, offset, addr, readTotal);
-                //}
+        //        //if (readTotal > 0)
+        //        //{
+        //        PlatformDependent.CopyMemory(tmp, offset, addr, readTotal);
+        //        //}
 
-                return readTotal;
-            }
-            finally
-            {
-                tmpBuf.Release();
-            }
-        }
+        //        return readTotal;
+        //    }
+        //    finally
+        //    {
+        //        tmpBuf.Release();
+        //    }
+        //}
 
         internal static void GetBytes(AbstractByteBuffer buf, byte* addr, int index, IByteBuffer dst, int dstIndex, int length)
         {
@@ -248,6 +248,7 @@ namespace DotNetty.Buffers
             //{
             //    ThrowHelper.ThrowIndexOutOfRangeException_DstIndex(dstIndex);
             //}
+            if (0u >= (uint)length) { return; }
 
             if (dst.HasMemoryAddress)
             {
@@ -263,8 +264,16 @@ namespace DotNetty.Buffers
                         PlatformDependent.CopyMemory(addr, destination + dstIndex, length);
                     }
                 }
+                return;
             }
-            else if (dst.HasArray)
+
+            GetBytes0(buf, addr, index, dst, dstIndex, length);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void GetBytes0(AbstractByteBuffer buf, byte* addr, int index, IByteBuffer dst, int dstIndex, int length)
+        {
+            if (dst.HasArray)
             {
                 PlatformDependent.CopyMemory(addr, dst.Array, dst.ArrayOffset + dstIndex, length);
             }
@@ -274,7 +283,8 @@ namespace DotNetty.Buffers
             }
         }
 
-        internal static void GetBytes(AbstractByteBuffer buf, byte* addr, int index, byte[] dst, int dstIndex, int length)
+        [MethodImpl(InlineMethod.Value)]
+        internal static void GetBytes(byte* addr, byte[] dst, int dstIndex, int length)
         {
             //if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
 
@@ -284,7 +294,7 @@ namespace DotNetty.Buffers
             //}
             //if (length != 0)
             //{
-                PlatformDependent.CopyMemory(addr, dst, dstIndex, length);
+            PlatformDependent.CopyMemory(addr, dst, dstIndex, length);
             //}
         }
 
@@ -296,37 +306,44 @@ namespace DotNetty.Buffers
             //{
             //    ThrowHelper.ThrowIndexOutOfRangeException_SrcIndex(srcIndex);
             //}
+            if (0u >= (uint)length) { return; }
 
-            if (length != 0)
+            if (src.HasMemoryAddress)
             {
-                if (src.HasMemoryAddress)
+                IntPtr ptr = src.AddressOfPinnedMemory();
+                if (ptr != IntPtr.Zero)
                 {
-                    IntPtr ptr = src.AddressOfPinnedMemory();
-                    if (ptr != IntPtr.Zero)
-                    {
-                        PlatformDependent.CopyMemory((byte*)(ptr + srcIndex), addr, length);
-                    }
-                    else
-                    {
-                        fixed (byte* source = &src.GetPinnableMemoryAddress())
-                        {
-                            PlatformDependent.CopyMemory(source + srcIndex, addr, length);
-                        }
-                    }
-                }
-                else if (src.HasArray)
-                {
-                    PlatformDependent.CopyMemory(src.Array, src.ArrayOffset + srcIndex, addr, length);
+                    PlatformDependent.CopyMemory((byte*)(ptr + srcIndex), addr, length);
                 }
                 else
                 {
-                    src.GetBytes(srcIndex, buf, index, length);
+                    fixed (byte* source = &src.GetPinnableMemoryAddress())
+                    {
+                        PlatformDependent.CopyMemory(source + srcIndex, addr, length);
+                    }
                 }
+                return;
+            }
+
+            SetBytes0(buf, addr, index, src, srcIndex, length);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void SetBytes0(AbstractByteBuffer buf, byte* addr, int index, IByteBuffer src, int srcIndex, int length)
+        {
+            if (src.HasArray)
+            {
+                PlatformDependent.CopyMemory(src.Array, src.ArrayOffset + srcIndex, addr, length);
+            }
+            else
+            {
+                src.GetBytes(srcIndex, buf, index, length);
             }
         }
 
         // No need to check length zero, the calling method already done it
-        internal static void SetBytes(AbstractByteBuffer buf, byte* addr, int index, byte[] src, int srcIndex, int length) =>
+        [MethodImpl(InlineMethod.Value)]
+        internal static void SetBytes(byte* addr, byte[] src, int srcIndex, int length) =>
                 PlatformDependent.CopyMemory(src, srcIndex, addr, length);
 
         internal static void GetBytes(AbstractByteBuffer buf, byte* addr, int index, Stream output, int length)
@@ -348,15 +365,17 @@ namespace DotNetty.Buffers
             }
         }
 
+        [MethodImpl(InlineMethod.Value)]
         internal static void SetZero(byte* addr, int length)
         {
-            //if (length == 0)
+            //if (0u >= (uint)length)
             //{
             //    return;
             //}
             PlatformDependent.SetMemory(addr, length, Zero);
         }
 
+        [MethodImpl(InlineMethod.Value)]
         internal static string GetString(byte* src, int length, Encoding encoding)
         {
 #if NET40 || NET451
@@ -369,7 +388,7 @@ namespace DotNetty.Buffers
 #endif
         }
 
-        internal static UnpooledUnsafeDirectByteBuffer NewUnsafeDirectByteBuffer(IByteBufferAllocator alloc, int initialCapacity, int maxCapacity) =>  
+        internal static UnpooledUnsafeDirectByteBuffer NewUnsafeDirectByteBuffer(IByteBufferAllocator alloc, int initialCapacity, int maxCapacity) =>
             new UnpooledUnsafeDirectByteBuffer(alloc, initialCapacity, maxCapacity);
     }
 }

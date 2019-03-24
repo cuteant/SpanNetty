@@ -18,6 +18,7 @@ namespace DotNetty.Buffers
         protected internal T Memory;
         protected internal int Offset;
         protected internal int Length;
+        protected internal IntPtr Origin;
         internal int MaxLength;
         internal PoolThreadCache<T> Cache;
         PooledByteBufferAllocator allocator;
@@ -33,7 +34,7 @@ namespace DotNetty.Buffers
 
         internal virtual void InitUnpooled(PoolChunk<T> chunk, int length) => this.Init0(chunk, 0, 0, length, length, null);
 
-        void Init0(PoolChunk<T> chunk, long handle, int offset, int length, int maxLength, PoolThreadCache<T> cache)
+        unsafe void Init0(PoolChunk<T> chunk, long handle, int offset, int length, int maxLength, PoolThreadCache<T> cache)
         {
             Debug.Assert(handle >= 0);
             Debug.Assert(chunk != null);
@@ -41,6 +42,7 @@ namespace DotNetty.Buffers
             this.Chunk = chunk;
             this.Memory = chunk.Memory;
             this.allocator = chunk.Arena.Parent;
+            this.Origin = chunk.NativePointer;
             this.Cache = cache;
             this.Handle = handle;
             this.Offset = offset;
@@ -140,6 +142,7 @@ namespace DotNetty.Buffers
             {
                 long handle = this.Handle;
                 this.Handle = -1;
+                this.Origin = IntPtr.Zero;
                 this.Memory = default(T);
                 this.Chunk.Arena.Free(this.Chunk, handle, this.MaxLength, this.Cache);
                 this.Chunk = null;

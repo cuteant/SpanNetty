@@ -86,44 +86,6 @@ namespace DotNetty.Common.Internal
 
         public bool ContentEqualsIgnoreCase(ICharSequence other) => CharUtil.ContentEqualsIgnoreCase(this, other);
 
-        public bool Equals(AppendableCharSequence other)
-        {
-            //if (other == null)
-            //{
-            //    return false;
-            //}
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            return other != null && this.pos == other.pos 
-                && PlatformDependent.ByteArrayEquals(this.chars, 0, other.chars, 0, this.pos);
-        }
-
-        public override bool Equals(object obj)
-        {
-            //if (obj == null)
-            //{
-            //    return false;
-            //}
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            if (obj is AppendableCharSequence other)
-            {
-                return this.pos == other.pos && PlatformDependent.ByteArrayEquals(this.chars, 0, other.chars, 0, this.pos);
-            }
-            if (obj is ICharSequence seq)
-            {
-                return this.ContentEquals(seq);
-            }
-
-            return false;
-        }
-
         public int HashCode(bool ignoreCase) => ignoreCase
             ? StringComparer.OrdinalIgnoreCase.GetHashCode(this.ToString())
             : StringComparer.Ordinal.GetHashCode(this.ToString());

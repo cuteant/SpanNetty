@@ -86,11 +86,6 @@ namespace DotNetty.Buffers
             throw new ReadOnlyBufferException();
         }
 
-        public override IByteBuffer SetBytes(int index, IByteBuffer src)
-        {
-            throw new ReadOnlyBufferException();
-        }
-
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int length)
         {
             throw new ReadOnlyBufferException();
@@ -201,37 +196,12 @@ namespace DotNetty.Buffers
             throw new ReadOnlyBufferException();
         }
 
-        public override IByteBuffer SetChar(int index, char value)
-        {
-            throw new ReadOnlyBufferException();
-        }
-
         public override int SetCharSequence(int index, ICharSequence sequence, Encoding encoding)
         {
             throw new ReadOnlyBufferException();
         }
 
-        public override IByteBuffer SetDouble(int index, double value)
-        {
-            throw new ReadOnlyBufferException();
-        }
-
-        public override IByteBuffer SetFloat(int index, float value)
-        {
-            throw new ReadOnlyBufferException();
-        }
-
         public override int SetString(int index, string value, Encoding encoding)
-        {
-            throw new ReadOnlyBufferException();
-        }
-
-        public override IByteBuffer SetUnsignedShort(int index, ushort value)
-        {
-            throw new ReadOnlyBufferException();
-        }
-
-        public override IByteBuffer SetUnsignedShortLE(int index, ushort value)
         {
             throw new ReadOnlyBufferException();
         }
@@ -368,19 +338,9 @@ namespace DotNetty.Buffers
             return new ReadOnlyByteBuffer(this.Unwrap().Slice(index, length));
         }
 
-        public override int ForEachByte(IByteProcessor processor)
-        {
-            return this.Unwrap().ForEachByte(processor);
-        }
-
         public override int ForEachByte(int index, int length, IByteProcessor processor)
         {
             return this.Unwrap().ForEachByte(index, length, processor);
-        }
-
-        public override int ForEachByteDesc(IByteProcessor processor)
-        {
-            return this.Unwrap().ForEachByteDesc(processor);
         }
 
         public override int ForEachByteDesc(int index, int length, IByteProcessor processor)

@@ -41,7 +41,7 @@ namespace DotNetty.Common.Utilities
 
         public int Count => this.count;
 
-        public bool IsEmpty => this.count == 0;
+        public bool IsEmpty => 0u >= (uint)this.count;
 
         public bool NonEmpty => this.count > 0;
 
@@ -70,7 +70,7 @@ namespace DotNetty.Common.Utilities
 
         public bool TryPeek(out T item)
         {
-            if (this.count == 0)
+            if (0u >= (uint)this.count)
             {
                 item = null;
                 return false;

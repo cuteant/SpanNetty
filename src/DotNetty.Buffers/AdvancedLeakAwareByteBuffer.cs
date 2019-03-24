@@ -126,58 +126,16 @@ namespace DotNetty.Buffers
             return base.GetShort(index);
         }
 
-        public override ushort GetUnsignedShort(int index)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetUnsignedShort(index);
-        }
-
         public override int GetInt(int index)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.GetInt(index);
         }
 
-        public override uint GetUnsignedInt(int index)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetUnsignedInt(index);
-        }
-
         public override long GetLong(int index)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.GetLong(index);
-        }
-
-        public override char GetChar(int index)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetChar(index);
-        }
-
-        public override float GetFloat(int index)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetFloat(index);
-        }
-
-        public override double GetDouble(int index)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetDouble(index);
-        }
-
-        public override IByteBuffer GetBytes(int index, IByteBuffer dst)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetBytes(index, dst);
-        }
-
-        public override IByteBuffer GetBytes(int index, IByteBuffer dst, int length)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetBytes(index, dst, length);
         }
 
         public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
@@ -234,30 +192,6 @@ namespace DotNetty.Buffers
             return base.SetLong(index, value);
         }
 
-        public override IByteBuffer SetChar(int index, char value)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.SetChar(index, value);
-        }
-
-        public override IByteBuffer SetFloat(int index, float value)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.SetFloat(index, value);
-        }
-
-        public override IByteBuffer SetDouble(int index, double value)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.SetDouble(index, value);
-        }
-
-        public override IByteBuffer SetBytes(int index, IByteBuffer src)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.SetBytes(index, src);
-        }
-
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int length)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
@@ -312,12 +246,6 @@ namespace DotNetty.Buffers
             return base.ReadShort();
         }
 
-        public override ushort ReadUnsignedShort()
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.ReadUnsignedShort();
-        }
-
         public override int ReadMedium()
         {
             RecordLeakNonRefCountingOperation(this.Leak);
@@ -336,46 +264,16 @@ namespace DotNetty.Buffers
             return base.ReadInt();
         }
 
-        public override uint ReadUnsignedInt()
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.ReadUnsignedInt();
-        }
-
         public override long ReadLong()
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.ReadLong();
         }
 
-        public override char ReadChar()
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.ReadChar();
-        }
-
-        public override float ReadFloat()
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.ReadFloat();
-        }
-
-        public override double ReadDouble()
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.ReadDouble();
-        }
-
         public override IByteBuffer ReadBytes(int length)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.ReadBytes(length);
-        }
-
-        public override IByteBuffer ReadBytes(IByteBuffer dst)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.ReadBytes(dst);
         }
 
         public override IByteBuffer ReadBytes(IByteBuffer dst, int length)
@@ -450,30 +348,6 @@ namespace DotNetty.Buffers
             return base.WriteLong(value);
         }
 
-        public override IByteBuffer WriteChar(char value)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.WriteChar(value);
-        }
-
-        public override IByteBuffer WriteFloat(float value)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.WriteFloat(value);
-        }
-
-        public override IByteBuffer WriteDouble(double value)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.WriteDouble(value);
-        }
-
-        public override IByteBuffer WriteBytes(IByteBuffer src)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.WriteBytes(src);
-        }
-
         public override IByteBuffer WriteBytes(IByteBuffer src, int length)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
@@ -510,58 +384,16 @@ namespace DotNetty.Buffers
             return base.WriteZero(length);
         }
 
-        public override int IndexOf(int fromIndex, int toIndex, byte value)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.IndexOf(fromIndex, toIndex, value);
-        }
-
-        public override int BytesBefore(byte value)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.BytesBefore(value);
-        }
-
-        public override int BytesBefore(int length, byte value)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.BytesBefore(length, value);
-        }
-
-        public override int BytesBefore(int index, int length, byte value)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.BytesBefore(index, length, value);
-        }
-
-        public override int ForEachByte(IByteProcessor processor)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.ForEachByte(processor);
-        }
-
         public override int ForEachByte(int index, int length, IByteProcessor processor)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.ForEachByte(index, length, processor);
         }
 
-        public override int ForEachByteDesc(IByteProcessor processor)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.ForEachByteDesc(processor);
-        }
-
         public override int ForEachByteDesc(int index, int length, IByteProcessor processor)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.ForEachByteDesc(index, length, processor);
-        }
-
-        public override IByteBuffer Copy()
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.Copy();
         }
 
         public override IByteBuffer Copy(int index, int length)
@@ -579,40 +411,16 @@ namespace DotNetty.Buffers
             }
         }
 
-        public override ArraySegment<byte> GetIoBuffer()
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetIoBuffer();
-        }
-
         public override ArraySegment<byte> GetIoBuffer(int index, int length)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.GetIoBuffer(index, length);
         }
 
-        public override ArraySegment<byte>[] GetIoBuffers()
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetIoBuffers();
-        }
-
         public override ArraySegment<byte>[] GetIoBuffers(int index, int length)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.GetIoBuffers(index, length);
-        }
-
-        public override string ToString(Encoding encoding)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.ToString(encoding);
-        }
-
-        public override string ToString(int index, int length, Encoding encoding)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.ToString(index, length, encoding);
         }
 
         public override IByteBuffer AdjustCapacity(int newCapacity)
@@ -625,12 +433,6 @@ namespace DotNetty.Buffers
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.GetShortLE(index);
-        }
-
-        public override ushort GetUnsignedShortLE(int index)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetUnsignedShortLE(index);
         }
 
         public override int GetMediumLE(int index)
@@ -649,12 +451,6 @@ namespace DotNetty.Buffers
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.GetIntLE(index);
-        }
-
-        public override uint GetUnsignedIntLE(int index)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetUnsignedIntLE(index);
         }
 
         public override long GetLongLE(int index)
@@ -693,12 +489,6 @@ namespace DotNetty.Buffers
             return base.ReadShortLE();
         }
 
-        public override ushort ReadUnsignedShortLE()
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.ReadUnsignedShortLE();
-        }
-
         public override int ReadMediumLE()
         {
             RecordLeakNonRefCountingOperation(this.Leak);
@@ -715,12 +505,6 @@ namespace DotNetty.Buffers
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.ReadIntLE();
-        }
-
-        public override uint ReadUnsignedIntLE()
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.ReadUnsignedIntLE();
         }
 
         public override long ReadLongLE()

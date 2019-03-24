@@ -72,7 +72,7 @@ namespace DotNetty.Buffers
         /// modification on the specified array's content will be visible to the returned buffer.</summary>
         public static IByteBuffer WrappedBuffer(byte[] array, int offset, int length)
         {
-            if (null == array || length == 0) { return Empty; }
+            if (null == array || 0u >= (uint)length) { return Empty; }
             if (MathUtil.IsOutOfBounds(offset, length, array.Length))
             {
                 ThrowHelper.ThrowIndexOutOfRangeException_Index(offset, length, array.Length);
@@ -90,7 +90,7 @@ namespace DotNetty.Buffers
 
         public static IByteBuffer WrappedBuffer(ArrayPool<byte> arrayPool, byte[] array, int offset, int length)
         {
-            if (null == array || length == 0) { return Empty; }
+            if (null == array || 0u >= (uint)length) { return Empty; }
             if (null == arrayPool) { arrayPool = DefaultArrayPool; }
             if (MathUtil.IsOutOfBounds(offset, length, array.Length))
             {
@@ -211,7 +211,7 @@ namespace DotNetty.Buffers
         /// <returns>The new buffer that copies the contents of array.</returns>
         public static IByteBuffer CopiedBuffer(byte[] array, int offset, int length)
         {
-            if (array == null || length == 0) { return Empty; }
+            if (array == null || 0u >= (uint)length) { return Empty; }
 
             var copy = DefaultArrayPool.Rent(length);
             PlatformDependent.CopyMemory(array, offset, copy, 0, length);
@@ -272,7 +272,7 @@ namespace DotNetty.Buffers
                 length += bLen;
             }
 
-            if (length == 0) { return Empty; }
+            if (0u >= (uint)length) { return Empty; }
 
             var mergedArray = DefaultArrayPool.Rent(length);
             for (int i = 0, j = 0; i < buffers.Length; i++)
@@ -288,7 +288,7 @@ namespace DotNetty.Buffers
 
         public static IByteBuffer CopiedBuffer(char[] array, int offset, int length, Encoding encoding)
         {
-            return null == array || length == 0 ? Empty : CopiedBuffer(new string(array, offset, length), encoding);
+            return null == array || 0u >= (uint)length ? Empty : CopiedBuffer(new string(array, offset, length), encoding);
         }
 
         public static IByteBuffer CopiedBuffer(string value, Encoding encoding) => ByteBufferUtil.EncodeString0(Allocator, true, value, encoding, 0);

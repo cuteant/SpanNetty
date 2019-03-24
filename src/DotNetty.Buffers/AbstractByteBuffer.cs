@@ -184,21 +184,24 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer DiscardReadBytes()
         {
             this.EnsureAccessible();
-            if (this.readerIndex == 0)
+
+            var readerIdx = this.readerIndex;
+            var writerIdx = this.writerIndex;
+            if (readerIdx == 0)
             {
                 return this;
             }
 
-            if (this.readerIndex != this.writerIndex)
+            if (readerIdx != writerIdx)
             {
-                this.SetBytes(0, this, this.readerIndex, this.writerIndex - this.readerIndex);
-                this.writerIndex -= this.readerIndex;
-                this.AdjustMarkers(this.readerIndex);
+                this.SetBytes(0, this, readerIdx, writerIdx - readerIdx);
+                this.writerIndex -= readerIdx;
+                this.AdjustMarkers(readerIdx);
                 this.readerIndex = 0;
             }
             else
             {
-                this.AdjustMarkers(this.readerIndex);
+                this.AdjustMarkers(readerIdx);
                 this.writerIndex = this.readerIndex = 0;
             }
 
@@ -208,23 +211,26 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer DiscardSomeReadBytes()
         {
             this.EnsureAccessible();
-            if (this.readerIndex == 0)
+
+            var readerIdx = this.readerIndex;
+            var writerIdx = this.writerIndex;
+            if (readerIdx == 0)
             {
                 return this;
             }
 
-            if (this.readerIndex == this.writerIndex)
+            if (readerIdx == writerIdx)
             {
-                this.AdjustMarkers(this.readerIndex);
+                this.AdjustMarkers(readerIdx);
                 this.writerIndex = this.readerIndex = 0;
                 return this;
             }
 
-            if (this.readerIndex >= this.Capacity.RightUShift(1))
+            if (readerIdx >= this.Capacity.RightUShift(1))
             {
-                this.SetBytes(0, this, this.readerIndex, this.writerIndex - this.readerIndex);
-                this.writerIndex -= this.readerIndex;
-                this.AdjustMarkers(this.readerIndex);
+                this.SetBytes(0, this, readerIdx, writerIdx - readerIdx);
+                this.writerIndex -= readerIdx;
+                this.AdjustMarkers(readerIdx);
                 this.readerIndex = 0;
             }
 
@@ -345,22 +351,6 @@ namespace DotNetty.Buffers
 
         protected internal abstract short _GetShortLE(int index);
 
-        public ushort GetUnsignedShort(int index)
-        {
-            unchecked
-            {
-                return (ushort)this.GetShort(index);
-            }
-        }
-
-        public ushort GetUnsignedShortLE(int index)
-        {
-            unchecked
-            {
-                return (ushort)this.GetShortLE(index);
-            }
-        }
-
         public virtual int GetUnsignedMedium(int index)
         {
             this.CheckIndex(index, 3);
@@ -415,22 +405,6 @@ namespace DotNetty.Buffers
 
         protected internal abstract int _GetIntLE(int index);
 
-        public uint GetUnsignedInt(int index)
-        {
-            unchecked
-            {
-                return (uint)(this.GetInt(index));
-            }
-        }
-
-        public uint GetUnsignedIntLE(int index)
-        {
-            unchecked
-            {
-                return (uint)this.GetIntLE(index);
-            }
-        }
-
         public virtual long GetLong(int index)
         {
             this.CheckIndex(index, 8);
@@ -447,16 +421,6 @@ namespace DotNetty.Buffers
 
         protected internal abstract long _GetLongLE(int index);
 
-        public virtual char GetChar(int index) => Convert.ToChar(this.GetShort(index));
-
-        public float GetFloat(int index) => ByteBufferUtil.Int32BitsToSingle(this.GetInt(index));
-
-        public float GetFloatLE(int index) => ByteBufferUtil.Int32BitsToSingle(this.GetIntLE(index));
-
-        public double GetDouble(int index) => BitConverter.Int64BitsToDouble(this.GetLong(index));
-
-        public double GetDoubleLE(int index) => BitConverter.Int64BitsToDouble(this.GetLongLE(index));
-
         public virtual IByteBuffer GetBytes(int index, byte[] destination)
         {
             this.GetBytes(index, destination, 0, destination.Length);
@@ -465,19 +429,6 @@ namespace DotNetty.Buffers
 
         public abstract IByteBuffer GetBytes(int index, byte[] destination, int dstIndex, int length);
 
-        public virtual IByteBuffer GetBytes(int index, IByteBuffer destination)
-        {
-            this.GetBytes(index, destination, destination.WritableBytes);
-            return this;
-        }
-
-        public virtual IByteBuffer GetBytes(int index, IByteBuffer destination, int length)
-        {
-            this.GetBytes(index, destination, destination.WriterIndex, length);
-            destination.SetWriterIndex(destination.WriterIndex + length);
-            return this;
-        }
-
         public abstract IByteBuffer GetBytes(int index, IByteBuffer destination, int dstIndex, int length);
 
         public abstract IByteBuffer GetBytes(int index, Stream destination, int length);
@@ -485,7 +436,7 @@ namespace DotNetty.Buffers
         public virtual unsafe string GetString(int index, int length, Encoding encoding)
         {
             this.CheckIndex0(index, length);
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return string.Empty;
             }
@@ -513,15 +464,16 @@ namespace DotNetty.Buffers
 
         public virtual string ReadString(int length, Encoding encoding)
         {
-            string value = this.GetString(this.readerIndex, length, encoding);
-            this.readerIndex += length;
+            var readerIdx = this.readerIndex;
+            string value = this.GetString(readerIdx, length, encoding);
+            this.readerIndex = readerIdx + length;
             return value;
         }
 
         public virtual unsafe ICharSequence GetCharSequence(int index, int length, Encoding encoding)
         {
             this.CheckIndex0(index, length);
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return StringCharSequence.Empty;
             }
@@ -555,8 +507,9 @@ namespace DotNetty.Buffers
 
         public virtual ICharSequence ReadCharSequence(int length, Encoding encoding)
         {
-            ICharSequence sequence = this.GetCharSequence(this.readerIndex, length, encoding);
-            this.readerIndex += length;
+            var readerIdx = this.readerIndex;
+            ICharSequence sequence = this.GetCharSequence(readerIdx, length, encoding);
+            this.readerIndex = readerIdx + length;
             return sequence;
         }
 
@@ -593,24 +546,6 @@ namespace DotNetty.Buffers
 
         protected internal abstract void _SetShortLE(int index, int value);
 
-        public virtual IByteBuffer SetUnsignedShort(int index, ushort value)
-        {
-            this.SetShort(index, value);
-            return this;
-        }
-
-        public virtual IByteBuffer SetUnsignedShortLE(int index, ushort value)
-        {
-            this.SetShortLE(index, value);
-            return this;
-        }
-
-        public virtual IByteBuffer SetChar(int index, char value)
-        {
-            this.SetShort(index, value);
-            return this;
-        }
-
         public virtual IByteBuffer SetMedium(int index, int value)
         {
             this.CheckIndex(index, 3);
@@ -636,22 +571,6 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public IByteBuffer SetUnsignedInt(int index, uint value)
-        {
-            unchecked
-            {
-                return this.SetInt(index, (int)value);
-            }
-        }
-
-        public IByteBuffer SetUnsignedIntLE(int index, uint value)
-        {
-            unchecked
-            {
-                return this.SetIntLE(index, (int)value);
-            }
-        }
-
         protected internal abstract void _SetInt(int index, int value);
 
         public virtual IByteBuffer SetIntLE(int index, int value)
@@ -662,14 +581,6 @@ namespace DotNetty.Buffers
         }
 
         protected internal abstract void _SetIntLE(int index, int value);
-
-        public virtual IByteBuffer SetFloat(int index, float value)
-        {
-            this.SetInt(index, ByteBufferUtil.SingleToInt32Bits(value));
-            return this;
-        }
-
-        public IByteBuffer SetFloatLE(int index, float value) => this.SetIntLE(index, ByteBufferUtil.SingleToInt32Bits(value));
 
         public virtual IByteBuffer SetLong(int index, long value)
         {
@@ -689,14 +600,6 @@ namespace DotNetty.Buffers
 
         protected internal abstract void _SetLongLE(int index, long value);
 
-        public virtual IByteBuffer SetDouble(int index, double value)
-        {
-            this.SetLong(index, BitConverter.DoubleToInt64Bits(value));
-            return this;
-        }
-
-        public IByteBuffer SetDoubleLE(int index, double value) => this.SetLongLE(index, BitConverter.DoubleToInt64Bits(value));
-
         public virtual IByteBuffer SetBytes(int index, byte[] src)
         {
             this.SetBytes(index, src, 0, src.Length);
@@ -704,12 +607,6 @@ namespace DotNetty.Buffers
         }
 
         public abstract IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length);
-
-        public virtual IByteBuffer SetBytes(int index, IByteBuffer src)
-        {
-            this.SetBytes(index, src, src.ReadableBytes);
-            return this;
-        }
 
         public virtual IByteBuffer SetBytes(int index, IByteBuffer src, int length)
         {
@@ -729,7 +626,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetZero(int index, int length)
         {
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return this;
             }
@@ -787,7 +684,7 @@ namespace DotNetty.Buffers
                     {
                         this.CheckIndex(index, len);
                     }
-                    return ByteBufferUtil.WriteUtf8(this, index, value, value.Length);
+                    return ByteBufferUtil.WriteUtf8(this, index, value);
 
                 case Constants.ASCIICodePage:
                     int length = value.Length;
@@ -800,7 +697,7 @@ namespace DotNetty.Buffers
                     {
                         this.CheckIndex(index, length);
                     }
-                    return ByteBufferUtil.WriteAscii(this, index, value, length);
+                    return ByteBufferUtil.WriteAscii(this, index, value);
 
                 default:
                     byte[] bytes = encoding.GetBytes(value);
@@ -831,7 +728,7 @@ namespace DotNetty.Buffers
                     {
                         this.CheckIndex(index, len);
                     }
-                    return ByteBufferUtil.WriteUtf8(this, index, sequence, sequence.Count);
+                    return ByteBufferUtil.WriteUtf8(this, index, sequence);
 
                 case Constants.ASCIICodePage:
                     int length = sequence.Count;
@@ -844,7 +741,7 @@ namespace DotNetty.Buffers
                     {
                         this.CheckIndex(index, length);
                     }
-                    return ByteBufferUtil.WriteAscii(this, index, sequence, length);
+                    return ByteBufferUtil.WriteAscii(this, index, sequence);
 
                 default:
                     byte[] bytes = encoding.GetBytes(sequence.ToString());
@@ -883,22 +780,6 @@ namespace DotNetty.Buffers
             short v = this._GetShortLE(this.readerIndex);
             this.readerIndex += 2;
             return v;
-        }
-
-        public ushort ReadUnsignedShort()
-        {
-            unchecked
-            {
-                return (ushort)(this.ReadShort());
-            }
-        }
-
-        public ushort ReadUnsignedShortLE()
-        {
-            unchecked
-            {
-                return (ushort)this.ReadShortLE();
-            }
         }
 
         public int ReadMedium()
@@ -955,22 +836,6 @@ namespace DotNetty.Buffers
             return v;
         }
 
-        public uint ReadUnsignedInt()
-        {
-            unchecked
-            {
-                return (uint)(this.ReadInt());
-            }
-        }
-
-        public uint ReadUnsignedIntLE()
-        {
-            unchecked
-            {
-                return (uint)this.ReadIntLE();
-            }
-        }
-
         public virtual long ReadLong()
         {
             this.CheckReadableBytes0(8);
@@ -987,20 +852,10 @@ namespace DotNetty.Buffers
             return v;
         }
 
-        public char ReadChar() => (char)this.ReadShort();
-
-        public float ReadFloat() => ByteBufferUtil.Int32BitsToSingle(this.ReadInt());
-
-        public float ReadFloatLE() => ByteBufferUtil.Int32BitsToSingle(this.ReadIntLE());
-
-        public double ReadDouble() => BitConverter.Int64BitsToDouble(this.ReadLong());
-
-        public double ReadDoubleLE() => BitConverter.Int64BitsToDouble(this.ReadLongLE());
-
         public virtual IByteBuffer ReadBytes(int length)
         {
             this.CheckReadableBytes(length);
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return Unpooled.Empty;
             }
@@ -1038,12 +893,6 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer ReadBytes(byte[] dst)
         {
             this.ReadBytes(dst, 0, dst.Length);
-            return this;
-        }
-
-        public virtual IByteBuffer ReadBytes(IByteBuffer dst)
-        {
-            this.ReadBytes(dst, dst.WritableBytes);
             return this;
         }
 
@@ -1110,22 +959,6 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public IByteBuffer WriteUnsignedShort(ushort value)
-        {
-            unchecked
-            {
-                return this.WriteShort((short)value);
-            }
-        }
-
-        public IByteBuffer WriteUnsignedShortLE(ushort value)
-        {
-            unchecked
-            {
-                return this.WriteShortLE((short)value);
-            }
-        }
-
         public virtual IByteBuffer WriteMedium(int value)
         {
             this.EnsureWritable0(3);
@@ -1180,28 +1013,6 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public virtual IByteBuffer WriteChar(char value)
-        {
-            this.WriteShort(value);
-            return this;
-        }
-
-        public virtual IByteBuffer WriteFloat(float value)
-        {
-            this.WriteInt(ByteBufferUtil.SingleToInt32Bits(value));
-            return this;
-        }
-
-        public IByteBuffer WriteFloatLE(float value) => this.WriteIntLE(ByteBufferUtil.SingleToInt32Bits(value));
-
-        public virtual IByteBuffer WriteDouble(double value)
-        {
-            this.WriteLong(BitConverter.DoubleToInt64Bits(value));
-            return this;
-        }
-
-        public IByteBuffer WriteDoubleLE(double value) => this.WriteLongLE(BitConverter.DoubleToInt64Bits(value));
-
         public virtual IByteBuffer WriteBytes(byte[] src, int srcIndex, int length)
         {
             this.EnsureWritable(length);
@@ -1214,12 +1025,6 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer WriteBytes(byte[] src)
         {
             this.WriteBytes(src, 0, src.Length);
-            return this;
-        }
-
-        public virtual IByteBuffer WriteBytes(IByteBuffer src)
-        {
-            this.WriteBytes(src, src.ReadableBytes);
             return this;
         }
 
@@ -1256,11 +1061,9 @@ namespace DotNetty.Buffers
             this.writerIndex = writerIdx + wrote;
         }
 
-        public Task WriteBytesAsync(Stream stream, int length) => this.WriteBytesAsync(stream, length, CancellationToken.None);
-
         public virtual IByteBuffer WriteZero(int length)
         {
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return this;
             }
@@ -1320,8 +1123,6 @@ namespace DotNetty.Buffers
             return written;
         }
 
-        public virtual IByteBuffer Copy() => this.Copy(this.readerIndex, this.ReadableBytes);
-
         public abstract IByteBuffer Copy(int index, int length);
 
         public virtual IByteBuffer Duplicate()
@@ -1344,43 +1145,18 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer RetainedSlice(int index, int length) => (IByteBuffer)this.Slice(index, length).Retain();
 
-        public virtual string ToString(Encoding encoding) => this.ToString(this.readerIndex, this.ReadableBytes, encoding);
-
-        public virtual string ToString(int index, int length, Encoding encoding) => ByteBufferUtil.DecodeString(this, index, length, encoding);
-
-        public virtual int IndexOf(int fromIndex, int toIndex, byte value) => ByteBufferUtil.IndexOf(this, fromIndex, toIndex, value);
-
-        public int BytesBefore(byte value) => this.BytesBefore(this.ReaderIndex, this.ReadableBytes, value);
-
-        public int BytesBefore(int length, byte value)
-        {
-            this.CheckReadableBytes(length);
-            return this.BytesBefore(this.ReaderIndex, length, value);
-        }
-
-        public virtual int BytesBefore(int index, int length, byte value)
-        {
-            int endIndex = this.IndexOf(index, index + length, value);
-            if (endIndex < 0)
-            {
-                return -1;
-            }
-
-            return endIndex - index;
-        }
-
-        public virtual int ForEachByte(IByteProcessor processor)
-        {
-            this.EnsureAccessible();
-            return this.ForEachByteAsc0(this.readerIndex, this.writerIndex, processor);
-        }
-
         public virtual int ForEachByte(int index, int length, IByteProcessor processor)
         {
             this.CheckIndex(index, length);
+#if NET40
             return this.ForEachByteAsc0(index, index + length, processor);
+#else
+            return this.ForEachByteAsc0(index, length, processor);
+#endif
         }
 
+#if NET40
+        // 如此反人类的 ForEach 设计
         internal protected virtual int ForEachByteAsc0(int start, int end, IByteProcessor processor)
         {
             for (; start < end; ++start)
@@ -1393,19 +1169,20 @@ namespace DotNetty.Buffers
 
             return -1;
         }
-
-        public virtual int ForEachByteDesc(IByteProcessor processor)
-        {
-            this.EnsureAccessible();
-            return this.ForEachByteDesc0(this.writerIndex - 1, this.readerIndex, processor);
-        }
+#endif
 
         public virtual int ForEachByteDesc(int index, int length, IByteProcessor processor)
         {
             this.CheckIndex(index, length);
+#if NET40
             return this.ForEachByteDesc0(index + length - 1, index, processor);
+#else
+            return this.ForEachByteDesc0(index, length, processor);
+#endif
         }
 
+#if NET40
+        // 如此反人类的 ForEach 设计
         internal protected virtual int ForEachByteDesc0(int rStart, int rEnd, IByteProcessor processor)
         {
             for (; rStart >= rEnd; --rStart)
@@ -1418,6 +1195,7 @@ namespace DotNetty.Buffers
 
             return -1;
         }
+#endif
 
         public override int GetHashCode() => ByteBufferUtil.HashCode(this);
 
@@ -1482,6 +1260,7 @@ namespace DotNetty.Buffers
             if (CheckBounds) { CheckRangeBounds(dstIndex, length, dstCapacity); }
         }
 
+        [MethodImpl(InlineMethod.Value)]
         protected void CheckReadableBytes(int minimumReadableBytes)
         {
             if (minimumReadableBytes < 0)
@@ -1492,6 +1271,7 @@ namespace DotNetty.Buffers
             this.CheckReadableBytes0(minimumReadableBytes);
         }
 
+        [MethodImpl(InlineMethod.Value)]
         protected void CheckNewCapacity(int newCapacity)
         {
             this.EnsureAccessible();
@@ -1533,11 +1313,7 @@ namespace DotNetty.Buffers
 
         public abstract int IoBufferCount { get; }
 
-        public ArraySegment<byte> GetIoBuffer() => this.GetIoBuffer(this.readerIndex, this.ReadableBytes);
-
         public abstract ArraySegment<byte> GetIoBuffer(int index, int length);
-
-        public ArraySegment<byte>[] GetIoBuffers() => this.GetIoBuffers(this.readerIndex, this.ReadableBytes);
 
         public abstract ArraySegment<byte>[] GetIoBuffers(int index, int length);
 

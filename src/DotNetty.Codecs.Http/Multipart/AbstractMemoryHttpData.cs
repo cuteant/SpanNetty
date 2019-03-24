@@ -165,7 +165,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override IByteBuffer GetChunk(int length)
         {
-            if (this.byteBuf == null || length == 0 || this.byteBuf.ReadableBytes == 0)
+            if (this.byteBuf == null || 0u >= (uint)length || this.byteBuf.ReadableBytes == 0)
             {
                 this.chunkPosition = 0;
                 return Unpooled.Empty;

@@ -16,12 +16,14 @@ namespace DotNetty.Codecs.Http
 
         /// <summary>Carriage return</summary>
         public const byte CarriageReturn = 13;
+        public const uint NCarriageReturn = 13u;
 
         /// <summary>Equals '='</summary>
         public const byte EqualsSign = 61;
 
         /// <summary>Line feed character</summary>
         public const byte LineFeed = 10;
+        public const uint NLineFeed = 10u;
 
         /// <summary>Colon ':'</summary>
         public const byte Colon = 58;

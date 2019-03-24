@@ -44,7 +44,7 @@ namespace DotNetty.Buffers
 
         void InitMemoryAddress()
         {
-            this.memoryAddress = (byte*)Unsafe.AsPointer(ref this.Memory[this.Offset]);
+            this.memoryAddress = (byte*)Unsafe.Add<byte>(this.Origin.ToPointer(), this.Offset);
         }
 
         public override bool IsDirect => true;
@@ -79,7 +79,7 @@ namespace DotNetty.Buffers
         {
             if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
             this.CheckDstIndex(index, length, dstIndex, dst.Length);
-            UnsafeByteBufferUtil.GetBytes(this, this.Addr(index), index, dst, dstIndex, length);
+            UnsafeByteBufferUtil.GetBytes(this.Addr(index), dst, dstIndex, length);
             return this;
         }
 
@@ -90,7 +90,7 @@ namespace DotNetty.Buffers
             //UnsafeByteBufferUtil.GetBytes(this, this.Addr(index), index, output, length);
             // UnsafeByteBufferUtil.GetBytes 多一遍内存拷贝，最终还是调用 stream.write，没啥必要
 #if NETCOREAPP
-            output.Write(new ReadOnlySpan<byte>(Unsafe.AsPointer(ref this.Memory[this.Idx(index)]), length));
+            output.Write(this._GetReadableSpan(index, length));
 #else
             output.Write(this.Memory, this.Idx(index), length);
 #endif
@@ -127,7 +127,7 @@ namespace DotNetty.Buffers
         {
             if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckSrcIndex(index, length, srcIndex, src.Length);
-            UnsafeByteBufferUtil.SetBytes(this, this.Addr(index), index, src, srcIndex, length);
+            UnsafeByteBufferUtil.SetBytes(this.Addr(index), src, srcIndex, length);
             return this;
         }
 
@@ -145,7 +145,7 @@ namespace DotNetty.Buffers
             do
             {
 #if NETCOREAPP
-                read = src.Read(new Span<byte>(Unsafe.AsPointer(ref this.Memory[this.Idx(index + readTotal)]), length - readTotal));
+                read = src.Read(this._GetSpan(index + readTotal, length - readTotal));
 #else
                 read = src.Read(this.Memory, offset + readTotal, length - readTotal);
 #endif
@@ -195,7 +195,7 @@ namespace DotNetty.Buffers
         public override ref byte GetPinnableMemoryAddress()
         {
             this.EnsureAccessible();
-            return ref this.Memory[this.Offset];
+            return ref Unsafe.AsRef<byte>(this.memoryAddress);
         }
 
         public override IntPtr AddressOfPinnedMemory() => (IntPtr)this.memoryAddress;
@@ -212,7 +212,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer WriteZero(int length)
         {
-            if (length == 0) { return this; }
+            if (0u >= (uint)length) { return this; }
 
             this.EnsureWritable(length);
             int wIndex = this.WriterIndex;

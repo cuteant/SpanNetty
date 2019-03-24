@@ -188,7 +188,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
             IByteBuffer data = envelope.Content;
             int length = data.ReadableBytes;
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return;
             }
@@ -241,7 +241,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
 
             int length = data.ReadableBytes;
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return true;
             }

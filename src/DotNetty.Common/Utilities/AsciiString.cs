@@ -45,7 +45,7 @@ namespace DotNetty.Common.Utilities
             public bool Equals(ICharSequence a, ICharSequence b) => ContentEquals(a, b);
         }
 
-        byte[] value; // ## 苦竹 修改 ## readonly
+        readonly byte[] value;
         readonly int offset;
         readonly int length;
 
@@ -182,62 +182,11 @@ namespace DotNetty.Common.Utilities
             this.value = thisVal;
         }
 
-        public int ForEachByte(IByteProcessor visitor) => this.ForEachByte0(0, this.length, visitor);
-
-        public int ForEachByte(int index, int count, IByteProcessor visitor)
-        {
-            if (MathUtil.IsOutOfBounds(index, count, this.length))
-            {
-                ThrowIndexOutOfRangeException_Index(index, count, this.length);
-            }
-            return this.ForEachByte0(index, count, visitor);
-        }
-
-        int ForEachByte0(int index, int count, IByteProcessor visitor)
-        {
-            int len = this.offset + index + count;
-            for (int i = this.offset + index; i < len; ++i)
-            {
-                if (!visitor.Process(this.value[i]))
-                {
-                    return i - this.offset;
-                }
-            }
-
-            return -1;
-        }
-
-        public int ForEachByteDesc(IByteProcessor visitor) => this.ForEachByteDesc0(0, this.length, visitor);
-
-        public int ForEachByteDesc(int index, int count, IByteProcessor visitor)
-        {
-            if (MathUtil.IsOutOfBounds(index, count, this.length))
-            {
-                ThrowIndexOutOfRangeException_Index(index, count, this.length);
-            }
-
-            return this.ForEachByteDesc0(index, count, visitor);
-        }
-
-        int ForEachByteDesc0(int index, int count, IByteProcessor visitor)
-        {
-            int end = this.offset + index;
-            for (int i = this.offset + index + count - 1; i >= end; --i)
-            {
-                if (!visitor.Process(this.value[i]))
-                {
-                    return i - this.offset;
-                }
-            }
-
-            return -1;
-        }
-
         public byte ByteAt(int index)
         {
             // We must do a range check here to enforce the access does not go outside our sub region of the array.
             // We rely on the array access itself to pick up the array out of bounds conditions
-            if (index < 0 || index >= this.length)
+            if ((uint)index >= (uint)this.length)
             {
                 ThrowIndexOutOfRangeException_Index(index, this.length);
             }
@@ -245,7 +194,7 @@ namespace DotNetty.Common.Utilities
             return this.value[index + this.offset];
         }
 
-        public bool IsEmpty => this.length == 0;
+        public bool IsEmpty => 0u >= (uint)this.length;
 
         public int Count => this.length;
 
@@ -263,9 +212,7 @@ namespace DotNetty.Common.Utilities
 
         public int Offset => this.offset;
 
-        public bool IsEntireArrayUsed => this.offset == 0 && this.length == this.value.Length;
-
-        public byte[] ToByteArray() => this.ToByteArray(0, this.length);
+        public bool IsEntireArrayUsed => 0u >= (uint)this.offset && this.length == this.value.Length;
 
         public byte[] ToByteArray(int start, int end)
         {
@@ -284,7 +231,7 @@ namespace DotNetty.Common.Utilities
             {
                 ThrowIndexOutOfRangeException_SrcIndex(srcIdx, count, this.length);
             }
-            if (count == 0)
+            if (0u >= (uint)count)
             {
                 return;
             }
@@ -294,147 +241,7 @@ namespace DotNetty.Common.Utilities
 
         public char this[int index] => ByteToChar(this.ByteAt(index));
 
-        public bool Contains(ICharSequence sequence) => this.IndexOf(sequence) >= 0;
-
-        public int CompareTo(ICharSequence other)
-        {
-            if (ReferenceEquals(this, other))
-            {
-                return 0;
-            }
-
-            int length1 = this.length;
-            int length2 = other.Count;
-            int minLength = Math.Min(length1, length2);
-            for (int i = 0, j = this.offset; i < minLength; i++, j++)
-            {
-                int result = ByteToChar(this.value[j]) - other[i];
-                if (result != 0)
-                {
-                    return result;
-                }
-            }
-
-            return length1 - length2;
-        }
-
-        public AsciiString Concat(ICharSequence charSequence)
-        {
-            int thisLen = this.length;
-            int thatLen = charSequence.Count;
-            if (thatLen == 0)
-            {
-                return this;
-            }
-
-            byte[] newValue;
-            if (charSequence is AsciiString that)
-            {
-                if (this.IsEmpty)
-                {
-                    return that;
-                }
-
-                newValue = new byte[thisLen + thatLen];
-                PlatformDependent.CopyMemory(this.value, this.offset, newValue, 0, thisLen);
-                PlatformDependent.CopyMemory(that.value, that.offset, newValue, thisLen, thatLen);
-
-                return new AsciiString(newValue, false);
-            }
-
-            if (this.IsEmpty)
-            {
-                return new AsciiString(charSequence);
-            }
-
-            newValue = new byte[thisLen + thatLen];
-            PlatformDependent.CopyMemory(this.value, this.offset, newValue, 0, thisLen);
-            for (int i = thisLen, j = 0; i < newValue.Length; i++, j++)
-            {
-                newValue[i] = CharToByte(charSequence[j]);
-            }
-
-            return new AsciiString(newValue, false);
-        }
-
-        public bool EndsWith(ICharSequence suffix)
-        {
-            int suffixLen = suffix.Count;
-            return this.RegionMatches(this.length - suffixLen, suffix, 0, suffixLen);
-        }
-
-        public bool ContentEqualsIgnoreCase(ICharSequence other)
-        {
-            if (ReferenceEquals(this, other)) { return true; }
-            if (other == null || other.Count != this.length)
-            {
-                return false;
-            }
-
-            if (other is AsciiString rhs)
-            {
-                for (int i = this.offset, j = rhs.offset; i < this.length; ++i, ++j)
-                {
-                    if (!EqualsIgnoreCase(this.value[i], rhs.value[j]))
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            }
-
-            for (int i = this.offset, j = 0; i < this.length; ++i, ++j)
-            {
-                if (!EqualsIgnoreCase(ByteToChar(this.value[i]), other[j]))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public char[] ToCharArray() => this.ToCharArray(0, this.length);
-
-        public char[] ToCharArray(int start, int end)
-        {
-            int count = end - start;
-            if (count == 0)
-            {
-                return EmptyArrays.EmptyChars;
-            }
-
-            if (MathUtil.IsOutOfBounds(start, count, this.length))
-            {
-                ThrowIndexOutOfRangeException_SrcIndex(start, count, this.length);
-            }
-
-            var buffer = new char[count];
-            for (int i = 0, j = start + this.offset; i < count; i++, j++)
-            {
-                buffer[i] = ByteToChar(this.value[j]);
-            }
-
-            return buffer;
-        }
-
-        public void Copy(int srcIdx, char[] dst, int dstIdx, int count)
-        {
-            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
-
-            if (MathUtil.IsOutOfBounds(srcIdx, count, this.length))
-            {
-                ThrowIndexOutOfRangeException_SrcIndex(srcIdx, count, this.length);
-            }
-
-            int dstEnd = dstIdx + count;
-            for (int i = dstIdx, j = srcIdx + this.offset; i < dstEnd; i++, j++)
-            {
-                dst[i] = ByteToChar(this.value[j]);
-            }
-        }
-
-        public ICharSequence SubSequence(int start) => (AsciiString)this.SubSequence(start, this.length);
+        public ICharSequence SubSequence(int start) => this.SubSequence(start, this.length);
 
         public ICharSequence SubSequence(int start, int end) => this.SubSequence(start, end, true);
 
@@ -445,288 +252,12 @@ namespace DotNetty.Common.Utilities
                 ThrowIndexOutOfRangeException_StartEnd(start, end, this.length);
             }
 
-            if (start == 0 && end == this.length)
+            if (0u >= (uint)start && end == this.length)
             {
                 return this;
             }
 
             return end == start ? Empty : new AsciiString(this.value, start + this.offset, end - start, copy);
-        }
-
-        public int IndexOf(ICharSequence sequence) => this.IndexOf(sequence, 0);
-
-        public int IndexOf(ICharSequence subString, int start)
-        {
-            if (start < 0)
-            {
-                start = 0;
-            }
-
-            int thisLen = this.length;
-
-            int subCount = subString.Count;
-            if (subCount <= 0)
-            {
-                return start < thisLen ? start : thisLen;
-            }
-            if (subCount > thisLen - start)
-            {
-                return IndexNotFound;
-            }
-
-            char firstChar = subString[0];
-            if (firstChar > MaxCharValue)
-            {
-                return IndexNotFound;
-            }
-
-            var thisOffset = this.offset;
-            var firstCharAsByte = (byte)firstChar;
-            var len = thisOffset + length - subCount;
-            var thisValue = this.value;
-            for (int i = start + thisOffset; i <= len; ++i)
-            {
-                if (thisValue[i] == firstCharAsByte)
-                {
-                    int o1 = i, o2 = 0;
-                    while (++o2 < subCount && ByteToChar(thisValue[++o1]) == subString[o2])
-                    {
-                        // Intentionally empty
-                    }
-                    if (o2 == subCount)
-                    {
-                        return i - thisOffset;
-                    }
-                }
-            }
-            return IndexNotFound;
-        }
-
-        public int IndexOf(char ch, int start)
-        {
-            if (ch > MaxCharValue)
-            {
-                return IndexNotFound;
-            }
-
-            if (start < 0)
-            {
-                start = 0;
-            }
-
-            var thisOffset = this.offset;
-            var thisValue = this.value;
-            byte chAsByte = (byte)ch;
-            int len = thisOffset + this.length;
-            for (int i = start + thisOffset; i < len; ++i)
-            {
-                if (thisValue[i] == chAsByte)
-                {
-                    return i - thisOffset;
-                }
-            }
-            return IndexNotFound;
-        }
-
-        // Use count instead of count - 1 so lastIndexOf("") answers count
-        public int LastIndexOf(ICharSequence charSequence) => this.LastIndexOf(charSequence, this.length);
-
-        public int LastIndexOf(ICharSequence subString, int start)
-        {
-            int thisLen = this.length;
-            int subCount = subString.Count;
-
-            if (start < 0)
-            {
-                start = 0;
-            }
-            if (subCount <= 0)
-            {
-                return start < thisLen ? start : thisLen;
-            }
-            if (subCount > thisLen - start)
-            {
-                return IndexNotFound;
-            }
-
-            char firstChar = subString[0];
-            if (firstChar > MaxCharValue)
-            {
-                return IndexNotFound;
-            }
-            byte firstCharAsByte = (byte)firstChar;
-            int end = offset + start;
-            for (int i = offset + thisLen - subCount; i >= end; --i)
-            {
-                if (value[i] == firstCharAsByte)
-                {
-                    int o1 = i, o2 = 0;
-                    while (++o2 < subCount && ByteToChar(value[++o1]) == subString[o2])
-                    {
-                        // Intentionally empty
-                    }
-                    if (o2 == subCount)
-                    {
-                        return i - offset;
-                    }
-                }
-            }
-            return IndexNotFound;
-        }
-
-        public bool RegionMatches(int thisStart, ICharSequence seq, int start, int count)
-        {
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
-
-            if (start < 0 || seq.Count - start < count)
-            {
-                return false;
-            }
-
-            int thisLen = this.length;
-            if (thisStart < 0 || thisLen - thisStart < count)
-            {
-                return false;
-            }
-
-            if (count <= 0)
-            {
-                return true;
-            }
-
-            int thatEnd = start + count;
-            for (int i = start, j = thisStart + this.offset; i < thatEnd; i++, j++)
-            {
-                if (ByteToChar(this.value[j]) != seq[i])
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public bool RegionMatchesIgnoreCase(int thisStart, ICharSequence seq, int start, int count)
-        {
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
-
-            int thisLen = this.length;
-            if (thisStart < 0 || count > thisLen - thisStart)
-            {
-                return false;
-            }
-            if (start < 0 || count > seq.Count - start)
-            {
-                return false;
-            }
-
-            thisStart += this.offset;
-            int thisEnd = thisStart + count;
-            while (thisStart < thisEnd)
-            {
-                if (!EqualsIgnoreCase(ByteToChar(this.value[thisStart++]), seq[start++]))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public AsciiString Replace(char oldChar, char newChar)
-        {
-            if (oldChar > MaxCharValue)
-            {
-                return this;
-            }
-
-            var oldCharAsByte = CharToByte(oldChar);
-            var newCharAsByte = CharToByte(newChar);
-            var thisLen = this.length;
-            var thisOffset = this.offset;
-            var thisVal = this.value;
-            var len = thisOffset + thisLen;
-            for (int i = thisOffset; i < len; ++i)
-            {
-                if (thisVal[i] == oldCharAsByte)
-                {
-                    byte[] buffer = new byte[thisLen];
-                    System.Array.Copy(thisVal, thisOffset, buffer, 0, i - thisOffset);
-                    buffer[i - thisOffset] = newCharAsByte;
-                    ++i;
-                    for (; i < len; ++i)
-                    {
-                        byte oldValue = thisVal[i];
-                        buffer[i - thisOffset] = oldValue != oldCharAsByte ? oldValue : newCharAsByte;
-                    }
-                    return new AsciiString(buffer, false);
-                }
-            }
-            return this;
-        }
-
-        public bool StartsWith(ICharSequence prefix) => this.StartsWith(prefix, 0);
-
-        public bool StartsWith(ICharSequence prefix, int start) => this.RegionMatches(start, prefix, 0, prefix.Count);
-
-        public AsciiString ToLowerCase()
-        {
-            bool lowercased = true;
-            int i, j;
-            int len = this.length + this.offset;
-            for (i = this.offset; i < len; ++i)
-            {
-                byte b = this.value[i];
-                if (b >= 'A' && b <= 'Z')
-                {
-                    lowercased = false;
-                    break;
-                }
-            }
-
-            // Check if this string does not contain any uppercase characters.
-            if (lowercased)
-            {
-                return this;
-            }
-
-            var newValue = new byte[this.length];
-            for (i = 0, j = this.offset; i < newValue.Length; ++i, ++j)
-            {
-                newValue[i] = ToLowerCase(this.value[j]);
-            }
-
-            return new AsciiString(newValue, false);
-        }
-
-        public AsciiString ToUpperCase()
-        {
-            bool uppercased = true;
-            int i, j;
-            int len = this.length + this.offset;
-            for (i = this.offset; i < len; ++i)
-            {
-                byte b = this.value[i];
-                if (b >= 'a' && b <= 'z')
-                {
-                    uppercased = false;
-                    break;
-                }
-            }
-
-            // Check if this string does not contain any lowercase characters.
-            if (uppercased)
-            {
-                return this;
-            }
-
-            var newValue = new byte[this.length];
-            for (i = 0, j = this.offset; i < newValue.Length; ++i, ++j)
-            {
-                newValue[i] = ToUpperCase(this.value[j]);
-            }
-
-            return new AsciiString(newValue, false);
         }
 
         public static ICharSequence Trim(ICharSequence c)
@@ -746,7 +277,7 @@ namespace DotNetty.Common.Utilities
             {
                 end--;
             }
-            if (start == 0 && end == last)
+            if (0u >= (uint)start && end == last)
             {
                 return c;
             }
@@ -758,20 +289,21 @@ namespace DotNetty.Common.Utilities
             int start = this.offset;
             int last = this.offset + this.length - 1;
             int end = last;
-            while (start <= end && this.value[start] <= ' ')
+            var thisValue = this.value;
+            while (start <= end && thisValue[start] <= ' ')
             {
                 start++;
             }
-            while (end >= start && this.value[end] <= ' ')
+            while (end >= start && thisValue[end] <= ' ')
             {
                 end--;
             }
-            if (start == 0 && end == last)
+            if (0u >= (uint)start && end == last)
             {
                 return this;
             }
 
-            return new AsciiString(this.value, start, end - start + 1, false);
+            return new AsciiString(thisValue, start, end - start + 1, false);
         }
 
         public unsafe bool ContentEquals(string a)
@@ -782,7 +314,7 @@ namespace DotNetty.Common.Utilities
             }
             if (this.stringValue != null)
             {
-                return this.stringValue.Equals(a);
+                return string.Equals(this.stringValue, a, StringComparison.Ordinal);
             }
             if (this.length != a.Length)
             {
@@ -800,29 +332,6 @@ namespace DotNetty.Common.Utilities
                             return false;
                         }
                     }
-            }
-
-            return true;
-        }
-
-        public bool ContentEquals(ICharSequence a)
-        {
-            if (a == null || a.Count != this.length)
-            {
-                return false;
-            }
-
-            if (a is AsciiString asciiString)
-            {
-                return this.Equals(asciiString);
-            }
-
-            for (int i = this.offset, j = 0; j < a.Count; ++i, ++j)
-            {
-                if (ByteToChar(this.value[i]) != a[j])
-                {
-                    return false;
-                }
             }
 
             return true;
@@ -850,7 +359,7 @@ namespace DotNetty.Common.Utilities
                 }
             }
 
-            if (start == 0)
+            if (0u >= (uint)start)
             {
                 // If no delimiter was found in the value
                 res.Add(this);
@@ -889,53 +398,13 @@ namespace DotNetty.Common.Utilities
         public override int GetHashCode()
         {
             int h = this.hash;
-            if (h == 0)
+            if (0u >= (uint)h)
             {
                 h = PlatformDependent.HashCodeAscii(this.value, this.offset, this.length);
                 this.hash = h;
             }
 
             return h;
-        }
-        // ReSharper restore NonReadonlyMemberInGetHashCode
-
-        public bool Equals(AsciiString other)
-        {
-            //if (other == null)
-            //{
-            //    return false;
-            //}
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            return other != null && this.length == other.length
-                && this.GetHashCode() == other.GetHashCode()
-                && PlatformDependent.ByteArrayEquals(this.value, this.offset, other.value, other.offset, this.length);
-        }
-
-        public override bool Equals(object obj)
-        {
-            //if (obj == null)
-            //{
-            //    return false;
-            //}
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            if (obj is AsciiString ascii)
-            {
-                return this.length == ascii.length && this.GetHashCode() == ascii.GetHashCode() && PlatformDependent.ByteArrayEquals(this.value, this.offset, ascii.value, ascii.offset, this.length);
-            }
-            if (obj is ICharSequence seq)
-            {
-                return this.ContentEquals(seq);
-            }
-
-            return false;
         }
 
         public override string ToString()
@@ -959,7 +428,7 @@ namespace DotNetty.Common.Utilities
             {
                 ThrowIndexOutOfRangeException_SrcIndex(start, count, this.length);
             }
-            if (count == 0)
+            if (0u >= (uint)count)
             {
                 return string.Empty;
             }
@@ -969,176 +438,6 @@ namespace DotNetty.Common.Utilities
                 return Marshal.PtrToStringAnsi((IntPtr)p, count);
             }
         }
-
-        public bool ParseBoolean() => this.length >= 1 && this.value[this.offset] != 0;
-
-        public char ParseChar() => this.ParseChar(0);
-
-        public char ParseChar(int start)
-        {
-            if (start + 1 >= this.length)
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException_ParseChar(start);
-            }
-
-            int startWithOffset = start + this.offset;
-
-            return (char)((ByteToChar(this.value[startWithOffset]) << 8)
-                | ByteToChar(this.value[startWithOffset + 1]));
-        }
-
-        public short ParseShort() => this.ParseShort(0, this.length, 10);
-
-        public short ParseShort(int radix) => this.ParseShort(0, this.length, radix);
-
-        public short ParseShort(int start, int end) => this.ParseShort(start, end, 10);
-
-        public short ParseShort(int start, int end, int radix)
-        {
-            int intValue = this.ParseInt(start, end, radix);
-            short result = (short)intValue;
-            if (result != intValue)
-            {
-                ThrowHelper.ThrowFormatException(this, start, end);
-            }
-
-            return result;
-        }
-
-        public int ParseInt() => this.ParseInt(0, this.length, 10);
-
-        public int ParseInt(int radix) => this.ParseInt(0, this.length, radix);
-
-        public int ParseInt(int start, int end) => this.ParseInt(start, end, 10);
-
-        public int ParseInt(int start, int end, int radix)
-        {
-            if (radix < CharUtil.MinRadix || radix > CharUtil.MaxRadix)
-            {
-                ThrowHelper.ThrowFormatException_Radix();
-            }
-            if (start == end)
-            {
-                ThrowHelper.ThrowFormatException(start, end);
-            }
-
-            int i = start;
-            bool negative = this.ByteAt(i) == '-';
-            if (negative && ++i == end)
-            {
-                ThrowHelper.ThrowFormatException(this, start, end);
-            }
-
-            return this.ParseInt(i, end, radix, negative);
-        }
-
-        int ParseInt(int start, int end, int radix, bool negative)
-        {
-            int max = int.MinValue / radix;
-            int result = 0;
-            int currOffset = start;
-            while (currOffset < end)
-            {
-                int digit = CharUtil.Digit((char)(this.value[currOffset++ + this.offset]), radix);
-                if (digit == -1)
-                {
-                    ThrowHelper.ThrowFormatException(this, start, end);
-                }
-                if (max > result)
-                {
-                    ThrowHelper.ThrowFormatException(this, start, end);
-                }
-                int next = result * radix - digit;
-                if (next > result)
-                {
-                    ThrowHelper.ThrowFormatException(this, start, end);
-                }
-                result = next;
-            }
-
-            if (!negative)
-            {
-                result = -result;
-                if (result < 0)
-                {
-                    ThrowHelper.ThrowFormatException(this, start, end);
-                }
-            }
-
-            return result;
-        }
-
-        public long ParseLong() => this.ParseLong(0, this.length, 10);
-
-        public long ParseLong(int radix) => this.ParseLong(0, this.length, radix);
-
-        public long ParseLong(int start, int end) => this.ParseLong(start, end, 10);
-
-        public long ParseLong(int start, int end, int radix)
-        {
-            if (radix < CharUtil.MinRadix || radix > CharUtil.MaxRadix)
-            {
-                ThrowHelper.ThrowFormatException_Radix();
-            }
-
-            if (start == end)
-            {
-                ThrowHelper.ThrowFormatException(start, end);
-            }
-
-            int i = start;
-            bool negative = this.ByteAt(i) == '-';
-            if (negative && ++i == end)
-            {
-                ThrowHelper.ThrowFormatException(this, start, end);
-            }
-
-            return this.ParseLong(i, end, radix, negative);
-        }
-
-        long ParseLong(int start, int end, int radix, bool negative)
-        {
-            long max = long.MinValue / radix;
-            long result = 0;
-            int currOffset = start;
-            while (currOffset < end)
-            {
-                int digit = CharUtil.Digit((char)(this.value[currOffset++ + this.offset]), radix);
-                if (digit == -1)
-                {
-                    ThrowHelper.ThrowFormatException(this, start, end);
-                }
-                if (max > result)
-                {
-                    ThrowHelper.ThrowFormatException(this, start, end);
-                }
-                long next = result * radix - digit;
-                if (next > result)
-                {
-                    ThrowHelper.ThrowFormatException(this, start, end);
-                }
-                result = next;
-            }
-
-            if (!negative)
-            {
-                result = -result;
-                if (result < 0)
-                {
-                    ThrowHelper.ThrowFormatException(this, start, end);
-                }
-            }
-
-            return result;
-        }
-
-        public float ParseFloat() => this.ParseFloat(0, this.length);
-
-        public float ParseFloat(int start, int end) => Convert.ToSingle(this.ToString(start, end));
-
-        public double ParseDouble() => this.ParseDouble(0, this.length);
-
-        public double ParseDouble(int start, int end) => Convert.ToDouble(this.ToString(start, end));
 
         public static AsciiString Of(string value) => new AsciiString(value);
 
@@ -1231,6 +530,11 @@ namespace DotNetty.Common.Utilities
                 return ReferenceEquals(a, b);
             }
 
+            if (a.Count != b.Count)
+            {
+                return false;
+            }
+
             if (a is AsciiString stringA)
             {
                 return stringA.ContentEquals(b);
@@ -1238,11 +542,6 @@ namespace DotNetty.Common.Utilities
             if (b is AsciiString stringB)
             {
                 return stringB.ContentEquals(a);
-            }
-
-            if (a.Count != b.Count)
-            {
-                return false;
             }
 
             for (int i = 0; i < a.Count; ++i)
@@ -1262,7 +561,7 @@ namespace DotNetty.Common.Utilities
             {
                 return false;
             }
-            if (b.Count == 0)
+            if (0u >= (uint)b.Count)
             {
                 return true;
             }
@@ -1390,7 +689,7 @@ namespace DotNetty.Common.Utilities
             {
                 return IndexNotFound;
             }
-            if (searchStrLen == 0)
+            if (0u >= (uint)searchStrLen)
             {
                 return startPos;
             }
@@ -1422,7 +721,7 @@ namespace DotNetty.Common.Utilities
             {
                 return IndexNotFound;
             }
-            if (searchStrLen == 0)
+            if (0u >= (uint)searchStrLen)
             {
                 return startPos;
             }
@@ -1462,28 +761,83 @@ namespace DotNetty.Common.Utilities
         }
 
         [MethodImpl(InlineMethod.Value)]
-        static bool EqualsIgnoreCase(byte a, byte b) => a == b || ToLowerCase(a) == ToLowerCase(b);
+        public static bool EqualsIgnoreCase(byte a, byte b)
+        {
+            var ua = (uint)a;
+            var ub = (uint)b;
+            return (ua == ub || ToLowerCase0(ua) == ToLowerCase0(ub)) ? true : false;
+        }
 
         [MethodImpl(InlineMethod.Value)]
-        static bool EqualsIgnoreCase(char a, char b) => a == b || ToLowerCase(a) == ToLowerCase(b);
+        public static bool EqualsIgnoreCase(char a, char b)
+        {
+            var ua = (uint)a;
+            var ub = (uint)b;
+            return (ua == ub || ToLowerCase0(ua) == ToLowerCase0(ub)) ? true : false;
+        }
 
         [MethodImpl(InlineMethod.Value)]
-        static byte ToLowerCase(byte b) => IsUpperCase(b) ? (byte)(b + 32) : b;
+        public static byte ToLowerCase(byte b) => unchecked((byte)ToLowerCase0(b));
 
         [MethodImpl(InlineMethod.Value)]
-        static char ToLowerCase(char c) => IsUpperCase(c) ? (char)(c + 32) : c;
+        public static byte ToLowerCase(uint b) => unchecked((byte)ToLowerCase0(b));
+        [MethodImpl(InlineMethod.Value)]
+        public static char ToLowerCase(char c) => unchecked((char)ToLowerCase0(c));
+        [MethodImpl(InlineMethod.Value)]
+        public static uint ToLowerCase0(uint b) => IsUpperCase(b) ? (b + 32u) : b;
 
         [MethodImpl(InlineMethod.Value)]
-        static byte ToUpperCase(byte b) => IsLowerCase(b) ? (byte)(b - 32) : b;
+        public static byte ToUpperCase(byte b) => unchecked((byte)ToUpperCase0(b));
+        [MethodImpl(InlineMethod.Value)]
+        public static byte ToUpperCase(uint b) => unchecked((byte)ToUpperCase0(b));
+        [MethodImpl(InlineMethod.Value)]
+        public static char ToUpperCase(char c) => unchecked((char)ToUpperCase0(c));
+        [MethodImpl(InlineMethod.Value)]
+        public static uint ToUpperCase0(uint b) => IsLowerCase(b) ? (b - 32u) : b;
+
+        const uint DigitDiff = '9' - '0';
+        const uint HexCharDiff = 'F' - 'A';
+        const uint AsciiCharDiff = 'Z' - 'A';
+        const uint Ascii0 = '0';
+        const uint AsciiA = 'A';
+        const uint Asciia = 'a';
+        [MethodImpl(InlineMethod.Value)]
+        public static bool IsLowerCase(byte value) => (value - Asciia <= AsciiCharDiff) ? true : false;
+        [MethodImpl(InlineMethod.Value)]
+        public static bool IsLowerCase(uint value) => (value - Asciia <= AsciiCharDiff) ? true : false;
+        [MethodImpl(InlineMethod.Value)]
+        public static bool IsLowerCase(char value) => (value - Asciia <= AsciiCharDiff) ? true : false;
 
         [MethodImpl(InlineMethod.Value)]
-        static bool IsLowerCase(byte value) => value >= 'a' && value <= 'z';
-
+        public static bool IsUpperCase(byte value) => (value - AsciiA <= AsciiCharDiff) ? true : false;
         [MethodImpl(InlineMethod.Value)]
-        public static bool IsUpperCase(byte value) => value >= 'A' && value <= 'Z';
-
+        public static bool IsUpperCase(uint value) => (value - AsciiA <= AsciiCharDiff) ? true : false;
         [MethodImpl(InlineMethod.Value)]
-        public static bool IsUpperCase(char value) => value >= 'A' && value <= 'Z';
+        public static bool IsUpperCase(char value) => (value - AsciiA <= AsciiCharDiff) ? true : false;
+
+        /// <summary>
+        /// A hex digit is valid if it is in the range: [0..9] | [A..F] | [a..f]
+        /// Otherwise, return false.
+        /// </summary>
+        [MethodImpl(InlineMethod.Value)]
+        public static bool IsHexDigit(byte value) => IsHexDigit((uint)value);
+        public static bool IsHexDigit(char value) => IsHexDigit((uint)value);
+        [MethodImpl(InlineMethod.Value)]
+        public static bool IsHexDigit(uint value) =>
+            ((value - Ascii0) <= DigitDiff ||
+            (value - AsciiA) <= HexCharDiff ||
+            (value - Asciia) <= HexCharDiff) ? true : false;
+
+        /// <summary>
+        /// Returns <see langword="true"/> iff <paramref name="value"/> is in the range [0..9].
+        /// Otherwise, returns <see langword="false"/>.
+        /// </summary>
+        [MethodImpl(InlineMethod.Value)]
+        public static bool IsDigit(byte value) => (value - Ascii0 <= DigitDiff) ? true : false;
+        [MethodImpl(InlineMethod.Value)]
+        public static bool IsDigit(char value) => (value - Ascii0 <= DigitDiff) ? true : false;
+        [MethodImpl(InlineMethod.Value)]
+        public static bool IsDigit(uint value) => (value - Ascii0 <= DigitDiff) ? true : false;
 
         [MethodImpl(InlineMethod.Value)]
         public static byte CharToByte(char c) => c > MaxCharValue ? Replacement : unchecked((byte)c);
@@ -1551,6 +905,7 @@ namespace DotNetty.Common.Utilities
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         static void ThrowIndexOutOfRangeException_Start(int start, int length, int count)
         {
             throw GetIndexOutOfRangeException();
@@ -1561,6 +916,7 @@ namespace DotNetty.Common.Utilities
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         static void ThrowIndexOutOfRangeException_StartEnd(int start, int end, int length)
         {
             throw GetIndexOutOfRangeException();
@@ -1571,6 +927,7 @@ namespace DotNetty.Common.Utilities
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         static void ThrowIndexOutOfRangeException_SrcIndex(int start, int count, int length)
         {
             throw GetIndexOutOfRangeException();
@@ -1581,6 +938,7 @@ namespace DotNetty.Common.Utilities
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         static void ThrowIndexOutOfRangeException_Index(int index, int length, int count)
         {
             throw GetIndexOutOfRangeException();
@@ -1591,6 +949,7 @@ namespace DotNetty.Common.Utilities
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         static void ThrowIndexOutOfRangeException_Index(int index, int length)
         {
             throw GetIndexOutOfRangeException();

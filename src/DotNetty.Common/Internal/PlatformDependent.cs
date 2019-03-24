@@ -57,8 +57,8 @@ namespace DotNetty.Common.Internal
             }
 
             fixed (byte* array1 = bytes1)
-                fixed (byte* array2 = bytes2)
-                    return PlatformDependent0.ByteArrayEquals(array1, startPos1, array2, startPos2, length);
+            fixed (byte* array2 = bytes2)
+                return PlatformDependent0.ByteArrayEquals(array1, startPos1, array2, startPos2, length);
         }
 
         public static unsafe int ByteArrayEqualsConstantTime(byte[] bytes1, int startPos1, byte[] bytes2, int startPos2, int length)
@@ -69,15 +69,15 @@ namespace DotNetty.Common.Internal
             return ConstantTimeUtils.EqualsConstantTime(bytes1, startPos1, bytes2, startPos2, length);
 #else
             fixed (byte* array1 = bytes1)
-                fixed (byte* array2 = bytes2)
-                    return PlatformDependent0.ByteArrayEqualsConstantTime(array1, startPos1, array2, startPos2, length);
+            fixed (byte* array2 = bytes2)
+                return PlatformDependent0.ByteArrayEqualsConstantTime(array1, startPos1, array2, startPos2, length);
 #endif
         }
 
         [MethodImpl(InlineMethod.Value)]
         public static unsafe int HashCodeAscii(byte[] bytes, int startPos, int length)
         {
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return HashCodeAsciiSeed;
             }
@@ -238,62 +238,81 @@ namespace DotNetty.Common.Internal
         static int HashCodeAsciiSanitizsByte(char value) => value & 0x1f;
 
 #if !NET40
+        // https://github.com/Azure/DotNetty/issues/371#issuecomment-372574610
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CopyMemory(byte[] src, int srcIndex, byte[] dst, int dstIndex, int length)
         {
-            if (length > 0)
-            {
-                Unsafe.CopyBlockUnaligned(ref dst[dstIndex], ref src[srcIndex], unchecked((uint)length));
-            }
+            uint nlen = unchecked((uint)length);
+            if (0u >= nlen) { return; }
+            Unsafe.CopyBlockUnaligned(ref dst[dstIndex], ref src[srcIndex], nlen);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void CopyMemory(byte* src, byte* dst, int length)
         {
-            if (length > 0)
-            {
-                Unsafe.CopyBlockUnaligned(dst, src, unchecked((uint)length));
-            }
+            uint nlen = unchecked((uint)length);
+            if (0u >= nlen) { return; }
+#if NET471
+            Buffer.MemoryCopy(src, dst, length, length);
+#else
+            Unsafe.CopyBlockUnaligned(dst, src, nlen);
+#endif
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void CopyMemory(byte* src, byte[] dst, int dstIndex, int length)
         {
-            if (length > 0)
+            uint nlen = unchecked((uint)length);
+            if (0u >= nlen) { return; }
+            fixed (byte* destination = &dst[dstIndex])
             {
-                fixed (byte* destination = &dst[dstIndex])
-                    Unsafe.CopyBlockUnaligned(destination, src, unchecked((uint)length));
+#if NET471
+                Buffer.MemoryCopy(src, destination, length, length);
+#else
+                Unsafe.CopyBlockUnaligned(destination, src, nlen);
+#endif
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void CopyMemory(byte[] src, int srcIndex, byte* dst, int length)
         {
-            if (length > 0)
+            uint nlen = unchecked((uint)length);
+            if (0u >= nlen) { return; }
+            fixed (byte* source = &src[srcIndex])
             {
-                fixed (byte* source = &src[srcIndex])
-                    Unsafe.CopyBlockUnaligned(dst, source, unchecked((uint)length));
+#if NET471
+                Buffer.MemoryCopy(source, dst, length, length);
+#else
+                Unsafe.CopyBlockUnaligned(dst, source, nlen);
+#endif
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Clear(byte[] src, int srcIndex, int length)
         {
-            if (length > 0)
-            {
-                Unsafe.InitBlockUnaligned(ref src[srcIndex], default(byte), unchecked((uint)length));
-            }
+            const byte DefaultValue = default;
+            uint nlen = unchecked((uint)length);
+            if (0u >= nlen) { return; }
+            Unsafe.InitBlockUnaligned(ref src[srcIndex], DefaultValue, nlen);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static unsafe void SetMemory(byte* src, int length, byte value)
         {
-            if (length > 0)
-            {
-                Unsafe.InitBlockUnaligned(src, value, unchecked((uint)length));
-            }
+            uint nlen = unchecked((uint)length);
+            if (0u >= nlen) { return; }
+            Unsafe.InitBlockUnaligned(src, value, nlen);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SetMemory(byte[] src, int srcIndex, int length, byte value)
         {
-            if (length > 0)
-            {
-                Unsafe.InitBlockUnaligned(ref src[srcIndex], value, unchecked((uint)length));
-            }
+            uint nlen = unchecked((uint)length);
+            if (0u >= nlen) { return; }
+            Unsafe.InitBlockUnaligned(ref src[srcIndex], value, nlen);
         }
 #endif
     }

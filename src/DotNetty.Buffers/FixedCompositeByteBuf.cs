@@ -300,7 +300,7 @@ namespace DotNetty.Buffers
         public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
             this.CheckDstIndex(index, length, dstIndex, dst.Length);
-            if (length == 0) { return this; }
+            if (0u >= (uint)length) { return this; }
 
             var c = this.FindComponent(index);
             int i = c.Index;
@@ -323,7 +323,7 @@ namespace DotNetty.Buffers
         public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
             this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
-            if (length == 0) { return this; }
+            if (0u >= (uint)length) { return this; }
 
             var c = this.FindComponent(index);
             int i = c.Index;
@@ -346,7 +346,7 @@ namespace DotNetty.Buffers
         public override IByteBuffer GetBytes(int index, Stream destination, int length)
         {
             this.CheckIndex(index, length);
-            if (length == 0) { return this; }
+            if (0u >= (uint)length) { return this; }
 
             var c = this.FindComponent(index);
             int i = c.Index;
@@ -495,11 +495,6 @@ namespace DotNetty.Buffers
             throw new ReadOnlyBufferException();
         }
 
-        public override IByteBuffer SetBytes(int index, IByteBuffer src)
-        {
-            throw new ReadOnlyBufferException();
-        }
-
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int length)
         {
             throw new ReadOnlyBufferException();
@@ -610,37 +605,12 @@ namespace DotNetty.Buffers
             throw new ReadOnlyBufferException();
         }
 
-        public override IByteBuffer SetChar(int index, char value)
-        {
-            throw new ReadOnlyBufferException();
-        }
-
         public override int SetCharSequence(int index, ICharSequence sequence, Encoding encoding)
         {
             throw new ReadOnlyBufferException();
         }
 
-        public override IByteBuffer SetDouble(int index, double value)
-        {
-            throw new ReadOnlyBufferException();
-        }
-
-        public override IByteBuffer SetFloat(int index, float value)
-        {
-            throw new ReadOnlyBufferException();
-        }
-
         public override int SetString(int index, string value, Encoding encoding)
-        {
-            throw new ReadOnlyBufferException();
-        }
-
-        public override IByteBuffer SetUnsignedShort(int index, ushort value)
-        {
-            throw new ReadOnlyBufferException();
-        }
-
-        public override IByteBuffer SetUnsignedShortLE(int index, ushort value)
         {
             throw new ReadOnlyBufferException();
         }

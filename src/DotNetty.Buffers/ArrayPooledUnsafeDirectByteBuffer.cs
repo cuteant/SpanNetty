@@ -98,7 +98,7 @@ namespace DotNetty.Buffers
             this.CheckDstIndex(index, length, dstIndex, dst.Length);
             fixed (byte* addr = &this.Addr(index))
             {
-                UnsafeByteBufferUtil.GetBytes(this, addr, index, dst, dstIndex, length);
+                UnsafeByteBufferUtil.GetBytes(addr, dst, dstIndex, length);
                 return this;
             }
         }
@@ -170,7 +170,7 @@ namespace DotNetty.Buffers
             {
                 fixed (byte* addr = &this.Addr(index))
                 {
-                    UnsafeByteBufferUtil.SetBytes(this, addr, index, src, srcIndex, length);
+                    UnsafeByteBufferUtil.SetBytes(addr, src, srcIndex, length);
                     return this;
                 }
             }
@@ -243,7 +243,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer WriteZero(int length)
         {
-            if (length == 0) { return this; }
+            if (0u >= (uint)length) { return this; }
 
             this.EnsureWritable(length);
             int wIndex = this.WriterIndex;

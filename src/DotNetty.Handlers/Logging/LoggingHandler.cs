@@ -338,7 +338,7 @@ namespace DotNetty.Handlers.Logging
         {
             string chStr = ctx.Channel.ToString();
             int length = msg.ReadableBytes;
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 var buf = StringBuilderManager.Allocate(chStr.Length + 1 + eventName.Length + 4);
                 buf.Append(chStr).Append(' ').Append(eventName).Append(": 0B");
@@ -365,7 +365,7 @@ namespace DotNetty.Handlers.Logging
             string msgStr = msg.ToString();
             IByteBuffer content = msg.Content;
             int length = content.ReadableBytes;
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 var buf = StringBuilderManager.Allocate(chStr.Length + 1 + eventName.Length + 2 + msgStr.Length + 4);
                 buf.Append(chStr).Append(' ').Append(eventName).Append(", ").Append(msgStr).Append(", 0B");

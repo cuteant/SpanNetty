@@ -29,11 +29,6 @@ namespace DotNetty.Buffers
         }
 
 
-        public override ReadOnlySequence<byte> GetSequence()
-        {
-            return this.Unwrap().GetSequence();
-        }
-
         public override ReadOnlySequence<byte> GetSequence(int index, int count)
         {
             return this.Unwrap().GetSequence(index, count);
@@ -50,6 +45,40 @@ namespace DotNetty.Buffers
             return this.Unwrap().GetBytes(index, destination);
         }
 
+        public override int FindIndex(int index, int count, Predicate<byte> match)
+        {
+            return this.Unwrap().FindIndex(index, count, match);
+        }
+
+        public override int FindLastIndex(int index, int count, Predicate<byte> match)
+        {
+            return this.Unwrap().FindLastIndex(index, count, match);
+        }
+
+        public override int IndexOf(int fromIndex, int toIndex, byte value)
+        {
+            return this.Unwrap().IndexOf(fromIndex, toIndex, value);
+        }
+
+        public override int IndexOf(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        {
+            return this.Unwrap().IndexOf(fromIndex, toIndex, values);
+        }
+
+        public override int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1)
+        {
+            return this.Unwrap().IndexOfAny(fromIndex, toIndex, value0, value1);
+        }
+
+        public override int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1, byte value2)
+        {
+            return this.Unwrap().IndexOfAny(fromIndex, toIndex, value0, value1, value2);
+        }
+
+        public override int IndexOfAny(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        {
+            return this.Unwrap().IndexOfAny(fromIndex, toIndex, values);
+        }
 
         public override void Advance(int count) => throw new ReadOnlyBufferException();
 

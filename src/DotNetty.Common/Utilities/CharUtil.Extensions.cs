@@ -6,7 +6,7 @@ namespace DotNetty.Common.Utilities
     using System;
     using System.Runtime.CompilerServices;
 
-    public static partial class CharUtil
+    partial class CharUtil
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void ThrowFormatException0(ICharSequence str)

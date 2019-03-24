@@ -6,13 +6,10 @@ namespace DotNetty.Buffers
 
     partial interface IByteBuffer : IBufferWriter<byte>
     {
-        ReadOnlyMemory<byte> GetReadableMemory();
         ReadOnlyMemory<byte> GetReadableMemory(int index, int count);
 
-        ReadOnlySpan<byte> GetReadableSpan();
         ReadOnlySpan<byte> GetReadableSpan(int index, int count);
 
-        ReadOnlySequence<byte> GetSequence();
         ReadOnlySequence<byte> GetSequence(int index, int count);
 
         Memory<byte> FreeMemory { get; }
@@ -34,6 +31,20 @@ namespace DotNetty.Buffers
 
         IByteBuffer WriteBytes(ReadOnlySpan<byte> src);
         IByteBuffer WriteBytes(ReadOnlyMemory<byte> src);
+
+        int FindIndex(int index, int count, Predicate<byte> match);
+
+        int FindLastIndex(int index, int count, Predicate<byte> match);
+
+        int IndexOf(int fromIndex, int toIndex, byte value);
+
+        int IndexOf(int fromIndex, int toIndex, ReadOnlySpan<byte> values);
+
+        int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1);
+
+        int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1, byte value2);
+
+        int IndexOfAny(int fromIndex, int toIndex, ReadOnlySpan<byte> values);
     }
 }
 #endif

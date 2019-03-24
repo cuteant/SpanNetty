@@ -24,6 +24,7 @@ namespace DotNetty.Buffers
         s,
         str,
         source,
+        elementIndex,
         type,
         types,
         value,

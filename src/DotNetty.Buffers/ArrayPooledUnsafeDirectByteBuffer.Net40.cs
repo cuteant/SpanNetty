@@ -126,7 +126,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer WriteZero(int length)
         {
-            if (length == 0) { return this; }
+            if (0u >= (uint)length) { return this; }
 
             this.EnsureWritable(length);
             int wIndex = this.WriterIndex;

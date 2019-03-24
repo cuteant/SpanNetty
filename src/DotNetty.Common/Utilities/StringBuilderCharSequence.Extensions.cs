@@ -7,18 +7,28 @@ namespace DotNetty.Common.Utilities
 
     partial class StringBuilderCharSequence
     {
-        public virtual void Dispose() { }
-
         bool IEquatable<ICharSequence>.Equals(ICharSequence other)
         {
             if (ReferenceEquals(this, other)) { return true; }
 
             if (other is StringBuilderCharSequence comparand)
             {
-                return this.Count == comparand.Count && string.Equals(this.builder.ToString(this.offset, this.Count), comparand.builder.ToString(comparand.offset, this.Count), StringComparison.Ordinal);
+                return this.size == comparand.size && string.Equals(this.builder.ToString(this.offset, this.size), comparand.builder.ToString(comparand.offset, this.size), StringComparison.Ordinal);
             }
 
             return other is ICharSequence seq && this.ContentEquals(seq);
         }
+
+#if NETCOREAPP
+        public void Append(ReadOnlySpan<char> value)
+        {
+            this.builder.Append(value);
+            this.size += value.Length;
+        }
+#endif
+
+#if !NET40
+        public ReadOnlySpan<char> Span => this.builder.ToString(this.offset, this.size).AsSpan();
+#endif
     }
 }

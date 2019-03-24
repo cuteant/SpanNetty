@@ -9,10 +9,11 @@ namespace DotNetty.Common.Utilities
     using System.Text;
     using DotNetty.Common.Internal;
 
-    public partial class StringBuilderCharSequence : ICharSequence, IEquatable<StringBuilderCharSequence> // ## 苦竹 修改 ## sealed
+    public sealed partial class StringBuilderCharSequence : ICharSequence, IEquatable<StringBuilderCharSequence>
     {
-        internal StringBuilder builder; // ## 苦竹 修改 ## readonly
+        internal readonly StringBuilder builder;
         readonly int offset;
+        int size;
 
         public StringBuilderCharSequence(int capacity = 0)
         {
@@ -20,7 +21,7 @@ namespace DotNetty.Common.Utilities
 
             this.builder = new StringBuilder(capacity);
             this.offset = 0;
-            this.Count = 0;
+            this.size = 0;
         }
 
         public StringBuilderCharSequence(StringBuilder builder) : this(builder, 0, builder.Length)
@@ -37,10 +38,10 @@ namespace DotNetty.Common.Utilities
 
             this.builder = builder;
             this.offset = offset;
-            this.Count = count;
+            this.size = count;
         }
 
-        public ICharSequence SubSequence(int start) => this.SubSequence(start, this.Count);
+        public ICharSequence SubSequence(int start) => this.SubSequence(start, this.size);
 
         public ICharSequence SubSequence(int start, int end)
         {
@@ -52,7 +53,7 @@ namespace DotNetty.Common.Utilities
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException_EndIndexLessThanStartIndex();
             }
-            if (end > this.Count)
+            if (end > this.size)
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.end);
             }
@@ -62,14 +63,14 @@ namespace DotNetty.Common.Utilities
                 : new StringBuilderCharSequence(this.builder, this.offset + start, end - start);
         }
 
-        public int Count { get; private set; }
+        public int Count => this.size;
 
         public char this[int index]
         {
             get
             {
                 if (index < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(index, ExceptionArgument.index); }
-                if (index >= this.Count) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.index); }
+                if (index >= this.size) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.index); }
                 return this.builder[this.offset + index];
             }
         }
@@ -77,13 +78,13 @@ namespace DotNetty.Common.Utilities
         public void Append(string value)
         {
             this.builder.Append(value);
-            this.Count += value.Length;
+            this.size += value.Length;
         }
 
         public void Append(string value, int index, int count)
         {
             this.builder.Append(value, index, count);
-            this.Count += count;
+            this.size += count;
         }
 
         public void Append(ICharSequence value)
@@ -94,7 +95,7 @@ namespace DotNetty.Common.Utilities
             }
 
             this.builder.Append(value);
-            this.Count += value.Count;
+            this.size += value.Count;
         }
 
         public void Append(ICharSequence value, int index, int count)
@@ -110,16 +111,16 @@ namespace DotNetty.Common.Utilities
         public void Append(char value)
         {
             this.builder.Append(value);
-            this.Count++;
+            this.size++;
         }
 
         public void Insert(int start, char value)
         {
             if (start < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(start, ExceptionArgument.start); }
-            if (start >= this.Count) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.start); }
+            if (start >= this.size) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.start); }
 
             this.builder.Insert(this.offset + start, value);
-            this.Count++;
+            this.size++;
         }
 
         public bool RegionMatches(int thisStart, ICharSequence seq, int start, int length) =>
@@ -133,12 +134,12 @@ namespace DotNetty.Common.Utilities
         public string ToString(int start)
         {
             if (start < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(start, ExceptionArgument.start); }
-            if (start >= this.Count) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.start); }
+            if (start >= this.size) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.start); }
 
-            return this.builder.ToString(this.offset + start, this.Count);
+            return this.builder.ToString(this.offset + start, this.size);
         }
 
-        public override string ToString() => this.Count == 0 ? string.Empty : this.ToString(0);
+        public override string ToString() => this.size == 0 ? string.Empty : this.ToString(0);
 
         public bool Equals(StringBuilderCharSequence other)
         {
@@ -147,8 +148,8 @@ namespace DotNetty.Common.Utilities
                 return true;
             }
 
-            return other != null && this.Count == other.Count && string.Equals(this.builder.ToString(this.offset, this.Count),
-                other.builder.ToString(other.offset, this.Count), StringComparison.Ordinal);
+            return other != null && this.size == other.size && string.Equals(this.builder.ToString(this.offset, this.size),
+                other.builder.ToString(other.offset, this.size), StringComparison.Ordinal);
         }
 
         public override bool Equals(object obj)
@@ -160,7 +161,7 @@ namespace DotNetty.Common.Utilities
 
             if (obj is StringBuilderCharSequence other)
             {
-                return this.Count == other.Count && string.Equals(this.builder.ToString(this.offset, this.Count), other.builder.ToString(other.offset, this.Count), StringComparison.Ordinal);
+                return this.size == other.size && string.Equals(this.builder.ToString(this.offset, this.size), other.builder.ToString(other.offset, this.size), StringComparison.Ordinal);
             }
             if (obj is ICharSequence seq)
             {

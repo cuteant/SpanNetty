@@ -369,7 +369,12 @@
             this.exception = exception;
         }
 
-        public override IByteBuffer WriteBytes(IByteBuffer src)
+        //public override IByteBuffer WriteBytes(IByteBuffer src)
+        //{
+        //    throw this.exception;
+        //}
+
+        public override IByteBuffer WriteBytes(IByteBuffer src, int length)
         {
             throw this.exception;
         }

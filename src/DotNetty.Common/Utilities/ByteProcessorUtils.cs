@@ -5,9 +5,14 @@ namespace DotNetty.Common.Utilities
 {
     static class ByteProcessorUtils
     {
-        internal static readonly byte Space = (byte)' ';
-        internal static readonly byte HTab = (byte)'\t';
-        internal static readonly byte CarriageReturn = (byte)'\r';
-        internal static readonly byte LineFeed = (byte)'\n';
+        internal const byte Space = (byte)' ';
+        internal const byte HTab = (byte)'\t';
+        internal const byte CarriageReturn = (byte)'\r';
+        internal const byte LineFeed = (byte)'\n';
+
+        internal const uint NSpace = (byte)' ';
+        internal const uint NHTab = (byte)'\t';
+        internal const uint NCarriageReturn = (byte)'\r';
+        internal const uint NLineFeed = (byte)'\n';
     }
 }

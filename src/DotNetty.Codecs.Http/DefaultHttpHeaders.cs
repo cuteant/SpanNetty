@@ -204,26 +204,26 @@ namespace DotNetty.Codecs.Http
         public override HttpHeaders Copy() => new DefaultHttpHeaders(this.headers.Copy());
 
         [MethodImpl(InlineMethod.Value)]
-        static void ValidateHeaderNameElement(byte value)
+        static void ValidateHeaderNameElement(uint value)
         {
             switch (value)
             {
-                case 0x00:
-                case 0x09: //'\t':
-                case 0x0a: //'\n':
-                case 0x0b:
-                case 0x0c: //'\f':
-                case 0x0d: //'\r':
-                case 0x20: //' ':
-                case 0x2c: //',':
-                case 0x3a: //':':
-                case 0x3b: //';':
-                case 0x3d: //'=':
+                case 0x00u:
+                case 0x09u: //'\t':
+                case 0x0au: //'\n':
+                case 0x0bu:
+                case 0x0cu: //'\f':
+                case 0x0du: //'\r':
+                case 0x20u: //' ':
+                case 0x2cu: //',':
+                case 0x3au: //':':
+                case 0x3bu: //';':
+                case 0x3du: //'=':
                     ThrowHelper.ThrowArgumentException_HeaderValue(value);
                     break;
                 default:
                     // Check to see if the character is not an ASCII character, or invalid
-                    if (value > 127)
+                    if (value > 127u)
                     {
                         ThrowHelper.ThrowArgumentException_HeaderValueNonAscii(value);
                     }

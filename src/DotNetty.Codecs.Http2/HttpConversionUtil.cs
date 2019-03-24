@@ -559,7 +559,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     int start = authority.IndexOf('@') + 1;
                     int length = authority.Length - start;
-                    if (length == 0)
+                    if (0u >= (uint)length)
                     {
                         ThrowHelper.ThrowArgumentException_Http2AuthorityIsEmpty(authority);
                     }

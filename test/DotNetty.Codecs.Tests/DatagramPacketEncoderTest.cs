@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Tests
 {
     using System.Net;
     using System.Text;
+    using DotNetty.Buffers;
     using DotNetty.Codecs;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Embedded;

@@ -14,7 +14,7 @@ namespace DotNetty.Common.Utilities
     {
         public static readonly StringCharSequence Empty = new StringCharSequence(string.Empty);
 
-        string value; // ## 苦竹 修改 ## readonly
+        readonly string value;
         readonly int offset;
         readonly int count;
 
@@ -70,22 +70,52 @@ namespace DotNetty.Common.Utilities
         {
             get
             {
-                if (index < 0 || index >= this.count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+                if ((uint)index >= (uint)this.count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
                 return this.value[this.offset + index];
             }
         }
 
-        public bool RegionMatches(int thisStart, ICharSequence seq, int start, int length) =>
-            CharUtil.RegionMatches(this, thisStart, seq, start, length);
+        public bool RegionMatches(int thisStart, ICharSequence seq, int start, int length)
+        {
+#if !NET40
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
 
-        public bool RegionMatchesIgnoreCase(int thisStart, ICharSequence seq, int start, int length) =>
-            CharUtil.RegionMatchesIgnoreCase(this, thisStart, seq, start, length);
+            if (start < 0 || seq.Count - start < length) { return false; }
+            if (thisStart < 0 || this.count - thisStart < length) { return false; }
+            if (0u >= (uint)length) { return true; }
+
+            if (seq is IHasUtf16Span hasUtf16)
+            {
+                this.Utf16Span.Slice(thisStart, length).SequenceEqual(hasUtf16.Utf16Span.Slice(start, length));
+            }
+#endif
+            return CharUtil.RegionMatches(this, thisStart, seq, start, length);
+        }
+
+        public bool RegionMatchesIgnoreCase(int thisStart, ICharSequence seq, int start, int length)
+        {
+#if !NET40
+            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
+
+            if (start < 0 || seq.Count - start < length) { return false; }
+            if (thisStart < 0 || this.count - thisStart < length) { return false; }
+            if (0u >= (uint)length) { return true; }
+
+            if (seq is IHasUtf16Span hasUtf16)
+            {
+                this.Utf16Span.Slice(thisStart, length).Equals(hasUtf16.Utf16Span.Slice(start, length), StringComparison.OrdinalIgnoreCase);
+            }
+#endif
+            return CharUtil.RegionMatchesIgnoreCase(this, thisStart, seq, start, length);
+        }
 
         public int IndexOf(char ch, int start = 0)
         {
-            if(this.count <= 0) { return -1; }
+            if (0u >= (uint)this.count) { return -1; }
 
-            if (start < 0 || start >= this.count)
+            if ((uint)start >= (uint)this.count)
             {
                 ThrowHelper.ThrowIndexOutOfRangeException();
             }
@@ -98,13 +128,13 @@ namespace DotNetty.Common.Utilities
 
         public string ToString(int start)
         {
-            if (this.count <= 0) { return string.Empty; }
-            if (start < 0 || start >= this.count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            if (0u >= (uint)this.count) { return string.Empty; }
+            if ((uint)start >= (uint)this.count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             return this.value.Substring(this.offset + start, this.count);
         }
 
-        public override string ToString() => this.count == 0 ? string.Empty : this.ToString(0);
+        public override string ToString() => 0u >= (uint)this.count ? string.Empty : this.ToString(0);
 
         public bool Equals(StringCharSequence other)
         {
@@ -146,6 +176,17 @@ namespace DotNetty.Common.Utilities
             }
 
             return false;
+        }
+        bool IEquatable<ICharSequence>.Equals(ICharSequence other)
+        {
+            if (ReferenceEquals(this, other)) { return true; }
+
+            if (other is StringCharSequence comparand)
+            {
+                return this.count == comparand.count && string.Compare(this.value, this.offset, comparand.value, comparand.offset, this.count, StringComparison.Ordinal) == 0;
+            }
+
+            return other is ICharSequence seq && this.ContentEquals(seq);
         }
 
         public int HashCode(bool ignoreCase) => ignoreCase

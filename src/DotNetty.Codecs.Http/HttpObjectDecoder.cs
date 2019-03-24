@@ -165,7 +165,7 @@ namespace DotNetty.Codecs.Http
                                 // length is 0. However for a response the body length is the number of octets received prior to the
                                 // server closing the connection. So we treat this as variable length chunked encoding.
                                 long length = this.ContentLength();
-                                if (length == 0 || length == -1 && this.IsDecodingRequest())
+                                if (0u >= (uint)length || length == -1 && this.IsDecodingRequest())
                                 {
                                     output.Add(this.message);
                                     output.Add(EmptyLastHttpContent.Default);
@@ -831,11 +831,11 @@ namespace DotNetty.Codecs.Http
             [MethodImpl(InlineMethod.Value)]
             public bool Process(byte value)
             {
-                if (value == HttpConstants.CarriageReturn)
+                if (value == HttpConstants.NCarriageReturn)
                 {
                     return true;
                 }
-                if (value == HttpConstants.LineFeed)
+                if (value == HttpConstants.NLineFeed)
                 {
                     return false;
                 }

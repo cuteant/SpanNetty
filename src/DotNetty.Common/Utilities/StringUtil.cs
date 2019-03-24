@@ -167,7 +167,7 @@ namespace DotNetty.Common.Utilities
         {
             if (length < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(length, ExceptionArgument.length); }
 
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return dst;
             }
@@ -231,7 +231,7 @@ namespace DotNetty.Common.Utilities
             {
                 ThrowHelper.ThrowArgumentException_InvalidLen(length);
             }
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return EmptyArrays.EmptyBytes;
             }
@@ -281,7 +281,7 @@ namespace DotNetty.Common.Utilities
             if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             int length = value.Count;
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return value;
             }
@@ -391,7 +391,7 @@ namespace DotNetty.Common.Utilities
         {
             if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             int length = value.Count;
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return value;
             }
@@ -558,7 +558,7 @@ namespace DotNetty.Common.Utilities
         public static ICharSequence TrimOws(ICharSequence value)
         {
             int length = value.Count;
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return value;
             }

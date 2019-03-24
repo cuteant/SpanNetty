@@ -456,7 +456,9 @@ namespace DotNetty.Codecs.Http
         {
             try
             {
-                int space = line.ForEachByte(ByteProcessor.FindAsciiSpace);
+                //int space = line.ForEachByte(ByteProcessor.FindAsciiSpace);
+                const char Space = ' ';
+                int space = line.IndexOf(Space, 0);
                 return space == -1 
                     ? ValueOf(line.ParseInt()) 
                     : ValueOf(line.ParseInt(0, space), (AsciiString)line.SubSequence(space + 1));

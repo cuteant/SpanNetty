@@ -176,8 +176,10 @@ namespace DotNetty.Codecs
          */
         int FindEndOfLine(IByteBuffer buffer)
         {
-            int totalLength = buffer.ReadableBytes;
-            int i = buffer.ForEachByte(buffer.ReaderIndex + offset, totalLength - offset, ByteProcessor.FindLF);
+            //int totalLength = buffer.ReadableBytes;
+            //int i = buffer.ForEachByte(buffer.ReaderIndex + offset, totalLength - offset, ByteProcessor.FindLF);
+            const byte LineFeed = (byte)'\n';
+            int i = buffer.IndexOf(buffer.ReaderIndex + offset, buffer.WriterIndex, LineFeed);
             if (i >= 0)
             {
                 offset = 0;
@@ -188,7 +190,7 @@ namespace DotNetty.Codecs
             }
             else
             {
-                offset = totalLength;
+                offset = buffer.ReadableBytes; //totalLength;
             }
             return i;
         }

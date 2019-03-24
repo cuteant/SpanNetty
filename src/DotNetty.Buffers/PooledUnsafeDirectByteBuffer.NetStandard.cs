@@ -18,7 +18,7 @@ namespace DotNetty.Buffers
 
         protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count)
         {
-            return new ReadOnlySpan<byte>(Unsafe.AsPointer(ref this.Memory[this.Idx(index)]), count);
+            return new ReadOnlySpan<byte>(Unsafe.Add<byte>(this.Origin.ToPointer(), this.Idx(index)), count);
         }
 
         public override ReadOnlySequence<byte> GetSequence(int index, int count)
@@ -33,7 +33,7 @@ namespace DotNetty.Buffers
 
         protected internal override Span<byte> _GetSpan(int index, int count)
         {
-            return new Span<byte>(Unsafe.AsPointer(ref this.Memory[this.Idx(index)]), count);
+            return new Span<byte>(Unsafe.Add<byte>(this.Origin.ToPointer(), this.Idx(index)), count);
         }
     }
 }

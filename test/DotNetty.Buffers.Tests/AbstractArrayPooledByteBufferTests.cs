@@ -3311,7 +3311,7 @@ namespace DotNetty.Buffers.Tests
 
             public bool Process(byte value)
             {
-                this.Bytes[this.index--] = value;
+                this.Bytes[this.index--] = (byte)value;
                 return true;
             }
         }
@@ -3350,7 +3350,7 @@ namespace DotNetty.Buffers.Tests
 
             public bool Process(byte value)
             {
-                this.Bytes[this.index++] = value;
+                this.Bytes[this.index++] = (byte)value;
                 return true;
             }
         }

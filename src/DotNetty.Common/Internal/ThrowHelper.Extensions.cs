@@ -135,6 +135,26 @@ namespace DotNetty.Common
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowException_InvalidCodePoint()
+        {
+            throw GetException();
+            Exception GetException()
+            {
+                return new Exception("Invalid code point!");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowException_CodepointIsDecodedButNumberOfCharactersReadIs0OrNegative()
+        {
+            throw GetException();
+            Exception GetException()
+            {
+                return new Exception("Internal error: CodePoint is decoded but number of characters read is 0 or negative");
+            }
+        }
+
         #endregion
 
         #region -- ArgumentException --
@@ -279,6 +299,30 @@ namespace DotNetty.Common
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_NotLongEnoughToHoldOutputValueUtf16()
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException(
+                    message: "Argument is not long enough to hold output value.",
+                    paramName: "utf16");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_NotLongEnoughToHoldOutputValueUtf8()
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException(
+                  message: "Argument is not long enough to hold output value.",
+                  paramName: "utf8");
+            }
+        }
+
         #endregion
 
         #region -- ArgumentOutOfRangeException --
@@ -372,6 +416,30 @@ namespace DotNetty.Common
             ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
                 return new ArgumentOutOfRangeException(nameof(logLevel), logLevel, null);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentOutOfRangeException_InvalidUnicodeChar()
+        {
+            throw GetNullReferenceException();
+            ArgumentOutOfRangeException GetNullReferenceException()
+            {
+                return new ArgumentOutOfRangeException(
+                   message: "Value must be between U+0000 and U+D7FF, inclusive; or value must be between U+E000 and U+FFFF, inclusive.",
+                   paramName: "char");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ArgumentOutOfRangeException_InvalidUnicodeValue()
+        {
+            throw GetNullReferenceException();
+            ArgumentOutOfRangeException GetNullReferenceException()
+            {
+                return new ArgumentOutOfRangeException(
+                    message: "Value must be between U+0000 and U+D7FF, inclusive; or value must be between U+E000 and U+10FFFF, inclusive.",
+                    paramName: "value");
             }
         }
 
@@ -517,6 +585,56 @@ namespace DotNetty.Common
             {
                 return new InvalidOperationException(
                     string.Format("timeout.deadline {0} > deadline {1}", timeoutDeadline, deadline));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_EnumeratorIsOnInvalidPosition()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("Enumerator is on invalid position");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_InvalidCharactersInTheString()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("Invalid characters in the string");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_MovenextNeedsToBeCalledAtLeastOnce()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("MoveNext() needs to be called at least once");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_CurrentDoesNotExist()
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("Current does not exist");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowException_InvalidUtf8CharacterBadlyEncoded()
+        {
+            throw GetException();
+            Exception GetException()
+            {
+                return new Exception("Invalid UTF-8 character (badly encoded)");
             }
         }
 

@@ -81,6 +81,93 @@ namespace DotNetty.Buffers.Tests
                 }
             }
         }
+
+        [Fact]
+        public void IndexOfAny()
+        {
+            this.buffer.Clear();
+            this.buffer.WriteByte(1);
+            this.buffer.WriteByte(2);
+            this.buffer.WriteByte(3);
+            this.buffer.WriteByte(2);
+            this.buffer.WriteByte(1);
+
+            Assert.Equal(-1, this.buffer.IndexOfAny(1, 4, 1, 1));
+            Assert.Equal(-1, this.buffer.IndexOfAny(4, 1, 1, 1));
+            Assert.Equal(1, this.buffer.IndexOfAny(1, 4, 2, 3));
+            Assert.Equal(3, this.buffer.IndexOfAny(4, 1, 2, 3));
+        }
+
+        [Fact]
+        public void FindIndex()
+        {
+            this.buffer.Clear();
+            for (int i = 0; i < Capacity; i++)
+            {
+                this.buffer.WriteByte(i + 1);
+            }
+
+            int lastIndex = 0;
+            this.buffer.SetIndex(Capacity / 4, Capacity * 3 / 4);
+            int i1 = Capacity / 4;
+            Assert.Equal(-1,
+                this.buffer.FindIndex(
+                    value =>
+                    {
+                        Assert.Equal(value, (byte)(i1 + 1));
+                        Volatile.Write(ref lastIndex, i1);
+                        i1++;
+                        return false;
+                    }));
+
+            Assert.Equal(Capacity * 3 / 4 - 1, Volatile.Read(ref lastIndex));
+        }
+
+        [Fact]
+        public void FindIndex2()
+        {
+            this.buffer.Clear();
+            for (int i = 0; i < Capacity; i++)
+            {
+                this.buffer.WriteByte(i + 1);
+            }
+
+            int stop = Capacity / 2;
+            int i1 = Capacity / 3;
+            Assert.Equal(stop, this.buffer.FindIndex(Capacity / 3, Capacity / 3, value =>
+            {
+                Assert.Equal((byte)(i1 + 1), value);
+                if (i1 == stop)
+                {
+                    return true;
+                }
+
+                i1++;
+                return false;
+            }));
+        }
+
+        [Fact]
+        public void FindLastIndex()
+        {
+            this.buffer.Clear();
+            for (int i = 0; i < Capacity; i++)
+            {
+                this.buffer.WriteByte(i + 1);
+            }
+
+            int lastIndex = 0;
+            int i1 = Capacity * 3 / 4 - 1;
+            Assert.Equal(-1, this.buffer.FindLastIndex(Capacity / 4, Capacity * 2 / 4, value =>
+            {
+                Assert.Equal((byte)(i1 + 1), value);
+                Volatile.Write(ref lastIndex, i1);
+                i1--;
+                return false;
+            }));
+
+            Assert.Equal(Capacity / 4, Volatile.Read(ref lastIndex));
+        }
     }
 }
 #endif

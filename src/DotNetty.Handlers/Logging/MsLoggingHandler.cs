@@ -253,7 +253,7 @@ namespace DotNetty.Handlers.Logging
         public static string FormatByteBuffer(IByteBuffer msg)
         {
             int length = msg.ReadableBytes;
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return $"0B";
             }
@@ -275,7 +275,7 @@ namespace DotNetty.Handlers.Logging
             string msgStr = msg.ToString();
             IByteBuffer content = msg.Content;
             int length = content.ReadableBytes;
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return $"{msgStr}, 0B";
             }

@@ -406,7 +406,7 @@ namespace DotNetty.Common.Tests.Utilities
             Assert.Equal(9, i3);
             Assert.True(i3 + 1 < foo.Count);
             int i4 = foo.IndexOf(' ', i3 + 1);
-            Assert.Equal(i4, -1);
+            Assert.Equal(-1, i4);
         }
     }
 }

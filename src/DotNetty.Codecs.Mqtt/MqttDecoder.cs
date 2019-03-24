@@ -378,7 +378,7 @@ namespace DotNetty.Codecs.Mqtt
         //static void ValidateTopicFilter(string topicFilter)
         //{
         //    int length = topicFilter.Length;
-        //    if (length == 0)
+        //    if (0u >= (uint)length)
         //    {
         //        ThrowHelper.ThrowDecoderException_MQTT_473_1();
         //    }

@@ -18,7 +18,7 @@ namespace DotNetty.Common.Utilities
 
     public sealed class IndexOfProcessor : IByteProcessor
     {
-        readonly byte byteToFind;
+        readonly uint byteToFind; // Use uint for comparisons to avoid unnecessary 8->32 extensions
 
         public IndexOfProcessor(byte byteToFind)
         {
@@ -30,7 +30,7 @@ namespace DotNetty.Common.Utilities
 
     public sealed class IndexNotOfProcessor : IByteProcessor
     {
-        readonly byte byteToNotFind;
+        readonly uint byteToNotFind; // Use uint for comparisons to avoid unnecessary 8->32 extensions
 
         public IndexNotOfProcessor(byte byteToNotFind)
         {
@@ -43,7 +43,6 @@ namespace DotNetty.Common.Utilities
     public sealed class ByteProcessor : IByteProcessor
     {
         readonly Func<byte, bool> customHandler;
-
         public ByteProcessor(Func<byte, bool> customHandler)
         {
             Debug.Assert(customHandler != null, "'customHandler' is required parameter.");
@@ -51,7 +50,6 @@ namespace DotNetty.Common.Utilities
         }
 
         public bool Process(byte value) => this.customHandler(value);
-
 
         /// <summary>
         ///     Aborts on a <c>NUL (0x00)</c>.

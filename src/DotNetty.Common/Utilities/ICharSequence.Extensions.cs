@@ -5,7 +5,30 @@ namespace DotNetty.Common.Utilities
 {
     using System;
 
-    partial interface ICharSequence : IDisposable, IEquatable<ICharSequence>
+    partial interface ICharSequence : IEquatable<ICharSequence>
     {
     }
+
+#if !NET40
+    public interface IHasAsciiSpan
+    {
+        int Count { get; }
+
+        ReadOnlySpan<byte> AsciiSpan { get; }
+    }
+
+    public interface IHasUtf16Span
+    {
+        int Count { get; }
+
+        ReadOnlySpan<char> Utf16Span { get; }
+    }
+
+    public interface IHasUtf8Span
+    {
+        int Count { get; }
+
+        ReadOnlySpan<byte> Utf8Span { get; }
+    }
+#endif
 }

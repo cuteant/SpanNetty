@@ -9,15 +9,12 @@ namespace DotNetty.Buffers
 
     partial class WrappedCompositeByteBuffer
     {
-        public override ReadOnlyMemory<byte> GetReadableMemory() => this.wrapped.GetReadableMemory();
         public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count) => this.wrapped.GetReadableMemory(index, count);
         protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count) => this.wrapped._GetReadableMemory(index, count);
 
-        public override ReadOnlySpan<byte> GetReadableSpan() => this.wrapped.GetReadableSpan();
         public override ReadOnlySpan<byte> GetReadableSpan(int index, int count) => this.wrapped.GetReadableSpan(index, count);
         protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count) => this.wrapped._GetReadableSpan(index, count);
 
-        public override ReadOnlySequence<byte> GetSequence() => this.wrapped.GetSequence();
         public override ReadOnlySequence<byte> GetSequence(int index, int count) => this.wrapped.GetSequence(index, count);
 
         public sealed override void Advance(int count) => this.wrapped.Advance(count);
@@ -43,6 +40,35 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer WriteBytes(ReadOnlySpan<byte> src) { this.wrapped.WriteBytes(src); return this; }
         public override IByteBuffer WriteBytes(ReadOnlyMemory<byte> src) { this.wrapped.WriteBytes(src); return this; }
+
+        public override int FindIndex(int index, int count, Predicate<byte> match)
+        {
+            return this.wrapped.FindIndex(index, count, match);
+        }
+
+        public override int FindLastIndex(int index, int count, Predicate<byte> match)
+        {
+            return this.wrapped.FindLastIndex(index, count, match);
+        }
+
+        public override int IndexOf(int fromIndex, int toIndex, byte value) => this.wrapped.IndexOf(fromIndex, toIndex, value);
+
+        public override int IndexOf(int fromIndex, int toIndex, ReadOnlySpan<byte> values) => this.wrapped.IndexOf(fromIndex, toIndex, values);
+
+        public override int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1)
+        {
+            return this.wrapped.IndexOfAny(fromIndex, toIndex, value0, value1);
+        }
+
+        public override int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1, byte value2)
+        {
+            return this.wrapped.IndexOfAny(fromIndex, toIndex, value0, value1, value2);
+        }
+
+        public override int IndexOfAny(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        {
+            return this.wrapped.IndexOfAny(fromIndex, toIndex, values);
+        }
     }
 }
 #endif

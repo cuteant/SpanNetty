@@ -115,7 +115,7 @@ namespace DotNetty.Common.Utilities
             // ReSharper disable once PossibleNullReferenceException
             int length = str.Count;
             int i = 0;
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 ThrowFormatException0(str);
             }
@@ -166,55 +166,9 @@ namespace DotNetty.Common.Utilities
 
         static void ThrowFormatException(ICharSequence str) => throw new FormatException(str.ToString());
 
-        public static bool IsNullOrEmpty(ICharSequence sequence) => sequence == null || sequence.Count == 0;
+        public static bool IsNullOrEmpty(ICharSequence sequence) => (sequence == null || 0u >= (uint)sequence.Count) ? true : false;
 
         public static ICharSequence[] Split(ICharSequence sequence, params char[] delimiters) => Split(sequence, 0, delimiters);
-
-        public static ICharSequence[] Split(ICharSequence sequence, int startIndex, params char[] delimiters)
-        {
-            if (null == sequence) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sequence); }
-            if (null == delimiters) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.delimiters); }
-            int length = sequence.Count;
-            if (length <= 0) { return new[] { sequence }; }
-            if ( startIndex < 0 || startIndex >= length) { ThrowHelper.ThrowIndexOutOfRangeException(); }
-
-            List<ICharSequence> result = InternalThreadLocalMap.Get().CharSequenceList();
-
-            int i = startIndex;
-
-            while (i < length)
-            {
-                while (i < length && IndexOf(delimiters, sequence[i]) >= 0)
-                {
-                    i++;
-                }
-
-                int position = i;
-                if (i < length)
-                {
-                    if (IndexOf(delimiters, sequence[position]) >= 0)
-                    {
-                        result.Add(sequence.SubSequence(position++, i + 1));
-                    }
-                    else
-                    {
-                        ICharSequence seq = null;
-                        for (position++; position < length; position++)
-                        {
-                            if (IndexOf(delimiters, sequence[position]) >= 0)
-                            {
-                                seq = sequence.SubSequence(i, position);
-                                break;
-                            }
-                        }
-                        result.Add(seq ?? sequence.SubSequence(i));
-                    }
-                    i = position;
-                }
-            }
-
-            return result.Count == 0 ? new[] { sequence } : result.ToArray();
-        }
 
         internal static bool ContentEquals(ICharSequence left, ICharSequence right)
         {
@@ -348,20 +302,9 @@ namespace DotNetty.Common.Utilities
             if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             if (null == other) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
-            if (start < 0 || other.Count - start < length)
-            {
-                return false;
-            }
-
-            if (thisStart < 0 || value.Count - thisStart < length)
-            {
-                return false;
-            }
-
-            if (length <= 0)
-            {
-                return true;
-            }
+            if (0u >= (uint)length) { return true; }
+            if (start < 0 || other.Count - start < length) { return false; }
+            if (thisStart < 0 || value.Count - thisStart < length) { return false; }
 
             int o1 = thisStart;
             int o2 = start;
@@ -381,15 +324,9 @@ namespace DotNetty.Common.Utilities
             if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             if (null == other) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
-            if (thisStart < 0 || length > value.Count - thisStart)
-            {
-                return false;
-            }
-
-            if (start < 0 || length > other.Count - start)
-            {
-                return false;
-            }
+            if (0u >= (uint)length) { return true; }
+            if (thisStart < 0 || length > value.Count - thisStart) { return false; }
+            if (start < 0 || length > other.Count - start) { return false; }
 
             int end = thisStart + length;
             while (thisStart < end)
@@ -561,23 +498,10 @@ namespace DotNetty.Common.Utilities
             return -1;
         }
 
-        static int IndexOf(char[] tokens, char value)
-        {
-            for (int i = 0; i < tokens.Length; i++)
-            {
-                if (tokens[i] == value)
-                {
-                    return i;
-                }
-            }
-
-            return -1;
-        }
-
         public static int CodePointAt(IReadOnlyList<char> seq, int index)
         {
             if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
-            if( index < 0 || index >= seq.Count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            if (index < 0 || index >= seq.Count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             char high = seq[index++];
             if (index >= seq.Count)

@@ -229,7 +229,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override IByteBuffer GetChunk(int length)
         {
-            if (this.fileStream == null || length == 0)
+            if (this.fileStream == null || 0u >= (uint)length)
             {
                 this.chunkPosition = 0L;
                 return Unpooled.Empty;

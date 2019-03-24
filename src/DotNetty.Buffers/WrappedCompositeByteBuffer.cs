@@ -60,8 +60,6 @@ namespace DotNetty.Buffers
 
         public override long GetLongLE(int index) => this.wrapped.GetLongLE(index);
 
-        public override char GetChar(int index) => this.wrapped.GetChar(index);
-
         public override IByteBuffer SetShortLE(int index, int value) => this.wrapped.SetShortLE(index, value);
 
         public override IByteBuffer SetMediumLE(int index, int value) => this.wrapped.SetMediumLE(index, value);
@@ -94,19 +92,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer Slice(int index, int length) => this.wrapped.Slice(index, length);
 
-        public override string ToString(Encoding encoding) => this.wrapped.ToString(encoding);
-
-        public override string ToString(int index, int length, Encoding encoding) => this.wrapped.ToString(index, length, encoding);
-
-        public override int IndexOf(int fromIndex, int toIndex, byte value) => this.wrapped.IndexOf(fromIndex, toIndex, value);
-
-        public override int BytesBefore(int index, int length, byte value) => this.wrapped.BytesBefore(index, length, value);
-
-        public override int ForEachByte(IByteProcessor processor) => this.wrapped.ForEachByte(processor);
-
         public override int ForEachByte(int index, int length, IByteProcessor processor) => this.wrapped.ForEachByte(index, length, processor);
-
-        public override int ForEachByteDesc(IByteProcessor processor) => this.wrapped.ForEachByteDesc(processor);
 
         public override int ForEachByteDesc(int index, int length, IByteProcessor processor) => this.wrapped.ForEachByteDesc(index, length, processor);
 
@@ -328,8 +314,6 @@ namespace DotNetty.Buffers
 
         public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken) => this.wrapped.SetBytesAsync(index, src, length, cancellationToken);
 
-        public override IByteBuffer Copy() => this.wrapped.Copy();
-
         public override IByteBuffer Copy(int index, int length) => this.wrapped.Copy(index, length);
 
         public sealed override IByteBuffer this[int cIndex] => this.wrapped[cIndex];
@@ -426,18 +410,6 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public override IByteBuffer GetBytes(int index, IByteBuffer dst)
-        {
-            this.wrapped.GetBytes(index, dst);
-            return this;
-        }
-
-        public override IByteBuffer GetBytes(int index, IByteBuffer dst, int length)
-        {
-            this.wrapped.GetBytes(index, dst, length);
-            return this;
-        }
-
         public override IByteBuffer GetBytes(int index, byte[] dst)
         {
             this.wrapped.GetBytes(index, dst);
@@ -447,30 +419,6 @@ namespace DotNetty.Buffers
         public override IByteBuffer SetBoolean(int index, bool value)
         {
             this.wrapped.SetBoolean(index, value);
-            return this;
-        }
-
-        public override IByteBuffer SetChar(int index, char value)
-        {
-            this.wrapped.SetChar(index, value);
-            return this;
-        }
-
-        public override IByteBuffer SetFloat(int index, float value)
-        {
-            this.wrapped.SetFloat(index, value);
-            return this;
-        }
-
-        public override IByteBuffer SetDouble(int index, double value)
-        {
-            this.wrapped.SetDouble(index, value);
-            return this;
-        }
-
-        public override IByteBuffer SetBytes(int index, IByteBuffer src)
-        {
-            this.wrapped.SetBytes(index, src);
             return this;
         }
 
@@ -489,12 +437,6 @@ namespace DotNetty.Buffers
         public override IByteBuffer SetZero(int index, int length)
         {
             this.wrapped.SetZero(index, length);
-            return this;
-        }
-
-        public override IByteBuffer ReadBytes(IByteBuffer dst)
-        {
-            this.wrapped.ReadBytes(dst);
             return this;
         }
 
@@ -583,30 +525,6 @@ namespace DotNetty.Buffers
         public override IByteBuffer WriteLong(long value)
         {
             this.wrapped.WriteLong(value);
-            return this;
-        }
-
-        public override IByteBuffer WriteChar(char value)
-        {
-            this.wrapped.WriteChar(value);
-            return this;
-        }
-
-        public override IByteBuffer WriteFloat(float value)
-        {
-            this.wrapped.WriteFloat(value);
-            return this;
-        }
-
-        public override IByteBuffer WriteDouble(double value)
-        {
-            this.wrapped.WriteDouble(value);
-            return this;
-        }
-
-        public override IByteBuffer WriteBytes(IByteBuffer src)
-        {
-            this.wrapped.WriteBytes(src);
             return this;
         }
 

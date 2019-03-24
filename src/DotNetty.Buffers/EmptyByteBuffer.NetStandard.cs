@@ -9,13 +9,10 @@ namespace DotNetty.Buffers
 
     partial class EmptyByteBuffer
     {
-        public ReadOnlyMemory<byte> GetReadableMemory() => ReadOnlyMemory<byte>.Empty;
         public ReadOnlyMemory<byte> GetReadableMemory(int index, int count) => ReadOnlyMemory<byte>.Empty;
 
-        public ReadOnlySpan<byte> GetReadableSpan() => ReadOnlySpan<byte>.Empty;
         public ReadOnlySpan<byte> GetReadableSpan(int index, int count) => ReadOnlySpan<byte>.Empty;
 
-        public ReadOnlySequence<byte> GetSequence() => ReadOnlySequence<byte>.Empty;
         public ReadOnlySequence<byte> GetSequence(int index, int count) => ReadOnlySequence<byte>.Empty;
 
         public Memory<byte> FreeMemory => Memory<byte>.Empty;
@@ -39,6 +36,48 @@ namespace DotNetty.Buffers
 
         public IByteBuffer WriteBytes(ReadOnlySpan<byte> src) => this.CheckLength(src.Length);
         public IByteBuffer WriteBytes(ReadOnlyMemory<byte> src) => this.CheckLength(src.Length);
+
+        public int FindIndex(int index, int count, Predicate<byte> match)
+        {
+            this.CheckIndex(index, count);
+            return -1;
+        }
+
+        public int FindLastIndex(int index, int count, Predicate<byte> match)
+        {
+            this.CheckIndex(index, count);
+            return -1;
+        }
+
+        public int IndexOf(int fromIndex, int toIndex, byte value)
+        {
+            this.CheckIndex(fromIndex, toIndex - fromIndex);
+            return -1;
+        }
+
+        public int IndexOf(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        {
+            this.CheckIndex(fromIndex, toIndex - fromIndex);
+            return -1;
+        }
+
+        public int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1)
+        {
+            this.CheckIndex(fromIndex, toIndex - fromIndex);
+            return -1;
+        }
+
+        public int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1, byte value2)
+        {
+            this.CheckIndex(fromIndex, toIndex - fromIndex);
+            return -1;
+        }
+
+        public int IndexOfAny(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        {
+            this.CheckIndex(fromIndex, toIndex - fromIndex);
+            return -1;
+        }
     }
 }
 #endif

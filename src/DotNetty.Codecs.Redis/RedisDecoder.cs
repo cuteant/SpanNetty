@@ -299,7 +299,9 @@ namespace DotNetty.Codecs.Redis
                 return null;
             }
 
-            int lfIndex = input.ForEachByte(ByteProcessor.FindLF);
+            //int lfIndex = input.ForEachByte(ByteProcessor.FindLF);
+            const byte LineFeed = (byte)'\n';
+            int lfIndex = input.IndexOf(LineFeed);
             if (lfIndex < 0)
             {
                 return null;

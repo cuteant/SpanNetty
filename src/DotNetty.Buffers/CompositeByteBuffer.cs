@@ -502,6 +502,7 @@ namespace DotNetty.Buffers
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
+#if NET40
         internal protected override int ForEachByteAsc0(int start, int end, IByteProcessor processor)
         {
             if (end <= start)
@@ -510,7 +511,7 @@ namespace DotNetty.Buffers
             }
             for (int i = this.ToComponentIndex0(start), length = end - start; length > 0; i++)
             {
-                ComponentEntry c = components[i];
+                ComponentEntry c = this.components[i];
                 if (c.Offset == c.EndOffset)
                 {
                     continue; // empty
@@ -561,6 +562,7 @@ namespace DotNetty.Buffers
             }
             return -1;
         }
+#endif
 
         /// <summary>
         ///     Same with {@link #slice(int, int)} except that this method returns a list.
@@ -568,7 +570,7 @@ namespace DotNetty.Buffers
         public virtual IList<IByteBuffer> Decompose(int offset, int length)
         {
             this.CheckIndex(offset, length);
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return EmptyList;
             }
@@ -904,7 +906,7 @@ namespace DotNetty.Buffers
             {
                 for (int i = 0; i < size; i++)
                 {
-                    if (components[i].EndOffset > 0)
+                    if (this.components[i].EndOffset > 0)
                     {
                         return i;
                     }
@@ -1041,7 +1043,7 @@ namespace DotNetty.Buffers
         public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
             this.CheckDstIndex(index, length, dstIndex, dst.Length);
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return this;
             }
@@ -1063,7 +1065,7 @@ namespace DotNetty.Buffers
         public override IByteBuffer GetBytes(int index, Stream destination, int length)
         {
             this.CheckIndex(index, length);
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return this;
             }
@@ -1084,7 +1086,7 @@ namespace DotNetty.Buffers
         public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
             this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return this;
             }
@@ -1231,7 +1233,7 @@ namespace DotNetty.Buffers
         public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
             this.CheckSrcIndex(index, length, srcIndex, src.Length);
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return this;
             }
@@ -1253,7 +1255,7 @@ namespace DotNetty.Buffers
         public override async Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
             this.CheckIndex(index, length);
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return 0;
                 //return src.Read(EmptyArrays.EMPTY_BYTES);
@@ -1307,7 +1309,7 @@ namespace DotNetty.Buffers
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
             this.CheckSrcIndex(index, length, srcIndex, src.Capacity);
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return this;
             }
@@ -1326,28 +1328,28 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        //public override IByteBuffer SetZero(int index, int length)
-        //{
-        //    this.CheckIndex(index, length);
-        //    if (length == 0)
-        //    {
-        //        return this;
-        //    }
+        public override IByteBuffer SetZero(int index, int length)
+        {
+            this.CheckIndex(index, length);
+            if (0u >= (uint)length)
+            {
+                return this;
+            }
 
-        //    int i = this.ToComponentIndex(index);
-        //    while (length > 0)
-        //    {
-        //        ComponentEntry c = this.components[i];
-        //        IByteBuffer s = c.Buffer;
-        //        int adjustment = c.Offset;
-        //        int localLength = Math.Min(length, s.Capacity - (index - adjustment));
-        //        s.SetZero(index - adjustment, localLength);
-        //        index += localLength;
-        //        length -= localLength;
-        //        i++;
-        //    }
-        //    return this;
-        //}
+            int i = this.ToComponentIndex(index);
+            while (length > 0)
+            {
+                ComponentEntry c = this.components[i];
+                IByteBuffer s = c.Buffer;
+                int adjustment = c.Offset;
+                int localLength = Math.Min(length, s.Capacity - (index - adjustment));
+                s.SetZero(index - adjustment, localLength);
+                index += localLength;
+                length -= localLength;
+                i++;
+            }
+            return this;
+        }
 
         public override IByteBuffer Copy(int index, int length)
         {

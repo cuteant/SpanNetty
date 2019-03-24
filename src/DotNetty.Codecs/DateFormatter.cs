@@ -60,7 +60,7 @@ namespace DotNetty.Codecs
             if (null == txt) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.txt); }
 
             int length = end - start;
-            if (length == 0)
+            if (0u >= (uint)length)
             {
                 return null;
             }
