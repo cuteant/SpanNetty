@@ -23,6 +23,9 @@ namespace DotNetty.Buffers
     /// </summary>
     public abstract partial class AbstractByteBuffer : IByteBuffer
     {
+        protected const int IndexNotFound = -1;
+        protected const uint NIndexNotFound = unchecked((uint)IndexNotFound);
+
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractByteBuffer>();
         const string LegacyPropCheckAccessible = "io.netty.buffer.bytebuf.checkAccessible";
         const string PropCheckAccessible = "io.netty.buffer.checkAccessible";
@@ -187,7 +190,7 @@ namespace DotNetty.Buffers
 
             var readerIdx = this.readerIndex;
             var writerIdx = this.writerIndex;
-            if (readerIdx == 0)
+            if (0u >= (uint)readerIdx)
             {
                 return this;
             }
@@ -195,7 +198,7 @@ namespace DotNetty.Buffers
             if (readerIdx != writerIdx)
             {
                 this.SetBytes(0, this, readerIdx, writerIdx - readerIdx);
-                this.writerIndex -= readerIdx;
+                this.writerIndex = writerIdx - readerIdx;
                 this.AdjustMarkers(readerIdx);
                 this.readerIndex = 0;
             }
@@ -214,7 +217,7 @@ namespace DotNetty.Buffers
 
             var readerIdx = this.readerIndex;
             var writerIdx = this.writerIndex;
-            if (readerIdx == 0)
+            if (0u >= (uint)readerIdx)
             {
                 return this;
             }
@@ -229,7 +232,7 @@ namespace DotNetty.Buffers
             if (readerIdx >= this.Capacity.RightUShift(1))
             {
                 this.SetBytes(0, this, readerIdx, writerIdx - readerIdx);
-                this.writerIndex -= readerIdx;
+                this.writerIndex = writerIdx - readerIdx;
                 this.AdjustMarkers(readerIdx);
                 this.readerIndex = 0;
             }
@@ -366,28 +369,6 @@ namespace DotNetty.Buffers
         }
 
         protected internal abstract int _GetUnsignedMediumLE(int index);
-
-        public int GetMedium(int index)
-        {
-            uint value = (uint)this.GetUnsignedMedium(index);
-            if ((value & 0x800000) != 0)
-            {
-                value |= 0xff000000;
-            }
-
-            return (int)value;
-        }
-
-        public int GetMediumLE(int index)
-        {
-            uint value = (uint)this.GetUnsignedMediumLE(index);
-            if ((value & 0x800000) != 0)
-            {
-                value |= 0xff000000;
-            }
-
-            return (int)value;
-        }
 
         public virtual int GetInt(int index)
         {
@@ -1167,7 +1148,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            return -1;
+            return IndexNotFound;
         }
 #endif
 
@@ -1193,7 +1174,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            return -1;
+            return IndexNotFound;
         }
 #endif
 
@@ -1208,7 +1189,7 @@ namespace DotNetty.Buffers
 
         public override string ToString()
         {
-            if (this.ReferenceCount == 0)
+            if (0u >= (uint)this.ReferenceCount)
             {
                 return StringUtil.SimpleClassName(this) + "(freed)";
             }
@@ -1294,7 +1275,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.Value)]
         protected void EnsureAccessible()
         {
-            if (CheckAccessible && this.ReferenceCount == 0)
+            if (CheckAccessible && 0u >= (uint)this.ReferenceCount)
             {
                 ThrowHelper.ThrowIllegalReferenceCountException(0);
             }
@@ -1310,6 +1291,8 @@ namespace DotNetty.Buffers
         {
             this.markedReaderIndex = this.markedWriterIndex = 0;
         }
+
+        public abstract bool IsSingleIoBuffer { get; }
 
         public abstract int IoBufferCount { get; }
 

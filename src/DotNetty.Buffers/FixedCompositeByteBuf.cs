@@ -159,6 +159,8 @@ namespace DotNetty.Buffers
             }
         }
 
+        public override bool IsSingleIoBuffer => 1u >= (uint)this.nioBufferCount;
+
         public override int IoBufferCount => this.nioBufferCount;
 
         ComponentEntry FindComponent(int index)
@@ -390,7 +392,7 @@ namespace DotNetty.Buffers
             if (this.buffers.Length == 1)
             {
                 var buf = this.Buffer(0);
-                if (buf.IoBufferCount == 1)
+                if (buf.IsSingleIoBuffer)
                 {
                     return buf.GetIoBuffer(index, length);
                 }
@@ -413,7 +415,7 @@ namespace DotNetty.Buffers
             var bufs = this.GetSequence(index, length);
 
             int offset = 0;
-            foreach (ReadOnlyMemory<byte> buf in bufs)
+            foreach (var buf in bufs)
             {
                 Debug.Assert(merged.Length - offset >= buf.Length);
 

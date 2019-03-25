@@ -356,6 +356,15 @@ namespace DotNetty.Buffers
             return base.Copy(index, length);
         }
 
+        public override bool IsSingleIoBuffer
+        {
+            get
+            {
+                RecordLeakNonRefCountingOperation(this.Leak);
+                return base.IsSingleIoBuffer;
+            }
+        }
+
         public override int IoBufferCount
         {
             get

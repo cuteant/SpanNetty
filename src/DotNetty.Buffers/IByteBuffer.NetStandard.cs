@@ -6,9 +6,17 @@ namespace DotNetty.Buffers
 
     partial interface IByteBuffer : IBufferWriter<byte>
     {
+        void AdvanceReader(int count);
+
+        ReadOnlyMemory<byte> UnreadMemory { get; }
+
         ReadOnlyMemory<byte> GetReadableMemory(int index, int count);
 
+        ReadOnlySpan<byte> UnreadSpan { get; }
+
         ReadOnlySpan<byte> GetReadableSpan(int index, int count);
+
+        ReadOnlySequence<byte> UnreadSequence { get; }
 
         ReadOnlySequence<byte> GetSequence(int index, int count);
 
@@ -16,7 +24,7 @@ namespace DotNetty.Buffers
 
         Memory<byte> GetMemory(int index, int count);
 
-        Span<byte> Free { get; }
+        Span<byte> FreeSpan { get; }
 
         Span<byte> GetSpan(int index, int count);
 

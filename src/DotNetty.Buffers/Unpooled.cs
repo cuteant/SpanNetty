@@ -36,7 +36,7 @@ namespace DotNetty.Buffers
         ///     A modification on the specified array's content will be visible to the returned buffer.
         /// </summary>
         public static IByteBuffer WrappedBuffer(byte[] array) =>
-            array.Length == 0 ? Empty : new UnpooledHeapByteBuffer(Allocator, array, array.Length);
+            0u >= (uint)array.Length ? Empty : new UnpooledHeapByteBuffer(Allocator, array, array.Length);
 
         /// <summary>
         ///     Creates a new big-endian buffer which wraps the sub-region of the
@@ -50,7 +50,7 @@ namespace DotNetty.Buffers
                 return Empty;
             }
 
-            if (offset == 0 && length == array.Length)
+            if (0u >= (uint)offset && length == array.Length)
             {
                 return WrappedBuffer(array);
             }

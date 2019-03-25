@@ -11,27 +11,27 @@ namespace DotNetty.Buffers
 
     unsafe partial class PooledUnsafeDirectByteBuffer
     {
-        protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count)
+        protected internal sealed override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count)
         {
             return MemoryMarshal.CreateFromPinnedArray(this.Memory, this.Idx(index), count);
         }
 
-        protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count)
+        protected internal sealed override ReadOnlySpan<byte> _GetReadableSpan(int index, int count)
         {
             return new ReadOnlySpan<byte>(Unsafe.Add<byte>(this.Origin.ToPointer(), this.Idx(index)), count);
         }
 
-        public override ReadOnlySequence<byte> GetSequence(int index, int count)
+        protected internal sealed override ReadOnlySequence<byte> _GetSequence(int index, int count)
         {
-            return ReadOnlyBufferSegment.Create(new[] { GetReadableMemory(index, count) });
+            return new ReadOnlySequence<byte>(MemoryMarshal.CreateFromPinnedArray(this.Memory, this.Idx(index), count));
         }
 
-        protected internal override Memory<byte> _GetMemory(int index, int count)
+        protected internal sealed override Memory<byte> _GetMemory(int index, int count)
         {
             return MemoryMarshal.CreateFromPinnedArray(this.Memory, this.Idx(index), count);
         }
 
-        protected internal override Span<byte> _GetSpan(int index, int count)
+        protected internal sealed override Span<byte> _GetSpan(int index, int count)
         {
             return new Span<byte>(Unsafe.Add<byte>(this.Origin.ToPointer(), this.Idx(index)), count);
         }

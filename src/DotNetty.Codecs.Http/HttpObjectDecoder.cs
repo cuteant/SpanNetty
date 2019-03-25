@@ -294,6 +294,7 @@ namespace DotNetty.Codecs.Http
                 {
                     int wIdx = buffer.WriterIndex;
                     int rIdx = buffer.ReaderIndex;
+                    // TODO ForEachByte
                     while (wIdx > rIdx)
                     {
                         byte next = buffer.GetByte(rIdx++);
@@ -525,6 +526,7 @@ namespace DotNetty.Codecs.Http
             bool skiped = false;
             int wIdx = buffer.WriterIndex;
             int rIdx = buffer.ReaderIndex;
+            // TODO ForEachByte
             while (wIdx > rIdx)
             {
                 byte c = buffer.GetByte(rIdx++);

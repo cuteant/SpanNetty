@@ -10,6 +10,9 @@ namespace DotNetty.Codecs.Http
 
     public static class HttpUtil
     {
+        const int IndexNotFound = -1;
+        const uint NIndexNotFound = unchecked((uint)IndexNotFound);
+
         static readonly AsciiString CharsetEquals = new AsciiString(HttpHeaderValues.Charset + "=");
         static readonly AsciiString Semicolon = AsciiString.Cached(";");
 
@@ -283,13 +286,13 @@ namespace DotNetty.Codecs.Http
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentTypeValue);
             }
             int indexOfCharset = AsciiString.IndexOfIgnoreCaseAscii(contentTypeValue, CharsetEquals, 0);
-            if (AsciiString.IndexNotFound == indexOfCharset) { return null; }
+            if ((uint)indexOfCharset >= NIndexNotFound) { return null; }
             int indexOfEncoding = indexOfCharset + CharsetEquals.Count;
             if (indexOfEncoding < contentTypeValue.Count)
             {
                 var charsetCandidate = contentTypeValue.SubSequence(indexOfEncoding, contentTypeValue.Count);
                 int indexOfSemicolon = AsciiString.IndexOfIgnoreCaseAscii(charsetCandidate, Semicolon, 0);
-                if (AsciiString.IndexNotFound == indexOfSemicolon)
+                if ((uint)indexOfSemicolon >= NIndexNotFound)
                 {
                     return charsetCandidate;
                 }
@@ -309,7 +312,7 @@ namespace DotNetty.Codecs.Http
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentTypeValue);
             }
             int indexOfSemicolon = AsciiString.IndexOfIgnoreCaseAscii(contentTypeValue, Semicolon, 0);
-            if (indexOfSemicolon != AsciiString.IndexNotFound)
+            if ((uint)indexOfSemicolon < NIndexNotFound)
             {
                 return contentTypeValue.SubSequence(0, indexOfSemicolon);
             }

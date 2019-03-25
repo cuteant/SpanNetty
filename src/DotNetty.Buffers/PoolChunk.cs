@@ -191,13 +191,13 @@ namespace DotNetty.Buffers
 
         int GetUsage(int bytes)
         {
-            if (bytes == 0)
+            if (0u >= (uint)bytes)
             {
                 return 100;
             }
 
             int freePercentage = (int)(bytes * 100L / this.ChunkSize);
-            if (freePercentage == 0)
+            if (0u >= (uint)freePercentage)
             {
                 return 99;
             }
@@ -291,7 +291,7 @@ namespace DotNetty.Buffers
                 // unusable
                 return -1;
             }
-            while (val < d || (id & initial) == 0)
+            while (val < d || 0u >= (uint)(id & initial))
             {
                 // id & initial == 1 << d for all ids at depth d, for < d it is 0
                 id <<= 1;
@@ -411,7 +411,7 @@ namespace DotNetty.Buffers
         {
             int memoryMapIdx = MemoryMapIdx(handle);
             int bitmapIdx = BitmapIdx(handle);
-            if (bitmapIdx == 0)
+            if (0u >= (uint)bitmapIdx)
             {
                 sbyte val = this.Value(memoryMapIdx);
                 Debug.Assert(val == this.unusable, val.ToString());

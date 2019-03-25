@@ -495,7 +495,7 @@ namespace DotNetty.Common.Utilities
                 }
             }
 
-            return -1;
+            return AsciiString.IndexNotFound;
         }
 
         public static int CodePointAt(IReadOnlyList<char> seq, int index)
@@ -545,7 +545,7 @@ namespace DotNetty.Common.Utilities
                 i++;
             }
 
-            return -1;
+            return AsciiString.IndexNotFound;
         }
     }
 }

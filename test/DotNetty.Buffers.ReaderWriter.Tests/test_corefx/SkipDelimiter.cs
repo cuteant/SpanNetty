@@ -1,0 +1,323 @@
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System.Buffers;
+using System.Text;
+using DotNetty.Buffers;
+using Xunit;
+using System.Runtime.InteropServices;
+using DotNetty.Common.Internal;
+
+namespace System.Memory.Tests.BufferReader
+{
+    public class SkipDelimiter
+    {
+        [Fact]
+        public void TryReadTo_SkipDelimiter()
+        {
+            byte[] expected = Encoding.UTF8.GetBytes("This is our ^|understanding^|");
+            ReadOnlySequence<byte> bytes = SequenceFactory.CreateUtf8("This is our ^|understanding^|| you see.");
+            ByteBufferReader reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out ReadOnlySpan<byte> span, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(expected, span.ToArray());
+            Assert.True(reader.IsNext((byte)' '));
+            Assert.Equal(30, reader.Consumed);
+
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(expected, span.ToArray());
+            Assert.True(reader.IsNext((byte)'|'));
+            Assert.Equal(29, reader.Consumed);
+
+            // Put the skip delimiter in another segment
+            bytes = SequenceFactory.CreateUtf8("This is our ^|understanding", "^|| you see.");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(expected, span.ToArray());
+            Assert.True(reader.IsNext((byte)' '));
+            Assert.Equal(30, reader.Consumed);
+
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(expected, span.ToArray());
+            Assert.True(reader.IsNext((byte)'|'));
+            Assert.Equal(29, reader.Consumed);
+
+            // Put the skip delimiter at the end of the segment
+            bytes = SequenceFactory.CreateUtf8("This is our ^|understanding^", "|| you see.");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(expected, span.ToArray());
+            Assert.True(reader.IsNext((byte)' '));
+            Assert.Equal(30, reader.Consumed);
+
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(expected, span.ToArray());
+            Assert.True(reader.IsNext((byte)'|'));
+            Assert.Equal(29, reader.Consumed);
+
+            // No trailing data
+            bytes = SequenceFactory.CreateUtf8("This is our ^|understanding^||");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(expected, span.ToArray());
+            Assert.True(reader.IsNext((byte)'|'));
+            Assert.Equal(29, reader.Consumed);
+
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(expected, span.ToArray());
+            Assert.True(reader.End);
+            Assert.Equal(30, reader.Consumed);
+
+            // All delimiters skipped
+            bytes = SequenceFactory.CreateUtf8("This is our ^|understanding^|");
+            reader = new ByteBufferReader(bytes);
+            Assert.False(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(0, reader.Consumed);
+
+            reader = new ByteBufferReader(bytes);
+            Assert.False(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(0, reader.Consumed);
+
+            bytes = SequenceFactory.CreateUtf8("abc^|de|");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(Encoding.UTF8.GetBytes("abc^|de"), span.ToArray());
+            Assert.True(reader.End);
+            Assert.Equal(8, reader.Consumed);
+
+            // Escape leads
+            bytes = SequenceFactory.CreateUtf8("^|a|b");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(Encoding.UTF8.GetBytes("^|a"), span.ToArray());
+            Assert.True(reader.IsNext((byte)'b'));
+            Assert.Equal(4, reader.Consumed);
+
+            // Delimiter starts second segment.
+            bytes = SequenceFactory.CreateUtf8("^", "|a|b");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(Encoding.UTF8.GetBytes("^|a"), span.ToArray());
+            Assert.True(reader.IsNext((byte)'b'));
+            Assert.Equal(4, reader.Consumed);
+        }
+
+        [Fact]
+        public void TryReadTo_SkipDelimiter_Runs()
+        {
+            ReadOnlySequence<byte> bytes = SequenceFactory.CreateUtf8("abc^^|def");
+            ByteBufferReader reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out ReadOnlySpan<byte> span, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(Encoding.UTF8.GetBytes("abc^^"), span.ToArray());
+            Assert.True(reader.IsNext((byte)'|'));
+            Assert.Equal(5, reader.Consumed);
+
+            // Split after escape char
+            bytes = SequenceFactory.CreateUtf8("abc^^", "|def");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(Encoding.UTF8.GetBytes("abc^^"), span.ToArray());
+            Assert.True(reader.IsNext((byte)'|'));
+            Assert.Equal(5, reader.Consumed);
+
+            // Split before and after escape char
+            bytes = SequenceFactory.CreateUtf8("abc^", "^", "|def");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(Encoding.UTF8.GetBytes("abc^^"), span.ToArray());
+            Assert.True(reader.IsNext((byte)'|'));
+            Assert.Equal(5, reader.Consumed);
+
+            // Check advance past delimiter
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(Encoding.UTF8.GetBytes("abc^^"), span.ToArray());
+            Assert.True(reader.IsNext((byte)'d'));
+            Assert.Equal(6, reader.Consumed);
+
+            // Leading run of 2
+            bytes = SequenceFactory.CreateUtf8("^^|abc");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(Encoding.UTF8.GetBytes("^^"), span.ToArray());
+            Assert.True(reader.IsNext((byte)'|'));
+            Assert.Equal(2, reader.Consumed);
+
+            // Leading run of 3
+            bytes = SequenceFactory.CreateUtf8("^^^|abc");
+            reader = new ByteBufferReader(bytes);
+            Assert.False(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.True(reader.IsNext((byte)'^'));
+            Assert.Equal(0, reader.Consumed);
+
+            // Trailing run of 3
+            bytes = SequenceFactory.CreateUtf8("abc^^^|");
+            reader = new ByteBufferReader(bytes);
+            Assert.False(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.True(reader.IsNext((byte)'a'));
+            Assert.Equal(0, reader.Consumed);
+
+            // Trailing run of 3, split
+            bytes = SequenceFactory.CreateUtf8("abc^^^", "|");
+            reader = new ByteBufferReader(bytes);
+            Assert.False(reader.TryReadTo(out span, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.True(reader.IsNext((byte)'a'));
+            Assert.Equal(0, reader.Consumed);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        [InlineData(4)]
+        [InlineData(5)]
+        [InlineData(6)]
+        public void TryReadTo_ForEachDesc(byte value)
+        {
+            var bts = new byte[] { 0, 1, 2, 3, 4, 5 };
+            var remaining = new Span<byte>(bts);
+
+            int escapeCount = 0;
+            for (int i = remaining.Length; i > 0 && remaining[i - 1].Equals(value); i--, escapeCount++) { }
+
+            var result = PlatformDependent.ForEachByteDesc(
+                    ref MemoryMarshal.GetReference(remaining),
+                    new ByteBufferReaderHelper.IndexNotOfProcessor(value),
+                    remaining.Length);
+            int escapeCount1 = result != -1 ? remaining.Length - result - 1 : remaining.Length;
+            Assert.Equal(escapeCount, escapeCount1);
+        }
+
+        //[Theory]
+        ////[InlineData(0, 0)]
+        ////[InlineData(0, 1)]
+        ////[InlineData(0, 2)]
+        ////[InlineData(0, 3)]
+        ////[InlineData(0, 4)]
+        ////[InlineData(0, 5)]
+        //[InlineData(0, 6)]
+        ////[InlineData(2, 0)]
+        ////[InlineData(2, 1)]
+        ////[InlineData(2, 2)]
+        ////[InlineData(2, 3)]
+        ////[InlineData(2, 4)]
+        ////[InlineData(2, 5)]
+        //[InlineData(2, 6)]
+        //public void TryReadTo_ForEach(int idx, byte value)
+        //{
+        //    var bts = new byte[] { 0, 1, 2, 3, 4, 5 };
+        //    var span = new Span<byte>(bts);
+
+        //    int i;
+        //    for (i = idx; i < span.Length && span[i].Equals(value); i++) { }
+        //    int advanced = i - idx;
+
+        //    var searchSpan = span.Slice(idx);
+        //    var result = PlatformDependent.ForEachByte(
+        //            ref MemoryMarshal.GetReference(searchSpan),
+        //            new ByteBufferReaderHelper.PastValueProcessor(value),
+        //            searchSpan.Length);
+        //    int advanced1 = result != -1 ? result : span.Length - idx;
+
+        //    Assert.Equal(advanced, advanced1);
+        //}
+
+        [Fact]
+        public void TryReadTo_SkipDelimiter_ReadOnlySequence()
+        {
+            byte[] expected = Encoding.UTF8.GetBytes("This is our ^|understanding^|");
+            ReadOnlySequence<byte> bytes = SequenceFactory.CreateUtf8("This is our ^|understanding^|| you see.");
+            ByteBufferReader reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out ReadOnlySequence<byte> sequence, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(expected, sequence.ToArray());
+            Assert.True(reader.IsNext((byte)' '));
+            Assert.Equal(30, reader.Consumed);
+
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out sequence, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(expected, sequence.ToArray());
+            Assert.True(reader.IsNext((byte)'|'));
+            Assert.Equal(29, reader.Consumed);
+
+            // Put the skip delimiter in another segment
+            bytes = SequenceFactory.CreateUtf8("This is our ^|understanding", "^|| you see.");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out sequence, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(expected, sequence.ToArray());
+            Assert.True(reader.IsNext((byte)' '));
+            Assert.Equal(30, reader.Consumed);
+
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out sequence, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(expected, sequence.ToArray());
+            Assert.True(reader.IsNext((byte)'|'));
+            Assert.Equal(29, reader.Consumed);
+
+            // Put the skip delimiter at the end of the segment
+            bytes = SequenceFactory.CreateUtf8("This is our ^|understanding^", "|| you see.");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out sequence, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(expected, sequence.ToArray());
+            Assert.True(reader.IsNext((byte)' '));
+            Assert.Equal(30, reader.Consumed);
+
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out sequence, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(expected, sequence.ToArray());
+            Assert.True(reader.IsNext((byte)'|'));
+            Assert.Equal(29, reader.Consumed);
+
+            // No trailing data
+            bytes = SequenceFactory.CreateUtf8("This is our ^|understanding^||");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out sequence, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(expected, sequence.ToArray());
+            Assert.True(reader.IsNext((byte)'|'));
+            Assert.Equal(29, reader.Consumed);
+
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out sequence, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(expected, sequence.ToArray());
+            Assert.True(reader.End);
+            Assert.Equal(30, reader.Consumed);
+
+            // All delimiters skipped
+            bytes = SequenceFactory.CreateUtf8("This is our ^|understanding^|");
+            reader = new ByteBufferReader(bytes);
+            Assert.False(reader.TryReadTo(out sequence, (byte)'|', (byte)'^', advancePastDelimiter: false));
+            Assert.Equal(0, reader.Consumed);
+
+            reader = new ByteBufferReader(bytes);
+            Assert.False(reader.TryReadTo(out sequence, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(0, reader.Consumed);
+
+            bytes = SequenceFactory.CreateUtf8("abc^|de|");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out sequence, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(Encoding.UTF8.GetBytes("abc^|de"), sequence.ToArray());
+            Assert.True(reader.End);
+            Assert.Equal(8, reader.Consumed);
+
+            // Escape leads
+            bytes = SequenceFactory.CreateUtf8("^|a|b");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out sequence, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(Encoding.UTF8.GetBytes("^|a"), sequence.ToArray());
+            Assert.True(reader.IsNext((byte)'b'));
+            Assert.Equal(4, reader.Consumed);
+
+            // Delimiter starts second segment.
+            bytes = SequenceFactory.CreateUtf8("^", "|a|b");
+            reader = new ByteBufferReader(bytes);
+            Assert.True(reader.TryReadTo(out sequence, (byte)'|', (byte)'^', advancePastDelimiter: true));
+            Assert.Equal(Encoding.UTF8.GetBytes("^|a"), sequence.ToArray());
+            Assert.True(reader.IsNext((byte)'b'));
+            Assert.Equal(4, reader.Consumed);
+        }
+    }
+}

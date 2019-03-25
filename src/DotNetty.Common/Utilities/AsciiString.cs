@@ -19,6 +19,7 @@ namespace DotNetty.Common.Utilities
         const int MaxCharValue = 255;
         const byte Replacement = (byte)'?';
         public const int IndexNotFound = -1;
+        internal const uint NIndexNotFound = unchecked((uint)IndexNotFound);
 
         public static readonly IHashingStrategy<ICharSequence> CaseInsensitiveHasher = new CaseInsensitiveHashingStrategy();
         public static readonly IHashingStrategy<ICharSequence> CaseSensitiveHasher = new CaseSensitiveHashingStrategy();

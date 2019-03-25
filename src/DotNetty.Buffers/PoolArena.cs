@@ -159,10 +159,10 @@ namespace DotNetty.Buffers
         }
 
         // capacity < pageSize
-        internal bool IsTinyOrSmall(int normCapacity) => (normCapacity & this.SubpageOverflowMask) == 0;
+        internal bool IsTinyOrSmall(int normCapacity) => 0u >= (uint)(normCapacity & this.SubpageOverflowMask) ? true : false;
 
         // normCapacity < 512
-        internal static bool IsTiny(int normCapacity) => (normCapacity & 0xFFFFFE00) == 0;
+        internal static bool IsTiny(int normCapacity) => 0u >= (uint)(normCapacity & 0xFFFFFE00) ? true : false;
 
         void Allocate(PoolThreadCache<T> cache, PooledByteBuffer<T> buf, int reqCapacity)
         {
@@ -398,7 +398,7 @@ namespace DotNetty.Buffers
             }
 
             // Quantum-spaced
-            if ((reqCapacity & 15) == 0)
+            if (0u >= (uint)(reqCapacity & 15))
             {
                 return reqCapacity;
             }

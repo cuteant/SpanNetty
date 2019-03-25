@@ -14,6 +14,7 @@ namespace DotNetty.Buffers
 
     public static partial class ByteBufferUtil
     {
+        const int IndexNotFound = -1;
         const char WriteUtfUnknown = '?';
         static readonly int MaxBytesPerCharUtf8 = Encoding.UTF8.GetMaxByteCount(1);
 
@@ -75,7 +76,11 @@ namespace DotNetty.Buffers
         /// </summary>
         public static string HexDump(byte[] array, int fromIndex, int length) => HexUtil.DoHexDump(array, fromIndex, length);
 
-        public static bool EnsureWritableSuccess(int ensureWritableResult) => ensureWritableResult == 0 || ensureWritableResult == 2;
+        public static bool EnsureWritableSuccess(int ensureWritableResult)
+        {
+            var nresult = (uint)ensureWritableResult;
+            return 0u >= nresult || 2u == nresult;
+        }
 
         /// <summary>
         ///     Calculates the hash code of the specified buffer.  This method is
@@ -100,7 +105,7 @@ namespace DotNetty.Buffers
                 hashCode = 31 * hashCode + buffer.GetByte(arrayIndex++);
             }
 
-            if (hashCode == 0)
+            if (0u >= (uint)hashCode)
             {
                 hashCode = 1;
             }
@@ -632,7 +637,7 @@ namespace DotNetty.Buffers
                 }
                 else
                 {
-                    int rows = length / 16 + (length % 15 == 0 ? 0 : 1) + 4;
+                    int rows = length / 16 + (0u >= (uint)(length % 15) ? 0 : 1) + 4;
                     var buf = StringBuilderManager.Allocate(rows * 80);
                     AppendPrettyHexDump(buf, buffer, offset, length);
                     return StringBuilderManager.ReturnAndFree(buf);
@@ -748,7 +753,7 @@ namespace DotNetty.Buffers
                 default:
                     try
                     {
-                        if (buf.IoBufferCount == 1)
+                        if (buf.IsSingleIoBuffer)
                         {
                             ArraySegment<byte> segment = buf.GetIoBuffer();
                             encoding.GetChars(segment.Array, segment.Offset, segment.Count);
@@ -792,7 +797,7 @@ namespace DotNetty.Buffers
             {
                 byte b1 = buf.GetByte(index++);
                 byte b2, b3;
-                if ((b1 & 0x80) == 0)
+                if (0u >= (uint)(b1 & 0x80))
                 {
                     // 1 byte
                     continue;

@@ -198,7 +198,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
 
 #if NETCOREAPP
-            int received = this.Socket.Receive(byteBuf.Free, SocketFlags.None, out SocketError errorCode);
+            int received = this.Socket.Receive(byteBuf.FreeSpan, SocketFlags.None, out SocketError errorCode);
 #else
             int received = this.Socket.Receive(byteBuf.Array, byteBuf.ArrayOffset + byteBuf.WriterIndex, byteBuf.WritableBytes, SocketFlags.None, out SocketError errorCode);
 #endif

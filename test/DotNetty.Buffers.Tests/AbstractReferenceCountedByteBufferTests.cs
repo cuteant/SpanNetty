@@ -116,6 +116,8 @@ namespace DotNetty.Buffers.Tests
 
             public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken) => throw new NotSupportedException();
 
+            public override bool IsSingleIoBuffer => throw new NotSupportedException();
+
             public override int IoBufferCount => throw new NotSupportedException();
 
             public override ArraySegment<byte> GetIoBuffer(int index, int length) => throw new NotSupportedException();
@@ -184,6 +186,11 @@ namespace DotNetty.Buffers.Tests
                 throw new NotImplementedException();
             }
             protected internal override Span<byte> _GetSpan(int index, int count)
+            {
+                throw new NotImplementedException();
+            }
+
+            protected internal override ReadOnlySequence<byte> _GetSequence(int index, int count)
             {
                 throw new NotImplementedException();
             }

@@ -108,12 +108,6 @@ namespace DotNetty.Buffers
             return base.GetByte(index);
         }
 
-        public override int GetMedium(int index)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetMedium(index);
-        }
-
         public override int GetUnsignedMedium(int index)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
@@ -402,6 +396,15 @@ namespace DotNetty.Buffers
             return base.Copy(index, length);
         }
 
+        public override bool IsSingleIoBuffer
+        {
+            get
+            {
+                RecordLeakNonRefCountingOperation(this.Leak);
+                return base.IsSingleIoBuffer;
+            }
+        }
+
         public override int IoBufferCount
         {
             get
@@ -433,12 +436,6 @@ namespace DotNetty.Buffers
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.GetShortLE(index);
-        }
-
-        public override int GetMediumLE(int index)
-        {
-            RecordLeakNonRefCountingOperation(this.Leak);
-            return base.GetMediumLE(index);
         }
 
         public override int GetUnsignedMediumLE(int index)

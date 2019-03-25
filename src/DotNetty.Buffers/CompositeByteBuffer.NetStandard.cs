@@ -23,7 +23,7 @@ namespace DotNetty.Buffers
                 case 1:
                     ComponentEntry c = this.components[0];
                     IByteBuffer buf = c.Buffer;
-                    if (buf.IoBufferCount == 1)
+                    if (buf.IsSingleIoBuffer)
                     {
                         return buf.GetReadableMemory(c.Idx(index), count);
                     }
@@ -34,7 +34,7 @@ namespace DotNetty.Buffers
             var buffers = this.GetSequence(index, count);
 
             int offset = 0;
-            foreach (ReadOnlyMemory<byte> buf in buffers)
+            foreach (var buf in buffers)
             {
                 Debug.Assert(merged.Length - offset >= buf.Length);
 
@@ -58,7 +58,7 @@ namespace DotNetty.Buffers
                     //return c.Buffer.GetReadableSpan(index, count);
                     ComponentEntry c = this.components[0];
                     IByteBuffer buf = c.Buffer;
-                    if (buf.IoBufferCount == 1)
+                    if (buf.IsSingleIoBuffer)
                     {
                         return buf.GetReadableSpan(c.Idx(index), count);
                     }
@@ -69,7 +69,7 @@ namespace DotNetty.Buffers
             var buffers = this.GetSequence(index, count);
 
             int offset = 0;
-            foreach (ReadOnlyMemory<byte> buf in buffers)
+            foreach (var buf in buffers)
             {
                 Debug.Assert(merged.Length - offset >= buf.Length);
 
@@ -80,9 +80,8 @@ namespace DotNetty.Buffers
             return merged.Span;
         }
 
-        public override ReadOnlySequence<byte> GetSequence(int index, int count)
+        protected internal override ReadOnlySequence<byte> _GetSequence(int index, int count)
         {
-            this.CheckIndex(index, count);
             if (0u >= (uint)count) { return ReadOnlySequence<byte>.Empty; }
 
             var buffers = ThreadLocalList<ReadOnlyMemory<byte>>.NewInstance(this.componentCount);
@@ -200,7 +199,7 @@ namespace DotNetty.Buffers
 
         protected internal override int ForEachByteAsc0(int index, int count, IByteProcessor processor)
         {
-            if (0u >= (uint)count) { return -1; }
+            if (0u >= (uint)count) { return IndexNotFound; }
 
             var start = index;
             var end = index + count;
@@ -219,19 +218,19 @@ namespace DotNetty.Buffers
                 int result = s is AbstractByteBuffer buf
                     ? buf.ForEachByteAsc0(localStart, localLength, processor)
                     : s.ForEachByte(localStart, localLength, processor);
-                if (result != -1)
+                if ((uint)result < NIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
                 start += localLength;
                 length -= localLength;
             }
-            return -1;
+            return IndexNotFound;
         }
 
         protected internal override int ForEachByteDesc0(int index, int count, IByteProcessor processor)
         {
-            if (0u >= (uint)count) { return -1; }
+            if (0u >= (uint)count) { return IndexNotFound; }
 
             var rStart = index + count - 1;  // rStart *and* rEnd are inclusive
             var rEnd = index;
@@ -251,18 +250,18 @@ namespace DotNetty.Buffers
                     ? buf.ForEachByteDesc0(localIndex, localLength, processor)
                     : s.ForEachByteDesc(localIndex, localLength, processor);
 
-                if (result != -1)
+                if ((uint)result < NIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
                 length -= localLength;
             }
-            return -1;
+            return IndexNotFound;
         }
 
         protected internal override int FindIndex0(int index, int count, Predicate<byte> match)
         {
-            if (0u >= (uint)count) { return -1; }
+            if (0u >= (uint)count) { return IndexNotFound; }
 
             var start = index;
             var end = index + count;
@@ -281,19 +280,19 @@ namespace DotNetty.Buffers
                 int result = s is AbstractByteBuffer buf
                     ? buf.FindIndex0(localStart, localLength, match)
                     : s.FindIndex(localStart, localLength, match);
-                if (result != -1)
+                if ((uint)result < NIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
                 start += localLength;
                 length -= localLength;
             }
-            return -1;
+            return IndexNotFound;
         }
 
         protected internal override int FindLastIndex0(int index, int count, Predicate<byte> match)
         {
-            if (0u >= (uint)count) { return -1; }
+            if (0u >= (uint)count) { return IndexNotFound; }
 
             var rStart = Math.Max(index + count - 1, 0);  // rStart *and* rEnd are inclusive
             var rEnd = index;
@@ -313,18 +312,18 @@ namespace DotNetty.Buffers
                     ? buf.FindLastIndex0(localIndex, localLength, match)
                     : s.FindLastIndex(localIndex, localLength, match);
 
-                if (result != -1)
+                if ((uint)result < NIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
                 length -= localLength;
             }
-            return -1;
+            return IndexNotFound;
         }
 
         internal protected override int IndexOf0(int index, int count, byte value)
         {
-            if (0u >= (uint)count) { return -1; }
+            if (0u >= (uint)count) { return IndexNotFound; }
 
             var start = index;
             var end = index + count;
@@ -343,19 +342,19 @@ namespace DotNetty.Buffers
                 int result = s is AbstractByteBuffer buf
                     ? buf.IndexOf0(localStart, localLength, value)
                     : s.IndexOf(localStart, localStart + localLength - 1, value);
-                if (result != -1)
+                if ((uint)result < NIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
                 start += localLength;
                 length -= localLength;
             }
-            return -1;
+            return IndexNotFound;
         }
 
         internal protected override int LastIndexOf0(int index, int count, byte value)
         {
-            if (0u >= (uint)count) { return -1; }
+            if (0u >= (uint)count) { return IndexNotFound; }
 
             var rStart = Math.Max(index + count - 1, 0);  // rStart *and* rEnd are inclusive
             var rEnd = index;
@@ -375,18 +374,18 @@ namespace DotNetty.Buffers
                     ? buf.LastIndexOf0(localIndex, localLength, value)
                     : s.IndexOf(localRStart - 1, localIndex, value);
 
-                if (result != -1)
+                if ((uint)result < NIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
                 length -= localLength;
             }
-            return -1;
+            return IndexNotFound;
         }
 
         protected internal override int IndexOfAny0(int index, int count, byte value0, byte value1)
         {
-            if (0u >= (uint)count) { return -1; }
+            if (0u >= (uint)count) { return IndexNotFound; }
 
             var start = index;
             var end = index + count;
@@ -405,19 +404,19 @@ namespace DotNetty.Buffers
                 int result = s is AbstractByteBuffer buf
                     ? buf.IndexOfAny0(localStart, localLength, value0, value1)
                     : s.IndexOfAny(localStart, localStart + localLength - 1, value0, value1);
-                if (result != -1)
+                if ((uint)result < NIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
                 start += localLength;
                 length -= localLength;
             }
-            return -1;
+            return IndexNotFound;
         }
 
         protected internal override int LastIndexOfAny0(int index, int count, byte value0, byte value1)
         {
-            if (0u >= (uint)count) { return -1; }
+            if (0u >= (uint)count) { return IndexNotFound; }
 
             var rStart = Math.Max(index + count - 1, 0);  // rStart *and* rEnd are inclusive
             var rEnd = index;
@@ -437,18 +436,18 @@ namespace DotNetty.Buffers
                     ? buf.LastIndexOfAny0(localIndex, localLength, value0, value1)
                     : s.IndexOfAny(localRStart - 1, localIndex, value0, value1);
 
-                if (result != -1)
+                if ((uint)result < NIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
                 length -= localLength;
             }
-            return -1;
+            return IndexNotFound;
         }
 
         protected internal override int IndexOfAny0(int index, int count, byte value0, byte value1, byte value2)
         {
-            if (0u >= (uint)count) { return -1; }
+            if (0u >= (uint)count) { return IndexNotFound; }
 
             var start = index;
             var end = index + count;
@@ -467,19 +466,19 @@ namespace DotNetty.Buffers
                 int result = s is AbstractByteBuffer buf
                     ? buf.IndexOfAny0(localStart, localLength, value0, value1, value2)
                     : s.IndexOfAny(localStart, localStart + localLength - 1, value0, value1, value2);
-                if (result != -1)
+                if ((uint)result < NIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
                 start += localLength;
                 length -= localLength;
             }
-            return -1;
+            return IndexNotFound;
         }
 
         protected internal override int LastIndexOfAny0(int index, int count, byte value0, byte value1, byte value2)
         {
-            if (0u >= (uint)count) { return -1; }
+            if (0u >= (uint)count) { return IndexNotFound; }
 
             var rStart = Math.Max(index + count - 1, 0);  // rStart *and* rEnd are inclusive
             var rEnd = index;
@@ -499,13 +498,13 @@ namespace DotNetty.Buffers
                     ? buf.LastIndexOfAny0(localIndex, localLength, value0, value1, value2)
                     : s.IndexOfAny(localRStart - 1, localIndex, value0, value1, value2);
 
-                if (result != -1)
+                if ((uint)result < NIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
                 length -= localLength;
             }
-            return -1;
+            return IndexNotFound;
         }
 
         // TODO 无法解决边界问题，先不重写

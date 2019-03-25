@@ -948,7 +948,7 @@ namespace DotNetty.Handlers.Tls
             {
                 var bufLen = buffer.Length;
                 output = capturedContext.Allocator.Buffer(bufLen);
-                buffer.CopyTo(output.Free);
+                buffer.CopyTo(output.FreeSpan);
                 output.Advance(bufLen);
             }
 

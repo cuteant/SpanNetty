@@ -9,13 +9,13 @@ namespace DotNetty.Buffers
     public static partial class IByteBufferExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ReadOnlyMemory<byte> GetReadableMemory(this IByteBuffer buf) => buf.GetReadableMemory(buf.ReaderIndex, buf.ReadableBytes);
+        public static ReadOnlyMemory<byte> GetReadableMemory(this IByteBuffer buf) => buf.UnreadMemory;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ReadOnlySpan<byte> GetReadableSpan(this IByteBuffer buf) => buf.GetReadableSpan(buf.ReaderIndex, buf.ReadableBytes);
+        public static ReadOnlySpan<byte> GetReadableSpan(this IByteBuffer buf) => buf.UnreadSpan;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ReadOnlySequence<byte> GetSequence(this IByteBuffer buf) => buf.GetSequence(buf.ReaderIndex, buf.ReadableBytes);
+        public static ReadOnlySequence<byte> GetSequence(this IByteBuffer buf) => buf.UnreadSequence;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int FindIndex(this IByteBuffer buf, Predicate<byte> match)

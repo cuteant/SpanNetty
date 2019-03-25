@@ -84,11 +84,11 @@ namespace DotNetty.Buffers
             this.capacity = array.Length;
         }
 
-        public override bool IsDirect => true;
+        public sealed override bool IsDirect => true;
 
-        public override int Capacity => this.capacity;
+        public sealed override int Capacity => this.capacity;
 
-        public override IByteBuffer AdjustCapacity(int newCapacity)
+        public sealed override IByteBuffer AdjustCapacity(int newCapacity)
         {
             this.CheckNewCapacity(newCapacity);
 
@@ -123,11 +123,11 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public override IByteBufferAllocator Allocator => this.allocator;
+        public sealed override IByteBufferAllocator Allocator => this.allocator;
 
-        public override bool HasArray => true;
+        public sealed override bool HasArray => true;
 
-        public override byte[] Array
+        public sealed override byte[] Array
         {
             get
             {
@@ -136,19 +136,21 @@ namespace DotNetty.Buffers
             }
         }
 
-        public override int ArrayOffset => 0;
+        public sealed override int ArrayOffset => 0;
 
-        public override int IoBufferCount => 1;
+        public sealed override bool IsSingleIoBuffer => true;
 
-        public override ArraySegment<byte> GetIoBuffer(int index, int length)
+        public sealed override int IoBufferCount => 1;
+
+        public sealed override ArraySegment<byte> GetIoBuffer(int index, int length)
         {
             this.CheckIndex(index, length);
             return new ArraySegment<byte>(this.buffer, index, length);
         }
 
-        public override ArraySegment<byte>[] GetIoBuffers(int index, int length) => new[] { this.GetIoBuffer(index, length) };
+        public sealed override ArraySegment<byte>[] GetIoBuffers(int index, int length) => new[] { this.GetIoBuffer(index, length) };
 
-        protected internal override void Deallocate()
+        protected internal sealed override void Deallocate()
         {
             byte[] buf = this.buffer;
             if (buf == null)
@@ -164,72 +166,72 @@ namespace DotNetty.Buffers
             }
         }
 
-        public override IByteBuffer Unwrap() => null;
+        public sealed override IByteBuffer Unwrap() => null;
 
-        protected internal override byte _GetByte(int index) => this.buffer[index];
+        protected internal sealed override byte _GetByte(int index) => this.buffer[index];
 
-        protected internal override void _SetByte(int index, int value) => this.buffer[index] = unchecked((byte)value);
+        protected internal sealed override void _SetByte(int index, int value) => this.buffer[index] = unchecked((byte)value);
 
-        public override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
+        public sealed override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
 
 #if !NET40
-        public override bool HasMemoryAddress => true;
+        public sealed override bool HasMemoryAddress => true;
 
-        public override ref byte GetPinnableMemoryAddress()
+        public sealed override ref byte GetPinnableMemoryAddress()
         {
             this.EnsureAccessible();
             return ref this.buffer[0];
         }
 
-        protected internal override short _GetShort(int index)
+        protected internal sealed override short _GetShort(int index)
         {
             fixed (byte* addr = &this.Addr(index))
                 return UnsafeByteBufferUtil.GetShort(addr);
         }
 
-        protected internal override short _GetShortLE(int index)
+        protected internal sealed override short _GetShortLE(int index)
         {
             fixed (byte* addr = &this.Addr(index))
                 return UnsafeByteBufferUtil.GetShortLE(addr);
         }
 
-        protected internal override int _GetUnsignedMedium(int index)
+        protected internal sealed override int _GetUnsignedMedium(int index)
         {
             fixed (byte* addr = &this.Addr(index))
                 return UnsafeByteBufferUtil.GetUnsignedMedium(addr);
         }
 
-        protected internal override int _GetUnsignedMediumLE(int index)
+        protected internal sealed override int _GetUnsignedMediumLE(int index)
         {
             fixed (byte* addr = &this.Addr(index))
                 return UnsafeByteBufferUtil.GetUnsignedMediumLE(addr);
         }
 
-        protected internal override int _GetInt(int index)
+        protected internal sealed override int _GetInt(int index)
         {
             fixed (byte* addr = &this.Addr(index))
                 return UnsafeByteBufferUtil.GetInt(addr);
         }
 
-        protected internal override int _GetIntLE(int index)
+        protected internal sealed override int _GetIntLE(int index)
         {
             fixed (byte* addr = &this.Addr(index))
                 return UnsafeByteBufferUtil.GetIntLE(addr);
         }
 
-        protected internal override long _GetLong(int index)
+        protected internal sealed override long _GetLong(int index)
         {
             fixed (byte* addr = &this.Addr(index))
                 return UnsafeByteBufferUtil.GetLong(addr);
         }
 
-        protected internal override long _GetLongLE(int index)
+        protected internal sealed override long _GetLongLE(int index)
         {
             fixed (byte* addr = &this.Addr(index))
                 return UnsafeByteBufferUtil.GetLongLE(addr);
         }
 
-        public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
+        public sealed override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
             if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
             this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
@@ -240,7 +242,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
+        public sealed override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
             if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
             this.CheckDstIndex(index, length, dstIndex, dst.Length);
@@ -251,55 +253,55 @@ namespace DotNetty.Buffers
             }
         }
 
-        protected internal override void _SetShort(int index, int value)
+        protected internal sealed override void _SetShort(int index, int value)
         {
             fixed (byte* addr = &this.Addr(index))
                 UnsafeByteBufferUtil.SetShort(addr, value);
         }
 
-        protected internal override void _SetShortLE(int index, int value)
+        protected internal sealed override void _SetShortLE(int index, int value)
         {
             fixed (byte* addr = &this.Addr(index))
                 UnsafeByteBufferUtil.SetShortLE(addr, value);
         }
 
-        protected internal override void _SetMedium(int index, int value)
+        protected internal sealed override void _SetMedium(int index, int value)
         {
             fixed (byte* addr = &this.Addr(index))
                 UnsafeByteBufferUtil.SetMedium(addr, value);
         }
 
-        protected internal override void _SetMediumLE(int index, int value)
+        protected internal sealed override void _SetMediumLE(int index, int value)
         {
             fixed (byte* addr = &this.Addr(index))
                 UnsafeByteBufferUtil.SetMediumLE(addr, value);
         }
 
-        protected internal override void _SetInt(int index, int value)
+        protected internal sealed override void _SetInt(int index, int value)
         {
             fixed (byte* addr = &this.Addr(index))
                 UnsafeByteBufferUtil.SetInt(addr, value);
         }
 
-        protected internal override void _SetIntLE(int index, int value)
+        protected internal sealed override void _SetIntLE(int index, int value)
         {
             fixed (byte* addr = &this.Addr(index))
                 UnsafeByteBufferUtil.SetIntLE(addr, value);
         }
 
-        protected internal override void _SetLong(int index, long value)
+        protected internal sealed override void _SetLong(int index, long value)
         {
             fixed (byte* addr = &this.Addr(index))
                 UnsafeByteBufferUtil.SetLong(addr, value);
         }
 
-        protected internal override void _SetLongLE(int index, long value)
+        protected internal sealed override void _SetLongLE(int index, long value)
         {
             fixed (byte* addr = &this.Addr(index))
                 UnsafeByteBufferUtil.SetLongLE(addr, value);
         }
 
-        public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
+        public sealed override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
             if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckSrcIndex(index, length, srcIndex, src.Capacity);
@@ -310,7 +312,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
+        public sealed override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
             if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckSrcIndex(index, length, srcIndex, src.Length);
@@ -325,7 +327,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public override IByteBuffer GetBytes(int index, Stream output, int length)
+        public sealed override IByteBuffer GetBytes(int index, Stream output, int length)
         {
             if (null == output) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
             this.CheckIndex(index, length);
@@ -343,7 +345,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
+        public sealed override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
             if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckIndex(index, length);
@@ -375,7 +377,7 @@ namespace DotNetty.Buffers
 #endif
         }
 
-        public override IByteBuffer Copy(int index, int length)
+        public sealed override IByteBuffer Copy(int index, int length)
         {
             this.CheckIndex(index, length);
             fixed (byte* addr = &this.Addr(index))
@@ -385,7 +387,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.Value)]
         ref byte Addr(int index) => ref this.buffer[index];
 
-        public override IByteBuffer SetZero(int index, int length)
+        public sealed override IByteBuffer SetZero(int index, int length)
         {
             this.CheckIndex(index, length);
             fixed (byte* addr = &this.Addr(index))
@@ -393,7 +395,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public override IByteBuffer WriteZero(int length)
+        public sealed override IByteBuffer WriteZero(int length)
         {
             if (0u >= (uint)length) { return this; }
 

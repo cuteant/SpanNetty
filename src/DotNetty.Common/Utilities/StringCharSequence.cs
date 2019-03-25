@@ -113,7 +113,7 @@ namespace DotNetty.Common.Utilities
 
         public int IndexOf(char ch, int start = 0)
         {
-            if (0u >= (uint)this.count) { return -1; }
+            if (0u >= (uint)this.count) { return AsciiString.IndexNotFound; }
 
             if ((uint)start >= (uint)this.count)
             {

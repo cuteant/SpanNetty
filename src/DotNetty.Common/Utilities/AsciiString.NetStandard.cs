@@ -283,12 +283,12 @@ namespace DotNetty.Common.Utilities
                 if (subString is IHasAsciiSpan hasAscii)
                 {
                     var result = this.AsciiSpan.Slice(start).IndexOf(hasAscii.AsciiSpan);
-                    return result >= 0 ? start + result : IndexNotFound;
+                    return (uint)result < NIndexNotFound ? start + result : IndexNotFound;
                 }
                 if (subString is IHasUtf16Span hasUtf16)
                 {
                     var result = this.Utf16Span.Slice(start).IndexOf(hasUtf16.Utf16Span);
-                    return result >= 0 ? start + result : IndexNotFound;
+                    return (uint)result < NIndexNotFound ? start + result : IndexNotFound;
                 }
             }
 
@@ -335,7 +335,7 @@ namespace DotNetty.Common.Utilities
                 return this.AsciiSpan.IndexOf((byte)ch);
             }
             var result = this.AsciiSpan.Slice(start).IndexOf((byte)ch);
-            return result >= 0 ? start + result : IndexNotFound;
+            return (uint)result < NIndexNotFound ? start + result : IndexNotFound;
         }
 
         public int LastIndexOf(ICharSequence subString, int start)
@@ -365,12 +365,12 @@ namespace DotNetty.Common.Utilities
                 if (subString is IHasAsciiSpan hasAscii)
                 {
                     var result = this.AsciiSpan.Slice(start).LastIndexOf(hasAscii.AsciiSpan);
-                    return result >= 0 ? start + result : IndexNotFound;
+                    return (uint)result < NIndexNotFound ? start + result : IndexNotFound;
                 }
                 if (subString is IHasUtf16Span hasUtf16)
                 {
                     var result = this.Utf16Span.Slice(start).LastIndexOf(hasUtf16.Utf16Span);
-                    return result >= 0 ? start + result : IndexNotFound;
+                    return (uint)result < NIndexNotFound ? start + result : IndexNotFound;
                 }
             }
 

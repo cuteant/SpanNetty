@@ -9,10 +9,15 @@ namespace DotNetty.Buffers
 
     partial class WrappedByteBuffer
     {
+        public void AdvanceReader(int count) => this.Buf.AdvanceReader(count);
+
+        public virtual ReadOnlyMemory<byte> UnreadMemory => this.Buf.FreeMemory;
         public virtual ReadOnlyMemory<byte> GetReadableMemory(int index, int count) => this.Buf.GetReadableMemory(index, count);
 
+        public virtual ReadOnlySpan<byte> UnreadSpan => this.Buf.UnreadSpan;
         public virtual ReadOnlySpan<byte> GetReadableSpan(int index, int count) => this.Buf.GetReadableSpan(index, count);
 
+        public virtual ReadOnlySequence<byte> UnreadSequence => this.Buf.UnreadSequence;
         public virtual ReadOnlySequence<byte> GetSequence(int index, int count) => this.Buf.GetSequence(index, count);
 
         public void Advance(int count) => this.Buf.Advance(count);
@@ -21,7 +26,7 @@ namespace DotNetty.Buffers
         public virtual Memory<byte> GetMemory(int sizeHintt = 0) => this.Buf.GetMemory(sizeHintt);
         public virtual Memory<byte> GetMemory(int index, int count) => this.Buf.GetMemory(index, count);
 
-        public virtual Span<byte> Free => this.Buf.Free;
+        public virtual Span<byte> FreeSpan => this.Buf.FreeSpan;
         public virtual Span<byte> GetSpan(int sizeHintt = 0) => this.Buf.GetSpan(sizeHintt);
         public virtual Span<byte> GetSpan(int index, int count) => this.Buf.GetSpan(index, count);
 

@@ -7,7 +7,7 @@ namespace DotNetty.Common.Tests.Internal
     using DotNetty.Common.Internal;
     using Xunit;
 
-    public class PlatformDependentTest
+    public partial class PlatformDependentTest
     {
         interface IEqualityChecker
         {

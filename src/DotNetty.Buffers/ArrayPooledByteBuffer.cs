@@ -143,19 +143,21 @@ namespace DotNetty.Buffers
 
         void Recycle() => this.recyclerHandle.Release(this);
 
-        public override int IoBufferCount => 1;
+        public sealed override bool IsSingleIoBuffer => true;
 
-        public override ArraySegment<byte> GetIoBuffer(int index, int length)
+        public sealed override int IoBufferCount => 1;
+
+        public sealed override ArraySegment<byte> GetIoBuffer(int index, int length)
         {
             this.CheckIndex(index, length);
             return new ArraySegment<byte>(this.Memory, index, length);
         }
 
-        public override ArraySegment<byte>[] GetIoBuffers(int index, int length) => new[] { this.GetIoBuffer(index, length) };
+        public sealed override ArraySegment<byte>[] GetIoBuffers(int index, int length) => new[] { this.GetIoBuffer(index, length) };
 
-        public override bool HasArray => true;
+        public sealed override bool HasArray => true;
 
-        public override byte[] Array
+        public sealed override byte[] Array
         {
             get
             {
@@ -164,18 +166,18 @@ namespace DotNetty.Buffers
             }
         }
 
-        public override int ArrayOffset => 0;
+        public sealed override int ArrayOffset => 0;
 
 #if !NET40
-        public override bool HasMemoryAddress => true;
+        public sealed override bool HasMemoryAddress => true;
 
-        public override ref byte GetPinnableMemoryAddress()
+        public sealed override ref byte GetPinnableMemoryAddress()
         {
             this.EnsureAccessible();
             return ref this.Memory[0];
         }
 #endif
 
-        public override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
+        public sealed override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
     }
 }

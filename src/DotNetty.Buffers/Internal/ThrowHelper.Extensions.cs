@@ -16,6 +16,7 @@ namespace DotNetty.Buffers
         freeSweepAllocationThreshold,
         nHeapArena,
         nDirectArena,
+        byteBuffer,
         assembly,
         buffer,
         destination,
@@ -132,12 +133,40 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_EndPositionNotReached() { throw CreateInvalidOperationException_EndPositionNotReached(); }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static Exception CreateInvalidOperationException_EndPositionNotReached()
+        {
+            return new InvalidOperationException("EndPositionNotReached");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static T ThrowInvalidOperationException_ShouldNotReachHere<T>()
         {
             throw GetException();
             InvalidOperationException GetException()
             {
                 return new InvalidOperationException("should not reach here");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_NeedMoreData()
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("Destination is too short.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_DestinationTooShort()
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("Destination is too short.");
             }
         }
 
@@ -323,6 +352,28 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_FailedToGetLargerSpan()
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentException("The 'IByteBuffer' could not provide an output buffer that is large enough to continue writing.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_FailedToGetMinimumSizeSpan(int minimumSize)
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentException($"The 'IByteBuffer' could not provide an output buffer that is large enough to continue writing. Need at least {minimumSize} bytes.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowIndexOutOfRangeException_IsText(int index, int length)
         {
             throw GetIndexOutOfRangeException();
@@ -451,6 +502,17 @@ namespace DotNetty.Buffers
             NotSupportedException GetNotSupportedException()
             {
                 return new NotSupportedException();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotSupportedException_UncompositeBuffer()
+        {
+            throw GetNotSupportedException();
+
+            NotSupportedException GetNotSupportedException()
+            {
+                return new NotSupportedException("ByteBufferWriter does not support composite buffer.");
             }
         }
 

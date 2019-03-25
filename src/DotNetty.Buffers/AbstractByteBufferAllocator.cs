@@ -104,7 +104,7 @@ namespace DotNetty.Buffers
         
         public IByteBuffer HeapBuffer(int initialCapacity, int maxCapacity)
         {
-            if (initialCapacity == 0 && maxCapacity == 0)
+            if (0u >= (uint)initialCapacity && 0u >= (uint)maxCapacity)
             {
                 return this.emptyBuffer;
             }

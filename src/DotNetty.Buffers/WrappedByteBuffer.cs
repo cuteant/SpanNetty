@@ -145,10 +145,6 @@ namespace DotNetty.Buffers
 
         public virtual short GetShortLE(int index) => this.Buf.GetShortLE(index);
 
-        public virtual int GetMedium(int index) => this.Buf.GetMedium(index);
-
-        public virtual int GetMediumLE(int index) => this.Buf.GetMediumLE(index);
-
         public virtual int GetUnsignedMedium(int index) => this.Buf.GetUnsignedMedium(index);
 
         public virtual int GetUnsignedMediumLE(int index) => this.Buf.GetUnsignedMediumLE(index);
@@ -460,7 +456,7 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer Slice() => this.Buf.Slice();
 
         public virtual IByteBuffer RetainedSlice() => this.Buf.RetainedSlice();
-        
+
         public virtual IByteBuffer Slice(int index, int length) => this.Buf.Slice(index, length);
 
         public virtual IByteBuffer RetainedSlice(int index, int length) => this.Buf.RetainedSlice(index, length);
@@ -468,6 +464,8 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer Duplicate() => this.Buf.Duplicate();
 
         public virtual IByteBuffer RetainedDuplicate() => this.Buf.RetainedDuplicate();
+
+        public virtual bool IsSingleIoBuffer => this.Buf.IsSingleIoBuffer;
 
         public virtual int IoBufferCount => this.Buf.IoBufferCount;
 

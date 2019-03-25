@@ -11,8 +11,33 @@ namespace DotNetty.Buffers
 
     partial class AbstractByteBuffer : IBufferWriter<byte>
     {
-        private const int c_minimumBufferSize = 256;
+        private const int c_minimumGrowthSize = 256;
         private const uint c_maxBufferSize = int.MaxValue;
+
+        public virtual void AdvanceReader(int count)
+        {
+            if (count < 0) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count);
+
+            if (0u >= (uint)count) { return; }
+
+            var readerIdx = this.readerIndex + count;
+            var writerIdx = this.writerIndex;
+            if (CheckBounds && readerIndex > writerIdx)
+            {
+                ThrowHelper.ThrowIndexOutOfRangeException_ReaderIndex(readerIndex, writerIdx);
+            }
+            this.readerIndex = readerIdx;
+        }
+
+        public virtual ReadOnlyMemory<byte> UnreadMemory
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                this.EnsureAccessible();
+                return this._GetReadableMemory(this.readerIndex, this.ReadableBytes);
+            }
+        }
 
         public virtual ReadOnlyMemory<byte> GetReadableMemory(int index, int count)
         {
@@ -22,6 +47,16 @@ namespace DotNetty.Buffers
         protected internal abstract ReadOnlyMemory<byte> _GetReadableMemory(int index, int count);
 
 
+        public virtual ReadOnlySpan<byte> UnreadSpan
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                this.EnsureAccessible();
+                return this._GetReadableSpan(this.readerIndex, this.ReadableBytes);
+            }
+        }
+
         public virtual ReadOnlySpan<byte> GetReadableSpan(int index, int count)
         {
             this.CheckIndex(index, count);
@@ -30,51 +65,84 @@ namespace DotNetty.Buffers
         protected internal abstract ReadOnlySpan<byte> _GetReadableSpan(int index, int count);
 
 
-        public abstract ReadOnlySequence<byte> GetSequence(int index, int count);
+        public virtual ReadOnlySequence<byte> UnreadSequence
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                this.EnsureAccessible();
+                return this._GetSequence(this.readerIndex, this.ReadableBytes);
+            }
+        }
+
+        public virtual ReadOnlySequence<byte> GetSequence(int index, int count)
+        {
+            this.CheckIndex(index, count);
+            return _GetSequence(index, count);
+        }
+        protected internal abstract ReadOnlySequence<byte> _GetSequence(int index, int count);
 
 
         public virtual void Advance(int count)
         {
             if (count < 0) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count);
 
-            var capacity = this.Capacity;
-            var writerIdx = this.writerIndex;
-            if (writerIdx > capacity - count) { ThrowHelper.ThrowInvalidOperationException(capacity); }
+            if (0u >= (uint)count) { return; }
 
-            this.writerIndex = writerIdx + count;
+            var capacity = this.Capacity;
+            var writerIdx = this.writerIndex + count;
+            if (CheckBounds && writerIdx > capacity) { ThrowHelper.ThrowInvalidOperationException(capacity); }
+
+            this.writerIndex = writerIdx;
         }
 
 
-        public virtual Memory<byte> FreeMemory => this.GetMemory(this.writerIndex, this.WritableBytes);
+        public virtual Memory<byte> FreeMemory
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                this.EnsureAccessible();
+                return this._GetMemory(this.writerIndex, this.WritableBytes);
+            }
+        }
 
         public virtual Memory<byte> GetMemory(int sizeHintt = 0)
         {
             var writerIdx = this.writerIndex;
-            EnsureWritable0(writerIdx, sizeHintt);
-            return GetMemory(writerIdx, this.WritableBytes);
+            this.EnsureWritable0(writerIdx, sizeHintt);
+            return this._GetMemory(writerIdx, this.WritableBytes);
         }
 
         public virtual Memory<byte> GetMemory(int index, int count)
         {
             this.CheckIndex(index, count);
-            return _GetMemory(index, count);
+            return this._GetMemory(index, count);
         }
         protected internal abstract Memory<byte> _GetMemory(int index, int count);
 
 
-        public virtual Span<byte> Free => this.GetSpan(this.writerIndex, this.WritableBytes);
+        public virtual Span<byte> FreeSpan
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                this.EnsureAccessible();
+                return this._GetSpan(this.writerIndex, this.WritableBytes);
+            }
+        }
 
         public virtual Span<byte> GetSpan(int sizeHintt = 0)
         {
             var writerIdx = this.writerIndex;
-            EnsureWritable0(writerIdx, sizeHintt);
-            return GetSpan(writerIdx, this.WritableBytes);
+            this.EnsureWritable0(writerIdx, sizeHintt);
+            return this._GetSpan(writerIdx, this.WritableBytes);
         }
 
         public virtual Span<byte> GetSpan(int index, int count)
         {
             this.CheckIndex(index, count);
-            return _GetSpan(index, count);
+            return this._GetSpan(index, count);
         }
         protected internal abstract Span<byte> _GetSpan(int index, int count);
 
@@ -122,7 +190,7 @@ namespace DotNetty.Buffers
             if (src.IsEmpty) { return this; }
 
             var length = src.Length;
-            EnsureWritable0(index, length);
+            this.EnsureWritable0(index, length);
             var selfSpan = this._GetSpan(index, length);
             src.CopyTo(selfSpan);
             return this;
@@ -133,7 +201,7 @@ namespace DotNetty.Buffers
             if (src.IsEmpty) { return this; }
 
             var length = src.Length;
-            EnsureWritable0(index, length);
+            this.EnsureWritable0(index, length);
             var selfMemory = this._GetMemory(index, length);
             src.CopyTo(selfMemory);
             return this;
@@ -162,7 +230,7 @@ namespace DotNetty.Buffers
             //if (sizeHint == 0)
             if ((uint)(sizeHint - 1) > c_maxBufferSize)
             {
-                sizeHint = c_minimumBufferSize;
+                sizeHint = c_minimumGrowthSize;
             }
 
             var capacity = this.Capacity;
@@ -226,7 +294,7 @@ namespace DotNetty.Buffers
 
             var result = PlatformDependent.ForEachByte(ref MemoryMarshal.GetReference(span), processor, span.Length);
 
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int ForEachByteDesc0(int index, int count, IByteProcessor processor)
@@ -235,13 +303,13 @@ namespace DotNetty.Buffers
 
             var result = PlatformDependent.ForEachByteDesc(ref MemoryMarshal.GetReference(span), processor, span.Length);
 
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
 
         public virtual int FindIndex(int index, int length, Predicate<byte> match)
         {
-            if (0u >= (uint)this.Capacity) { return -1; }
+            if (0u >= (uint)this.Capacity) { return IndexNotFound; }
 
             return this.FindIndex0(index, length, match);
         }
@@ -251,12 +319,12 @@ namespace DotNetty.Buffers
 
             var result = PlatformDependent.FindIndex(ref MemoryMarshal.GetReference(span), match, span.Length);
 
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         public virtual int FindLastIndex(int index, int count, Predicate<byte> match)
         {
-            if (0u >= (uint)this.Capacity) { return -1; }
+            if (0u >= (uint)this.Capacity) { return IndexNotFound; }
 
             return this.FindLastIndex0(index, count, match);
         }
@@ -266,7 +334,7 @@ namespace DotNetty.Buffers
 
             var result = PlatformDependent.FindLastIndex(ref MemoryMarshal.GetReference(span), match, span.Length);
 
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
 
@@ -275,17 +343,17 @@ namespace DotNetty.Buffers
             if (fromIndex <= toIndex)
             {
                 fromIndex = Math.Max(fromIndex, 0);
-                if (fromIndex >= toIndex || 0u >= (uint)this.Capacity) { return -1; }
+                if (fromIndex >= toIndex || 0u >= (uint)this.Capacity) { return IndexNotFound; }
 
-                return IndexOf0(fromIndex, toIndex - fromIndex, value);
+                return this.IndexOf0(fromIndex, toIndex - fromIndex, value);
             }
             else
             {
                 int capacity = this.Capacity;
                 fromIndex = Math.Min(fromIndex, capacity);
-                if (fromIndex < 0 || 0u >= (uint)capacity) { return -1; }
+                if (fromIndex < 0 || 0u >= (uint)capacity) { return IndexNotFound; }
 
-                return LastIndexOf0(toIndex, fromIndex - toIndex, value);
+                return this.LastIndexOf0(toIndex, fromIndex - toIndex, value);
             }
         }
 
@@ -293,14 +361,14 @@ namespace DotNetty.Buffers
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.IndexOf(value);
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOf0(int index, int count, byte value)
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.LastIndexOf(value);
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         public virtual int IndexOf(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
@@ -308,17 +376,17 @@ namespace DotNetty.Buffers
             if (fromIndex <= toIndex)
             {
                 fromIndex = Math.Max(fromIndex, 0);
-                if (fromIndex >= toIndex || 0u >= (uint)this.Capacity) { return -1; }
+                if (fromIndex >= toIndex || 0u >= (uint)this.Capacity) { return IndexNotFound; }
 
-                return IndexOf0(fromIndex, toIndex - fromIndex, values);
+                return this.IndexOf0(fromIndex, toIndex - fromIndex, values);
             }
             else
             {
                 int capacity = this.Capacity;
                 fromIndex = Math.Min(fromIndex, capacity);
-                if (fromIndex < 0 || 0u >= (uint)capacity) { return -1; }
+                if (fromIndex < 0 || 0u >= (uint)capacity) { return IndexNotFound; }
 
-                return LastIndexOf0(toIndex, fromIndex - toIndex, values);
+                return this.LastIndexOf0(toIndex, fromIndex - toIndex, values);
             }
         }
 
@@ -326,14 +394,14 @@ namespace DotNetty.Buffers
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.IndexOf(values);
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOf0(int index, int count, ReadOnlySpan<byte> values)
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.LastIndexOf(values);
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         public virtual int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1)
@@ -341,17 +409,17 @@ namespace DotNetty.Buffers
             if (fromIndex <= toIndex)
             {
                 fromIndex = Math.Max(fromIndex, 0);
-                if (fromIndex >= toIndex || 0u >= (uint)this.Capacity) { return -1; }
+                if (fromIndex >= toIndex || 0u >= (uint)this.Capacity) { return IndexNotFound; }
 
-                return IndexOfAny0(fromIndex, toIndex - fromIndex, value0, value1);
+                return this.IndexOfAny0(fromIndex, toIndex - fromIndex, value0, value1);
             }
             else
             {
                 int capacity = this.Capacity;
                 fromIndex = Math.Min(fromIndex, capacity);
-                if (fromIndex < 0 || 0u >= (uint)capacity) { return -1; }
+                if (fromIndex < 0 || 0u >= (uint)capacity) { return IndexNotFound; }
 
-                return LastIndexOfAny0(toIndex, fromIndex - toIndex, value0, value1);
+                return this.LastIndexOfAny0(toIndex, fromIndex - toIndex, value0, value1);
             }
         }
 
@@ -359,14 +427,14 @@ namespace DotNetty.Buffers
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.IndexOfAny(value0, value1);
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOfAny0(int index, int count, byte value0, byte value1)
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.LastIndexOfAny(value0, value1);
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         public virtual int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1, byte value2)
@@ -374,17 +442,17 @@ namespace DotNetty.Buffers
             if (fromIndex <= toIndex)
             {
                 fromIndex = Math.Max(fromIndex, 0);
-                if (fromIndex >= toIndex || 0u >= (uint)this.Capacity) { return -1; }
+                if (fromIndex >= toIndex || 0u >= (uint)this.Capacity) { return IndexNotFound; }
 
-                return IndexOfAny0(fromIndex, toIndex - fromIndex, value0, value1, value2);
+                return this.IndexOfAny0(fromIndex, toIndex - fromIndex, value0, value1, value2);
             }
             else
             {
                 int capacity = this.Capacity;
                 fromIndex = Math.Min(fromIndex, capacity);
-                if (fromIndex < 0 || 0u >= (uint)capacity) { return -1; }
+                if (fromIndex < 0 || 0u >= (uint)capacity) { return IndexNotFound; }
 
-                return LastIndexOfAny0(toIndex, fromIndex - toIndex, value0, value1, value2);
+                return this.LastIndexOfAny0(toIndex, fromIndex - toIndex, value0, value1, value2);
             }
         }
 
@@ -392,14 +460,14 @@ namespace DotNetty.Buffers
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.IndexOfAny(value0, value1, value2);
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOfAny0(int index, int count, byte value0, byte value1, byte value2)
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.LastIndexOfAny(value0, value1, value2);
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         public virtual int IndexOfAny(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
@@ -407,17 +475,17 @@ namespace DotNetty.Buffers
             if (fromIndex <= toIndex)
             {
                 fromIndex = Math.Max(fromIndex, 0);
-                if (fromIndex >= toIndex || 0u >= (uint)this.Capacity) { return -1; }
+                if (fromIndex >= toIndex || 0u >= (uint)this.Capacity) { return IndexNotFound; }
 
-                return IndexOfAny0(fromIndex, toIndex - fromIndex, values);
+                return this.IndexOfAny0(fromIndex, toIndex - fromIndex, values);
             }
             else
             {
                 int capacity = this.Capacity;
                 fromIndex = Math.Min(fromIndex, capacity);
-                if (fromIndex < 0 || 0u >= (uint)capacity) { return -1; }
+                if (fromIndex < 0 || 0u >= (uint)capacity) { return IndexNotFound; }
 
-                return LastIndexOfAny0(toIndex, fromIndex - toIndex, values);
+                return this.LastIndexOfAny0(toIndex, fromIndex - toIndex, values);
             }
         }
 
@@ -425,14 +493,14 @@ namespace DotNetty.Buffers
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.IndexOfAny(values);
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOfAny0(int index, int count, ReadOnlySpan<byte> values)
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.LastIndexOfAny(values);
-            return result >= 0 ? index + result : result;
+            return (uint)result < NIndexNotFound ? index + result : result;
         }
     }
 }

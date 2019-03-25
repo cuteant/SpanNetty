@@ -37,6 +37,11 @@ namespace DotNetty.Buffers
             return this.Unwrap().GetSequence(this.Idx(index), count);
         }
 
+        protected internal override ReadOnlySequence<byte> _GetSequence(int index, int count)
+        {
+            return this.Unwrap().GetSequence(this.Idx(index), count);
+        }
+
         public override Memory<byte> GetMemory(int index, int count)
         {
             this.CheckIndex0(index, count);

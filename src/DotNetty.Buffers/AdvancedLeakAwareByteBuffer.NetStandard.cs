@@ -9,16 +9,43 @@ namespace DotNetty.Buffers
 
     partial class AdvancedLeakAwareByteBuffer
     {
+        public override ReadOnlyMemory<byte> UnreadMemory
+        {
+            get
+            {
+                RecordLeakNonRefCountingOperation(this.Leak);
+                return base.UnreadMemory;
+            }
+        }
+
         public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.GetReadableMemory(index, count);
         }
 
+        public override ReadOnlySpan<byte> UnreadSpan
+        {
+            get
+            {
+                RecordLeakNonRefCountingOperation(this.Leak);
+                return base.UnreadSpan;
+            }
+        }
+
         public override ReadOnlySpan<byte> GetReadableSpan(int index, int count)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.GetReadableSpan(index, count);
+        }
+
+        public override ReadOnlySequence<byte> UnreadSequence
+        {
+            get
+            {
+                RecordLeakNonRefCountingOperation(this.Leak);
+                return base.UnreadSequence;
+            }
         }
 
         public override ReadOnlySequence<byte> GetSequence(int index, int count)
@@ -47,12 +74,12 @@ namespace DotNetty.Buffers
             return base.GetMemory(index, count);
         }
 
-        public override Span<byte> Free
+        public override Span<byte> FreeSpan
         {
             get
             {
                 RecordLeakNonRefCountingOperation(this.Leak);
-                return base.Free;
+                return base.FreeSpan;
             }
         }
 

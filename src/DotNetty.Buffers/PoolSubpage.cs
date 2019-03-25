@@ -78,12 +78,12 @@ namespace DotNetty.Buffers
 
         internal long Allocate()
         {
-            if (this.ElemSize == 0)
+            if (0u >= (uint)this.ElemSize)
             {
                 return this.ToHandle(0);
             }
 
-            if (this.numAvail == 0 || !this.DoNotDestroy)
+            if (0u >= (uint)this.numAvail || !this.DoNotDestroy)
             {
                 return -1;
             }
@@ -109,7 +109,7 @@ namespace DotNetty.Buffers
 
         internal bool Free(PoolSubpage<T> head, int bitmapIdx)
         {
-            if (this.ElemSize == 0)
+            if (0u >= (uint)this.ElemSize)
             {
                 return true;
             }
@@ -202,7 +202,7 @@ namespace DotNetty.Buffers
 
             for (int j = 0; j < 64; j++)
             {
-                if ((bits & 1) == 0)
+                if (0u >= (uint)(bits & 1))
                 {
                     int val = baseVal | j;
                     if (val < maxNumElems)

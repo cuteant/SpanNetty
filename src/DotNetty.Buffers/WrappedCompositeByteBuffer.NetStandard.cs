@@ -9,13 +9,19 @@ namespace DotNetty.Buffers
 
     partial class WrappedCompositeByteBuffer
     {
+        public override void AdvanceReader(int count) => this.wrapped.AdvanceReader(count);
+
+        public override ReadOnlyMemory<byte> UnreadMemory => this.wrapped.UnreadMemory;
         public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count) => this.wrapped.GetReadableMemory(index, count);
         protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count) => this.wrapped._GetReadableMemory(index, count);
 
+        public override ReadOnlySpan<byte> UnreadSpan => this.wrapped.UnreadSpan;
         public override ReadOnlySpan<byte> GetReadableSpan(int index, int count) => this.wrapped.GetReadableSpan(index, count);
         protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count) => this.wrapped._GetReadableSpan(index, count);
 
+        public override ReadOnlySequence<byte> UnreadSequence => this.wrapped.UnreadSequence;
         public override ReadOnlySequence<byte> GetSequence(int index, int count) => this.wrapped.GetSequence(index, count);
+        protected internal override ReadOnlySequence<byte> _GetSequence(int index, int count) => this.wrapped._GetSequence(index, count);
 
         public sealed override void Advance(int count) => this.wrapped.Advance(count);
 
@@ -24,7 +30,7 @@ namespace DotNetty.Buffers
         public override Memory<byte> GetMemory(int index, int count) => this.wrapped.GetMemory(index, count);
         protected internal override Memory<byte> _GetMemory(int index, int count) => this.wrapped._GetMemory(index, count);
 
-        public override Span<byte> Free => this.wrapped.Free;
+        public override Span<byte> FreeSpan => this.wrapped.FreeSpan;
         public override Span<byte> GetSpan(int sizeHintt = 0) => this.wrapped.GetSpan(sizeHintt);
         public override Span<byte> GetSpan(int index, int count) => this.wrapped.GetSpan(index, count);
         protected internal override Span<byte> _GetSpan(int index, int count) => this.wrapped._GetSpan(index, count);

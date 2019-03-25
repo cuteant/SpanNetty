@@ -256,21 +256,21 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             if (msg is DatagramPacket packet)
             {
-                return IsSingleBuffer(packet.Content)
+                return packet.Content.IsSingleIoBuffer
                     ? packet
                     : new DatagramPacket(this.CreateNewDirectBuffer(packet, packet.Content), packet.Recipient);
             }
 
             if (msg is IByteBuffer buffer)
             {
-                return IsSingleBuffer(buffer)
+                return buffer.IsSingleIoBuffer
                     ? buffer
                     : this.CreateNewDirectBuffer(buffer);
             }
 
             if (msg is IAddressedEnvelope<IByteBuffer> envolope)
             {
-                if (IsSingleBuffer(envolope.Content))
+                if (envolope.Content.IsSingleIoBuffer)
                 {
                     return envolope;
                 }
@@ -322,15 +322,15 @@ namespace DotNetty.Transport.Channels.Sockets
             return data;
         }
 
-        //
-        // Checks if the specified buffer is a direct buffer and is composed of a single NIO buffer.
-        // (We check this because otherwise we need to make it a non-composite buffer.)
-        //
-        static bool IsSingleBuffer(IByteBuffer buffer)
-        {
-            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
-            return buffer.IoBufferCount == 1;
-        }
+        ////
+        //// Checks if the specified buffer is a direct buffer and is composed of a single NIO buffer.
+        //// (We check this because otherwise we need to make it a non-composite buffer.)
+        ////
+        //static bool IsSingleBuffer(IByteBuffer buffer)
+        //{
+        //    if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+        //    return buffer.IsSingleIoBuffer;
+        //}
 
         // Continue on write error as a SocketDatagramChannel can write to multiple remote peers
         // See https://github.com/netty/netty/issues/2665

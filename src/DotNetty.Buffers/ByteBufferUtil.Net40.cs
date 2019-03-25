@@ -26,7 +26,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            return -1;
+            return IndexNotFound;
         }
 
         /// <summary>
@@ -167,9 +167,9 @@ namespace DotNetty.Buffers
         static int FirstIndexOf(IByteBuffer buffer, int fromIndex, int toIndex, byte value)
         {
             fromIndex = Math.Max(fromIndex, 0);
-            if (fromIndex >= toIndex || buffer.Capacity == 0)
+            if (fromIndex >= toIndex || 0u >= (uint)buffer.Capacity)
             {
-                return -1;
+                return IndexNotFound;
             }
 
             return buffer.ForEachByte(fromIndex, toIndex - fromIndex, new IndexOfProcessor(value));
@@ -179,9 +179,9 @@ namespace DotNetty.Buffers
         {
             int capacity = buffer.Capacity;
             fromIndex = Math.Min(fromIndex, capacity);
-            if (fromIndex < 0 || capacity == 0)
+            if (fromIndex < 0 || 0u >= (uint)capacity)
             {
-                return -1;
+                return IndexNotFound;
             }
 
             return buffer.ForEachByteDesc(toIndex, fromIndex - toIndex, new IndexOfProcessor(value));
@@ -374,12 +374,12 @@ namespace DotNetty.Buffers
 
         public static string DecodeString(IByteBuffer src, int readerIndex, int len, Encoding encoding)
         {
-            if (len == 0)
+            if (0u >= (uint)len)
             {
                 return string.Empty;
             }
 
-            if (src.IoBufferCount == 1)
+            if (src.IsSingleIoBuffer)
             {
                 ArraySegment<byte> ioBuf = src.GetIoBuffer(readerIndex, len);
                 return encoding.GetString(ioBuf.Array, ioBuf.Offset, ioBuf.Count);

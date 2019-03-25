@@ -66,7 +66,7 @@ namespace DotNetty.Common.Utilities
                 }
             }
 
-            return -1;
+            return AsciiString.IndexNotFound;
         }
     }
 }

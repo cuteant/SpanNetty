@@ -78,7 +78,7 @@ namespace DotNetty.Buffers
                 ThrowHelper.ThrowIndexOutOfRangeException_Index(offset, length, array.Length);
             }
 
-            if (offset == 0)
+            if (0u >= (uint)offset)
             {
                 return PlatformDependent.DirectBufferPreferred
                      ? ArrayPooledUnsafeDirectByteBuffer.NewInstance(Allocator, DefaultArrayPool, array, length, array.Length)
@@ -97,7 +97,7 @@ namespace DotNetty.Buffers
                 ThrowHelper.ThrowIndexOutOfRangeException_Index(offset, length, array.Length);
             }
 
-            if (offset == 0)
+            if (0u >= (uint)offset)
             {
                 return PlatformDependent.DirectBufferPreferred
                      ? ArrayPooledUnsafeDirectByteBuffer.NewInstance(Allocator, arrayPool, array, length, array.Length)

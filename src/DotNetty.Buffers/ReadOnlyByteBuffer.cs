@@ -321,6 +321,8 @@ namespace DotNetty.Buffers
             return this.Unwrap().GetString(index, length, encoding);
         }
 
+        public override bool IsSingleIoBuffer => this.Unwrap().IsSingleIoBuffer;
+
         public override int IoBufferCount => this.Unwrap().IoBufferCount;
 
         public override IByteBuffer Copy(int index, int length)

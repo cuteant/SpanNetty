@@ -260,7 +260,7 @@ namespace DotNetty.Buffers
 
         ComponentEntry NewComponent(IByteBuffer buf, int offset)
         {
-            if (CheckAccessible && buf.ReferenceCount == 0)
+            if (CheckAccessible && 0u >= (uint)buf.ReferenceCount)
             {
                 ThrowHelper.ThrowIllegalReferenceCountException(0);
             }
@@ -463,7 +463,7 @@ namespace DotNetty.Buffers
         {
             this.CheckComponentIndex(cIndex, numComponents);
 
-            if (numComponents == 0)
+            if (0u >= (uint)numComponents)
             {
                 return this;
             }
@@ -507,7 +507,7 @@ namespace DotNetty.Buffers
         {
             if (end <= start)
             {
-                return -1;
+                return IndexNotFound;
             }
             for (int i = this.ToComponentIndex0(start), length = end - start; length > 0; i++)
             {
@@ -523,21 +523,21 @@ namespace DotNetty.Buffers
                 int result = s is AbstractByteBuffer buf
                     ? buf.ForEachByteAsc0(localStart, localStart + localLength, processor)
                     : s.ForEachByte(localStart, localLength, processor);
-                if (result != -1)
+                if ((uint)result < NIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
                 start += localLength;
                 length -= localLength;
             }
-            return -1;
+            return IndexNotFound;
         }
 
         internal protected override int ForEachByteDesc0(int rStart, int rEnd, IByteProcessor processor)
         {
             if (rEnd > rStart) // rStart *and* rEnd are inclusive
             {
-                return -1;
+                return IndexNotFound;
             }
             for (int i = this.ToComponentIndex0(rStart), length = 1 + rStart - rEnd; length > 0; i--)
             {
@@ -554,13 +554,13 @@ namespace DotNetty.Buffers
                     ? buf.ForEachByteDesc0(localRStart - 1, localIndex, processor)
                     : s.ForEachByteDesc(localIndex, localLength, processor);
 
-                if (result != -1)
+                if ((uint)result < NIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
                 length -= localLength;
             }
-            return -1;
+            return IndexNotFound;
         }
 #endif
 
@@ -583,7 +583,7 @@ namespace DotNetty.Buffers
             IByteBuffer slice = firstC.Buffer.Slice(firstC.Idx(offset), Math.Min(firstC.EndOffset - offset, bytesToSlice));
             bytesToSlice -= slice.ReadableBytes;
 
-            if (bytesToSlice == 0)
+            if (0u >= (uint)bytesToSlice)
             {
                 return new List<IByteBuffer> { slice };
             }
@@ -601,6 +601,29 @@ namespace DotNetty.Buffers
             } while (bytesToSlice > 0);
 
             return sliceList;
+        }
+
+        public override bool IsSingleIoBuffer
+        {
+            get
+            {
+                int size = this.componentCount;
+                switch (size)
+                {
+                    case 0:
+                        return true;
+                    case 1:
+                        return this.components[0].Buffer.IsSingleIoBuffer;
+                    default:
+                        return false;
+                        //int count = 0;
+                        //for (int i = 0; i < size; i++)
+                        //{
+                        //    count += this.components[i].Buffer.IoBufferCount;
+                        //}
+                        //return 1u >= (uint)count;
+                }
+            }
         }
 
         public override int IoBufferCount
@@ -637,7 +660,7 @@ namespace DotNetty.Buffers
                 case 1:
                     ComponentEntry c = this.components[0];
                     IByteBuffer buf = c.Buffer;
-                    if (buf.IoBufferCount == 1)
+                    if (buf.IsSingleIoBuffer)
                     {
                         return buf.GetIoBuffer(c.Idx(index), length);
                     }
@@ -661,7 +684,7 @@ namespace DotNetty.Buffers
             var buffers = this.GetSequence(index, length);
 
             int offset = 0;
-            foreach (ReadOnlyMemory<byte> buf in buffers)
+            foreach (var buf in buffers)
             {
                 Debug.Assert(merged.Length - offset >= buf.Length);
 
@@ -721,7 +744,7 @@ namespace DotNetty.Buffers
             get
             {
                 int size = this.componentCount;
-                if (size == 0)
+                if (0u >= (uint)size)
                 {
                     return false;
                 }
@@ -902,7 +925,7 @@ namespace DotNetty.Buffers
         int ToComponentIndex0(int offset)
         {
             int size = this.componentCount;
-            if (offset == 0) // fast-path zero offset
+            if (0u >= (uint)offset) // fast-path zero offset
             {
                 for (int i = 0; i < size; i++)
                 {
@@ -1268,7 +1291,7 @@ namespace DotNetty.Buffers
             {
                 ComponentEntry c = this.components[i];
                 int localLength = Math.Min(length, c.EndOffset - index);
-                if (localLength == 0)
+                if (0u >= (uint)localLength)
                 {
                     // Skip empty buffer
                     i++;
@@ -1277,7 +1300,7 @@ namespace DotNetty.Buffers
                 int localReadBytes = await c.Buffer.SetBytesAsync(c.Idx(index), src, localLength, cancellationToken);
                 if (localReadBytes < 0)
                 {
-                    if (readBytes == 0)
+                    if (0u >= (uint)readBytes)
                     {
                         return -1;
                     }
@@ -1531,7 +1554,7 @@ namespace DotNetty.Buffers
         {
             this.EnsureAccessible();
             int readerIndex = this.ReaderIndex;
-            if (readerIndex == 0)
+            if (0u >= (uint)readerIndex)
             {
                 return this;
             }
@@ -1574,7 +1597,7 @@ namespace DotNetty.Buffers
         {
             this.EnsureAccessible();
             int readerIndex = this.ReaderIndex;
-            if (readerIndex == 0)
+            if (0u >= (uint)readerIndex)
             {
                 return this;
             }

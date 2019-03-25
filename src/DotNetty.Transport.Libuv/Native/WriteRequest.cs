@@ -73,9 +73,9 @@ namespace DotNetty.Transport.Libuv.Native
 
             if (this.maxBytes - len < this.size && this.count > 0) { return false; }
 
-            if (buf.IoBufferCount == 1)
+            if (buf.IsSingleIoBuffer)
             {
-                var memory = buf.GetReadableMemory();
+                var memory = buf.UnreadMemory;
                 this.Add(memory.Pin(), memory.Length);
                 return true;
             }
@@ -88,7 +88,7 @@ namespace DotNetty.Transport.Libuv.Native
         {
             if (MaximumLimit - buf.IoBufferCount < this.count) { return false; }
 
-            var segments = buf.GetSequence();
+            var segments = buf.UnreadSequence;
             foreach (var memory in segments)
             {
                 this.Add(memory.Pin(), memory.Length);

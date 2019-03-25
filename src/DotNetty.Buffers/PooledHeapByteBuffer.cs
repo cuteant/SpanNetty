@@ -26,27 +26,27 @@ namespace DotNetty.Buffers
         {
         }
 
-        public override bool IsDirect => false;
+        public sealed override bool IsDirect => false;
 
-        protected internal override byte _GetByte(int index) => HeapByteBufferUtil.GetByte(this.Memory, this.Idx(index));
+        protected internal sealed override byte _GetByte(int index) => HeapByteBufferUtil.GetByte(this.Memory, this.Idx(index));
 
-        protected internal override short _GetShort(int index) => HeapByteBufferUtil.GetShort(this.Memory, this.Idx(index));
+        protected internal sealed override short _GetShort(int index) => HeapByteBufferUtil.GetShort(this.Memory, this.Idx(index));
 
-        protected internal override short _GetShortLE(int index) => HeapByteBufferUtil.GetShortLE(this.Memory, this.Idx(index));
+        protected internal sealed override short _GetShortLE(int index) => HeapByteBufferUtil.GetShortLE(this.Memory, this.Idx(index));
 
-        protected internal override int _GetUnsignedMedium(int index) => HeapByteBufferUtil.GetUnsignedMedium(this.Memory, this.Idx(index));
+        protected internal sealed override int _GetUnsignedMedium(int index) => HeapByteBufferUtil.GetUnsignedMedium(this.Memory, this.Idx(index));
 
-        protected internal override int _GetUnsignedMediumLE(int index) => HeapByteBufferUtil.GetUnsignedMediumLE(this.Memory, this.Idx(index));
+        protected internal sealed override int _GetUnsignedMediumLE(int index) => HeapByteBufferUtil.GetUnsignedMediumLE(this.Memory, this.Idx(index));
 
-        protected internal override int _GetInt(int index) => HeapByteBufferUtil.GetInt(this.Memory, this.Idx(index));
+        protected internal sealed override int _GetInt(int index) => HeapByteBufferUtil.GetInt(this.Memory, this.Idx(index));
 
-        protected internal override int _GetIntLE(int index) => HeapByteBufferUtil.GetIntLE(this.Memory, this.Idx(index));
+        protected internal sealed override int _GetIntLE(int index) => HeapByteBufferUtil.GetIntLE(this.Memory, this.Idx(index));
 
-        protected internal override long _GetLong(int index) => HeapByteBufferUtil.GetLong(this.Memory, this.Idx(index));
+        protected internal sealed override long _GetLong(int index) => HeapByteBufferUtil.GetLong(this.Memory, this.Idx(index));
 
-        protected internal override long _GetLongLE(int index) => HeapByteBufferUtil.GetLongLE(this.Memory, this.Idx(index));
+        protected internal sealed override long _GetLongLE(int index) => HeapByteBufferUtil.GetLongLE(this.Memory, this.Idx(index));
 
-        public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
+        public sealed override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
             if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
             this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
@@ -61,7 +61,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
+        public sealed override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
             if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
             this.CheckDstIndex(index, length, dstIndex, dst.Length);
@@ -69,7 +69,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public override IByteBuffer GetBytes(int index, Stream destination, int length)
+        public sealed override IByteBuffer GetBytes(int index, Stream destination, int length)
         {
             if (null == destination) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.destination); }
             this.CheckIndex(index, length);
@@ -81,25 +81,25 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        protected internal override void _SetByte(int index, int value) => HeapByteBufferUtil.SetByte(this.Memory, this.Idx(index), value);
+        protected internal sealed override void _SetByte(int index, int value) => HeapByteBufferUtil.SetByte(this.Memory, this.Idx(index), value);
 
-        protected internal override void _SetShort(int index, int value) => HeapByteBufferUtil.SetShort(this.Memory, this.Idx(index), value);
+        protected internal sealed override void _SetShort(int index, int value) => HeapByteBufferUtil.SetShort(this.Memory, this.Idx(index), value);
 
-        protected internal override void _SetShortLE(int index, int value) => HeapByteBufferUtil.SetShortLE(this.Memory, this.Idx(index), value);
+        protected internal sealed override void _SetShortLE(int index, int value) => HeapByteBufferUtil.SetShortLE(this.Memory, this.Idx(index), value);
 
-        protected internal override void _SetMedium(int index, int value) => HeapByteBufferUtil.SetMedium(this.Memory, this.Idx(index), value);
+        protected internal sealed override void _SetMedium(int index, int value) => HeapByteBufferUtil.SetMedium(this.Memory, this.Idx(index), value);
 
-        protected internal override void _SetMediumLE(int index, int value) => HeapByteBufferUtil.SetMediumLE(this.Memory, this.Idx(index), value);
+        protected internal sealed override void _SetMediumLE(int index, int value) => HeapByteBufferUtil.SetMediumLE(this.Memory, this.Idx(index), value);
 
-        protected internal override void _SetInt(int index, int value) => HeapByteBufferUtil.SetInt(this.Memory, this.Idx(index), value);
+        protected internal sealed override void _SetInt(int index, int value) => HeapByteBufferUtil.SetInt(this.Memory, this.Idx(index), value);
 
-        protected internal override void _SetIntLE(int index, int value) => HeapByteBufferUtil.SetIntLE(this.Memory, this.Idx(index), value);
+        protected internal sealed override void _SetIntLE(int index, int value) => HeapByteBufferUtil.SetIntLE(this.Memory, this.Idx(index), value);
 
-        protected internal override void _SetLong(int index, long value) => HeapByteBufferUtil.SetLong(this.Memory, this.Idx(index), value);
+        protected internal sealed override void _SetLong(int index, long value) => HeapByteBufferUtil.SetLong(this.Memory, this.Idx(index), value);
 
-        protected internal override void _SetLongLE(int index, long value) => HeapByteBufferUtil.SetLongLE(this.Memory, this.Idx(index), value);
+        protected internal sealed override void _SetLongLE(int index, long value) => HeapByteBufferUtil.SetLongLE(this.Memory, this.Idx(index), value);
 
-        public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
+        public sealed override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
             if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckSrcIndex(index, length, srcIndex, src.Capacity);
@@ -114,7 +114,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
+        public sealed override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
             if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckIndex(index, length);
@@ -140,7 +140,7 @@ namespace DotNetty.Buffers
 #endif
         }
 
-        public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
+        public sealed override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
             if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckSrcIndex(index, length, srcIndex, src.Length);
@@ -148,7 +148,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public override IByteBuffer Copy(int index, int length)
+        public sealed override IByteBuffer Copy(int index, int length)
         {
             this.CheckIndex(index, length);
             IByteBuffer copy = this.Allocator.HeapBuffer(length, this.MaxCapacity);
@@ -157,27 +157,29 @@ namespace DotNetty.Buffers
         }
 
 
-        public override IByteBuffer SetZero(int index, int length)
+        public sealed override IByteBuffer SetZero(int index, int length)
         {
             this.CheckIndex(index, length);
             PlatformDependent.Clear(this.Memory, this.Idx(index), length);
             return this;
         }
 
-        public override int IoBufferCount => 1;
+        public sealed override bool IsSingleIoBuffer => true;
 
-        public override ArraySegment<byte> GetIoBuffer(int index, int length)
+        public sealed override int IoBufferCount => 1;
+
+        public sealed override ArraySegment<byte> GetIoBuffer(int index, int length)
         {
             this.CheckIndex(index, length);
             index = index + this.Offset;
             return new ArraySegment<byte>(this.Memory, index, length);
         }
 
-        public override ArraySegment<byte>[] GetIoBuffers(int index, int length) => new[] { this.GetIoBuffer(index, length) };
+        public sealed override ArraySegment<byte>[] GetIoBuffers(int index, int length) => new[] { this.GetIoBuffer(index, length) };
 
-        public override bool HasArray => true;
+        public sealed override bool HasArray => true;
 
-        public override byte[] Array
+        public sealed override byte[] Array
         {
             get
             {
@@ -186,21 +188,21 @@ namespace DotNetty.Buffers
             }
         }
 
-        public override int ArrayOffset => this.Offset;
+        public sealed override int ArrayOffset => this.Offset;
 
 #if !NET40
-        public override bool HasMemoryAddress => true;
+        public sealed override bool HasMemoryAddress => true;
 
-        public override ref byte GetPinnableMemoryAddress()
+        public sealed override ref byte GetPinnableMemoryAddress()
         {
             this.EnsureAccessible();
             return ref this.Memory[this.Offset];
         }
 #endif
 
-        public override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
+        public sealed override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
 
-        public override IByteBuffer WriteZero(int length)
+        public sealed override IByteBuffer WriteZero(int length)
         {
             if (0u >= (uint)length) { return this; }
 

@@ -7,6 +7,8 @@ namespace DotNetty.Buffers
 
     partial class ReadOnlyByteBuffer
     {
+        public override void AdvanceReader(int count) => this.Unwrap().AdvanceReader(count);
+        public override ReadOnlyMemory<byte> UnreadMemory => this.Unwrap().UnreadMemory;
         public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count)
         {
             return this.Unwrap().GetReadableMemory(index, count);
@@ -18,6 +20,7 @@ namespace DotNetty.Buffers
         }
 
 
+        public override ReadOnlySpan<byte> UnreadSpan => this.Unwrap().UnreadSpan;
         public override ReadOnlySpan<byte> GetReadableSpan(int index, int count)
         {
             return this.Unwrap().GetReadableSpan(index, count);
@@ -28,8 +31,13 @@ namespace DotNetty.Buffers
             return this.Unwrap().GetReadableSpan(index, count);
         }
 
-
+        public override ReadOnlySequence<byte> UnreadSequence => this.Unwrap().UnreadSequence;
         public override ReadOnlySequence<byte> GetSequence(int index, int count)
+        {
+            return this.Unwrap().GetSequence(index, count);
+        }
+
+        protected internal override ReadOnlySequence<byte> _GetSequence(int index, int count)
         {
             return this.Unwrap().GetSequence(index, count);
         }
@@ -98,7 +106,7 @@ namespace DotNetty.Buffers
         }
 
 
-        public override Span<byte> Free => throw new ReadOnlyBufferException();
+        public override Span<byte> FreeSpan => throw new ReadOnlyBufferException();
         public override Span<byte> GetSpan(int sizeHintt = 0)
         {
             throw new ReadOnlyBufferException();

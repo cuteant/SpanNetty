@@ -18,7 +18,7 @@ namespace DotNetty.Buffers
             if (this.buffers.Length == 1)
             {
                 var buf = this.Buffer(0);
-                if (buf.IoBufferCount == 1)
+                if (buf.IsSingleIoBuffer)
                 {
                     return buf.GetReadableMemory(index, count);
                 }
@@ -28,7 +28,7 @@ namespace DotNetty.Buffers
             var bufs = this.GetSequence(index, count);
 
             int offset = 0;
-            foreach (ReadOnlyMemory<byte> buf in bufs)
+            foreach (var buf in bufs)
             {
                 Debug.Assert(merged.Length - offset >= buf.Length);
 
@@ -46,7 +46,7 @@ namespace DotNetty.Buffers
             if (this.buffers.Length == 1)
             {
                 var buf = this.Buffer(0);
-                if (buf.IoBufferCount == 1)
+                if (buf.IsSingleIoBuffer)
                 {
                     return buf.GetReadableSpan(index, count);
                 }
@@ -56,7 +56,7 @@ namespace DotNetty.Buffers
             var bufs = this.GetSequence(index, count);
 
             int offset = 0;
-            foreach (ReadOnlyMemory<byte> buf in bufs)
+            foreach (var buf in bufs)
             {
                 Debug.Assert(merged.Length - offset >= buf.Length);
 
@@ -67,9 +67,8 @@ namespace DotNetty.Buffers
             return merged.Span;
         }
 
-        public override ReadOnlySequence<byte> GetSequence(int index, int count)
+        protected internal override ReadOnlySequence<byte> _GetSequence(int index, int count)
         {
-            this.CheckIndex(index, count);
             if (0u >= (uint)count) { return ReadOnlySequence<byte>.Empty; }
 
             var array = ThreadLocalList<ReadOnlyMemory<byte>>.NewInstance(this.nioBufferCount);

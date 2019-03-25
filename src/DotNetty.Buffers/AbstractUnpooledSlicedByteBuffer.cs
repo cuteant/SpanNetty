@@ -293,7 +293,9 @@ namespace DotNetty.Buffers
             return this.Unwrap().SetBytesAsync(this.Idx(index), src, length, cancellationToken);
         }
 
-        public override int IoBufferCount => this.Unwrap().IoBufferCount;
+        public sealed override bool IsSingleIoBuffer => this.Unwrap().IsSingleIoBuffer;
+
+        public sealed override int IoBufferCount => this.Unwrap().IoBufferCount;
 
         public override ArraySegment<byte> GetIoBuffer(int index, int length)
         {
@@ -317,7 +319,7 @@ namespace DotNetty.Buffers
             }
             else
             {
-                return -1;
+                return IndexNotFound;
             }
         }
 
@@ -331,7 +333,7 @@ namespace DotNetty.Buffers
             }
             else
             {
-                return -1;
+                return IndexNotFound;
             }
         }
 

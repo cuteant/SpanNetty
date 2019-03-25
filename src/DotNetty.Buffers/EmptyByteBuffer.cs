@@ -17,6 +17,7 @@ namespace DotNetty.Buffers
     /// </summary>
     public sealed partial class EmptyByteBuffer : IByteBuffer
     {
+        const int IndexNotFound = -1;
         public const int EmptyByteBufferHashCode = 1;
         static readonly ArraySegment<byte> EmptyBuffer = new ArraySegment<byte>(ArrayExtensions.ZeroBytes);
         static readonly ArraySegment<byte>[] EmptyBuffers = { EmptyBuffer };
@@ -98,7 +99,7 @@ namespace DotNetty.Buffers
         {
             if (minWritableBytes < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(minWritableBytes, ExceptionArgument.minWritableBytes); }
 
-            if (minWritableBytes == 0)
+            if (0u >= (uint)minWritableBytes)
             {
                 return 0;
             }
@@ -113,10 +114,6 @@ namespace DotNetty.Buffers
         public short GetShort(int index) => throw new IndexOutOfRangeException();
 
         public short GetShortLE(int index) => throw new IndexOutOfRangeException();
-
-        public int GetMedium(int index) => throw new IndexOutOfRangeException();
-
-        public int GetMediumLE(int index) => throw new IndexOutOfRangeException();
 
         public int GetUnsignedMedium(int index) => throw new IndexOutOfRangeException();
 
@@ -281,13 +278,13 @@ namespace DotNetty.Buffers
         public int ForEachByte(int index, int length, IByteProcessor processor)
         {
             this.CheckIndex(index, length);
-            return -1;
+            return IndexNotFound;
         }
 
         public int ForEachByteDesc(int index, int length, IByteProcessor processor)
         {
             this.CheckIndex(index, length);
-            return -1;
+            return IndexNotFound;
         }
 
         public IByteBuffer Copy(int index, int length)
@@ -305,6 +302,8 @@ namespace DotNetty.Buffers
         public IByteBuffer RetainedSlice(int index, int length) => this.CheckIndex(index, length);
 
         public IByteBuffer Duplicate() => this;
+
+        public bool IsSingleIoBuffer => true;
 
         public int IoBufferCount => 1;
 

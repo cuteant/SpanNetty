@@ -88,6 +88,8 @@ namespace DotNetty.Buffers
 
         public override bool HasMemoryAddress => this.Unwrap().HasMemoryAddress;
 
+        public sealed override bool IsSingleIoBuffer => this.Unwrap().IsSingleIoBuffer;
+
         public sealed override int IoBufferCount => this.Unwrap().IoBufferCount;
 
         public sealed override IByteBuffer RetainedSlice()

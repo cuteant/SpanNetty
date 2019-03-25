@@ -40,7 +40,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Http2", "sr
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{44B80AAB-869F-40FC-B3C5-7F9C80B87387}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConcurrentqueuePerformance", "test\ConcurrentqueuePerformance\ConcurrentqueuePerformance.csproj", "{2B2E98E6-B78D-408E-BEA6-C805D78FEBDD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConcurrentqueuePerformance", "test\ConcurrentqueuePerformance\ConcurrentqueuePerformance.csproj", "{2B2E98E6-B78D-408E-BEA6-C805D78FEBDD}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution

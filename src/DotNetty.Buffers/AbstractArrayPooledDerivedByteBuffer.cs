@@ -12,7 +12,7 @@ namespace DotNetty.Buffers
     {
         readonly ThreadLocalPool.Handle recyclerHandle;
         AbstractByteBuffer rootParent;
-          
+
         // Deallocations of a pooled derived buffer should always propagate through the entire chain of derived buffers.
         // This is because each pooled derived buffer maintains its own reference count and we should respect each one.
         // If deallocations cause a release of the "root parent" then then we may prematurely release the underlying
@@ -20,7 +20,7 @@ namespace DotNetty.Buffers
         //
         IByteBuffer parent;
 
-        protected AbstractArrayPooledDerivedByteBuffer(ThreadLocalPool.Handle recyclerHandle) 
+        protected AbstractArrayPooledDerivedByteBuffer(ThreadLocalPool.Handle recyclerHandle)
             : base(0)
         {
             this.recyclerHandle = recyclerHandle;
@@ -52,7 +52,7 @@ namespace DotNetty.Buffers
                 this.SetMaxCapacity(maxCapacity);
                 this.SetIndex0(readerIndex, writerIndex); // It is assumed the bounds checking is done by the caller.
                 this.SetReferenceCount(1);
-                
+
                 wrapped = null;
                 return (T)this;
             }
@@ -87,6 +87,8 @@ namespace DotNetty.Buffers
         public override byte[] Array => this.Unwrap().Array;
 
         public override bool HasMemoryAddress => this.Unwrap().HasMemoryAddress;
+
+        public override bool IsSingleIoBuffer => this.Unwrap().IsSingleIoBuffer;
 
         public sealed override int IoBufferCount => this.Unwrap().IoBufferCount;
 
@@ -204,12 +206,12 @@ namespace DotNetty.Buffers
 
             protected override bool Release0(int decrement) => this.referenceCountDelegate.Release(decrement);
 
-            public override IByteBuffer Duplicate() => 
+            public override IByteBuffer Duplicate() =>
                 new ArrayPooledNonRetainedDuplicateByteBuffer(this.referenceCountDelegate, this.UnwrapCore())
                     .SetIndex(this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
 
             public override IByteBuffer RetainedDuplicate() => ArrayPooledDuplicatedByteBuffer.NewInstance(this.UnwrapCore(), this, this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
-            
+
             public override IByteBuffer Slice(int index, int length)
             {
                 this.CheckIndex0(index, length);

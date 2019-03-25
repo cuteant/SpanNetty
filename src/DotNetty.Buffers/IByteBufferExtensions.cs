@@ -12,6 +12,48 @@ namespace DotNetty.Buffers
     public static partial class IByteBufferExtensions
     {
         /// <summary>
+        ///     Gets a 24-bit medium integer at the specified absolute index in this buffer.
+        ///     This method does not modify <see cref="IByteBuffer.ReaderIndex" /> or <see cref="IByteBuffer.WriterIndex" />
+        ///     of this buffer.
+        /// </summary>
+        /// <exception cref="IndexOutOfRangeException">
+        ///     if the specified <paramref name="index"/>  is less than <c>0</c> or
+        ///     <c>index + 3</c> greater than <see cref="IByteBuffer.Capacity" />
+        /// </exception>
+        [MethodImpl(InlineMethod.Value)]
+        public static int GetMedium(this IByteBuffer buf, int index)
+        {
+            uint value = (uint)buf.GetUnsignedMedium(index);
+            if ((value & 0x800000) != 0)
+            {
+                value |= 0xff000000;
+            }
+
+            return (int)value;
+        }
+
+        /// <summary>
+        ///     Gets a 24-bit medium integer at the specified absolute index in this buffer
+        ///     in Little Endian Byte Order. This method does not modify <see cref="IByteBuffer.ReaderIndex" /> 
+        ///     or <see cref="IByteBuffer.WriterIndex" /> of this buffer.
+        /// </summary>
+        /// <exception cref="IndexOutOfRangeException">
+        ///     if the specified <paramref name="index"/> is less than <c>0</c> or
+        ///     <c>index + 3</c> greater than <see cref="IByteBuffer.Capacity" />
+        /// </exception>
+        [MethodImpl(InlineMethod.Value)]
+        public static int GetMediumLE(this IByteBuffer buf, int index)
+        {
+            uint value = (uint)buf.GetUnsignedMediumLE(index);
+            if ((value & 0x800000) != 0)
+            {
+                value |= 0xff000000;
+            }
+
+            return (int)value;
+        }
+
+        /// <summary>
         ///     Gets an ushort at the specified absolute <paramref name="index" /> in this buffer.
         ///     This method does not modify <see cref="IByteBuffer.ReaderIndex" /> or <see cref="IByteBuffer.WriterIndex" />
         ///     of this buffer.

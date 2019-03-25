@@ -324,6 +324,8 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer InternalComponentAtOffset(int offset) => this.wrapped.InternalComponentAtOffset(offset);
 
+        public override bool IsSingleIoBuffer => this.wrapped.IsSingleIoBuffer;
+
         public override int IoBufferCount => this.wrapped.IoBufferCount;
 
         public override ArraySegment<byte> GetIoBuffer(int index, int length) => this.wrapped.GetIoBuffer(index, length);

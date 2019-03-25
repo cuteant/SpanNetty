@@ -277,28 +277,6 @@ namespace DotNetty.Buffers
         long GetLongLE(int index);
 
         /// <summary>
-        ///     Gets a 24-bit medium integer at the specified absolute index in this buffer.
-        ///     This method does not modify <see cref="ReaderIndex" /> or <see cref="WriterIndex" />
-        ///     of this buffer.
-        /// </summary>
-        /// <exception cref="IndexOutOfRangeException">
-        ///     if the specified <param name="index"/>  is less than <c>0</c> or
-        ///     <c>index + 3</c> greater than <see cref="Capacity" />
-        /// </exception>
-        int GetMedium(int index);
-
-        /// <summary>
-        ///     Gets a 24-bit medium integer at the specified absolute index in this buffer
-        ///     in Little Endian Byte Order. This method does not modify <see cref="ReaderIndex" /> 
-        ///     or <see cref="WriterIndex" /> of this buffer.
-        /// </summary>
-        /// <exception cref="IndexOutOfRangeException">
-        ///     if the specified <param name="index"/> is less than <c>0</c> or
-        ///     <c>index + 3</c> greater than <see cref="Capacity" />
-        /// </exception>
-        int GetMediumLE(int index);
-
-        /// <summary>
         ///     Gets an unsigned 24-bit medium integer at the specified absolute index in this buffer.
         ///     This method does not modify <see cref="ReaderIndex" /> or <see cref="WriterIndex" />
         ///     of this buffer.
@@ -726,6 +704,10 @@ namespace DotNetty.Buffers
         IByteBuffer WriteBytes(byte[] src);
 
         IByteBuffer WriteBytes(byte[] src, int srcIndex, int length);
+
+        /// <summary>Checks if the specified <see cref="IByteBuffer"/> is a direct buffer and is composed of a single NIO buffer.</summary>
+        /// <remarks>We check this because otherwise we need to make it a non-composite buffer.</remarks>
+        bool IsSingleIoBuffer { get; }
 
         /// <summary>
         ///     Returns the maximum <see cref="ArraySegment{T}" /> of <see cref="Byte" /> that this buffer holds. Note that

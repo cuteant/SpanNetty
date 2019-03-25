@@ -173,7 +173,7 @@ namespace DotNetty.Codecs.Base64
 
             fixed (byte* alphabet = dialect.alphabet)
             {
-                if ((src.IoBufferCount == 1) && (dest.IoBufferCount == 1))
+                if (src.IsSingleIoBuffer && dest.IsSingleIoBuffer)
                 {
                     destLength = EncodeUsingPointer(alphabet, src, dest, offset, length, breakLines);
                 }
@@ -333,7 +333,7 @@ namespace DotNetty.Codecs.Base64
 
             fixed (sbyte* decodabet = dialect.decodabet)
             {
-                if ((src.IoBufferCount == 1) && (dest.IoBufferCount == 1))
+                if (src.IsSingleIoBuffer && dest.IsSingleIoBuffer)
                 {
                     charCount = DecodeUsingPointer(src, dest, decodabet, offset, length);
                 }
