@@ -105,7 +105,7 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AdvanceAndGrowIf(ref int alreadyWritten, int sizeHintt)
         {
-            if ((uint)sizeHintt >= (uint)_buffer.Length) { AdvanceAndGrow(ref alreadyWritten, sizeHintt); }
+            if ((uint)sizeHintt >= (uint)(_buffer.Length - alreadyWritten)) { AdvanceAndGrow(ref alreadyWritten, sizeHintt); }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
