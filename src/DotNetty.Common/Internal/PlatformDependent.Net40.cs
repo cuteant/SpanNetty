@@ -5,7 +5,6 @@ namespace DotNetty.Common.Internal
 
     public static partial class PlatformDependent
     {
-        internal static readonly bool Is64BitProcess = IntPtr.Size == sizeof(UInt64);
         private const int Zero = 0;
 
         public static void CopyMemory(byte[] src, int srcIndex, byte[] dst, int dstIndex, int length)

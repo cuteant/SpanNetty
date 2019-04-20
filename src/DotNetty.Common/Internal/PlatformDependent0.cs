@@ -1,8 +1,11 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 #if !NET40
+
 namespace DotNetty.Common.Internal
 {
+    using System;
     using System.Runtime.CompilerServices;
     using DotNetty.Common.Utilities;
 
@@ -12,6 +15,7 @@ namespace DotNetty.Common.Internal
         internal static readonly int HashCodeC1 = unchecked((int)0xcc9e2d51);
         internal static readonly int HashCodeC2 = 0x1b873593;
 
+        [Obsolete("=> SequenceEqual")]
         [MethodImpl(InlineMethod.Value)]
         internal static unsafe bool ByteArrayEquals(byte* bytes1, int startPos1, byte* bytes2, int startPos2, int length)
         {
@@ -156,4 +160,5 @@ namespace DotNetty.Common.Internal
         static int HashCodeAsciiSanitize(byte value) => value & 0x1f;
     }
 }
+
 #endif

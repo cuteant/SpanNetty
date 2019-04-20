@@ -1,4 +1,5 @@
 ﻿#if NETCOREAPP
+
 namespace DotNetty.Handlers.Tls
 {
     using System;
@@ -11,7 +12,6 @@ namespace DotNetty.Handlers.Tls
         partial class MediationStream
         {
             private ReadOnlyMemory<byte> _input;
-            private int _inputStartOffset;
             private Memory<byte> _sslOwnedBuffer;
             private int _readByteCount;
 
@@ -99,4 +99,5 @@ namespace DotNetty.Handlers.Tls
         }
     }
 }
+
 #endif

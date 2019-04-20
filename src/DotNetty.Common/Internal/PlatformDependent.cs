@@ -31,6 +31,8 @@ namespace DotNetty.Common.Internal
             }
         }
 
+        public static readonly bool Is64BitProcess = IntPtr.Size >= 8;
+
         public static bool DirectBufferPreferred => UseDirectBuffer;
 
         static int seed = (int)(Stopwatch.GetTimestamp() & 0xFFFFFFFF); //used to safly cast long to int, because the timestamp returned is long and it doesn't fit into an int
@@ -49,16 +51,18 @@ namespace DotNetty.Common.Internal
 
         public static Random GetThreadLocalRandom() => ThreadLocalRandom.Value;
 
+        [MethodImpl(InlineMethod.Value)]
         public static unsafe bool ByteArrayEquals(byte[] bytes1, int startPos1, byte[] bytes2, int startPos2, int length)
         {
-            if (length <= 0)
-            {
-                return true;
-            }
+            if (length <= 0) { return true; }
 
+#if NET40
             fixed (byte* array1 = bytes1)
             fixed (byte* array2 = bytes2)
                 return PlatformDependent0.ByteArrayEquals(array1, startPos1, array2, startPos2, length);
+#else
+            return SequenceEqual(ref bytes1[startPos1], ref bytes2[startPos2], unchecked((uint)length));
+#endif
         }
 
         public static unsafe int ByteArrayEqualsConstantTime(byte[] bytes1, int startPos1, byte[] bytes2, int startPos2, int length)
