@@ -2,10 +2,10 @@
   <!-- Shared Package Versions -->
   <PropertyGroup Label="Package Versions">
     <!-- core packages -->
-    <CuteAntAsyncExPackageVersion>2.2.0-rtm-190420-01</CuteAntAsyncExPackageVersion>
-    <CuteAntCoreAbstractionsPackageVersion>2.2.0-rtm-190420-01</CuteAntCoreAbstractionsPackageVersion>
-    <CuteAntCorePackageVersion>2.2.0-rtm-190420-01</CuteAntCorePackageVersion>
-    <CuteAntRuntimePackageVersion>2.2.0-rtm-190420-01</CuteAntRuntimePackageVersion>
+    <CuteAntAsyncExPackageVersion>2.2.0-rtm-190421-01</CuteAntAsyncExPackageVersion>
+    <CuteAntCoreAbstractionsPackageVersion>2.2.0-rtm-190421-01</CuteAntCoreAbstractionsPackageVersion>
+    <CuteAntCorePackageVersion>2.2.0-rtm-190421-01</CuteAntCorePackageVersion>
+    <CuteAntRuntimePackageVersion>2.2.0-rtm-190421-01</CuteAntRuntimePackageVersion>
 
     <CuteAntBuffersPackageVersion>2.2.0-rtm-190309-01</CuteAntBuffersPackageVersion>
     <CuteAntIOPipelinesPackageVersion>2.2.0-rtm-190309-01</CuteAntIOPipelinesPackageVersion>
@@ -135,10 +135,10 @@
     <CuteAntJsonExtensionsPackageVersion>2.2.0-rtm-190310-01</CuteAntJsonExtensionsPackageVersion>
     <HyperionUnofficialPackageVersion>0.9.8-rtm-190310-01</HyperionUnofficialPackageVersion>
     <MessagePackSpanAbstractionsPackageVersion>1.0.0</MessagePackSpanAbstractionsPackageVersion>
-    <MessagePackHyperionPackageVersion>1.0.0-rtm-190420-01</MessagePackHyperionPackageVersion>
-    <MessagePackImmutableCollectionUnofficialPackageVersion>1.0.0-rtm-190420-01</MessagePackImmutableCollectionUnofficialPackageVersion>
-    <MessagePackLZ4UnofficialPackageVersion>1.0.0-rtm-190420-01</MessagePackLZ4UnofficialPackageVersion>
-    <MessagePackUnofficialPackageVersion>1.0.0-rtm-190420-01</MessagePackUnofficialPackageVersion>
+    <MessagePackHyperionPackageVersion>1.0.0-rtm-190421-01</MessagePackHyperionPackageVersion>
+    <MessagePackImmutableCollectionUnofficialPackageVersion>1.0.0-rtm-190421-01</MessagePackImmutableCollectionUnofficialPackageVersion>
+    <MessagePackLZ4UnofficialPackageVersion>1.0.0-rtm-190421-01</MessagePackLZ4UnofficialPackageVersion>
+    <MessagePackUnofficialPackageVersion>1.0.0-rtm-190421-01</MessagePackUnofficialPackageVersion>
     <ServiceStackTextNet40PackageVersion>5.5.0-rtm-190310-01</ServiceStackTextNet40PackageVersion>
     <ServiceStackTextUnofficialPackageVersion>5.5.0-rtm-190310-01</ServiceStackTextUnofficialPackageVersion>
     <Utf8JsonAbstractionsUnofficialPackageVersion>1.3.6-rtm-190310-01</Utf8JsonAbstractionsUnofficialPackageVersion>

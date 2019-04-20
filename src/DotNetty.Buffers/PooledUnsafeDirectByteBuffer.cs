@@ -51,21 +51,21 @@ namespace DotNetty.Buffers
 
         protected internal sealed override byte _GetByte(int index) => *(this.memoryAddress + index);
 
-        protected internal sealed override short _GetShort(int index) => UnsafeByteBufferUtil.GetShort(this.Addr(index));
+        protected internal sealed override short _GetShort(int index) => UnsafeByteBufferUtil.GetShort(ref Unsafe.AsRef<byte>(this.memoryAddress), index);
 
-        protected internal sealed override short _GetShortLE(int index) => UnsafeByteBufferUtil.GetShortLE(this.Addr(index));
+        protected internal sealed override short _GetShortLE(int index) => UnsafeByteBufferUtil.GetShortLE(ref Unsafe.AsRef<byte>(this.memoryAddress), index);
 
-        protected internal sealed override int _GetUnsignedMedium(int index) => UnsafeByteBufferUtil.GetUnsignedMedium(this.Addr(index));
+        protected internal sealed override int _GetUnsignedMedium(int index) => UnsafeByteBufferUtil.GetUnsignedMedium(ref Unsafe.AsRef<byte>(this.memoryAddress), index);
 
-        protected internal sealed override int _GetUnsignedMediumLE(int index) => UnsafeByteBufferUtil.GetUnsignedMediumLE(this.Addr(index));
+        protected internal sealed override int _GetUnsignedMediumLE(int index) => UnsafeByteBufferUtil.GetUnsignedMediumLE(ref Unsafe.AsRef<byte>(this.memoryAddress), index);
 
-        protected internal sealed override int _GetInt(int index) => UnsafeByteBufferUtil.GetInt(this.Addr(index));
+        protected internal sealed override int _GetInt(int index) => UnsafeByteBufferUtil.GetInt(ref Unsafe.AsRef<byte>(this.memoryAddress), index);
 
-        protected internal sealed override int _GetIntLE(int index) => UnsafeByteBufferUtil.GetIntLE(this.Addr(index));
+        protected internal sealed override int _GetIntLE(int index) => UnsafeByteBufferUtil.GetIntLE(ref Unsafe.AsRef<byte>(this.memoryAddress), index);
 
-        protected internal sealed override long _GetLong(int index) => UnsafeByteBufferUtil.GetLong(this.Addr(index));
+        protected internal sealed override long _GetLong(int index) => UnsafeByteBufferUtil.GetLong(ref Unsafe.AsRef<byte>(this.memoryAddress), index);
 
-        protected internal sealed override long _GetLongLE(int index) => UnsafeByteBufferUtil.GetLongLE(this.Addr(index));
+        protected internal sealed override long _GetLongLE(int index) => UnsafeByteBufferUtil.GetLongLE(ref Unsafe.AsRef<byte>(this.memoryAddress), index);
 
         public sealed override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
@@ -99,21 +99,21 @@ namespace DotNetty.Buffers
 
         protected internal sealed override void _SetByte(int index, int value) => *(this.memoryAddress + index) = unchecked((byte)value);
 
-        protected internal sealed override void _SetShort(int index, int value) => UnsafeByteBufferUtil.SetShort(this.Addr(index), value);
+        protected internal sealed override void _SetShort(int index, int value) => UnsafeByteBufferUtil.SetShort(ref Unsafe.AsRef<byte>(this.memoryAddress), index, value);
 
-        protected internal sealed override void _SetShortLE(int index, int value) => UnsafeByteBufferUtil.SetShortLE(this.Addr(index), value);
+        protected internal sealed override void _SetShortLE(int index, int value) => UnsafeByteBufferUtil.SetShortLE(ref Unsafe.AsRef<byte>(this.memoryAddress), index, value);
 
-        protected internal sealed override void _SetMedium(int index, int value) => UnsafeByteBufferUtil.SetMedium(this.Addr(index), value);
+        protected internal sealed override void _SetMedium(int index, int value) => UnsafeByteBufferUtil.SetMedium(ref Unsafe.AsRef<byte>(this.memoryAddress), index, value);
 
-        protected internal sealed override void _SetMediumLE(int index, int value) => UnsafeByteBufferUtil.SetMediumLE(this.Addr(index), value);
+        protected internal sealed override void _SetMediumLE(int index, int value) => UnsafeByteBufferUtil.SetMediumLE(ref Unsafe.AsRef<byte>(this.memoryAddress), index, value);
 
-        protected internal sealed override void _SetInt(int index, int value) => UnsafeByteBufferUtil.SetInt(this.Addr(index), value);
+        protected internal sealed override void _SetInt(int index, int value) => UnsafeByteBufferUtil.SetInt(ref Unsafe.AsRef<byte>(this.memoryAddress), index, value);
 
-        protected internal sealed override void _SetIntLE(int index, int value) => UnsafeByteBufferUtil.SetIntLE(this.Addr(index), value);
+        protected internal sealed override void _SetIntLE(int index, int value) => UnsafeByteBufferUtil.SetIntLE(ref Unsafe.AsRef<byte>(this.memoryAddress), index, value);
 
-        protected internal sealed override void _SetLong(int index, long value) => UnsafeByteBufferUtil.SetLong(this.Addr(index), value);
+        protected internal sealed override void _SetLong(int index, long value) => UnsafeByteBufferUtil.SetLong(ref Unsafe.AsRef<byte>(this.memoryAddress), index, value);
 
-        protected internal sealed override void _SetLongLE(int index, long value) => UnsafeByteBufferUtil.SetLongLE(this.Addr(index), value);
+        protected internal sealed override void _SetLongLE(int index, long value) => UnsafeByteBufferUtil.SetLongLE(ref Unsafe.AsRef<byte>(this.memoryAddress), index, value);
 
         public sealed override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
