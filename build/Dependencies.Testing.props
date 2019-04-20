@@ -10,8 +10,8 @@
     <NBenchRunnerPackageVersion>1.2.2</NBenchRunnerPackageVersion>
 
     <FluentAssertions4PackageVersion>4.19.4</FluentAssertions4PackageVersion>
-    <FluentAssertions5PackageVersion>5.5.1</FluentAssertions5PackageVersion>
-    <FluentAssertionsPackageVersion>5.5.1</FluentAssertionsPackageVersion>
+    <FluentAssertions5PackageVersion>5.6.0</FluentAssertions5PackageVersion>
+    <FluentAssertionsPackageVersion>5.6.0</FluentAssertionsPackageVersion>
     <MoqPackageVersion>4.10.0</MoqPackageVersion>
     <NSubstitutePackageVersion>3.1.0</NSubstitutePackageVersion>
     <ShouldlyPackageVersion>3.0.2</ShouldlyPackageVersion>
@@ -40,7 +40,7 @@
     <NUnitDevPackageVersion>3.11.0-dev-05430</NUnitDevPackageVersion>
     <NUnit3TestAdapterDevPackageVersion>3.11.0-dev-00847</NUnit3TestAdapterDevPackageVersion>
 
-    <SimpleFixtureNSubstitutePackageVersion>3.0.2</SimpleFixtureNSubstitutePackageVersion>
-    <SimpleFixturexUnitPackageVersion>3.0.2</SimpleFixturexUnitPackageVersion>
+    <SimpleFixtureNSubstitutePackageVersion>3.0.6</SimpleFixtureNSubstitutePackageVersion>
+    <SimpleFixturexUnitPackageVersion>3.0.6</SimpleFixturexUnitPackageVersion>
   </PropertyGroup>
 </Project>

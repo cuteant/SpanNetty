@@ -347,7 +347,7 @@ namespace DotNetty.Buffers
         /// <param name="span">The read data, if any.</param>
         /// <param name="delimiters">The delimiters to look for.</param>
         /// <param name="advancePastDelimiter">True to move past the first found instance of any of the given <paramref name="delimiters"/>.</param>
-        /// <returns>True if any of the the <paramref name="delimiters"/> were found.</returns>
+        /// <returns>True if any of the <paramref name="delimiters"/> were found.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryReadToAny(out ReadOnlySpan<byte> span, ReadOnlySpan<byte> delimiters, bool advancePastDelimiter = true)
         {
@@ -383,7 +383,7 @@ namespace DotNetty.Buffers
         /// <param name="sequence">The read data, if any.</param>
         /// <param name="delimiters">The delimiters to look for.</param>
         /// <param name="advancePastDelimiter">True to move past the first found instance of any of the given <paramref name="delimiters"/>.</param>
-        /// <returns>True if any of the the <paramref name="delimiters"/> were found.</returns>
+        /// <returns>True if any of the <paramref name="delimiters"/> were found.</returns>
         public bool TryReadToAny(out ReadOnlySequence<byte> sequence, ReadOnlySpan<byte> delimiters, bool advancePastDelimiter = true)
         {
             return TryReadToAnyInternal(out sequence, delimiters, advancePastDelimiter);
@@ -445,7 +445,14 @@ namespace DotNetty.Buffers
                     return false;
                 }
 
-                if (delimiter.Length == 1) { return true; }
+                if (delimiter.Length == 1)
+                {
+                    if (advancePastDelimiter)
+                    {
+                        Advance(1);
+                    }
+                    return true;
+                }
 
                 if (IsNext(delimiter))
                 {

@@ -5,7 +5,7 @@
     <CommandLineParserPackageVersion>2.3.0</CommandLineParserPackageVersion>
     <CronExpressionDescriptorPackageVersion>2.2.0</CronExpressionDescriptorPackageVersion>
     <MoreLinqPackageVersion>2.10.0</MoreLinqPackageVersion>
-    <OptionalPackageVersion>3.2.0</OptionalPackageVersion>
+    <OptionalPackageVersion>4.0.0</OptionalPackageVersion>
     <SuperpowerPackageVersion>1.0.2</SuperpowerPackageVersion>
 
     <JetBrainsAnnotationsPackageVersion>11.1.0</JetBrainsAnnotationsPackageVersion>
@@ -112,8 +112,8 @@
     <MailKitPackageVersion>2.1.2</MailKitPackageVersion>
 
     <!-- Serialization related packages -->
-    <GoogleProtobufPackageVersion>3.6.1</GoogleProtobufPackageVersion>
-    <GoogleProtobufToolsPackageVersion>3.6.1</GoogleProtobufToolsPackageVersion>
+    <GoogleProtobufPackageVersion>3.7.0</GoogleProtobufPackageVersion>
+    <GoogleProtobufToolsPackageVersion>3.7.0</GoogleProtobufToolsPackageVersion>
     <HyperionPackageVersion>0.9.7</HyperionPackageVersion>
     <MessagePackAnalyzerPackageVersion>1.6.0</MessagePackAnalyzerPackageVersion>
     <MsgPackCliPackageVersion>1.0.0-rc</MsgPackCliPackageVersion>
