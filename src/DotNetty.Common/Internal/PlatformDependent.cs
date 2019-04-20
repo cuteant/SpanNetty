@@ -245,7 +245,23 @@ namespace DotNetty.Common.Internal
         {
             uint nlen = unchecked((uint)length);
             if (0u >= nlen) { return; }
+
+#if NET451
+            Buffer.BlockCopy(src, srcIndex, dst, dstIndex, length);
+#elif NET471
+            unsafe
+            {
+                fixed (byte* source = &src[srcIndex])
+                {
+                    fixed (byte* destination = &dst[dstIndex])
+                    {
+                        Buffer.MemoryCopy(source, destination, length, length);
+                    }
+                }
+            }
+#else
             Unsafe.CopyBlockUnaligned(ref dst[dstIndex], ref src[srcIndex], nlen);
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
