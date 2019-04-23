@@ -64,11 +64,14 @@ namespace DotNetty.Common.Concurrency
         protected SingleThreadEventExecutor(IEventExecutorGroup parent, string threadName, TimeSpan breakoutInterval, IQueue<IRunnable> taskQueue)
             : base(parent)
         {
+            this.loopAction = this.Loop;
+            this.loopCoreAciton = this.LoopCore;
+
             this.terminationCompletionSource = this.NewPromise();
             this.taskQueue = taskQueue;
             this.preciseBreakoutInterval = PreciseTimeSpan.FromTimeSpan(breakoutInterval);
             this.scheduler = new ExecutorTaskScheduler(this);
-            this.thread = new Thread(this.Loop);
+            this.thread = new Thread(this.loopAction);
             if (string.IsNullOrEmpty(threadName))
             {
                 this.thread.Name = DefaultWorkerThreadName;
@@ -85,13 +88,15 @@ namespace DotNetty.Common.Concurrency
         /// </summary>
         public TaskScheduler Scheduler => this.scheduler;
 
-        void Loop()
+        readonly XParameterizedThreadStart loopAction;
+        void Loop(object s)
         {
             this.SetCurrentExecutor(this);
 
-            Task.Factory.StartNew(LoopCore, CancellationToken.None, TaskCreationOptions.None, this.scheduler);
+            Task.Factory.StartNew(this.loopCoreAciton, CancellationToken.None, TaskCreationOptions.None, this.scheduler);
         }
 
+        readonly Action loopCoreAciton;
         void LoopCore()
         {
             try
@@ -335,7 +340,7 @@ namespace DotNetty.Common.Concurrency
             {
                 oldState = thisState;
 
-                if ((oldState >= ST_SHUTTING_DOWN)) { break; }
+                if (oldState >= ST_SHUTTING_DOWN) { break; }
 
                 thisState = Interlocked.CompareExchange(ref this.executionState, ST_SHUTTING_DOWN, oldState);
             } while (thisState != oldState);

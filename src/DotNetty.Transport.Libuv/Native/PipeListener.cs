@@ -22,6 +22,8 @@ namespace DotNetty.Transport.Libuv.Native
 
         public PipeListener(Loop loop, bool ipc) : base(loop, ipc)
         {
+            this.onReadAction = this.OnRead;
+
             this.pipes = new List<Pipe>();
             this.windowsApi = new WindowsApi();
             this.requestId = 0;
@@ -85,7 +87,7 @@ namespace DotNetty.Transport.Libuv.Native
                     NativeMethods.ThrowIfError(result);
 
                     this.pipes.Add(client);
-                    client.ReadStart(this.OnRead);
+                    client.ReadStart(this.onReadAction);
                 }
             }
             catch (Exception exception)
@@ -95,6 +97,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
         }
 
+        readonly Action<Pipe, int> onReadAction;
         void OnRead(Pipe pipe, int status)
         {
             // The server connection is never meant to read anything back

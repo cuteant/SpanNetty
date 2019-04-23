@@ -8,6 +8,7 @@ namespace DotNetty.Transport.Libuv
 {
     using System;
     using System.Diagnostics;
+    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Channels;
@@ -72,14 +73,14 @@ namespace DotNetty.Transport.Libuv
             this.scheduler = new ExecutorTaskScheduler(this);
 
             this.loop = new Loop();
-            this.asyncHandle = new Async(this.loop, OnCallback, this);
-            this.timerHandle = new Timer(this.loop, OnCallback, this);
+            this.asyncHandle = new Async(this.loop, OnCallbackAction, this);
+            this.timerHandle = new Timer(this.loop, OnCallbackAction, this);
             string name = $"{this.GetType().Name}:{this.loop.Handle}";
             if (!string.IsNullOrEmpty(threadName))
             {
                 name = $"{name}({threadName})";
             }
-            this.thread = new XThread(Run) { Name = name };
+            this.thread = new XThread(RunAction) { Name = name };
             this.loopRunStart = new ManualResetEventSlim(false, 1);
         }
 
@@ -99,6 +100,7 @@ namespace DotNetty.Transport.Libuv
 
         internal int LoopThreadId => this.thread.Id;
 
+        static readonly XParameterizedThreadStart RunAction = s => Run(s);
         static void Run(object state)
         {
             var loopExecutor = (LoopExecutor)state;
@@ -111,6 +113,8 @@ namespace DotNetty.Transport.Libuv
                 loopExecutor.scheduler);
         }
 
+        static readonly Action<object> OnCallbackAction = s => OnCallback(s);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void OnCallback(object state) => ((LoopExecutor)state).OnCallback();
 
         void OnCallback()
