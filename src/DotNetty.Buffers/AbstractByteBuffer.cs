@@ -278,20 +278,23 @@ namespace DotNetty.Buffers
         protected internal void EnsureWritable0(int minWritableBytes)
         {
             this.EnsureAccessible();
-            if (minWritableBytes <= this.WritableBytes)
-            {
-                return;
-            }
 
-            var writerIdx = this.writerIndex;
+            if (minWritableBytes <= this.WritableBytes) { return; }
+
+            this.EnsureWritableInternal(this.writerIndex, minWritableBytes);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void EnsureWritableInternal(int writerIdx, int sizeHint)
+        {
             var maxCapacity = this.MaxCapacity;
             if (CheckBounds)
             {
-                CheckMinWritableBounds(minWritableBytes, writerIdx, maxCapacity, this);
+                CheckMinWritableBounds(sizeHint, writerIdx, maxCapacity, this);
             }
 
             // Normalize the current capacity to the power of 2.
-            int newCapacity = this.Allocator.CalculateNewCapacity(writerIdx + minWritableBytes, maxCapacity);
+            int newCapacity = this.Allocator.CalculateNewCapacity(writerIdx + sizeHint, maxCapacity);
 
             // Adjust to the new capacity.
             this.AdjustCapacity(newCapacity);
@@ -1163,7 +1166,6 @@ namespace DotNetty.Buffers
         }
 
 #if NET40
-        // 如此反人类的 ForEach 设计
         internal protected virtual int ForEachByteDesc0(int rStart, int rEnd, IByteProcessor processor)
         {
             for (; rStart >= rEnd; --rStart)

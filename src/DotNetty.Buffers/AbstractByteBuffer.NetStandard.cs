@@ -109,6 +109,7 @@ namespace DotNetty.Buffers
 
         public virtual Memory<byte> GetMemory(int sizeHintt = 0)
         {
+            this.EnsureAccessible();
             var writerIdx = this.writerIndex;
             this.EnsureWritable0(writerIdx, sizeHintt);
             return this._GetMemory(writerIdx, this.WritableBytes);
@@ -134,6 +135,7 @@ namespace DotNetty.Buffers
 
         public virtual Span<byte> GetSpan(int sizeHintt = 0)
         {
+            this.EnsureAccessible();
             var writerIdx = this.writerIndex;
             this.EnsureWritable0(writerIdx, sizeHintt);
             return this._GetSpan(writerIdx, this.WritableBytes);
@@ -238,19 +240,8 @@ namespace DotNetty.Buffers
 
             if (sizeHint <= availableSpace) { return; }
 
-            var maxCapacity = this.MaxCapacity;
-            if (CheckBounds)
-            {
-                CheckMinWritableBounds(sizeHint, writerIdx, maxCapacity, this);
-            }
-
-            // Normalize the current capacity to the power of 2.
-            int newCapacity = this.Allocator.CalculateNewCapacity(writerIdx + sizeHint, maxCapacity);
-
-            // Adjust to the new capacity.
-            this.AdjustCapacity(newCapacity);
+            this.EnsureWritableInternal(writerIndex, sizeHint);
         }
-
 
         protected sealed class ReadOnlyBufferSegment : ReadOnlySequenceSegment<byte>
         {
