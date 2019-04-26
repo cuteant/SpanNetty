@@ -54,7 +54,7 @@ namespace DotNetty.Codecs.Protobuf
 
         static int ReadRawVarint32(IByteBuffer buffer)
         {
-            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (null == buffer) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.buffer); }
 
             if (!buffer.IsReadable())
             {

@@ -84,7 +84,7 @@ namespace DotNetty.Codecs
             DateTime? dateTime = DateFormatter.ParseHttpDate(value);
             if (dateTime == null)
             {
-                ThrowHelper.ThrowFormatException(value);
+                CThrowHelper.ThrowFormatException(value);
             }
             return dateTime.Value.Ticks / TimeSpan.TicksPerMillisecond;
         }

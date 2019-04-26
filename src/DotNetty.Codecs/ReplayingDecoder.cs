@@ -112,7 +112,7 @@ namespace DotNetty.Codecs
                     {
                         if (oldInputLength == input.ReadableBytes && s_comparer.Equals(oldState, this.state))
                         {
-                            ThrowHelper.ThrowDecoderException_Anything(this.GetType());
+                            CThrowHelper.ThrowDecoderException_Anything(this.GetType());
                         }
                         else
                         {
@@ -124,7 +124,7 @@ namespace DotNetty.Codecs
 
                     if (oldReaderIndex == input.ReaderIndex && s_comparer.Equals(oldState, this.state))
                     {
-                        ThrowHelper.ThrowDecoderException_Something(this.GetType());
+                        CThrowHelper.ThrowDecoderException_Something(this.GetType());
                     }
 
                     if (this.SingleDecode)
@@ -139,7 +139,7 @@ namespace DotNetty.Codecs
             }
             catch (Exception cause)
             {
-                ThrowHelper.ThrowDecoderException(cause);
+                CThrowHelper.ThrowDecoderException(cause);
             }
         }
 

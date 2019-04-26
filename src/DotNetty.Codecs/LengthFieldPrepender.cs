@@ -128,41 +128,45 @@ namespace DotNetty.Codecs
             this.lengthAdjustment = lengthAdjustment;
         }
 
+        /// <inheritdoc />
         protected internal override void Encode(IChannelHandlerContext context, IByteBuffer message, List<object> output)
         {
             int length = message.ReadableBytes + this.lengthAdjustment;
+            var lengthFieldLen = this.lengthFieldLength;
             if (this.lengthFieldIncludesLengthFieldLength)
             {
-                length += this.lengthFieldLength;
+                length += lengthFieldLen;
             }
 
-            if (length < 0)
+            const uint TooBigOrNegative = int.MaxValue;
+            uint nlen = unchecked((uint)length);
+            if (nlen > TooBigOrNegative)
             {
-                ThrowHelper.ThrowArgumentException_LessThanZero(length);
+                CThrowHelper.ThrowArgumentException_LessThanZero(length);
             }
 
-            switch (this.lengthFieldLength)
+            switch (lengthFieldLen)
             {
                 case 1:
-                    if (length >= 256)
+                    if (nlen >= 256u)
                     {
-                        ThrowHelper.ThrowArgumentException_Byte(length);
+                        CThrowHelper.ThrowArgumentException_Byte(length);
                     }
                     output.Add(context.Allocator.Buffer(1).WriteByte((byte)length));
                     break;
                 case 2:
-                    if (length >= 65536)
+                    if (nlen >= 65536u)
                     {
-                        ThrowHelper.ThrowArgumentException_Short(length);
+                        CThrowHelper.ThrowArgumentException_Short(length);
                     }
                     output.Add(this.byteOrder == ByteOrder.BigEndian 
                         ? context.Allocator.Buffer(2).WriteShort((short)length) 
                         : context.Allocator.Buffer(2).WriteShortLE((short)length));
                     break;
                 case 3:
-                    if (length >= 16777216)
+                    if (nlen >= 16777216u)
                     {
-                        ThrowHelper.ThrowArgumentException_Medium(length);
+                        CThrowHelper.ThrowArgumentException_Medium(length);
                     }
                     output.Add(this.byteOrder == ByteOrder.BigEndian
                         ? context.Allocator.Buffer(3).WriteMedium(length)
@@ -179,7 +183,7 @@ namespace DotNetty.Codecs
                         : context.Allocator.Buffer(8).WriteLongLE(length));
                     break;
                 default:
-                    ThrowHelper.ThrowException_UnknownLen(); break;
+                    CThrowHelper.ThrowException_UnknownLen(); break;
             }
 
             output.Add(message.Retain());

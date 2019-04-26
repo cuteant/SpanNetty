@@ -5,10 +5,10 @@ using DotNetty.Common.Utilities;
 
 namespace DotNetty.Codecs
 {
-    #region -- ExceptionArgument --
+    #region -- CExceptionArgument --
 
     /// <summary>The convention for this enum is using the argument name as the enum name</summary>
-    internal enum ExceptionArgument
+    internal enum CExceptionArgument
     {
         array,
         assembly,
@@ -95,19 +95,19 @@ namespace DotNetty.Codecs
 
     #endregion
 
-    #region -- ExceptionResource --
+    #region -- CExceptionResource --
 
     /// <summary>The convention for this enum is using the resource name as the enum name</summary>
-    internal enum ExceptionResource
+    internal enum CExceptionResource
     {
     }
 
     #endregion
 
-    partial class ThrowHelper
+    partial class CThrowHelper
     {
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowNullReferenceException(ExceptionArgument argument)
+        internal static void ThrowNullReferenceException(CExceptionArgument argument)
         {
             throw GetNullReferenceException();
             NullReferenceException GetNullReferenceException()
@@ -516,6 +516,16 @@ namespace DotNetty.Codecs
         internal static TooLongFrameException GetTooLongFrameException(int maxContentLength)
         {
             return new TooLongFrameException($"content length exceeded {maxContentLength} bytes.");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotSupportedException_ByteBuffer()
+        {
+            throw GetException();
+            NotSupportedException GetException()
+            {
+                return new NotSupportedException("ByteBuffer's type is not an acceptable base type");
+            }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

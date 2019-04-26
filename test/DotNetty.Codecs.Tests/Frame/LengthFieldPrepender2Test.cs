@@ -27,9 +27,8 @@ namespace DotNetty.Codecs.Tests.Frame
             var ch = new EmbeddedChannel(new LengthFieldPrepender2(4));
             ch.WriteOutbound(this.msg);
             var buf = ch.ReadOutbound<IByteBuffer>();
-            Assert.Equal(5, buf.ReadableBytes);
+            Assert.Equal(4, buf.ReadableBytes);
             Assert.Equal(this.msg.ReadableBytes, buf.ReadInt());
-            Assert.Equal('A', (char)buf.ReadByte());
             buf.Release();
         }
 
@@ -39,9 +38,8 @@ namespace DotNetty.Codecs.Tests.Frame
             var ch = new EmbeddedChannel(new LengthFieldPrepender2(4, true));
             ch.WriteOutbound(this.msg);
             var buf = ch.ReadOutbound<IByteBuffer>();
-            Assert.Equal(5, buf.ReadableBytes);
+            Assert.Equal(4, buf.ReadableBytes);
             Assert.Equal(5, buf.ReadInt());
-            Assert.Equal('A', (char)buf.ReadByte());
             buf.Release();
         }
 
@@ -51,9 +49,8 @@ namespace DotNetty.Codecs.Tests.Frame
             var ch = new EmbeddedChannel(new LengthFieldPrepender2(4, -1));
             ch.WriteOutbound(this.msg);
             var buf = ch.ReadOutbound<IByteBuffer>();
-            Assert.Equal(5, buf.ReadableBytes);
+            Assert.Equal(4, buf.ReadableBytes);
             Assert.Equal(this.msg.ReadableBytes - 1, buf.ReadInt());
-            Assert.Equal('A', (char)buf.ReadByte());
             buf.Release();
         }
 
@@ -70,23 +67,25 @@ namespace DotNetty.Codecs.Tests.Frame
             Assert.IsType<EncoderException>(ex.InnerExceptions.Single());
         }
 
-        //[Fact]
-        //public void TestPrependLengthInLittleEndian()
-        //{
-        //    var ch = new EmbeddedChannel(new LengthFieldPrepender2(ByteOrder.LittleEndian, 4, 0, false));
-        //    ch.WriteOutbound(this.msg);
-        //    var buf = ch.ReadOutbound<IByteBuffer>();
-        //    Assert.Equal(5, buf.ReadableBytes);
-        //    var writtenBytes = new byte[buf.ReadableBytes];
-        //    buf.GetBytes(0, writtenBytes);
-        //    Assert.Equal(1, writtenBytes[0]);
-        //    Assert.Equal(0, writtenBytes[1]);
-        //    Assert.Equal(0, writtenBytes[2]);
-        //    Assert.Equal(0, writtenBytes[3]);
-        //    Assert.Equal('A', (char)buf.GetByte(4));
-        //    buf.Release();
+        [Fact]
+        public void TestPrependLengthInLittleEndian()
+        {
+            var ch = new EmbeddedChannel(new LengthFieldPrepender2(4, 0, false));
+            ch.WriteOutbound(this.msg);
+            var buf = ch.ReadOutbound<IByteBuffer>();
+            Assert.Equal(4, buf.ReadableBytes);
+            var writtenBytes = new byte[buf.ReadableBytes];
+            buf.GetBytes(0, writtenBytes);
+            Assert.Equal(1, writtenBytes[3]);
+            Assert.Equal(0, writtenBytes[2]);
+            Assert.Equal(0, writtenBytes[1]);
+            Assert.Equal(0, writtenBytes[0]);
+            buf.Release();
 
-        //    Assert.False(ch.Finish(), "The channel must have been completely read");
-        //}
+            buf = ch.ReadOutbound<IByteBuffer>();
+            Assert.Same(buf, this.msg);
+            buf.Release();
+            Assert.False(ch.Finish(), "The channel must have been completely read");
+        }
     }
 }

@@ -17,7 +17,7 @@ namespace DotNetty.Codecs
 
         public static DecoderResult Failure(Exception cause)
         {
-            if (null == cause) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
+            if (null == cause) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.cause); }
             return new DecoderResult(cause);
         }
 
@@ -25,7 +25,7 @@ namespace DotNetty.Codecs
 
         protected DecoderResult(Exception cause)
         {
-            if (null == cause) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
+            if (null == cause) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.cause); }
             this.cause = cause;
         }
 

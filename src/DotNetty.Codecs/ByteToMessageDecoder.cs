@@ -128,7 +128,7 @@ namespace DotNetty.Codecs
             // ReSharper disable once DoNotCallOverridableMethodsInConstructor -- used for safety check only
             if (this.IsSharable)
             {
-                ThrowHelper.ThrowInvalidOperationException_ByteToMessageDecoder();
+                CThrowHelper.ThrowInvalidOperationException_ByteToMessageDecoder();
             }
         }
 
@@ -141,7 +141,7 @@ namespace DotNetty.Codecs
 
         public void SetCumulator(CumulationFunc cumulationFunc)
         {
-            if (null == cumulationFunc) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cumulationFunc); }
+            if (null == cumulationFunc) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.cumulationFunc); }
 
             this.cumulator = cumulationFunc;
         }
@@ -154,7 +154,7 @@ namespace DotNetty.Codecs
         {
             if (discardAfterReads <= 0)
             {
-                ThrowHelper.ThrowArgumentException_DiscardAfterReads();
+                CThrowHelper.ThrowArgumentException_DiscardAfterReads();
             }
             this.discardAfterReads = discardAfterReads;
         }
@@ -241,7 +241,7 @@ namespace DotNetty.Codecs
                 }
                 catch (Exception ex)
                 {
-                    ThrowHelper.ThrowDecoderException(ex);
+                    CThrowHelper.ThrowDecoderException(ex);
                 }
                 finally
                 {
@@ -260,7 +260,7 @@ namespace DotNetty.Codecs
                     }
 
                     int size = output.Count;
-                    this.decodeWasNull = size == 0;
+                    this.decodeWasNull = 0u >= (uint)size;
 
                     for (int i = 0; i < size; i++)
                     {
@@ -355,7 +355,7 @@ namespace DotNetty.Codecs
             }
             catch (Exception e)
             {
-                ThrowHelper.ThrowDecoderException(e);
+                CThrowHelper.ThrowDecoderException(e);
             }
             finally
             {
@@ -408,9 +408,9 @@ namespace DotNetty.Codecs
 
         protected virtual void CallDecode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
-            if (null == context) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.context); }
-            if (null == input) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.input); }
-            if (null == output) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
+            if (null == context) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.context); }
+            if (null == input) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.input); }
+            if (null == output) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.output); }
 
             try
             {
@@ -465,7 +465,7 @@ namespace DotNetty.Codecs
 
                     if (oldInputLength == input.ReadableBytes)
                     {
-                        ThrowHelper.ThrowDecoderException_ByteToMessageDecoder(this.GetType());
+                        CThrowHelper.ThrowDecoderException_ByteToMessageDecoder(this.GetType());
                     }
 
                     if (this.SingleDecode)
@@ -480,7 +480,7 @@ namespace DotNetty.Codecs
             }
             catch (Exception cause)
             {
-                ThrowHelper.ThrowDecoderException(cause);
+                CThrowHelper.ThrowDecoderException(cause);
             }
         }
 

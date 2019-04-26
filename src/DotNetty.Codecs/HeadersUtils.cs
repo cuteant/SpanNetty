@@ -46,7 +46,7 @@ namespace DotNetty.Codecs
             where TKey : class
         {
             string simpleName = StringUtil.SimpleClassName(headers);
-            if (size == 0)
+            if (0u >= (uint)size)
             {
                 return simpleName + "[]";
             }

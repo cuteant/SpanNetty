@@ -62,10 +62,10 @@ namespace DotNetty.Codecs
         {
             ValidateMaxFrameLength(maxFrameLength);
             if (delimiters == null)
-                ThrowHelper.ThrowNullReferenceException(ExceptionArgument.delimiters);
+                CThrowHelper.ThrowNullReferenceException(CExceptionArgument.delimiters);
 
             if (0u >= (uint)delimiters.Length)
-                ThrowHelper.ThrowArgumentException_EmptyDelimiters();
+                CThrowHelper.ThrowArgumentException_EmptyDelimiters();
 
             if (IsLineBased(delimiters) && !this.IsSubclass())
             {
@@ -242,9 +242,9 @@ namespace DotNetty.Codecs
         void Fail(long frameLength)
         {
             if (frameLength > 0)
-                ThrowHelper.ThrowTooLongFrameException(this.maxFrameLength, frameLength);
+                CThrowHelper.ThrowTooLongFrameException(this.maxFrameLength, frameLength);
             else
-                ThrowHelper.ThrowTooLongFrameException(this.maxFrameLength);
+                CThrowHelper.ThrowTooLongFrameException(this.maxFrameLength);
         }
 
         /**
@@ -287,16 +287,16 @@ namespace DotNetty.Codecs
         static void ValidateDelimiter(IByteBuffer delimiter)
         {
             if (delimiter == null)
-                ThrowHelper.ThrowNullReferenceException(ExceptionArgument.delimiter);
+                CThrowHelper.ThrowNullReferenceException(CExceptionArgument.delimiter);
 
             if (!delimiter.IsReadable())
-                ThrowHelper.ThrowArgumentException_EmptyDelimiter();
+                CThrowHelper.ThrowArgumentException_EmptyDelimiter();
         }
 
         static void ValidateMaxFrameLength(int maxFrameLength)
         {
             if (maxFrameLength <= 0)
-                ThrowHelper.ThrowArgumentException_MaxFrameLengthMustBe(maxFrameLength);
+                CThrowHelper.ThrowArgumentException_MaxFrameLengthMustBe(maxFrameLength);
         }
     }
 }

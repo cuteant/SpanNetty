@@ -19,7 +19,7 @@ namespace DotNetty.Codecs
 
         public DatagramPacketEncoder2(MessageToMessageEncoder2<T> encoder)
         {
-            if (null == encoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoder); }
+            if (null == encoder) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.encoder); }
 
             this.encoder = encoder;
         }
@@ -37,13 +37,13 @@ namespace DotNetty.Codecs
             this.encoder.Encode(context, message.Content, output);
             if (output.Count != 1)
             {
-                ThrowHelper.ThrowEncoderException_MustProduceOnlyOneMsg(this.encoder.GetType());
+                CThrowHelper.ThrowEncoderException_MustProduceOnlyOneMsg(this.encoder.GetType());
             }
 
             var content = output[0] as IByteBuffer;
             if (content == null)
             {
-                ThrowHelper.ThrowEncoderException_MustProduceOnlyByteBuf(this.encoder.GetType());
+                CThrowHelper.ThrowEncoderException_MustProduceOnlyByteBuf(this.encoder.GetType());
             }
 
             // Replace the ByteBuf with a DatagramPacket.

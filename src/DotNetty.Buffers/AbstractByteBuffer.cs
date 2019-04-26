@@ -109,7 +109,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        protected void SetWriterIndex0(int index)
+        internal protected void SetWriterIndex0(int index)
         {
             this.writerIndex = index;
         }

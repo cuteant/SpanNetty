@@ -59,9 +59,9 @@ namespace DotNetty.Codecs.Compression
          */
         public JZlibEncoder(ZlibWrapper wrapper, int compressionLevel, int windowBits, int memLevel)
         {
-            if (compressionLevel < 0 || compressionLevel > 9) { ThrowHelper.ThrowArgumentException_CompressionLevel(compressionLevel); }
-            if (windowBits < 9 || windowBits > 15) { ThrowHelper.ThrowArgumentException_WindowBits(windowBits); }
-            if (memLevel < 1 || memLevel > 9) { ThrowHelper.ThrowArgumentException_MemLevel(memLevel); }
+            if (compressionLevel < 0 || compressionLevel > 9) { CThrowHelper.ThrowArgumentException_CompressionLevel(compressionLevel); }
+            if (windowBits < 9 || windowBits > 15) { CThrowHelper.ThrowArgumentException_WindowBits(windowBits); }
+            if (memLevel < 1 || memLevel > 9) { CThrowHelper.ThrowArgumentException_MemLevel(memLevel); }
 
             int resultCode = this.z.Init(
                 compressionLevel, windowBits, memLevel,
@@ -84,9 +84,9 @@ namespace DotNetty.Codecs.Compression
 
         public JZlibEncoder(int compressionLevel, int windowBits, int memLevel, byte[] dictionary)
         {
-            if (compressionLevel < 0 || compressionLevel > 9) { ThrowHelper.ThrowArgumentException_CompressionLevel(compressionLevel); }
-            if (windowBits < 9 || windowBits > 15) { ThrowHelper.ThrowArgumentException_WindowBits(windowBits); }
-            if (memLevel < 1 || memLevel > 9) { ThrowHelper.ThrowArgumentException_MemLevel(memLevel); }
+            if (compressionLevel < 0 || compressionLevel > 9) { CThrowHelper.ThrowArgumentException_CompressionLevel(compressionLevel); }
+            if (windowBits < 9 || windowBits > 15) { CThrowHelper.ThrowArgumentException_WindowBits(windowBits); }
+            if (memLevel < 1 || memLevel > 9) { CThrowHelper.ThrowArgumentException_MemLevel(memLevel); }
 
             int resultCode = this.z.DeflateInit(
                     compressionLevel, windowBits, memLevel,

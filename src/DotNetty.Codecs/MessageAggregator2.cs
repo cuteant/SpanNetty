@@ -51,7 +51,7 @@ namespace DotNetty.Codecs
         {
             if (maxContentLength < 0)
             {
-                ThrowHelper.ThrowArgumentException_MaxContentLength(maxContentLength);
+                CThrowHelper.ThrowArgumentException_MaxContentLength(maxContentLength);
             }
         }
 
@@ -84,11 +84,11 @@ namespace DotNetty.Codecs
             {
                 if (value < 2)
                 {
-                    ThrowHelper.ThrowArgumentException_MaxCumulationBufferComponents(value);
+                    CThrowHelper.ThrowArgumentException_MaxCumulationBufferComponents(value);
                 }
                 if (this.handlerContext != null)
                 {
-                    ThrowHelper.ThrowInvalidOperationException_DecoderProperties();
+                    CThrowHelper.ThrowInvalidOperationException_DecoderProperties();
                 }
 
                 this.maxCumulationBufferComponents = value;
@@ -99,7 +99,7 @@ namespace DotNetty.Codecs
         {
             if (this.handlerContext == null)
             {
-                ThrowHelper.ThrowInvalidOperationException_NotAddedToAPipelineYet();
+                CThrowHelper.ThrowInvalidOperationException_NotAddedToAPipelineYet();
             }
 
             return this.handlerContext;
@@ -115,7 +115,7 @@ namespace DotNetty.Codecs
                     this.currentMessage.Release();
                     this.currentMessage = default;
 
-                    ThrowHelper.ThrowMessageAggregationException_StartMessage();
+                    CThrowHelper.ThrowMessageAggregationException_StartMessage();
                 }
 
                 var m = As<TStart>(message);
@@ -250,7 +250,7 @@ namespace DotNetty.Codecs
             }
             else
             {
-                ThrowHelper.ThrowMessageAggregationException_UnknownAggregationState();
+                CThrowHelper.ThrowMessageAggregationException_UnknownAggregationState();
             }
         }
 
@@ -319,7 +319,7 @@ namespace DotNetty.Codecs
         }
 
         protected virtual void HandleOversizedMessage(IChannelHandlerContext ctx, TStart oversized) =>
-            ctx.FireExceptionCaught(ThrowHelper.GetTooLongFrameException(this.MaxContentLength));
+            ctx.FireExceptionCaught(CThrowHelper.GetTooLongFrameException(this.MaxContentLength));
 
         public override void ChannelReadComplete(IChannelHandlerContext context)
         {

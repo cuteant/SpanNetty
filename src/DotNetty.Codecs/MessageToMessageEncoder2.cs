@@ -40,12 +40,12 @@ namespace DotNetty.Codecs
                         ReferenceCountUtil.Release(cast);
                     }
 
-                    if (output.Count == 0)
+                    if (0u >= (uint)output.Count)
                     {
                         output.Return();
                         output = null;
 
-                        ThrowHelper.ThrowEncoderException_MustProduceAtLeastOneMsg(this.GetType());
+                        CThrowHelper.ThrowEncoderException_MustProduceAtLeastOneMsg(this.GetType());
                     }
                 }
                 else
@@ -59,14 +59,14 @@ namespace DotNetty.Codecs
             }
             catch (Exception ex)
             {
-                ThrowHelper.ThrowEncoderException(ex); // todo: we don't have a stack on EncoderException but it's present on inner exception.
+                CThrowHelper.ThrowEncoderException(ex); // todo: we don't have a stack on EncoderException but it's present on inner exception.
             }
             finally
             {
                 if (output != null)
                 {
                     int lastItemIndex = output.Count - 1;
-                    if (lastItemIndex == 0)
+                    if (0u >= (uint)lastItemIndex)
                     {
                         ctx.WriteAsync(output[0], promise);
                     }

@@ -13,7 +13,7 @@ namespace DotNetty.Codecs
         {
             if (name == null)
             {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name);
+                CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
             }
         }
     }

@@ -101,20 +101,73 @@ namespace DotNetty.Codecs
             this.failFast = failFast;
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void DiscardingTooLongFrame(IByteBuffer input)
+        {
+            long bytesToDiscard = this.bytesToDiscard;
+            int localBytesToDiscard = (int)Math.Min(bytesToDiscard, input.ReadableBytes);
+            input.SkipBytes(localBytesToDiscard);
+            bytesToDiscard -= localBytesToDiscard;
+            this.bytesToDiscard = bytesToDiscard;
+
+            this.FailIfNecessary(false);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void FailOnNegativeLengthField(IByteBuffer input, long frameLength, int lengthFieldEndOffset)
+        {
+            input.SkipBytes(lengthFieldEndOffset);
+            CThrowHelper.ThrowCorruptedFrameException_FrameLength(frameLength);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void FailOnFrameLengthLessThanLengthFieldEndOffset(IByteBuffer input,
+                                                                          long frameLength,
+                                                                          int lengthFieldEndOffset)
+        {
+            input.SkipBytes(lengthFieldEndOffset);
+            CThrowHelper.ThrowCorruptedFrameException_LengthFieldEndOffset(frameLength, lengthFieldEndOffset);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void ExceededFrameLength(IByteBuffer input, long frameLength)
+        {
+            long discard = frameLength - input.ReadableBytes;
+            this.tooLongFrameLength = frameLength;
+
+            if (discard < 0)
+            {
+                // buffer contains more bytes then the frameLength so we can discard all now
+                input.SkipBytes((int)frameLength);
+            }
+            else
+            {
+                // Enter the discard mode and discard everything received so far.
+                this.discardingTooLongFrame = true;
+                this.bytesToDiscard = discard;
+                input.SkipBytes(input.ReadableBytes);
+            }
+            this.FailIfNecessary(true);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void FailOnFrameLengthLessThanInitialBytesToStrip(IByteBuffer input,
+                                                                         int frameLength,
+                                                                         int initialBytesToStrip)
+        {
+            input.SkipBytes(frameLength);
+            CThrowHelper.ThrowCorruptedFrameException_InitialBytesToStrip(frameLength, initialBytesToStrip);
+        }
+
         protected internal override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
             if (this.discardingTooLongFrame)
             {
-                long bytesToDiscard = this.bytesToDiscard;
-                int localBytesToDiscard = (int)Math.Min(bytesToDiscard, input.ReadableBytes);
-                input.SkipBytes(localBytesToDiscard);
-                bytesToDiscard -= localBytesToDiscard;
-                this.bytesToDiscard = bytesToDiscard;
-
-                this.FailIfNecessary(false);
+                this.DiscardingTooLongFrame(input);
             }
 
-            if (input.ReadableBytes < this.lengthFieldEndOffset)
+            var thisLengthFieldEndOffset = this.lengthFieldEndOffset;
+            if (input.ReadableBytes < thisLengthFieldEndOffset)
             {
                 return;
             }
@@ -124,36 +177,19 @@ namespace DotNetty.Codecs
 
             if (frameLength < 0)
             {
-                input.SkipBytes(this.lengthFieldEndOffset);
-                ThrowHelper.ThrowCorruptedFrameException_FrameLength(frameLength);
+                FailOnNegativeLengthField(input, frameLength, thisLengthFieldEndOffset);
             }
 
-            frameLength += this.lengthAdjustment + this.lengthFieldEndOffset;
+            frameLength += this.lengthAdjustment + thisLengthFieldEndOffset;
 
-            if (frameLength < this.lengthFieldEndOffset)
+            if (frameLength < thisLengthFieldEndOffset)
             {
-                input.SkipBytes(this.lengthFieldEndOffset);
-                ThrowHelper.ThrowCorruptedFrameException_LengthFieldEndOffset(frameLength, this.lengthFieldEndOffset);
+                FailOnFrameLengthLessThanLengthFieldEndOffset(input, frameLength, thisLengthFieldEndOffset);
             }
 
             if (frameLength > this.maxFrameLength)
             {
-                long discard = frameLength - input.ReadableBytes;
-                this.tooLongFrameLength = frameLength;
-
-                if (discard < 0)
-                {
-                    // buffer contains more bytes then the frameLength so we can discard all now
-                    input.SkipBytes((int)frameLength);
-                }
-                else
-                {
-                    // Enter the discard mode and discard everything received so far.
-                    this.discardingTooLongFrame = true;
-                    this.bytesToDiscard = discard;
-                    input.SkipBytes(input.ReadableBytes);
-                }
-                this.FailIfNecessary(true);
+                this.ExceededFrameLength(input, frameLength);
                 return;
             }
 
@@ -164,16 +200,16 @@ namespace DotNetty.Codecs
                 return;
             }
 
-            if (this.initialBytesToStrip > frameLengthInt)
+            var thisInitialBytesToStrip = this.initialBytesToStrip;
+            if (thisInitialBytesToStrip > frameLengthInt)
             {
-                input.SkipBytes(frameLengthInt);
-                ThrowHelper.ThrowCorruptedFrameException_InitialBytesToStrip(frameLength, this.initialBytesToStrip);
+                FailOnFrameLengthLessThanInitialBytesToStrip(input, frameLengthInt, thisInitialBytesToStrip);
             }
-            input.SkipBytes(this.initialBytesToStrip);
+            input.SkipBytes(thisInitialBytesToStrip);
 
             // extract frame
             int readerIndex = input.ReaderIndex;
-            int actualFrameLength = frameLengthInt - this.initialBytesToStrip;
+            int actualFrameLength = frameLengthInt - thisInitialBytesToStrip;
             IByteBuffer frame = this.ExtractFrame(context, input, readerIndex, actualFrameLength);
             input.SetReaderIndex(readerIndex + actualFrameLength);
             output.Add(frame);
@@ -206,7 +242,7 @@ namespace DotNetty.Codecs
                 case 8:
                     return buffer.GetLong(offset);
                 default:
-                    return ThrowHelper.ThrowDecoderException(length);
+                    return CThrowHelper.ThrowDecoderException(length);
             }
         }
 
@@ -215,6 +251,7 @@ namespace DotNetty.Codecs
             return buffer.RetainedSlice(index, length);
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         void FailIfNecessary(bool firstDetectionOfTooLongFrame)
         {
             if (this.bytesToDiscard == 0)
@@ -253,7 +290,6 @@ namespace DotNetty.Codecs
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         private static void Fail(long frameLength, int maxFrameLength)
         {
             throw GetTooLongFrameException();
@@ -264,7 +300,6 @@ namespace DotNetty.Codecs
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
         private static void Fail(int maxFrameLength)
         {
             throw GetTooLongFrameException();

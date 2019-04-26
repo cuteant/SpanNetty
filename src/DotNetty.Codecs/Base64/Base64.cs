@@ -148,16 +148,16 @@ namespace DotNetty.Codecs.Base64
         {
             if (src == null)
             {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src);
+                CThrowHelper.ThrowArgumentNullException(CExceptionArgument.src);
             }
             if (dialect.alphabet == null)
             {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dialect_alphabet);
+                CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dialect_alphabet);
             }
             Debug.Assert(dialect.alphabet.Length == 64, "alphabet.Length must be 64!");
             if ((offset < src.ReaderIndex) || (offset + length > src.ReaderIndex + src.ReadableBytes))
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.offset);
+                CThrowHelper.ThrowArgumentOutOfRangeException(CExceptionArgument.offset);
             }
             if (length <= 0)
             {
@@ -206,7 +206,7 @@ namespace DotNetty.Codecs.Base64
                     sbyte value = (sbyte)(srcArray[i] & 0x7F);
                     if (decodabet[value] < WHITE_SPACE_ENC)
                     {
-                        ThrowHelper.ThrowArgumentException_BadBase64InputChar(i, value);
+                        CThrowHelper.ThrowArgumentException_BadBase64InputChar(i, value);
                     }
                     if (decodabet[value] >= EQUALS_SIGN_ENC)
                     {
@@ -263,7 +263,7 @@ namespace DotNetty.Codecs.Base64
                 sbyte value = (sbyte)(src.GetByte(i) & 0x7F);
                 if (decodabet[value] < WHITE_SPACE_ENC)
                 {
-                    ThrowHelper.ThrowArgumentException_BadBase64InputChar(i, value);
+                    CThrowHelper.ThrowArgumentException_BadBase64InputChar(i, value);
                 }
                 if (decodabet[value] >= EQUALS_SIGN_ENC)
                 {
@@ -310,15 +310,15 @@ namespace DotNetty.Codecs.Base64
         {
             if (src == null)
             {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src);
+                CThrowHelper.ThrowArgumentNullException(CExceptionArgument.src);
             }
             if (dialect.decodabet == null)
             {
-                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dialect_decodabet);
+                CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dialect_decodabet);
             }
             if ((offset < src.ReaderIndex) || (offset + length > src.ReaderIndex + src.ReadableBytes))
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.offset);
+                CThrowHelper.ThrowArgumentOutOfRangeException(CExceptionArgument.offset);
             }
             Debug.Assert(dialect.decodabet.Length == 127, "decodabet.Length must be 127!");
             if (length <= 0)

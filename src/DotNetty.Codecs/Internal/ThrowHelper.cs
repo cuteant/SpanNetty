@@ -5,7 +5,7 @@ using DotNetty.Codecs.Internal;
 
 namespace DotNetty.Codecs
 {
-  internal static partial class ThrowHelper
+  internal static partial class CThrowHelper
   {
     #region -- Throw ArgumentException --
 
@@ -20,19 +20,19 @@ namespace DotNetty.Codecs
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static void ThrowArgumentException(ExceptionResource resource)
+    internal static void ThrowArgumentException(CExceptionResource resource)
     {
       throw GetArgumentException(resource);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static void ThrowArgumentException(ExceptionResource resource, ExceptionArgument argument)
+    internal static void ThrowArgumentException(CExceptionResource resource, CExceptionArgument argument)
     {
       throw GetArgumentException(resource, argument);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static void ThrowArgumentException(string message, ExceptionArgument argument)
+    internal static void ThrowArgumentException(string message, CExceptionArgument argument)
     {
       throw GetArgumentException();
       ArgumentException GetArgumentException()
@@ -46,12 +46,12 @@ namespace DotNetty.Codecs
 
     #region -- Get ArgumentException --
 
-    internal static ArgumentException GetArgumentException(ExceptionResource resource)
+    internal static ArgumentException GetArgumentException(CExceptionResource resource)
     {
       return new ArgumentException(GetResourceString(resource));
     }
 
-    internal static ArgumentException GetArgumentException(ExceptionResource resource, ExceptionArgument argument)
+    internal static ArgumentException GetArgumentException(CExceptionResource resource, CExceptionArgument argument)
     {
       return new ArgumentException(GetResourceString(resource), GetArgumentName(argument));
     }
@@ -72,19 +72,19 @@ namespace DotNetty.Codecs
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static void ThrowArgumentOutOfRangeException(ExceptionArgument argument)
+    internal static void ThrowArgumentOutOfRangeException(CExceptionArgument argument)
     {
       throw GetArgumentOutOfRangeException(argument);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static void ThrowArgumentOutOfRangeException(ExceptionArgument argument, ExceptionResource resource)
+    internal static void ThrowArgumentOutOfRangeException(CExceptionArgument argument, CExceptionResource resource)
     {
       throw GetArgumentOutOfRangeException(argument, resource);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static void ThrowArgumentOutOfRangeException(ExceptionArgument argument, int paramNumber, ExceptionResource resource)
+    internal static void ThrowArgumentOutOfRangeException(CExceptionArgument argument, int paramNumber, CExceptionResource resource)
     {
       throw GetArgumentOutOfRangeException(argument, paramNumber, resource);
     }
@@ -93,17 +93,17 @@ namespace DotNetty.Codecs
 
     #region -- Get ArgumentOutOfRangeException --
 
-    internal static ArgumentOutOfRangeException GetArgumentOutOfRangeException(ExceptionArgument argument)
+    internal static ArgumentOutOfRangeException GetArgumentOutOfRangeException(CExceptionArgument argument)
     {
       return new ArgumentOutOfRangeException(GetArgumentName(argument));
     }
 
-    internal static ArgumentOutOfRangeException GetArgumentOutOfRangeException(ExceptionArgument argument, ExceptionResource resource)
+    internal static ArgumentOutOfRangeException GetArgumentOutOfRangeException(CExceptionArgument argument, CExceptionResource resource)
     {
       return new ArgumentOutOfRangeException(GetArgumentName(argument), GetResourceString(resource));
     }
 
-    internal static ArgumentOutOfRangeException GetArgumentOutOfRangeException(ExceptionArgument argument, int paramNumber, ExceptionResource resource)
+    internal static ArgumentOutOfRangeException GetArgumentOutOfRangeException(CExceptionArgument argument, int paramNumber, CExceptionResource resource)
     {
       return new ArgumentOutOfRangeException(GetArgumentName(argument) + "[" + paramNumber.ToString() + "]", GetResourceString(resource));
     }
@@ -114,19 +114,19 @@ namespace DotNetty.Codecs
     #region -- Throw ArgumentNullException --
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static void ThrowArgumentNullException(ExceptionArgument argument)
+    internal static void ThrowArgumentNullException(CExceptionArgument argument)
     {
       throw GetArgumentNullException(argument);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static void ThrowArgumentNullException(ExceptionResource resource)
+    internal static void ThrowArgumentNullException(CExceptionResource resource)
     {
       throw GetArgumentNullException(resource);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static void ThrowArgumentNullException(ExceptionArgument argument, ExceptionResource resource)
+    internal static void ThrowArgumentNullException(CExceptionArgument argument, CExceptionResource resource)
     {
       throw GetArgumentNullException(argument, resource);
     }
@@ -135,17 +135,17 @@ namespace DotNetty.Codecs
 
     #region -- Get ArgumentNullException --
 
-    internal static ArgumentNullException GetArgumentNullException(ExceptionArgument argument)
+    internal static ArgumentNullException GetArgumentNullException(CExceptionArgument argument)
     {
       return new ArgumentNullException(GetArgumentName(argument));
     }
 
-    internal static ArgumentNullException GetArgumentNullException(ExceptionResource resource)
+    internal static ArgumentNullException GetArgumentNullException(CExceptionResource resource)
     {
       return new ArgumentNullException(GetResourceString(resource), innerException: null);
     }
 
-    internal static ArgumentNullException GetArgumentNullException(ExceptionArgument argument, ExceptionResource resource)
+    internal static ArgumentNullException GetArgumentNullException(CExceptionArgument argument, CExceptionResource resource)
     {
       return new ArgumentNullException(GetArgumentName(argument), GetResourceString(resource));
     }
@@ -170,13 +170,13 @@ namespace DotNetty.Codecs
     #region -- Throw InvalidOperationException --
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static void ThrowInvalidOperationException(ExceptionResource resource)
+    internal static void ThrowInvalidOperationException(CExceptionResource resource)
     {
       throw GetInvalidOperationException(resource);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    internal static void ThrowInvalidOperationException(ExceptionResource resource, Exception e)
+    internal static void ThrowInvalidOperationException(CExceptionResource resource, Exception e)
     {
       throw GetInvalidOperationException();
       InvalidOperationException GetInvalidOperationException()
@@ -185,7 +185,7 @@ namespace DotNetty.Codecs
       }
     }
 
-    internal static InvalidOperationException GetInvalidOperationException(ExceptionResource resource)
+    internal static InvalidOperationException GetInvalidOperationException(CExceptionResource resource)
     {
       return new InvalidOperationException(GetResourceString(resource));
     }
@@ -195,10 +195,10 @@ namespace DotNetty.Codecs
     #region ** GetArgumentName **
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static string GetArgumentName(ExceptionArgument argument)
+    private static string GetArgumentName(CExceptionArgument argument)
     {
-      Debug.Assert(Enum.IsDefined(typeof(ExceptionArgument), argument),
-          "The enum value is not defined, please check the ExceptionArgument Enum.");
+      Debug.Assert(Enum.IsDefined(typeof(CExceptionArgument), argument),
+          "The enum value is not defined, please check the CExceptionArgument Enum.");
 
       return argument.ToString();
     }
@@ -207,12 +207,12 @@ namespace DotNetty.Codecs
 
     #region ** GetResourceString **
 
-    // This function will convert an ExceptionResource enum value to the resource string.
+    // This function will convert an CExceptionResource enum value to the resource string.
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static string GetResourceString(ExceptionResource resource)
+    private static string GetResourceString(CExceptionResource resource)
     {
-      Debug.Assert(Enum.IsDefined(typeof(ExceptionResource), resource),
-          "The enum value is not defined, please check the ExceptionResource Enum.");
+      Debug.Assert(Enum.IsDefined(typeof(CExceptionResource), resource),
+          "The enum value is not defined, please check the CExceptionResource Enum.");
 
       return SR.GetResourceString(resource.ToString());
     }

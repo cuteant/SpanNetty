@@ -4,6 +4,7 @@
 namespace DotNetty.Codecs
 {
     using System;
+    using System.Collections.Generic;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
@@ -33,7 +34,7 @@ namespace DotNetty.Codecs
     ///         +--------+----------------+
     ///     </pre>
     /// </summary>
-    public class LengthFieldPrepender2 : MessageToByteEncoder2<IByteBuffer>
+    public class LengthFieldPrepender2 : MessageToMessageEncoder2<IByteBuffer>
     {
         readonly int lengthFieldLength;
         readonly bool lengthFieldIncludesLengthFieldLength;
@@ -108,61 +109,65 @@ namespace DotNetty.Codecs
         }
 
         /// <inheritdoc />
-        protected override void Encode(IChannelHandlerContext context, IByteBuffer message, IByteBuffer output)
+        protected internal override void Encode(IChannelHandlerContext context, IByteBuffer message, List<object> output)
         {
-            int bodyLength = message.ReadableBytes;
-            int headerLength = this.lengthFieldLength;
-
-            int length = bodyLength + this.lengthAdjustment;
+            int length = message.ReadableBytes + this.lengthAdjustment;
+            var lengthFieldLen = this.lengthFieldLength;
             if (this.lengthFieldIncludesLengthFieldLength)
             {
-                length += headerLength;
+                length += lengthFieldLen;
             }
 
-            if (length < 0)
+            const uint TooBigOrNegative = int.MaxValue;
+            uint nlen = unchecked((uint)length);
+            if (nlen > TooBigOrNegative)
             {
-                ThrowHelper.ThrowArgumentException_LessThanZero(length);
+                CThrowHelper.ThrowArgumentException_LessThanZero(length);
             }
 
-            switch (headerLength)
+            var buffer = context.Allocator.Buffer(8) as AbstractByteBuffer;
+            if (null == buffer)
+            {
+                buffer.Release();
+                CThrowHelper.ThrowNotSupportedException_ByteBuffer();
+            }
+            switch (lengthFieldLen)
             {
                 case 1:
-                    if (length >= 256)
+                    if (nlen >= 256u)
                     {
-                        ThrowHelper.ThrowArgumentException_Byte(length);
+                        CThrowHelper.ThrowArgumentException_Byte(length);
                     }
-                    output.EnsureWritable(headerLength + bodyLength);
-                    output.WriteByte((byte)length);
+                    buffer._SetByte(0, (byte)length);
                     break;
                 case 2:
-                    if (length >= 65536)
+                    if (nlen >= 65536u)
                     {
-                        ThrowHelper.ThrowArgumentException_Short(length);
+                        CThrowHelper.ThrowArgumentException_Short(length);
                     }
-                    output.EnsureWritable(headerLength + bodyLength);
-                    output.WriteShort((short)length);
+                    buffer._SetShort(0, (short)length);
                     break;
                 case 3:
-                    if (length >= 16777216)
+                    if (nlen >= 16777216u)
                     {
-                        ThrowHelper.ThrowArgumentException_Medium(length);
+                        CThrowHelper.ThrowArgumentException_Medium(length);
                     }
-                    output.EnsureWritable(headerLength + bodyLength);
-                    output.WriteMedium(length);
+                    buffer._SetMedium(0, length);
                     break;
                 case 4:
-                    output.EnsureWritable(headerLength + bodyLength);
-                    output.WriteInt(length);
+                    buffer._SetInt(0, length);
                     break;
                 case 8:
-                    output.EnsureWritable(headerLength + bodyLength);
-                    output.WriteLong(length);
+                    buffer._SetLong(0, length);
                     break;
                 default:
-                    ThrowHelper.ThrowException_UnknownLen(); break;
+                    CThrowHelper.ThrowException_UnknownLen(); break;
             }
 
-            output.WriteBytes(message, message.ReaderIndex, bodyLength);
+            buffer.SetWriterIndex0(lengthFieldLen);
+            output.Add(buffer);
+
+            output.Add(message.Retain());
         }
     }
 }

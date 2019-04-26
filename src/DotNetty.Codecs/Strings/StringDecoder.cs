@@ -56,7 +56,7 @@ namespace DotNetty.Codecs
         {
             if (encoding == null)
             {
-                ThrowHelper.ThrowNullReferenceException(ExceptionArgument.encoding);
+                CThrowHelper.ThrowNullReferenceException(CExceptionArgument.encoding);
             }
 
             this.encoding = encoding;

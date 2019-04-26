@@ -15,7 +15,7 @@ namespace DotNetty.Codecs
 
         public override void Write(IChannelHandlerContext context, object message, IPromise promise)
         {
-            if (null == context) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.context); }
+            if (null == context) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.context); }
 
             IByteBuffer buffer = null;
             try
@@ -56,7 +56,7 @@ namespace DotNetty.Codecs
             }
             catch (Exception ex)
             {
-                ThrowHelper.ThrowEncoderException(ex);
+                CThrowHelper.ThrowEncoderException(ex);
             }
             finally
             {
@@ -66,7 +66,7 @@ namespace DotNetty.Codecs
 
         protected virtual IByteBuffer AllocateBuffer(IChannelHandlerContext context)
         {
-            if (null == context) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.context); }
+            if (null == context) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.context); }
 
             return context.Allocator.Buffer();
         }

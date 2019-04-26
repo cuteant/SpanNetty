@@ -29,7 +29,7 @@ namespace DotNetty.Codecs.Compression
 
         public JZlibDecoder(byte[] dictionary)
         {
-            if (null == dictionary) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dictionary); }
+            if (null == dictionary) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dictionary); }
             this.dictionary = dictionary;
 
             int resultCode;
