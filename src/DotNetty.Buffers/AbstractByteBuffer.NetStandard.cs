@@ -235,12 +235,9 @@ namespace DotNetty.Buffers
                 sizeHint = c_minimumGrowthSize;
             }
 
-            var capacity = this.Capacity;
-            int availableSpace = capacity - writerIdx;
+            if (sizeHint <= (this.Capacity - writerIdx)) { return; }
 
-            if (sizeHint <= availableSpace) { return; }
-
-            this.EnsureWritableInternal(writerIndex, sizeHint);
+            this.EnsureWritableInternal(writerIdx, sizeHint);
         }
 
         protected sealed class ReadOnlyBufferSegment : ReadOnlySequenceSegment<byte>
