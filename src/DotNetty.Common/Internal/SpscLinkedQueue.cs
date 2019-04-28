@@ -202,7 +202,7 @@ namespace DotNetty.Common.Internal
 
         public void SpValue(T newValue) => this.value = newValue;
 
-        public void SoNext(LinkedQueueNode<T> n) => Interlocked.Exchange(ref this.next, n);
+        public void SoNext(LinkedQueueNode<T> n) => Volatile.Write(ref this.next, n);
 
         public LinkedQueueNode<T> LvNext() => Volatile.Read(ref this.next);
     }

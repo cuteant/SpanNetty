@@ -298,7 +298,7 @@ namespace DotNetty.Common.Internal
         protected long ConsumerIndexCache
         {
             get { return Volatile.Read(ref this.headCache); }
-            set { Interlocked.Exchange(ref this.headCache, value); }
+            set { Volatile.Write(ref this.headCache, value); }
         }
     }
 
@@ -329,7 +329,7 @@ namespace DotNetty.Common.Internal
         protected long ConsumerIndex
         {
             get { return Volatile.Read(ref this.consumerIndex); }
-            set { Interlocked.Exchange(ref this.consumerIndex, value); } // todo: revisit: UNSAFE.putOrderedLong -- StoreStore fence
+            set { Volatile.Write(ref this.consumerIndex, value); } // todo: revisit: UNSAFE.putOrderedLong -- StoreStore fence
         }
     }
 }

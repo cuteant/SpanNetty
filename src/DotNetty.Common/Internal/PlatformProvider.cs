@@ -4,6 +4,7 @@
 namespace DotNetty.Common.Internal
 {
     using System;
+    using System.Runtime.CompilerServices;
     using System.Threading;
 
     public static class PlatformProvider
@@ -12,26 +13,21 @@ namespace DotNetty.Common.Internal
 
         public static IPlatform Platform
         {
-            get
-            {
-                IPlatform platform = Volatile.Read(ref defaultPlatform);
-                if(platform == null)
-                {
-                    platform = new DefaultPlatform();
-                    IPlatform current = Interlocked.CompareExchange(ref defaultPlatform, platform, null);
-                    if (current != null)
-                    {
-                        return current;
-                    }
-                }
-                return platform;
-            }
-
+            [MethodImpl(InlineMethod.Value)]
+            get => Volatile.Read(ref defaultPlatform) ?? EnsurePlatformCreated();
             set
             {
                 if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 Interlocked.Exchange(ref defaultPlatform, value);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static IPlatform EnsurePlatformCreated()
+        {
+            var platform = new DefaultPlatform();
+            IPlatform current = Interlocked.CompareExchange(ref defaultPlatform, platform, null);
+            return current ?? platform;
         }
     }
 }
