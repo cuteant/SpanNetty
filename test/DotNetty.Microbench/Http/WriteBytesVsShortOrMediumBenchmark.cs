@@ -23,6 +23,8 @@ namespace DotNetty.Microbench.Http
         [GlobalSetup]
         public void GlobalSetup()
         {
+            System.Environment.SetEnvironmentVariable("io.netty.buffer.checkAccessible", "false");
+            System.Environment.SetEnvironmentVariable("io.netty.buffer.checkBounds", "false");
             ResourceLeakDetector.Level = ResourceLeakDetector.DetectionLevel.Disabled;
             this.buf = Unpooled.Buffer(16);
         }

@@ -24,6 +24,8 @@ namespace DotNetty.Microbench.Allocators
         static AbstractByteBufferAllocatorBenchmark()
         {
             ResourceLeakDetector.Level = ResourceLeakDetector.DetectionLevel.Disabled;
+            System.Environment.SetEnvironmentVariable("io.netty.buffer.checkAccessible", "false");
+            System.Environment.SetEnvironmentVariable("io.netty.buffer.checkBounds", "false");
         }
 
         protected AbstractByteBufferAllocatorBenchmark(IByteBufferAllocator allocator)

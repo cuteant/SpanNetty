@@ -19,6 +19,8 @@ namespace DotNetty.Microbench.Http
         public void GlobalSetup()
         {
             ResourceLeakDetector.Level = ResourceLeakDetector.DetectionLevel.Disabled;
+            System.Environment.SetEnvironmentVariable("io.netty.buffer.checkAccessible", "false");
+            System.Environment.SetEnvironmentVariable("io.netty.buffer.checkBounds", "false");
             this.uri = "http://localhost?eventType=CRITICAL&from=0&to=1497437160327&limit=10&offset=0";
             this. encoder = new HttpRequestEncoder();
         }

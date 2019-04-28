@@ -31,6 +31,8 @@ namespace DotNetty.Microbench.Headers
         public void GlobalSetup()
         {
             ResourceLeakDetector.Level = ResourceLeakDetector.DetectionLevel.Disabled;
+            System.Environment.SetEnvironmentVariable("io.netty.buffer.checkAccessible", "false");
+            System.Environment.SetEnvironmentVariable("io.netty.buffer.checkBounds", "false");
             Dictionary<HeaderExample, Dictionary<string, string>> headersSet = ExampleHeaders.GetExamples();
             Dictionary<string, string> headers = headersSet[(HeaderExample)this.HeaderSize];
             this.httpNames = new AsciiString[headers.Count];

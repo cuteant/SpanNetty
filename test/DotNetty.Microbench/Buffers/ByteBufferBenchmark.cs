@@ -25,6 +25,8 @@ namespace DotNetty.Microbench.Buffers
         static ByteBufferBenchmark()
         {
             ResourceLeakDetector.Level = ResourceLeakDetector.DetectionLevel.Disabled;
+            System.Environment.SetEnvironmentVariable("io.netty.buffer.checkAccessible", "false");
+            System.Environment.SetEnvironmentVariable("io.netty.buffer.checkBounds", "false");
             Environment.SetEnvironmentVariable(PropMode, "false");
         }
 

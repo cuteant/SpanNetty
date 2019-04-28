@@ -26,6 +26,8 @@ namespace DotNetty.Microbench.Http
         public void GlobalSetup()
         {
             ResourceLeakDetector.Level = ResourceLeakDetector.DetectionLevel.Disabled;
+            System.Environment.SetEnvironmentVariable("io.netty.buffer.checkAccessible", "false");
+            System.Environment.SetEnvironmentVariable("io.netty.buffer.checkBounds", "false");
             this.contentMixedDelimiters = CreateContent("\r\n", "\n");
         }
 
