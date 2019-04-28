@@ -22,9 +22,9 @@ namespace DotNetty.Buffers
 
             var readerIdx = this.readerIndex + count;
             var writerIdx = this.writerIndex;
-            if (CheckBounds && readerIndex > writerIdx)
+            if (CheckBounds && readerIdx > writerIdx)
             {
-                ThrowHelper.ThrowIndexOutOfRangeException_ReaderIndex(readerIndex, writerIdx);
+                ThrowHelper.ThrowIndexOutOfRangeException_ReaderIndex(readerIdx, writerIdx);
             }
             this.readerIndex = readerIdx;
         }

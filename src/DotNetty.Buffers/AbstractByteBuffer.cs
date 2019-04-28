@@ -17,7 +17,6 @@ namespace DotNetty.Buffers
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 
-    /// <inheritdoc />
     /// <summary>
     ///     Abstract base class implementation of a <see cref="T:DotNetty.Buffers.IByteBuffer" />
     /// </summary>
