@@ -1,1 +1,0 @@
-bin\Release\net48\win-x64\NBench.Runner.exe bin\Release\net48\win-x64\DotNetty.Tests.Performance.dll output-directory="Perf"

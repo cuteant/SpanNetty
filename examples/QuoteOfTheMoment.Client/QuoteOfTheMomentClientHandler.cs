@@ -5,6 +5,7 @@ namespace QuoteOfTheMoment.Client
 {
     using System;
     using System.Text;
+    using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
 
