@@ -36,11 +36,11 @@
     <DapperPackageVersion>1.60.1</DapperPackageVersion>
     <DapperStrongNamePackageVersion>1.60.1</DapperStrongNamePackageVersion>
     <MicrosoftSqlServerTypesPackageVersion>14.0.1016.290</MicrosoftSqlServerTypesPackageVersion>
-    <MongoDBBsonStrongNamePackageVersion>2.7.2</MongoDBBsonStrongNamePackageVersion>
-    <MongoDBDriverCoreStrongNamePackageVersion>2.7.2</MongoDBDriverCoreStrongNamePackageVersion>
-    <MongoDBDriverStrongNamePackageVersion>2.7.2</MongoDBDriverStrongNamePackageVersion>
-    <MongoDBDriverGridFSStrongNamePackageVersion>2.7.2</MongoDBDriverGridFSStrongNamePackageVersion>
-    <mongocsharpdriverStrongNamePackageVersion>2.7.2</mongocsharpdriverStrongNamePackageVersion>
+    <MongoDBBsonStrongNamePackageVersion>2.8.0</MongoDBBsonStrongNamePackageVersion>
+    <MongoDBDriverCoreStrongNamePackageVersion>2.8.0</MongoDBDriverCoreStrongNamePackageVersion>
+    <MongoDBDriverStrongNamePackageVersion>2.8.0</MongoDBDriverStrongNamePackageVersion>
+    <MongoDBDriverGridFSStrongNamePackageVersion>2.8.0</MongoDBDriverGridFSStrongNamePackageVersion>
+    <mongocsharpdriverStrongNamePackageVersion>2.8.0</mongocsharpdriverStrongNamePackageVersion>
     <MySqlDataPackageVersion>8.0.15</MySqlDataPackageVersion>
     <MySqlConnectorPackageVersion>0.49.3</MySqlConnectorPackageVersion>
     <NpgsqlPackageVersion>4.0.5</NpgsqlPackageVersion>
@@ -50,14 +50,14 @@
     <SystemDataSQLiteCorePackageVersion>1.0.109.2</SystemDataSQLiteCorePackageVersion>
 
     <!-- Hosting related packages -->
-    <TopshelfPackageVersion>4.2.0.200-develop</TopshelfPackageVersion>
-    <TopshelfExtensionsConfigurationPackageVersion>4.2.0.200-develop</TopshelfExtensionsConfigurationPackageVersion>
-    <TopshelfNLogPackageVersion>4.2.0.200-develop</TopshelfNLogPackageVersion>
-    <TopshelfSerilogPackageVersion>4.2.0.200-develop</TopshelfSerilogPackageVersion>
+    <TopshelfPackageVersion>4.2.0.205-develop</TopshelfPackageVersion>
+    <TopshelfExtensionsConfigurationPackageVersion>4.2.0.205-develop</TopshelfExtensionsConfigurationPackageVersion>
+    <TopshelfNLogPackageVersion>4.2.0.205-develop</TopshelfNLogPackageVersion>
+    <TopshelfSerilogPackageVersion>4.2.0.205-develop</TopshelfSerilogPackageVersion>
 
     <!-- Logging related packages -->
-    <NLogPackageVersion>4.5.11</NLogPackageVersion>
-    <NLogDevPackageVersion>4.5.11</NLogDevPackageVersion>
+    <NLogPackageVersion>4.6.2</NLogPackageVersion>
+    <NLogDevPackageVersion>4.6.2</NLogDevPackageVersion>
     <SerilogPackageVersion>2.8.0</SerilogPackageVersion>
     <SerilogDevPackageVersion>2.8.0</SerilogDevPackageVersion>
     <SerilogEnrichersEnvironmentPackageVersion>2.1.3-dev-00752</SerilogEnrichersEnvironmentPackageVersion>
@@ -121,7 +121,7 @@
     <NewtonsoftJsonPackageVersion>12.0.1</NewtonsoftJsonPackageVersion>
     <ProtobufNetPackageVersion>2.4.0</ProtobufNetPackageVersion>
     <ProtobufNetDataPackageVersion>3.0.0</ProtobufNetDataPackageVersion>
-    <YamlDotNetPackageVersion>5.4.0</YamlDotNetPackageVersion>
-    <YamlDotNetSignedPackageVersion>5.4.0</YamlDotNetSignedPackageVersion>
+    <YamlDotNetPackageVersion>6.0.0</YamlDotNetPackageVersion>
+    <YamlDotNetSignedPackageVersion>6.0.0</YamlDotNetSignedPackageVersion>
   </PropertyGroup>
 </Project>
