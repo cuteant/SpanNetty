@@ -2,10 +2,10 @@
   <!-- Shared Package Versions -->
   <PropertyGroup Label="Package Versions">
     <!-- core packages -->
-    <CuteAntAsyncExPackageVersion>2.2.0-rtm-190429-01</CuteAntAsyncExPackageVersion>
-    <CuteAntCoreAbstractionsPackageVersion>2.2.0-rtm-190429-01</CuteAntCoreAbstractionsPackageVersion>
-    <CuteAntCorePackageVersion>2.2.0-rtm-190429-01</CuteAntCorePackageVersion>
-    <CuteAntRuntimePackageVersion>2.2.0-rtm-190429-01</CuteAntRuntimePackageVersion>
+    <CuteAntAsyncExPackageVersion>2.2.0-rtm-190618-01</CuteAntAsyncExPackageVersion>
+    <CuteAntCoreAbstractionsPackageVersion>2.2.0-rtm-190618-01</CuteAntCoreAbstractionsPackageVersion>
+    <CuteAntCorePackageVersion>2.2.0-rtm-190618-01</CuteAntCorePackageVersion>
+    <CuteAntRuntimePackageVersion>2.2.0-rtm-190618-01</CuteAntRuntimePackageVersion>
 
     <CuteAntBuffersPackageVersion>2.2.0-rtm-190309-01</CuteAntBuffersPackageVersion>
     <CuteAntIOPipelinesPackageVersion>2.2.0-rtm-190309-01</CuteAntIOPipelinesPackageVersion>
@@ -13,9 +13,9 @@
     <PollyUnofficialPackageVersion>6.1.2</PollyUnofficialPackageVersion>
     <ReactiveStreamsSignedPackageVersion>1.0.2</ReactiveStreamsSignedPackageVersion>
 
-    <EasyEventStoreAbstractionsPackageVersion>5.0.1-rtm-190429-01</EasyEventStoreAbstractionsPackageVersion>
-    <EasyEventStoreAutoSubscribingPackageVersion>5.0.1-rtm-190429-01</EasyEventStoreAutoSubscribingPackageVersion>
-    <EasyEventStoreCorePackageVersion>5.0.1-rtm-190429-01</EasyEventStoreCorePackageVersion>
+    <EasyEventStoreAbstractionsPackageVersion>5.0.1-rtm-190501-01</EasyEventStoreAbstractionsPackageVersion>
+    <EasyEventStoreAutoSubscribingPackageVersion>5.0.1-rtm-190501-01</EasyEventStoreAutoSubscribingPackageVersion>
+    <EasyEventStoreCorePackageVersion>5.0.1-rtm-190501-01</EasyEventStoreCorePackageVersion>
 
     <GrEmitSignedPackageVersion>3.1.1</GrEmitSignedPackageVersion>
     <GrobExpCompilerSignedPackageVersion>1.2.13</GrobExpCompilerSignedPackageVersion>
@@ -26,6 +26,11 @@
     <HangfireMongoUnofficialPackageVersion>0.5.9-preview2-180227-01</HangfireMongoUnofficialPackageVersion>
     <HangfireRedisUnofficialPackageVersion>1.7.2-preview2-180227-01</HangfireRedisUnofficialPackageVersion>
     <NCrontabUnofficialPackageVersion>3.3.0-preview2-180227-01</NCrontabUnofficialPackageVersion>
+
+    <NodaTimeUnofficialPackageVersion>3.0.0-rtm-190621-01</NodaTimeUnofficialPackageVersion>
+    <NodaTimeSerializationJsonNetUnofficialPackageVersion>3.0.0-rtm-190621-01</NodaTimeSerializationJsonNetUnofficialPackageVersion>
+    <NodaTimeSerializationJsonSpanPackageVersion>3.0.0-rtm-190621-01</NodaTimeSerializationJsonSpanPackageVersion>
+    <NodaTimeSerializationMessagePackSpanPackageVersion>3.0.0-rtm-190621-01</NodaTimeSerializationMessagePackSpanPackageVersion>
 
     <!-- Caching related packages -->
     <!--<CuteAntAspNetRedisSessionProviderPackageVersion>2.1.0-rc1-180512-01</CuteAntAspNetRedisSessionProviderPackageVersion>-->
@@ -46,6 +51,10 @@
 
     <!-- Database related packages -->
     <ConsulExtensionsPackageVersion>2.2.0-rtm-181220-01</ConsulExtensionsPackageVersion>
+    <DapperSignedPackageVersion>1.60.6</DapperSignedPackageVersion>
+    <MySqlConnectorUnofficialPackageVersion>0.56.0</MySqlConnectorUnofficialPackageVersion>
+    <MySqlConnectorAuthenticationEd25519UnofficialPackageVersion>0.56.0</MySqlConnectorAuthenticationEd25519UnofficialPackageVersion>
+    <NpgsqlUnofficialPackageVersion>4.0.7</NpgsqlUnofficialPackageVersion>
     <CuteAntExtensionsRedisPackageVersion>2.1.0-rc1-180512-01</CuteAntExtensionsRedisPackageVersion>
     <CuteAntIdUtilsPackageVersion>2.2.0-rtm-190309-01</CuteAntIdUtilsPackageVersion>
     <CuteAntWingsPackageVersion>2.2.0-rtm-190309-01</CuteAntWingsPackageVersion>
@@ -58,6 +67,13 @@
     <CuteAntWingsSqlitePackageVersion>2.2.0-rtm-190309-01</CuteAntWingsSqlitePackageVersion>
     <CuteAntWingsSqlServerPackageVersion>2.2.0-rtm-190309-01</CuteAntWingsSqlServerPackageVersion>
     <CuteAntWingsSqlServerConvertersPackageVersion>2.2.0-rtm-190309-01</CuteAntWingsSqlServerConvertersPackageVersion>
+    <YesSqlAbstractionsSignedPackageVersion>2.0.0-beta-190501-01</YesSqlAbstractionsSignedPackageVersion>
+    <YesSqlCoreSignedPackageVersion>2.0.0-beta-190501-01</YesSqlCoreSignedPackageVersion>
+    <YesSqlProviderCommonSignedPackageVersion>1.0.0-beta-190501-01</YesSqlProviderCommonSignedPackageVersion>
+    <YesSqlProviderMySqlSignedPackageVersion>1.0.0-beta-190501-01</YesSqlProviderMySqlSignedPackageVersion>
+    <YesSqlProviderPostgreSqlSignedPackageVersion>1.0.0-beta-190501-01</YesSqlProviderPostgreSqlSignedPackageVersion>
+    <YesSqlProviderSqliteSignedPackageVersion>1.0.0-beta-190501-01</YesSqlProviderSqliteSignedPackageVersion>
+    <YesSqlProviderSqlServerSignedPackageVersion>1.0.0-beta-190501-01</YesSqlProviderSqlServerSignedPackageVersion>
 
     <!-- Hosting related packages -->
     <CuteAntHostingPackageVersion>2.1.0-rc1-180512-01</CuteAntHostingPackageVersion>
@@ -66,83 +82,75 @@
     <!-- Ioc related packages -->
 
     <!-- Logging related packages -->
-    <NLogExtensionsLoggingUnofficialPackageVersion>2.2.0-rtm-190425-01</NLogExtensionsLoggingUnofficialPackageVersion>
-    <NLogWebAspNetCoreUnofficialPackageVersion>2.2.0-rtm-190425-01</NLogWebAspNetCoreUnofficialPackageVersion>
-    <NLogWebUnofficialPackageVersion>2.2.0-rtm-190425-01</NLogWebUnofficialPackageVersion>
+    <NLogExtensionsLoggingUnofficialPackageVersion>2.2.0-rtm-190501-01</NLogExtensionsLoggingUnofficialPackageVersion>
+    <NLogWebAspNetCoreUnofficialPackageVersion>2.2.0-rtm-190501-01</NLogWebAspNetCoreUnofficialPackageVersion>
+    <NLogWebUnofficialPackageVersion>2.2.0-rtm-190501-01</NLogWebUnofficialPackageVersion>
     <SerilogExtensionsLoggingFileUnofficialPackageVersion>2.2.0-rtm-190222-01</SerilogExtensionsLoggingFileUnofficialPackageVersion>
     <SerilogExtensionsLoggingUnofficialPackageVersion>2.2.0-rtm-190222-01</SerilogExtensionsLoggingUnofficialPackageVersion>
 
     <!-- Network related packages -->
-    <AkkaCoreUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaCoreUnofficialPackageVersion>
-    <AkkaUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaUnofficialPackageVersion>
-    <AkkaTestKitUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaTestKitUnofficialPackageVersion>
-    <AkkaTestKitXunit2UnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaTestKitXunit2UnofficialPackageVersion>
-    <AkkaTestsSharedUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaTestsSharedUnofficialPackageVersion>
+    <AkkaCoreUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaCoreUnofficialPackageVersion>
+    <AkkaUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaUnofficialPackageVersion>
+    <AkkaTestKitUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaTestKitUnofficialPackageVersion>
+    <AkkaTestKitXunit2UnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaTestKitXunit2UnofficialPackageVersion>
+    <AkkaTestsSharedUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaTestsSharedUnofficialPackageVersion>
 
-    <AkkaDistributedDataUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaDistributedDataUnofficialPackageVersion>
-    <AkkaClusterUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaClusterUnofficialPackageVersion>
-    <AkkaClusterShardingUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaClusterShardingUnofficialPackageVersion>
-    <AkkaClusterToolsUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaClusterToolsUnofficialPackageVersion>
-    <AkkaClusterTestKitUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaClusterTestKitUnofficialPackageVersion>
-    <AkkaRemoteUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaRemoteUnofficialPackageVersion>
-    <AkkaRemoteTestKitUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaRemoteTestKitUnofficialPackageVersion>
+    <AkkaDistributedDataUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaDistributedDataUnofficialPackageVersion>
+    <AkkaClusterUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaClusterUnofficialPackageVersion>
+    <AkkaClusterShardingUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaClusterShardingUnofficialPackageVersion>
+    <AkkaClusterToolsUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaClusterToolsUnofficialPackageVersion>
+    <AkkaClusterTestKitUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaClusterTestKitUnofficialPackageVersion>
+    <AkkaRemoteUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaRemoteUnofficialPackageVersion>
+    <AkkaRemoteTestKitUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaRemoteTestKitUnofficialPackageVersion>
 
-    <AkkaDICoreUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaDICoreUnofficialPackageVersion>
-    <AkkaDIAutoFacUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaDIAutoFacUnofficialPackageVersion>
-    <AkkaDITestKitUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaDITestKitUnofficialPackageVersion>
+    <AkkaDICoreUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaDICoreUnofficialPackageVersion>
+    <AkkaDIAutoFacUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaDIAutoFacUnofficialPackageVersion>
+    <AkkaDITestKitUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaDITestKitUnofficialPackageVersion>
 
-    <AkkaLoggerNLogUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaLoggerNLogUnofficialPackageVersion>
-    <AkkaLoggerSerilogUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaLoggerSerilogUnofficialPackageVersion>
+    <AkkaLoggerNLogUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaLoggerNLogUnofficialPackageVersion>
+    <AkkaLoggerSerilogUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaLoggerSerilogUnofficialPackageVersion>
 
-    <AkkaPersistenceUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaPersistenceUnofficialPackageVersion>
-    <AkkaPersistenceQueryUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaPersistenceQueryUnofficialPackageVersion>
-    <AkkaPersistenceTCKUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaPersistenceTCKUnofficialPackageVersion>
-    <AkkaPersistenceEventStoreUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaPersistenceEventStoreUnofficialPackageVersion>
-    <AkkaPersistenceEventStoreQueryUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaPersistenceEventStoreQueryUnofficialPackageVersion>
-    <AkkaPersistenceMongoDbUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaPersistenceMongoDbUnofficialPackageVersion>
-    <AkkaPersistenceWingsPackageVersion>1.3.11-rtm-190210-01</AkkaPersistenceWingsPackageVersion>
+    <AkkaExtensionEventStorePackageVersion>1.3.13-rtm-190515-01</AkkaExtensionEventStorePackageVersion>
 
-    <AkkaSerializationHyperionUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaSerializationHyperionUnofficialPackageVersion>
-    <AkkaSerializationJsonUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaSerializationJsonUnofficialPackageVersion>
-    <AkkaSerializationMessagePackLZ4PackageVersion>1.3.11-rtm-190210-01</AkkaSerializationMessagePackLZ4PackageVersion>
-    <AkkaSerializationProtobufPackageVersion>1.3.11-rtm-190210-01</AkkaSerializationProtobufPackageVersion>
-    <AkkaSerializationUtf8JsonPackageVersion>1.3.11-rtm-190210-01</AkkaSerializationUtf8JsonPackageVersion>
-    <AkkaSerializationTestKitUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaSerializationTestKitUnofficialPackageVersion>
+    <AkkaPersistenceUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaPersistenceUnofficialPackageVersion>
+    <AkkaPersistenceQueryUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaPersistenceQueryUnofficialPackageVersion>
+    <AkkaPersistenceTCKUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaPersistenceTCKUnofficialPackageVersion>
+    <AkkaPersistenceEventStoreUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaPersistenceEventStoreUnofficialPackageVersion>
+    <AkkaPersistenceMongoDbUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaPersistenceMongoDbUnofficialPackageVersion>
 
-    <AkkaStreamsUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaStreamsUnofficialPackageVersion>
-    <AkkaStreamsTestKitUnofficialPackageVersion>1.3.11-rtm-190210-01</AkkaStreamsTestKitUnofficialPackageVersion>
+    <AkkaSerializationHyperionUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaSerializationHyperionUnofficialPackageVersion>
+    <AkkaSerializationJsonUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaSerializationJsonUnofficialPackageVersion>
+    <AkkaSerializationMessagePackLZ4PackageVersion>1.3.13-rtm-190515-01</AkkaSerializationMessagePackLZ4PackageVersion>
+    <AkkaSerializationProtobufPackageVersion>1.3.13-rtm-190515-01</AkkaSerializationProtobufPackageVersion>
+    <AkkaSerializationProtobufNetPackageVersion>1.3.13-rtm-190515-01</AkkaSerializationProtobufNetPackageVersion>
+    <AkkaSerializationUtf8JsonPackageVersion>1.3.13-rtm-190515-01</AkkaSerializationUtf8JsonPackageVersion>
+    <AkkaSerializationTestKitUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaSerializationTestKitUnofficialPackageVersion>
 
-    <DotNettyBuffersUnofficialPackageVersion>0.6.0-rtm-190429-01</DotNettyBuffersUnofficialPackageVersion>
-    <DotNettyCodecsHttpUnofficialPackageVersion>0.6.0-rtm-190429-01</DotNettyCodecsHttpUnofficialPackageVersion>
-    <DotNettyCodecsHttp2UnofficialPackageVersion>0.6.0-rtm-190429-01</DotNettyCodecsHttp2UnofficialPackageVersion>
-    <DotNettyCodecsMqttUnofficialPackageVersion>0.6.0-rtm-190429-01</DotNettyCodecsMqttUnofficialPackageVersion>
-    <DotNettyCodecsRedisUnofficialPackageVersion>0.6.0-rtm-190429-01</DotNettyCodecsRedisUnofficialPackageVersion>
-    <DotNettyCodecsUnofficialPackageVersion>0.6.0-rtm-190429-01</DotNettyCodecsUnofficialPackageVersion>
-    <DotNettyCommonUnofficialPackageVersion>0.6.0-rtm-190429-01</DotNettyCommonUnofficialPackageVersion>
-    <DotNettyHandlersUnofficialPackageVersion>0.6.0-rtm-190429-01</DotNettyHandlersUnofficialPackageVersion>
-    <DotNettyTransportLibuvUnofficialPackageVersion>0.6.0-rtm-190429-01</DotNettyTransportLibuvUnofficialPackageVersion>
-    <DotNettyTransportUnofficialPackageVersion>0.6.0-rtm-190429-01</DotNettyTransportUnofficialPackageVersion>
+    <AkkaStreamsUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaStreamsUnofficialPackageVersion>
+    <AkkaStreamsTestKitUnofficialPackageVersion>1.3.13-rtm-190515-01</AkkaStreamsTestKitUnofficialPackageVersion>
+
+    <DotNettyBuffersUnofficialPackageVersion>0.6.0-rtm-190430-01</DotNettyBuffersUnofficialPackageVersion>
+    <DotNettyCodecsHttpUnofficialPackageVersion>0.6.0-rtm-190430-01</DotNettyCodecsHttpUnofficialPackageVersion>
+    <DotNettyCodecsHttp2UnofficialPackageVersion>0.6.0-rtm-190430-01</DotNettyCodecsHttp2UnofficialPackageVersion>
+    <DotNettyCodecsMqttUnofficialPackageVersion>0.6.0-rtm-190430-01</DotNettyCodecsMqttUnofficialPackageVersion>
+    <DotNettyCodecsRedisUnofficialPackageVersion>0.6.0-rtm-190430-01</DotNettyCodecsRedisUnofficialPackageVersion>
+    <DotNettyCodecsUnofficialPackageVersion>0.6.0-rtm-190430-01</DotNettyCodecsUnofficialPackageVersion>
+    <DotNettyCommonUnofficialPackageVersion>0.6.0-rtm-190430-01</DotNettyCommonUnofficialPackageVersion>
+    <DotNettyHandlersUnofficialPackageVersion>0.6.0-rtm-190430-01</DotNettyHandlersUnofficialPackageVersion>
+    <DotNettyTransportLibuvUnofficialPackageVersion>0.6.0-rtm-190430-01</DotNettyTransportLibuvUnofficialPackageVersion>
+    <DotNettyTransportUnofficialPackageVersion>0.6.0-rtm-190430-01</DotNettyTransportUnofficialPackageVersion>
 
     <!-- Serialization related packages -->
-    <CuteAntExtensionsSerializationPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationPackageVersion>
-    <CuteAntExtensionsSerializationAbstractionsPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationAbstractionsPackageVersion>
-    <CuteAntExtensionsSerializationCorePackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationCorePackageVersion>
-    <CuteAntExtensionsSerializationHyperionPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationHyperionPackageVersion>
-    <!--<CuteAntExtensionsSerializationMessagePackPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationMessagePackPackageVersion>-->
-    <CuteAntExtensionsSerializationProtobufPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationProtobufPackageVersion>
-    <CuteAntExtensionsSerializationServiceStackPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationServiceStackPackageVersion>
-    <CuteAntExtensionsSerializationUtf8JsonPackageVersion>2.2.0-rtm-190310-01</CuteAntExtensionsSerializationUtf8JsonPackageVersion>
-    <CuteAntJsonExtensionsPackageVersion>2.2.0-rtm-190310-01</CuteAntJsonExtensionsPackageVersion>
-    <HyperionUnofficialPackageVersion>0.9.8-rtm-190310-01</HyperionUnofficialPackageVersion>
+    <CuteAntJsonExtensionsPackageVersion>2.2.0-rtm-190618-01</CuteAntJsonExtensionsPackageVersion>
+    <HyperionUnofficialPackageVersion>0.9.8-rtm-190618-01</HyperionUnofficialPackageVersion>
     <MessagePackSpanAbstractionsPackageVersion>1.0.0</MessagePackSpanAbstractionsPackageVersion>
-    <MessagePackHyperionPackageVersion>1.0.1-rtm-190421-01</MessagePackHyperionPackageVersion>
-    <MessagePackImmutableCollectionUnofficialPackageVersion>1.0.1-rtm-190421-01</MessagePackImmutableCollectionUnofficialPackageVersion>
-    <MessagePackLZ4UnofficialPackageVersion>1.0.1-rtm-190421-01</MessagePackLZ4UnofficialPackageVersion>
-    <MessagePackUnofficialPackageVersion>1.0.1-rtm-190421-01</MessagePackUnofficialPackageVersion>
+    <MessagePackHyperionPackageVersion>1.1.0-rtm-190618-02</MessagePackHyperionPackageVersion>
+    <MessagePackImmutableCollectionUnofficialPackageVersion>1.1.0-rtm-190618-02</MessagePackImmutableCollectionUnofficialPackageVersion>
+    <MessagePackLZ4UnofficialPackageVersion>1.1.0-rtm-190618-02</MessagePackLZ4UnofficialPackageVersion>
+    <MessagePackUnofficialPackageVersion>1.1.0-rtm-190618-02</MessagePackUnofficialPackageVersion>
     <ServiceStackTextNet40PackageVersion>5.5.0-rtm-190310-01</ServiceStackTextNet40PackageVersion>
-    <ServiceStackTextUnofficialPackageVersion>5.5.0-rtm-190310-01</ServiceStackTextUnofficialPackageVersion>
-    <Utf8JsonAbstractionsUnofficialPackageVersion>1.3.6-rtm-190310-01</Utf8JsonAbstractionsUnofficialPackageVersion>
-    <Utf8JsonImmutableCollectionUnofficialPackageVersion>1.3.6-rtm-190310-01</Utf8JsonImmutableCollectionUnofficialPackageVersion>
-    <Utf8JsonUnofficialPackageVersion>1.3.6-rtm-190310-01</Utf8JsonUnofficialPackageVersion>
+    <ServiceStackTextUnofficialPackageVersion>5.5.0-rtm-190621-01</ServiceStackTextUnofficialPackageVersion>
+    <SpanJsonUnofficialPackageVersion>2.0.14-rtm-190621-01</SpanJsonUnofficialPackageVersion>
+    <SpanJsonAspNetCoreFormatterUnofficialPackageVersion>2.0.14-rtm-190621-01</SpanJsonAspNetCoreFormatterUnofficialPackageVersion>
   </PropertyGroup>
 </Project>

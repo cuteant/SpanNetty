@@ -1,11 +1,33 @@
 <Project>
   <!-- Shared Package Versions -->
   <PropertyGroup>
-    <!-- Compatibility packages -->
+    <!-- Core packages -->
     <MicrosoftCSharpPackageVersion>4.5.0</MicrosoftCSharpPackageVersion>
+    <FSharpCorePackageVersion>4.6.2</FSharpCorePackageVersion>
+    <MonoPosixPackageVersion>5.4.0.201</MonoPosixPackageVersion>
+    <MonoPosixNETStandardPackageVersion>1.0.0</MonoPosixNETStandardPackageVersion>
+
+    <!-- Azure packages -->
+    <MicrosoftAzureKeyVaultPackageVersion>3.0.3</MicrosoftAzureKeyVaultPackageVersion>
+    <WindowsAzureStoragePackageVersion>9.3.3</WindowsAzureStoragePackageVersion>
+
+    <!-- IdentityModel packages -->
+    <MicrosoftIdentityModelKeyVaultExtensionsPackageVersion>5.4.0</MicrosoftIdentityModelKeyVaultExtensionsPackageVersion>
+    <MicrosoftIdentityModelLoggingPackageVersion>5.4.0</MicrosoftIdentityModelLoggingPackageVersion>
+    <MicrosoftIdentityModelManagedKeyVaultSecurityKeyPackageVersion>5.4.0</MicrosoftIdentityModelManagedKeyVaultSecurityKeyPackageVersion>
+    <MicrosoftIdentityModelJsonWebTokensPackageVersion>5.4.0</MicrosoftIdentityModelJsonWebTokensPackageVersion>
+    <MicrosoftIdentityModelProtocolsPackageVersion>5.4.0</MicrosoftIdentityModelProtocolsPackageVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>5.4.0</MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>
+    <MicrosoftIdentityModelProtocolsWsFederationPackageVersion>5.4.0</MicrosoftIdentityModelProtocolsWsFederationPackageVersion>
+    <MicrosoftIdentityModelTokensPackageVersion>5.4.0</MicrosoftIdentityModelTokensPackageVersion>
+    <MicrosoftIdentityModelTokensSamlPackageVersion>5.4.0</MicrosoftIdentityModelTokensSamlPackageVersion>
+    <MicrosoftIdentityModelXmlPackageVersion>5.4.0</MicrosoftIdentityModelXmlPackageVersion>
+    <SystemIdentityModelTokensJwtPackageVersion>5.4.0</SystemIdentityModelTokensJwtPackageVersion>
+
+    <!-- Compatibility packages -->
     <MicrosoftWin32RegistryPackageVersion>4.5.0</MicrosoftWin32RegistryPackageVersion>
     <MicrosoftWin32RegistryAccessControlPackageVersion>4.5.0</MicrosoftWin32RegistryAccessControlPackageVersion>
-    <MicrosoftWindowsCompatibilityPackageVersion>2.0.1</MicrosoftWindowsCompatibilityPackageVersion>
+    <MicrosoftWindowsCompatibilityPackageVersion>2.1.1</MicrosoftWindowsCompatibilityPackageVersion>
     <MicrosoftWindowsCompatibilityShimsPackageVersion>2.0.1</MicrosoftWindowsCompatibilityShimsPackageVersion>
     <SystemCodeDomPackageVersion>4.5.0</SystemCodeDomPackageVersion>
     <SystemComponentModelAnnotationsPackageVersion>4.5.0</SystemComponentModelAnnotationsPackageVersion>
@@ -13,13 +35,13 @@
     <SystemConfigurationConfigurationManagerPackageVersion>4.5.0</SystemConfigurationConfigurationManagerPackageVersion>
     <SystemDataDataSetExtensionsPackageVersion>4.5.0</SystemDataDataSetExtensionsPackageVersion>
     <SystemDataOdbcPackageVersion>4.5.0</SystemDataOdbcPackageVersion>
-    <SystemDataSqlClientPackageVersion>4.6.0</SystemDataSqlClientPackageVersion>
+    <SystemDataSqlClientPackageVersion>4.6.1</SystemDataSqlClientPackageVersion>
     <SystemDiagnosticsEventLogPackageVersion>4.5.0</SystemDiagnosticsEventLogPackageVersion>
     <SystemDiagnosticsPerformanceCounterPackageVersion>4.5.0</SystemDiagnosticsPerformanceCounterPackageVersion>
     <SystemDirectoryServicesPackageVersion>4.5.0</SystemDirectoryServicesPackageVersion>
     <SystemDirectoryServicesAccountManagementPackageVersion>4.5.0</SystemDirectoryServicesAccountManagementPackageVersion>
     <SystemDirectoryServicesProtocolsPackageVersion>4.5.0</SystemDirectoryServicesProtocolsPackageVersion>
-    <SystemDrawingCommonPackageVersion>4.5.0</SystemDrawingCommonPackageVersion>
+    <SystemDrawingCommonPackageVersion>4.5.1</SystemDrawingCommonPackageVersion>
     <SystemIOFileSystemAccessControlPackageVersion>4.5.0</SystemIOFileSystemAccessControlPackageVersion>
     <SystemIOPackagingPackageVersion>4.5.0</SystemIOPackagingPackageVersion>
     <SystemIOPipesAccessControlPackageVersion>4.5.1</SystemIOPipesAccessControlPackageVersion>
@@ -39,7 +61,7 @@
     <SystemBuffersPackageVersion>4.5.0</SystemBuffersPackageVersion>
     <SystemDiagnosticsDiagnosticSourcePackageVersion>4.5.1</SystemDiagnosticsDiagnosticSourcePackageVersion>
     <SystemIOPipelinesPackageVersion>4.5.3</SystemIOPipelinesPackageVersion>
-    <SystemMemoryPackageVersion>4.5.2</SystemMemoryPackageVersion>
+    <SystemMemoryPackageVersion>4.5.3</SystemMemoryPackageVersion>
     <SystemNetHttpPackageVersion>4.3.4</SystemNetHttpPackageVersion>
     <SystemNumericsVectorsPackageVersion>4.5.0</SystemNumericsVectorsPackageVersion>
 
@@ -62,7 +84,7 @@
 
     <SystemSecurityCryptographyCngPackageVersion>4.5.0</SystemSecurityCryptographyCngPackageVersion>
     <SystemSecurityCryptographyOpenSslPackageVersion>4.5.0</SystemSecurityCryptographyOpenSslPackageVersion>
-    <SystemSecurityCryptographyPkcsPackageVersion>4.5.0</SystemSecurityCryptographyPkcsPackageVersion>
+    <SystemSecurityCryptographyPkcsPackageVersion>4.5.2</SystemSecurityCryptographyPkcsPackageVersion>
     <SystemSecurityCryptographyProtectedDataPackageVersion>4.5.0</SystemSecurityCryptographyProtectedDataPackageVersion>
     <SystemSecurityCryptographyXmlPackageVersion>4.5.0</SystemSecurityCryptographyXmlPackageVersion>
 

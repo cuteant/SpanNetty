@@ -1,38 +1,25 @@
 <Project>
   <!-- Shared Package Versions -->
   <PropertyGroup>
-    <!-- Microsoft packages -->
-    <MicrosoftBuildPackageVersion>15.6.82</MicrosoftBuildPackageVersion>
-    <MicrosoftBuildRuntimePackageVersion>15.6.82</MicrosoftBuildRuntimePackageVersion>
-    <MicrosoftBuildTasksCorePackageVersion>15.6.82</MicrosoftBuildTasksCorePackageVersion>
-    <MicrosoftBuildUtilitiesCorePackageVersion>15.6.82</MicrosoftBuildUtilitiesCorePackageVersion>
-
-    <FSharpCorePackageVersion>4.5.4</FSharpCorePackageVersion>
+    <MicrosoftBuildPackageVersion>16.0.461</MicrosoftBuildPackageVersion>
+    <MicrosoftBuildRuntimePackageVersion>16.0.461</MicrosoftBuildRuntimePackageVersion>
+    <MicrosoftBuildTasksCorePackageVersion>16.0.461</MicrosoftBuildTasksCorePackageVersion>
+    <MicrosoftBuildUtilitiesCorePackageVersion>16.0.461</MicrosoftBuildUtilitiesCorePackageVersion>
 
     <MicrosoftBclPackageVersion>1.1.10</MicrosoftBclPackageVersion>
     <MicrosoftBclAsyncPackageVersion>1.0.168</MicrosoftBclAsyncPackageVersion>
     <MicrosoftBclBuildPackageVersion>1.0.21</MicrosoftBclBuildPackageVersion>
 
-    <MicrosoftAzureKeyVaultPackageVersion>3.0.3</MicrosoftAzureKeyVaultPackageVersion>
-    <WindowsAzureStoragePackageVersion>9.3.3</WindowsAzureStoragePackageVersion>
+    <MicrosoftApplicationInsightsAspNetCorePackageVersion>2.6.1</MicrosoftApplicationInsightsAspNetCorePackageVersion>
+    <MicrosoftApplicationInsightsPackageVersion>2.9.1</MicrosoftApplicationInsightsPackageVersion>
 
-    <MicrosoftApplicationInsightsAspNetCorePackageVersion>2.5.1</MicrosoftApplicationInsightsAspNetCorePackageVersion>
-    <MicrosoftApplicationInsightsPackageVersion>2.8.1</MicrosoftApplicationInsightsPackageVersion>
-    <MicrosoftApplicationInsightsWebPackageVersion>2.8.1</MicrosoftApplicationInsightsWebPackageVersion>
-
-    <MicrosoftIdentityModelKeyVaultExtensionsPackageVersion>5.4.0</MicrosoftIdentityModelKeyVaultExtensionsPackageVersion>
-    <MicrosoftIdentityModelLoggingPackageVersion>5.4.0</MicrosoftIdentityModelLoggingPackageVersion>
-    <MicrosoftIdentityModelManagedKeyVaultSecurityKeyPackageVersion>5.4.0</MicrosoftIdentityModelManagedKeyVaultSecurityKeyPackageVersion>
-    <MicrosoftIdentityModelJsonWebTokensPackageVersion>5.4.0</MicrosoftIdentityModelJsonWebTokensPackageVersion>
-    <MicrosoftIdentityModelProtocolsPackageVersion>5.4.0</MicrosoftIdentityModelProtocolsPackageVersion>
-    <MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>5.4.0</MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>
-    <MicrosoftIdentityModelProtocolsWsFederationPackageVersion>5.4.0</MicrosoftIdentityModelProtocolsWsFederationPackageVersion>
-    <MicrosoftIdentityModelTokensPackageVersion>5.4.0</MicrosoftIdentityModelTokensPackageVersion>
-    <MicrosoftIdentityModelTokensSamlPackageVersion>5.4.0</MicrosoftIdentityModelTokensSamlPackageVersion>
-    <MicrosoftIdentityModelXmlPackageVersion>5.4.0</MicrosoftIdentityModelXmlPackageVersion>
-    <SystemIdentityModelTokensJwtPackageVersion>5.4.0</SystemIdentityModelTokensJwtPackageVersion>
-
-    <MonoPosixPackageVersion>5.4.0.201</MonoPosixPackageVersion>
-    <MonoPosixNETStandardPackageVersion>1.0.0</MonoPosixNETStandardPackageVersion>
+    <MicrosoftSourceLinkGitHubPackageVersion>1.0.0-beta2-18618-05</MicrosoftSourceLinkGitHubPackageVersion>
+    <SourceLinkCreateCommandLinePackageVersion>2.8.3</SourceLinkCreateCommandLinePackageVersion>
+    <SourceLinkEmbedAllSourceFilesPackageVersion>2.8.3</SourceLinkEmbedAllSourceFilesPackageVersion>
+    <SourceLinkCreateGitHubPackageVersion>2.8.3</SourceLinkCreateGitHubPackageVersion>
+    <SourceLinkCopyPdbFilesVersion>2.8.3</SourceLinkCopyPdbFilesVersion>
+    <SourceLinkEmbedPaketFilesPackageVersion>2.8.3</SourceLinkEmbedPaketFilesPackageVersion>
+    <SourceLinkTestPackageVersion>2.8.3</SourceLinkTestPackageVersion>
+    <SourceLinkCreateBitBucketPackageVersion>2.8.3</SourceLinkCreateBitBucketPackageVersion>
   </PropertyGroup>
 </Project>

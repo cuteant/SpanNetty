@@ -2,25 +2,26 @@
   <!-- Shared Package Versions -->
   <PropertyGroup>
     <MicrosoftCodeAnalysisCSharpNet45PackageVersion>1.3.2</MicrosoftCodeAnalysisCSharpNet45PackageVersion>
-    <MicrosoftCodeAnalysisCompilersPackageVersion>2.10.0</MicrosoftCodeAnalysisCompilersPackageVersion>
-    <MicrosoftCodeAnalysisCommonPackageVersion>2.10.0</MicrosoftCodeAnalysisCommonPackageVersion>
-    <MicrosoftCodeAnalysisCSharpPackageVersion>2.10.0</MicrosoftCodeAnalysisCSharpPackageVersion>
-    <MicrosoftCodeAnalysisCSharpFeaturesPackageVersion>2.10.0</MicrosoftCodeAnalysisCSharpFeaturesPackageVersion>
-    <MicrosoftCodeAnalysisCSharpScriptingPackageVersion>2.10.0</MicrosoftCodeAnalysisCSharpScriptingPackageVersion>
-    <MicrosoftCodeAnalysisCSharpWorkspacesPackageVersion>2.10.0</MicrosoftCodeAnalysisCSharpWorkspacesPackageVersion>
-    <MicrosoftCodeAnalysisFeaturesPackageVersion>2.10.0</MicrosoftCodeAnalysisFeaturesPackageVersion>
-    <MicrosoftCodeAnalysisScriptingPackageVersion>2.10.0</MicrosoftCodeAnalysisScriptingPackageVersion>
-    <MicrosoftCodeAnalysisScriptingCommonPackageVersion>2.10.0</MicrosoftCodeAnalysisScriptingCommonPackageVersion>
-    <MicrosoftCodeAnalysisVisualBasicPackageVersion>2.10.0</MicrosoftCodeAnalysisVisualBasicPackageVersion>
-    <MicrosoftCodeAnalysisWorkspacesCommonPackageVersion>2.10.0</MicrosoftCodeAnalysisWorkspacesCommonPackageVersion>
+    <MicrosoftCodeAnalysisCompilersPackageVersion>3.1.0</MicrosoftCodeAnalysisCompilersPackageVersion>
+    <MicrosoftCodeAnalysisCommonPackageVersion>3.1.0</MicrosoftCodeAnalysisCommonPackageVersion>
+    <MicrosoftCodeAnalysisCSharpPackageVersion>3.1.0</MicrosoftCodeAnalysisCSharpPackageVersion>
+    <MicrosoftCodeAnalysisCSharpFeaturesPackageVersion>3.1.0</MicrosoftCodeAnalysisCSharpFeaturesPackageVersion>
+    <MicrosoftCodeAnalysisCSharpScriptingPackageVersion>3.1.0</MicrosoftCodeAnalysisCSharpScriptingPackageVersion>
+    <MicrosoftCodeAnalysisCSharpWorkspacesPackageVersion>3.1.0</MicrosoftCodeAnalysisCSharpWorkspacesPackageVersion>
+    <MicrosoftCodeAnalysisFeaturesPackageVersion>3.1.0</MicrosoftCodeAnalysisFeaturesPackageVersion>
+    <MicrosoftCodeAnalysisScriptingPackageVersion>3.1.0</MicrosoftCodeAnalysisScriptingPackageVersion>
+    <MicrosoftCodeAnalysisScriptingCommonPackageVersion>3.1.0</MicrosoftCodeAnalysisScriptingCommonPackageVersion>
+    <MicrosoftCodeAnalysisVisualBasicPackageVersion>3.1.0</MicrosoftCodeAnalysisVisualBasicPackageVersion>
+    <MicrosoftCodeAnalysisWorkspacesCommonPackageVersion>3.1.0</MicrosoftCodeAnalysisWorkspacesCommonPackageVersion>
 
-    <MicrosoftNetCompilersPackageVersion>2.10.0</MicrosoftNetCompilersPackageVersion>
-    <MicrosoftNETCoreCompilersPackageVersion>2.10.0</MicrosoftNETCoreCompilersPackageVersion>
+    <MicrosoftNetCompilersPackageVersion>3.1.0</MicrosoftNetCompilersPackageVersion>
+    <MicrosoftNETCoreCompilersPackageVersion>3.1.0</MicrosoftNETCoreCompilersPackageVersion>
 
-    <MicrosoftCodeAnalysisAnalyzersPackageVersion>2.6.3</MicrosoftCodeAnalysisAnalyzersPackageVersion>
-    <MicrosoftCodeAnalysisFxCopAnalyzersPackageVersion>2.6.3</MicrosoftCodeAnalysisFxCopAnalyzersPackageVersion>
+    <MicrosoftCodeAnalysisAnalyzersPackageVersion>2.9.2</MicrosoftCodeAnalysisAnalyzersPackageVersion>
+    <MicrosoftCodeAnalysisFxCopAnalyzersPackageVersion>2.9.2</MicrosoftCodeAnalysisFxCopAnalyzersPackageVersion>
+    <MicrosoftCodeQualityAnalyzersPackageVersion>2.9.2</MicrosoftCodeQualityAnalyzersPackageVersion>
     <MicrosoftNetRoslynDiagnosticsPackageVersion>2.6.3</MicrosoftNetRoslynDiagnosticsPackageVersion>
 
-    <StyleCopAnalyzersPackageVersion>1.1.1-rc.94</StyleCopAnalyzersPackageVersion>
+    <StyleCopAnalyzersPackageVersion>1.1.118</StyleCopAnalyzersPackageVersion>
   </PropertyGroup>
 </Project>

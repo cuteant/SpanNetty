@@ -2,7 +2,8 @@
   <!-- Shared Package Versions -->
   <PropertyGroup>
     <MicrosoftAspNetCorePackageVersion>2.2.0</MicrosoftAspNetCorePackageVersion>
-    <MicrosoftAspNetCoreAllPackageVersion>2.2.3</MicrosoftAspNetCoreAllPackageVersion>
+    <MicrosoftAspNetCoreAllPackageVersion>2.2.5</MicrosoftAspNetCoreAllPackageVersion>
+    <MicrosoftAspNetCoreAppPackageVersion>2.2.5</MicrosoftAspNetCoreAppPackageVersion>
 
     <MicrosoftAspNetCoreAntiforgeryPackageVersion>2.2.0</MicrosoftAspNetCoreAntiforgeryPackageVersion>
     <MicrosoftAspNetCoreApplicationInsightsHostingStartupPackageVersion>2.2.0</MicrosoftAspNetCoreApplicationInsightsHostingStartupPackageVersion>
@@ -39,7 +40,7 @@
     <MicrosoftAspNetCoreDataProtectionAzureKeyVaultPackageVersion>2.2.0</MicrosoftAspNetCoreDataProtectionAzureKeyVaultPackageVersion>
     <MicrosoftAspNetCoreDataProtectionAzureStoragePackageVersion>2.2.0</MicrosoftAspNetCoreDataProtectionAzureStoragePackageVersion>
     <MicrosoftAspNetCoreDataProtectionExtensionsPackageVersion>2.2.0</MicrosoftAspNetCoreDataProtectionExtensionsPackageVersion>
-    <MicrosoftAspNetCoreDataProtectionRedisPackageVersion>2.2.0-preview2-35157</MicrosoftAspNetCoreDataProtectionRedisPackageVersion>
+    <MicrosoftAspNetCoreDataProtectionStackExchangeRedisPackageVersion>2.2.5</MicrosoftAspNetCoreDataProtectionStackExchangeRedisPackageVersion>
     <MicrosoftAspNetCoreDataProtectionSystemWebPackageVersion>2.2.0</MicrosoftAspNetCoreDataProtectionSystemWebPackageVersion>
 
     <MicrosoftAspNetCoreDiagnosticsPackageVersion>2.2.0</MicrosoftAspNetCoreDiagnosticsPackageVersion>
@@ -79,7 +80,7 @@
     <MicrosoftAspNetCoreMvcAbstractionsPackageVersion>2.2.0</MicrosoftAspNetCoreMvcAbstractionsPackageVersion>
     <MicrosoftAspNetCoreMvcAnalyzersPackageVersion>2.2.0</MicrosoftAspNetCoreMvcAnalyzersPackageVersion>
     <MicrosoftAspNetCoreMvcApiExplorerPackageVersion>2.2.0</MicrosoftAspNetCoreMvcApiExplorerPackageVersion>
-    <MicrosoftAspNetCoreMvcCorePackageVersion>2.2.2</MicrosoftAspNetCoreMvcCorePackageVersion>
+    <MicrosoftAspNetCoreMvcCorePackageVersion>2.2.5</MicrosoftAspNetCoreMvcCorePackageVersion>
     <MicrosoftAspNetCoreMvcCorsPackageVersion>2.2.0</MicrosoftAspNetCoreMvcCorsPackageVersion>
     <MicrosoftAspNetCoreMvcDataAnnotationsPackageVersion>2.2.0</MicrosoftAspNetCoreMvcDataAnnotationsPackageVersion>
     <MicrosoftAspNetCoreMvcFormattersJsonPackageVersion>2.2.0</MicrosoftAspNetCoreMvcFormattersJsonPackageVersion>
@@ -88,7 +89,7 @@
     <MicrosoftAspNetCoreMvcRazorPackageVersion>2.2.0</MicrosoftAspNetCoreMvcRazorPackageVersion>
     <MicrosoftAspNetCoreMvcRazorExtensionsPackageVersion>2.2.0</MicrosoftAspNetCoreMvcRazorExtensionsPackageVersion>
     <MicrosoftAspNetCoreMvcRazorViewCompilationPackageVersion>2.2.0</MicrosoftAspNetCoreMvcRazorViewCompilationPackageVersion>
-    <MicrosoftAspNetCoreMvcRazorPagesPackageVersion>2.2.0</MicrosoftAspNetCoreMvcRazorPagesPackageVersion>
+    <MicrosoftAspNetCoreMvcRazorPagesPackageVersion>2.2.5</MicrosoftAspNetCoreMvcRazorPagesPackageVersion>
     <MicrosoftAspNetCoreMvcTagHelpersPackageVersion>2.2.0</MicrosoftAspNetCoreMvcTagHelpersPackageVersion>
     <MicrosoftAspNetCoreMvcViewFeaturesPackageVersion>2.2.0</MicrosoftAspNetCoreMvcViewFeaturesPackageVersion>
 
@@ -126,9 +127,10 @@
     <MicrosoftAspNetCoreSignalRClientMsgPackPackageVersion>1.1.0</MicrosoftAspNetCoreSignalRClientMsgPackPackageVersion>
     <MicrosoftAspNetCoreSignalRCommonPackageVersion>1.1.0</MicrosoftAspNetCoreSignalRCommonPackageVersion>
     <MicrosoftAspNetCoreSignalRCorePackageVersion>1.1.0</MicrosoftAspNetCoreSignalRCorePackageVersion>
-    <MicrosoftAspNetCoreSignalRMsgPackPackageVersion>1.1.0</MicrosoftAspNetCoreSignalRMsgPackPackageVersion>
-    <MicrosoftAspNetCoreSignalRProtocolsMsgPackPackageVersion>1.1.0</MicrosoftAspNetCoreSignalRProtocolsMsgPackPackageVersion>
-    <MicrosoftAspNetCoreSignalRRedisPackageVersion>1.1.0</MicrosoftAspNetCoreSignalRRedisPackageVersion>
+    <MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJsonPackageVersion>3.0.0-preview4-19216-03</MicrosoftAspNetCoreSignalRProtocolsNewtonsoftJsonPackageVersion>
+    <MicrosoftAspNetCoreSignalRProtocolsJsonPackageVersion>1.1.0</MicrosoftAspNetCoreSignalRProtocolsJsonPackageVersion>
+    <MicrosoftAspNetCoreSignalRProtocolsMessagePackPackageVersion>1.1.5</MicrosoftAspNetCoreSignalRProtocolsMessagePackPackageVersion>
+    <MicrosoftAspNetCoreSignalRStackExchangeRedisPackageVersion>1.1.5</MicrosoftAspNetCoreSignalRStackExchangeRedisPackageVersion>
 
     <MicrosoftAspNetCoreSpaServicesPackageVersion>2.2.0</MicrosoftAspNetCoreSpaServicesPackageVersion>
     <MicrosoftAspNetCoreSpaServicesExtensionsPackageVersion>2.2.0</MicrosoftAspNetCoreSpaServicesExtensionsPackageVersion>
@@ -140,19 +142,19 @@
     <MicrosoftAspNetCoreTestHostPackageVersion>2.2.0</MicrosoftAspNetCoreTestHostPackageVersion>
     <MicrosoftCodeAnalysisRazorPackageVersion>2.2.0</MicrosoftCodeAnalysisRazorPackageVersion>
 
-    <MicrosoftDataSqliteCorePackageVersion>2.2.3</MicrosoftDataSqliteCorePackageVersion>
-    <MicrosoftDataSqlitePackageVersion>2.2.3</MicrosoftDataSqlitePackageVersion>
+    <MicrosoftDataSqliteCorePackageVersion>2.2.4</MicrosoftDataSqliteCorePackageVersion>
+    <MicrosoftDataSqlitePackageVersion>2.2.4</MicrosoftDataSqlitePackageVersion>
 
-    <MicrosoftEntityFrameworkCorePackageVersion>2.2.3</MicrosoftEntityFrameworkCorePackageVersion>
-    <MicrosoftEntityFrameworkCoreAbstractionsPackageVersion>2.2.3</MicrosoftEntityFrameworkCoreAbstractionsPackageVersion>
-    <MicrosoftEntityFrameworkCoreAnalyzersPackageVersion>2.2.3</MicrosoftEntityFrameworkCoreAnalyzersPackageVersion>
-    <MicrosoftEntityFrameworkCoreDesignPackageVersion>2.2.3</MicrosoftEntityFrameworkCoreDesignPackageVersion>
-    <MicrosoftEntityFrameworkCoreInMemoryPackageVersion>2.2.3</MicrosoftEntityFrameworkCoreInMemoryPackageVersion>
-    <MicrosoftEntityFrameworkCoreRelationalPackageVersion>2.2.3</MicrosoftEntityFrameworkCoreRelationalPackageVersion>
-    <MicrosoftEntityFrameworkCoreSqlitePackageVersion>2.2.3</MicrosoftEntityFrameworkCoreSqlitePackageVersion>
-    <MicrosoftEntityFrameworkCoreSqliteCorePackageVersion>2.2.3</MicrosoftEntityFrameworkCoreSqliteCorePackageVersion>
-    <MicrosoftEntityFrameworkCoreSqlServerPackageVersion>2.2.3</MicrosoftEntityFrameworkCoreSqlServerPackageVersion>
-    <MicrosoftEntityFrameworkCoreToolsPackageVersion>2.2.3</MicrosoftEntityFrameworkCoreToolsPackageVersion>
+    <MicrosoftEntityFrameworkCorePackageVersion>2.2.4</MicrosoftEntityFrameworkCorePackageVersion>
+    <MicrosoftEntityFrameworkCoreAbstractionsPackageVersion>2.2.4</MicrosoftEntityFrameworkCoreAbstractionsPackageVersion>
+    <MicrosoftEntityFrameworkCoreAnalyzersPackageVersion>2.2.4</MicrosoftEntityFrameworkCoreAnalyzersPackageVersion>
+    <MicrosoftEntityFrameworkCoreDesignPackageVersion>2.2.4</MicrosoftEntityFrameworkCoreDesignPackageVersion>
+    <MicrosoftEntityFrameworkCoreInMemoryPackageVersion>2.2.4</MicrosoftEntityFrameworkCoreInMemoryPackageVersion>
+    <MicrosoftEntityFrameworkCoreRelationalPackageVersion>2.2.4</MicrosoftEntityFrameworkCoreRelationalPackageVersion>
+    <MicrosoftEntityFrameworkCoreSqlitePackageVersion>2.2.4</MicrosoftEntityFrameworkCoreSqlitePackageVersion>
+    <MicrosoftEntityFrameworkCoreSqliteCorePackageVersion>2.2.4</MicrosoftEntityFrameworkCoreSqliteCorePackageVersion>
+    <MicrosoftEntityFrameworkCoreSqlServerPackageVersion>2.2.4</MicrosoftEntityFrameworkCoreSqlServerPackageVersion>
+    <MicrosoftEntityFrameworkCoreToolsPackageVersion>2.2.4</MicrosoftEntityFrameworkCoreToolsPackageVersion>
 
     <MicrosoftExtensionsIdentityCorePackageVersion>2.2.0</MicrosoftExtensionsIdentityCorePackageVersion>
     <MicrosoftExtensionsIdentityStoresPackageVersion>2.2.0</MicrosoftExtensionsIdentityStoresPackageVersion>
