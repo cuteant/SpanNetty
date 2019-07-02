@@ -23,7 +23,6 @@
   <PropertyGroup>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>$(SourceRoot)/build/DotNetty.snk</AssemblyOriginatorKeyFile>
-    <OutputPath>$(SourceRoot)/$(Configuration)/$(Platform)</OutputPath>
   </PropertyGroup>
 
   <!-- Common compile parameters -->
