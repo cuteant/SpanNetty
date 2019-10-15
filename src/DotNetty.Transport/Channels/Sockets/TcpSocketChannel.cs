@@ -173,9 +173,12 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             try
             {
-                if (this.TryResetState(StateFlags.Open | StateFlags.Active))
+                if (this.TryResetState(StateFlags.Open))
                 {
-                    //this.Socket.Shutdown(SocketShutdown.Both);
+                    if (this.TryResetState(StateFlags.Active))
+                    {
+                        this.Socket.Shutdown(SocketShutdown.Both);
+                    }
                     this.Socket.SafeClose(); //this.Socket.Dispose();
                 }
             }
