@@ -44,6 +44,7 @@ namespace DotNetty.Common.Concurrency
         PreciseTimeSpan gracefulShutdownQuietPeriod;
         PreciseTimeSpan gracefulShutdownTimeout;
         readonly ISet<Action> shutdownHooks = new HashSet<Action>();
+        long progress;
 
         /// <summary>Creates a new instance of <see cref="SingleThreadEventExecutor"/>.</summary>
         public SingleThreadEventExecutor(string threadName, TimeSpan breakoutInterval)
@@ -87,6 +88,21 @@ namespace DotNetty.Common.Concurrency
         ///     Task Scheduler that will post work to this executor's queue.
         /// </summary>
         public TaskScheduler Scheduler => this.scheduler;
+
+        /// <summary>
+        ///     Allows to track whether executor is progressing through its backlog. Useful for diagnosing / mitigating stalls due to blocking calls in conjunction with IsBacklogEmpty property.
+        /// </summary>
+        public long Progress => Volatile.Read(ref this.progress);
+
+        /// <summary>
+        ///     Indicates whether executor's backlog is empty. Useful for diagnosing / mitigating stalls due to blocking calls in conjunction with Progress property.
+        /// </summary>
+        public bool IsBacklogEmpty => this.taskQueue.IsEmpty;
+
+        /// <summary>
+        ///     Gets length of backlog of tasks queued for immediate execution.
+        /// </summary>
+        public int BacklogLength => this.taskQueue.Count;
 
         readonly XParameterizedThreadStart loopAction;
         void Loop(object s)
@@ -141,6 +157,8 @@ namespace DotNetty.Common.Concurrency
                 this.emptyEvent.Set();
             }
         }
+
+        protected override IEnumerable<IEventExecutor> GetItems() => new[] { this };
 
         protected void WakeUp(bool inEventLoop)
         {
@@ -400,6 +418,7 @@ namespace DotNetty.Common.Concurrency
 
             while (true)
             {
+                Volatile.Write(ref this.progress, this.progress + 1); // volatile write is enough as this is the only thread ever writing
                 SafeExecute(task);
                 task = this.PollTask();
                 if (task == null)

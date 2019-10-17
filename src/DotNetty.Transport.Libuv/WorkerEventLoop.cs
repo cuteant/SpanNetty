@@ -7,6 +7,7 @@
 namespace DotNetty.Transport.Libuv
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
@@ -110,6 +111,8 @@ namespace DotNetty.Transport.Libuv
         public Task RegisterAsync(IChannel channel) => channel.Unsafe.RegisterAsync(this);
 
         public new IEventLoopGroup Parent => (IEventLoopGroup)base.Parent;
+
+        IEnumerable<IEventLoop> IEventLoopGroup.Items => new[] { this };
 
         sealed class PipeConnect : ConnectRequest
         {

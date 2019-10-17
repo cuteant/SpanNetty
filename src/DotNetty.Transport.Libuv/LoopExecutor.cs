@@ -7,6 +7,7 @@
 namespace DotNetty.Transport.Libuv
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
@@ -17,7 +18,6 @@ namespace DotNetty.Transport.Libuv
     using System.Threading;
     using DotNetty.Common;
     using DotNetty.Transport.Libuv.Native;
-
     using Timer = Native.Timer;
 
     class LoopExecutor : AbstractScheduledEventExecutor, IOrderedEventExecutor
@@ -553,5 +553,7 @@ namespace DotNetty.Transport.Libuv
 
             return this.TerminationCompletion;
         }
+
+        protected override IEnumerable<IEventExecutor> GetItems() => new[] { this };
     }
 }

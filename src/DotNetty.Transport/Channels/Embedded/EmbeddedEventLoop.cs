@@ -28,6 +28,10 @@ namespace DotNetty.Transport.Channels.Embedded
 
         public new IEventLoopGroup Parent => (IEventLoopGroup)base.Parent;
 
+        protected override IEnumerable<IEventExecutor> GetItems() => new[] { this };
+
+        public new IEnumerable<IEventLoop> Items => new[] { this };
+
         public override bool IsInEventLoop(Thread thread) => true;
 
         public override void Execute(IRunnable command)
