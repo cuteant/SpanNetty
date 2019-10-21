@@ -7,7 +7,7 @@ namespace DotNetty.Common
     {
         public static readonly ThreadLocalObjectPoolProvider Default = new ThreadLocalObjectPoolProvider();
 
-        public int MaximumRetained { get; set; } = ThreadLocalPool.DefaultMaxCapacity;
+        public int MaximumRetained { get; set; } = ThreadLocalPool.DefaultMaxCapacityPerThread;
 
         public override ObjectPool<T> Create<T>(IPooledObjectPolicy<T> policy)
         {

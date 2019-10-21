@@ -25,7 +25,7 @@ namespace DotNetty.Common
         {
             if (null == policy) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.policy); }
             _policy = policy;
-            _innerPool = new ThreadLocalPool<TPoolItem>(_policy.ValueFactory, ThreadLocalPool.DefaultMaxCapacity, _policy.PreCreate);
+            _innerPool = new ThreadLocalPool<TPoolItem>(_policy.ValueFactory, ThreadLocalPool.DefaultMaxCapacityPerThread, _policy.PreCreate);
         }
 
         public ThreadLocalObjectPool(IThreadLocalPooledObjectPolicy<TPoolItem> policy, int maxCapacity)
