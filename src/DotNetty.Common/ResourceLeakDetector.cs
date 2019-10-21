@@ -140,7 +140,13 @@ namespace DotNetty.Common
 
         void ReportLeak(DefaultResourceLeak resourceLeak)
         {
-            string records = resourceLeak.ToString();
+            if (!Logger.ErrorEnabled)
+            {
+                resourceLeak.Dispose();
+                return;
+            }
+
+            string records = resourceLeak.Dump();
             if (this.reportedLeaks.TryAdd(records, true))
             {
                 if (0u >= (uint)records.Length)
@@ -178,21 +184,31 @@ namespace DotNetty.Common
 
             RecordEntry head;
             long droppedRecords;
+            readonly WeakReference<GCNotice> gcNotice;
 
             public DefaultResourceLeak(ResourceLeakDetector owner, object referent)
             {
                 Debug.Assert(referent != null);
 
                 this.owner = owner;
-                if (owner.gcNotificationMap.TryGetValue(referent, out GCNotice existingNotice))
+                GCNotice gcNotice;
+                do
                 {
-                    existingNotice.Rearm(this);
+                    GCNotice gcNotice0 = null;
+                    gcNotice = owner.gcNotificationMap.GetValue(referent, referent0 =>
+                    {
+                        gcNotice0 = new GCNotice(referent0, owner);
+                        return gcNotice0;
+                    });
+                    if (gcNotice0 is object && gcNotice0 != gcNotice)
+                    {
+                        GC.SuppressFinalize(gcNotice0);
+                    }
                 }
-                else
-                {
-                    owner.gcNotificationMap.Add(referent, new GCNotice(this, referent));
-                }
+                while (!gcNotice.Arm(this, owner, referent));
+                this.gcNotice = new WeakReference<GCNotice>(gcNotice);
                 this.head = RecordEntry.Bottom;
+                Record();
             }
 
             public void Record() => this.Record0(null);
@@ -245,37 +261,31 @@ namespace DotNetty.Common
 
             public bool Close(object trackedObject)
             {
-                if (this.owner.gcNotificationMap.TryGetValue(trackedObject, out GCNotice notice))
+                if (gcNotice.TryGetTarget(out var notice))
                 {
-                    // The close is called by byte buffer release, in this case
-                    // we suppress the GCNotice finalize to prevent false positive
-                    // report where the byte buffer instance gets reused by thread
-                    // local cache and the existing GCNotice finalizer still holds 
-                    // the same byte buffer instance.
-                    GC.SuppressFinalize(notice);
-
-                    Debug.Assert(this.owner.gcNotificationMap.Remove(trackedObject));
-                    Interlocked.Exchange(ref this.head, null);
-                    return true;
+                    if (notice.UnArm(this, owner, trackedObject))
+                    {
+                        this.Dispose();
+                        return true;
+                    }
                 }
 
                 return false;
             }
 
-            // This is called from GCNotice finalizer 
-            internal void CloseFinal(object trackedObject)
+            // This is called from GCNotice finalizer
+            internal void CloseFinal()
             {
-                if (this.owner.gcNotificationMap.Remove(trackedObject)
-                    && Volatile.Read(ref this.head) != null)
+                if (Volatile.Read(ref this.head) is object)
                 {
                     this.owner.ReportLeak(this);
                 }
             }
 
-            public override string ToString()
+            public string Dump()
             {
                 RecordEntry oldHead = Interlocked.Exchange(ref this.head, null);
-                if (oldHead == null)
+                if (oldHead is null)
                 {
                     // Already closed
                     return string.Empty;
@@ -334,6 +344,11 @@ namespace DotNetty.Common
 
                 buf.Length = buf.Length - StringUtil.Newline.Length;
                 return buf.ToString();
+            }
+
+            internal void Dispose()
+            {
+                Interlocked.Exchange(ref this.head, null);
             }
         }
 
@@ -404,26 +419,81 @@ namespace DotNetty.Common
             //    Once the key dies, the dictionary automatically removes
             //    the key/value entry.
             //
-            DefaultResourceLeak leak;
+            private readonly LinkedList<DefaultResourceLeak> leakList = new LinkedList<DefaultResourceLeak>();
             object referent;
-
-            public GCNotice(DefaultResourceLeak leak, object referent)
+            ResourceLeakDetector owner;
+            public GCNotice(object referent, ResourceLeakDetector owner)
             {
-                this.leak = leak;
                 this.referent = referent;
+                this.owner = owner;
             }
 
             ~GCNotice()
             {
-                object trackedObject = this.referent;
-                this.referent = null;
-                this.leak.CloseFinal(trackedObject);
+                lock (this.leakList)
+                {
+                    foreach (var leak in this.leakList)
+                    {
+                        leak.CloseFinal();
+                    }
+                    this.leakList.Clear();
+
+                    //Since we get here with finalizer, it's no needed to remove key from gcNotificationMap
+
+                    //this.referent = null;
+                    this.owner = null;
+                }
             }
 
-            public void Rearm(DefaultResourceLeak newLeak)
+            public bool Arm(DefaultResourceLeak leak, ResourceLeakDetector owner, object referent)
             {
-                DefaultResourceLeak oldLeak = Interlocked.Exchange(ref this.leak, newLeak);
-                oldLeak.CloseFinal(this.referent);
+                lock (this.leakList)
+                {
+                    if (this.owner is null)
+                    {
+                        //Already disposed
+                        return false;
+                    }
+                    Debug.Assert(owner == this.owner);
+                    Debug.Assert(referent == this.referent);
+
+                    this.leakList.AddLast(leak);
+                    return true;
+                }
+            }
+
+            public bool UnArm(DefaultResourceLeak leak, ResourceLeakDetector owner, object referent)
+            {
+                lock (this.leakList)
+                {
+                    if (this.owner is null)
+                    {
+                        //Already disposed
+                        return false;
+                    }
+                    Debug.Assert(owner == this.owner);
+                    Debug.Assert(referent == this.referent);
+
+                    bool res = this.leakList.Remove(leak);
+                    if (0u >= (uint)this.leakList.Count)
+                    {
+                        // The close is called by byte buffer release, in this case
+                        // we suppress the GCNotice finalize to prevent false positive
+                        // report where the byte buffer instance gets reused by thread
+                        // local cache and the existing GCNotice finalizer still holds
+                        // the same byte buffer instance.
+                        GC.SuppressFinalize(this);
+
+                        // Don't inline the variable, anything inside Debug.Assert()
+                        // will be stripped out in Release builds
+                        bool removed = this.owner.gcNotificationMap.Remove(this.referent);
+                        Debug.Assert(removed);
+
+                        //this.referent = null;
+                        this.owner = null;
+                    }
+                    return res;
+                }
             }
         }
     }

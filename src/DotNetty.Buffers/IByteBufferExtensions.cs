@@ -343,7 +343,10 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.Value)]
         public static IByteBuffer SetUnsignedShort(this IByteBuffer buf, int index, ushort value)
         {
-            buf.SetShort(index, value);
+            unchecked
+            {
+                buf.SetShort(index, (short)value);
+            }
             return buf;
         }
 
@@ -359,7 +362,10 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.Value)]
         public static IByteBuffer SetUnsignedShortLE(this IByteBuffer buf, int index, ushort value)
         {
-            buf.SetShortLE(index, value);
+            unchecked
+            {
+                buf.SetShortLE(index, (short)value);
+            }
             return buf;
         }
 

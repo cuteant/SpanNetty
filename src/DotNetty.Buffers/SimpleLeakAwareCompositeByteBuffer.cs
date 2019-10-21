@@ -12,7 +12,7 @@ namespace DotNetty.Buffers
 
         internal SimpleLeakAwareCompositeByteBuffer(CompositeByteBuffer wrapped, IResourceLeakTracker leak) : base(wrapped)
         {
-            if (null == leak) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.leak); }
+            if (leak is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.leak); }
             this.Leak = leak;
         }
 
@@ -52,6 +52,8 @@ namespace DotNetty.Buffers
             Debug.Assert(closed);
         }
 
+        public override IByteBuffer AsReadOnly() => this.NewLeakAwareByteBuffer(base.AsReadOnly());
+
         public override IByteBuffer Slice() => this.NewLeakAwareByteBuffer(base.Slice());
 
         public override IByteBuffer Slice(int index, int length) => this.NewLeakAwareByteBuffer(base.Slice(index, length));
@@ -60,7 +62,13 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer ReadSlice(int length) => this.NewLeakAwareByteBuffer(base.ReadSlice(length));
 
-        public override IByteBuffer AsReadOnly() => this.NewLeakAwareByteBuffer(base.AsReadOnly());
+        public override IByteBuffer RetainedSlice() => this.NewLeakAwareByteBuffer(base.RetainedSlice());
+
+        public override IByteBuffer RetainedSlice(int index, int length) => this.NewLeakAwareByteBuffer(base.RetainedSlice(index, length));
+
+        public override IByteBuffer RetainedDuplicate() => this.NewLeakAwareByteBuffer(base.RetainedDuplicate());
+
+        public override IByteBuffer ReadRetainedSlice(int length) => this.NewLeakAwareByteBuffer(base.ReadRetainedSlice(length));
 
         SimpleLeakAwareByteBuffer NewLeakAwareByteBuffer(IByteBuffer wrapped) => this.NewLeakAwareByteBuffer(wrapped, this.Unwrap(), this.Leak);
 
