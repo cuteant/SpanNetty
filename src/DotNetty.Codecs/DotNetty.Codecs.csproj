@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\version.props" />
   <Import Project="..\nuget.props" />
   
   <PropertyGroup>
@@ -38,4 +37,6 @@
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+
+  <Import Project="..\version.props" />
 </Project>

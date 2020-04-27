@@ -4,7 +4,6 @@
 
 using System;
 using System.Buffers;
-using System.Buffers;
 using Xunit;
 
 namespace DotNetty.Buffers.Tests

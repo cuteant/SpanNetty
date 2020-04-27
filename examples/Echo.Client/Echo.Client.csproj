@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp2.0;net451;net40</TargetFrameworks>
-    <RuntimeFrameworkVersion Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">$(NETCoreApp2RuntimeFrameworkVersion)</RuntimeFrameworkVersion>
+    <TargetFrameworks>netcoreapp3.1;net451;net40</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net451' ">

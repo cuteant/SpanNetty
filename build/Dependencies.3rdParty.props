@@ -2,134 +2,151 @@
   <!-- Shared Package Versions -->
   <PropertyGroup>
     <!-- Common packages -->
+    <BenDemystifierPackageVersion>0.1.4</BenDemystifierPackageVersion>
     <CommandLineParserPackageVersion>2.3.0</CommandLineParserPackageVersion>
-    <CronExpressionDescriptorPackageVersion>2.2.0</CronExpressionDescriptorPackageVersion>
-    <MoreLinq2PackageVersion>2.10.0</MoreLinq2PackageVersion>
-    <MoreLinqPackageVersion>3.1.1</MoreLinqPackageVersion>
-    <SystemLinqDynamicCorePackageVersion>1.0.15</SystemLinqDynamicCorePackageVersion>
-    <OptionalPackageVersion>4.0.0</OptionalPackageVersion>
-    <SuperpowerPackageVersion>1.0.2</SuperpowerPackageVersion>
+    <CronExpressionDescriptorPackageVersion>2.13.0</CronExpressionDescriptorPackageVersion>
     <FastMemberSigned13PackageVersion>1.3.0</FastMemberSigned13PackageVersion>
-    <FastMemberSignedPackageVersion>1.4.1</FastMemberSignedPackageVersion>
+    <FastMemberSignedPackageVersion>1.5.0</FastMemberSignedPackageVersion>
+    <MoreLinq2PackageVersion>2.10.0</MoreLinq2PackageVersion>
+    <MoreLinqPackageVersion>3.2.0</MoreLinqPackageVersion>
+    <NCrontabSignedPackageVersion>3.3.2</NCrontabSignedPackageVersion>
+    <OptionalPackageVersion>4.0.0</OptionalPackageVersion>
+    <SystemLinqDynamicCorePackageVersion>1.0.19</SystemLinqDynamicCorePackageVersion>
+    <SuperpowerPackageVersion>1.0.2</SuperpowerPackageVersion>
 
-    <JetBrainsAnnotationsPackageVersion>11.1.0</JetBrainsAnnotationsPackageVersion>
+    <AutoMapperPackageVersion>9.0.0</AutoMapperPackageVersion>
+    <AutoMapperCollectionPackageVersion>5.0.0</AutoMapperCollectionPackageVersion>
 
-    <PollyPackageVersion>6.1.2</PollyPackageVersion>
+    <ToolGoodWordsPackageVersion>2.3.4.2</ToolGoodWordsPackageVersion>
+
+    <PollyPackageVersion>7.2.0</PollyPackageVersion>
+    <PollyCachingDistributedPackageVersion>3.0.1</PollyCachingDistributedPackageVersion>
+    <PollyCachingMemoryPackageVersion>3.0.2</PollyCachingMemoryPackageVersion>
+    <PollyExtensionsHttpPackageVersion>3.0.0</PollyExtensionsHttpPackageVersion>
+
     <ReactivePropertyPackageVersion>5.3.0</ReactivePropertyPackageVersion>
     <ReactiveStreamsPackageVersion>1.0.2</ReactiveStreamsPackageVersion>
+
+    <JetBrainsAnnotationsPackageVersion>2019.1.3</JetBrainsAnnotationsPackageVersion>
 
     <!-- Castle packages -->
     <CastleCorePackageVersion>4.4.0</CastleCorePackageVersion>
 
     <!-- Ioc related packages -->
-    <AutofacPackageVersion>4.9.2</AutofacPackageVersion>
+    <AutofacPackageVersion>4.9.4</AutofacPackageVersion>
     <AutofacConfigurationPackageVersion>4.1.0</AutofacConfigurationPackageVersion>
     <AutofacExtensionsDependencyInjectionPackageVersion>4.4.0</AutofacExtensionsDependencyInjectionPackageVersion>
     <AutofacExtrasDynamicProxyPackageVersion>4.5.0</AutofacExtrasDynamicProxyPackageVersion>
 
     <!-- Compression related packages -->
     <BrotliNativePackageVersion>0.0.1</BrotliNativePackageVersion>
-    <K4osCompressionLZ4PackageVersion>1.1.1</K4osCompressionLZ4PackageVersion>
-    <K4osCompressionLZ4StreamsPackageVersion>1.1.1</K4osCompressionLZ4StreamsPackageVersion>
-    <K4osHashxxHashPackageVersion>1.0.5</K4osHashxxHashPackageVersion>
+    <K4osCompressionLZ4PackageVersion>1.2.1-beta</K4osCompressionLZ4PackageVersion>
+    <K4osCompressionLZ4StreamsPackageVersion>1.2.1-beta</K4osCompressionLZ4StreamsPackageVersion>
+    <K4osHashxxHashPackageVersion>1.0.6</K4osHashxxHashPackageVersion>
     <Lz4netPackageVersion>1.0.15.93</Lz4netPackageVersion>
     <Lz4netNETCoreSignedPackageVersion>1.0.15.93</Lz4netNETCoreSignedPackageVersion>
 
     <!-- Database related packages -->
-    <CsvHelperPackageVersion>12.1.2</CsvHelperPackageVersion>
-    <DocumentFormatOpenXmlPackageVersion>2.9.1</DocumentFormatOpenXmlPackageVersion>
-    <ExcelNumberFormatPackageVersion>1.0.7</ExcelNumberFormatPackageVersion>
+    <CsvHelperPackageVersion>15.0.4</CsvHelperPackageVersion>
+    <DocumentFormatOpenXmlPackageVersion>2.10.1</DocumentFormatOpenXmlPackageVersion>
+    <ExcelNumberFormatPackageVersion>1.0.10</ExcelNumberFormatPackageVersion>
     <RemotionLinqPackageVersion>2.2.0</RemotionLinqPackageVersion>
     <ConsulPackageVersion>0.7.2.6</ConsulPackageVersion>
-    <DapperPackageVersion>1.60.1</DapperPackageVersion>
-    <DapperStrongNamePackageVersion>1.60.1</DapperStrongNamePackageVersion>
+    <DapperStrongNamePackageVersion>2.0.35</DapperStrongNamePackageVersion>
     <MicrosoftSqlServerTypesPackageVersion>14.0.1016.290</MicrosoftSqlServerTypesPackageVersion>
-    <MongoDBBsonStrongNamePackageVersion>2.8.1</MongoDBBsonStrongNamePackageVersion>
-    <MongoDBDriverCoreStrongNamePackageVersion>2.8.1</MongoDBDriverCoreStrongNamePackageVersion>
-    <MongoDBDriverStrongNamePackageVersion>2.8.1</MongoDBDriverStrongNamePackageVersion>
-    <MongoDBDriverGridFSStrongNamePackageVersion>2.8.1</MongoDBDriverGridFSStrongNamePackageVersion>
-    <mongocsharpdriverStrongNamePackageVersion>2.8.1</mongocsharpdriverStrongNamePackageVersion>
-    <MySqlDataPackageVersion>8.0.16</MySqlDataPackageVersion>
-    <MySqlConnectorPackageVersion>0.54.0</MySqlConnectorPackageVersion>
-    <NpgsqlPackageVersion>4.0.7</NpgsqlPackageVersion>
+    <MongoDBBsonStrongNamePackageVersion>2.9.3</MongoDBBsonStrongNamePackageVersion>
+    <MongoDBDriverCoreStrongNamePackageVersion>2.9.3</MongoDBDriverCoreStrongNamePackageVersion>
+    <MongoDBDriverStrongNamePackageVersion>2.9.3</MongoDBDriverStrongNamePackageVersion>
+    <MongoDBDriverGridFSStrongNamePackageVersion>2.9.3</MongoDBDriverGridFSStrongNamePackageVersion>
+    <mongocsharpdriverStrongNamePackageVersion>2.9.3</mongocsharpdriverStrongNamePackageVersion>
+    <MySqlConnectorPackageVersion>0.63.1</MySqlConnectorPackageVersion>
+    <NpgsqlPackageVersion>4.1.3.1</NpgsqlPackageVersion>
     <OracleManagedDataAccessPackageVersion>18.6.0</OracleManagedDataAccessPackageVersion>
     <OracleManagedDataAccessCorePackageVersion>2.18.6</OracleManagedDataAccessCorePackageVersion>
-    <StackExchangeRedisPackageVersion>2.0.601</StackExchangeRedisPackageVersion>
-    <StackExchangeRedisStrongNamePackageVersion>2.0.601</StackExchangeRedisStrongNamePackageVersion>
-    <SystemDataSQLiteCorePackageVersion>1.0.110</SystemDataSQLiteCorePackageVersion>
+    <StackExchangeRedisPackageVersion>2.1.30</StackExchangeRedisPackageVersion>
+    <StackExchangeRedisStrongNamePackageVersion>2.1.30</StackExchangeRedisStrongNamePackageVersion>
+    <SystemDataSQLiteCorePackageVersion>1.0.112.1</SystemDataSQLiteCorePackageVersion>
 
     <!-- Hosting related packages -->
-    <TopshelfPackageVersion>4.2.0.212-develop</TopshelfPackageVersion>
-    <TopshelfExtensionsConfigurationPackageVersion>4.2.0.212-develop</TopshelfExtensionsConfigurationPackageVersion>
-    <TopshelfNLogPackageVersion>4.2.0.212-develop</TopshelfNLogPackageVersion>
-    <TopshelfSerilogPackageVersion>4.2.0.212-develop</TopshelfSerilogPackageVersion>
+    <TopshelfPackageVersion>4.2.1</TopshelfPackageVersion>
+    <TopshelfExtensionsConfigurationPackageVersion>4.2.1</TopshelfExtensionsConfigurationPackageVersion>
+    <TopshelfNLogPackageVersion>4.2.1</TopshelfNLogPackageVersion>
+    <TopshelfSerilogPackageVersion>4.2.1</TopshelfSerilogPackageVersion>
 
     <!-- Logging related packages -->
-    <NLogPackageVersion>4.6.3</NLogPackageVersion>
-    <NLogDevPackageVersion>4.6.3</NLogDevPackageVersion>
-    <SerilogPackageVersion>2.8.0</SerilogPackageVersion>
-    <SerilogDevPackageVersion>2.8.0</SerilogDevPackageVersion>
-    <SerilogEnrichersEnvironmentPackageVersion>2.1.3-dev-00752</SerilogEnrichersEnvironmentPackageVersion>
-    <SerilogEnrichersProcessPackageVersion>2.0.1</SerilogEnrichersProcessPackageVersion>
-    <SerilogEnrichersThreadPackageVersion>3.0.1-dev-00731</SerilogEnrichersThreadPackageVersion>
-    <SerilogExtensionsLoggingFilePackageVersion>2.0.0-dev-00024</SerilogExtensionsLoggingFilePackageVersion>
-    <SerilogFiltersExpressionsPackageVersion>2.0.1-dev-00044</SerilogFiltersExpressionsPackageVersion>
-    <SerilogFormattingCompactPackageVersion>1.0.1-dev-00925</SerilogFormattingCompactPackageVersion>
-    <SerilogFormattingCompactReaderPackageVersion>1.0.3</SerilogFormattingCompactReaderPackageVersion>
-    <SerilogSettingsAppSettingsPackageVersion>2.2.2</SerilogSettingsAppSettingsPackageVersion>
-    <SerilogSettingsConfigurationPackageVersion>3.0.2-dev-00187</SerilogSettingsConfigurationPackageVersion>
-    <SerilogSinksApplicationInsightsPackageVersion>3.0.1</SerilogSinksApplicationInsightsPackageVersion>
-    <SerilogSinksAsyncPackageVersion>1.3.1-dev-00063</SerilogSinksAsyncPackageVersion>
-    <SerilogSinksColoredConsolePackageVersion>3.0.1</SerilogSinksColoredConsolePackageVersion>
-    <SerilogSinksConsolePackageVersion>3.1.2-dev-00788</SerilogSinksConsolePackageVersion>
-    <SerilogSinksDebugPackageVersion>1.0.2-dev-00020</SerilogSinksDebugPackageVersion>
-    <SerilogSinksEmailPackageVersion>2.3.1-dev-00092</SerilogSinksEmailPackageVersion>
-    <SerilogSinksEventLogPackageVersion>3.1.0</SerilogSinksEventLogPackageVersion>
-    <SerilogSinksFilePackageVersion>4.1.0-dev-00806</SerilogSinksFilePackageVersion>
-    <SerilogSinksLiteratePackageVersion>3.0.1-dev-00044</SerilogSinksLiteratePackageVersion>
-    <SerilogSinksObservablePackageVersion>2.0.3-dev-00712</SerilogSinksObservablePackageVersion>
-    <SerilogSinksPeriodicBatchingPackageVersion>2.2.0-dev-00740</SerilogSinksPeriodicBatchingPackageVersion>
+    <NLogPackageVersion>4.7.0</NLogPackageVersion>
+    <NLogDevPackageVersion>4.7.0</NLogDevPackageVersion>
+    <NLogExtensionsLoggingPackageVersion>1.6.2</NLogExtensionsLoggingPackageVersion>
+    <NLogWebAspNetCorePackageVersion>4.9.1</NLogWebAspNetCorePackageVersion>
+
+    <SerilogPackageVersion>2.9.0</SerilogPackageVersion>
+    <SerilogDevPackageVersion>2.9.0</SerilogDevPackageVersion>
+    <SerilogAspNetCorePackageVersion>3.2.0</SerilogAspNetCorePackageVersion>
+    <SerilogExtensionsLoggingPackageVersion>3.0.1</SerilogExtensionsLoggingPackageVersion>
+    <SerilogExtensionsHostingPackageVersion>3.0.0</SerilogExtensionsHostingPackageVersion>
+    <SerilogExtensionsLoggingFilePackageVersion>2.0.0-dev-00039</SerilogExtensionsLoggingFilePackageVersion>
+    <SerilogFormattingCompactPackageVersion>1.1.0</SerilogFormattingCompactPackageVersion>
+    <SerilogSinksAsyncPackageVersion>1.4.0</SerilogSinksAsyncPackageVersion>
+    <SerilogSinksConsolePackageVersion>4.0.0-dev-00834</SerilogSinksConsolePackageVersion>
+    <SerilogSinksDebugPackageVersion>1.0.1</SerilogSinksDebugPackageVersion>
+    <SerilogSinksFilePackageVersion>4.1.0</SerilogSinksFilePackageVersion>
     <SerilogSinksRollingFilePackageVersion>3.3.1-dev-00771</SerilogSinksRollingFilePackageVersion>
-    <SerilogSinksTextWriterPackageVersion>2.1.0</SerilogSinksTextWriterPackageVersion>
-    <SerilogSinksTracePackageVersion>3.0.0-dev-00732</SerilogSinksTracePackageVersion>
+
+    <SerilogSettingsAppSettingsPackageVersion>2.2.2</SerilogSettingsAppSettingsPackageVersion>
+    <SerilogSettingsConfigurationPackageVersion>3.1.1-dev-00209</SerilogSettingsConfigurationPackageVersion>
+
+    <SerilogEnrichersEnvironmentPackageVersion>2.1.3</SerilogEnrichersEnvironmentPackageVersion>
+    <SerilogEnrichersProcessPackageVersion>2.0.1</SerilogEnrichersProcessPackageVersion>
+    <SerilogEnrichersThreadPackageVersion>3.1.0</SerilogEnrichersThreadPackageVersion>
+
+    <!-- NetTopologySuite related packages -->
+    <GeoAPICorePackageVersion>1.7.5</GeoAPICorePackageVersion>
+    <GeoAPICoordinateSystemsPackageVersion>1.7.5</GeoAPICoordinateSystemsPackageVersion>
+    <GeoAPIPackageVersion>1.7.5</GeoAPIPackageVersion>
+
+    <NetTopologySuiteCorePackageVersion>1.15.3</NetTopologySuiteCorePackageVersion>
+    <NetTopologySuiteCoordinateSystemsPackageVersion>1.15.3</NetTopologySuiteCoordinateSystemsPackageVersion>
+    <NetTopologySuiteFeaturesPackageVersion>1.15.1</NetTopologySuiteFeaturesPackageVersion>
+    <NetTopologySuitePackageVersion>1.15.3</NetTopologySuitePackageVersion>
+
+    <NetTopologySuiteIOGeoJSONPackageVersion>1.15.5</NetTopologySuiteIOGeoJSONPackageVersion>
+    <NetTopologySuiteIOGeoPackagePackageVersion>1.15.0</NetTopologySuiteIOGeoPackagePackageVersion>
+    <NetTopologySuiteIOGPXPackageVersion>0.6.0</NetTopologySuiteIOGPXPackageVersion>
+    <NetTopologySuiteIOPostGisPackageVersion>1.15.1</NetTopologySuiteIOPostGisPackageVersion>
+    <NetTopologySuiteIOShapeFilePackageVersion>1.15.3</NetTopologySuiteIOShapeFilePackageVersion>
+    <NetTopologySuiteIOSpatiaLitePackageVersion>1.15.1</NetTopologySuiteIOSpatiaLitePackageVersion>
 
     <!-- Network related packages -->
-    <BouncyCastlePackageVersion>1.8.4</BouncyCastlePackageVersion>
-    <PortableBouncyCastlePackageVersion>1.8.5</PortableBouncyCastlePackageVersion>
-    <DotNettyBuffersPackageVersion>0.5.0</DotNettyBuffersPackageVersion>
-    <DotNettyCodecsHttpPackageVersion>0.5.0</DotNettyCodecsHttpPackageVersion>
-    <DotNettyCodecsMqttPackageVersion>0.5.0</DotNettyCodecsMqttPackageVersion>
-    <DotNettyCodecsRedisPackageVersion>0.5.0</DotNettyCodecsRedisPackageVersion>
-    <DotNettyCodecsPackageVersion>0.5.0</DotNettyCodecsPackageVersion>
-    <DotNettyCommonPackageVersion>0.5.0</DotNettyCommonPackageVersion>
-    <DotNettyHandlersPackageVersion>0.5.0</DotNettyHandlersPackageVersion>
-    <DotNettyTransportLibuvPackageVersion>0.5.0</DotNettyTransportLibuvPackageVersion>
-    <DotNettyTransportPackageVersion>0.5.0</DotNettyTransportPackageVersion>
-    <GrpcPackageVersion>1.18.0</GrpcPackageVersion>
-    <GrpcCorePackageVersion>1.18.0</GrpcCorePackageVersion>
-    <GrpcCoreTestingPackageVersion>1.18.0</GrpcCoreTestingPackageVersion>
-    <GrpcHealthCheckPackageVersion>1.18.0</GrpcHealthCheckPackageVersion>
-    <GrpcReflectionPackageVersion>1.18.0</GrpcReflectionPackageVersion>
-    <GrpcToolsPackageVersion>1.18.0</GrpcToolsPackageVersion>
+    <BouncyCastlePackageVersion>1.8.6.1</BouncyCastlePackageVersion>
+    <PortableBouncyCastlePackageVersion>1.8.6.7</PortableBouncyCastlePackageVersion>
+    <DotNettyBuffersPackageVersion>0.6.0</DotNettyBuffersPackageVersion>
+    <DotNettyCodecsHttpPackageVersion>0.6.0</DotNettyCodecsHttpPackageVersion>
+    <DotNettyCodecsMqttPackageVersion>0.6.0</DotNettyCodecsMqttPackageVersion>
+    <DotNettyCodecsRedisPackageVersion>0.6.0</DotNettyCodecsRedisPackageVersion>
+    <DotNettyCodecsPackageVersion>0.6.0</DotNettyCodecsPackageVersion>
+    <DotNettyCommonPackageVersion>0.6.0</DotNettyCommonPackageVersion>
+    <DotNettyHandlersPackageVersion>0.6.0</DotNettyHandlersPackageVersion>
+    <DotNettyTransportLibuvPackageVersion>0.6.0</DotNettyTransportLibuvPackageVersion>
+    <DotNettyTransportPackageVersion>0.6.0</DotNettyTransportPackageVersion>
 
     <DnsClientPackageVersion>1.2.0</DnsClientPackageVersion>
     <RabbitMQClientPackageVersion>5.1.0</RabbitMQClientPackageVersion>
 
     <LibuvPackageVersion>1.10.0</LibuvPackageVersion>
 
-    <MimeKitPackageVersion>2.1.2</MimeKitPackageVersion>
-    <MailKitPackageVersion>2.1.2</MailKitPackageVersion>
+    <MimeKitPackageVersion>2.6.0</MimeKitPackageVersion>
+    <MailKitPackageVersion>2.6.0</MailKitPackageVersion>
 
     <!-- Serialization related packages -->
     <GoogleApiCommonProtosPackageVersion>1.6.0</GoogleApiCommonProtosPackageVersion>
     <GoogleProtobufPackageVersion>3.8.0</GoogleProtobufPackageVersion>
     <GoogleProtobufToolsPackageVersion>3.8.0</GoogleProtobufToolsPackageVersion>
-    <HyperionPackageVersion>0.9.7</HyperionPackageVersion>
+    <HyperionPackageVersion>0.9.15</HyperionPackageVersion>
     <MessagePackAnalyzerPackageVersion>1.7.3.7</MessagePackAnalyzerPackageVersion>
-    <NewtonsoftJsonBsonPackageVersion>1.0.1</NewtonsoftJsonBsonPackageVersion>
-    <NewtonsoftJsonPackageVersion>12.0.2</NewtonsoftJsonPackageVersion>
-    <ProtobufNetPackageVersion>2.4.0</ProtobufNetPackageVersion>
+    <NewtonsoftJsonBsonPackageVersion>1.0.2</NewtonsoftJsonBsonPackageVersion>
+    <NewtonsoftJsonPackageVersion>12.0.3</NewtonsoftJsonPackageVersion>
+    <ProtobufNetPackageVersion>2.4.4</ProtobufNetPackageVersion>
     <ProtobufNetDataPackageVersion>3.0.0</ProtobufNetDataPackageVersion>
-    <YamlDotNetPackageVersion>6.1.1</YamlDotNetPackageVersion>
+    <YamlDotNetPackageVersion>8.1.0</YamlDotNetPackageVersion>
   </PropertyGroup>
 </Project>

@@ -4,7 +4,6 @@
     <AssemblyVersion>0.6.0.0</AssemblyVersion>
     <VersionPrefix Condition=" '$(VersionPrefix)'=='' ">0.6.0</VersionPrefix>
     <VersionSuffix Condition=" '$(VersionSuffix)'=='' ">rtm</VersionSuffix>
-    <VersionDateSuffix Condition=" '$(VersionDateSuffix)'=='' ">190618-01</VersionDateSuffix>
     <VersionSuffix Condition=" '$(VersionDateSuffix)'!='' ">$(VersionSuffix)-$(VersionDateSuffix)</VersionSuffix>
   </PropertyGroup>
   <Choose>
@@ -76,6 +75,11 @@
     <When Condition=" '$(TargetFramework)' == 'netcoreapp3.0' ">
       <PropertyGroup>
         <FileVersion>0.6.0.6500</FileVersion>
+      </PropertyGroup>
+    </When>
+    <When Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+      <PropertyGroup>
+        <FileVersion>0.6.0.6600</FileVersion>
       </PropertyGroup>
     </When>
     <Otherwise>

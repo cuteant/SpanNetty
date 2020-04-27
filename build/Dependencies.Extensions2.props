@@ -1,0 +1,74 @@
+<Project>
+  <!-- Shared Package Versions -->
+  <PropertyGroup>
+    <MicrosoftExtensionsClosedGenericMatcherSources2PackageVersion>2.2.0</MicrosoftExtensionsClosedGenericMatcherSources2PackageVersion>
+    <MicrosoftExtensionsCommandLineUtilsSources2PackageVersion>2.2.0</MicrosoftExtensionsCommandLineUtilsSources2PackageVersion>
+    <MicrosoftExtensionsObjectMethodExecutorSources2PackageVersion>2.2.0</MicrosoftExtensionsObjectMethodExecutorSources2PackageVersion>
+    <MicrosoftExtensionsSecurityHelperSources2PackageVersion>2.2.0</MicrosoftExtensionsSecurityHelperSources2PackageVersion>
+    <MicrosoftExtensionsValueStopwatchSources2PackageVersion>2.2.0</MicrosoftExtensionsValueStopwatchSources2PackageVersion>
+    <MicrosoftExtensionsWebEncodersSources2PackageVersion>2.2.0</MicrosoftExtensionsWebEncodersSources2PackageVersion>
+
+    <MicrosoftExtensionsCachingAbstractions2PackageVersion>2.2.0</MicrosoftExtensionsCachingAbstractions2PackageVersion>
+    <MicrosoftExtensionsCachingMemory2PackageVersion>2.2.0</MicrosoftExtensionsCachingMemory2PackageVersion>
+    <MicrosoftExtensionsCachingStackExchangeRedis2PackageVersion>2.2.5</MicrosoftExtensionsCachingStackExchangeRedis2PackageVersion>
+    <MicrosoftExtensionsCachingSqlConfigTools2PackageVersion>2.0.2</MicrosoftExtensionsCachingSqlConfigTools2PackageVersion>
+    <MicrosoftExtensionsCachingSqlServer2PackageVersion>2.2.0</MicrosoftExtensionsCachingSqlServer2PackageVersion>
+    <MicrosoftExtensionsConfigurationAbstractions2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationAbstractions2PackageVersion>
+    <MicrosoftExtensionsConfigurationAzureKeyVault2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationAzureKeyVault2PackageVersion>
+    <MicrosoftExtensionsConfigurationBinder2PackageVersion>2.2.4</MicrosoftExtensionsConfigurationBinder2PackageVersion>
+    <MicrosoftExtensionsConfigurationCommandLine2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationCommandLine2PackageVersion>
+    <MicrosoftExtensionsConfigurationEnvironmentVariables2PackageVersion>2.2.4</MicrosoftExtensionsConfigurationEnvironmentVariables2PackageVersion>
+    <MicrosoftExtensionsConfigurationFileExtensions2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationFileExtensions2PackageVersion>
+    <MicrosoftExtensionsConfigurationIni2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationIni2PackageVersion>
+    <MicrosoftExtensionsConfigurationJson2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationJson2PackageVersion>
+    <MicrosoftExtensionsConfiguration2PackageVersion>2.2.0</MicrosoftExtensionsConfiguration2PackageVersion>
+    <MicrosoftExtensionsConfigurationUserSecrets2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationUserSecrets2PackageVersion>
+    <MicrosoftExtensionsConfigurationXml2PackageVersion>2.2.0</MicrosoftExtensionsConfigurationXml2PackageVersion>
+    <MicrosoftExtensionsDependencyInjectionAbstractions2PackageVersion>2.2.0</MicrosoftExtensionsDependencyInjectionAbstractions2PackageVersion>
+    <MicrosoftExtensionsDependencyInjection2PackageVersion>2.2.0</MicrosoftExtensionsDependencyInjection2PackageVersion>
+
+    <MicrosoftDotNetPlatformAbstractions2PackageVersion>2.1.0</MicrosoftDotNetPlatformAbstractions2PackageVersion>
+    <MicrosoftExtensionsDependencyModel2PackageVersion>2.1.0</MicrosoftExtensionsDependencyModel2PackageVersion>
+
+    <MicrosoftExtensionsDiagnosticAdapter2PackageVersion>2.2.0</MicrosoftExtensionsDiagnosticAdapter2PackageVersion>
+    <MicrosoftExtensionsDiagnosticsHealthChecksAbstractions2PackageVersion>2.2.5</MicrosoftExtensionsDiagnosticsHealthChecksAbstractions2PackageVersion>
+    <MicrosoftExtensionsDiagnosticsHealthChecksEntityFrameworkCore2PackageVersion>2.2.5</MicrosoftExtensionsDiagnosticsHealthChecksEntityFrameworkCore2PackageVersion>
+    <MicrosoftExtensionsDiagnosticsHealthChecks2PackageVersion>2.2.5</MicrosoftExtensionsDiagnosticsHealthChecks2PackageVersion>
+    <MicrosoftExtensionsFileProvidersAbstractions2PackageVersion>2.2.0</MicrosoftExtensionsFileProvidersAbstractions2PackageVersion>
+    <MicrosoftExtensionsFileProvidersComposite2PackageVersion>2.2.0</MicrosoftExtensionsFileProvidersComposite2PackageVersion>
+    <MicrosoftExtensionsFileProvidersEmbedded2PackageVersion>2.2.0</MicrosoftExtensionsFileProvidersEmbedded2PackageVersion>
+    <MicrosoftExtensionsFileProvidersPhysical2PackageVersion>2.2.0</MicrosoftExtensionsFileProvidersPhysical2PackageVersion>
+    <MicrosoftExtensionsFileSystemGlobbing2PackageVersion>2.2.0</MicrosoftExtensionsFileSystemGlobbing2PackageVersion>
+    <MicrosoftExtensionsHostingAbstractions2PackageVersion>2.2.0</MicrosoftExtensionsHostingAbstractions2PackageVersion>
+    <MicrosoftExtensionsHosting2PackageVersion>2.2.0</MicrosoftExtensionsHosting2PackageVersion>
+    <MicrosoftExtensionsHttp2PackageVersion>2.2.0</MicrosoftExtensionsHttp2PackageVersion>
+    <MicrosoftExtensionsHttpPolly2PackageVersion>2.2.0</MicrosoftExtensionsHttpPolly2PackageVersion>
+    <MicrosoftExtensionsLocalizationAbstractions2PackageVersion>2.2.0</MicrosoftExtensionsLocalizationAbstractions2PackageVersion>
+    <MicrosoftExtensionsLocalization2PackageVersion>2.2.0</MicrosoftExtensionsLocalization2PackageVersion>
+    <MicrosoftExtensionsLoggingAbstractions2PackageVersion>2.2.0</MicrosoftExtensionsLoggingAbstractions2PackageVersion>
+    <MicrosoftExtensionsLoggingAzureAppServices2PackageVersion>2.2.0</MicrosoftExtensionsLoggingAzureAppServices2PackageVersion>
+    <MicrosoftExtensionsLoggingConfiguration2PackageVersion>2.2.0</MicrosoftExtensionsLoggingConfiguration2PackageVersion>
+    <MicrosoftExtensionsLoggingConsole2PackageVersion>2.2.0</MicrosoftExtensionsLoggingConsole2PackageVersion>
+    <MicrosoftExtensionsLoggingDebug2PackageVersion>2.2.0</MicrosoftExtensionsLoggingDebug2PackageVersion>
+    <MicrosoftExtensionsLoggingEventSource2PackageVersion>2.2.0</MicrosoftExtensionsLoggingEventSource2PackageVersion>
+    <MicrosoftExtensionsLogging2PackageVersion>2.2.0</MicrosoftExtensionsLogging2PackageVersion>
+    <MicrosoftExtensionsLoggingTesting2PackageVersion>2.2.0</MicrosoftExtensionsLoggingTesting2PackageVersion>
+    <MicrosoftExtensionsLoggingTraceSource2PackageVersion>2.2.0</MicrosoftExtensionsLoggingTraceSource2PackageVersion>
+    <MicrosoftExtensionsObjectPool2PackageVersion>2.2.0</MicrosoftExtensionsObjectPool2PackageVersion>
+    <MicrosoftExtensionsOptionsConfigurationExtensions2PackageVersion>2.2.0</MicrosoftExtensionsOptionsConfigurationExtensions2PackageVersion>
+    <MicrosoftExtensionsOptions2PackageVersion>2.2.0</MicrosoftExtensionsOptions2PackageVersion>
+    <MicrosoftExtensionsPrimitives2PackageVersion>2.2.0</MicrosoftExtensionsPrimitives2PackageVersion>
+
+
+    <NetFxAspNetCoreJsonPatchPackageVersion>2.2.0</NetFxAspNetCoreJsonPatchPackageVersion>
+    <NetFxExtensionsCachingPackageVersion>2.2.0</NetFxExtensionsCachingPackageVersion>
+    <NetFxExtensionsConfigurationPackageVersion>2.2.0</NetFxExtensionsConfigurationPackageVersion>
+    <NetFxExtensionsDependencyInjectionPackageVersion>2.2.0</NetFxExtensionsDependencyInjectionPackageVersion>
+    <NetFxExtensionsFileProvidersPackageVersion>2.2.0</NetFxExtensionsFileProvidersPackageVersion>
+    <NetFxExtensionsLoggingPackageVersion>2.2.0</NetFxExtensionsLoggingPackageVersion>
+    <NetFxExtensionsObjectPoolPackageVersion>2.2.0</NetFxExtensionsObjectPoolPackageVersion>
+    <NetFxExtensionsOptionsConfigurationExtensionsPackageVersion>2.2.0</NetFxExtensionsOptionsConfigurationExtensionsPackageVersion>
+    <NetFxExtensionsOptionsPackageVersion>2.2.0</NetFxExtensionsOptionsPackageVersion>
+    <NetFxExtensionsPrimitivesPackageVersion>2.2.0</NetFxExtensionsPrimitivesPackageVersion>
+  </PropertyGroup>
+</Project>

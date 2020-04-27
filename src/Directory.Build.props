@@ -2,9 +2,13 @@
   <!-- Import parent Directory.build.props -->
   <Import Project="..\Directory.Build.props" />
 
-  <PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <IsPackable>false</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
     <IsPackable>true</IsPackable>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
   </PropertyGroup>
 

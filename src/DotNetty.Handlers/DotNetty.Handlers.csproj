@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\version.props" />
   <Import Project="..\nuget.props" />
   
   <ImportGroup Condition=" '$(TargetFramework)' == 'net40' ">
@@ -7,7 +6,7 @@
   </ImportGroup>
   
   <PropertyGroup>
-    <TargetFrameworks>net471;net451;net40;netstandard2.0;netcoreapp2.2</TargetFrameworks>
+    <TargetFrameworks>net471;net451;net40;netstandard2.0;netstandard2.1;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
     <RootNamespace>DotNetty.Handlers</RootNamespace>
     <AssemblyName>DotNetty.Handlers</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
@@ -41,4 +40,6 @@
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+
+  <Import Project="..\version.props" />
 </Project>
