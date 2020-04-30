@@ -36,8 +36,6 @@
     <DefineConstants>$(DefineConstants);NET_3_5_GREATER;SIGNED</DefineConstants>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <ImportLibs>netcore</ImportLibs>
   </PropertyGroup>
@@ -85,6 +83,11 @@
   <PropertyGroup Condition="'$(TargetFramework)' == 'net48'">
     <DefineConstants>$(DefineConstants);DESKTOPCLR;NET_4_0_GREATER;NET_4_5_GREATER;NET_4_6_GREATER;NET_4_7_GREATER</DefineConstants>
     <ImportLibs>netfx</ImportLibs>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(ImportLibs)' == 'netfx'">
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
 
 
