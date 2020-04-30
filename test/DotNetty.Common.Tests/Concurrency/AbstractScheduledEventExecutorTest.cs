@@ -2,6 +2,7 @@
 namespace DotNetty.Common.Tests.Concurrency
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
     using Xunit;
@@ -37,6 +38,8 @@ namespace DotNetty.Common.Tests.Concurrency
             public override bool IsShutdown => false;
 
             public override bool IsTerminated => false;
+
+            protected override IEnumerable<IEventExecutor> GetItems() => new[] { this };
 
             public override void Execute(IRunnable task)
             {
