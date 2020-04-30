@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+#if !TEST40
 namespace DotNetty.Common.Tests
 {
     using DotNetty.Common.Concurrency;
@@ -284,3 +285,4 @@ namespace DotNetty.Common.Tests
         }
     }
 }
+#endif

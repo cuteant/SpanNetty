@@ -3381,7 +3381,7 @@ namespace DotNetty.Buffers.Tests
                     var t2 = new Thread(s2 =>
                     {
 #if TEST40
-                      Interlocked.Exchange(ref cnt, buf.ReferenceCount);
+                        Interlocked.Exchange(ref cnt, buf.ReferenceCount);
 #else
                         Volatile.Write(ref cnt, buf.ReferenceCount);
 #endif

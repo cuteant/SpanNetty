@@ -1,4 +1,4 @@
-﻿#if !NET40
+﻿#if !TEST40
 
 namespace DotNetty.Common.Tests.Internal
 {
