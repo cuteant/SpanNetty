@@ -17,9 +17,6 @@ namespace DotNetty.Buffers
 
     public ref partial struct ByteBufferReader
     {
-        private const int IndexNotFound = -1;
-        private const uint NIndexNotFound = unchecked((uint)IndexNotFound);
-
         /// <summary>Try to read everything up to the given <paramref name="delimiter"/>.</summary>
         /// <param name="span">The read data, if any.</param>
         /// <param name="delimiter">The delimiter to look for.</param>
@@ -31,7 +28,7 @@ namespace DotNetty.Buffers
             int index = remaining.IndexOf(delimiter);
 
             uint uIndex = (uint)index;
-            if (uIndex < NIndexNotFound)
+            if (Constants.TooBigOrNegative >= uIndex) // index != -1
             {
                 span = 0u >= uIndex ? default : remaining.Slice(0, index);
                 AdvanceCurrentSpan(index + (advancePastDelimiter ? 1 : 0));
@@ -66,7 +63,7 @@ namespace DotNetty.Buffers
             ReadOnlySpan<byte> remaining = UnreadSpan;
             int index = remaining.IndexOf(delimiter);
 
-            if ((index > 0 && !remaining[index - 1].Equals(delimiterEscape)) || 0u >= (uint)index)
+            if ((index > 0 && remaining[index - 1] != delimiterEscape) || 0u >= (uint)index)
             {
                 span = remaining.Slice(0, index);
                 AdvanceCurrentSpan(index + (advancePastDelimiter ? 1 : 0));
@@ -101,7 +98,7 @@ namespace DotNetty.Buffers
             do
             {
                 uint uIndex = (uint)index;
-                if (uIndex < NIndexNotFound) // index >= 0
+                if (Constants.TooBigOrNegative >= uIndex) // index >= 0
                 {
                     if (0u >= uIndex && priorEscape) // index == 0
                     {
@@ -111,28 +108,22 @@ namespace DotNetty.Buffers
                         remaining = UnreadSpan;
                         goto Continue;
                     }
-                    else if (index > 0 && remaining[index - 1].Equals(delimiterEscape))
+                    else if (index > 0 && remaining[index - 1] == delimiterEscape)
                     {
                         // This delimiter might be skipped
 
                         // Count our escapes
                         int escapeCount = 1;
-                        //int i = index - 2;
-                        //for (; i >= 0; i--)
-                        //{
-                        //    if (!remaining[i].Equals(delimiterEscape)) { break; }
-                        //}
-                        var result = PlatformDependent.ForEachByteDesc(
+                        var idx = SpanHelpers.LastIndexNotOf(
                                 ref MemoryMarshal.GetReference(remaining),
-                                new ByteBufferReaderHelper.IndexNotOfProcessor(delimiterEscape),
+                                delimiterEscape,
                                 index - 1);
-                        int i = (uint)result < NIndexNotFound ? result : IndexNotFound;
-                        if (i < 0 && priorEscape)
+                        if ((uint)idx > Constants.TooBigOrNegative && priorEscape) // i < 0
                         {
                             // Started and ended with escape, increment once more
                             escapeCount++;
                         }
-                        escapeCount += index - 2 - i;
+                        escapeCount += index - 2 - idx;
 
                         if ((escapeCount & 1) != 0)
                         {
@@ -159,22 +150,16 @@ namespace DotNetty.Buffers
                 {
                     // No delimiter, need to check the end of the span for odd number of escapes then advance
                     var remainingLen = remaining.Length;
-                    if (remainingLen > 0 && remaining[remainingLen - 1].Equals(delimiterEscape))
+                    if (remainingLen > 0 && remaining[remainingLen - 1] == delimiterEscape)
                     {
                         int escapeCount = 1;
-                        //int i = remainingLen - 2;
-                        //for (; i >= 0; i--)
-                        //{
-                        //    if (!remaining[i].Equals(delimiterEscape)) { break; }
-                        //}
-                        var result = PlatformDependent.ForEachByteDesc(
+                        var idx = SpanHelpers.LastIndexNotOf(
                                 ref MemoryMarshal.GetReference(remaining),
-                                new ByteBufferReaderHelper.IndexNotOfProcessor(delimiterEscape),
+                                delimiterEscape,
                                 remainingLen - 1);
-                        int i = (uint)result < NIndexNotFound ? result : IndexNotFound;
+                        escapeCount += remainingLen - 2 - idx;
 
-                        escapeCount += remainingLen - 2 - i;
-                        if (i < 0 && priorEscape)
+                        if ((uint)idx > Constants.TooBigOrNegative && priorEscape) // idx < 0
                         {
                             priorEscape = (escapeCount & 1) == 0;   // equivalent to incrementing escapeCount before setting priorEscape
                         }
@@ -223,7 +208,7 @@ namespace DotNetty.Buffers
             while (_moreData)
             {
                 int index = remaining.IndexOf(delimiter);
-                if ((uint)index < NIndexNotFound)
+                if (Constants.TooBigOrNegative >= (uint)index) // index != -1
                 {
                     // Found the delimiter. Move to it, slice, then move past it.
                     if (index > 0)
@@ -267,7 +252,7 @@ namespace DotNetty.Buffers
             {
                 int index = remaining.IndexOf(delimiter);
                 uint uIndex = (uint)index;
-                if (uIndex < NIndexNotFound) // index != -1
+                if (Constants.TooBigOrNegative >= uIndex) // index != -1
                 {
                     if (0u >= uIndex && priorEscape) // index == 0
                     {
@@ -277,18 +262,16 @@ namespace DotNetty.Buffers
                         remaining = UnreadSpan;
                         continue;
                     }
-                    else if (index > 0 && remaining[index - 1].Equals(delimiterEscape))
+                    else if (index > 0 && remaining[index - 1] == delimiterEscape)
                     {
                         // This delimiter might be skipped
 
                         // Count our escapes
-                        //int escapeCount = 0;
-                        //for (int i = index; i > 0 && remaining[i - 1].Equals(delimiterEscape); i--, escapeCount++) { }
-                        var result = PlatformDependent.ForEachByteDesc(
+                        var idx = SpanHelpers.LastIndexNotOf(
                                 ref MemoryMarshal.GetReference(remaining),
-                                new ByteBufferReaderHelper.IndexNotOfProcessor(delimiterEscape),
+                                delimiterEscape,
                                 index);
-                        int escapeCount = (uint)result < NIndexNotFound ? index - result - 1 : index;
+                        int escapeCount = Constants.TooBigOrNegative >= (uint)idx ? index - idx - 1 : index;
 
                         if (escapeCount == index && priorEscape)
                         {
@@ -317,13 +300,11 @@ namespace DotNetty.Buffers
                 // No delimiter, need to check the end of the span for odd number of escapes then advance
                 {
                     var remainingLen = remaining.Length;
-                    //int escapeCount = 0;
-                    //for (int i = remainingLen; i > 0 && remaining[i - 1].Equals(delimiterEscape); i--, escapeCount++) { }
-                    var result = PlatformDependent.ForEachByteDesc(
+                    var idx = SpanHelpers.LastIndexNotOf(
                             ref MemoryMarshal.GetReference(remaining),
-                            new ByteBufferReaderHelper.IndexNotOfProcessor(delimiterEscape),
+                            delimiterEscape,
                             remainingLen);
-                    int escapeCount = (uint)result < NIndexNotFound ? remainingLen - result - 1 : remainingLen;
+                    int escapeCount = Constants.TooBigOrNegative >= (uint)idx ? remainingLen - idx - 1 : remainingLen;
 
                     if (priorEscape && escapeCount == remainingLen)
                     {
@@ -356,7 +337,7 @@ namespace DotNetty.Buffers
                 ? remaining.IndexOfAny(delimiters[0], delimiters[1])
                 : remaining.IndexOfAny(delimiters);
 
-            if ((uint)index < NIndexNotFound)
+            if (Constants.TooBigOrNegative >= (uint)index) // index != -1
             {
                 span = remaining.Slice(0, index);
                 Advance(index + (advancePastDelimiter ? 1 : 0));
@@ -401,7 +382,7 @@ namespace DotNetty.Buffers
                     ? remaining.IndexOfAny(delimiters[0], delimiters[1])
                     : remaining.IndexOfAny(delimiters);
 
-                if ((uint)index < NIndexNotFound)
+                if (Constants.TooBigOrNegative >= (uint)index) // index != -1
                 {
                     // Found one of the delimiters. Move to it, slice, then move past it.
                     if (index > 0) { AdvanceCurrentSpan(index); }
@@ -428,7 +409,7 @@ namespace DotNetty.Buffers
         /// <returns>True if the <paramref name="delimiter"/> was found.</returns>
         public bool TryReadTo(out ReadOnlySequence<byte> sequence, ReadOnlySpan<byte> delimiter, bool advancePastDelimiter = true)
         {
-            if (delimiter.Length == 0)
+            if (0u >= (uint)delimiter.Length)
             {
                 sequence = default;
                 return true;
@@ -488,7 +469,7 @@ namespace DotNetty.Buffers
         {
             ReadOnlySpan<byte> remaining = UnreadSpan;
             int index = remaining.IndexOf(delimiter);
-            if ((uint)index < NIndexNotFound)
+            if (Constants.TooBigOrNegative >= (uint)index) // ndex != -1
             {
                 Advance(advancePastDelimiter ? index + 1 : index);
                 return true;
@@ -505,7 +486,7 @@ namespace DotNetty.Buffers
         {
             ReadOnlySpan<byte> remaining = UnreadSpan;
             int index = remaining.IndexOfAny(delimiters);
-            if ((uint)index < NIndexNotFound)
+            if (Constants.TooBigOrNegative >= (uint)index) // ndex != -1
             {
                 AdvanceCurrentSpan(index + (advancePastDelimiter ? 1 : 0));
                 return true;
@@ -523,17 +504,14 @@ namespace DotNetty.Buffers
             do
             {
                 // Advance past all matches in the current span
-                //int i;
-                //for (i = CurrentSpanIndex; i < CurrentSpan.Length && CurrentSpan[i].Equals(value); i++) { }
-                //int advanced = i - CurrentSpanIndex;
-
                 var searchSpan = _currentSpan.Slice(_currentSpanIndex);
-                var result = PlatformDependent.ForEachByte(
+                var idx = SpanHelpers.IndexNotOf(
                         ref MemoryMarshal.GetReference(searchSpan),
-                        new ByteBufferReaderHelper.PastValueProcessor(value),
+                        value,
                         searchSpan.Length);
-                int advanced = (uint)result < NIndexNotFound ? result : _currentSpan.Length - _currentSpanIndex;
-                if (advanced == 0)
+                int advanced = Constants.TooBigOrNegative >= (uint)idx ? idx : _currentSpan.Length - _currentSpanIndex;
+
+                if (0u >= (uint)advanced)
                 {
                     // Didn't advance at all in this span, exit.
                     break;
@@ -543,7 +521,7 @@ namespace DotNetty.Buffers
 
                 // If we're at postion 0 after advancing and not at the End,
                 // we're in a new span and should continue the loop.
-            } while (_currentSpanIndex == 0 && !End);
+            } while (0u >= (uint)_currentSpanIndex && !End);
 
             return _consumed - start;
         }
@@ -558,13 +536,13 @@ namespace DotNetty.Buffers
             {
                 // Advance past all matches in the current span
                 var searchSpan = _currentSpan.Slice(_currentSpanIndex);
-                var result = ByteBufferReaderHelper.PastAny(
+                var idx = SpanHelpers.IndexNotOfAny(
                         ref MemoryMarshal.GetReference(searchSpan),
                         searchSpan.Length,
                         ref MemoryMarshal.GetReference(values),
                         values.Length);
-                int advanced = (uint)result < NIndexNotFound ? _currentSpanIndex + result : _currentSpan.Length - _currentSpanIndex;
-                if (advanced == 0)
+                int advanced = Constants.TooBigOrNegative >= (uint)idx ? _currentSpanIndex + idx : _currentSpan.Length - _currentSpanIndex;
+                if (0u >= (uint)advanced)
                 {
                     // Didn't advance at all in this span, exit.
                     break;
@@ -574,7 +552,7 @@ namespace DotNetty.Buffers
 
                 // If we're at postion 0 after advancing and not at the End,
                 // we're in a new span and should continue the loop.
-            } while (_currentSpanIndex == 0 && !End);
+            } while (0u >= (uint)_currentSpanIndex && !End);
 
             return _consumed - start;
         }
@@ -589,12 +567,13 @@ namespace DotNetty.Buffers
             {
                 // Advance past all matches in the current span
                 var searchSpan = _currentSpan.Slice(_currentSpanIndex);
-                var result = PlatformDependent.ForEachByte(
+                var idx = SpanHelpers.IndexNotOfAny(
                         ref MemoryMarshal.GetReference(searchSpan),
-                        new ByteBufferReaderHelper.PastValue4Processor(value0, value1, value2, value3),
+                        value0, value1, value2, value3,
                         searchSpan.Length);
-                int advanced = (uint)result < NIndexNotFound ? result : _currentSpan.Length - _currentSpanIndex;
-                if (advanced == 0)
+                int advanced = Constants.TooBigOrNegative >= (uint)idx ? idx : _currentSpan.Length - _currentSpanIndex;
+
+                if (0u >= (uint)advanced)
                 {
                     // Didn't advance at all in this span, exit.
                     break;
@@ -604,7 +583,7 @@ namespace DotNetty.Buffers
 
                 // If we're at postion 0 after advancing and not at the End,
                 // we're in a new span and should continue the loop.
-            } while (_currentSpanIndex == 0 && !End);
+            } while (0u >= (uint)_currentSpanIndex && !End);
 
             return _consumed - start;
         }
@@ -619,12 +598,13 @@ namespace DotNetty.Buffers
             {
                 // Advance past all matches in the current span
                 var searchSpan = _currentSpan.Slice(_currentSpanIndex);
-                var result = PlatformDependent.ForEachByte(
+                var idx = SpanHelpers.IndexNotOfAny(
                         ref MemoryMarshal.GetReference(searchSpan),
-                        new ByteBufferReaderHelper.PastValue3Processor(value0, value1, value2),
+                        value0, value1, value2,
                         searchSpan.Length);
-                int advanced = (uint)result < NIndexNotFound ? result : _currentSpan.Length - _currentSpanIndex;
-                if (advanced == 0)
+                int advanced = Constants.TooBigOrNegative >= (uint)idx ? idx : _currentSpan.Length - _currentSpanIndex;
+
+                if (0u >= (uint)advanced)
                 {
                     // Didn't advance at all in this span, exit.
                     break;
@@ -634,7 +614,7 @@ namespace DotNetty.Buffers
 
                 // If we're at postion 0 after advancing and not at the End,
                 // we're in a new span and should continue the loop.
-            } while (_currentSpanIndex == 0 && !End);
+            } while (0u >= (uint)_currentSpanIndex && !End);
 
             return _consumed - start;
         }
@@ -649,12 +629,13 @@ namespace DotNetty.Buffers
             {
                 // Advance past all matches in the current span
                 var searchSpan = _currentSpan.Slice(_currentSpanIndex);
-                var result = PlatformDependent.ForEachByte(
+                var idx = SpanHelpers.IndexNotOfAny(
                         ref MemoryMarshal.GetReference(searchSpan),
-                        new ByteBufferReaderHelper.PastValue2Processor(value0, value1),
+                        value0, value1,
                         searchSpan.Length);
-                int advanced = (uint)result < NIndexNotFound ? result : _currentSpan.Length - _currentSpanIndex;
-                if (advanced == 0)
+                int advanced = Constants.TooBigOrNegative >= (uint)idx ? idx : _currentSpan.Length - _currentSpanIndex;
+
+                if (0u >= (uint)advanced)
                 {
                     // Didn't advance at all in this span, exit.
                     break;
@@ -664,7 +645,7 @@ namespace DotNetty.Buffers
 
                 // If we're at postion 0 after advancing and not at the End,
                 // we're in a new span and should continue the loop.
-            } while (_currentSpanIndex == 0 && !End);
+            } while (0u >= (uint)_currentSpanIndex && !End);
 
             return _consumed - start;
         }
@@ -677,7 +658,7 @@ namespace DotNetty.Buffers
         {
             if (End) { return false; }
 
-            if (_currentSpan[_currentSpanIndex].Equals(next))
+            if (_currentSpan[_currentSpanIndex] == next)
             {
                 if (advancePast) { AdvanceCurrentSpan(1); }
                 return true;

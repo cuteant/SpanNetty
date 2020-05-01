@@ -61,7 +61,7 @@ namespace DotNetty.Common.Internal
             fixed (byte* array2 = bytes2)
                 return PlatformDependent0.ByteArrayEquals(array1, startPos1, array2, startPos2, length);
 #else
-            return SequenceEqual(ref bytes1[startPos1], ref bytes2[startPos2], unchecked((uint)length));
+            return SpanHelpers.SequenceEqual(ref bytes1[startPos1], ref bytes2[startPos2], unchecked((uint)length));
 #endif
         }
 

@@ -280,7 +280,7 @@ namespace DotNetty.Buffers
         {
             var span = this.GetReadableSpan(index, count);
 
-            var result = PlatformDependent.ForEachByte(ref MemoryMarshal.GetReference(span), processor, span.Length);
+            var result = SpanHelpers.ForEachByte(ref MemoryMarshal.GetReference(span), processor, span.Length);
 
             return (uint)result < NIndexNotFound ? index + result : result;
         }
@@ -289,7 +289,7 @@ namespace DotNetty.Buffers
         {
             var span = this.GetReadableSpan(index, count);
 
-            var result = PlatformDependent.ForEachByteDesc(ref MemoryMarshal.GetReference(span), processor, span.Length);
+            var result = SpanHelpers.ForEachByteDesc(ref MemoryMarshal.GetReference(span), processor, span.Length);
 
             return (uint)result < NIndexNotFound ? index + result : result;
         }
@@ -305,7 +305,7 @@ namespace DotNetty.Buffers
         {
             var span = this.GetReadableSpan(index, count);
 
-            var result = PlatformDependent.FindIndex(ref MemoryMarshal.GetReference(span), match, span.Length);
+            var result = SpanHelpers.FindIndex(ref MemoryMarshal.GetReference(span), match, span.Length);
 
             return (uint)result < NIndexNotFound ? index + result : result;
         }
@@ -320,7 +320,7 @@ namespace DotNetty.Buffers
         {
             var span = this.GetReadableSpan(index, count);
 
-            var result = PlatformDependent.FindLastIndex(ref MemoryMarshal.GetReference(span), match, span.Length);
+            var result = SpanHelpers.FindLastIndex(ref MemoryMarshal.GetReference(span), match, span.Length);
 
             return (uint)result < NIndexNotFound ? index + result : result;
         }

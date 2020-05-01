@@ -12,6 +12,7 @@ namespace DotNetty.Buffers
     using System.Buffers;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
+    using System.Threading;
 
     public ref partial struct ByteBufferReader
     {
@@ -50,47 +51,59 @@ namespace DotNetty.Buffers
         }
 
         /// <summary>Return true if we're in the last segment.</summary>
-        public bool IsLastSegment => _nextPosition.GetObject() == null;
+        public readonly bool IsLastSegment => _nextPosition.GetObject() == null;
 
         /// <summary>True when there is no more data in the <see cref="Sequence"/>.</summary>
-        public bool End => !_moreData;
+        public readonly bool End => !_moreData;
 
         /// <summary>The underlying <see cref="ReadOnlySequence{T}"/> for the reader.</summary>
-        public ReadOnlySequence<byte> Sequence => _sequence;
+        public readonly ReadOnlySequence<byte> Sequence => _sequence;
 
         /// <summary>The current position in the <see cref="Sequence"/>.</summary>
-        public SequencePosition Position
-            => new SequencePosition(_currentPosition.GetObject(), _currentSpanIndex + (_currentPosition.GetInteger() & ~(1 << 31)));
+        public readonly SequencePosition Position
+            => _sequence.GetPosition(_currentSpanIndex, _currentPosition);
 
         /// <summary>The current segment in the <see cref="Sequence"/>.</summary>
-        public ReadOnlySpan<byte> CurrentSpan => _currentSpan;
+        public ReadOnlySpan<byte> CurrentSpan
+        {
+            readonly get => _currentSpan;
+            private set => _currentSpan = value;
+        }
 
         /// <summary>The index in the <see cref="CurrentSpan"/>.</summary>
-        public int CurrentSpanIndex => _currentSpanIndex;
+        public int CurrentSpanIndex
+        {
+            readonly get => _currentSpanIndex;
+            private set => _currentSpanIndex = value;
+        }
 
         /// <summary>The unread portion of the <see cref="CurrentSpan"/>.</summary>
-        public ReadOnlySpan<byte> UnreadSpan
+        public readonly ReadOnlySpan<byte> UnreadSpan
         {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => _currentSpan.Slice(_currentSpanIndex);
         }
 
         /// <summary>The total number of <see cref="byte"/>'s processed by the reader.</summary>
-        public long Consumed => _consumed;
+        public long Consumed
+        {
+            readonly get => _consumed;
+            private set => _consumed = value;
+        }
 
         /// <summary>Remaining <see cref="byte"/>'s in the reader's <see cref="Sequence"/>.</summary>
-        public long Remaining => Length - _consumed;
+        public readonly long Remaining => Length - _consumed;
 
         /// <summary>Count of <see cref="byte"/> in the reader's <see cref="Sequence"/>.</summary>
-        public long Length
+        public readonly long Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 if (_length < 0)
                 {
-                    // Cache the length
-                    _length = _sequence.Length;
+                    // Cast-away readonly to initialize lazy field
+                    Volatile.Write(ref Unsafe.AsRef(_length), Sequence.Length);
                 }
                 return _length;
             }
@@ -100,7 +113,7 @@ namespace DotNetty.Buffers
         /// <param name="value">The next value or default if at the end.</param>
         /// <returns>False if at the end of the reader.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryPeek(out byte value)
+        public readonly bool TryPeek(out byte value)
         {
             if (_moreData)
             {
@@ -139,10 +152,13 @@ namespace DotNetty.Buffers
         }
 
         /// <summary>Move the reader back the specified number of items.</summary>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown if trying to rewind a negative amount or more than <see cref="Consumed"/>.
+        /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Rewind(long count)
         {
-            if (count < 0) { ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count); }
+            if ((ulong)count > (ulong)Consumed) { ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count); }
 
             _consumed -= count;
 
@@ -286,10 +302,10 @@ namespace DotNetty.Buffers
 
                 GetNextSpan();
 
-                if (count == 0L) { break; }
+                if (0L >= (ulong)count) { break; }
             }
 
-            if (count != 0)
+            if (!(0L >= (ulong)count)) // count != 0
             {
                 // Not enough space left- adjust for where we actually ended and throw
                 _consumed -= count;
@@ -297,12 +313,20 @@ namespace DotNetty.Buffers
             }
         }
 
-        /// <summary>Copies data from the current <see cref="Position"/> to the given <paramref name="destination"/> span.</summary>
-        /// <param name="destination">Destination to copy to.</param>
-        /// <returns>True if there is enough data to copy to the <paramref name="destination"/>.</returns>
+        /// <summary>Copies data from the current <see cref="Position"/> to the given <paramref name="destination"/> span
+        /// if there is enough data to fill it.</summary>
+        /// <remarks>This API is used to copy a fixed amount of data out of the sequence if possible.
+        /// It does not advance the reader.
+        /// To look ahead for a specific stream of data <see cref="IsNext(ReadOnlySpan{byte}, bool)"/> can be used.</remarks>
+        /// <param name="destination">Destination span to copy to.</param>
+        /// <returns>True if there is enough data to completely fill the <paramref name="destination"/> span.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryCopyTo(Span<byte> destination)
+        public readonly bool TryCopyTo(Span<byte> destination)
         {
+            // This API doesn't advance to facilitate conditional advancement based on the data returned.
+            // We don't provide an advance option to allow easier utilizing of stack allocated destination spans.
+            // (Because we can make this method readonly we can guarantee that we won't capture the span.)
+
             ReadOnlySpan<byte> firstSpan = UnreadSpan;
             int destLen = destination.Length;
             if ((uint)firstSpan.Length >= (uint)destLen)
@@ -311,11 +335,12 @@ namespace DotNetty.Buffers
                 return true;
             }
 
+            // Not enough in the current span to satisfy the request, fall through to the slow path
             return TryCopyMultisegment(destination);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal bool TryCopyMultisegment(Span<byte> destination)
+        internal readonly bool TryCopyMultisegment(Span<byte> destination)
         {
             int destinationLen = destination.Length;
             if (Remaining < destinationLen) { return false; }

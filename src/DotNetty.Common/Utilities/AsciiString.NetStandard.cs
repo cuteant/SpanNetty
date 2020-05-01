@@ -49,7 +49,7 @@ namespace DotNetty.Common.Utilities
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         int ForEachByte0(int index, int count, IByteProcessor visitor)
         {
-            return PlatformDependent.ForEachByte(ref this.value[this.offset + index], visitor, count);
+            return SpanHelpers.ForEachByte(ref this.value[this.offset + index], visitor, count);
         }
 
         public int ForEachByteDesc(IByteProcessor visitor) => this.ForEachByteDesc0(0, this.length, visitor);
@@ -67,7 +67,7 @@ namespace DotNetty.Common.Utilities
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         int ForEachByteDesc0(int index, int count, IByteProcessor visitor)
         {
-            return PlatformDependent.ForEachByteDesc(ref this.value[this.offset + index], visitor, count);
+            return SpanHelpers.ForEachByteDesc(ref this.value[this.offset + index], visitor, count);
         }
 
         public int CompareTo(ICharSequence other)
@@ -534,7 +534,7 @@ namespace DotNetty.Common.Utilities
             if (0u >= (uint)thisLen) { return this; }
 
             var thisSpan = this.AsciiSpan;
-            var result = PlatformDependent.FindIndex(ref MemoryMarshal.GetReference(thisSpan), x => IsUpperCase(x), thisLen);
+            var result = SpanHelpers.FindIndex(ref MemoryMarshal.GetReference(thisSpan), x => IsUpperCase(x), thisLen);
             if (result < 0) { return this; }
 
             byte[] buffer = new byte[thisLen];
@@ -557,7 +557,7 @@ namespace DotNetty.Common.Utilities
             if (0u >= (uint)thisLen) { return this; }
 
             var thisSpan = this.AsciiSpan;
-            var result = PlatformDependent.FindIndex(ref MemoryMarshal.GetReference(thisSpan), x => IsLowerCase(x), thisLen);
+            var result = SpanHelpers.FindIndex(ref MemoryMarshal.GetReference(thisSpan), x => IsLowerCase(x), thisLen);
             if (result < 0) { return this; }
 
             byte[] buffer = new byte[thisLen];
