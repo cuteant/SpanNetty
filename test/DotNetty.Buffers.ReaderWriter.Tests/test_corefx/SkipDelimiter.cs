@@ -278,9 +278,9 @@ namespace System.Memory.Tests.BufferReader
             int escapeCount = 0;
             for (int i = remaining.Length; i > 0 && remaining[i - 1].Equals(value); i--, escapeCount++) { }
 
-            var result = SpanHelpers.ForEachByteDesc(
+            var result = SpanHelpers.LastIndexNotOf(
                     ref MemoryMarshal.GetReference(remaining),
-                    new ByteBufferReaderHelper.IndexNotOfProcessor(value),
+                    value,
                     remaining.Length);
             int escapeCount1 = result != -1 ? remaining.Length - result - 1 : remaining.Length;
             Assert.Equal(escapeCount, escapeCount1);

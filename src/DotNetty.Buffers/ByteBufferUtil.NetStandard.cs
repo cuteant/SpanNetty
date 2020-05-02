@@ -11,6 +11,7 @@ namespace DotNetty.Buffers
     using System.Runtime.InteropServices;
     using System.Text;
     using CuteAnt.Buffers;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     partial class ByteBufferUtil
@@ -79,28 +80,27 @@ namespace DotNetty.Buffers
         {
             if (value is IHasUtf16Span hasUtf16)
             {
-                var utf16Span = MemoryMarshal.AsBytes(hasUtf16.Utf16Span);
                 if (buffer.IsSingleIoBuffer)
                 {
                     var bufSpan = buffer.GetSpan(writerIndex, buffer.Capacity - writerIndex);
-                    var status = EncodingUtils.ToUtf8(utf16Span, bufSpan, out _, out var written);
+                    var status = TextEncodings.Utf16.ToUtf8(hasUtf16.Utf16Span, bufSpan, out _, out var written);
                     if (status == OperationStatus.Done) { return written; }
                 }
                 else
                 {
-                    if (TryWriteUtf8Composite(buffer, writerIndex, utf16Span, out var written)) { return written; }
+                    if (TryWriteUtf8Composite(buffer, writerIndex, hasUtf16.Utf16Span, out var written)) { return written; }
                 }
             }
             return WriteUtf80(buffer, writerIndex, value);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static bool TryWriteUtf8Composite(AbstractByteBuffer buffer, int writerIndex, ReadOnlySpan<byte> utf16Span, out int written)
+        private static bool TryWriteUtf8Composite(AbstractByteBuffer buffer, int writerIndex, ReadOnlySpan<char> utf16Span, out int written)
         {
             var memory = BufferManager.Shared.Rent(buffer.Capacity);
             try
             {
-                var status = EncodingUtils.ToUtf8(utf16Span, memory.AsSpan(), out _, out written);
+                var status = TextEncodings.Utf16.ToUtf8(utf16Span, memory.AsSpan(), out _, out written);
                 if (status == OperationStatus.Done)
                 {
                     buffer.SetBytes(writerIndex, memory, 0, written);
@@ -181,17 +181,15 @@ namespace DotNetty.Buffers
         // Fast-Path implementation
         internal static int WriteUtf8(AbstractByteBuffer buffer, int writerIndex, string value)
         {
-            var utf16Span = MemoryMarshal.AsBytes(MemoryMarshal.AsBytes(value.AsSpan()));
-
             if (buffer.IsSingleIoBuffer)
             {
                 var bufSpan = buffer.GetSpan(writerIndex, buffer.Capacity - writerIndex);
-                var status = EncodingUtils.ToUtf8(utf16Span, bufSpan, out _, out var written);
+                var status = TextEncodings.Utf16.ToUtf8(value.AsSpan(), bufSpan, out _, out var written);
                 if (status == OperationStatus.Done) { return written; }
             }
             else
             {
-                if (TryWriteUtf8Composite(buffer, writerIndex, utf16Span, out var written)) { return written; }
+                if (TryWriteUtf8Composite(buffer, writerIndex, value.AsSpan(), out var written)) { return written; }
             }
             return WriteUtf80(buffer, writerIndex, value);
         }
