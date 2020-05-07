@@ -333,6 +333,9 @@ namespace DotNetty.Common.Internal
         {
             Debug.Assert(length >= 0);
 
+#if NETCOREAPP_3_0_GREATER
+            return SharedConstants.TooBigOrNegative >= (uint)IndexOf(ref searchSpace, value, length);
+#else
             uint uValue = value; // Use uint for comparisons to avoid unnecessary 8->32 extensions
             IntPtr offset = (IntPtr)0; // Use IntPtr for arithmetic to avoid unnecessary 64->32->64 truncations
             IntPtr lengthToExamine = (IntPtr)length;
@@ -416,6 +419,7 @@ namespace DotNetty.Common.Internal
 
         Found:
             return true;
+#endif
         }
 
         #endregion
@@ -2414,28 +2418,28 @@ namespace DotNetty.Common.Internal
                 lengthToExamine -= 8;
 
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 1);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found1;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 2);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found2;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 3);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found3;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 4);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found4;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 5);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found5;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 6);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found6;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 7);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found7;
 
                 offset += 8;
@@ -2446,16 +2450,16 @@ namespace DotNetty.Common.Internal
                 lengthToExamine -= 4;
 
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 1);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found1;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 2);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found2;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 3);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found3;
 
                 offset += 4;
@@ -2466,7 +2470,7 @@ namespace DotNetty.Common.Internal
                 lengthToExamine -= 1;
 
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found;
 
                 offset += 1;
@@ -2871,28 +2875,28 @@ namespace DotNetty.Common.Internal
                 offset -= 8;
 
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 7);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found7;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 6);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found6;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 5);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found5;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 4);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found4;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 3);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found3;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 2);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found2;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 1);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found1;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found;
             }
 
@@ -2902,16 +2906,16 @@ namespace DotNetty.Common.Internal
                 offset -= 4;
 
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 3);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found3;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 2);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found2;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset + 1);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found1;
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found;
             }
 
@@ -2921,7 +2925,7 @@ namespace DotNetty.Common.Internal
                 offset -= 1;
 
                 lookUp = Unsafe.AddByteOffset(ref searchSpace, offset);
-                if ((uint)IndexOf(ref value, lookUp, valueLength) > Constants.TooBigOrNegative)
+                if ((uint)IndexOf(ref value, lookUp, valueLength) > SharedConstants.TooBigOrNegative)
                     goto Found;
             }
 

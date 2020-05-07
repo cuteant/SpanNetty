@@ -190,7 +190,7 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        public bool Registered => Constants.True == Volatile.Read(ref this.registered);
+        public bool Registered => SharedConstants.True == Volatile.Read(ref this.registered);
 
         /// <summary>
         /// Returns a new <see cref="DefaultChannelId"/> instance. Subclasses may override this method to assign custom
@@ -358,7 +358,7 @@ namespace DotNetty.Transport.Channels
             public ChannelOutboundBuffer OutboundBuffer => Volatile.Read(ref this.outboundBuffer);
 
             [Conditional("DEBUG")]
-            void AssertEventLoop() => Debug.Assert(Constants.False == Volatile.Read(ref this.channel.registered) || Volatile.Read(ref this.channel.eventLoop).InEventLoop);
+            void AssertEventLoop() => Debug.Assert(SharedConstants.False == Volatile.Read(ref this.channel.registered) || Volatile.Read(ref this.channel.eventLoop).InEventLoop);
 
             public Task RegisterAsync(IEventLoop eventLoop)
             {
@@ -416,7 +416,7 @@ namespace DotNetty.Transport.Channels
                     bool firstRegistration = this.neverRegistered;
                     ch.DoRegister();
                     this.neverRegistered = false;
-                    Interlocked.Exchange(ref ch.registered, Constants.True);
+                    Interlocked.Exchange(ref ch.registered, SharedConstants.True);
 
                     // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                     // user may already fire events through the pipeline in the ChannelFutureListener.
@@ -538,7 +538,7 @@ namespace DotNetty.Transport.Channels
                 if (!promise.SetUncancellable()) { return; }
 
                 var ch = this.channel;
-                if (Constants.True == Interlocked.Exchange(ref ch.closeInitiated, Constants.True))
+                if (SharedConstants.True == Interlocked.Exchange(ref ch.closeInitiated, SharedConstants.True))
                 {
                     var closeCompletion = ch.CloseCompletion;
                     if (closeCompletion.IsCompleted)
@@ -662,7 +662,7 @@ namespace DotNetty.Transport.Channels
                 }
 
                 var ch = this.channel;
-                if (Constants.False == Volatile.Read(ref ch.registered))
+                if (SharedConstants.False == Volatile.Read(ref ch.registered))
                 {
                     Util.SafeSetSuccess(promise, Logger);
                 }
@@ -696,9 +696,9 @@ namespace DotNetty.Transport.Channels
                         // an open channel.  Their doDeregister() calls close(). Consequently,
                         // close() calls deregister() again - no need to fire channelUnregistered, so check
                         // if it was registered.
-                        if (Constants.True == Volatile.Read(ref ch.registered))
+                        if (SharedConstants.True == Volatile.Read(ref ch.registered))
                         {
-                            Interlocked.Exchange(ref ch.registered, Constants.False);
+                            Interlocked.Exchange(ref ch.registered, SharedConstants.False);
                             ch.pipeline.FireChannelUnregistered();
                         }
                         Util.SafeSetSuccess(promise, Logger);

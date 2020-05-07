@@ -3,10 +3,7 @@
 
 namespace DotNetty.Common.Utilities
 {
-    using System;
     using System.Runtime.CompilerServices;
-    using System.Runtime.InteropServices;
-    using DotNetty.Common.Internal;
 
     public static class AsciiStringExtensions
     {
@@ -17,7 +14,7 @@ namespace DotNetty.Common.Utilities
         public static char[] ToCharArray(this AsciiString ascii) => ascii.ToCharArray(0, ascii.Count);
 
         [MethodImpl(InlineMethod.Value)]
-        public static bool Contains(this AsciiString ascii, ICharSequence sequence) => (ascii.IndexOf(sequence) >= 0) ? true : false;
+        public static bool Contains(this AsciiString ascii, ICharSequence sequence) => (SharedConstants.TooBigOrNegative >= (uint)ascii.IndexOf(sequence)) ? true : false;
 
         [MethodImpl(InlineMethod.Value)]
         public static int IndexOf(this AsciiString ascii, ICharSequence sequence) => ascii.IndexOf(sequence, 0);

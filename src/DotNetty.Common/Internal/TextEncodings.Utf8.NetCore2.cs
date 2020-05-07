@@ -378,7 +378,7 @@ namespace DotNetty.Common.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private static bool TryGetCharCountFast(in ReadOnlySpan<byte> utf8Bytes, out int totalCharCount)
             {
-                if ((uint)Utf8Util.GetIndexOfFirstInvalidUtf8Sequence(utf8Bytes, out int scalarCount, out int surrogatePairCount) > Constants.TooBigOrNegative)
+                if ((uint)Utf8Util.GetIndexOfFirstInvalidUtf8Sequence(utf8Bytes, out int scalarCount, out int surrogatePairCount) > SharedConstants.TooBigOrNegative)
                 {
                     // Well-formed UTF-8 string.
 

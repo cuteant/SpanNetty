@@ -7,6 +7,7 @@ namespace DotNetty.Common.Internal
 {
     using System;
     using System.Runtime.CompilerServices;
+    using System.Runtime.InteropServices;
     using DotNetty.Common.Utilities;
 
     partial class AppendableCharSequence : IHasAsciiSpan
@@ -24,54 +25,55 @@ namespace DotNetty.Common.Internal
 
         public bool Equals(AppendableCharSequence other)
         {
-            //if (other == null)
-            //{
-            //    return false;
-            //}
             if (ReferenceEquals(this, other))
             {
                 return true;
             }
 
-            return other != null && this.pos == other.pos
-                && this.AsciiSpan.SequenceEqual(other.AsciiSpan);
+            return other is object && this.pos == other.pos
+                && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(this.AsciiSpan), ref MemoryMarshal.GetReference(other.AsciiSpan), this.pos);
         }
 
         public override bool Equals(object obj)
         {
-            //if (obj == null)
-            //{
-            //    return false;
-            //}
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
+            if (ReferenceEquals(this, obj)) { return true; }
 
-            if (obj is AppendableCharSequence other)
+            switch (obj)
             {
-                return this.pos == other.pos && this.AsciiSpan.SequenceEqual(other.AsciiSpan);
-            }
-            if (obj is ICharSequence seq)
-            {
-                return this.ContentEquals(seq);
-            }
+                case AppendableCharSequence other:
+                    return this.pos == other.pos
+                        && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(this.AsciiSpan), ref MemoryMarshal.GetReference(other.AsciiSpan), this.pos);
 
-            return false;
+                case IHasAsciiSpan hasAscii:
+                    return this.AsciiSpan.SequenceEqual(hasAscii.AsciiSpan);
+
+                case ICharSequence seq:
+                    return this.ContentEquals(seq);
+
+                default:
+                    return false;
+            }
         }
 
         bool IEquatable<ICharSequence>.Equals(ICharSequence other)
         {
             if (ReferenceEquals(this, other)) { return true; }
 
-            if (null == other) { return false; }
-
-            if (other is AppendableCharSequence comparand)
+            switch (other)
             {
-                return this.pos == comparand.pos && this.AsciiSpan.SequenceEqual(comparand.AsciiSpan);
-            }
+                case null:
+                    return false;
 
-            return this.ContentEquals(other);
+                case AppendableCharSequence comparand:
+                    return this.pos == comparand.pos
+                        && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(this.AsciiSpan), ref MemoryMarshal.GetReference(comparand.AsciiSpan), this.pos);
+
+                case IHasAsciiSpan hasAscii:
+                    return this.AsciiSpan.SequenceEqual(hasAscii.AsciiSpan);
+
+                default:
+                    return false;
+            }
         }
     }
 }

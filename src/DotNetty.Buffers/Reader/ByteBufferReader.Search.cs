@@ -28,7 +28,7 @@ namespace DotNetty.Buffers
             int index = remaining.IndexOf(delimiter);
 
             uint uIndex = (uint)index;
-            if (Constants.TooBigOrNegative >= uIndex) // index != -1
+            if (SharedConstants.TooBigOrNegative >= uIndex) // index != -1
             {
                 span = 0u >= uIndex ? default : remaining.Slice(0, index);
                 AdvanceCurrentSpan(index + (advancePastDelimiter ? 1 : 0));
@@ -98,7 +98,7 @@ namespace DotNetty.Buffers
             do
             {
                 uint uIndex = (uint)index;
-                if (Constants.TooBigOrNegative >= uIndex) // index >= 0
+                if (SharedConstants.TooBigOrNegative >= uIndex) // index >= 0
                 {
                     if (0u >= uIndex && priorEscape) // index == 0
                     {
@@ -118,7 +118,7 @@ namespace DotNetty.Buffers
                                 ref MemoryMarshal.GetReference(remaining),
                                 delimiterEscape,
                                 index - 1);
-                        if ((uint)idx > Constants.TooBigOrNegative && priorEscape) // i < 0
+                        if ((uint)idx > SharedConstants.TooBigOrNegative && priorEscape) // i < 0
                         {
                             // Started and ended with escape, increment once more
                             escapeCount++;
@@ -159,7 +159,7 @@ namespace DotNetty.Buffers
                                 remainingLen - 1);
                         escapeCount += remainingLen - 2 - idx;
 
-                        if ((uint)idx > Constants.TooBigOrNegative && priorEscape) // idx < 0
+                        if ((uint)idx > SharedConstants.TooBigOrNegative && priorEscape) // idx < 0
                         {
                             priorEscape = (escapeCount & 1) == 0;   // equivalent to incrementing escapeCount before setting priorEscape
                         }
@@ -208,7 +208,7 @@ namespace DotNetty.Buffers
             while (_moreData)
             {
                 int index = remaining.IndexOf(delimiter);
-                if (Constants.TooBigOrNegative >= (uint)index) // index != -1
+                if (SharedConstants.TooBigOrNegative >= (uint)index) // index != -1
                 {
                     // Found the delimiter. Move to it, slice, then move past it.
                     if (index > 0)
@@ -252,7 +252,7 @@ namespace DotNetty.Buffers
             {
                 int index = remaining.IndexOf(delimiter);
                 uint uIndex = (uint)index;
-                if (Constants.TooBigOrNegative >= uIndex) // index != -1
+                if (SharedConstants.TooBigOrNegative >= uIndex) // index != -1
                 {
                     if (0u >= uIndex && priorEscape) // index == 0
                     {
@@ -271,7 +271,7 @@ namespace DotNetty.Buffers
                                 ref MemoryMarshal.GetReference(remaining),
                                 delimiterEscape,
                                 index);
-                        int escapeCount = Constants.TooBigOrNegative >= (uint)idx ? index - idx - 1 : index;
+                        int escapeCount = SharedConstants.TooBigOrNegative >= (uint)idx ? index - idx - 1 : index;
 
                         if (escapeCount == index && priorEscape)
                         {
@@ -304,7 +304,7 @@ namespace DotNetty.Buffers
                             ref MemoryMarshal.GetReference(remaining),
                             delimiterEscape,
                             remainingLen);
-                    int escapeCount = Constants.TooBigOrNegative >= (uint)idx ? remainingLen - idx - 1 : remainingLen;
+                    int escapeCount = SharedConstants.TooBigOrNegative >= (uint)idx ? remainingLen - idx - 1 : remainingLen;
 
                     if (priorEscape && escapeCount == remainingLen)
                     {
@@ -337,7 +337,7 @@ namespace DotNetty.Buffers
                 ? remaining.IndexOfAny(delimiters[0], delimiters[1])
                 : remaining.IndexOfAny(delimiters);
 
-            if (Constants.TooBigOrNegative >= (uint)index) // index != -1
+            if (SharedConstants.TooBigOrNegative >= (uint)index) // index != -1
             {
                 span = remaining.Slice(0, index);
                 Advance(index + (advancePastDelimiter ? 1 : 0));
@@ -382,7 +382,7 @@ namespace DotNetty.Buffers
                     ? remaining.IndexOfAny(delimiters[0], delimiters[1])
                     : remaining.IndexOfAny(delimiters);
 
-                if (Constants.TooBigOrNegative >= (uint)index) // index != -1
+                if (SharedConstants.TooBigOrNegative >= (uint)index) // index != -1
                 {
                     // Found one of the delimiters. Move to it, slice, then move past it.
                     if (index > 0) { AdvanceCurrentSpan(index); }
@@ -469,7 +469,7 @@ namespace DotNetty.Buffers
         {
             ReadOnlySpan<byte> remaining = UnreadSpan;
             int index = remaining.IndexOf(delimiter);
-            if (Constants.TooBigOrNegative >= (uint)index) // ndex != -1
+            if (SharedConstants.TooBigOrNegative >= (uint)index) // ndex != -1
             {
                 Advance(advancePastDelimiter ? index + 1 : index);
                 return true;
@@ -486,7 +486,7 @@ namespace DotNetty.Buffers
         {
             ReadOnlySpan<byte> remaining = UnreadSpan;
             int index = remaining.IndexOfAny(delimiters);
-            if (Constants.TooBigOrNegative >= (uint)index) // ndex != -1
+            if (SharedConstants.TooBigOrNegative >= (uint)index) // ndex != -1
             {
                 AdvanceCurrentSpan(index + (advancePastDelimiter ? 1 : 0));
                 return true;
@@ -509,7 +509,7 @@ namespace DotNetty.Buffers
                         ref MemoryMarshal.GetReference(searchSpan),
                         value,
                         searchSpan.Length);
-                int advanced = Constants.TooBigOrNegative >= (uint)idx ? idx : _currentSpan.Length - _currentSpanIndex;
+                int advanced = SharedConstants.TooBigOrNegative >= (uint)idx ? idx : _currentSpan.Length - _currentSpanIndex;
 
                 if (0u >= (uint)advanced)
                 {
@@ -541,7 +541,7 @@ namespace DotNetty.Buffers
                         searchSpan.Length,
                         ref MemoryMarshal.GetReference(values),
                         values.Length);
-                int advanced = Constants.TooBigOrNegative >= (uint)idx ? _currentSpanIndex + idx : _currentSpan.Length - _currentSpanIndex;
+                int advanced = SharedConstants.TooBigOrNegative >= (uint)idx ? _currentSpanIndex + idx : _currentSpan.Length - _currentSpanIndex;
                 if (0u >= (uint)advanced)
                 {
                     // Didn't advance at all in this span, exit.
@@ -571,7 +571,7 @@ namespace DotNetty.Buffers
                         ref MemoryMarshal.GetReference(searchSpan),
                         value0, value1, value2, value3,
                         searchSpan.Length);
-                int advanced = Constants.TooBigOrNegative >= (uint)idx ? idx : _currentSpan.Length - _currentSpanIndex;
+                int advanced = SharedConstants.TooBigOrNegative >= (uint)idx ? idx : _currentSpan.Length - _currentSpanIndex;
 
                 if (0u >= (uint)advanced)
                 {
@@ -602,7 +602,7 @@ namespace DotNetty.Buffers
                         ref MemoryMarshal.GetReference(searchSpan),
                         value0, value1, value2,
                         searchSpan.Length);
-                int advanced = Constants.TooBigOrNegative >= (uint)idx ? idx : _currentSpan.Length - _currentSpanIndex;
+                int advanced = SharedConstants.TooBigOrNegative >= (uint)idx ? idx : _currentSpan.Length - _currentSpanIndex;
 
                 if (0u >= (uint)advanced)
                 {
@@ -633,7 +633,7 @@ namespace DotNetty.Buffers
                         ref MemoryMarshal.GetReference(searchSpan),
                         value0, value1,
                         searchSpan.Length);
-                int advanced = Constants.TooBigOrNegative >= (uint)idx ? idx : _currentSpan.Length - _currentSpanIndex;
+                int advanced = SharedConstants.TooBigOrNegative >= (uint)idx ? idx : _currentSpan.Length - _currentSpanIndex;
 
                 if (0u >= (uint)advanced)
                 {

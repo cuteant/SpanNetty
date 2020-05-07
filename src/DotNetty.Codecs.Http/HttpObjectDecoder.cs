@@ -84,7 +84,7 @@ namespace DotNetty.Codecs.Http
 
         protected override void Decode(IChannelHandlerContext context, IByteBuffer buffer, List<object> output)
         {
-            if (Constants.True == Volatile.Read(ref this.resetRequested))
+            if (SharedConstants.True == Volatile.Read(ref this.resetRequested))
             {
                 this.ResetNow();
             }
@@ -352,7 +352,7 @@ namespace DotNetty.Codecs.Http
         {
             base.DecodeLast(context, input, output);
 
-            if (Constants.True == Volatile.Read(ref this.resetRequested))
+            if (SharedConstants.True == Volatile.Read(ref this.resetRequested))
             {
                 // If a reset was requested by decodeLast() we need to do it now otherwise we may produce a
                 // LastHttpContent while there was already one.
@@ -462,7 +462,7 @@ namespace DotNetty.Codecs.Http
 
         // Resets the state of the decoder so that it is ready to decode a new message.
         // This method is useful for handling a rejected request with {@code Expect: 100-continue} header.
-        public void Reset() => Interlocked.Exchange(ref this.resetRequested, Constants.True);
+        public void Reset() => Interlocked.Exchange(ref this.resetRequested, SharedConstants.True);
 
         void ResetNow()
         {
@@ -483,7 +483,7 @@ namespace DotNetty.Codecs.Http
                 }
             }
 
-            Interlocked.Exchange(ref this.resetRequested, Constants.False);
+            Interlocked.Exchange(ref this.resetRequested, SharedConstants.False);
             this.currentState = State.SkipControlChars;
         }
 

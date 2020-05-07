@@ -33,7 +33,7 @@ namespace DotNetty.Codecs.Http
             [MethodImpl(InlineMethod.Value)]
             public void ValidateName(ICharSequence name)
             {
-                if (name == null || name.Count == 0)
+                if (name is null || 0u >= (uint)name.Count)
                 {
                     ThrowHelper.ThrowArgumentException_HeaderName();
                 }

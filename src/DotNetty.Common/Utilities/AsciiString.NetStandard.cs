@@ -30,18 +30,25 @@ namespace DotNetty.Common.Utilities
             {
                 if (0u >= (uint)this.length) { return ReadOnlySpan<char>.Empty; }
                 var thisValue = this.stringValue;
-                if (thisValue != null) { return thisValue.AsSpan(); }
+                if (thisValue is object) { return thisValue.AsSpan(); }
                 return this.ToString().AsSpan();
             }
         }
 
-        public int ForEachByte(IByteProcessor visitor) => this.ForEachByte0(0, this.length, visitor);
+        public int ForEachByte(IByteProcessor visitor)
+        {
+            var thisLength = this.length;
+            if (0u >= (uint)thisLength) { return IndexNotFound; }
+            return this.ForEachByte0(0, this.length, visitor);
+        }
 
         public int ForEachByte(int index, int count, IByteProcessor visitor)
         {
-            if (MathUtil.IsOutOfBounds(index, count, this.length))
+            var thisLength = this.length;
+            if (0u >= (uint)thisLength) { return IndexNotFound; }
+            if (MathUtil.IsOutOfBounds(index, count, thisLength))
             {
-                ThrowIndexOutOfRangeException_Index(index, count, this.length);
+                ThrowIndexOutOfRangeException_Index(index, count, thisLength);
             }
             return this.ForEachByte0(index, count, visitor);
         }
@@ -52,13 +59,20 @@ namespace DotNetty.Common.Utilities
             return SpanHelpers.ForEachByte(ref this.value[this.offset + index], visitor, count);
         }
 
-        public int ForEachByteDesc(IByteProcessor visitor) => this.ForEachByteDesc0(0, this.length, visitor);
+        public int ForEachByteDesc(IByteProcessor visitor)
+        {
+            var thisLength = this.length;
+            if (0u >= (uint)thisLength) { return IndexNotFound; }
+            return this.ForEachByteDesc0(0, thisLength, visitor);
+        }
 
         public int ForEachByteDesc(int index, int count, IByteProcessor visitor)
         {
-            if (MathUtil.IsOutOfBounds(index, count, this.length))
+            var thisLength = this.length;
+            if (0u >= (uint)thisLength) { return IndexNotFound; }
+            if (MathUtil.IsOutOfBounds(index, count, thisLength))
             {
-                ThrowIndexOutOfRangeException_Index(index, count, this.length);
+                ThrowIndexOutOfRangeException_Index(index, count, thisLength);
             }
 
             return this.ForEachByteDesc0(index, count, visitor);
@@ -74,17 +88,17 @@ namespace DotNetty.Common.Utilities
         {
             if (ReferenceEquals(this, other)) { return 0; }
 
-            if (other is IHasAsciiSpan ascii)
+            switch (other)
             {
-                return this.AsciiSpan.SequenceCompareTo(ascii.AsciiSpan);
-            }
+                case IHasAsciiSpan ascii:
+                    return this.AsciiSpan.SequenceCompareTo(ascii.AsciiSpan);
 
-            if (other is IHasUtf16Span utf16Span)
-            {
-                return this.Utf16Span.SequenceCompareTo(utf16Span.Utf16Span);
-            }
+                case IHasUtf16Span utf16Span:
+                    return this.Utf16Span.SequenceCompareTo(utf16Span.Utf16Span);
 
-            return CompareTo0(other);
+                default:
+                    return CompareTo0(other);
+            }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -109,7 +123,7 @@ namespace DotNetty.Common.Utilities
         {
             int thisLen = this.length;
             int thatLen = charSequence.Count;
-            if (thatLen == 0) { return this; }
+            if (0u >= (uint)thatLen) { return this; }
 
             if (this.IsEmpty)
             {
@@ -148,25 +162,24 @@ namespace DotNetty.Common.Utilities
         {
             if (ReferenceEquals(this, other)) { return true; }
 
-            if (null == other || this.length != other.Count) { return false; }
+            var thisLength = this.length;
+            if (other is null || thisLength != other.Count) { return false; }
 
-            if (other is AsciiString asciiStr)
+            switch (other)
             {
-                return this.GetHashCode() == asciiStr.GetHashCode()
-                    && this.AsciiSpan.SequenceEqual(asciiStr.AsciiSpan);
-            }
+                case AsciiString asciiStr:
+                    return this.GetHashCode() == asciiStr.GetHashCode()
+                        && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(this.AsciiSpan), ref MemoryMarshal.GetReference(asciiStr.AsciiSpan), thisLength);
 
-            if (other is IHasAsciiSpan comparand)
-            {
-                return this.AsciiSpan.SequenceEqual(comparand.AsciiSpan);
-            }
+                case IHasAsciiSpan hasAscii:
+                    return SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(this.AsciiSpan), ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), thisLength);
 
-            if (other is IHasUtf16Span hasUtf16)
-            {
-                return this.Utf16Span.SequenceEqual(hasUtf16.Utf16Span);
-            }
+                case IHasUtf16Span hasUtf16:
+                    return SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(this.Utf16Span), ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), thisLength);
 
-            return ContentEquals0(other);
+                default:
+                    return ContentEquals0(other);
+            }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -186,14 +199,18 @@ namespace DotNetty.Common.Utilities
         public bool ContentEqualsIgnoreCase(ICharSequence other)
         {
             if (ReferenceEquals(this, other)) { return true; }
-            if (other == null || other.Count != this.length) { return false; }
 
-            if (other is IHasUtf16Span utf16Span)
+            switch (other)
             {
-                return this.Utf16Span.Equals(utf16Span.Utf16Span, StringComparison.OrdinalIgnoreCase);
-            }
+                case null:
+                    return false;
 
-            return ContentEqualsIgnoreCase0(other);
+                case IHasUtf16Span utf16Span:
+                    return this.Utf16Span.Equals(utf16Span.Utf16Span, StringComparison.OrdinalIgnoreCase);
+
+                default:
+                    return other.Count == this.length && ContentEqualsIgnoreCase0(other);
+            }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -230,65 +247,60 @@ namespace DotNetty.Common.Utilities
                 return EmptyArrays.EmptyChars;
             }
 
-            if (MathUtil.IsOutOfBounds(start, count, this.length))
-            {
-                ThrowIndexOutOfRangeException_SrcIndex(start, count, this.length);
-            }
-
             return this.Utf16Span.Slice(start, count).ToArray();
         }
 
         public void Copy(int srcIdx, char[] dst, int dstIdx, int count)
         {
-            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            if (dst is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
 
-            if (MathUtil.IsOutOfBounds(srcIdx, count, this.length))
-            {
-                ThrowIndexOutOfRangeException_SrcIndex(srcIdx, count, this.length);
-            }
-
-            this.Utf16Span.Slice(srcIdx, count).CopyTo(new Span<char>(dst, dstIdx, count));
+            this.Utf16Span.Slice(srcIdx, count).CopyTo(dst.AsSpan(dstIdx, count));
         }
 
         public int IndexOf(ICharSequence subString, int start)
         {
             int thisLen = this.length;
-            if (0u >= (uint)thisLen) { return IndexNotFound; }
+            uint uThisLen = (uint)thisLen;
+            if (0u >= uThisLen) { return IndexNotFound; }
 
-            if (start < 0) { start = 0; }
+            uint uStart = (uint)start;
+            if (uStart > SharedConstants.TooBigOrNegative) { start = 0; }
 
             int subCount = subString.Count;
-            if (0u >= (uint)subCount)
-            {
-                return start < thisLen ? start : thisLen;
-            }
-            if (subCount > thisLen - start) { return IndexNotFound; }
+            uint uSubCount = (uint)subCount;
+            if (0u >= uSubCount) { return uStart < uThisLen ? start : thisLen; }
+            var searchLen = thisLen - start;
+            if (uSubCount > (uint)searchLen) { return IndexNotFound; }
 
             char firstChar = subString[0];
-            if (firstChar > MaxCharValue) { return IndexNotFound; }
+            if ((uint)firstChar > uMaxCharValue) { return IndexNotFound; }
 
-            if (0u >= (uint)start)
+            if (0u >= uStart)
             {
                 if (subString is IHasAsciiSpan hasAscii)
                 {
-                    return this.AsciiSpan.IndexOf(hasAscii.AsciiSpan);
+                    return SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(this.AsciiSpan), thisLen, ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), subCount);
                 }
                 if (subString is IHasUtf16Span hasUtf16)
                 {
-                    return this.Utf16Span.IndexOf(hasUtf16.Utf16Span);
+                    return SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(this.Utf16Span), thisLen, ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), subCount);
                 }
             }
             else
             {
                 if (subString is IHasAsciiSpan hasAscii)
                 {
-                    var result = this.AsciiSpan.Slice(start).IndexOf(hasAscii.AsciiSpan);
-                    return (uint)result < NIndexNotFound ? start + result : IndexNotFound;
+                    var result = SpanHelpers.IndexOf(
+                        ref Unsafe.Add(ref MemoryMarshal.GetReference(this.AsciiSpan), start), thisLen,
+                        ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), subCount);
+                    return SharedConstants.TooBigOrNegative >= (uint)result ? start + result : IndexNotFound;
                 }
                 if (subString is IHasUtf16Span hasUtf16)
                 {
-                    var result = this.Utf16Span.Slice(start).IndexOf(hasUtf16.Utf16Span);
-                    return (uint)result < NIndexNotFound ? start + result : IndexNotFound;
+                    var result = SpanHelpers.IndexOf(
+                        ref Unsafe.Add(ref MemoryMarshal.GetReference(this.Utf16Span), start), thisLen,
+                        ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), subCount);
+                    return SharedConstants.TooBigOrNegative >= (uint)result ? start + result : IndexNotFound;
                 }
             }
 
@@ -325,52 +337,62 @@ namespace DotNetty.Common.Utilities
 
         public int IndexOf(char ch, int start)
         {
-            if (0u >= (uint)this.length) { return IndexNotFound; }
-            if (ch > MaxCharValue) { return IndexNotFound; }
+            int thisLen = this.length;
+            uint uThisLen = (uint)thisLen;
+            if (0u >= uThisLen) { return IndexNotFound; }
+            if ((uint)ch > uMaxCharValue) { return IndexNotFound; }
 
-            if (start < 0) { start = 0; }
+            if ((uint)start >= uThisLen) { start = 0; }
 
             if (0u >= (uint)start)
             {
-                return this.AsciiSpan.IndexOf((byte)ch);
+                return SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(this.AsciiSpan), (byte)ch, thisLen);
             }
-            var result = this.AsciiSpan.Slice(start).IndexOf((byte)ch);
-            return (uint)result < NIndexNotFound ? start + result : IndexNotFound;
+            var seachSpan = this.AsciiSpan.Slice(start);
+            var result = SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(seachSpan), (byte)ch, seachSpan.Length);
+            return SharedConstants.TooBigOrNegative >= (uint)result ? start + result : IndexNotFound;
         }
 
         public int LastIndexOf(ICharSequence subString, int start)
         {
             int thisLen = this.length;
-            if (0u >= (uint)thisLen) { return IndexNotFound; }
+            uint uThisLen = (uint)thisLen;
+            if (0u >= uThisLen) { return IndexNotFound; }
+
+            uint uStart = (uint)start;
+            if (uStart > SharedConstants.TooBigOrNegative) { start = 0; }
 
             int subCount = subString.Count;
-
-            if (start < 0) { start = 0; }
-            if (subCount <= 0) { return start < thisLen ? start : thisLen; }
-            if (subCount > thisLen - start) { return IndexNotFound; }
+            uint uSubCount = (uint)subCount;
+            if (0u >= uSubCount) { return start < uThisLen ? start : thisLen; }
+            if (uSubCount > (uint)(thisLen - start)) { return IndexNotFound; }
 
             if (0u >= (uint)start)
             {
                 if (subString is IHasAsciiSpan hasAscii)
                 {
-                    return this.AsciiSpan.LastIndexOf(hasAscii.AsciiSpan);
+                    return SpanHelpers.LastIndexOf(ref MemoryMarshal.GetReference(this.AsciiSpan), thisLen, ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), subCount);
                 }
                 if (subString is IHasUtf16Span hasUtf16)
                 {
-                    return this.Utf16Span.LastIndexOf(hasUtf16.Utf16Span);
+                    return SpanHelpers.LastIndexOf(ref MemoryMarshal.GetReference(this.Utf16Span), thisLen, ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), subCount);
                 }
             }
             else
             {
                 if (subString is IHasAsciiSpan hasAscii)
                 {
-                    var result = this.AsciiSpan.Slice(start).LastIndexOf(hasAscii.AsciiSpan);
-                    return (uint)result < NIndexNotFound ? start + result : IndexNotFound;
+                    var result = SpanHelpers.LastIndexOf(
+                        ref Unsafe.Add(ref MemoryMarshal.GetReference(this.AsciiSpan), start), thisLen,
+                        ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), subCount);
+                    return SharedConstants.TooBigOrNegative >= (uint)result ? start + result : IndexNotFound;
                 }
                 if (subString is IHasUtf16Span hasUtf16)
                 {
-                    var result = this.Utf16Span.Slice(start).LastIndexOf(hasUtf16.Utf16Span);
-                    return (uint)result < NIndexNotFound ? start + result : IndexNotFound;
+                    var result = SpanHelpers.LastIndexOf(
+                        ref Unsafe.Add(ref MemoryMarshal.GetReference(this.Utf16Span), start), thisLen,
+                        ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), subCount);
+                    return SharedConstants.TooBigOrNegative >= (uint)result ? start + result : IndexNotFound;
                 }
             }
 
@@ -381,7 +403,7 @@ namespace DotNetty.Common.Utilities
         private int LastIndexOf0(ICharSequence subString, int start)
         {
             char firstChar = subString[0];
-            if (firstChar > MaxCharValue) { return IndexNotFound; }
+            if ((uint)firstChar > uMaxCharValue) { return IndexNotFound; }
 
             int thisLen = this.length;
             int subCount = subString.Count;
@@ -408,31 +430,38 @@ namespace DotNetty.Common.Utilities
 
         public bool RegionMatches(int thisStart, ICharSequence seq, int start, int count)
         {
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
+            if (seq is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
 
-            if (0u >= (uint)count)
+            uint uCount = (uint)count;
+            if (0u >= uCount)
             {
                 return true;
             }
 
-            if (start < 0 || seq.Count - start < count)
+            if ((uint)start > SharedConstants.TooBigOrNegative || uCount > (uint)(seq.Count - start))
             {
                 return false;
             }
 
             int thisLen = this.length;
-            if (thisStart < 0 || thisLen - thisStart < count)
+            if ((uint)thisStart > SharedConstants.TooBigOrNegative || uCount > (uint)(thisLen - thisStart))
             {
                 return false;
             }
 
             if (seq is IHasAsciiSpan hasAscii)
             {
-                return this.AsciiSpan.Slice(thisStart, count).SequenceEqual(hasAscii.AsciiSpan.Slice(start, count));
+                return SpanHelpers.SequenceEqual(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(this.AsciiSpan), thisStart),
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), start),
+                    count);
             }
             if (seq is IHasUtf16Span hasUtf16)
             {
-                return this.Utf16Span.Slice(thisStart, count).SequenceEqual(hasUtf16.Utf16Span.Slice(start, count));
+                return SpanHelpers.SequenceEqual(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(this.Utf16Span), thisStart),
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), start),
+                    count);
             }
 
             return RegionMatches0(thisStart, seq, start, count);
@@ -455,19 +484,21 @@ namespace DotNetty.Common.Utilities
 
         public bool RegionMatchesIgnoreCase(int thisStart, ICharSequence seq, int start, int count)
         {
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
+            if (seq is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
 
-            if (0u >= (uint)count)
+            uint uCount = (uint)count;
+            if (0u >= uCount)
             {
                 return true;
             }
 
-            int thisLen = this.length;
-            if (thisStart < 0 || count > thisLen - thisStart)
+            if ((uint)start > SharedConstants.TooBigOrNegative || uCount > (uint)(seq.Count - start))
             {
                 return false;
             }
-            if (start < 0 || count > seq.Count - start)
+
+            int thisLen = this.length;
+            if ((uint)thisStart > SharedConstants.TooBigOrNegative || uCount > (uint)(thisLen - thisStart))
             {
                 return false;
             }
@@ -498,7 +529,7 @@ namespace DotNetty.Common.Utilities
 
         public AsciiString Replace(char oldChar, char newChar)
         {
-            if (oldChar > MaxCharValue)
+            if ((uint)oldChar > uMaxCharValue)
             {
                 return this;
             }
@@ -511,11 +542,12 @@ namespace DotNetty.Common.Utilities
 
             var thisSpan = this.AsciiSpan;
             var pos = thisSpan.IndexOf(oldCharAsByte);
-            if (pos < 0) { return this; }
+            uint uPos = (uint)pos;
+            if (uPos > SharedConstants.TooBigOrNegative) { return this; }
 
             byte[] buffer = new byte[thisLen];
             var span = new Span<byte>(buffer);
-            if (pos > 0)
+            if (uPos > 0u)
             {
                 thisSpan.Slice(0, pos).CopyTo(span.Slice(0, pos));
             }
@@ -534,16 +566,17 @@ namespace DotNetty.Common.Utilities
             if (0u >= (uint)thisLen) { return this; }
 
             var thisSpan = this.AsciiSpan;
-            var result = SpanHelpers.FindIndex(ref MemoryMarshal.GetReference(thisSpan), x => IsUpperCase(x), thisLen);
-            if (result < 0) { return this; }
+            var index = SpanHelpers.FindIndex(ref MemoryMarshal.GetReference(thisSpan), x => IsUpperCase(x), thisLen);
+            uint uIndex = (uint)index;
+            if (uIndex > SharedConstants.TooBigOrNegative) { return this; }
 
             byte[] buffer = new byte[thisLen];
             var span = new Span<byte>(buffer);
-            if (result > 0)
+            if (uIndex > 0u)
             {
-                thisSpan.Slice(0, result).CopyTo(span.Slice(0, result));
+                thisSpan.Slice(0, index).CopyTo(span.Slice(0, index));
             }
-            for (var idx = result; idx < thisLen; idx++)
+            for (var idx = index; idx < thisLen; idx++)
             {
                 byte oldValue = thisSpan[idx];
                 span[idx] = ToLowerCase(thisSpan[idx]);
@@ -557,16 +590,17 @@ namespace DotNetty.Common.Utilities
             if (0u >= (uint)thisLen) { return this; }
 
             var thisSpan = this.AsciiSpan;
-            var result = SpanHelpers.FindIndex(ref MemoryMarshal.GetReference(thisSpan), x => IsLowerCase(x), thisLen);
-            if (result < 0) { return this; }
+            var index = SpanHelpers.FindIndex(ref MemoryMarshal.GetReference(thisSpan), x => IsLowerCase(x), thisLen);
+            uint uIndex = (uint)index;
+            if (uIndex > SharedConstants.TooBigOrNegative) { return this; }
 
             byte[] buffer = new byte[thisLen];
             var span = new Span<byte>(buffer);
-            if (result > 0)
+            if (uIndex > 0u)
             {
-                thisSpan.Slice(0, result).CopyTo(span.Slice(0, result));
+                thisSpan.Slice(0, index).CopyTo(span.Slice(0, index));
             }
-            for (var idx = result; idx < thisLen; idx++)
+            for (var idx = index; idx < thisLen; idx++)
             {
                 byte oldValue = thisSpan[idx];
                 span[idx] = ToUpperCase(thisSpan[idx]);
@@ -578,7 +612,7 @@ namespace DotNetty.Common.Utilities
         {
             if (ReferenceEquals(this, other)) { return true; }
 
-            return other != null && this.length == other.length
+            return other is object && this.length == other.length
                 && this.GetHashCode() == other.GetHashCode()
                 && this.AsciiSpan.SequenceEqual(other.AsciiSpan);
         }

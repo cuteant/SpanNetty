@@ -464,25 +464,25 @@ namespace DotNetty.Codecs.Http2
             private readonly IPromise closePromise;
             private readonly bool outbound;
 
-            private int _registered = Constants.False;
+            private int _registered = SharedConstants.False;
             private bool InternalRegistered
             {
-                get => Constants.True == Volatile.Read(ref _registered);
-                set => Interlocked.Exchange(ref _registered, value ? Constants.True : Constants.False);
+                get => SharedConstants.True == Volatile.Read(ref _registered);
+                set => Interlocked.Exchange(ref _registered, value ? SharedConstants.True : SharedConstants.False);
             }
             // We start with the writability of the channel when creating the StreamChannel.
-            private int _writable = Constants.False;
+            private int _writable = SharedConstants.False;
             private bool InternalWritable
             {
-                get => Constants.True == Volatile.Read(ref _writable);
-                set => Interlocked.Exchange(ref _writable, value ? Constants.True : Constants.False);
+                get => SharedConstants.True == Volatile.Read(ref _writable);
+                set => Interlocked.Exchange(ref _writable, value ? SharedConstants.True : SharedConstants.False);
             }
 
-            private int _outboundClosed = Constants.False;
+            private int _outboundClosed = SharedConstants.False;
             internal bool OutboundClosed
             {
-                get => Constants.True == Volatile.Read(ref _outboundClosed);
-                set => Interlocked.Exchange(ref _outboundClosed, value ? Constants.True : Constants.False);
+                get => SharedConstants.True == Volatile.Read(ref _outboundClosed);
+                set => Interlocked.Exchange(ref _outboundClosed, value ? SharedConstants.True : SharedConstants.False);
             }
 
             /// <summary>
@@ -767,18 +767,18 @@ namespace DotNetty.Codecs.Http2
                 private readonly IPromise unsafeVoidPromise;
                 private IRecvByteBufAllocatorHandle recvHandle;
                 private bool writeDoneAndNoFlush;
-                private int _closeInitiated = Constants.False;
+                private int _closeInitiated = SharedConstants.False;
                 private bool CloseInitiated
                 {
-                    get => Constants.True == Volatile.Read(ref _closeInitiated);
-                    set => Interlocked.Exchange(ref _closeInitiated, value ? Constants.True : Constants.False);
+                    get => SharedConstants.True == Volatile.Read(ref _closeInitiated);
+                    set => Interlocked.Exchange(ref _closeInitiated, value ? SharedConstants.True : SharedConstants.False);
                 }
 
-                private int _readEOS = Constants.False;
+                private int _readEOS = SharedConstants.False;
                 internal bool ReadEOS
                 {
-                    get => Constants.True == Volatile.Read(ref _readEOS);
-                    set => Interlocked.Exchange(ref _readEOS, value ? Constants.True : Constants.False);
+                    get => SharedConstants.True == Volatile.Read(ref _readEOS);
+                    set => Interlocked.Exchange(ref _readEOS, value ? SharedConstants.True : SharedConstants.False);
                 }
 
                 public Http2ChannelUnsafe(DefaultHttp2StreamChannel channel)

@@ -156,7 +156,7 @@ namespace DotNetty.Common.Utilities
 
         public static void CascadeTo(this Task task, IPromise promise, IInternalLogger logger = null)
         {
-            logger = logger ?? Logger;
+            logger ??= Logger;
             var internalLogger = !promise.IsVoid ? logger : null;
 
 #if NETCOREAPP

@@ -13,7 +13,12 @@ namespace DotNetty.Common.Utilities
 
             if (other is StringBuilderCharSequence comparand)
             {
-                return this.size == comparand.size && string.Equals(this.builder.ToString(this.offset, this.size), comparand.builder.ToString(comparand.offset, this.size), StringComparison.Ordinal);
+                return this.size == comparand.size && string.Equals(this.builder.ToString(this.offset, this.size), comparand.builder.ToString(comparand.offset, this.size)
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                    );
+#else
+                    , StringComparison.Ordinal);
+#endif
             }
 
             return other is ICharSequence seq && this.ContentEquals(seq);

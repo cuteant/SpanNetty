@@ -73,14 +73,14 @@ namespace DotNetty.Transport.Channels.Local
 
         protected override void DoBeginRead()
         {
-            if (Constants.True == Volatile.Read(ref this.acceptInProgress))
+            if (SharedConstants.True == Volatile.Read(ref this.acceptInProgress))
             {
                 return;
             }
 
             if (this.inboundBuffer.IsEmpty)
             {
-                Interlocked.Exchange(ref this.acceptInProgress, Constants.True);
+                Interlocked.Exchange(ref this.acceptInProgress, SharedConstants.True);
                 return;
             }
 
@@ -133,9 +133,9 @@ namespace DotNetty.Transport.Channels.Local
         {
             this.inboundBuffer.TryEnqueue(child);
 
-            if (Constants.True == Volatile.Read(ref this.acceptInProgress))
+            if (SharedConstants.True == Volatile.Read(ref this.acceptInProgress))
             {
-                Interlocked.Exchange(ref this.acceptInProgress, Constants.False);
+                Interlocked.Exchange(ref this.acceptInProgress, SharedConstants.False);
                 this.ReadInbound();
             }
         }

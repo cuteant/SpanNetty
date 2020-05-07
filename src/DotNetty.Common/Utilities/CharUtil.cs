@@ -6,6 +6,8 @@ namespace DotNetty.Common.Utilities
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
+    using System.Runtime.InteropServices;
+    using DotNetty.Common.Internal;
 
     public static partial class CharUtil
     {
@@ -36,155 +38,33 @@ namespace DotNetty.Common.Utilities
             return mid - (c < value ? 1 : 0);
         }
 
-        public static int ParseInt(ICharSequence seq, int start, int end, int radix)
-        {
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
-            if (radix < MinRadix || radix > MaxRadix) { ThrowHelper.ThrowIndexOutOfRangeException(); }
-
-            if (start == end)
-            {
-                ThrowHelper.ThrowFormatException();
-            }
-
-            int i = start;
-            bool negative = seq[i] == '-';
-            if (negative && ++i == end)
-            {
-                ThrowHelper.ThrowFormatException(seq, start, end);
-            }
-
-            return ParseInt(seq, i, end, radix, negative);
-        }
-
-        public static int ParseInt(ICharSequence seq) => ParseInt(seq, 0, seq.Count, 10, false);
-
-        public static int ParseInt(ICharSequence seq, int start, int end, int radix, bool negative)
-        {
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
-            if (radix < MinRadix || radix > MaxRadix) { ThrowHelper.ThrowIndexOutOfRangeException(); }
-
-            int max = int.MinValue / radix;
-            int result = 0;
-            int currOffset = start;
-            while (currOffset < end)
-            {
-                int digit = Digit((char)(seq[currOffset++] & 0xFF), radix);
-                if (digit == -1)
-                {
-                    ThrowHelper.ThrowFormatException(seq, start, end);
-                }
-                if (max > result)
-                {
-                    ThrowHelper.ThrowFormatException(seq, start, end);
-                }
-                int next = result * radix - digit;
-                if (next > result)
-                {
-                    ThrowHelper.ThrowFormatException(seq, start, end);
-                }
-                result = next;
-            }
-
-            if (!negative)
-            {
-                result = -result;
-                if (result < 0)
-                {
-                    ThrowHelper.ThrowFormatException(seq, start, end);
-                }
-            }
-
-            return result;
-        }
-
-        [MethodImpl(InlineMethod.Value)]
-        public static long ParseLong(ICharSequence str, int radix = 10)
-        {
-            if (str is AsciiString asciiString)
-            {
-                return asciiString.ParseLong(radix);
-            }
-
-            if (str == null
-                || radix < MinRadix
-                || radix > MaxRadix)
-            {
-                ThrowFormatException0(str);
-            }
-
-            // ReSharper disable once PossibleNullReferenceException
-            int length = str.Count;
-            int i = 0;
-            if (0u >= (uint)length)
-            {
-                ThrowFormatException0(str);
-            }
-            bool negative = str[i] == '-';
-            if (negative && ++i == length)
-            {
-                ThrowFormatException0(str);
-            }
-
-            return ParseLong(str, i, radix, negative);
-        }
-
-        [MethodImpl(InlineMethod.Value)]
-        static long ParseLong(ICharSequence str, int offset, int radix, bool negative)
-        {
-            long max = long.MinValue / radix;
-            long result = 0, length = str.Count;
-            while (offset < length)
-            {
-                int digit = Digit(str[offset++], radix);
-                if (digit == -1)
-                {
-                    ThrowFormatException0(str);
-                }
-                if (max > result)
-                {
-                    ThrowFormatException0(str);
-                }
-                long next = result * radix - digit;
-                if (next > result)
-                {
-                    ThrowFormatException0(str);
-                }
-                result = next;
-            }
-
-            if (!negative)
-            {
-                result = -result;
-                if (result < 0)
-                {
-                    ThrowFormatException0(str);
-                }
-            }
-
-            return result;
-        }
-
-        static void ThrowFormatException(ICharSequence str) => throw new FormatException(str.ToString());
-
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool IsNullOrEmpty(ICharSequence sequence) => (sequence == null || 0u >= (uint)sequence.Count) ? true : false;
 
         public static ICharSequence[] Split(ICharSequence sequence, params char[] delimiters) => Split(sequence, 0, delimiters);
 
         internal static bool ContentEquals(ICharSequence left, ICharSequence right)
         {
-            if (left == null || right == null)
-            {
-                return ReferenceEquals(left, right);
-            }
+            if (left is null || right is null) { return ReferenceEquals(left, right); }
+            if (ReferenceEquals(left, right)) { return true; }
+            if (left.Count != right.Count) { return false; }
 
-            if (ReferenceEquals(left, right))
+#if !NET40
+            if (left is IHasAsciiSpan thisHasAscii && right is IHasAsciiSpan otherHasAscii)
             {
-                return true;
+                return SpanHelpers.SequenceEqual(
+                    ref MemoryMarshal.GetReference(thisHasAscii.AsciiSpan),
+                    ref MemoryMarshal.GetReference(otherHasAscii.AsciiSpan),
+                    left.Count);
             }
-            if (left.Count != right.Count)
+            else if (left is IHasUtf16Span thisHasUtf16 && right is IHasUtf16Span otherHasUtf16)
             {
-                return false;
+                return SpanHelpers.SequenceEqual(
+                    ref MemoryMarshal.GetReference(thisHasUtf16.Utf16Span),
+                    ref MemoryMarshal.GetReference(otherHasUtf16.Utf16Span),
+                    left.Count);
             }
+#endif
 
             for (int i = 0; i < left.Count; i++)
             {
@@ -203,19 +83,16 @@ namespace DotNetty.Common.Utilities
 
         internal static bool ContentEqualsIgnoreCase(ICharSequence left, ICharSequence right)
         {
-            if (left == null || right == null)
-            {
-                return ReferenceEquals(left, right);
-            }
+            if (left is null || right is null) { return ReferenceEquals(left, right); }
+            if (ReferenceEquals(left, right)) { return true; }
 
-            if (ReferenceEquals(left, right))
+#if !NET40
+            if (left is IHasUtf16Span thisHasUtf16 && right is IHasUtf16Span otherHasUtf16)
             {
-                return true;
+                return thisHasUtf16.Utf16Span.Equals(otherHasUtf16.Utf16Span, StringComparison.OrdinalIgnoreCase);
             }
-            if (left.Count != right.Count)
-            {
-                return false;
-            }
+#endif
+            if (left.Count != right.Count) { return false; }
 
             for (int i = 0; i < left.Count; i++)
             {
@@ -232,26 +109,23 @@ namespace DotNetty.Common.Utilities
 
         public static bool RegionMatches(string value, int thisStart, ICharSequence other, int start, int length)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-            if (null == other) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (other is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
-            if (start < 0
-                || other.Count - start < length)
+            uint uLength = (uint)length;
+            if (0u >= uLength) { return true; }
+            if ((uint)thisStart > SharedConstants.TooBigOrNegative || uLength > (uint)(value.Length - thisStart)) { return false; }
+            if ((uint)start > SharedConstants.TooBigOrNegative || uLength > (uint)(other.Count - start)) { return false; }
+
+#if !NET40
+            if (other is IHasUtf16Span hasUtf16)
             {
-                return false;
+                return SpanHelpers.SequenceEqual(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(value.AsSpan()), thisStart),
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), start),
+                    length);
             }
-
-            if (thisStart < 0
-                || value.Length - thisStart < length)
-            {
-                return false;
-            }
-
-            if (length <= 0)
-            {
-                return true;
-            }
-
+#endif
             int o1 = thisStart;
             int o2 = start;
             for (int i = 0; i < length; ++i)
@@ -267,19 +141,20 @@ namespace DotNetty.Common.Utilities
 
         public static bool RegionMatchesIgnoreCase(string value, int thisStart, ICharSequence other, int start, int length)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-            if (null == other) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (other is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
-            if (thisStart < 0
-                || length > value.Length - thisStart)
-            {
-                return false;
-            }
+            uint uLength = (uint)length;
+            if (0u >= uLength) { return true; }
+            if ((uint)thisStart > SharedConstants.TooBigOrNegative || uLength > (uint)(value.Length - thisStart)) { return false; }
+            if ((uint)start > SharedConstants.TooBigOrNegative || uLength > (uint)(other.Count - start)) { return false; }
 
-            if (start < 0 || length > other.Count - start)
+#if !NET40
+            if (other is IHasUtf16Span hasUtf16)
             {
-                return false;
+                return value.AsSpan(thisStart, length).Equals(hasUtf16.Utf16Span.Slice(start, length), StringComparison.OrdinalIgnoreCase);
             }
+#endif
 
             int end = thisStart + length;
             while (thisStart < end)
@@ -297,14 +172,32 @@ namespace DotNetty.Common.Utilities
             return true;
         }
 
-        public static bool RegionMatches(IReadOnlyList<char> value, int thisStart, ICharSequence other, int start, int length)
+        internal static bool RegionMatches(ICharSequence value, int thisStart, ICharSequence other, int start, int length)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-            if (null == other) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (other is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
-            if (0u >= (uint)length) { return true; }
-            if (start < 0 || other.Count - start < length) { return false; }
-            if (thisStart < 0 || value.Count - thisStart < length) { return false; }
+            uint uLength = (uint)length;
+            if (0u >= uLength) { return true; }
+            if ((uint)thisStart > SharedConstants.TooBigOrNegative || uLength > (uint)(value.Count - thisStart)) { return false; }
+            if ((uint)start > SharedConstants.TooBigOrNegative || uLength > (uint)(other.Count - start)) { return false; }
+
+#if !NET40
+            if (value is IHasAsciiSpan thisHasAscii && other is IHasAsciiSpan otherHasAscii)
+            {
+                return SpanHelpers.SequenceEqual(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(thisHasAscii.AsciiSpan), thisStart),
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(otherHasAscii.AsciiSpan), start),
+                    length);
+            }
+            else if (value is IHasUtf16Span thisHasUtf16 && other is IHasUtf16Span otherHasUtf16)
+            {
+                return SpanHelpers.SequenceEqual(
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(thisHasUtf16.Utf16Span), thisStart),
+                    ref Unsafe.Add(ref MemoryMarshal.GetReference(otherHasUtf16.Utf16Span), start),
+                    length);
+            }
+#endif
 
             int o1 = thisStart;
             int o2 = start;
@@ -319,14 +212,22 @@ namespace DotNetty.Common.Utilities
             return true;
         }
 
-        public static bool RegionMatchesIgnoreCase(IReadOnlyList<char> value, int thisStart, ICharSequence other, int start, int length)
+        internal static bool RegionMatchesIgnoreCase(ICharSequence value, int thisStart, ICharSequence other, int start, int length)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-            if (null == other) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (other is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
-            if (0u >= (uint)length) { return true; }
-            if (thisStart < 0 || length > value.Count - thisStart) { return false; }
-            if (start < 0 || length > other.Count - start) { return false; }
+            uint uLength = (uint)length;
+            if (0u >= uLength) { return true; }
+            if ((uint)thisStart > SharedConstants.TooBigOrNegative || uLength > (uint)(value.Count - thisStart)) { return false; }
+            if ((uint)start > SharedConstants.TooBigOrNegative || uLength > (uint)(other.Count - start)) { return false; }
+
+#if !NET40
+            if (value is IHasUtf16Span thisHasUtf16 && other is IHasUtf16Span otherHasUtf16)
+            {
+                return thisHasUtf16.Utf16Span.Slice(thisStart, length).Equals(otherHasUtf16.Utf16Span.Slice(start, length), StringComparison.OrdinalIgnoreCase);
+            }
+#endif
 
             int end = thisStart + length;
             while (thisStart < end)
@@ -352,7 +253,7 @@ namespace DotNetty.Common.Utilities
 
         public static ICharSequence Trim(ICharSequence sequence)
         {
-            if (null == sequence) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sequence); }
+            if (sequence is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sequence); }
 
             int length = sequence.Count;
             int start = IndexOfFirstNonWhiteSpace(sequence);
@@ -371,7 +272,7 @@ namespace DotNetty.Common.Utilities
 
         static int IndexOfFirstNonWhiteSpace(IReadOnlyList<char> value)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             int i = 0;
             while (i < value.Count && char.IsWhiteSpace(value[i]))
@@ -393,22 +294,6 @@ namespace DotNetty.Common.Utilities
             return i;
         }
 
-        public static bool Contains(IReadOnlyList<char> value, char c)
-        {
-            if (value != null)
-            {
-                int length = value.Count;
-                for (int i = 0; i < length; i++)
-                {
-                    if (value[i] == c)
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
         [MethodImpl(InlineMethod.Value)]
         public static int Digit(byte b)
         {
@@ -421,45 +306,6 @@ namespace DotNetty.Common.Utilities
             }
 
             return b - First;
-        }
-
-        [MethodImpl(InlineMethod.Value)]
-        public static int Digit(char c, int radix)
-        {
-            if (radix >= MinRadix && radix <= MaxRadix)
-            {
-                if (c < 128)
-                {
-                    int result = -1;
-                    if ('0' <= c && c <= '9')
-                    {
-                        result = c - '0';
-                    }
-                    else if ('a' <= c && c <= 'z')
-                    {
-                        result = c - ('a' - 10);
-                    }
-                    else if ('A' <= c && c <= 'Z')
-                    {
-                        result = c - ('A' - 10);
-                    }
-
-                    return result < radix ? result : -1;
-                }
-
-                int result1 = BinarySearchRange(DigitKeys, c);
-                if (result1 >= 0 && c <= DigitValues[result1 * 2])
-                {
-                    int value = (char)(c - DigitValues[result1 * 2 + 1]);
-                    if (value >= radix)
-                    {
-                        return -1;
-                    }
-                    return value;
-                }
-            }
-
-            return -1;
         }
 
         [MethodImpl(InlineMethod.Value)]
@@ -479,29 +325,27 @@ namespace DotNetty.Common.Utilities
                     return s.IndexOf(searchChar, start);
 
                 default:
-                    break;
-            }
+                    int sz = cs.Count;
+                    if (start < 0)
+                    {
+                        start = 0;
+                    }
+                    for (int i = start; i < sz; i++)
+                    {
+                        if (cs[i] == searchChar)
+                        {
+                            return i;
+                        }
+                    }
 
-            int sz = cs.Count;
-            if (start < 0)
-            {
-                start = 0;
+                    return AsciiString.IndexNotFound;
             }
-            for (int i = start; i < sz; i++)
-            {
-                if (cs[i] == searchChar)
-                {
-                    return i;
-                }
-            }
-
-            return AsciiString.IndexNotFound;
         }
 
         public static int CodePointAt(IReadOnlyList<char> seq, int index)
         {
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
-            if (index < 0 || index >= seq.Count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            if (seq is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
+            if (/*index < 0 ||*/ (uint)index >= (uint)seq.Count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             char high = seq[index++];
             if (index >= seq.Count)

@@ -172,7 +172,7 @@ namespace DotNetty.Transport.Channels.Local
                     Interlocked.Exchange(ref this.state, State.Closed);
 
                     // Preserve order of event and force a read operation now before the close operation is processed.
-                    if (Constants.True == Volatile.Read(ref this.writeInProgress) && peer != null) { this.FinishPeerRead(peer); }
+                    if (SharedConstants.True == Volatile.Read(ref this.writeInProgress) && peer != null) { this.FinishPeerRead(peer); }
 
                     TaskCompletionSource promise = Volatile.Read(ref this.connectPromise);
                     if (promise != null)
@@ -264,14 +264,14 @@ namespace DotNetty.Transport.Channels.Local
 
         protected override void DoBeginRead()
         {
-            if (Constants.True == Volatile.Read(ref this.readInProgress))
+            if (SharedConstants.True == Volatile.Read(ref this.readInProgress))
             {
                 return;
             }
 
             if (this.inboundBuffer.IsEmpty)
             {
-                Interlocked.Exchange(ref this.readInProgress, Constants.True);
+                Interlocked.Exchange(ref this.readInProgress, SharedConstants.True);
                 return;
             }
 
@@ -321,7 +321,7 @@ namespace DotNetty.Transport.Channels.Local
 
             var peer = Volatile.Read(ref this.peer);
 
-            Interlocked.Exchange(ref this.writeInProgress, Constants.True);
+            Interlocked.Exchange(ref this.writeInProgress, SharedConstants.True);
             try
             {
                 while (true)
@@ -359,7 +359,7 @@ namespace DotNetty.Transport.Channels.Local
                 // 2. promise X is completed when in.remove() is called, and a listener on this promise calls close()
                 // 3. Then the close event will be executed for the peer before the write events, when the write events
                 // actually happened before the close event.
-                Interlocked.Exchange(ref this.writeInProgress, Constants.False);
+                Interlocked.Exchange(ref this.writeInProgress, SharedConstants.False);
             }
 
             this.FinishPeerRead(peer);
@@ -368,7 +368,7 @@ namespace DotNetty.Transport.Channels.Local
         void FinishPeerRead(LocalChannel peer)
         {
             // If the peer is also writing, then we must schedule the event on the event loop to preserve read order.
-            if (peer.EventLoop == this.EventLoop && Constants.False == Volatile.Read(ref peer.writeInProgress))
+            if (peer.EventLoop == this.EventLoop && SharedConstants.False == Volatile.Read(ref peer.writeInProgress))
             {
                 this.FinishPeerRead0(peer);
             }
@@ -384,7 +384,7 @@ namespace DotNetty.Transport.Channels.Local
             // we keep track of the task, and coordinate later that our read can't happen until the peer is done.
             try
             {
-                if (Constants.True == Volatile.Read(ref peer.writeInProgress))
+                if (SharedConstants.True == Volatile.Read(ref peer.writeInProgress))
                 {
                     Interlocked.Exchange(ref peer.finishReadFuture, peer.EventLoop.SubmitAsync(
                         () =>
@@ -410,7 +410,7 @@ namespace DotNetty.Transport.Channels.Local
         void ReleaseInboundBuffers()
         {
             Debug.Assert(this.EventLoop == null || this.EventLoop.InEventLoop);
-            Interlocked.Exchange(ref this.readInProgress, Constants.False);
+            Interlocked.Exchange(ref this.readInProgress, SharedConstants.False);
             var inboundBuffer = this.inboundBuffer;
             while (inboundBuffer.TryDequeue(out object msg))
             {
@@ -438,9 +438,9 @@ namespace DotNetty.Transport.Channels.Local
             // We should only set readInProgress to false if there is any data that was read as otherwise we may miss to
             // forward data later on.
             IChannelPipeline peerPipeline = peer.Pipeline;
-            if (Constants.True == Volatile.Read(ref peer.readInProgress) && peer.inboundBuffer.NonEmpty)
+            if (SharedConstants.True == Volatile.Read(ref peer.readInProgress) && peer.inboundBuffer.NonEmpty)
             {
-                Interlocked.Exchange(ref peer.readInProgress, Constants.False);
+                Interlocked.Exchange(ref peer.readInProgress, SharedConstants.False);
                 peer.ReadInbound();
             }
         }

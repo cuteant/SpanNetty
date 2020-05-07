@@ -1,6 +1,6 @@
 ﻿namespace DotNetty
 {
-    public static class Constants
+    public static class SharedConstants
     {
         public const int True = 1;
 

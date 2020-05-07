@@ -744,10 +744,10 @@ namespace DotNetty.Buffers
             }
             switch (encoding.CodePage)
             {
-                case Constants.UTF8CodePage:
+                case SharedConstants.UTF8CodePage:
                     return IsUtf8(buf, index, length);
 
-                case Constants.ASCIICodePage:
+                case SharedConstants.ASCIICodePage:
                     return IsAscii(buf, index, length);
 
                 default:

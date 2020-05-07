@@ -49,9 +49,9 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public int MaxFramePayloadLength => this.maxFramePayloadLength;
 
-        public bool IsHandshakeComplete => Constants.True == Volatile.Read(ref this.handshakeComplete);
+        public bool IsHandshakeComplete => SharedConstants.True == Volatile.Read(ref this.handshakeComplete);
 
-        void SetHandshakeComplete() => Interlocked.Exchange(ref this.handshakeComplete, Constants.True);
+        void SetHandshakeComplete() => Interlocked.Exchange(ref this.handshakeComplete, SharedConstants.True);
 
         public string ExpectedSubprotocol => this.expectedSubprotocol;
 

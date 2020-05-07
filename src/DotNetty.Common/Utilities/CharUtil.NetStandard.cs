@@ -11,26 +11,27 @@ namespace DotNetty.Common.Utilities
     {
         public static ICharSequence[] Split(ICharSequence sequence, int startIndex, params char[] delimiters)
         {
-            if (null == sequence) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sequence); }
-            if (null == delimiters) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.delimiters); }
+            if (sequence is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sequence); }
+            if (delimiters is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.delimiters); }
             int length = sequence.Count;
-            if (0u >= (uint)length) { return new[] { sequence }; }
-            if ((uint)startIndex >= (uint)length) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            uint uLength = (uint)length;
+            if (0u >= uLength) { return new[] { sequence }; }
+            if ((uint)startIndex >= uLength) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             var delimitersSpan = delimiters.AsSpan();
             List<ICharSequence> result = InternalThreadLocalMap.Get().CharSequenceList();
 
             int i = startIndex;
 
-            while (i < length)
+            while ((uint)i < uLength)
             {
-                while (i < length && delimitersSpan.IndexOf(sequence[i]) >= 0)
+                while ((uint)i < uLength && delimitersSpan.IndexOf(sequence[i]) >= 0)
                 {
                     i++;
                 }
 
                 int position = i;
-                if (i < length)
+                if ((uint)i < uLength)
                 {
                     if (delimitersSpan.IndexOf(sequence[position]) >= 0)
                     {

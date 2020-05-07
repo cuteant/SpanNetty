@@ -71,7 +71,7 @@ namespace DotNetty.Transport.Channels
         [MethodImpl(InlineMethod.Value)]
         void CheckAdded()
         {
-            if (Constants.False == Volatile.Read(ref this.handlerAdded))
+            if (SharedConstants.False == Volatile.Read(ref this.handlerAdded))
             {
                 ThrowHelper.ThrowInvalidOperationException_HandlerNotAddedToPipeYet();
             }
@@ -119,7 +119,7 @@ namespace DotNetty.Transport.Channels
 
             // The inboundCtx and outboundCtx were created and set now it's safe to call removeInboundHandler() and
             // removeOutboundHandler().
-            Interlocked.Exchange(ref this.handlerAdded, Constants.True);
+            Interlocked.Exchange(ref this.handlerAdded, SharedConstants.True);
 
             try
             {

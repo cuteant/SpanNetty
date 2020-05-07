@@ -8,6 +8,7 @@ namespace DotNetty.Common.Utilities
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using DotNetty.Common.Internal;
 
     public sealed partial class StringCharSequence : ICharSequence, IEquatable<StringCharSequence>
@@ -20,7 +21,7 @@ namespace DotNetty.Common.Utilities
 
         public StringCharSequence(string value)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             this.value = value;
             this.offset = 0;
@@ -29,7 +30,7 @@ namespace DotNetty.Common.Utilities
 
         public StringCharSequence(string value, int offset, int count)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             if (MathUtil.IsOutOfBounds(offset, count, value.Length))
             {
                 ThrowHelper.ThrowIndexOutOfRangeException_Index(offset, count, value.Length);
@@ -44,13 +45,13 @@ namespace DotNetty.Common.Utilities
 
         public static explicit operator string(StringCharSequence charSequence)
         {
-            if (null == charSequence) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charSequence); }
+            if (charSequence is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charSequence); }
             return charSequence.ToString();
         }
 
         public static explicit operator StringCharSequence(string value)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             return value.Length > 0 ? new StringCharSequence(value) : Empty;
         }
@@ -59,7 +60,7 @@ namespace DotNetty.Common.Utilities
 
         public ICharSequence SubSequence(int start, int end)
         {
-            if (start < 0 || end < start || end > this.count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            if ((uint)end > (uint)this.count || (uint)start > (uint)end) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             return end == start
                 ? Empty
@@ -75,47 +76,20 @@ namespace DotNetty.Common.Utilities
             }
         }
 
+        [MethodImpl(InlineMethod.Value)]
         public bool RegionMatches(int thisStart, ICharSequence seq, int start, int length)
-        {
-#if !NET40
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
+            => CharUtil.RegionMatches(this, thisStart, seq, start, length);
 
-            if (start < 0 || seq.Count - start < length) { return false; }
-            if (thisStart < 0 || this.count - thisStart < length) { return false; }
-            if (0u >= (uint)length) { return true; }
-
-            if (seq is IHasUtf16Span hasUtf16)
-            {
-                this.Utf16Span.Slice(thisStart, length).SequenceEqual(hasUtf16.Utf16Span.Slice(start, length));
-            }
-#endif
-            return CharUtil.RegionMatches(this, thisStart, seq, start, length);
-        }
-
+        [MethodImpl(InlineMethod.Value)]
         public bool RegionMatchesIgnoreCase(int thisStart, ICharSequence seq, int start, int length)
-        {
-#if !NET40
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
-
-            if (start < 0 || seq.Count - start < length) { return false; }
-            if (thisStart < 0 || this.count - thisStart < length) { return false; }
-            if (0u >= (uint)length) { return true; }
-
-            if (seq is IHasUtf16Span hasUtf16)
-            {
-                this.Utf16Span.Slice(thisStart, length).Equals(hasUtf16.Utf16Span.Slice(start, length), StringComparison.OrdinalIgnoreCase);
-            }
-#endif
-            return CharUtil.RegionMatchesIgnoreCase(this, thisStart, seq, start, length);
-        }
+            => CharUtil.RegionMatchesIgnoreCase(this, thisStart, seq, start, length);
 
         public int IndexOf(char ch, int start = 0)
         {
-            if (0u >= (uint)this.count) { return AsciiString.IndexNotFound; }
+            var uCount = (uint)this.count;
+            if (0u >= uCount) { return AsciiString.IndexNotFound; }
 
-            if ((uint)start >= (uint)this.count)
+            if ((uint)start >= uCount)
             {
                 ThrowHelper.ThrowIndexOutOfRangeException();
             }
@@ -128,8 +102,9 @@ namespace DotNetty.Common.Utilities
 
         public string ToString(int start)
         {
-            if (0u >= (uint)this.count) { return string.Empty; }
-            if ((uint)start >= (uint)this.count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            var uCount = (uint)this.count;
+            if (0u >= uCount) { return string.Empty; }
+            if ((uint)start >= uCount) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             return this.value.Substring(this.offset + start, this.count);
         }
@@ -138,37 +113,21 @@ namespace DotNetty.Common.Utilities
 
         public bool Equals(StringCharSequence other)
         {
-            //if (other == null)
-            //{
-            //    return false;
-            //}
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-            //if (this.count == other.count)
-            //{
-            //    return true;
-            //}
+            if (ReferenceEquals(this, other)) { return true; }
 
-            return other != null && this.count == other.count && string.Compare(this.value, this.offset, other.value, other.offset, this.count,
-                StringComparison.Ordinal) == 0;
+            return other is object
+                && this.count == other.count
+                && 0u >= (uint)string.Compare(this.value, this.offset, other.value, other.offset, this.count, StringComparison.Ordinal);
         }
 
         public override bool Equals(object obj)
         {
-            //if (ReferenceEquals(obj, null))
-            //{
-            //    return false;
-            //}
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
+            if (ReferenceEquals(this, obj)) { return true; }
 
             if (obj is StringCharSequence other)
             {
-                return this.count == other.count && string.Compare(this.value, this.offset, other.value, other.offset, this.count, StringComparison.Ordinal) == 0;
+                return this.count == other.count
+                    && 0u >= (uint)string.Compare(this.value, this.offset, other.value, other.offset, this.count, StringComparison.Ordinal);
             }
             if (obj is ICharSequence seq)
             {
@@ -183,7 +142,8 @@ namespace DotNetty.Common.Utilities
 
             if (other is StringCharSequence comparand)
             {
-                return this.count == comparand.count && string.Compare(this.value, this.offset, comparand.value, comparand.offset, this.count, StringComparison.Ordinal) == 0;
+                return this.count == comparand.count
+                    && 0u >= (uint)string.Compare(this.value, this.offset, comparand.value, comparand.offset, this.count, StringComparison.Ordinal);
             }
 
             return other is ICharSequence seq && this.ContentEquals(seq);
@@ -195,8 +155,10 @@ namespace DotNetty.Common.Utilities
 
         public override int GetHashCode() => this.HashCode(false);
 
+        [MethodImpl(InlineMethod.Value)]
         public bool ContentEquals(ICharSequence other) => CharUtil.ContentEquals(this, other);
 
+        [MethodImpl(InlineMethod.Value)]
         public bool ContentEqualsIgnoreCase(ICharSequence other) => CharUtil.ContentEqualsIgnoreCase(this, other);
 
         public IEnumerator<char> GetEnumerator() => new CharSequenceEnumerator(this);

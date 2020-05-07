@@ -53,7 +53,7 @@ namespace DotNetty.Transport.Libuv
 
         // Flag to indicate whether async handle should be used to wake up 
         // the loop, only accessed when InEventLoop is true
-        int wakeUp = Constants.True;
+        int wakeUp = SharedConstants.True;
 
         public LoopExecutor(string threadName)
             : this(null, threadName, DefaultBreakoutInterval)
@@ -301,7 +301,7 @@ namespace DotNetty.Transport.Libuv
             long start = this.GetLoopTime();
             long runTasks = 0;
             long executionTime;
-            Interlocked.Exchange(ref this.wakeUp, Constants.False);
+            Interlocked.Exchange(ref this.wakeUp, SharedConstants.False);
             while (true)
             {
                 SafeExecute(task);
@@ -326,7 +326,7 @@ namespace DotNetty.Transport.Libuv
                     break;
                 }
             }
-            Interlocked.Exchange(ref this.wakeUp, Constants.True);
+            Interlocked.Exchange(ref this.wakeUp, SharedConstants.True);
 
             this.AfterRunningAllTasks();
             this.lastExecutionTime = executionTime;
@@ -436,7 +436,7 @@ namespace DotNetty.Transport.Libuv
             //
             // If the executor is in the event loop and in the middle of RunAllTasks, no need to 
             // wake up the loop again because this is normally called by the current running task.
-            if (!inEventLoop || Constants.True == Volatile.Read(ref this.wakeUp))
+            if (!inEventLoop || SharedConstants.True == Volatile.Read(ref this.wakeUp))
             {
                 this.asyncHandle.Send();
             }
@@ -448,7 +448,7 @@ namespace DotNetty.Transport.Libuv
             {
                 this.ScheduledTaskQueue.TryEnqueue(task);
                 //this.WakeUp(true);
-                if (Constants.True == Volatile.Read(ref this.wakeUp))
+                if (SharedConstants.True == Volatile.Read(ref this.wakeUp))
                 {
                     this.asyncHandle.Send();
                 }

@@ -3,9 +3,10 @@
 
 namespace DotNetty.Common.Utilities
 {
+    using System;
     using System.Collections.Generic;
 
-    public partial interface ICharSequence : IReadOnlyList<char>
+    public interface ICharSequence : IReadOnlyList<char>, IEquatable<ICharSequence>
     {
         /// Start is the inclusive start index to begin the subsequence.
         /// End is the exclusive end index to end the subsequence.

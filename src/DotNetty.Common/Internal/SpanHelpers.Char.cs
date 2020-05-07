@@ -22,6 +22,12 @@ namespace DotNetty.Common.Internal
         {
             Debug.Assert(length >= 0);
 
+#if NETCOREAPP_3_0_GREATER
+            int index = PlatformDependent.Is64BitProcess
+                ? InternalIndexOf_x64(ref searchSpace, value, length)
+                : InternalIndexOf_x32(ref searchSpace, value, length);
+            return SharedConstants.TooBigOrNegative >= (uint)index;
+#else
             fixed (char* pChars = &searchSpace)
             {
                 char* pCh = pChars;
@@ -103,6 +109,7 @@ namespace DotNetty.Common.Internal
             Found:
                 return true;
             }
+#endif
         }
 
         #endregion
@@ -304,14 +311,9 @@ namespace DotNetty.Common.Internal
             Debug.Assert(length >= 0);
 
 #if NETCOREAPP_3_0_GREATER
-            if (PlatformDependent.Is64BitProcess)
-            {
-                return InternalIndexOf_x64(ref searchSpace, value, length);
-            }
-            else
-            {
-                return InternalIndexOf_x32(ref searchSpace, value, length);
-            }
+            return PlatformDependent.Is64BitProcess
+                ? InternalIndexOf_x64(ref searchSpace, value, length)
+                : InternalIndexOf_x32(ref searchSpace, value, length);
 #else
             fixed (char* pChars = &searchSpace)
             {

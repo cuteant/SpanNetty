@@ -145,11 +145,11 @@ namespace DotNetty.Codecs.Compression
             return context;
         }
 
-        public override bool IsClosed => Constants.True == Volatile.Read(ref this.finished);
+        public override bool IsClosed => SharedConstants.True == Volatile.Read(ref this.finished);
 
         protected override void Encode(IChannelHandlerContext context, IByteBuffer message, IByteBuffer output)
         {
-            if (Constants.True == Volatile.Read(ref this.finished))
+            if (SharedConstants.True == Volatile.Read(ref this.finished))
             {
                 output.WriteBytes(message);
                 return;
@@ -233,7 +233,7 @@ namespace DotNetty.Codecs.Compression
 
         Task FinishEncode(IChannelHandlerContext context, IPromise promise)
         {
-            if (Constants.True == Interlocked.Exchange(ref this.finished, Constants.True))
+            if (SharedConstants.True == Interlocked.Exchange(ref this.finished, SharedConstants.True))
             {
                 promise.TryComplete();
                 return promise.Task;

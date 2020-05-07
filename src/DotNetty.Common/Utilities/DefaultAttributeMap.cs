@@ -128,8 +128,8 @@ namespace DotNetty.Common.Utilities
             public DefaultAttribute Next;
 
             // Will be set to true one the attribute is removed via GetAndRemove() or Remove()
-            protected int removed = Constants.False;
-            public bool Removed => Constants.True == Volatile.Read(ref this.removed);
+            protected int removed = SharedConstants.False;
+            public bool Removed => SharedConstants.True == Volatile.Read(ref this.removed);
 
             public abstract IConstant GetKey();
 
@@ -184,7 +184,7 @@ namespace DotNetty.Common.Utilities
 
             public T GetAndRemove()
             {
-                Interlocked.Exchange(ref this.removed, Constants.True);
+                Interlocked.Exchange(ref this.removed, SharedConstants.True);
                 T oldValue = this.GetAndSet(null);
                 this.Remove0();
                 return oldValue;
@@ -194,7 +194,7 @@ namespace DotNetty.Common.Utilities
 
             public void Remove()
             {
-                Interlocked.Exchange(ref this.removed, Constants.True);
+                Interlocked.Exchange(ref this.removed, SharedConstants.True);
                 this.Set(null);
                 this.Remove0();
             }

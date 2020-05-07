@@ -4,7 +4,8 @@
 namespace DotNetty.Common.Utilities
 {
     using System;
-    using System.Threading;
+    using System.Globalization;
+    using System.Runtime.CompilerServices;
     using DotNetty.Common.Internal.Logging;
     using Thread = DotNetty.Common.Concurrency.XThread;
 
@@ -17,14 +18,10 @@ namespace DotNetty.Common.Utilities
         /// <see cref="IReferenceCounted"/>. If the specified message doesn't implement
         /// <see cref="IReferenceCounted"/>, this method does nothing.
         /// </summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static T Retain<T>(T msg)
         {
-            var counted = msg as IReferenceCounted;
-            if (counted != null)
-            {
-                return (T)counted.Retain();
-            }
-            return msg;
+            return msg is IReferenceCounted counted ? (T)counted.Retain() : msg;
         }
 
         /// <summary>
@@ -32,14 +29,10 @@ namespace DotNetty.Common.Utilities
         /// <see cref="IReferenceCounted"/>. If the specified message doesn't implement
         /// <see cref="IReferenceCounted"/>, this method does nothing.
         /// </summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static T Retain<T>(T msg, int increment)
         {
-            var counted = msg as IReferenceCounted;
-            if (counted != null)
-            {
-                return (T)counted.Retain(increment);
-            }
-            return msg;
+            return msg is IReferenceCounted counted ? (T)counted.Retain(increment) : msg;
         }
 
         /// <summary>
@@ -47,14 +40,10 @@ namespace DotNetty.Common.Utilities
         /// <see cref="IReferenceCounted" />.
         /// If the specified message doesn't implement <see cref="IReferenceCounted" />, this method does nothing.
         /// </summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static T Touch<T>(T msg)
         {
-            var refCnt = msg as IReferenceCounted;
-            if (refCnt != null)
-            {
-                return (T)refCnt.Touch();
-            }
-            return msg;
+            return msg is IReferenceCounted refCnt ? (T)refCnt.Touch() : msg;
         }
 
         /// <summary>
@@ -62,14 +51,10 @@ namespace DotNetty.Common.Utilities
         /// <see cref="IReferenceCounted" />. If the specified message doesn't implement
         /// <see cref="IReferenceCounted" />, this method does nothing.
         /// </summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static T Touch<T>(T msg, object hint)
         {
-            var refCnt = msg as IReferenceCounted;
-            if (refCnt != null)
-            {
-                return (T)refCnt.Touch(hint);
-            }
-            return msg;
+            return msg is IReferenceCounted refCnt ? (T)refCnt.Touch(hint) : msg;
         }
 
         /// <summary>
@@ -77,14 +62,10 @@ namespace DotNetty.Common.Utilities
         /// <see cref="IReferenceCounted"/>. If the specified message doesn't implement
         /// <see cref="IReferenceCounted"/>, this method does nothing.
         /// </summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool Release(object msg)
         {
-            var counted = msg as IReferenceCounted;
-            if (counted != null)
-            {
-                return counted.Release();
-            }
-            return false;
+            return msg is IReferenceCounted counted ? counted.Release() : false;
         }
 
         /// <summary>
@@ -92,14 +73,10 @@ namespace DotNetty.Common.Utilities
         /// <see cref="IReferenceCounted"/>. If the specified message doesn't implement
         /// <see cref="IReferenceCounted"/>, this method does nothing.
         /// </summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool Release(object msg, int decrement)
         {
-            var counted = msg as IReferenceCounted;
-            if (counted != null)
-            {
-                return counted.Release(decrement);
-            }
-            return false;
+            return msg is IReferenceCounted counted ? counted.Release(decrement) : false;
         }
 
         /// <summary>
@@ -110,6 +87,7 @@ namespace DotNetty.Common.Utilities
         /// rethrowing it to the caller. It is usually recommended to use <see cref="Release(object)"/> instead, unless
         /// you absolutely need to swallow an exception.
         /// </summary>
+        [MethodImpl(InlineMethod.Value)]
         public static void SafeRelease(object msg)
         {
             try
@@ -130,6 +108,7 @@ namespace DotNetty.Common.Utilities
         /// than rethrowing it to the caller. It is usually recommended to use <see cref="Release(object, int)"/>
         /// instead, unless you absolutely need to swallow an exception.
         /// </summary>
+        [MethodImpl(InlineMethod.Value)]
         public static void SafeRelease(object msg, int decrement)
         {
             try
@@ -145,6 +124,7 @@ namespace DotNetty.Common.Utilities
             }
         }
 
+        [MethodImpl(InlineMethod.Value)]
         public static void SafeRelease(this IReferenceCounted msg)
         {
             try
@@ -157,6 +137,7 @@ namespace DotNetty.Common.Utilities
             }
         }
 
+        [MethodImpl(InlineMethod.Value)]
         public static void SafeRelease(this IReferenceCounted msg, int decrement)
         {
             try
@@ -174,6 +155,7 @@ namespace DotNetty.Common.Utilities
         /// is intended to simplify reference counting of ephemeral objects during unit tests. Do not use it beyond the
         /// intended use case.
         /// </summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static T ReleaseLater<T>(T msg) => ReleaseLater(msg, 1);
 
         /// <summary>
@@ -183,8 +165,7 @@ namespace DotNetty.Common.Utilities
         /// </summary>
         public static T ReleaseLater<T>(T msg, int decrement)
         {
-            var referenceCounted = msg as IReferenceCounted;
-            if (referenceCounted != null)
+            if (msg is IReferenceCounted referenceCounted)
             {
                 ThreadDeathWatcher.Watch(Thread.CurrentThread, () =>
                 {
@@ -209,6 +190,6 @@ namespace DotNetty.Common.Utilities
         }
 
         internal static string FormatReleaseString(IReferenceCounted referenceCounted, int decrement)
-            => $"{referenceCounted.GetType().Name}.Release({decrement.ToString()}) refCnt: {referenceCounted.ReferenceCount.ToString()}";
+            => $"{referenceCounted.GetType().Name}.Release({decrement.ToString(CultureInfo.InvariantCulture)}) refCnt: {referenceCounted.ReferenceCount.ToString(CultureInfo.InvariantCulture)}";
     }
 }

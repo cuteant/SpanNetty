@@ -5,10 +5,6 @@ namespace DotNetty.Common.Utilities
 {
     using System;
 
-    partial interface ICharSequence : IEquatable<ICharSequence>
-    {
-    }
-
 #if !NET40
     public interface IHasAsciiSpan
     {

@@ -111,7 +111,7 @@ namespace DotNetty.Codecs.Http
                     }
                 }
 
-                if (CharUtil.Contains(encoding, '*'))
+                if (encoding.Contains('*'))
                 {
                     starQ = q;
                 }

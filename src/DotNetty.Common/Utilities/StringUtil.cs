@@ -6,6 +6,7 @@ namespace DotNetty.Common.Utilities
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
+    using System.Runtime.InteropServices;
     using System.Text;
     using DotNetty.Common.Internal;
 
@@ -22,10 +23,13 @@ namespace DotNetty.Common.Utilities
         public const char LineFeed = '\n';
         public const char CarriageReturn = '\r';
         public const char Tab = '\t';
-        public static readonly char Space = '\x20';
+        public const char Space = '\x20';
         public const byte UpperCaseToLowerCaseAsciiOffset = 'a' - 'A';
+        const uint uTab = Tab;
+        const uint uSpace = Space;
         static readonly string[] Byte2HexPad = new string[256];
         static readonly string[] Byte2HexNopad = new string[256];
+
         /**
          * 2 - Quote character at beginning and end.
          * 5 - Extra allowance for anticipated escape characters that may be added.
@@ -66,28 +70,31 @@ namespace DotNetty.Common.Utilities
         public static string SubstringAfter(string value, char delim)
         {
             int pos = value.IndexOf(delim);
-            return pos >= 0 ? value.Substring(pos + 1) : null;
+            return SharedConstants.TooBigOrNegative >= (uint)pos ? value.Substring(pos + 1) : null;
         }
 
-        public static bool CommonSuffixOfLength(string s, string p, int len) => s != null && p != null && len >= 0 && RegionMatches(s, s.Length - len, p, p.Length - len, len);
+        public static bool CommonSuffixOfLength(string s, string p, int len)
+            => s is object && p is object && SharedConstants.TooBigOrNegative >= (uint)len && RegionMatches(s, s.Length - len, p, p.Length - len, len);
 
         static bool RegionMatches(string value, int thisStart, string other, int start, int length)
         {
-            if (start < 0 || other.Length - start < length)
+            if ((uint)start > (uint)other.Length || (uint)length > (uint)(other.Length - start))
             {
                 return false;
             }
 
-            if (thisStart < 0 || value.Length - thisStart < length)
+            if ((uint)thisStart > (uint)value.Length || (uint)length > (uint)(value.Length - thisStart))
             {
                 return false;
             }
 
-            if (length <= 0)
-            {
-                return true;
-            }
+            if (0u >= (uint)length) { return true; }
 
+#if !NET40
+            ref char valueStart = ref MemoryMarshal.GetReference(value.AsSpan());
+            ref char otherStart = ref MemoryMarshal.GetReference(other.AsSpan());
+            return SpanHelpers.SequenceEqual(ref Unsafe.Add(ref valueStart, thisStart), ref Unsafe.Add(ref otherStart, start), length);
+#else
             int o1 = thisStart;
             int o2 = start;
             for (int i = 0; i < length; ++i)
@@ -99,6 +106,7 @@ namespace DotNetty.Common.Utilities
             }
 
             return true;
+#endif
         }
 
         /// <summary>
@@ -290,7 +298,7 @@ namespace DotNetty.Common.Utilities
             int last;
             if (trimWhiteSpace)
             {
-                start = IndexOfFirstNonOwsChar(value, length);
+                start = IndexOfFirstNonOwsChar(value, (uint)length);
                 last = IndexOfLastNonOwsChar(value, start, length);
             }
             else
@@ -530,6 +538,7 @@ namespace DotNetty.Common.Utilities
 
         public static int Length(string s) => s?.Length ?? 0;
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool IsEmpty(string s) => 0u >= (uint)s.Length ? true : false;
 
         public static int IndexOfNonWhiteSpace(IReadOnlyList<char> seq, int offset)
@@ -545,33 +554,69 @@ namespace DotNetty.Common.Utilities
             return AsciiString.IndexNotFound;
         }
 
-        public static bool IsSurrogate(char c) => c >= '\uD800' && c <= '\uDFFF';
+        public static bool IsSurrogate(char c) => UnicodeUtility.IsInRangeInclusive(c, '\uD800', '\uDFFF');
 
         static bool IsDoubleQuote(char c) => c == DoubleQuote;
 
         public static bool EndsWith(IReadOnlyList<char> s, char c)
         {
             int len = s.Count;
-            return len > 0 && s[len - 1] == c;
+            return (uint)len > 0u && s[len - 1] == c;
         }
 
         public static ICharSequence TrimOws(ICharSequence value)
         {
             int length = value.Count;
-            if (0u >= (uint)length)
-            {
-                return value;
-            }
+            uint ulength = (uint)length;
+            if (0u >= ulength) { return value; }
 
-            int start = IndexOfFirstNonOwsChar(value, length);
-            int end = IndexOfLastNonOwsChar(value, start, length);
-            return start == 0 && end == length - 1 ? value : value.SubSequence(start, end + 1);
+            int start, end;
+#if !NET40
+            if (value is IHasUtf16Span hasUtf16Span)
+            {
+                var utf16Span = hasUtf16Span.Utf16Span;
+                start = IndexOfFirstNonOwsChar(utf16Span, ulength);
+                end = IndexOfLastNonOwsChar(utf16Span, start, length);
+            }
+            else
+            {
+#endif
+                start = IndexOfFirstNonOwsChar(value, ulength);
+                end = IndexOfLastNonOwsChar(value, start, length);
+#if !NET40
+            }
+#endif
+            return 0u >= (uint)start && end == length - 1 ? value : value.SubSequence(start, end + 1);
         }
 
-        static int IndexOfFirstNonOwsChar(IReadOnlyList<char> value, int length)
+#if !NET40
+        static int IndexOfFirstNonOwsChar(in ReadOnlySpan<char> value, uint length)
         {
             int i = 0;
-            while (i < length && IsOws(value[i]))
+            while ((uint)i < length && IsOws(value[i]))
+            {
+                i++;
+            }
+
+            return i;
+        }
+
+        static int IndexOfLastNonOwsChar(in ReadOnlySpan<char> value, int start, int length)
+        {
+            int i = length - 1;
+            while (i > start && IsOws(value[i]))
+            {
+                i--;
+            }
+
+            return i;
+        }
+#endif
+
+        static int IndexOfFirstNonOwsChar(IReadOnlyList<char> value, uint length)
+        {
+            int i = 0;
+            while ((uint)i < length && IsOws(value[i]))
             {
                 i++;
             }
@@ -590,7 +635,7 @@ namespace DotNetty.Common.Utilities
             return i;
         }
 
-        [MethodImpl(InlineMethod.Value)]
-        static bool IsOws(char c) => c == Space || c == Tab;
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        static bool IsOws(uint c) => c == uSpace || c == uTab;
     }
 }

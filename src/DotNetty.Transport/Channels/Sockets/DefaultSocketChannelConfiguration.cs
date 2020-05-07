@@ -119,8 +119,8 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public bool AllowHalfClosure
         {
-            get { return Constants.True == Volatile.Read(ref this.allowHalfClosure); }
-            set { Interlocked.Exchange(ref this.allowHalfClosure, value ? Constants.True : Constants.False); }
+            get { return SharedConstants.True == Volatile.Read(ref this.allowHalfClosure); }
+            set { Interlocked.Exchange(ref this.allowHalfClosure, value ? SharedConstants.True : SharedConstants.False); }
         }
 
         public int ReceiveBufferSize

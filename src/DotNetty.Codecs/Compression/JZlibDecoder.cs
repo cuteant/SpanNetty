@@ -40,11 +40,11 @@ namespace DotNetty.Codecs.Compression
             }
         }
 
-        public override bool IsClosed => Constants.True == Volatile.Read(ref this.finished);
+        public override bool IsClosed => SharedConstants.True == Volatile.Read(ref this.finished);
 
         protected internal override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
-            if (Constants.True == Volatile.Read(ref this.finished))
+            if (SharedConstants.True == Volatile.Read(ref this.finished))
             {
                 // Skip data received after finished.
                 input.SkipBytes(input.ReadableBytes);
@@ -115,7 +115,7 @@ namespace DotNetty.Codecs.Compression
                         }
                         if (resultCode == JZlib.Z_STREAM_END)
                         {
-                            Interlocked.Exchange(ref this.finished, Constants.True); // Do not decode anymore.
+                            Interlocked.Exchange(ref this.finished, SharedConstants.True); // Do not decode anymore.
                             this.z.InflateEnd();
                             break;
                         }

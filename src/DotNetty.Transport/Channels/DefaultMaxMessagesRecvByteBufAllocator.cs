@@ -14,7 +14,7 @@ namespace DotNetty.Transport.Channels
     public abstract class DefaultMaxMessagesRecvByteBufAllocator : IMaxMessagesRecvByteBufAllocator
     {
         int maxMessagesPerRead;
-        int respectMaybeMoreData = Constants.True;
+        int respectMaybeMoreData = SharedConstants.True;
 
         protected DefaultMaxMessagesRecvByteBufAllocator()
             : this(1)
@@ -38,8 +38,8 @@ namespace DotNetty.Transport.Channels
 
         public bool RespectMaybeMoreData
         {
-            get => Constants.True == Volatile.Read(ref this.respectMaybeMoreData);
-            set => Interlocked.Exchange(ref this.respectMaybeMoreData, value ? Constants.True : Constants.False);
+            get => SharedConstants.True == Volatile.Read(ref this.respectMaybeMoreData);
+            set => Interlocked.Exchange(ref this.respectMaybeMoreData, value ? SharedConstants.True : SharedConstants.False);
         }
 
         public abstract IRecvByteBufAllocatorHandle NewHandle();

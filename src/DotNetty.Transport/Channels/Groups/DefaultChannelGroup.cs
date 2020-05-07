@@ -254,7 +254,7 @@ namespace DotNetty.Transport.Channels.Groups
                 // ChannelGroup.add() happens-before checking closed==true
                 //
                 // See https://github.com/netty/netty/issues/4020
-                Interlocked.Exchange(ref this.closed, Constants.True);
+                Interlocked.Exchange(ref this.closed, SharedConstants.True);
             }
 
             foreach (IChannel c in this.nonServerChannels.Values)
@@ -354,7 +354,7 @@ namespace DotNetty.Transport.Channels.Groups
 #endif
             }
 
-            if (this.stayClosed && (Constants.True == Volatile.Read(ref this.closed)))
+            if (this.stayClosed && (SharedConstants.True == Volatile.Read(ref this.closed)))
             {
 
                 // First add channel, than check if closed.

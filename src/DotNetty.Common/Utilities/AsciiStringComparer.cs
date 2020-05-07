@@ -12,7 +12,7 @@ namespace DotNetty.Common.Utilities
 
         public bool Equals(AsciiString x, AsciiString y)
         {
-            if (null == x) { return false; }
+            if (x is null) { return false; }
 
             return x.Equals(y);
         }
@@ -28,7 +28,7 @@ namespace DotNetty.Common.Utilities
     {
         public bool Equals(AsciiString x, AsciiString y)
         {
-            if (null == x) { return false; }
+            if (x is null) { return false; }
 
             return x.ContentEqualsIgnoreCase(y);
         }

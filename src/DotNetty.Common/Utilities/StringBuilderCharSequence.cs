@@ -17,7 +17,7 @@ namespace DotNetty.Common.Utilities
 
         public StringBuilderCharSequence(int capacity = 0)
         {
-            if (capacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(capacity, ExceptionArgument.capacity); }
+            if ((uint)capacity > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(capacity, ExceptionArgument.capacity); }
 
             this.builder = new StringBuilder(capacity);
             this.offset = 0;
@@ -30,7 +30,7 @@ namespace DotNetty.Common.Utilities
 
         public StringBuilderCharSequence(StringBuilder builder, int offset, int count)
         {
-            if (null == builder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.builder); }
+            if (builder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.builder); }
             if (MathUtil.IsOutOfBounds(offset, count, builder.Length))
             {
                 ThrowHelper.ThrowIndexOutOfRangeException_Index(offset, count, builder.Length);
@@ -45,7 +45,7 @@ namespace DotNetty.Common.Utilities
 
         public ICharSequence SubSequence(int start, int end)
         {
-            if (start < 0)
+            if ((uint)start > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException_StartIndex(ExceptionArgument.start);
             }
@@ -69,8 +69,9 @@ namespace DotNetty.Common.Utilities
         {
             get
             {
-                if (index < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(index, ExceptionArgument.index); }
-                if (index >= this.size) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.index); }
+                var uIdx = (uint)index;
+                if (uIdx > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(index, ExceptionArgument.index); }
+                if (uIdx >= (uint)this.size) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.index); }
                 return this.builder[this.offset + index];
             }
         }
@@ -89,7 +90,7 @@ namespace DotNetty.Common.Utilities
 
         public void Append(ICharSequence value)
         {
-            if (value == null || value.Count == 0)
+            if (value == null || 0u >= (uint)value.Count)
             {
                 return;
             }
@@ -100,13 +101,27 @@ namespace DotNetty.Common.Utilities
 
         public void Append(ICharSequence value, int index, int count)
         {
-            if (value == null || count == 0)
+            if (value == null || 0u >= (uint)count)
             {
                 return;
             }
 
             this.Append(value.SubSequence(index, index + count));
         }
+
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
+        public void Append(in ReadOnlySpan<char> value)
+        {
+            this.builder.Append(value);
+            this.size += value.Length;
+        }
+
+        public void Append(in ReadOnlyMemory<char> value)
+        {
+            this.builder.Append(value);
+            this.size += value.Length;
+        }
+#endif
 
         public void Append(char value)
         {
@@ -133,13 +148,14 @@ namespace DotNetty.Common.Utilities
 
         public string ToString(int start)
         {
-            if (start < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(start, ExceptionArgument.start); }
-            if (start >= this.size) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.start); }
+            var uStart = (uint)start;
+            if (uStart > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(start, ExceptionArgument.start); }
+            if (uStart >= (uint)this.size) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.start); }
 
             return this.builder.ToString(this.offset + start, this.size);
         }
 
-        public override string ToString() => this.size == 0 ? string.Empty : this.ToString(0);
+        public override string ToString() => 0u >= (uint)this.size ? string.Empty : this.ToString(0);
 
         public bool Equals(StringBuilderCharSequence other)
         {
@@ -148,8 +164,12 @@ namespace DotNetty.Common.Utilities
                 return true;
             }
 
-            return other != null && this.size == other.size && string.Equals(this.builder.ToString(this.offset, this.size),
-                other.builder.ToString(other.offset, this.size), StringComparison.Ordinal);
+            return other is object && this.size == other.size && string.Equals(this.builder.ToString(this.offset, this.size), other.builder.ToString(other.offset, this.size)
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                );
+#else
+                , StringComparison.Ordinal);
+#endif
         }
 
         public override bool Equals(object obj)
@@ -159,16 +179,20 @@ namespace DotNetty.Common.Utilities
                 return true;
             }
 
-            if (obj is StringBuilderCharSequence other)
+            switch (obj)
             {
-                return this.size == other.size && string.Equals(this.builder.ToString(this.offset, this.size), other.builder.ToString(other.offset, this.size), StringComparison.Ordinal);
+                case StringBuilderCharSequence other:
+                    return this.size == other.size && string.Equals(this.builder.ToString(this.offset, this.size), other.builder.ToString(other.offset, this.size)
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                        );
+#else
+                        , StringComparison.Ordinal);
+#endif
+                case ICharSequence seq:
+                    return this.ContentEquals(seq);
+                default:
+                    return false;
             }
-            if (obj is ICharSequence seq)
-            {
-                return this.ContentEquals(seq);
-            }
-
-            return false;
         }
 
         public int HashCode(bool ignoreCase) => ignoreCase

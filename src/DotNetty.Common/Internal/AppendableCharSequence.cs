@@ -41,7 +41,7 @@ namespace DotNetty.Common.Internal
 
         public AppendableCharSequence(byte[] chars)
         {
-            if (null == chars || chars.Length <= 0) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.chars); }
+            if (null == chars || 0u >= (uint)chars.Length) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.chars); }
 
             this.chars = chars;
             this.pos = chars.Length;
@@ -97,7 +97,7 @@ namespace DotNetty.Common.Internal
         [MethodImpl(InlineMethod.Value)]
         public IAppendable Append(byte c)
         {
-            if (this.pos == this.chars.Length)
+            if ((uint)this.pos >= (uint)this.chars.Length)
             {
                 byte[] old = this.chars;
                 this.chars = new byte[old.Length << 1];
@@ -111,27 +111,36 @@ namespace DotNetty.Common.Internal
 
         public IAppendable Append(ICharSequence sequence, int start, int end)
         {
-            if (sequence.Count < end) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            if ((uint)end > (uint)sequence.Count) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            if ((uint)start > (uint)end) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             int length = end - start;
-            if (length > this.chars.Length - this.pos)
+            if ((uint)length > (uint)(this.chars.Length - this.pos))
             {
                 this.chars = Expand(this.chars, this.pos + length, this.pos);
             }
 
-            if (sequence is AppendableCharSequence seq)
+            switch (sequence)
             {
-                // Optimize append operations via array copy
-                byte[] src = seq.chars;
-                PlatformDependent.CopyMemory(src, start, this.chars, this.pos, length);
-                this.pos += length;
+                case AppendableCharSequence seq:
+                    // Optimize append operations via array copy
+                    byte[] src = seq.chars;
+                    PlatformDependent.CopyMemory(src, start, this.chars, this.pos, length);
+                    this.pos += length;
+                    break;
 
-                return this;
-            }
+#if !NET40
+                case IHasAsciiSpan hasAscii:
+                    hasAscii.AsciiSpan.Slice(start, length).CopyTo(this.chars.AsSpan(this.pos, length));
+                    break;
+#endif
 
-            for (int i = start; i < end; i++)
-            {
-                this.chars[this.pos++] = (byte)sequence[i];
+                default:
+                    for (int idx = start; idx < end; idx++)
+                    {
+                        this.chars[this.pos++] = (byte)sequence[idx];
+                    }
+                    break;
             }
 
             return this;
@@ -145,13 +154,13 @@ namespace DotNetty.Common.Internal
 
         public string ToString(int start)
         {
-            if (start < 0 || start >= this.pos) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            if ((uint)start >= (uint)this.pos) { ThrowHelper.ThrowIndexOutOfRangeException(); }
             return Encoding.ASCII.GetString(this.chars, start, this.pos);
         }
 
-        public override string ToString() => this.pos == 0 ? string.Empty : this.ToString(0);
+        public override string ToString() => 0u >= (uint)this.pos ? string.Empty : this.ToString(0);
 
-        public AsciiString ToAsciiString() => this.pos == 0 ? AsciiString.Empty : new AsciiString(this.chars, 0, this.pos, true);
+        public AsciiString ToAsciiString() => 0u >= (uint)this.pos ? AsciiString.Empty : new AsciiString(this.chars, 0, this.pos, true);
 
         /// <summary>
         /// Create a new ascii string, this method assumes all chars has been sanitized to ascii chars when appending

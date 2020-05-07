@@ -34,9 +34,9 @@ namespace DotNetty.Buffers
                 bool isMultiSegment = startObject != end.GetObject();
 
                 // A == 0 && B == 0 means SequenceType.MultiSegment
-                if (Constants.TooBigOrNegative >= (uint)startIndex) // startIndex >= 0
+                if (SharedConstants.TooBigOrNegative >= (uint)startIndex) // startIndex >= 0
                 {
-                    if (Constants.TooBigOrNegative >= (uint)endIndex)  // endIndex >= 0 SequenceType.MultiSegment
+                    if (SharedConstants.TooBigOrNegative >= (uint)endIndex)  // endIndex >= 0 SequenceType.MultiSegment
                     {
                         ReadOnlySequenceSegment<byte> segment = (ReadOnlySequenceSegment<byte>)startObject;
                         first = segment.Memory.Span;

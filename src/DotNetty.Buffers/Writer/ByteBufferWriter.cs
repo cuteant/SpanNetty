@@ -46,7 +46,7 @@ namespace DotNetty.Buffers
             _buffer = _output.FreeSpan;
         }
 
-        public void WriteBoolean(bool value) => WriteByte(value ? Constants.True : Constants.False);
+        public void WriteBoolean(bool value) => WriteByte(value ? SharedConstants.True : SharedConstants.False);
         public void WriteByte(int value)
         {
             GrowAndEnsureIf(1);

@@ -19,8 +19,8 @@ namespace DotNetty.Transport.Channels
         IRecvByteBufAllocator recvByteBufAllocator = FixedRecvByteBufAllocator.Default;
         IMessageSizeEstimator messageSizeEstimator = DefaultMessageSizeEstimator.Default;
 
-        int autoRead = Constants.True;
-        int autoClose = Constants.True;
+        int autoRead = SharedConstants.True;
+        int autoClose = SharedConstants.True;
         int writeSpinCount = 16;
         int writeBufferHighWaterMark = 64 * 1024;
         int writeBufferLowWaterMark = 32 * 1024;
@@ -208,11 +208,11 @@ namespace DotNetty.Transport.Channels
 
         public bool AutoRead
         {
-            get { return Constants.True == Volatile.Read(ref this.autoRead); }
+            get { return SharedConstants.True == Volatile.Read(ref this.autoRead); }
             set
             {
 #pragma warning disable 420 // atomic exchange is ok
-                bool oldAutoRead = Constants.True == Interlocked.Exchange(ref this.autoRead, value ? Constants.True : Constants.False);
+                bool oldAutoRead = SharedConstants.True == Interlocked.Exchange(ref this.autoRead, value ? SharedConstants.True : SharedConstants.False);
 #pragma warning restore 420
                 if (value && !oldAutoRead)
                 {
@@ -231,8 +231,8 @@ namespace DotNetty.Transport.Channels
 
         public bool AutoClose
         {
-            get { return Constants.True == Volatile.Read(ref this.autoClose); }
-            set { Interlocked.Exchange(ref this.autoClose, value ? Constants.True : Constants.False); }
+            get { return SharedConstants.True == Volatile.Read(ref this.autoClose); }
+            set { Interlocked.Exchange(ref this.autoClose, value ? SharedConstants.True : SharedConstants.False); }
         }
 
         public virtual int WriteBufferHighWaterMark

@@ -436,7 +436,7 @@ namespace DotNetty.Common.Internal
 
                 SuccessfullyProcessedThreeByteSequence:
 
-                    if (IntPtr.Size >= 8 && BitConverter.IsLittleEndian)
+                    if (PlatformDependent.Is64BitProcess && BitConverter.IsLittleEndian)
                     {
                         // x64 little-endian optimization: A three-byte character could indicate CJK text,
                         // which makes it likely that the character following this one is also CJK.

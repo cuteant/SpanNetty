@@ -11,7 +11,7 @@ namespace DotNetty.Common.Utilities
         public static bool Join(this Thread thread, TimeSpan timeout)
         {
             long tm = (long)timeout.TotalMilliseconds;
-            if (tm < 0 || tm > int.MaxValue) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            if (/*tm < 0 ||*/ (ulong)tm > int.MaxValue) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             return thread.Join((int)tm);
         }
