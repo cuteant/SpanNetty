@@ -12,7 +12,7 @@ namespace DotNetty.Transport.Channels.Sockets
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
     using System.Runtime.InteropServices;
 #endif
 
@@ -137,7 +137,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         SocketChannelAsyncOperation<TChannel, TUnsafe> WriteOperation => this.writeOperation ?? (this.writeOperation = new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, false));
 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
         protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(ReadOnlyMemory<byte> buffer)
         {
             var operation = this.WriteOperation;

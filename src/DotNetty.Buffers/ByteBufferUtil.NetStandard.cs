@@ -333,7 +333,7 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void WriteAscii0(ReadOnlySpan<char> utf16Source, Span<byte> asciiDestination, int length)
         {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             System.Text.Encoding.ASCII.GetBytes(utf16Source, asciiDestination);
 #else
             unsafe
@@ -359,7 +359,7 @@ namespace DotNetty.Buffers
 
             try
             {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
                 int written = encoding.GetBytes(src.AsSpan(), dst.FreeSpan);
 #else
                 int written = encoding.GetBytes(src, 0, src.Length, dst.Array, dst.ArrayOffset + dst.WriterIndex);
@@ -406,7 +406,7 @@ namespace DotNetty.Buffers
             }
 #else
             var source = src.GetReadableSpan(readerIndex, len);
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             return encoding.GetString(source);
 #else
             unsafe

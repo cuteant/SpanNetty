@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\nuget.props" />
+  
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <RootNamespace>DotNetty.Codecs.Mqtt</RootNamespace>
+    <AssemblyName>DotNetty.Codecs.Mqtt</AssemblyName>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>DotNetty.Codecs.Mqtt.Unofficial</PackageId>
+    <Title>DotNetty.Codecs.Mqtt.Unofficial</Title>
+    <Description>MQTT codec for DotNetty：the complete port of the DotNetty.Codecs.Mqtt assembly to support .NET 4.0 and newer.</Description>
+    <PackageTags>socket;tcp;protocol;netty;dotnetty;network;mqtt</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DotNetty.Codecs\DotNetty.Codecs.Netstandard.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Internal\Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Internal\Strings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <Import Project="..\version.props" />
+</Project>

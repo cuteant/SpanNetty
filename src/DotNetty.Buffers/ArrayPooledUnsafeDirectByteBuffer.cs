@@ -187,7 +187,7 @@ namespace DotNetty.Buffers
             //    return this;
             //}
             // UnsafeByteBufferUtil.GetBytes 多一遍内存拷贝，最终还是调用 stream.write，没啥必要
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             output.Write(new ReadOnlySpan<byte>(this.Memory, index, length));
 #else
             output.Write(this.Memory, index, length);
@@ -209,7 +209,7 @@ namespace DotNetty.Buffers
             int read;
             do
             {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
                 read = src.Read(new Span<byte>(this.Memory, index + readTotal, length - readTotal));
 #else
                 read = src.Read(this.Memory, index + readTotal, length - readTotal);

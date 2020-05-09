@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD
+﻿#if NETSTANDARD2_0
 namespace DotNetty.Handlers.Tls
 {
     using System;

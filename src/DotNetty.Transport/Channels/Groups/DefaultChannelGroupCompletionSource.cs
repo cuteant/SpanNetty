@@ -102,7 +102,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         public bool IsSucess()
         {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             return this.Task.IsCompletedSuccessfully;
 #else
             var task = this.Task;

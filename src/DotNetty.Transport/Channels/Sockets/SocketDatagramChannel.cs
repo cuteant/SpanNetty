@@ -109,7 +109,7 @@ namespace DotNetty.Transport.Channels.Sockets
             handle.AttemptedBytesRead = buffer.WritableBytes;
             operation.UserToken = buffer;
 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             operation.SetBuffer(buffer.FreeMemory);
 #else
             ArraySegment<byte> bytes = buffer.GetIoBuffer(0, buffer.WritableBytes);
@@ -193,7 +193,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 return;
             }
 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             var operation = this.PrepareWriteOperation(data.GetReadableMemory(data.ReaderIndex, length));
 #else
             var operation = this.PrepareWriteOperation(data.GetIoBuffer(data.ReaderIndex, length));

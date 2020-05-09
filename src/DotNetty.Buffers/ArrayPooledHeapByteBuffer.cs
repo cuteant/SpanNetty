@@ -74,7 +74,7 @@ namespace DotNetty.Buffers
         {
             if (null == destination) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.destination); }
             this.CheckIndex(index, length);
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             destination.Write(new ReadOnlySpan<byte>(this.Memory, index, length));
 #else
             destination.Write(this.Memory, index, length);
@@ -124,7 +124,7 @@ namespace DotNetty.Buffers
             int read;
             do
             {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
                 read = src.Read(new Span<byte>(this.Memory, index + readTotal, length - readTotal));
 #else
                 read = src.Read(this.Memory, index + readTotal, length - readTotal);

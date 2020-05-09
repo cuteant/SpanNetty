@@ -89,7 +89,7 @@ namespace DotNetty.Buffers
             this.CheckIndex(index, length);
             //UnsafeByteBufferUtil.GetBytes(this, this.Addr(index), index, output, length);
             // UnsafeByteBufferUtil.GetBytes 多一遍内存拷贝，最终还是调用 stream.write，没啥必要
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             output.Write(this._GetReadableSpan(index, length));
 #else
             output.Write(this.Memory, this.Idx(index), length);
@@ -139,12 +139,12 @@ namespace DotNetty.Buffers
             //return Task.FromResult(read);
             int readTotal = 0;
             int read;
-#if !NETCOREAPP
+#if !(NETCOREAPP || NETSTANDARD_2_0_GREATER)
             int offset = this.Idx(index);
 #endif
             do
             {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
                 read = src.Read(this._GetSpan(index + readTotal, length - readTotal));
 #else
                 read = src.Read(this.Memory, offset + readTotal, length - readTotal);

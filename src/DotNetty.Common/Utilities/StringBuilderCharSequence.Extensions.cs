@@ -24,7 +24,7 @@ namespace DotNetty.Common.Utilities
             return other is ICharSequence seq && this.ContentEquals(seq);
         }
 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
         public void Append(ReadOnlySpan<char> value)
         {
             this.builder.Append(value);

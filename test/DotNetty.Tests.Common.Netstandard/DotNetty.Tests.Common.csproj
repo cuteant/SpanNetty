@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  
+  <PropertyGroup>
+    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1</TargetFrameworks>
+    <RootNamespace>DotNetty.Tests.Common</RootNamespace>
+    <AssemblyName>DotNetty.Tests.Common</AssemblyName>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\shared\dotnetty.com.pfx" Link="dotnetty.com.pfx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\shared\contoso.com.pfx" Link="contoso.com.pfx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit" Version="$(xUnitPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.Netstandard.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\DotNetty.Tests.Common\**\*.cs" Exclude="..\DotNetty.Tests.Common\bin\**;..\DotNetty.Tests.Common\obj\**" />
+    <EmbeddedResource Include="..\DotNetty.Tests.Common\**\*.resx" Exclude="..\DotNetty.Tests.Common\bin\**;..\DotNetty.Tests.Common\obj\**;@(EmbeddedResource)" />
+  </ItemGroup>
+
+</Project>

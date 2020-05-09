@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\nuget.props" />
+  
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+    <RootNamespace>DotNetty.Codecs.Http2</RootNamespace>
+    <AssemblyName>DotNetty.Codecs.Http2</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>DotNetty.Codecs.Http2.Unofficial</PackageId>
+    <Title>DotNetty.Codecs.Unofficial</Title>
+    <Description>General purpose codecs for DotNetty：the complete port of the DotNetty.Codecs assembly to support .NET 4.0 and newer.</Description>
+    <PackageTags>socket;tcp;protocol;netty;dotnetty;network;Http2</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DotNetty.Codecs.Http\DotNetty.Codecs.Http.Netstandard.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Internal\Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Internal\Strings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <Import Project="..\version.props" />
+</Project>

@@ -1,4 +1,4 @@
-﻿#if NETCOREAPP
+﻿#if NETCOREAPP || NETSTANDARD_2_0_GREATER
 
 namespace DotNetty.Handlers.Tls
 {

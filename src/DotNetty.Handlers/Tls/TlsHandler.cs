@@ -401,7 +401,7 @@ namespace DotNetty.Handlers.Tls
 
             try
             {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
                 ReadOnlyMemory<byte> inputIoBuffer = packet.GetReadableMemory(offset, length);
                 _mediationStream.SetSource(inputIoBuffer);
 #else
@@ -563,7 +563,7 @@ namespace DotNetty.Handlers.Tls
 
         #region ** ReadFromSslStreamAsync **
 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
         private Task<int> ReadFromSslStreamAsync(IByteBuffer outputBuffer, int outputBufferLength)
         {
             Memory<byte> outlet = outputBuffer.GetMemory(outputBuffer.WriterIndex, outputBufferLength);
@@ -935,7 +935,7 @@ namespace DotNetty.Handlers.Tls
 
         #region ** FinishWrap **
 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
         private void FinishWrap(ReadOnlySpan<byte> buffer, IPromise promise)
         {
             IByteBuffer output;
@@ -977,7 +977,7 @@ namespace DotNetty.Handlers.Tls
 
         #region ** FinishWrapNonAppDataAsync **
 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
         private Task FinishWrapNonAppDataAsync(ReadOnlyMemory<byte> buffer, IPromise promise)
         {
             var capturedContext = CapturedContext;

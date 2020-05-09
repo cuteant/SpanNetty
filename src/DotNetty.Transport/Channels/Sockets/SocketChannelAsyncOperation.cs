@@ -22,7 +22,7 @@ namespace DotNetty.Transport.Channels.Sockets
             this.Completed += AbstractSocketChannel<TChannel, TUnsafe>.IoCompletedCallback;
             if (setEmptyBuffer)
             {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
                 this.SetBuffer(Memory<byte>.Empty);
 #else
                 this.SetBuffer(ArrayExtensions.ZeroBytes, 0, 0);

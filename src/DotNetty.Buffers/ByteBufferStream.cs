@@ -157,7 +157,7 @@ namespace DotNetty.Buffers
 
         #region -- CopyToAsync --
 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
         public override void CopyTo(Stream destination, int bufferSize)
         {
             EnsureNotClosed();
@@ -234,7 +234,7 @@ namespace DotNetty.Buffers
             }
         }
 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
         public override int Read(Span<byte> buffer)
         {
             EnsureNotClosed();
@@ -373,7 +373,7 @@ namespace DotNetty.Buffers
         }
 #endif
 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
         public override void Write(ReadOnlySpan<byte> buffer)
         {
             EnsureNotClosed();

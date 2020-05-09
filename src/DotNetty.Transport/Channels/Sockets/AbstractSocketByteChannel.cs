@@ -237,7 +237,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     {
                         input.Remove();
                     }
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
                     else if (this.IncompleteWrite(scheduleAsync, this.PrepareWriteOperation(buf.UnreadMemory)))
 #else
                     else if (this.IncompleteWrite(scheduleAsync, this.PrepareWriteOperation(buf.GetIoBuffer())))

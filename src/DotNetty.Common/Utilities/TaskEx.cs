@@ -48,7 +48,7 @@ namespace DotNetty.Common.Utilities
         static readonly Action<Task, object> LinkOutcomeContinuationAction = LinkOutcomeContinuation;
         private static void LinkOutcomeContinuation(Task t, object tcs)
         {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             if (t.IsCompletedSuccessfully)
             {
                 ((IPromise)tcs).TryComplete(); return;
@@ -80,7 +80,7 @@ namespace DotNetty.Common.Utilities
 
         public static void LinkOutcome(this Task task, IPromise promise)
         {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             if (task.IsCompletedSuccessfully)
             {
                 promise.TryComplete(); return;
@@ -124,7 +124,7 @@ namespace DotNetty.Common.Utilities
         private static void CascadeToContinuation(Task t, object s)
         {
             var wrapped = (Tuple<IPromise, IInternalLogger>)s;
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             if (t.IsCompletedSuccessfully)
             {
                 wrapped.Item1.TryComplete(wrapped.Item2); return;
@@ -159,7 +159,7 @@ namespace DotNetty.Common.Utilities
             logger ??= Logger;
             var internalLogger = !promise.IsVoid ? logger : null;
 
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             if (task.IsCompletedSuccessfully)
             {
                 promise.TryComplete(internalLogger); return;
@@ -204,7 +204,7 @@ namespace DotNetty.Common.Utilities
             public static readonly Action<Task<T>, object> Action =
                 (t, tcs) =>
                 {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
                     if (t.IsCompletedSuccessfully)
                     {
                         ((TaskCompletionSource<T>)tcs).TrySetResult(t.Result); return;
@@ -237,7 +237,7 @@ namespace DotNetty.Common.Utilities
 
         public static void LinkOutcome<T>(this Task<T> task, TaskCompletionSource<T> taskCompletionSource)
         {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             if (task.IsCompletedSuccessfully)
             {
                 taskCompletionSource.TrySetResult(task.Result); return;
@@ -298,7 +298,7 @@ namespace DotNetty.Common.Utilities
         [MethodImpl(InlineMethod.Value)]
         public static bool IsSuccess(this Task task)
         {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             return task.IsCompletedSuccessfully;
 #else
             return task.IsCompleted && !task.IsFaulted && !task.IsCanceled;
@@ -309,7 +309,7 @@ namespace DotNetty.Common.Utilities
         [MethodImpl(InlineMethod.Value)]
         public static bool IsSuccess<T>(this Task<T> task)
         {
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
             return task.IsCompletedSuccessfully;
 #else
             return task.IsCompleted && !task.IsFaulted && !task.IsCanceled;
