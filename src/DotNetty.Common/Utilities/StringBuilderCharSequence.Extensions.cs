@@ -11,17 +11,23 @@ namespace DotNetty.Common.Utilities
         {
             if (ReferenceEquals(this, other)) { return true; }
 
-            if (other is StringBuilderCharSequence comparand)
+            switch (other)
             {
-                return this.size == comparand.size && string.Equals(this.builder.ToString(this.offset, this.size), comparand.builder.ToString(comparand.offset, this.size)
+                case StringBuilderCharSequence comparand:
+                    return this.size == comparand.size && string.Equals(this.builder.ToString(this.offset, this.size), comparand.builder.ToString(comparand.offset, this.size)
 #if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
-                    );
+                        );
 #else
-                    , StringComparison.Ordinal);
+                        , StringComparison.Ordinal);
 #endif
+#if !NET40
+                case IHasUtf16Span hasUtf16:
+                    return this.Span.SequenceEqual(hasUtf16.Utf16Span);
+#endif
+                default:
+                    return other is ICharSequence seq && this.ContentEquals(seq);
             }
 
-            return other is ICharSequence seq && this.ContentEquals(seq);
         }
 
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
