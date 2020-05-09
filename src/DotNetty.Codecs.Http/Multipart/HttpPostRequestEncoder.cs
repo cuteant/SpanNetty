@@ -345,7 +345,12 @@ namespace DotNetty.Codecs.Http.Multipart
                 bool localMixed;
                 if (this.duringMixedMode)
                 {
-                    if (this.currentFileUpload != null && string.Equals(this.currentFileUpload.Name, fileUpload.Name, StringComparison.Ordinal))
+                    if (this.currentFileUpload != null && string.Equals(this.currentFileUpload.Name, fileUpload.Name
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                        ))
+#else
+                        , StringComparison.Ordinal))
+#endif
                     {
                         // continue a mixed mode
 
@@ -374,7 +379,12 @@ namespace DotNetty.Codecs.Http.Multipart
                 else
                 {
                     if (this.encoderMode != EncoderMode.HTML5 && this.currentFileUpload != null
-                        && string.Equals(this.currentFileUpload.Name, fileUpload.Name, StringComparison.Ordinal))
+                        && string.Equals(this.currentFileUpload.Name, fileUpload.Name
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                            ))
+#else
+                            , StringComparison.Ordinal))
+#endif
                     {
                         // create a new mixed mode (from previous file)
 
@@ -510,7 +520,12 @@ namespace DotNetty.Codecs.Http.Multipart
                 internalAttribute.AddValue($"{HttpHeaderNames.ContentType}: {fileUpload.ContentType}");
                 string contentTransferEncoding = fileUpload.ContentTransferEncoding;
                 if (contentTransferEncoding != null
-                    && string.Equals(contentTransferEncoding, HttpPostBodyUtil.TransferEncodingMechanism.Binary.Value, StringComparison.Ordinal))
+                    && string.Equals(contentTransferEncoding, HttpPostBodyUtil.TransferEncodingMechanism.Binary.Value
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                        ))
+#else
+                        , StringComparison.Ordinal))
+#endif
                 {
                     internalAttribute.AddValue($"\r\n{HttpHeaderNames.ContentTransferEncoding}: {HttpPostBodyUtil.TransferEncodingMechanism.Binary.Value}\r\n\r\n");
                 }

@@ -241,8 +241,13 @@ namespace DotNetty.Codecs.Http.WebSockets
 
                 foreach (string supportedSubprotocol in this.subprotocols)
                 {
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                    if (string.Equals(SubProtocolWildcard, supportedSubprotocol)
+                        || string.Equals(requestedSubprotocol, supportedSubprotocol))
+#else
                     if (string.Equals(SubProtocolWildcard, supportedSubprotocol, StringComparison.Ordinal)
                         || string.Equals(requestedSubprotocol, supportedSubprotocol, StringComparison.Ordinal))
+#endif
                     {
                         this.selectedSubprotocol = requestedSubprotocol;
                         return requestedSubprotocol;

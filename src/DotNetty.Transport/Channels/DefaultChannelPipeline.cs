@@ -489,7 +489,12 @@ namespace DotNetty.Transport.Channels
                 }
                 else
                 {
-                    bool sameName = ctx.Name.Equals(newName, StringComparison.Ordinal);
+                    bool sameName = string.Equals(ctx.Name, newName
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                        );
+#else
+                        , StringComparison.Ordinal);
+#endif
                     if (!sameName)
                     {
                         this.CheckDuplicateName(newName);
@@ -924,7 +929,12 @@ namespace DotNetty.Transport.Channels
             var context = this.head.Next;
             while (context != this.tail)
             {
-                if (context.Name.Equals(name, StringComparison.Ordinal))
+                if (string.Equals(context.Name, name
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                    ))
+#else
+                    , StringComparison.Ordinal))
+#endif
                 {
                     return context;
                 }

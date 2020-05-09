@@ -78,7 +78,12 @@ namespace DotNetty.Handlers.Tls
                 hasEkuExtension = true;
                 foreach (var oid in extension.EnhancedKeyUsages)
                 {
-                    if (oid.Value.Equals(ServerAuthenticationOid, StringComparison.Ordinal))
+                    if (string.Equals(oid.Value, ServerAuthenticationOid
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                        ))
+#else
+                        , StringComparison.Ordinal))
+#endif
                     {
                         return true;
                     }

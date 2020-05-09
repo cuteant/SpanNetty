@@ -169,7 +169,11 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
         [MethodImpl(InlineMethod.Value)]
         internal static bool IsPerMessageDeflateExtension(string name)
         {
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+            if (string.Equals(PerMessageDeflateExtension, name)) { return true; }
+#else
             if (string.Equals(PerMessageDeflateExtension, name, StringComparison.Ordinal)) { return true; }
+#endif
             if (string.Equals(PerMessageDeflateExtension, name, StringComparison.OrdinalIgnoreCase)) { return true; }
             return false;
         }

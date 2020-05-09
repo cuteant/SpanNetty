@@ -467,7 +467,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         static void SkipControlCharactersStandard(IByteBuffer undecodedChunk)
         {
-            while(true)
+            while (true)
             {
                 char c = (char)undecodedChunk.ReadByte();
                 if (!CharUtil.IsISOControl(c) && !char.IsWhiteSpace(c))
@@ -478,7 +478,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
         }
 
-        IInterfaceHttpData FindMultipartDelimiter(ICharSequence delimiter, MultiPartStatus dispositionStatus, 
+        IInterfaceHttpData FindMultipartDelimiter(ICharSequence delimiter, MultiPartStatus dispositionStatus,
             MultiPartStatus closeDelimiterStatus)
         {
             // --AaB03x or --AaB03x--
@@ -736,8 +736,8 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 // Value is quoted or token. Strip if quoted:
                 int last = value.Count - 1;
-                if (last > 0 
-                    && value[0] == HttpConstants.DoubleQuote 
+                if (last > 0
+                    && value[0] == HttpConstants.DoubleQuote
                     && value[last] == HttpConstants.DoubleQuote)
                 {
                     value = value.SubSequence(1, last);
@@ -748,7 +748,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 try
                 {
                     name = HttpHeaderValues.FileName;
-                    string[] split = value.ToString().Split(new [] { '\'' }, 3);
+                    string[] split = value.ToString().Split(new[] { '\'' }, 3);
                     value = new StringCharSequence(
                         QueryStringDecoder.DecodeComponent(split[2], Encoding.GetEncoding(split[0])));
                 }
@@ -788,16 +788,31 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     ThrowHelper.ThrowErrorDataDecoderException(e);
                 }
-                if (string.Equals(code, HttpPostBodyUtil.TransferEncodingMechanism.Bit7.Value, StringComparison.Ordinal))
+                if (string.Equals(code, HttpPostBodyUtil.TransferEncodingMechanism.Bit7.Value
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                    ))
+#else
+                    , StringComparison.Ordinal))
+#endif
                 {
                     localCharset = Encoding.ASCII;
                 }
-                else if (string.Equals(code, HttpPostBodyUtil.TransferEncodingMechanism.Bit8.Value, StringComparison.Ordinal))
+                else if (string.Equals(code, HttpPostBodyUtil.TransferEncodingMechanism.Bit8.Value
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                    ))
+#else
+                    , StringComparison.Ordinal))
+#endif
                 {
                     localCharset = Encoding.UTF8;
                     mechanism = HttpPostBodyUtil.TransferEncodingMechanism.Bit8;
                 }
-                else if (string.Equals(code, HttpPostBodyUtil.TransferEncodingMechanism.Binary.Value, StringComparison.Ordinal))
+                else if (string.Equals(code, HttpPostBodyUtil.TransferEncodingMechanism.Binary.Value
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                    ))
+#else
+                    , StringComparison.Ordinal))
+#endif
                 {
                     // no real charset, so let the default
                     mechanism = HttpPostBodyUtil.TransferEncodingMechanism.Binary;
@@ -1509,7 +1524,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 values = CharUtil.Split(svalue, HttpConstants.CommaChar);
             }
-            foreach(ICharSequence value in values)
+            foreach (ICharSequence value in values)
             {
                 headers.Add(CharUtil.Trim(value));
             }

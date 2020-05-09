@@ -98,8 +98,13 @@ namespace DotNetty.Codecs.Http.WebSockets
         }
 
         bool IsNotWebSocketPath(IFullHttpRequest req) => this.checkStartsWith 
-            ? !req.Uri.StartsWith(this.websocketPath, System.StringComparison.Ordinal) 
-            : !string.Equals(req.Uri, this.websocketPath, System.StringComparison.Ordinal);
+            ? !req.Uri.StartsWith(this.websocketPath, StringComparison.Ordinal) 
+            : !string.Equals(req.Uri, this.websocketPath
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                );
+#else
+                , StringComparison.Ordinal);
+#endif
 
         static void SendHttpResponse(IChannelHandlerContext ctx, IHttpRequest req, IHttpResponse res)
         {

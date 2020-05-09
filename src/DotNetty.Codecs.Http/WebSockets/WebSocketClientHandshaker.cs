@@ -56,7 +56,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public string ExpectedSubprotocol => this.expectedSubprotocol;
 
         public string ActualSubprotocol
-        { 
+        {
             get => Volatile.Read(ref this.actualSubprotocol);
             private set => Interlocked.Exchange(ref this.actualSubprotocol, value);
         }
@@ -141,7 +141,12 @@ namespace DotNetty.Codecs.Http.WebSockets
                 // We require a subprotocol and received one -> verify it
                 foreach (string protocol in expectedProtocol.Split(','))
                 {
-                    if (string.Equals(protocol.Trim(), receivedProtocol, StringComparison.Ordinal))
+                    if (string.Equals(protocol.Trim(), receivedProtocol
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                        ))
+#else
+                        , StringComparison.Ordinal))
+#endif
                     {
                         protocolValid = true;
                         this.ActualSubprotocol = receivedProtocol;
@@ -346,8 +351,13 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
             if (port == HttpScheme.Https.Port)
             {
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                return string.Equals(HttpScheme.Https.Name.ToString(), scheme)
+                    || string.Equals(WebSocketScheme.WSS.Name.ToString(), scheme)
+#else
                 return string.Equals(HttpScheme.Https.Name.ToString(), scheme, StringComparison.Ordinal)
-                    || string.Equals(WebSocketScheme.WSS.Name.ToString(), scheme, StringComparison.Ordinal) 
+                    || string.Equals(WebSocketScheme.WSS.Name.ToString(), scheme, StringComparison.Ordinal)
+#endif
                         ? host : NetUtil.ToSocketAddressString(host, port);
             }
 
@@ -419,7 +429,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             int index = uri.Scheme.Length + 3 + uri.Host.Length;
 
             var originalString = uri.OriginalString;
-            if ((uint)index < (uint)originalString.Length 
+            if ((uint)index < (uint)originalString.Length
                 && originalString[index] == HttpConstants.ColonChar)
             {
                 return uri.Port;

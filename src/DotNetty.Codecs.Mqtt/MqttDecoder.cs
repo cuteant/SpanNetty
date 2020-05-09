@@ -229,7 +229,12 @@ namespace DotNetty.Codecs.Mqtt
         static void DecodeConnectPacket(IByteBuffer buffer, ConnectPacket packet, ref int remainingLength, IChannelHandlerContext context)
         {
             string protocolName = DecodeString(buffer, ref remainingLength);
-            if (!string.Equals(Util.ProtocolName, protocolName, StringComparison.Ordinal))
+            if (!string.Equals(Util.ProtocolName, protocolName
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                ))
+#else
+                , StringComparison.Ordinal))
+#endif
             {
                 ThrowHelper.ThrowDecoderException_UnexpectedProtocolName(protocolName);
             }

@@ -22,7 +22,12 @@ namespace DotNetty.Codecs.Mqtt.Packets
         public bool Equals(SubscriptionRequest other)
         {
             return this.QualityOfService == other.QualityOfService
-                && string.Equals(this.TopicFilter, other.TopicFilter, StringComparison.Ordinal);
+                && string.Equals(this.TopicFilter, other.TopicFilter
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                    );
+#else
+                    , StringComparison.Ordinal);
+#endif
         }
 
         public override string ToString()

@@ -21,7 +21,12 @@ namespace DotNetty.Codecs.Http
             return other != null
                 && this.minorVersion == other.minorVersion
                 && this.majorVersion == other.majorVersion
-                && string.Equals(this.protocolName, other.protocolName, StringComparison.Ordinal);
+                && string.Equals(this.protocolName, other.protocolName
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                    );
+#else
+                    , StringComparison.Ordinal);
+#endif
         }
     }
 }

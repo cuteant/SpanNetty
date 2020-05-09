@@ -96,7 +96,12 @@ namespace DotNetty.Codecs.Http.Cookies
                 return true;
             }
 
-            if (!string.Equals(this.name, other.Name, StringComparison.Ordinal))
+            if (!string.Equals(this.name, other.Name
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                    ))
+#else
+                    , StringComparison.Ordinal))
+#endif
             {
                 return false;
             }
@@ -112,7 +117,12 @@ namespace DotNetty.Codecs.Http.Cookies
             {
                 return false;
             }
-            else if (!string.Equals(this.path, other.Path, StringComparison.Ordinal))
+            else if (!string.Equals(this.path, other.Path
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                    ))
+#else
+                    , StringComparison.Ordinal))
+#endif
             {
                 return false;
             }
