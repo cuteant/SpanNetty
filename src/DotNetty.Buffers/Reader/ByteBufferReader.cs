@@ -54,7 +54,11 @@ namespace DotNetty.Buffers
         public readonly bool IsLastSegment => _nextPosition.GetObject() == null;
 
         /// <summary>True when there is no more data in the <see cref="Sequence"/>.</summary>
-        public readonly bool End => !_moreData;
+        public readonly bool End
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => !_moreData;
+        }
 
         /// <summary>The underlying <see cref="ReadOnlySequence{T}"/> for the reader.</summary>
         public readonly ReadOnlySequence<byte> Sequence => _sequence;
@@ -100,7 +104,7 @@ namespace DotNetty.Buffers
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (_length < 0)
+                if (_length < 0L)
                 {
                     // Cast-away readonly to initialize lazy field
                     Volatile.Write(ref Unsafe.AsRef(_length), Sequence.Length);
@@ -120,11 +124,8 @@ namespace DotNetty.Buffers
                 value = _currentSpan[_currentSpanIndex];
                 return true;
             }
-            else
-            {
-                value = default;
-                return false;
-            }
+            value = default;
+            return false;
         }
 
         /// <summary>Read the next value and advance the reader.</summary>
@@ -220,7 +221,7 @@ namespace DotNetty.Buffers
                 while (_sequence.TryGet(ref _nextPosition, out ReadOnlyMemory<byte> memory, advance: true))
                 {
                     _currentPosition = previousNextPosition;
-                    if (memory.Length > 0)
+                    if ((uint)memory.Length > 0u)
                     {
                         _currentSpan = memory.Span;
                         _currentSpanIndex = 0;
@@ -242,7 +243,7 @@ namespace DotNetty.Buffers
         public void Advance(long count)
         {
             const long TooBigOrNegative = unchecked((long)0xFFFFFFFF80000000);
-            if (0u >= (uint)(count & TooBigOrNegative) && (_currentSpan.Length - _currentSpanIndex) > (int)count)
+            if (0ul >= (ulong)(count & TooBigOrNegative) && (_currentSpan.Length - _currentSpanIndex) > (int)count)
             {
                 _currentSpanIndex += (int)count;
                 _consumed += count;
@@ -343,7 +344,7 @@ namespace DotNetty.Buffers
         internal readonly bool TryCopyMultisegment(Span<byte> destination)
         {
             int destinationLen = destination.Length;
-            if (Remaining < destinationLen) { return false; }
+            if ((ulong)Remaining < (ulong)destinationLen) { return false; }
 
             ReadOnlySpan<byte> firstSpan = UnreadSpan;
             Debug.Assert(firstSpan.Length < destinationLen);
@@ -353,7 +354,7 @@ namespace DotNetty.Buffers
             SequencePosition next = _nextPosition;
             while (_sequence.TryGet(ref next, out ReadOnlyMemory<byte> nextSegment, true))
             {
-                if (nextSegment.Length > 0)
+                if ((uint)nextSegment.Length > 0u)
                 {
                     ReadOnlySpan<byte> nextSpan = nextSegment.Span;
                     int toCopy = Math.Min(nextSpan.Length, destinationLen - copied);

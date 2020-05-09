@@ -25,7 +25,7 @@ namespace DotNetty.Buffers
         public bool TryReadTo(out ReadOnlySpan<byte> span, byte delimiter, bool advancePastDelimiter = true)
         {
             ReadOnlySpan<byte> remaining = UnreadSpan;
-            int index = remaining.IndexOf(delimiter);
+            int index = SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(remaining), delimiter, remaining.Length);
 
             uint uIndex = (uint)index;
             if (SharedConstants.TooBigOrNegative >= uIndex) // index != -1
@@ -61,7 +61,7 @@ namespace DotNetty.Buffers
         public bool TryReadTo(out ReadOnlySpan<byte> span, byte delimiter, byte delimiterEscape, bool advancePastDelimiter = true)
         {
             ReadOnlySpan<byte> remaining = UnreadSpan;
-            int index = remaining.IndexOf(delimiter);
+            int index = SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(remaining), delimiter, remaining.Length);
 
             if ((index > 0 && remaining[index - 1] != delimiterEscape) || 0u >= (uint)index)
             {
@@ -179,7 +179,7 @@ namespace DotNetty.Buffers
                 remaining = _currentSpan;
 
             Continue:
-                index = remaining.IndexOf(delimiter);
+                index = SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(remaining), delimiter, remaining.Length);
             } while (!End);
 
             // Didn't find anything, reset our original state.
@@ -207,11 +207,12 @@ namespace DotNetty.Buffers
 
             while (_moreData)
             {
-                int index = remaining.IndexOf(delimiter);
-                if (SharedConstants.TooBigOrNegative >= (uint)index) // index != -1
+                int index = SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(remaining), delimiter, remaining.Length);
+                uint uIndex = (uint)index;
+                if (SharedConstants.TooBigOrNegative >= uIndex) // index != -1
                 {
                     // Found the delimiter. Move to it, slice, then move past it.
-                    if (index > 0)
+                    if (uIndex > 0u) // 此时 index 为非负值
                     {
                         AdvanceCurrentSpan(index);
                     }
@@ -262,7 +263,7 @@ namespace DotNetty.Buffers
                         remaining = UnreadSpan;
                         continue;
                     }
-                    else if (index > 0 && remaining[index - 1] == delimiterEscape)
+                    else if (uIndex > 0u && remaining[index - 1] == delimiterEscape) // 此时 index 为非负值
                     {
                         // This delimiter might be skipped
 
@@ -290,7 +291,7 @@ namespace DotNetty.Buffers
                     }
 
                     // Found the delimiter. Move to it, slice, then move past it.
-                    if (index > 0) { Advance(index); }
+                    if (uIndex > 0u) { Advance(index); } // 此时 index 为非负值
 
                     sequence = _sequence.Slice(copy.Position, Position);
                     if (advancePastDelimiter) { Advance(1); }
@@ -333,9 +334,7 @@ namespace DotNetty.Buffers
         public bool TryReadToAny(out ReadOnlySpan<byte> span, ReadOnlySpan<byte> delimiters, bool advancePastDelimiter = true)
         {
             ReadOnlySpan<byte> remaining = UnreadSpan;
-            int index = delimiters.Length == 2
-                ? remaining.IndexOfAny(delimiters[0], delimiters[1])
-                : remaining.IndexOfAny(delimiters);
+            var index = SpanHelpers.IndexOfAny(ref MemoryMarshal.GetReference(remaining), remaining.Length, ref MemoryMarshal.GetReference(delimiters), delimiters.Length);
 
             if (SharedConstants.TooBigOrNegative >= (uint)index) // index != -1
             {
@@ -376,16 +375,16 @@ namespace DotNetty.Buffers
             if (skip > 0) { Advance(skip); }
             ReadOnlySpan<byte> remaining = UnreadSpan;
 
+            ref byte delimiterSpace = ref MemoryMarshal.GetReference(delimiters);
+
             while (!End)
             {
-                int index = delimiters.Length == 2
-                    ? remaining.IndexOfAny(delimiters[0], delimiters[1])
-                    : remaining.IndexOfAny(delimiters);
-
-                if (SharedConstants.TooBigOrNegative >= (uint)index) // index != -1
+                int index = SpanHelpers.IndexOfAny(ref MemoryMarshal.GetReference(remaining), remaining.Length, ref delimiterSpace, delimiters.Length);
+                uint uIndex = (uint)index;
+                if (SharedConstants.TooBigOrNegative >= uIndex) // index != -1
                 {
                     // Found one of the delimiters. Move to it, slice, then move past it.
-                    if (index > 0) { AdvanceCurrentSpan(index); }
+                    if (uIndex > 0u) { AdvanceCurrentSpan(index); } // 此时 index 为非负值
 
                     sequence = _sequence.Slice(copy.Position, Position);
                     if (advancePastDelimiter) { Advance(1); }
@@ -426,7 +425,7 @@ namespace DotNetty.Buffers
                     return false;
                 }
 
-                if (delimiter.Length == 1)
+                if (1u >= (uint)delimiter.Length) // 此时 delimiter.Length 最小值为 1
                 {
                     if (advancePastDelimiter)
                     {
@@ -468,7 +467,7 @@ namespace DotNetty.Buffers
         public bool TryAdvanceTo(byte delimiter, bool advancePastDelimiter = true)
         {
             ReadOnlySpan<byte> remaining = UnreadSpan;
-            int index = remaining.IndexOf(delimiter);
+            int index = SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(remaining), delimiter, remaining.Length);
             if (SharedConstants.TooBigOrNegative >= (uint)index) // ndex != -1
             {
                 Advance(advancePastDelimiter ? index + 1 : index);
@@ -485,7 +484,7 @@ namespace DotNetty.Buffers
         public bool TryAdvanceToAny(ReadOnlySpan<byte> delimiters, bool advancePastDelimiter = true)
         {
             ReadOnlySpan<byte> remaining = UnreadSpan;
-            int index = remaining.IndexOfAny(delimiters);
+            int index = SpanHelpers.IndexOfAny(ref MemoryMarshal.GetReference(remaining), remaining.Length, ref MemoryMarshal.GetReference(delimiters), delimiters.Length);
             if (SharedConstants.TooBigOrNegative >= (uint)index) // ndex != -1
             {
                 AdvanceCurrentSpan(index + (advancePastDelimiter ? 1 : 0));
@@ -680,7 +679,7 @@ namespace DotNetty.Buffers
             }
 
             // Only check the slow path if there wasn't enough to satisfy next
-            return unread.Length < next.Length && IsNextSlow(next, advancePast);
+            return (uint)unread.Length < (uint)next.Length && IsNextSlow(next, advancePast);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -712,11 +711,11 @@ namespace DotNetty.Buffers
                         return false;
                     }
 
-                    if (nextSegment.Length > 0)
+                    if ((uint)nextSegment.Length > 0u)
                     {
                         next = next.Slice(currentSpan.Length);
                         currentSpan = nextSegment.Span;
-                        if (currentSpan.Length > next.Length)
+                        if ((uint)currentSpan.Length > (uint)next.Length)
                         {
                             currentSpan = currentSpan.Slice(0, next.Length);
                         }
