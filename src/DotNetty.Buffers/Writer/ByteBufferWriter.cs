@@ -96,13 +96,13 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         private void AdvanceAndGrowIf(ref int alreadyWritten)
         {
             if ((uint)alreadyWritten >= (uint)_buffer.Length) { AdvanceAndGrow(ref alreadyWritten); }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         private void AdvanceAndGrowIf(ref int alreadyWritten, int sizeHintt)
         {
             if ((uint)sizeHintt >= (uint)(_buffer.Length - alreadyWritten)) { AdvanceAndGrow(ref alreadyWritten, sizeHintt); }
@@ -136,13 +136,13 @@ namespace DotNetty.Buffers
             _buffer = _buffer.Slice(count);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         private void GrowAndEnsureIf()
         {
             if (0u >= (uint)_buffer.Length) { GrowAndEnsure(); }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         private void GrowAndEnsureIf(int sizeHintt)
         {
             if ((uint)sizeHintt >= (uint)_buffer.Length) { GrowAndEnsure(sizeHintt); }

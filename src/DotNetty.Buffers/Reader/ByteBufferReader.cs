@@ -159,7 +159,9 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Rewind(long count)
         {
-            if ((ulong)count > (ulong)Consumed) { ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count); }
+            ulong uCount = (ulong)count;
+            if (0ul >= uCount) { return; }
+            if (uCount > (ulong)Consumed) { ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count); }
 
             _consumed -= count;
 

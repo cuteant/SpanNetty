@@ -569,6 +569,52 @@ namespace DotNetty.Buffers
         }
 
         #endregion
+
+        #region -- 7BitEncodedInt --
+
+        public static bool TryRead7BitEncodedInt(ref this ByteBufferReader reader, out int value)
+        {
+            // Read out an Int32 7 bits at a time.  The high bit
+            // of the byte when on means to continue reading more bytes.
+            value = 0;
+            int count = 0;
+            int shift = 0;
+            byte b;
+            do
+            {
+                // Check for a corrupted stream.  Read a max of 5 bytes.
+                // In a future version, add a DataFormatException.
+                if (shift == 5 * 7)  // 5 bytes max per Int32, shift += 7
+                {
+                    ThrowFormatException_Bad7BitInt32();
+                }
+
+                // ReadByte handles end of stream cases for us.
+                if (!reader.TryRead(out b))
+                {
+                    reader.Rewind(count);
+                    value = 0;
+                    return false;
+                }
+                value |= (b & 0x7F) << shift;
+                shift += 7;
+                count++;
+            } while ((b & 0x80) != 0);
+
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void ThrowFormatException_Bad7BitInt32()
+        {
+            throw GetFormatException();
+            static FormatException GetFormatException()
+            {
+                return new FormatException("Too many bytes in what should have been a 7 bit encoded Int32.");
+            }
+        }
+
+        #endregion
     }
 }
 
