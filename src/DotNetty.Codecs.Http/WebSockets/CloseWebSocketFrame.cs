@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             IByteBuffer binaryData = ArrayPooled.Buffer(2 + reasonText.Count);
             binaryData.WriteShort(statusCode);
-            if (reasonText.Count > 0)
+            if ((uint)reasonText.Count > 0u)
             {
                 binaryData.WriteCharSequence(reasonText, Encoding.UTF8);
             }

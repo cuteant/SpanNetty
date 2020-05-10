@@ -53,7 +53,7 @@ namespace DotNetty.Common.Utilities
         {
             if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
-            return value.Length > 0 ? new StringCharSequence(value) : Empty;
+            return (uint)value.Length > 0u ? new StringCharSequence(value) : Empty;
         }
 
         public ICharSequence SubSequence(int start) => this.SubSequence(start, this.count);

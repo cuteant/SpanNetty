@@ -133,7 +133,7 @@ namespace DotNetty.Codecs.Http2
             if ((uint)index > SharedConstants.TooBigOrNegative/* == -1*/) { return -1; }
 
             // Note this assumes all entries for a given header field are sequential.
-            while (index <= Length)
+            while ((uint)index <= (uint)Length)
             {
                 HpackHeaderField entry = GetEntry(index);
                 if (0u >= (uint)HpackUtil.EqualsConstantTime(name, entry.name))

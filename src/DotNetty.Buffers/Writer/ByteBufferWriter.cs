@@ -154,7 +154,7 @@ namespace DotNetty.Buffers
             Flush();
             var previousSpanLength = _buffer.Length;
             _buffer = _output.GetSpan(previousSpanLength + 1);
-            if (_buffer.Length <= previousSpanLength)
+            if ((uint)previousSpanLength >= (uint)_buffer.Length)
             {
                 ThrowHelper.ThrowArgumentException_FailedToGetLargerSpan();
             }
@@ -165,7 +165,7 @@ namespace DotNetty.Buffers
         {
             Flush();
             _buffer = _output.GetSpan(sizeHintt);
-            if (_buffer.Length < sizeHintt)
+            if ((uint)sizeHintt > (uint)_buffer.Length)
             {
                 ThrowHelper.ThrowArgumentException_FailedToGetMinimumSizeSpan(sizeHintt);
             }

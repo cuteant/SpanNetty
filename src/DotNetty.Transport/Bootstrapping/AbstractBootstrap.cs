@@ -417,14 +417,14 @@ namespace DotNetty.Transport.Bootstrapping
                     .Append(", ");
             }
 
-            if (this.options.Count > 0)
+            if ((uint)this.options.Count > 0u)
             {
                 buf.Append("options: ")
                     .Append(this.options.ToDebugString())
                     .Append(", ");
             }
 
-            if (this.attrs.Count > 0)
+            if ((uint)this.attrs.Count > 0u)
             {
                 buf.Append("attrs: ")
                     .Append(this.attrs.ToDebugString())

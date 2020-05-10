@@ -41,7 +41,7 @@ namespace DotNetty.Buffers
 
             ByteBufferReaderHelper.GetFirstSpan(buffer, out ReadOnlySpan<byte> first, out _nextPosition);
             _currentSpan = first;
-            _moreData = first.Length > 0;
+            _moreData = (uint)first.Length > 0u;
 
             if (!buffer.IsSingleSegment && !_moreData)
             {

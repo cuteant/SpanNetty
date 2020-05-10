@@ -351,7 +351,7 @@ namespace DotNetty.Common.Utilities
                 else
                 {
                     // Truncate trailing empty elements.
-                    while (res.Count > 0)
+                    while ((uint)res.Count > 0u)
                     {
                         int i = res.Count - 1;
                         if (!res[i].IsEmpty)

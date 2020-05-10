@@ -122,7 +122,7 @@ namespace DotNetty.Codecs.Http.Cookies
             }
 
             var encoded = new List<string>(cookies.Length);
-            Dictionary<string, int> nameToIndex = this.Strict && cookies.Length > 1 ? new Dictionary<string, int>(StringComparer.Ordinal) : null;
+            Dictionary<string, int> nameToIndex = this.Strict && (uint)cookies.Length > 1u ? new Dictionary<string, int>(StringComparer.Ordinal) : null;
             bool hasDupdName = false;
             for (int i = 0; i < cookies.Length; i++)
             {

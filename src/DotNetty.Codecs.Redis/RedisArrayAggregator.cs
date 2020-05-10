@@ -27,7 +27,7 @@ namespace DotNetty.Codecs.Redis
                 ReferenceCountUtil.Retain(message);
             }
 
-            while (this.depths.Count > 0)
+            while ((uint)this.depths.Count > 0u)
             {
                 AggregateState current = this.depths.Peek();
                 current.Children.Add(message);

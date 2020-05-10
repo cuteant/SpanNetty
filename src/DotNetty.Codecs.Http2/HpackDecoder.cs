@@ -438,13 +438,13 @@ namespace DotNetty.Codecs.Http2
 
         private ICharSequence ReadName(int index)
         {
-            if (index <= HpackStaticTable.Length)
+            if ((uint)index <= (uint)HpackStaticTable.Length)
             {
                 HpackHeaderField hpackHeaderField = HpackStaticTable.GetEntry(index);
                 return hpackHeaderField.name;
             }
 
-            if (index - HpackStaticTable.Length <= this.hpackDynamicTable.Length())
+            if ((uint)(index - HpackStaticTable.Length) <= (uint)this.hpackDynamicTable.Length())
             {
                 HpackHeaderField hpackHeaderField = this.hpackDynamicTable.GetEntry(index - HpackStaticTable.Length);
                 return hpackHeaderField.name;
@@ -455,11 +455,11 @@ namespace DotNetty.Codecs.Http2
 
         private HpackHeaderField GetIndexedHeader(int index)
         {
-            if (index <= HpackStaticTable.Length)
+            if ((uint)index <= (uint)HpackStaticTable.Length)
             {
                 return HpackStaticTable.GetEntry(index);
             }
-            if (index - HpackStaticTable.Length <= this.hpackDynamicTable.Length())
+            if ((uint)(index - HpackStaticTable.Length) <= (uint)this.hpackDynamicTable.Length())
             {
                 return this.hpackDynamicTable.GetEntry(index - HpackStaticTable.Length);
             }

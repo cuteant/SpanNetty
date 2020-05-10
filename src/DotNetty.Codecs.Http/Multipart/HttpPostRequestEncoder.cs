@@ -312,7 +312,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     this.duringMixedMode = false;
                 }
                 internalAttribute = new InternalAttribute(this.charset);
-                if (this.MultipartHttpDatas.Count > 0)
+                if ((uint)this.MultipartHttpDatas.Count > 0u)
                 {
                     // previously a data field so CRLF
                     internalAttribute.AddValue("\r\n");
@@ -337,7 +337,7 @@ namespace DotNetty.Codecs.Http.Multipart
             else if (data is IFileUpload fileUpload)
             {
                 var internalAttribute = new InternalAttribute(this.charset);
-                if (this.MultipartHttpDatas.Count > 0)
+                if ((uint)this.MultipartHttpDatas.Count > 0u)
                 {
                     // previously a data field so CRLF
                     internalAttribute.AddValue("\r\n");
@@ -444,7 +444,7 @@ namespace DotNetty.Codecs.Http.Multipart
                             .Append(": ")
                             .Append(HttpHeaderValues.Attachment);
 
-                        if (fileUpload.FileName.Length > 0)
+                        if ((uint)fileUpload.FileName.Length > 0u)
                         {
                             replacement.Append("; ")
                                 .Append(HttpHeaderValues.FileName)

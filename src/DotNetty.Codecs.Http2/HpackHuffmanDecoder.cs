@@ -239,7 +239,7 @@ namespace DotNetty.Codecs.Http2
                     // Choose an expanding strategy depending on how big the buffer already is.
                     // 1024 was choosen as a good guess and we may be able to investigate more if there are better choices.
                     // See also https://github.com/netty/netty/issues/6846
-                    int newLength = this.bytes.Length >= 1024 ? this.bytes.Length + this.initialCapacity : this.bytes.Length << 1;
+                    int newLength = (uint)this.bytes.Length >= 1024u ? this.bytes.Length + this.initialCapacity : this.bytes.Length << 1;
                     byte[] newBytes = new byte[newLength];
                     PlatformDependent.CopyMemory(this.bytes, 0, newBytes, 0, this.bytes.Length);
                     this.bytes = newBytes;

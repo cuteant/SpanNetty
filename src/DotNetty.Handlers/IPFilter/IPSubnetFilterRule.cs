@@ -157,7 +157,7 @@ namespace DotNetty.Handlers.IPFilter
                 BigInteger masked = 0u >= cidr ? 0 : s_mask << (128 - cidr);
                 byte[] m = masked.ToByteArray();
                 var bmask = new byte[16];
-                int copy = m.Length > 16 ? 16 : m.Length;
+                int copy = (uint)m.Length > 16u ? 16 : m.Length;
                 Array.Copy(m, 0, bmask, 0, copy);
                 byte[] resBytes = bmask.Reverse().ToArray();
                 return new BigInteger(resBytes);

@@ -110,7 +110,7 @@ namespace DotNetty.Codecs.Http
                             return;
                         }
                         AsciiString[] initialLine = SplitInitialLine(line);
-                        if (initialLine.Length < 3)
+                        if ((uint)initialLine.Length < 3u)
                         {
                             // Invalid initial line - ignore.
                             this.currentState = State.SkipControlChars;
@@ -553,7 +553,7 @@ namespace DotNetty.Codecs.Http
                 return null;
             }
             // ReSharper disable once ConvertIfDoToWhile
-            if (line.Count > 0)
+            if ((uint)line.Count > 0u)
             {
                 do
                 {
@@ -579,7 +579,7 @@ namespace DotNetty.Codecs.Http
                     {
                         return null;
                     }
-                } while (line.Count > 0);
+                } while ((uint)line.Count > 0u);
             }
 
             // Add the last header.
@@ -630,7 +630,7 @@ namespace DotNetty.Codecs.Http
                 return null;
             }
             AsciiString lastHeader = null;
-            if (line.Count > 0)
+            if ((uint)line.Count > 0u)
             {
                 ILastHttpContent trailingHeaders = this.trailer;
                 if (trailingHeaders is null)
@@ -644,7 +644,7 @@ namespace DotNetty.Codecs.Http
                     if (lastHeader is object && s_whiteSpaceChars.Contains(firstChar))
                     {
                         IList<ICharSequence> current = trailingHeaders.TrailingHeaders.GetAll(lastHeader);
-                        if (current.Count > 0)
+                        if ((uint)current.Count > 0u)
                         {
                             int lastPos = current.Count - 1;
                             //please do not make one line from below code
@@ -674,7 +674,7 @@ namespace DotNetty.Codecs.Http
                     {
                         return null;
                     }
-                } while (line.Count > 0);
+                } while ((uint)line.Count > 0u);
 
                 this.trailer = null;
                 return trailingHeaders;

@@ -335,7 +335,7 @@ namespace DotNetty.Codecs.Http
             }
 
             // Add the last protocol
-            if (builder.Length > 0)
+            if ((uint)builder.Length > 0u)
             {
                 protocols.Add(new AsciiString(builder.ToString()));
             }

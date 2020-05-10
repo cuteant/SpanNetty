@@ -188,7 +188,7 @@ namespace DotNetty.Codecs.Http
 
                 foreach (object value in values)
                 {
-                    if (sb.Count > 0)
+                    if ((uint)sb.Count > 0u)
                     {
                         sb.Append(Comma);
                     }
@@ -207,7 +207,7 @@ namespace DotNetty.Codecs.Http
 
                 foreach (ICharSequence value in values)
                 {
-                    if (sb.Count > 0)
+                    if ((uint)sb.Count > 0u)
                     {
                         sb.Append(Comma);
                     }

@@ -166,7 +166,7 @@ namespace DotNetty.Codecs.Http.Cors
         void SetExposeHeaders(IHttpResponse response)
         {
             ISet<ICharSequence> headers = this.config.ExposedHeaders();
-            if (headers.Count > 0)
+            if ((uint)headers.Count > 0u)
             {
                 response.Headers.Set(HttpHeaderNames.AccessControlExposeHeaders, headers);
             }

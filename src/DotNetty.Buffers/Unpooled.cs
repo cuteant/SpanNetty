@@ -124,13 +124,13 @@ namespace DotNetty.Buffers
                         {
                             break;
                         }
-                        if (array.Length > 0)
+                        if ((uint)array.Length > 0u)
                         {
                             components.Add(WrappedBuffer(array));
                         }
                     }
 
-                    if (components.Count > 0)
+                    if ((uint)components.Count > 0u)
                     {
                         return new CompositeByteBuffer(Allocator, false, maxNumComponents, components);
                     }

@@ -85,11 +85,11 @@ namespace DotNetty.Codecs.Http2
         {
             if (headerName is AsciiString asciiHeaderName)
             {
-                return asciiHeaderName.Count > 0 && asciiHeaderName.ByteAt(0) == PseudoHeaderPrefixByte;
+                return (uint)asciiHeaderName.Count > 0u && asciiHeaderName.ByteAt(0) == PseudoHeaderPrefixByte;
             }
             else
             {
-                return headerName.Count > 0 && headerName[0] == PseudoHeaderPrefix;
+                return (uint)headerName.Count > 0u && headerName[0] == PseudoHeaderPrefix;
             }
         }
 

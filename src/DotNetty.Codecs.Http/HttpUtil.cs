@@ -317,7 +317,7 @@ namespace DotNetty.Codecs.Http
                 return contentTypeValue.SubSequence(0, indexOfSemicolon);
             }
 
-            return contentTypeValue.Count > 0 ? contentTypeValue : null;
+            return (uint)contentTypeValue.Count > 0u ? contentTypeValue : null;
         }
     }
 }

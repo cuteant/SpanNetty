@@ -29,7 +29,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         public IWebSocketServerExtension HandshakeExtension(WebSocketExtensionData extensionData)
         {
-            if (extensionData.Parameters.Count > 0) { return null; }
+            if ((uint)extensionData.Parameters.Count > 0u) { return null; }
 
             var extensionDataName = extensionData.Name;
             switch (extensionDataName)

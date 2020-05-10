@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns>An exception which can be translated into a HTTP/2 error.</returns>
         public static Http2Exception ConnectionError(Http2Error error, string fmt, params object[] args)
         {
-            return new Http2Exception(error, args is object && args.Length > 0 ? string.Format(fmt, args) : fmt);
+            return new Http2Exception(error, args is object && (uint)args.Length > 0u ? string.Format(fmt, args) : fmt);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns>An exception which can be translated into a HTTP/2 error.</returns>
         public static Http2Exception ConnectionError(Http2Error error, Exception cause, string fmt, params object[] args)
         {
-            return new Http2Exception(error, args is object && args.Length > 0 ? string.Format(fmt, args) : fmt, cause);
+            return new Http2Exception(error, args is object && (uint)args.Length > 0u ? string.Format(fmt, args) : fmt, cause);
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns>An exception which can be translated into a HTTP/2 error.</returns>
         public static Http2Exception ClosedStreamError(Http2Error error, string fmt, params object[] args)
         {
-            return new ClosedStreamCreationException(error, args is object && args.Length > 0 ? string.Format(fmt, args) : fmt);
+            return new ClosedStreamCreationException(error, args is object && (uint)args.Length > 0u ? string.Format(fmt, args) : fmt);
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace DotNetty.Codecs.Http2
         {
             return Http2CodecUtil.ConnectionStreamId == id ?
                     Http2Exception.ConnectionError(error, fmt, args) :
-                        new StreamException(id, error, args is object && args.Length > 0 ? string.Format(fmt, args) : fmt);
+                        new StreamException(id, error, args is object && (uint)args.Length > 0u ? string.Format(fmt, args) : fmt);
         }
 
         /// <summary>
@@ -127,7 +127,7 @@ namespace DotNetty.Codecs.Http2
         {
             return Http2CodecUtil.ConnectionStreamId == id ?
                     Http2Exception.ConnectionError(error, cause, fmt, args) :
-                        new StreamException(id, error, args is object && args.Length > 0 ? string.Format(fmt, args) : fmt, cause);
+                        new StreamException(id, error, args is object && (uint)args.Length > 0u ? string.Format(fmt, args) : fmt, cause);
         }
 
         /// <summary>
@@ -149,7 +149,7 @@ namespace DotNetty.Codecs.Http2
         {
             return Http2CodecUtil.ConnectionStreamId == id ?
                     Http2Exception.ConnectionError(error, fmt, args) :
-                        new HeaderListSizeException(id, error, args is object && args.Length > 0 ? string.Format(fmt, args) : fmt, onDecode);
+                        new HeaderListSizeException(id, error, args is object && (uint)args.Length > 0u ? string.Format(fmt, args) : fmt, onDecode);
         }
 
         /// <summary>

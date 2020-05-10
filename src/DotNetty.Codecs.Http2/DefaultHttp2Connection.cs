@@ -627,7 +627,7 @@ namespace DotNetty.Codecs.Http2
                     if (index >= this.values.Length)
                     {
                         object[] tmp = new object[this.registry.Size];
-                        if (this.values.Length > 0)
+                        if ((uint)this.values.Length > 0u)
                         {
                             Array.Copy(this.values, tmp, Math.Min(this.values.Length, tmp.Length));
                         }

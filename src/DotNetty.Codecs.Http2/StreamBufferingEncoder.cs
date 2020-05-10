@@ -151,7 +151,7 @@ namespace DotNetty.Codecs.Http2
 
                     // Fail all buffered streams.
                     Http2ChannelClosedException e = new Http2ChannelClosedException();
-                    if (this.pendingStreams.Count > 0)
+                    if ((uint)this.pendingStreams.Count > 0u)
                     {
                         foreach (var stream in this.pendingStreams.Values)
                         {
@@ -169,7 +169,7 @@ namespace DotNetty.Codecs.Http2
 
         private void TryCreatePendingStreams()
         {
-            if (this.pendingStreams.Count <= 0) { return; }
+            if (0u >= (uint)this.pendingStreams.Count) { return; }
 
             var keyList = new List<int>(this.pendingStreams.Count);
             foreach (var item in this.pendingStreams)
@@ -195,7 +195,7 @@ namespace DotNetty.Codecs.Http2
 
         private void CancelGoAwayStreams(int lastStreamId, Http2Error errorCode, IByteBuffer debugData)
         {
-            if (this.pendingStreams.Count <= 0) { return; }
+            if (0u >= (uint)this.pendingStreams.Count) { return; }
 
             var e = new Http2GoAwayException(lastStreamId, errorCode, ByteBufferUtil.GetBytes(debugData));
 

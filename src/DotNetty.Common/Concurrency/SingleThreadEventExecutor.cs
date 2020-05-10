@@ -206,7 +206,7 @@ namespace DotNetty.Common.Concurrency
             bool ran = false;
 
             // Note shutdown hooks can add / remove shutdown hooks.
-            while (this.shutdownHooks.Count > 0)
+            while ((uint)this.shutdownHooks.Count > 0u)
             {
                 var copy = this.shutdownHooks.ToArray();
                 this.shutdownHooks.Clear();

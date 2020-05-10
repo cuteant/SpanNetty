@@ -242,7 +242,7 @@ namespace DotNetty.Codecs.Http2
             // The location in the dependency tree impacts the priority in the stateOnlyRemovalQueue map. If we created new
             // State objects we must check if we exceeded the limit after we insert into the dependency tree to ensure the
             // stateOnlyRemovalQueue has been updated.
-            while (this.stateOnlyRemovalQueue.Count > this.maxStateOnlySize)
+            while ((uint)this.stateOnlyRemovalQueue.Count > (uint)this.maxStateOnlySize)
             {
                 this.stateOnlyRemovalQueue.TryDequeue(out State stateToRemove);
                 stateToRemove.parent.RemoveChild(stateToRemove);
@@ -597,7 +597,7 @@ namespace DotNetty.Codecs.Http2
                     //Debug.Assert(added, "A stream with the same stream ID was already in the child map.");
                 }
 
-                if (exclusive && this.children.Count > 0)
+                if (exclusive && (uint)this.children.Count > 0u)
                 {
                     // If it was requested that this child be the exclusive dependency of this node,
                     // move any previous children to the child node, becoming grand children of this node.
@@ -898,7 +898,7 @@ namespace DotNetty.Codecs.Http2
                   .Append(" stateOnlyQueueIndex ").Append(this.stateOnlyQueueIndex)
                   .Append(" parent.streamId ").Append(this.parent is null ? -1 : this.parent.streamId).Append("} [");
 
-                if (this.pseudoTimeQueue.Count > 0)
+                if ((uint)this.pseudoTimeQueue.Count > 0u)
                 {
                     foreach (var s in this.pseudoTimeQueue)
                     {

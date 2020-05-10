@@ -117,7 +117,7 @@ namespace DotNetty.Codecs.Http
         [MethodImpl(InlineMethod.Value)]
         static HttpMethod ValueOfInline(byte[] bytes)
         {
-            if (bytes.Length <= 2)
+            if ((uint)bytes.Length <= 2u)
             {
                 return null;
             }

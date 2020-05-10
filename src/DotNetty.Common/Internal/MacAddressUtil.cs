@@ -41,7 +41,7 @@ namespace DotNetty.Common.Internal
                 {
                     // Use the interface with proper INET addresses only.
                     var addrs = iface.GetIPProperties().UnicastAddresses;
-                    if (addrs.Count > 0)
+                    if ((uint)addrs.Count > 0u)
                     {
                         var addressInfo = addrs.First();
                         if (!IPAddress.IsLoopback(addressInfo.Address))
@@ -81,7 +81,7 @@ namespace DotNetty.Common.Internal
                     else if (0u >= res)
                     {
                         // Cannot tell the difference.  Choose the longer one.
-                        if (bestMacAddr.Length < macAddr.Length)
+                        if ((uint)bestMacAddr.Length < (uint)macAddr.Length)
                         {
                             replace = true;
                         }
@@ -141,7 +141,7 @@ namespace DotNetty.Common.Internal
             }
 
             // Must be EUI-48 or longer.
-            if (candidate.Length < 6)
+            if ((uint)candidate.Length < 6u)
             {
                 return 1;
             }

@@ -101,7 +101,7 @@ namespace DotNetty.Codecs.Http.Multipart
             if (dataBoundary is object)
             {
                 this.multipartDataBoundary = new AsciiString(dataBoundary[0]);
-                if (dataBoundary.Length > 1 && dataBoundary[1] is object)
+                if ((uint)dataBoundary.Length > 1u && dataBoundary[1] is object)
                 {
                     this.charset = Encoding.GetEncoding(dataBoundary[1].ToString());
                 }
@@ -220,7 +220,7 @@ namespace DotNetty.Codecs.Http.Multipart
                         ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.HttpPostMultipartRequestDecoder);
                     }
                 }
-                return this.bodyListHttpData.Count > 0 && this.bodyListHttpDataRank < this.bodyListHttpData.Count;
+                return (uint)this.bodyListHttpData.Count > 0u && this.bodyListHttpDataRank < this.bodyListHttpData.Count;
             }
         }
 

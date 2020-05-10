@@ -340,7 +340,7 @@ namespace DotNetty.Handlers.Tls
                 {
                     // Check first if firedChannelRead is not set yet as it may have been set in a
                     // previous decode(...) call.
-                    _firedChannelRead = output.Count > 0;
+                    _firedChannelRead = (uint)output.Count > 0u;
                 }
             }
 
@@ -392,7 +392,7 @@ namespace DotNetty.Handlers.Tls
         /// <summary>Unwraps inbound SSL records.</summary>
         private void Unwrap(IChannelHandlerContext ctx, IByteBuffer packet, int offset, int length, List<int> packetLengths, List<object> output)
         {
-            if (packetLengths.Count <= 0) { ThrowHelper.ThrowArgumentException(); }
+            if (0u >= (uint)packetLengths.Count) { ThrowHelper.ThrowArgumentException(); }
 
             //bool notifyClosure = false; // todo: netty/issues/137
             bool pending = false;

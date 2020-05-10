@@ -12,7 +12,7 @@
 
         public static Task WriteAndFlushManyAsync(this IChannel channel, ICollection<object> messages)
         {
-            if (messages is null || messages.Count <= 0) { return TaskUtil.Completed; }
+            if (messages is null || 0u >= (uint)messages.Count) { return TaskUtil.Completed; }
 
             var taskList = ThreadLocalList<Task>.NewInstance();
             foreach (object m in messages)

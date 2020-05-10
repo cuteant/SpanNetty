@@ -190,7 +190,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     }
                 }
 
-                return this.bodyListHttpData.Count > 0 && this.bodyListHttpDataRank < this.bodyListHttpData.Count;
+                return (uint)this.bodyListHttpData.Count > 0u && this.bodyListHttpDataRank < this.bodyListHttpData.Count;
             }
         }
 
