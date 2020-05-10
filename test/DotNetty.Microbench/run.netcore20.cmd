@@ -1,1 +1,0 @@
-dotnet run --configuration Release --framework netcoreapp2.0 -- RunConfiguration.TargetPlatform=x64

@@ -43,24 +43,24 @@ namespace DotNetty.Codecs.Http2.Tests
     //}
 
 #if !TEST40
-    public class LibuvDataCompressionHttp2Test : AbstractDataCompressionHttp2Test
-    {
-        public LibuvDataCompressionHttp2Test(ITestOutputHelper output) : base(output) { }
+    //public class LibuvDataCompressionHttp2Test : AbstractDataCompressionHttp2Test
+    //{
+    //    public LibuvDataCompressionHttp2Test(ITestOutputHelper output) : base(output) { }
 
-        protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
-        {
-            var dispatcher = new DispatcherEventLoopGroup();
-            var bossGroup = dispatcher;
-            var workGroup = new WorkerEventLoopGroup(dispatcher);
-            bootstrap.Group(bossGroup, workGroup)
-                     .Channel<TcpServerChannel>();
-        }
+    //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
+    //    {
+    //        var dispatcher = new DispatcherEventLoopGroup();
+    //        var bossGroup = dispatcher;
+    //        var workGroup = new WorkerEventLoopGroup(dispatcher);
+    //        bootstrap.Group(bossGroup, workGroup)
+    //                 .Channel<TcpServerChannel>();
+    //    }
 
-        protected override void SetupBootstrap(Bootstrap bootstrap)
-        {
-            bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
-        }
-    }
+    //    protected override void SetupBootstrap(Bootstrap bootstrap)
+    //    {
+    //        bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
+    //    }
+    //}
 #endif
 
     //public sealed class TlsSocketDataCompressionHttp2Test : SocketDataCompressionHttp2Test

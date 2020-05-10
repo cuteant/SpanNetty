@@ -27,24 +27,24 @@ namespace DotNetty.Codecs.Http2.Tests
     using Xunit.Abstractions;
 
 #if !TEST40
-    public sealed class LibuvInboundHttp2ToHttpAdapterTest : AbstractInboundHttp2ToHttpAdapterTest
-    {
-        public LibuvInboundHttp2ToHttpAdapterTest(ITestOutputHelper output) : base(output) { }
+    //public sealed class LibuvInboundHttp2ToHttpAdapterTest : AbstractInboundHttp2ToHttpAdapterTest
+    //{
+    //    public LibuvInboundHttp2ToHttpAdapterTest(ITestOutputHelper output) : base(output) { }
 
-        protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
-        {
-            var dispatcher = new DispatcherEventLoopGroup();
-            var bossGroup = dispatcher;
-            var workGroup = new WorkerEventLoopGroup(dispatcher);
-            bootstrap.Group(bossGroup, workGroup)
-                     .Channel<TcpServerChannel>();
-        }
+    //    protected override void SetupServerBootstrap(ServerBootstrap bootstrap)
+    //    {
+    //        var dispatcher = new DispatcherEventLoopGroup();
+    //        var bossGroup = dispatcher;
+    //        var workGroup = new WorkerEventLoopGroup(dispatcher);
+    //        bootstrap.Group(bossGroup, workGroup)
+    //                 .Channel<TcpServerChannel>();
+    //    }
 
-        protected override void SetupBootstrap(Bootstrap bootstrap)
-        {
-            bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
-        }
-    }
+    //    protected override void SetupBootstrap(Bootstrap bootstrap)
+    //    {
+    //        bootstrap.Group(new EventLoopGroup()).Channel<TcpChannel>();
+    //    }
+    //}
 #endif
 
     //public sealed class TlsSocketInboundHttp2ToHttpAdapterTest : SocketInboundHttp2ToHttpAdapterTest
