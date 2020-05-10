@@ -118,19 +118,12 @@ namespace DotNetty.Codecs
                 length += lengthFieldLen;
             }
 
-            const uint TooBigOrNegative = int.MaxValue;
             uint nlen = unchecked((uint)length);
-            if (nlen > TooBigOrNegative)
+            if (nlen > SharedConstants.TooBigOrNegative)
             {
                 CThrowHelper.ThrowArgumentException_LessThanZero(length);
             }
 
-            var buffer = context.Allocator.Buffer(8) as AbstractByteBuffer;
-            if (buffer is null)
-            {
-                buffer.Release();
-                CThrowHelper.ThrowNotSupportedException_ByteBuffer();
-            }
             switch (lengthFieldLen)
             {
                 case 1:
@@ -138,34 +131,31 @@ namespace DotNetty.Codecs
                     {
                         CThrowHelper.ThrowArgumentException_Byte(length);
                     }
-                    buffer._SetByte(0, (byte)length);
+                    output.Add(context.Allocator.Buffer(1).WriteByte((byte)length));
                     break;
                 case 2:
                     if (nlen >= 65536u)
                     {
                         CThrowHelper.ThrowArgumentException_Short(length);
                     }
-                    buffer._SetShort(0, (short)length);
+                    output.Add(context.Allocator.Buffer(2).WriteShort((short)length));
                     break;
                 case 3:
                     if (nlen >= 16777216u)
                     {
                         CThrowHelper.ThrowArgumentException_Medium(length);
                     }
-                    buffer._SetMedium(0, length);
+                    output.Add(context.Allocator.Buffer(3).WriteMedium(length));
                     break;
                 case 4:
-                    buffer._SetInt(0, length);
+                    output.Add(context.Allocator.Buffer(4).WriteInt(length));
                     break;
                 case 8:
-                    buffer._SetLong(0, length);
+                    output.Add(context.Allocator.Buffer(8).WriteLong(length));
                     break;
                 default:
                     CThrowHelper.ThrowException_UnknownLen(); break;
             }
-
-            buffer.SetWriterIndex0(lengthFieldLen);
-            output.Add(buffer);
 
             output.Add(message.Retain());
         }

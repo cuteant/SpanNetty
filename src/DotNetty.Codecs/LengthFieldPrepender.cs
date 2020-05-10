@@ -138,9 +138,8 @@ namespace DotNetty.Codecs
                 length += lengthFieldLen;
             }
 
-            const uint TooBigOrNegative = int.MaxValue;
             uint nlen = unchecked((uint)length);
-            if (nlen > TooBigOrNegative)
+            if (nlen > SharedConstants.TooBigOrNegative)
             {
                 CThrowHelper.ThrowArgumentException_LessThanZero(length);
             }
