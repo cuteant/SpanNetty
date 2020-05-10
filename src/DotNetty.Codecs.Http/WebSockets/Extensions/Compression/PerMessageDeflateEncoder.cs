@@ -24,7 +24,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             {
                 case Opcode.Text:
                 case Opcode.Binary:
-                    return (frame.Rsv & WebSocketRsv.Rsv1) == 0;
+                    return 0u >= (uint)(frame.Rsv & WebSocketRsv.Rsv1);
                 case Opcode.Cont:
                     return this.compressing;
                 default:

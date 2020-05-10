@@ -55,11 +55,12 @@ namespace DotNetty.Codecs.Http
             public override IList<ICharSequence> GetAll(AsciiString name)
             {
                 IList<ICharSequence> values = base.GetAll(name);
-                if (values.Count == 0 || CannotBeCombined(name))
+                uint uCount = (uint)values.Count;
+                if (0u >= uCount || CannotBeCombined(name))
                 {
                     return values;
                 }
-                if (values.Count != 1)
+                if (uCount > 1u) // != 1
                 {
                     ThrowHelper.ThrowInvalidOperationException_OnlyHaveOneValue();
                 }

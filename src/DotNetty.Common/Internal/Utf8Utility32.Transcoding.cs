@@ -202,7 +202,7 @@ namespace DotNetty.Common.Internal
                         // Slow-track: we need to make sure each individual write has enough
                         // of a buffer so that we don't overrun the destination.
 
-                        if (outputCharsRemaining == 0)
+                        if (0u >= (uint)outputCharsRemaining)
                         {
                             goto OutputBufferTooSmall;
                         }
@@ -215,7 +215,7 @@ namespace DotNetty.Common.Internal
 
                         if (Utf8Utility.UInt32SecondByteIsAscii(thisDWord))
                         {
-                            if (outputCharsRemaining == 0)
+                            if (0u >= (uint)outputCharsRemaining)
                             {
                                 goto OutputBufferTooSmall;
                             }
@@ -406,7 +406,7 @@ namespace DotNetty.Common.Internal
                     }
                     else
                     {
-                        if (outputCharsRemaining == 0)
+                        if (0u >= (uint)outputCharsRemaining)
                         {
                             goto ProcessRemainingBytesSlow; // running out of output buffer
                         }
@@ -463,14 +463,14 @@ namespace DotNetty.Common.Internal
 
                         // Code below becomes 5 instructions: test, jz, lea, test, jz
 
-                        if (((thisDWord & 0x0000_200Fu) == 0) || (((thisDWord - 0x0000_200Du) & 0x0000_200Fu) == 0))
+                        if ((0u >= (thisDWord & 0x0000_200Fu)) || (0u >= ((thisDWord - 0x0000_200Du) & 0x0000_200Fu)))
                         {
                             goto Error; // overlong or surrogate
                         }
                     }
                     else
                     {
-                        if (((thisDWord & 0x0F20_0000u) == 0) || (((thisDWord - 0x0D20_0000u) & 0x0F20_0000u) == 0))
+                        if ((0u >= (thisDWord & 0x0F20_0000u)) || (0u >= ((thisDWord - 0x0D20_0000u) & 0x0F20_0000u)))
                         {
                             goto Error; // overlong or surrogate
                         }
@@ -478,7 +478,7 @@ namespace DotNetty.Common.Internal
 
                     // At this point, we know the incoming scalar is well-formed.
 
-                    if (outputCharsRemaining == 0)
+                    if (0u >= (uint)outputCharsRemaining)
                     {
                         goto OutputBufferTooSmall; // not enough space in the destination buffer to write
                     }
@@ -493,7 +493,7 @@ namespace DotNetty.Common.Internal
                         // First, check that the leftover byte from the original DWORD is in the range [ E0..EF ], which
                         // would indicate the potential start of a second three-byte sequence.
 
-                        if (((thisDWord - 0xE000_0000u) & 0xF000_0000u) == 0)
+                        if (0u >= ((thisDWord - 0xE000_0000u) & 0xF000_0000u))
                         {
                             // The const '3' below is correct because pFinalPosWhereCanReadDWordFromInputBuffer represents
                             // the final place where we can safely perform a DWORD read, and we want to probe whether it's
@@ -549,7 +549,7 @@ namespace DotNetty.Common.Internal
 
                     if (Utf8Utility.UInt32FourthByteIsAscii(thisDWord))
                     {
-                        if (outputCharsRemaining == 0)
+                        if (0u >= (uint)outputCharsRemaining)
                         {
                             goto OutputBufferTooSmall;
                         }
@@ -666,7 +666,7 @@ namespace DotNetty.Common.Internal
                 uint firstByte = pInputBuffer[0];
                 if (firstByte <= 0x7Fu)
                 {
-                    if (outputCharsRemaining == 0)
+                    if (0u >= (uint)outputCharsRemaining)
                     {
                         goto OutputBufferTooSmall; // we have no hope of writing anything to the output
                     }
@@ -698,7 +698,7 @@ namespace DotNetty.Common.Internal
                         goto Error; // 2-byte marker not followed by continuation byte
                     }
 
-                    if (outputCharsRemaining == 0)
+                    if (0u >= (uint)outputCharsRemaining)
                     {
                         goto OutputBufferTooSmall; // we have no hope of writing anything to the output
                     }
@@ -739,7 +739,7 @@ namespace DotNetty.Common.Internal
                             goto Error; // attempted to encode a UTF-16 surrogate code point; fail
                         }
 
-                        if (outputCharsRemaining == 0)
+                        if (0u >= (uint)outputCharsRemaining)
                         {
                             goto OutputBufferTooSmall; // we have no hope of writing anything to the output
                         }
@@ -1091,7 +1091,7 @@ namespace DotNetty.Common.Internal
 
                 if (Utf8Utility.IsFirstCharAscii(thisDWord))
                 {
-                    if (outputBytesRemaining == 0)
+                    if (0u >= (uint)outputBytesRemaining)
                     {
                         goto OutputBufferTooSmall;
                     }
@@ -1287,7 +1287,7 @@ namespace DotNetty.Common.Internal
 
                     if (Utf8Utility.IsSecondCharAscii(thisDWord))
                     {
-                        if (outputBytesRemaining == 0)
+                        if (0u >= (uint)outputBytesRemaining)
                         {
                             goto OutputBufferTooSmall;
                         }
@@ -1363,7 +1363,7 @@ namespace DotNetty.Common.Internal
         ProcessInputOfLessThanDWordSize:
             Debug.Assert(inputLength < CharsPerDWord);
 
-            if (inputLength == 0)
+            if (0u >= (uint)inputLength)
             {
                 goto InputBufferFullyConsumed;
             }
@@ -1385,7 +1385,7 @@ namespace DotNetty.Common.Internal
             {
                 if (thisChar <= 0x7Fu)
                 {
-                    if (outputBytesRemaining == 0)
+                    if (0u >= (uint)outputBytesRemaining)
                     {
                         goto OutputBufferTooSmall; // we have no hope of writing anything to the output
                     }

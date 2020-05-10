@@ -106,7 +106,7 @@ namespace DotNetty.Common
 
                     Thread.Sleep(1000);
 
-                    if (this.watchees.Count == 0 && PendingEntries.IsEmpty)
+                    if (0u >= (uint)this.watchees.Count && PendingEntries.IsEmpty)
                     {
                         // Mark the current worker thread as stopped.
                         // The following CAS must always success and must be uncontended,

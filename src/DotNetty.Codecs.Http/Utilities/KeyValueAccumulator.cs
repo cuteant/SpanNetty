@@ -22,7 +22,7 @@ namespace DotNetty.Codecs.Http.Utilities
             StringValues values;
             if (_accumulator.TryGetValue(key, out values))
             {
-                if (values.Count == 0)
+                if (0u >= (uint)values.Count)
                 {
                     // Marker entry for this key to indicate entry already in expanding list dictionary
                     _expandingAccumulator[key].Add(value);

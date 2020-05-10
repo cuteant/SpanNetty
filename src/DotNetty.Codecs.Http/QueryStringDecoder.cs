@@ -135,7 +135,7 @@ namespace DotNetty.Codecs.Http
                         if (AddParam(s, nameStart, valueStart, i, parameters, charset))
                         {
                             paramsLimit--;
-                            if (paramsLimit == 0)
+                            if (0u >= (uint)paramsLimit)
                             {
                                 return parameters;
                             }

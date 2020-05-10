@@ -69,8 +69,9 @@ namespace DotNetty.Codecs.Http2
 
         public WeightedFairQueueByteDistributor(IHttp2Connection connection, int maxStateOnlySize)
         {
-            if (maxStateOnlySize < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxStateOnlySize, ExceptionArgument.maxStateOnlySize); }
-            if (maxStateOnlySize == 0)
+            uint uMaxStateOnlySize = (uint)maxStateOnlySize;
+            if (uMaxStateOnlySize > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxStateOnlySize, ExceptionArgument.maxStateOnlySize); }
+            if (0u >= uMaxStateOnlySize)
             {
                 this.stateOnlyMap = EmptyDictionary<int, State>.Instance;
                 this.stateOnlyRemovalQueue = EmptyPriorityQueue<State>.Instance;
@@ -147,7 +148,7 @@ namespace DotNetty.Codecs.Http2
             // the stream reference is set to null to avoid retaining a reference longer than necessary.
             state.stream = null;
 
-            if (this.maxStateOnlySize == 0)
+            if (0u >= (uint)this.maxStateOnlySize)
             {
                 state.parent.RemoveChild(state);
                 return;
@@ -188,7 +189,7 @@ namespace DotNetty.Codecs.Http2
                 // If there is no State object that means there is no IHttp2Stream object and we would have to keep the
                 // State object in the stateOnlyMap and stateOnlyRemovalQueue. However if maxStateOnlySize is 0 this means
                 // stateOnlyMap and stateOnlyRemovalQueue are empty collections and cannot be modified so we drop the State.
-                if (this.maxStateOnlySize == 0) { return; }
+                if (0u >= (uint)this.maxStateOnlySize) { return; }
 
                 state = new State(this, childStreamId);
                 this.stateOnlyRemovalQueue.TryEnqueue(state);
@@ -201,7 +202,7 @@ namespace DotNetty.Codecs.Http2
                 // If there is no State object that means there is no IHttp2Stream object and we would have to keep the
                 // State object in the stateOnlyMap and stateOnlyRemovalQueue. However if maxStateOnlySize is 0 this means
                 // stateOnlyMap and stateOnlyRemovalQueue are empty collections and cannot be modified so we drop the State.
-                if (this.maxStateOnlySize == 0) { return; }
+                if (0u >= (uint)this.maxStateOnlySize) { return; }
 
                 newParent = new State(this, parentStreamId);
                 this.stateOnlyRemovalQueue.TryEnqueue(newParent);
@@ -253,7 +254,7 @@ namespace DotNetty.Codecs.Http2
         public bool Distribute(int maxBytes, IStreamByteDistributorWriter writer)
         {
             // As long as there is some active frame we should write at least 1 time.
-            if (this.connectionState.activeCountForTree == 0) { return false; }
+            if (0u >= (uint)this.connectionState.activeCountForTree) { return false; }
 
             // The goal is to write until we write all the allocated bytes or are no longer making progress.
             // We still attempt to write even after the number of allocated bytes has been exhausted to allow empty frames
@@ -291,7 +292,7 @@ namespace DotNetty.Codecs.Http2
             {
                 int nsent = Math.Min(maxBytes, state.streamableBytes);
                 state.Write(nsent, writer);
-                if (nsent == 0 && maxBytes != 0)
+                if (0u >= (uint)nsent && maxBytes != 0)
                 {
                     // If a stream sends zero bytes, then we gave it a chance to write empty frames and it is now
                     // considered inactive until the next call to updateStreamableBytes. This allows descendant streams to
@@ -716,7 +717,7 @@ namespace DotNetty.Codecs.Http2
                     Debug.Assert(
                         this.activeCountForTree != increment || this.pseudoTimeQueueIndex == IndexNotInQueue || this.parent.pseudoTimeQueue.Contains(this),
                         $"State[{this.streamId}].activeCountForTree changed from 0 to {increment} is in a pseudoTimeQueue, but not in parent[{this.parent.streamId}]'s pseudoTimeQueue");
-                    if (this.activeCountForTree == 0)
+                    if (0u >= (uint)this.activeCountForTree)
                     {
                         this.parent.RemovePseudoTimeQueue(this);
                     }

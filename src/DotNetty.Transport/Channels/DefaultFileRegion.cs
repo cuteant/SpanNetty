@@ -46,11 +46,11 @@ namespace DotNetty.Transport.Channels
                 ThrowHelper.ThrowArgumentException_Position(pos, this.Count);
             }
 
-            if (totalCount == 0)
+            if (0ul >= (ulong)totalCount)
             {
                 return 0L;
             }
-            if (this.ReferenceCount == 0)
+            if (0u >= (uint)this.ReferenceCount)
             {
                 ThrowHelper.ThrowIllegalReferenceCountException(0);
             }

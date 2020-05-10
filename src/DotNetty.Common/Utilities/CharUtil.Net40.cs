@@ -53,7 +53,7 @@ namespace DotNetty.Common.Utilities
                 }
             }
 
-            return result.Count == 0 ? new[] { sequence } : result.ToArray();
+            return 0u >= (uint)result.Count ? new[] { sequence } : result.ToArray();
         }
 
         static int IndexOf(char[] tokens, char value)

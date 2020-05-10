@@ -159,7 +159,7 @@ namespace DotNetty.Common.Utilities
             }
 
             // Preserve the min-heap property by comparing the new priority with parents/children in the heap.
-            if (i == 0)
+            if (0u >= (uint)i)
             {
                 this.TrickleDown(i, node);
             }

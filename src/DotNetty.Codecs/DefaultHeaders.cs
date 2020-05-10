@@ -1022,7 +1022,7 @@ namespace DotNetty.Codecs
                 [MethodImpl(InlineMethod.Value)]
                 get
                 {
-                    if (this.index == 0 || this.index == this.size + 1)
+                    if (0u >= (uint)this.index || this.index == this.size + 1)
                     {
                         CThrowHelper.ThrowInvalidOperationException_EnumeratorNotInitOrCompleted();
                     }

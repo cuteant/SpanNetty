@@ -85,7 +85,7 @@ namespace DotNetty.Transport.Channels.Sockets
             public override void FinishRead(SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
             {
                 var ch = this.channel;
-                if ((ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active) == 0)
+                if (0u >= (uint)(ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active))
                 {
                     return; // read was signaled as a result of channel closure
                 }
@@ -201,7 +201,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     //var buf = (IByteBuffer)msg; // ## 苦竹 修改 ##
                     int readableBytes = buf.ReadableBytes;
-                    if (readableBytes == 0)
+                    if (0u >= (uint)readableBytes)
                     {
                         input.Remove();
                         continue;
@@ -217,7 +217,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     for (int i = writeSpinCount - 1; i >= 0; i--)
                     {
                         int localFlushedAmount = this.DoWriteBytes(buf);
-                        if (localFlushedAmount == 0) // todo: check for "sent less than attempted bytes" to avoid unnecessary extra doWriteBytes call?
+                        if (0u >= (uint)localFlushedAmount) // todo: check for "sent less than attempted bytes" to avoid unnecessary extra doWriteBytes call?
                         {
                             scheduleAsync = true;
                             break;

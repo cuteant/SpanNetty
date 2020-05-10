@@ -56,7 +56,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         internal void DispatchHandle(NativeHandle handle)
         {
-            if (this.pipes.Count == 0)
+            if (0u >= (uint)this.pipes.Count)
             {
                 ThrowHelper.ThrowInvalidOperationException_Dispatch();
             }

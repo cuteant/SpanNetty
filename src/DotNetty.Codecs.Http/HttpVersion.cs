@@ -40,7 +40,7 @@ namespace DotNetty.Codecs.Http
             // Fall back to slow path
             text = text.Trim();
 
-            if (text.Count == 0)
+            if (0u >= (uint)text.Count)
             {
                 ThrowHelper.ThrowArgumentException_EmptyText();
             }

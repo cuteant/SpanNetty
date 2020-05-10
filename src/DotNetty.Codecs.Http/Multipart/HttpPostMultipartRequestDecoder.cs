@@ -282,7 +282,7 @@ namespace DotNetty.Codecs.Http.Multipart
         void ParseBodyMultipart()
         {
             if (this.undecodedChunk == null
-                || this.undecodedChunk.ReadableBytes == 0)
+                || 0u >= (uint)this.undecodedChunk.ReadableBytes)
             {
                 // nothing to decode
                 return;

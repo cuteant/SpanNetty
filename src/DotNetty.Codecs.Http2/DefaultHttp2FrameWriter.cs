@@ -103,7 +103,7 @@ namespace DotNetty.Codecs.Http2
                     while (remainingData > this.maxFrameSize);
                 }
 
-                if (padding == 0)
+                if (0u >= (uint)padding)
                 {
                     // Write the header.
                     if (frameHeader != null)
@@ -167,7 +167,7 @@ namespace DotNetty.Codecs.Http2
 
                         // Write the header.
                         IByteBuffer frameHeader2 = ctx.Allocator.Buffer(Http2CodecUtil.DataFrameHeaderLength);
-                        flags.EndOfStream(endOfStream && remainingData == 0 && padding == 0);
+                        flags.EndOfStream(endOfStream && 0u >= (uint)remainingData && 0u >= (uint)padding);
                         flags.PaddingPresent(framePaddingBytes > 0);
                         Http2CodecUtil.WriteFrameHeaderInternal(frameHeader2, framePaddingBytes + frameDataBytes, Http2FrameTypes.Data, flags, streamId);
                         WritePaddingLength(frameHeader2, framePaddingBytes);
@@ -176,7 +176,7 @@ namespace DotNetty.Codecs.Http2
                         // Write the payload.
                         if (frameDataBytes != 0)
                         {
-                            if (remainingData == 0)
+                            if (0u >= (uint)remainingData)
                             {
                                 IByteBuffer lastFrame = data.ReadSlice(frameDataBytes);
                                 data = null;

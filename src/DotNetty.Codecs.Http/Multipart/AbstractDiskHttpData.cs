@@ -78,7 +78,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
                 }
-                if (buffer.ReadableBytes == 0)
+                if (0u >= (uint)buffer.ReadableBytes)
                 {
                     // empty file
                     return;
@@ -235,13 +235,13 @@ namespace DotNetty.Codecs.Http.Multipart
                 return Unpooled.Empty;
             }
             var sizeLeft = this.fileStream.Length - this.chunkPosition;
-            if (sizeLeft == 0L)
+            if (0ul >= (ulong)sizeLeft)
             {
                 this.chunkPosition = 0L;
                 return Unpooled.Empty;
             }
             int sliceLength = length;
-            if (sizeLeft < length)
+            if ((uint)sizeLeft < (uint)length)
             {
                 sliceLength = (int)sizeLeft;
             }
@@ -261,7 +261,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 read += readnow;
             }
             this.fileStream.Seek(lastPosition, SeekOrigin.Begin);
-            if (read == 0)
+            if (0u >= (uint)read)
             {
                 return Unpooled.Empty;
             }

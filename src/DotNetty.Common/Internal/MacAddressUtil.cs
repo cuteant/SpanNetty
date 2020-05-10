@@ -63,22 +63,22 @@ namespace DotNetty.Common.Internal
                 // todo: netty has a check for whether interface is virtual but it always returns false. There is no equivalent in .NET
                 byte[] macAddr = iface.GetPhysicalAddress()?.GetAddressBytes();
                 bool replace = false;
-                int res = CompareAddresses(bestMacAddr, macAddr);
-                if (res < 0)
+                uint res = (uint)CompareAddresses(bestMacAddr, macAddr);
+                if (res > SharedConstants.TooBigOrNegative) // res < 0
                 {
                     // Found a better MAC address.
                     replace = true;
                 }
-                else if (res == 0)
+                else if (0u >= res)
                 {
                     // Two MAC addresses are of pretty much same quality.
-                    res = CompareAddresses(bestInetAddr, inetAddr);
-                    if (res < 0)
+                    res = (uint)CompareAddresses(bestInetAddr, inetAddr);
+                    if (res > SharedConstants.TooBigOrNegative) // res < 0
                     {
                         // Found a MAC address with better INET address.
                         replace = true;
                     }
-                    else if (res == 0)
+                    else if (0u >= res)
                     {
                         // Cannot tell the difference.  Choose the longer one.
                         if (bestMacAddr.Length < macAddr.Length)
@@ -169,9 +169,9 @@ namespace DotNetty.Common.Internal
             }
 
             // Prefer globally unique address.
-            if ((current[0] & 2) == 0)
+            if (0u >= (uint)(current[0] & 2))
             {
-                if ((candidate[0] & 2) == 0)
+                if (0u >= (uint)(candidate[0] & 2))
                 {
                     // Both current and candidate are globally unique addresses.
                     return 0;
@@ -184,7 +184,7 @@ namespace DotNetty.Common.Internal
             }
             else
             {
-                if ((candidate[0] & 2) == 0)
+                if (0u >= (uint)(candidate[0] & 2))
                 {
                     // Only candidate is globally unique.
                     return -1;

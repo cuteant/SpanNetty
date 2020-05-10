@@ -564,7 +564,7 @@ namespace DotNetty.Codecs.Http2
         }
 
         protected override bool IsGracefulShutdownComplete =>
-            base.IsGracefulShutdownComplete && Volatile.Read(ref this.numBufferedStreams) == 0;
+            base.IsGracefulShutdownComplete && 0u >= (uint)Volatile.Read(ref this.numBufferedStreams);
 
         sealed class FrameListener : IHttp2FrameListener
         {
@@ -656,7 +656,7 @@ namespace DotNetty.Codecs.Http2
 
             public void OnWindowUpdateRead(IChannelHandlerContext ctx, int streamId, int windowSizeIncrement)
             {
-                if (streamId == 0)
+                if (0u >= (uint)streamId)
                 {
                     // Ignore connection window updates.
                     return;

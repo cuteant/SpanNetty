@@ -118,7 +118,7 @@ namespace DotNetty.Codecs.Http
         {
             // ReSharper disable NonReadonlyMemberInGetHashCode
             int hashCode = this.hash;
-            if (hashCode == 0)
+            if (0u >= (uint)hashCode)
             {
                 if (this.content.ReferenceCount != 0)
                 {

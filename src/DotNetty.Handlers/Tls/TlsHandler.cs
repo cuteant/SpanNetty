@@ -459,7 +459,7 @@ namespace DotNetty.Handlers.Tls
 
                         int read = currentReadFuture.Result;
 
-                        if (read == 0)
+                        if (0u >= (uint)read)
                         {
                             //Stream closed
                             return;
@@ -470,7 +470,7 @@ namespace DotNetty.Handlers.Tls
 
                         currentReadFuture = null;
                         outputBuffer = null;
-                        if (_mediationStream.SourceReadableBytes == 0)
+                        if (0u >= (uint)_mediationStream.SourceReadableBytes)
                         {
                             // we just made a frame available for reading but there was already pending read so SslStream read it out to make further progress there
 
@@ -889,7 +889,7 @@ namespace DotNetty.Handlers.Tls
                 while (true)
                 {
                     List<object> messages = _pendingUnencryptedWrites.Current;
-                    if (messages == null || messages.Count == 0)
+                    if (messages is null || 0u >= (uint)messages.Count)
                     {
                         break;
                     }
@@ -960,7 +960,7 @@ namespace DotNetty.Handlers.Tls
         {
             IByteBuffer output;
             var capturedContext = CapturedContext;
-            if (count == 0)
+            if (0u >= (uint)count)
             {
                 output = Unpooled.Empty;
             }

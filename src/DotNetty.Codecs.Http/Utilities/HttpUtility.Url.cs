@@ -125,7 +125,7 @@ namespace DotNetty.Codecs.Http.Utilities
             }
 
             // nothing to expand?
-            if (cSpaces == 0 && cUnsafe == 0)
+            if (0u >= (uint)cSpaces && 0u >= (uint)cUnsafe)
             {
                 // DevDiv 912606: respect "offset" and "count"
                 if (0 == offset && bytes.Length == count)
@@ -239,7 +239,7 @@ namespace DotNetty.Codecs.Http.Utilities
             }
 
             // nothing to expand?
-            if (cNonAscii == 0)
+            if (0u >= (uint)cNonAscii)
             {
                 return bytes;
             }
@@ -354,7 +354,7 @@ namespace DotNetty.Codecs.Http.Utilities
                     }
                 }
 
-                if ((ch & 0xFF80) == 0)
+                if (0u >= (uint)(ch & 0xFF80))
                 {
                     helper.AddByte((byte)ch); // 7 bit have to go as bytes because of Unicode
                 }
@@ -501,7 +501,7 @@ namespace DotNetty.Codecs.Http.Utilities
         [MethodImpl(InlineMethod.Value)]
         private static bool ValidateUrlEncodingParameters(byte[] bytes, int offset, int count)
         {
-            if (bytes == null && count == 0)
+            if (bytes == null && 0u >= (uint)count)
             {
                 return false;
             }
@@ -678,7 +678,7 @@ namespace DotNetty.Codecs.Http.Utilities
             public override string ToString()
             {
                 int count = Count;
-                if (count == 0)
+                if (0u >= (uint)count)
                 {
                     return "";
                 }

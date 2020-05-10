@@ -139,7 +139,7 @@ namespace DotNetty.Transport.Libuv.Native
 
                 int result = NativeMethods.uv_loop_close(handle);
                 if (debugEnabled) Logger.LoopCloseResult(handle, result, count);
-                if (result == 0)
+                if (0u >= (uint)result)
                 {
                     break;
                 }

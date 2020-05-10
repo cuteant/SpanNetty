@@ -46,8 +46,8 @@ namespace DotNetty.Common.Internal
                     : Utf8Utility32.GetPointerToFirstInvalidByte(pUtf8Data, utf8Data.Length, out utf16CodeUnitCountAdjustment, out _);
                 int index = (int)(void*)Unsafe.ByteOffset(ref *pUtf8Data, ref *pFirstInvalidByte);
 
-                isAscii = (utf16CodeUnitCountAdjustment == 0); // If UTF-16 char count == UTF-8 byte count, it's ASCII.
-                return (index < utf8Data.Length) ? index : -1;
+                isAscii = (0u >= (uint)utf16CodeUnitCountAdjustment); // If UTF-16 char count == UTF-8 byte count, it's ASCII.
+                return ((uint)index < (uint)utf8Data.Length) ? index : -1;
             }
         }
 

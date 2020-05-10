@@ -254,7 +254,7 @@ namespace DotNetty.Codecs
         [MethodImpl(MethodImplOptions.NoInlining)]
         void FailIfNecessary(bool firstDetectionOfTooLongFrame)
         {
-            if (this.bytesToDiscard == 0)
+            if (0ul >= (ulong)this.bytesToDiscard)
             {
                 // Reset to the initial state and tell the handlers that
                 // the frame was too large.

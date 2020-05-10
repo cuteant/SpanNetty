@@ -78,7 +78,7 @@ namespace DotNetty.Codecs.Http
 
         public static bool Contains(HttpStatusClass httpStatusClass, int code)
         {
-            if ((httpStatusClass.min & httpStatusClass.max) == 0)
+            if (0u >= (uint)(httpStatusClass.min & httpStatusClass.max))
             {
                 return code < 100 || code >= 600;
             }

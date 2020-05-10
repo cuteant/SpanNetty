@@ -315,7 +315,7 @@ namespace DotNetty.Codecs.Http
                 // 0: Previous character was neither CR nor LF
                 // 1: The previous character was CR
                 // 2: The previous character was LF
-                if ((character & HighestInvalidValueCharMask) == 0)
+                if (0u >= (uint)(character & HighestInvalidValueCharMask))
                 {
                     // Check the absolutely prohibited characters.
                     switch (character)

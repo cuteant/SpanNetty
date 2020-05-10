@@ -59,7 +59,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
 
             int result = NativeMethods.uv_is_closing(handle);
-            if (result == 0)
+            if (0u >= (uint)result)
             {
                 NativeMethods.uv_close(handle, CloseCallback);
             }

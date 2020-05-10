@@ -68,7 +68,7 @@ namespace DotNetty.Transport.Channels.Pool
         /// <summary>
         /// Returns <c>true</c> if the <see cref="AbstractChannelPoolMap{TKey, TPool}"/> is empty, otherwise <c>false</c>.
         /// </summary>
-        public bool IsEmpty => this.map.Count == 0;
+        public bool IsEmpty => 0u >= (uint)this.map.Count;
 
         public bool Contains(TKey key)
         {

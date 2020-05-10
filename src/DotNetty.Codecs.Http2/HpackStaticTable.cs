@@ -130,13 +130,13 @@ namespace DotNetty.Codecs.Http2
         internal static int GetIndex(ICharSequence name, ICharSequence value)
         {
             int index = GetIndex(name);
-            if (index == -1) { return -1; }
+            if ((uint)index > SharedConstants.TooBigOrNegative/* == -1*/) { return -1; }
 
             // Note this assumes all entries for a given header field are sequential.
             while (index <= Length)
             {
                 HpackHeaderField entry = GetEntry(index);
-                if (HpackUtil.EqualsConstantTime(name, entry.name) == 0)
+                if (0u >= (uint)HpackUtil.EqualsConstantTime(name, entry.name))
                 {
                     break;
                 }

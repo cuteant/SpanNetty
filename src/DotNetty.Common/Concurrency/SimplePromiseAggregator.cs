@@ -51,7 +51,7 @@ namespace DotNetty.Common.Concurrency
             if (!this.doneAllocating)
             {
                 this.doneAllocating = true;
-                if (this.doneCount == this.expectedCount || this.expectedCount == 0)
+                if (this.doneCount == this.expectedCount || 0u >= (uint)this.expectedCount)
                 {
                     this.SetPromise();
                 }
@@ -171,7 +171,7 @@ namespace DotNetty.Common.Concurrency
         [MethodImpl(InlineMethod.Value)]
         bool AllowFailure()
         {
-            return this.AwaitingPromises() || this.expectedCount == 0;
+            return this.AwaitingPromises() || 0u >= (uint)this.expectedCount;
         }
 
         [MethodImpl(InlineMethod.Value)]

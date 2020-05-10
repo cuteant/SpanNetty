@@ -165,19 +165,19 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override IByteBuffer GetChunk(int length)
         {
-            if (this.byteBuf == null || 0u >= (uint)length || this.byteBuf.ReadableBytes == 0)
+            if (this.byteBuf == null || 0u >= (uint)length || 0u >= (uint)this.byteBuf.ReadableBytes)
             {
                 this.chunkPosition = 0;
                 return Unpooled.Empty;
             }
             int sizeLeft = this.byteBuf.ReadableBytes - this.chunkPosition;
-            if (sizeLeft == 0)
+            if (0u >= (uint)sizeLeft)
             {
                 this.chunkPosition = 0;
                 return Unpooled.Empty;
             }
             int sliceLength = length;
-            if (sizeLeft < length)
+            if ((uint)sizeLeft < (uint)length)
             {
                 sliceLength = sizeLeft;
             }

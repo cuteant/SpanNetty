@@ -152,7 +152,7 @@ namespace DotNetty.Codecs.Http.Cors
 
         public CorsConfig Build()
         {
-            if (this.preflightHeaders.Count == 0 && !this.noPreflightHeaders)
+            if (0u >= (uint)this.preflightHeaders.Count && !this.noPreflightHeaders)
             {
                 this.preflightHeaders.Add(HttpHeaderNames.Date, DateValueGenerator.Default);
                 this.preflightHeaders.Add(HttpHeaderNames.ContentLength, new ConstantValueGenerator(new AsciiString("0")));

@@ -47,7 +47,7 @@ namespace DotNetty.Codecs.Http.Cors
 
         public bool IsAnyOriginSupported => this.anyOrigin;
 
-        public ICharSequence Origin => this.origins.Count == 0 ? CorsHandler.AnyOrigin : this.origins.First();
+        public ICharSequence Origin => 0u >= (uint)this.origins.Count ? CorsHandler.AnyOrigin : this.origins.First();
 
         public ISet<ICharSequence> Origins => this.origins;
 
@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http.Cors
 
         public HttpHeaders PreflightResponseHeaders()
         {
-            if (this.preflightHeaders.Count == 0)
+            if (0u >= (uint)this.preflightHeaders.Count)
             {
                 return EmptyHttpHeaders.Default;
             }
@@ -106,7 +106,7 @@ namespace DotNetty.Codecs.Http.Cors
                 .Append($"[enabled = {this.enabled}");
 
             builder.Append(", origins=");
-            if (this.Origins.Count == 0)
+            if (0u >= (uint)this.Origins.Count)
             {
                 builder.Append("*");
             }
@@ -121,7 +121,7 @@ namespace DotNetty.Codecs.Http.Cors
             }
 
             builder.Append(", exposedHeaders=");
-            if (this.exposeHeaders.Count == 0)
+            if (0u >= (uint)this.exposeHeaders.Count)
             {
                 builder.Append("*");
             }
@@ -139,7 +139,7 @@ namespace DotNetty.Codecs.Http.Cors
             builder.Append($", maxAge={this.maxAge}");
 
             builder.Append(", allowedRequestMethods=");
-            if (this.allowedRequestMethods.Count == 0)
+            if (0u >= (uint)this.allowedRequestMethods.Count)
             {
                 builder.Append("*");
             }
@@ -154,7 +154,7 @@ namespace DotNetty.Codecs.Http.Cors
             }
 
             builder.Append(", allowedRequestHeaders=");
-            if (this.allowedRequestHeaders.Count == 0)
+            if (0u >= (uint)this.allowedRequestHeaders.Count)
             {
                 builder.Append("*");
             }
@@ -169,7 +169,7 @@ namespace DotNetty.Codecs.Http.Cors
             }
 
             builder.Append(", preflightHeaders=");
-            if (this.preflightHeaders.Count == 0)
+            if (0u >= (uint)this.preflightHeaders.Count)
             {
                 builder.Append("*");
             }

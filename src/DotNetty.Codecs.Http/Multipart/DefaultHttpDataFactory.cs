@@ -231,11 +231,11 @@ namespace DotNetty.Codecs.Http.Multipart
                     break;
                 }
             }
-            if (index != -1)
+            if ((uint)index < (uint)list.Count) // index != -1
             {
                 list.RemoveAt(index);
             }
-            if (list.Count == 0)
+            if (0u >= (uint)list.Count)
             {
                 this.requestFileDeleteMap.TryRemove(request, out _);
             }

@@ -41,7 +41,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 Debug.Assert(this.channel.EventLoop.InEventLoop);
 
                 var ch = this.channel;
-                if ((ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active) == 0)
+                if (0u >= (uint)(ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active))
                 {
                     return; // read was signaled as a result of channel closure
                 }
@@ -60,11 +60,12 @@ namespace DotNetty.Transport.Channels.Sockets
                         do
                         {
                             int localRead = ch.DoReadMessages(this.readBuf);
-                            if (localRead == 0)
+                            uint uLocalRead = (uint)localRead;
+                            if (0u >= uLocalRead)
                             {
                                 break;
                             }
-                            if (localRead < 0)
+                            if (uLocalRead > SharedConstants.TooBigOrNegative) // localRead < 0
                             {
                                 closed = true;
                                 break;

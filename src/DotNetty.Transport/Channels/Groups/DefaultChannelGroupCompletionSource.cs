@@ -82,7 +82,7 @@ namespace DotNetty.Transport.Channels.Groups
             }
 
             // Done on arrival?
-            if (futures.Count == 0)
+            if (0u >= (uint)futures.Count)
             {
                 this.TrySetResult(0);
             }

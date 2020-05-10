@@ -48,7 +48,7 @@ namespace DotNetty.Common.Internal
             pInputBuffer += (uint)numAsciiCharsConsumedJustNow;
             inputLength -= numAsciiCharsConsumedJustNow;
 
-            if (inputLength == 0)
+            if (0u >= (uint)inputLength)
             {
                 utf8CodeUnitCountAdjustment = 0;
                 scalarCountAdjustment = 0;

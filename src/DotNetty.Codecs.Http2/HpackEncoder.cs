@@ -125,7 +125,7 @@ namespace DotNetty.Codecs.Http2
             }
 
             // If the peer will only use the static table
-            if (this.maxHeaderTableSize == 0)
+            if (0ul >= (ulong)this.maxHeaderTableSize)
             {
                 int staticTableIndex = HpackStaticTable.GetIndex(name, value);
                 if (staticTableIndex == -1)
@@ -350,7 +350,7 @@ namespace DotNetty.Codecs.Http2
             while (this.maxHeaderTableSize - this.size < headerSize)
             {
                 int index = this.Length();
-                if (index == 0)
+                if (0u >= (uint)index)
                 {
                     break;
                 }
@@ -364,7 +364,7 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         internal int Length()
         {
-            return this.size == 0 ? 0 : this.head.after.index - this.head.before.index + 1;
+            return 0ul >= (ulong)this.size ? 0 : this.head.after.index - this.head.before.index + 1;
         }
 
         /// <summary>
@@ -398,7 +398,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="value"></param>
         HeaderEntry GetEntry(ICharSequence name, ICharSequence value)
         {
-            if (this.Length() == 0 || name == null || value == null)
+            if (0u >= (uint)this.Length() || name == null || value == null)
             {
                 return null;
             }
@@ -425,7 +425,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         int GetIndex(ICharSequence name)
         {
-            if (this.Length() == 0 || name == null)
+            if (0u >= (uint)this.Length() || name == null)
             {
                 return -1;
             }
@@ -490,7 +490,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         HpackHeaderField Remove()
         {
-            if (this.size == 0)
+            if (0ul >= (ulong)this.size)
             {
                 return null;
             }

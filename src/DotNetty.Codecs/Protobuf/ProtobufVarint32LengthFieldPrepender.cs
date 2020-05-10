@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Protobuf
 
             while (true)
             {
-                if ((value & ~0x7F) == 0)
+                if (0u >= (uint)(value & ~0x7F))
                 {
                     output.WriteByte(value);
                     return;
@@ -52,22 +52,22 @@ namespace DotNetty.Codecs.Protobuf
 
         public static int ComputeRawVarint32Size(int value)
         {
-            if ((value & (0xffffffff << 7)) == 0)
+            if (0ul >= (ulong)(value & (0xffffffff << 7)))
             {
                 return 1;
             }
 
-            if ((value & (0xffffffff << 14)) == 0)
+            if (0ul >= (ulong)(value & (0xffffffff << 14)))
             {
                 return 2;
             }
 
-            if ((value & (0xffffffff << 21)) == 0)
+            if (0ul >= (ulong)(value & (0xffffffff << 21)))
             {
                 return 3;
             }
 
-            if ((value & (0xffffffff << 28)) == 0)
+            if (0ul >= (ulong)(value & (0xffffffff << 28)))
             {
                 return 4;
             }

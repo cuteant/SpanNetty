@@ -449,7 +449,7 @@ namespace DotNetty.Common.Concurrency
 
                 // Check timeout every 64 tasks because nanoTime() is relatively expensive.
                 // XXX: Hard-coded value - will make it configurable if it is really a problem.
-                if ((runTasks & 0x3F) == 0)
+                if (0ul >= (ulong)(runTasks & 0x3F))
                 {
                     executionTime = PreciseTimeSpan.FromStart;
                     if (executionTime >= deadline)

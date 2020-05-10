@@ -26,7 +26,7 @@ namespace DotNetty.Codecs.Http2
 
             public void ValidateName(ICharSequence name)
             {
-                if (name == null || name.Count == 0)
+                if (name == null || 0u >= (uint)name.Count)
                 {
                     ThrowHelper.ThrowConnectionError_EmptyHeadersAreNotAllowed(name);
                 }

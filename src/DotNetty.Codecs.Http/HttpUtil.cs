@@ -215,7 +215,7 @@ namespace DotNetty.Codecs.Http
             else
             {
                 IList<ICharSequence> encodings = m.Headers.GetAll(HttpHeaderNames.TransferEncoding);
-                if (encodings.Count == 0)
+                if (0u >= (uint)encodings.Count)
                 {
                     return;
                 }
@@ -227,7 +227,7 @@ namespace DotNetty.Codecs.Http
                         values.Remove(value);
                     }
                 }
-                if (values.Count == 0)
+                if (0u >= (uint)values.Count)
                 {
                     m.Headers.Remove(HttpHeaderNames.TransferEncoding);
                 }

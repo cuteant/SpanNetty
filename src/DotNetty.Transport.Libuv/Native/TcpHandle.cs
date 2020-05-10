@@ -23,8 +23,8 @@ namespace DotNetty.Transport.Libuv.Native
                 // Otherwise the socket is created when bind to an address.
                 //  
                 // This is for TcpListener to create socket early before bind
-                int result = flags == 0 
-                    ? NativeMethods.uv_tcp_init(loop.Handle, handle) 
+                int result = 0u >= flags
+                    ? NativeMethods.uv_tcp_init(loop.Handle, handle)
                     : NativeMethods.uv_tcp_init_ex(loop.Handle, handle, flags);
                 NativeMethods.ThrowIfError(result);
             }

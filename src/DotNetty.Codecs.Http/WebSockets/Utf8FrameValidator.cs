@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     // Not final frame so we can expect more frames in the
                     // fragmented sequence
-                    if (this.fragmentedFramesCount == 0)
+                    if (0u >= (uint)this.fragmentedFramesCount)
                     {
                         // First text or binary frame for a fragmented set
                         if (frame.Opcode == Opcode.Text)

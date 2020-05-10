@@ -41,7 +41,7 @@ namespace DotNetty.Codecs.Http.Cookies
             if (null == header) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.header); }
 
             int headerLen = header.Length;
-            if (headerLen == 0)
+            if (0u >= (uint)headerLen)
             {
                 return ImmutableHashSet<ICookie>.Empty;
             }

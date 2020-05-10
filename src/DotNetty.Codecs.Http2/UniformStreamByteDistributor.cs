@@ -80,7 +80,7 @@ namespace DotNetty.Codecs.Http2
         public bool Distribute(int maxBytes, IStreamByteDistributorWriter writer)
         {
             var size = queue.Count;
-            if (size == 0)
+            if (0u >= (uint)size)
             {
                 return totalStreamableBytes > 0;
             }
@@ -95,7 +95,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     continue;
                 }
-                if (maxBytes == 0 && state.streamableBytes > 0)
+                if (0u >= (uint)maxBytes && state.streamableBytes > 0)
                 {
                     // Stop at the first state that can't send. Add this state back to the head of the queue. Note
                     // that empty frames at the head of the queue will always be written, assuming the stream window
@@ -158,7 +158,7 @@ namespace DotNetty.Codecs.Http2
                 //    we gave the state a chance to write zero length frames. We wait until updateStreamableBytes is
                 //    called again before this state is allowed to write.
                 windowNegative = windowSize < 0;
-                if (hasFrame && (windowSize > 0 || (windowSize == 0 && !writing)))
+                if (hasFrame && (windowSize > 0 || (0u >= (uint)windowSize && !writing)))
                 {
                     AddToQueue();
                 }

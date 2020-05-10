@@ -126,7 +126,7 @@ namespace DotNetty.Transport.Channels
 
         void IncrementPendingOutboundBytes(long size, bool invokeLater)
         {
-            if (size == 0)
+            if (0ul >= (ulong)size)
             {
                 return;
             }
@@ -147,7 +147,7 @@ namespace DotNetty.Transport.Channels
 
         void DecrementPendingOutboundBytes(long size, bool invokeLater, bool notifyWritability)
         {
-            if (size == 0)
+            if (0ul >= (ulong)size)
             {
                 return;
             }
@@ -257,7 +257,7 @@ namespace DotNetty.Transport.Channels
 
         void RemoveEntry(Entry e)
         {
-            if (--this.flushed == 0)
+            if (0u >= (uint)(--this.flushed))
             {
                 // processed everything
                 this.flushedEntry = null;
@@ -439,7 +439,7 @@ namespace DotNetty.Transport.Channels
                 {
                     break;
                 }
-                else if (nioBuf.Count == 0)
+                else if (0u >= (uint)nioBuf.Count)
                 {
                     continue;
                 }
@@ -461,7 +461,7 @@ namespace DotNetty.Transport.Channels
         /// did not exceed the write watermark of the <see cref="IChannel"/> and no user-defined writability flag
         /// (<see cref="SetUserDefinedWritability(int, bool)"/>) has been set to <c>false</c>.
         /// </summary>
-        public bool IsWritable => Volatile.Read(ref this.unwritable) == 0;
+        public bool IsWritable => 0u >= (uint)Volatile.Read(ref this.unwritable);
 
         /// <summary>
         /// Returns <c>true</c> if and only if the user-defined writability flag at the specified index is set to
@@ -471,7 +471,7 @@ namespace DotNetty.Transport.Channels
         /// <returns>
         /// <c>true</c> if the user-defined writability flag at the specified index is set to <c>true</c>.
         /// </returns>
-        public bool GetUserDefinedWritability(int index) => (Volatile.Read(ref this.unwritable) & WritabilityMask(index)) == 0;
+        public bool GetUserDefinedWritability(int index) => 0u >= (uint)(Volatile.Read(ref this.unwritable) & WritabilityMask(index));
 
         /// <summary>
         /// Sets a user-defined writability flag at the specified index.
@@ -501,7 +501,7 @@ namespace DotNetty.Transport.Channels
                 prevValue = Interlocked.CompareExchange(ref this.unwritable, newValue, prevValue);
                 if (prevValue == oldValue)
                 {
-                    if (prevValue != 0 && newValue == 0)
+                    if (prevValue != 0 && 0u >= (uint)newValue)
                     {
                         this.FireChannelWritabilityChanged(true);
                     }
@@ -521,7 +521,7 @@ namespace DotNetty.Transport.Channels
                 prevValue = Interlocked.CompareExchange(ref this.unwritable, newValue, prevValue);
                 if (prevValue == oldValue)
                 {
-                    if (prevValue == 0 && newValue != 0)
+                    if (0u >= (uint)prevValue && newValue != 0)
                     {
                         this.FireChannelWritabilityChanged(true);
                     }
@@ -549,7 +549,7 @@ namespace DotNetty.Transport.Channels
                 prevValue = Interlocked.CompareExchange(ref this.unwritable, newValue, prevValue);
                 if (prevValue == oldValue)
                 {
-                    if (prevValue != 0 && newValue == 0)
+                    if (prevValue != 0 && 0u >= (uint)newValue)
                     {
                         this.FireChannelWritabilityChanged(invokeLater);
                     }
@@ -568,7 +568,7 @@ namespace DotNetty.Transport.Channels
                 prevValue = Interlocked.CompareExchange(ref this.unwritable, newValue, prevValue);
                 if (prevValue == oldValue)
                 {
-                    if (prevValue == 0 && newValue != 0)
+                    if (0u >= (uint)prevValue && newValue != 0)
                     {
                         this.FireChannelWritabilityChanged(invokeLater);
                     }
@@ -599,7 +599,7 @@ namespace DotNetty.Transport.Channels
         /// Returns <c>true</c> if there are flushed messages in this <see cref="ChannelOutboundBuffer"/>, otherwise
         /// <c>false</c>.
         /// </summary>
-        public bool IsEmpty => this.flushed == 0;
+        public bool IsEmpty => 0u >= (uint)this.flushed;
 
         public void FailFlushed(Exception cause, bool notify)
         {

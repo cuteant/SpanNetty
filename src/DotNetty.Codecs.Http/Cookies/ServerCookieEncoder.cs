@@ -147,7 +147,7 @@ namespace DotNetty.Codecs.Http.Cookies
         public IList<string> Encode(ICollection<ICookie> cookies)
         {
             if (null == cookies) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cookies); }
-            if (cookies.Count == 0)
+            if (0u >= (uint)cookies.Count)
             {
                 return ImmutableList<string>.Empty;
             }

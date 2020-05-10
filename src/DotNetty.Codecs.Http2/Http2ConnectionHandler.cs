@@ -284,7 +284,7 @@ namespace DotNetty.Codecs.Http2
                 int bytesRead = Math.Min(input.ReadableBytes, prefaceRemaining);
 
                 // If the input so far doesn't match the preface, break the connection.
-                if (bytesRead == 0 || !ByteBufferUtil.Equals(input, input.ReaderIndex,
+                if (0u >= (uint)bytesRead || !ByteBufferUtil.Equals(input, input.ReaderIndex,
                                                              this.clientPrefaceString, this.clientPrefaceString.ReaderIndex,
                                                              bytesRead))
                 {
@@ -671,7 +671,7 @@ namespace DotNetty.Codecs.Http2
         /// if the graceful shutdown has completed and the connection can be safely closed. This implementation just
         /// guarantees that there are no active streams. Subclasses may override to provide additional checks.
         /// </summary>
-        protected virtual bool IsGracefulShutdownComplete => this.Connection.NumActiveStreams == 0;
+        protected virtual bool IsGracefulShutdownComplete => 0u >= (uint)this.Connection.NumActiveStreams;
 
         /// <summary>
         /// Handler for a connection error. Sends a <c>GO_AWAY</c> frame to the remote endpoint. Once all

@@ -347,7 +347,7 @@ namespace DotNetty.Codecs.Mqtt
         static void DecodePacketIdVariableHeader(IByteBuffer buffer, PacketWithId packet, ref int remainingLength)
         {
             int packetId = packet.PacketId = DecodeUnsignedShort(buffer, ref remainingLength);
-            if (packetId == 0)
+            if (0u >= (uint)packetId)
             {
                 ThrowHelper.ThrowDecoderException_MQTT_231_1();
             }
@@ -372,7 +372,7 @@ namespace DotNetty.Codecs.Mqtt
                 subscribeTopics.Add(new SubscriptionRequest(topicFilter, (QualityOfService)qos));
             }
 
-            if (subscribeTopics.Count == 0)
+            if (0u >= (uint)subscribeTopics.Count)
             {
                 ThrowHelper.ThrowDecoderException_MQTT_383_3();
             }
@@ -436,7 +436,7 @@ namespace DotNetty.Codecs.Mqtt
                 unsubscribeTopics.Add(topicFilter);
             }
 
-            if (unsubscribeTopics.Count == 0)
+            if (0u >= (uint)unsubscribeTopics.Count)
             {
                 ThrowHelper.ThrowDecoderException_MQTT_3103_2();
             }
@@ -469,7 +469,7 @@ namespace DotNetty.Codecs.Mqtt
                 ThrowHelper.ThrowDecoderException_StrIsLongerThanMaxSize(maxBytes, size);
             }
 
-            if (size == 0)
+            if (0u >= (uint)size)
             {
                 return string.Empty;
             }

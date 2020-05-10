@@ -351,7 +351,7 @@ namespace DotNetty.Codecs.Http2
                         try
                         {
                             frame.Write(this.controller.ctx, Math.Max(0, maxBytes));
-                            if (frame.Size == 0)
+                            if (0u >= (uint)frame.Size)
                             {
                                 // This frame has been fully written, remove this frame and notify it.
                                 // Since we remove this frame first, we're guaranteed that its error

@@ -727,7 +727,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     ThrowHelper.ThrowErrorDataEncoderException(e);
                 }
-                if (buffer.Capacity == 0)
+                if (0u >= (uint)buffer.Capacity)
                 {
                     // end for current InterfaceHttpData, need more data
                     this.currentData = null;
@@ -805,7 +805,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
 
             // End for current InterfaceHttpData, need potentially more data
-            if (buffer.Capacity == 0)
+            if (0u >= (uint)buffer.Capacity)
             {
                 this.currentData = null;
                 if (this.currentBuffer == null)

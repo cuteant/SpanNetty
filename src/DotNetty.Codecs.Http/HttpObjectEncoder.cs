@@ -193,7 +193,7 @@ namespace DotNetty.Codecs.Http
                     output.Add(buf);
                 }
             }
-            else if (contentLength == 0)
+            else if (0ul >= (ulong)contentLength)
             {
                 // Need to produce some output otherwise an
                 // IllegalstateException will be thrown

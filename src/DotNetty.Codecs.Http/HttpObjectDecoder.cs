@@ -216,7 +216,7 @@ namespace DotNetty.Codecs.Http
                     // handled like it is the last HttpChunk.
                     //
                     // See https://github.com/netty/netty/issues/433
-                    if (readLimit == 0)
+                    if (0u >= (uint)readLimit)
                     {
                         return;
                     }
@@ -229,7 +229,7 @@ namespace DotNetty.Codecs.Http
                     IByteBuffer content = buffer.ReadRetainedSlice(toRead);
                     this.chunkSize -= toRead;
 
-                    if (this.chunkSize == 0)
+                    if (0ul >= (ulong)this.chunkSize)
                     {
                         // Read all content.
                         output.Add(new DefaultLastHttpContent(content, this.ValidateHeaders));
@@ -254,7 +254,7 @@ namespace DotNetty.Codecs.Http
                         }
                         int size = GetChunkSize(line.ToAsciiString());
                         this.chunkSize = size;
-                        if (size == 0)
+                        if (0u >= (uint)size)
                         {
                             this.currentState = State.ReadChunkFooter;
                             return;
@@ -274,7 +274,7 @@ namespace DotNetty.Codecs.Http
 
                     int toRead = Math.Min((int)this.chunkSize, this.maxChunkSize);
                     toRead = Math.Min(toRead, buffer.ReadableBytes);
-                    if (toRead == 0)
+                    if (0u >= (uint)toRead)
                     {
                         return;
                     }

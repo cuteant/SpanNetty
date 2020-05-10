@@ -173,15 +173,16 @@ namespace DotNetty.Codecs.Http.WebSockets
                                 return;
                         }
 
+                        uint uFragmentedFramesCount = (uint)this.fragmentedFramesCount;
                         // check opcode vs message fragmentation state 1/2
-                        if (this.fragmentedFramesCount == 0 && this.frameOpcode == OpcodeCont)
+                        if (0u >= uFragmentedFramesCount && this.frameOpcode == OpcodeCont)
                         {
                             this.ProtocolViolation_RecContionuationDataFrame(context);
                             return;
                         }
 
                         // check opcode vs message fragmentation state 2/2
-                        if (this.fragmentedFramesCount != 0 && this.frameOpcode != OpcodeCont && this.frameOpcode != OpcodePing)
+                        if (uFragmentedFramesCount > 0u && this.frameOpcode != OpcodeCont && this.frameOpcode != OpcodePing)
                         {
                             this.ProtocolViolation_RecNonContionuationDataFrame(context);
                             return;

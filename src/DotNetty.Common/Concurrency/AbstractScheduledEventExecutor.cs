@@ -31,7 +31,7 @@ namespace DotNetty.Common.Concurrency
         protected static bool IsNullOrEmpty<T>(IPriorityQueue<T> taskQueue)
             where T : class, IPriorityQueueNode<T>
         {
-            return taskQueue == null || taskQueue.Count == 0;
+            return taskQueue is null || 0u >= (uint)taskQueue.Count;
         }
 
         /// <summary>

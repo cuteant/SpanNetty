@@ -154,7 +154,7 @@ namespace DotNetty.Handlers.IPFilter
                 });
             static BigInteger CidrToSubnetMask(byte cidr)
             {
-                BigInteger masked = cidr == 0 ? 0 : s_mask << (128 - cidr);
+                BigInteger masked = 0u >= cidr ? 0 : s_mask << (128 - cidr);
                 byte[] m = masked.ToByteArray();
                 var bmask = new byte[16];
                 int copy = m.Length > 16 ? 16 : m.Length;

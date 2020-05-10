@@ -158,7 +158,7 @@ namespace DotNetty.Common.Utilities
         [MethodImpl(InlineMethod.Value)]
         static int ToLiveRealCnt(int rawCnt, int decrement)
         {
-            if ((rawCnt & 1) == 0)
+            if (0u >= (uint)(rawCnt & 1))
             {
                 return rawCnt.RightUShift(1);
             }

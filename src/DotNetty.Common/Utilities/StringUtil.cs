@@ -488,7 +488,7 @@ namespace DotNetty.Common.Utilities
                             current.Length = 0;
                             break;
                         case DoubleQuote:
-                            if (current.Length == 0)
+                            if (0u >= (uint)current.Length)
                             {
                                 quoted = true;
                             }

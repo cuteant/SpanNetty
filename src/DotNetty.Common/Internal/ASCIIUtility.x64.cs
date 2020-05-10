@@ -31,7 +31,7 @@ namespace DotNetty.Common.Internal
         {
             // If the high bit of any byte is set, that byte is non-ASCII.
 
-            return ((value & ASCIIUtility.UInt64HighBitsOnlyMask) == 0);
+            return (0ul >= (value & ASCIIUtility.UInt64HighBitsOnlyMask));
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace DotNetty.Common.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AllCharsInUInt32AreAscii(uint value)
         {
-            return ((value & ~0x007F007Fu) == 0);
+            return (0u >= (value & ~0x007F007Fu));
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace DotNetty.Common.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AllCharsInUInt64AreAscii(ulong value)
         {
-            return ((value & ~0x007F007F_007F007Ful) == 0);
+            return (0ul >= (value & ~0x007F007F_007F007Ful));
         }
 
         /// <summary>
@@ -60,8 +60,8 @@ namespace DotNetty.Common.Internal
         /// <returns></returns>
         private static bool FirstCharInUInt32IsAscii(uint value)
         {
-            return (BitConverter.IsLittleEndian && (value & 0xFF80u) == 0)
-                || (!BitConverter.IsLittleEndian && (value & 0xFF800000u) == 0);
+            return (BitConverter.IsLittleEndian && 0u >= (value & 0xFF80u))
+                || (!BitConverter.IsLittleEndian && 0u >= (value & 0xFF800000u));
         }
 
         /// <summary>
@@ -315,7 +315,7 @@ namespace DotNetty.Common.Internal
 
             // If there is fewer than one vector length remaining, skip the next aligned read.
 
-            if ((bufferLength & SizeOfVector128) == 0)
+            if (0ul >= (bufferLength & SizeOfVector128))
             {
                 goto DoFinalUnalignedVectorRead;
             }
@@ -361,7 +361,7 @@ namespace DotNetty.Common.Internal
             // instead be the second mask. If so, skip the entire first mask and drain ASCII bytes
             // from the second mask.
 
-            if (currentMask == 0)
+            if (0u >= currentMask)
             {
                 pBuffer += SizeOfVector128;
                 currentMask = secondMask;
@@ -645,7 +645,7 @@ namespace DotNetty.Common.Internal
 
             // Quick check for empty inputs.
 
-            if (bufferLength == 0)
+            if (0ul >= bufferLength)
             {
                 return 0;
             }
@@ -777,7 +777,7 @@ namespace DotNetty.Common.Internal
             // If there is fewer than one vector length remaining, skip the next aligned read.
             // Remember, at this point bufferLength is measured in bytes, not chars.
 
-            if ((bufferLength & SizeOfVector128InBytes) == 0)
+            if (0ul >= (bufferLength & SizeOfVector128InBytes))
             {
                 goto DoFinalUnalignedVectorRead;
             }
@@ -1354,7 +1354,7 @@ namespace DotNetty.Common.Internal
             // address &pAsciiBuffer[SizeOfVector128 / 2], and we should perform one more 8-byte write to bump
             // just past the next aligned boundary address.
 
-            if (((uint)pAsciiBuffer & (SizeOfVector128 / 2)) == 0)
+            if (0u >= ((uint)pAsciiBuffer & (SizeOfVector128 / 2)))
             {
                 // We need to perform one more partial vector write before we can get the alignment we want.
 
@@ -1584,7 +1584,7 @@ namespace DotNetty.Common.Internal
 
             // Drain ASCII bytes one at a time.
 
-            while (((byte)asciiData & 0x80) == 0)
+            while (0u >= (uint)((byte)asciiData & 0x80))
             {
                 pUtf16Buffer[currentOffset] = (char)(byte)asciiData;
                 currentOffset += 1;
@@ -1675,7 +1675,7 @@ namespace DotNetty.Common.Internal
 
             // Can we at least widen the first part of the vector?
 
-            if ((byte)mask == 0)
+            if (0u >= ((byte)mask))
             {
                 // First part was all ASCII, widen
                 utf16FirstHalfVector = Sse2.UnpackLow(asciiVector, zeroVector);

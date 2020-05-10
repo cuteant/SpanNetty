@@ -193,7 +193,7 @@ namespace DotNetty.Codecs.Redis
                 this.ResetDecoder();
                 return true;
             }
-            else if (this.remainingBulkLength == 0)
+            else if (0u >= (uint)this.remainingBulkLength)
             {
                 this.state = State.DecodeBulkStringEol;
                 return this.DecodeBulkStringEndOfLine(input, output);
@@ -224,7 +224,7 @@ namespace DotNetty.Codecs.Redis
         bool DecodeBulkStringContent(IByteBuffer input, List<object> output)
         {
             int readableBytes = input.ReadableBytes;
-            if (readableBytes == 0 || this.remainingBulkLength == 0 && readableBytes < RedisConstants.EndOfLineLength)
+            if (0u >= (uint)readableBytes || 0u >= (uint)this.remainingBulkLength && readableBytes < RedisConstants.EndOfLineLength)
             {
                 return false;
             }

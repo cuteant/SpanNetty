@@ -150,7 +150,7 @@ namespace DotNetty.Buffers
                 {
                     // No delimiter, need to check the end of the span for odd number of escapes then advance
                     var remainingLen = remaining.Length;
-                    if (remainingLen > 0 && remaining[remainingLen - 1] == delimiterEscape)
+                    if ((uint)remainingLen > 0u && remaining[remainingLen - 1] == delimiterEscape)
                     {
                         int escapeCount = 1;
                         var idx = SpanHelpers.LastIndexNotOf(
@@ -161,7 +161,7 @@ namespace DotNetty.Buffers
 
                         if ((uint)idx > SharedConstants.TooBigOrNegative && priorEscape) // idx < 0
                         {
-                            priorEscape = (escapeCount & 1) == 0;   // equivalent to incrementing escapeCount before setting priorEscape
+                            priorEscape = 0u >= (uint)(escapeCount & 1);  // equivalent to incrementing escapeCount before setting priorEscape
                         }
                         else
                         {

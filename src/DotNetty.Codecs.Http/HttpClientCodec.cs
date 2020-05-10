@@ -142,7 +142,7 @@ namespace DotNetty.Codecs.Http
                 if (this.clientCodec.done)
                 {
                     int readable = this.ActualReadableBytes;
-                    if (readable == 0)
+                    if (0u >= (uint)readable)
                     {
                         // if non is readable just return null
                         // https://github.com/netty/netty/issues/1159

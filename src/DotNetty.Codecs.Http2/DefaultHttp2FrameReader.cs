@@ -646,7 +646,7 @@ namespace DotNetty.Codecs.Http2
         void ReadWindowUpdateFrame(IChannelHandlerContext ctx, IByteBuffer payload, IHttp2FrameListener listener)
         {
             int windowSizeIncrement = Http2CodecUtil.ReadUnsignedInt(payload);
-            if (windowSizeIncrement == 0)
+            if (0u >= (uint)windowSizeIncrement)
             {
                 ThrowHelper.ThrowStreamError_ReceivedWindowUpdateWithDelta0ForStream(this.streamId);
             }
@@ -684,7 +684,7 @@ namespace DotNetty.Codecs.Http2
         void VerifyPadding(int padding)
         {
             int len = LengthWithoutTrailingPadding(this.payloadLength, padding);
-            if (len < 0)
+            if ((uint)len > SharedConstants.TooBigOrNegative) // < 0
             {
                 ThrowHelper.ThrowConnectionError_FramePayloadTooSmallForPadding();
             }
@@ -699,7 +699,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(InlineMethod.Value)]
         static int LengthWithoutTrailingPadding(int readableBytes, int padding)
         {
-            return padding == 0 ? readableBytes : readableBytes - (padding - 1);
+            return 0u >= (uint)padding ? readableBytes : readableBytes - (padding - 1);
         }
 
         /// <summary>
@@ -866,19 +866,19 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         void VerifyPayloadLength(int payloadLength)
         {
-            if (payloadLength > this.maxFrameSize)
+            if ((uint)payloadLength > (uint)this.maxFrameSize)
             {
                 ThrowHelper.ThrowConnectionError_TotalPayloadLengthExceedsMaxFrameLength(payloadLength);
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         void VerifyAssociatedWithAStream()
         {
-            if (this.streamId == 0)
+            if (0u >= (uint)this.streamId)
             {
                 ThrowHelper.ThrowConnectionError_FrameTypeMustBeAssociatedWithAStream(this.frameType);
             }

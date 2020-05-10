@@ -209,13 +209,13 @@ namespace DotNetty.Transport.Channels.Sockets
             switch (errorCode)
             {
                 case SocketError.Success:
-                    if (received == 0)
+                    if (0u >= (uint)received)
                     {
                         return -1; // indicate that socket was closed
                     }
                     break;
                 case SocketError.WouldBlock:
-                    if (received == 0)
+                    if (0u >= (uint)received)
                     {
                         return 0;
                     }
@@ -268,7 +268,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 while (true)
                 {
                     int size = input.Size;
-                    if (size == 0)
+                    if (0u >= (uint)size)
                     {
                         // All written
                         break;
@@ -300,14 +300,14 @@ namespace DotNetty.Transport.Channels.Sockets
                                     ThrowHelper.ThrowSocketException(errorCode);
                                 }
 
-                                if (localWrittenBytes == 0)
+                                if (0ul >= (ulong)localWrittenBytes)
                                 {
                                     break;
                                 }
 
                                 expectedWrittenBytes -= localWrittenBytes;
                                 writtenBytes += localWrittenBytes;
-                                if (expectedWrittenBytes == 0)
+                                if (0ul >= (ulong)expectedWrittenBytes)
                                 {
                                     done = true;
                                     break;

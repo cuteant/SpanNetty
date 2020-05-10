@@ -289,7 +289,7 @@ namespace DotNetty.Common.Internal
 
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
-            return (BitConverter.IsLittleEndian && (value & 0xFF80u) == 0)
+            return (BitConverter.IsLittleEndian && 0u >= (value & 0xFF80u))
                 || (!BitConverter.IsLittleEndian && value < 0x0080_0000u);
         }
 
@@ -322,7 +322,7 @@ namespace DotNetty.Common.Internal
 
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
-            return (BitConverter.IsLittleEndian && ((value - 0xD800u) & 0xF800u) == 0)
+            return (BitConverter.IsLittleEndian && 0u >= ((value - 0xD800u) & 0xF800u))
                 || (!BitConverter.IsLittleEndian && (value - 0xD800_0000u) < 0x0800_0000u);
         }
 
@@ -373,7 +373,7 @@ namespace DotNetty.Common.Internal
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
             return (BitConverter.IsLittleEndian && value < 0x0080_0000u)
-                || (!BitConverter.IsLittleEndian && (value & 0xFF80u) == 0);
+                || (!BitConverter.IsLittleEndian && 0u >= (value & 0xFF80u));
         }
 
         /// <summary>
@@ -406,7 +406,7 @@ namespace DotNetty.Common.Internal
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
             return (BitConverter.IsLittleEndian && (value - 0xD800_0000u) < 0x0800_0000u)
-                || (!BitConverter.IsLittleEndian && ((value - 0xD800u) & 0xF800u) == 0);
+                || (!BitConverter.IsLittleEndian && 0u >= ((value - 0xD800u) & 0xF800u));
         }
 
         /// <summary>
@@ -466,8 +466,8 @@ namespace DotNetty.Common.Internal
 
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
-            return (BitConverter.IsLittleEndian && ((value - 0xDC00_D800u) & 0xFC00_FC00u) == 0)
-                || (!BitConverter.IsLittleEndian && ((value - 0xD800_DC00u) & 0xFC00_FC00u) == 0);
+            return (BitConverter.IsLittleEndian && 0u >= ((value - 0xDC00_D800u) & 0xFC00_FC00u))
+                || (!BitConverter.IsLittleEndian && 0u >= ((value - 0xD800_DC00u) & 0xFC00_FC00u));
         }
 
         /// <summary>
@@ -537,8 +537,8 @@ namespace DotNetty.Common.Internal
 
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
-            return (BitConverter.IsLittleEndian && (((value - 0x8080_80F0u) & 0xC0C0_C0F8u) == 0))
-                || (!BitConverter.IsLittleEndian && (((value - 0xF080_8000u) & 0xF8C0_C0C0u) == 0));
+            return (BitConverter.IsLittleEndian && (0u >= ((value - 0x8080_80F0u) & 0xC0C0_C0F8u)))
+                || (!BitConverter.IsLittleEndian && (0u >= ((value - 0xF080_8000u) & 0xF8C0_C0C0u)));
         }
 
         /// <summary>
@@ -569,8 +569,8 @@ namespace DotNetty.Common.Internal
 
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
-            return (BitConverter.IsLittleEndian && (((value - 0x0080_80E0u) & 0x00C0_C0F0u) == 0))
-                || (!BitConverter.IsLittleEndian && (((value - 0xE080_8000u) & 0xF0C0_C000u) == 0));
+            return (BitConverter.IsLittleEndian && (0u >= ((value - 0x0080_80E0u) & 0x00C0_C0F0u)))
+                || (!BitConverter.IsLittleEndian && (0u >= ((value - 0xE080_8000u) & 0xF0C0_C000u)));
         }
 
         /// <summary>
@@ -601,8 +601,8 @@ namespace DotNetty.Common.Internal
 
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
-            return (BitConverter.IsLittleEndian && (((value - 0x0000_80C0u) & 0x0000_C0E0u) == 0))
-                || (!BitConverter.IsLittleEndian && (((value - 0xC080_0000u) & 0xE0C0_0000u) == 0));
+            return (BitConverter.IsLittleEndian && (0u >= ((value - 0x0000_80C0u) & 0x0000_C0E0u)))
+                || (!BitConverter.IsLittleEndian && (0u >= ((value - 0xC080_0000u) & 0xE0C0_0000u)));
         }
 
         /// <summary>
@@ -627,8 +627,8 @@ namespace DotNetty.Common.Internal
 
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
-            return (BitConverter.IsLittleEndian && ((value & 0x001E_0000u) == 0))
-                || (!BitConverter.IsLittleEndian && ((value & 0x1E00u) == 0));
+            return (BitConverter.IsLittleEndian && (0u >= (value & 0x001E_0000u)))
+                || (!BitConverter.IsLittleEndian && (0u >= (value & 0x1E00u)));
         }
 
         /// <summary>
@@ -659,8 +659,8 @@ namespace DotNetty.Common.Internal
 
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
-            return (BitConverter.IsLittleEndian && (((value - 0x80C0_0000u) & 0xC0E0_0000u) == 0))
-                || (!BitConverter.IsLittleEndian && (((value - 0x0000_C080u) & 0x0000_E0C0u) == 0));
+            return (BitConverter.IsLittleEndian && (0u >= ((value - 0x80C0_0000u) & 0xC0E0_0000u)))
+                || (!BitConverter.IsLittleEndian && (0u >= ((value - 0x0000_C080u) & 0x0000_E0C0u)));
         }
 
         /// <summary>
@@ -716,8 +716,8 @@ namespace DotNetty.Common.Internal
         {
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
-            return (BitConverter.IsLittleEndian && ((value & 0x80u) == 0))
-                || (!BitConverter.IsLittleEndian && ((int)value >= 0));
+            return (BitConverter.IsLittleEndian && (0u >= (value & 0x80u)))
+                || (!BitConverter.IsLittleEndian && (SharedConstants.TooBigOrNegative >= value)); // (int)value >= 0
         }
 
         /// <summary>
@@ -729,8 +729,8 @@ namespace DotNetty.Common.Internal
         {
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
-            return (BitConverter.IsLittleEndian && ((int)value >= 0))
-                || (!BitConverter.IsLittleEndian && ((value & 0x80u) == 0));
+            return (BitConverter.IsLittleEndian && (SharedConstants.TooBigOrNegative >= value)) // (int)value >= 0
+                || (!BitConverter.IsLittleEndian && (0u >= (value & 0x80u)));
         }
 
         /// <summary>
@@ -742,8 +742,8 @@ namespace DotNetty.Common.Internal
         {
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
-            return (BitConverter.IsLittleEndian && ((value & 0x8000u) == 0))
-                || (!BitConverter.IsLittleEndian && ((value & 0x0080_0000u) == 0));
+            return (BitConverter.IsLittleEndian && (0u >= (value & 0x8000u)))
+                || (!BitConverter.IsLittleEndian && (0u >= (value & 0x0080_0000u)));
         }
 
         /// <summary>
@@ -755,8 +755,8 @@ namespace DotNetty.Common.Internal
         {
             // Return statement is written this way to work around https://github.com/dotnet/coreclr/issues/914.
 
-            return (BitConverter.IsLittleEndian && ((value & 0x0080_0000u) == 0))
-                || (!BitConverter.IsLittleEndian && ((value & 0x8000u) == 0));
+            return (BitConverter.IsLittleEndian && (0u >= (value & 0x0080_0000u)))
+                || (!BitConverter.IsLittleEndian && (0u >= (value & 0x8000u)));
         }
 
         /// <summary>

@@ -123,7 +123,7 @@ namespace DotNetty.Common
 
             if (level < DetectionLevel.Paranoid)
             {
-                if ((PlatformDependent.GetThreadLocalRandom().Next(this.samplingInterval)) == 0)
+                if (0u >= (uint)(PlatformDependent.GetThreadLocalRandom().Next(this.samplingInterval)))
                 {
                     return new DefaultResourceLeak(this, obj);
                 }

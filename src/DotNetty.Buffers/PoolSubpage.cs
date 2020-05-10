@@ -94,7 +94,7 @@ namespace DotNetty.Buffers
             Debug.Assert((this.bitmap[q].RightUShift(r) & 1) == 0);
             this.bitmap[q] |= 1L << r;
 
-            if (--this.numAvail == 0)
+            if (0u >= (uint)(--this.numAvail))
             {
                 this.RemoveFromPool();
             }
@@ -121,7 +121,7 @@ namespace DotNetty.Buffers
 
             this.SetNextAvail(bitmapIdx);
 
-            if (this.numAvail++ == 0)
+            if (0u >= (uint)this.numAvail++)
             {
                 this.AddToPool(head);
                 return true;

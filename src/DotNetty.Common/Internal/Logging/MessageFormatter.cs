@@ -139,7 +139,7 @@ namespace DotNetty.Common.Internal.Logging
                 if (j == -1)
                 {
                     // no more variables
-                    if (i == 0)
+                    if (0u >= (uint)i)
                     {
                         StringBuilderManager.Free(sbuf);
                         // this is a simple string
@@ -200,7 +200,7 @@ namespace DotNetty.Common.Internal.Logging
         public static bool IsEscapedDelimeter(string messagePattern,
             int delimeterStartIndex)
         {
-            if (delimeterStartIndex == 0)
+            if (0u >= (uint)delimeterStartIndex)
             {
                 return false;
             }

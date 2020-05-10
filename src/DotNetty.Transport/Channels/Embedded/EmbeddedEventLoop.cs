@@ -55,12 +55,12 @@ namespace DotNetty.Transport.Channels.Embedded
             while(true)
             {
                 // have to perform an additional check since Queue<T> throws upon empty dequeue in .NET
-                if (this.tasks.Count == 0)
+                if (0u >= (uint)this.tasks.Count)
                 {
                     break;
                 }
                 IRunnable task = this.tasks.Dequeue();
-                if (task == null)
+                if (task is null)
                 {
                     break;
                 }

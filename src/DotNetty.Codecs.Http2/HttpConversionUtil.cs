@@ -640,7 +640,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     // https://tools.ietf.org/html/rfc7540#section-8.1.2.3
                     // All headers that start with ':' are only valid in HTTP/2 context
-                    if (name.Count == 0 || name[0] == ':')
+                    if (0u >= (uint)name.Count || name[0] == ':')
                     {
                         ThrowHelper.ThrowStreamError_InvalidHttp2HeaderEncounteredInTranslationToHttp1(streamId, name);
                     }

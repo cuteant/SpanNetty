@@ -20,7 +20,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                 case Opcode.Text:
                 case Opcode.Binary:
                 case Opcode.Cont:
-                    return frame.Content.ReadableBytes > 0 && (frame.Rsv & WebSocketRsv.Rsv1) == 0;
+                    return frame.Content.ReadableBytes > 0 && 0u >= (uint)(frame.Rsv & WebSocketRsv.Rsv1);
                 default:
                     return false;
             }

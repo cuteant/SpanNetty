@@ -87,7 +87,7 @@ namespace DotNetty.Common.Utilities
         {
             int thisLen = this.length;
             int thatLen = charSequence.Count;
-            if (thatLen == 0)
+            if (0u >= (uint)thatLen)
             {
                 return this;
             }
@@ -181,7 +181,7 @@ namespace DotNetty.Common.Utilities
         public char[] ToCharArray(int start, int end)
         {
             int count = end - start;
-            if (count == 0)
+            if (0u >= (uint)count)
             {
                 return EmptyArrays.EmptyChars;
             }

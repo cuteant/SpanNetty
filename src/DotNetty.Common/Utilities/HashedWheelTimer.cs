@@ -102,7 +102,7 @@ namespace DotNetty.Common.Utilities
             this.maxPendingTimeouts = maxPendingTimeouts;
 
             if (Interlocked.Increment(ref instanceCounter) > InstanceCountLimit &&
-                Interlocked.CompareExchange(ref warnedTooManyInstances, 1, 0) == 0)
+                0u >= (uint)Interlocked.CompareExchange(ref warnedTooManyInstances, 1, 0))
             {
                 ReportTooManyInstances();
             }
@@ -259,7 +259,7 @@ namespace DotNetty.Common.Utilities
         static TimeSpan CeilTimeSpanToMilliseconds(TimeSpan time)
         {
             long remainder = time.Ticks % TimeSpan.TicksPerMillisecond;
-            return remainder == 0 ? time : new TimeSpan(time.Ticks - remainder + TimeSpan.TicksPerMillisecond);
+            return 0ul >= (ulong)remainder ? time : new TimeSpan(time.Ticks - remainder + TimeSpan.TicksPerMillisecond);
         }
 
         sealed class Worker : IRunnable

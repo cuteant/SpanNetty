@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public int StatusCode()
         {
             IByteBuffer binaryData = this.Content;
-            if (binaryData == null || binaryData.Capacity == 0)
+            if (binaryData == null || 0u >= (uint)binaryData.Capacity)
             {
                 return -1;
             }

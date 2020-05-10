@@ -156,7 +156,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public static bool IsOutboundStream(bool server, int streamId)
         {
-            bool even = (streamId & 1) == 0;
+            bool even = 0u >= (uint)(streamId & 1);
             return streamId > 0 && server == even;
         }
 

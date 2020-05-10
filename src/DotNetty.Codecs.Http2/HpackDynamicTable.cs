@@ -159,7 +159,7 @@ namespace DotNetty.Codecs.Http2
 
             this.capacity = capacity;
 
-            if (capacity == 0)
+            if (0ul >= (ulong)capacity)
             {
                 this.Clear();
             }

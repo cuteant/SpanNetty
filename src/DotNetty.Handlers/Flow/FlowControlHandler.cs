@@ -111,7 +111,7 @@ namespace DotNetty.Handlers.Flow
 
         public override void Read(IChannelHandlerContext ctx)
         {
-            if (this.Dequeue(ctx, 1) == 0)
+            if (0u >= (uint)this.Dequeue(ctx, 1))
             {
                 // It seems no messages were consumed. We need to read() some
                 // messages from upstream and once one arrives it need to be

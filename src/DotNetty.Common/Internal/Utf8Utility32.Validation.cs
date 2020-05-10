@@ -48,7 +48,7 @@ namespace DotNetty.Common.Internal
                 // If so, short-circuit the remainder of the method.
 
                 inputLength -= (int)numAsciiBytesCounted;
-                if (inputLength == 0)
+                if (0u >= (uint)inputLength)
                 {
                     utf16CodeUnitCountAdjustment = 0;
                     scalarCountAdjustment = 0;
@@ -243,7 +243,7 @@ namespace DotNetty.Common.Internal
                 // Check the 2-byte case.
 
                 thisDWord -= (BitConverter.IsLittleEndian) ? 0x0000_80C0u : 0xC080_0000u;
-                if ((thisDWord & (BitConverter.IsLittleEndian ? 0x0000_C0E0u : 0xE0C0_0000u)) == 0)
+                if (0u >= (thisDWord & (BitConverter.IsLittleEndian ? 0x0000_C0E0u : 0xE0C0_0000u)))
                 {
                     // Per Table 3-7, valid sequences are:
                     // [ C2..DF ] [ 80..BF ]
@@ -354,7 +354,7 @@ namespace DotNetty.Common.Internal
                 // We need to restore the C0 leading byte we stripped out earlier, then we can strip out the expected E0 byte.
 
                 thisDWord -= (BitConverter.IsLittleEndian) ? (0x0080_00E0u - 0x0000_00C0u) : (0xE000_8000u - 0xC000_0000u);
-                if ((thisDWord & (BitConverter.IsLittleEndian ? 0x00C0_C0F0u : 0xF0C0_C000u)) == 0)
+                if (0u >= (thisDWord & (BitConverter.IsLittleEndian ? 0x00C0_C0F0u : 0xF0C0_C000u)))
                 {
                 ProcessThreeByteSequenceWithCheck:
 
@@ -389,14 +389,14 @@ namespace DotNetty.Common.Internal
 
                         // Code below becomes 5 instructions: test, jz, lea, test, jz
 
-                        if (((thisDWord & 0x0000_200Fu) == 0) || (((thisDWord - 0x0000_200Du) & 0x0000_200Fu) == 0))
+                        if ((0u >= (thisDWord & 0x0000_200Fu)) || (0u >= ((thisDWord - 0x0000_200Du) & 0x0000_200Fu)))
                         {
                             goto Error; // overlong or surrogate
                         }
                     }
                     else
                     {
-                        if (((thisDWord & 0x0F20_0000u) == 0) || (((thisDWord - 0x0D20_0000u) & 0x0F20_0000u) == 0))
+                        if ((0u >= (thisDWord & 0x0F20_0000u)) || (0u >= ((thisDWord - 0x0D20_0000u) & 0x0F20_0000u)))
                         {
                             goto Error; // overlong or surrogate
                         }
@@ -467,7 +467,7 @@ namespace DotNetty.Common.Internal
                                 // Check the first character.
                                 // If the first character is overlong or a surrogate, fail immediately.
 
-                                if ((((uint)thisQWord & 0x200Fu) == 0) || ((((uint)thisQWord - 0x200Du) & 0x200Fu) == 0))
+                                if ((0u >= ((uint)thisQWord & 0x200Fu)) || (0u >= (((uint)thisQWord - 0x200Du) & 0x200Fu)))
                                 {
                                     goto Error;
                                 }
@@ -478,7 +478,7 @@ namespace DotNetty.Common.Internal
                                 // logic.
 
                                 thisQWord >>= 24;
-                                if ((((uint)thisQWord & 0x200Fu) == 0) || ((((uint)thisQWord - 0x200Du) & 0x200Fu) == 0))
+                                if ((0u >= ((uint)thisQWord & 0x200Fu)) || (0u >= (((uint)thisQWord - 0x200Du) & 0x200Fu)))
                                 {
                                     goto ProcessSingleThreeByteSequenceSkipOverlongAndSurrogateChecks;
                                 }
@@ -486,7 +486,7 @@ namespace DotNetty.Common.Internal
                                 // Check the third character (we already checked that it's followed by a continuation byte).
 
                                 thisQWord >>= 24;
-                                if ((((uint)thisQWord & 0x200Fu) == 0) || ((((uint)thisQWord - 0x200Du) & 0x200Fu) == 0))
+                                if ((0u >= ((uint)thisQWord & 0x200Fu)) || (0u >= (((uint)thisQWord - 0x200Du) & 0x200Fu)))
                                 {
                                     goto ProcessSingleThreeByteSequenceSkipOverlongAndSurrogateChecks;
                                 }
@@ -508,7 +508,7 @@ namespace DotNetty.Common.Internal
                                 // Check the first character.
                                 // If the first character is overlong or a surrogate, fail immediately.
 
-                                if ((((uint)thisQWord & 0x200Fu) == 0) || ((((uint)thisQWord - 0x200Du) & 0x200Fu) == 0))
+                                if ((0u >= ((uint)thisQWord & 0x200Fu)) || (0u >= (((uint)thisQWord - 0x200Du) & 0x200Fu)))
                                 {
                                     goto Error;
                                 }
@@ -519,7 +519,7 @@ namespace DotNetty.Common.Internal
                                 // logic.
 
                                 thisQWord >>= 24;
-                                if ((((uint)thisQWord & 0x200Fu) == 0) || ((((uint)thisQWord - 0x200Du) & 0x200Fu) == 0))
+                                if ((0u >= ((uint)thisQWord & 0x200Fu)) || (0u >= (((uint)thisQWord - 0x200Du) & 0x200Fu)))
                                 {
                                     goto ProcessSingleThreeByteSequenceSkipOverlongAndSurrogateChecks;
                                 }

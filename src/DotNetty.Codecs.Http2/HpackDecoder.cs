@@ -533,7 +533,7 @@ namespace DotNetty.Codecs.Http2
         internal static long DecodeULE128(IByteBuffer input, long result)
         {
             Debug.Assert(result <= 0x7f && result >= 0);
-            bool resultStartedAtZero = result == 0;
+            bool resultStartedAtZero = 0ul >= (ulong)result;
             int writerIndex = input.WriterIndex;
             for (int readerIndex = input.ReaderIndex, shift = 0; readerIndex < writerIndex; ++readerIndex, shift += 7)
             {
@@ -550,7 +550,7 @@ namespace DotNetty.Codecs.Http2
                     ThrowHelper.ThrowHttp2Exception_DecodeULE128ToLongDecompression();
                 }
 
-                if ((b & 0x80) == 0)
+                if (0u >= (uint)(b & 0x80))
                 {
                     input.SetReaderIndex(readerIndex + 1);
                     return result + ((b & 0x7FL) << shift);

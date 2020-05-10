@@ -80,14 +80,14 @@ namespace DotNetty.Codecs.Http.Cookies
 
         internal static StringBuilder StringBuilder() => InternalThreadLocalMap.Get().StringBuilder;
 
-        internal static string StripTrailingSeparatorOrNull(StringBuilder buf) => 
-            buf.Length == 0 ? null : StripTrailingSeparator(buf);
+        internal static string StripTrailingSeparatorOrNull(StringBuilder buf) =>
+            0u >= (uint)buf.Length ? null : StripTrailingSeparator(buf);
 
         internal static string StripTrailingSeparator(StringBuilder buf)
         {
-            if (buf.Length > 0)
+            if ((uint)buf.Length > 0u)
             {
-                buf.Length = buf.Length - 2;
+                buf.Length -= 2;
             }
 
             return buf.ToString();

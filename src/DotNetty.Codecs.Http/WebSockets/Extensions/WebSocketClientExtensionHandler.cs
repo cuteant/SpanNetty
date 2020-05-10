@@ -73,7 +73,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                             }
                         }
 
-                        if (validExtension != null && (validExtension.Rsv & rsv) == 0)
+                        if (validExtension != null && 0u >= (uint)(validExtension.Rsv & rsv))
                         {
                             rsv = rsv | validExtension.Rsv;
                             validExtensions.Add(validExtension);

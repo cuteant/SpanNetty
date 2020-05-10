@@ -82,7 +82,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
             } while ((b & 0x80) == 0x80);
 
-            if (type == 0xFF && frameSize == 0)
+            if (type == 0xFF && 0ul >= (ulong)frameSize)
             {
                 this.receivedClosingHandshake = true;
                 return new CloseWebSocketFrame();

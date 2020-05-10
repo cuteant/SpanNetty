@@ -18,7 +18,7 @@ namespace DotNetty.Common.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool AllCharsInUInt32AreAscii(uint value)
         {
-            return (value & ~0x007F_007Fu) == 0;
+            return 0u >= (value & ~0x007F_007Fu);
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace DotNetty.Common.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool AllCharsInUInt64AreAscii(ulong value)
         {
-            return (value & ~0x007F_007F_007F_007Ful) == 0;
+            return 0ul >= (value & ~0x007F_007F_007F_007Ful);
         }
 
         /// <summary>
@@ -176,7 +176,7 @@ namespace DotNetty.Common.Internal
             // The line below is a more efficient way of doing the same check taking advantage of the XOR
             // computation we performed at the beginning of the method.
 
-            return (((combinedIndicator >> 2) | ~0x0020_0020u) & differentBits) == 0;
+            return 0u >= (((combinedIndicator >> 2) | ~0x0020_0020u) & differentBits);
         }
 
         /// <summary>

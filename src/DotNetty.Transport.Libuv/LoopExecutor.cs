@@ -196,7 +196,7 @@ namespace DotNetty.Transport.Libuv
 
             this.CancelScheduledTasks();
 
-            if (this.gracefulShutdownStartTime == 0)
+            if (0ul >= (ulong)this.gracefulShutdownStartTime)
             {
                 this.gracefulShutdownStartTime = this.GetLoopTime();
             }
@@ -207,7 +207,7 @@ namespace DotNetty.Transport.Libuv
                 runTask = this.RunAllTasks();
 
                 // Terminate if the quiet period is 0.
-                if (this.gracefulShutdownQuietPeriod == 0)
+                if (0ul >= (ulong)this.gracefulShutdownQuietPeriod)
                 {
                     this.StopLoop();
                     return;
@@ -310,7 +310,7 @@ namespace DotNetty.Transport.Libuv
 
                 // Check timeout every 64 tasks because nanoTime() is relatively expensive.
                 // XXX: Hard-coded value - will make it configurable if it is really a problem.
-                if ((runTasks & 0x3F) == 0)
+                if (0ul >= (ulong)(runTasks & 0x3F))
                 {
                     executionTime = this.GetLoopTime();
                     if ((executionTime - start) >= timeout)

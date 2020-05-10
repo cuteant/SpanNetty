@@ -56,11 +56,11 @@ namespace DotNetty.Codecs.Http.WebSockets
                         int b2 = dataLen.RightUShift(14) & 0x7F;
                         int b3 = dataLen.RightUShift(7) & 0x7F;
                         int b4 = dataLen & 0x7F;
-                        if (b1 == 0)
+                        if (0u >= (uint)b1)
                         {
-                            if (b2 == 0)
+                            if (0u >= (uint)b2)
                             {
-                                if (b3 == 0)
+                                if (0u >= (uint)b3)
                                 {
                                     buf.WriteByte(b4);
                                 }

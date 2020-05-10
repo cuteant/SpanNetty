@@ -46,7 +46,7 @@ namespace DotNetty.Transport.Channels.Groups
             this.stayClosed = stayClosed;
         }
 
-        public bool IsEmpty => this.serverChannels.Count == 0 && this.nonServerChannels.Count == 0;
+        public bool IsEmpty => 0u >= (uint)this.serverChannels.Count && 0u >= (uint)this.nonServerChannels.Count;
 
         public string Name { get; }
 

@@ -174,7 +174,7 @@ namespace DotNetty.Handlers.Tls
 
                                         // SNI
                                         // See https://tools.ietf.org/html/rfc6066#page-6
-                                        if (extensionType == 0)
+                                        if (0u >= (uint)extensionType)
                                         {
                                             offset += 2;
                                             if (extensionsLimit - offset < 3)
@@ -186,7 +186,7 @@ namespace DotNetty.Handlers.Tls
                                             int serverNameType = input.GetByte(offset);
                                             offset++;
 
-                                            if (serverNameType == 0)
+                                            if (0u >= (uint)serverNameType)
                                             {
                                                 int serverNameLength = input.GetUnsignedShort(offset);
                                                 offset += 2;

@@ -771,7 +771,7 @@ namespace DotNetty.Codecs.Http2
 
             public bool IsValidStreamId(int streamId)
             {
-                return streamId > 0 && this.server == ((streamId & 1) == 0);
+                return streamId > 0 && this.server == (0u >= (uint)(streamId & 1));
             }
 
             public bool MayHaveCreatedStream(int streamId)
@@ -1063,7 +1063,7 @@ namespace DotNetty.Codecs.Http2
 
             internal bool AllowModifications()
             {
-                return this.pendingIterations == 0;
+                return 0u >= (uint)this.pendingIterations;
             }
 
             internal void IncrementPendingIterations()

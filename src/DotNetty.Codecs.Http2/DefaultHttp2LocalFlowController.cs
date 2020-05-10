@@ -150,12 +150,13 @@ namespace DotNetty.Codecs.Http2
         public bool ConsumeBytes(IHttp2Stream stream, int numBytes)
         {
             Debug.Assert(this.ctx != null && this.ctx.Executor.InEventLoop);
-            if (numBytes < 0)
+            uint uNumBytes = (uint)numBytes;
+            if (uNumBytes > SharedConstants.TooBigOrNegative) // < 0
             {
                 ThrowHelper.ThrowArgumentException_NumBytesMustNotBeNegative();
             }
 
-            if (numBytes == 0) { return false; }
+            if (0u >= uNumBytes) { return false; }
 
             // Streams automatically consume all remaining bytes when they are closed, so just ignore
             // if already closed.

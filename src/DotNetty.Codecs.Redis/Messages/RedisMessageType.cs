@@ -50,7 +50,7 @@ namespace DotNetty.Codecs.Redis.Messages
 
         public void WriteTo(IByteBuffer output)
         {
-            if (this.value == 0) // InlineCommand
+            if (0u >= this.value) // InlineCommand
             {
                 return;
             }

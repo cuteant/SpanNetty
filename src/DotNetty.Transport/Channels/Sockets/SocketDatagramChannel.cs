@@ -288,7 +288,7 @@ namespace DotNetty.Transport.Channels.Sockets
             if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 
             int readableBytes = buffer.ReadableBytes;
-            if (readableBytes == 0)
+            if (0u >= (uint)readableBytes)
             {
                 buffer.SafeRelease();
                 return Unpooled.Empty;
@@ -308,7 +308,7 @@ namespace DotNetty.Transport.Channels.Sockets
             if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 
             int readableBytes = buffer.ReadableBytes;
-            if (readableBytes == 0)
+            if (0u >= (uint)readableBytes)
             {
                 holder.SafeRelease();
                 return Unpooled.Empty;

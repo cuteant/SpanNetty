@@ -415,7 +415,7 @@ namespace DotNetty.Codecs.Http2
                 int queuedData = this.queue.ReadableBytes();
                 if (!endOfStream)
                 {
-                    if (queuedData == 0)
+                    if (0u >= (uint)queuedData)
                     {
                         // There's no need to write any data frames because there are only empty data frames in the queue
                         // and it is not end of stream yet. Just complete their promises by getting the buffer corresponding
@@ -426,7 +426,7 @@ namespace DotNetty.Codecs.Http2
                         return;
                     }
 
-                    if (allowedBytes == 0)
+                    if (0u >= (uint)allowedBytes)
                     {
                         return;
                     }
@@ -445,7 +445,7 @@ namespace DotNetty.Codecs.Http2
 
                 // Write the frame(s).
                 this.encoder.frameWriter.WriteDataAsync(ctx, stream.Id, toWrite, writablePadding,
-                        endOfStream && this.Size == 0, writePromise);
+                        endOfStream && 0u >= (uint)this.Size, writePromise);
             }
 
             public override bool Merge(IChannelHandlerContext ctx, IHttp2RemoteFlowControlled next)

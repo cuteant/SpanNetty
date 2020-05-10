@@ -32,7 +32,7 @@ namespace DotNetty.Codecs.Http2
             if (other is Http2StreamChannelId otherId)
             {
                 int res = parentId.CompareTo(otherId.parentId);
-                if (res == 0)
+                if (0u >= (uint)res)
                 {
                     return id - otherId.id;
                 }

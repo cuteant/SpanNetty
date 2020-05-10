@@ -18,11 +18,11 @@ namespace DotNetty.Transport.Channels.Groups
 
         public ChannelGroupException(IList<KeyValuePair<IChannel, Exception>> exceptions)
         {
-            if (exceptions == null)
+            if (exceptions is null)
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.exceptions);
             }
-            if (exceptions.Count == 0)
+            if (0u >= (uint)exceptions.Count)
             {
                 ThrowHelper.ThrowArgumentException_Excs();
             }

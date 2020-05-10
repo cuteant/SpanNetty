@@ -54,14 +54,14 @@ namespace DotNetty.Codecs.Redis
             {
                 return ArrayRedisMessage.Null;
             }
-            else if (header.Length == 0)
+            else if (0ul >= (ulong)header.Length)
             {
                 return ArrayRedisMessage.Empty;
             }
-            else if (header.Length > 0)
+            else if ((ulong)header.Length > 0ul)
             {
                 // Currently, this codec doesn't support `long` length for arrays because Java's List.size() is int.
-                if (header.Length > int.MaxValue)
+                if ((ulong)header.Length > int.MaxValue)
                 {
                     throw new CodecException($"This codec doesn't support longer length than {int.MaxValue}");
                 }

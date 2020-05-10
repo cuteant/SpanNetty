@@ -166,7 +166,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 Debug.Assert(this.channel.EventLoop.InEventLoop);
 
                 var ch = this.channel;
-                if ((ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active) == 0)
+                if (0u >= (uint)(ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active))
                 {
                     return; // read was signaled as a result of channel closure
                 }

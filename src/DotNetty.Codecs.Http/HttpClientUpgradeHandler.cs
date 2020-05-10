@@ -137,7 +137,7 @@ namespace DotNetty.Codecs.Http
                 {
                     // Call the base class to handle the aggregation of the full request.
                     base.Decode(context, message, output);
-                    if (output.Count == 0)
+                    if (0u >= (uint)output.Count)
                     {
                         // The full request hasn't been created yet, still awaiting more data.
                         return;
