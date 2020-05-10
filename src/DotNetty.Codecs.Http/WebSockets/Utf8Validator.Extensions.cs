@@ -12,7 +12,8 @@ namespace DotNetty.Codecs.Http.WebSockets
         static void ThrowCorruptedFrameException()
         {
             throw GetCorruptedFrameException();
-            CorruptedFrameException GetCorruptedFrameException()
+
+            static CorruptedFrameException GetCorruptedFrameException()
             {
                 return new CorruptedFrameException("bytes are not UTF-8");
             }

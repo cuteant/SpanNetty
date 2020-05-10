@@ -87,7 +87,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowException_ShouldNotReachHere()
         {
             throw GetException();
-            Exception GetException()
+
+            static Exception GetException()
             {
                 return new Exception("should not reach here");
             }
@@ -131,7 +132,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_InvalidArraySize()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("pseudoHeaders and otherHeaders must be arrays of [name, value] pairs");
             }
@@ -141,7 +143,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_InvalidContendAndPadding()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("content + padding must be <= int.MaxValue");
             }
@@ -151,7 +154,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_ExtraStreamIdsNonNegative()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("extraStreamIds must be non-negative");
             }
@@ -341,7 +345,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_SchemeMustBeSpecified()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException(":scheme must be specified. " +
                         "see https://tools.ietf.org/html/rfc7540#section-8.1.2.3");
@@ -372,7 +377,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentNullException_MethodHeader()
         {
             throw GetException();
-            ArgumentNullException GetException()
+
+            static ArgumentNullException GetException()
             {
                 return new ArgumentNullException("method header cannot be null in conversion to HTTP/1.x");
             }
@@ -382,7 +388,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentNullException_PathHeader()
         {
             throw GetException();
-            ArgumentNullException GetException()
+
+            static ArgumentNullException GetException()
             {
                 return new ArgumentNullException("path header cannot be null in conversion to HTTP/1.x");
             }
@@ -392,7 +399,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_MustOnlyOne()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("There must be 1 and only 1 " + Http2CodecUtil.HttpUpgradeSettingsHeader + " header.");
             }
@@ -402,7 +410,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_ServerCodecsDonotUseAnExtraHandlerForTheUpgradeStream()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("Server codecs don't use an extra handler for the upgrade stream");
             }
@@ -412,7 +421,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_TheHandlerMustBeSharable()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("The handler must be Sharable");
             }
@@ -433,7 +443,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_LastStreamIdMustNotBeSetOnGoAwayFrame()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("Last stream id must not be set on GOAWAY frame");
             }
@@ -443,7 +454,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_EncoderAndDecoderDonotShareTheSameConnObject()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("Encoder and Decoder do not share the same connection object");
             }
@@ -464,7 +476,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_RequireHttp2FrameCodec()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException(StringUtil.SimpleClassName<Http2FrameCodec>()
                         + " was not found in the channel pipeline.");
@@ -505,7 +518,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_NumBytesMustNotBeNegative()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("numBytes must not be negative");
             }
@@ -515,7 +529,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_InvalidPingFramePayloadLength()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("Opaque data must be " + Http2CodecUtil.PingFramePayloadLength + " bytes");
             }
@@ -564,7 +579,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_UsingAKeyThatWasNotCreatedByThisConnection()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("Using a key that was not created by this connection");
             }
@@ -574,7 +590,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_ServersDoNotAllowPush()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("Servers do not allow push");
             }
@@ -626,7 +643,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_DifferentConnections()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("The specified encoder and decoder have different connections.");
             }
@@ -651,7 +669,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowInvalidOperationException_Inval1idHuffmanCode()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("invalid Huffman code: prefix not unique");
             }
@@ -661,7 +680,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowInvalidOperationException_EventExecutorMustBeEventLoopOfChannel()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("EventExecutor must be EventLoop of Channel");
             }
@@ -701,7 +721,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowInvalidOperationException_RequireHttp2FrameCodec()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException(StringUtil.SimpleClassName<Http2FrameCodec>() + " not found." +
                         " Has the handler been added to a pipeline?");
@@ -1506,7 +1527,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowEncoderException_ContinueResponseMustBeFullHttpResponse()
         {
             throw GetException();
-            EncoderException GetException()
+
+            static EncoderException GetException()
             {
                 return new EncoderException(HttpResponseStatus.Continue.ToString() + " must be a FullHttpResponse");
             }
@@ -1526,7 +1548,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowUnsupportedMessageTypeException()
         {
             throw GetException();
-            UnsupportedMessageTypeException GetException()
+
+            static UnsupportedMessageTypeException GetException()
             {
                 return new UnsupportedMessageTypeException();
             }
@@ -1536,7 +1559,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ReturningBytesForTheConnectionWindowIsNotSupported()
         {
             throw GetException();
-            NotSupportedException GetException()
+
+            static NotSupportedException GetException()
             {
                 return new NotSupportedException("Returning bytes for the connection window is not supported");
             }
@@ -1546,7 +1570,8 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowHttp2NoMoreStreamIdsException()
         {
             throw GetException();
-            Http2NoMoreStreamIdsException GetException()
+
+            static Http2NoMoreStreamIdsException GetException()
             {
                 return new Http2NoMoreStreamIdsException();
             }

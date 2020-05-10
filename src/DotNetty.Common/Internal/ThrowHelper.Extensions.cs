@@ -119,7 +119,8 @@ namespace DotNetty.Common
         internal static int ThrowException_CompareConstant()
         {
             throw GetException();
-            Exception GetException()
+
+            static Exception GetException()
             {
                 return new Exception("failed to compare two different constants");
             }
@@ -129,7 +130,8 @@ namespace DotNetty.Common
         internal static int ThrowException_CompareSignal()
         {
             throw GetException();
-            Exception GetException()
+
+            static Exception GetException()
             {
                 return new Exception("failed to compare two different signal constants");
             }
@@ -139,7 +141,8 @@ namespace DotNetty.Common
         internal static void ThrowException_InvalidCodePoint()
         {
             throw GetException();
-            Exception GetException()
+
+            static Exception GetException()
             {
                 return new Exception("Invalid code point!");
             }
@@ -149,7 +152,8 @@ namespace DotNetty.Common
         internal static void ThrowException_CodepointIsDecodedButNumberOfCharactersReadIs0OrNegative()
         {
             throw GetException();
-            Exception GetException()
+
+            static Exception GetException()
             {
                 return new Exception("Internal error: CodePoint is decoded but number of characters read is 0 or negative");
             }
@@ -253,7 +257,8 @@ namespace DotNetty.Common
         internal static void ThrowArgumentException_ValueDiffers()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("value differs from one backed by this handle.");
             }
@@ -263,7 +268,8 @@ namespace DotNetty.Common
         internal static void ThrowArgumentException_MustBeLessThanOrEqualTo()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException($"tickInterval must be less than or equal to ${int.MaxValue} ms.");
             }
@@ -303,7 +309,8 @@ namespace DotNetty.Common
         internal static void ThrowArgumentException_NotLongEnoughToHoldOutputValueUtf16()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException(
                     message: "Argument is not long enough to hold output value.",
@@ -315,7 +322,8 @@ namespace DotNetty.Common
         internal static void ThrowArgumentException_NotLongEnoughToHoldOutputValueUtf8()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException(
                   message: "Argument is not long enough to hold output value.",
@@ -352,7 +360,8 @@ namespace DotNetty.Common
         internal static void ThrowArgumentOutOfRangeException_EndIndexLessThanStartIndex()
         {
             throw GetArgumentOutOfRangeException();
-            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
                 return new ArgumentOutOfRangeException("end", "EndIndex cannot be less than StartIndex.");
             }
@@ -423,7 +432,8 @@ namespace DotNetty.Common
         internal static void ArgumentOutOfRangeException_InvalidUnicodeChar()
         {
             throw GetNullReferenceException();
-            ArgumentOutOfRangeException GetNullReferenceException()
+
+            static ArgumentOutOfRangeException GetNullReferenceException()
             {
                 return new ArgumentOutOfRangeException(
                    message: "Value must be between U+0000 and U+D7FF, inclusive; or value must be between U+E000 and U+FFFF, inclusive.",
@@ -435,7 +445,8 @@ namespace DotNetty.Common
         internal static void ArgumentOutOfRangeException_InvalidUnicodeValue()
         {
             throw GetNullReferenceException();
-            ArgumentOutOfRangeException GetNullReferenceException()
+
+            static ArgumentOutOfRangeException GetNullReferenceException()
             {
                 return new ArgumentOutOfRangeException(
                     message: "Value must be between U+0000 and U+D7FF, inclusive; or value must be between U+E000 and U+10FFFF, inclusive.",
@@ -451,7 +462,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_CannotBeCalledFromTimerTask()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException($"{nameof(HashedWheelTimer)}.stop() cannot be called from timer task.");
             }
@@ -461,7 +473,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_InvalidWorkerState()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("Invalid WorkerState");
             }
@@ -471,7 +484,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_CannotBeStartedOnceStopped()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("cannot be started once stopped");
             }
@@ -481,7 +495,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_EnumeratorNotInit()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("Enumerator not initialized.");
             }
@@ -491,7 +506,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_EnumeratorAlreadyCompleted()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("Eumerator already completed.");
             }
@@ -501,7 +517,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_TooMany()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("too many thread-local indexed variables");
             }
@@ -511,7 +528,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_RecycledAlready()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("recycled already");
             }
@@ -521,7 +539,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_ReleasedAlready()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("released already");
             }
@@ -531,7 +550,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_AlreadyFinished()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("Already finished");
             }
@@ -541,7 +561,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_AddingPromisesIsNotAllowedAfterFinishedAdding()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("Adding promises is not allowed after finished adding");
             }
@@ -551,7 +572,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_RecycledMultiTimes()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("recycled multiple times");
             }
@@ -592,7 +614,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_EnumeratorIsOnInvalidPosition()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("Enumerator is on invalid position");
             }
@@ -602,7 +625,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_InvalidCharactersInTheString()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("Invalid characters in the string");
             }
@@ -612,7 +636,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_MovenextNeedsToBeCalledAtLeastOnce()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("MoveNext() needs to be called at least once");
             }
@@ -622,7 +647,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidOperationException_CurrentDoesNotExist()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("Current does not exist");
             }
@@ -632,7 +658,8 @@ namespace DotNetty.Common
         internal static void ThrowException_InvalidUtf8CharacterBadlyEncoded()
         {
             throw GetException();
-            Exception GetException()
+
+            static Exception GetException()
             {
                 return new Exception("Invalid UTF-8 character (badly encoded)");
             }
@@ -646,7 +673,8 @@ namespace DotNetty.Common
         internal static void ThrowInvalidCastException<T>()
         {
             throw GetException();
-            InvalidCastException GetException()
+
+            static InvalidCastException GetException()
             {
                 var msg = $"Type of policy requires pooled object policy of type {typeof(IThreadLocalPooledObjectPolicy<T>)}.";
                 return new InvalidCastException(msg);
@@ -696,7 +724,8 @@ namespace DotNetty.Common
         internal static void ThrowFormatException()
         {
             throw GetException();
-            FormatException GetException()
+
+            static FormatException GetException()
             {
                 return new FormatException();
             }
@@ -706,7 +735,8 @@ namespace DotNetty.Common
         internal static void ThrowFormatException_Radix()
         {
             throw GetException();
-            FormatException GetException()
+
+            static FormatException GetException()
             {
                 return new FormatException($"Radix must be from {CharUtil.MinRadix} to {CharUtil.MaxRadix}");
             }
@@ -740,7 +770,8 @@ namespace DotNetty.Common
         internal static int ThrowRejectedExecutionException_TimerStopped()
         {
             throw GetException();
-            RejectedExecutionException GetException()
+
+            static RejectedExecutionException GetException()
             {
                 return new RejectedExecutionException("Timer has been stopped and cannot process new operations.");
             }

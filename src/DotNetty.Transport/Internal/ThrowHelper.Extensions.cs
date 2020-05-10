@@ -225,7 +225,8 @@ namespace DotNetty.Transport
         internal static void ThrowArgumentException_Excs()
         {
             throw GetArgumentException();
-            ArgumentException GetArgumentException()
+
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("excetpions must be not empty.");
             }
@@ -235,7 +236,8 @@ namespace DotNetty.Transport
         internal static void ThrowArgumentException_TheLastOpCompleted()
         {
             throw GetArgumentException();
-            ArgumentException GetArgumentException()
+
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("The last operation completed on the socket was not expected");
             }
@@ -245,7 +247,8 @@ namespace DotNetty.Transport
         internal static void ThrowArgumentException_Action()
         {
             throw GetArgumentException();
-            ArgumentException GetArgumentException()
+
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("action");
             }
@@ -315,7 +318,8 @@ namespace DotNetty.Transport
         internal static void ThrowArgumentException_Context<T>()
         {
             throw GetArgumentException();
-            ArgumentException GetArgumentException()
+
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException($"Handler of type `{typeof(T).Name}` could not be found in the pipeline.");
             }
@@ -355,7 +359,8 @@ namespace DotNetty.Transport
         internal static void ThrowArgumentException_VoidPromiseIsNotAllowed()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("Void promise is not allowed for this operation");
             }
@@ -407,7 +412,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException();
             }
@@ -417,7 +423,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_ChildGroupSetAlready()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("childGroup set already");
             }
@@ -427,7 +434,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_HandlerNotSet()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("handler not set");
             }
@@ -437,7 +445,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_RemoteAddrNotSet()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("remoteAddress not set");
             }
@@ -447,7 +456,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_LocalAddrMustBeSetBeforehand()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("localAddress must be set beforehand.");
             }
@@ -457,7 +467,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_ChannelOrFactoryNotSet()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("channel or channelFactory not set");
             }
@@ -467,7 +478,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_GroupNotSet()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("group not set");
             }
@@ -477,7 +489,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_GroupHasAlreadyBeenSet()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("group has already been set.");
             }
@@ -487,7 +500,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_ChildHandlerNotYet()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("childHandler not set");
             }
@@ -497,7 +511,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_HandlerNotAddedToPipeYet()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("handler not added to pipeline yet");
             }
@@ -507,7 +522,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_ConnAttemptAlreadyMade()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("connection attempt already made");
             }
@@ -527,7 +543,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_Close0()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("close() must be invoked after the channel is closed.");
             }
@@ -537,7 +554,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_Close1()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("close() must be invoked after all flushed writes are handled.");
             }
@@ -547,7 +565,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_ChannelNotReg()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("channel not registered to an event loop");
             }
@@ -557,7 +576,8 @@ namespace DotNetty.Transport
         internal static void ThrowInvalidOperationException_Pipeline()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("Pipeline is empty.");
             }
@@ -607,7 +627,8 @@ namespace DotNetty.Transport
         internal static Task ThrowInvalidOperationException_RegisteredToEventLoopAlready()
         {
             return TaskUtil.FromException(GetInvalidOperationException());
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("registered to an event loop already");
             }
@@ -651,7 +672,8 @@ namespace DotNetty.Transport
         internal static void ThrowChannelException()
         {
             throw GetException();
-            ChannelException GetException()
+
+            static ChannelException GetException()
             {
                 return new ChannelException();
             }
@@ -661,7 +683,8 @@ namespace DotNetty.Transport
         internal static void ThrowChannelException_AlreadyBound()
         {
             throw GetException();
-            ChannelException GetException()
+
+            static ChannelException GetException()
             {
                 return new ChannelException("already bound");
             }
@@ -836,7 +859,8 @@ namespace DotNetty.Transport
         internal static void ThrowNotImplementedException_OnlyIByteBufferImpl()
         {
             throw GetNotImplementedException();
-            NotImplementedException GetNotImplementedException()
+
+            static NotImplementedException GetNotImplementedException()
             {
                 return new NotImplementedException("Only IByteBuffer implementations backed by array are supported.");
             }
@@ -857,7 +881,8 @@ namespace DotNetty.Transport
         internal static void ThrowIllegalReferenceCountException(int count)
         {
             throw GetInvalidOperationException();
-            IllegalReferenceCountException GetInvalidOperationException()
+
+            static IllegalReferenceCountException GetInvalidOperationException()
             {
                 return new IllegalReferenceCountException(0);
             }
@@ -867,7 +892,8 @@ namespace DotNetty.Transport
         internal static void ThrowNotYetConnectedException()
         {
             throw GetException();
-            NotYetConnectedException GetException()
+
+            static NotYetConnectedException GetException()
             {
                 return new NotYetConnectedException();
             }
@@ -877,7 +903,8 @@ namespace DotNetty.Transport
         internal static void ThrowConnectionPendingException()
         {
             throw GetException();
-            ConnectionPendingException GetException()
+
+            static ConnectionPendingException GetException()
             {
                 return new ConnectionPendingException();
             }
@@ -897,7 +924,8 @@ namespace DotNetty.Transport
         internal static void ThrowNullReferenceException_Command()
         {
             throw GetException();
-            NullReferenceException GetException()
+
+            static NullReferenceException GetException()
             {
                 return new NullReferenceException("command");
             }

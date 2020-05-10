@@ -149,7 +149,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowException_FrameDecoder()
         {
             throw GetException();
-            Exception GetException()
+
+            static Exception GetException()
             {
                 return new Exception("Shouldn't reach here.");
             }
@@ -159,7 +160,8 @@ namespace DotNetty.Codecs.Http
         internal static WebSocketFrame ThrowException_UnkonwFrameType()
         {
             throw GetException();
-            Exception GetException()
+
+            static Exception GetException()
             {
                 return new Exception("Unkonw WebSocketFrame type, must be either TextWebSocketFrame or BinaryWebSocketFrame");
             }
@@ -243,7 +245,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_DiffArrayLen()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("Different array length");
             }
@@ -253,7 +256,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_BufferNoBacking()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("buffer hasn't backing byte array");
             }
@@ -263,7 +267,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_FileTooBig()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("File too big to be loaded in memory");
             }
@@ -313,7 +318,8 @@ namespace DotNetty.Codecs.Http
         internal static int ThrowArgumentException_CompareToCookie()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException($"obj must be of {nameof(ICookie)} type");
             }
@@ -323,7 +329,8 @@ namespace DotNetty.Codecs.Http
         internal static int ThrowArgumentException_CompareToHttpVersion()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException($"obj must be of {nameof(HttpVersion)} type");
             }
@@ -343,7 +350,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_Stream_NotReadable()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException($"inputStream is not readable");
             }
@@ -353,7 +361,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_Stream_NotWritable()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException($"destination is not writable");
             }
@@ -363,7 +372,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_AttrBigger()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("Attribute bigger than maxSize allowed");
             }
@@ -373,7 +383,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_TextFrame()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("a text frame should not contain 0xFF.");
             }
@@ -383,7 +394,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_HeadCantAddSelf()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("can't add to itself.");
             }
@@ -393,7 +405,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_ChunkedMsgNotSupported()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("Chunked messages not supported");
             }
@@ -517,7 +530,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowIOException_CheckSize()
         {
             throw GetException();
-            IOException GetException()
+
+            static IOException GetException()
             {
                 return new IOException("Size exceed allowed maximum capacity");
             }
@@ -605,7 +619,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowInvalidOperationException_NoMoreElement()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("No more element to iterate");
             }
@@ -615,7 +630,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowInvalidOperationException_WebSocketClientHandshaker()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("WebSocketClientHandshaker should have been finished yet");
             }
@@ -625,7 +641,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowInvalidOperationException_UnknownWebSocketVersion()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("Unknown web socket version");
             }
@@ -635,7 +652,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowInvalidOperationException_OnlyHaveOneValue()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException($"{nameof(CombinedHttpHeaders)} should only have one value");
             }
@@ -645,7 +663,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowInvalidOperationException_NoFileDefined()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("No file defined so cannot be renamed");
             }
@@ -655,7 +674,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowInvalidOperationException_CannotSendMore()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("cannot send more responses than requests");
             }
@@ -665,7 +685,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowInvalidOperationException_ReadHttpResponse()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("Read HTTP response without requesting protocol switch");
             }
@@ -675,7 +696,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowInvalidOperationException_CheckDestroyed<T>()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException($"{StringUtil.SimpleClassName<T>()} was destroyed already");
             }
@@ -767,7 +789,8 @@ namespace DotNetty.Codecs.Http
         internal static long ThrowFormatException_HeaderNotFound()
         {
             throw GetException();
-            FormatException GetException()
+
+            static FormatException GetException()
             {
                 return new FormatException($"header not found: {HttpHeaderNames.ContentLength}");
             }
@@ -781,7 +804,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowTooLongFrameException_WebSocket00FrameDecoder()
         {
             throw GetException();
-            TooLongFrameException GetException()
+
+            static TooLongFrameException GetException()
             {
                 return new TooLongFrameException(nameof(WebSocket00FrameDecoder));
             }
@@ -825,7 +849,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowNotEnoughDataDecoderException_AccessOutOfBounds()
         {
             throw GetException();
-            NotEnoughDataDecoderException GetException()
+
+            static NotEnoughDataDecoderException GetException()
             {
                 return new NotEnoughDataDecoderException("Access out of bounds");
             }
@@ -835,7 +860,8 @@ namespace DotNetty.Codecs.Http
         internal static StringCharSequence ThrowNotEnoughDataDecoderException_ReadLineStandard()
         {
             throw GetException();
-            NotEnoughDataDecoderException GetException()
+
+            static NotEnoughDataDecoderException GetException()
             {
                 return new NotEnoughDataDecoderException("ReadLineStandard");
             }
@@ -845,7 +871,8 @@ namespace DotNetty.Codecs.Http
         internal static StringCharSequence ThrowNotEnoughDataDecoderException_ReadLine()
         {
             throw GetException();
-            NotEnoughDataDecoderException GetException()
+
+            static NotEnoughDataDecoderException GetException()
             {
                 return new NotEnoughDataDecoderException("ReadLine");
             }
@@ -855,7 +882,8 @@ namespace DotNetty.Codecs.Http
         internal static StringBuilderCharSequence ThrowNotEnoughDataDecoderException_ReadDelimiterStandard()
         {
             throw GetException();
-            NotEnoughDataDecoderException GetException()
+
+            static NotEnoughDataDecoderException GetException()
             {
                 return new NotEnoughDataDecoderException("ReadDelimiterStandard");
             }
@@ -865,7 +893,8 @@ namespace DotNetty.Codecs.Http
         internal static StringBuilderCharSequence ThrowNotEnoughDataDecoderException_ReadDelimiter()
         {
             throw GetException();
-            NotEnoughDataDecoderException GetException()
+
+            static NotEnoughDataDecoderException GetException()
             {
                 return new NotEnoughDataDecoderException("ReadDelimiter");
             }
@@ -889,7 +918,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataDecoderException_GetStatus()
         {
             throw GetErrorDataDecoderException();
-            ErrorDataDecoderException GetErrorDataDecoderException()
+
+            static ErrorDataDecoderException GetErrorDataDecoderException()
             {
                 return new ErrorDataDecoderException("Should not be called with the current getStatus");
             }
@@ -899,7 +929,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataDecoderException_Attr()
         {
             throw GetErrorDataDecoderException();
-            ErrorDataDecoderException GetErrorDataDecoderException()
+
+            static ErrorDataDecoderException GetErrorDataDecoderException()
             {
                 return new ErrorDataDecoderException($"{HttpHeaderValues.Name} attribute cannot be null.");
             }
@@ -909,7 +940,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataDecoderException_NameAttr()
         {
             throw GetErrorDataDecoderException();
-            ErrorDataDecoderException GetErrorDataDecoderException()
+
+            static ErrorDataDecoderException GetErrorDataDecoderException()
             {
                 return new ErrorDataDecoderException($"{HttpHeaderValues.Name} attribute cannot be null for file upload");
             }
@@ -919,7 +951,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataDecoderException_FileNameAttr()
         {
             throw GetErrorDataDecoderException();
-            ErrorDataDecoderException GetErrorDataDecoderException()
+
+            static ErrorDataDecoderException GetErrorDataDecoderException()
             {
                 return new ErrorDataDecoderException($"{HttpHeaderValues.FileName} attribute cannot be null for file upload");
             }
@@ -929,7 +962,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataDecoderException_ReachHere()
         {
             throw GetErrorDataDecoderException();
-            ErrorDataDecoderException GetErrorDataDecoderException()
+
+            static ErrorDataDecoderException GetErrorDataDecoderException()
             {
                 return new ErrorDataDecoderException("Shouldn't reach here.");
             }
@@ -939,7 +973,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataDecoderException_NoMultipartDelimiterFound()
         {
             throw GetErrorDataDecoderException();
-            ErrorDataDecoderException GetErrorDataDecoderException()
+
+            static ErrorDataDecoderException GetErrorDataDecoderException()
             {
                 return new ErrorDataDecoderException("No Multipart delimiter found");
             }
@@ -949,7 +984,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataDecoderException_MixedMultipartFound()
         {
             throw GetErrorDataDecoderException();
-            ErrorDataDecoderException GetErrorDataDecoderException()
+
+            static ErrorDataDecoderException GetErrorDataDecoderException()
             {
                 return new ErrorDataDecoderException("Mixed Multipart found in a previous Mixed Multipart");
             }
@@ -969,7 +1005,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataDecoderException_FileName()
         {
             throw GetErrorDataDecoderException();
-            ErrorDataDecoderException GetErrorDataDecoderException()
+
+            static ErrorDataDecoderException GetErrorDataDecoderException()
             {
                 return new ErrorDataDecoderException("Filename not found");
             }
@@ -979,7 +1016,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataDecoderException_NeedBoundaryValue()
         {
             throw GetErrorDataDecoderException();
-            ErrorDataDecoderException GetErrorDataDecoderException()
+
+            static ErrorDataDecoderException GetErrorDataDecoderException()
             {
                 return new ErrorDataDecoderException("Needs a boundary value");
             }
@@ -989,7 +1027,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataDecoderException_BadEndOfLine()
         {
             throw GetErrorDataDecoderException();
-            ErrorDataDecoderException GetErrorDataDecoderException()
+
+            static ErrorDataDecoderException GetErrorDataDecoderException()
             {
                 return new ErrorDataDecoderException("Bad end of line");
             }
@@ -1033,7 +1072,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataEncoderException_HeaderAlreadyEncoded()
         {
             throw GetErrorDataEncoderException();
-            ErrorDataEncoderException GetErrorDataEncoderException()
+
+            static ErrorDataEncoderException GetErrorDataEncoderException()
             {
                 return new ErrorDataEncoderException("Header already encoded");
             }
@@ -1043,7 +1083,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataEncoderException_CannotAddValue()
         {
             throw GetErrorDataEncoderException();
-            ErrorDataEncoderException GetErrorDataEncoderException()
+
+            static ErrorDataEncoderException GetErrorDataEncoderException()
             {
                 return new ErrorDataEncoderException("Cannot add value once finalized");
             }
@@ -1053,7 +1094,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowErrorDataEncoderException_CannotCreate()
         {
             throw GetErrorDataEncoderException();
-            ErrorDataEncoderException GetErrorDataEncoderException()
+
+            static ErrorDataEncoderException GetErrorDataEncoderException()
             {
                 return new ErrorDataEncoderException("Cannot create a Encoder if request is a TRACE");
             }
@@ -1137,7 +1179,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowCodecException_CannotReadCompressedBuf()
         {
             throw GetException();
-            CodecException GetException()
+
+            static CodecException GetException()
             {
                 return new CodecException("cannot read compressed buffer");
             }
@@ -1147,7 +1190,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowCodecException_CannotReadUncompressedBuf()
         {
             throw GetException();
-            CodecException GetException()
+
+            static CodecException GetException()
             {
                 return new CodecException("cannot read uncompressed buffer");
             }
@@ -1221,7 +1265,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowWebSocketHandshakeException_InvalidChallenge()
         {
             throw GetException();
-            WebSocketHandshakeException GetException()
+
+            static WebSocketHandshakeException GetException()
             {
                 return new WebSocketHandshakeException("Invalid challenge");
             }
@@ -1241,7 +1286,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowWebSocketHandshakeException_MissingUpgrade()
         {
             throw GetException();
-            WebSocketHandshakeException GetException()
+
+            static WebSocketHandshakeException GetException()
             {
                 return new WebSocketHandshakeException("not a WebSocket handshake request: missing upgrade");
             }
@@ -1251,7 +1297,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowWebSocketHandshakeException_MissingKey()
         {
             throw GetException();
-            WebSocketHandshakeException GetException()
+
+            static WebSocketHandshakeException GetException()
             {
                 return new WebSocketHandshakeException("not a WebSocket request: missing key");
             }
@@ -1265,7 +1312,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowEndOfDataDecoderException_HttpPostStandardRequestDecoder()
         {
             throw GetException();
-            EndOfDataDecoderException GetException()
+
+            static EndOfDataDecoderException GetException()
             {
                 return new EndOfDataDecoderException(nameof(HttpPostStandardRequestDecoder));
             }
@@ -1279,7 +1327,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowMessageAggregationException_StartMessage()
         {
             throw GetException();
-            MessageAggregationException GetException()
+
+            static MessageAggregationException GetException()
             {
                 return new MessageAggregationException("Start message should not have any current content.");
             }
@@ -1289,7 +1338,8 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowMessageAggregationException_UnknownAggregationState()
         {
             throw GetException();
-            MessageAggregationException GetException()
+
+            static MessageAggregationException GetException()
             {
                 return new MessageAggregationException("Unknown aggregation state.");
             }

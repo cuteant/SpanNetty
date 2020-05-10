@@ -147,7 +147,8 @@ namespace DotNetty.Handlers
         internal static void ThrowArgumentException_ServerCertificateRequired()
         {
             throw GetArgumentException();
-            ArgumentException GetArgumentException()
+
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("The server certificate parameter is required.", "settings");
             }
@@ -205,7 +206,8 @@ namespace DotNetty.Handlers
         internal static IIPFilterRule ThrowArgumentOutOfRangeException_OctetsCountMustBeEqual4ForIPv4()
         {
             throw GetArgumentOutOfRangeException();
-            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
                 return new ArgumentOutOfRangeException("ipAddress", "Octets count must be equal 4 for IPv4 address.");
             }
@@ -215,7 +217,8 @@ namespace DotNetty.Handlers
         internal static IIPFilterRule ThrowArgumentOutOfRangeException_OctetsCountMustBeEqual16ForIPv6()
         {
             throw GetArgumentOutOfRangeException();
-            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
                 return new ArgumentOutOfRangeException("ipAddress", "Octets count must be equal 16 for IPv6 address.");
             }
@@ -225,7 +228,8 @@ namespace DotNetty.Handlers
         internal static IIPFilterRule ThrowArgumentOutOfRangeException_OnlySupportIPv4AndIPv6Addresses()
         {
             throw GetArgumentOutOfRangeException();
-            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
                 return new ArgumentOutOfRangeException("ipAddress", "Only IPv4 and IPv6 addresses are supported");
             }

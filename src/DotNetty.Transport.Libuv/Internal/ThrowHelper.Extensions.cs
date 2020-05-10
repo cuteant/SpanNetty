@@ -139,7 +139,8 @@ namespace DotNetty.Transport.Libuv
         internal static void ThrowArgumentException_RegChannel()
         {
             throw GetArgumentException();
-            ArgumentException GetArgumentException()
+
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException($"channel must be of {typeof(INativeChannel)}");
             }
@@ -149,7 +150,8 @@ namespace DotNetty.Transport.Libuv
         internal static void ThrowArgumentException_PipeName()
         {
             throw GetArgumentException();
-            ArgumentException GetArgumentException()
+
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("Pipe name is required for worker event loop", "parent");
             }
@@ -199,7 +201,8 @@ namespace DotNetty.Transport.Libuv
         internal static void ThrowInvalidOperationException_Dispatch()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("No pipe connections to dispatch handles.");
             }
@@ -209,7 +212,8 @@ namespace DotNetty.Transport.Libuv
         internal static void ThrowInvalidOperationException_ConnAttempt()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("connection attempt already made");
             }
@@ -219,7 +223,8 @@ namespace DotNetty.Transport.Libuv
         internal static void ThrowInvalidOperationException_TcpHandle()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("Tcp handle not intialized");
             }
@@ -259,7 +264,8 @@ namespace DotNetty.Transport.Libuv
         internal static void ThrowInvalidOperationException_HandleNotInit()
         {
             throw GetInvalidOperationException();
-            InvalidOperationException GetInvalidOperationException()
+
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("tcpListener handle not intialized");
             }
@@ -279,7 +285,8 @@ namespace DotNetty.Transport.Libuv
         internal static void ThrowRejectedExecutionException_Terminated()
         {
             throw GetSocketException();
-            RejectedExecutionException GetSocketException()
+
+            static RejectedExecutionException GetSocketException()
             {
                 return new RejectedExecutionException($"{nameof(LoopExecutor)} terminated");
             }
@@ -289,7 +296,8 @@ namespace DotNetty.Transport.Libuv
         internal static void ThrowRejectedExecutionException_Shutdown()
         {
             throw GetSocketException();
-            RejectedExecutionException GetSocketException()
+
+            static RejectedExecutionException GetSocketException()
             {
                 return new RejectedExecutionException($"{nameof(LoopExecutor)} already shutdown");
             }
@@ -299,7 +307,8 @@ namespace DotNetty.Transport.Libuv
         internal static void ThrowRejectedExecutionException_Queue()
         {
             throw GetSocketException();
-            RejectedExecutionException GetSocketException()
+
+            static RejectedExecutionException GetSocketException()
             {
                 return new RejectedExecutionException($"{nameof(LoopExecutor)} queue task failed");
             }

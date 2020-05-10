@@ -41,7 +41,8 @@ namespace DotNetty.Codecs.Mqtt
         internal static void ThrowDecoderException_MQTT_231_1()
         {
             throw GetException();
-            DecoderException GetException()
+
+            static DecoderException GetException()
             {
                 return new DecoderException("[MQTT-2.3.1-1]");
             }
@@ -51,7 +52,8 @@ namespace DotNetty.Codecs.Mqtt
         internal static void ThrowDecoderException_MQTT_312_11()
         {
             throw GetException();
-            DecoderException GetException()
+
+            static DecoderException GetException()
             {
                 return new DecoderException("[MQTT-3.1.2-11]");
             }
@@ -61,7 +63,8 @@ namespace DotNetty.Codecs.Mqtt
         internal static void ThrowDecoderException_MQTT_312_22()
         {
             throw GetException();
-            DecoderException GetException()
+
+            static DecoderException GetException()
             {
                 return new DecoderException("[MQTT-3.1.2-22]");
             }
@@ -71,7 +74,8 @@ namespace DotNetty.Codecs.Mqtt
         internal static void ThrowDecoderException_MQTT_312_3()
         {
             throw GetException();
-            DecoderException GetException()
+
+            static DecoderException GetException()
             {
                 return new DecoderException("[MQTT-3.1.2-3]");
             }
@@ -81,7 +85,8 @@ namespace DotNetty.Codecs.Mqtt
         internal static void ThrowDecoderException_MQTT_383_3()
         {
             throw GetException();
-            DecoderException GetException()
+
+            static DecoderException GetException()
             {
                 return new DecoderException("[MQTT-3.8.3-3]");
             }
@@ -111,7 +116,8 @@ namespace DotNetty.Codecs.Mqtt
         internal static void ThrowDecoderException_MQTT_3103_2()
         {
             throw GetException();
-            DecoderException GetException()
+
+            static DecoderException GetException()
             {
                 return new DecoderException("[MQTT-3.10.3-2]");
             }
@@ -141,7 +147,8 @@ namespace DotNetty.Codecs.Mqtt
         internal static void ThrowDecoderException_MQTT_473_1()
         {
             throw GetException();
-            DecoderException GetException()
+
+            static DecoderException GetException()
             {
                 return new DecoderException("[MQTT-4.7.3-1]");
             }
@@ -151,7 +158,8 @@ namespace DotNetty.Codecs.Mqtt
         internal static void ThrowDecoderException_RemainingLenExceeds4BytesInLen()
         {
             throw GetException();
-            DecoderException GetException()
+
+            static DecoderException GetException()
             {
                 return new DecoderException("Remaining length exceeds 4 bytes in length");
             }

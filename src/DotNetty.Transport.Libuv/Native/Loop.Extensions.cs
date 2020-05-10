@@ -13,7 +13,8 @@ namespace DotNetty.Transport.Libuv.Native
         internal static void ThrowObjectDisposedException()
         {
             throw GetObjectDisposedException();
-            ObjectDisposedException GetObjectDisposedException()
+
+            static ObjectDisposedException GetObjectDisposedException()
             {
                 return new ObjectDisposedException($"{typeof(Loop)}");
             }

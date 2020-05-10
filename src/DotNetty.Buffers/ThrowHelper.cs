@@ -182,7 +182,7 @@ namespace DotNetty.Buffers
         {
             throw GetArgumentOutOfRangeException();
 
-            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
                 return new ArgumentOutOfRangeException("initialCapacity", "initialCapacity must be greater than zero");
             }
@@ -204,7 +204,7 @@ namespace DotNetty.Buffers
         {
             throw GetArgumentOutOfRangeException();
 
-            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
                 return new ArgumentOutOfRangeException("minWritableBytes", "expected minWritableBytes to be greater than zero");
             }
@@ -248,7 +248,7 @@ namespace DotNetty.Buffers
         {
             throw GetArgumentOutOfRangeException();
 
-            ArgumentNullException GetArgumentOutOfRangeException()
+            static ArgumentNullException GetArgumentOutOfRangeException()
             {
                 return new ArgumentNullException("dst");
             }

@@ -15,7 +15,7 @@ namespace DotNetty.Codecs.Http
         {
             throw GetArgumentException();
 
-            ArgumentException GetArgumentException()
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("text");
             }
@@ -26,7 +26,7 @@ namespace DotNetty.Codecs.Http
         {
             throw GetArgumentException();
 
-            ArgumentException GetArgumentException()
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("text is empty (possibly HTTP/0.9)");
             }
@@ -37,7 +37,7 @@ namespace DotNetty.Codecs.Http
         {
             throw GetArgumentException();
 
-            ArgumentException GetArgumentException()
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("empty headers are not allowed", "name");
             }
@@ -114,7 +114,7 @@ namespace DotNetty.Codecs.Http
         {
             throw GetArgumentException();
 
-            ArgumentException GetArgumentException()
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("a header value contains a prohibited character '\0'");
             }
@@ -125,7 +125,7 @@ namespace DotNetty.Codecs.Http
         {
             throw GetArgumentException();
 
-            ArgumentException GetArgumentException()
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("a header value contains a prohibited character '\\v'");
             }
@@ -136,7 +136,7 @@ namespace DotNetty.Codecs.Http
         {
             throw GetArgumentException();
 
-            ArgumentException GetArgumentException()
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("a header value contains a prohibited character '\\f'");
             }
@@ -147,7 +147,7 @@ namespace DotNetty.Codecs.Http
         {
             throw GetArgumentException();
 
-            ArgumentException GetArgumentException()
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("only '\\n' is allowed after '\\r'");
             }
@@ -158,7 +158,7 @@ namespace DotNetty.Codecs.Http
         {
             throw GetArgumentException();
 
-            ArgumentException GetArgumentException()
+            static ArgumentException GetArgumentException()
             {
                 return new ArgumentException("only ' ' and '\\t' are allowed after '\\n'");
             }

@@ -120,7 +120,8 @@ namespace DotNetty.Codecs
         internal static void ThrowException_UnknownLen()
         {
             throw GetException();
-            Exception GetException()
+
+            static Exception GetException()
             {
                 return new Exception("Unknown length field length");
             }
@@ -130,7 +131,8 @@ namespace DotNetty.Codecs
         internal static void ThrowArgumentException_DiscardAfterReads()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("discardAfterReads must be > 0");
             }
@@ -140,7 +142,8 @@ namespace DotNetty.Codecs
         internal static void ThrowArgumentException_EmptyDelimiter()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("empty delimiter");
             }
@@ -150,7 +153,8 @@ namespace DotNetty.Codecs
         internal static void ThrowArgumentException_EmptyDelimiters()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("empty delimiters");
             }
@@ -160,7 +164,8 @@ namespace DotNetty.Codecs
         internal static void ThrowArgumentException_CannotAddToItSelf()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("can't add to itself.");
             }
@@ -170,7 +175,8 @@ namespace DotNetty.Codecs
         internal static void ThrowArgumentException_CannotHaveEndStart()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("Can't have end < start");
             }
@@ -180,7 +186,8 @@ namespace DotNetty.Codecs
         internal static void ThrowArgumentException_CannotParseMoreThan64Chars()
         {
             throw GetException();
-            ArgumentException GetException()
+
+            static ArgumentException GetException()
             {
                 return new ArgumentException("Can't parse more than 64 chars, looks like a user error or a malformed header");
             }
@@ -300,7 +307,8 @@ namespace DotNetty.Codecs
         internal static void ThrowMessageAggregationException_UnknownAggregationState()
         {
             throw GetException();
-            MessageAggregationException GetException()
+
+            static MessageAggregationException GetException()
             {
                 return new MessageAggregationException("Unknown aggregation state.");
             }
@@ -310,7 +318,8 @@ namespace DotNetty.Codecs
         internal static void ThrowMessageAggregationException_StartMessage()
         {
             throw GetException();
-            MessageAggregationException GetException()
+
+            static MessageAggregationException GetException()
             {
                 return new MessageAggregationException("Start message should not have any current content.");
             }
@@ -320,7 +329,8 @@ namespace DotNetty.Codecs
         internal static void ThrowInvalidOperationException_EnumeratorNotInitOrCompleted()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("Enumerator not initialized or completed.");
             }
@@ -330,7 +340,8 @@ namespace DotNetty.Codecs
         internal static void ThrowInvalidOperationException_NotAddedToAPipelineYet()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("not added to a pipeline yet");
             }
@@ -340,7 +351,8 @@ namespace DotNetty.Codecs
         internal static void ThrowInvalidOperationException_DecoderProperties()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("decoder properties cannot be changed once the decoder is added to a pipeline.");
             }
@@ -350,7 +362,8 @@ namespace DotNetty.Codecs
         internal static void ThrowInvalidOperationException_ByteToMessageDecoder()
         {
             throw GetException();
-            InvalidOperationException GetException()
+
+            static InvalidOperationException GetException()
             {
                 return new InvalidOperationException($"Decoders inheriting from {typeof(ByteToMessageDecoder).Name} cannot be sharable.");
             }
@@ -522,7 +535,8 @@ namespace DotNetty.Codecs
         internal static void ThrowNotSupportedException_ByteBuffer()
         {
             throw GetException();
-            NotSupportedException GetException()
+
+            static NotSupportedException GetException()
             {
                 return new NotSupportedException("ByteBuffer's type is not an acceptable base type");
             }
@@ -532,7 +546,8 @@ namespace DotNetty.Codecs
         internal static void ThrowNotSupportedException_Readonly()
         {
             throw GetException();
-            NotSupportedException GetException()
+
+            static NotSupportedException GetException()
             {
                 return new NotSupportedException("read only");
             }

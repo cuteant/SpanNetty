@@ -15,7 +15,8 @@ namespace DotNetty.Codecs.Mqtt
         public static void ValidateTopicName()
         {
             throw GetDecoderException();
-            DecoderException GetDecoderException()
+
+            static DecoderException GetDecoderException()
             {
                 return new DecoderException("[MQTT-4.7.3-1]");
             }
@@ -41,7 +42,8 @@ namespace DotNetty.Codecs.Mqtt
         public static void ValidateClientId()
         {
             throw GetDecoderException();
-            DecoderException GetDecoderException()
+
+            static DecoderException GetDecoderException()
             {
                 return new DecoderException("Client identifier is required.");
             }

@@ -912,7 +912,7 @@ namespace DotNetty.Buffers
             {
                 throw GetObjectDisposedException();
 
-                ObjectDisposedException GetObjectDisposedException()
+                static ObjectDisposedException GetObjectDisposedException()
                 {
                     return new ObjectDisposedException(nameof(OwnedPinnedBlock));
                 }
