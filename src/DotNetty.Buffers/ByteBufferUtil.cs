@@ -152,7 +152,7 @@ namespace DotNetty.Buffers
             {
                 switch (buf)
                 {
-                    case WrappedCompositeByteBuffer byteBuffers:
+                    case WrappedCompositeByteBuffer _:
                         // WrappedCompositeByteBuf is a sub-class of AbstractByteBuf so it needs special handling.
                         buf = buf.Unwrap();
                         break;
@@ -200,6 +200,11 @@ namespace DotNetty.Buffers
             {
                 switch (buf)
                 {
+                    case WrappedCompositeByteBuffer _:
+                        // WrappedCompositeByteBuf is a sub-class of AbstractByteBuf so it needs special handling.
+                        buf = buf.Unwrap();
+                        break;
+
                     case AbstractByteBuffer byteBuf:
                         byteBuf.EnsureWritable0(reserveBytes);
                         int written = WriteUtf8(byteBuf, byteBuf.WriterIndex, value);
@@ -310,7 +315,7 @@ namespace DotNetty.Buffers
                 {
                     switch (buf)
                     {
-                        case WrappedCompositeByteBuffer byteBuffers:
+                        case WrappedCompositeByteBuffer _:
                             // WrappedCompositeByteBuf is a sub-class of AbstractByteBuf so it needs special handling.
                             buf = buf.Unwrap();
                             break;
@@ -352,6 +357,11 @@ namespace DotNetty.Buffers
             {
                 switch (buf)
                 {
+                    case WrappedCompositeByteBuffer _:
+                        // WrappedCompositeByteBuf is a sub-class of AbstractByteBuf so it needs special handling.
+                        buf = buf.Unwrap();
+                        break;
+
                     case AbstractByteBuffer byteBuf:
                         byteBuf.EnsureWritable0(len);
                         int written = WriteAscii(byteBuf, byteBuf.WriterIndex, value);
