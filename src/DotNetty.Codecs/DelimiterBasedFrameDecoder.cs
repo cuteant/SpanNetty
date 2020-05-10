@@ -61,7 +61,7 @@ namespace DotNetty.Codecs
         public DelimiterBasedFrameDecoder(int maxFrameLength, bool stripDelimiter, bool failFast, params IByteBuffer[] delimiters)
         {
             ValidateMaxFrameLength(maxFrameLength);
-            if (delimiters == null)
+            if (delimiters is null)
                 CThrowHelper.ThrowNullReferenceException(CExceptionArgument.delimiters);
 
             if (0u >= (uint)delimiters.Length)
@@ -286,7 +286,7 @@ namespace DotNetty.Codecs
 
         static void ValidateDelimiter(IByteBuffer delimiter)
         {
-            if (delimiter == null)
+            if (delimiter is null)
                 CThrowHelper.ThrowNullReferenceException(CExceptionArgument.delimiter);
 
             if (!delimiter.IsReadable())

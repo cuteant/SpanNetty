@@ -75,7 +75,7 @@ namespace DotNetty.Codecs.Mqtt
 
             // Client id
             string clientId = packet.ClientId;
-            if (clientId == null) Util.ValidateClientId();
+            if (clientId is null) Util.ValidateClientId();
             byte[] clientIdBytes = EncodeStringInUtf8(clientId);
             payloadBufferSize += StringSizeLength + clientIdBytes.Length;
 

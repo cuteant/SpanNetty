@@ -29,7 +29,7 @@ namespace DotNetty.Codecs.Compression
 
         public JZlibDecoder(byte[] dictionary)
         {
-            if (null == dictionary) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dictionary); }
+            if (dictionary is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dictionary); }
             this.dictionary = dictionary;
 
             int resultCode;
@@ -99,7 +99,7 @@ namespace DotNetty.Codecs.Compression
 
                         if (resultCode == JZlib.Z_NEED_DICT)
                         {
-                            if (this.dictionary == null)
+                            if (this.dictionary is null)
                             {
                                 ZlibUtil.Fail(this.z, "decompression failure", resultCode);
                             }

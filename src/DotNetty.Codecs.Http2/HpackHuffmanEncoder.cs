@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="data">the string literal to be Huffman encoded</param>
         public void Encode(IByteBuffer ouput, ICharSequence data)
         {
-            if (null == ouput) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ouput); }
+            if (ouput is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ouput); }
 
             if (data is AsciiString str)
             {

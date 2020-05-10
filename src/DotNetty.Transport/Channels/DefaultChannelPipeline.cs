@@ -59,7 +59,7 @@ namespace DotNetty.Transport.Channels
 
         public DefaultChannelPipeline(IChannel channel)
         {
-            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
+            if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
             this.channel = channel;
             this.voidPromise = new VoidChannelPromise(channel, true);
@@ -76,7 +76,7 @@ namespace DotNetty.Transport.Channels
             get
             {
                 var handle = Volatile.Read(ref this.estimatorHandle);
-                if (null == handle)
+                if (handle is null)
                 {
                     handle = this.channel.Configuration.MessageSizeEstimator.NewHandle();
                     var current = Interlocked.CompareExchange(ref this.estimatorHandle, handle, null);
@@ -106,7 +106,7 @@ namespace DotNetty.Transport.Channels
 
         IEventExecutor GetChildExecutor(IEventExecutorGroup group)
         {
-            if (group == null)
+            if (group is null)
             {
                 return null;
             }
@@ -135,7 +135,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelPipeline AddFirst(IEventExecutorGroup group, string name, IChannelHandler handler)
         {
-            if (null == handler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
+            if (handler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
 
             AbstractChannelHandlerContext newCtx;
             lock (this)
@@ -182,7 +182,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelPipeline AddLast(IEventExecutorGroup group, string name, IChannelHandler handler)
         {
-            if (null == handler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
+            if (handler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
 
             AbstractChannelHandlerContext newCtx;
             lock (this)
@@ -228,7 +228,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelPipeline AddBefore(IEventExecutorGroup group, string baseName, string name, IChannelHandler handler)
         {
-            if (null == handler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
+            if (handler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
 
             AbstractChannelHandlerContext newCtx;
             lock (this)
@@ -275,7 +275,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelPipeline AddAfter(IEventExecutorGroup group, string baseName, string name, IChannelHandler handler)
         {
-            if (null == handler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
+            if (handler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
 
             AbstractChannelHandlerContext newCtx;
 
@@ -325,7 +325,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelPipeline AddFirst(IEventExecutorGroup group, params IChannelHandler[] handlers)
         {
-            if (null == handlers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handlers); }
+            if (handlers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handlers); }
 
             for (int i = handlers.Length - 1; i >= 0; i--)
             {
@@ -363,7 +363,7 @@ namespace DotNetty.Transport.Channels
                 for (int i = 1; ; i++)
                 {
                     string newName = baseName + i;
-                    if (this.Context0(newName) == null)
+                    if (this.Context0(newName) is null)
                     {
                         name = newName;
                         break;
@@ -402,7 +402,7 @@ namespace DotNetty.Transport.Channels
 
         T RemoveIfExists<T>(IChannelHandlerContext ctx) where T : class, IChannelHandler
         {
-            if (ctx == null)
+            if (ctx is null)
             {
                 return null;
             }
@@ -476,14 +476,14 @@ namespace DotNetty.Transport.Channels
 
         IChannelHandler Replace(AbstractChannelHandlerContext ctx, string newName, IChannelHandler newHandler)
         {
-            if (null == newHandler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.newHandler); }
+            if (newHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.newHandler); }
             Debug.Assert(ctx != this.head && ctx != this.tail);
 
             AbstractChannelHandlerContext newCtx;
             lock (this)
             {
                 CheckMultiplicity(newHandler);
-                if (newName == null)
+                if (newName is null)
                 {
                     newName = this.GenerateName(newHandler);
                 }
@@ -651,19 +651,19 @@ namespace DotNetty.Transport.Channels
 
         public IChannelHandlerContext Context(string name)
         {
-            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
 
             return this.Context0(name);
         }
 
         public IChannelHandlerContext Context(IChannelHandler handler)
         {
-            if (null == handler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
+            if (handler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
 
             var ctx = this.head.Next;
             while (true)
             {
-                if (ctx == null)
+                if (ctx is null)
                 {
                     return null;
                 }
@@ -682,7 +682,7 @@ namespace DotNetty.Transport.Channels
             var ctx = this.head.Next;
             while (true)
             {
-                if (ctx == null)
+                if (ctx is null)
                 {
                     return null;
                 }
@@ -908,7 +908,7 @@ namespace DotNetty.Transport.Channels
 
         string FilterName(string name, IChannelHandler handler)
         {
-            if (name == null)
+            if (name is null)
             {
                 return this.GenerateName(handler);
             }
@@ -946,7 +946,7 @@ namespace DotNetty.Transport.Channels
         AbstractChannelHandlerContext GetContextOrThrow(string name)
         {
             var ctx = (AbstractChannelHandlerContext)this.Context(name);
-            if (ctx == null)
+            if (ctx is null)
             {
                 ThrowHelper.ThrowArgumentException_Context(name);
             }
@@ -957,7 +957,7 @@ namespace DotNetty.Transport.Channels
         AbstractChannelHandlerContext GetContextOrThrow(IChannelHandler handler)
         {
             var ctx = (AbstractChannelHandlerContext)this.Context(handler);
-            if (ctx == null)
+            if (ctx is null)
             {
                 ThrowHelper.ThrowArgumentException_Context(handler);
             }
@@ -968,7 +968,7 @@ namespace DotNetty.Transport.Channels
         AbstractChannelHandlerContext GetContextOrThrow<T>() where T : class, IChannelHandler
         {
             var ctx = (AbstractChannelHandlerContext)this.Context<T>();
-            if (ctx == null)
+            if (ctx is null)
             {
                 ThrowHelper.ThrowArgumentException_Context<T>();
             }
@@ -1008,7 +1008,7 @@ namespace DotNetty.Transport.Channels
 
             PendingHandlerCallback task = added ? (PendingHandlerCallback)new PendingHandlerAddedTask(this, ctx) : new PendingHandlerRemovedTask(this, ctx);
             PendingHandlerCallback pending = this.pendingHandlerCallbackHead;
-            if (pending == null)
+            if (pending is null)
             {
                 this.pendingHandlerCallbackHead = task;
             }

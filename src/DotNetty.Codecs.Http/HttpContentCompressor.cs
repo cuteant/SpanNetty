@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http
             }
 
             ZlibWrapper? wrapper = this.DetermineWrapper(acceptEncoding);
-            if (wrapper == null)
+            if (wrapper is null)
             {
                 return null;
             }

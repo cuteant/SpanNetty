@@ -67,7 +67,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="hpackDecoder"></param>
         internal DefaultHttp2HeadersDecoder(bool validateHeaders, HpackDecoder hpackDecoder)
         {
-            if (null == hpackDecoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.hpackDecoder); }
+            if (hpackDecoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.hpackDecoder); }
 
             this.hpackDecoder = hpackDecoder;
             this.validateHeaders = validateHeaders;

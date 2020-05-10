@@ -41,7 +41,7 @@ namespace DotNetty.Common.Internal
 
         public AppendableCharSequence(byte[] chars)
         {
-            if (null == chars || 0u >= (uint)chars.Length) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.chars); }
+            if (chars is null || 0u >= (uint)chars.Length) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.chars); }
 
             this.chars = chars;
             this.pos = chars.Length;

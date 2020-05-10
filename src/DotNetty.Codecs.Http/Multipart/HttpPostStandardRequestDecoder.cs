@@ -59,9 +59,9 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public HttpPostStandardRequestDecoder(IHttpDataFactory factory, IHttpRequest request, Encoding charset)
         {
-            if (null == request) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.request); }
-            if (null == charset) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
-            if (null == factory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
+            if (request is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.request); }
+            if (charset is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
+            if (factory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
 
             this.factory = factory;
             this.request = request;
@@ -152,7 +152,7 @@ namespace DotNetty.Codecs.Http.Multipart
             // more care by the caller to release the content in a correct manner later
             // So maybe something to optimize on a later stage
             IByteBuffer buf = content.Content;
-            if (this.undecodedChunk == null)
+            if (this.undecodedChunk is null)
             {
                 this.undecodedChunk = buf.Copy();
             }
@@ -221,7 +221,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         protected void AddHttpData(IInterfaceHttpData data)
         {
-            if (data == null)
+            if (data is null)
             {
                 return;
             }

@@ -113,7 +113,7 @@ namespace DotNetty.Codecs.Http2
             for (int i = 1; i < pseudoHeaders.Length; i += 2)
             {
                 // pseudoHeaders names are only set internally so they are assumed to be valid.
-                if (pseudoHeaders[i] == null)
+                if (pseudoHeaders[i] is null)
                 {
                     ThrowHelper.ThrowArgumentException_PseudoHeadersValueIsNull(i);
                 }
@@ -135,7 +135,7 @@ namespace DotNetty.Codecs.Http2
                     ThrowHelper.ThrowArgumentException_OtherHeadersNameIsPseudoHeader(i);
                 }
                 var idx = i + 1;
-                if (otherHeaders[idx] == null)
+                if (otherHeaders[idx] is null)
                 {
                     ThrowHelper.ThrowArgumentException_OtherHeadersValueIsNull(idx);
                 }

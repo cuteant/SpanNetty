@@ -137,7 +137,7 @@ namespace DotNetty.Codecs.Http2
                         remainingData -= this.maxFrameSize;
                         // Write the header.
                         IByteBuffer lastFrame;
-                        if (frameHeader == null)
+                        if (frameHeader is null)
                         {
                             lastFrame = ctx.Allocator.Buffer(Http2CodecUtil.FrameHeaderLength);
                             Http2CodecUtil.WriteFrameHeaderInternal(lastFrame, this.maxFrameSize, Http2FrameTypes.Data, flags, streamId);
@@ -290,7 +290,7 @@ namespace DotNetty.Codecs.Http2
         {
             try
             {
-                if (null == settings) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
+                if (settings is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
 
                 int payloadLength = Http2CodecUtil.SettingEntryLength * settings.Count;
                 IByteBuffer buf = ctx.Allocator.Buffer(Http2CodecUtil.FrameHeaderLength + settings.Count * Http2CodecUtil.SettingEntryLength);
@@ -717,7 +717,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(InlineMethod.Value)]
         static void VerifyPingPayload(IByteBuffer data)
         {
-            if (data == null || data.ReadableBytes != Http2CodecUtil.PingFramePayloadLength)
+            if (data is null || data.ReadableBytes != Http2CodecUtil.PingFramePayloadLength)
             {
                 ThrowHelper.ThrowArgumentException_InvalidPingFramePayloadLength();
             }

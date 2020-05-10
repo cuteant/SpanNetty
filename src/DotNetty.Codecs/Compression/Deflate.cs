@@ -1471,7 +1471,7 @@ namespace DotNetty.Codecs.Compression
             //    byte[] my_version=ZLIB_VERSION;
 
             //
-            //  if (version == null || version[0] != my_version[0]
+            //  if (version is null || version[0] != my_version[0]
             //  || stream_size != sizeof(z_stream)) {
             //  return Z_VERSION_ERROR;
             //  }
@@ -1612,7 +1612,7 @@ namespace DotNetty.Codecs.Compression
             int length = dictLength;
             int index = 0;
 
-            if (dictionary == null || status != INIT_STATE)
+            if (dictionary is null || status != INIT_STATE)
                 return Z_STREAM_ERROR;
 
             strm.adler.Update(dictionary, 0, dictLength);
@@ -1652,8 +1652,8 @@ namespace DotNetty.Codecs.Compression
                 return Z_STREAM_ERROR;
             }
 
-            if (strm.next_out == null ||
-               (strm.next_in == null && strm.avail_in != 0) ||
+            if (strm.next_out is null ||
+               (strm.next_in is null && strm.avail_in != 0) ||
                (status == FINISH_STATE && flush != Z_FINISH))
             {
                 strm.msg = z_errmsg[Z_NEED_DICT - (Z_STREAM_ERROR)];
@@ -1835,7 +1835,7 @@ namespace DotNetty.Codecs.Compression
 
         internal static int DeflateCopy(ZStream dest, ZStream src)
         {
-            if (src.dstate == null)
+            if (src.dstate is null)
             {
                 return Z_STREAM_ERROR;
             }
@@ -1932,7 +1932,7 @@ namespace DotNetty.Codecs.Compression
         {
             lock (this)
             {
-                if (gheader == null)
+                if (gheader is null)
                 {
                     gheader = new GZIPHeader();
                 }

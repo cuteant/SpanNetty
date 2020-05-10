@@ -83,7 +83,7 @@ namespace DotNetty.Transport.Channels
                 }
             }
 
-            if (machineId == null)
+            if (machineId is null)
             {
                 machineId = DefaultMachineId();
                 if (Logger.DebugEnabled)
@@ -97,7 +97,7 @@ namespace DotNetty.Transport.Channels
         public string AsShortText()
         {
             string asShortText = this.shortValue;
-            if (asShortText == null)
+            if (asShortText is null)
             {
                 this.shortValue = asShortText = ByteBufferUtil.HexDump(this.data, MachineIdLen + ProcessIdLen + SequenceLen + TimestampLen, RandomLen);
             }
@@ -108,7 +108,7 @@ namespace DotNetty.Transport.Channels
         public string AsLongText()
         {
             string asLongText = this.longValue;
-            if (asLongText == null)
+            if (asLongText is null)
             {
                 this.longValue = asLongText = this.NewLongValue();
             }
@@ -180,7 +180,7 @@ namespace DotNetty.Transport.Channels
         static byte[] DefaultMachineId()
         {
             byte[] bestMacAddr = Platform.GetDefaultDeviceId();
-            if (bestMacAddr == null)
+            if (bestMacAddr is null)
             {
                 bestMacAddr = new byte[MacAddressUtil.MacAddressLength];
                 ThreadLocalRandom.Value.NextBytes(bestMacAddr);

@@ -52,7 +52,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         public ServerBootstrap Group(IEventLoopGroup parentGroup, IEventLoopGroup childGroup)
         {
-            if (null == childGroup) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childGroup); }
+            if (childGroup is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childGroup); }
 
             base.Group(parentGroup);
             if (InternalChildGroup is object)
@@ -70,9 +70,9 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         public ServerBootstrap ChildOption<T>(ChannelOption<T> childOption, T value)
         {
-            if (null == childOption) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childOption); }
+            if (childOption is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childOption); }
 
-            if (value == null)
+            if (value is null)
             {
                 //ChannelOptionValue removed;
                 this.childOptions.TryRemove(childOption, out _);
@@ -91,9 +91,9 @@ namespace DotNetty.Transport.Bootstrapping
         public ServerBootstrap ChildAttribute<T>(AttributeKey<T> childKey, T value)
             where T : class
         {
-            if (null == childKey) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childKey); }
+            if (childKey is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childKey); }
 
-            if (value == null)
+            if (value is null)
             {
                 //AttributeValue removed;
                 this.childAttrs.TryRemove(childKey, out _);
@@ -110,7 +110,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         public ServerBootstrap ChildHandler(IChannelHandler childHandler)
         {
-            if (null == childHandler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childHandler); }
+            if (childHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childHandler); }
 
             InternalChildHandler = childHandler;
             return this;
@@ -153,11 +153,11 @@ namespace DotNetty.Transport.Bootstrapping
         public override ServerBootstrap Validate()
         {
             base.Validate();
-            if (InternalChildHandler == null)
+            if (InternalChildHandler is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_ChildHandlerNotYet();
             }
-            if (InternalChildGroup == null)
+            if (InternalChildGroup is null)
             {
                 if (Logger.WarnEnabled) Logger.ChildGroupIsNotSetUsingParentGroupInstead();
                 InternalChildGroup = this.Group();

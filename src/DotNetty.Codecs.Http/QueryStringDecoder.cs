@@ -41,8 +41,8 @@ namespace DotNetty.Codecs.Http
 
         public QueryStringDecoder(string uri, Encoding charset, bool hasPath, int maxParams)
         {
-            if (null == uri) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
-            if (null == charset) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
+            if (uri is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
+            if (charset is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
             if (maxParams <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxParams, ExceptionArgument.maxParams); }
 
             this.uri = uri;
@@ -63,8 +63,8 @@ namespace DotNetty.Codecs.Http
 
         public QueryStringDecoder(Uri uri, Encoding charset, int maxParams)
         {
-            if (null == uri) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
-            if (null == charset) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
+            if (uri is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
+            if (charset is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
             if (maxParams <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxParams, ExceptionArgument.maxParams); }
 
             string rawPath = uri.AbsolutePath;
@@ -103,7 +103,7 @@ namespace DotNetty.Codecs.Http
         static IDictionary<string, List<string>> DecodeParams(string s, int from, Encoding charset, int paramsLimit)
         {
             int len = s.Length;
-            if (from >= len)
+            if ((uint)from >= (uint)len)
             {
                 return ImmutableDictionary<string, List<string>>.Empty;
             }
@@ -175,7 +175,7 @@ namespace DotNetty.Codecs.Http
 
         public static string DecodeComponent(string s) => DecodeComponent(s, HttpConstants.DefaultEncoding);
 
-        public static string DecodeComponent(string s, Encoding charset) => s == null 
+        public static string DecodeComponent(string s, Encoding charset) => s is null 
             ? StringUtil.EmptyString : DecodeComponent(s, 0, s.Length, charset, false);
 
         static string DecodeComponent(string s, int from, int toExcluded, Encoding charset, bool isPath)

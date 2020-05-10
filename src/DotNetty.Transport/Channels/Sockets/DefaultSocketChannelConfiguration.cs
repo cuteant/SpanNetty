@@ -19,7 +19,7 @@ namespace DotNetty.Transport.Channels.Sockets
         public DefaultSocketChannelConfiguration(ISocketChannel channel, Socket socket)
             : base(channel)
         {
-            if (null == socket) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.socket); }
+            if (socket is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.socket); }
             this.Socket = socket;
 
             // Enable TCP_NODELAY by default if possible.

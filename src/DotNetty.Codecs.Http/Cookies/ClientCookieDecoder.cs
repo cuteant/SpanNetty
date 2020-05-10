@@ -25,7 +25,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public ICookie Decode(string header)
         {
-            if (null == header) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.header); }
+            if (header is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.header); }
 
             int headerLen = header.Length;
             if (0u >= (uint)headerLen)
@@ -115,12 +115,12 @@ namespace DotNetty.Codecs.Http.Cookies
                     valueEnd--;
                 }
 
-                if (cookieBuilder == null)
+                if (cookieBuilder is null)
                 {
                     // cookie name-value pair
                     DefaultCookie cookie = this.InitCookie(header, nameBegin, nameEnd, valueBegin, valueEnd);
 
-                    if (cookie == null)
+                    if (cookie is null)
                     {
                         return null;
                     }

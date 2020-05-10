@@ -95,7 +95,7 @@ namespace DotNetty.Transport.Libuv
         public Task RegisterAsync(IChannel channel)
         {
             var nativeChannel = channel as INativeChannel;
-            if (null == nativeChannel)
+            if (nativeChannel is null)
             {
                 ThrowHelper.ThrowArgumentException_RegChannel();
             }

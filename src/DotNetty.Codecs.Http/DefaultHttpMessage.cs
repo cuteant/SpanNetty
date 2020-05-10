@@ -18,7 +18,7 @@ namespace DotNetty.Codecs.Http
 
         protected DefaultHttpMessage(HttpVersion version, bool validateHeaders, bool singleFieldHeaders)
         {
-            if (null == version) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.version); }
+            if (version is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.version); }
 
             this.version = version;
             this.headers = singleFieldHeaders 
@@ -28,8 +28,8 @@ namespace DotNetty.Codecs.Http
 
         protected DefaultHttpMessage(HttpVersion version, HttpHeaders headers)
         {
-            if (null == version) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.version); }
-            if (null == headers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
+            if (version is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.version); }
+            if (headers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
 
             this.version = version;
             this.headers = headers;
@@ -63,7 +63,7 @@ namespace DotNetty.Codecs.Http
 
         public IHttpMessage SetProtocolVersion(HttpVersion value)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             this.version = value;
             return this;
         }

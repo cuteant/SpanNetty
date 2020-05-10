@@ -25,7 +25,7 @@ namespace DotNetty.Codecs.Http2
         public InboundHttp2ToHttpAdapter(IHttp2Connection connection, int maxContentLength,
             bool validateHttpHeaders, bool propagateSettings)
         {
-            if (null == connection) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
+            if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
             if (maxContentLength <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxContentLength, ExceptionArgument.maxContentLength); }
 
             this.connection = connection;
@@ -134,7 +134,7 @@ namespace DotNetty.Codecs.Http2
         {
             IFullHttpMessage msg = this.GetMessage(stream);
             var release = true;
-            if (msg == null)
+            if (msg is null)
             {
                 msg = this.NewMessage(stream, headers, this.validateHttpHeaders, ctx.Allocator);
             }
@@ -186,7 +186,7 @@ namespace DotNetty.Codecs.Http2
         {
             IHttp2Stream stream = this.connection.Stream(streamId);
             IFullHttpMessage msg = this.GetMessage(stream);
-            if (msg == null)
+            if (msg is null)
             {
                 ThrowHelper.ThrowConnectionError_DataFrameReceivedForUnknownStream(streamId);
             }
@@ -252,7 +252,7 @@ namespace DotNetty.Codecs.Http2
         {
             // A push promise should not be allowed to add headers to an existing stream
             IHttp2Stream promisedStream = this.connection.Stream(promisedStreamId);
-            if (headers.Status == null)
+            if (headers.Status is null)
             {
                 // A PUSH_PROMISE frame has no Http response status.
                 // https://tools.ietf.org/html/rfc7540#section-8.2.1
@@ -262,7 +262,7 @@ namespace DotNetty.Codecs.Http2
                 headers.Status = HttpResponseStatus.OK.CodeAsText;
             }
             IFullHttpMessage msg = this.ProcessHeadersBegin(ctx, promisedStream, headers, false, false, false);
-            if (msg == null)
+            if (msg is null)
             {
                 ThrowHelper.ThrowConnectionError_PushPromiseFrameReceivedForPreExistingStreamId(promisedStreamId);
             }

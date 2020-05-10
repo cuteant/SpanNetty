@@ -18,7 +18,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public WebSocketChunkedInput(IChunkedInput<IByteBuffer> input, int rsv)
         {
-            if (null == input) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.input); }
+            if (input is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.input); }
 
             this.input = input;
             this.rsv = rsv;

@@ -129,13 +129,13 @@ namespace DotNetty.Codecs.Compression
 
         internal int Inflate_z(int f)
         {
-            if (istate == null) return Z_STREAM_ERROR;
+            if (istate is null) return Z_STREAM_ERROR;
             return istate.Inflate_I(f);
         }
 
         internal int InflateEnd()
         {
-            if (istate == null) return Z_STREAM_ERROR;
+            if (istate is null) return Z_STREAM_ERROR;
             int ret = istate.InflateEnd();
             //    istate = null;
             return ret;
@@ -143,20 +143,20 @@ namespace DotNetty.Codecs.Compression
 
         internal int InflateSync()
         {
-            if (istate == null)
+            if (istate is null)
                 return Z_STREAM_ERROR;
             return istate.InflateSync();
         }
 
         internal int InflateSyncPoint()
         {
-            if (istate == null) return Z_STREAM_ERROR;
+            if (istate is null) return Z_STREAM_ERROR;
             return istate.InflateSyncPoint();
         }
 
         internal int InflateSetDictionary(byte[] dictionary, int dictLength)
         {
-            if (istate == null) return Z_STREAM_ERROR;
+            if (istate is null) return Z_STREAM_ERROR;
             return istate.InflateSetDictionary(dictionary, dictLength);
         }
 
@@ -207,13 +207,13 @@ namespace DotNetty.Codecs.Compression
 
         internal int Deflate_z(int flush)
         {
-            if (dstate == null) return Z_STREAM_ERROR;
+            if (dstate is null) return Z_STREAM_ERROR;
             return dstate.Deflate_D(flush);
         }
 
         internal int DeflateEnd()
         {
-            if (dstate == null) return Z_STREAM_ERROR;
+            if (dstate is null) return Z_STREAM_ERROR;
             int ret = dstate.DeflateEnd();
             dstate = null;
             return ret;
@@ -221,13 +221,13 @@ namespace DotNetty.Codecs.Compression
 
         internal int DeflateParams(int level, int strategy)
         {
-            if (dstate == null) return Z_STREAM_ERROR;
+            if (dstate is null) return Z_STREAM_ERROR;
             return dstate.DeflateParams(level, strategy);
         }
 
         internal int DeflateSetDictionary(byte[] dictionary, int dictLength)
         {
-            if (dstate == null) return Z_STREAM_ERROR;
+            if (dstate is null) return Z_STREAM_ERROR;
             return dstate.DeflateSetDictionary(dictionary, dictLength);
         }
 

@@ -13,7 +13,7 @@ namespace DotNetty.Transport.Channels
 
         public ActionChannelInitializer(Action<T> initializationAction)
         {
-            if (null == initializationAction) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.initializationAction); }
+            if (initializationAction is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.initializationAction); }
 
             this.initializationAction = initializationAction;
         }

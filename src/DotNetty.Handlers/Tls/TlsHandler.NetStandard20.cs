@@ -36,7 +36,7 @@ namespace DotNetty.Handlers.Tls
                 _inputLength += count;
 
                 ArraySegment<byte> sslBuffer = _sslOwnedBuffer;
-                if (sslBuffer.Array == null)
+                if (sslBuffer.Array is null)
                 {
                     // there is no pending read operation - keep for future
                     return;
@@ -66,7 +66,7 @@ namespace DotNetty.Handlers.Tls
                     return Task.FromResult(read);
                 }
 
-                Debug.Assert(_sslOwnedBuffer.Array == null);
+                Debug.Assert(_sslOwnedBuffer.Array is null);
                 // take note of buffer - we will pass bytes there once available
                 _sslOwnedBuffer = new ArraySegment<byte>(buffer, offset, count);
                 _readCompletionSource = new TaskCompletionSource<int>();

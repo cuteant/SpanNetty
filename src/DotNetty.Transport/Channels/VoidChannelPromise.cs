@@ -29,7 +29,7 @@ namespace DotNetty.Transport.Channels
         /// <param name="fireException"></param>
         public VoidChannelPromise(IChannel channel, bool fireException)
         {
-            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
+            if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
             this.channel = channel;
             this.fireException = fireException;
             this.Task = TaskUtil.FromException(Error);

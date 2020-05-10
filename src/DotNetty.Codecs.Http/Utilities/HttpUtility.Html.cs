@@ -36,7 +36,7 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public static void HtmlEncode(TextWriter output, char[] value, int startIndex, int characterCount)
         {
-            if (null == value || 0u >= (uint)value.Length) { return; }
+            if (value is null || 0u >= (uint)value.Length) { return; }
 
             s_htmlEncoder.Encode(output, value, startIndex, characterCount);
         }
@@ -60,8 +60,8 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public static void HtmlAttributeEncode(string value, TextWriter output)
         {
-            if (value == null) { return; }
-            if (output == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
+            if (value is null) { return; }
+            if (output is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
 
             HtmlAttributeEncodeInternal(value, output);
         }
@@ -176,8 +176,8 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public static void HtmlDecode(string value, TextWriter output)
         {
-            if (null == value) { return; }
-            if (output == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
+            if (value is null) { return; }
+            if (output is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
 
             output.Write(HtmlDecode(value));
         }

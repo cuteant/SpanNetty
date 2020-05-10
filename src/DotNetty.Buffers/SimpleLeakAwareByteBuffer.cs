@@ -14,8 +14,8 @@ namespace DotNetty.Buffers
         internal SimpleLeakAwareByteBuffer(IByteBuffer wrapped, IByteBuffer trackedByteBuf, IResourceLeakTracker leak)
             : base(wrapped)
         {
-            if (null == trackedByteBuf) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.trackedByteBuf); }
-            if (null == leak) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.leak); }
+            if (trackedByteBuf is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.trackedByteBuf); }
+            if (leak is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.leak); }
 
             this.trackedByteBuf = trackedByteBuf;
             this.Leak = leak;
@@ -84,7 +84,7 @@ namespace DotNetty.Buffers
                 buffer.Parent(this);
 
                 IResourceLeakTracker newLeak = AbstractByteBuffer.LeakDetector.Track(buffer);
-                if (newLeak == null)
+                if (newLeak is null)
                 {
                     // No leak detection, just return the derived buffer.
                     return derived;

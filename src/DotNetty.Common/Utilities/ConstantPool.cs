@@ -18,8 +18,8 @@ namespace DotNetty.Common.Utilities
         /// <summary>Shortcut of <c>this.ValueOf(firstNameComponent.Name + "#" + secondNameComponent)</c>.</summary>
         public IConstant ValueOf<T>(Type firstNameComponent, string secondNameComponent)
         {
-            if (null == firstNameComponent) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.firstNameComponent); }
-            if (null == secondNameComponent) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.secondNameComponent); }
+            if (firstNameComponent is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.firstNameComponent); }
+            if (secondNameComponent is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.secondNameComponent); }
 
             return this.ValueOf<T>(firstNameComponent.Name + '#' + secondNameComponent);
         }

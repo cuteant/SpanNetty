@@ -45,7 +45,7 @@ namespace DotNetty.Codecs
                 for (int i = 1; i < expectedTypes.Length; i++)
                 {
                     Type t = expectedTypes[i];
-                    if (t == null)
+                    if (t is null)
                     {
                         break;
                     }

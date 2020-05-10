@@ -44,8 +44,8 @@ namespace DotNetty.Codecs.Http2
 
         public DefaultHttp2RemoteFlowController(IHttp2Connection connection, IStreamByteDistributor streamByteDistributor, IHttp2RemoteFlowControllerListener listener)
         {
-            if (null == connection) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
-            if (null == streamByteDistributor) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.streamByteDistributor); }
+            if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
+            if (streamByteDistributor is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.streamByteDistributor); }
             this.connection = connection;
             this.streamByteDistributor = streamByteDistributor;
 
@@ -104,7 +104,7 @@ namespace DotNetty.Codecs.Http2
         /// <remarks>Any queued <see cref="IHttp2RemoteFlowControlled"/> objects will be sent.</remarks>
         public void SetChannelHandlerContext(IChannelHandlerContext ctx)
         {
-            if (null == ctx) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ctx); }
+            if (ctx is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ctx); }
             this.ctx = ctx;
 
             // Writing the pending bytes will not check writability change and instead a writability change notification
@@ -125,7 +125,7 @@ namespace DotNetty.Codecs.Http2
 
         public void SetInitialWindowSize(int newWindowSize)
         {
-            Debug.Assert(this.ctx == null || this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx is null || this.ctx.Executor.InEventLoop);
             this.monitor.InitialWindowSize(newWindowSize);
         }
 
@@ -168,20 +168,20 @@ namespace DotNetty.Codecs.Http2
 
         public void Listener(IHttp2RemoteFlowControllerListener listener)
         {
-            this.monitor = listener == null ? new WritabilityMonitor(this) : new ListenerWritabilityMonitor(this, listener);
+            this.monitor = listener is null ? new WritabilityMonitor(this) : new ListenerWritabilityMonitor(this, listener);
         }
 
         public void IncrementWindowSize(IHttp2Stream stream, int delta)
         {
-            Debug.Assert(this.ctx == null || this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx is null || this.ctx.Executor.InEventLoop);
             this.monitor.IncrementWindowSize(this.GetState(stream), delta);
         }
 
         public void AddFlowControlled(IHttp2Stream stream, IHttp2RemoteFlowControlled frame)
         {
             // The context can be null assuming the frame will be queued and send later when the context is set.
-            Debug.Assert(this.ctx == null || this.ctx.Executor.InEventLoop);
-            if (null == frame) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frame); }
+            Debug.Assert(this.ctx is null || this.ctx.Executor.InEventLoop);
+            if (frame is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frame); }
             try
             {
                 this.monitor.EnqueueFrame(this.GetState(stream), frame);
@@ -435,7 +435,7 @@ namespace DotNetty.Codecs.Http2
             internal void EnqueueFrame(IHttp2RemoteFlowControlled frame)
             {
                 var last = this.pendingWriteQueue.LastOrDefault;
-                if (null == last)
+                if (last is null)
                 {
                     this.EnqueueFrameWithoutMerge(frame);
                     return;

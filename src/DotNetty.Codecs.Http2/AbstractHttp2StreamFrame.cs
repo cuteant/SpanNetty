@@ -26,7 +26,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (ReferenceEquals(this, other)) { return true; }
 
-            if (null == other) { return false; }
+            if (other is null) { return false; }
 
             return Equals0(other);
         }
@@ -41,7 +41,7 @@ namespace DotNetty.Codecs.Http2
         public override int GetHashCode()
         {
             var thisStream = this.stream;
-            if (null == thisStream) { return base.GetHashCode(); }
+            if (thisStream is null) { return base.GetHashCode(); }
 
             return thisStream.GetHashCode();
         }

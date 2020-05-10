@@ -49,7 +49,7 @@ namespace DotNetty.Codecs.Http2
         /// </param>
         public DefaultHttp2LocalFlowController(IHttp2Connection connection, float windowUpdateRatio, bool autoRefillConnectionWindow)
         {
-            if (null == connection) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
+            if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
 
             this.connection = connection;
             this.WindowUpdateRatio(windowUpdateRatio);
@@ -109,20 +109,20 @@ namespace DotNetty.Codecs.Http2
 
         public IHttp2LocalFlowController FrameWriter(IHttp2FrameWriter frameWriter)
         {
-            if (null == frameWriter) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frameWriter); }
+            if (frameWriter is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frameWriter); }
             this.frameWriter = frameWriter;
             return this;
         }
 
         public void SetChannelHandlerContext(IChannelHandlerContext ctx)
         {
-            if (null == ctx) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ctx); }
+            if (ctx is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ctx); }
             this.ctx = ctx;
         }
 
         public void SetInitialWindowSize(int newWindowSize)
         {
-            Debug.Assert(this.ctx == null || this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx is null || this.ctx.Executor.InEventLoop);
             int delta = newWindowSize - this.initialWindowSize;
             this.initialWindowSize = newWindowSize;
 
@@ -195,7 +195,7 @@ namespace DotNetty.Codecs.Http2
         /// <exception cref="ArgumentException">If the ratio is out of bounds (0, 1).</exception>
         public void WindowUpdateRatio(float ratio)
         {
-            Debug.Assert(this.ctx == null || this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx is null || this.ctx.Executor.InEventLoop);
             CheckValidRatio(ratio);
             this.windowUpdateRatio = ratio;
         }
@@ -336,7 +336,7 @@ namespace DotNetty.Codecs.Http2
 
             public void Window(int initialWindowSize)
             {
-                Debug.Assert(this.controller.ctx == null || this.controller.ctx.Executor.InEventLoop);
+                Debug.Assert(this.controller.ctx is null || this.controller.ctx.Executor.InEventLoop);
                 this.window = this.processedWindow = this.initialStreamWindowSize = initialWindowSize;
             }
 
@@ -350,7 +350,7 @@ namespace DotNetty.Codecs.Http2
 
             public void WindowUpdateRatio(float ratio)
             {
-                Debug.Assert(this.controller.ctx == null || this.controller.ctx.Executor.InEventLoop);
+                Debug.Assert(this.controller.ctx is null || this.controller.ctx.Executor.InEventLoop);
                 this.streamWindowUpdateRatio = ratio;
             }
 
@@ -574,7 +574,7 @@ namespace DotNetty.Codecs.Http2
                 }
                 catch (StreamException e)
                 {
-                    if (this.compositeException == null)
+                    if (this.compositeException is null)
                     {
                         this.compositeException = new CompositeStreamException(e.Error, 4);
                     }

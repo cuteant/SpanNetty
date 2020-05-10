@@ -25,7 +25,7 @@ namespace DotNetty.Codecs.Http2
         /// for the current connection.</param>
         protected AbstractInboundHttp2ToHttpAdapterBuilder(IHttp2Connection connection)
         {
-            if (null == connection) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
+            if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
             this.connection = connection;
         }
 

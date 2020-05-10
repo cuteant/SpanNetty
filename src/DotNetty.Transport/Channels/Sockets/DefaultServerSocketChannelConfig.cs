@@ -21,7 +21,7 @@ namespace DotNetty.Transport.Channels.Sockets
         public DefaultServerSocketChannelConfig(IServerSocketChannel channel, Socket socket)
             : base(channel)
         {
-            if (null == socket) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.socket); }
+            if (socket is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.socket); }
 
             this.Socket = socket;
         }

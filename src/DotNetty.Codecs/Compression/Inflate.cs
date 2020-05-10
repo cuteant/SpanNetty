@@ -128,7 +128,7 @@ namespace DotNetty.Codecs.Compression
 
         internal int InflateReset()
         {
-            if (z == null)
+            if (z is null)
                 return Z_STREAM_ERROR;
 
             z.total_in = z.total_out = 0;
@@ -212,7 +212,7 @@ namespace DotNetty.Codecs.Compression
             int r;
             int b;
 
-            if (z == null || z.next_in == null)
+            if (z is null || z.next_in is null)
             {
                 if (f == Z_FINISH && this.mode == HEAD)
                     return Z_OK;
@@ -244,7 +244,7 @@ namespace DotNetty.Codecs.Compression
                         z.adler = new CRC32();
                         Checksum(2, this.need);
 
-                        if (gheader == null)
+                        if (gheader is null)
                             gheader = new GZIPHeader();
 
                         this.mode = FLAGS;
@@ -728,7 +728,7 @@ namespace DotNetty.Codecs.Compression
 
         internal int InflateSetDictionary(byte[] dictionary, int dictLength)
         {
-            if (z == null || (this.mode != DICT0 && this.wrap != 0))
+            if (z is null || (this.mode != DICT0 && this.wrap != 0))
             {
                 return Z_STREAM_ERROR;
             }
@@ -769,7 +769,7 @@ namespace DotNetty.Codecs.Compression
             long r, w; // temporaries to save total_in and total_out
 
             // set up
-            if (z == null)
+            if (z is null)
                 return Z_STREAM_ERROR;
             if (this.mode != BAD)
             {
@@ -829,7 +829,7 @@ namespace DotNetty.Codecs.Compression
         // waiting for these length bytes.
         internal int InflateSyncPoint()
         {
-            if (z == null || this.blocks == null)
+            if (z is null || this.blocks is null)
                 return Z_STREAM_ERROR;
             return this.blocks.Sync_point();
         }
@@ -873,7 +873,7 @@ namespace DotNetty.Codecs.Compression
 
         int ReadString(int r, int f)
         {
-            if (tmp_string == null)
+            if (tmp_string is null)
             {
                 tmp_string = new MemoryStream();
             }
@@ -900,7 +900,7 @@ namespace DotNetty.Codecs.Compression
 
         int ReadBytes(int r, int f)
         {
-            if (tmp_string == null)
+            if (tmp_string is null)
             {
                 tmp_string = new MemoryStream();
             }

@@ -191,7 +191,7 @@ namespace DotNetty.Codecs.Http
         //
         public HttpMethod(string name)
         {
-            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
 
             name = name.Trim();
             if (string.IsNullOrEmpty(name))

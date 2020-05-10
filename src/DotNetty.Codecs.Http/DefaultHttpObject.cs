@@ -17,7 +17,7 @@ namespace DotNetty.Codecs.Http
             get => this.decoderResult;
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.decoderResult = value;
             }
         }

@@ -126,7 +126,7 @@ namespace DotNetty.Codecs
             }
 
             var buffer = context.Allocator.Buffer(8) as AbstractByteBuffer;
-            if (null == buffer)
+            if (buffer is null)
             {
                 buffer.Release();
                 CThrowHelper.ThrowNotSupportedException_ByteBuffer();

@@ -20,7 +20,7 @@ namespace DotNetty.Common.Internal.Logging
         /// <param name="name">A friendly name for the new logger instance.</param>
         protected AbstractInternalLogger(string name)
         {
-            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
 
             this.Name = name;
         }

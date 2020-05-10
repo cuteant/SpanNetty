@@ -21,11 +21,11 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 return 0;
             }
-            if (x == null)
+            if (x is null)
             {
                 return -1;
             }
-            if (y == null)
+            if (y is null)
             {
                 return 1;
             }
@@ -63,7 +63,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 return true;
             }
             
-            if (x == null || y == null)
+            if (x is null || y is null)
             {
                 return false;
             }

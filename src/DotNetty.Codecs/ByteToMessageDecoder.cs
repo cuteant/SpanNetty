@@ -141,7 +141,7 @@ namespace DotNetty.Codecs
 
         public void SetCumulator(CumulationFunc cumulationFunc)
         {
-            if (null == cumulationFunc) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.cumulationFunc); }
+            if (cumulationFunc is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.cumulationFunc); }
 
             this.cumulator = cumulationFunc;
         }
@@ -224,7 +224,7 @@ namespace DotNetty.Codecs
                 ThreadLocalObjectList output = ThreadLocalObjectList.NewInstance();
                 try
                 {
-                    this.first = this.cumulation == null;
+                    this.first = this.cumulation is null;
                     if (this.first)
                     {
                         this.cumulation = data;
@@ -408,9 +408,9 @@ namespace DotNetty.Codecs
 
         protected virtual void CallDecode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
-            if (null == context) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.context); }
-            if (null == input) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.input); }
-            if (null == output) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.output); }
+            if (context is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.context); }
+            if (input is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.input); }
+            if (output is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.output); }
 
             try
             {

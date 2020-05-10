@@ -75,7 +75,7 @@ namespace DotNetty.Codecs.Http2
                 this.children = null;
             }
 
-            internal bool IsTerminal() => this.children == null;
+            internal bool IsTerminal() => this.children is null;
         }
 
         static Node BuildTree(int[] codes, byte[] lengths)
@@ -102,7 +102,7 @@ namespace DotNetty.Codecs.Http2
 
                 length -= 8;
                 int i = code.RightUShift(length) & 0xFF;
-                if (current.children[i] == null)
+                if (current.children[i] is null)
                 {
                     current.children[i] = new Node();
                 }

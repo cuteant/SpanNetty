@@ -14,7 +14,7 @@ namespace DotNetty.Codecs.Http2
 
         public DefaultHttp2SettingsFrame(Http2Settings settings)
         {
-            if (null == settings) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
+            if (settings is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
             this.settings = settings;
         }
 

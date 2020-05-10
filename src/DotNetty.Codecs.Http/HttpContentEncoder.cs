@@ -71,7 +71,7 @@ namespace DotNetty.Codecs.Http
                 case State.AwaitHeaders:
                 {
                     EnsureHeaders(msg);
-                    Debug.Assert(this.encoder == null);
+                    Debug.Assert(this.encoder is null);
 
                     int code = res.Status.Code;
                     ICharSequence acceptEncoding;
@@ -132,7 +132,7 @@ namespace DotNetty.Codecs.Http
                     Result result = this.BeginEncode(res, acceptEncoding);
 
                     // If unable to encode, pass through.
-                    if (result == null)
+                    if (result is null)
                     {
                         if (isFull)
                         {
@@ -353,7 +353,7 @@ namespace DotNetty.Codecs.Http
             while(true)
             {
                 var buf = this.encoder.ReadOutbound<IByteBuffer>();
-                if (buf == null)
+                if (buf is null)
                 {
                     break;
                 }
@@ -370,8 +370,8 @@ namespace DotNetty.Codecs.Http
         {
             public Result(ICharSequence targetContentEncoding, EmbeddedChannel contentEncoder)
             {
-                if (null == targetContentEncoding) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.targetContentEncoding); }
-                if (null == contentEncoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentEncoder); }
+                if (targetContentEncoding is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.targetContentEncoding); }
+                if (contentEncoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentEncoder); }
 
                 this.TargetContentEncoding = targetContentEncoding;
                 this.ContentEncoder = contentEncoder;

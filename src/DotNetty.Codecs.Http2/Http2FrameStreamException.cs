@@ -13,7 +13,7 @@ namespace DotNetty.Codecs.Http2
         public Http2FrameStreamException(IHttp2FrameStream stream, Http2Error error, Exception cause)
             : base(cause.Message, cause)
         {
-            if (null == stream) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stream); }
+            if (stream is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stream); }
 
             this.Stream = stream;
             this.Error = error;

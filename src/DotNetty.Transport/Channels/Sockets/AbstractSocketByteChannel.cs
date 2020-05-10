@@ -191,7 +191,7 @@ namespace DotNetty.Transport.Channels.Sockets
             while (true)
             {
                 object msg = input.Current;
-                if (msg == null)
+                if (msg is null)
                 {
                     // Wrote all messages.
                     break;

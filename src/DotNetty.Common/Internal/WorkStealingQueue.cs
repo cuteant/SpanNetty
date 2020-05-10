@@ -130,7 +130,7 @@ namespace DotNetty.Common.Internal
                     item = Volatile.Read(ref this.array[idx]);
 
                     // Check for nulls in the array.
-                    if (item == null)
+                    if (item is null)
                     {
                         continue;
                     }
@@ -162,7 +162,7 @@ namespace DotNetty.Common.Internal
                     item = Volatile.Read(ref this.array[idx]);
 
                     // Check for nulls in the array.
-                    if (item == null)
+                    if (item is null)
                     {
                         continue;
                     }
@@ -185,7 +185,7 @@ namespace DotNetty.Common.Internal
                             item = Volatile.Read(ref this.array[idx]);
 
                             // Check for nulls in the array.
-                            if (item == null)
+                            if (item is null)
                             {
                                 continue;
                             }
@@ -239,7 +239,7 @@ namespace DotNetty.Common.Internal
                             item = Volatile.Read(ref this.array[idx]);
 
                             // Check for nulls in the array.
-                            if (item == null)
+                            if (item is null)
                             {
                                 continue;
                             }

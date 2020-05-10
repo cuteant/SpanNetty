@@ -135,7 +135,7 @@ namespace DotNetty.Common.Internal
         /// <returns>positive - current is better, 0 - cannot tell from MAC addr, negative - candidate is better.</returns>
         static int CompareAddresses(byte[] current, byte[] candidate)
         {
-            if (candidate == null)
+            if (candidate is null)
             {
                 return 1;
             }

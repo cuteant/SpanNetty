@@ -15,7 +15,7 @@ namespace DotNetty.Codecs
 
         public DatagramPacketDecoder(MessageToMessageDecoder<IByteBuffer> decoder)
         {
-            if (null == decoder) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.decoder); }
+            if (decoder is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.decoder); }
 
             this.decoder = decoder;
         }

@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http2
         {
             IHttp2Stream stream = this.connection.Stream(streamId);
             Http2Decompressor decompressor = this.Decompressor(stream);
-            if (decompressor == null)
+            if (decompressor is null)
             {
                 // The decompressor may be null if no compatible encoding type was found in this stream's headers
                 return this.listener.OnDataRead(ctx, streamId, data, padding, endOfStream);
@@ -57,11 +57,11 @@ namespace DotNetty.Codecs.Http2
                 // call retain here as it will call release after its written to the channel
                 channel.WriteInbound(data.Retain());
                 var buf = NextReadableBuf(channel);
-                if (buf == null && endOfStream && channel.Finish())
+                if (buf is null && endOfStream && channel.Finish())
                 {
                     buf = NextReadableBuf(channel);
                 }
-                if (buf == null)
+                if (buf is null)
                 {
                     if (endOfStream)
                     {
@@ -81,11 +81,11 @@ namespace DotNetty.Codecs.Http2
                     while (true)
                     {
                         var nextBuf = NextReadableBuf(channel);
-                        var decompressedEndOfStream = nextBuf == null && endOfStream;
+                        var decompressedEndOfStream = nextBuf is null && endOfStream;
                         if (decompressedEndOfStream && channel.Finish())
                         {
                             nextBuf = NextReadableBuf(channel);
-                            decompressedEndOfStream = nextBuf == null;
+                            decompressedEndOfStream = nextBuf is null;
                         }
 
                         decompressor.IncrementDecompressedBytes(buf.ReadableBytes);
@@ -94,7 +94,7 @@ namespace DotNetty.Codecs.Http2
                         // control knows about.
                         flowController.ConsumeBytes(stream,
                                 this.listener.OnDataRead(ctx, streamId, buf, padding, decompressedEndOfStream));
-                        if (nextBuf == null)
+                        if (nextBuf is null)
                         {
                             break;
                         }
@@ -191,10 +191,10 @@ namespace DotNetty.Codecs.Http2
         private void InitDecompressor(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, bool endOfStream)
         {
             var stream = this.connection.Stream(streamId);
-            if (stream == null) { return; }
+            if (stream is null) { return; }
 
             Http2Decompressor decompressor = this.Decompressor(stream);
-            if (decompressor == null && !endOfStream)
+            if (decompressor is null && !endOfStream)
             {
                 // Determine the content encoding.
                 if (!headers.TryGet(HttpHeaderNames.ContentEncoding, out var contentEncoding))
@@ -263,7 +263,7 @@ namespace DotNetty.Codecs.Http2
             while (true)
             {
                 var buf = decompressor.ReadInbound<IByteBuffer>();
-                if (buf == null) { return null; }
+                if (buf is null) { return null; }
                 if (!buf.IsReadable())
                 {
                     buf.Release();
@@ -302,7 +302,7 @@ namespace DotNetty.Codecs.Http2
 
             public ConsumedBytesConverter(DelegatingDecompressorFrameListener frameListener, IHttp2LocalFlowController flowController)
             {
-                if (null == flowController) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.flowController); }
+                if (flowController is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.flowController); }
                 this.flowController = flowController;
                 this.frameListener = frameListener;
             }

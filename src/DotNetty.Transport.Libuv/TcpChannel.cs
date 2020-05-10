@@ -40,7 +40,7 @@ namespace DotNetty.Transport.Libuv
 
         protected override void DoRegister()
         {
-            if (this.tcp == null)
+            if (this.tcp is null)
             {
                 var loopExecutor = (LoopExecutor)this.EventLoop;
                 this.tcp = new Tcp(loopExecutor.UnsafeLoop);
@@ -53,7 +53,7 @@ namespace DotNetty.Transport.Libuv
 
         internal override NativeHandle GetHandle()
         {
-            if (this.tcp == null)
+            if (this.tcp is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_TcpHandle();
             }

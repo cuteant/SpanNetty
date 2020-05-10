@@ -33,7 +33,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 IChannelPipeline p = wrapped.Item2;
                 IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
-                if (ctx == null)
+                if (ctx is null)
                 {
                     wrapped.Item1.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
                     return;

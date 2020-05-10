@@ -29,7 +29,7 @@ namespace DotNetty.Buffers
         public FixedCompositeByteBuf(IByteBufferAllocator allocator, params IByteBuffer[] buffers)
             : base(AbstractByteBufferAllocator.DefaultMaxCapacity)
         {
-            if (null == buffers || 0u >= (uint)buffers.Length)
+            if (buffers is null || 0u >= (uint)buffers.Length)
             {
                 this.buffers = Empty;
                 this.nioBufferCount = 1;
@@ -177,7 +177,7 @@ namespace DotNetty.Buffers
                 readable += b.ReadableBytes;
                 if (index < readable)
                 {
-                    if (comp == null)
+                    if (comp is null)
                     {
                         // Create a new component and store it in the array so it not create a new object
                         // on the next access.

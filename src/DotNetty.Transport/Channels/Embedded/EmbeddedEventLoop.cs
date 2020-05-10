@@ -36,7 +36,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
         public override void Execute(IRunnable command)
         {
-            if (command == null)
+            if (command is null)
             {
                 ThrowHelper.ThrowNullReferenceException_Command();
             }
@@ -74,7 +74,7 @@ namespace DotNetty.Transport.Channels.Embedded
             while(true)
             {
                 IRunnable task = this.PollScheduledTask(time);
-                if (task == null)
+                if (task is null)
                 {
                     return this.NextScheduledTaskNanos();
                 }

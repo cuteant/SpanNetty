@@ -42,7 +42,7 @@ namespace DotNetty.Handlers.IPFilter
             var remoteAddress = (T)ctx.Channel.RemoteAddress;
             
             // If the remote address is not available yet, defer the decision.
-            if (remoteAddress == null)
+            if (remoteAddress is null)
             {
                 return false;
             }

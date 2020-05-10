@@ -16,8 +16,8 @@ namespace DotNetty.Codecs.Http2
 
         public Http2InboundFrameLogger(IHttp2FrameReader reader, IHttp2FrameLogger logger)
         {
-            if (null == reader) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.reader); }
-            if (null == logger) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.logger); }
+            if (reader is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.reader); }
+            if (logger is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.logger); }
             this.reader = reader;
             this.logger = logger;
         }

@@ -17,7 +17,7 @@ namespace DotNetty.Codecs.Http2
 
         public DecoratingHttp2ConnectionDecoder(IHttp2ConnectionDecoder decoder)
         {
-            if (null == decoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoder); }
+            if (decoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoder); }
 
             this.innerDecoder = decoder;
         }

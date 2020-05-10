@@ -37,7 +37,7 @@ namespace DotNetty.Buffers
         /// <exception cref="ArgumentNullException">Thrown when the instance of <see cref="IByteBuffer" /> that is passed in is null.</exception>
         public ByteBufferWriter(IByteBuffer byteBuffer)
         {
-            if (null == byteBuffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.byteBuffer); }
+            if (byteBuffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.byteBuffer); }
             if (!byteBuffer.IsSingleIoBuffer) { ThrowHelper.ThrowNotSupportedException_UncompositeBuffer(); }
 
             _output = byteBuffer;

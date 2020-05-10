@@ -28,7 +28,7 @@ namespace DotNetty.Common.Utilities
 
         public static int ParseInt(ICharSequence seq, int start, int end, int radix)
         {
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
+            if (seq is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
             if (radix < MinRadix || radix > MaxRadix) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             if (start == end)
@@ -50,7 +50,7 @@ namespace DotNetty.Common.Utilities
 
         public static int ParseInt(ICharSequence seq, int start, int end, int radix, bool negative)
         {
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
+            if (seq is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
             if (radix < MinRadix || radix > MaxRadix) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             int max = int.MinValue / radix;
@@ -95,7 +95,7 @@ namespace DotNetty.Common.Utilities
                 return asciiString.ParseLong(radix);
             }
 
-            if (str == null
+            if (str is null
                 || radix < MinRadix
                 || radix > MaxRadix)
             {

@@ -25,14 +25,14 @@ namespace DotNetty.Handlers.Tls
         /// </summary>
         public TlsHandshakeCompletionEvent(Exception exception)
         {
-            if (null == exception) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.exception); }
+            if (exception is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.exception); }
             this.exception = exception;
         }
 
         /// <summary>
         ///     Return {@code true} if the handshake was successful
         /// </summary>
-        public bool IsSuccessful => this.exception == null;
+        public bool IsSuccessful => this.exception is null;
 
         /// <summary>
         ///     Return the {@link Throwable} if {@link #isSuccess()} returns {@code false}
@@ -43,7 +43,7 @@ namespace DotNetty.Handlers.Tls
         public override string ToString()
         {
             Exception ex = this.Exception;
-            return ex == null ? "TlsHandshakeCompletionEvent(SUCCESS)" : $"TlsHandshakeCompletionEvent({ex})";
+            return ex is null ? "TlsHandshakeCompletionEvent(SUCCESS)" : $"TlsHandshakeCompletionEvent({ex})";
         }
     }
 }

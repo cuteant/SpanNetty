@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http2
         public IHttp2FrameStream NewStream()
         {
             Http2FrameCodec codec = this.InternalframeCodec;
-            if (codec == null)
+            if (codec is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_RequireHttp2FrameCodec();
             }
@@ -80,7 +80,7 @@ namespace DotNetty.Codecs.Http2
         private static Http2FrameCodec RequireHttp2FrameCodec(IChannelHandlerContext ctx)
         {
             var frameCodecCtx = ctx.Pipeline.Context<Http2FrameCodec>();
-            if (frameCodecCtx == null)
+            if (frameCodecCtx is null)
             {
                 ThrowHelper.ThrowArgumentException_RequireHttp2FrameCodec();
             }

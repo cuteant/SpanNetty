@@ -29,7 +29,7 @@ namespace DotNetty.Codecs.Http2
 
         public Http2StreamChannelBootstrap(IChannel channel)
         {
-            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
+            if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
             this.channel = channel;
         }
 
@@ -43,9 +43,9 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public Http2StreamChannelBootstrap Option<T>(ChannelOption<T> option, T value)
         {
-            if (null == option) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.option); }
+            if (option is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.option); }
 
-            if (value == null)
+            if (value is null)
             {
                 this.options.TryRemove(option, out _);
             }
@@ -67,9 +67,9 @@ namespace DotNetty.Codecs.Http2
         public Http2StreamChannelBootstrap Attr<T>(AttributeKey<T> key, T value)
             where T : class
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
-            if (value == null)
+            if (value is null)
             {
                 this.attrs.TryRemove(key, out _);
             }
@@ -87,7 +87,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public Http2StreamChannelBootstrap Handler(IChannelHandler handler)
         {
-            if (null == handler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
+            if (handler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
 
             this.InternalHandler = handler;
             return this;
@@ -101,7 +101,7 @@ namespace DotNetty.Codecs.Http2
         public Task<IHttp2StreamChannel> OpenAsync(TaskCompletionSource<IHttp2StreamChannel> promise)
         {
             var ctx = channel.Pipeline.Context<Http2MultiplexCodec>();
-            if (ctx == null)
+            if (ctx is null)
             {
                 if (channel.Active)
                 {

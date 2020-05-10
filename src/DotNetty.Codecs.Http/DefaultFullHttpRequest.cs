@@ -36,7 +36,7 @@ namespace DotNetty.Codecs.Http
             IByteBuffer content, bool validateHeaders)
             : base(httpVersion, method, uri, validateHeaders)
         {
-            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
+            if (content is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
 
             this.content = content;
             this.trailingHeader = new DefaultHttpHeaders(validateHeaders);
@@ -46,8 +46,8 @@ namespace DotNetty.Codecs.Http
             IByteBuffer content, HttpHeaders headers, HttpHeaders trailingHeader) 
             : base(httpVersion, method, uri, headers)
         {
-            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
-            if (null == trailingHeader) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.trailingHeader); }
+            if (content is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
+            if (trailingHeader is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.trailingHeader); }
 
             this.content = content;
             this.trailingHeader = trailingHeader;

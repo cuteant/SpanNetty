@@ -18,7 +18,7 @@ namespace DotNetty.Codecs.Http2
 
         public DecoratingHttp2FrameWriter(IHttp2FrameWriter writer)
         {
-            if (null == writer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.writer); }
+            if (writer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.writer); }
 
             this.innerWriter = writer;
         }

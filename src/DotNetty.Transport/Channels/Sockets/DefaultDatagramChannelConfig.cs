@@ -17,7 +17,7 @@ namespace DotNetty.Transport.Channels.Sockets
         public DefaultDatagramChannelConfig(IDatagramChannel channel, Socket socket)
             : base(channel, new FixedRecvByteBufAllocator(DefaultFixedBufferSize))
         {
-            if (null == socket) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.socket); }
+            if (socket is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.socket); }
 
             this.socket = socket;
         }
@@ -377,7 +377,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
                 try
                 {
@@ -426,7 +426,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
                 try
                 {
@@ -470,7 +470,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         internal int GetNetworkInterfaceIndex(NetworkInterface networkInterface)
         {
-            if (null == networkInterface) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.networkInterface); }
+            if (networkInterface is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.networkInterface); }
 
             NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
             for (int index = 0; index < interfaces.Length; index++)

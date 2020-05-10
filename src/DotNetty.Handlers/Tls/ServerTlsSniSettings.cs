@@ -10,7 +10,7 @@ namespace DotNetty.Handlers.Tls
     {
         public ServerTlsSniSettings(Func<string, Task<ServerTlsSettings>> serverTlsSettingMap, string defaultServerHostName = null)
         {
-            if (null == serverTlsSettingMap) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.serverTlsSettingMap); }
+            if (serverTlsSettingMap is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.serverTlsSettingMap); }
             this.ServerTlsSettingMap = serverTlsSettingMap;
             this.DefaultServerHostName = defaultServerHostName;
         }

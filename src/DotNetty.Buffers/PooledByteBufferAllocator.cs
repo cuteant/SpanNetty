@@ -91,7 +91,7 @@ namespace DotNetty.Buffers
             {
                 Logger.Debug("-Dio.netty.allocator.numHeapArenas: {}", DefaultNumHeapArena);
                 Logger.Debug("-Dio.netty.allocator.numDirectArenas: {}", DefaultNumDirectArena);
-                if (pageSizeFallbackCause == null)
+                if (pageSizeFallbackCause is null)
                 {
                     Logger.Debug("-Dio.netty.allocator.pageSize: {}", DefaultPageSize);
                 }
@@ -99,7 +99,7 @@ namespace DotNetty.Buffers
                 {
                     Logger.Debug("-Dio.netty.allocator.pageSize: {}", DefaultPageSize, pageSizeFallbackCause);
                 }
-                if (maxOrderFallbackCause == null)
+                if (maxOrderFallbackCause is null)
                 {
                     Logger.Debug("-Dio.netty.allocator.maxOrder: {}", DefaultMaxOrder);
                 }
@@ -310,7 +310,7 @@ namespace DotNetty.Buffers
 
             PoolArena<T> LeastUsedArena<T>(PoolArena<T>[] arenas)
             {
-                if (arenas == null || 0u >= (uint)arenas.Length)
+                if (arenas is null || 0u >= (uint)arenas.Length)
                 {
                     return null;
                 }
@@ -357,7 +357,7 @@ namespace DotNetty.Buffers
 
         static long UsedMemory(PoolArena<byte[]>[] arenas)
         {
-            if (arenas == null)
+            if (arenas is null)
             {
                 return -1;
             }

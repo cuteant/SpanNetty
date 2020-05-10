@@ -15,7 +15,7 @@ namespace DotNetty.Common.Utilities
 
         internal CharSequenceEnumerator(ICharSequence charSequence)
         {
-            if (null == charSequence) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charSequence); }
+            if (charSequence is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charSequence); }
 
             this.charSequence = charSequence;
             this.index = -1;

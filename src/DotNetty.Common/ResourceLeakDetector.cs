@@ -98,7 +98,7 @@ namespace DotNetty.Common
 
         public ResourceLeakDetector(string resourceType, int samplingInterval)
         {
-            if (null == resourceType) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.resourceType); }
+            if (resourceType is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.resourceType); }
             if (samplingInterval <= 0) { ThrowHelper.ThrowArgumentException_Positive(samplingInterval, ExceptionArgument.samplingInterval); }
 
             this.resourceType = resourceType;
@@ -229,7 +229,7 @@ namespace DotNetty.Common
                     bool dropped;
                     do
                     {
-                        if ((prevHead = oldHead = thisHead) == null)
+                        if ((prevHead = oldHead = thisHead) is null)
                         {
                             // already closed.
                             return;

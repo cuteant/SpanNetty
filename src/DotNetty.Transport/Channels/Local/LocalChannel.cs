@@ -160,7 +160,7 @@ namespace DotNetty.Transport.Channels.Local
                     var thisLocalAddr = Volatile.Read(ref this.localAddress);
                     if (thisLocalAddr is object)
                     {
-                        if (this.Parent == null)
+                        if (this.Parent is null)
                         {
                             LocalChannelRegistry.Unregister(thisLocalAddr);
                         }
@@ -327,7 +327,7 @@ namespace DotNetty.Transport.Channels.Local
                 while (true)
                 {
                     object msg = buffer.Current;
-                    if (msg == null)
+                    if (msg is null)
                     {
                         break;
                     }
@@ -409,7 +409,7 @@ namespace DotNetty.Transport.Channels.Local
 
         void ReleaseInboundBuffers()
         {
-            Debug.Assert(this.EventLoop == null || this.EventLoop.InEventLoop);
+            Debug.Assert(this.EventLoop is null || this.EventLoop.InEventLoop);
             Interlocked.Exchange(ref this.readInProgress, SharedConstants.False);
             var inboundBuffer = this.inboundBuffer;
             while (inboundBuffer.TryDequeue(out object msg))
@@ -477,7 +477,7 @@ namespace DotNetty.Transport.Channels.Local
                 if (Volatile.Read(ref this.channel.state) != State.Bound)
                 {
                     // Not bound yet and no localAddress specified - get one.
-                    if (localAddress == null)
+                    if (localAddress is null)
                     {
                         localAddress = new LocalAddress(this.channel);
                     }

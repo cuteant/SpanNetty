@@ -96,9 +96,9 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public HttpPostRequestEncoder(IHttpDataFactory factory, IHttpRequest request, bool multipart, EncoderMode encoderMode)
         {
-            if (null == request) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.request); }
-            if (null == factory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
-            if (null == charset) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
+            if (request is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.request); }
+            if (factory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
+            if (charset is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
 
             this.request = request;
             this.factory = factory;
@@ -154,7 +154,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void SetBodyHttpDatas(List<IInterfaceHttpData> list)
         {
-            if (null == list) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.list); }
+            if (list is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.list); }
 
             this.globalBodySize = 0;
             this.bodyListDatas.Clear();
@@ -169,7 +169,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void AddBodyAttribute(string name, string value)
         {
-            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
             IAttribute data = this.factory.CreateAttribute(this.request, name, value ?? StringUtil.EmptyString);
             this.AddBodyHttpData(data);
         }
@@ -182,16 +182,16 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void AddBodyFileUpload(string name, string fileName, FileStream fileStream, string contentType, bool isText)
         {
-            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
-            if (null == fileStream) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.fileStream); }
+            if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (fileStream is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.fileStream); }
 
-            if (fileName == null)
+            if (fileName is null)
             {
                 fileName = StringUtil.EmptyString;
             }
             string scontentType = contentType;
             string contentTransferEncoding = null;
-            if (contentType == null)
+            if (contentType is null)
             {
                 scontentType = isText
                     ? HttpPostBodyUtil.DefaultTextContentType
@@ -230,7 +230,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void AddBodyHttpData(IInterfaceHttpData data)
         {
-            if (null == data) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.data); }
+            if (data is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.data); }
             if (this.headerFinalized)
             {
                 ThrowHelper.ThrowErrorDataEncoderException_CannotAddValue();
@@ -660,7 +660,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         string EncodeAttribute(string value, Encoding stringEncoding)
         {
-            if (value == null)
+            if (value is null)
             {
                 return string.Empty;
             }
@@ -707,7 +707,7 @@ namespace DotNetty.Codecs.Http.Multipart
         // This is the Multipart version.
         IHttpContent EncodeNextChunkMultipart(int sizeleft)
         {
-            if (this.currentData == null)
+            if (this.currentData is null)
             {
                 return null;
             }
@@ -734,7 +734,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     return null;
                 }
             }
-            this.currentBuffer = this.currentBuffer == null
+            this.currentBuffer = this.currentBuffer is null
                 ? buffer
                 : Unpooled.WrappedBuffer(this.currentBuffer, buffer);
 
@@ -752,7 +752,7 @@ namespace DotNetty.Codecs.Http.Multipart
         // trying to get* sizeleft bytes more into the currentBuffer.This is the UrlEncoded version.
         IHttpContent EncodeNextChunkUrlEncoded(int sizeleft)
         {
-            if (this.currentData == null)
+            if (this.currentData is null)
             {
                 return null;
             }
@@ -765,7 +765,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 string key = this.currentData.Name;
                 buffer = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes(key));
                 this.isKey = false;
-                if (this.currentBuffer == null)
+                if (this.currentBuffer is null)
                 {
                     this.currentBuffer = Unpooled.WrappedBuffer(buffer,
                         Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("=")));
@@ -808,7 +808,7 @@ namespace DotNetty.Codecs.Http.Multipart
             if (0u >= (uint)buffer.Capacity)
             {
                 this.currentData = null;
-                if (this.currentBuffer == null)
+                if (this.currentBuffer is null)
                 {
                     this.currentBuffer = delimiter;
                 }
@@ -829,7 +829,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
 
             // Put it all together: name=value&
-            if (this.currentBuffer == null)
+            if (this.currentBuffer is null)
             {
                 this.currentBuffer = delimiter is object
                     ? Unpooled.WrappedBuffer(buffer, delimiter)
@@ -918,7 +918,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     chunk = this.EncodeNextChunkUrlEncoded(size);
                 }
-                if (chunk == null)
+                if (chunk is null)
                 {
                     // not enough
                     size = this.CalculateRemainingSize();
@@ -944,7 +944,7 @@ namespace DotNetty.Codecs.Http.Multipart
         IHttpContent LastChunk()
         {
             this.isLastChunk = true;
-            if (this.currentBuffer == null)
+            if (this.currentBuffer is null)
             {
                 this.isLastChunkSent = true;
                 // LastChunk with no more data

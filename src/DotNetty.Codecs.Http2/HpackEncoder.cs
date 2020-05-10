@@ -398,7 +398,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="value"></param>
         HeaderEntry GetEntry(ICharSequence name, ICharSequence value)
         {
-            if (0u >= (uint)this.Length() || name == null || value == null)
+            if (0u >= (uint)this.Length() || name is null || value is null)
             {
                 return null;
             }
@@ -425,7 +425,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         int GetIndex(ICharSequence name)
         {
-            if (0u >= (uint)this.Length() || name == null)
+            if (0u >= (uint)this.Length() || name is null)
             {
                 return -1;
             }

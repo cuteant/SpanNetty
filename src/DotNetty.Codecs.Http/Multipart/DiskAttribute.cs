@@ -57,7 +57,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
                 byte[] bytes = this.Charset.GetBytes(value);
                 CheckSize(bytes.Length, this.MaxSize);

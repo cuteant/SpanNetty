@@ -27,7 +27,7 @@ namespace DotNetty.Codecs.Http.Cookies
         public DefaultCookie(string name, string value)
         {
             if (string.IsNullOrEmpty(name?.Trim())) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             this.name = name;
             this.value = value;
@@ -40,7 +40,7 @@ namespace DotNetty.Codecs.Http.Cookies
             get => this.value;
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.value = value;
             }
         }
@@ -106,14 +106,14 @@ namespace DotNetty.Codecs.Http.Cookies
                 return false;
             }
 
-            if (this.path == null)
+            if (this.path is null)
             {
                 if (other.Path is object)
                 {
                     return false;
                 }
             }
-            else if (other.Path == null)
+            else if (other.Path is null)
             {
                 return false;
             }
@@ -127,7 +127,7 @@ namespace DotNetty.Codecs.Http.Cookies
                 return false;
             }
 
-            if (this.domain == null)
+            if (this.domain is null)
             {
                 if (other.Domain is object)
                 {
@@ -150,14 +150,14 @@ namespace DotNetty.Codecs.Http.Cookies
                 return v;
             }
 
-            if (this.path == null)
+            if (this.path is null)
             {
                 if (other.Path is object)
                 {
                     return -1;
                 }
             }
-            else if (other.Path == null)
+            else if (other.Path is null)
             {
                 return 1;
             }
@@ -170,14 +170,14 @@ namespace DotNetty.Codecs.Http.Cookies
                 }
             }
 
-            if (this.domain == null)
+            if (this.domain is null)
             {
                 if (other.Domain is object)
                 {
                     return -1;
                 }
             }
-            else if (other.Domain == null)
+            else if (other.Domain is null)
             {
                 return 1;
             }

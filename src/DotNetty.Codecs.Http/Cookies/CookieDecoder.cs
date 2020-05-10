@@ -34,7 +34,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
             var sequence = new StringCharSequence(header, valueBegin, valueEnd - valueBegin);
             ICharSequence unwrappedValue = UnwrapValue(sequence);
-            if (unwrappedValue == null)
+            if (unwrappedValue is null)
             {
                 if (Logger.DebugEnabled) Logger.SkippingCookieBecauseStartingQuotesAreNotProperlyBalancedIn(sequence);
                 return null;

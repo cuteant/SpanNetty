@@ -16,7 +16,7 @@ namespace DotNetty.Codecs.Redis.Messages
 
         public ArrayRedisMessage(IList<IRedisMessage> childMessages)
         {
-            if (null == childMessages) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childMessages); }
+            if (childMessages is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childMessages); }
             // do not retain here. children are already retained when created.
             this.Children = childMessages;
         }

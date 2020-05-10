@@ -18,7 +18,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
         public override bool TryAcceptInboundMessage(object msg, out WebSocketFrame frame)
         {
             frame = msg as WebSocketFrame;
-            if (null == frame) { return false; }
+            if (frame is null) { return false; }
 
             switch (frame.Opcode)
             {

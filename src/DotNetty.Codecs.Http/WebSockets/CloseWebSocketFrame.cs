@@ -36,7 +36,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         static IByteBuffer NewBinaryData(int statusCode, ICharSequence reasonText)
         {
-            if (reasonText == null)
+            if (reasonText is null)
             {
                 reasonText = StringCharSequence.Empty;
             }
@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public int StatusCode()
         {
             IByteBuffer binaryData = this.Content;
-            if (binaryData == null || 0u >= (uint)binaryData.Capacity)
+            if (binaryData is null || 0u >= (uint)binaryData.Capacity)
             {
                 return -1;
             }
@@ -78,7 +78,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public ICharSequence ReasonText()
         {
             IByteBuffer binaryData = this.Content;
-            if (binaryData == null || binaryData.Capacity <= 2)
+            if (binaryData is null || binaryData.Capacity <= 2)
             {
                 return StringCharSequence.Empty;
             }

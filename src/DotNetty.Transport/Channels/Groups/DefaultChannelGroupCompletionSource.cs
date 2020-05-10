@@ -24,8 +24,8 @@ namespace DotNetty.Transport.Channels.Groups
         public DefaultChannelGroupCompletionSource(IChannelGroup group, Dictionary<IChannel, Task> futures /*, IEventExecutor executor*/, object state)
             : base(state)
         {
-            if (null == group) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.group); }
-            if (null == futures) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.futures); }
+            if (group is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.group); }
+            if (futures is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.futures); }
 
             this.Group = group;
             this.futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);

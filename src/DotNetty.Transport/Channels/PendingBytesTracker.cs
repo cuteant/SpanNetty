@@ -6,7 +6,7 @@
 
         protected PendingBytesTracker(IMessageSizeEstimatorHandle estimatorHandle)
         {
-            if (null == estimatorHandle) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.estimatorHandle); }
+            if (estimatorHandle is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.estimatorHandle); }
             this.estimatorHandle = estimatorHandle;
         }
 
@@ -23,7 +23,7 @@
                 // We need to guard against null as channel.unsafe().outboundBuffer() may returned null
                 // if the channel was already closed when constructing the PendingBytesTracker.
                 // See https://github.com/netty/netty/issues/3967
-                return buffer == null 
+                return buffer is null 
                     ? (PendingBytesTracker)new NoopPendingBytesTracker(handle) 
                     : new ChannelOutboundBufferPendingBytesTracker(buffer, handle);
             }

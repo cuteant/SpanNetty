@@ -12,7 +12,7 @@ namespace DotNetty.Common
         public override ObjectPool<T> Create<T>(IPooledObjectPolicy<T> policy)
         {
             var threadLocalPolicy = policy as IThreadLocalPooledObjectPolicy<T>;
-            if (threadLocalPolicy == null)
+            if (threadLocalPolicy is null)
             {
                 ThrowHelper.ThrowInvalidCastException<T>();
             }
@@ -22,7 +22,7 @@ namespace DotNetty.Common
         public override ObjectPool<T> Create<T>(IPooledObjectPolicy<T> policy, int maximumRetained)
         {
             var threadLocalPolicy = policy as IThreadLocalPooledObjectPolicy<T>;
-            if (threadLocalPolicy == null)
+            if (threadLocalPolicy is null)
             {
                 ThrowHelper.ThrowInvalidCastException<T>();
             }

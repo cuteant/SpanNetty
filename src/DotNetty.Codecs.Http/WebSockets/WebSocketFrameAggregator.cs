@@ -20,7 +20,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public override bool TryAcceptInboundMessage(object msg, out WebSocketFrame message)
         {
             message = msg as WebSocketFrame;
-            if (null == message) { return false; }
+            if (message is null) { return false; }
 
             switch (message.Opcode)
             {
@@ -112,7 +112,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     break;
 
                 case Opcode.Cont:
-                    if (this.currentMessage == null)
+                    if (this.currentMessage is null)
                     {
                         // it is possible that a TooLongFrameException was already thrown but we can still discard data
                         // until the begging of the next request/response.

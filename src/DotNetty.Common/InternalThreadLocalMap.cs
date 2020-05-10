@@ -59,7 +59,7 @@ namespace DotNetty.Common
         public static InternalThreadLocalMap Get()
         {
             InternalThreadLocalMap ret = slowThreadLocalMap;
-            if (ret == null)
+            if (ret is null)
             {
                 ret = new InternalThreadLocalMap();
                 slowThreadLocalMap = ret;
@@ -127,7 +127,7 @@ namespace DotNetty.Common
             get
             {
                 StringBuilder builder = this.stringBuilder;
-                if (builder == null)
+                if (builder is null)
                 {
                     this.stringBuilder = builder = new StringBuilder(512);
                 }
@@ -142,7 +142,7 @@ namespace DotNetty.Common
         public List<ICharSequence> CharSequenceList(int minCapacity = DefaultArrayListInitialCapacity)
         {
             List<ICharSequence> localList = this.charSequences;
-            if (localList == null)
+            if (localList is null)
             {
                 this.charSequences = new List<ICharSequence>(minCapacity);
                 return this.charSequences;
@@ -157,7 +157,7 @@ namespace DotNetty.Common
         public List<AsciiString> AsciiStringList(int minCapacity = DefaultArrayListInitialCapacity)
         {
             List<AsciiString> localList = this.asciiStrings;
-            if (localList == null)
+            if (localList is null)
             {
                 this.asciiStrings = new List<AsciiString>(minCapacity);
                 return this.asciiStrings;

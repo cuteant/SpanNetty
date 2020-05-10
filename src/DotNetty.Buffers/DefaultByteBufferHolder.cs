@@ -12,7 +12,7 @@ namespace DotNetty.Buffers
 
         public DefaultByteBufferHolder(IByteBuffer data)
         {
-            if (null == data) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.data); }
+            if (data is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.data); }
 
             this.data = data;
         }

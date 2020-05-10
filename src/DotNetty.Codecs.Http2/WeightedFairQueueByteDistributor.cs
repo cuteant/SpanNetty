@@ -184,7 +184,7 @@ namespace DotNetty.Codecs.Http2
         public void UpdateDependencyTree(int childStreamId, int parentStreamId, short weight, bool exclusive)
         {
             State state = this.GetState(childStreamId);
-            if (state == null)
+            if (state is null)
             {
                 // If there is no State object that means there is no IHttp2Stream object and we would have to keep the
                 // State object in the stateOnlyMap and stateOnlyRemovalQueue. However if maxStateOnlySize is 0 this means
@@ -197,7 +197,7 @@ namespace DotNetty.Codecs.Http2
             }
 
             State newParent = this.GetState(parentStreamId);
-            if (newParent == null)
+            if (newParent is null)
             {
                 // If there is no State object that means there is no IHttp2Stream object and we would have to keep the
                 // State object in the stateOnlyMap and stateOnlyRemovalQueue. However if maxStateOnlySize is 0 this means
@@ -330,11 +330,11 @@ namespace DotNetty.Codecs.Http2
             try
             {
                 Debug.Assert(
-                    nextChildState == null || nextChildState.pseudoTimeToWrite >= childState.pseudoTimeToWrite,
+                    nextChildState is null || nextChildState.pseudoTimeToWrite >= childState.pseudoTimeToWrite,
                     $"nextChildState[{nextChildState?.streamId}].pseudoTime({nextChildState?.pseudoTimeToWrite}) <  childState[{childState.streamId}].pseudoTime({childState.pseudoTimeToWrite})");
 
                 int nsent = this.Distribute(
-                    nextChildState == null
+                    nextChildState is null
                         ? maxBytes
                         : Math.Min(
                             maxBytes,
@@ -397,7 +397,7 @@ namespace DotNetty.Codecs.Http2
         internal int NumChildren(int streamId)
         {
             State state = this.GetState(streamId);
-            return state == null ? 0 : state.children.Count;
+            return state is null ? 0 : state.children.Count;
         }
 
         /// <summary>
@@ -678,7 +678,7 @@ namespace DotNetty.Codecs.Http2
 
                 this.parent = newParent;
                 // Use MAX_VALUE if no parent because lower depth is considered higher priority by StateOnlyComparator.
-                this.dependencyTreeDepth = newParent == null ? int.MaxValue : newParent.dependencyTreeDepth + 1;
+                this.dependencyTreeDepth = newParent is null ? int.MaxValue : newParent.dependencyTreeDepth + 1;
             }
 
             void InitChildrenIfEmpty()
@@ -896,7 +896,7 @@ namespace DotNetty.Codecs.Http2
                   .Append(" flags ").Append(this.flags)
                   .Append(" pseudoTimeQueue.Count ").Append(this.pseudoTimeQueue.Count)
                   .Append(" stateOnlyQueueIndex ").Append(this.stateOnlyQueueIndex)
-                  .Append(" parent.streamId ").Append(this.parent == null ? -1 : this.parent.streamId).Append("} [");
+                  .Append(" parent.streamId ").Append(this.parent is null ? -1 : this.parent.streamId).Append("} [");
 
                 if (this.pseudoTimeQueue.Count > 0)
                 {

@@ -249,7 +249,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                         {
                             return;
                         }
-                        if (this.maskingKey == null)
+                        if (this.maskingKey is null)
                         {
                             this.maskingKey = new byte[4];
                         }
@@ -437,7 +437,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected void CheckCloseFrameBody(IChannelHandlerContext ctx, IByteBuffer buffer)
         {
-            if (buffer == null || !buffer.IsReadable())
+            if (buffer is null || !buffer.IsReadable())
             {
                 return;
             }

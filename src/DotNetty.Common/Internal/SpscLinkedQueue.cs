@@ -17,7 +17,7 @@ namespace DotNetty.Common.Internal
 
         public override bool Offer(T e)
         {
-            if (null == e) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e); }
+            if (e is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e); }
 
             var nextNode = new LinkedQueueNode<T>(e);
             LinkedQueueNode<T> producerNode = this.LpProducerNode();

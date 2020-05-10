@@ -59,7 +59,7 @@ namespace DotNetty.Handlers.Logging
         /// <param name="level">the log level</param>
         public LoggingHandler(Type type, LogLevel level)
         {
-            if (type == null)
+            if (type is null)
             {
                 ThrowHelper.ThrowNullReferenceException(ExceptionArgument.type);
             }
@@ -85,7 +85,7 @@ namespace DotNetty.Handlers.Logging
         /// <param name="level">the log level</param>
         public LoggingHandler(string name, LogLevel level)
         {
-            if (name == null)
+            if (name is null)
             {
                 ThrowHelper.ThrowNullReferenceException(ExceptionArgument.name);
             }
@@ -316,7 +316,7 @@ namespace DotNetty.Handlers.Logging
         /// <param name="secondArg">the second argument of the event</param>
         protected virtual string Format(IChannelHandlerContext ctx, string eventName, object firstArg, object secondArg)
         {
-            if (secondArg == null)
+            if (secondArg is null)
             {
                 return this.FormatSimple(ctx, eventName, firstArg);
             }

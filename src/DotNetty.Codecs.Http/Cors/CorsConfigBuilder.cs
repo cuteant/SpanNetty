@@ -113,7 +113,7 @@ namespace DotNetty.Codecs.Http.Cors
 
         public CorsConfigBuilder PreflightResponseHeader(AsciiString name, params object[] values)
         {
-            if (null == values) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.values); }
+            if (values is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.values); }
 
             if (values.Length == 1)
             {
@@ -169,7 +169,7 @@ namespace DotNetty.Codecs.Http.Cors
 
             internal ConstantValueGenerator(object value)
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.value = value;
             }
 

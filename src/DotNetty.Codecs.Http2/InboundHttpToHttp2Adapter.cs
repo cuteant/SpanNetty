@@ -48,7 +48,7 @@ namespace DotNetty.Codecs.Http2
             {
                 int streamId = GetStreamId(connection, message.Headers);
                 IHttp2Stream stream = connection.Stream(streamId);
-                if (stream == null)
+                if (stream is null)
                 {
                     stream = connection.Remote.CreateStream(streamId, false);
                 }

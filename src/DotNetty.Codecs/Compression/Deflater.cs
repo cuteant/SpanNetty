@@ -146,7 +146,7 @@ namespace DotNetty.Codecs.Compression
 
         public int Deflate(int flush)
         {
-            if (dstate == null)
+            if (dstate is null)
             {
                 return Z_STREAM_ERROR;
             }
@@ -159,7 +159,7 @@ namespace DotNetty.Codecs.Compression
         public override int End()
         {
             finished = true;
-            if (dstate == null)
+            if (dstate is null)
                 return Z_STREAM_ERROR;
             int ret = dstate.DeflateEnd();
             dstate = null;
@@ -169,13 +169,13 @@ namespace DotNetty.Codecs.Compression
 
         public int Params(int level, int strategy)
         {
-            if (dstate == null) return Z_STREAM_ERROR;
+            if (dstate is null) return Z_STREAM_ERROR;
             return dstate.DeflateParams(level, strategy);
         }
 
         public int SetDictionary(byte[] dictionary, int dictLength)
         {
-            if (dstate == null) return Z_STREAM_ERROR;
+            if (dstate is null) return Z_STREAM_ERROR;
             return dstate.DeflateSetDictionary(dictionary, dictLength);
         }
 

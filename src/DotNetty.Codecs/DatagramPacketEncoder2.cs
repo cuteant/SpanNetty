@@ -19,7 +19,7 @@ namespace DotNetty.Codecs
 
         public DatagramPacketEncoder2(MessageToMessageEncoder2<T> encoder)
         {
-            if (null == encoder) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.encoder); }
+            if (encoder is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.encoder); }
 
             this.encoder = encoder;
         }
@@ -41,7 +41,7 @@ namespace DotNetty.Codecs
             }
 
             var content = output[0] as IByteBuffer;
-            if (content == null)
+            if (content is null)
             {
                 CThrowHelper.ThrowEncoderException_MustProduceOnlyByteBuf(this.encoder.GetType());
             }

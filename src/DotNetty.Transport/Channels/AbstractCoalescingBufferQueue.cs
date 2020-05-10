@@ -29,7 +29,7 @@ namespace DotNetty.Transport.Channels
         protected AbstractCoalescingBufferQueue(IChannel channel, int initSize)
         {
             this.bufAndListenerPairs = new Deque<object>(initSize);
-            this.tracker = channel == null ? null : PendingBytesTracker.NewTracker(channel);
+            this.tracker = channel is null ? null : PendingBytesTracker.NewTracker(channel);
         }
 
         public void AddFirst(IByteBuffer buf, IPromise promise)
@@ -105,7 +105,7 @@ namespace DotNetty.Transport.Channels
         public IByteBuffer Remove(IByteBufferAllocator alloc, int bytes, IPromise aggregatePromise)
         {
             if (bytes < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(bytes, ExceptionArgument.bytes); }
-            if (null == aggregatePromise) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.aggregatePromise); }
+            if (aggregatePromise is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.aggregatePromise); }
 
             // Use isEmpty rather than readableBytes==0 as we may have a promise associated with an empty buffer.
             if (bufAndListenerPairs.IsEmpty)
@@ -135,7 +135,7 @@ namespace DotNetty.Transport.Channels
                         {
                             // Take a slice of what we can consume and retain it.
                             entryBuffer = entryBuffer.ReadRetainedSlice(bytes);
-                            toReturn = toReturn == null ? ComposeFirst(alloc, entryBuffer)
+                            toReturn = toReturn is null ? ComposeFirst(alloc, entryBuffer)
                                                         : Compose(alloc, toReturn, entryBuffer);
                             bytes = 0;
                         }
@@ -144,7 +144,7 @@ namespace DotNetty.Transport.Channels
                     else
                     {
                         bytes -= entryBuffer.ReadableBytes;
-                        toReturn = toReturn == null ? ComposeFirst(alloc, entryBuffer)
+                        toReturn = toReturn is null ? ComposeFirst(alloc, entryBuffer)
                                                     : Compose(alloc, toReturn, entryBuffer);
                     }
                     entryBuffer = null;
@@ -212,7 +212,7 @@ namespace DotNetty.Transport.Channels
                 bufAndListenerPairs.TryRemoveFromFront(out var entry);
                 try
                 {
-                    if (entry == null)
+                    if (entry is null)
                     {
                         if (previousBuf is object)
                         {
@@ -243,7 +243,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception t)
                 {
-                    if (pending == null)
+                    if (pending is null)
                     {
                         pending = t;
                     }
@@ -365,7 +365,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception t)
                 {
-                    if (pending == null)
+                    if (pending is null)
                     {
                         pending = t;
                     }

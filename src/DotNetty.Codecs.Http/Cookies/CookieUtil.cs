@@ -120,7 +120,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         internal static void AddQuoted(StringBuilder sb, string name, string val)
         {
-            if (val == null)
+            if (val is null)
             {
                 val = "";
             }

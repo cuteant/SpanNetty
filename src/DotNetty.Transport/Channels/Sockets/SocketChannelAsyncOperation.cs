@@ -16,7 +16,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public SocketChannelAsyncOperation(TChannel channel, bool setEmptyBuffer)
         {
-            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
+            if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
             this.Channel = channel;
             this.Completed += AbstractSocketChannel<TChannel, TUnsafe>.IoCompletedCallback;

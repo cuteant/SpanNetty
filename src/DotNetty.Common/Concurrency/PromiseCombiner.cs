@@ -73,7 +73,7 @@ namespace DotNetty.Common.Concurrency
 
         public void Finish(IPromise aggregatePromise)
         {
-            if (null == aggregatePromise)
+            if (aggregatePromise is null)
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.aggregatePromise);
             }
@@ -92,7 +92,7 @@ namespace DotNetty.Common.Concurrency
         bool TryPromise()
         {
             var excs = Volatile.Read(ref this.causes);
-            return (excs == null) ? this.aggregatePromise.TryComplete() : this.aggregatePromise.TrySetException(excs);
+            return (excs is null) ? this.aggregatePromise.TryComplete() : this.aggregatePromise.TrySetException(excs);
         }
 
         static readonly Action<Task, object> OperationCompleteAction = OperationComplete;
@@ -100,7 +100,7 @@ namespace DotNetty.Common.Concurrency
         {
             var self = (PromiseCombiner)state;
             Interlocked.Increment(ref self.doneCount);
-            if (!future.IsSuccess() && Volatile.Read(ref self.causes) == null)
+            if (!future.IsSuccess() && Volatile.Read(ref self.causes) is null)
             {
                 Interlocked.Exchange(ref self.causes, future.Exception.InnerExceptions);
             }

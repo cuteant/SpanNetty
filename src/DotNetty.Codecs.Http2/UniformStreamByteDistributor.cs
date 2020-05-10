@@ -118,7 +118,7 @@ namespace DotNetty.Codecs.Http2
 
         private State GetState(IHttp2Stream stream)
         {
-            if (null == stream) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stream); }
+            if (stream is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stream); }
             return stream.GetProperty<State>(stateKey);
         }
 

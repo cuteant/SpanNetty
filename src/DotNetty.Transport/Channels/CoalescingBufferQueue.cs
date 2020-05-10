@@ -35,7 +35,7 @@ namespace DotNetty.Transport.Channels
         public CoalescingBufferQueue(IChannel channel, int initSize, bool updateWritability)
             : base(updateWritability ? channel : null, initSize)
         {
-            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
+            if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
             this.channel = channel;
         }
 

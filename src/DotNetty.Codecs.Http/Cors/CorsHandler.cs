@@ -32,8 +32,8 @@ namespace DotNetty.Codecs.Http.Cors
 
         public CorsHandler(IList<CorsConfig> configList, bool isShortCircuit)
         {
-            if (null == configList) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.configList); }
-            if (configList.Count <= 0) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.configList); }
+            if (configList is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.configList); }
+            if (0u >= (uint)configList.Count) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.configList); }
             this.configList = configList;
             this.isShortCircuit = isShortCircuit;
         }
@@ -50,7 +50,7 @@ namespace DotNetty.Codecs.Http.Cors
                     this.HandlePreflight(context, req);
                     return;
                 }
-                if (this.isShortCircuit && !(origin == null || this.config is object))
+                if (this.isShortCircuit && !(origin is null || this.config is object))
                 {
                     Forbidden(context, req);
                     return;
@@ -103,7 +103,7 @@ namespace DotNetty.Codecs.Http.Cors
 
         bool SetOrigin(IHttpResponse response)
         {
-            if (!this.request.Headers.TryGet(HttpHeaderNames.Origin, out ICharSequence origin) || this.config == null)
+            if (!this.request.Headers.TryGet(HttpHeaderNames.Origin, out ICharSequence origin) || this.config is null)
             {
                 return false;
             }

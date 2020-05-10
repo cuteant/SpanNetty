@@ -37,7 +37,7 @@ namespace DotNetty.Handlers.IPFilter
 
         static IIPFilterRule SelectFilterRule(IPAddress ipAddress, int cidrPrefix, IPFilterRuleType ruleType)
         {
-            if (ipAddress == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ipAddress); }
+            if (ipAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ipAddress); }
 
             switch (ipAddress.AddressFamily)
             {

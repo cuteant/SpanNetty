@@ -61,7 +61,7 @@ namespace DotNetty.Transport.Channels
         public void AddMessage(object msg, int size, IPromise promise)
         {
             Entry entry = Entry.NewInstance(msg, size, promise);
-            if (this.tailEntry == null)
+            if (this.tailEntry is null)
             {
                 this.flushedEntry = null;
             }
@@ -71,7 +71,7 @@ namespace DotNetty.Transport.Channels
                 tail.Next = entry;
             }
             this.tailEntry = entry;
-            if (this.unflushedEntry == null)
+            if (this.unflushedEntry is null)
             {
                 this.unflushedEntry = entry;
             }
@@ -94,7 +94,7 @@ namespace DotNetty.Transport.Channels
             Entry entry = this.unflushedEntry;
             if (entry is object)
             {
-                if (this.flushedEntry == null)
+                if (this.flushedEntry is null)
                 {
                     // there is no flushedEntry yet, so start with the entry
                     this.flushedEntry = entry;
@@ -191,7 +191,7 @@ namespace DotNetty.Transport.Channels
         public bool Remove()
         {
             Entry e = this.flushedEntry;
-            if (e == null)
+            if (e is null)
             {
                 this.ClearNioBuffers();
                 return false;
@@ -229,7 +229,7 @@ namespace DotNetty.Transport.Channels
         bool Remove0(Exception cause, bool notifyWritability)
         {
             Entry e = this.flushedEntry;
-            if (e == null)
+            if (e is null)
             {
                 this.ClearNioBuffers();
                 return false;
@@ -395,7 +395,7 @@ namespace DotNetty.Transport.Channels
                         if (count == 1)
                         {
                             ArraySegment<byte> nioBuf = entry.Buffer;
-                            if (nioBuf.Array == null)
+                            if (nioBuf.Array is null)
                             {
                                 // cache ByteBuffer as it may need to create a new ByteBuffer instance if its a
                                 // derived buffer
@@ -426,7 +426,7 @@ namespace DotNetty.Transport.Channels
         static int GetSharedBufferList(Entry entry, IByteBuffer buf, List<ArraySegment<byte>> nioBuffers, int nioBufferCount, int maxCount)
         {
             ArraySegment<byte>[] nioBufs = entry.Buffers;
-            if (nioBufs == null)
+            if (nioBufs is null)
             {
                 // cached ByteBuffers as they may be expensive to create in terms
                 // of Object allocation
@@ -435,7 +435,7 @@ namespace DotNetty.Transport.Channels
             for (int i = 0; i < nioBufs.Length && nioBufferCount < maxCount; i++)
             {
                 ArraySegment<byte> nioBuf = nioBufs[i];
-                if (nioBuf.Array == null)
+                if (nioBuf.Array is null)
                 {
                     break;
                 }
@@ -761,10 +761,10 @@ namespace DotNetty.Transport.Channels
         /// </param>
         public void ForEachFlushedMessage(IMessageProcessor processor)
         {
-            if (null == processor) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.processor); }
+            if (processor is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.processor); }
 
             Entry entry = this.flushedEntry;
-            if (entry == null)
+            if (entry is null)
             {
                 return;
             }

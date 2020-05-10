@@ -31,7 +31,7 @@
 
 //        public void AddParam(string name, string value)
 //        {
-//            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+//            if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
 //            if (this.hasParams)
 //            {
 //                this.uriBuilder.Append('&');

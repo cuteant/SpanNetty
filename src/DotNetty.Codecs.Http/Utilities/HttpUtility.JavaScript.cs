@@ -28,7 +28,7 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public static void JavaScriptStringEncode(TextWriter output, char[] value, int startIndex, int characterCount)
         {
-            if (null == value || 0u >= (uint)value.Length) { return; }
+            if (value is null || 0u >= (uint)value.Length) { return; }
 
             s_scriptEncoder.Encode(output, value, startIndex, characterCount);
         }

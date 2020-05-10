@@ -25,7 +25,7 @@ namespace DotNetty.Codecs.Http
         [MethodImpl(InlineMethod.Value)]
         internal static HttpVersion ValueOf(AsciiString text)
         {
-            if (text == null)
+            if (text is null)
             {
                 ThrowHelper.ThrowArgumentException_NullText();
             }
@@ -102,7 +102,7 @@ namespace DotNetty.Codecs.Http
 
         public HttpVersion(string text, bool keepAliveDefault)
         {
-            if (null == text) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.text); }
+            if (text is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.text); }
 
             text = text.Trim().ToUpperInvariant();
             if (string.IsNullOrEmpty(text))
@@ -126,7 +126,7 @@ namespace DotNetty.Codecs.Http
 
         HttpVersion(string protocolName, int majorVersion, int minorVersion, bool keepAliveDefault, bool bytes)
         {
-            if (protocolName == null)
+            if (protocolName is null)
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.protocolName);
             }
@@ -230,7 +230,7 @@ namespace DotNetty.Codecs.Http
 
         internal void Encode(IByteBuffer buf)
         {
-            if (this.bytes == null)
+            if (this.bytes is null)
             {
                 buf.WriteCharSequence(this.text, Encoding.ASCII);
             }

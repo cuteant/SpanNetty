@@ -13,7 +13,7 @@ namespace DotNetty.Common.Concurrency
             if (!promise.TrySetCanceled() && logger is object && logger.WarnEnabled)
             {
                 var err = promise.Task.Exception;
-                if (null == err)
+                if (err is null)
                 {
                     logger.Warn($"Failed to cancel promise because it has succeeded already: {promise}");
                 }
@@ -29,7 +29,7 @@ namespace DotNetty.Common.Concurrency
             if (!promise.TryComplete() && logger is object && logger.WarnEnabled)
             {
                 var err = promise.Task.Exception;
-                if (null == err)
+                if (err is null)
                 {
                     logger.Warn($"Failed to mark a promise as success because it has succeeded already: {promise}");
                 }
@@ -45,7 +45,7 @@ namespace DotNetty.Common.Concurrency
             if (!promise.TrySetException(cause) && logger is object && logger.WarnEnabled)
             {
                 var err = promise.Task.Exception;
-                if (null == err)
+                if (err is null)
                 {
                     logger.Warn($"Failed to mark a promise as failure because it has succeeded already: {promise}");
                 }

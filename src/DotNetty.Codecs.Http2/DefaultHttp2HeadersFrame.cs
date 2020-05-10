@@ -38,7 +38,7 @@ namespace DotNetty.Codecs.Http2
         /// 256 (inclusive).</param>
         public DefaultHttp2HeadersFrame(IHttp2Headers headers, bool endStream, int padding)
         {
-            if (null == headers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
+            if (headers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
 
             this.headers = headers;
             this.endStream = endStream;

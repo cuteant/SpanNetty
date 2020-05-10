@@ -36,7 +36,7 @@ namespace DotNetty.Codecs.Http2
 
         private Http2FrameMsLogger(LogLevel level, ILogger logger)
         {
-            if (null == logger) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.logger); }
+            if (logger is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.logger); }
             this.level = level;
             this.logger = logger;
         }

@@ -286,7 +286,7 @@ namespace DotNetty.Common.Utilities
         /// <returns>the escaped value if necessary, or the value unchanged</returns>
         public static ICharSequence EscapeCsv(ICharSequence value, bool trimWhiteSpace = false)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             int length = value.Count;
             if (0u >= (uint)length)
@@ -397,7 +397,7 @@ namespace DotNetty.Common.Utilities
 
         public static ICharSequence UnescapeCsv(ICharSequence value)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             int length = value.Count;
             if (0u >= (uint)length)
             {

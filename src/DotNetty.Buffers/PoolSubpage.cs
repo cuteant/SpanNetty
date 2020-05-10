@@ -149,7 +149,7 @@ namespace DotNetty.Buffers
 
         void AddToPool(PoolSubpage<T> head)
         {
-            Debug.Assert(this.Prev == null && this.Next == null);
+            Debug.Assert(this.Prev is null && this.Next is null);
 
             this.Prev = head;
             this.Next = head.Next;

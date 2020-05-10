@@ -123,7 +123,7 @@ namespace DotNetty.Handlers.Flow
 
         public override void ChannelRead(IChannelHandlerContext ctx, object msg)
         {
-            if (this.queue == null)
+            if (this.queue is null)
             {
                 this.queue = Recycler.Take();
             }

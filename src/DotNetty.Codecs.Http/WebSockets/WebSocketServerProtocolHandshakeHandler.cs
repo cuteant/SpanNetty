@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     GetWebSocketLocation(ctx.Pipeline, req, this.websocketPath), this.subprotocols,
                     this.allowExtensions, this.maxFramePayloadSize, this.allowMaskMismatch);
                 WebSocketServerHandshaker handshaker = wsFactory.NewHandshaker(req);
-                if (handshaker == null)
+                if (handshaker is null)
                 {
                     WebSocketServerHandshakerFactory.SendUnsupportedVersionResponse(ctx.Channel);
                 }

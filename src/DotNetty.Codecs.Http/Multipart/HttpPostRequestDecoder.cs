@@ -25,9 +25,9 @@ namespace DotNetty.Codecs.Http.Multipart
 
         internal HttpPostRequestDecoder(IHttpDataFactory factory, IHttpRequest request, Encoding encoding)
         {
-            if (null == factory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
-            if (null == request) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.request); }
-            if (null == encoding) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoding); }
+            if (factory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
+            if (request is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.request); }
+            if (encoding is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoding); }
 
             // Fill default values
             if (IsMultipartRequest(request))
@@ -82,7 +82,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     return null;
                 }
                 ICharSequence boundary = headerContentType[mrank].SubstringAfter(HttpConstants.EqualsSignChar);
-                if (boundary == null)
+                if (boundary is null)
                 {
                     ThrowHelper.ThrowErrorDataDecoderException_NeedBoundaryValue();
                 }

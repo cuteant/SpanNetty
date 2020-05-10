@@ -44,9 +44,9 @@ namespace DotNetty.Codecs.Http2
 
         public Http2ConnectionHandler(IHttp2ConnectionDecoder decoder, IHttp2ConnectionEncoder encoder, Http2Settings initialSettings)
         {
-            if (null == initialSettings) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.initialSettings); }
-            if (null == decoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoder); }
-            if (null == encoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoder); }
+            if (initialSettings is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.initialSettings); }
+            if (decoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoder); }
+            if (encoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoder); }
             this.initialSettings = initialSettings;
             this.decoder = decoder;
             this.encoder = encoder;
@@ -58,7 +58,7 @@ namespace DotNetty.Codecs.Http2
 
         public Http2ConnectionHandler(bool server, IHttp2FrameWriter frameWriter, IHttp2FrameLogger frameLogger, Http2Settings initialSettings)
         {
-            if (null == initialSettings) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.initialSettings); }
+            if (initialSettings is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.initialSettings); }
             this.initialSettings = initialSettings;
 
             var connection = new DefaultHttp2Connection(server);
@@ -275,7 +275,7 @@ namespace DotNetty.Codecs.Http2
             /// only be received by servers, returns true immediately for client endpoints.</returns>
             private bool ReadClientPrefaceString(IByteBuffer input)
             {
-                if (this.clientPrefaceString == null)
+                if (this.clientPrefaceString is null)
                 {
                     return true;
                 }
@@ -413,7 +413,7 @@ namespace DotNetty.Codecs.Http2
 
         public override void ChannelActive(IChannelHandlerContext ctx)
         {
-            if (this.byteDecoder == null)
+            if (this.byteDecoder is null)
             {
                 this.byteDecoder = new PrefaceDecoder(this, ctx);
             }
@@ -684,7 +684,7 @@ namespace DotNetty.Codecs.Http2
         /// be <c>null</c> if it's an unknown exception.</param>
         protected virtual void OnConnectionError(IChannelHandlerContext ctx, bool outbound, Exception cause, Http2Exception http2Ex)
         {
-            if (http2Ex == null)
+            if (http2Ex is null)
             {
                 http2Ex = new Http2Exception(Http2Error.InternalError, cause.Message, cause);
             }
@@ -739,7 +739,7 @@ namespace DotNetty.Codecs.Http2
 
                 // The case of a streamId referring to a stream which was already closed is handled
                 // by createStream and will land us in the catch block below
-                if (stream == null)
+                if (stream is null)
                 {
                     try
                     {
@@ -766,7 +766,7 @@ namespace DotNetty.Codecs.Http2
                 }
             }
 
-            if (stream == null)
+            if (stream is null)
             {
                 if (!outbound || this.Connection.Local.MayHaveCreatedStream(streamId))
                 {
@@ -823,7 +823,7 @@ namespace DotNetty.Codecs.Http2
         public virtual Task ResetStreamAsync(IChannelHandlerContext ctx, int streamId, Http2Error errorCode, IPromise promise)
         {
             var stream = this.Connection.Stream(streamId);
-            if (stream == null)
+            if (stream is null)
             {
                 return ResetUnknownStreamAsync(ctx, streamId, errorCode, promise.Unvoid());
             }

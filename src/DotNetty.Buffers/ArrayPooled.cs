@@ -49,7 +49,7 @@ namespace DotNetty.Buffers
         /// specified array's content will be visible to the returned buffer.</summary>
         public static IByteBuffer WrappedBuffer(byte[] array)
         {
-            if (null == array) { return Empty; }
+            if (array is null) { return Empty; }
 
             return 0u >= (uint)array.Length ? Empty :
                 PlatformDependent.DirectBufferPreferred
@@ -59,8 +59,8 @@ namespace DotNetty.Buffers
 
         public static IByteBuffer WrappedBuffer(ArrayPool<byte> arrayPool, byte[] array)
         {
-            if (null == array) { return Empty; }
-            if (null == arrayPool) { arrayPool = DefaultArrayPool; }
+            if (array is null) { return Empty; }
+            if (arrayPool is null) { arrayPool = DefaultArrayPool; }
 
             return 0u >= (uint)array.Length ? Empty :
                 PlatformDependent.DirectBufferPreferred
@@ -72,7 +72,7 @@ namespace DotNetty.Buffers
         /// modification on the specified array's content will be visible to the returned buffer.</summary>
         public static IByteBuffer WrappedBuffer(byte[] array, int offset, int length)
         {
-            if (null == array || 0u >= (uint)length) { return Empty; }
+            if (array is null || 0u >= (uint)length) { return Empty; }
             if (MathUtil.IsOutOfBounds(offset, length, array.Length))
             {
                 ThrowHelper.ThrowIndexOutOfRangeException_Index(offset, length, array.Length);
@@ -90,8 +90,8 @@ namespace DotNetty.Buffers
 
         public static IByteBuffer WrappedBuffer(ArrayPool<byte> arrayPool, byte[] array, int offset, int length)
         {
-            if (null == array || 0u >= (uint)length) { return Empty; }
-            if (null == arrayPool) { arrayPool = DefaultArrayPool; }
+            if (array is null || 0u >= (uint)length) { return Empty; }
+            if (arrayPool is null) { arrayPool = DefaultArrayPool; }
             if (MathUtil.IsOutOfBounds(offset, length, array.Length))
             {
                 ThrowHelper.ThrowIndexOutOfRangeException_Index(offset, length, array.Length);
@@ -112,7 +112,7 @@ namespace DotNetty.Buffers
 
         public static IByteBuffer WrappedBuffer(IList<ArraySegment<byte>> buffers)
         {
-            if (null == buffers) { return Empty; }
+            if (buffers is null) { return Empty; }
 
             return WrappedBuffer(buffers.Select(_ => WrappedBuffer(_)).ToArray());
         }
@@ -141,7 +141,7 @@ namespace DotNetty.Buffers
         /// <returns>The readable portion of the buffers. The caller is responsible for releasing this buffer.</returns>
         public static IByteBuffer WrappedBuffer(params IByteBuffer[] buffers)
         {
-            if (null == buffers) { return Empty; }
+            if (buffers is null) { return Empty; }
             return WrappedBuffer(buffers.Length, buffers);
         }
 
@@ -153,7 +153,7 @@ namespace DotNetty.Buffers
         /// <returns>The readable portion of the buffers. The caller is responsible for releasing this buffer.</returns>
         public static IByteBuffer WrappedBuffer(int maxNumComponents, params IByteBuffer[] buffers)
         {
-            if (null == buffers) { return Empty; }
+            if (buffers is null) { return Empty; }
 
             switch (buffers.Length)
             {
@@ -194,7 +194,7 @@ namespace DotNetty.Buffers
         /// <returns>The new buffer that copies the contents of array.</returns>
         public static IByteBuffer CopiedBuffer(byte[] array)
         {
-            if (array == null || 0u >= (uint)array.Length) { return Empty; }
+            if (array is null || 0u >= (uint)array.Length) { return Empty; }
 
             var newArray = DefaultArrayPool.Rent(array.Length);
             PlatformDependent.CopyMemory(array, 0, newArray, 0, array.Length);
@@ -211,7 +211,7 @@ namespace DotNetty.Buffers
         /// <returns>The new buffer that copies the contents of array.</returns>
         public static IByteBuffer CopiedBuffer(byte[] array, int offset, int length)
         {
-            if (array == null || 0u >= (uint)length) { return Empty; }
+            if (array is null || 0u >= (uint)length) { return Empty; }
 
             var copy = DefaultArrayPool.Rent(length);
             PlatformDependent.CopyMemory(array, offset, copy, 0, length);
@@ -225,7 +225,7 @@ namespace DotNetty.Buffers
         /// <returns>The new buffer that copies the contents of buffer.</returns>
         public static IByteBuffer CopiedBuffer(IByteBuffer buffer)
         {
-            if (null == buffer) { return Empty; }
+            if (buffer is null) { return Empty; }
 
             int readable = buffer.ReadableBytes;
             if (readable > 0)
@@ -247,7 +247,7 @@ namespace DotNetty.Buffers
         /// <returns>The new buffer that copies the contents of buffers.</returns>
         public static IByteBuffer CopiedBuffer(params IByteBuffer[] buffers)
         {
-            if (null == buffers) { return Empty; }
+            if (buffers is null) { return Empty; }
 
             switch (buffers.Length)
             {
@@ -288,7 +288,7 @@ namespace DotNetty.Buffers
 
         public static IByteBuffer CopiedBuffer(char[] array, int offset, int length, Encoding encoding)
         {
-            return null == array || 0u >= (uint)length ? Empty : CopiedBuffer(new string(array, offset, length), encoding);
+            return array is null || 0u >= (uint)length ? Empty : CopiedBuffer(new string(array, offset, length), encoding);
         }
 
         public static IByteBuffer CopiedBuffer(string value, Encoding encoding) => ByteBufferUtil.EncodeString0(Allocator, true, value, encoding, 0);
@@ -304,7 +304,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a big-endian buffer that holds a sequence of the specified 32-bit integers.</summary>
         public static IByteBuffer CopyInt(params int[] values)
         {
-            if (null == values || 0u >= (uint)values.Length) { return Empty; }
+            if (values is null || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 4);
             foreach (int v in values) { buffer.WriteInt(v); }
@@ -323,7 +323,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified 16-bit integers.</summary>
         public static IByteBuffer CopyShort(params short[] values)
         {
-            if (null == values || 0u >= (uint)values.Length) { return Empty; }
+            if (values is null || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 2);
             foreach (short v in values) { buffer.WriteShort(v); }
@@ -334,7 +334,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified 16-bit integers.</summary>
         public static IByteBuffer CopyShort(params int[] values)
         {
-            if (null == values || 0u >= (uint)values.Length) { return Empty; }
+            if (values is null || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 2);
             foreach (int v in values) { buffer.WriteShort(v); }
@@ -352,7 +352,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified 24-bit integers.</summary>
         public static IByteBuffer CopyMedium(params int[] values)
         {
-            if (null == values || 0u >= (uint)values.Length) { return Empty; }
+            if (values is null || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 3);
             foreach (int v in values) { buffer.WriteMedium(v); }
@@ -371,7 +371,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified 64-bit integers.</summary>
         public static IByteBuffer CopyLong(params long[] values)
         {
-            if (null == values || 0u >= (uint)values.Length) { return Empty; }
+            if (values is null || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 8);
             foreach (long v in values) { buffer.WriteLong(v); }
@@ -390,7 +390,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified boolean values.</summary>
         public static IByteBuffer CopyBoolean(params bool[] values)
         {
-            if (null == values || 0u >= (uint)values.Length) { return Empty; }
+            if (values is null || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length);
             foreach (bool v in values) { buffer.WriteBoolean(v); }
@@ -409,7 +409,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified 32-bit floating point numbers.</summary>
         public static IByteBuffer CopyFloat(params float[] values)
         {
-            if (null == values || 0u >= (uint)values.Length) { return Empty; }
+            if (values is null || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 4);
             foreach (float v in values) { buffer.WriteFloat(v); }
@@ -428,7 +428,7 @@ namespace DotNetty.Buffers
         /// <summary>Create a new big-endian buffer that holds a sequence of the specified 64-bit floating point numbers.</summary>
         public static IByteBuffer CopyDouble(params double[] values)
         {
-            if (null == values || 0u >= (uint)values.Length) { return Empty; }
+            if (values is null || 0u >= (uint)values.Length) { return Empty; }
 
             IByteBuffer buffer = Buffer(values.Length * 8);
             foreach (double v in values) { buffer.WriteDouble(v); }

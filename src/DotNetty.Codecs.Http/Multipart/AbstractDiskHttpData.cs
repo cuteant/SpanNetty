@@ -62,7 +62,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override void SetContent(IByteBuffer buffer)
         {
-            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
             try
             {
                 if (this.fileStream is object)
@@ -109,7 +109,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     {
                         ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
                     }
-                    if (this.fileStream == null)
+                    if (this.fileStream is null)
                     {
                         this.fileStream = this.TempFile();
                     }
@@ -128,7 +128,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             if (last)
             {
-                if (this.fileStream == null)
+                if (this.fileStream is null)
                 {
                     this.fileStream = this.TempFile();
                 }
@@ -136,7 +136,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             else
             {
-                if (buffer == null)
+                if (buffer is null)
                 {
                     ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer);
                 }
@@ -145,7 +145,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override void SetContent(Stream source)
         {
-            if (null == source) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.source); }
+            if (source is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.source); }
 
             if (this.fileStream is object)
             {
@@ -213,12 +213,12 @@ namespace DotNetty.Codecs.Http.Multipart
             }
         }
 
-        public override byte[] GetBytes() => this.fileStream == null
+        public override byte[] GetBytes() => this.fileStream is null
             ? ArrayExtensions.ZeroBytes : ReadFrom(this.fileStream);
 
         public override IByteBuffer GetByteBuffer()
         {
-            if (this.fileStream == null)
+            if (this.fileStream is null)
             {
                 return Unpooled.Empty;
             }
@@ -229,7 +229,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override IByteBuffer GetChunk(int length)
         {
-            if (this.fileStream == null || 0u >= (uint)length)
+            if (this.fileStream is null || 0u >= (uint)length)
             {
                 this.chunkPosition = 0L;
                 return Unpooled.Empty;
@@ -279,12 +279,12 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override string GetString(Encoding encoding)
         {
-            if (this.fileStream == null)
+            if (this.fileStream is null)
             {
                 return string.Empty;
             }
             byte[] array = ReadFrom(this.fileStream);
-            if (encoding == null)
+            if (encoding is null)
             {
                 encoding = HttpConstants.DefaultEncoding;
             }
@@ -296,8 +296,8 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override bool RenameTo(FileStream destination)
         {
-            if (null == destination) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.destination); }
-            if (this.fileStream == null)
+            if (destination is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.destination); }
+            if (this.fileStream is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_NoFileDefined();
             }

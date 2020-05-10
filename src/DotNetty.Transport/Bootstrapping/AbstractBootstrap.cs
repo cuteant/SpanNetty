@@ -59,7 +59,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="AbstractBootstrap{TBootstrap,TChannel}"/> instance.</returns>
         public virtual TBootstrap Group(IEventLoopGroup group)
         {
-            if (null == group) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.group); }
+            if (group is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.group); }
 
             if (InternalGroup is object)
             {
@@ -78,7 +78,7 @@ namespace DotNetty.Transport.Bootstrapping
 
         public TBootstrap ChannelFactory(Func<TChannel> channelFactory)
         {
-            if (null == channelFactory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channelFactory); }
+            if (channelFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channelFactory); }
             InternalChannelFactory = channelFactory;
             return (TBootstrap)this;
         }
@@ -129,9 +129,9 @@ namespace DotNetty.Transport.Bootstrapping
         /// <param name="value">The value to set the given option.</param>
         public TBootstrap Option<T>(ChannelOption<T> option, T value)
         {
-            if (null == option) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.option); }
+            if (option is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.option); }
 
-            if (value == null)
+            if (value is null)
             {
                 //ChannelOptionValue removed;
                 this.options.TryRemove(option, out _);
@@ -150,9 +150,9 @@ namespace DotNetty.Transport.Bootstrapping
         public TBootstrap Attribute<T>(AttributeKey<T> key, T value)
             where T : class
         {
-            if (null == key) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
+            if (key is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
 
-            if (value == null)
+            if (value is null)
             {
                 //AttributeValue removed;
                 this.attrs.TryRemove(key, out _);
@@ -169,11 +169,11 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         public virtual TBootstrap Validate()
         {
-            if (InternalGroup == null)
+            if (InternalGroup is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_GroupNotSet();
             }
-            if (InternalChannelFactory == null)
+            if (InternalChannelFactory is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_ChannelOrFactoryNotSet();
             }
@@ -204,7 +204,7 @@ namespace DotNetty.Transport.Bootstrapping
         {
             this.Validate();
             EndPoint address = InternalLocalAddress;
-            if (address == null)
+            if (address is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_LocalAddrMustBeSetBeforehand();
             }
@@ -245,7 +245,7 @@ namespace DotNetty.Transport.Bootstrapping
         public Task<IChannel> BindAsync(EndPoint localAddress)
         {
             this.Validate();
-            if (null == localAddress) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.localAddress); }
+            if (localAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.localAddress); }
 
             return this.DoBindAsync(localAddress);
         }
@@ -337,7 +337,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="AbstractBootstrap{TBootstrap,TChannel}"/> instance.</returns>
         public TBootstrap Handler(IChannelHandler handler)
         {
-            if (null == handler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
+            if (handler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
             InternalHandler = handler;
             return (TBootstrap)this;
         }

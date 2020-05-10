@@ -58,13 +58,13 @@ namespace DotNetty.Buffers
 
         internal void PrevList(PoolChunkList<T> list)
         {
-            Debug.Assert(this.prevList == null);
+            Debug.Assert(this.prevList is null);
             this.prevList = list;
         }
 
         internal bool Allocate(PooledByteBuffer<T> buf, int reqCapacity, int normCapacity)
         {
-            if (this.head == null || normCapacity > this.maxCapacity)
+            if (this.head is null || normCapacity > this.maxCapacity)
             {
                 // Either this PoolChunkList is empty or the requested capacity is larger then the capacity which can
                 // be handled by the PoolChunks that are contained in this PoolChunkList.
@@ -77,7 +77,7 @@ namespace DotNetty.Buffers
                 if (handle < 0)
                 {
                     cur = cur.Next;
-                    if (cur == null)
+                    if (cur is null)
                     {
                         return false;
                     }
@@ -126,7 +126,7 @@ namespace DotNetty.Buffers
         /// {@link PoolChunkList} that has the correct minUsage / maxUsage in respect to {@link PoolChunk#usage()}.
         bool Move0(PoolChunk<T> chunk)
         {
-            if (this.prevList == null)
+            if (this.prevList is null)
             {
                 // There is no previous PoolChunkList so return false which result in having the PoolChunk destroyed and
                 // all memory associated with the PoolChunk will be released.
@@ -150,7 +150,7 @@ namespace DotNetty.Buffers
         void Add0(PoolChunk<T> chunk)
         {
             chunk.Parent = this;
-            if (this.head == null)
+            if (this.head is null)
             {
                 this.head = chunk;
                 chunk.Prev = null;
@@ -193,7 +193,7 @@ namespace DotNetty.Buffers
         static int MinUsage0(int value) => Math.Max(1, value);
 
         public IEnumerator<IPoolChunkMetric> GetEnumerator() => 
-            this.head == null ? Enumerable.Empty<IPoolChunkMetric>().GetEnumerator() : this.GetEnumeratorInternal();
+            this.head is null ? Enumerable.Empty<IPoolChunkMetric>().GetEnumerator() : this.GetEnumeratorInternal();
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
@@ -214,7 +214,7 @@ namespace DotNetty.Buffers
             var buf = StringBuilderManager.Allocate();
             lock (this.arena)
             {
-                if (this.head == null)
+                if (this.head is null)
                 {
                     StringBuilderManager.Free(buf);
                     return "none";
@@ -224,7 +224,7 @@ namespace DotNetty.Buffers
                 {
                     buf.Append(cur);
                     cur = cur.Next;
-                    if (cur == null)
+                    if (cur is null)
                     {
                         break;
                     }

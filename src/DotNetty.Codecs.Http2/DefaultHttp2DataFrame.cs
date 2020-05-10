@@ -54,7 +54,7 @@ namespace DotNetty.Codecs.Http2
         /// 256 (inclusive).</param>
         public DefaultHttp2DataFrame(IByteBuffer content, bool endStream, int padding)
         {
-            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
+            if (content is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
 
             this.content = content;
             this.endStream = endStream;

@@ -45,7 +45,7 @@ namespace DotNetty.Codecs.Http2
             var httpMsg = msg as IHttpMessage;
             var contentMsg = msg as IHttpContent;
 
-            if (null == httpMsg && null == contentMsg)
+            if (httpMsg is null && contentMsg is null)
             {
                 ctx.WriteAsync(msg, promise);
                 return;

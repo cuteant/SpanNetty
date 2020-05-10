@@ -97,7 +97,7 @@ namespace DotNetty.Codecs
 
         protected IChannelHandlerContext HandlerContext()
         {
-            if (this.handlerContext == null)
+            if (this.handlerContext is null)
             {
                 CThrowHelper.ThrowInvalidOperationException_NotAddedToAPipelineYet();
             }
@@ -186,7 +186,7 @@ namespace DotNetty.Codecs
             }
             else if (this.IsContentMessage(message))
             {
-                if (this.currentMessage == null)
+                if (this.currentMessage is null)
                 {
                     // it is possible that a TooLongFrameException was already thrown but we can still discard data
                     // until the begging of the next request/response.
@@ -364,7 +364,7 @@ namespace DotNetty.Codecs
 
         void ReleaseCurrentMessage()
         {
-            if (this.currentMessage == null)
+            if (this.currentMessage is null)
             {
                 return;
             }

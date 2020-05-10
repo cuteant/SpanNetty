@@ -313,7 +313,7 @@ namespace DotNetty.Transport.Channels.Pool
         public override async ValueTask<bool> ReleaseAsync(IChannel channel)
 #endif
         {
-            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
+            if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
             
             if (this.executor.InEventLoop)
             {

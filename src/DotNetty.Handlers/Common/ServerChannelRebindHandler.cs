@@ -21,7 +21,7 @@ namespace DotNetty.Handlers
 
         public ServerChannelRebindHandler(Action doBindAction, int delaySeconds)
         {
-            if (null == doBindAction) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.doBindAction);
+            if (doBindAction is null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.doBindAction);
             if (delaySeconds <= 0) { delaySeconds = 2; }
 
             _doBindAction = doBindAction;

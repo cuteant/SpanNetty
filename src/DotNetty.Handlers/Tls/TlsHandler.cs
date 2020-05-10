@@ -69,8 +69,8 @@ namespace DotNetty.Handlers.Tls
 
         public TlsHandler(Func<Stream, SslStream> sslStreamFactory, TlsSettings settings)
         {
-            if (null == sslStreamFactory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sslStreamFactory); }
-            if (null == settings) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
+            if (sslStreamFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sslStreamFactory); }
+            if (settings is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
 
             _serverSettings = settings as ServerTlsSettings;
             if (_serverSettings is object)
@@ -80,7 +80,7 @@ namespace DotNetty.Handlers.Tls
                 // capture the certificate now so it can't be switched after validation
                 _serverCertificate = _serverSettings.Certificate;
                 _serverCertificateSelector = _serverSettings.ServerCertificateSelector;
-                if (_serverCertificate == null && _serverCertificateSelector == null)
+                if (_serverCertificate is null && _serverCertificateSelector is null)
                 {
                     ThrowHelper.ThrowArgumentException_ServerCertificateRequired();
                 }
@@ -1028,7 +1028,7 @@ namespace DotNetty.Handlers.Tls
                 //
                 // See https://github.com/netty/netty/issues/1340
                 //string msg = ex.Message;
-                //if (msg == null || !msg.contains("possible truncation attack"))
+                //if (msg is null || !msg.contains("possible truncation attack"))
                 //{
                 //    //Logger.Debug("{} SSLEngine.closeInbound() raised an exception.", ctx.channel(), e);
                 //}

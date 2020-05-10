@@ -27,7 +27,7 @@ namespace DotNetty.Handlers.Logging
         /// <param name="type">the class type to generate the logger for</param>
         public MsLoggingHandler(Type type)
         {
-            if (type == null) { ThrowHelper.ThrowNullReferenceException(ExceptionArgument.type); }
+            if (type is null) { ThrowHelper.ThrowNullReferenceException(ExceptionArgument.type); }
 
             Logger = TraceLogger.GetLogger(type);
         }
@@ -36,7 +36,7 @@ namespace DotNetty.Handlers.Logging
         /// <param name="name">the name of the class to use for the logger</param>
         public MsLoggingHandler(string name)
         {
-            if (name == null) { ThrowHelper.ThrowNullReferenceException(ExceptionArgument.name); }
+            if (name is null) { ThrowHelper.ThrowNullReferenceException(ExceptionArgument.name); }
 
             Logger = TraceLogger.GetLogger(name);
         }

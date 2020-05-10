@@ -68,8 +68,8 @@ namespace DotNetty.Codecs.Http
         public HttpClientUpgradeHandler(ISourceCodec sourceCodec, IUpgradeCodec upgradeCodec, int maxContentLength)
             : base(maxContentLength)
         {
-            if (null == sourceCodec) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sourceCodec); }
-            if (null == upgradeCodec) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.upgradeCodec); }
+            if (sourceCodec is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sourceCodec); }
+            if (upgradeCodec is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.upgradeCodec); }
 
             this.sourceCodec = sourceCodec;
             this.upgradeCodec = upgradeCodec;
@@ -78,7 +78,7 @@ namespace DotNetty.Codecs.Http
         public override void Write(IChannelHandlerContext context, object message, IPromise promise)
         {
             var request = message as IHttpRequest;
-            if (null == request)
+            if (request is null)
             {
                 context.WriteAsync(message, promise);
                 return;

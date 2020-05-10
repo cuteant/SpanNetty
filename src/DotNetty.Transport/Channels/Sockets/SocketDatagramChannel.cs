@@ -140,7 +140,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override int DoReadMessages(List<object> buf)
         {
-            if (null == buf) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buf); }
+            if (buf is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buf); }
 
             var operation = this.ReadOperation;
             var data = (IByteBuffer)operation.UserToken;
@@ -180,7 +180,7 @@ namespace DotNetty.Transport.Channels.Sockets
         protected override void ScheduleMessageWrite(object message)
         {
             var envelope = message as IAddressedEnvelope<IByteBuffer>;
-            if (envelope == null)
+            if (envelope is null)
             {
                 throw new InvalidOperationException(
                     $"Unexpected type: {message.GetType().FullName}, expecting DatagramPacket or IAddressedEnvelope.");
@@ -235,7 +235,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 remoteAddress = this.RemoteAddressInternal;
             }
 
-            if (data == null || remoteAddress == null)
+            if (data is null || remoteAddress is null)
             {
                 return false;
             }
@@ -285,7 +285,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         IByteBuffer CreateNewDirectBuffer(IByteBuffer buffer)
         {
-            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 
             int readableBytes = buffer.ReadableBytes;
             if (0u >= (uint)readableBytes)
@@ -304,8 +304,8 @@ namespace DotNetty.Transport.Channels.Sockets
 
         IByteBuffer CreateNewDirectBuffer(IReferenceCounted holder, IByteBuffer buffer)
         {
-            if (null == holder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.holder); }
-            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (holder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.holder); }
+            if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 
             int readableBytes = buffer.ReadableBytes;
             if (0u >= (uint)readableBytes)
@@ -328,7 +328,7 @@ namespace DotNetty.Transport.Channels.Sockets
         ////
         //static bool IsSingleBuffer(IByteBuffer buffer)
         //{
-        //    if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+        //    if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
         //    return buffer.IsSingleIoBuffer;
         //}
 

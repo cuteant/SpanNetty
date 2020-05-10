@@ -51,7 +51,7 @@ namespace DotNetty.Buffers
         }
 
         /// <summary>Return true if we're in the last segment.</summary>
-        public readonly bool IsLastSegment => _nextPosition.GetObject() == null;
+        public readonly bool IsLastSegment => _nextPosition.GetObject() is null;
 
         /// <summary>True when there is no more data in the <see cref="Sequence"/>.</summary>
         public readonly bool End

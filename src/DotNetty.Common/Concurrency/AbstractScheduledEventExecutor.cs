@@ -94,35 +94,35 @@ namespace DotNetty.Common.Concurrency
 
         public override IScheduledTask Schedule(IRunnable action, TimeSpan delay)
         {
-            if (null == action) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
             return this.Schedule(new RunnableScheduledTask(this, action, PreciseTimeSpan.Deadline(delay)));
         }
 
         public override IScheduledTask Schedule(Action action, TimeSpan delay)
         {
-            if (null == action) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
             return this.Schedule(new ActionScheduledTask(this, action, PreciseTimeSpan.Deadline(delay)));
         }
 
         public override IScheduledTask Schedule(Action<object> action, object state, TimeSpan delay)
         {
-            if (null == action) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
             return this.Schedule(new StateActionScheduledTask(this, action, state, PreciseTimeSpan.Deadline(delay)));
         }
 
         public override IScheduledTask Schedule(Action<object, object> action, object context, object state, TimeSpan delay)
         {
-            if (null == action) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
             return this.Schedule(new StateActionWithContextScheduledTask(this, action, context, state, PreciseTimeSpan.Deadline(delay)));
         }
 
         public override Task ScheduleAsync(Action action, TimeSpan delay, CancellationToken cancellationToken)
         {
-            if (null == action) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
+            if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
             if (cancellationToken.IsCancellationRequested)
             {

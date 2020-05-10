@@ -242,7 +242,7 @@ namespace DotNetty.Buffers
 
         internal static void GetBytes(AbstractByteBuffer buf, byte* addr, int index, IByteBuffer dst, int dstIndex, int length)
         {
-            //if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            //if (dst is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
 
             //if (MathUtil.IsOutOfBounds(dstIndex, length, dst.Capacity))
             //{
@@ -286,7 +286,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.Value)]
         internal static void GetBytes(byte* addr, byte[] dst, int dstIndex, int length)
         {
-            //if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            //if (dst is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
 
             //if (MathUtil.IsOutOfBounds(dstIndex, length, dst.Length))
             //{
@@ -300,7 +300,7 @@ namespace DotNetty.Buffers
 
         internal static void SetBytes(AbstractByteBuffer buf, byte* addr, int index, IByteBuffer src, int srcIndex, int length)
         {
-            //if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            //if (src is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
 
             //if (MathUtil.IsOutOfBounds(srcIndex, length, src.Capacity))
             //{

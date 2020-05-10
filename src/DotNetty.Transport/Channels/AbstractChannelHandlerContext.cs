@@ -201,15 +201,15 @@ namespace DotNetty.Transport.Channels
         protected AbstractChannelHandlerContext(DefaultChannelPipeline pipeline, IEventExecutor executor,
             string name, SkipFlags skipPropagationDirections)
         {
-            if (null == pipeline) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.pipeline); }
-            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (pipeline is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.pipeline); }
+            if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
 
             this.pipeline = pipeline;
             this.Name = name;
             this.executor = executor;
             this.SkipPropagationFlags = skipPropagationDirections;
             // Its ordered if its driven by the EventLoop or the given Executor is an instanceof OrderedEventExecutor.
-            this.ordered = executor == null || executor is IOrderedEventExecutor;
+            this.ordered = executor is null || executor is IOrderedEventExecutor;
         }
 
         public IChannel Channel => this.pipeline.Channel;
@@ -469,7 +469,7 @@ namespace DotNetty.Transport.Channels
 
         internal static void InvokeExceptionCaught(AbstractChannelHandlerContext next, Exception cause)
         {
-            if (null == cause) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
+            if (cause is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
 
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
@@ -526,7 +526,7 @@ namespace DotNetty.Transport.Channels
 
         internal static void InvokeUserEventTriggered(AbstractChannelHandlerContext next, object evt)
         {
-            if (null == evt) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.evt); }
+            if (evt is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.evt); }
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
             {
@@ -565,7 +565,7 @@ namespace DotNetty.Transport.Channels
 
         internal static void InvokeChannelRead(AbstractChannelHandlerContext next, object msg)
         {
-            if (null == msg) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
+            if (msg is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
 
             object m = next.pipeline.Touch(msg, next);
             IEventExecutor nextExecutor = next.Executor;
@@ -678,7 +678,7 @@ namespace DotNetty.Transport.Channels
 
         public Task BindAsync(EndPoint localAddress)
         {
-            if (null == localAddress) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.localAddress); }
+            if (localAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.localAddress); }
             // todo: check for cancellation
             //if (!validatePromise(ctx, promise, false)) {
             //    // promise cancelled
@@ -714,7 +714,7 @@ namespace DotNetty.Transport.Channels
         public Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
         {
             AbstractChannelHandlerContext next = this.FindContextOutbound();
-            if (null == remoteAddress) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
+            if (remoteAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
             // todo: check for cancellation
 
             IEventExecutor nextExecutor = next.Executor;
@@ -943,7 +943,7 @@ namespace DotNetty.Transport.Channels
 
         public Task WriteAsync(object msg, IPromise promise)
         {
-            if (null == msg) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
+            if (msg is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
 
             try
             {
@@ -1039,7 +1039,7 @@ namespace DotNetty.Transport.Channels
 
         public Task WriteAndFlushAsync(object message, IPromise promise)
         {
-            if (null == message) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.message); }
+            if (message is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.message); }
 
             if (IsNotValidPromise(promise, true))
             {
@@ -1187,7 +1187,7 @@ namespace DotNetty.Transport.Channels
 
         static bool IsNotValidPromise(IPromise promise, bool allowVoidPromise)
         {
-            if (null == promise) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.promise); }
+            if (promise is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.promise); }
 
             if (promise.IsCompleted)
             {

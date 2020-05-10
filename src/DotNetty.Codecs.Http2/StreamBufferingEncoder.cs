@@ -285,7 +285,7 @@ namespace DotNetty.Codecs.Http2
             /// <param name="ex"></param>
             public virtual void Release(Exception ex)
             {
-                if (ex == null)
+                if (ex is null)
                 {
                     promise.Complete();
                 }

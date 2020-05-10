@@ -24,7 +24,7 @@ namespace DotNetty.Transport.Libuv
         public WorkerEventLoop(WorkerEventLoopGroup parent)
             : base(parent, null)
         {
-            if (null == parent) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parent); }
+            if (parent is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parent); }
 
             string name = parent.PipeName;
             if (string.IsNullOrEmpty(name))
@@ -44,7 +44,7 @@ namespace DotNetty.Transport.Libuv
 
         protected override void Initialize()
         {
-            Debug.Assert(this.pipe == null);
+            Debug.Assert(this.pipe is null);
 
             this.pipe = new Pipe(this.UnsafeLoop, true);
             PipeConnect request = null;

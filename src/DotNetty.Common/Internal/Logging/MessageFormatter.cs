@@ -98,7 +98,7 @@ namespace DotNetty.Common.Internal.Logging
 
         public static Exception GetThrowableCandidate(object[] argArray)
         {
-            if (argArray == null || 0u >= (uint)argArray.Length)
+            if (argArray is null || 0u >= (uint)argArray.Length)
             {
                 return null;
             }
@@ -118,12 +118,12 @@ namespace DotNetty.Common.Internal.Logging
         {
             Exception throwableCandidate = GetThrowableCandidate(argArray);
 
-            if (messagePattern == null)
+            if (messagePattern is null)
             {
                 return new FormattingTuple(null, argArray, throwableCandidate);
             }
 
-            if (argArray == null)
+            if (argArray is null)
             {
                 return new FormattingTuple(messagePattern);
             }

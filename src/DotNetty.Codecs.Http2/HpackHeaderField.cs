@@ -27,8 +27,8 @@ namespace DotNetty.Codecs.Http2
         /// <param name="value"></param>
         internal HpackHeaderField(ICharSequence name, ICharSequence value)
         {
-            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             this.name = name;
             this.value = value;
@@ -50,7 +50,7 @@ namespace DotNetty.Codecs.Http2
             if (ReferenceEquals(this, obj)) { return true; }
 
             var other = obj as HpackHeaderField;
-            if (null == other) { return false; }
+            if (other is null) { return false; }
 
             // To avoid short circuit behavior a bitwise operator is used instead of a bool operator.
             return (HpackUtil.EqualsConstantTime(this.name, other.name) & HpackUtil.EqualsConstantTime(this.value, other.value)) != 0;

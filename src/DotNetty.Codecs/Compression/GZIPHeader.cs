@@ -123,11 +123,11 @@ namespace DotNetty.Codecs.Compression
 
         public void SetName(string value) => this.name = ISOEncoding.GetBytes(value);
 
-        public string GetName() => this.name == null ? string.Empty : ISOEncoding.GetString(this.name);
+        public string GetName() => this.name is null ? string.Empty : ISOEncoding.GetString(this.name);
 
         public void SetComment(string value) => this.comment = ISOEncoding.GetBytes(value);
 
-        public string GetComment() => this.comment == null ? string.Empty : ISOEncoding.GetString(this.comment);
+        public string GetComment() => this.comment is null ? string.Empty : ISOEncoding.GetString(this.comment);
 
         public void SetCRC(long value) => this.crc = value;
 

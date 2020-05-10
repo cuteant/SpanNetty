@@ -43,8 +43,8 @@ namespace DotNetty.Codecs.Http2
         /// <param name="hpackEncoder"></param>
         internal DefaultHttp2HeadersEncoder(ISensitivityDetector sensitivityDetector, HpackEncoder hpackEncoder)
         {
-            if (null == sensitivityDetector) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sensitivityDetector); }
-            if (null == hpackEncoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.hpackEncoder); }
+            if (sensitivityDetector is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sensitivityDetector); }
+            if (hpackEncoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.hpackEncoder); }
 
             this.sensitivityDetector = sensitivityDetector;
             this.hpackEncoder = hpackEncoder;

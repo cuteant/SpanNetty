@@ -69,7 +69,7 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
-            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            if (dst is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
             this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
             UnsafeByteBufferUtil.GetBytes(this, this.Addr(index), index, dst, dstIndex, length);
             return this;
@@ -77,7 +77,7 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
-            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            if (dst is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
             this.CheckDstIndex(index, length, dstIndex, dst.Length);
             UnsafeByteBufferUtil.GetBytes(this.Addr(index), dst, dstIndex, length);
             return this;
@@ -85,7 +85,7 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer GetBytes(int index, Stream output, int length)
         {
-            if (null == output) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
+            if (output is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
             this.CheckIndex(index, length);
             //UnsafeByteBufferUtil.GetBytes(this, this.Addr(index), index, output, length);
             // UnsafeByteBufferUtil.GetBytes 多一遍内存拷贝，最终还是调用 stream.write，没啥必要
@@ -117,7 +117,7 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
-            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            if (src is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckSrcIndex(index, length, srcIndex, src.Capacity);
             UnsafeByteBufferUtil.SetBytes(this, this.Addr(index), index, src, srcIndex, length);
             return this;
@@ -125,7 +125,7 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
-            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            if (src is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckSrcIndex(index, length, srcIndex, src.Length);
             UnsafeByteBufferUtil.SetBytes(this.Addr(index), src, srcIndex, length);
             return this;
@@ -133,7 +133,7 @@ namespace DotNetty.Buffers
 
         public sealed override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
-            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            if (src is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckIndex(index, length);
             //int read = UnsafeByteBufferUtil.SetBytes(this, this.Addr(index), index, src, length);
             //return Task.FromResult(read);

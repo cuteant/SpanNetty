@@ -493,7 +493,7 @@ namespace DotNetty.Codecs.Http
             {
                 ThrowHelper.ThrowArgumentException_InvalidResponseCode(code);
             }
-            if (reasonPhrase == null)
+            if (reasonPhrase is null)
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.reasonPhrase);
             }
@@ -549,7 +549,7 @@ namespace DotNetty.Codecs.Http
 
         internal void Encode(IByteBuffer buf)
         {
-            if (this.bytes == null)
+            if (this.bytes is null)
             {
                 ByteBufferUtil.Copy(this.codeAsText, buf);
                 buf.WriteByte(HttpConstants.HorizontalSpace);

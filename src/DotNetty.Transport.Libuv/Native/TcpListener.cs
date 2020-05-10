@@ -18,7 +18,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         public void Listen(IServerNativeUnsafe channel, int backlog)
         {
-            Debug.Assert(channel is object && this.nativeUnsafe == null);
+            Debug.Assert(channel is object && this.nativeUnsafe is null);
             Debug.Assert(backlog > 0);
 
             int result = NativeMethods.uv_listen(this.Handle, backlog, ConnectionCallback);

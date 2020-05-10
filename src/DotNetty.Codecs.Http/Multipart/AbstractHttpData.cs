@@ -27,7 +27,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         protected AbstractHttpData(string name, Encoding charset, long size)
         {
-            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
 
             name = StripPattern.Replace(name, " ");
             name = ReplacePattern.Replace(name, "");
@@ -73,7 +73,7 @@ namespace DotNetty.Codecs.Http.Multipart
             get => this.charset;
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.charset = value;
             }
         }

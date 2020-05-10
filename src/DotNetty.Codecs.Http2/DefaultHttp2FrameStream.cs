@@ -35,7 +35,7 @@ namespace DotNetty.Codecs.Http2
             get
             {
                 var stream = this.InternalStream;
-                return stream == null ? Volatile.Read(ref this.id) : stream.Id;
+                return stream is null ? Volatile.Read(ref this.id) : stream.Id;
             }
             set => Interlocked.Exchange(ref this.id, value);
         }
@@ -45,7 +45,7 @@ namespace DotNetty.Codecs.Http2
             get
             {
                 var stream = this.InternalStream;
-                return stream == null ? Http2StreamState.Idle : stream.State;
+                return stream is null ? Http2StreamState.Idle : stream.State;
             }
         }
 

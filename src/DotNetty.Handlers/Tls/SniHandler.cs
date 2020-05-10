@@ -34,8 +34,8 @@ namespace DotNetty.Handlers.Tls
 
         public SniHandler(Func<Stream, SslStream> sslStreamFactory, ServerTlsSniSettings settings)
         {
-            if (null == settings) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
-            if (null == sslStreamFactory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sslStreamFactory); }
+            if (settings is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
+            if (sslStreamFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sslStreamFactory); }
             this.sslStreamFactory = sslStreamFactory;
             this.serverTlsSniSettings = settings;
         }
@@ -266,7 +266,7 @@ namespace DotNetty.Handlers.Tls
 
         async void Select(IChannelHandlerContext context, string hostName)
         {
-            if (null == hostName) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.hostName); }
+            if (hostName is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.hostName); }
             this.suppressRead = true;
             try
             {
@@ -290,7 +290,7 @@ namespace DotNetty.Handlers.Tls
 
         void ReplaceHandler(IChannelHandlerContext context, ServerTlsSettings serverTlsSetting)
         {
-            if (null == serverTlsSetting) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.serverTlsSetting); }
+            if (serverTlsSetting is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.serverTlsSetting); }
             var tlsHandler = new TlsHandler(this.sslStreamFactory, serverTlsSetting);
             context.Pipeline.Replace(this, nameof(TlsHandler), tlsHandler);
         }

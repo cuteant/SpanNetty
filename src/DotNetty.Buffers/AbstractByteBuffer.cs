@@ -593,7 +593,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetBytes(int index, IByteBuffer src, int length)
         {
-            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            if (src is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
 
             this.CheckIndex(index, length);
             if (CheckBounds) { CheckReadableBounds(src, length); }

@@ -26,7 +26,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override void SetContent(IByteBuffer buffer)
         {
-            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 
             long localsize = buffer.ReadableBytes;
             CheckSize(localsize, this.MaxSize);
@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override void SetContent(Stream inputStream)
         {
-            if (null == inputStream) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.inputStream); }
+            if (inputStream is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.inputStream); }
 
             if (!inputStream.CanRead)
             {
@@ -95,7 +95,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
 
                 this.Size += localsize;
-                if (this.byteBuf == null)
+                if (this.byteBuf is null)
                 {
                     this.byteBuf = buffer;
                 }
@@ -118,7 +118,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             else
             {
-                if (buffer == null)
+                if (buffer is null)
                 {
                     ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer);
                 }
@@ -136,7 +136,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override byte[] GetBytes()
         {
-            if (this.byteBuf == null)
+            if (this.byteBuf is null)
             {
                 return Unpooled.Empty.Array;
             }
@@ -150,11 +150,11 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override string GetString(Encoding encoding)
         {
-            if (this.byteBuf == null)
+            if (this.byteBuf is null)
             {
                 return string.Empty;
             }
-            if (encoding == null)
+            if (encoding is null)
             {
                 encoding = HttpConstants.DefaultEncoding;
             }
@@ -165,7 +165,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override IByteBuffer GetChunk(int length)
         {
-            if (this.byteBuf == null || 0u >= (uint)length || 0u >= (uint)this.byteBuf.ReadableBytes)
+            if (this.byteBuf is null || 0u >= (uint)length || 0u >= (uint)this.byteBuf.ReadableBytes)
             {
                 this.chunkPosition = 0;
                 return Unpooled.Empty;
@@ -191,13 +191,13 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override bool RenameTo(FileStream destination)
         {
-            if (null == destination) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.destination); }
+            if (destination is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.destination); }
 
             if (!destination.CanWrite)
             {
                 ThrowHelper.ThrowArgumentException_Stream_NotWritable();
             }
-            if (this.byteBuf == null)
+            if (this.byteBuf is null)
             {
                 return true;
             }

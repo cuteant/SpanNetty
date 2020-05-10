@@ -136,7 +136,7 @@ namespace DotNetty.Codecs.Redis
         bool DecodeInline(IByteBuffer input, List<object> output)
         {
             IByteBuffer lineBytes = ReadLine(input);
-            if (lineBytes == null)
+            if (lineBytes is null)
             {
                 if (input.ReadableBytes > this.maxInlineMessageLength)
                 {
@@ -154,7 +154,7 @@ namespace DotNetty.Codecs.Redis
         bool DecodeLength(IByteBuffer input, List<object> output)
         {
             IByteBuffer lineByteBuf = ReadLine(input);
-            if (lineByteBuf == null)
+            if (lineByteBuf is null)
             {
                 return false;
             }

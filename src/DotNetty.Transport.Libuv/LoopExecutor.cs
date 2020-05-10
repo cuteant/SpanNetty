@@ -292,7 +292,7 @@ namespace DotNetty.Transport.Libuv
         {
             this.FetchFromScheduledTaskQueue();
             IRunnable task = this.PollTask();
-            if (task == null)
+            if (task is null)
             {
                 this.AfterRunningAllTasks();
                 return;
@@ -320,7 +320,7 @@ namespace DotNetty.Transport.Libuv
                 }
 
                 task = this.PollTask();
-                if (task == null)
+                if (task is null)
                 {
                     executionTime = this.GetLoopTime();
                     break;
@@ -402,7 +402,7 @@ namespace DotNetty.Transport.Libuv
         static bool RunAllTasksFrom(IQueue<IRunnable> taskQueue)
         {
             IRunnable task = PollTaskFrom(taskQueue);
-            if (task == null)
+            if (task is null)
             {
                 return false;
             }
@@ -410,7 +410,7 @@ namespace DotNetty.Transport.Libuv
             {
                 SafeExecute(task);
                 task = PollTaskFrom(taskQueue);
-                if (task == null)
+                if (task is null)
                 {
                     return true;
                 }
@@ -462,7 +462,7 @@ namespace DotNetty.Transport.Libuv
 
         public override void Execute(IRunnable task)
         {
-            if (null == task) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task); }
+            if (task is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task); }
 
             this.AddTask(task);
             bool inEventLoop = this.InEventLoop;

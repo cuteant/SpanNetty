@@ -17,7 +17,7 @@ namespace DotNetty.Common.Internal
             get => Volatile.Read(ref defaultPlatform) ?? EnsurePlatformCreated();
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 Interlocked.Exchange(ref defaultPlatform, value);
             }
         }

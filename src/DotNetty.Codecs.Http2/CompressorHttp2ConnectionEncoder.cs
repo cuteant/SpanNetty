@@ -58,7 +58,7 @@ namespace DotNetty.Codecs.Http2
         {
             IHttp2Stream stream = this.Connection.Stream(streamId);
             EmbeddedChannel channel = stream?.GetProperty<EmbeddedChannel>(propertyKey);
-            if (channel == null)
+            if (channel is null)
             {
                 // The compressor may be null if no compatible encoding type was found in this stream's headers
                 return base.WriteDataAsync(ctx, streamId, data, padding, endOfStream, promise);
@@ -69,7 +69,7 @@ namespace DotNetty.Codecs.Http2
                 // The channel will release the buffer after being written
                 channel.WriteOutbound(data);
                 var buf = NextReadableBuf(channel);
-                if (buf == null)
+                if (buf is null)
                 {
                     if (endOfStream)
                     {
@@ -89,18 +89,18 @@ namespace DotNetty.Codecs.Http2
                 while (true)
                 {
                     var nextBuf = NextReadableBuf(channel);
-                    var compressedEndOfStream = nextBuf == null && endOfStream;
+                    var compressedEndOfStream = nextBuf is null && endOfStream;
                     if (compressedEndOfStream && channel.Finish())
                     {
                         nextBuf = NextReadableBuf(channel);
-                        compressedEndOfStream = nextBuf == null;
+                        compressedEndOfStream = nextBuf is null;
                     }
 
                     var bufPromise = ctx.NewPromise();
                     tasks.Add(bufPromise.Task);
                     base.WriteDataAsync(ctx, streamId, buf, padding, compressedEndOfStream, bufPromise);
 
-                    if (nextBuf == null) { break; }
+                    if (nextBuf is null) { break; }
 
                     padding = 0; // Padding is only communicated once on the first iteration
                     buf = nextBuf;
@@ -293,7 +293,7 @@ namespace DotNetty.Codecs.Http2
                 while (true)
                 {
                     var buf = compressor.ReadOutbound<IByteBuffer>();
-                    if (buf == null) { break; }
+                    if (buf is null) { break; }
 
                     buf.Release();
                 }
@@ -311,7 +311,7 @@ namespace DotNetty.Codecs.Http2
             while (true)
             {
                 var buf = compressor.ReadOutbound<IByteBuffer>();
-                if (buf == null) { return null; }
+                if (buf is null) { return null; }
                 if (!buf.IsReadable())
                 {
                     buf.Release();

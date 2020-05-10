@@ -31,8 +31,8 @@ namespace DotNetty.Transport.Channels
 
         public CombinedChannelDuplexHandler(TIn inboundHandler, TOut outboundHandler)
         {
-            if (null == inboundHandler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.inboundHandler); }
-            if (null == outboundHandler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.outboundHandler); }
+            if (inboundHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.inboundHandler); }
+            if (outboundHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.outboundHandler); }
 
             this.EnsureNotSharable();
             this.Init(inboundHandler, outboundHandler);
@@ -57,12 +57,12 @@ namespace DotNetty.Transport.Channels
                 ThrowHelper.ThrowInvalidOperationException_InitCannotBeInvokedIf(this);
             }
 
-            if (inbound == null)
+            if (inbound is null)
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.inbound);
             }
 
-            if (outbound == null)
+            if (outbound is null)
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.outbound);
             }
@@ -91,7 +91,7 @@ namespace DotNetty.Transport.Channels
 
         public override void HandlerAdded(IChannelHandlerContext context)
         {
-            if (this.InboundHandler == null)
+            if (this.InboundHandler is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_InitMustBeInvokedBefore(this);
             }

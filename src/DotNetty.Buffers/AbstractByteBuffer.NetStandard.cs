@@ -266,7 +266,7 @@ namespace DotNetty.Buffers
                     segment = newSegment;
                 }
 
-                if (first == null)
+                if (first is null)
                 {
                     first = segment = new ReadOnlyBufferSegment();
                 }

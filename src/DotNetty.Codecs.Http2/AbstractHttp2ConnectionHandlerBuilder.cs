@@ -92,7 +92,7 @@ namespace DotNetty.Codecs.Http2
             get => this.initialSettings;
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.initialSettings = value;
             }
         }
@@ -106,7 +106,7 @@ namespace DotNetty.Codecs.Http2
             get => this.frameListener;
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.frameListener = value;
             }
         }
@@ -181,7 +181,7 @@ namespace DotNetty.Codecs.Http2
                 //EnforceConstraint("connection", "server", isServer);
                 EnforceConstraint("connection", "codec", this.decoder);
                 EnforceConstraint("connection", "codec", this.encoder);
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.connection = value;
             }
         }
@@ -211,8 +211,8 @@ namespace DotNetty.Codecs.Http2
             //EnforceConstraint("codec", "validateHeaders", validateHeaders);
             EnforceConstraint("codec", "headerSensitivityDetector", this.headerSensitivityDetector);
             //EnforceConstraint("codec", "encoderEnforceMaxConcurrentStreams", encoderEnforceMaxConcurrentStreams);
-            if (null == decoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoder); }
-            if (null == encoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoder); }
+            if (decoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoder); }
+            if (encoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoder); }
 
             if (decoder.Connection != encoder.Connection)
             {
@@ -248,7 +248,7 @@ namespace DotNetty.Codecs.Http2
             set
             {
                 EnforceNonCodecConstraints("frameLogger");
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.frameLogger = value;
             }
         }
@@ -276,7 +276,7 @@ namespace DotNetty.Codecs.Http2
             set
             {
                 EnforceNonCodecConstraints("headerSensitivityDetector");
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.headerSensitivityDetector = value;
             }
         }
@@ -324,7 +324,7 @@ namespace DotNetty.Codecs.Http2
             }
 
             IHttp2Connection connection = this.connection;
-            if (connection == null)
+            if (connection is null)
             {
                 connection = new DefaultHttp2Connection(this.isServer, this.maxReservedStreams);
             }
@@ -381,7 +381,7 @@ namespace DotNetty.Codecs.Http2
 
             // Setup post build options
             handler.GracefulShutdownTimeout = this.gracefulShutdownTimeout;
-            if (handler.Decoder.FrameListener == null)
+            if (handler.Decoder.FrameListener is null)
             {
                 handler.Decoder.FrameListener = frameListener;
             }

@@ -82,7 +82,7 @@ namespace DotNetty.Codecs
         public long ConvertToTimeMillis(ICharSequence value)
         {
             DateTime? dateTime = DateFormatter.ParseHttpDate(value);
-            if (dateTime == null)
+            if (dateTime is null)
             {
                 CThrowHelper.ThrowFormatException(value);
             }

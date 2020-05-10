@@ -166,7 +166,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
             Debug.Assert(operation is object);
 
-            if (operation.BufferList == null)
+            if (operation.BufferList is null)
             {
                 operation.SetBuffer(null, 0, 0);
             }
@@ -321,7 +321,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
             void FulfillConnectPromise(IPromise promise, bool wasActive)
             {
-                if (null == promise)
+                if (promise is null)
                 {
                     // Closed via cancellation and the promise has been notified already.
                     return;
@@ -352,7 +352,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
             void FulfillConnectPromise(IPromise promise, Exception cause)
             {
-                if (null == promise)
+                if (promise is null)
                 {
                     // Closed via cancellation and the promise has been notified already.
                     return;

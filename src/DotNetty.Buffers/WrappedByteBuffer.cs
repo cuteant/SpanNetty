@@ -23,7 +23,7 @@ namespace DotNetty.Buffers
 
         protected WrappedByteBuffer(IByteBuffer buf)
         {
-            if (null == buf) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buf); }
+            if (buf is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buf); }
 
             this.Buf = buf;
         }

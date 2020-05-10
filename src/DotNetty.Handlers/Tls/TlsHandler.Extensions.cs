@@ -25,7 +25,7 @@ namespace DotNetty.Handlers.Tls
 
         private static SslStream CreateSslStream(TlsSettings settings, Stream stream)
         {
-            if (null == settings) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
+            if (settings is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
 
             if (settings is ServerTlsSettings serverSettings)
             {
@@ -45,19 +45,19 @@ namespace DotNetty.Handlers.Tls
 
                 bool LocalClientCertificateValidation(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
                 {
-                    if (certificate == null)
+                    if (certificate is null)
                     {
                         return serverSettings.ClientCertificateMode != ClientCertificateMode.RequireCertificate;
                     }
 
                     var clientCertificateValidationFunc = serverSettings.ClientCertificateValidation;
-                    if (clientCertificateValidationFunc == null)
+                    if (clientCertificateValidationFunc is null)
                     {
                         if (sslPolicyErrors != SslPolicyErrors.None) { return false; }
                     }
 
                     var certificate2 = ConvertToX509Certificate2(certificate);
-                    if (certificate2 == null) { return false; }
+                    if (certificate2 is null) { return false; }
 
                     if (clientCertificateValidationFunc is object)
                     {
@@ -143,7 +143,7 @@ namespace DotNetty.Handlers.Tls
                     leaveInnerStreamOpen: true,
                     userCertificateValidationCallback: new RemoteCertificateValidationCallback(LocalServerCertificateValidation)
 #if !NETCOREAPP_2_0_GREATER
-                    , userCertificateSelectionCallback: clientSettings.UserCertSelector == null ? null : new LocalCertificateSelectionCallback((sender, targetHost, localCertificates, remoteCertificate, acceptableIssuers) =>
+                    , userCertificateSelectionCallback: clientSettings.UserCertSelector is null ? null : new LocalCertificateSelectionCallback((sender, targetHost, localCertificates, remoteCertificate, acceptableIssuers) =>
                     {
                         return clientSettings.UserCertSelector(sender as SslStream, targetHost, localCertificates, remoteCertificate, acceptableIssuers);
                     })

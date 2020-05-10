@@ -11,7 +11,7 @@ namespace DotNetty.Codecs
 
         public void ValidateName(T name)
         {
-            if (name == null)
+            if (name is null)
             {
                 CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
             }

@@ -16,8 +16,8 @@ namespace DotNetty.Transport.Channels
 
         public DefaultAddressedEnvelope(T content, EndPoint sender, EndPoint recipient)
         {
-            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
-            if (null == sender && null == recipient) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.senderAndRecipient); }
+            if (content is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
+            if (sender is null && recipient is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.senderAndRecipient); }
 
             this.Content = content;
             this.Sender = sender;

@@ -42,7 +42,7 @@ namespace DotNetty.Handlers.Tls
                 _inputLength += count;
 
                 ArraySegment<byte> sslBuffer = _sslOwnedBuffer;
-                if (sslBuffer.Array == null)
+                if (sslBuffer.Array is null)
                 {
                     // there is no pending read operation - keep for future
                     return;
@@ -71,7 +71,7 @@ namespace DotNetty.Handlers.Tls
                     return res;
                 }
 
-                Debug.Assert(_sslOwnedBuffer.Array == null);
+                Debug.Assert(_sslOwnedBuffer.Array is null);
                 // take note of buffer - we will pass bytes there once available
                 _sslOwnedBuffer = new ArraySegment<byte>(buffer, offset, count);
                 _readCompletionSource = new TaskCompletionSource<int>(state);
@@ -87,7 +87,7 @@ namespace DotNetty.Handlers.Tls
                     return syncResult.Result;
                 }
 
-                Debug.Assert(_readCompletionSource == null || _readCompletionSource.Task == asyncResult);
+                Debug.Assert(_readCompletionSource is null || _readCompletionSource.Task == asyncResult);
                 Debug.Assert(!((Task<int>)asyncResult).IsCanceled);
 
                 try
@@ -158,7 +158,7 @@ namespace DotNetty.Handlers.Tls
                 {
                     if (callback is object || state != task.AsyncState)
                     {
-                        Debug.Assert(_writeCompletion == null);
+                        Debug.Assert(_writeCompletion is null);
                         _writeCallback = callback;
                         var tcs = _owner.CapturedContext.NewPromise(state);
                         _writeCompletion = tcs;

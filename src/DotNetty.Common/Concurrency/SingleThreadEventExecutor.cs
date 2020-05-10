@@ -411,7 +411,7 @@ namespace DotNetty.Common.Concurrency
         {
             this.FetchFromScheduledTaskQueue();
             IRunnable task = this.PollTask();
-            if (task == null)
+            if (task is null)
             {
                 return false;
             }
@@ -421,7 +421,7 @@ namespace DotNetty.Common.Concurrency
                 Volatile.Write(ref this.progress, this.progress + 1); // volatile write is enough as this is the only thread ever writing
                 SafeExecute(task);
                 task = this.PollTask();
-                if (task == null)
+                if (task is null)
                 {
                     this.lastExecutionTime = PreciseTimeSpan.FromStart;
                     return true;
@@ -433,7 +433,7 @@ namespace DotNetty.Common.Concurrency
         {
             this.FetchFromScheduledTaskQueue();
             IRunnable task = this.PollTask();
-            if (task == null)
+            if (task is null)
             {
                 return false;
             }
@@ -459,7 +459,7 @@ namespace DotNetty.Common.Concurrency
                 }
 
                 task = this.PollTask();
-                if (task == null)
+                if (task is null)
                 {
                     executionTime = PreciseTimeSpan.FromStart;
                     break;

@@ -575,7 +575,7 @@ namespace DotNetty.Codecs.Compression
 
         void InitWorkArea(int vsize)
         {
-            if (hn == null)
+            if (hn is null)
             {
                 hn = new int[1];
                 v = new int[vsize];

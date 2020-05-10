@@ -13,7 +13,7 @@ namespace DotNetty.Codecs.Http2
         public DecoratingHttp2ConnectionEncoder(IHttp2ConnectionEncoder encoder)
             : base(encoder)
         {
-            if (null == encoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoder); }
+            if (encoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoder); }
 
             this.innerEncoder = encoder;
         }

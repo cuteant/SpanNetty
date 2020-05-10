@@ -187,9 +187,9 @@ namespace DotNetty.Codecs.Http2
         {
             // HTTP/2 does not define a way to carry the version identifier that is included in the HTTP/1.1 request line.
             var method = http2Headers.Method;
-            if (null == method) { ThrowHelper.ThrowArgumentNullException_MethodHeader(); }
+            if (method is null) { ThrowHelper.ThrowArgumentNullException_MethodHeader(); }
             var path = http2Headers.Path;
-            if (null == path) { ThrowHelper.ThrowArgumentNullException_PathHeader(); }
+            if (path is null) { ThrowHelper.ThrowArgumentNullException_PathHeader(); }
             var msg = new DefaultFullHttpRequest(DotNettyHttpVersion.Http11, HttpMethod.ValueOf(AsciiString.Of(method)),
                 path.ToString(), alloc.Buffer(), validateHttpHeaders);
             try
@@ -222,9 +222,9 @@ namespace DotNetty.Codecs.Http2
         {
             // HTTP/2 does not define a way to carry the version identifier that is included in the HTTP/1.1 request line.
             var method = http2Headers.Method;
-            if (null == method) { ThrowHelper.ThrowArgumentNullException_MethodHeader(); }
+            if (method is null) { ThrowHelper.ThrowArgumentNullException_MethodHeader(); }
             var path = http2Headers.Path;
-            if (null == path) { ThrowHelper.ThrowArgumentNullException_PathHeader(); }
+            if (path is null) { ThrowHelper.ThrowArgumentNullException_PathHeader(); }
 
             var msg = new DefaultHttpRequest(DotNettyHttpVersion.Http11, HttpMethod.ValueOf(AsciiString.Of(method)),
                     path.ToString(), validateHttpHeaders);
@@ -366,7 +366,7 @@ namespace DotNetty.Codecs.Http2
                     {
                         output.Scheme = AsciiString.Of(cValue);
                     }
-                    if (output.Scheme == null)
+                    if (output.Scheme is null)
                     {
                         ThrowHelper.ThrowArgumentException_SchemeMustBeSpecified();
                     }

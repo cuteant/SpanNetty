@@ -19,7 +19,7 @@ namespace DotNetty.Codecs.Redis
 
         public RedisEncoder(IRedisMessagePool messagePool)
         {
-            if (null == messagePool) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.messagePool); }
+            if (messagePool is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.messagePool); }
 
             this.messagePool = messagePool;
         }

@@ -70,7 +70,7 @@ namespace DotNetty.Transport.Libuv
 
         internal override NativeHandle GetHandle()
         {
-            if (this.tcpListener == null)
+            if (this.tcpListener is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_HandleNotInit();
             }
@@ -144,7 +144,7 @@ namespace DotNetty.Transport.Libuv
                         client = null;
                     }
                 }
-                if (client == null)
+                if (client is null)
                 {
                     return;
                 }

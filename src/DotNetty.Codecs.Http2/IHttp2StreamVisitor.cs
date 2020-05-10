@@ -25,7 +25,7 @@ namespace DotNetty.Codecs.Http2
 
         public FuncHttp2StreamVisitor(Func<IHttp2Stream, bool> visitFunc)
         {
-            if (null == visitFunc) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.visitFunc); }
+            if (visitFunc is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.visitFunc); }
             this.visitFunc = visitFunc;
         }
 

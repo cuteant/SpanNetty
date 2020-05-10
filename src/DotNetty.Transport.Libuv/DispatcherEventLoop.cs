@@ -18,7 +18,7 @@ namespace DotNetty.Transport.Libuv
         internal DispatcherEventLoop(IEventLoopGroup parent, string threadName = null)
             : base(parent, threadName)
         {
-            if (null == parent) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parent); }
+            if (parent is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parent); }
 
             string pipeName = "DotNetty_" + Guid.NewGuid().ToString("n");
             this.PipeName = (PlatformApi.IsWindows

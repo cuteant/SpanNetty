@@ -19,8 +19,8 @@ namespace DotNetty.Codecs.Http.Multipart
             string contentTransferEncoding, Encoding charset, long size)
             : base(name, charset, size)
         {
-            if (null == fileName) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.fileName); }
-            if (null == contentType) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentType); }
+            if (fileName is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.fileName); }
+            if (contentType is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentType); }
 
             this.fileName = fileName;
             this.contentType = contentType;
@@ -34,7 +34,7 @@ namespace DotNetty.Codecs.Http.Multipart
             get => this.fileName;
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.fileName = value;
             }
         }
@@ -67,7 +67,7 @@ namespace DotNetty.Codecs.Http.Multipart
             get => this.contentType;
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.contentType = value;
             }
         }

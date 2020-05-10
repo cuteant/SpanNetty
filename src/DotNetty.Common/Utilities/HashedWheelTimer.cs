@@ -217,7 +217,7 @@ namespace DotNetty.Common.Utilities
 
         public ITimeout NewTimeout(ITimerTask task, TimeSpan delay)
         {
-            if (task == null)
+            if (task is null)
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task);
             }
@@ -583,9 +583,9 @@ namespace DotNetty.Common.Utilities
             /// </summary>
             public void AddTimeout(HashedWheelTimeout timeout)
             {
-                Debug.Assert(timeout.Bucket == null);
+                Debug.Assert(timeout.Bucket is null);
                 timeout.Bucket = this;
-                if (this.head == null)
+                if (this.head is null)
                 {
                     this.head = this.tail = timeout;
                 }
@@ -679,7 +679,7 @@ namespace DotNetty.Common.Utilities
                 while (true)
                 {
                     HashedWheelTimeout timeout = this.PollTimeout();
-                    if (timeout == null)
+                    if (timeout is null)
                     {
                         return;
                     }
@@ -694,12 +694,12 @@ namespace DotNetty.Common.Utilities
             HashedWheelTimeout PollTimeout()
             {
                 HashedWheelTimeout head = this.head;
-                if (head == null)
+                if (head is null)
                 {
                     return null;
                 }
                 HashedWheelTimeout next = head.Next;
-                if (next == null)
+                if (next is null)
                 {
                     this.tail = this.head = null;
                 }

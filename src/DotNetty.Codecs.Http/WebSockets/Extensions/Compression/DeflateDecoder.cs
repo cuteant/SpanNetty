@@ -28,7 +28,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         protected override void Decode(IChannelHandlerContext ctx, WebSocketFrame msg, List<object> output)
         {
-            if (this.decoder == null)
+            if (this.decoder is null)
             {
                 switch (msg.Opcode)
                 {
@@ -54,7 +54,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             while(true)
             {
                 var partUncompressedContent = this.decoder.ReadInbound<IByteBuffer>();
-                if (partUncompressedContent == null)
+                if (partUncompressedContent is null)
                 {
                     break;
                 }
@@ -122,7 +122,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                     while(true)
                     {
                         var buf = this.decoder.ReadOutbound<IByteBuffer>();
-                        if (buf == null)
+                        if (buf is null)
                         {
                             break;
                         }

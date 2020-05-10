@@ -110,7 +110,7 @@ namespace DotNetty.Transport.Channels.Embedded
         public EmbeddedChannel(IChannelId id, bool hasDisconnect, IChannelConfiguration config, params IChannelHandler[] handlers)
             : base(null, id)
         {
-            if (null == config) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.config); }
+            if (config is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.config); }
 
             this.Metadata = GetMetadata(hasDisconnect);
             this.Configuration = config;
@@ -121,7 +121,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
         void Setup(bool register, params IChannelHandler[] handlers)
         {
-            if (null == handlers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handlers); }
+            if (handlers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handlers); }
 
             IChannelPipeline p = this.Pipeline;
             p.AddLast(new ActionChannelInitializer<IChannel>(channel =>
@@ -129,7 +129,7 @@ namespace DotNetty.Transport.Channels.Embedded
                 IChannelPipeline pipeline = channel.Pipeline;
                 foreach (IChannelHandler h in handlers)
                 {
-                    if (h == null) { break; }
+                    if (h is null) { break; }
                     pipeline.AddLast(h);
                 }
             }));
@@ -236,7 +236,7 @@ namespace DotNetty.Transport.Channels.Embedded
             while (true)
             {
                 object msg = input.Current;
-                if (msg == null)
+                if (msg is null)
                 {
                     break;
                 }
@@ -370,7 +370,7 @@ namespace DotNetty.Transport.Channels.Embedded
             {
                 foreach (object m in msgs)
                 {
-                    if (m == null)
+                    if (m is null)
                     {
                         break;
                     }
@@ -414,7 +414,7 @@ namespace DotNetty.Transport.Channels.Embedded
         [MethodImpl(InlineMethod.Value)]
         void RecordException(Exception cause)
         {
-            if (this.lastException == null)
+            if (this.lastException is null)
             {
                 this.lastException = cause;
             }
@@ -567,7 +567,7 @@ namespace DotNetty.Transport.Channels.Embedded
         public void CheckException(IPromise promise)
         {
             Exception e = this.lastException;
-            if (e == null)
+            if (e is null)
             {
                 promise.TryComplete();
                 return;

@@ -21,7 +21,7 @@ namespace DotNetty.Common.Internal.Logging
         {
             this.Message = message;
             this.Exception = exception;
-            if (exception == null)
+            if (exception is null)
             {
                 this.ArgArray = argArray;
             }
@@ -33,7 +33,7 @@ namespace DotNetty.Common.Internal.Logging
 
         static object[] GetTrimmedCopy(object[] argArray)
         {
-            if(null == argArray || argArray.Length<=0) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.argArray); }
+            if(argArray is null || argArray.Length<=0) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.argArray); }
 
             int trimemdLen = argArray.Length - 1;
             var trimmed = new object[trimemdLen];

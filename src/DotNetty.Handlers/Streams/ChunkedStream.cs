@@ -22,7 +22,7 @@ namespace DotNetty.Handlers.Streams
 
         public ChunkedStream(Stream input, int chunkSize)
         {
-            if (null == input) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.input); }
+            if (input is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.input); }
             if (chunkSize <= 0) { ThrowHelper.ThrowArgumentException_Positive(chunkSize, ExceptionArgument.chunkSize); }
 
             this.input = input;

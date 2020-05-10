@@ -11,7 +11,7 @@ namespace DotNetty.Transport.Channels
             DefaultChannelPipeline pipeline, IEventExecutor executor, string name, IChannelHandler handler)
             : base(pipeline, executor, name, GetSkipPropagationFlags(handler))
         {
-            if (null == handler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
+            if (handler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
 
             this.Handler = handler;
         }

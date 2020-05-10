@@ -26,7 +26,7 @@ namespace DotNetty.Codecs.Http2
 
         public ActionStreamByteDistributorWriter(Action<IHttp2Stream, int> writeAction)
         {
-            if (null == writeAction) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.writeAction); }
+            if (writeAction is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.writeAction); }
             this.writeAction = writeAction;
         }
 

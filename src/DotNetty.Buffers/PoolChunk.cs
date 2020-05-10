@@ -357,7 +357,7 @@ namespace DotNetty.Buffers
 
                 int subpageIdx = this.SubpageIdx(id);
                 PoolSubpage<T> subpage = subpages[subpageIdx];
-                if (subpage == null)
+                if (subpage is null)
                 {
                     subpage = new PoolSubpage<T>(head, this, id, this.RunOffset(id), pageSize, normCapacity);
                     subpages[subpageIdx] = subpage;

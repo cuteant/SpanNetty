@@ -39,7 +39,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         public DefaultChannelGroup(string name, IEventExecutor executor, bool stayClosed)
         {
-            if (name == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
 
             this.Name = name;
             this.executor = executor;
@@ -69,8 +69,8 @@ namespace DotNetty.Transport.Channels.Groups
 
         public Task WriteAsync(object message, IChannelMatcher matcher, bool voidPromise)
         {
-            if (null == message) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.message); }
-            if (null == matcher) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
+            if (message is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.message); }
+            if (matcher is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
 
             Task result;
             if (voidPromise)
@@ -181,8 +181,8 @@ namespace DotNetty.Transport.Channels.Groups
 
         public Task WriteAndFlushAsync(object message, IChannelMatcher matcher, bool voidPromise)
         {
-            if (null == message) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.message); }
-            if (null == matcher) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
+            if (message is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.message); }
+            if (matcher is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
 
             Task result;
             if (voidPromise)
@@ -219,7 +219,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         public Task DisconnectAsync(IChannelMatcher matcher)
         {
-            if (null == matcher) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
+            if (matcher is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
             var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
@@ -243,7 +243,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         public Task CloseAsync(IChannelMatcher matcher)
         {
-            if (null == matcher) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
+            if (matcher is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
             var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
 
             if (this.stayClosed)
@@ -279,7 +279,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         public Task DeregisterAsync(IChannelMatcher matcher)
         {
-            if (null == matcher) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
+            if (matcher is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
             var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {
@@ -303,7 +303,7 @@ namespace DotNetty.Transport.Channels.Groups
 
         public Task NewCloseFuture(IChannelMatcher matcher)
         {
-            if (null == matcher) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
+            if (matcher is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.matcher); }
             var futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
             foreach (IChannel c in this.nonServerChannels.Values)
             {

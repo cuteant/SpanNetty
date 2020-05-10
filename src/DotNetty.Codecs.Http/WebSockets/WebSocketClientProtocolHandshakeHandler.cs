@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public override void ChannelRead(IChannelHandlerContext ctx, object msg)
         {
             var response = msg as IFullHttpResponse;
-            if (null == response)
+            if (response is null)
             {
                 ctx.FireChannelRead(msg);
                 return;

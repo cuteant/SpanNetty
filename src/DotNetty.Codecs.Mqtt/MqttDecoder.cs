@@ -289,7 +289,7 @@ namespace DotNetty.Codecs.Mqtt
             packet.KeepAliveInSeconds = DecodeUnsignedShort(buffer, ref remainingLength);
 
             string clientId = DecodeString(buffer, ref remainingLength);
-            if (clientId == null) Util.ValidateClientId();
+            if (clientId is null) Util.ValidateClientId();
             packet.ClientId = clientId;
 
             if (hasWill)

@@ -23,7 +23,7 @@ namespace DotNetty.Transport.Channels
             if (!promise.IsVoid && !promise.TryComplete() && logger.WarnEnabled)
             {
                 var err = promise.Task.Exception?.InnerException;
-                if (null == err)
+                if (err is null)
                 {
                     logger.FailedToMarkAPromiseAsSuccess(promise);
                 }
@@ -46,7 +46,7 @@ namespace DotNetty.Transport.Channels
             if (!promise.IsVoid && !promise.TrySetException(cause) && logger.WarnEnabled)
             {
                 var err = promise.Task.Exception?.InnerException;
-                if (null == err)
+                if (err is null)
                 {
                     logger.FailedToMarkAPromiseAsFailure(promise, cause);
                 }

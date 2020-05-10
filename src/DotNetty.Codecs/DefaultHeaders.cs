@@ -71,7 +71,7 @@ namespace DotNetty.Codecs
 
         public bool TryGet(TKey name, out TValue value)
         {
-            if (name == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
+            if (name is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
 
             bool found = false;
             int h = this.hashingStrategy.HashCode(name);
@@ -96,7 +96,7 @@ namespace DotNetty.Codecs
 
         public bool TryGetAndRemove(TKey name, out TValue value)
         {
-            if (name == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
+            if (name is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
 
             int h = this.hashingStrategy.HashCode(name);
             return this.TryRemove0(h, this.Index(h), name, out value);
@@ -106,7 +106,7 @@ namespace DotNetty.Codecs
 
         public virtual IList<TValue> GetAll(TKey name)
         {
-            if (name == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
+            if (name is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
 
             var values = new List<TValue>();
             int h = this.hashingStrategy.HashCode(name);
@@ -137,7 +137,7 @@ namespace DotNetty.Codecs
 
         public bool ContainsObject(TKey name, object value)
         {
-            if (value == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
+            if (value is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
 
             return this.Contains(name, this.ValueConverter.ConvertObject(value));
         }
@@ -164,7 +164,7 @@ namespace DotNetty.Codecs
 
         public bool Contains(TKey name, TValue value, IHashingStrategy<TValue> valueHashingStrategy)
         {
-            if (name == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
+            if (name is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
 
             int h = this.hashingStrategy.HashCode(name);
             int i = this.Index(h);
@@ -227,7 +227,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> AddObject(TKey name, object value)
         {
-            if (value == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
+            if (value is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
 
             return this.Add(name, this.ValueConverter.ConvertObject(value));
         }
@@ -353,7 +353,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> SetObject(TKey name, object value)
         {
-            if (value == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
+            if (value is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
 
             TValue convertedValue = this.ValueConverter.ConvertObject(value);
             return this.Set(name, convertedValue);
@@ -371,7 +371,7 @@ namespace DotNetty.Codecs
             // ReSharper disable once PossibleNullReferenceException
             foreach (object v in values)
             {
-                if (v == null)
+                if (v is null)
                 {
                     break;
                 }
@@ -883,7 +883,7 @@ namespace DotNetty.Codecs
             value = default(TValue);
 
             HeaderEntry<TKey, TValue> e = this.entries[i];
-            if (e == null)
+            if (e is null)
             {
                 return false;
             }
@@ -943,7 +943,7 @@ namespace DotNetty.Codecs
 
             public ValueEnumerator(DefaultHeaders<TKey, TValue> headers, TKey name)
             {
-                if (name == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
+                if (name is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
 
                 this.hashingStrategy = headers.hashingStrategy;
                 this.hash = this.hashingStrategy.HashCode(name);
@@ -954,7 +954,7 @@ namespace DotNetty.Codecs
 
             bool IEnumerator.MoveNext()
             {
-                if (this.node == null)
+                if (this.node is null)
                 {
                     return false;
                 }
@@ -1032,7 +1032,7 @@ namespace DotNetty.Codecs
 
             public bool MoveNext()
             {
-                if (this.node == null)
+                if (this.node is null)
                 {
                     this.index = this.size + 1;
                     return false;
@@ -1143,11 +1143,11 @@ namespace DotNetty.Codecs
 
         // ReSharper disable once MergeConditionalExpression
         public override bool Equals(object obj) => obj is HeaderEntry<TKey, TValue> other 
-            && (this.key == null ? other.key == null : this.key.Equals(other.key))
+            && (this.key is null ? other.key is null : this.key.Equals(other.key))
             && (ReferenceEquals(this.value, null) ? ReferenceEquals(other.value, null) : this.value.Equals(other.value));
 
         // ReSharper disable NonReadonlyMemberInGetHashCode
-        public override int GetHashCode() => (this.key == null ? 0 : this.key.GetHashCode()) 
+        public override int GetHashCode() => (this.key is null ? 0 : this.key.GetHashCode()) 
                 ^ (ReferenceEquals(this.value, null) ? 0 : this.value.GetHashCode());
         // ReSharper restore NonReadonlyMemberInGetHashCode
     }

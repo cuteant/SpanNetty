@@ -57,7 +57,7 @@ namespace DotNetty.Codecs
 
         public static DateTime? ParseHttpDate(ICharSequence txt, int start, int end)
         {
-            if (null == txt) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.txt); }
+            if (txt is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.txt); }
 
             int length = end - start;
             if (0u >= (uint)length)

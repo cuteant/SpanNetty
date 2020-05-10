@@ -33,7 +33,7 @@ namespace DotNetty.Codecs.Http
         public override bool TryAcceptInboundMessage(object msg, out IHttpObject message)
         {
             message = msg as IHttpObject;
-            if (null == message) { return false; }
+            if (message is null) { return false; }
 
             if (msg is IFullHttpMessage) { return false; }
 

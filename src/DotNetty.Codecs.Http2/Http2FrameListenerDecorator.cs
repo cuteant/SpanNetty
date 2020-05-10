@@ -15,7 +15,7 @@ namespace DotNetty.Codecs.Http2
 
         public Http2FrameListenerDecorator(IHttp2FrameListener listener)
         {
-            if (null == listener) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.listener); }
+            if (listener is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.listener); }
             this.listener = listener;
         }
 

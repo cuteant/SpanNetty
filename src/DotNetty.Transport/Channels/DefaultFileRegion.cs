@@ -17,7 +17,7 @@ namespace DotNetty.Transport.Channels
 
         public DefaultFileRegion(FileStream file, long position, long count)
         {
-            if (null == file) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.file); }
+            if (file is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.file); }
             if (!file.CanRead) { ThrowHelper.ThrowArgumentException(); }
             if (position < 0) { ThrowHelper.ThrowArgumentException_FileRegionPosition(position); }
             if (count < 0) { ThrowHelper.ThrowArgumentException_FileRegionCount(count); }
@@ -37,7 +37,7 @@ namespace DotNetty.Transport.Channels
 
         public long TransferTo(Stream target, long pos)
         {
-            if (null == target) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.target); }
+            if (target is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.target); }
             if (pos < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(pos, ExceptionArgument.pos); }
 
             long totalCount = this.Count - pos;

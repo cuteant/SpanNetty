@@ -26,12 +26,12 @@ namespace DotNetty.Codecs.Http2
 
         public DefaultHttp2ConnectionEncoder(IHttp2Connection connection, IHttp2FrameWriter frameWriter)
         {
-            if (null == connection) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
-            if (null == frameWriter) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frameWriter); }
+            if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
+            if (frameWriter is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frameWriter); }
             this.connection = connection;
             this.frameWriter = frameWriter;
             var connRemote = connection.Remote;
-            if (connRemote.FlowController == null)
+            if (connRemote.FlowController is null)
             {
                 connRemote.FlowController = new DefaultHttp2RemoteFlowController(connection);
             }
@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Http2
 
         public void LifecycleManager(IHttp2LifecycleManager lifecycleManager)
         {
-            if (null == lifecycleManager) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.lifecycleManager); }
+            if (lifecycleManager is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.lifecycleManager); }
             this.lifecycleManager = lifecycleManager;
         }
 
@@ -151,7 +151,7 @@ namespace DotNetty.Codecs.Http2
             try
             {
                 var stream = this.connection.Stream(streamId);
-                if (stream == null)
+                if (stream is null)
                 {
                     try
                     {
@@ -370,7 +370,7 @@ namespace DotNetty.Codecs.Http2
         private IHttp2Stream RequireStream(int streamId)
         {
             var stream = this.connection.Stream(streamId);
-            if (stream == null)
+            if (stream is null)
             {
                 ThrowHelper.ThrowArgumentException_RequireStream(this.connection, streamId);
             }
@@ -451,7 +451,7 @@ namespace DotNetty.Codecs.Http2
             public override bool Merge(IChannelHandlerContext ctx, IHttp2RemoteFlowControlled next)
             {
                 var nextData = next as FlowControlledData;
-                if (null == nextData || (int.MaxValue - nextData.Size) < this.Size)
+                if (nextData is null || (uint)this.Size > (uint)(int.MaxValue - nextData.Size))
                 {
                     return false;
                 }

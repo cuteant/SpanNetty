@@ -24,8 +24,8 @@ namespace DotNetty.Codecs.Http
         ///// <returns></returns>
         //public static bool IsOriginForm(Uri uri)
         //{
-        //    return uri.Scheme == null && /*uri.getSchemeSpecificPart() == null &&*/ uri.PathAndQuery == null &&
-        //           uri.Host == null && uri.Authority == null;
+        //    return uri.Scheme is null && /*uri.getSchemeSpecificPart() is null &&*/ uri.PathAndQuery is null &&
+        //           uri.Host is null && uri.Authority is null;
         //}
 
         ///// <summary>
@@ -37,9 +37,9 @@ namespace DotNetty.Codecs.Http
         //public static bool IsAsteriskForm(Uri uri)
         //{
         //    return string.Equals("*", uri.AbsolutePath, StringComparison.Ordinal) &&
-        //           uri.Scheme == null && /*uri.getSchemeSpecificPart() == null &&*/ uri.Host == null && uri.PathAndQuery == null &&
-        //           uri.Port == 0 && uri.Authority == null && uri.Query == null &&
-        //           uri.Fragment == null;
+        //           uri.Scheme is null && /*uri.getSchemeSpecificPart() is null &&*/ uri.Host is null && uri.PathAndQuery is null &&
+        //           uri.Port == 0 && uri.Authority is null && uri.Query is null &&
+        //           uri.Fragment is null;
         //}
 
         public static bool IsKeepAlive(IHttpMessage message)
@@ -281,7 +281,7 @@ namespace DotNetty.Codecs.Http
 
         public static ICharSequence GetCharsetAsSequence(ICharSequence contentTypeValue)
         {
-            if (contentTypeValue == null)
+            if (contentTypeValue is null)
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentTypeValue);
             }
@@ -307,7 +307,7 @@ namespace DotNetty.Codecs.Http
 
         public static ICharSequence GetMimeType(ICharSequence contentTypeValue)
         {
-            if (contentTypeValue == null)
+            if (contentTypeValue is null)
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentTypeValue);
             }

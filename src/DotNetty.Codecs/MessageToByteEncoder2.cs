@@ -20,7 +20,7 @@ namespace DotNetty.Codecs
 
         public override void Write(IChannelHandlerContext context, object message, IPromise promise)
         {
-            if (null == context) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.context); }
+            if (context is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.context); }
 
             IByteBuffer buffer = null;
             try
@@ -70,7 +70,7 @@ namespace DotNetty.Codecs
 
         protected virtual IByteBuffer AllocateBuffer(IChannelHandlerContext context)
         {
-            if (null == context) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.context); }
+            if (context is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.context); }
 
             return context.Allocator.Buffer();
         }

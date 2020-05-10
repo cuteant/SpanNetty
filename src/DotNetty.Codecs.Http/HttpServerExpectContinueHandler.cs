@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http
                 };
 #endif
 
-                if (accept == null)
+                if (accept is null)
                 {
                     // the expectation failed so we refuse the request.
                     IHttpResponse rejection = this.RejectResponse(req);

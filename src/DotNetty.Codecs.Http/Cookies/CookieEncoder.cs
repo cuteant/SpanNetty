@@ -32,7 +32,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
             var sequnce = new StringCharSequence(value);
             ICharSequence unwrappedValue = UnwrapValue(sequnce);
-            if (unwrappedValue == null)
+            if (unwrappedValue is null)
             {
                 ThrowHelper.ThrowArgumentException_CookieValue(value);
             }

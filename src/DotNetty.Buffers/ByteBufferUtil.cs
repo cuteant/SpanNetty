@@ -464,7 +464,7 @@ namespace DotNetty.Buffers
             {
                 ThrowHelper.ThrowIndexOutOfRangeException_Src(srcIdx, length, src.Count);
             }
-            if (dst == null)
+            if (dst is null)
             {
                 ThrowHelper.ThrowArgumentNullException_Dst();
             }
@@ -479,7 +479,7 @@ namespace DotNetty.Buffers
             {
                 ThrowHelper.ThrowIndexOutOfRangeException_Src(srcIdx, length, src.Count);
             }
-            if (dst == null)
+            if (dst is null)
             {
                 ThrowHelper.ThrowArgumentNullException_Dst();
             }
@@ -734,8 +734,8 @@ namespace DotNetty.Buffers
 
         public static bool IsText(IByteBuffer buf, int index, int length, Encoding encoding)
         {
-            if (null == buf) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buf); }
-            if (null == encoding) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoding); }
+            if (buf is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buf); }
+            if (encoding is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoding); }
 
             int maxIndex = buf.ReaderIndex + buf.ReadableBytes;
             if (index < 0 || length < 0 || index > maxIndex - length)

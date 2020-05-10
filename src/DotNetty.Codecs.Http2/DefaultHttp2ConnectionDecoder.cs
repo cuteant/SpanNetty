@@ -41,17 +41,17 @@ namespace DotNetty.Codecs.Http2
         public DefaultHttp2ConnectionDecoder(IHttp2Connection connection,
             IHttp2ConnectionEncoder encoder, IHttp2FrameReader frameReader, IHttp2PromisedRequestVerifier requestVerifier)
         {
-            if (null == connection) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
-            if (null == frameReader) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frameReader); }
-            if (null == encoder) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoder); }
-            if (null == requestVerifier) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.requestVerifier); }
+            if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
+            if (frameReader is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frameReader); }
+            if (encoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoder); }
+            if (requestVerifier is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.requestVerifier); }
 
             this.connection = connection;
             this.frameReader = frameReader;
             this.encoder = encoder;
             this.requestVerifier = requestVerifier;
             var connLocal = connection.Local;
-            if (connLocal.FlowController == null)
+            if (connLocal.FlowController is null)
             {
                 connLocal.FlowController = new DefaultHttp2LocalFlowController(connection);
             }
@@ -62,7 +62,7 @@ namespace DotNetty.Codecs.Http2
 
         public void LifecycleManager(IHttp2LifecycleManager lifecycleManager)
         {
-            if (null == lifecycleManager) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.lifecycleManager); }
+            if (lifecycleManager is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.lifecycleManager); }
             this.lifecycleManager = lifecycleManager;
         }
 
@@ -75,7 +75,7 @@ namespace DotNetty.Codecs.Http2
             get => this.listener;
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 this.listener = value;
             }
         }
@@ -274,7 +274,7 @@ namespace DotNetty.Codecs.Http2
                 var connection = this.decoder.connection;
                 var stream = connection.Stream(streamId);
                 var allowHalfClosedRemote = false;
-                if (stream == null && !connection.StreamMayHaveExisted(streamId))
+                if (stream is null && !connection.StreamMayHaveExisted(streamId))
                 {
                     stream = connection.Remote.CreateStream(streamId, endOfStream);
                     // Allow the state to be HALF_CLOSE_REMOTE if we're creating it in that state.
@@ -368,7 +368,7 @@ namespace DotNetty.Codecs.Http2
                     return;
                 }
 
-                if (parentStream == null)
+                if (parentStream is null)
                 {
                     ThrowHelper.ThrowConnectionError_StreamDoesNotExist(streamId);
                 }
@@ -407,7 +407,7 @@ namespace DotNetty.Codecs.Http2
             public void OnRstStreamRead(IChannelHandlerContext ctx, int streamId, Http2Error errorCode)
             {
                 var stream = this.decoder.connection.Stream(streamId);
-                if (stream == null)
+                if (stream is null)
                 {
                     this.VerifyStreamMayHaveExisted(streamId);
                     return;
@@ -512,7 +512,7 @@ namespace DotNetty.Codecs.Http2
             public void OnWindowUpdateRead(IChannelHandlerContext ctx, int streamId, int windowSizeIncrement)
             {
                 var stream = this.decoder.connection.Stream(streamId);
-                if (stream == null || stream.State == Http2StreamState.Closed || this.StreamCreatedAfterGoAwaySent(streamId))
+                if (stream is null || stream.State == Http2StreamState.Closed || this.StreamCreatedAfterGoAwaySent(streamId))
                 {
                     // Ignore this frame.
                     this.VerifyStreamMayHaveExisted(streamId);
@@ -536,7 +536,7 @@ namespace DotNetty.Codecs.Http2
             /// <returns></returns>
             private bool ShouldIgnoreHeadersOrDataFrame(IChannelHandlerContext ctx, int streamId, IHttp2Stream stream, Http2FrameTypes frameName)
             {
-                if (stream == null)
+                if (stream is null)
                 {
                     if (this.StreamCreatedAfterGoAwaySent(streamId))
                     {

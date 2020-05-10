@@ -72,9 +72,9 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public HttpPostMultipartRequestDecoder(IHttpDataFactory factory, IHttpRequest request, Encoding charset)
         {
-            if (null == request) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.request); }
-            if (null == charset) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
-            if (null == factory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
+            if (request is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.request); }
+            if (charset is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
+            if (factory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
 
             this.factory = factory;
             this.request = request;
@@ -185,7 +185,7 @@ namespace DotNetty.Codecs.Http.Multipart
             // more care by the caller to release the content in a correct manner later
             // So maybe something to optimize on a later stage
             IByteBuffer buf = content.Content;
-            if (this.undecodedChunk == null)
+            if (this.undecodedChunk is null)
             {
                 this.undecodedChunk = buf.Copy();
             }
@@ -265,7 +265,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         protected void AddHttpData(IInterfaceHttpData data)
         {
-            if (data == null)
+            if (data is null)
             {
                 return;
             }
@@ -281,7 +281,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         void ParseBodyMultipart()
         {
-            if (this.undecodedChunk == null
+            if (this.undecodedChunk is null
                 || 0u >= (uint)this.undecodedChunk.ReadableBytes)
             {
                 // nothing to decode
@@ -350,7 +350,7 @@ namespace DotNetty.Codecs.Http.Multipart
                             }
                         }
                         this.currentFieldAttributes.TryGetValue(HttpHeaderValues.Name, out IAttribute nameAttribute);
-                        if (this.currentAttribute == null)
+                        if (this.currentAttribute is null)
                         {
                             this.currentFieldAttributes.TryGetValue(HttpHeaderNames.ContentLength, out IAttribute lengthAttribute);
                             long size;
@@ -368,7 +368,7 @@ namespace DotNetty.Codecs.Http.Multipart
                             }
                             try
                             {
-                                if (nameAttribute == null)
+                                if (nameAttribute is null)
                                 {
                                     ThrowHelper.ThrowErrorDataDecoderException_Attr();
                                 }
@@ -837,7 +837,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     ThrowHelper.ThrowErrorDataDecoderException(e);
                 }
             }
-            if (this.currentFileUpload == null)
+            if (this.currentFileUpload is null)
             {
                 this.currentFieldAttributes.TryGetValue(HttpHeaderValues.FileName, out IAttribute filenameAttribute);
                 this.currentFieldAttributes.TryGetValue(HttpHeaderValues.Name, out IAttribute nameAttribute);
@@ -867,11 +867,11 @@ namespace DotNetty.Codecs.Http.Multipart
                     {
                         contentType = HttpPostBodyUtil.DefaultBinaryContentType;
                     }
-                    if (nameAttribute == null)
+                    if (nameAttribute is null)
                     {
                         ThrowHelper.ThrowErrorDataDecoderException_NameAttr();
                     }
-                    if (filenameAttribute == null)
+                    if (filenameAttribute is null)
                     {
                         ThrowHelper.ThrowErrorDataDecoderException_FileNameAttr();
                     }

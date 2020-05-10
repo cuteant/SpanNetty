@@ -12,14 +12,14 @@ namespace DotNetty.Common.Utilities
 
         public bool Equals(ICharSequence x, ICharSequence y)
         {
-            if (null == x) { return false; }
+            if (x is null) { return false; }
 
             return x.Equals(y);
         }
 
         public int GetHashCode(ICharSequence obj)
         {
-            //if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
+            //if (obj is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
             return obj.GetHashCode();
         }
     }
@@ -28,14 +28,14 @@ namespace DotNetty.Common.Utilities
     {
         public bool Equals(ICharSequence x, ICharSequence y)
         {
-            if (null == x) { return false; }
+            if (x is null) { return false; }
 
             return x.ContentEqualsIgnoreCase(y);
         }
 
         public int GetHashCode(ICharSequence obj)
         {
-            //if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
+            //if (obj is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
             return obj.HashCode(true);
         }
     }

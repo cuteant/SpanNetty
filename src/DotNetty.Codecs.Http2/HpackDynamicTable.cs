@@ -108,7 +108,7 @@ namespace DotNetty.Codecs.Http2
         public HpackHeaderField Remove()
         {
             HpackHeaderField removed = this.hpackHeaderFields[this.tail];
-            if (removed == null)
+            if (removed is null)
             {
                 return null;
             }

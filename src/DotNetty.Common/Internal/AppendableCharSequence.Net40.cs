@@ -12,7 +12,7 @@ namespace DotNetty.Common.Internal
     {
         public bool Equals(AppendableCharSequence other)
         {
-            //if (other == null)
+            //if (other is null)
             //{
             //    return false;
             //}
@@ -27,7 +27,7 @@ namespace DotNetty.Common.Internal
 
         public override bool Equals(object obj)
         {
-            //if (obj == null)
+            //if (obj is null)
             //{
             //    return false;
             //}
@@ -52,7 +52,7 @@ namespace DotNetty.Common.Internal
         {
             if (ReferenceEquals(this, other)) { return true; }
 
-            if (null == other) { return false; }
+            if (other is null) { return false; }
 
             if (other is AppendableCharSequence comparand)
             {

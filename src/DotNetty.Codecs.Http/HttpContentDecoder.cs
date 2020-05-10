@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http
                 }
                 this.decoder = this.NewContentDecoder(contentEncoding);
 
-                if (this.decoder == null)
+                if (this.decoder is null)
                 {
                     if (httpContent is object)
                     {
@@ -127,7 +127,7 @@ namespace DotNetty.Codecs.Http
 
             if (httpContent is object)
             {
-                if (this.decoder == null)
+                if (this.decoder is null)
                 {
                     output.Add(httpContent.Retain());
                 }
@@ -228,7 +228,7 @@ namespace DotNetty.Codecs.Http
             while(true)
             {
                 var buf = this.decoder.ReadInbound<IByteBuffer>();
-                if (buf == null)
+                if (buf is null)
                 {
                     break;
                 }

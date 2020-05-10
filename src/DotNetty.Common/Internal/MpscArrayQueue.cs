@@ -42,7 +42,7 @@ namespace DotNetty.Common.Internal
         /// <seealso cref="IQueue{T}.TryEnqueue"/>
         public override bool TryEnqueue(T e)
         {
-            if (null == e) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e); }
+            if (e is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e); }
 
             // use a cached view on consumer index (potentially updated in loop)
             long mask = this.Mask;
@@ -87,7 +87,7 @@ namespace DotNetty.Common.Internal
         /// <returns><c>1</c> if next element cannot be filled, <c>-1</c> if CAS failed, and <c>0</c> if successful.</returns>
         public int WeakEnqueue(T e)
         {
-            if (null == e) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e); }
+            if (e is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e); }
 
             long mask = this.Mask;
             long capacity = mask + 1;
@@ -134,7 +134,7 @@ namespace DotNetty.Common.Internal
 
             // If we can't see the next available element we can't poll
             T e = RefArrayAccessUtil.LvElement(buffer, offset); // LoadLoad
-            if (null == e)
+            if (e is null)
             {
                 // NOTE: Queue may not actually be empty in the case of a producer (P1) being interrupted after
                 // winning the CAS on offer but before storing the element in the queue. Other producers may go on
@@ -146,7 +146,7 @@ namespace DotNetty.Common.Internal
                     {
                         e = RefArrayAccessUtil.LvElement(buffer, offset);
                     }
-                    while (e == null);
+                    while (e is null);
                 }
                 else
                 {
@@ -175,7 +175,7 @@ namespace DotNetty.Common.Internal
             long consumerIndex = this.ConsumerIndex; // LoadLoad
             long offset = this.CalcElementOffset(consumerIndex);
             T e = RefArrayAccessUtil.LvElement(buffer, offset);
-            if (null == e)
+            if (e is null)
             {
                 // NOTE: Queue may not actually be empty in the case of a producer (P1) being interrupted after
                 // winning the CAS on offer but before storing the element in the queue. Other producers may go on
@@ -187,7 +187,7 @@ namespace DotNetty.Common.Internal
                     {
                         e = RefArrayAccessUtil.LvElement(buffer, offset);
                     }
-                    while (e == null);
+                    while (e is null);
                 }
                 else
                 {

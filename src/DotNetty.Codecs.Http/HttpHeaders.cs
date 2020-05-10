@@ -55,7 +55,7 @@ namespace DotNetty.Codecs.Http
 
         public virtual HttpHeaders Add(HttpHeaders headers)
         {
-            if (null == headers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
+            if (headers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
 
             foreach (HeaderEntry<AsciiString, ICharSequence> pair in headers)
             {
@@ -74,7 +74,7 @@ namespace DotNetty.Codecs.Http
 
         public virtual HttpHeaders Set(HttpHeaders headers)
         {
-            if (null == headers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
+            if (headers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
 
             this.Clear();
 
@@ -92,7 +92,7 @@ namespace DotNetty.Codecs.Http
 
         public HttpHeaders SetAll(HttpHeaders headers)
         {
-            if (null == headers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
+            if (headers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
 
             if (headers.IsEmpty)
             {

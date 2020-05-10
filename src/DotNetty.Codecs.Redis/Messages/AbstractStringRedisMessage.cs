@@ -10,7 +10,7 @@ namespace DotNetty.Codecs.Redis.Messages
     {
         protected AbstractStringRedisMessage(string content)
         {
-            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
+            if (content is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
 
             this.Content = content;
         }

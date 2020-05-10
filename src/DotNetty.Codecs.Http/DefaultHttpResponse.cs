@@ -14,7 +14,7 @@ namespace DotNetty.Codecs.Http
         public DefaultHttpResponse(HttpVersion version, HttpResponseStatus status, bool validateHeaders = true, bool singleFieldHeaders = false)
             : base(version, validateHeaders, singleFieldHeaders)
         {
-            if (null == status) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.status); }
+            if (status is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.status); }
 
             this.status = status;
         }
@@ -22,7 +22,7 @@ namespace DotNetty.Codecs.Http
         public DefaultHttpResponse(HttpVersion version, HttpResponseStatus status, HttpHeaders headers)
             : base(version, headers)
         {
-            if (null == status) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.status); }
+            if (status is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.status); }
 
             this.status = status;
         }
@@ -31,7 +31,7 @@ namespace DotNetty.Codecs.Http
 
         public IHttpResponse SetStatus(HttpResponseStatus value)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             this.status = value;
             return this;
         }

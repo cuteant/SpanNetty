@@ -15,7 +15,7 @@ namespace DotNetty.Codecs.Http
 
         public DefaultHttpContent(IByteBuffer content)
         {
-            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
+            if (content is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
 
             this.content = content;
         }

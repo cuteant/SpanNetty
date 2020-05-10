@@ -17,7 +17,7 @@ namespace DotNetty.Codecs.Redis
             if (message is ArrayHeaderRedisMessage)
             {
                 message = this.DecodeRedisArrayHeader((ArrayHeaderRedisMessage)message);
-                if (message == null)
+                if (message is null)
                 {
                     return;
                 }

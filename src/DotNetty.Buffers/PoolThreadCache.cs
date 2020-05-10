@@ -190,7 +190,7 @@ namespace DotNetty.Buffers
 
         bool Allocate(MemoryRegionCache cache, PooledByteBuffer<T> buf, int reqCapacity)
         {
-            if (cache == null)
+            if (cache is null)
             {
                 // no cache found so just return false here
                 return false;
@@ -211,7 +211,7 @@ namespace DotNetty.Buffers
         internal bool Add(PoolArena<T> area, PoolChunk<T> chunk, long handle, int normCapacity, SizeClass sizeClass)
         {
             MemoryRegionCache cache = this.Cache(area, normCapacity, sizeClass);
-            if (cache == null)
+            if (cache is null)
             {
                 return false;
             }
@@ -267,7 +267,7 @@ namespace DotNetty.Buffers
 
         static int Free(MemoryRegionCache[] caches)
         {
-            if (caches == null)
+            if (caches is null)
             {
                 return 0;
             }
@@ -282,7 +282,7 @@ namespace DotNetty.Buffers
 
         static int Free(MemoryRegionCache cache)
         {
-            if (cache == null)
+            if (cache is null)
             {
                 return 0;
             }
@@ -301,7 +301,7 @@ namespace DotNetty.Buffers
 
         static void Trim(MemoryRegionCache[] caches)
         {
-            if (caches == null)
+            if (caches is null)
             {
                 return;
             }
@@ -338,7 +338,7 @@ namespace DotNetty.Buffers
 
         static MemoryRegionCache Cache(MemoryRegionCache[] cache, int idx)
         {
-            if (cache == null || idx > cache.Length - 1)
+            if (cache is null || idx > cache.Length - 1)
             {
                 return null;
             }

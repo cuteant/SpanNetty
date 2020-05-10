@@ -13,8 +13,8 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
         public WebSocketExtensionData(string name, IDictionary<string, string> parameters)
         {
-            if (null == name) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
-            if (null == parameters) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parameters); }
+            if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (parameters is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parameters); }
 
             this.name = name;
             this.parameters = new Dictionary<string, string>(parameters, System.StringComparer.Ordinal);

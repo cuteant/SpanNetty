@@ -130,8 +130,8 @@ namespace DotNetty.Codecs.Http
         public HttpServerUpgradeHandler(ISourceCodec sourceCodec, IUpgradeCodecFactory upgradeCodecFactory, int maxContentLength)
             : base(maxContentLength)
         {
-            if (null == sourceCodec) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sourceCodec); }
-            if (null == upgradeCodecFactory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.upgradeCodecFactory); }
+            if (sourceCodec is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sourceCodec); }
+            if (upgradeCodecFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.upgradeCodecFactory); }
 
             this.sourceCodec = sourceCodec;
             this.upgradeCodecFactory = upgradeCodecFactory;
@@ -210,7 +210,7 @@ namespace DotNetty.Codecs.Http
                 }
             }
 
-            if (upgradeCodec == null)
+            if (upgradeCodec is null)
             {
                 // None of the requested protocols are supported, don't upgrade.
                 return false;

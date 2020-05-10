@@ -34,9 +34,9 @@ namespace DotNetty.Codecs.Http2
         public CleartextHttp2ServerUpgradeHandler(HttpServerCodec httpServerCodec,
             HttpServerUpgradeHandler httpServerUpgradeHandler, IChannelHandler http2ServerHandler)
         {
-            if (null == httpServerCodec) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.httpServerCodec); }
-            if (null == httpServerUpgradeHandler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.httpServerUpgradeHandler); }
-            if (null == http2ServerHandler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.http2ServerHandler); }
+            if (httpServerCodec is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.httpServerCodec); }
+            if (httpServerUpgradeHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.httpServerUpgradeHandler); }
+            if (http2ServerHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.http2ServerHandler); }
 
             this.httpServerCodec = httpServerCodec;
             this.httpServerUpgradeHandler = httpServerUpgradeHandler;

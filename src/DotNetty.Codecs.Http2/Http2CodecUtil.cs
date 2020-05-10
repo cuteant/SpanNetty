@@ -218,7 +218,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public static IByteBuffer ToByteBuf(IChannelHandlerContext ctx, Exception cause)
         {
-            if (cause == null || cause.Message == null)
+            if (cause is null || cause.Message is null)
             {
                 return Unpooled.Empty;
             }

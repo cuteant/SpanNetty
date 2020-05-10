@@ -12,8 +12,8 @@ namespace DotNetty.Common.Utilities
     {
         public static ICharSequence[] Split(ICharSequence sequence, int startIndex, params char[] delimiters)
         {
-            if (null == sequence) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sequence); }
-            if (null == delimiters) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.delimiters); }
+            if (sequence is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sequence); }
+            if (delimiters is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.delimiters); }
             int length = sequence.Count;
             if (0u >= (uint)length) { return new[] { sequence }; }
             if ((uint)startIndex >= (uint)length) { ThrowHelper.ThrowIndexOutOfRangeException(); }

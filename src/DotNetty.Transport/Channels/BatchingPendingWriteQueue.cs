@@ -33,7 +33,7 @@ namespace DotNetty.Transport.Channels
 
         public BatchingPendingWriteQueue(IChannelHandlerContext ctx, int maxSize)
         {
-            if (null == ctx) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ctx); }
+            if (ctx is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ctx); }
 
             this.ctx = ctx;
             this.maxSize = maxSize;
@@ -48,7 +48,7 @@ namespace DotNetty.Transport.Channels
             {
                 Debug.Assert(this.ctx.Executor.InEventLoop);
 
-                return this.head == null;
+                return this.head is null;
             }
         }
 
@@ -67,7 +67,7 @@ namespace DotNetty.Transport.Channels
         public void Add(object msg, IPromise promise)
         {
             Debug.Assert(this.ctx.Executor.InEventLoop);
-            if (null == msg) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
+            if (msg is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
 
             int messageSize = this.estimatorHandle.Size(msg);
             if (messageSize < 0)
@@ -101,7 +101,7 @@ namespace DotNetty.Transport.Channels
             {
                 write = PendingWrite.NewInstance(msg, messageSize, promise);
             }
-            if (currentTail == null)
+            if (currentTail is null)
             {
                 this.tail = this.head = write;
             }
@@ -125,7 +125,7 @@ namespace DotNetty.Transport.Channels
         public void RemoveAndFailAll(Exception cause)
         {
             Debug.Assert(this.ctx.Executor.InEventLoop);
-            if (null == cause) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
+            if (cause is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
 
             // It is possible for some of the failed promises to trigger more writes. The new writes
             // will "revive" the queue, so we need to clean them up until the queue is empty.
@@ -154,11 +154,11 @@ namespace DotNetty.Transport.Channels
         public void RemoveAndFail(Exception cause)
         {
             Debug.Assert(this.ctx.Executor.InEventLoop);
-            if (null == cause) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
+            if (cause is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
 
             PendingWrite write = this.head;
 
-            if (write == null)
+            if (write is null)
             {
                 return;
             }
@@ -213,7 +213,7 @@ namespace DotNetty.Transport.Channels
         }
 
         [Conditional("DEBUG")]
-        void AssertEmpty() => Debug.Assert(this.tail == null && this.head == null && this.size == 0);
+        void AssertEmpty() => Debug.Assert(this.tail is null && this.head is null && this.size == 0);
 
         /// <summary>
         ///     Removes a pending write operation and performs it via
@@ -228,7 +228,7 @@ namespace DotNetty.Transport.Channels
             Debug.Assert(this.ctx.Executor.InEventLoop);
 
             PendingWrite write = this.head;
-            if (write == null)
+            if (write is null)
             {
                 return null;
             }
@@ -247,7 +247,7 @@ namespace DotNetty.Transport.Channels
             Debug.Assert(this.ctx.Executor.InEventLoop);
 
             PendingWrite write = this.head;
-            if (write == null)
+            if (write is null)
             {
                 return null;
             }
@@ -302,7 +302,7 @@ namespace DotNetty.Transport.Channels
 
             if (update)
             {
-                if (next == null)
+                if (next is null)
                 {
                     // Handled last PendingWrite so rest head and tail
                     // Guard against re-entrance by directly reset

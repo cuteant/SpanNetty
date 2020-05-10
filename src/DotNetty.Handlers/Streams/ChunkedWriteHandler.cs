@@ -31,7 +31,7 @@ namespace DotNetty.Handlers.Streams
         public void ResumeTransfer()
         {
             var ctx = Volatile.Read(ref this.ctx);
-            if (null == ctx) { return; }
+            if (ctx is null) { return; }
 
             if (ctx.Executor.InEventLoop)
             {
@@ -72,7 +72,7 @@ namespace DotNetty.Handlers.Streams
             while (true)
             {
                 PendingWrite current = this.currentWrite;
-                if (current == null)
+                if (current is null)
                 {
                     this.queue.TryRemoveFromFront(out current);
                 }
@@ -81,7 +81,7 @@ namespace DotNetty.Handlers.Streams
                     this.currentWrite = null;
                 }
 
-                if (current == null)
+                if (current is null)
                 {
                     break;
                 }
@@ -93,7 +93,7 @@ namespace DotNetty.Handlers.Streams
                     {
                         if (!chunks.IsEndOfInput)
                         {
-                            if (cause == null)
+                            if (cause is null)
                             {
                                 cause = new ClosedChannelException();
                             }
@@ -117,7 +117,7 @@ namespace DotNetty.Handlers.Streams
                 }
                 else
                 {
-                    if (cause == null)
+                    if (cause is null)
                     {
                         cause = new ClosedChannelException();
                     }
@@ -155,12 +155,12 @@ namespace DotNetty.Handlers.Streams
             IByteBufferAllocator allocator = context.Allocator;
             while (channel.IsWritable)
             {
-                if (this.currentWrite == null)
+                if (this.currentWrite is null)
                 {
                     this.queue.TryRemoveFromFront(out currentWrite);
                 }
 
-                if (this.currentWrite == null)
+                if (this.currentWrite is null)
                 {
                     break;
                 }
@@ -178,7 +178,7 @@ namespace DotNetty.Handlers.Streams
                     {
                         message = chunks.ReadChunk(allocator);
                         endOfInput = chunks.IsEndOfInput;
-                        if (message == null)
+                        if (message is null)
                         {
                             // No need to suspend when reached at the end.
                             suspend = !endOfInput;
@@ -211,7 +211,7 @@ namespace DotNetty.Handlers.Streams
                         break;
                     }
 
-                    if (message == null)
+                    if (message is null)
                     {
                         // If message is null write an empty ByteBuf.
                         // See https://github.com/netty/netty/issues/1671

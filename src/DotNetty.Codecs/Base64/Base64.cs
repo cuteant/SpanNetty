@@ -146,11 +146,11 @@ namespace DotNetty.Codecs.Base64
 
         public static unsafe IByteBuffer Encode(IByteBuffer src, int offset, int length, bool breakLines, in Base64Dialect dialect, IByteBufferAllocator allocator)
         {
-            if (src == null)
+            if (src is null)
             {
                 CThrowHelper.ThrowArgumentNullException(CExceptionArgument.src);
             }
-            if (dialect.alphabet == null)
+            if (dialect.alphabet is null)
             {
                 CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dialect_alphabet);
             }
@@ -308,11 +308,11 @@ namespace DotNetty.Codecs.Base64
 
         public static unsafe IByteBuffer Decode(IByteBuffer src, int offset, int length, in Base64Dialect dialect, IByteBufferAllocator allocator)
         {
-            if (src == null)
+            if (src is null)
             {
                 CThrowHelper.ThrowArgumentNullException(CExceptionArgument.src);
             }
-            if (dialect.decodabet == null)
+            if (dialect.decodabet is null)
             {
                 CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dialect_decodabet);
             }

@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http2
                 case IHttp2HeadersFrame headersFrame:
                     IHttp2Headers headers = headersFrame.Headers;
                     IHttp2FrameStream stream = headersFrame.Stream;
-                    int id = stream == null ? 0 : stream.Id;
+                    int id = stream is null ? 0 : stream.Id;
 
                     var status = headers.Status;
 
@@ -80,7 +80,7 @@ namespace DotNetty.Codecs.Http2
 
                     if (headersFrame.IsEndStream)
                     {
-                        if (headers.Method == null && status == null)
+                        if (headers.Method is null && status is null)
                         {
                             ILastHttpContent last = new DefaultLastHttpContent(Unpooled.Empty, validateHeaders);
                             HttpConversionUtil.AddHttp2ToHttpHeaders(id, headers, last.TrailingHeaders,
@@ -225,7 +225,7 @@ namespace DotNetty.Codecs.Http2
             // determine the HTTP scheme should suffice, even for the case where
             // SniHandler is used.
             IAttribute<HttpScheme> schemeAttribute = ConnectionSchemeAttribute(ctx);
-            if (schemeAttribute.Get() == null)
+            if (schemeAttribute.Get() is null)
             {
                 HttpScheme scheme = IsSsl(ctx) ? HttpScheme.Https : HttpScheme.Http;
                 schemeAttribute.Set(scheme);
@@ -241,7 +241,7 @@ namespace DotNetty.Codecs.Http2
         private static HttpScheme ConnectionScheme(IChannelHandlerContext ctx)
         {
             HttpScheme scheme = ConnectionSchemeAttribute(ctx).Get();
-            return scheme == null ? HttpScheme.Http : scheme;
+            return scheme is null ? HttpScheme.Http : scheme;
         }
 
         private static IAttribute<HttpScheme> ConnectionSchemeAttribute(IChannelHandlerContext ctx)

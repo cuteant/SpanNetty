@@ -93,11 +93,11 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             IChannelHandlerContext ctx = p.Context<HttpRequestDecoder>();
             string encoderName;
-            if (ctx == null)
+            if (ctx is null)
             {
                 // this means the user use a HttpServerCodec
                 ctx = p.Context<HttpServerCodec>();
-                if (ctx == null)
+                if (ctx is null)
                 {
                     completion.TrySetException(ThrowHelper.GetInvalidOperationException_NoHttpDecoderAndServerCodec());
                     return;
@@ -146,11 +146,11 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
             IChannelPipeline p = channel.Pipeline;
             IChannelHandlerContext ctx = p.Context<HttpRequestDecoder>();
-            if (ctx == null)
+            if (ctx is null)
             {
                 // this means the user use a HttpServerCodec
                 ctx = p.Context<HttpServerCodec>();
-                if (ctx == null)
+                if (ctx is null)
                 {
                     return ThrowHelper.ThrowInvalidOperationException_NoHttpDecoderAndServerCodec();
                 }
@@ -217,7 +217,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public virtual Task CloseAsync(IChannel channel, CloseWebSocketFrame frame)
         {
-            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
+            if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
 #if NET40
             Action<Task> closeOnComplete = (Task t) => channel.CloseAsync();
@@ -229,7 +229,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected string SelectSubprotocol(string requestedSubprotocols)
         {
-            if (requestedSubprotocols == null || 0u >= (uint)this.subprotocols.Length)
+            if (requestedSubprotocols is null || 0u >= (uint)this.subprotocols.Length)
             {
                 return null;
             }

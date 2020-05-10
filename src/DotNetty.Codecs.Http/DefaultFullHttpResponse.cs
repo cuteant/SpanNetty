@@ -49,7 +49,7 @@ namespace DotNetty.Codecs.Http
             IByteBuffer content, bool validateHeaders, bool singleFieldHeaders)
             : base(version, status, validateHeaders, singleFieldHeaders)
         {
-            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
+            if (content is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
 
             this.content = content;
             this.trailingHeaders = singleFieldHeaders 
@@ -60,8 +60,8 @@ namespace DotNetty.Codecs.Http
         public DefaultFullHttpResponse(HttpVersion version, HttpResponseStatus status, IByteBuffer content, HttpHeaders headers, HttpHeaders trailingHeaders)
             : base(version, status, headers)
         {
-            if (null == content) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
-            if (null == trailingHeaders) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.trailingHeaders); }
+            if (content is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
+            if (trailingHeaders is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.trailingHeaders); }
 
             this.content = content;
             this.trailingHeaders = trailingHeaders;

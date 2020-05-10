@@ -18,7 +18,7 @@ namespace DotNetty.Transport.Channels.Local
             }
 
             var addr = localAddress as LocalAddress;
-            if (null == addr) 
+            if (addr is null) 
             {
                 ThrowHelper.ThrowChannelException_UnsupportedAddrType(localAddress);
             }

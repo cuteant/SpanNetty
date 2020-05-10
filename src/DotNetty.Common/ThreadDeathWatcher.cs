@@ -36,8 +36,8 @@ namespace DotNetty.Common
         /// </summary>
         public static void Watch(Thread thread, Action task)
         {
-            if (null == thread) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.thread); }
-            if (null == task) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task); }
+            if (thread is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.thread); }
+            if (task is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task); }
             //if (!thread.IsAlive) { ThrowHelper.ThrowArgumentException(); }
             
             Schedule(thread, task, true);
@@ -48,8 +48,8 @@ namespace DotNetty.Common
         /// </summary>
         public static void Unwatch(Thread thread, Action task)
         {
-            if (null == thread) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.thread); }
-            if (null == task) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task); }
+            if (thread is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.thread); }
+            if (task is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task); }
 
             Schedule(thread, task, false);
         }

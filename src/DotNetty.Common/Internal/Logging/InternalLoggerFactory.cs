@@ -56,7 +56,7 @@ namespace DotNetty.Common.Internal.Logging
             get
             {
                 ILoggerFactory factory = Volatile.Read(ref defaultFactory);
-                if (factory == null)
+                if (factory is null)
                 {
                     factory = NewDefaultFactory(typeof(InternalLoggerFactory).FullName);
                     ILoggerFactory current = Interlocked.CompareExchange(ref defaultFactory, factory, null);
@@ -69,7 +69,7 @@ namespace DotNetty.Common.Internal.Logging
             }
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
                 Interlocked.Exchange(ref defaultFactory, value);
             }

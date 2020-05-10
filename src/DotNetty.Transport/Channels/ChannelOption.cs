@@ -104,7 +104,7 @@ namespace DotNetty.Transport.Channels
 
         public void Validate(T value)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
         }
 
         public override bool Set(IChannelConfiguration configuration, object value) => configuration.SetOption(this, (T)value);

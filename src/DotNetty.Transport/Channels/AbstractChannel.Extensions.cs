@@ -47,7 +47,7 @@ namespace DotNetty.Transport.Channels
                 if (!promise.SetUncancellable()) { return; }
 
                 var outboundBuffer = Interlocked.Exchange(ref this.outboundBuffer, null); // Disallow adding any messages and flushes to outboundBuffer.
-                if (outboundBuffer == null)
+                if (outboundBuffer is null)
                 {
                     promise.TrySetException(CloseClosedChannelException);
                     return;

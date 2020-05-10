@@ -253,7 +253,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     OnUpgradeEvent(ctx, (HttpServerUpgradeHandler.UpgradeEvent)upgrade.Retain());
                     var stream = this.Connection.Stream(Http2CodecUtil.HttpUpgradeStreamId);
-                    if (stream.GetProperty<IHttp2FrameStream>(this.streamKey) == null)
+                    if (stream.GetProperty<IHttp2FrameStream>(this.streamKey) is null)
                     {
                         // TODO: improve handler/stream lifecycle so that stream isn't active before handler added.
                         // The stream was already made active, but ctx may have been null so it wasn't initialized.
@@ -300,7 +300,7 @@ namespace DotNetty.Codecs.Http2
                     // to set the Http2FrameStream so we assume if it is null the WINDOW_UPDATE is for the connection stream.
                     try
                     {
-                        if (frameStream == null)
+                        if (frameStream is null)
                         {
                             this.IncreaseInitialConnectionWindow(windowUpdateFrame.WindowSizeIncrement);
                         }
@@ -409,7 +409,7 @@ namespace DotNetty.Codecs.Http2
 
                 // TODO: This depends on the fact that the connection based API will create Http2Stream objects
                 // synchronously. We should investigate how to refactor this later on when we consolidate some layers.
-                Debug.Assert(frameStreamToInitialize == null);
+                Debug.Assert(frameStreamToInitialize is null);
                 frameStreamToInitialize = stream;
 
                 // TODO(buchgr): Once Http2Stream2 and Http2Stream are merged this is no longer necessary.
@@ -533,7 +533,7 @@ namespace DotNetty.Codecs.Http2
         {
             int streamId = streamException.StreamId;
             var connectionStream = this.Connection.Stream(streamId);
-            if (connectionStream == null)
+            if (connectionStream is null)
             {
                 this.OnHttp2UnknownStreamError(ctx, cause, streamException);
                 // Write a RST_STREAM
@@ -542,7 +542,7 @@ namespace DotNetty.Codecs.Http2
             }
 
             var stream = connectionStream.GetProperty<IHttp2FrameStream>(streamKey);
-            if (stream == null)
+            if (stream is null)
             {
                 if (Logger.WarnEnabled) { Logger.StreamExceptionThrownWithoutStreamObjectAttached(cause); }
                 // Write a RST_STREAM
@@ -671,7 +671,7 @@ namespace DotNetty.Codecs.Http2
             private IHttp2FrameStream RequireStream(int streamId)
             {
                 var stream = this.frameCodec.Connection.Stream(streamId).GetProperty<IHttp2FrameStream>(this.frameCodec.streamKey);
-                if (stream == null)
+                if (stream is null)
                 {
                     ThrowHelper.ThrowInvalidOperationException_StreamObjectRequiredForIdentifier(streamId);
                 }
@@ -719,7 +719,7 @@ namespace DotNetty.Codecs.Http2
             public void WritabilityChanged(IHttp2Stream stream)
             {
                 var frameStream = stream.GetProperty<IHttp2FrameStream>(this.frameCodec.streamKey);
-                if (frameStream == null) { return; }
+                if (frameStream is null) { return; }
                 this.frameCodec.OnHttp2StreamWritabilityChanged(
                     this.frameCodec.ctx, frameStream, this.frameCodec.Connection.Remote.FlowController.IsWritable(stream));
             }

@@ -53,7 +53,7 @@ namespace DotNetty.Common.Concurrency
 
         int IComparable<IScheduledRunnable>.CompareTo(IScheduledRunnable other)
         {
-            if (null == other) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
+            if (other is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
             return this.Deadline.CompareTo(other.Deadline);
         }

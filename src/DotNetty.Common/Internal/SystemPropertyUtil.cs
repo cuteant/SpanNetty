@@ -68,7 +68,7 @@ namespace DotNetty.Common.Internal
         public static bool GetBoolean(string key, bool def)
         {
             string value = Get(key);
-            if (value == null)
+            if (value is null)
             {
                 return def;
             }
@@ -113,7 +113,7 @@ namespace DotNetty.Common.Internal
         public static int GetInt(string key, int def)
         {
             string value = Get(key);
-            if (value == null)
+            if (value is null)
             {
                 return def;
             }
@@ -143,7 +143,7 @@ namespace DotNetty.Common.Internal
         public static long GetLong(string key, long def)
         {
             string value = Get(key);
-            if (value == null)
+            if (value is null)
             {
                 return def;
             }

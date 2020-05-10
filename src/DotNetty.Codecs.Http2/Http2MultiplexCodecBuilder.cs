@@ -16,7 +16,7 @@ namespace DotNetty.Codecs.Http2
 
         public Http2MultiplexCodecBuilder(bool server, IChannelHandler childHandler)
         {
-            if (null == childHandler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childHandler); }
+            if (childHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childHandler); }
             this.IsServer = server;
             this.childHandler = CheckSharable(childHandler);
         }

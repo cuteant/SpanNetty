@@ -54,7 +54,7 @@ namespace DotNetty.Codecs
         /// <param name="encoding">Encoding.</param>
         public StringDecoder(Encoding encoding)
         {
-            if (encoding == null)
+            if (encoding is null)
             {
                 CThrowHelper.ThrowNullReferenceException(CExceptionArgument.encoding);
             }

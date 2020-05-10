@@ -66,10 +66,10 @@ namespace DotNetty.Codecs.Http.WebSockets
             IFullHttpRequest request = this.NewHandshakeRequest();
 
             var decoder = channel.Pipeline.Get<HttpResponseDecoder>();
-            if (decoder == null)
+            if (decoder is null)
             {
                 var codec = channel.Pipeline.Get<HttpClientCodec>();
-                if (codec == null)
+                if (codec is null)
                 {
                     return ThrowHelper.ThrowInvalidOperationException_HttpResponseDecoder();
                 }
@@ -91,7 +91,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     IChannelPipeline p = channel.Pipeline;
                     IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
-                    if (ctx == null)
+                    if (ctx is null)
                     {
                         completion.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
                         return;
@@ -130,7 +130,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             string expectedProtocol = this.expectedSubprotocol ?? "";
             bool protocolValid = false;
 
-            if (0u >= (uint)expectedProtocol.Length && receivedProtocol == null)
+            if (0u >= (uint)expectedProtocol.Length && receivedProtocol is null)
             {
                 // No subprotocol required and none received
                 protocolValid = true;
@@ -178,10 +178,10 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 
             IChannelHandlerContext ctx = p.Context<HttpResponseDecoder>();
-            if (ctx == null)
+            if (ctx is null)
             {
                 ctx = p.Context<HttpClientCodec>();
-                if (ctx == null)
+                if (ctx is null)
                 {
                     ThrowHelper.ThrowInvalidOperationException_HttpRequestEncoder();
                 }
@@ -234,10 +234,10 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 IChannelPipeline p = channel.Pipeline;
                 IChannelHandlerContext ctx = p.Context<HttpResponseDecoder>();
-                if (ctx == null)
+                if (ctx is null)
                 {
                     ctx = p.Context<HttpClientCodec>();
-                    if (ctx == null)
+                    if (ctx is null)
                     {
                         completionSource.TrySetException(ThrowHelper.GetInvalidOperationException<HttpResponseDecoder>());
                     }
@@ -316,7 +316,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public Task CloseAsync(IChannel channel, CloseWebSocketFrame frame)
         {
-            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
+            if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
             return channel.WriteAndFlushAsync(frame);
         }
 
@@ -387,7 +387,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             if (WebSocketScheme.WSS.Name.ContentEquals(scheme)
                 || HttpScheme.Https.Name.ContentEquals(scheme)
-                || (scheme == null && port == WebSocketScheme.WSS.Port))
+                || (scheme is null && port == WebSocketScheme.WSS.Port))
             {
 
                 schemePrefix = HttpsSchemePrefix;

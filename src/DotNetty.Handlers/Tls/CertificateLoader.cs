@@ -36,7 +36,7 @@ namespace DotNetty.Handlers.Tls
                         .OrderByDescending(certificate => certificate.NotAfter)
                         .FirstOrDefault();
 
-                    if (foundCertificate == null)
+                    if (foundCertificate is null)
                     {
                         throw new InvalidOperationException($"The requested certificate {subject} could not be found in {storeLocation}/{storeName} with AllowInvalid setting: {allowInvalid}.");
                     }

@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http
             else
             {
                 IByteBuffer buf = this.input.ReadChunk(allocator);
-                return buf == null ? null : new DefaultHttpContent(buf);
+                return buf is null ? null : new DefaultHttpContent(buf);
             }
         }
 

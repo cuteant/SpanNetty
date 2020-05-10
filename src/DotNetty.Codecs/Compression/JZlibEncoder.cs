@@ -137,7 +137,7 @@ namespace DotNetty.Codecs.Compression
         IChannelHandlerContext CurrentContext()
         {
             IChannelHandlerContext context = Volatile.Read(ref this.ctx);
-            if (context == null)
+            if (context is null)
             {
                 throw new InvalidOperationException("not added to a pipeline");
             }

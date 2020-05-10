@@ -35,16 +35,16 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public static void UrlEncode(TextWriter output, char[] value, int startIndex, int characterCount)
         {
-            if (null == value || 0u >= (uint)value.Length) { return; }
+            if (value is null || 0u >= (uint)value.Length) { return; }
 
             s_urlEncoder.Encode(output, value, startIndex, characterCount);
         }
 
         public static string UrlEncode(string str, Encoding e)
         {
-            if (null == str) { return null; }
+            if (str is null) { return null; }
 #if !DEBUG
-            if (null == e || Constants.UTF8CodePage == e.CodePage)
+            if (e is null || Constants.UTF8CodePage == e.CodePage)
             {
                 return s_urlEncoder.Encode(str);
             }
@@ -56,7 +56,7 @@ namespace DotNetty.Codecs.Http.Utilities
         }
 
         public static string UrlEncode(byte[] bytes)
-            => bytes == null ? null : Encoding.ASCII.GetString(UrlEncodeToBytesImpl(bytes, 0, bytes.Length, alwaysCreateNewReturnValue: true));
+            => bytes is null ? null : Encoding.ASCII.GetString(UrlEncodeToBytesImpl(bytes, 0, bytes.Length, alwaysCreateNewReturnValue: true));
 
         public static string UrlEncode(byte[] bytes, int offset, int count)
         {
@@ -73,15 +73,15 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public static byte[] UrlEncodeToBytes(string str, Encoding e)
         {
-            if (str == null) { return null; }
-            if (null == e) { e = Encoding.UTF8; }
+            if (str is null) { return null; }
+            if (e is null) { e = Encoding.UTF8; }
 
             byte[] bytes = e.GetBytes(str);
             return UrlEncodeToBytesImpl(bytes, 0, bytes.Length);//, alwaysCreateNewReturnValue: false);
         }
 
         public static byte[] UrlEncodeToBytes(byte[] bytes)
-            => bytes == null ? null : UrlEncodeToBytesImpl(bytes, 0, bytes.Length, alwaysCreateNewReturnValue: true);
+            => bytes is null ? null : UrlEncodeToBytesImpl(bytes, 0, bytes.Length, alwaysCreateNewReturnValue: true);
 
         public static byte[] UrlEncodeToBytes(byte[] bytes, int offset, int count)
         {
@@ -282,11 +282,11 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public static string UrlDecode(string str, Encoding e)
         {
-            if (null == e) { e = Encoding.UTF8; }
+            if (e is null) { e = Encoding.UTF8; }
             return UrlDecodeImpl(str, e);
         }
 
-        public static string UrlDecode(byte[] bytes, Encoding e) => bytes == null ? null : UrlDecodeImpl(bytes, 0, bytes.Length, e);
+        public static string UrlDecode(byte[] bytes, Encoding e) => bytes is null ? null : UrlDecodeImpl(bytes, 0, bytes.Length, e);
 
         public static string UrlDecode(byte[] bytes, int offset, int count, Encoding e)
         {
@@ -301,7 +301,7 @@ namespace DotNetty.Codecs.Http.Utilities
 
         private static string UrlDecodeImpl(string value, Encoding encoding)
         {
-            if (value == null) { return null; }
+            if (value is null) { return null; }
 
             int count = value.Length;
             UrlDecoder helper = new UrlDecoder(count, encoding);
@@ -369,7 +369,7 @@ namespace DotNetty.Codecs.Http.Utilities
 
         private static string UrlDecodeImpl(byte[] bytes, int offset, int count, Encoding encoding)
         {
-            if (null == encoding) { encoding = Encoding.UTF8; }
+            if (encoding is null) { encoding = Encoding.UTF8; }
 
             UrlDecoder helper = new UrlDecoder(count, encoding);
 
@@ -434,14 +434,14 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public static byte[] UrlDecodeToBytes(string str, Encoding e)
         {
-            if (null == str) { return null; }
-            if (null == e) { e = Encoding.UTF8; }
+            if (str is null) { return null; }
+            if (e is null) { e = Encoding.UTF8; }
 
             var bytes = e.GetBytes(str);
             return UrlDecodeToBytesImpl(bytes, 0, bytes.Length);
         }
 
-        public static byte[] UrlDecodeToBytes(byte[] bytes) => bytes == null ? null : UrlDecodeToBytesImpl(bytes, 0, bytes.Length);
+        public static byte[] UrlDecodeToBytes(byte[] bytes) => bytes is null ? null : UrlDecodeToBytesImpl(bytes, 0, bytes.Length);
 
         public static byte[] UrlDecodeToBytes(byte[] bytes, int offset, int count)
         {
@@ -501,12 +501,12 @@ namespace DotNetty.Codecs.Http.Utilities
         [MethodImpl(InlineMethod.Value)]
         private static bool ValidateUrlEncodingParameters(byte[] bytes, int offset, int count)
         {
-            if (bytes == null && 0u >= (uint)count)
+            if (bytes is null && 0u >= (uint)count)
             {
                 return false;
             }
 
-            if (bytes == null)
+            if (bytes is null)
             {
                 return false;
                 //throw new ArgumentNullException(nameof(bytes));
@@ -585,7 +585,7 @@ namespace DotNetty.Codecs.Http.Utilities
                                 else
                 */
                 {
-                    if (_byteBuffer == null)
+                    if (_byteBuffer is null)
                     {
                         _byteBuffer = new byte[_bufferSize];
                     }
@@ -613,8 +613,8 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public static NameValueCollection ParseQueryString(string query, Encoding encoding)
         {
-            if (query == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.query); }
-            if (encoding == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoding); }
+            if (query is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.query); }
+            if (encoding is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoding); }
 
             HttpQSCollection result = new HttpQSCollection();
             int queryLength = query.Length;

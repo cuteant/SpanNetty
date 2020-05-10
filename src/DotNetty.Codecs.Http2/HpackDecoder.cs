@@ -418,7 +418,7 @@ namespace DotNetty.Codecs.Http2
                 }
 
                 var pseudoHeader = PseudoHeaderName.GetPseudoHeader(name);
-                if (pseudoHeader == null)
+                if (pseudoHeader is null)
                 {
                     ThrowHelper.ThrowStreamError_InvalidPseudoHeader(streamId, name);
                 }

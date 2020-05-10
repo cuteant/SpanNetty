@@ -35,7 +35,7 @@ namespace DotNetty.Codecs.Http2
         // For testing only.
         internal Http2FrameCodecBuilder FrameWriter(IHttp2FrameWriter frameWriter)
         {
-            if (null == frameWriter) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frameWriter); }
+            if (frameWriter is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frameWriter); }
             this.frameWriter = frameWriter;
             return this;
         }

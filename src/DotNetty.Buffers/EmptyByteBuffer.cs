@@ -24,7 +24,7 @@ namespace DotNetty.Buffers
 
         public EmptyByteBuffer(IByteBufferAllocator allocator)
         {
-            if (null == allocator) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.allocator); }
+            if (allocator is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.allocator); }
 
             this.Allocator = allocator;
         }

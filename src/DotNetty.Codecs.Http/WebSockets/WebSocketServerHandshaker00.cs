@@ -57,7 +57,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 if (req.Headers.TryGet(HttpHeaderNames.SecWebsocketProtocol, out ICharSequence subprotocols))
                 {
                     string selectedSubprotocol = this.SelectSubprotocol(subprotocols.ToString());
-                    if (selectedSubprotocol == null)
+                    if (selectedSubprotocol is null)
                     {
                         if (Logger.DebugEnabled)
                         {

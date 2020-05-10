@@ -53,7 +53,7 @@ namespace DotNetty.Handlers.Tls
         /// ALPN/NPN negotiation fails or the client does not support ALPN/NPN</param>
         public ApplicationProtocolNegotiationHandler(string protocol)
         {
-            if (null == protocol) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.protocol); }
+            if (protocol is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.protocol); }
             this.fallbackProtocol = new SslApplicationProtocol(protocol);
         }
 
@@ -76,7 +76,7 @@ namespace DotNetty.Handlers.Tls
                 if (handshakeEvent.IsSuccessful)
                 {
                     var sslHandler = ctx.Pipeline.Get<TlsHandler>();
-                    if (null == sslHandler)
+                    if (sslHandler is null)
                     {
                         throw new InvalidOperationException(
                             "cannot find a SslHandler in the pipeline (required for application-level protocol negotiation)");

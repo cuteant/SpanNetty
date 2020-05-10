@@ -31,7 +31,7 @@ namespace DotNetty.Buffers
 
         public ByteBufferStream(IByteBuffer buffer, bool writable, bool releaseReferenceOnClosure)
         {
-            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 
             _buffer = buffer;
             _releaseReferenceOnClosure = releaseReferenceOnClosure;
@@ -252,7 +252,7 @@ namespace DotNetty.Buffers
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (buffer == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
             if (offset < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.offset); }
             if (count < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.count); }
             if (buffer.Length - offset < count) { ThrowHelper.ThrowArgumentException_InvalidOffLen(); }
@@ -313,7 +313,7 @@ namespace DotNetty.Buffers
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            if (buffer == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
             if (offset < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.offset); }
             if (count < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.count); }
             if (buffer.Length - offset < count) { ThrowHelper.ThrowArgumentException_InvalidOffLen(); }
@@ -326,7 +326,7 @@ namespace DotNetty.Buffers
 
         public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
-            if (buffer == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
             if (offset < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.offset); }
             if (count < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.count); }
             if (buffer.Length - offset < count) { ThrowHelper.ThrowArgumentException_InvalidOffLen(); }
@@ -346,7 +346,7 @@ namespace DotNetty.Buffers
 #if !NET40
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            if (buffer == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
             if (offset < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.offset); }
             if (count < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.count); }
             if (buffer.Length - offset < count) { ThrowHelper.ThrowArgumentException_InvalidOffLen(); }
@@ -457,7 +457,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.Value)]
         private static void ValidateCopyToArgs(Stream destination)
         {
-            if (destination == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.destination); }
+            if (destination is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.destination); }
 
             bool destinationCanWrite = destination.CanWrite;
             if (!destinationCanWrite)

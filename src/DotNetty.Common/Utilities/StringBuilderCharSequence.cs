@@ -90,7 +90,7 @@ namespace DotNetty.Common.Utilities
 
         public void Append(ICharSequence value)
         {
-            if (value == null || 0u >= (uint)value.Count)
+            if (value is null || 0u >= (uint)value.Count)
             {
                 return;
             }
@@ -101,7 +101,7 @@ namespace DotNetty.Common.Utilities
 
         public void Append(ICharSequence value, int index, int count)
         {
-            if (value == null || 0u >= (uint)count)
+            if (value is null || 0u >= (uint)count)
             {
                 return;
             }

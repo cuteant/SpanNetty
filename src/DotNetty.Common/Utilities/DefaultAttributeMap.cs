@@ -21,10 +21,10 @@ namespace DotNetty.Common.Utilities
         public IAttribute<T> GetAttribute<T>(AttributeKey<T> key)
             where T : class
         {
-            if (null == key) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
+            if (key is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
 
             DefaultAttribute[] attrs = Volatile.Read(ref this.attributes);
-            if (attrs == null)
+            if (attrs is null)
             {
                 attrs = new DefaultAttribute[BucketSize];
                 // Not using ConcurrentHashMap due to high memory consumption.
@@ -33,13 +33,13 @@ namespace DotNetty.Common.Utilities
 
             int i = Index(key);
             DefaultAttribute head = Volatile.Read(ref attrs[i]);
-            if (head == null)
+            if (head is null)
             {
                 // No head exists yet which means we may be able to add the attribute without synchronization and just
                 // use compare and set. At worst we need to fallback to synchronization
                 head = new DefaultAttribute<T>(key);
 
-                if (Interlocked.CompareExchange(ref this.attributes[i], head, null) == null)
+                if (Interlocked.CompareExchange(ref this.attributes[i], head, null) is null)
                 {
                     // we were able to add it so return the head right away
                     return (IAttribute<T>)head;
@@ -59,7 +59,7 @@ namespace DotNetty.Common.Utilities
                     }
 
                     DefaultAttribute next = curr.Next;
-                    if (next == null)
+                    if (next is null)
                     {
                         var attr = new DefaultAttribute<T>(head, key);
                         curr.Next = attr;
@@ -77,10 +77,10 @@ namespace DotNetty.Common.Utilities
         public bool HasAttribute<T>(AttributeKey<T> key)
             where T : class
         {
-            if (null == key) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
+            if (key is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
 
             DefaultAttribute[] attrs = Volatile.Read(ref this.attributes);
-            if (attrs == null)
+            if (attrs is null)
             {
                 // no attribute exists
                 return false;
@@ -88,7 +88,7 @@ namespace DotNetty.Common.Utilities
 
             int i = Index(key);
             DefaultAttribute head = Volatile.Read(ref attrs[i]);
-            if (head == null)
+            if (head is null)
             {
                 // No attribute exists which point to the bucket in which the head should be located
                 return false;

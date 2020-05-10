@@ -39,7 +39,7 @@ namespace DotNetty.Common.Utilities
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        public static bool IsNullOrEmpty(ICharSequence sequence) => (sequence == null || 0u >= (uint)sequence.Count) ? true : false;
+        public static bool IsNullOrEmpty(ICharSequence sequence) => (sequence is null || 0u >= (uint)sequence.Count) ? true : false;
 
         public static ICharSequence[] Split(ICharSequence sequence, params char[] delimiters) => Split(sequence, 0, delimiters);
 

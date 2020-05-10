@@ -20,7 +20,7 @@ namespace DotNetty.Handlers.IPFilter
 
         public RuleBasedIPFilter(params IIPFilterRule[] rules)
         {
-            if (rules == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.rules); }
+            if (rules is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.rules); }
             this.rules = rules;
         }
 
@@ -28,7 +28,7 @@ namespace DotNetty.Handlers.IPFilter
         {
             foreach (IIPFilterRule rule in this.rules)
             {
-                if (rule == null) { break; }
+                if (rule is null) { break; }
                 if (rule.Matches(remoteAddress))
                 {
                     return rule.RuleType == IPFilterRuleType.Accept;

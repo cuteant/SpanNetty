@@ -39,7 +39,7 @@ namespace DotNetty.Transport.Libuv
 
         public WorkerEventLoopGroup(DispatcherEventLoopGroup eventLoopGroup, int eventLoopCount)
         {
-            if (null == eventLoopGroup) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventLoopGroup); }
+            if (eventLoopGroup is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventLoopGroup); }
 
             this.dispatcherLoop = eventLoopGroup.Dispatcher;
             this.PipeName = this.dispatcherLoop.PipeName;
@@ -102,7 +102,7 @@ namespace DotNetty.Transport.Libuv
         public Task RegisterAsync(IChannel channel)
         {
             var nativeChannel = channel as INativeChannel;
-            if (null == nativeChannel)
+            if (nativeChannel is null)
             {
                 ThrowHelper.ThrowArgumentException_RegChannel();
             }

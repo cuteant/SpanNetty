@@ -32,7 +32,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         protected override void Encode(IChannelHandlerContext ctx, WebSocketFrame msg, List<object> output)
         {
-            if (this.encoder == null)
+            if (this.encoder is null)
             {
                 this.encoder = new EmbeddedChannel(
                     ZlibCodecFactory.NewZlibEncoder(
@@ -48,7 +48,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             while(true)
             {
                 var partCompressedContent = this.encoder.ReadOutbound<IByteBuffer>();
-                if (partCompressedContent == null)
+                if (partCompressedContent is null)
                 {
                     break;
                 }
@@ -119,7 +119,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                     while(true)
                     {
                         var buf = this.encoder.ReadOutbound<IByteBuffer>();
-                        if (buf == null)
+                        if (buf is null)
                         {
                             break;
                         }

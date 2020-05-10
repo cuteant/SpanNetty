@@ -14,7 +14,7 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public void Append(string key, string value)
         {
-            if (_accumulator == null)
+            if (_accumulator is null)
             {
                 _accumulator = new Dictionary<string, StringValues>(StringComparer.OrdinalIgnoreCase);
             }
@@ -38,7 +38,7 @@ namespace DotNetty.Codecs.Http.Utilities
                     // Add zero count entry and move to data to expanding list dictionary
                     _accumulator[key] = default(StringValues);
 
-                    if (_expandingAccumulator == null)
+                    if (_expandingAccumulator is null)
                     {
                         _expandingAccumulator = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
                     }

@@ -38,7 +38,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public ISet<ICookie> Decode(string header)
         {
-            if (null == header) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.header); }
+            if (header is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.header); }
 
             int headerLen = header.Length;
             if (0u >= (uint)headerLen)

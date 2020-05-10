@@ -55,8 +55,8 @@ namespace DotNetty.Codecs.Http2
 
         private Http2ClientUpgradeCodec(string handlerName, Http2ConnectionHandler connectionHandler, IChannelHandler upgradeToHandler)
         {
-            if (null == connectionHandler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connectionHandler); }
-            if (null == upgradeToHandler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.upgradeToHandler); }
+            if (connectionHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connectionHandler); }
+            if (upgradeToHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.upgradeToHandler); }
 
             this.handlerName = handlerName;
             this.connectionHandler = connectionHandler;

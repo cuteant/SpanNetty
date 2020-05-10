@@ -18,8 +18,8 @@ namespace DotNetty.Codecs.Http2
 
         public Http2OutboundFrameLogger(IHttp2FrameWriter writer, IHttp2FrameLogger logger)
         {
-            if (null == writer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.writer); }
-            if (null == logger) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.logger); }
+            if (writer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.writer); }
+            if (logger is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.logger); }
             this.writer = writer;
             this.logger = logger;
         }

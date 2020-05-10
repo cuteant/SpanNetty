@@ -28,7 +28,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void AddValue(string stringValue)
         {
-            if (null == stringValue) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stringValue); }
+            if (stringValue is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stringValue); }
 
             IByteBuffer buf = ArrayPooled.CopiedBuffer(stringValue, this.charset);
             this.value.Add(buf);
@@ -37,7 +37,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void AddValue(string stringValue, int rank)
         {
-            if (null == stringValue) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stringValue); }
+            if (stringValue is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stringValue); }
 
             IByteBuffer buf = ArrayPooled.CopiedBuffer(stringValue, this.charset);
             this.value[rank] = buf;
@@ -46,7 +46,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void SetValue(string stringValue, int rank)
         {
-            if (null == stringValue) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stringValue); }
+            if (stringValue is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stringValue); }
 
             IByteBuffer buf = ArrayPooled.CopiedBuffer(stringValue, this.charset);
             IByteBuffer old = this.value[rank];

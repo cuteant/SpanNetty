@@ -117,7 +117,7 @@ namespace DotNetty.Transport.Channels
             get
             {
                 IEventLoop eventLoop = Volatile.Read(ref this.eventLoop);
-                if (eventLoop == null)
+                if (eventLoop is null)
                 {
                     ThrowHelper.ThrowInvalidOperationException_ChannelNotReg();
                 }
@@ -362,7 +362,7 @@ namespace DotNetty.Transport.Channels
 
             public Task RegisterAsync(IEventLoop eventLoop)
             {
-                if (null == eventLoop) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventLoop); }
+                if (eventLoop is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventLoop); }
 
                 var ch = this.channel;
                 if (ch.Registered)
@@ -732,7 +732,7 @@ namespace DotNetty.Transport.Channels
                 this.AssertEventLoop();
 
                 ChannelOutboundBuffer outboundBuffer = Volatile.Read(ref this.outboundBuffer);
-                if (outboundBuffer == null)
+                if (outboundBuffer is null)
                 {
                     // If the outboundBuffer is null we know the channel was closed and so
                     // need to fail the future right away. If it is not null the handling of the rest
@@ -770,7 +770,7 @@ namespace DotNetty.Transport.Channels
                 this.AssertEventLoop();
 
                 ChannelOutboundBuffer outboundBuffer = Volatile.Read(ref this.outboundBuffer);
-                if (outboundBuffer == null)
+                if (outboundBuffer is null)
                 {
                     return;
                 }
@@ -788,7 +788,7 @@ namespace DotNetty.Transport.Channels
                 }
 
                 ChannelOutboundBuffer outboundBuffer = Volatile.Read(ref this.outboundBuffer);
-                if (outboundBuffer == null || outboundBuffer.IsEmpty)
+                if (outboundBuffer is null || outboundBuffer.IsEmpty)
                 {
                     return;
                 }

@@ -90,9 +90,9 @@ namespace DotNetty.Transport.Channels.Pool
         /// </param>
         public SimpleChannelPool(Bootstrap bootstrap, IChannelPoolHandler handler, IChannelHealthChecker healthChecker, bool releaseHealthCheck, bool lastRecentUsed)
         {
-            if (null == handler) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
-            if (null == healthChecker) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.healthChecker); }
-            if (null == bootstrap) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.bootstrap); }
+            if (handler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
+            if (healthChecker is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.healthChecker); }
+            if (bootstrap is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.bootstrap); }
 
             this.Handler = handler;
             this.HealthChecker = healthChecker;
@@ -237,7 +237,7 @@ namespace DotNetty.Transport.Channels.Pool
         public virtual async ValueTask<bool> ReleaseAsync(IChannel channel)
 #endif
         {
-            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
+            if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
             try
             {
                 IEventLoop loop = channel.EventLoop;

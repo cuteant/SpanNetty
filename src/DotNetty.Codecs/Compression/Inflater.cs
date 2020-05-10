@@ -130,7 +130,7 @@ namespace DotNetty.Codecs.Compression
 
         public int Inflate(int f)
         {
-            if (istate == null) return Z_STREAM_ERROR;
+            if (istate is null) return Z_STREAM_ERROR;
             int ret = istate.Inflate_I(f);
             //if (ret == Z_STREAM_END)
             //    finished = true;
@@ -140,7 +140,7 @@ namespace DotNetty.Codecs.Compression
         public override int End()
         {
             // finished = true;
-            if (istate == null) return Z_STREAM_ERROR;
+            if (istate is null) return Z_STREAM_ERROR;
             int ret = istate.InflateEnd();
             //    istate = null;
             return ret;
@@ -148,18 +148,18 @@ namespace DotNetty.Codecs.Compression
 
         public int Sync()
         {
-            if (istate == null) return Z_STREAM_ERROR;
+            if (istate is null) return Z_STREAM_ERROR;
             return istate.InflateSync();
         }
         public int SyncPoint()
         {
-            if (istate == null) return Z_STREAM_ERROR;
+            if (istate is null) return Z_STREAM_ERROR;
             return istate.InflateSyncPoint();
         }
 
         public int SetDictionary(byte[] dictionary, int dictLength)
         {
-            if (istate == null) return Z_STREAM_ERROR;
+            if (istate is null) return Z_STREAM_ERROR;
             return istate.InflateSetDictionary(dictionary, dictLength);
         }
 

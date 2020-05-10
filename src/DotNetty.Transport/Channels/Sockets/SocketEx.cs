@@ -25,7 +25,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         internal static void SafeClose(this Socket socket)
         {
-            if (socket == null)
+            if (socket is null)
             {
                 return;
             }

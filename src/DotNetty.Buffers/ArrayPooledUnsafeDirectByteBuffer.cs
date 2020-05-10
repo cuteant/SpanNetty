@@ -83,7 +83,7 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
-            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            if (dst is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
             this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
             fixed (byte* addr = &this.Addr(index))
             {
@@ -94,7 +94,7 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
-            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            if (dst is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
             this.CheckDstIndex(index, length, dstIndex, dst.Length);
             fixed (byte* addr = &this.Addr(index))
             {
@@ -153,7 +153,7 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
-            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            if (src is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckSrcIndex(index, length, srcIndex, src.Capacity);
             fixed (byte* addr = &this.Addr(index))
             {
@@ -164,7 +164,7 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
-            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            if (src is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckSrcIndex(index, length, srcIndex, src.Length);
             if (length != 0)
             {
@@ -179,7 +179,7 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer GetBytes(int index, Stream output, int length)
         {
-            if (null == output) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
+            if (output is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.output); }
             this.CheckIndex(index, length);
             //fixed (byte* addr = &this.Addr(index))
             //{
@@ -197,7 +197,7 @@ namespace DotNetty.Buffers
 
         public sealed override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
-            if (null == src) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
+            if (src is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             this.CheckIndex(index, length);
             //int read;
             //fixed (byte* addr = &this.Addr(index))

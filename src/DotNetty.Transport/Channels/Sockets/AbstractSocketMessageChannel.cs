@@ -131,7 +131,7 @@ namespace DotNetty.Transport.Channels.Sockets
             while (true)
             {
                 var msg = input.Current;
-                if (msg == null)
+                if (msg is null)
                 {
                     break;
                 }

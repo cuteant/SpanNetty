@@ -23,8 +23,8 @@ namespace DotNetty.Codecs.Http
         public DefaultHttpRequest(HttpVersion version, HttpMethod method, string uri, bool validateHeaders)
             : base(version, validateHeaders, false)
         {
-            if (null == method) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.method); }
-            if (null == uri) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
+            if (method is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.method); }
+            if (uri is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
 
             this.method = method;
             this.uri = uri;
@@ -33,8 +33,8 @@ namespace DotNetty.Codecs.Http
         public DefaultHttpRequest(HttpVersion version, HttpMethod method, string uri, HttpHeaders headers) 
             : base(version, headers)
         {
-            if (null == method) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.method); }
-            if (null == uri) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
+            if (method is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.method); }
+            if (uri is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
 
             this.method = method;
             this.uri = uri;
@@ -46,14 +46,14 @@ namespace DotNetty.Codecs.Http
 
         public IHttpRequest SetMethod(HttpMethod value)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             this.method = value;
             return this;
         }
 
         public IHttpRequest SetUri(string value)
         {
-            if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
             this.uri = value;
             return this;
         }

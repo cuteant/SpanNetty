@@ -36,7 +36,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 
             if (!req.Headers.TryGet(HttpHeaderNames.SecWebsocketKey, out ICharSequence key) 
-                || key == null)
+                || key is null)
             {
                 ThrowHelper.ThrowWebSocketHandshakeException_MissingKey();
             }
@@ -57,7 +57,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 && subprotocols is object)
             {
                 string selectedSubprotocol = this.SelectSubprotocol(subprotocols.ToString());
-                if (selectedSubprotocol == null)
+                if (selectedSubprotocol is null)
                 {
                     if (Logger.DebugEnabled)
                     {

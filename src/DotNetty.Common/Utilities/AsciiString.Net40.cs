@@ -126,7 +126,7 @@ namespace DotNetty.Common.Utilities
         {
             if (ReferenceEquals(this, a)) { return true; }
 
-            if (a == null || a.Count != this.length)
+            if (a is null || a.Count != this.length)
             {
                 return false;
             }
@@ -150,7 +150,7 @@ namespace DotNetty.Common.Utilities
         public bool ContentEqualsIgnoreCase(ICharSequence other)
         {
             if (ReferenceEquals(this, other)) { return true; }
-            if (other == null || other.Count != this.length)
+            if (other is null || other.Count != this.length)
             {
                 return false;
             }
@@ -202,7 +202,7 @@ namespace DotNetty.Common.Utilities
 
         public void Copy(int srcIdx, char[] dst, int dstIdx, int count)
         {
-            if (null == dst) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
+            if (dst is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
 
             if (MathUtil.IsOutOfBounds(srcIdx, count, this.length))
             {
@@ -334,7 +334,7 @@ namespace DotNetty.Common.Utilities
 
         public bool RegionMatches(int thisStart, ICharSequence seq, int start, int count)
         {
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
+            if (seq is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
 
             if (start < 0 || seq.Count - start < count)
             {
@@ -366,7 +366,7 @@ namespace DotNetty.Common.Utilities
 
         public bool RegionMatchesIgnoreCase(int thisStart, ICharSequence seq, int start, int count)
         {
-            if (null == seq) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
+            if (seq is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.seq); }
 
             int thisLen = this.length;
             if (thisStart < 0 || count > thisLen - thisStart)

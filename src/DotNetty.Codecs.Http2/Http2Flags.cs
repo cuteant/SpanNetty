@@ -209,7 +209,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (ReferenceEquals(this, other)) { return true; }
 
-            if (null == other) { return false; }
+            if (other is null) { return false; }
 
             return this.value == other.value;
         }

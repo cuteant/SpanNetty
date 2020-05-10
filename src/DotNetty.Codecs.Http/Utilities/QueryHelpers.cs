@@ -23,9 +23,9 @@ namespace DotNetty.Codecs.Http.Utilities
         /// <returns>The combined result.</returns>
         public static string AddQueryString(string uri, string name, string value)
         {
-            if (uri == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
-            if (name == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
-            if (value == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+            if (uri is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
+            if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
+            if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
             return AddQueryString(uri, new[] { new KeyValuePair<string, string>(name, value) });
         }
@@ -38,16 +38,16 @@ namespace DotNetty.Codecs.Http.Utilities
         /// <returns>The combined result.</returns>
         public static string AddQueryString(string uri, IDictionary<string, string> queryString)
         {
-            if (uri == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
-            if (queryString == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.queryString); }
+            if (uri is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
+            if (queryString is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.queryString); }
 
             return AddQueryString(uri, queryParams:queryString);
         }
 
         private static string AddQueryString(string uri, IEnumerable<KeyValuePair<string, string>> queryParams)
         {
-            //if (uri == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
-            //if (queryString == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.queryString); }
+            //if (uri is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
+            //if (queryString is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.queryString); }
 
             var anchorIndex = uri.IndexOf('#');
             var uriToBeAppended = uri;
@@ -86,7 +86,7 @@ namespace DotNetty.Codecs.Http.Utilities
         {
             var result = ParseNullableQuery(queryString);
 
-            if (result == null)
+            if (result is null)
             {
                 return new Dictionary<string, StringValues>();
             }

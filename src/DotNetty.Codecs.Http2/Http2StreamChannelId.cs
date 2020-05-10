@@ -52,7 +52,7 @@ namespace DotNetty.Codecs.Http2
         public bool Equals(Http2StreamChannelId other)
         {
             if (ReferenceEquals(this, other)) { return true; }
-            if (null == other) { return false; }
+            if (other is null) { return false; }
             return id == other.id && parentId.Equals(other.parentId);
         }
 

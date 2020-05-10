@@ -22,7 +22,7 @@ namespace DotNetty.Common.Utilities
 
         public PriorityQueue(IComparer<T> comparer, int initialCapacity)
         {
-            if (null == comparer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.comparer); }
+            if (comparer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.comparer); }
 
             this.comparer = comparer;
             this.capacity = initialCapacity;
@@ -49,7 +49,7 @@ namespace DotNetty.Common.Utilities
 
         public bool TryDequeue(out T item)
         {
-            if (!this.TryPeek(out item) || item == null)
+            if (!this.TryPeek(out item) || item is null)
             {
                 return false;
             }
@@ -84,7 +84,7 @@ namespace DotNetty.Common.Utilities
 
         public void Enqueue(T item)
         {
-            if (null == item) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.item); }
+            if (item is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.item); }
 
             int index = item.GetPriorityQueueIndex(this);
             if (index != IndexNotInQueue)
@@ -97,7 +97,7 @@ namespace DotNetty.Common.Utilities
 
         public bool TryEnqueue(T item)
         {
-            if (null == item) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.item); }
+            if (item is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.item); }
 
             int index = item.GetPriorityQueueIndex(this);
             if (index != IndexNotInQueue) { return false; }

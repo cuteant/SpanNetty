@@ -105,7 +105,7 @@ namespace DotNetty.Codecs.Http
                     try
                     {
                         AppendableCharSequence line = this.lineParser.Parse(buffer);
-                        if (line == null)
+                        if (line is null)
                         {
                             return;
                         }
@@ -132,7 +132,7 @@ namespace DotNetty.Codecs.Http
                     try
                     {
                         State? nextState = this.ReadHeaders(buffer);
-                        if (nextState == null)
+                        if (nextState is null)
                         {
                             return;
                         }
@@ -248,7 +248,7 @@ namespace DotNetty.Codecs.Http
                     try
                     {
                         AppendableCharSequence line = this.lineParser.Parse(buffer);
-                        if (line == null)
+                        if (line is null)
                         {
                             return;
                         }
@@ -312,7 +312,7 @@ namespace DotNetty.Codecs.Http
                     try
                     {
                         ILastHttpContent lastTrialer = this.ReadTrailingHeaders(buffer);
-                        if (lastTrialer == null)
+                        if (lastTrialer is null)
                         {
                             return;
                         }
@@ -495,7 +495,7 @@ namespace DotNetty.Codecs.Http
             // when we produced an invalid message without consuming anything.
             buf.SkipBytes(buf.ReadableBytes);
 
-            if (this.message == null)
+            if (this.message is null)
             {
                 this.message = this.CreateInvalidMessage();
             }
@@ -548,7 +548,7 @@ namespace DotNetty.Codecs.Http
             HttpHeaders headers = httpMessage.Headers;
 
             AppendableCharSequence line = this.headerParser.Parse(buffer);
-            if (line == null)
+            if (line is null)
             {
                 return null;
             }
@@ -575,7 +575,7 @@ namespace DotNetty.Codecs.Http
                     }
 
                     line = this.headerParser.Parse(buffer);
-                    if (line == null)
+                    if (line is null)
                     {
                         return null;
                     }
@@ -625,7 +625,7 @@ namespace DotNetty.Codecs.Http
         ILastHttpContent ReadTrailingHeaders(IByteBuffer buffer)
         {
             AppendableCharSequence line = this.headerParser.Parse(buffer);
-            if (line == null)
+            if (line is null)
             {
                 return null;
             }
@@ -633,7 +633,7 @@ namespace DotNetty.Codecs.Http
             if (line.Count > 0)
             {
                 ILastHttpContent trailingHeaders = this.trailer;
-                if (trailingHeaders == null)
+                if (trailingHeaders is null)
                 {
                     trailingHeaders = new DefaultLastHttpContent(Unpooled.Empty, this.ValidateHeaders);
                     this.trailer = trailingHeaders;
@@ -670,7 +670,7 @@ namespace DotNetty.Codecs.Http
                     }
 
                     line = this.headerParser.Parse(buffer);
-                    if (line == null)
+                    if (line is null)
                     {
                         return null;
                     }

@@ -47,7 +47,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="Bootstrap"/> instance.</returns>
         public Bootstrap Resolver(INameResolver resolver)
         {
-            if (null == resolver) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.resolver); }
+            if (resolver is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.resolver); }
             InternalResolver = resolver;
             return this;
         }
@@ -95,7 +95,7 @@ namespace DotNetty.Transport.Bootstrapping
         {
             this.Validate();
             EndPoint remoteAddress = InternalRemoteAddress;
-            if (remoteAddress == null)
+            if (remoteAddress is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_RemoteAddrNotSet();
             }
@@ -126,7 +126,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="IChannel"/>.</returns>
         public Task<IChannel> ConnectAsync(EndPoint remoteAddress)
         {
-            if (null == remoteAddress) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
+            if (remoteAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
 
             this.Validate();
             return this.DoResolveAndConnectAsync(remoteAddress, this.LocalAddress());
@@ -140,7 +140,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="IChannel"/>.</returns>
         public Task<IChannel> ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
         {
-            if (null == remoteAddress) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
+            if (remoteAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
 
             this.Validate();
             return this.DoResolveAndConnectAsync(remoteAddress, localAddress);
@@ -197,7 +197,7 @@ namespace DotNetty.Transport.Bootstrapping
             {
                 try
                 {
-                    if (localAddress == null)
+                    if (localAddress is null)
                     {
                         channel.ConnectAsync(remoteAddress).LinkOutcome(promise);
                     }
@@ -233,7 +233,7 @@ namespace DotNetty.Transport.Bootstrapping
         public override Bootstrap Validate()
         {
             base.Validate();
-            if (this.Handler() == null)
+            if (this.Handler() is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_HandlerNotSet();
             }
@@ -257,7 +257,7 @@ namespace DotNetty.Transport.Bootstrapping
         public override string ToString()
         {
             var remoteAddress = InternalRemoteAddress;
-            if (remoteAddress == null)
+            if (remoteAddress is null)
             {
                 return base.ToString();
             }

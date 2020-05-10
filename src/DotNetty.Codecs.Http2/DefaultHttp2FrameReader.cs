@@ -389,7 +389,7 @@ namespace DotNetty.Codecs.Http2
             this.VerifyAssociatedWithAStream();
             this.VerifyPayloadLength(this.payloadLength);
 
-            if (this.headersContinuation == null)
+            if (this.headersContinuation is null)
             {
                 ThrowHelper.ThrowConnectionError_ReceivedFrameButNotCurrentlyProcessingHeaders(this.frameType);
             }
@@ -780,7 +780,7 @@ namespace DotNetty.Codecs.Http2
             /// block. In that case, the buffer is used directly without copying.</param>
             internal void AddFragment(IByteBuffer fragment, int len, IByteBufferAllocator alloc, bool endOfHeaders)
             {
-                if (this.headerBlock == null)
+                if (this.headerBlock is null)
                 {
                     if (len > this.reader.headersDecoder.Configuration.MaxHeaderListSizeGoAway)
                     {

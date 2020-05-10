@@ -12,13 +12,13 @@ namespace DotNetty.Transport.Channels
         {
             return ReferenceEquals(x, y);
             //if (ReferenceEquals(x, y)) { return true; }
-            //if (x == null || y == null) { return false; }
+            //if (x is null || y is null) { return false; }
             //return x.Equals(y);
         }
 
         public int GetHashCode(ChannelOption obj)
         {
-            //if (null == obj) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
+            //if (obj is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.obj); }
 
             return obj.GetHashCode();
         }

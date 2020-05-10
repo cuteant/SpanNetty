@@ -23,7 +23,7 @@ namespace DotNetty.Transport.Channels.Pool
 
         public TPool Get(TKey key)
         {
-            if (null == key) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
+            if (key is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
 
             if (!this.map.TryGetValue(key, out TPool pool))
             {
@@ -47,7 +47,7 @@ namespace DotNetty.Transport.Channels.Pool
         /// <returns><c>true</c> if removed, otherwise <c>false</c>.</returns>
         public bool Remove(TKey key)
         {
-            if (null == key) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
+            if (key is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
             if (this.map.TryRemove(key, out TPool pool))
             {
                 pool.Dispose();
@@ -72,7 +72,7 @@ namespace DotNetty.Transport.Channels.Pool
 
         public bool Contains(TKey key)
         {
-            if (null == key) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
+            if (key is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
             return this.map.ContainsKey(key);
         }
 

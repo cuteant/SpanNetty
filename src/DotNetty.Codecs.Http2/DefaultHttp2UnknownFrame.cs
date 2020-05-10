@@ -57,7 +57,7 @@ namespace DotNetty.Codecs.Http2
             if (ReferenceEquals(this, obj)) { return true; }
 
             var unknownFrame = obj as DefaultHttp2UnknownFrame;
-            if (null == unknownFrame) { return false; }
+            if (unknownFrame is null) { return false; }
 
             var thisStream = this.stream;
             var otherStream = unknownFrame.Stream;

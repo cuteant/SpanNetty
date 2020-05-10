@@ -35,14 +35,14 @@ namespace DotNetty.Transport.Channels
 
         public DefaultChannelConfiguration(IChannel channel, IRecvByteBufAllocator allocator)
         {
-            if (null == channel) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
+            if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
             this.Channel = channel;
             if (allocator is IMaxMessagesRecvByteBufAllocator maxMessagesAllocator)
             {
                 maxMessagesAllocator.MaxMessagesPerRead = channel.Metadata.DefaultMaxMessagesPerRead;
             }
-            else if (allocator == null)
+            else if (allocator is null)
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.allocator);
             }
@@ -51,7 +51,7 @@ namespace DotNetty.Transport.Channels
 
         public virtual T GetOption<T>(ChannelOption<T> option)
         {
-            if (null == option) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.option); }
+            if (option is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.option); }
 
             if (ChannelOption.ConnectTimeout.Equals(option))
             {
@@ -162,7 +162,7 @@ namespace DotNetty.Transport.Channels
 
         protected virtual void Validate<T>(ChannelOption<T> option, T value)
         {
-            if (null == option) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.option); }
+            if (option is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.option); }
             option.Validate(value);
         }
 
@@ -181,7 +181,7 @@ namespace DotNetty.Transport.Channels
             get { return Volatile.Read(ref this.allocator); }
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 Interlocked.Exchange(ref this.allocator, value);
             }
         }
@@ -191,7 +191,7 @@ namespace DotNetty.Transport.Channels
             get { return Volatile.Read(ref this.recvByteBufAllocator); }
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 Interlocked.Exchange(ref this.recvByteBufAllocator, value);
             }
         }
@@ -201,7 +201,7 @@ namespace DotNetty.Transport.Channels
             get { return Volatile.Read(ref this.messageSizeEstimator); }
             set
             {
-                if (null == value) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 Interlocked.Exchange(ref this.messageSizeEstimator, value);
             }
         }

@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public string Encode(ICookie cookie)
         {
-            if (null == cookie) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cookie); }
+            if (cookie is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cookie); }
 
             string name = cookie.Name ?? nameof(cookie);
             string value = cookie.Value ?? "";
@@ -116,7 +116,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public IList<string> Encode(params ICookie[] cookies)
         {
-            if (cookies == null || 0u >= (uint)cookies.Length)
+            if (cookies is null || 0u >= (uint)cookies.Length)
             {
                 return ImmutableList<string>.Empty;
             }
@@ -146,7 +146,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public IList<string> Encode(ICollection<ICookie> cookies)
         {
-            if (null == cookies) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cookies); }
+            if (cookies is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cookies); }
             if (0u >= (uint)cookies.Count)
             {
                 return ImmutableList<string>.Empty;

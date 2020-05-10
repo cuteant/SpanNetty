@@ -88,7 +88,7 @@ namespace DotNetty.Codecs.Http2
         public override void OnHttpClientUpgrade()
         {
             // We must have an upgrade handler or else we can't handle the stream
-            if (this.upgradeStreamHandler == null)
+            if (this.upgradeStreamHandler is null)
             {
                 ThrowHelper.ThrowConnectionError_ClientIsMisconfiguredForUpgradeRequests();
             }
@@ -289,9 +289,9 @@ namespace DotNetty.Codecs.Http2
 
         internal void AddChildChannelToReadPendingQueue(DefaultHttp2StreamChannel childChannel)
         {
-            if (tail == null)
+            if (tail is null)
             {
-                Debug.Assert(this.head == null);
+                Debug.Assert(this.head is null);
                 this.tail = this.head = childChannel;
             }
             else
@@ -712,7 +712,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     // If a read is in progress or has been requested, there cannot be anything in the queue,
                     // otherwise we would have drained it from the queue and processed it during the read cycle.
-                    Debug.Assert(this.inboundBuffer == null || this.inboundBuffer.IsEmpty);
+                    Debug.Assert(this.inboundBuffer is null || this.inboundBuffer.IsEmpty);
                     var allocHandle = this.channelUnsafe.RecvBufAllocHandle;
                     this.channelUnsafe.DoRead0(frame, allocHandle);
                     // We currently don't need to check for readEOS because the parent channel and child channel are limited
@@ -731,7 +731,7 @@ namespace DotNetty.Codecs.Http2
                 }
                 else
                 {
-                    if (this.inboundBuffer == null)
+                    if (this.inboundBuffer is null)
                     {
                         this.inboundBuffer = new Deque<object>(4);
                     }
@@ -800,7 +800,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     get
                     {
-                        if (null == this.recvHandle)
+                        if (this.recvHandle is null)
                         {
                             var config = this.channel.Configuration;
                             this.recvHandle = config.RecvByteBufAllocator.NewHandle();
@@ -986,7 +986,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     var ch = this.channel;
                     var inboundBuffer = ch.inboundBuffer;
-                    if (inboundBuffer == null || (!inboundBuffer.TryRemoveFromFront(out var message)))
+                    if (inboundBuffer is null || (!inboundBuffer.TryRemoveFromFront(out var message)))
                     {
                         if (this.ReadEOS)
                         {
@@ -1028,7 +1028,7 @@ namespace DotNetty.Codecs.Http2
                 internal void NotifyReadComplete(IRecvByteBufAllocatorHandle allocHandle)
                 {
                     var ch = this.channel;
-                    Debug.Assert(ch.next == null && ch.previous == null);
+                    Debug.Assert(ch.next is null && ch.previous is null);
                     if (ch.readStatus == ReadStatus.Requested)
                     {
                         ch.readStatus = ReadStatus.InProgress;

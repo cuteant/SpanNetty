@@ -108,7 +108,7 @@ namespace DotNetty.Buffers
         private CompositeByteBuffer(IByteBufferAllocator allocator, bool direct, int maxNumComponents, int initSize)
             : base(AbstractByteBufferAllocator.DefaultMaxCapacity)
         {
-            if (null == allocator) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.allocator); }
+            if (allocator is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.allocator); }
             if (maxNumComponents < 1) { ThrowHelper.ThrowArgumentException_CheckMaxNumComponents(maxNumComponents); }
 
             this.allocator = allocator;
@@ -193,7 +193,7 @@ namespace DotNetty.Buffers
 
         public virtual CompositeByteBuffer AddComponent(bool increaseWriterIndex, IByteBuffer buffer)
         {
-            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
             this.AddComponent0(increaseWriterIndex, this.componentCount, buffer);
             this.ConsolidateIfNeeded();
             return this;
@@ -201,7 +201,7 @@ namespace DotNetty.Buffers
 
         public virtual CompositeByteBuffer AddComponents(bool increaseWriterIndex, params IByteBuffer[] buffers)
         {
-            if (null == buffers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffers); }
+            if (buffers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffers); }
             this.AddComponents0(increaseWriterIndex, this.componentCount, buffers, 0);
             this.ConsolidateIfNeeded();
             return this;
@@ -216,7 +216,7 @@ namespace DotNetty.Buffers
 
         public virtual CompositeByteBuffer AddComponent(bool increaseWriterIndex, int cIndex, IByteBuffer buffer)
         {
-            if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
+            if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
             this.AddComponent0(increaseWriterIndex, cIndex, buffer);
             this.ConsolidateIfNeeded();
             return this;
@@ -290,7 +290,7 @@ namespace DotNetty.Buffers
         /// </summary>
         public virtual CompositeByteBuffer AddComponents(int cIndex, params IByteBuffer[] buffers)
         {
-            if (null == buffers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffers); }
+            if (buffers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffers); }
             this.AddComponents0(false, cIndex, buffers, 0);
             this.ConsolidateIfNeeded();
             return this;
@@ -356,7 +356,7 @@ namespace DotNetty.Buffers
         // but we do in the most common case that the Iterable is a Collection)
         int AddComponents0(bool increaseIndex, int cIndex, IEnumerable<IByteBuffer> buffers)
         {
-            if (null == buffers) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffers); }
+            if (buffers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffers); }
 
             if (buffers is IByteBuffer buffer)
             {
