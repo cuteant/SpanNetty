@@ -93,6 +93,6 @@ namespace DotNetty.Codecs.Http.Utilities
         }
 
         //  Helper to encode spaces only
-        internal static string UrlEncodeSpaces(string str) => str != null && str.IndexOf(' ') >= 0 ? str.Replace(" ", "%20") : str;
+        internal static string UrlEncodeSpaces(string str) => str is object && str.IndexOf(' ') >= 0 ? str.Replace(" ", "%20") : str;
     }
 }

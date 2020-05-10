@@ -165,14 +165,14 @@ namespace DotNetty.Codecs.Http.WebSockets
             IChannelPipeline p = channel.Pipeline;
             // Remove decompressor from pipeline if its in use
             var decompressor = p.Get<HttpContentDecompressor>();
-            if (decompressor != null)
+            if (decompressor is object)
             {
                 p.Remove(decompressor);
             }
 
             // Remove aggregator if present before
             var aggregator = p.Get<HttpObjectAggregator>();
-            if (aggregator != null)
+            if (aggregator is object)
             {
                 p.Remove(aggregator);
             }
@@ -199,7 +199,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
             else
             {
-                if (p.Get<HttpRequestEncoder>() != null)
+                if (p.Get<HttpRequestEncoder>() is object)
                 {
                     // Remove the encoder part of the codec as the user may start writing frames after this method returns.
                     p.Remove<HttpRequestEncoder>();

@@ -78,7 +78,7 @@ namespace DotNetty.Common
         public static bool AwaitInactivity(TimeSpan timeout)
         {
             Thread watcherThread = Volatile.Read(ref ThreadDeathWatcher.watcherThread);
-            if (watcherThread != null)
+            if (watcherThread is object)
             {
                 watcherThread.Join(timeout);
                 return !watcherThread.IsAlive;

@@ -59,7 +59,7 @@ namespace DotNetty.Handlers.Tls
                     var certificate2 = ConvertToX509Certificate2(certificate);
                     if (certificate2 == null) { return false; }
 
-                    if (clientCertificateValidationFunc != null)
+                    if (clientCertificateValidationFunc is object)
                     {
                         if (!clientCertificateValidationFunc(certificate2, chain, sslPolicyErrors))
                         {
@@ -79,10 +79,10 @@ namespace DotNetty.Handlers.Tls
                 bool LocalServerCertificateValidation(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
                 {
                     var certificateValidation = clientSettings.ServerCertificateValidation;
-                    if (certificateValidation != null) { return certificateValidation(certificate, chain, sslPolicyErrors); }
+                    if (certificateValidation is object) { return certificateValidation(certificate, chain, sslPolicyErrors); }
 
                     var callback = ServicePointManager.ServerCertificateValidationCallback;
-                    if (callback != null) { return callback(sender, certificate, chain, sslPolicyErrors); }
+                    if (callback is object) { return callback(sender, certificate, chain, sslPolicyErrors); }
 
                     if (sslPolicyErrors == SslPolicyErrors.None) { return true; }
 
@@ -111,7 +111,7 @@ namespace DotNetty.Handlers.Tls
                         return false;
                     }
 
-                    if (chain != null && chain.ChainStatus != null)
+                    if (chain is object && chain.ChainStatus is object)
                     {
                         foreach (X509ChainStatus status in chain.ChainStatus)
                         {
@@ -166,7 +166,7 @@ namespace DotNetty.Handlers.Tls
         {
             if (certificate is X509Certificate2 cert2) { return cert2; }
 
-            return certificate != null ? new X509Certificate2(certificate) : null;
+            return certificate is object ? new X509Certificate2(certificate) : null;
         }
 
 #if !DESKTOPCLR && (NET40 || NET45 || NET451 || NET46 || NET461 || NET462 || NET47 || NET471 || NET472)

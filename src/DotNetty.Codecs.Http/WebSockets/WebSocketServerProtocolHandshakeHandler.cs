@@ -123,7 +123,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         static string GetWebSocketLocation(IChannelPipeline cp, IHttpRequest req, string path)
         {
             string protocol = "ws";
-            if (cp.Get<TlsHandler>() != null)
+            if (cp.Get<TlsHandler>() is object)
             {
                 // SSL in use so use Secure WebSockets
                 protocol = "wss";

@@ -68,7 +68,7 @@ namespace DotNetty.Codecs.Http2
                     new DefaultHttp2HeadersDecoder(true) :
                     new DefaultHttp2HeadersDecoder(true, maxHeaderListSize.Value));
 
-            if (frameLogger != null)
+            if (frameLogger is object)
             {
                 frameWriter = new Http2OutboundFrameLogger(frameWriter, frameLogger);
                 frameReader = new Http2InboundFrameLogger(frameReader, frameLogger);
@@ -100,7 +100,7 @@ namespace DotNetty.Codecs.Http2
 
         public IHttp2ConnectionEncoder Encoder => this.encoder;
 
-        private bool PrefaceSent => this.byteDecoder != null && this.byteDecoder.PrefaceSent;
+        private bool PrefaceSent => this.byteDecoder is object && this.byteDecoder.PrefaceSent;
 
         /// <summary>
         /// Handles the client-side (cleartext) upgrade from HTTP to HTTP/2.
@@ -260,7 +260,7 @@ namespace DotNetty.Codecs.Http2
             private void Cleanup()
             {
                 var clientPrefaceString = this.clientPrefaceString;
-                if (clientPrefaceString != null)
+                if (clientPrefaceString is object)
                 {
                     clientPrefaceString.Release();
                     this.clientPrefaceString = null;
@@ -404,7 +404,7 @@ namespace DotNetty.Codecs.Http2
 
         protected override void HandlerRemovedInternal(IChannelHandlerContext ctx)
         {
-            if (this.byteDecoder != null)
+            if (this.byteDecoder is object)
             {
                 this.byteDecoder.HandlerRemoved(ctx);
                 this.byteDecoder = null;
@@ -425,7 +425,7 @@ namespace DotNetty.Codecs.Http2
         {
             // Call super class first, as this may result in decode being called.
             base.ChannelInactive(ctx);
-            if (this.byteDecoder != null)
+            if (this.byteDecoder is object)
             {
                 this.byteDecoder.ChannelInactive(ctx);
                 this.byteDecoder = null;
@@ -578,7 +578,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="cause"></param>
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
         {
-            if (Http2CodecUtil.GetEmbeddedHttp2Exception(cause) != null)
+            if (Http2CodecUtil.GetEmbeddedHttp2Exception(cause) is object)
             {
                 // Some exception in the causality chain is an Http2Exception - handle it.
                 this.OnError(ctx, false, cause);
@@ -753,7 +753,7 @@ namespace DotNetty.Codecs.Http2
                 }
 
                 // ensure that we have not already sent headers on this stream
-                if (stream != null && !stream.IsHeadersSent)
+                if (stream is object && !stream.IsHeadersSent)
                 {
                     try
                     {
@@ -927,7 +927,7 @@ namespace DotNetty.Codecs.Http2
         {
             // If this connection is closing and the graceful shutdown has completed, close the connection
             // once this operation completes.
-            if (this.closeListener != null && this.IsGracefulShutdownComplete)
+            if (this.closeListener is object && this.IsGracefulShutdownComplete)
             {
                 var closeListener = this.closeListener;
                 // This method could be called multiple times
@@ -946,7 +946,7 @@ namespace DotNetty.Codecs.Http2
 
         private Task GoAwayAsync(IChannelHandlerContext ctx, Http2Exception cause)
         {
-            var errorCode = cause != null ? cause.Error : Http2Error.NoError;
+            var errorCode = cause is object ? cause.Error : Http2Error.NoError;
             int lastKnownStream = this.Connection.Remote.LastStreamCreated;
             return GoAwayAsync(ctx, lastKnownStream, errorCode, Http2CodecUtil.ToByteBuf(ctx, cause), ctx.NewPromise());
         }

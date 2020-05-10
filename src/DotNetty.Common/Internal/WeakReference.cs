@@ -61,7 +61,7 @@ namespace DotNetty
     /// <returns></returns>
     public static implicit operator T(WeakReference<T> obj)
     {
-      if (obj != null && obj.Target != null) { return obj.Target; }
+      if (obj is object && obj.Target is object) { return obj.Target; }
       return default(T);
     }
 

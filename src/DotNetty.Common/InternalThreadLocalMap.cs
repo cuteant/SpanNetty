@@ -104,7 +104,7 @@ namespace DotNetty.Common
                 {
                     count++;
                 }
-                if (this.stringBuilder != null)
+                if (this.stringBuilder is object)
                 {
                     count++;
                 }

@@ -61,7 +61,7 @@ namespace DotNetty.Transport.Channels.Groups
                             Task f = ft.Value;
                             if (f.IsFaulted || f.IsCanceled)
                             {
-                                if (f.Exception != null)
+                                if (f.Exception is object)
                                 {
                                     failed.Add(new KeyValuePair<IChannel, Exception>(c, f.Exception.InnerException));
                                 }

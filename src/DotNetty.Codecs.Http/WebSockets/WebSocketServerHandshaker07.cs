@@ -30,7 +30,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.SwitchingProtocols);
 
-            if (headers != null)
+            if (headers is object)
             {
                 res.Headers.Add(headers);
             }
@@ -55,7 +55,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             
             if (req.Headers.TryGet(HttpHeaderNames.SecWebsocketProtocol, out ICharSequence subprotocols) 
-                && subprotocols != null)
+                && subprotocols is object)
             {
                 string selectedSubprotocol = this.SelectSubprotocol(subprotocols.ToString());
                 if (selectedSubprotocol == null)

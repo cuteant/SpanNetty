@@ -34,7 +34,7 @@ namespace DotNetty.Transport.Channels
 
         public void AddFirst(IByteBuffer buf, IPromise promise)
         {
-            if (promise != null && !promise.IsVoid)
+            if (promise is object && !promise.IsVoid)
             {
                 this.bufAndListenerPairs.AddToFront(promise);
             }
@@ -62,7 +62,7 @@ namespace DotNetty.Transport.Channels
             // buffers are added before promises so that we naturally 'consume' the entire buffer during removal
             // before we complete it's promise.
             this.bufAndListenerPairs.AddToBack(buf);
-            if (promise != null && !promise.IsVoid)
+            if (promise is object && !promise.IsVoid)
             {
                 this.bufAndListenerPairs.AddToBack(promise);
             }
@@ -214,7 +214,7 @@ namespace DotNetty.Transport.Channels
                 {
                     if (entry == null)
                     {
-                        if (previousBuf != null)
+                        if (previousBuf is object)
                         {
                             ctx.WriteAsync(previousBuf, ctx.VoidPromise());
                         }
@@ -223,7 +223,7 @@ namespace DotNetty.Transport.Channels
 
                     if (entry is IByteBuffer byteBuffer)
                     {
-                        if (previousBuf != null)
+                        if (previousBuf is object)
                         {
                             ctx.WriteAsync(previousBuf, ctx.VoidPromise());
                         }
@@ -253,7 +253,7 @@ namespace DotNetty.Transport.Channels
                     }
                 }
             }
-            if (pending != null)
+            if (pending is object)
             {
                 ThrowHelper.ThrowInvalidOperationException_CoalescingBufferQueuePending(pending);
             }
@@ -375,7 +375,7 @@ namespace DotNetty.Transport.Channels
                     }
                 }
             }
-            if (pending != null)
+            if (pending is object)
             {
                 ThrowHelper.ThrowInvalidOperationException_CoalescingBufferQueuePending(pending);
             }
@@ -389,7 +389,7 @@ namespace DotNetty.Transport.Channels
                 ThrowHelper.ThrowInvalidOperationException_BufferQueueLengthOverflow(readableBytes, increment);
             }
             readableBytes = nextReadableBytes;
-            if (tracker != null)
+            if (tracker is object)
             {
                 tracker.IncrementPendingOutboundBytes(increment);
             }
@@ -399,7 +399,7 @@ namespace DotNetty.Transport.Channels
         {
             this.readableBytes -= decrement;
             Debug.Assert(this.readableBytes >= 0);
-            if (tracker != null)
+            if (tracker is object)
             {
                 tracker.DecrementPendingOutboundBytes(decrement);
             }

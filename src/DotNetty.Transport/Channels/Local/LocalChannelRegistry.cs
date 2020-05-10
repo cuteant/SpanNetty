@@ -12,7 +12,7 @@ namespace DotNetty.Transport.Channels.Local
 
         internal static LocalAddress Register(IChannel channel, LocalAddress oldLocalAddress, EndPoint localAddress) 
         {
-            if (oldLocalAddress != null) 
+            if (oldLocalAddress is object) 
             {
                 ThrowHelper.ThrowChannelException_AlreadyBound();
             }

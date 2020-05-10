@@ -293,7 +293,7 @@ namespace DotNetty.Buffers
             else
             {
                 SizeClass sizeClass = this.SizeClass(normCapacity);
-                if (cache != null && cache.Add(this, chunk, handle, normCapacity, sizeClass))
+                if (cache is object && cache.Add(this, chunk, handle, normCapacity, sizeClass))
                 {
                     // cached so not free it.
                     return;

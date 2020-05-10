@@ -487,7 +487,7 @@ namespace DotNetty.Common.Utilities
         {
             if (ReferenceEquals(this, other)) { return true; }
 
-            return other != null && this.length == other.length
+            return other is object && this.length == other.length
                 && this.GetHashCode() == other.GetHashCode()
                 && PlatformDependent.ByteArrayEquals(this.value, this.offset, other.value, other.offset, this.length);
         }

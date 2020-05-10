@@ -208,7 +208,7 @@ namespace DotNetty.Codecs.Http2
         public bool TryGet(ICharSequence name, out ICharSequence value)
         {
             value = this.Get0(name);
-            return value != null;
+            return value is object;
         }
 
         public ICharSequence Get(ICharSequence name, ICharSequence defaultValue)
@@ -264,7 +264,7 @@ namespace DotNetty.Codecs.Http2
         {
             AsciiString rawValue = this.Get0(name);
 
-            if (rawValue != null)
+            if (rawValue is object)
             {
                 value = CharSequenceValueConverter.Default.ConvertToBoolean(rawValue);
                 return true;
@@ -279,7 +279,7 @@ namespace DotNetty.Codecs.Http2
         {
             AsciiString rawValue = this.Get0(name);
 
-            if (rawValue != null)
+            if (rawValue is object)
             {
                 value = CharSequenceValueConverter.Default.ConvertToByte(rawValue);
                 return true;
@@ -294,7 +294,7 @@ namespace DotNetty.Codecs.Http2
         {
             AsciiString rawValue = this.Get0(name);
 
-            if (rawValue != null)
+            if (rawValue is object)
             {
                 value = CharSequenceValueConverter.Default.ConvertToChar(rawValue);
                 return true;
@@ -309,7 +309,7 @@ namespace DotNetty.Codecs.Http2
         {
             AsciiString rawValue = this.Get0(name);
 
-            if (rawValue != null)
+            if (rawValue is object)
             {
                 value = CharSequenceValueConverter.Default.ConvertToShort(rawValue);
                 return true;
@@ -324,7 +324,7 @@ namespace DotNetty.Codecs.Http2
         {
             AsciiString rawValue = this.Get0(name);
 
-            if (rawValue != null)
+            if (rawValue is object)
             {
                 value = CharSequenceValueConverter.Default.ConvertToInt(rawValue);
                 return true;
@@ -339,7 +339,7 @@ namespace DotNetty.Codecs.Http2
         {
             AsciiString rawValue = this.Get0(name);
 
-            if (rawValue != null)
+            if (rawValue is object)
             {
                 value = CharSequenceValueConverter.Default.ConvertToLong(rawValue);
                 return true;
@@ -354,7 +354,7 @@ namespace DotNetty.Codecs.Http2
         {
             AsciiString rawValue = this.Get0(name);
 
-            if (rawValue != null)
+            if (rawValue is object)
             {
                 value = CharSequenceValueConverter.Default.ConvertToFloat(rawValue);
                 return true;
@@ -369,7 +369,7 @@ namespace DotNetty.Codecs.Http2
         {
             AsciiString rawValue = this.Get0(name);
 
-            if (rawValue != null)
+            if (rawValue is object)
             {
                 value = CharSequenceValueConverter.Default.ConvertToDouble(rawValue);
                 return true;
@@ -384,7 +384,7 @@ namespace DotNetty.Codecs.Http2
         {
             AsciiString rawValue = this.Get0(name);
 
-            if (rawValue != null)
+            if (rawValue is object)
             {
                 value = CharSequenceValueConverter.Default.ConvertToTimeMillis(rawValue);
                 return true;
@@ -485,7 +485,7 @@ namespace DotNetty.Codecs.Http2
             throw new NotSupportedException("read only");
         }
 
-        public bool Contains(ICharSequence name) => this.Get0(name) != null;
+        public bool Contains(ICharSequence name) => this.Get0(name) is object;
 
         public bool Contains(ICharSequence name, ICharSequence value) => this.Contains(name, value, false);
 

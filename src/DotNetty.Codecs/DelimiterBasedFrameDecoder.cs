@@ -137,7 +137,7 @@ namespace DotNetty.Codecs
         protected internal override void Decode(IChannelHandlerContext ctx, IByteBuffer input, List<object> output)
         {
             object decoded = this.Decode(ctx, input);
-            if (decoded != null)
+            if (decoded is object)
                 output.Add(decoded);
         }
 
@@ -153,7 +153,7 @@ namespace DotNetty.Codecs
         /// </returns>
         protected virtual object Decode(IChannelHandlerContext ctx, IByteBuffer buffer)
         {
-            if (this.lineBasedDecoder != null)
+            if (this.lineBasedDecoder is object)
             {
                 return this.lineBasedDecoder.Decode(ctx, buffer);
             }
@@ -171,7 +171,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            if (minDelim != null)
+            if (minDelim is object)
             {
                 int minDelimLength = minDelim.Capacity;
                 IByteBuffer frame;

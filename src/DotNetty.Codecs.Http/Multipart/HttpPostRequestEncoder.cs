@@ -323,7 +323,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 // Add Content-Length: xxx
                 internalAttribute.AddValue($"{HttpHeaderNames.ContentLength}: {attribute.Length}\r\n");
                 Encoding localcharset = attribute.Charset;
-                if (localcharset != null)
+                if (localcharset is object)
                 {
                     // Content-Type: text/plain; charset=charset
                     internalAttribute.AddValue($"{HttpHeaderNames.ContentType}: {HttpPostBodyUtil.DefaultTextContentType}; {HttpHeaderValues.Charset}={localcharset.WebName}\r\n");
@@ -345,7 +345,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 bool localMixed;
                 if (this.duringMixedMode)
                 {
-                    if (this.currentFileUpload != null && string.Equals(this.currentFileUpload.Name, fileUpload.Name
+                    if (this.currentFileUpload is object && string.Equals(this.currentFileUpload.Name, fileUpload.Name
 #if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
                         ))
 #else
@@ -378,7 +378,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 else
                 {
-                    if (this.encoderMode != EncoderMode.HTML5 && this.currentFileUpload != null
+                    if (this.encoderMode != EncoderMode.HTML5 && this.currentFileUpload is object
                         && string.Equals(this.currentFileUpload.Name, fileUpload.Name
 #if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
                             ))
@@ -519,7 +519,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 // Content-Transfer-Encoding: binary
                 internalAttribute.AddValue($"{HttpHeaderNames.ContentType}: {fileUpload.ContentType}");
                 string contentTransferEncoding = fileUpload.ContentTransferEncoding;
-                if (contentTransferEncoding != null
+                if (contentTransferEncoding is object
                     && string.Equals(contentTransferEncoding, HttpPostBodyUtil.TransferEncodingMechanism.Binary.Value
 #if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
                         ))
@@ -529,7 +529,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     internalAttribute.AddValue($"\r\n{HttpHeaderNames.ContentTransferEncoding}: {HttpPostBodyUtil.TransferEncodingMechanism.Binary.Value}\r\n\r\n");
                 }
-                else if (fileUpload.Charset != null)
+                else if (fileUpload.Charset is object)
                 {
                     internalAttribute.AddValue($"; {HttpHeaderValues.Charset}={fileUpload.Charset.WebName}\r\n\r\n");
                 }
@@ -575,7 +575,7 @@ namespace DotNetty.Codecs.Http.Multipart
             HttpHeaders headers = this.request.Headers;
             IList<ICharSequence> contentTypes = headers.GetAll(HttpHeaderNames.ContentType);
             IList<ICharSequence> transferEncoding = headers.GetAll(HttpHeaderNames.TransferEncoding);
-            if (contentTypes != null)
+            if (contentTypes is object)
             {
                 headers.Remove(HttpHeaderNames.ContentType);
                 foreach (ICharSequence contentType in contentTypes)
@@ -614,7 +614,7 @@ namespace DotNetty.Codecs.Http.Multipart
             if (realSize > HttpPostBodyUtil.ChunkSize || this.isMultipart)
             {
                 this.isChunked = true;
-                if (transferEncoding != null)
+                if (transferEncoding is object)
                 {
                     headers.Remove(HttpHeaderNames.TransferEncoding);
                     foreach (ICharSequence v in transferEncoding)
@@ -814,12 +814,12 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 else
                 {
-                    if (delimiter != null)
+                    if (delimiter is object)
                     {
                         this.currentBuffer = Unpooled.WrappedBuffer(this.currentBuffer, delimiter);
                     }
                 }
-                Debug.Assert(this.currentBuffer != null);
+                Debug.Assert(this.currentBuffer is object);
                 if (this.currentBuffer.ReadableBytes >= HttpPostBodyUtil.ChunkSize)
                 {
                     buffer = this.FillByteBuffer();
@@ -831,13 +831,13 @@ namespace DotNetty.Codecs.Http.Multipart
             // Put it all together: name=value&
             if (this.currentBuffer == null)
             {
-                this.currentBuffer = delimiter != null
+                this.currentBuffer = delimiter is object
                     ? Unpooled.WrappedBuffer(buffer, delimiter)
                     : buffer;
             }
             else
             {
-                this.currentBuffer = delimiter != null
+                this.currentBuffer = delimiter is object
                     ? Unpooled.WrappedBuffer(this.currentBuffer, buffer, delimiter)
                     : Unpooled.WrappedBuffer(this.currentBuffer, buffer);
             }
@@ -889,13 +889,13 @@ namespace DotNetty.Codecs.Http.Multipart
                 return new DefaultHttpContent(buffer);
             }
             // size > 0
-            if (this.currentData != null)
+            if (this.currentData is object)
             {
                 // continue to read data
                 IHttpContent chunk = this.isMultipart
                     ? this.EncodeNextChunkMultipart(size)
                     : this.EncodeNextChunkUrlEncoded(size);
-                if (chunk != null)
+                if (chunk is object)
                 {
                     // NextChunk from data
                     return chunk;
@@ -934,7 +934,7 @@ namespace DotNetty.Codecs.Http.Multipart
         int CalculateRemainingSize()
         {
             int size = HttpPostBodyUtil.ChunkSize;
-            if (this.currentBuffer != null)
+            if (this.currentBuffer is object)
             {
                 size -= this.currentBuffer.ReadableBytes;
             }

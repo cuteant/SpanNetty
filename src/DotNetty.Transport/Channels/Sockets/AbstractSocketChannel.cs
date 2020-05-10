@@ -164,7 +164,7 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             var operation = this.writeOperation;
 
-            Debug.Assert(operation != null);
+            Debug.Assert(operation is object);
 
             if (operation.BufferList == null)
             {
@@ -269,7 +269,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
                 try
                 {
-                    if (ch.connectPromise != null)
+                    if (ch.connectPromise is object)
                     {
                         ThrowHelper.ThrowInvalidOperationException_ConnAttemptAlreadyMade();
                     }
@@ -469,7 +469,7 @@ namespace DotNetty.Transport.Channels.Sockets
         protected override void DoClose()
         {
             var promise = this.connectPromise;
-            if (promise != null)
+            if (promise is object)
             {
                 // Use TrySetException() instead of SetException() to avoid the race against cancellation due to timeout.
                 promise.TrySetException(ThrowHelper.GetClosedChannelException());
@@ -477,21 +477,21 @@ namespace DotNetty.Transport.Channels.Sockets
             }
 
             IScheduledTask cancellationTask = this.connectCancellationTask;
-            if (cancellationTask != null)
+            if (cancellationTask is object)
             {
                 cancellationTask.Cancel();
                 this.connectCancellationTask = null;
             }
 
             var readOp = this.readOperation;
-            if (readOp != null)
+            if (readOp is object)
             {
                 readOp.Dispose();
                 this.readOperation = null;
             }
 
             var writeOp = this.writeOperation;
-            if (writeOp != null)
+            if (writeOp is object)
             {
                 writeOp.Dispose();
                 this.writeOperation = null;

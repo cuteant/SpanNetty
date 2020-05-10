@@ -282,7 +282,7 @@ namespace DotNetty.Transport.Channels.Pool
                     {
                         Interlocked.Increment(ref this.pendingAcquireCount);
 
-                        if (this.timeoutTask != null)
+                        if (this.timeoutTask is object)
                         {
                             task.TimeoutTask = this.executor.Schedule(this.timeoutTask, this.acquireTimeout);
                         }
@@ -499,7 +499,7 @@ namespace DotNetty.Transport.Channels.Pool
                 
                 if (SharedConstants.True == Volatile.Read(ref this.pool.closed))
                 {
-                    if (promise != null)
+                    if (promise is object)
                     {
                         promise.TrySetException(PoolClosedOnAcquireException);
 #if NET40
@@ -533,7 +533,7 @@ namespace DotNetty.Transport.Channels.Pool
                     {
                         //pool never closed here
                         var channel = future.Result;
-                        if (promise != null)
+                        if (promise is object)
                         {
                             promise.TrySetResult(channel);
 #if NET40
@@ -553,7 +553,7 @@ namespace DotNetty.Transport.Channels.Pool
                     //pool never closed here
                     ResumeQueue();
 
-                    if (promise != null)
+                    if (promise is object)
                     {
                         promise.TrySetException(ex);
 #if NET40

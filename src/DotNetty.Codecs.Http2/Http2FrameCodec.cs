@@ -361,7 +361,7 @@ namespace DotNetty.Codecs.Http2
             var stream = connection.Stream(streamId);
             // Upgraded requests are ineligible for stream control. We add the null check
             // in case the stream has been deregistered.
-            if (stream != null && streamId == Http2CodecUtil.HttpUpgradeStreamId)
+            if (stream is object && streamId == Http2CodecUtil.HttpUpgradeStreamId)
             {
                 var upgraded = stream.GetProperty<bool>(upgradeKey);
                 if (upgraded) { return false; }
@@ -477,7 +477,7 @@ namespace DotNetty.Codecs.Http2
             public override void OnStreamAdded(IHttp2Stream stream)
             {
                 var frameStreamToInitialize = this.frameCodec.frameStreamToInitialize;
-                if (frameStreamToInitialize != null && stream.Id == frameStreamToInitialize.Id)
+                if (frameStreamToInitialize is object && stream.Id == frameStreamToInitialize.Id)
                 {
                     frameStreamToInitialize.SetStreamAndProperty(this.frameCodec.streamKey, stream);
                     this.frameCodec.frameStreamToInitialize = null;
@@ -492,7 +492,7 @@ namespace DotNetty.Codecs.Http2
             public override void OnStreamClosed(IHttp2Stream stream)
             {
                 var stream2 = stream.GetProperty<DefaultHttp2FrameStream>(this.frameCodec.streamKey);
-                if (stream2 != null)
+                if (stream2 is object)
                 {
                     this.frameCodec.OnHttp2StreamStateChanged(this.frameCodec.ctx, stream2);
                 }
@@ -501,7 +501,7 @@ namespace DotNetty.Codecs.Http2
             public override void OnStreamHalfClosed(IHttp2Stream stream)
             {
                 var stream2 = stream.GetProperty<DefaultHttp2FrameStream>(this.frameCodec.streamKey);
-                if (stream2 != null)
+                if (stream2 is object)
                 {
                     this.frameCodec.OnHttp2StreamStateChanged(this.frameCodec.ctx, stream2);
                 }
@@ -707,7 +707,7 @@ namespace DotNetty.Codecs.Http2
         internal bool IsWritable(DefaultHttp2FrameStream stream)
         {
             var s = stream.InternalStream;
-            return s != null && this.Connection.Remote.FlowController.IsWritable(s);
+            return s is object && this.Connection.Remote.FlowController.IsWritable(s);
         }
 
         sealed class Http2RemoteFlowControllerListener : IHttp2RemoteFlowControllerListener

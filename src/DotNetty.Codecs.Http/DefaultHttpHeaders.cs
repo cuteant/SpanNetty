@@ -44,7 +44,7 @@ namespace DotNetty.Codecs.Http
                 else
                 {
                     // Go through each character in the name
-                    Debug.Assert(name != null);
+                    Debug.Assert(name is object);
                     // ReSharper disable once ForCanBeConvertedToForeach
                     // Avoid new enumerator instance
                     for (int index = 0; index < name.Count; ++index)

@@ -106,7 +106,7 @@ namespace DotNetty.Codecs.Http2
                 if (0u >= (uint)padding)
                 {
                     // Write the header.
-                    if (frameHeader != null)
+                    if (frameHeader is object)
                     {
                         frameHeader.Release();
                         frameHeader = null;
@@ -126,7 +126,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     if (remainingData != this.maxFrameSize)
                     {
-                        if (frameHeader != null)
+                        if (frameHeader is object)
                         {
                             frameHeader.Release();
                             frameHeader = null;
@@ -201,13 +201,13 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Exception cause)
             {
-                if (frameHeader != null) { frameHeader.Release(); }
+                if (frameHeader is object) { frameHeader.Release(); }
 
                 // Use a try/finally here in case the data has been released before calling this method. This is not
                 // necessary above because we internally allocate frameHeader.
                 try
                 {
-                    if (data != null) { data.Release(); }
+                    if (data is object) { data.Release(); }
                 }
                 finally
                 {
@@ -395,7 +395,7 @@ namespace DotNetty.Codecs.Http2
             }
             finally
             {
-                if (headerBlock != null) { headerBlock.Release(); }
+                if (headerBlock is object) { headerBlock.Release(); }
             }
 
             promiseAggregator.DoneAllocatingPromises();

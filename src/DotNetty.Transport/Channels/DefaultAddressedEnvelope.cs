@@ -68,7 +68,7 @@ namespace DotNetty.Transport.Channels
         public bool Release(int decrement) => ReferenceCountUtil.Release(this.Content, decrement);
 
         public override string ToString() => $"DefaultAddressedEnvelope<{typeof(T)}>"
-            + (this.Sender != null
+            + (this.Sender is object
                 ? $"({this.Sender} => {this.Recipient}, {this.Content})"
                 : $"(=> {this.Recipient}, {this.Content})");
     }

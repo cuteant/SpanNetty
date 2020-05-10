@@ -58,7 +58,7 @@ namespace DotNetty.Buffers
             }
             finally
             {
-                if (wrapped != null)
+                if (wrapped is object)
                 {
                     this.parent = this.rootParent = null;
                     wrapped.Release();

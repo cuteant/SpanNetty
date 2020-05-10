@@ -86,7 +86,7 @@ namespace DotNetty.Codecs
                 {
                     CThrowHelper.ThrowArgumentException_MaxCumulationBufferComponents(value);
                 }
-                if (this.handlerContext != null)
+                if (this.handlerContext is object)
                 {
                     CThrowHelper.ThrowInvalidOperationException_DecoderProperties();
                 }
@@ -110,7 +110,7 @@ namespace DotNetty.Codecs
             if (this.IsStartMessage(message))
             {
                 this.handlingOversizedMessage = false;
-                if (this.currentMessage != null)
+                if (this.currentMessage is object)
                 {
                     this.currentMessage.Release();
                     this.currentMessage = default;
@@ -119,12 +119,12 @@ namespace DotNetty.Codecs
                 }
 
                 var m = As<TStart>(message);
-                //Debug.Assert(m != null);
+                //Debug.Assert(m is object);
 
                 // Send the continue response if necessary(e.g. 'Expect: 100-continue' header)
                 // Check before content length. Failing an expectation may result in a different response being sent.
                 object continueResponse = this.NewContinueResponse(m, this.MaxContentLength, context.Pipeline);
-                if (continueResponse != null)
+                if (continueResponse is object)
                 {
                     // Make sure to call this before writing, otherwise reference counts may be invalid.
                     bool closeAfterWrite = this.CloseAfterContinueResponse(continueResponse);
@@ -204,7 +204,7 @@ namespace DotNetty.Codecs
                     // By convention, full message type extends first message type.
                     //@SuppressWarnings("unchecked")
                     var s = As<TStart>(this.currentMessage);
-                    //Debug.Assert(s != null);
+                    //Debug.Assert(s is object);
 
                     this.InvokeHandleOversizedMessage(context, s);
                     return;
@@ -326,7 +326,7 @@ namespace DotNetty.Codecs
             // We might need keep reading the channel until the full message is aggregated.
             //
             // See https://github.com/netty/netty/issues/6583
-            if (this.currentMessage != null && !this.handlerContext.Channel.Configuration.AutoRead)
+            if (this.currentMessage is object && !this.handlerContext.Channel.Configuration.AutoRead)
             {
                 context.Read();
             }

@@ -126,7 +126,7 @@ namespace DotNetty.Codecs.Http2
                 return;
             }
 
-            if (handlers != null)
+            if (handlers is object)
             {
                 var name = ctx.Pipeline.Context(connectionHandler).Name;
                 for (int i = handlers.Length - 1; i >= 0; i--)

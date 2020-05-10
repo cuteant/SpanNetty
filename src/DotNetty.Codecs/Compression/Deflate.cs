@@ -1840,7 +1840,7 @@ namespace DotNetty.Codecs.Compression
                 return Z_STREAM_ERROR;
             }
 
-            if (src.next_in != null)
+            if (src.next_in is object)
             {
                 dest.next_in = new byte[src.next_in.Length];
                 Array.Copy(src.next_in, 0, dest.next_in, 0, src.next_in.Length);
@@ -1849,7 +1849,7 @@ namespace DotNetty.Codecs.Compression
             dest.avail_in = src.avail_in;
             dest.total_in = src.total_in;
 
-            if (src.next_out != null)
+            if (src.next_out is object)
             {
                 dest.next_out = new byte[src.next_out.Length];
                 Array.Copy(src.next_out, 0, dest.next_out, 0, src.next_out.Length);
@@ -1899,7 +1899,7 @@ namespace DotNetty.Codecs.Compression
             dest.bl_desc.stat_desc = StaticTree.static_bl_desc;
             */
 
-            if (dest.gheader != null)
+            if (dest.gheader is object)
             {
                 dest.gheader = dest.gheader.Clone();
             }

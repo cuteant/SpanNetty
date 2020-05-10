@@ -85,7 +85,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         bool IsClosed()
         {
-            return this.InternalClosePromise != null;
+            return this.InternalClosePromise is object;
         }
 
         public Task CloseCompletion => this.closeFuture.Task;
@@ -97,7 +97,7 @@ namespace DotNetty.Codecs.Http2
             // Since we allow this method to be called multiple times, we must make sure that all the promises are notified
             // when all streams are removed and the close operation completes.
             var prevClosePromise = this.InternalClosePromise;
-            if (prevClosePromise != null)
+            if (prevClosePromise is object)
             {
                 if (ReferenceEquals(prevClosePromise, promise))
                 {
@@ -313,7 +313,7 @@ namespace DotNetty.Codecs.Http2
                     }
                 }
 
-                if (this.InternalClosePromise != null && IsStreamMapEmpty())
+                if (this.InternalClosePromise is object && IsStreamMapEmpty())
                 {
                     this.closeFuture.TryComplete();
                 }

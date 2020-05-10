@@ -61,13 +61,13 @@ namespace DotNetty.Codecs
         public virtual bool TryAcceptInboundMessage(object msg, out TInbound cast)
         {
             cast = msg as TInbound;
-            return cast != null;
+            return cast is object;
         }
 
         public virtual bool TryAcceptOutboundMessage(object message, out TOutbound cast)
         {
             cast = message as TOutbound;
-            return cast != null;
+            return cast is object;
         }
 
         protected abstract void Encode(IChannelHandlerContext ctx, TOutbound msg, List<object> output);

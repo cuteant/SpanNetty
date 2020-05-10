@@ -73,7 +73,7 @@ namespace DotNetty.Handlers.Tls
             if (null == settings) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
 
             _serverSettings = settings as ServerTlsSettings;
-            if (_serverSettings != null)
+            if (_serverSettings is object)
             {
                 _isServer = true;
 
@@ -87,14 +87,14 @@ namespace DotNetty.Handlers.Tls
 
 #if NETCOREAPP_2_0_GREATER
                 var serverApplicationProtocols = _serverSettings.ApplicationProtocols;
-                if (serverApplicationProtocols != null)
+                if (serverApplicationProtocols is object)
                 {
                     _hasHttp2Protocol = serverApplicationProtocols.Contains(SslApplicationProtocol.Http2);
                 }
 #endif
 
                 // If a selector is provided then ignore the cert, it may be a default cert.
-                if (_serverCertificateSelector != null)
+                if (_serverCertificateSelector is object)
                 {
                     // SslStream doesn't allow both.
                     _serverCertificate = null;
@@ -106,10 +106,10 @@ namespace DotNetty.Handlers.Tls
             }
             _clientSettings = settings as ClientTlsSettings;
 #if NETCOREAPP_2_0_GREATER
-            if (_clientSettings != null)
+            if (_clientSettings is object)
             {
                 var clientApplicationProtocols = _clientSettings.ApplicationProtocols;
-                _hasHttp2Protocol = clientApplicationProtocols != null && clientApplicationProtocols.Contains(SslApplicationProtocol.Http2);
+                _hasHttp2Protocol = clientApplicationProtocols is object && clientApplicationProtocols.Contains(SslApplicationProtocol.Http2);
                 _userCertSelector = _clientSettings.UserCertSelector;
             }
 #endif
@@ -424,10 +424,10 @@ namespace DotNetty.Handlers.Tls
 
                 int outputBufferLength;
 
-                if (currentReadFuture != null)
+                if (currentReadFuture is object)
                 {
                     // restoring context from previous read
-                    Debug.Assert(_pendingSslStreamReadBuffer != null);
+                    Debug.Assert(_pendingSslStreamReadBuffer is object);
 
                     outputBuffer = _pendingSslStreamReadBuffer;
                     outputBufferLength = outputBuffer.WritableBytes;
@@ -446,7 +446,7 @@ namespace DotNetty.Handlers.Tls
                     int currentPacketLength = packetLengths[packetIndex];
                     _mediationStream.ExpandSource(currentPacketLength);
 
-                    if (currentReadFuture != null)
+                    if (currentReadFuture is object)
                     {
                         // there was a read pending already, so we make sure we completed that first
 
@@ -510,7 +510,7 @@ namespace DotNetty.Handlers.Tls
                 // using FallbackReadBufferSize - buffer size we're ok to have pinned with the SslStream until it's done reading
                 while (true)
                 {
-                    if (currentReadFuture != null)
+                    if (currentReadFuture is object)
                     {
                         if (!currentReadFuture.IsCompleted)
                         {
@@ -535,7 +535,7 @@ namespace DotNetty.Handlers.Tls
             finally
             {
                 _mediationStream.ResetSource();
-                if (!pending && outputBuffer != null)
+                if (!pending && outputBuffer is object)
                 {
                     if (outputBuffer.IsReadable())
                     {
@@ -607,13 +607,13 @@ namespace DotNetty.Handlers.Tls
 #if NETCOREAPP_2_0_GREATER
                     // Adapt to the SslStream signature
                     ServerCertificateSelectionCallback selector = null;
-                    if (_serverCertificateSelector != null)
+                    if (_serverCertificateSelector is object)
                     {
                         X509Certificate LocalServerCertificateSelection(object sender, string name)
                         {
                             ctx.GetAttribute(SslStreamAttrKey).Set(_sslStream);
                             var cert = _serverCertificateSelector(ctx, name);
-                            if (cert != null)
+                            if (cert is object)
                             {
                                 EnsureCertificateIsAllowedForServerAuth(cert);
                             }
@@ -640,11 +640,11 @@ namespace DotNetty.Handlers.Tls
                               .ContinueWith(s_handshakeCompletionCallback, this, TaskContinuationOptions.ExecuteSynchronously);
 #else
                     var serverCert = _serverCertificate;
-                    if (_serverCertificateSelector != null)
+                    if (_serverCertificateSelector is object)
                     {
                         ctx.GetAttribute(SslStreamAttrKey).Set(_sslStream);
                         var serverCert2 = _serverCertificateSelector(ctx, null);
-                        if (serverCert2 != null)
+                        if (serverCert2 is object)
                         {
                             EnsureCertificateIsAllowedForServerAuth(serverCert2);
                             serverCert = serverCert2;
@@ -670,7 +670,7 @@ namespace DotNetty.Handlers.Tls
                 {
 #if NETCOREAPP_2_0_GREATER
                     LocalCertificateSelectionCallback selector = null;
-                    if (_userCertSelector != null)
+                    if (_userCertSelector is object)
                     {
                         X509Certificate LocalCertificateSelection(object sender, string targetHost, X509CertificateCollection localCertificates, X509Certificate remoteCertificate, string[] acceptableIssuers)
                         {
@@ -912,7 +912,7 @@ namespace DotNetty.Handlers.Tls
 
                     var promise = _pendingUnencryptedWrites.Remove();
                     Task task = _lastContextWriteTask;
-                    if (task != null)
+                    if (task is object)
                     {
                         task.LinkOutcome(promise);
                         _lastContextWriteTask = null;
@@ -1087,7 +1087,7 @@ namespace DotNetty.Handlers.Tls
                 if (disposing)
                 {
                     TaskCompletionSource<int> p = _readCompletionSource;
-                    if (p != null)
+                    if (p is object)
                     {
                         _readCompletionSource = null;
                         p.TrySetResult(0);

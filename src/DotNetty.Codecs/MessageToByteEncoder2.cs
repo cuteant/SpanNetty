@@ -15,7 +15,7 @@ namespace DotNetty.Codecs
         public virtual bool TryAcceptOutboundMessage(object message, out T input)
         {
             input = message as T;
-            return input != null;
+            return input is object;
         }
 
         public override void Write(IChannelHandlerContext context, object message, IPromise promise)

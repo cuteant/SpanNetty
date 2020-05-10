@@ -96,7 +96,7 @@ namespace DotNetty.Handlers.Tls
 #if !(NET40 || NET451)
         private static void DisposeCertificates(X509Certificate2Collection certificates, X509Certificate2 except)
         {
-            if (certificates != null)
+            if (certificates is object)
             {
                 foreach (var certificate in certificates)
                 {

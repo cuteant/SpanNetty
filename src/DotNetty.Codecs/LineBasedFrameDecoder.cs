@@ -78,7 +78,7 @@ namespace DotNetty.Codecs
         protected internal override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
             object decode = this.Decode(context, input);
-            if (decode != null)
+            if (decode is object)
             {
                 output.Add(decode);
             }

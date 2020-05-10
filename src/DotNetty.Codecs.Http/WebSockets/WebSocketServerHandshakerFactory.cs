@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public WebSocketServerHandshaker NewHandshaker(IHttpRequest req)
         {
             if (req.Headers.TryGet(HttpHeaderNames.SecWebsocketVersion, out ICharSequence version)
-                && version != null)
+                && version is object)
             {
                 if (version.Equals(WebSocketVersion.V13.ToHttpHeaderValue()))
                 {

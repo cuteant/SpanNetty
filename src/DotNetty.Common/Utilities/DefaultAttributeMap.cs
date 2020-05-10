@@ -104,7 +104,7 @@ namespace DotNetty.Common.Utilities
             {
                 // we need to synchronize on the head
                 DefaultAttribute curr = head.Next;
-                while (curr != null)
+                while (curr is object)
                 {
                     if (!curr.Removed && curr.GetKey() == key)
                     {
@@ -174,7 +174,7 @@ namespace DotNetty.Common.Utilities
                 while (!this.CompareAndSet(null, value))
                 {
                     T old = this.Get();
-                    if (old != null)
+                    if (old is object)
                     {
                         return old;
                     }
@@ -203,16 +203,16 @@ namespace DotNetty.Common.Utilities
             {
                 lock (this.Head)
                 {
-                    // We only update the linked-list structure if prev != null because if it is null this
+                    // We only update the linked-list structure if prev is object because if it is null this
                     // DefaultAttribute acts also as head. The head must never be removed completely and just be
                     // marked as removed as all synchronization is done on the head itself for each bucket.
                     // The head itself will be GC'ed once the DefaultAttributeMap is GC'ed. So at most 5 heads will
                     // be removed lazy as the array size is 5.
-                    if (this.Prev != null)
+                    if (this.Prev is object)
                     {
                         this.Prev.Next = this.Next;
 
-                        if (this.Next != null)
+                        if (this.Next is object)
                         {
                             this.Next.Prev = this.Prev;
                         }

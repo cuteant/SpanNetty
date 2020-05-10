@@ -57,7 +57,7 @@ namespace DotNetty.Codecs.Http2
             {
                 var encoder = this.Encoder;
                 var endStream = false;
-                if (httpMsg != null)
+                if (httpMsg is object)
                 {
                     // Provide the user the opportunity to specify the streamId
                     this.currentStreamId = this.GetStreamId(httpMsg.Headers);
@@ -68,7 +68,7 @@ namespace DotNetty.Codecs.Http2
                     WriteHeaders(ctx, encoder, this.currentStreamId, httpMsg.Headers, http2Headers, endStream, promiseAggregator);
                 }
 
-                if (!endStream && contentMsg != null)
+                if (!endStream && contentMsg is object)
                 {
                     var isLastContent = false;
                     HttpHeaders trailers = EmptyHttpHeaders.Default;

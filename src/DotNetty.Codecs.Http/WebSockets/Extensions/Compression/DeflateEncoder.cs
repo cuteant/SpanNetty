@@ -111,7 +111,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         void Cleanup()
         {
-            if (this.encoder != null)
+            if (this.encoder is object)
             {
                 // Clean-up the previous encoder if not cleaned up correctly.
                 if (this.encoder.Finish())

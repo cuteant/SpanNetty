@@ -30,7 +30,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                 if (WebSocketExtensionUtil.IsWebsocketUpgrade(request.Headers))
                 {
                     if (request.Headers.TryGet(HttpHeaderNames.SecWebsocketExtensions, out ICharSequence value)
-                        && value != null)
+                        && value is object)
                     {
                         string extensionsHeader = value.ToString();
                         List<WebSocketExtensionData> extensions =
@@ -43,13 +43,13 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                             foreach (IWebSocketServerExtensionHandshaker extensionHandshaker in this.extensionHandshakers)
                             {
                                 validExtension = extensionHandshaker.HandshakeExtension(extensionData);
-                                if (validExtension != null)
+                                if (validExtension is object)
                                 {
                                     break;
                                 }
                             }
 
-                            if (validExtension != null && 0u >= (uint)(validExtension.Rsv & rsv))
+                            if (validExtension is object && 0u >= (uint)(validExtension.Rsv & rsv))
                             {
                                 if (this.validExtensions == null)
                                 {
@@ -77,7 +77,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
             if (msg is IHttpResponse response && WebSocketExtensionUtil.IsWebsocketUpgrade(response.Headers)                 )
             {
-                if (this.validExtensions != null)
+                if (this.validExtensions is object)
                 {
                     string headerValue = null;
                     if (response.Headers.TryGet(HttpHeaderNames.SecWebsocketExtensions, out ICharSequence value))
@@ -92,7 +92,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                             extensionData.Name, extensionData.Parameters);
                     }
 
-                    if (headerValue != null)
+                    if (headerValue is object)
                     {
                         response.Headers.Set(HttpHeaderNames.SecWebsocketExtensions, headerValue);
                     }
@@ -102,7 +102,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                 continuationAction = t =>
                 {
                     var pipeline = ctx.Pipeline;
-                    if (t.IsSuccess() && this.validExtensions != null)
+                    if (t.IsSuccess() && this.validExtensions is object)
                     {
                         foreach (IWebSocketServerExtension extension in this.validExtensions)
                         {
@@ -120,7 +120,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
             }
 
-            if(continuationAction != null)
+            if(continuationAction is object)
             {
                 promise = promise.Unvoid();
                 promise.Task
@@ -140,7 +140,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
             var ctx = wrapped.Item1;
             var validExtensions = wrapped.Item2;
             var pipeline = ctx.Pipeline;
-            if (promise.IsSuccess() && validExtensions != null)
+            if (promise.IsSuccess() && validExtensions is object)
             {
                 foreach (IWebSocketServerExtension extension in validExtensions)
                 {

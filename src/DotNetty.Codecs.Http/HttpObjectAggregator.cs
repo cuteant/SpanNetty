@@ -93,7 +93,7 @@ namespace DotNetty.Codecs.Http
             object response = ContinueResponse(start, maxContentLength, pipeline);
             // we're going to respond based on the request expectation so there's no
             // need to propagate the expectation further.
-            if (response != null)
+            if (response is object)
             {
                 start.Headers.Remove(HttpHeaderNames.Expect);
             }

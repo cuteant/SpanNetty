@@ -603,7 +603,7 @@ namespace DotNetty.Codecs.Http2
             {
                 Http2CodecUtil.HeaderListSizeExceeded(this.streamId, this.maxHeaderListSize, true);
             }
-            else if (validationException != null)
+            else if (validationException is object)
             {
                 ThrowValidationException();
             }
@@ -620,7 +620,7 @@ namespace DotNetty.Codecs.Http2
             this.headersLength += HpackHeaderField.SizeOf(name, value);
             this.exceededMaxLength |= this.headersLength > this.maxHeaderListSize;
 
-            if (this.exceededMaxLength || this.validationException != null)
+            if (this.exceededMaxLength || this.validationException is object)
             {
                 // We don't store the header since we've already failed validation requirements.
                 return;

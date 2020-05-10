@@ -253,7 +253,7 @@ namespace DotNetty.Buffers
                         Memory = buffer,
                     };
 
-                    if (segment != null)
+                    if (segment is object)
                     {
                         segment.Next = newSegment;
                         newSegment.RunningIndex = segment.RunningIndex + segment.Memory.Length;

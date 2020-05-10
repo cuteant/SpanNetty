@@ -37,7 +37,7 @@ namespace DotNetty.Codecs.Http
         public bool Equals(HttpMethod other)
         {
             if (ReferenceEquals(this, other)) { return true; }
-            return other != null && this.name.Equals(other.name);
+            return other is object && this.name.Equals(other.name);
         }
     }
 }

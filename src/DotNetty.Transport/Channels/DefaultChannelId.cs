@@ -43,7 +43,7 @@ namespace DotNetty.Transport.Channels
         {
             int processId = -1;
             string customProcessId = SystemPropertyUtil.Get("io.netty.processId");
-            if (customProcessId != null)
+            if (customProcessId is object)
             {
                 if (!int.TryParse(customProcessId, out processId))
                 {
@@ -70,7 +70,7 @@ namespace DotNetty.Transport.Channels
             ProcessId = processId;
             byte[] machineId = null;
             string customMachineId = SystemPropertyUtil.Get("io.netty.machineId");
-            if (customMachineId != null)
+            if (customMachineId is object)
             {
                 if (MachineIdPattern.Match(customMachineId).Success)
                 {

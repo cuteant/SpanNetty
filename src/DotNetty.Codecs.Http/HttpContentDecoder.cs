@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http
 
                 if (this.decoder == null)
                 {
-                    if (httpContent != null)
+                    if (httpContent is object)
                     {
                         httpContent.Retain();
                     }
@@ -94,7 +94,7 @@ namespace DotNetty.Codecs.Http
                     headers.Set(HttpHeaderNames.ContentEncoding, targetContentEncoding);
                 }
 
-                if (httpContent != null)
+                if (httpContent is object)
                 {
                     // If message is a full request or response object (headers + data), don't copy data part into out.
                     // Output headers only; data part will be decoded below.
@@ -125,7 +125,7 @@ namespace DotNetty.Codecs.Http
                 }
             }
 
-            if (httpContent != null)
+            if (httpContent is object)
             {
                 if (this.decoder == null)
                 {
@@ -186,7 +186,7 @@ namespace DotNetty.Codecs.Http
 
         void Cleanup()
         {
-            if (this.decoder != null)
+            if (this.decoder is object)
             {
                 this.decoder.FinishAndReleaseAll();
                 this.decoder = null;

@@ -167,7 +167,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
 
             this.ParseBody();
-            if (this.undecodedChunk != null && this.undecodedChunk.WriterIndex > this.discardThreshold)
+            if (this.undecodedChunk is object && this.undecodedChunk.WriterIndex > this.discardThreshold)
             {
                 this.undecodedChunk.DiscardReadBytes();
             }
@@ -329,7 +329,7 @@ namespace DotNetty.Codecs.Http.Multipart
                             break;
                     }
                 }
-                if (this.isLastChunk && this.currentAttribute != null)
+                if (this.isLastChunk && this.currentAttribute is object)
                 {
                     // special case
                     ampersandpos = currentpos;
@@ -344,7 +344,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     firstpos = currentpos;
                     this.currentStatus = MultiPartStatus.Epilogue;
                 }
-                else if (contRead && this.currentAttribute != null && this.currentStatus == MultiPartStatus.Field)
+                else if (contRead && this.currentAttribute is object && this.currentStatus == MultiPartStatus.Field)
                 {
                     // reset index except if to continue in case of FIELD getStatus
                     this.currentAttribute.AddContent(this.undecodedChunk.Copy(firstpos, currentpos - firstpos), false);
@@ -476,7 +476,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     }
                 }
                 loop:
-                if (this.isLastChunk && this.currentAttribute != null)
+                if (this.isLastChunk && this.currentAttribute is object)
                 {
                     // special case
                     ampersandpos = currentpos;
@@ -491,7 +491,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     firstpos = currentpos;
                     this.currentStatus = MultiPartStatus.Epilogue;
                 }
-                else if (contRead && this.currentAttribute != null && this.currentStatus == MultiPartStatus.Field)
+                else if (contRead && this.currentAttribute is object && this.currentStatus == MultiPartStatus.Field)
                 {
                     // reset index except if to continue in case of FIELD getStatus
                     this.currentAttribute.AddContent(this.undecodedChunk.Copy(firstpos, currentpos - firstpos), false);
@@ -547,7 +547,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
             this.destroyed = true;
 
-            if (this.undecodedChunk != null && this.undecodedChunk.ReferenceCount > 0)
+            if (this.undecodedChunk is object && this.undecodedChunk.ReferenceCount > 0)
             {
                 this.undecodedChunk.Release();
                 this.undecodedChunk = null;

@@ -31,7 +31,7 @@ namespace DotNetty.Handlers.Tls
 
             public void ExpandSource(int count)
             {
-                Debug.Assert(_input != null);
+                Debug.Assert(_input is object);
 
                 _inputLength += count;
 
@@ -75,7 +75,7 @@ namespace DotNetty.Handlers.Tls
 
             private int ReadFromInput(byte[] destination, int destinationOffset, int destinationCapacity)
             {
-                Debug.Assert(destination != null);
+                Debug.Assert(destination is object);
 
                 byte[] source = _input;
                 int readableBytes = this.SourceReadableBytes;

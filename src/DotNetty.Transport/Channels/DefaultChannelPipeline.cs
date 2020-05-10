@@ -80,7 +80,7 @@ namespace DotNetty.Transport.Channels
                 {
                     handle = this.channel.Configuration.MessageSizeEstimator.NewHandle();
                     var current = Interlocked.CompareExchange(ref this.estimatorHandle, handle, null);
-                    if (current != null) { return current; }
+                    if (current is object) { return current; }
                 }
                 return handle;
             }
@@ -93,7 +93,7 @@ namespace DotNetty.Transport.Channels
         IEnumerator<IChannelHandler> IEnumerable<IChannelHandler>.GetEnumerator()
         {
             AbstractChannelHandlerContext current = this.head;
-            while (current != null)
+            while (current is object)
             {
                 yield return current.Handler;
                 current = current.Next;
@@ -111,7 +111,7 @@ namespace DotNetty.Transport.Channels
                 return null;
             }
             //var pinEventExecutor = channel.Configuration.GetOption(ChannelOption.SINGLE_EVENTEXECUTOR_PER_GROUP);
-            //if (pinEventExecutor != null && !pinEventExecutor)
+            //if (pinEventExecutor is object && !pinEventExecutor)
             //{
             //    return group.next();
             //}
@@ -357,7 +357,7 @@ namespace DotNetty.Transport.Channels
 
             // It's not very likely for a user to put more than one handler of the same type, but make sure to avoid
             // any name conflicts.  Note that we don't cache the names generated here.
-            if (this.Context0(name) != null)
+            if (this.Context0(name) is object)
             {
                 string baseName = name.Substring(0, name.Length - 1); // Strip the trailing '0'.
                 for (int i = 1; ; i++)
@@ -918,7 +918,7 @@ namespace DotNetty.Transport.Channels
 
         void CheckDuplicateName(string name)
         {
-            if (this.Context0(name) != null)
+            if (this.Context0(name) is object)
             {
                 ThrowHelper.ThrowArgumentException_DuplicateHandler(name);
             }
@@ -995,7 +995,7 @@ namespace DotNetty.Transport.Channels
             // holding the lock and so produce a deadlock if handlerAdded(...) will try to add another handler from outside
             // the EventLoop.
             PendingHandlerCallback task = pendingHandlerCallbackHead;
-            while (task != null)
+            while (task is object)
             {
                 task.Execute();
                 task = task.Next;
@@ -1015,7 +1015,7 @@ namespace DotNetty.Transport.Channels
             else
             {
                 // Find the tail of the linked-list.
-                while (pending.Next != null)
+                while (pending.Next is object)
                 {
                     pending = pending.Next;
                 }
@@ -1104,7 +1104,7 @@ namespace DotNetty.Transport.Channels
         internal protected virtual void IncrementPendingOutboundBytes(long size)
         {
             ChannelOutboundBuffer buffer = this.channel.Unsafe.OutboundBuffer;
-            if (buffer != null)
+            if (buffer is object)
             {
                 buffer.IncrementPendingOutboundBytes(size);
             }
@@ -1113,7 +1113,7 @@ namespace DotNetty.Transport.Channels
         internal protected virtual void DecrementPendingOutboundBytes(long size)
         {
             ChannelOutboundBuffer buffer = this.channel.Unsafe.OutboundBuffer;
-            if (buffer != null)
+            if (buffer is object)
             {
                 buffer.DecrementPendingOutboundBytes(size);
             }

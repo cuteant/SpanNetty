@@ -130,7 +130,7 @@ namespace DotNetty.Buffers
         protected internal sealed override void Deallocate()
         {
             var buffer = Memory;
-            if (_arrayPool != null & buffer != null)
+            if (_arrayPool is object & buffer is object)
             {
                 FreeArray(buffer);
 

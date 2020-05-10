@@ -77,7 +77,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         internal void Send(NativeHandle serverHandle)
         {
-            Debug.Assert(serverHandle != null);
+            Debug.Assert(serverHandle is object);
 
             var ping = new Ping(serverHandle);
             uv_buf_t[] bufs = ping.Bufs;

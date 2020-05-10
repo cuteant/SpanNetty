@@ -67,7 +67,7 @@ namespace DotNetty.Common.Concurrency
                     // This is needed to avoid thread reuse for tasks (see below)
                     this.readyToStart.WaitOne();
                     // This is the first time we're using this thread, therefore the TLS slot must be empty
-                    if (currentThread != null)
+                    if (currentThread is object)
                     {
                         Debug.WriteLine("warning: currentThread already created; OS thread reused");
                         Debug.Assert(false);

@@ -39,7 +39,7 @@ namespace DotNetty.Codecs
         {
             var buf = StringBuilderManager.Allocate().Append(actualType);
 
-            if (expectedTypes != null && expectedTypes.Length > 0)
+            if (expectedTypes is object && expectedTypes.Length > 0)
             {
                 buf.Append(" (expected: ").Append(expectedTypes[0].Name);
                 for (int i = 1; i < expectedTypes.Length; i++)

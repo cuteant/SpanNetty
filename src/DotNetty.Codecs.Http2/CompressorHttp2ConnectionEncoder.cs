@@ -242,7 +242,7 @@ namespace DotNetty.Codecs.Http2
                 encoding = HttpHeaderValues.Identity;
             }
             var compressor = NewContentCompressor(ctx, encoding);
-            if (compressor != null)
+            if (compressor is object)
             {
                 var targetContentEncoding = GetTargetContentEncoding(encoding);
                 if (HttpHeaderValues.Identity.ContentEqualsIgnoreCase(targetContentEncoding))
@@ -271,10 +271,10 @@ namespace DotNetty.Codecs.Http2
         /// <param name="streamId">The stream id for which the headers were written.</param>
         private void BindCompressorToStream(EmbeddedChannel compressor, int streamId)
         {
-            if (compressor != null)
+            if (compressor is object)
             {
                 var stream = this.Connection.Stream(streamId);
-                if (stream != null)
+                if (stream is object)
                 {
                     stream.SetProperty(this.propertyKey, compressor);
                 }
@@ -330,7 +330,7 @@ namespace DotNetty.Codecs.Http2
             public override void OnStreamRemoved(IHttp2Stream stream)
             {
                 var compressor = stream.GetProperty<EmbeddedChannel>(this.encoder.propertyKey);
-                if (compressor != null)
+                if (compressor is object)
                 {
                     this.encoder.Cleanup(stream, compressor);
                 }

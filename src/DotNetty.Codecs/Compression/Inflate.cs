@@ -141,7 +141,7 @@ namespace DotNetty.Codecs.Compression
 
         internal int InflateEnd()
         {
-            if (blocks != null)
+            if (blocks is object)
             {
                 blocks.Free();
             }
@@ -188,7 +188,7 @@ namespace DotNetty.Codecs.Compression
                 InflateEnd();
                 return Z_STREAM_ERROR;
             }
-            if (blocks != null && wbits != w)
+            if (blocks is object && wbits != w)
             {
                 blocks.Free();
                 blocks = null;
@@ -466,7 +466,7 @@ namespace DotNetty.Codecs.Compression
                         break;
                     */
                     }
-                    else if (flags != 0 && gheader != null)
+                    else if (flags != 0 && gheader is object)
                     {
                         gheader.crc = this.need;
                     }
@@ -480,7 +480,7 @@ namespace DotNetty.Codecs.Compression
                         try  { r = ReadBytes(4, r, f); }
                         catch (Return e) { return e.r; }
 
-                        if (z.msg != null && z.msg.Equals("incorrect data check"))
+                        if (z.msg is object && z.msg.Equals("incorrect data check"))
                         {
                             this.mode = BAD;
                             this.marker = 5; // can't try inflateSync
@@ -497,7 +497,7 @@ namespace DotNetty.Codecs.Compression
                     }
                     else
                     {
-                        if (z.msg != null && z.msg.Equals("incorrect data check"))
+                        if (z.msg is object && z.msg.Equals("incorrect data check"))
                         {
                             this.mode = BAD;
                             this.marker = 5; // can't try inflateSync
@@ -552,7 +552,7 @@ namespace DotNetty.Codecs.Compression
                     {
                         return e.r;
                     }
-                    if (gheader != null)
+                    if (gheader is object)
                         gheader.time = this.need;
                     if ((flags & 0x0200) != 0)
                     {
@@ -571,7 +571,7 @@ namespace DotNetty.Codecs.Compression
                     {
                         return e.r;
                     }
-                    if (gheader != null)
+                    if (gheader is object)
                     {
                         gheader.xflags = ((int)this.need) & 0xff;
                         gheader.os = (((int)this.need) >> 8) & 0xff;
@@ -595,7 +595,7 @@ namespace DotNetty.Codecs.Compression
                         {
                             return e.r;
                         }
-                        if (gheader != null)
+                        if (gheader is object)
                         {
                             gheader.extra = new byte[((int)this.need) & 0xffff];
                         }
@@ -604,7 +604,7 @@ namespace DotNetty.Codecs.Compression
                             Checksum(2, this.need);
                         }
                     }
-                    else if (gheader != null)
+                    else if (gheader is object)
                     {
                         gheader.extra = null;
                     }
@@ -618,7 +618,7 @@ namespace DotNetty.Codecs.Compression
                         try
                         {
                             r = ReadBytes(r, f);
-                            if (gheader != null)
+                            if (gheader is object)
                             {
                                 byte[] foo = tmp_string.ToArray();
                                 tmp_string = null;
@@ -639,7 +639,7 @@ namespace DotNetty.Codecs.Compression
                             return e.r;
                         }
                     }
-                    else if (gheader != null)
+                    else if (gheader is object)
                     {
                         gheader.extra = null;
                     }
@@ -652,7 +652,7 @@ namespace DotNetty.Codecs.Compression
                         try
                         {
                             r = ReadString(r, f);
-                            if (gheader != null)
+                            if (gheader is object)
                             {
                                 gheader.name = tmp_string.ToArray();
                             }
@@ -663,7 +663,7 @@ namespace DotNetty.Codecs.Compression
                             return e.r;
                         }
                     }
-                    else if (gheader != null)
+                    else if (gheader is object)
                     {
                         gheader.name = null;
                     }
@@ -677,7 +677,7 @@ namespace DotNetty.Codecs.Compression
                         try
                         {
                             r = ReadString(r, f);
-                            if (gheader != null)
+                            if (gheader is object)
                             {
                                 gheader.comment = tmp_string.ToArray();
                             }
@@ -688,7 +688,7 @@ namespace DotNetty.Codecs.Compression
                             return e.r;
                         }
                     }
-                    else if (gheader != null)
+                    else if (gheader is object)
                     {
                         gheader.comment = null;
                     }
@@ -700,7 +700,7 @@ namespace DotNetty.Codecs.Compression
                     {
                         try { r = ReadBytes(2, r, f); }
                         catch (Return e) { return e.r; }
-                        if (gheader != null)
+                        if (gheader is object)
                         {
                             gheader.hcrc = (int)(this.need & 0xffff);
                         }

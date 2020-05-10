@@ -222,7 +222,7 @@ namespace DotNetty.Codecs.Http2
                     unconsumedBytes = this.decoder.UnconsumedBytes(stream);
 
                     // If the stream is in an invalid state to receive the frame, throw the error.
-                    if (error != null) { throw error; }
+                    if (error is object) { throw error; }
 
                     // Call back the application and retrieve the number of bytes that have been
                     // immediately processed.
@@ -431,7 +431,7 @@ namespace DotNetty.Codecs.Http2
                 // Apply oldest outstanding local settings here. This is a synchronization point between endpoints.
                 Http2Settings settings = this.decoder.encoder.PollSentSettings;
 
-                if (settings != null)
+                if (settings is object)
                 {
                     this.ApplyLocalSettings(settings);
                 }

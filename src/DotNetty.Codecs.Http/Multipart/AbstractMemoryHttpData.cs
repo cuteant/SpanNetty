@@ -85,7 +85,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override void AddContent(IByteBuffer buffer, bool last)
         {
-            if (buffer != null)
+            if (buffer is object)
             {
                 long localsize = buffer.ReadableBytes;
                 CheckSize(this.Size + localsize, this.MaxSize);
@@ -127,7 +127,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override void Delete()
         {
-            if (this.byteBuf != null)
+            if (this.byteBuf is object)
             {
                 this.byteBuf.Release();
                 this.byteBuf = null;

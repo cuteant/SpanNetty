@@ -67,7 +67,7 @@ namespace DotNetty.Buffers
 
             public IByteBuffer Slice()
             {
-                return this.slice != null ? this.slice : (this.slice = this.Buffer.Slice(this.Idx(this.Offset), this.Length()));
+                return this.slice is object ? this.slice : (this.slice = this.Buffer.Slice(this.Idx(this.Offset), this.Length()));
             }
 
             public IByteBuffer Duplicate()
@@ -80,7 +80,7 @@ namespace DotNetty.Buffers
                 // Release the slice if present since it may have a different
                 // refcount to the unwrapped buf if it is a PooledSlicedByteBuf
                 IByteBuffer buffer = this.slice;
-                if (buffer != null)
+                if (buffer is object)
                 {
                     buffer.Release();
                 }
@@ -306,7 +306,7 @@ namespace DotNetty.Buffers
                 this.ShiftComps(cIndex, count); // will increase componentCount
                 ci = cIndex; // only set this after we've shifted so that finally block logic is always correct
                 int nextOffset = cIndex > 0 ? this.components[cIndex - 1].EndOffset : 0;
-                for (IByteBuffer b; arrOffset < len && (b = buffers[arrOffset]) != null; arrOffset++, ci++)
+                for (IByteBuffer b; arrOffset < len && (b = buffers[arrOffset]) is object; arrOffset++, ci++)
                 {
                     ComponentEntry c = this.NewComponent(b, nextOffset);
                     this.components[ci] = c;
@@ -1449,7 +1449,7 @@ namespace DotNetty.Buffers
         ComponentEntry FindComponent(int offset)
         {
             var la = this.lastAccessed;
-            if (la != null && offset >= la.Offset && offset < la.EndOffset)
+            if (la is object && offset >= la.Offset && offset < la.EndOffset)
             {
                 this.EnsureAccessible();
                 return la;
@@ -1461,7 +1461,7 @@ namespace DotNetty.Buffers
         ComponentEntry FindComponent0(int offset)
         {
             var la = lastAccessed;
-            if (la != null && offset >= la.Offset && offset < la.EndOffset)
+            if (la is object && offset >= la.Offset && offset < la.EndOffset)
             {
                 return la;
             }

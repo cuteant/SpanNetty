@@ -93,10 +93,10 @@ namespace DotNetty.Codecs.Http
         [MethodImpl(InlineMethod.Value)]
         public static HttpMethod ValueOf(AsciiString name)
         {
-            if (name != null)
+            if (name is object)
             {
                 HttpMethod result = ValueOfInline(name.Array);
-                if (result != null)
+                if (result is object)
                 {
                     return result;
                 }
@@ -159,7 +159,7 @@ namespace DotNetty.Codecs.Http
                     match = Trace;
                     break;
             }
-            if (match != null)
+            if (match is object)
             {
                 byte[] array = match.name.Array;
                 if ((uint)bytes.Length == (uint)array.Length)

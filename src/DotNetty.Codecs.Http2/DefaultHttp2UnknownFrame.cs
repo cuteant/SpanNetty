@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http2
             return base.Equals(obj)
                 && this.flags.Equals(unknownFrame.flags)
                 && this.frameType == unknownFrame.frameType
-                && (ReferenceEquals(thisStream, otherStream) || (thisStream != null && thisStream.Equals(otherStream)));
+                && (ReferenceEquals(thisStream, otherStream) || (thisStream is object && thisStream.Equals(otherStream)));
         }
 
         public override int GetHashCode()
@@ -73,7 +73,7 @@ namespace DotNetty.Codecs.Http2
             int hash = base.GetHashCode();
             hash = hash * 31 + (byte)this.frameType;
             hash = hash * 31 + this.flags.GetHashCode();
-            if (this.stream != null)
+            if (this.stream is object)
             {
                 hash = hash * 31 + this.stream.GetHashCode();
             }

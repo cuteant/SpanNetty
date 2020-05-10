@@ -91,7 +91,7 @@ namespace DotNetty.Transport.Libuv
             {
                 if (this.TryResetState(StateFlags.Open | StateFlags.Active))
                 {
-                    if (this.tcp != null)
+                    if (this.tcp is object)
                     {
                         this.tcp.ReadStop();
                         this.tcp.CloseHandle();

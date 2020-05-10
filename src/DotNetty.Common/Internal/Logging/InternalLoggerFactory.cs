@@ -60,7 +60,7 @@ namespace DotNetty.Common.Internal.Logging
                 {
                     factory = NewDefaultFactory(typeof(InternalLoggerFactory).FullName);
                     ILoggerFactory current = Interlocked.CompareExchange(ref defaultFactory, factory, null);
-                    if (current != null)
+                    if (current is object)
                     {
                         return current;
                     }

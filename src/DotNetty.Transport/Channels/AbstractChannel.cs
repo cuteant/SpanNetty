@@ -78,7 +78,7 @@ namespace DotNetty.Transport.Channels
             get
             {
                 ChannelOutboundBuffer buf = this.channelUnsafe.OutboundBuffer;
-                return buf != null && buf.IsWritable;
+                return buf is object && buf.IsWritable;
             }
         }
 
@@ -89,7 +89,7 @@ namespace DotNetty.Transport.Channels
                 ChannelOutboundBuffer buf = this.channelUnsafe.OutboundBuffer;
                 // isWritable() is currently assuming if there is no outboundBuffer then the channel is not writable.
                 // We should be consistent with that here.
-                return buf != null ? buf.BytesBeforeUnwritable : 0;
+                return buf is object ? buf.BytesBeforeUnwritable : 0;
             }
         }
 
@@ -100,7 +100,7 @@ namespace DotNetty.Transport.Channels
                 ChannelOutboundBuffer buf = this.channelUnsafe.OutboundBuffer;
                 // isWritable() is currently assuming if there is no outboundBuffer then the channel is not writable.
                 // We should be consistent with that here.
-                return buf != null ? buf.BytesBeforeWritable : long.MaxValue;
+                return buf is object ? buf.BytesBeforeWritable : long.MaxValue;
             }
         }
 
@@ -283,14 +283,14 @@ namespace DotNetty.Transport.Channels
         public override string ToString()
         {
             bool active = this.Active;
-            if (this.strValActive == active && this.strVal != null)
+            if (this.strValActive == active && this.strVal is object)
             {
                 return this.strVal;
             }
 
             EndPoint remoteAddr = this.RemoteAddress;
             EndPoint localAddr = this.LocalAddress;
-            if (remoteAddr != null)
+            if (remoteAddr is object)
             {
                 var buf = StringBuilderCache.Acquire(96)
                     .Append("[id: 0x")
@@ -303,7 +303,7 @@ namespace DotNetty.Transport.Channels
                     .Append(']');
                 this.strVal = StringBuilderCache.GetStringAndRelease(buf);
             }
-            else if (localAddr != null)
+            else if (localAddr is object)
             {
                 var buf = StringBuilderCache.Acquire(64)
                     .Append("[id: 0x")
@@ -556,7 +556,7 @@ namespace DotNetty.Transport.Channels
                 bool wasActive = ch.Active;
                 var outboundBuffer = Interlocked.Exchange(ref this.outboundBuffer, null); // Disallow adding any messages and flushes to outboundBuffer.
                 IEventExecutor closeExecutor = this.PrepareToClose();
-                if (closeExecutor != null)
+                if (closeExecutor is object)
                 {
                     closeExecutor.Execute(() =>
                     {
@@ -570,7 +570,7 @@ namespace DotNetty.Transport.Channels
                             // Call invokeLater so closeAndDeregister is executed input the EventLoop again!
                             this.InvokeLater(() =>
                             {
-                                if (outboundBuffer != null)
+                                if (outboundBuffer is object)
                                 {
                                     // Fail all the queued messages
                                     outboundBuffer.FailFlushed(cause, notify);
@@ -590,7 +590,7 @@ namespace DotNetty.Transport.Channels
                     }
                     finally
                     {
-                        if (outboundBuffer != null)
+                        if (outboundBuffer is object)
                         {
                             // Fail all the queued messages.
                             outboundBuffer.FailFlushed(cause, notify);

@@ -133,7 +133,7 @@ namespace DotNetty.Codecs.Http.Multipart
         public override IByteBufferHolder RetainedDuplicate()
         {
             IByteBuffer content = this.Content;
-            if (content != null)
+            if (content is object)
             {
                 content = content.RetainedDuplicate();
                 bool success = false;
@@ -161,7 +161,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             var attr = new DiskAttribute(this.Name);
             attr.Charset = this.Charset;
-            if (content != null)
+            if (content is object)
             {
                 try
                 {

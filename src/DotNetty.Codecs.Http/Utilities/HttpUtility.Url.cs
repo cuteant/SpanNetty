@@ -99,7 +99,7 @@ namespace DotNetty.Codecs.Http.Utilities
         {
             byte[] encoded = UrlEncodeToBytesImpl(bytes, offset, count);
 
-            return (alwaysCreateNewReturnValue && (encoded != null) && (encoded == bytes))
+            return (alwaysCreateNewReturnValue && (encoded is object) && (encoded == bytes))
                 ? (byte[])encoded.Clone()
                 : encoded;
         }
@@ -219,7 +219,7 @@ namespace DotNetty.Codecs.Http.Utilities
         private static string UrlEncodeNonAscii(string str, Encoding e)
         {
             Debug.Assert(!string.IsNullOrEmpty(str));
-            Debug.Assert(e != null);
+            Debug.Assert(e is object);
             byte[] bytes = e.GetBytes(str);
             byte[] encodedBytes = UrlEncodeNonAscii(bytes, 0, bytes.Length);
             return Encoding.ASCII.GetString(encodedBytes);

@@ -202,7 +202,7 @@ namespace DotNetty.Codecs.Http
             {
                 ICharSequence p = requestedProtocols[i];
                 IUpgradeCodec c = this.upgradeCodecFactory.NewUpgradeCodec(p);
-                if (c != null)
+                if (c is object)
                 {
                     upgradeProtocol = p;
                     upgradeCodec = c;

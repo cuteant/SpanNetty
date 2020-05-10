@@ -87,7 +87,7 @@ namespace DotNetty.Codecs.Http2
 
         void CloseHeadersContinuation()
         {
-            if (this.headersContinuation != null)
+            if (this.headersContinuation is object)
             {
                 this.headersContinuation.Close();
                 this.headersContinuation = null;
@@ -841,7 +841,7 @@ namespace DotNetty.Codecs.Http2
             /// </summary>
             internal void Close()
             {
-                if (this.headerBlock != null)
+                if (this.headerBlock is object)
                 {
                     this.headerBlock.Release();
                     this.headerBlock = null;
@@ -859,7 +859,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(InlineMethod.Value)]
         void VerifyNotProcessingHeaders()
         {
-            if (this.headersContinuation != null)
+            if (this.headersContinuation is object)
             {
                 ThrowHelper.ThrowConnectionError_ReceivedFrameTypeWhileProcessingHeadersOnStream(
                     this.frameType, this.headersContinuation.GetStreamId());

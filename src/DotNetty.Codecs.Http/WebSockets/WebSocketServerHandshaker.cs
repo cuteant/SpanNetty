@@ -38,7 +38,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             this.version = version;
             this.uri = uri;
-            if (subprotocols != null)
+            if (subprotocols is object)
             {
                 string[] subprotocolArray = subprotocols.Split(',');
                 for (int i = 0; i < subprotocolArray.Length; i++)
@@ -85,11 +85,11 @@ namespace DotNetty.Codecs.Http.WebSockets
             IFullHttpResponse response = this.NewHandshakeResponse(req, responseHeaders);
             IChannelPipeline p = channel.Pipeline;
 
-            if (p.Get<HttpObjectAggregator>() != null) { p.Remove<HttpObjectAggregator>(); }
-            if (p.Get<HttpContentCompressor>() != null) { p.Remove<HttpContentCompressor>(); }
-            if (p.Get<CorsHandler>() != null) { p.Remove<CorsHandler>(); }
-            if (p.Get<HttpServerExpectContinueHandler>() != null) { p.Remove<HttpServerExpectContinueHandler>(); }
-            if (p.Get<HttpServerKeepAliveHandler>() != null) { p.Remove<HttpServerKeepAliveHandler>(); }
+            if (p.Get<HttpObjectAggregator>() is object) { p.Remove<HttpObjectAggregator>(); }
+            if (p.Get<HttpContentCompressor>() is object) { p.Remove<HttpContentCompressor>(); }
+            if (p.Get<CorsHandler>() is object) { p.Remove<CorsHandler>(); }
+            if (p.Get<HttpServerExpectContinueHandler>() is object) { p.Remove<HttpServerExpectContinueHandler>(); }
+            if (p.Get<HttpServerKeepAliveHandler>() is object) { p.Remove<HttpServerKeepAliveHandler>(); }
 
             IChannelHandlerContext ctx = p.Context<HttpRequestDecoder>();
             string encoderName;

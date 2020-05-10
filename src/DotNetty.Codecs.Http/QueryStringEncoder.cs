@@ -43,7 +43,7 @@
 //            }
 
 //            AppendComponent(name, this.encoding, this.uriBuilder);
-//            if (value != null)
+//            if (value is object)
 //            {
 //                this.uriBuilder.Append('=');
 //                AppendComponent(value, this.encoding, this.uriBuilder);

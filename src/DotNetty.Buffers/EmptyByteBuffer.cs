@@ -335,7 +335,7 @@ namespace DotNetty.Buffers
 
         public override int GetHashCode() => EmptyByteBufferHashCode;
 
-        public bool Equals(IByteBuffer buffer) => buffer != null && !buffer.IsReadable();
+        public bool Equals(IByteBuffer buffer) => buffer is object && !buffer.IsReadable();
 
         public override bool Equals(object obj)
         {

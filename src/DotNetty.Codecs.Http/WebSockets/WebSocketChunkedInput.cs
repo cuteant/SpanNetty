@@ -31,7 +31,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public WebSocketFrame ReadChunk(IByteBufferAllocator allocator)
         {
             IByteBuffer buf = this.input.ReadChunk(allocator);
-            return buf != null ? new ContinuationWebSocketFrame(this.input.IsEndOfInput, this.rsv, buf) : null;
+            return buf is object ? new ContinuationWebSocketFrame(this.input.IsEndOfInput, this.rsv, buf) : null;
         }
 
         public long Length => this.input.Length;

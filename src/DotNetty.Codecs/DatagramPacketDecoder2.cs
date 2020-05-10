@@ -23,7 +23,7 @@ namespace DotNetty.Codecs
         public override bool TryAcceptInboundMessage(object msg, out DatagramPacket envelope)
         {
             envelope = msg as DatagramPacket;
-            return envelope != null
+            return envelope is object
                 && this.decoder.TryAcceptInboundMessage(envelope.Content, out _);
         }
 

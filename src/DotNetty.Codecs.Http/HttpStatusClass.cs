@@ -48,7 +48,7 @@ namespace DotNetty.Codecs.Http
 
         public static HttpStatusClass ValueOf(ICharSequence code)
         {
-            if (code != null && code.Count == 3)
+            if (code is object && code.Count == 3)
             {
                 char c0 = code[0];
                 return IsDigit(c0) && IsDigit(code[1]) && IsDigit(code[2]) 

@@ -68,12 +68,12 @@ namespace DotNetty.Codecs.Http.Cookies
                 buf.Append(HttpConstants.HorizontalSpaceChar);
             }
 
-            if (cookie.Path != null)
+            if (cookie.Path is object)
             {
                 Add(buf, (string)CookieHeaderNames.Path, cookie.Path);
             }
 
-            if (cookie.Domain != null)
+            if (cookie.Domain is object)
             {
                 Add(buf, (string)CookieHeaderNames.Domain, cookie.Domain);
             }
@@ -128,7 +128,7 @@ namespace DotNetty.Codecs.Http.Cookies
             {
                 ICookie c = cookies[i];
                 encoded.Add(this.Encode(c));
-                if (nameToIndex != null)
+                if (nameToIndex is object)
                 {
                     if (nameToIndex.ContainsKey(c.Name))
                     {

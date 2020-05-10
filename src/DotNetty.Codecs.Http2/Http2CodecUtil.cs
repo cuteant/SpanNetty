@@ -198,7 +198,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public static Http2Exception GetEmbeddedHttp2Exception(Exception cause)
         {
-            while (cause != null)
+            while (cause is object)
             {
                 if (cause is Http2Exception http2Exception)
                 {

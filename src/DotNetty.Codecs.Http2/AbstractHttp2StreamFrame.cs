@@ -35,7 +35,7 @@ namespace DotNetty.Codecs.Http2
         {
             var thisStream = this.stream;
             var otherStream = other.Stream;
-            return ReferenceEquals(thisStream, otherStream) || (thisStream != null && thisStream.Equals(otherStream));
+            return ReferenceEquals(thisStream, otherStream) || (thisStream is object && thisStream.Equals(otherStream));
         }
 
         public override int GetHashCode()

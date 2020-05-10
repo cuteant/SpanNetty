@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http
         {
             var res = msg as IHttpResponse;
             var lastContent = msg as ILastHttpContent;
-            bool isFull = res != null && lastContent != null;
+            bool isFull = res is object && lastContent is object;
             switch (this.state)
             {
                 case State.AwaitHeaders:
@@ -198,7 +198,7 @@ namespace DotNetty.Codecs.Http
                     EnsureContent(msg);
                     output.Add(ReferenceCountUtil.Retain(msg));
                     // Passed through all following contents of the current response.
-                    if (lastContent != null)
+                    if (lastContent is object)
                     {
                         this.state = State.AwaitHeaders;
                     }
@@ -310,7 +310,7 @@ namespace DotNetty.Codecs.Http
 
         void Cleanup()
         {
-            if (this.encoder != null)
+            if (this.encoder is object)
             {
                 // Clean-up the previous encoder if not cleaned up correctly.
                 this.encoder.FinishAndReleaseAll();

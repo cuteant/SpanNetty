@@ -430,7 +430,7 @@ namespace DotNetty.Codecs.Http
         public static HttpResponseStatus ValueOf(int code, AsciiString reasonPhrase)
         {
             HttpResponseStatus responseStatus = ValueOf0(code);
-            return responseStatus != null && responseStatus.ReasonPhrase.ContentEquals(reasonPhrase) 
+            return responseStatus is object && responseStatus.ReasonPhrase.ContentEquals(reasonPhrase) 
                 ? responseStatus 
                 : new HttpResponseStatus(code, reasonPhrase);
         }
@@ -536,7 +536,7 @@ namespace DotNetty.Codecs.Http
         public bool Equals(HttpResponseStatus other)
         {
             if(ReferenceEquals(this, other)) { return true; }
-            return other != null && this.code == other.code;
+            return other is object && this.code == other.code;
         }
 
         public int CompareTo(HttpResponseStatus other) => this.code - other.code;

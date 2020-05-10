@@ -134,7 +134,7 @@ namespace DotNetty.Codecs.Http2
 
             // Unlink the linked list to guard against GC nepotism.
             DefaultHttp2StreamChannel ch = this.head;
-            while (ch != null)
+            while (ch is object)
             {
                 DefaultHttp2StreamChannel curr = ch;
                 ch = curr.next;
@@ -212,7 +212,7 @@ namespace DotNetty.Codecs.Http2
             var streamState = stream.State;
             if (Http2StreamState.HalfClosedRemote == streamState || Http2StreamState.Open == streamState)
             {
-                if (s.channel != null)
+                if (s.channel is object)
                 {
                     // ignore if child channel was already created.
                     return;
@@ -236,7 +236,7 @@ namespace DotNetty.Codecs.Http2
             else if (Http2StreamState.Closed == streamState)
             {
                 DefaultHttp2StreamChannel channel = s.channel;
-                if (channel != null)
+                if (channel is object)
                 {
                     channel.StreamClosed();
                 }
@@ -275,7 +275,7 @@ namespace DotNetty.Codecs.Http2
 
         private bool IsChildChannelInReadPendingQueue(DefaultHttp2StreamChannel childChannel)
         {
-            return childChannel.previous != null || childChannel.next != null || head == childChannel;
+            return childChannel.previous is object || childChannel.next is object || head == childChannel;
         }
 
 
@@ -313,7 +313,7 @@ namespace DotNetty.Codecs.Http2
         private void RemoveChildChannelFromReadPendingQueue(DefaultHttp2StreamChannel childChannel)
         {
             DefaultHttp2StreamChannel previous = childChannel.previous;
-            if (childChannel.next != null)
+            if (childChannel.next is object)
             {
                 childChannel.next.previous = previous;
             }
@@ -321,7 +321,7 @@ namespace DotNetty.Codecs.Http2
             {
                 tail = tail.previous; // If there is no next, this childChannel is the tail, so move the tail back.
             }
-            if (previous != null)
+            if (previous is object)
             {
                 previous.next = childChannel.next;
             }
@@ -387,7 +387,7 @@ namespace DotNetty.Codecs.Http2
             // channelReadComplete(...) callbacks and only do it once as otherwise we will end-up with multiple
             // write calls on the socket which is expensive.
             DefaultHttp2StreamChannel current = head;
-            while (current != null)
+            while (current is object)
             {
                 DefaultHttp2StreamChannel childChannel = current;
                 // Clear early in case fireChildReadComplete() causes it to need to be re-processed
@@ -882,7 +882,7 @@ namespace DotNetty.Codecs.Http2
                     }
 
                     var inboundBuffer = ch.inboundBuffer;
-                    if (inboundBuffer != null)
+                    if (inboundBuffer is object)
                     {
                         while (inboundBuffer.TryRemoveFromFront(out var msg))
                         {
@@ -1240,7 +1240,7 @@ namespace DotNetty.Codecs.Http2
                 private IHttp2StreamFrame ValidateStreamFrame(IHttp2StreamFrame frame)
                 {
                     var frameStream = frame.Stream;
-                    if (frameStream != null && frameStream != this.channel.stream)
+                    if (frameStream is object && frameStream != this.channel.stream)
                     {
                         ReferenceCountUtil.Release(frame);
                         ThrowHelper.ThrowArgumentException_StreamMustNotBeSetOnTheFrame(frame);

@@ -249,7 +249,7 @@ namespace DotNetty.Handlers.Tls
                     }
                 }
 
-                if (this.serverTlsSniSettings.DefaultServerHostName != null)
+                if (this.serverTlsSniSettings.DefaultServerHostName is object)
                 {
                     // Just select the default server TLS setting
                     this.Select(context, this.serverTlsSniSettings.DefaultServerHostName); 

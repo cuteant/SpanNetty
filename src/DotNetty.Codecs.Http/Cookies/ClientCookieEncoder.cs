@@ -42,7 +42,7 @@ namespace DotNetty.Codecs.Http.Cookies
         {
             public int Compare(ICookie c1, ICookie c2)
             {
-                Debug.Assert(c1 != null && c2 != null);
+                Debug.Assert(c1 is object && c2 is object);
 
                 string path1 = c1.Path;
                 string path2 = c2.Path;

@@ -69,7 +69,7 @@ namespace DotNetty.Codecs.Http.Multipart
                         this.definedSize);
                     diskFileUpload.MaxSize = this.maxSize;
                     IByteBuffer data = this.fileUpload.GetByteBuffer();
-                    if (data != null && data.IsReadable())
+                    if (data is object && data.IsReadable())
                     {
                         diskFileUpload.AddContent((IByteBuffer)data.Retain(), false);
                     }

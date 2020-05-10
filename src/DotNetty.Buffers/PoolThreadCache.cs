@@ -56,7 +56,7 @@ namespace DotNetty.Buffers
             this.freeSweepAllocationThreshold = freeSweepAllocationThreshold;
             this.HeapArena = heapArena;
             this.DirectArena = directArena;
-            if (directArena != null)
+            if (directArena is object)
             {
                 this.tinySubPageDirectCaches = CreateSubPageCaches(
                     tinyCacheSize, PoolArena<T>.NumTinySubpagePools, SizeClass.Tiny);
@@ -77,7 +77,7 @@ namespace DotNetty.Buffers
                 this.normalDirectCaches = null;
                 this.numShiftsNormalDirect = -1;
             }
-            if (heapArena != null)
+            if (heapArena is object)
             {
                 // Create the caches for the heap allocations
                 this.tinySubPageHeapCaches = CreateSubPageCaches(
@@ -101,8 +101,8 @@ namespace DotNetty.Buffers
             }
 
             // We only need to watch the thread when any cache is used.
-            if (this.tinySubPageDirectCaches != null || this.smallSubPageDirectCaches != null || this.normalDirectCaches != null
-                || this.tinySubPageHeapCaches != null || this.smallSubPageHeapCaches != null || this.normalHeapCaches != null)
+            if (this.tinySubPageDirectCaches is object || this.smallSubPageDirectCaches is object || this.normalDirectCaches is object
+                || this.tinySubPageHeapCaches is object || this.smallSubPageHeapCaches is object || this.normalHeapCaches is object)
             {
                 this.freeTask = this.Free0;
                 this.deathWatchThread = Thread.CurrentThread;
@@ -238,9 +238,9 @@ namespace DotNetty.Buffers
          */
         internal void Free()
         {
-            if (this.freeTask != null)
+            if (this.freeTask is object)
             {
-                Debug.Assert(this.deathWatchThread != null);
+                Debug.Assert(this.deathWatchThread is object);
                 ThreadDeathWatcher.Unwatch(this.deathWatchThread, this.freeTask);
             }
 

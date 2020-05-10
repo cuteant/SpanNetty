@@ -219,7 +219,7 @@ namespace DotNetty.Codecs.Compression
                     xbits = extra[n - _base];
                 f = tree[n * 2];
                 s.opt_len += f * (bits + xbits);
-                if (stree != null)
+                if (stree is object)
                     s.static_len += f * (stree[n * 2 + 1] + xbits);
             }
             if (overflow == 0)
@@ -303,7 +303,7 @@ namespace DotNetty.Codecs.Compression
                 tree[node * 2] = 1;
                 s.depth[node] = 0;
                 s.opt_len--;
-                if (stree != null)
+                if (stree is object)
                     s.static_len -= stree[node * 2 + 1];
                 // node is 0 or 1 so it does not have extra bits
             }

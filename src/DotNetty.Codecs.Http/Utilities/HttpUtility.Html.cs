@@ -188,7 +188,7 @@ namespace DotNetty.Codecs.Http.Utilities
 
         private static void HtmlDecodeImpl(string value, StringBuilder output)
         {
-            Debug.Assert(output != null);
+            Debug.Assert(output is object);
 
             int l = value.Length;
             for (int i = 0; i < l; i++)

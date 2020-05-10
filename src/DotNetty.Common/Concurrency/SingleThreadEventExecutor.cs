@@ -474,7 +474,7 @@ namespace DotNetty.Common.Concurrency
         {
             PreciseTimeSpan nanoTime = PreciseTimeSpan.FromStart;
             IScheduledRunnable scheduledTask = this.PollScheduledTask(nanoTime);
-            while (scheduledTask != null)
+            while (scheduledTask is object)
             {
                 if (!this.taskQueue.TryEnqueue(scheduledTask))
                 {

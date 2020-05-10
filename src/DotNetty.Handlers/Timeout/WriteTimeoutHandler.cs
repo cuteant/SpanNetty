@@ -97,7 +97,7 @@ namespace DotNetty.Handlers.Timeout
         public override void HandlerRemoved(IChannelHandlerContext context)
         {
             LinkedListNode<WriteTimeoutTask> task = this.tasks.Last;
-            while (task != null)
+            while (task is object)
             {
                 task.Value.ScheduledTask.Cancel();
                 this.tasks.RemoveLast();

@@ -49,7 +49,7 @@ namespace DotNetty.Common.Internal
         {
             LinkedQueueNode<T> currConsumerNode = this.LpConsumerNode(); // don't load twice, it's alright
             LinkedQueueNode<T> nextNode = currConsumerNode.LvNext();
-            return nextNode != null
+            return nextNode is object
                 ? this.GetSingleConsumerNodeValue(currConsumerNode, nextNode)
                 : null;
         }
@@ -88,7 +88,7 @@ namespace DotNetty.Common.Internal
                 int size = 0;
                 // must chase the nodes all the way to the producer node, but there's no need to count beyond expected head.
                 while (chaserNode != producerNode && // don't go passed producer node
-                    chaserNode != null && // stop at last node
+                    chaserNode is object && // stop at last node
                     size < int.MaxValue) // stop at max int
                 {
                     LinkedQueueNode<T> next = chaserNode.LvNext();

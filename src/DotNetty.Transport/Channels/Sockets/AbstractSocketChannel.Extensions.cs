@@ -38,7 +38,7 @@ namespace DotNetty.Transport.Channels.Sockets
             // todo: call Socket.CancelConnectAsync(...)
             var promise = self.connectPromise;
             var cause = new ConnectTimeoutException("connection timed out: " + a.ToString());
-            if (promise != null && promise.TrySetException(cause))
+            if (promise is object && promise.TrySetException(cause))
             {
                 self.CloseSafe();
             }

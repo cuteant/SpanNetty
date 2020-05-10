@@ -215,7 +215,7 @@ namespace DotNetty.Codecs.Http2
 
             // if activeCountForTree == 0 then it will not be in its parent's pseudoTimeQueue and thus should not be counted
             // toward parent.totalQueuedWeights.
-            if (state.activeCountForTree != 0 && state.parent != null)
+            if (state.activeCountForTree != 0 && state.parent is object)
             {
                 state.parent.totalQueuedWeights += weight - state.weight;
             }
@@ -371,7 +371,7 @@ namespace DotNetty.Codecs.Http2
         {
             IHttp2Stream stream = this.connection.Stream(streamId);
 
-            return stream != null ? this.GetState(stream) : (this.stateOnlyMap.TryGetValue(streamId, out State state) ? state : null);
+            return stream is object ? this.GetState(stream) : (this.stateOnlyMap.TryGetValue(streamId, out State state) ? state : null);
         }
 
         /// <summary>
@@ -412,7 +412,7 @@ namespace DotNetty.Codecs.Http2
                 var evtState = evt.state;
                 this.stateOnlyRemovalQueue.PriorityChanged(evtState);
                 var evtStateParent = evtState.parent;
-                if (evtStateParent != null && evtState.activeCountForTree != 0)
+                if (evtStateParent is object && evtState.activeCountForTree != 0)
                 {
                     evtStateParent.OfferAndInitializePseudoTime(evtState);
                     evtStateParent.ActiveCountChangeForTree(evtState.activeCountForTree);
@@ -546,7 +546,7 @@ namespace DotNetty.Codecs.Http2
             internal bool IsDescendantOf(State state)
             {
                 State next = this.parent;
-                while (next != null)
+                while (next is object)
                 {
                     if (next == state) { return true; }
 
@@ -581,11 +581,11 @@ namespace DotNetty.Codecs.Http2
                     // If the childItr is not null we are iterating over the oldParent.children collection and should
                     // use the iterator to remove from the collection to avoid concurrent modification. Otherwise it is
                     // assumed we are not iterating over this collection and it is safe to call remove directly.
-                    if (childItr != null)
+                    if (childItr is object)
                     {
                         //childItr.Remove();
                     }
-                    else if (oldParent != null)
+                    else if (oldParent is object)
                     {
                         oldParent.children.Remove(child.streamId);
                     }
@@ -670,7 +670,7 @@ namespace DotNetty.Codecs.Http2
             void SetParent(State newParent)
             {
                 // if activeCountForTree == 0 then it will not be in its parent's pseudoTimeQueue.
-                if (this.activeCountForTree != 0 && this.parent != null)
+                if (this.activeCountForTree != 0 && this.parent is object)
                 {
                     this.parent.RemovePseudoTimeQueue(this);
                     this.parent.ActiveCountChangeForTree(-1 * this.activeCountForTree);
@@ -697,7 +697,7 @@ namespace DotNetty.Codecs.Http2
 
             internal void Write(int numBytes, IStreamByteDistributorWriter writer)
             {
-                Debug.Assert(this.stream != null);
+                Debug.Assert(this.stream is object);
                 try
                 {
                     writer.Write(this.stream, numBytes);
@@ -712,7 +712,7 @@ namespace DotNetty.Codecs.Http2
             {
                 Debug.Assert(this.activeCountForTree + increment >= 0);
                 this.activeCountForTree += increment;
-                if (this.parent != null)
+                if (this.parent is object)
                 {
                     Debug.Assert(
                         this.activeCountForTree != increment || this.pseudoTimeQueueIndex == IndexNotInQueue || this.parent.pseudoTimeQueue.Contains(this),

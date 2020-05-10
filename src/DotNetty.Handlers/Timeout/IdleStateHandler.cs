@@ -380,19 +380,19 @@ namespace DotNetty.Handlers.Timeout
         {
             this.state = 2;
 
-            if (this.readerIdleTimeout != null)
+            if (this.readerIdleTimeout is object)
             {
                 this.readerIdleTimeout.Cancel();
                 this.readerIdleTimeout = null;
             }
 
-            if (this.writerIdleTimeout != null)
+            if (this.writerIdleTimeout is object)
             {
                 this.writerIdleTimeout.Cancel();
                 this.writerIdleTimeout = null;
             }
 
-            if (this.allIdleTimeout != null)
+            if (this.allIdleTimeout is object)
             {
                 this.allIdleTimeout.Cancel();
                 this.allIdleTimeout = null;
@@ -441,7 +441,7 @@ namespace DotNetty.Handlers.Timeout
             {
                 ChannelOutboundBuffer buf = ctx.Channel.Unsafe.OutboundBuffer;
 
-                if (buf != null)
+                if (buf is object)
                 {
                     lastMessageHashCode = RuntimeHelpers.GetHashCode(buf.Current);
                     lastPendingWriteBytes = buf.TotalPendingWriteBytes();
@@ -482,7 +482,7 @@ namespace DotNetty.Handlers.Timeout
 
                 ChannelOutboundBuffer buf = ctx.Channel.Unsafe.OutboundBuffer;
 
-                if (buf != null)
+                if (buf is object)
                 {
                     int messageHashCode = RuntimeHelpers.GetHashCode(buf.Current);
                     long pendingWriteBytes = buf.TotalPendingWriteBytes();

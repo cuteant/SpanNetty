@@ -10,7 +10,7 @@ namespace DotNetty.Common.Concurrency
     {
         public static void TrySetCanceled(this IPromise promise, IInternalLogger logger)
         {
-            if (!promise.TrySetCanceled() && logger != null && logger.WarnEnabled)
+            if (!promise.TrySetCanceled() && logger is object && logger.WarnEnabled)
             {
                 var err = promise.Task.Exception;
                 if (null == err)
@@ -26,7 +26,7 @@ namespace DotNetty.Common.Concurrency
 
         public static void TryComplete(this IPromise promise, IInternalLogger logger)
         {
-            if (!promise.TryComplete() && logger != null && logger.WarnEnabled)
+            if (!promise.TryComplete() && logger is object && logger.WarnEnabled)
             {
                 var err = promise.Task.Exception;
                 if (null == err)
@@ -42,7 +42,7 @@ namespace DotNetty.Common.Concurrency
 
         public static void TrySetException(this IPromise promise, Exception cause, IInternalLogger logger)
         {
-            if (!promise.TrySetException(cause) && logger != null && logger.WarnEnabled)
+            if (!promise.TrySetException(cause) && logger is object && logger.WarnEnabled)
             {
                 var err = promise.Task.Exception;
                 if (null == err)

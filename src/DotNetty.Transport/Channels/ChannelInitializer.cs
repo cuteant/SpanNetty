@@ -112,7 +112,7 @@ namespace DotNetty.Transport.Channels
                 finally
                 {
                     var pipeline = ctx.Pipeline;
-                    if (pipeline.Context(this) != null)
+                    if (pipeline.Context(this) is object)
                     {
                         pipeline.Remove(this);
                     }

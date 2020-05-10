@@ -19,7 +19,7 @@ namespace DotNetty.Buffers
         readonly IByteBuffer buffer;
 
         public ReadOnlyByteBuffer(IByteBuffer buffer)
-            : base(buffer != null ? buffer.MaxCapacity : AbstractByteBufferAllocator.DefaultMaxCapacity)
+            : base(buffer is object ? buffer.MaxCapacity : AbstractByteBufferAllocator.DefaultMaxCapacity)
         {
             if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 

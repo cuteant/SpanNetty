@@ -137,7 +137,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
                 case Opcode.Close:
                     WebSocketServerHandshaker handshaker = GetHandshaker(ctx.Channel);
-                    if (handshaker != null)
+                    if (handshaker is object)
                     {
                         frame.Retain();
                         handshaker.CloseAsync(ctx.Channel, (CloseWebSocketFrame)frame);

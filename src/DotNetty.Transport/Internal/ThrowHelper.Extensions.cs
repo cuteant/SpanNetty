@@ -829,7 +829,7 @@ namespace DotNetty.Transport
         internal static ChannelOutputShutdownException GetChannelOutputShutdownException(Exception cause = null)
         {
             const string errMsg = "Channel output shutdown";
-            return cause != null ? new ChannelOutputShutdownException(errMsg, cause) : new ChannelOutputShutdownException(errMsg);
+            return cause is object ? new ChannelOutputShutdownException(errMsg, cause) : new ChannelOutputShutdownException(errMsg);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

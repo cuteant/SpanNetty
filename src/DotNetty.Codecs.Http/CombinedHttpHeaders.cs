@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http
                 ICharSequence value = null;
                 foreach (ICharSequence v in itr)
                 {
-                    if (value != null)
+                    if (value is object)
                     {
                         ThrowHelper.ThrowInvalidOperationException_OnlyHaveOneValue();
                     }

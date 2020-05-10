@@ -55,7 +55,7 @@ namespace DotNetty.Transport.Bootstrapping
             if (null == childGroup) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childGroup); }
 
             base.Group(parentGroup);
-            if (InternalChildGroup != null)
+            if (InternalChildGroup is object)
             {
                 ThrowHelper.ThrowInvalidOperationException_ChildGroupSetAlready();
             }
@@ -133,7 +133,7 @@ namespace DotNetty.Transport.Bootstrapping
 
             IChannelPipeline p = channel.Pipeline;
             IChannelHandler channelHandler = this.Handler();
-            if (channelHandler != null)
+            if (channelHandler is object)
             {
                 p.AddLast((string)null, channelHandler);
             }
@@ -251,7 +251,7 @@ namespace DotNetty.Transport.Bootstrapping
             buf.Length = buf.Length - 1;
             buf.Append(", ");
             var childGroup = InternalChildGroup;
-            if (childGroup != null)
+            if (childGroup is object)
             {
                 buf.Append("childGroup: ")
                     .Append(childGroup.GetType().Name)
@@ -271,7 +271,7 @@ namespace DotNetty.Transport.Bootstrapping
             //    }
             //}
             var childHandler = InternalChildHandler;
-            if (childHandler != null)
+            if (childHandler is object)
             {
                 buf.Append("childHandler: ");
                 buf.Append(childHandler);

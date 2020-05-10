@@ -13,7 +13,7 @@ namespace DotNetty.Common.Concurrency
         public static bool TryGetCurrentExecutor(out IEventExecutor executor)
         {
             executor = currentExecutor;
-            return executor != null;
+            return executor is object;
         }
 
         internal static void SetCurrentExecutor(IEventExecutor executor) => currentExecutor = executor;

@@ -166,7 +166,7 @@ namespace DotNetty.Codecs.Http.Cookies
                 else if (IsValueDefined(this.expiresStart, this.expiresEnd))
                 {
                     DateTime? expiresDate = DateFormatter.ParseHttpDate(this.header, this.expiresStart, this.expiresEnd);
-                    if (expiresDate != null)
+                    if (expiresDate is object)
                     {
                         return (expiresDate.Value.Ticks - DateTime.UtcNow.Ticks) / TimeSpan.TicksPerSecond;
                     }

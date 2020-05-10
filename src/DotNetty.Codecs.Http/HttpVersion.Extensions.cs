@@ -18,7 +18,7 @@ namespace DotNetty.Codecs.Http
         {
             if (ReferenceEquals(this, other)) { return true; }
 
-            return other != null
+            return other is object
                 && this.minorVersion == other.minorVersion
                 && this.majorVersion == other.majorVersion
                 && string.Equals(this.protocolName, other.protocolName

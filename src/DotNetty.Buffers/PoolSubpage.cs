@@ -159,7 +159,7 @@ namespace DotNetty.Buffers
 
         void RemoveFromPool()
         {
-            Debug.Assert(this.Prev != null && this.Next != null);
+            Debug.Assert(this.Prev is object && this.Next is object);
 
             this.Prev.Next = this.Next;
             this.Next.Prev = this.Prev;

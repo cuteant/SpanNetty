@@ -240,7 +240,7 @@ namespace DotNetty.Codecs.Http
 
         public static Encoding GetCharset(IHttpMessage message) => GetCharset(message, Encoding.UTF8);
 
-        public static Encoding GetCharset(ICharSequence contentTypeValue) => contentTypeValue != null ? GetCharset(contentTypeValue, Encoding.UTF8) : Encoding.UTF8;
+        public static Encoding GetCharset(ICharSequence contentTypeValue) => contentTypeValue is object ? GetCharset(contentTypeValue, Encoding.UTF8) : Encoding.UTF8;
 
         public static Encoding GetCharset(IHttpMessage message, Encoding defaultCharset)
         {
@@ -251,10 +251,10 @@ namespace DotNetty.Codecs.Http
 
         public static Encoding GetCharset(ICharSequence contentTypeValue, Encoding defaultCharset)
         {
-            if (contentTypeValue != null)
+            if (contentTypeValue is object)
             {
                 ICharSequence charsetCharSequence = GetCharsetAsSequence(contentTypeValue);
-                if (charsetCharSequence != null)
+                if (charsetCharSequence is object)
                 {
                     try
                     {

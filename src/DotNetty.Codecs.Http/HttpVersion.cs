@@ -32,7 +32,7 @@ namespace DotNetty.Codecs.Http
 
             // ReSharper disable once PossibleNullReferenceException
             HttpVersion version = ValueOfInline(text.Array);
-            if (version != null)
+            if (version is object)
             {
                 return version;
             }

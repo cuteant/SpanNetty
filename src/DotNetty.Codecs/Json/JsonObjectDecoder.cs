@@ -96,7 +96,7 @@ namespace DotNetty.Codecs.Json
                     if (this.openBraces == 0)
                     {
                         IByteBuffer json = this.ExtractObject(context, input, input.ReaderIndex, idx + 1 - input.ReaderIndex);
-                        if (json != null)
+                        if (json is object)
                         {
                             output.Add(json);
                         }
@@ -131,7 +131,7 @@ namespace DotNetty.Codecs.Json
                         }
 
                         IByteBuffer json = this.ExtractObject(context, input, input.ReaderIndex, idxNoSpaces + 1 - input.ReaderIndex);
-                        if (json != null)
+                        if (json is object)
                         {
                             output.Add(json);
                         }

@@ -26,7 +26,7 @@ namespace DotNetty.Codecs.Http.Cors
         bool isShortCircuit;
 
         public CorsHandler(CorsConfig config)
-            : this(config != null ? new List<CorsConfig>(new[] { config }) : null, config.IsShortCircuit)
+            : this(config is object ? new List<CorsConfig>(new[] { config }) : null, config.IsShortCircuit)
         {
         }
 
@@ -50,7 +50,7 @@ namespace DotNetty.Codecs.Http.Cors
                     this.HandlePreflight(context, req);
                     return;
                 }
-                if (this.isShortCircuit && !(origin == null || this.config != null))
+                if (this.isShortCircuit && !(origin == null || this.config is object))
                 {
                     Forbidden(context, req);
                     return;
@@ -180,7 +180,7 @@ namespace DotNetty.Codecs.Http.Cors
 
         public override void Write(IChannelHandlerContext context, object message, IPromise promise)
         {
-            if (this.config != null && this.config.IsCorsSupportEnabled && message is IHttpResponse response)
+            if (this.config is object && this.config.IsCorsSupportEnabled && message is IHttpResponse response)
             {
                 if (this.SetOrigin(response))
                 {

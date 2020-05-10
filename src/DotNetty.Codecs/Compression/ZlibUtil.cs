@@ -9,12 +9,12 @@ namespace DotNetty.Codecs.Compression
     {
         public static void Fail(Inflater z, string message, int resultCode)
         {
-            throw new DecompressionException($"{message} ({resultCode})" + (z.msg != null ? " : " + z.msg : ""));
+            throw new DecompressionException($"{message} ({resultCode})" + (z.msg is object ? " : " + z.msg : ""));
         }
 
         public static void Fail(Deflater z, string message, int resultCode)
         {
-            throw new CompressionException($"{message} ({resultCode})" + (z.msg != null ? " : " + z.msg : ""));
+            throw new CompressionException($"{message} ({resultCode})" + (z.msg is object ? " : " + z.msg : ""));
         }
 
         public static JZlib.WrapperType ConvertWrapperType(ZlibWrapper wrapper)

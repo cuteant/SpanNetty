@@ -57,7 +57,7 @@ namespace DotNetty.Handlers.IPFilter
             else
             {
                 Task rejectedTask = this.ChannelRejected(ctx, remoteAddress);
-                if (rejectedTask != null)
+                if (rejectedTask is object)
                 {
 #if NET40
                     void closeOnComplete(Task t) => ctx.CloseAsync();

@@ -84,7 +84,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 HttpHeaderValues.FormData + "; " + HttpHeaderValues.Name + "=\"" + this.Name +
                 "\"; " + HttpHeaderValues.FileName + "=\"" + this.FileName + "\"\r\n" +
                 HttpHeaderNames.ContentType + ": " + this.contentType +
-                (this.Charset != null ? "; " + HttpHeaderValues.Charset + '=' + this.Charset.WebName + "\r\n" : "\r\n") +
+                (this.Charset is object ? "; " + HttpHeaderValues.Charset + '=' + this.Charset.WebName + "\r\n" : "\r\n") +
                 HttpHeaderNames.ContentLength + ": " + this.Length + "\r\n" +
                 "Completed: " + this.IsCompleted +
                 "\r\nIsInMemory: " + this.IsInMemory;
@@ -97,7 +97,7 @@ namespace DotNetty.Codecs.Http.Multipart
         public override IByteBufferHolder RetainedDuplicate()
         {
             IByteBuffer content = this.Content;
-            if (content != null)
+            if (content is object)
             {
                 content = content.RetainedDuplicate();
                 bool success = false;
@@ -125,7 +125,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             var upload = new MemoryFileUpload(
                 this.Name, this.FileName, this.ContentType, this.contentTransferEncoding, this.Charset, this.Size);
-            if (content != null)
+            if (content is object)
             {
                 try
                 {

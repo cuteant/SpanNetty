@@ -14,7 +14,7 @@ namespace DotNetty.Common.Utilities
     {
         public int GetHashCode(T obj) => obj.GetHashCode();
 
-        public int HashCode(T obj) => obj != null ? this.GetHashCode(obj) : 0;
+        public int HashCode(T obj) => obj is object ? this.GetHashCode(obj) : 0;
 
         public bool Equals(T a, T b) => ReferenceEquals(a, b) || (!ReferenceEquals(a, null) && a.Equals(b));
     }

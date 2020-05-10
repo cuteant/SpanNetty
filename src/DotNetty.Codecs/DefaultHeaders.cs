@@ -79,7 +79,7 @@ namespace DotNetty.Codecs
             HeaderEntry<TKey, TValue> e = this.entries[i];
             value = default(TValue);
             // loop until the first header was found
-            while (e != null)
+            while (e is object)
             {
                 if (e.Hash == h && this.hashingStrategy.Equals(name, e.key))
                 {
@@ -112,7 +112,7 @@ namespace DotNetty.Codecs
             int h = this.hashingStrategy.HashCode(name);
             int i = this.Index(h);
             HeaderEntry<TKey, TValue> e = this.entries[i];
-            while (e != null)
+            while (e is object)
             {
                 if (e.Hash == h && this.hashingStrategy.Equals(name, e.key))
                 {
@@ -169,7 +169,7 @@ namespace DotNetty.Codecs
             int h = this.hashingStrategy.HashCode(name);
             int i = this.Index(h);
             HeaderEntry<TKey, TValue> e = this.entries[i];
-            while (e != null)
+            while (e is object)
             {
                 if (e.Hash == h && this.hashingStrategy.Equals(name, e.key) 
                     && valueHashingStrategy.Equals(value, e.value))
@@ -891,7 +891,7 @@ namespace DotNetty.Codecs
             bool result = false;
 
             HeaderEntry<TKey, TValue> next = e.Next;
-            while (next != null)
+            while (next is object)
             {
                 if (next.Hash == h && this.hashingStrategy.Equals(name, next.key))
                 {
@@ -966,7 +966,7 @@ namespace DotNetty.Codecs
 
             void CalculateNext(HeaderEntry<TKey, TValue> entry)
             {
-                while (entry != null)
+                while (entry is object)
                 {
                     if (entry.Hash == this.hash && this.hashingStrategy.Equals(this.name, entry.key))
                     {

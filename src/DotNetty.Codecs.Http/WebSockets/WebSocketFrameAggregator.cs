@@ -97,7 +97,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 case Opcode.Text:
                 case Opcode.Binary:
                     this.handlingOversizedMessage = false;
-                    if (this.currentMessage != null)
+                    if (this.currentMessage is object)
                     {
                         this.currentMessage.Release();
                         this.currentMessage = default;

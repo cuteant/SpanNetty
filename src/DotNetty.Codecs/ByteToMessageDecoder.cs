@@ -171,7 +171,7 @@ namespace DotNetty.Codecs
         {
             get
             {
-                if (this.cumulation != null)
+                if (this.cumulation is object)
                 {
                     return this.cumulation;
                 }
@@ -190,7 +190,7 @@ namespace DotNetty.Codecs
                 return;
             }
             IByteBuffer buf = this.cumulation;
-            if (buf != null)
+            if (buf is object)
             {
                 // Directly set this to null so we are sure we not access it in any other method here anymore.
                 this.cumulation = null;
@@ -245,7 +245,7 @@ namespace DotNetty.Codecs
                 }
                 finally
                 {
-                    if (this.cumulation != null && !this.cumulation.IsReadable())
+                    if (this.cumulation is object && !this.cumulation.IsReadable())
                     {
                         this.numReads = 0;
                         this.cumulation.Release();
@@ -303,7 +303,7 @@ namespace DotNetty.Codecs
 
         protected void DiscardSomeReadBytes()
         {
-            if (this.cumulation != null && !this.first && this.cumulation.ReferenceCount == 1)
+            if (this.cumulation is object && !this.first && this.cumulation.ReferenceCount == 1)
             {
                 // discard some bytes if possible to make more room input the
                 // buffer but only if the refCnt == 1  as otherwise the user may have
@@ -339,7 +339,7 @@ namespace DotNetty.Codecs
             try
             {
                 //this.ChannelInputClosed(ctx, output);
-                if (this.cumulation != null)
+                if (this.cumulation is object)
                 {
                     this.CallDecode(ctx, this.cumulation, output);
                     this.DecodeLast(ctx, this.cumulation, output);
@@ -361,7 +361,7 @@ namespace DotNetty.Codecs
             {
                 try
                 {
-                    if (this.cumulation != null)
+                    if (this.cumulation is object)
                     {
                         this.cumulation.Release();
                         this.cumulation = null;
@@ -395,7 +395,7 @@ namespace DotNetty.Codecs
         // */
         //protected virtual void ChannelInputClosed(IChannelHandlerContext ctx, List<object> output)
         //{
-        //    if (this.cumulation != null)
+        //    if (this.cumulation is object)
         //    {
         //        this.CallDecode(ctx, this.cumulation, output);
         //        this.DecodeLast(ctx, this.cumulation, output);

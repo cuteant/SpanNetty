@@ -422,7 +422,7 @@ namespace DotNetty.Common.Utilities
 #endif
                         delay.Wait();
                     }
-                    catch (AggregateException) when (delay != null && delay.IsCanceled)
+                    catch (AggregateException) when (delay is object && delay.IsCanceled)
                     {
                         if (Volatile.Read(ref this.owner.workerStateVolatile) == WorkerStateShutdown)
                         {
@@ -487,7 +487,7 @@ namespace DotNetty.Common.Utilities
             internal void Remove()
             {
                 HashedWheelBucket bucket = this.Bucket;
-                if (bucket != null)
+                if (bucket is object)
                 {
                     // timeout got canceled before it was added to the bucket
                     bucket.Remove(this);
@@ -605,7 +605,7 @@ namespace DotNetty.Common.Utilities
                 HashedWheelTimeout timeout = this.head;
 
                 // process all timeouts
-                while (timeout != null)
+                while (timeout is object)
                 {
                     HashedWheelTimeout next = timeout.Next;
                     if (timeout.RemainingRounds <= 0)
@@ -633,11 +633,11 @@ namespace DotNetty.Common.Utilities
             {
                 HashedWheelTimeout next = timeout.Next;
                 // remove timeout that was either processed or cancelled by updating the linked-list
-                if (timeout.Prev != null)
+                if (timeout.Prev is object)
                 {
                     timeout.Prev.Next = next;
                 }
-                if (timeout.Next != null)
+                if (timeout.Next is object)
                 {
                     timeout.Next.Prev = timeout.Prev;
                 }

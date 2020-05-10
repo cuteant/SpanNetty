@@ -92,7 +92,7 @@ namespace DotNetty.Transport.Channels
             //
             // See https://github.com/netty/netty/issues/2577
             Entry entry = this.unflushedEntry;
-            if (entry != null)
+            if (entry is object)
             {
                 if (this.flushedEntry == null)
                 {
@@ -110,7 +110,7 @@ namespace DotNetty.Transport.Channels
                     }
                     entry = entry.Next;
                 }
-                while (entry != null);
+                while (entry is object);
 
                 // All flushed so reset unflushedEntry
                 this.unflushedEntry = null;
@@ -172,7 +172,7 @@ namespace DotNetty.Transport.Channels
         {
             // todo: support progress report?
             //Entry e = this.flushedEntry;
-            //Debug.Assert(e != null);
+            //Debug.Assert(e is object);
             //var p = e.promise;
             //if (p is ChannelProgressivePromise)
             //{
@@ -670,7 +670,7 @@ namespace DotNetty.Transport.Channels
             try
             {
                 Entry e = this.unflushedEntry;
-                while (e != null)
+                while (e is object)
                 {
                     // Just decrease; do not trigger any events via DecrementPendingOutboundBytes()
                     int size = e.PendingSize;
@@ -783,7 +783,7 @@ namespace DotNetty.Transport.Channels
             while (this.IsFlushedEntry(entry));
         }
 
-        bool IsFlushedEntry(Entry e) => e != null && e != this.unflushedEntry;
+        bool IsFlushedEntry(Entry e) => e is object && e != this.unflushedEntry;
 
         public interface IMessageProcessor
         {

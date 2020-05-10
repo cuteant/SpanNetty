@@ -25,7 +25,7 @@ namespace DotNetty.Buffers
             {
                 case ResourceLeakDetector.DetectionLevel.Simple:
                     leak = AbstractByteBuffer.LeakDetector.Track(buf);
-                    if (leak != null)
+                    if (leak is object)
                     {
                         buf = new SimpleLeakAwareByteBuffer(buf, leak);
                     }
@@ -33,7 +33,7 @@ namespace DotNetty.Buffers
                 case ResourceLeakDetector.DetectionLevel.Advanced:
                 case ResourceLeakDetector.DetectionLevel.Paranoid:
                     leak = AbstractByteBuffer.LeakDetector.Track(buf);
-                    if (leak != null)
+                    if (leak is object)
                     {
                         buf = new AdvancedLeakAwareByteBuffer(buf, leak);
                     }
@@ -54,7 +54,7 @@ namespace DotNetty.Buffers
             {
                 case ResourceLeakDetector.DetectionLevel.Simple:
                     leak = AbstractByteBuffer.LeakDetector.Track(buf);
-                    if (leak != null)
+                    if (leak is object)
                     {
                         buf = new SimpleLeakAwareCompositeByteBuffer(buf, leak);
                     }
@@ -62,7 +62,7 @@ namespace DotNetty.Buffers
                 case ResourceLeakDetector.DetectionLevel.Advanced:
                 case ResourceLeakDetector.DetectionLevel.Paranoid:
                     leak = AbstractByteBuffer.LeakDetector.Track(buf);
-                    if (leak != null)
+                    if (leak is object)
                     {
                         buf = new AdvancedLeakAwareCompositeByteBuffer(buf, leak);
                     }

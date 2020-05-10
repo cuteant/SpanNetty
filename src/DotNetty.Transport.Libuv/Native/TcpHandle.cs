@@ -12,7 +12,7 @@ namespace DotNetty.Transport.Libuv.Native
     {
         internal TcpHandle(Loop loop, uint flags) : base(uv_handle_type.UV_TCP)
         {
-            Debug.Assert(loop != null);
+            Debug.Assert(loop is object);
 
             IntPtr handle = NativeMethods.Allocate(uv_handle_type.UV_TCP);
 
@@ -41,7 +41,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         internal void Bind(IPEndPoint endPoint, bool dualStack = false)
         {
-            Debug.Assert(endPoint != null);
+            Debug.Assert(endPoint is object);
 
             this.Validate();
             NativeMethods.GetSocketAddress(endPoint, out sockaddr addr);

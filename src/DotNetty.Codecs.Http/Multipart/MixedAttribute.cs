@@ -108,7 +108,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     var diskAttribute = new DiskAttribute(this.attribute.Name, this.attribute.DefinedLength);
                     diskAttribute.MaxSize = this.maxSize;
-                    if (memoryAttribute.GetByteBuffer() != null)
+                    if (memoryAttribute.GetByteBuffer() is object)
                     {
                         diskAttribute.AddContent(memoryAttribute.GetByteBuffer(), false);
                     }
@@ -192,9 +192,9 @@ namespace DotNetty.Codecs.Http.Multipart
             get => this.attribute.Value;
             set
             {
-                if (value != null)
+                if (value is object)
                 {
-                    byte[] bytes = this.Charset != null
+                    byte[] bytes = this.Charset is object
                         ? this.Charset.GetBytes(value)
                         : HttpConstants.DefaultEncoding.GetBytes(value);
                     this.CheckSize(bytes.Length);

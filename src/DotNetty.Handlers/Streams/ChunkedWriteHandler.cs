@@ -192,7 +192,7 @@ namespace DotNetty.Handlers.Streams
                     {
                         this.currentWrite = null;
 
-                        if (message != null)
+                        if (message is object)
                         {
                             ReferenceCountUtil.Release(message);
                         }

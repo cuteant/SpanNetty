@@ -52,7 +52,7 @@ namespace DotNetty.Transport.Channels
 
         void Validate(TIn inbound, TOut outbound)
         {
-            if (this.InboundHandler != null)
+            if (this.InboundHandler is object)
             {
                 ThrowHelper.ThrowInvalidOperationException_InitCannotBeInvokedIf(this);
             }
@@ -438,7 +438,7 @@ namespace DotNetty.Transport.Channels
 
             public IChannelHandlerContext FireExceptionCaught(Exception ex)
             {
-                if (this.onError != null)
+                if (this.onError is object)
                 {
                     this.onError(ex);
                 }

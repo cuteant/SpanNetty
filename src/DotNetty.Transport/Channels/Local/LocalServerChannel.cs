@@ -59,7 +59,7 @@ namespace DotNetty.Transport.Channels.Local
             {
                 // Update all internal state before the closeFuture is notified.
                 var thisLocalAddr = Volatile.Read(ref this.localAddress);
-                if (thisLocalAddr != null)
+                if (thisLocalAddr is object)
                 {
                     LocalChannelRegistry.Unregister(thisLocalAddr);
                     Interlocked.Exchange(ref this.localAddress, null);

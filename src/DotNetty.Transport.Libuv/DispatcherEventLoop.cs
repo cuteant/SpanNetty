@@ -31,7 +31,7 @@ namespace DotNetty.Transport.Libuv
 
         internal void Register(IServerNativeUnsafe serverChannel)
         {
-            Debug.Assert(serverChannel != null);
+            Debug.Assert(serverChannel is object);
             this.nativeUnsafe = serverChannel;
         }
 

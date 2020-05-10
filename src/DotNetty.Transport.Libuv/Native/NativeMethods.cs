@@ -311,7 +311,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         internal static void GetSocketAddress(IPEndPoint endPoint, out sockaddr addr)
         {
-            Debug.Assert(endPoint != null);
+            Debug.Assert(endPoint is object);
 
             string ip = endPoint.Address.ToString();
             int result = 0;

@@ -317,9 +317,9 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public virtual THandler Build()
         {
-            if (this.encoder != null)
+            if (this.encoder is object)
             {
-                Debug.Assert(this.decoder != null);
+                Debug.Assert(this.decoder is object);
                 return BuildFromCodec(this.decoder, this.encoder);
             }
 
@@ -340,7 +340,7 @@ namespace DotNetty.Codecs.Http2
                     this.initialHuffmanDecodeCapacity));
             IHttp2FrameWriter writer = new DefaultHttp2FrameWriter(this.HeaderSensitivityDetector, this.encoderIgnoreMaxHeaderListSize);
 
-            if (this.frameLogger != null)
+            if (this.frameLogger is object)
             {
                 reader = new Http2InboundFrameLogger(reader, this.frameLogger);
                 writer = new Http2OutboundFrameLogger(writer, this.frameLogger);
@@ -412,7 +412,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(InlineMethod.Value)]
         private static void EnforceConstraint(string methodName, string rejectorName, object value)
         {
-            if (value != null)
+            if (value is object)
             {
                 ThrowHelper.ThrowInvalidOperationException_EnforceConstraint(methodName, rejectorName);
             }

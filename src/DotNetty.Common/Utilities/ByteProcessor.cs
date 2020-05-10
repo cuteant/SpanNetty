@@ -45,7 +45,7 @@ namespace DotNetty.Common.Utilities
         readonly Func<byte, bool> customHandler;
         public ByteProcessor(Func<byte, bool> customHandler)
         {
-            Debug.Assert(customHandler != null, "'customHandler' is required parameter.");
+            Debug.Assert(customHandler is object, "'customHandler' is required parameter.");
             this.customHandler = customHandler;
         }
 

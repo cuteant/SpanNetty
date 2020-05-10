@@ -55,7 +55,7 @@ namespace DotNetty.Transport.Channels
 
                 var shutdownCause = ThrowHelper.GetChannelOutputShutdownException(cause);
                 var closeExecutor = this.PrepareToClose();
-                if (closeExecutor != null)
+                if (closeExecutor is object)
                 {
                     closeExecutor.Execute(() =>
                     {

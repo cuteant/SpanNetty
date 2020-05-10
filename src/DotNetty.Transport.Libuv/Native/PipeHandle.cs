@@ -13,7 +13,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         protected PipeHandle(Loop loop, bool ipc) : base(uv_handle_type.UV_NAMED_PIPE)
         {
-            Debug.Assert(loop != null);
+            Debug.Assert(loop is object);
 
             IntPtr handle = NativeMethods.Allocate(uv_handle_type.UV_NAMED_PIPE);
             try

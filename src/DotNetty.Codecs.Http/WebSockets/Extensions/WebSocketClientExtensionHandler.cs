@@ -54,7 +54,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                 }
 
                 var pipeline = ctx.Pipeline;
-                if (extensionsHeader != null)
+                if (extensionsHeader is object)
                 {
                     List<WebSocketExtensionData> extensions =
                         WebSocketExtensionUtil.ExtractExtensions(extensionsHeader);
@@ -67,13 +67,13 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                         foreach (IWebSocketClientExtensionHandshaker extensionHandshaker in this.extensionHandshakers)
                         {
                             validExtension = extensionHandshaker.HandshakeExtension(extensionData);
-                            if (validExtension != null)
+                            if (validExtension is object)
                             {
                                 break;
                             }
                         }
 
-                        if (validExtension != null && 0u >= (uint)(validExtension.Rsv & rsv))
+                        if (validExtension is object && 0u >= (uint)(validExtension.Rsv & rsv))
                         {
                             rsv = rsv | validExtension.Rsv;
                             validExtensions.Add(validExtension);

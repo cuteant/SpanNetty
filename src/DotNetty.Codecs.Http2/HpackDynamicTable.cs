@@ -179,7 +179,7 @@ namespace DotNetty.Codecs.Http2
             }
 
             // check if capacity change requires us to reallocate the array
-            if (this.hpackHeaderFields != null && this.hpackHeaderFields.Length == maxEntries)
+            if (this.hpackHeaderFields is object && this.hpackHeaderFields.Length == maxEntries)
             {
                 return;
             }

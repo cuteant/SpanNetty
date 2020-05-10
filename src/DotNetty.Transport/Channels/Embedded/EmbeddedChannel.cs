@@ -177,7 +177,7 @@ namespace DotNetty.Transport.Channels.Embedded
         {
 #if DEBUG
             var message = (T)Poll(this.inboundMessages);
-            if (message != null)
+            if (message is object)
             {
                 ReferenceCountUtil.Touch(message, "Caller of readInbound() will handle the message from this point");
             }
@@ -194,7 +194,7 @@ namespace DotNetty.Transport.Channels.Embedded
         {
 #if DEBUG
             var message = (T)Poll(this.outboundMessages);
-            if (message != null)
+            if (message is object)
             {
                 ReferenceCountUtil.Touch(message, "Caller of readOutbound() will handle the message from this point.");
             }

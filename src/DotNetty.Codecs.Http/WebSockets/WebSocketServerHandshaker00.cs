@@ -37,7 +37,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             // Create the WebSocket handshake response.
             var res = new DefaultFullHttpResponse(HttpVersion.Http11,
                 new HttpResponseStatus(101, new AsciiString(isHixie76 ? "WebSocket Protocol Handshake" : "Web Socket Protocol Handshake")));
-            if (headers != null)
+            if (headers is object)
             {
                 res.Headers.Add(headers);
             }
@@ -50,7 +50,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 // New handshake getMethod with a challenge:
                 value = req.Headers.Get(HttpHeaderNames.Origin, null);
-                Debug.Assert(value != null);
+                Debug.Assert(value is object);
                 res.Headers.Add(HttpHeaderNames.SecWebsocketOrigin, value);
                 res.Headers.Add(HttpHeaderNames.SecWebsocketLocation, this.Uri);
 
@@ -72,10 +72,10 @@ namespace DotNetty.Codecs.Http.WebSockets
 
                 // Calculate the answer of the challenge.
                 value = req.Headers.Get(HttpHeaderNames.SecWebsocketKey1, null);
-                Debug.Assert(value != null, $"{HttpHeaderNames.SecWebsocketKey1} must exist");
+                Debug.Assert(value is object, $"{HttpHeaderNames.SecWebsocketKey1} must exist");
                 string key1 = value.ToString();
                 value = req.Headers.Get(HttpHeaderNames.SecWebsocketKey2, null);
-                Debug.Assert(value != null, $"{HttpHeaderNames.SecWebsocketKey2} must exist");
+                Debug.Assert(value is object, $"{HttpHeaderNames.SecWebsocketKey2} must exist");
                 string key2 = value.ToString();
                 int a = (int)(long.Parse(BeginningDigit.Replace(key1, "")) /
                     BeginningSpace.Replace(key1, "").Length);
@@ -92,7 +92,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 // Old Hixie 75 handshake getMethod with no challenge:
                 value = req.Headers.Get(HttpHeaderNames.Origin, null);
-                Debug.Assert(value != null);
+                Debug.Assert(value is object);
                 res.Headers.Add(HttpHeaderNames.WebsocketOrigin, value);
                 res.Headers.Add(HttpHeaderNames.WebsocketLocation, this.Uri);
 

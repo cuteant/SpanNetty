@@ -37,7 +37,7 @@ namespace DotNetty.Buffers
         unsafe void Init0(PoolChunk<T> chunk, long handle, int offset, int length, int maxLength, PoolThreadCache<T> cache)
         {
             Debug.Assert(handle >= 0);
-            Debug.Assert(chunk != null);
+            Debug.Assert(chunk is object);
 
             this.Chunk = chunk;
             this.Memory = chunk.Memory;

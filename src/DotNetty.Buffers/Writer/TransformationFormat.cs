@@ -35,7 +35,7 @@ namespace DotNetty.Buffers
 
         public bool TryTransform(Span<byte> buffer, ref int bytesWritten)
         {
-            if (_first != null)
+            if (_first is object)
             {
                 var status = _first.Transform(buffer, bytesWritten, out int transformed);
                 switch (status)
@@ -54,7 +54,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            if (_rest != null)
+            if (_rest is object)
             {
                 return TryTransformMulti(buffer, ref bytesWritten);
             }

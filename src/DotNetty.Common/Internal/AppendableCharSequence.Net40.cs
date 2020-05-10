@@ -21,7 +21,7 @@ namespace DotNetty.Common.Internal
                 return true;
             }
 
-            return other != null && this.pos == other.pos 
+            return other is object && this.pos == other.pos 
                 && PlatformDependent.ByteArrayEquals(this.chars, 0, other.chars, 0, this.pos);
         }
 

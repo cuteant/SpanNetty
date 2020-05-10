@@ -42,7 +42,7 @@ namespace DotNetty.Codecs.Http
         public bool Equals(HttpScheme other)
         {
             if (ReferenceEquals(this, other)) { return true; }
-            return other != null && other.port == this.port && other.name.Equals(this.name);
+            return other is object && other.port == this.port && other.name.Equals(this.name);
         }
 
         public override int GetHashCode() => this.port * 31 + this.name.GetHashCode();

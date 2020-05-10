@@ -86,7 +86,7 @@ namespace DotNetty.Codecs.Http
                             long contentLength = ContentLength(message);
                             if (contentLength > 0)
                             {
-                                if (buf != null && buf.WritableBytes >= contentLength && message is IHttpContent)
+                                if (buf is object && buf.WritableBytes >= contentLength && message is IHttpContent)
                                 {
                                     // merge into other buffer for performance reasons
                                     buf.WriteBytes(((IHttpContent)message).Content);
@@ -94,7 +94,7 @@ namespace DotNetty.Codecs.Http
                                 }
                                 else
                                 {
-                                    if (buf != null)
+                                    if (buf is object)
                                     {
                                         output.Add(buf);
                                     }
@@ -111,7 +111,7 @@ namespace DotNetty.Codecs.Http
                             goto case StContentAlwaysEmpty; // fall-through!
                         case StContentAlwaysEmpty:
                             // ReSharper disable once ConvertIfStatementToNullCoalescingExpression
-                            if (buf != null)
+                            if (buf is object)
                             {
                                 // We allocated a buffer so add it now.
                                 output.Add(buf);
@@ -130,7 +130,7 @@ namespace DotNetty.Codecs.Http
 
                             break;
                         case StContentChunk:
-                            if (buf != null)
+                            if (buf is object)
                             {
                                 // We allocated a buffer so add it now.
                                 output.Add(buf);

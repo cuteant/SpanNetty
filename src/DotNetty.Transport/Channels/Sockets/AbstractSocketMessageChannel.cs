@@ -90,7 +90,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     allocHandle.ReadComplete();
                     pipeline.FireChannelReadComplete();
 
-                    if (exception != null)
+                    if (exception is object)
                     {
                         if (exception is SocketException asSocketException && asSocketException.SocketErrorCode != SocketError.TryAgain) // todo: other conditions for not closing message-based socket?
                         {

@@ -240,7 +240,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     allocHandle.ReadComplete();
                     pipeline.FireChannelReadComplete();
 
-                    if (exception != null)
+                    if (exception is object)
                     {
                         // ServerChannel should not be closed even on SocketException because it can often continue
                         // accepting incoming connections. (e.g. too many open files)

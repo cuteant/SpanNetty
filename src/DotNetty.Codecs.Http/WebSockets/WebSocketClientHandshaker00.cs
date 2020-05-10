@@ -66,7 +66,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             var request = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, path);
             HttpHeaders headers = request.Headers;
 
-            if (this.CustomHeaders != null)
+            if (this.CustomHeaders is object)
             {
                 headers.Add(this.CustomHeaders);
             }

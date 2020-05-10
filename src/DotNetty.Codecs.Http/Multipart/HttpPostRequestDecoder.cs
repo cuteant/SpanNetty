@@ -44,7 +44,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             if (request.Headers.TryGet(HttpHeaderNames.ContentType, out ICharSequence contentType))
             {
-                return GetMultipartDataBoundary(contentType) != null;
+                return GetMultipartDataBoundary(contentType) is object;
             }
             else
             {
@@ -99,7 +99,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 if (headerContentType[crank].RegionMatchesIgnoreCase(0, charsetHeader, 0, charsetHeader.Count))
                 {
                     ICharSequence charset = headerContentType[crank].SubstringAfter(HttpConstants.EqualsSignChar);
-                    if (charset != null)
+                    if (charset is object)
                     {
                         return new []
                         {

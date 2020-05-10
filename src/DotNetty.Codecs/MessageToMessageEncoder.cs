@@ -59,7 +59,7 @@ namespace DotNetty.Codecs
             }
             finally
             {
-                if (output != null)
+                if (output is object)
                 {
                     int lastItemIndex = output.Count - 1;
                     if (0u >= (uint)lastItemIndex)

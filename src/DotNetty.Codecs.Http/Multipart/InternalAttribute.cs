@@ -51,7 +51,7 @@ namespace DotNetty.Codecs.Http.Multipart
             IByteBuffer buf = ArrayPooled.CopiedBuffer(stringValue, this.charset);
             IByteBuffer old = this.value[rank];
             this.value[rank] = buf;
-            if (old != null)
+            if (old is object)
             {
                 this.size -= old.ReadableBytes;
                 old.Release();

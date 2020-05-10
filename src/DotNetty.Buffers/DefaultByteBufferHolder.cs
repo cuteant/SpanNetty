@@ -88,7 +88,7 @@ namespace DotNetty.Buffers
         public bool Equals(IByteBufferHolder other)
         {
             if (ReferenceEquals(this, other)) { return true; }
-            return other != null && this.data.Equals(other.Content);
+            return other is object && this.data.Equals(other.Content);
 
         }
 

@@ -26,9 +26,9 @@ namespace DotNetty.Codecs
         public override bool AcceptOutboundMessage(object msg)
         {
             var envelope = msg as IAddressedEnvelope<T>;
-            return envelope != null 
+            return envelope is object 
                 && this.encoder.AcceptOutboundMessage(envelope.Content) 
-                && (envelope.Sender != null || envelope.Recipient != null);
+                && (envelope.Sender is object || envelope.Recipient is object);
         }
 
         protected internal override void Encode(IChannelHandlerContext context, IAddressedEnvelope<T> message, List<object> output)

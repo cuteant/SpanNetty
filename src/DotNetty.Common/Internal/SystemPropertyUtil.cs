@@ -18,7 +18,7 @@ namespace DotNetty.Common.Internal
         ///     Returns <c>true</c> if and only if the system property with the specified <c>key</c>
         ///     exists.
         /// </summary>
-        public static bool Contains(string key) => Get(key) != null;
+        public static bool Contains(string key) => Get(key) is object;
 
         /// <summary>
         ///     Returns the value of the system property with the specified

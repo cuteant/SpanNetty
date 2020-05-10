@@ -87,7 +87,7 @@ namespace DotNetty.Codecs.Http2
                 // are restored to the connection window.
                 IFlowState state = this.GetState(stream);
                 int unconsumedBytes = state.UnconsumedBytes;
-                if (this.ctx != null && unconsumedBytes > 0)
+                if (this.ctx is object && unconsumedBytes > 0)
                 {
                     this.ConnectionState().ConsumeBytes(unconsumedBytes);
                     state.ConsumeBytes(unconsumedBytes);
@@ -139,7 +139,7 @@ namespace DotNetty.Codecs.Http2
 
         public void IncrementWindowSize(IHttp2Stream stream, int delta)
         {
-            Debug.Assert(this.ctx != null && this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx is object && this.ctx.Executor.InEventLoop);
             IFlowState state = this.GetState(stream);
             // Just add the delta to the stream-specific initial window size so that the next time the window
             // expands it will grow to the new initial size.
@@ -149,7 +149,7 @@ namespace DotNetty.Codecs.Http2
 
         public bool ConsumeBytes(IHttp2Stream stream, int numBytes)
         {
-            Debug.Assert(this.ctx != null && this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx is object && this.ctx.Executor.InEventLoop);
             uint uNumBytes = (uint)numBytes;
             if (uNumBytes > SharedConstants.TooBigOrNegative) // < 0
             {
@@ -160,7 +160,7 @@ namespace DotNetty.Codecs.Http2
 
             // Streams automatically consume all remaining bytes when they are closed, so just ignore
             // if already closed.
-            if (stream != null && !IsClosed(stream))
+            if (stream is object && !IsClosed(stream))
             {
                 if (stream.Id == Http2CodecUtil.ConnectionStreamId)
                 {
@@ -221,7 +221,7 @@ namespace DotNetty.Codecs.Http2
         /// <remarks>If a protocol-error occurs while generating <c>WINDOW_UPDATE</c> frames</remarks>
         public void WindowUpdateRatio(IHttp2Stream stream, float ratio)
         {
-            Debug.Assert(this.ctx != null && this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx is object && this.ctx.Executor.InEventLoop);
             CheckValidRatio(ratio);
             IFlowState state = this.GetState(stream);
             state.WindowUpdateRatio(ratio);
@@ -238,14 +238,14 @@ namespace DotNetty.Codecs.Http2
 
         public void ReceiveFlowControlledFrame(IHttp2Stream stream, IByteBuffer data, int padding, bool endOfStream)
         {
-            Debug.Assert(this.ctx != null && this.ctx.Executor.InEventLoop);
+            Debug.Assert(this.ctx is object && this.ctx.Executor.InEventLoop);
             int dataLength = data.ReadableBytes + padding;
 
             // Apply the connection-level flow control
             IFlowState connectionState = this.ConnectionState();
             connectionState.ReceiveFlowControlledFrame(dataLength);
 
-            if (stream != null && !IsClosed(stream))
+            if (stream is object && !IsClosed(stream))
             {
                 // Apply the stream-level flow control
                 IFlowState state = this.GetState(stream);
@@ -587,7 +587,7 @@ namespace DotNetty.Codecs.Http2
 
             public void ThrowIfError()
             {
-                if (this.compositeException != null)
+                if (this.compositeException is object)
                 {
                     throw this.compositeException;
                 }

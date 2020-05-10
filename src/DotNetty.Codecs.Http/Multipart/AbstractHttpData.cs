@@ -37,7 +37,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
 
             this.name = name;
-            if (charset != null)
+            if (charset is object)
             {
                 this.charset = charset;
             }

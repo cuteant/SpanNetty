@@ -20,7 +20,7 @@ namespace DotNetty.Codecs
         public virtual bool TryAcceptOutboundMessage(object msg, out T cast)
         {
             cast = msg as T;
-            return cast != null;
+            return cast is object;
         }
 
         public override void Write(IChannelHandlerContext ctx, object msg, IPromise promise)
@@ -63,7 +63,7 @@ namespace DotNetty.Codecs
             }
             finally
             {
-                if (output != null)
+                if (output is object)
                 {
                     int lastItemIndex = output.Count - 1;
                     if (0u >= (uint)lastItemIndex)

@@ -42,7 +42,7 @@ namespace DotNetty.Buffers
         {
             int total = 0;
             var arenas = this.HeapArenas();
-            if (arenas != null)
+            if (arenas is object)
             {
                 foreach (IPoolArenaMetric metric in arenas)
                 {
@@ -51,7 +51,7 @@ namespace DotNetty.Buffers
             }
 
             arenas = this.DirectArenas();
-            if (arenas != null)
+            if (arenas is object)
             {
                 foreach (IPoolArenaMetric metric in arenas)
                 {

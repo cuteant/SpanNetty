@@ -25,7 +25,7 @@ namespace DotNetty.Common.Concurrency
 
         public SimplePromiseAggregator(IPromise promise)
         {
-            Debug.Assert(promise != null && !promise.IsCompleted);
+            Debug.Assert(promise is object && !promise.IsCompleted);
             this.promise = promise;
         }
 
@@ -194,7 +194,7 @@ namespace DotNetty.Common.Concurrency
                 base.Complete();
                 return;
             }
-            if (this.lastFailure != null)
+            if (this.lastFailure is object)
             {
                 this.promise.SetException(this.lastFailure);
                 base.SetException(this.lastFailure);
@@ -213,7 +213,7 @@ namespace DotNetty.Common.Concurrency
                 return base.TryComplete();
             }
 
-            if (this.lastFailure != null)
+            if (this.lastFailure is object)
             {
                 this.promise.TrySetException(this.lastFailure);
                 return base.TrySetException(this.lastFailure);

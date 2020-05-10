@@ -12,8 +12,8 @@ namespace DotNetty.Transport.Libuv.Native
 
         public TcpConnect(INativeUnsafe nativeUnsafe, IPEndPoint remoteEndPoint)
         {
-            Debug.Assert(nativeUnsafe != null);
-            Debug.Assert(remoteEndPoint != null);
+            Debug.Assert(nativeUnsafe is object);
+            Debug.Assert(remoteEndPoint is object);
 
             NativeMethods.GetSocketAddress(remoteEndPoint, out sockaddr addr);
             int result = NativeMethods.uv_tcp_connect(

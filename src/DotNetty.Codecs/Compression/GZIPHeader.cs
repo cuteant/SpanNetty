@@ -144,15 +144,15 @@ namespace DotNetty.Codecs.Compression
             {
                 flag |= 2;     // FHCRC
             }
-            if (extra != null)
+            if (extra is object)
             {
                 flag |= 4;     // FEXTRA
             }
-            if (name != null)
+            if (name is object)
             {
                 flag |= 8;    // FNAME
             }
-            if (comment != null)
+            if (comment is object)
             {
                 flag |= 16;   // FCOMMENT
             }
@@ -176,20 +176,20 @@ namespace DotNetty.Codecs.Compression
             d.Put_byte((byte)xfl);
             d.Put_byte((byte)os);
 
-            if (extra != null)
+            if (extra is object)
             {
                 d.Put_byte((byte)extra.Length);
                 d.Put_byte((byte)(extra.Length >> 8));
                 d.Put_byte(extra, 0, extra.Length);
             }
 
-            if (name != null)
+            if (name is object)
             {
                 d.Put_byte(name, 0, name.Length);
                 d.Put_byte((byte)0);
             }
 
-            if (comment != null)
+            if (comment is object)
             {
                 d.Put_byte(comment, 0, comment.Length);
                 d.Put_byte((byte)0);
@@ -200,21 +200,21 @@ namespace DotNetty.Codecs.Compression
         {
             var gheader = new GZIPHeader();
             byte[] tmp;
-            if (gheader.extra != null)
+            if (gheader.extra is object)
             {
                 tmp = new byte[gheader.extra.Length];
                 Array.Copy(gheader.extra, 0, tmp, 0, tmp.Length);
                 gheader.extra = tmp;
             }
 
-            if (gheader.name != null)
+            if (gheader.name is object)
             {
                 tmp = new byte[gheader.name.Length];
                 Array.Copy(gheader.name, 0, tmp, 0, tmp.Length);
                 gheader.name = tmp;
             }
 
-            if (gheader.comment != null)
+            if (gheader.comment is object)
             {
                 tmp = new byte[gheader.comment.Length];
                 Array.Copy(gheader.comment, 0, tmp, 0, tmp.Length);

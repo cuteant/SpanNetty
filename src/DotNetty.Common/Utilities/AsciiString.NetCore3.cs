@@ -33,9 +33,9 @@ namespace DotNetty.Common.Utilities
             // A modification of this method should be copied in to each of the supported encodings: ASCII, UTF8, UTF16, UTF32.
 
             //Debug.Assert(charCount >= 0, "Caller shouldn't specify negative length buffer.");
-            //Debug.Assert(pChars != null || charCount == 0, "Input pointer shouldn't be null if non-zero length specified.");
+            //Debug.Assert(pChars is object || charCount == 0, "Input pointer shouldn't be null if non-zero length specified.");
             //Debug.Assert(byteCount >= 0, "Caller shouldn't specify negative length buffer.");
-            //Debug.Assert(pBytes != null || byteCount == 0, "Input pointer shouldn't be null if non-zero length specified.");
+            //Debug.Assert(pBytes is object || byteCount == 0, "Input pointer shouldn't be null if non-zero length specified.");
 
             // First call into the fast path.
 

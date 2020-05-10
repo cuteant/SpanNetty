@@ -1184,7 +1184,7 @@ namespace DotNetty.Buffers
         public sealed override bool Equals(object o) => this.Equals(o as IByteBuffer);
 
         public virtual bool Equals(IByteBuffer buffer) =>
-            ReferenceEquals(this, buffer) || buffer != null && ByteBufferUtil.Equals(this, buffer);
+            ReferenceEquals(this, buffer) || buffer is object && ByteBufferUtil.Equals(this, buffer);
 
         public virtual int CompareTo(IByteBuffer that) => ByteBufferUtil.Compare(this, that);
 
@@ -1206,7 +1206,7 @@ namespace DotNetty.Buffers
             }
 
             IByteBuffer unwrapped = this.Unwrap();
-            if (unwrapped != null)
+            if (unwrapped is object)
             {
                 buf.Append(", unwrapped: ").Append(unwrapped);
             }

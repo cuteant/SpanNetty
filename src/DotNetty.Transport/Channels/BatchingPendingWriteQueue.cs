@@ -76,7 +76,7 @@ namespace DotNetty.Transport.Channels
                 messageSize = 0;
             }
             PendingWrite currentTail = this.tail;
-            if (currentTail != null)
+            if (currentTail is object)
             {
                 bool canBundle = this.CanBatch(msg, messageSize, currentTail.Size);
                 if (canBundle)
@@ -129,11 +129,11 @@ namespace DotNetty.Transport.Channels
 
             // It is possible for some of the failed promises to trigger more writes. The new writes
             // will "revive" the queue, so we need to clean them up until the queue is empty.
-            for (PendingWrite write = this.head; write != null; write = this.head)
+            for (PendingWrite write = this.head; write is object; write = this.head)
             {
                 this.head = this.tail = null;
                 this.size = 0;
-                while (write != null)
+                while (write is object)
                 {
                     PendingWrite next = write.Next;
                     ReferenceCountUtil.SafeRelease(write.Messages);
@@ -188,12 +188,12 @@ namespace DotNetty.Transport.Channels
 
             // It is possible for some of the written promises to trigger more writes. The new writes
             // will "revive" the queue, so we need to write them up until the queue is empty.
-            for (PendingWrite write = this.head; write != null; write = this.head)
+            for (PendingWrite write = this.head; write is object; write = this.head)
             {
                 this.head = this.tail = null;
                 this.size = 0;
 
-                while (write != null)
+                while (write is object)
                 {
                     PendingWrite next = write.Next;
                     object msg = write.Messages;

@@ -78,7 +78,7 @@ namespace DotNetty.Transport.Channels.Sockets
             var tcs = this.NewPromise();
             // todo: use closeExecutor if available
             //Executor closeExecutor = ((TcpSocketChannelUnsafe) unsafe()).closeExecutor();
-            //if (closeExecutor != null) {
+            //if (closeExecutor is object) {
             //    closeExecutor.execute(new OneTimeTask() {
 
             //        public void run() {
@@ -116,7 +116,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override bool DoConnect(EndPoint remoteAddress, EndPoint localAddress)
         {
-            if (localAddress != null)
+            if (localAddress is object)
             {
                 this.Socket.Bind(localAddress);
             }

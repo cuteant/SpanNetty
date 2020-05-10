@@ -549,7 +549,7 @@ namespace DotNetty.Codecs.Http2
         internal static void SetHttp2Authority(string authority, IHttp2Headers output)
         {
             // The authority MUST NOT include the deprecated "userinfo" subcomponent
-            if (authority != null)
+            if (authority is object)
             {
                 if (StringUtil.IsEmpty(authority))
                 {
@@ -571,7 +571,7 @@ namespace DotNetty.Codecs.Http2
         private static void SetHttp2Scheme(HttpHeaders input, Uri uri, IHttp2Headers output)
         {
             var value = uri.Scheme;
-            if (value != null)
+            if (value is object)
             {
                 output.Scheme = new AsciiString(value);
                 return;
@@ -651,7 +651,7 @@ namespace DotNetty.Codecs.Http2
                         // https://tools.ietf.org/html/rfc7540#section-8.1.2.5
                         var existingCookie = output.Get(cookie, null);
                         output.Set(cookie,
-                                   (existingCookie != null) ? new StringCharSequence(existingCookie + "; " + value) : value);
+                                   (existingCookie is object) ? new StringCharSequence(existingCookie + "; " + value) : value);
                     }
                     else
                     {

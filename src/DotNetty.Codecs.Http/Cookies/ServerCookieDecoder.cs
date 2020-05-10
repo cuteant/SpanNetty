@@ -133,7 +133,7 @@ namespace DotNetty.Codecs.Http.Cookies
                 }
 
                 DefaultCookie cookie = this.InitCookie(header, nameBegin, nameEnd, valueBegin, valueEnd);
-                if (cookie != null)
+                if (cookie is object)
                 {
                     cookies.Add(cookie);
                 }

@@ -42,7 +42,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             string newpostfix;
             string diskFilename = this.DiskFilename;
-            if (diskFilename != null)
+            if (diskFilename is object)
             {
                 newpostfix = '_' + diskFilename;
             }
@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http.Multipart
             if (null == buffer) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
             try
             {
-                if (this.fileStream != null)
+                if (this.fileStream is object)
                 {
                     this.Delete();
                 }
@@ -99,7 +99,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override void AddContent(IByteBuffer buffer, bool last)
         {
-            if (buffer != null)
+            if (buffer is object)
             {
                 try
                 {
@@ -147,7 +147,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             if (null == source) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.source); }
 
-            if (this.fileStream != null)
+            if (this.fileStream is object)
             {
                 this.Delete();
             }
@@ -198,7 +198,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override void Delete()
         {
-            if (this.fileStream != null)
+            if (this.fileStream is object)
             {
                 try
                 {

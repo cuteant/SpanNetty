@@ -249,7 +249,7 @@ namespace DotNetty.Buffers
             PoolArena<byte[]> heapArena = cache.HeapArena;
 
             IByteBuffer buf;
-            if (heapArena != null)
+            if (heapArena is object)
             {
                 buf = heapArena.Allocate(cache, initialCapacity, maxCapacity);
             }
@@ -267,7 +267,7 @@ namespace DotNetty.Buffers
             PoolArena<byte[]> directArena = cache.DirectArena;
 
             IByteBuffer buf;
-            if (directArena != null)
+            if (directArena is object)
             {
                 buf = directArena.Allocate(cache, initialCapacity, maxCapacity);
             }
@@ -281,7 +281,7 @@ namespace DotNetty.Buffers
 
         public static bool DefaultPreferDirect => PlatformDependent.DirectBufferPreferred;
 
-        public override bool IsDirectBufferPooled => this.directArenas != null;
+        public override bool IsDirectBufferPooled => this.directArenas is object;
 
         sealed class PoolThreadLocalCache : FastThreadLocal<PoolThreadCache<byte[]>>
         {

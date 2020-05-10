@@ -170,7 +170,7 @@ namespace DotNetty.Buffers
             {
                 var b = this.buffers[i];
                 var comp = b as ComponentEntry;
-                if (comp != null)
+                if (comp is object)
                 {
                     b = comp.Buf;
                 }

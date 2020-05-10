@@ -389,7 +389,7 @@ namespace DotNetty.Buffers
             {
                 // free a subpage
                 PoolSubpage<T> subpage = this.subpages[this.SubpageIdx(memoryMapIdx)];
-                Debug.Assert(subpage != null && subpage.DoNotDestroy);
+                Debug.Assert(subpage is object && subpage.DoNotDestroy);
 
                 // Obtain the head of the PoolSubPage pool that is owned by the PoolArena and synchronize on it.
                 // This is need as we may add it back and so alter the linked-list structure.

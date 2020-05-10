@@ -170,7 +170,7 @@ namespace DotNetty.Buffers
             if (cur == this.head)
             {
                 this.head = cur.Next;
-                if (this.head != null)
+                if (this.head is object)
                 {
                     this.head.Prev = null;
                 }
@@ -179,7 +179,7 @@ namespace DotNetty.Buffers
             {
                 PoolChunk<T> next = cur.Next;
                 cur.Prev.Next = next;
-                if (next != null)
+                if (next is object)
                 {
                     next.Prev = cur.Prev;
                 }
@@ -201,7 +201,7 @@ namespace DotNetty.Buffers
         {
             lock (this.arena)
             {
-                for (PoolChunk<T> cur = this.head; cur != null;)
+                for (PoolChunk<T> cur = this.head; cur is object;)
                 {
                     yield return cur;
                     cur = cur.Next;
@@ -238,7 +238,7 @@ namespace DotNetty.Buffers
         internal void Destroy(PoolArena<T> poolArena)
         {
             PoolChunk<T> chunk = this.head;
-            while (chunk != null)
+            while (chunk is object)
             {
                 poolArena.DestroyChunk(chunk);
                 chunk = chunk.Next;

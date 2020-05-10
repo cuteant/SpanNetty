@@ -210,7 +210,7 @@ namespace DotNetty.Codecs.Http2
         {
             var p = channel.Pipeline;
             var handler = this.InternalHandler;
-            if (handler != null)
+            if (handler is object)
             {
                 p.AddLast(handler);
             }

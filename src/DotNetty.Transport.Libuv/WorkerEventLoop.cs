@@ -66,7 +66,7 @@ namespace DotNetty.Transport.Libuv
         {
             try
             {
-                if (request.Error != null)
+                if (request.Error is object)
                 {
                     if (Logger.WarnEnabled) Logger.FailedToConnectToDispatcher(request);
                     this.connectCompletion.TrySetException(request.Error);
@@ -123,7 +123,7 @@ namespace DotNetty.Transport.Libuv
 
             public PipeConnect(WorkerEventLoop workerEventLoop)
             {
-                Debug.Assert(workerEventLoop != null);
+                Debug.Assert(workerEventLoop is object);
 
                 this.workerEventLoop = workerEventLoop;
                 this.Connect();
@@ -132,7 +132,7 @@ namespace DotNetty.Transport.Libuv
 
             protected override void OnWatcherCallback()
             {
-                if (this.Error != null && this.retryCount < MaximumRetryCount)
+                if (this.Error is object && this.retryCount < MaximumRetryCount)
                 {
                     if (Logger.InfoEnabled) Logger.FailedToConnectToDispatcher(this.retryCount, this.Error);
                     this.Connect();

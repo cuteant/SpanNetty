@@ -188,7 +188,7 @@ namespace DotNetty.Common
 
             public DefaultResourceLeak(ResourceLeakDetector owner, object referent)
             {
-                Debug.Assert(referent != null);
+                Debug.Assert(referent is object);
 
                 this.owner = owner;
                 GCNotice gcNotice;
@@ -248,7 +248,7 @@ namespace DotNetty.Common
                         {
                             dropped = false;
                         }
-                        newHead = hint != null ? new RecordEntry(prevHead, stackTrace, hint) : new RecordEntry(prevHead, stackTrace);
+                        newHead = hint is object ? new RecordEntry(prevHead, stackTrace, hint) : new RecordEntry(prevHead, stackTrace);
                         thisHead = Interlocked.CompareExchange(ref this.head, newHead, thisHead);
                     }
                     while (thisHead != oldHead);
@@ -391,7 +391,7 @@ namespace DotNetty.Common
             public override string ToString()
             {
                 var buf = new StringBuilder(2048);
-                if (this.hintString != null)
+                if (this.hintString is object)
                 {
                     buf.Append("\tHint: ").Append(this.hintString).Append(StringUtil.Newline);
                 }

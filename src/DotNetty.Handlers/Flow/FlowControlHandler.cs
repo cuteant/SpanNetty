@@ -78,7 +78,7 @@ namespace DotNetty.Handlers.Flow
          */
         void Destroy()
         {
-            if (this.queue != null)
+            if (this.queue is object)
             {
                 if (this.queue.NonEmpty)
                 {
@@ -160,7 +160,7 @@ namespace DotNetty.Handlers.Flow
          */
         int Dequeue(IChannelHandlerContext ctx, int minConsume)
         {
-            if (this.queue != null)
+            if (this.queue is object)
             {
                 int consumed = 0;
 

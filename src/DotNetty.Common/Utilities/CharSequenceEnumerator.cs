@@ -75,7 +75,7 @@ namespace DotNetty.Common.Utilities
 
         public void Dispose()
         {
-            if (this.charSequence != null)
+            if (this.charSequence is object)
             {
                 this.index = this.charSequence.Count;
             }

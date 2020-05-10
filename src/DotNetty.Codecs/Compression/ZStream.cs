@@ -314,7 +314,7 @@ namespace DotNetty.Codecs.Compression
 
         internal void SetInput(byte[] buf, int off, int len, bool append)
         {
-            if (len <= 0 && append && next_in != null) return;
+            if (len <= 0 && append && next_in is object) return;
 
             if (avail_in > 0 && append)
             {

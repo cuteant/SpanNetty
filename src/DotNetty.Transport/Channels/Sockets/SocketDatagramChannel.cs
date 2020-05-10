@@ -63,7 +63,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override bool DoConnect(EndPoint remoteAddress, EndPoint localAddress)
         {
-            if (localAddress != null)
+            if (localAddress is object)
             {
                 this.DoBind(localAddress);
             }
@@ -437,7 +437,7 @@ namespace DotNetty.Transport.Channels.Sockets
         object CreateMulticastOption(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source)
         {
             int interfaceIndex = -1;
-            if (networkInterface != null)
+            if (networkInterface is object)
             {
                 int index = this.config.GetNetworkInterfaceIndex(networkInterface);
                 if (index >= 0)
@@ -453,7 +453,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     multicastOption.InterfaceIndex = interfaceIndex;
                 }
-                if (source != null)
+                if (source is object)
                 {
                     multicastOption.LocalAddress = source.Address;
                 }

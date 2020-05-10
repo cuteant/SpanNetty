@@ -16,7 +16,7 @@ namespace DotNetty.Codecs
         public virtual bool TryAcceptInboundMessage(object msg, out T cast)
         {
             cast = msg as T;
-            return cast != null;
+            return cast is object;
         }
 
         public override void ChannelRead(IChannelHandlerContext context, object message)

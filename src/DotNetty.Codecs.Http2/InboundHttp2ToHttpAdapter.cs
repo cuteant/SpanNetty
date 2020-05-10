@@ -44,7 +44,7 @@ namespace DotNetty.Codecs.Http2
         protected void RemoveMessage(IHttp2Stream stream, bool release)
         {
             IFullHttpMessage msg = stream.RemoveProperty<IFullHttpMessage>(this.messageKey);
-            if (release && msg != null)
+            if (release && msg is object)
             {
                 msg.Release();
             }
@@ -68,7 +68,7 @@ namespace DotNetty.Codecs.Http2
         protected void PutMessage(IHttp2Stream stream, IFullHttpMessage message)
         {
             IFullHttpMessage previous = stream.SetProperty<IFullHttpMessage>(this.messageKey, message);
-            if (previous != message && previous != null)
+            if (previous != message && previous is object)
             {
                 previous.Release();
             }
@@ -213,7 +213,7 @@ namespace DotNetty.Codecs.Http2
         {
             IHttp2Stream stream = this.connection.Stream(streamId);
             IFullHttpMessage msg = this.ProcessHeadersBegin(ctx, stream, headers, endOfStream, true, true);
-            if (msg != null)
+            if (msg is object)
             {
                 this.ProcessHeadersEnd(ctx, stream, msg, endOfStream);
             }
@@ -223,7 +223,7 @@ namespace DotNetty.Codecs.Http2
         {
             IHttp2Stream stream = this.connection.Stream(streamId);
             IFullHttpMessage msg = this.ProcessHeadersBegin(ctx, stream, headers, endOfStream, true, true);
-            if (msg != null)
+            if (msg is object)
             {
                 // Add headers for dependency and weight.
                 // See https://github.com/netty/netty/issues/5866
@@ -241,7 +241,7 @@ namespace DotNetty.Codecs.Http2
         {
             IHttp2Stream stream = this.connection.Stream(streamId);
             IFullHttpMessage msg = this.GetMessage(stream);
-            if (msg != null)
+            if (msg is object)
             {
                 this.OnRstStreamRead(stream, msg);
             }

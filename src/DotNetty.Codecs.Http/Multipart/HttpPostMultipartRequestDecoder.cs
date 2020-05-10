@@ -98,10 +98,10 @@ namespace DotNetty.Codecs.Http.Multipart
         void SetMultipart(ICharSequence contentType)
         {
             ICharSequence[] dataBoundary = HttpPostRequestDecoder.GetMultipartDataBoundary(contentType);
-            if (dataBoundary != null)
+            if (dataBoundary is object)
             {
                 this.multipartDataBoundary = new AsciiString(dataBoundary[0]);
-                if (dataBoundary.Length > 1 && dataBoundary[1] != null)
+                if (dataBoundary.Length > 1 && dataBoundary[1] is object)
                 {
                     this.charset = Encoding.GetEncoding(dataBoundary[1].ToString());
                 }
@@ -198,7 +198,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 this.isLastChunk = true;
             }
             this.ParseBody();
-            if (this.undecodedChunk != null
+            if (this.undecodedChunk is object
                 && this.undecodedChunk.WriterIndex > this.discardThreshold)
             {
                 this.undecodedChunk.DiscardReadBytes();
@@ -237,7 +237,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             get
             {
-                if (this.currentFileUpload != null)
+                if (this.currentFileUpload is object)
                 {
                     return this.currentFileUpload;
                 }
@@ -289,7 +289,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
 
             IInterfaceHttpData data = this.DecodeMultipart(this.currentStatus);
-            while (data != null)
+            while (data is object)
             {
                 this.AddHttpData(data);
                 if (this.currentStatus == MultiPartStatus.PreEpilogue
@@ -356,7 +356,7 @@ namespace DotNetty.Codecs.Http.Multipart
                             long size;
                             try
                             {
-                                size = lengthAttribute != null ? long.Parse(lengthAttribute.Value) : 0L;
+                                size = lengthAttribute is object ? long.Parse(lengthAttribute.Value) : 0L;
                             }
                             catch (IOException e)
                             {
@@ -391,7 +391,7 @@ namespace DotNetty.Codecs.Http.Multipart
                             {
                                 ThrowHelper.ThrowErrorDataDecoderException(e);
                             }
-                            if (localCharset != null)
+                            if (localCharset is object)
                             {
                                 this.currentAttribute.Charset = localCharset;
                             }
@@ -692,7 +692,7 @@ namespace DotNetty.Codecs.Http.Multipart
             this.currentFieldAttributes.TryGetValue(HttpHeaderValues.FileName, out IAttribute filenameAttribute);
             if (this.currentStatus == MultiPartStatus.Disposition)
             {
-                if (filenameAttribute != null)
+                if (filenameAttribute is object)
                 {
                     // FileUpload
                     this.currentStatus = MultiPartStatus.Fileupload;
@@ -709,7 +709,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             else
             {
-                if (filenameAttribute != null)
+                if (filenameAttribute is object)
                 {
                     // FileUpload
                     this.currentStatus = MultiPartStatus.MixedFileUpload;
@@ -777,7 +777,7 @@ namespace DotNetty.Codecs.Http.Multipart
             Encoding localCharset = this.charset;
             // Default
             HttpPostBodyUtil.TransferEncodingMechanism mechanism = HttpPostBodyUtil.TransferEncodingMechanism.Bit7;
-            if (encodingAttribute != null)
+            if (encodingAttribute is object)
             {
                 string code = null;
                 try
@@ -846,7 +846,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 long size;
                 try
                 {
-                    size = lengthAttribute != null ? long.Parse(lengthAttribute.Value) : 0L;
+                    size = lengthAttribute is object ? long.Parse(lengthAttribute.Value) : 0L;
                 }
                 catch (IOException e)
                 {
@@ -859,7 +859,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 try
                 {
                     string contentType;
-                    if (contentTypeAttribute != null)
+                    if (contentTypeAttribute is object)
                     {
                         contentType = contentTypeAttribute.Value;
                     }
@@ -929,7 +929,7 @@ namespace DotNetty.Codecs.Http.Multipart
             this.CleanFiles();
             this.destroyed = true;
 
-            if (this.undecodedChunk != null && this.undecodedChunk.ReferenceCount > 0)
+            if (this.undecodedChunk is object && this.undecodedChunk.ReferenceCount > 0)
             {
                 this.undecodedChunk.Release();
                 this.undecodedChunk = null;

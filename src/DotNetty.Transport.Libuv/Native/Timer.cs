@@ -17,8 +17,8 @@ namespace DotNetty.Transport.Libuv.Native
         public unsafe Timer(Loop loop, Action<object> callback, object state) 
             : base(uv_handle_type.UV_TIMER)
         {
-            Debug.Assert(loop != null);
-            Debug.Assert(callback != null);
+            Debug.Assert(loop is object);
+            Debug.Assert(callback is object);
 
             IntPtr handle = NativeMethods.Allocate(uv_handle_type.UV_TIMER);
 

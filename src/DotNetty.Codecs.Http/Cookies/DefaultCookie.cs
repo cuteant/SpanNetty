@@ -108,7 +108,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
             if (this.path == null)
             {
-                if (other.Path != null)
+                if (other.Path is object)
                 {
                     return false;
                 }
@@ -129,7 +129,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
             if (this.domain == null)
             {
-                if (other.Domain != null)
+                if (other.Domain is object)
                 {
                     return false;
                 }
@@ -152,7 +152,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
             if (this.path == null)
             {
-                if (other.Path != null)
+                if (other.Path is object)
                 {
                     return -1;
                 }
@@ -172,7 +172,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
             if (this.domain == null)
             {
-                if (other.Domain != null)
+                if (other.Domain is object)
                 {
                     return -1;
                 }
@@ -209,11 +209,11 @@ namespace DotNetty.Codecs.Http.Cookies
         {
             StringBuilder buf = StringBuilder();
             buf.Append($"{this.name}={this.Value}");
-            if (this.domain != null)
+            if (this.domain is object)
             {
                 buf.Append($", domain={this.domain}");
             }
-            if (this.path != null)
+            if (this.path is object)
             {
                 buf.Append($", path={this.path}");
             }

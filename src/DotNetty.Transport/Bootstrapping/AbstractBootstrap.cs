@@ -61,7 +61,7 @@ namespace DotNetty.Transport.Bootstrapping
         {
             if (null == group) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.group); }
 
-            if (InternalGroup != null)
+            if (InternalGroup is object)
             {
                 ThrowHelper.ThrowInvalidOperationException_GroupHasAlreadyBeenSet();
             }
@@ -394,7 +394,7 @@ namespace DotNetty.Transport.Bootstrapping
                 .Append('(');
 
             var group = InternalGroup;
-            if (group != null)
+            if (group is object)
             {
                 buf.Append("group: ")
                     .Append(group.GetType().Name)
@@ -402,7 +402,7 @@ namespace DotNetty.Transport.Bootstrapping
             }
 
             var channelFactory = InternalChannelFactory;
-            if (channelFactory != null)
+            if (channelFactory is object)
             {
                 buf.Append("channelFactory: ")
                     .Append(channelFactory)
@@ -410,7 +410,7 @@ namespace DotNetty.Transport.Bootstrapping
             }
 
             var localAddress = InternalLocalAddress;
-            if (localAddress != null)
+            if (localAddress is object)
             {
                 buf.Append("localAddress: ")
                     .Append(localAddress)
@@ -432,7 +432,7 @@ namespace DotNetty.Transport.Bootstrapping
             }
 
             var handler = InternalHandler;
-            if (handler != null)
+            if (handler is object)
             {
                 buf.Append("handler: ")
                     .Append(handler)
@@ -465,7 +465,7 @@ namespace DotNetty.Transport.Bootstrapping
         //    protected EventExecutor executor()
         //    {
         //        EventExecutor executor = this.executor;
-        //        if (executor != null)
+        //        if (executor is object)
         //        {
         //            // If the registration was a success executor is set.
         //            //

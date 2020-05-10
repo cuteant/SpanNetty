@@ -41,7 +41,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public bool Equals(WebSocketScheme other)
         {
             if (ReferenceEquals(this, other)) { return true; }
-            return other != null
+            return other is object
                 && other.port == this.port
                 && other.name.Equals(this.name);
         }

@@ -54,7 +54,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 frame = this.DecodeTextFrame(context, input);
             }
 
-            if (frame != null)
+            if (frame is object)
             {
                 output.Add(frame);
             }

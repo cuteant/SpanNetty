@@ -124,9 +124,9 @@ namespace DotNetty.Transport.Libuv
 
                 var connError = connection.Error;
                 // If the AutoRead is false, reject the connection
-                if (!ch.config.AutoRead || connError != null)
+                if (!ch.config.AutoRead || connError is object)
                 {
-                    if (connError != null)
+                    if (connError is object)
                     {
                         if (Logger.InfoEnabled) Logger.AcceptClientConnectionFailed(connError);
                         this.channel.Pipeline.FireExceptionCaught(connError);
@@ -200,7 +200,7 @@ namespace DotNetty.Transport.Libuv
                 allocHandle.ReadComplete();
                 pipeline.FireChannelReadComplete();
 
-                if (exception != null)
+                if (exception is object)
                 {
                     pipeline.FireExceptionCaught(exception);
                 }

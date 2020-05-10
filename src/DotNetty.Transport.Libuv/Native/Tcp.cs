@@ -22,7 +22,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         internal void ReadStart(INativeUnsafe channel)
         {
-            Debug.Assert(channel != null);
+            Debug.Assert(channel is object);
 
             this.Validate();
             int result = NativeMethods.uv_read_start(this.Handle, AllocateCallback, ReadCallback);

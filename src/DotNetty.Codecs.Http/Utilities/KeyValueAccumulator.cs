@@ -71,7 +71,7 @@ namespace DotNetty.Codecs.Http.Utilities
 
         public Dictionary<string, StringValues> GetResults()
         {
-            if (_expandingAccumulator != null)
+            if (_expandingAccumulator is object)
             {
                 // Coalesce count 3+ multi-value entries into _accumulator dictionary
                 foreach (var entry in _expandingAccumulator)

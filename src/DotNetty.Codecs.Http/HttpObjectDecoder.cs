@@ -360,7 +360,7 @@ namespace DotNetty.Codecs.Http
             }
 
             // Handle the last unfinished message.
-            if (this.message != null)
+            if (this.message is object)
             {
                 bool chunked = HttpUtil.IsTransferEncodingChunked(this.message);
                 if (this.currentState == State.ReadVariableLengthContent 
@@ -558,7 +558,7 @@ namespace DotNetty.Codecs.Http
                 do
                 {
                     byte firstChar = line.Bytes[0];
-                    if (this.name != null && s_whiteSpaceChars.Contains(firstChar))
+                    if (this.name is object && s_whiteSpaceChars.Contains(firstChar))
                     {
                         //please do not make one line from below code
                         //as it breaks +XX:OptimizeStringConcat optimization
@@ -567,7 +567,7 @@ namespace DotNetty.Codecs.Http
                     }
                     else
                     {
-                        if (this.name != null)
+                        if (this.name is object)
                         {
                             headers.Add(this.name, this.value);
                         }
@@ -583,7 +583,7 @@ namespace DotNetty.Codecs.Http
             }
 
             // Add the last header.
-            if (this.name != null)
+            if (this.name is object)
             {
                 headers.Add(this.name, this.value);
             }
@@ -641,7 +641,7 @@ namespace DotNetty.Codecs.Http
                 do
                 {
                     byte firstChar = line.Bytes[0];
-                    if (lastHeader != null && s_whiteSpaceChars.Contains(firstChar))
+                    if (lastHeader is object && s_whiteSpaceChars.Contains(firstChar))
                     {
                         IList<ICharSequence> current = trailingHeaders.TrailingHeaders.GetAll(lastHeader);
                         if (current.Count > 0)

@@ -54,11 +54,11 @@ namespace DotNetty.Transport.Channels.Local
             : base(parent)
         {
             this.peer = peer;
-            if (parent != null)
+            if (parent is object)
             {
                 this.localAddress = parent.LocalAddress;
             }
-            if (peer != null)
+            if (peer is object)
             {
                 this.remoteAddress = peer.LocalAddress;
             }
@@ -108,7 +108,7 @@ namespace DotNetty.Transport.Channels.Local
             // deregistered / registered later again.
             //
             // See https://github.com/netty/netty/issues/2400
-            if (Volatile.Read(ref this.peer) != null && this.Parent != null)
+            if (Volatile.Read(ref this.peer) is object && this.Parent is object)
             {
                 // Store the peer in a local variable as it may be set to null if doClose() is called.
                 // See https://github.com/netty/netty/issues/2144
@@ -129,7 +129,7 @@ namespace DotNetty.Transport.Channels.Local
 
                         // Only trigger fireChannelActive() if the promise was not null and was not completed yet.
                         // connectPromise may be set to null if doClose() was called in the meantime.
-                        if (promise != null && promise.TryComplete())
+                        if (promise is object && promise.TryComplete())
                         {
                             peer.Pipeline.FireChannelActive();
                         }
@@ -158,7 +158,7 @@ namespace DotNetty.Transport.Channels.Local
                 {
                     // Update all internal state before the closeFuture is notified.
                     var thisLocalAddr = Volatile.Read(ref this.localAddress);
-                    if (thisLocalAddr != null)
+                    if (thisLocalAddr is object)
                     {
                         if (this.Parent == null)
                         {
@@ -172,10 +172,10 @@ namespace DotNetty.Transport.Channels.Local
                     Interlocked.Exchange(ref this.state, State.Closed);
 
                     // Preserve order of event and force a read operation now before the close operation is processed.
-                    if (SharedConstants.True == Volatile.Read(ref this.writeInProgress) && peer != null) { this.FinishPeerRead(peer); }
+                    if (SharedConstants.True == Volatile.Read(ref this.writeInProgress) && peer is object) { this.FinishPeerRead(peer); }
 
                     TaskCompletionSource promise = Volatile.Read(ref this.connectPromise);
-                    if (promise != null)
+                    if (promise is object)
                     {
                         // Use tryFailure() instead of setFailure() to avoid the race against cancel().
                         promise.TrySetException(DoCloseClosedChannelException);
@@ -183,7 +183,7 @@ namespace DotNetty.Transport.Channels.Local
                     }
                 }
 
-                if (peer != null)
+                if (peer is object)
                 {
                     Interlocked.Exchange(ref this.peer, null);
                     // Always call peer.eventLoop().execute() even if peer.eventLoop().inEventLoop() is true.
@@ -421,7 +421,7 @@ namespace DotNetty.Transport.Channels.Local
         void FinishPeerRead0(LocalChannel peer)
         {
             Task peerFinishReadFuture = Volatile.Read(ref peer.finishReadFuture);
-            if (peerFinishReadFuture != null)
+            if (peerFinishReadFuture is object)
             {
                 if (!peerFinishReadFuture.IsCompleted)
                 {
@@ -467,7 +467,7 @@ namespace DotNetty.Transport.Channels.Local
                     return promise.Task;
                 }
 
-                if (Volatile.Read(ref this.channel.connectPromise) != null)
+                if (Volatile.Read(ref this.channel.connectPromise) is object)
                 {
                     ThrowHelper.ThrowConnectionPendingException();
                 }
@@ -483,7 +483,7 @@ namespace DotNetty.Transport.Channels.Local
                     }
                 }
 
-                if (localAddress != null)
+                if (localAddress is object)
                 {
                     try
                     {

@@ -46,7 +46,7 @@ namespace DotNetty.Codecs.Http2
         public override Http2FrameCodec Build()
         {
             var frameWriter = this.frameWriter;
-            if (frameWriter != null)
+            if (frameWriter is object)
             {
                 // This is to support our tests and will never be executed by the user as frameWriter(...)
                 // is package-private.
@@ -56,7 +56,7 @@ namespace DotNetty.Codecs.Http2
                         new DefaultHttp2HeadersDecoder(true) :
                         new DefaultHttp2HeadersDecoder(true, maxHeaderListSize.Value));
 
-                if (this.FrameLogger != null)
+                if (this.FrameLogger is object)
                 {
                     frameWriter = new Http2OutboundFrameLogger(frameWriter, this.FrameLogger);
                     frameReader = new Http2InboundFrameLogger(frameReader, this.FrameLogger);

@@ -87,7 +87,7 @@ namespace DotNetty.Transport.Libuv
 
         internal void Accept(NativeHandle handle)
         {
-            Debug.Assert(this.dispatcherLoop != null);
+            Debug.Assert(this.dispatcherLoop is object);
             this.dispatcherLoop.Accept(handle);
         }
 

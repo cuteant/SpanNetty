@@ -72,7 +72,7 @@ namespace DotNetty.Transport.Libuv
             ConnectRequest request = null;
             try
             {
-                if (localAddress != null)
+                if (localAddress is object)
                 {
                     this.DoBind(localAddress);
                 }
@@ -90,7 +90,7 @@ namespace DotNetty.Transport.Libuv
         protected override void DoClose()
         {
             var promise = this.connectPromise;
-            if (promise != null)
+            if (promise is object)
             {
                 promise.TrySetException(ThrowHelper.GetClosedChannelException());
                 this.connectPromise = null;
@@ -127,7 +127,7 @@ namespace DotNetty.Transport.Libuv
 
                 try
                 {
-                    if (ch.connectPromise != null)
+                    if (ch.connectPromise is object)
                     {
                         ThrowHelper.ThrowInvalidOperationException_ConnAttempt();
                     }
@@ -158,7 +158,7 @@ namespace DotNetty.Transport.Libuv
                 var address = (IPEndPoint)state;
                 var promise = ch.connectPromise;
                 var cause = new ConnectTimeoutException($"connection timed out: {address}");
-                if (promise != null && promise.TrySetException(cause))
+                if (promise is object && promise.TrySetException(cause))
                 {
                     ch.Unsafe.CloseSafe();
                 }
@@ -174,10 +174,10 @@ namespace DotNetty.Transport.Libuv
                 bool success = false;
                 try
                 {
-                    if (promise != null) // Not cancelled from timed out
+                    if (promise is object) // Not cancelled from timed out
                     {
                         OperationException error = request.Error;
-                        if (error != null)
+                        if (error is object)
                         {
                             if (error.ErrorCode == ErrorCode.ETIMEDOUT)
                             {
@@ -220,7 +220,7 @@ namespace DotNetty.Transport.Libuv
             // Allocate callback from libuv thread
             uv_buf_t INativeUnsafe.PrepareRead(ReadOperation readOperation)
             {
-                Debug.Assert(readOperation != null);
+                Debug.Assert(readOperation is object);
 
                 var ch = this.channel;
                 IChannelConfiguration config = ch.Configuration;
@@ -241,12 +241,12 @@ namespace DotNetty.Transport.Libuv
                 IChannelPipeline pipeline = ch.Pipeline;
                 OperationException error = operation.Error;
 
-                bool close = error != null || operation.EndOfStream;
+                bool close = error is object || operation.EndOfStream;
                 IRecvByteBufAllocatorHandle allocHandle = this.RecvBufAllocHandle;
                 allocHandle.Reset(config);
 
                 IByteBuffer buffer = operation.Buffer;
-                Debug.Assert(buffer != null);
+                Debug.Assert(buffer is object);
 
                 allocHandle.LastBytesRead = operation.Status;
                 if (allocHandle.LastBytesRead <= 0)
@@ -275,7 +275,7 @@ namespace DotNetty.Transport.Libuv
 
                 if (close)
                 {
-                    if (error != null)
+                    if (error is object)
                     {
                         pipeline.FireExceptionCaught(ThrowHelper.GetChannelException(error));
                     }
@@ -331,7 +331,7 @@ namespace DotNetty.Transport.Libuv
                 try
                 {
                     ChannelOutboundBuffer input = this.OutboundBuffer;
-                    if (error != null)
+                    if (error is object)
                     {
                         input.FailFlushed(error, true);
                         ch.Pipeline.FireExceptionCaught(error);

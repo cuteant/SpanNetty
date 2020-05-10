@@ -202,7 +202,7 @@ namespace DotNetty.Codecs.Http2
                     contentEncoding = HttpHeaderValues.Identity;
                 }
                 EmbeddedChannel channel = NewContentDecompressor(ctx, contentEncoding);
-                if (channel != null)
+                if (channel is object)
                 {
                     decompressor = new Http2Decompressor(channel);
                     stream.SetProperty(this.propertyKey, decompressor);
@@ -220,7 +220,7 @@ namespace DotNetty.Codecs.Http2
                 }
             }
 
-            if (decompressor != null)
+            if (decompressor is object)
             {
                 // The content length will be for the compressed data. Since we will decompress the data
                 // this content-length will not be correct. Instead of queuing messages or delaying sending
@@ -285,7 +285,7 @@ namespace DotNetty.Codecs.Http2
             public override void OnStreamRemoved(IHttp2Stream stream)
             {
                 Http2Decompressor decompressor = this.frameListener.Decompressor(stream);
-                if (decompressor != null)
+                if (decompressor is object)
                 {
                     Cleanup(decompressor);
                 }
@@ -315,7 +315,7 @@ namespace DotNetty.Codecs.Http2
             public bool ConsumeBytes(IHttp2Stream stream, int numBytes)
             {
                 Http2Decompressor decompressor = this.frameListener.Decompressor(stream);
-                if (decompressor != null)
+                if (decompressor is object)
                 {
                     // Convert the decompressed bytes to compressed (on the wire) bytes.
                     numBytes = decompressor.ConsumeBytes(stream.Id, numBytes);

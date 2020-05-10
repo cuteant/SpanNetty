@@ -22,7 +22,7 @@ namespace DotNetty.Transport.Channels
         public virtual bool TryAcceptInboundMessage(object msg, out I imsg)
         {
             imsg = msg as I;
-            return imsg != null;
+            return imsg is object;
         }
 
         public override void ChannelRead(IChannelHandlerContext ctx, object msg)

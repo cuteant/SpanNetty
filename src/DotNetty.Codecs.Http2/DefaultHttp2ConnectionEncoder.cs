@@ -516,7 +516,7 @@ namespace DotNetty.Codecs.Http2
 
             public override void Error(IChannelHandlerContext ctx, Exception cause)
             {
-                if (ctx != null)
+                if (ctx is object)
                 {
                     this.encoder.lifecycleManager.OnError(ctx, true, cause);
                 }

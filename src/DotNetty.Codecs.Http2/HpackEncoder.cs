@@ -150,7 +150,7 @@ namespace DotNetty.Codecs.Http2
             }
 
             HeaderEntry headerField = this.GetEntry(name, value);
-            if (headerField != null)
+            if (headerField is object)
             {
                 int index = this.GetIndex(headerField.index) + HpackStaticTable.Length;
                 // Section 6.1. Indexed Header Field Representation
@@ -405,7 +405,7 @@ namespace DotNetty.Codecs.Http2
 
             int h = AsciiString.GetHashCode(name);
             int i = this.Index(h);
-            for (HeaderEntry e = this.headerFields[i]; e != null; e = e.next)
+            for (HeaderEntry e = this.headerFields[i]; e is object; e = e.next)
             {
                 // To avoid short circuit behavior a bitwise operator is used instead of a bool operator.
                 if (e.hash == h && (HpackUtil.EqualsConstantTime(name, e.name) & HpackUtil.EqualsConstantTime(value, e.value)) != 0)
@@ -432,7 +432,7 @@ namespace DotNetty.Codecs.Http2
 
             int h = AsciiString.GetHashCode(name);
             int i = this.Index(h);
-            for (HeaderEntry e = this.headerFields[i]; e != null; e = e.next)
+            for (HeaderEntry e = this.headerFields[i]; e is object; e = e.next)
             {
                 if (e.hash == h && HpackUtil.EqualsConstantTime(name, e.name) != 0)
                 {
@@ -500,7 +500,7 @@ namespace DotNetty.Codecs.Http2
             int i = this.Index(h);
             HeaderEntry prev = this.headerFields[i];
             HeaderEntry e = prev;
-            while (e != null)
+            while (e is object)
             {
                 HeaderEntry next = e.next;
                 if (e == eldest)

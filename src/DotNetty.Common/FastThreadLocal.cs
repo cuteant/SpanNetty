@@ -26,7 +26,7 @@ namespace DotNetty.Common
             try
             {
                 object v = threadLocalMap.GetIndexedVariable(VariablesToRemoveIndex);
-                if (v != null && v != InternalThreadLocalMap.Unset)
+                if (v is object && v != InternalThreadLocalMap.Unset)
                 {
                     var variablesToRemove = (HashSet<FastThreadLocal>)v;
                     foreach (FastThreadLocal tlv in variablesToRemove) // todo: do we need to make a snapshot?
@@ -158,7 +158,7 @@ namespace DotNetty.Common
         /// The specified thread local map must be for the current thread.
         /// </summary>
         [MethodImpl(InlineMethod.Value)]
-        public bool IsSet(InternalThreadLocalMap threadLocalMap) => threadLocalMap != null && threadLocalMap.IsIndexedVariableSet(this.index);
+        public bool IsSet(InternalThreadLocalMap threadLocalMap) => threadLocalMap is object && threadLocalMap.IsIndexedVariableSet(this.index);
 
         /// <summary>
         /// Returns the initial value for this thread-local variable.

@@ -158,7 +158,7 @@ namespace DotNetty.Codecs.Http2
 
         bool IsChannelWritable()
         {
-            return this.ctx != null && this.IsChannelWritable0();
+            return this.ctx is object && this.IsChannelWritable0();
         }
 
         bool IsChannelWritable0()
@@ -336,7 +336,7 @@ namespace DotNetty.Codecs.Http2
 
                     // Write the remainder of frames that we are allowed to
                     bool writeOccurred = false;
-                    while (!this.cancelled && (frame = this.Peek()) != null)
+                    while (!this.cancelled && (frame = this.Peek()) is object)
                     {
                         int maxBytes = Math.Min(allocated, this.WritableWindow());
                         if (maxBytes <= 0 && frame.Size > 0)
@@ -549,7 +549,7 @@ namespace DotNetty.Codecs.Http2
             void WriteError(IHttp2RemoteFlowControlled frame, Http2Exception cause)
             {
                 IChannelHandlerContext ctx = this.controller.ctx;
-                Debug.Assert(ctx != null);
+                Debug.Assert(ctx is object);
                 this.DecrementPendingBytes(frame.Size, true);
                 frame.Error(ctx, cause);
             }

@@ -68,7 +68,7 @@ namespace DotNetty.Buffers
             if (tryFree)
             {
                 byte[] oldBuffer = this.buffer;
-                if (oldBuffer != null)
+                if (oldBuffer is object)
                 {
                     if (this.doNotFree)
                     {
