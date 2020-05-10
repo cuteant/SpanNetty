@@ -9,6 +9,7 @@ namespace Echo.Server
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using DotNetty.Codecs;
+    using DotNetty.Common;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Bootstrapping;
@@ -28,6 +29,7 @@ namespace Echo.Server
 
             if (ServerSettings.UseLibuv)
             {
+                ResourceLeakDetector.Level = ResourceLeakDetector.DetectionLevel.Disabled;
                 var dispatcher = new DispatcherEventLoopGroup();
                 bossGroup = dispatcher;
                 workerGroup = new WorkerEventLoopGroup(dispatcher);
