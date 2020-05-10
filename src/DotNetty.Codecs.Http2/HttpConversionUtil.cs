@@ -479,12 +479,13 @@ namespace DotNetty.Codecs.Http2
                     else if (aName.ContentEqualsIgnoreCase(HttpHeaderNames.Cookie))
                     {
                         AsciiString value = AsciiString.Of(entry.Value);
+                        uint uValueCount = (uint)value.Count;
                         // split up cookies to allow for better compression
                         // https://tools.ietf.org/html/rfc7540#section-8.1.2.5
                         try
                         {
                             int index = value.ForEachByte(ByteProcessor.FindSemicolon);
-                            if (index != -1)
+                            if (uValueCount > (uint)index) // != -1
                             {
                                 int start = 0;
                                 do
@@ -492,9 +493,9 @@ namespace DotNetty.Codecs.Http2
                                     output.Add(HttpHeaderNames.Cookie, value.SubSequence(start, index, false));
                                     // skip 2 characters "; " (see https://tools.ietf.org/html/rfc6265#section-4.2.1)
                                     start = index + 2;
-                                } while (start < value.Count &&
-                                        (index = value.ForEachByte(start, value.Count - start, ByteProcessor.FindSemicolon)) != -1);
-                                if (start >= value.Count)
+                                } while ((uint)start < uValueCount &&
+                                        uValueCount > (uint)(index = value.ForEachByte(start, value.Count - start, ByteProcessor.FindSemicolon))); // != -1
+                                if ((uint)start >= uValueCount)
                                 {
                                     ThrowHelper.ThrowArgumentException_CookieValueIsOfUnexpectedFormat(value);
                                 }
@@ -505,8 +506,9 @@ namespace DotNetty.Codecs.Http2
                                 output.Add(HttpHeaderNames.Cookie, value);
                             }
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
+                            var str = ex.ToString();
                             // This is not expect to happen because FIND_SEMI_COLON never throws but must be caught
                             // because of the ByteProcessor interface.
                             ThrowHelper.ThrowInvalidOperationException();

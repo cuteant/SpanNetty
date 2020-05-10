@@ -39,7 +39,7 @@ namespace DotNetty.Common.Utilities
         {
             var thisLength = this.length;
             if (0u >= (uint)thisLength) { return IndexNotFound; }
-            return this.ForEachByte0(0, this.length, visitor);
+            return SpanHelpers.ForEachByte(ref this.value[this.offset], visitor, thisLength);
         }
 
         public int ForEachByte(int index, int count, IByteProcessor visitor)
@@ -50,20 +50,16 @@ namespace DotNetty.Common.Utilities
             {
                 ThrowIndexOutOfRangeException_Index(index, count, thisLength);
             }
-            return this.ForEachByte0(index, count, visitor);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        int ForEachByte0(int index, int count, IByteProcessor visitor)
-        {
-            return SpanHelpers.ForEachByte(ref this.value[this.offset + index], visitor, count);
+            var idx = SpanHelpers.ForEachByte(ref this.value[this.offset + index], visitor, count);
+            if ((uint)count > (uint)idx) { return index + idx; }
+            return IndexNotFound;
         }
 
         public int ForEachByteDesc(IByteProcessor visitor)
         {
             var thisLength = this.length;
             if (0u >= (uint)thisLength) { return IndexNotFound; }
-            return this.ForEachByteDesc0(0, thisLength, visitor);
+            return SpanHelpers.ForEachByteDesc(ref this.value[this.offset], visitor, thisLength);
         }
 
         public int ForEachByteDesc(int index, int count, IByteProcessor visitor)
@@ -75,13 +71,9 @@ namespace DotNetty.Common.Utilities
                 ThrowIndexOutOfRangeException_Index(index, count, thisLength);
             }
 
-            return this.ForEachByteDesc0(index, count, visitor);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        int ForEachByteDesc0(int index, int count, IByteProcessor visitor)
-        {
-            return SpanHelpers.ForEachByteDesc(ref this.value[this.offset + index], visitor, count);
+            var idx = SpanHelpers.ForEachByteDesc(ref this.value[this.offset + index], visitor, count);
+            if ((uint)count > (uint)idx) { return index + idx; }
+            return IndexNotFound;
         }
 
         public int CompareTo(ICharSequence other)
