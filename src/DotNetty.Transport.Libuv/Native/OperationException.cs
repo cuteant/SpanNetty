@@ -41,7 +41,9 @@ namespace DotNetty.Transport.Libuv.Native
         }
     }
 
+#pragma warning disable IDE1006 // 命名样式
     enum uv_err_code
+#pragma warning restore IDE1006 // 命名样式
     {
         UV_OK = 0,
         UV_E2BIG,

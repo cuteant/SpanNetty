@@ -11,11 +11,13 @@ namespace DotNetty.Transport.Libuv.Native
 
     static class UnixApi
     {
+#pragma warning disable IDE1006 // 命名样式
         [DllImport("libc", SetLastError = true)]
         static extern int setsockopt(int socket, int level, int option_name, IntPtr option_value, uint option_len);
 
         [DllImport("libc", SetLastError = true)]
         static extern unsafe int getsockopt(int socket, int level, int option_name, byte* optionValue, int* optionLen);
+#pragma warning restore IDE1006 // 命名样式
 
         const int SOL_SOCKET_LINUX = 0x0001;
         const int SO_REUSEADDR_LINUX = 0x0002;

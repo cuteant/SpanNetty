@@ -253,7 +253,6 @@ namespace DotNetty.Transport.Libuv
                 {
                     // nothing was read -> release the buffer.
                     buffer.Release();
-                    buffer = null;
                     close = allocHandle.LastBytesRead < 0;
                     if (close)
                     {

@@ -37,13 +37,17 @@ namespace DotNetty.Transport.Libuv.Native
             // https://msdn.microsoft.com/en-us/library/cc704588.aspx
             const uint STATUS_INVALID_INFO_CLASS = 0xC0000003;
 
+#pragma warning disable IDE0059 // 不需要赋值
             var statusBlock = new IO_STATUS_BLOCK();
+#pragma warning restore IDE0059 // 不需要赋值
             IntPtr socket = IntPtr.Zero;
             NativeMethods.uv_fileno(handle.Handle, ref socket);
 
             uint len = (uint)Marshal.SizeOf<FILE_COMPLETION_INFORMATION>();
-            if (NtSetInformationFile(socket, 
-                out statusBlock, this.fileCompletionInfoPtr, len, 
+            if (NtSetInformationFile(socket,
+#pragma warning disable IDE0059 // 不需要赋值
+                out statusBlock, this.fileCompletionInfoPtr, len,
+#pragma warning restore IDE0059 // 不需要赋值
                 FileReplaceCompletionInformation) == STATUS_INVALID_INFO_CLASS)
             {
                 // Replacing IOCP information is only supported on Windows 8.1 or newer
@@ -53,8 +57,12 @@ namespace DotNetty.Transport.Libuv.Native
 
         struct IO_STATUS_BLOCK
         {
+#pragma warning disable IDE0044 // 添加只读修饰符
+#pragma warning disable IDE0051 // 删除未使用的私有成员
             uint status;
             ulong information;
+#pragma warning restore IDE0051 // 删除未使用的私有成员
+#pragma warning restore IDE0044 // 添加只读修饰符
         }
 
         struct FILE_COMPLETION_INFORMATION
@@ -66,11 +74,13 @@ namespace DotNetty.Transport.Libuv.Native
         [DllImport("NtDll.dll")]
         static extern uint NtSetInformationFile(IntPtr FileHandle, out IO_STATUS_BLOCK IoStatusBlock, IntPtr FileInformation, uint Length, int FileInformationClass);
 
+#pragma warning disable IDE1006 // 命名样式
         [DllImport("ws2_32.dll", SetLastError = true)]
         static extern SocketError setsockopt(IntPtr socketHandle, SocketOptionLevel level, SocketOptionName optionName, ref int optionValue, uint optionLength);
 
         [DllImport("ws2_32.dll", SetLastError = true)]
         static extern SocketError getsockopt(IntPtr socketHandle, SocketOptionLevel level, SocketOptionName optionName, ref int optionValue, ref int optionLength);
+#pragma warning restore IDE1006 // 命名样式
 
         internal static bool GetReuseAddress(IntPtr socket)
         {

@@ -11,6 +11,7 @@ namespace DotNetty.Transport.Libuv.Native
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
 
+#pragma warning disable IDE1006 // 命名样式
     enum uv_run_mode
     {
         UV_RUN_DEFAULT = 0,
@@ -179,12 +180,16 @@ namespace DotNetty.Transport.Libuv.Native
         // https://msdn.microsoft.com/en-us/library/windows/desktop/ms740496(v=vs.85).aspx
         // although the c/c++ header defines it as a 2-byte short followed by a 14-byte array,
         // the simplest way to reserve the same size in c# is with four nameless long values
+#pragma warning disable IDE0044 // 添加只读修饰符
         private long _field0;
         private long _field1;
         private long _field2;
         private long _field3;
+#pragma warning restore IDE0044 // 添加只读修饰符
 
+#pragma warning disable IDE0060 // 删除未使用的参数
         public sockaddr(long ignored)
+#pragma warning restore IDE0060 // 删除未使用的参数
         {
             _field0 = _field1 = _field2 = _field3 = 0;
         }
@@ -235,9 +240,9 @@ namespace DotNetty.Transport.Libuv.Native
             if (PlatformApi.IsDarwin)
             {
                 // see explaination in example 4
-                family = family >> 8;
+                family >>= 8;
             }
-            family = family & 0xFF;
+            family &= 0xFF;
 
             if (family == 2)
             {
@@ -579,5 +584,6 @@ namespace DotNetty.Transport.Libuv.Native
 
         [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
         static extern IntPtr uv_err_name(uv_err_code err);
+#pragma warning restore IDE1006 // 命名样式
     }
 }
