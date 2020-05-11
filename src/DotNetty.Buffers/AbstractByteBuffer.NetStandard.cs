@@ -186,7 +186,7 @@ namespace DotNetty.Buffers
         }
 
 
-        public virtual IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src)
+        public virtual IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src)
         {
             this.CheckIndex(index);
             if (src.IsEmpty) { return this; }
@@ -197,7 +197,7 @@ namespace DotNetty.Buffers
             src.CopyTo(selfSpan);
             return this;
         }
-        public virtual IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src)
+        public virtual IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src)
         {
             this.CheckIndex(index);
             if (src.IsEmpty) { return this; }
@@ -209,14 +209,14 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public virtual IByteBuffer WriteBytes(ReadOnlySpan<byte> src)
+        public virtual IByteBuffer WriteBytes(in ReadOnlySpan<byte> src)
         {
             var writerIdx = this.writerIndex;
             this.SetBytes(writerIdx, src);
             this.writerIndex = writerIdx + src.Length;
             return this;
         }
-        public virtual IByteBuffer WriteBytes(ReadOnlyMemory<byte> src)
+        public virtual IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src)
         {
             var writerIdx = this.writerIndex;
             this.SetBytes(writerIdx, src);
@@ -359,7 +359,7 @@ namespace DotNetty.Buffers
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
-        public virtual int IndexOf(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        public virtual int IndexOf(int fromIndex, int toIndex, in ReadOnlySpan<byte> values)
         {
             if (fromIndex <= toIndex)
             {
@@ -378,14 +378,14 @@ namespace DotNetty.Buffers
             }
         }
 
-        internal protected virtual int IndexOf0(int index, int count, ReadOnlySpan<byte> values)
+        internal protected virtual int IndexOf0(int index, int count, in ReadOnlySpan<byte> values)
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.IndexOf(values);
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
-        internal protected virtual int LastIndexOf0(int index, int count, ReadOnlySpan<byte> values)
+        internal protected virtual int LastIndexOf0(int index, int count, in ReadOnlySpan<byte> values)
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.LastIndexOf(values);
@@ -458,7 +458,7 @@ namespace DotNetty.Buffers
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
-        public virtual int IndexOfAny(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        public virtual int IndexOfAny(int fromIndex, int toIndex, in ReadOnlySpan<byte> values)
         {
             if (fromIndex <= toIndex)
             {
@@ -477,14 +477,14 @@ namespace DotNetty.Buffers
             }
         }
 
-        internal protected virtual int IndexOfAny0(int index, int count, ReadOnlySpan<byte> values)
+        internal protected virtual int IndexOfAny0(int index, int count, in ReadOnlySpan<byte> values)
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.IndexOfAny(values);
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
-        internal protected virtual int LastIndexOfAny0(int index, int count, ReadOnlySpan<byte> values)
+        internal protected virtual int LastIndexOfAny0(int index, int count, in ReadOnlySpan<byte> values)
         {
             var span = this.GetReadableSpan(index, count);
             var result = span.LastIndexOfAny(values);

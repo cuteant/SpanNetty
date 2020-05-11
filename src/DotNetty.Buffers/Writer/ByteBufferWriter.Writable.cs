@@ -70,7 +70,7 @@ namespace DotNetty.Buffers
             Advance(ref idx);
         }
 
-        public void Write<TOperation>(TOperation operation, ReadOnlySpan<byte> input) where TOperation : IBufferOperation
+        public void Write<TOperation>(TOperation operation, in ReadOnlySpan<byte> input) where TOperation : IBufferOperation
         {
             int idx = 0, partialConsumed = 0;
             while (true)

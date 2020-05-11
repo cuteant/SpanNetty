@@ -15,7 +15,7 @@ namespace DotNetty.Handlers.Tls
             private Memory<byte> _sslOwnedBuffer;
             private int _readByteCount;
 
-            public void SetSource(ReadOnlyMemory<byte> source)
+            public void SetSource(in ReadOnlyMemory<byte> source)
             {
                 _input = source;
                 _inputOffset = 0;

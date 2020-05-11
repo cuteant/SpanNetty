@@ -12,7 +12,7 @@ namespace DotNetty.Common.Utilities
 
     partial class AsciiString : IHasAsciiSpan, IHasUtf16Span
     {
-        private static unsafe void GetBytes(ReadOnlySpan<char> chars, Span<byte> bytes)
+        private static unsafe void GetBytes(in ReadOnlySpan<char> chars, Span<byte> bytes)
         {
             // It's ok for us to operate on null / empty spans.
 

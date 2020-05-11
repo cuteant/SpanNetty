@@ -133,20 +133,20 @@ namespace DotNetty.Buffers
             throw new ReadOnlyBufferException();
         }
 
-        public override IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src)
+        public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src)
         {
             throw new ReadOnlyBufferException();
         }
-        public override IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src)
+        public override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src)
         {
             throw new ReadOnlyBufferException();
         }
 
-        public override IByteBuffer WriteBytes(ReadOnlySpan<byte> src)
+        public override IByteBuffer WriteBytes(in ReadOnlySpan<byte> src)
         {
             throw new ReadOnlyBufferException();
         }
-        public override IByteBuffer WriteBytes(ReadOnlyMemory<byte> src)
+        public override IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src)
         {
             throw new ReadOnlyBufferException();
         }

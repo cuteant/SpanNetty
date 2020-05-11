@@ -30,7 +30,7 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int IndexOf(this IByteBuffer buf, ReadOnlySpan<byte> values)
+        public static int IndexOf(this IByteBuffer buf, in ReadOnlySpan<byte> values)
         {
             return buf.IndexOf(buf.ReaderIndex, buf.WriterIndex, values);
         }
@@ -60,7 +60,7 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int IndexOfAny(this IByteBuffer buf, ReadOnlySpan<byte> values)
+        public static int IndexOfAny(this IByteBuffer buf, in ReadOnlySpan<byte> values)
         {
             return buf.IndexOfAny(buf.ReaderIndex, buf.WriterIndex, values);
         }

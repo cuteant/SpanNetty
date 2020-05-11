@@ -117,23 +117,23 @@ namespace DotNetty.Buffers
             return base.ReadBytes(destination);
         }
 
-        public override IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src)
+        public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.SetBytes(index, src);
         }
-        public override IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src)
+        public override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.SetBytes(index, src);
         }
 
-        public override IByteBuffer WriteBytes(ReadOnlySpan<byte> src)
+        public override IByteBuffer WriteBytes(in ReadOnlySpan<byte> src)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.WriteBytes(src);
         }
-        public override IByteBuffer WriteBytes(ReadOnlyMemory<byte> src)
+        public override IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src)
         {
             RecordLeakNonRefCountingOperation(this.Leak);
             return base.WriteBytes(src);

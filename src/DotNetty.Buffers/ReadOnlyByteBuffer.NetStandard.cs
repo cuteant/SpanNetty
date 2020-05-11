@@ -68,7 +68,7 @@ namespace DotNetty.Buffers
             return this.Unwrap().IndexOf(fromIndex, toIndex, value);
         }
 
-        public override int IndexOf(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        public override int IndexOf(int fromIndex, int toIndex, in ReadOnlySpan<byte> values)
         {
             return this.Unwrap().IndexOf(fromIndex, toIndex, values);
         }
@@ -83,7 +83,7 @@ namespace DotNetty.Buffers
             return this.Unwrap().IndexOfAny(fromIndex, toIndex, value0, value1, value2);
         }
 
-        public override int IndexOfAny(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        public override int IndexOfAny(int fromIndex, int toIndex, in ReadOnlySpan<byte> values)
         {
             return this.Unwrap().IndexOfAny(fromIndex, toIndex, values);
         }
@@ -121,20 +121,20 @@ namespace DotNetty.Buffers
         }
 
 
-        public override IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src)
+        public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src)
         {
             throw new ReadOnlyBufferException();
         }
-        public override IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src)
+        public override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src)
         {
             throw new ReadOnlyBufferException();
         }
 
-        public override IByteBuffer WriteBytes(ReadOnlySpan<byte> src)
+        public override IByteBuffer WriteBytes(in ReadOnlySpan<byte> src)
         {
             throw new ReadOnlyBufferException();
         }
-        public override IByteBuffer WriteBytes(ReadOnlyMemory<byte> src)
+        public override IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src)
         {
             throw new ReadOnlyBufferException();
         }

@@ -95,7 +95,7 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static bool TryWriteUtf8Composite(AbstractByteBuffer buffer, int writerIndex, ReadOnlySpan<char> utf16Span, out int written)
+        private static bool TryWriteUtf8Composite(AbstractByteBuffer buffer, int writerIndex, in ReadOnlySpan<char> utf16Span, out int written)
         {
             var memory = BufferManager.Shared.Rent(buffer.Capacity);
             try
@@ -300,7 +300,7 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int WriteAscii0(AbstractByteBuffer buffer, int writerIndex, ReadOnlySpan<char> utf16Source)
+        private static int WriteAscii0(AbstractByteBuffer buffer, int writerIndex, in ReadOnlySpan<char> utf16Source)
         {
             var charCount = utf16Source.Length;
             if (buffer.IsSingleIoBuffer)
@@ -316,7 +316,7 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void WriteAsciiComposite(AbstractByteBuffer buffer, int writerIndex, ReadOnlySpan<char> utf16Source, int length)
+        private static void WriteAsciiComposite(AbstractByteBuffer buffer, int writerIndex, in ReadOnlySpan<char> utf16Source, int length)
         {
             var memory = BufferManager.Shared.Rent(length);
             try
@@ -331,7 +331,7 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void WriteAscii0(ReadOnlySpan<char> utf16Source, Span<byte> asciiDestination, int length)
+        private static void WriteAscii0(in ReadOnlySpan<char> utf16Source, Span<byte> asciiDestination, int length)
         {
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
             System.Text.Encoding.ASCII.GetBytes(utf16Source, asciiDestination);

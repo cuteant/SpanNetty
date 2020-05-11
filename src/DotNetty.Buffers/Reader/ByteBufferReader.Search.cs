@@ -331,7 +331,7 @@ namespace DotNetty.Buffers
         /// <param name="advancePastDelimiter">True to move past the first found instance of any of the given <paramref name="delimiters"/>.</param>
         /// <returns>True if any of the <paramref name="delimiters"/> were found.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryReadToAny(out ReadOnlySpan<byte> span, ReadOnlySpan<byte> delimiters, bool advancePastDelimiter = true)
+        public bool TryReadToAny(out ReadOnlySpan<byte> span, in ReadOnlySpan<byte> delimiters, bool advancePastDelimiter = true)
         {
             ReadOnlySpan<byte> remaining = UnreadSpan;
             var index = SpanHelpers.IndexOfAny(ref MemoryMarshal.GetReference(remaining), remaining.Length, ref MemoryMarshal.GetReference(delimiters), delimiters.Length);
@@ -347,7 +347,7 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private bool TryReadToAnySlow(out ReadOnlySpan<byte> span, ReadOnlySpan<byte> delimiters, bool advancePastDelimiter)
+        private bool TryReadToAnySlow(out ReadOnlySpan<byte> span, in ReadOnlySpan<byte> delimiters, bool advancePastDelimiter)
         {
             if (!TryReadToAnyInternal(out ReadOnlySequence<byte> sequence, delimiters, advancePastDelimiter, _currentSpan.Length - _currentSpanIndex))
             {
@@ -364,12 +364,12 @@ namespace DotNetty.Buffers
         /// <param name="delimiters">The delimiters to look for.</param>
         /// <param name="advancePastDelimiter">True to move past the first found instance of any of the given <paramref name="delimiters"/>.</param>
         /// <returns>True if any of the <paramref name="delimiters"/> were found.</returns>
-        public bool TryReadToAny(out ReadOnlySequence<byte> sequence, ReadOnlySpan<byte> delimiters, bool advancePastDelimiter = true)
+        public bool TryReadToAny(out ReadOnlySequence<byte> sequence, in ReadOnlySpan<byte> delimiters, bool advancePastDelimiter = true)
         {
             return TryReadToAnyInternal(out sequence, delimiters, advancePastDelimiter);
         }
 
-        private bool TryReadToAnyInternal(out ReadOnlySequence<byte> sequence, ReadOnlySpan<byte> delimiters, bool advancePastDelimiter, int skip = 0)
+        private bool TryReadToAnyInternal(out ReadOnlySequence<byte> sequence, in ReadOnlySpan<byte> delimiters, bool advancePastDelimiter, int skip = 0)
         {
             ByteBufferReader copy = this;
             if (skip > 0) { Advance(skip); }
@@ -406,7 +406,7 @@ namespace DotNetty.Buffers
         /// <param name="delimiter">The multi (byte) delimiter.</param>
         /// <param name="advancePastDelimiter">True to move past the <paramref name="delimiter"/> if found.</param>
         /// <returns>True if the <paramref name="delimiter"/> was found.</returns>
-        public bool TryReadTo(out ReadOnlySequence<byte> sequence, ReadOnlySpan<byte> delimiter, bool advancePastDelimiter = true)
+        public bool TryReadTo(out ReadOnlySequence<byte> sequence, in ReadOnlySpan<byte> delimiter, bool advancePastDelimiter = true)
         {
             if (0u >= (uint)delimiter.Length)
             {
@@ -481,7 +481,7 @@ namespace DotNetty.Buffers
         /// <param name="delimiters">The delimiters to search for.</param>
         /// <param name="advancePastDelimiter">True to move past the first found instance of any of the given <paramref name="delimiters"/>.</param>
         /// <returns>True if any of the given <paramref name="delimiters"/> were found.</returns>
-        public bool TryAdvanceToAny(ReadOnlySpan<byte> delimiters, bool advancePastDelimiter = true)
+        public bool TryAdvanceToAny(in ReadOnlySpan<byte> delimiters, bool advancePastDelimiter = true)
         {
             ReadOnlySpan<byte> remaining = UnreadSpan;
             int index = SpanHelpers.IndexOfAny(ref MemoryMarshal.GetReference(remaining), remaining.Length, ref MemoryMarshal.GetReference(delimiters), delimiters.Length);
@@ -527,7 +527,7 @@ namespace DotNetty.Buffers
 
         /// <summary>Skip consecutive instances of any of the given <paramref name="values"/>.</summary>
         /// <returns>How many positions the reader has been advanced.</returns>
-        public long AdvancePastAny(ReadOnlySpan<byte> values)
+        public long AdvancePastAny(in ReadOnlySpan<byte> values)
         {
             long start = _consumed;
 
@@ -669,7 +669,7 @@ namespace DotNetty.Buffers
         /// <param name="next">The span to compare the next items to.</param>
         /// <param name="advancePast">Move past the <paramref name="next"/> values if found.</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsNext(ReadOnlySpan<byte> next, bool advancePast = false)
+        public bool IsNext(in ReadOnlySpan<byte> next, bool advancePast = false)
         {
             ReadOnlySpan<byte> unread = UnreadSpan;
             if (unread.StartsWith(next))

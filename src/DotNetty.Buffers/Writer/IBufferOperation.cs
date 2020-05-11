@@ -13,7 +13,7 @@ namespace DotNetty.Buffers
 
     public interface IBufferOperation
     {
-        OperationStatus Execute(ReadOnlySpan<byte> input, Span<byte> output, out int bytesConsumed, out int bytesWritten);
+        OperationStatus Execute(in ReadOnlySpan<byte> input, Span<byte> output, out int bytesConsumed, out int bytesWritten);
     }
 }
 

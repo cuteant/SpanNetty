@@ -936,7 +936,7 @@ namespace DotNetty.Handlers.Tls
         #region ** FinishWrap **
 
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
-        private void FinishWrap(ReadOnlySpan<byte> buffer, IPromise promise)
+        private void FinishWrap(in ReadOnlySpan<byte> buffer, IPromise promise)
         {
             IByteBuffer output;
             var capturedContext = CapturedContext;
@@ -978,7 +978,7 @@ namespace DotNetty.Handlers.Tls
         #region ** FinishWrapNonAppDataAsync **
 
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
-        private Task FinishWrapNonAppDataAsync(ReadOnlyMemory<byte> buffer, IPromise promise)
+        private Task FinishWrapNonAppDataAsync(in ReadOnlyMemory<byte> buffer, IPromise promise)
         {
             var capturedContext = CapturedContext;
             var future = capturedContext.WriteAndFlushAsync(Unpooled.WrappedBuffer(buffer.ToArray()), promise);

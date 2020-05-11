@@ -36,11 +36,11 @@ namespace DotNetty.Buffers
         public int ReadBytes(Span<byte> destination) => 0;
         public int ReadBytes(Memory<byte> destination) => 0;
 
-        public IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src) => this.CheckIndex(index, src.Length);
-        public IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src) => this.CheckIndex(index, src.Length);
+        public IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src) => this.CheckIndex(index, src.Length);
+        public IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src) => this.CheckIndex(index, src.Length);
 
-        public IByteBuffer WriteBytes(ReadOnlySpan<byte> src) => this.CheckLength(src.Length);
-        public IByteBuffer WriteBytes(ReadOnlyMemory<byte> src) => this.CheckLength(src.Length);
+        public IByteBuffer WriteBytes(in ReadOnlySpan<byte> src) => this.CheckLength(src.Length);
+        public IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src) => this.CheckLength(src.Length);
 
         public int FindIndex(int index, int count, Predicate<byte> match)
         {
@@ -60,7 +60,7 @@ namespace DotNetty.Buffers
             return IndexNotFound;
         }
 
-        public int IndexOf(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        public int IndexOf(int fromIndex, int toIndex, in ReadOnlySpan<byte> values)
         {
             this.CheckIndex(fromIndex, toIndex - fromIndex);
             return IndexNotFound;
@@ -78,7 +78,7 @@ namespace DotNetty.Buffers
             return IndexNotFound;
         }
 
-        public int IndexOfAny(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        public int IndexOfAny(int fromIndex, int toIndex, in ReadOnlySpan<byte> values)
         {
             this.CheckIndex(fromIndex, toIndex - fromIndex);
             return IndexNotFound;

@@ -34,11 +34,11 @@ namespace DotNetty.Buffers
         int ReadBytes(Span<byte> destination);
         int ReadBytes(Memory<byte> destination);
 
-        IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src);
-        IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src);
+        IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src);
+        IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src);
 
-        IByteBuffer WriteBytes(ReadOnlySpan<byte> src);
-        IByteBuffer WriteBytes(ReadOnlyMemory<byte> src);
+        IByteBuffer WriteBytes(in ReadOnlySpan<byte> src);
+        IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src);
 
         int FindIndex(int index, int count, Predicate<byte> match);
 
@@ -46,13 +46,13 @@ namespace DotNetty.Buffers
 
         int IndexOf(int fromIndex, int toIndex, byte value);
 
-        int IndexOf(int fromIndex, int toIndex, ReadOnlySpan<byte> values);
+        int IndexOf(int fromIndex, int toIndex, in ReadOnlySpan<byte> values);
 
         int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1);
 
         int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1, byte value2);
 
-        int IndexOfAny(int fromIndex, int toIndex, ReadOnlySpan<byte> values);
+        int IndexOfAny(int fromIndex, int toIndex, in ReadOnlySpan<byte> values);
     }
 }
 #endif

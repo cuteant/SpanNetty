@@ -41,11 +41,11 @@ namespace DotNetty.Buffers
         public override int ReadBytes(Span<byte> destination) => this.wrapped.ReadBytes(destination);
         public override int ReadBytes(Memory<byte> destination) => this.wrapped.ReadBytes(destination);
 
-        public override IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src) { this.wrapped.SetBytes(index, src); return this; }
-        public override IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src) { this.wrapped.SetBytes(index, src); return this; }
+        public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src) { this.wrapped.SetBytes(index, src); return this; }
+        public override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src) { this.wrapped.SetBytes(index, src); return this; }
 
-        public override IByteBuffer WriteBytes(ReadOnlySpan<byte> src) { this.wrapped.WriteBytes(src); return this; }
-        public override IByteBuffer WriteBytes(ReadOnlyMemory<byte> src) { this.wrapped.WriteBytes(src); return this; }
+        public override IByteBuffer WriteBytes(in ReadOnlySpan<byte> src) { this.wrapped.WriteBytes(src); return this; }
+        public override IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src) { this.wrapped.WriteBytes(src); return this; }
 
         public override int FindIndex(int index, int count, Predicate<byte> match)
         {
@@ -59,7 +59,7 @@ namespace DotNetty.Buffers
 
         public override int IndexOf(int fromIndex, int toIndex, byte value) => this.wrapped.IndexOf(fromIndex, toIndex, value);
 
-        public override int IndexOf(int fromIndex, int toIndex, ReadOnlySpan<byte> values) => this.wrapped.IndexOf(fromIndex, toIndex, values);
+        public override int IndexOf(int fromIndex, int toIndex, in ReadOnlySpan<byte> values) => this.wrapped.IndexOf(fromIndex, toIndex, values);
 
         public override int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1)
         {
@@ -71,7 +71,7 @@ namespace DotNetty.Buffers
             return this.wrapped.IndexOfAny(fromIndex, toIndex, value0, value1, value2);
         }
 
-        public override int IndexOfAny(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        public override int IndexOfAny(int fromIndex, int toIndex, in ReadOnlySpan<byte> values)
         {
             return this.wrapped.IndexOfAny(fromIndex, toIndex, values);
         }

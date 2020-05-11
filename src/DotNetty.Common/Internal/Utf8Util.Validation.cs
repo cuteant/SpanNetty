@@ -100,7 +100,7 @@ namespace DotNetty.Common.Internal
         /// <paramref name="surrogatePairCount"/> to <paramref name="scalarCount"/>.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int GetIndexOfFirstInvalidUtf8Sequence(ReadOnlySpan<byte> input, out int scalarCount, out int surrogatePairCount)
+        internal static int GetIndexOfFirstInvalidUtf8Sequence(in ReadOnlySpan<byte> input, out int scalarCount, out int surrogatePairCount)
             => GetIndexOfFirstInvalidUtf8Sequence(ref MemoryMarshal.GetReference(input), input.Length, out scalarCount, out surrogatePairCount);
 
         [MethodImpl(MethodImplOptions.NoInlining)]

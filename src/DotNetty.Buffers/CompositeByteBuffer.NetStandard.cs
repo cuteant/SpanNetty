@@ -155,7 +155,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        public override IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src)
+        public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src)
         {
             var length = src.Length;
             this.CheckIndex(index, length);
@@ -176,7 +176,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public override IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src)
+        public override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src)
         {
             var length = src.Length;
             this.CheckIndex(index, length);
@@ -508,22 +508,22 @@ namespace DotNetty.Buffers
         }
 
         // TODO 无法解决边界问题，先不重写
-        //protected internal override int IndexOf0(int index, int count, ReadOnlySpan<byte> values)
+        //protected internal override int IndexOf0(int index, int count, in ReadOnlySpan<byte> values)
         //{
         //    return base.IndexOf0(index, count, values);
         //}
 
-        //protected internal override int LastIndexOf0(int index, int count, ReadOnlySpan<byte> values)
+        //protected internal override int LastIndexOf0(int index, int count, in ReadOnlySpan<byte> values)
         //{
         //    return base.LastIndexOf0(index, count, values);
         //}
 
-        //protected internal override int IndexOfAny0(int index, int count, ReadOnlySpan<byte> values)
+        //protected internal override int IndexOfAny0(int index, int count, in ReadOnlySpan<byte> values)
         //{
         //    return base.IndexOfAny0(index, count, values);
         //}
 
-        //protected internal override int LastIndexOfAny0(int index, int count, ReadOnlySpan<byte> values)
+        //protected internal override int LastIndexOfAny0(int index, int count, in ReadOnlySpan<byte> values)
         //{
         //    return base.LastIndexOfAny0(index, count, values);
         //}

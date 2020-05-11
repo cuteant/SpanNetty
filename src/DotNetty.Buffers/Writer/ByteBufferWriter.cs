@@ -54,7 +54,7 @@ namespace DotNetty.Buffers
             AdvanceCore(1);
         }
 
-        public void WriteBytes(ReadOnlySpan<byte> source)
+        public void WriteBytes(in ReadOnlySpan<byte> source)
         {
             GrowAndEnsureIf();
             var idx = 0;
@@ -171,7 +171,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        private void CopyLoop(ReadOnlySpan<byte> source, ref int idx)
+        private void CopyLoop(in ReadOnlySpan<byte> source, ref int idx)
         {
             if ((uint)source.Length <= (uint)(_buffer.Length - idx))
             {
@@ -184,7 +184,7 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private void CopyLoopSlow(ReadOnlySpan<byte> source, ref int idx)
+        private void CopyLoopSlow(in ReadOnlySpan<byte> source, ref int idx)
         {
             var copyLen = _buffer.Length - idx;
             source.Slice(0, copyLen).CopyTo(_buffer.Slice(idx));

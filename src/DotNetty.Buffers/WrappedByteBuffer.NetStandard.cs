@@ -36,11 +36,11 @@ namespace DotNetty.Buffers
         public virtual int ReadBytes(Span<byte> destination) => this.Buf.ReadBytes(destination);
         public virtual int ReadBytes(Memory<byte> destination) => this.Buf.ReadBytes(destination);
 
-        public virtual IByteBuffer SetBytes(int index, ReadOnlySpan<byte> src) => this.Buf.SetBytes(index, src);
-        public virtual IByteBuffer SetBytes(int index, ReadOnlyMemory<byte> src) => this.Buf.SetBytes(index, src);
+        public virtual IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src) => this.Buf.SetBytes(index, src);
+        public virtual IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src) => this.Buf.SetBytes(index, src);
 
-        public virtual IByteBuffer WriteBytes(ReadOnlySpan<byte> src) => this.Buf.WriteBytes(src);
-        public virtual IByteBuffer WriteBytes(ReadOnlyMemory<byte> src) => this.Buf.WriteBytes(src);
+        public virtual IByteBuffer WriteBytes(in ReadOnlySpan<byte> src) => this.Buf.WriteBytes(src);
+        public virtual IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src) => this.Buf.WriteBytes(src);
 
         public virtual int FindIndex(int index, int count, Predicate<byte> match)
         {
@@ -54,7 +54,7 @@ namespace DotNetty.Buffers
 
         public virtual int IndexOf(int fromIndex, int toIndex, byte value) => this.Buf.IndexOf(fromIndex, toIndex, value);
 
-        public virtual int IndexOf(int fromIndex, int toIndex, ReadOnlySpan<byte> values) => this.Buf.IndexOf(fromIndex, toIndex, values);
+        public virtual int IndexOf(int fromIndex, int toIndex, in ReadOnlySpan<byte> values) => this.Buf.IndexOf(fromIndex, toIndex, values);
 
         public virtual int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1)
         {
@@ -66,7 +66,7 @@ namespace DotNetty.Buffers
             return this.Buf.IndexOfAny(fromIndex, toIndex, value0, value1, value2);
         }
 
-        public virtual int IndexOfAny(int fromIndex, int toIndex, ReadOnlySpan<byte> values)
+        public virtual int IndexOfAny(int fromIndex, int toIndex, in ReadOnlySpan<byte> values)
         {
             return this.Buf.IndexOfAny(fromIndex, toIndex, values);
         }
