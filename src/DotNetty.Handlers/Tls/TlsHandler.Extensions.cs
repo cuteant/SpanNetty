@@ -152,7 +152,7 @@ namespace DotNetty.Handlers.Tls
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private static void EnsureCertificateIsAllowedForServerAuth(X509Certificate2 certificate)
         {
             if (!CertificateLoader.IsCertificateAllowedForServerAuth(certificate))
@@ -161,7 +161,7 @@ namespace DotNetty.Handlers.Tls
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private static X509Certificate2 ConvertToX509Certificate2(X509Certificate certificate)
         {
             if (certificate is X509Certificate2 cert2) { return cert2; }

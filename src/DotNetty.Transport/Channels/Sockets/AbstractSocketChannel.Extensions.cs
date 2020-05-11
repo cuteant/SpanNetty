@@ -19,7 +19,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         private int State
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _state);
             set => Interlocked.Exchange(ref _state, value);
         }

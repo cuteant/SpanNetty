@@ -411,7 +411,7 @@ namespace DotNetty.Transport.Channels.Embedded
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         void RecordException(Exception cause)
         {
             if (this.lastException is null)
@@ -453,7 +453,7 @@ namespace DotNetty.Transport.Channels.Embedded
             return this;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         void FlushOutbound0()
         {
             // We need to call RunPendingTasks first as a IChannelHandler may have used IEventLoop.Execute(...) to
@@ -594,7 +594,7 @@ namespace DotNetty.Transport.Channels.Embedded
         /// an <see cref="Exception" /> if it isn't.</summary>
         /// <param name="recordException"></param>
         /// <returns></returns>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         bool CheckOpen(bool recordException)
         {
             if (!this.Open)
@@ -620,7 +620,7 @@ namespace DotNetty.Transport.Channels.Embedded
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static object Poll(QueueX<object> queue)
         {
             queue.TryDequeue(out var result);

@@ -307,7 +307,7 @@ namespace DotNetty.Buffers
             return ret - this.adjustment;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         int Idx(int index) => index + this.adjustment;
     }
 }

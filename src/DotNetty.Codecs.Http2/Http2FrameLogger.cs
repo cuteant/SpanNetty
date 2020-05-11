@@ -40,7 +40,7 @@ namespace DotNetty.Codecs.Http2
             this.logger = logger;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public bool IsEnabled() => logger.IsEnabled(level);
 
         public void LogData(Direction direction, IChannelHandlerContext ctx, int streamId, IByteBuffer data,

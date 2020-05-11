@@ -160,7 +160,7 @@ namespace DotNetty.Codecs.Http
                 return this;
             }
 
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             static bool CannotBeCombined(ICharSequence name)
             {
                 return HttpHeaderNames.SetCookie.ContentEqualsIgnoreCase(name);

@@ -467,7 +467,7 @@ namespace DotNetty.Buffers
 
         public static void Copy(AsciiString src, IByteBuffer dst) => Copy(src, 0, dst, src.Count);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static void Copy(AsciiString src, int srcIdx, IByteBuffer dst, int dstIdx, int length)
         {
             if (MathUtil.IsOutOfBounds(srcIdx, length, src.Count))
@@ -482,7 +482,7 @@ namespace DotNetty.Buffers
             dst.SetBytes(dstIdx, src.Array, srcIdx + src.Offset, length);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static void Copy(AsciiString src, int srcIdx, IByteBuffer dst, int length)
         {
             if (MathUtil.IsOutOfBounds(srcIdx, length, src.Count))

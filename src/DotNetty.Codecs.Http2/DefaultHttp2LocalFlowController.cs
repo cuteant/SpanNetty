@@ -177,7 +177,7 @@ namespace DotNetty.Codecs.Http2
 
         public int UnconsumedBytes(IHttp2Stream stream) => this.GetState(stream).UnconsumedBytes;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static void CheckValidRatio(float ratio)
         {
             if (ratio <= 0.0 || ratio >= 1.0)

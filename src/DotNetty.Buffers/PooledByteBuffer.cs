@@ -63,7 +63,7 @@ namespace DotNetty.Buffers
 
         public override int Capacity
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => this.Length;
         }
 
@@ -152,7 +152,7 @@ namespace DotNetty.Buffers
 
         void Recycle() => this.recyclerHandle.Release(this);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected int Idx(int index) => this.Offset + index;
     }
 }

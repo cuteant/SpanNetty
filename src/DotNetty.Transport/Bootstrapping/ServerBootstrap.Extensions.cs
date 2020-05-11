@@ -11,14 +11,14 @@ namespace DotNetty.Transport.Bootstrapping
     {
         private IEventLoopGroup InternalChildGroup
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _childGroup);
             set => Interlocked.Exchange(ref _childGroup, value);
         }
 
         private IChannelHandler InternalChildHandler
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _childHandler);
             set => Interlocked.Exchange(ref _childHandler, value);
         }

@@ -238,7 +238,7 @@ namespace DotNetty.Codecs
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         void Fail(long frameLength)
         {
             if (frameLength > 0)

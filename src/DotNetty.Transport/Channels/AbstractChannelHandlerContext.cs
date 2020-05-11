@@ -232,7 +232,7 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         private bool InvokeHandler
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get
             {
                 // Store in local variable to reduce volatile reads.

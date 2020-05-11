@@ -94,7 +94,7 @@ namespace DotNetty.Codecs.Http.Utilities
 
         #region ** UrlEncodeToBytesImpl **
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private static byte[] UrlEncodeToBytesImpl(byte[] bytes, int offset, int count, bool alwaysCreateNewReturnValue)
         {
             byte[] encoded = UrlEncodeToBytesImpl(bytes, offset, count);
@@ -271,7 +271,7 @@ namespace DotNetty.Codecs.Http.Utilities
 
         #region ** IsNonAsciiByte **
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private static bool IsNonAsciiByte(byte b) => b >= 0x7F || b < 0x20;
 
         #endregion
@@ -498,7 +498,7 @@ namespace DotNetty.Codecs.Http.Utilities
 
         #region ** ValidateUrlEncodingParameters **
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private static bool ValidateUrlEncodingParameters(byte[] bytes, int offset, int count)
         {
             if (bytes is null && 0u >= (uint)count)

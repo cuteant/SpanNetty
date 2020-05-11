@@ -271,7 +271,7 @@ namespace DotNetty.Codecs
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static T As<T>(object obj) => (T)obj;
 
         protected static void AppendPartialContent(CompositeByteBuffer content, IByteBuffer partialContent)

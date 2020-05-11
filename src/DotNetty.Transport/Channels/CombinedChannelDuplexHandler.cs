@@ -68,7 +68,7 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         void CheckAdded()
         {
             if (SharedConstants.False == Volatile.Read(ref this.handlerAdded))

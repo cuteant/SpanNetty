@@ -53,7 +53,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void CheckSize(long newSize) => CheckSize(newSize, this.maxSize);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void CheckSize(long newSize, long maxSize)
         {
             if (maxSize >= 0 && newSize > maxSize)

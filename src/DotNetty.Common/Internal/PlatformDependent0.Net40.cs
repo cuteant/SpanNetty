@@ -13,7 +13,7 @@ namespace DotNetty.Common.Internal
         internal static readonly int HashCodeC2 = 0x1b873593;
 
         // https://stackoverflow.com/questions/43289/comparing-two-byte-arrays-in-net
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static unsafe bool ByteArrayEquals(byte* bytes1, int startPos1, byte* bytes2, int startPos2, int length)
         {
             if (length <= 0) { return true; }
@@ -29,7 +29,7 @@ namespace DotNetty.Common.Internal
             return true;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static unsafe int HashCodeAscii(byte* bytes, int length)
         {
             int hash = HashCodeAsciiSeed;
@@ -66,7 +66,7 @@ namespace DotNetty.Common.Internal
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static int HashCodeAsciiCompute(long value, int hash)
         {
             // masking with 0x1f reduces the number of overall bits that impact the hash code but makes the hash
@@ -81,13 +81,13 @@ namespace DotNetty.Common.Internal
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int HashCodeAsciiSanitize(int value) => value & 0x1f1f1f1f;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int HashCodeAsciiSanitize(short value) => value & 0x1f1f;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int HashCodeAsciiSanitize(byte value) => value & 0x1f;
     }
 }

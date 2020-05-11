@@ -20,7 +20,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index"/>  is less than <c>0</c> or
         ///     <c>index + 3</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int GetMedium(this IByteBuffer buf, int index)
         {
             uint value = (uint)buf.GetUnsignedMedium(index);
@@ -41,7 +41,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index"/> is less than <c>0</c> or
         ///     <c>index + 3</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int GetMediumLE(this IByteBuffer buf, int index)
         {
             uint value = (uint)buf.GetUnsignedMediumLE(index);
@@ -62,7 +62,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 2</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static ushort GetUnsignedShort(this IByteBuffer buf, int index)
         {
             unchecked
@@ -80,7 +80,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 2</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static ushort GetUnsignedShortLE(this IByteBuffer buf, int index)
         {
             unchecked
@@ -98,7 +98,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 4</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static uint GetUnsignedInt(this IByteBuffer buf, int index)
         {
             unchecked
@@ -116,7 +116,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 4</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static uint GetUnsignedIntLE(this IByteBuffer buf, int index)
         {
             unchecked
@@ -134,7 +134,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 2</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static char GetChar(this IByteBuffer buf, int index) => Convert.ToChar(buf.GetShort(index));
 
         /// <summary>
@@ -146,7 +146,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index"/> is less than <c>0</c> or
         ///     <c>index + 4</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static float GetFloat(this IByteBuffer buf, int index) => ByteBufferUtil.Int32BitsToSingle(buf.GetInt(index));
 
         /// <summary>
@@ -158,7 +158,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index"/> is less than <c>0</c> or
         ///     <c>index + 4</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static float GetFloatLE(this IByteBuffer buf, int index) => ByteBufferUtil.Int32BitsToSingle(buf.GetIntLE(index));
 
         /// <summary>
@@ -170,7 +170,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 8</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static double GetDouble(this IByteBuffer buf, int index) => BitConverter.Int64BitsToDouble(buf.GetLong(index));
 
         /// <summary>
@@ -182,7 +182,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 8</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static double GetDoubleLE(this IByteBuffer buf, int index) => BitConverter.Int64BitsToDouble(buf.GetLongLE(index));
 
         /// <summary>
@@ -193,7 +193,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 1</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer GetBytes(this IByteBuffer buf, int index, IByteBuffer destination)
         {
             buf.GetBytes(index, destination, destination.WritableBytes);
@@ -208,7 +208,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 1</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer GetBytes(this IByteBuffer buf, int index, IByteBuffer destination, int length)
         {
             var writerIdx = destination.WriterIndex;
@@ -222,7 +222,7 @@ namespace DotNetty.Buffers
         ///     by <c>2</c> in this buffer.
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">if <see cref="IByteBuffer.ReadableBytes" /> is less than <c>2</c></exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static ushort ReadUnsignedShort(this IByteBuffer buf)
         {
             unchecked
@@ -236,7 +236,7 @@ namespace DotNetty.Buffers
         ///     increases the <see cref="IByteBuffer.ReaderIndex" /> by <c>2</c> in this buffer.
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">if <see cref="IByteBuffer.ReadableBytes" /> is less than <c>2</c></exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static ushort ReadUnsignedShortLE(this IByteBuffer buf)
         {
             unchecked
@@ -250,7 +250,7 @@ namespace DotNetty.Buffers
         ///     by <c>4</c> in this buffer.
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">if <see cref="IByteBuffer.ReadableBytes" /> is less than <c>4</c></exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static uint ReadUnsignedInt(this IByteBuffer buf)
         {
             unchecked
@@ -264,7 +264,7 @@ namespace DotNetty.Buffers
         ///     increases the <see cref="IByteBuffer.ReaderIndex" /> by <c>4</c> in this buffer.
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">if <see cref="IByteBuffer.ReadableBytes" /> is less than <c>4</c></exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static uint ReadUnsignedIntLE(this IByteBuffer buf)
         {
             unchecked
@@ -279,7 +279,7 @@ namespace DotNetty.Buffers
         ///     by <c>2</c> in this buffer.
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">if <see cref="IByteBuffer.ReadableBytes" /> is less than <c>2</c></exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static char ReadChar(this IByteBuffer buf) => (char)buf.ReadShort();
 
         /// <summary>
@@ -288,7 +288,7 @@ namespace DotNetty.Buffers
         ///     by <c>4</c> in this buffer.
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">if <see cref="IByteBuffer.ReadableBytes" /> is less than <c>4</c></exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static float ReadFloat(this IByteBuffer buf) => ByteBufferUtil.Int32BitsToSingle(buf.ReadInt());
 
         /// <summary>
@@ -296,7 +296,7 @@ namespace DotNetty.Buffers
         ///     <see cref="IByteBuffer.ReaderIndex" /> by <c>4</c> in this buffer in Little Endian Byte Order.
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">if <see cref="IByteBuffer.ReadableBytes" /> is less than <c>4</c></exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static float ReadFloatLE(this IByteBuffer buf) => ByteBufferUtil.Int32BitsToSingle(buf.ReadIntLE());
 
         /// <summary>
@@ -305,7 +305,7 @@ namespace DotNetty.Buffers
         ///     by <c>8</c> in this buffer.
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">if <see cref="IByteBuffer.ReadableBytes" /> is less than <c>8</c></exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static double ReadDouble(this IByteBuffer buf) => BitConverter.Int64BitsToDouble(buf.ReadLong());
 
         /// <summary>
@@ -313,7 +313,7 @@ namespace DotNetty.Buffers
         ///     <see cref="IByteBuffer.ReaderIndex" /> by <c>8</c> in this buffer in Little Endian Byte Order.
         /// </summary>
         /// <exception cref="IndexOutOfRangeException">if <see cref="IByteBuffer.ReadableBytes" /> is less than <c>8</c></exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static double ReadDoubleLE(this IByteBuffer buf) => BitConverter.Int64BitsToDouble(buf.ReadLongLE());
 
         /// <summary>
@@ -325,7 +325,7 @@ namespace DotNetty.Buffers
         ///     if <c>destination.<see cref="IByteBuffer.WritableBytes" /></c> is greater than
         ///     <see cref="IByteBuffer.ReadableBytes" />.
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer ReadBytes(this IByteBuffer buf, IByteBuffer dst)
         {
             buf.ReadBytes(dst, dst.WritableBytes);
@@ -340,7 +340,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 2</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetUnsignedShort(this IByteBuffer buf, int index, ushort value)
         {
             unchecked
@@ -359,7 +359,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 2</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetUnsignedShortLE(this IByteBuffer buf, int index, ushort value)
         {
             unchecked
@@ -377,7 +377,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 2</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetChar(this IByteBuffer buf, int index, char value)
         {
             buf.SetShort(index, value);
@@ -392,7 +392,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 4</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetUnsignedInt(this IByteBuffer buf, int index, uint value)
         {
             unchecked
@@ -411,7 +411,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 4</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetUnsignedIntLE(this IByteBuffer buf, int index, uint value)
         {
             unchecked
@@ -429,7 +429,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 4</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetFloat(this IByteBuffer buf, int index, float value)
         {
             buf.SetInt(index, ByteBufferUtil.SingleToInt32Bits(value));
@@ -445,7 +445,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 4</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetFloatLE(this IByteBuffer buf, int index, float value)
         {
             buf.SetIntLE(index, ByteBufferUtil.SingleToInt32Bits(value));
@@ -460,7 +460,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 8</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetDouble(this IByteBuffer buf, int index, double value)
         {
             buf.SetLong(index, BitConverter.DoubleToInt64Bits(value));
@@ -476,7 +476,7 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c>index + 4</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetDoubleLE(this IByteBuffer buf, int index, double value)
         {
             buf.SetLongLE(index, BitConverter.DoubleToInt64Bits(value));
@@ -491,14 +491,14 @@ namespace DotNetty.Buffers
         ///     if the specified <paramref name="index" /> is less than <c>0</c> or
         ///     <c><paramref name="index"/> + <paramref name="src"/>.ReadableBytes</c> greater than <see cref="IByteBuffer.Capacity" />
         /// </exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetBytes(this IByteBuffer buf, int index, IByteBuffer src)
         {
             buf.SetBytes(index, src, src.ReadableBytes);
             return buf;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteUnsignedShort(this IByteBuffer buf, ushort value)
         {
             unchecked
@@ -508,7 +508,7 @@ namespace DotNetty.Buffers
             return buf;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteUnsignedShortLE(this IByteBuffer buf, ushort value)
         {
             unchecked
@@ -518,49 +518,49 @@ namespace DotNetty.Buffers
             return buf;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteChar(this IByteBuffer buf, char value)
         {
             buf.WriteShort(value);
             return buf;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteFloat(this IByteBuffer buf, float value)
         {
             buf.WriteInt(ByteBufferUtil.SingleToInt32Bits(value));
             return buf;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteFloatLE(this IByteBuffer buf, float value)
         {
             buf.WriteIntLE(ByteBufferUtil.SingleToInt32Bits(value));
             return buf;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteDouble(this IByteBuffer buf, double value)
         {
             buf.WriteLong(BitConverter.DoubleToInt64Bits(value));
             return buf;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteDoubleLE(this IByteBuffer buf, double value)
         {
             buf.WriteLongLE(BitConverter.DoubleToInt64Bits(value));
             return buf;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteBytes(this IByteBuffer buf, IByteBuffer src)
         {
             buf.WriteBytes(src, src.ReadableBytes);
             return buf;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static Task WriteBytesAsync(this IByteBuffer buf, Stream stream, int length) => buf.WriteBytesAsync(stream, length, CancellationToken.None);
 
         /// <summary>
@@ -569,7 +569,7 @@ namespace DotNetty.Buffers
         ///     identical to {@code buf.copy(buf.readerIndex(), buf.readableBytes())}.
         ///     This method does not modify {@code readerIndex} or {@code writerIndex} of this buffer.
         ///</summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer Copy(this IByteBuffer buf) => buf.Copy(buf.ReaderIndex, buf.ReadableBytes);
 
         /// <summary>
@@ -587,7 +587,7 @@ namespace DotNetty.Buffers
         /// <seealso cref="IByteBuffer.IoBufferCount" />
         /// <seealso cref="GetIoBuffers(IByteBuffer)" />
         /// <seealso cref="IByteBuffer.GetIoBuffers(int,int)" />
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static ArraySegment<byte> GetIoBuffer(this IByteBuffer buf) => buf.GetIoBuffer(buf.ReaderIndex, buf.ReadableBytes);
 
         /// <summary>
@@ -605,21 +605,21 @@ namespace DotNetty.Buffers
         /// <seealso cref="IByteBuffer.IoBufferCount" />
         /// <seealso cref="GetIoBuffer(IByteBuffer)" />
         /// <seealso cref="IByteBuffer.GetIoBuffer(int,int)" />
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static ArraySegment<byte>[] GetIoBuffers(this IByteBuffer buf) => buf.GetIoBuffers(buf.ReaderIndex, buf.ReadableBytes);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int IndexOf(this IByteBuffer buf, byte value) => buf.IndexOf(buf.ReaderIndex, buf.WriterIndex, value);
 
 #if NET40
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int IndexOf(this IByteBuffer buf, int fromIndex, int toIndex, byte value) => ByteBufferUtil.IndexOf(buf, fromIndex, toIndex, value);
 #endif
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int BytesBefore(this IByteBuffer buf, byte value) => buf.BytesBefore(buf.ReaderIndex, buf.ReadableBytes, value);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int BytesBefore(this IByteBuffer buf, int length, byte value)
         {
             if (length < 0) { ThrowHelper.ThrowArgumentOutOfRangeException(); }
@@ -628,7 +628,7 @@ namespace DotNetty.Buffers
             return buf.BytesBefore(buf.ReaderIndex, length, value);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int BytesBefore(this IByteBuffer buf, int index, int length, byte value)
         {
             int endIndex = buf.IndexOf(index, index + length, value);
@@ -662,10 +662,10 @@ namespace DotNetty.Buffers
             return buf.ForEachByteDesc(buf.ReaderIndex, buf.ReadableBytes, processor);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static string ToString(this IByteBuffer buf, Encoding encoding) => buf.ToString(buf.ReaderIndex, buf.ReadableBytes, encoding);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static string ToString(this IByteBuffer buf, int index, int length, Encoding encoding) => ByteBufferUtil.DecodeString(buf, index, length, encoding);
     }
 }

@@ -680,7 +680,7 @@ namespace DotNetty.Codecs.Http2
             return payload.ReadByte() + 1;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         void VerifyPadding(int padding)
         {
             int len = LengthWithoutTrailingPadding(this.payloadLength, padding);
@@ -696,7 +696,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="readableBytes"></param>
         /// <param name="padding"></param>
         /// <returns>the number of readable bytes without the trailing padding.</returns>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int LengthWithoutTrailingPadding(int readableBytes, int padding)
         {
             return 0u >= (uint)padding ? readableBytes : readableBytes - (padding - 1);
@@ -856,7 +856,7 @@ namespace DotNetty.Codecs.Http2
         /// Verify that current state is not processing on header block
         /// </summary>
         /// <exception cref="Http2Exception">if <see cref="headersContinuation"/> is not null</exception>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         void VerifyNotProcessingHeaders()
         {
             if (this.headersContinuation is object)

@@ -398,7 +398,7 @@ namespace DotNetty.Common.Utilities
             return IndexNotFound;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool EqualsIgnoreCase(byte a, byte b)
         {
             var ua = (uint)a;
@@ -406,7 +406,7 @@ namespace DotNetty.Common.Utilities
             return (ua == ub || ToLowerCase0(ua) == ToLowerCase0(ub)) ? true : false;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool EqualsIgnoreCase(char a, char b)
         {
             var ua = (uint)a;
@@ -414,21 +414,21 @@ namespace DotNetty.Common.Utilities
             return (ua == ub || ToLowerCase0(ua) == ToLowerCase0(ub)) ? true : false;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static byte ToLowerCase(byte b) => unchecked((byte)ToLowerCase0(b));
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static byte ToLowerCase(uint b) => unchecked((byte)ToLowerCase0(b));
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static char ToLowerCase(char c) => unchecked((char)ToLowerCase0(c));
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static uint ToLowerCase0(uint b) => IsUpperCase(b) ? (b + 32u) : b;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static byte ToUpperCase(byte b) => unchecked((byte)ToUpperCase0(b));
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static byte ToUpperCase(uint b) => unchecked((byte)ToUpperCase0(b));
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static char ToUpperCase(char c) => unchecked((char)ToUpperCase0(c));
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static uint ToUpperCase0(uint b) => IsLowerCase(b) ? (b - 32u) : b;
@@ -457,10 +457,10 @@ namespace DotNetty.Common.Utilities
         /// A hex digit is valid if it is in the range: [0..9] | [A..F] | [a..f]
         /// Otherwise, return false.
         /// </summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsHexDigit(byte value) => IsHexDigit((uint)value);
         public static bool IsHexDigit(char value) => IsHexDigit((uint)value);
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsHexDigit(uint value) =>
             ((value - Ascii0) <= DigitDiff ||
             (value - AsciiA) <= HexCharDiff ||
@@ -470,17 +470,17 @@ namespace DotNetty.Common.Utilities
         /// Returns <see langword="true"/> iff <paramref name="value"/> is in the range [0..9].
         /// Otherwise, returns <see langword="false"/>.
         /// </summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsDigit(byte value) => (value - Ascii0 <= DigitDiff) ? true : false;
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsDigit(char value) => (value - Ascii0 <= DigitDiff) ? true : false;
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsDigit(uint value) => (value - Ascii0 <= DigitDiff) ? true : false;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static byte CharToByte(char c) => c > uMaxCharValue ? Replacement : unchecked((byte)c);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static char ByteToChar(byte b) => (char)(b);
 
         [MethodImpl(MethodImplOptions.NoInlining)]

@@ -30,7 +30,7 @@ namespace DotNetty.Codecs.Http
         {
             static readonly NameProcessor ByteProcessor = new NameProcessor();
 
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             public void ValidateName(ICharSequence name)
             {
                 if (name is null || 0u >= (uint)name.Count)
@@ -203,7 +203,7 @@ namespace DotNetty.Codecs.Http
 
         public override HttpHeaders Copy() => new DefaultHttpHeaders(this.headers.Copy());
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static void ValidateHeaderNameElement(uint value)
         {
             switch (value)
@@ -231,7 +231,7 @@ namespace DotNetty.Codecs.Http
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static void ValidateHeaderNameElement(char value)
         {
             switch (value)
@@ -308,7 +308,7 @@ namespace DotNetty.Codecs.Http
                 return seq;
             }
 
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             static int ValidateValueChar(int state, char character)
             {
                 // State:

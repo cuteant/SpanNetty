@@ -52,10 +52,10 @@ namespace DotNetty.Common
             return index;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static InternalThreadLocalMap GetIfSet() => slowThreadLocalMap;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static InternalThreadLocalMap Get()
         {
             InternalThreadLocalMap ret = slowThreadLocalMap;
@@ -181,7 +181,7 @@ namespace DotNetty.Common
             set => this.localChannelReaderStackDepth = value;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public object GetIndexedVariable(int index)
         {
             object[] lookup = this.indexedVariables;

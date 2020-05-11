@@ -283,7 +283,7 @@ namespace DotNetty.Codecs.Http2
             return Unpooled.DirectBuffer(initialCapacity);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static void VerifyPadding(int padding)
         {
             if (padding < 0 || padding > MaxPadding)

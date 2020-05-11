@@ -87,7 +87,7 @@ namespace DotNetty.Common.Utilities
         /// rethrowing it to the caller. It is usually recommended to use <see cref="Release(object)"/> instead, unless
         /// you absolutely need to swallow an exception.
         /// </summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static void SafeRelease(object msg)
         {
             try
@@ -108,7 +108,7 @@ namespace DotNetty.Common.Utilities
         /// than rethrowing it to the caller. It is usually recommended to use <see cref="Release(object, int)"/>
         /// instead, unless you absolutely need to swallow an exception.
         /// </summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static void SafeRelease(object msg, int decrement)
         {
             try
@@ -124,7 +124,7 @@ namespace DotNetty.Common.Utilities
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static void SafeRelease(this IReferenceCounted msg)
         {
             try
@@ -137,7 +137,7 @@ namespace DotNetty.Common.Utilities
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static void SafeRelease(this IReferenceCounted msg, int decrement)
         {
             try

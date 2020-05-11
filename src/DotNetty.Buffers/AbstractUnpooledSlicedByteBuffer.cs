@@ -45,10 +45,10 @@ namespace DotNetty.Buffers
 
         internal int Length => this.Capacity;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public override IByteBuffer Unwrap() => this.buffer;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected AbstractByteBuffer UnwrapCore() => this.buffer;
 
         public override IByteBufferAllocator Allocator => this.Unwrap().Allocator;
@@ -338,7 +338,7 @@ namespace DotNetty.Buffers
         }
 
         // Returns the index with the needed adjustment.
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal protected int Idx(int index) => index + this.adjustment;
 
         internal static void CheckSliceOutOfBounds(int index, int length, IByteBuffer buffer)

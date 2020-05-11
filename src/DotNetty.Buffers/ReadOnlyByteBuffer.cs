@@ -53,7 +53,7 @@ namespace DotNetty.Buffers
 
         public override int EnsureWritable(int minWritableBytes, bool force) => 1;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public override IByteBuffer Unwrap() => this.buffer;
 
         public override IByteBufferAllocator Allocator => this.Unwrap().Allocator;

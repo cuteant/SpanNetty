@@ -868,7 +868,7 @@ namespace DotNetty.Codecs
         protected virtual HeaderEntry<TKey, TValue> NewHeaderEntry(int h, TKey name, TValue value, HeaderEntry<TKey, TValue> next) =>
             new HeaderEntry<TKey, TValue>(h, name, value, next, this.head);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         int Index(int hash) => hash & this.hashMask;
 
         void Add0(int h, int i, TKey name, TValue value)
@@ -1019,7 +1019,7 @@ namespace DotNetty.Codecs
 
             object IEnumerator.Current
             {
-                [MethodImpl(InlineMethod.Value)]
+                [MethodImpl(InlineMethod.AggressiveInlining)]
                 get
                 {
                     if (0u >= (uint)this.index || this.index == this.size + 1)

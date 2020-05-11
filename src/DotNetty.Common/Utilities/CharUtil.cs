@@ -294,7 +294,7 @@ namespace DotNetty.Common.Utilities
             return i;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int Digit(byte b)
         {
             const byte First = (byte)'0';
@@ -308,7 +308,7 @@ namespace DotNetty.Common.Utilities
             return b - First;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsISOControl(int c) => (c >= 0 && c <= 0x1f) || (c >= 0x7f && c <= 0x9f);
 
         public static int IndexOf(this ICharSequence cs, char searchChar, int start)
@@ -358,7 +358,7 @@ namespace DotNetty.Common.Utilities
             return IsSurrogatePair(high, low) ? ToCodePoint(high, low) : high;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int ToCodePoint(char high, char low)
         {
             // See RFC 2781, Section 2.2
@@ -368,7 +368,7 @@ namespace DotNetty.Common.Utilities
             return (h | l) + 0x10000;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static bool IsSurrogatePair(char high, char low) => char.IsHighSurrogate(high) && char.IsLowSurrogate(low);
 
         internal static int IndexOf(IReadOnlyList<char> value, char ch, int start)

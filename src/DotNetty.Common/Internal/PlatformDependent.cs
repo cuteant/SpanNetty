@@ -51,7 +51,7 @@ namespace DotNetty.Common.Internal
 
         public static Random GetThreadLocalRandom() => ThreadLocalRandom.Value;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static unsafe bool ByteArrayEquals(byte[] bytes1, int startPos1, byte[] bytes2, int startPos2, int length)
         {
             if (length <= 0) { return true; }
@@ -78,7 +78,7 @@ namespace DotNetty.Common.Internal
 #endif
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static unsafe int HashCodeAscii(byte[] bytes, int startPos, int length)
         {
             if (0u >= (uint)length)
@@ -188,7 +188,7 @@ namespace DotNetty.Common.Internal
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int HashCodeAsciiCompute(ICharSequence value, int offset, int hash)
         {
             if (!IsLittleEndian)
@@ -206,7 +206,7 @@ namespace DotNetty.Common.Internal
                 HashCodeAsciiSanitizeInt(value, offset + 4);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int HashCodeAsciiSanitizeInt(ICharSequence value, int offset)
         {
             if (!IsLittleEndian)
@@ -224,7 +224,7 @@ namespace DotNetty.Common.Internal
                 | (value[offset] & 0x1f);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int HashCodeAsciiSanitizeShort(ICharSequence value, int offset)
         {
             if (!IsLittleEndian)
@@ -238,7 +238,7 @@ namespace DotNetty.Common.Internal
                 | (value[offset] & 0x1f);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int HashCodeAsciiSanitizsByte(char value) => value & 0x1f;
 
 #if !NET40

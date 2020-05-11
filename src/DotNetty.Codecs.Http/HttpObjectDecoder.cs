@@ -830,7 +830,7 @@ namespace DotNetty.Codecs.Http
 
             public void Reset() => this.size = 0;
 
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             public bool Process(byte value)
             {
                 if (value == HttpConstants.NCarriageReturn)
@@ -885,7 +885,7 @@ namespace DotNetty.Codecs.Http
         }
 
         // Similar to char.IsWhiteSpace for ascii
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static bool IsWhiteSpace(byte c)
         {
             switch (c)
@@ -898,7 +898,7 @@ namespace DotNetty.Codecs.Http
             return false;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static bool IsWhiteSpaceOrColon(byte c)
         {
             switch (c)
@@ -912,7 +912,7 @@ namespace DotNetty.Codecs.Http
             return false;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static bool IsWhiteSpaceOrSemicolonOrISOControl(byte c)
         {
             switch (c)

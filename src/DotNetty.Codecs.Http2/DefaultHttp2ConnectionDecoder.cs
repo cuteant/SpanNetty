@@ -588,7 +588,7 @@ namespace DotNetty.Codecs.Http2
                     streamId > remote.LastStreamKnownByPeer();
             }
 
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             private void VerifyStreamMayHaveExisted(int streamId)
             {
                 if (!this.decoder.connection.StreamMayHaveExisted(streamId))
@@ -604,7 +604,7 @@ namespace DotNetty.Codecs.Http2
 
             public PrefaceFrameListener(DefaultHttp2ConnectionDecoder decoder) => this.decoder = decoder;
 
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             private void VerifyPrefaceReceived()
             {
                 if (!this.decoder.PrefaceReceived)

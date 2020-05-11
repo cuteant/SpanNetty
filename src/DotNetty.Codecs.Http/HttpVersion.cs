@@ -22,7 +22,7 @@ namespace DotNetty.Codecs.Http
         public static readonly HttpVersion Http10 = new HttpVersion("HTTP", 1, 0, false, true);
         public static readonly HttpVersion Http11 = new HttpVersion("HTTP", 1, 1, true, true);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static HttpVersion ValueOf(AsciiString text)
         {
             if (text is null)
@@ -56,7 +56,7 @@ namespace DotNetty.Codecs.Http
             return Version0(text) ?? new HttpVersion(text.ToString(), true);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static HttpVersion ValueOfInline(byte[] bytes)
         {
             if (bytes.Length != 8) return null;

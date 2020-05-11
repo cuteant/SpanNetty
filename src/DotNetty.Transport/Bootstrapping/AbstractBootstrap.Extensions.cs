@@ -18,28 +18,28 @@ namespace DotNetty.Transport.Bootstrapping
 
         private IEventLoopGroup InternalGroup
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _group);
             set => Interlocked.Exchange(ref _group, value);
         }
 
         private Func<TChannel> InternalChannelFactory
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _channelFactory);
             set => Interlocked.Exchange(ref _channelFactory, value);
         }
 
         private EndPoint InternalLocalAddress
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _localAddress);
             set => Interlocked.Exchange(ref _localAddress, value);
         }
 
         private IChannelHandler InternalHandler
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _handler);
             set => Interlocked.Exchange(ref _handler, value);
         }

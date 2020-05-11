@@ -137,14 +137,14 @@ namespace DotNetty.Handlers.Tls
 
         private IChannelHandlerContext CapturedContext
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _capturedContext);
             set => Interlocked.Exchange(ref _capturedContext, value);
         }
 
         private int State
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _state);
             set => Interlocked.Exchange(ref _state, value);
         }
@@ -1175,10 +1175,10 @@ namespace DotNetty.Handlers.Tls
 
     internal static class TlsHandlerStateExtensions
     {
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool Has(this int value, int testValue) => (value & testValue) == testValue;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool HasAny(this int value, int testValue) => (value & testValue) != 0;
     }
 

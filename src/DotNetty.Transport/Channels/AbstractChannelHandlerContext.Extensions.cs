@@ -24,13 +24,13 @@ namespace DotNetty.Transport.Channels
 
         internal AbstractChannelHandlerContext Next
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _next);
             set => Interlocked.Exchange(ref _next, value);
         }
         internal AbstractChannelHandlerContext Prev
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _prev);
             set => Interlocked.Exchange(ref _prev, value);
         }

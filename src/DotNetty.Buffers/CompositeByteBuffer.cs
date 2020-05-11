@@ -39,7 +39,7 @@ namespace DotNetty.Buffers
                 this.slice = slice;
             }
 
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             public int Idx(int index)
             {
                 return index + this.Adjustment;
@@ -395,7 +395,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         void CheckComponentIndex(int cIndex)
         {
             this.EnsureAccessible();
@@ -405,7 +405,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         void CheckComponentIndex(int cIndex, int numComponents)
         {
             this.EnsureAccessible();

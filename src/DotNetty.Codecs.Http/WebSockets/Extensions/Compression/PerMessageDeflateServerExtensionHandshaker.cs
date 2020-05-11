@@ -166,7 +166,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static bool IsPerMessageDeflateExtension(string name)
         {
 #if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER

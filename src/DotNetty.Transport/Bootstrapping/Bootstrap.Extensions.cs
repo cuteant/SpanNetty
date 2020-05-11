@@ -11,14 +11,14 @@ namespace DotNetty.Transport.Bootstrapping
     {
         private INameResolver InternalResolver
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _resolver);
             set => Interlocked.Exchange(ref _resolver, value);
         }
 
         private EndPoint InternalRemoteAddress
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref _remoteAddress);
             set => Interlocked.Exchange(ref _remoteAddress, value);
         }

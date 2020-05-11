@@ -668,7 +668,7 @@ namespace DotNetty.Codecs.Http2
         /// Returns the number of padding bytes that should be appended to the end of a frame.
         /// </summary>
         /// <param name="padding"></param>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int PaddingBytes(int padding)
         {
             // The padding parameter contains the 1 byte pad length field as well as the trailing padding bytes.
@@ -676,7 +676,7 @@ namespace DotNetty.Codecs.Http2
             return padding - 1;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static void WritePaddingLength(IByteBuffer buf, int padding)
         {
             if (padding > 0)
@@ -687,7 +687,7 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static void VerifyWeight(short weight)
         {
             if (weight < Http2CodecUtil.MinWeight || weight > Http2CodecUtil.MaxWeight)
@@ -696,7 +696,7 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static void VerifyErrorCode(long errorCode)
         {
             if (errorCode < 0 || errorCode > Http2CodecUtil.MaxUnsignedInt)
@@ -705,7 +705,7 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static void VerifyWindowSizeIncrement(int windowSizeIncrement)
         {
             if (windowSizeIncrement < 0)
@@ -714,7 +714,7 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static void VerifyPingPayload(IByteBuffer data)
         {
             if (data is null || data.ReadableBytes != Http2CodecUtil.PingFramePayloadLength)

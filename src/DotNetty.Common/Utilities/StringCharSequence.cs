@@ -76,11 +76,11 @@ namespace DotNetty.Common.Utilities
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public bool RegionMatches(int thisStart, ICharSequence seq, int start, int length)
             => CharUtil.RegionMatches(this, thisStart, seq, start, length);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public bool RegionMatchesIgnoreCase(int thisStart, ICharSequence seq, int start, int length)
             => CharUtil.RegionMatchesIgnoreCase(this, thisStart, seq, start, length);
 
@@ -155,10 +155,10 @@ namespace DotNetty.Common.Utilities
 
         public override int GetHashCode() => this.HashCode(false);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public bool ContentEquals(ICharSequence other) => CharUtil.ContentEquals(this, other);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public bool ContentEqualsIgnoreCase(ICharSequence other) => CharUtil.ContentEqualsIgnoreCase(this, other);
 
         public IEnumerator<char> GetEnumerator() => new CharSequenceEnumerator(this);

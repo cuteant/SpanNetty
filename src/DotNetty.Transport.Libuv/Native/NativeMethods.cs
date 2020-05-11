@@ -265,7 +265,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         public uint ScopeId
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => (uint)_field3;
             set
             {
@@ -274,7 +274,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private bool IsIPv4MappedToIPv6()
         {
             // If the IPAddress is an IPv4 mapped to IPv6, return the IPv4 representation instead.

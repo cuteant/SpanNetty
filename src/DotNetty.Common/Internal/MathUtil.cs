@@ -8,22 +8,22 @@ namespace DotNetty.Common.Internal
 
     public static class MathUtil
     {
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsOutOfBounds(int index, int length, int capacity) =>
             (index | length | (index + length) | (capacity - (index + length))) < 0;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int FindNextPositivePowerOfTwo(int value)
         {
             Debug.Assert(value > int.MinValue && value < 0x40000000);
             return 1 << (32 - NumberOfLeadingZeros(value - 1));
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int SafeFindNextPositivePowerOfTwo(int value) =>
             value <= 0 ? 1 : value >= 0x40000000 ? 0x40000000 : FindNextPositivePowerOfTwo(value);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int NumberOfLeadingZeros(this int i)
         {
             i |= i >> 1;
@@ -42,7 +42,7 @@ namespace DotNetty.Common.Internal
             return (i & 0x0000003F);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int Compare(long x, long y)
         {
             if (x < y) { return -1; }

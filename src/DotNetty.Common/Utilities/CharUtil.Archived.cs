@@ -87,7 +87,7 @@ namespace DotNetty.Common.Utilities
             return result;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static long ParseLong(ICharSequence str, int radix = 10)
         {
             if (str is AsciiString asciiString)
@@ -118,7 +118,7 @@ namespace DotNetty.Common.Utilities
             return ParseLong(str, i, radix, negative);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static long ParseLong(ICharSequence str, int offset, int radix, bool negative)
         {
             long max = long.MinValue / radix;
@@ -154,7 +154,7 @@ namespace DotNetty.Common.Utilities
             return result;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int Digit(char c, int radix)
         {
             if (radix >= MinRadix && radix <= MaxRadix)

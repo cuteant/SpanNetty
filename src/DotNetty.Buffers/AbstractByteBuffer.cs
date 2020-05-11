@@ -137,19 +137,19 @@ namespace DotNetty.Buffers
 
         public virtual int ReadableBytes
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => this.writerIndex - this.readerIndex;
         }
 
         public virtual int WritableBytes
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => this.Capacity - this.writerIndex;
         }
 
         public virtual int MaxWritableBytes
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => this.MaxCapacity - this.writerIndex;
         }
 
@@ -273,7 +273,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected internal void EnsureWritable0(int minWritableBytes)
         {
             this.EnsureAccessible();
@@ -1222,27 +1222,27 @@ namespace DotNetty.Buffers
             this.CheckIndex0(index, fieldLength);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckIndex0(int index, int fieldLength)
         {
             if (CheckBounds) { CheckRangeBounds(index, fieldLength, this.Capacity); }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckSrcIndex(int index, int length, int srcIndex, int srcCapacity)
         {
             this.CheckIndex(index, length);
             if (CheckBounds) { CheckRangeBounds(srcIndex, length, srcCapacity); }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckDstIndex(int index, int length, int dstIndex, int dstCapacity)
         {
             this.CheckIndex(index, length);
             if (CheckBounds) { CheckRangeBounds(dstIndex, length, dstCapacity); }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckReadableBytes(int minimumReadableBytes)
         {
             if (minimumReadableBytes < 0)
@@ -1253,7 +1253,7 @@ namespace DotNetty.Buffers
             this.CheckReadableBytes0(minimumReadableBytes);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckNewCapacity(int newCapacity)
         {
             this.EnsureAccessible();
@@ -1263,7 +1263,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         void CheckReadableBytes0(int minimumReadableBytes)
         {
             this.EnsureAccessible();
@@ -1273,7 +1273,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void EnsureAccessible()
         {
             if (CheckAccessible && 0u >= (uint)this.ReferenceCount)

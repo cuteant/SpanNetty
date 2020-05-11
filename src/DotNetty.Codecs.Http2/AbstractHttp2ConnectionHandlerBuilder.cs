@@ -400,7 +400,7 @@ namespace DotNetty.Codecs.Http2
         /// </returns>
         protected abstract THandler Build(IHttp2ConnectionDecoder decoder, IHttp2ConnectionEncoder encoder, Http2Settings initialSettings);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected TBuilder Self() => (TBuilder)this;
 
         private void EnforceNonCodecConstraints(string rejected)
@@ -409,7 +409,7 @@ namespace DotNetty.Codecs.Http2
             EnforceConstraint(rejected, "server/connection", this.encoder);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private static void EnforceConstraint(string methodName, string rejectorName, object value)
         {
             if (value is object)

@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http.Utilities
             //            : -1;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static char IntToHex(int n)
         {
             Debug.Assert(n < 0x10);
@@ -68,7 +68,7 @@ namespace DotNetty.Codecs.Http.Utilities
         }
 
         // Set of safe chars, from RFC 1738.4 minus '+'
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsUrlSafeChar(char ch)
         {
             return UrlSafeChars.Contains(ch);

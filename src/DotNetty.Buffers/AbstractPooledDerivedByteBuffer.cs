@@ -33,10 +33,10 @@ namespace DotNetty.Buffers
             this.parent = newParent;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public sealed override IByteBuffer Unwrap() => this.rootParent;//this.UnwrapCore();
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected AbstractByteBuffer UnwrapCore() => this.rootParent;
 
         internal T Init<T>(

@@ -414,7 +414,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             throw ex;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int ToFrameLength(long l)
         {
             if (l > int.MaxValue)

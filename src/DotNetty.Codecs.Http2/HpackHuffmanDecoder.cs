@@ -231,7 +231,7 @@ namespace DotNetty.Codecs.Http2
                 return new AsciiString(this.bytes, 0, this.index, false);
             }
 
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             void Append(int i)
             {
                 if ((uint)this.bytes.Length == (uint)this.index)

@@ -202,7 +202,7 @@ namespace DotNetty.Buffers
 
         public sealed override IntPtr AddressOfPinnedMemory() => (IntPtr)this.memoryAddress;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         byte* Addr(int index) => this.memoryAddress + index;
 
         public sealed override IByteBuffer SetZero(int index, int length)

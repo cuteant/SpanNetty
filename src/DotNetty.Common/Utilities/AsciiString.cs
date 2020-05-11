@@ -397,7 +397,7 @@ namespace DotNetty.Common.Utilities
 
         public string ToString(int start) => this.ToString(start, this.length);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public unsafe string ToString(int start, int end)
         {
             int count = end - start;

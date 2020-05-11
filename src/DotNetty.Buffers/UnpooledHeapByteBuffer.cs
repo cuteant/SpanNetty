@@ -59,7 +59,7 @@ namespace DotNetty.Buffers
 
         public sealed override int Capacity
         {
-            [System.Runtime.CompilerServices.MethodImpl(InlineMethod.Value)]
+            [System.Runtime.CompilerServices.MethodImpl(InlineMethod.AggressiveInlining)]
             get
             {
                 return this.array.Length;

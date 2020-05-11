@@ -441,20 +441,20 @@ namespace DotNetty.Buffers
 
         #region ** Helper **
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private void EnsureNotClosed()
         {
             if (!_isOpen) { ThrowHelper.ThrowObjectDisposedException_StreamIsClosed(); }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private void EnsureWriteable()
         {
             if (!_writable) { ThrowHelper.ThrowNotSupportedException_UnwritableStream(); }
         }
 
         /// <summary>Validate the arguments to CopyTo, as would Stream.CopyTo.</summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private static void ValidateCopyToArgs(Stream destination)
         {
             if (destination is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.destination); }

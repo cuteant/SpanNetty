@@ -90,7 +90,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public void CheckSize(long newSize)
         {
             if (this.maxSize >= 0 && newSize > this.maxSize)

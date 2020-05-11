@@ -13,7 +13,7 @@ namespace DotNetty.Common.Internal
 
         public static IPlatform Platform
         {
-            [MethodImpl(InlineMethod.Value)]
+            [MethodImpl(InlineMethod.AggressiveInlining)]
             get => Volatile.Read(ref defaultPlatform) ?? EnsurePlatformCreated();
             set
             {

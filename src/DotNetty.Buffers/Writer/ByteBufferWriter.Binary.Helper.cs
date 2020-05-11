@@ -14,7 +14,7 @@ namespace DotNetty.Buffers
         const int Int32ValueLength = 4;
         const int Int64ValueLength = 8;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private unsafe static void SetMedium(ref byte start, int value)
         {
             //fixed(byte* bytes = &start)
@@ -28,7 +28,7 @@ namespace DotNetty.Buffers
             Unsafe.AddByteOffset(ref start, offset + 2) = (byte)unsignedValue;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private unsafe static void SetMediumLE(ref byte start, int value)
         {
             uint unsignedValue = (uint)value;
@@ -38,7 +38,7 @@ namespace DotNetty.Buffers
             Unsafe.AddByteOffset(ref start, offset + 2) = (byte)(unsignedValue >> 16);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private unsafe static void SetDecimal(ref byte start, decimal value)
         {
             var bits = decimal.GetBits(value);
@@ -66,7 +66,7 @@ namespace DotNetty.Buffers
             Unsafe.AddByteOffset(ref start, offset + 15) = (byte)flags;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         private unsafe static void SetDecimalLE(ref byte start, decimal value)
         {
             var bits = decimal.GetBits(value);

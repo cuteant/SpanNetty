@@ -57,7 +57,7 @@ namespace DotNetty.Common.Internal
         /// <summary>
         /// Decomposes an astral Unicode scalar into UTF-16 high and low surrogate code units.
         /// </summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static void GetUtf16SurrogatesFromSupplementaryPlaneScalar(uint value, out char highSurrogateCodePoint, out char lowSurrogateCodePoint)
         {
             UnicodeDebug.AssertIsValidSupplementaryPlaneScalar(value);
@@ -133,7 +133,7 @@ namespace DotNetty.Common.Internal
         /// Returns <see langword="true"/> iff <paramref name="value"/> is a UTF-16 high surrogate code point,
         /// i.e., is in [ U+D800..U+DBFF ], inclusive.
         /// </summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsHighSurrogateCodePoint(uint value) => IsInRangeInclusive(value, 0xD800U, 0xDBFFU);
 
         /// <summary>
@@ -172,14 +172,14 @@ namespace DotNetty.Common.Internal
         /// Returns <see langword="true"/> iff <paramref name="value"/> is a UTF-16 low surrogate code point,
         /// i.e., is in [ U+DC00..U+DFFF ], inclusive.
         /// </summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsLowSurrogateCodePoint(uint value) => IsInRangeInclusive(value, 0xDC00U, 0xDFFFU);
 
         /// <summary>
         /// Returns <see langword="true"/> iff <paramref name="value"/> is a UTF-16 surrogate code point,
         /// i.e., is in [ U+D800..U+DFFF ], inclusive.
         /// </summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsSurrogateCodePoint(uint value) => IsInRangeInclusive(value, 0xD800U, 0xDFFFU);
 
         /// <summary>

@@ -137,13 +137,13 @@ namespace DotNetty.Common.Utilities
             return oldRefCnt;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         bool CompareAndSetRefCnt(int expect, int update)
         {
             return expect == Interlocked.CompareExchange(ref this.referenceCount, update, expect);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int RealRefCnt(int rawCnt)
         {
             return (rawCnt & 1) != 0 ? 0 : rawCnt.RightUShift(1);
@@ -155,7 +155,7 @@ namespace DotNetty.Common.Utilities
         /// <param name="rawCnt"></param>
         /// <param name="decrement"></param>
         /// <returns></returns>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int ToLiveRealCnt(int rawCnt, int decrement)
         {
             if (0u >= (uint)(rawCnt & 1))

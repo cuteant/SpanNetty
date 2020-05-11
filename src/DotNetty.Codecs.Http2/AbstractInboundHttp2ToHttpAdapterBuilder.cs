@@ -29,7 +29,7 @@ namespace DotNetty.Codecs.Http2
             this.connection = connection;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected TBuilder Self() => (TBuilder)this;
 
         /// <summary>

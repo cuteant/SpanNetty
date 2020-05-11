@@ -168,19 +168,19 @@ namespace DotNetty.Common.Concurrency
             return false;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         bool AllowFailure()
         {
             return this.AwaitingPromises() || 0u >= (uint)this.expectedCount;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         bool AwaitingPromises()
         {
             return this.doneCount < this.expectedCount;
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         bool AllPromisesDone()
         {
             return (this.doneCount == this.expectedCount) && this.doneAllocating;

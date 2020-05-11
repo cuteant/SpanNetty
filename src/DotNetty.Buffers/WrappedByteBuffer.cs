@@ -46,7 +46,7 @@ namespace DotNetty.Buffers
 
         public IByteBufferAllocator Allocator => this.Buf.Allocator;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public IByteBuffer Unwrap() => this.Buf;
 
         public bool IsReadOnly => this.Buf.IsReadOnly;

@@ -12,7 +12,7 @@ namespace DotNetty.Codecs.Mqtt
 
         // most often used (anticipated) come first
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsPublish(int signature)
         {
             const byte TypeOnlyMask = 0xf << 4;

@@ -230,19 +230,19 @@ namespace DotNetty.Common.Utilities
             return c0 <= '9' && (len == 1 || IsValidNumericChar(word[from + 1]));
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static bool IsValidHexChar(char c)
         {
             return c >= '0' && c <= '9' || c >= 'A' && c <= 'F' || c >= 'a' && c <= 'f';
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static bool IsValidNumericChar(char c)
         {
             return c >= '0' && c <= '9';
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static bool IsValidIPv4MappedChar(char c)
         {
             return c == 'f' || c == 'F';

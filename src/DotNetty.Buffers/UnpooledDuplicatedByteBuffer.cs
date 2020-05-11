@@ -45,12 +45,12 @@ namespace DotNetty.Buffers
             this.MarkIndex(); // Mark read and writer index
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public sealed override IByteBuffer Unwrap() => this.buffer;//this.UnwrapCore();
 
         public sealed override IByteBuffer Copy(int index, int length) => this.Unwrap().Copy(index, length);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         protected AbstractByteBuffer UnwrapCore() => this.buffer;
 
         public sealed override IByteBufferAllocator Allocator => this.Unwrap().Allocator;

@@ -114,7 +114,7 @@ namespace DotNetty.Common
         ///     Returns the current value for the specified thread local map.
         ///     The specified thread local map must be for the current thread.
         /// </summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public T Get(InternalThreadLocalMap threadLocalMap)
         {
             object v = threadLocalMap.GetIndexedVariable(this.index);
@@ -126,7 +126,7 @@ namespace DotNetty.Common
             return this.Initialize(threadLocalMap);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         T Initialize(InternalThreadLocalMap threadLocalMap)
         {
             T v = this.GetInitialValue();
@@ -139,7 +139,7 @@ namespace DotNetty.Common
         /// <summary>
         /// Set the value for the specified thread local map. The specified thread local map must be for the current thread.
         /// </summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public void Set(InternalThreadLocalMap threadLocalMap, T value)
         {
             if (threadLocalMap.SetIndexedVariable(this.index, value))
@@ -157,7 +157,7 @@ namespace DotNetty.Common
         /// Returns <c>true</c> if and only if this thread-local variable is set.
         /// The specified thread local map must be for the current thread.
         /// </summary>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public bool IsSet(InternalThreadLocalMap threadLocalMap) => threadLocalMap is object && threadLocalMap.IsIndexedVariableSet(this.index);
 
         /// <summary>
@@ -175,7 +175,7 @@ namespace DotNetty.Common
         /// <param name="threadLocalMap">
         /// The <see cref="InternalThreadLocalMap"/> from which this <see cref="FastThreadLocal"/> should be removed.
         /// </param>
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         public sealed override void Remove(InternalThreadLocalMap threadLocalMap)
         {
             if (threadLocalMap is null)

@@ -13,41 +13,41 @@ namespace DotNetty.Buffers
     {
         const byte Zero = 0;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static short GetShort(byte* bytes) =>
             unchecked((short)(((*bytes) << 8) | *(bytes + 1)));
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static short GetShortLE(byte* bytes) =>
             unchecked((short)((*bytes) | (*(bytes + 1) << 8)));
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static int GetUnsignedMedium(byte* bytes) =>
             *bytes << 16 |
             *(bytes + 1) << 8 |
             *(bytes + 2);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static int GetUnsignedMediumLE(byte* bytes) =>
             *bytes |
             *(bytes + 1) << 8 |
             *(bytes + 2) << 16;
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static int GetInt(byte* bytes) =>
             (*bytes << 24) |
             (*(bytes + 1) << 16) |
             (*(bytes + 2) << 8) |
             (*(bytes + 3));
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static int GetIntLE(byte* bytes) =>
             *bytes |
             (*(bytes + 1) << 8) |
             (*(bytes + 2) << 16) |
             (*(bytes + 3) << 24);
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static long GetLong(byte* bytes)
         {
             unchecked
@@ -58,7 +58,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static long GetLongLE(byte* bytes)
         {
             unchecked
@@ -69,7 +69,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetShort(byte* bytes, int value)
         {
             unchecked
@@ -79,7 +79,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetShortLE(byte* bytes, int value)
         {
             unchecked
@@ -89,7 +89,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetMedium(byte* bytes, int value)
         {
             unchecked
@@ -101,7 +101,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetMediumLE(byte* bytes, int value)
         {
             unchecked
@@ -113,7 +113,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetInt(byte* bytes, int value)
         {
             unchecked
@@ -126,7 +126,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetIntLE(byte* bytes, int value)
         {
             unchecked
@@ -139,7 +139,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetLong(byte* bytes, long value)
         {
             unchecked
@@ -156,7 +156,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetLongLE(byte* bytes, long value)
         {
             unchecked
@@ -173,7 +173,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetZero(byte[] array, int index, int length)
         {
             //if (0u >= (uint)length)
@@ -283,7 +283,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void GetBytes(byte* addr, byte[] dst, int dstIndex, int length)
         {
             //if (dst is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst); }
@@ -342,7 +342,7 @@ namespace DotNetty.Buffers
         }
 
         // No need to check length zero, the calling method already done it
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetBytes(byte* addr, byte[] src, int srcIndex, int length) =>
                 PlatformDependent.CopyMemory(src, srcIndex, addr, length);
 
@@ -365,7 +365,7 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static void SetZero(byte* addr, int length)
         {
             //if (0u >= (uint)length)
@@ -375,7 +375,7 @@ namespace DotNetty.Buffers
             PlatformDependent.SetMemory(addr, length, Zero);
         }
 
-        [MethodImpl(InlineMethod.Value)]
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static string GetString(byte* src, int length, Encoding encoding)
         {
 #if NET40 || NET451
