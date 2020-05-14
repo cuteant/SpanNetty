@@ -44,26 +44,26 @@ namespace DotNetty.Codecs.Compression
     /// 
     /// http://www.ietf.org/rfc/rfc1952.txt
     /// </summary>
-    class GZIPHeader
+    sealed class GZIPHeader
     {
         static readonly Encoding ISOEncoding = Encoding.GetEncoding("ISO-8859-1");
         static readonly byte Platform;
 
-        public static readonly byte OS_MSDOS = (byte)0x00;
-        public static readonly byte OS_AMIGA = (byte)0x01;
-        public static readonly byte OS_VMS = (byte)0x02;
-        public static readonly byte OS_UNIX = (byte)0x03;
-        public static readonly byte OS_ATARI = (byte)0x05;
-        public static readonly byte OS_OS2 = (byte)0x06;
-        public static readonly byte OS_MACOS = (byte)0x07;
-        public static readonly byte OS_TOPS20 = (byte)0x0a;
-        public static readonly byte OS_WIN32 = (byte)0x0b;
-        public static readonly byte OS_VMCMS = (byte)0x04;
-        public static readonly byte OS_ZSYSTEM = (byte)0x08;
-        public static readonly byte OS_CPM = (byte)0x09;
-        public static readonly byte OS_QDOS = (byte)0x0c;
-        public static readonly byte OS_RISCOS = (byte)0x0d;
-        public static readonly byte OS_UNKNOWN = (byte)0xff;
+        public const byte OS_MSDOS = (byte)0x00;
+        public const byte OS_AMIGA = (byte)0x01;
+        public const byte OS_VMS = (byte)0x02;
+        public const byte OS_UNIX = (byte)0x03;
+        public const byte OS_ATARI = (byte)0x05;
+        public const byte OS_OS2 = (byte)0x06;
+        public const byte OS_MACOS = (byte)0x07;
+        public const byte OS_TOPS20 = (byte)0x0a;
+        public const byte OS_WIN32 = (byte)0x0b;
+        public const byte OS_VMCMS = (byte)0x04;
+        public const byte OS_ZSYSTEM = (byte)0x08;
+        public const byte OS_CPM = (byte)0x09;
+        public const byte OS_QDOS = (byte)0x0c;
+        public const byte OS_RISCOS = (byte)0x0d;
+        public const byte OS_UNKNOWN = (byte)0xff;
 
         bool text = false;
         bool fhcrc = false;

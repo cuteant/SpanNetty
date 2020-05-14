@@ -14,6 +14,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
 
     public sealed class HttpPostRequestEncoderTest : IDisposable
     {
+        const string Newline = "\r\n"; // file-01.txt、file-02.txt 换行符
         readonly List<IDisposable> files = new List<IDisposable>();
 
         [Fact]
@@ -58,7 +59,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 HttpHeaderNames.ContentType + ": text/plain" + "\r\n" +
                 HttpHeaderNames.ContentTransferEncoding + ": binary" + "\r\n" +
                 "\r\n" +
-                "File 01" + StringUtil.Newline +
+                "File 01" + /*StringUtil.*/Newline +
                 "\r\n" +
                 "--" + multipartDataBoundary + "--" + "\r\n";
 
@@ -92,7 +93,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 HttpHeaderNames.ContentType + ": text/plain" + "\r\n" +
                 HttpHeaderNames.ContentTransferEncoding + ": binary" + "\r\n" +
                 "\r\n" +
-                "File 01" + StringUtil.Newline +
+                "File 01" + /*StringUtil.*/Newline +
                 "\r\n" +
                 "--" + multipartDataBoundary + "--" + "\r\n";
 
@@ -136,7 +137,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 HttpHeaderNames.ContentType + ": text/plain" + "\r\n" +
                 HttpHeaderNames.ContentTransferEncoding + ": binary" + "\r\n" +
                 "\r\n" +
-                "File 01" + StringUtil.Newline +
+                "File 01" + /*StringUtil.*/Newline +
                 "\r\n" +
                 "--" + multipartMixedBoundary + "\r\n" +
                 HttpHeaderNames.ContentDisposition + ": attachment; filename=\"file-02.txt\"" + "\r\n" +
@@ -144,7 +145,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 HttpHeaderNames.ContentType + ": text/plain" + "\r\n" +
                 HttpHeaderNames.ContentTransferEncoding + ": binary" + "\r\n" +
                 "\r\n" +
-                "File 02" + StringUtil.Newline +
+                "File 02" + /*StringUtil.*/Newline +
                 "\r\n" +
                 "--" + multipartMixedBoundary + "--" + "\r\n" +
                 "--" + multipartDataBoundary + "--" + "\r\n";
@@ -189,7 +190,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 HttpHeaderNames.ContentType + ": text/plain" + "\r\n" +
                 HttpHeaderNames.ContentTransferEncoding + ": binary" + "\r\n" +
                 "\r\n" +
-                "File 01" + StringUtil.Newline +
+                "File 01" + /*StringUtil.*/Newline +
                 "\r\n" +
                 "--" + multipartMixedBoundary + "\r\n" +
                 HttpHeaderNames.ContentDisposition + ": attachment\r\n" +
@@ -197,7 +198,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 HttpHeaderNames.ContentType + ": text/plain" + "\r\n" +
                 HttpHeaderNames.ContentTransferEncoding + ": binary" + "\r\n" +
                 "\r\n" +
-                "File 02" + StringUtil.Newline +
+                "File 02" + /*StringUtil.*/Newline +
                 "\r\n" +
                 "--" + multipartMixedBoundary + "--" + "\r\n" +
                 "--" + multipartDataBoundary + "--" + "\r\n";
@@ -241,14 +242,14 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 HttpHeaderNames.ContentType + ": text/plain" + "\r\n" +
                 HttpHeaderNames.ContentTransferEncoding + ": binary" + "\r\n" +
                 "\r\n" +
-                "File 01" + StringUtil.Newline + "\r\n" +
+                "File 01" + /*StringUtil.*/Newline + "\r\n" +
                 "--" + multipartDataBoundary + "\r\n" +
                 HttpHeaderNames.ContentDisposition + ": form-data; name=\"quux\"; filename=\"file-02.txt\"" + "\r\n" +
                 HttpHeaderNames.ContentLength + ": " + fileStream2.Length + "\r\n" +
                 HttpHeaderNames.ContentType + ": text/plain" + "\r\n" +
                 HttpHeaderNames.ContentTransferEncoding + ": binary" + "\r\n" +
                 "\r\n" +
-                "File 02" + StringUtil.Newline +
+                "File 02" + /*StringUtil.*/Newline +
                 "\r\n" +
                 "--" + multipartDataBoundary + "--" + "\r\n";
 
@@ -289,7 +290,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 HttpHeaderNames.ContentType + ": text/plain" + "\r\n" +
                 HttpHeaderNames.ContentTransferEncoding + ": binary" + "\r\n" +
                 "\r\n" +
-                "File 01" + StringUtil.Newline +
+                "File 01" + /*StringUtil.*/Newline +
                 "\r\n" +
                 "--" + multipartDataBoundary + "--" + "\r\n";
 

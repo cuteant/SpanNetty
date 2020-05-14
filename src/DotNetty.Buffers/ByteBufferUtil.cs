@@ -89,7 +89,7 @@ namespace DotNetty.Buffers
         public static int HashCode(IByteBuffer buffer)
         {
             int aLen = buffer.ReadableBytes;
-            int intCount = (int)((uint)aLen >> 2);
+            int intCount = aLen.RightUShift(2);
             int byteCount = aLen & 3;
 
             int hashCode = EmptyByteBuffer.EmptyByteBufferHashCode;
@@ -529,14 +529,14 @@ namespace DotNetty.Buffers
             static readonly string[] HexPadding = new string[16];
             static readonly string[] BytePadding = new string[16];
             static readonly char[] Byte2Char = new char[256];
-            static readonly string[] HexDumpRowPrefixes = new string[(int)((uint)65536 >> 4)];
+            static readonly string[] HexDumpRowPrefixes = new string[65536.RightUShift(4)];
 
             static HexUtil()
             {
                 char[] digits = "0123456789abcdef".ToCharArray();
                 for (int i = 0; i < 256; i++)
                 {
-                    HexdumpTable[i << 1] = digits[(int)((uint)i >> 4 & 0x0F)];
+                    HexdumpTable[i << 1] = digits[i.RightUShift(4) & 0x0F];
                     HexdumpTable[(i << 1) + 1] = digits[i & 0x0F];
                 }
 
@@ -670,7 +670,7 @@ namespace DotNetty.Buffers
                     Newline + "+--------+-------------------------------------------------+----------------+");
 
                 int startIndex = offset;
-                int fullRows = (int)((uint)length >> 4);
+                int fullRows = length.RightUShift(4);
                 int remainder = length & 0xF;
 
                 // Dump the rows which have 16 bytes.

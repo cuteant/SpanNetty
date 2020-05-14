@@ -19,6 +19,9 @@ namespace DotNetty.Handlers.Tests
     using DotNetty.Transport.Channels.Embedded;
     using Xunit;
     using Xunit.Abstractions;
+#if !TEST40
+    using System.Runtime.InteropServices;
+#endif
 
     public class TlsHandlerTest : TestBase
     {
@@ -45,16 +48,29 @@ namespace DotNetty.Handlers.Tests
                     Enumerable.Repeat(0, 30).Select(_ => random.Next(0, 17000)).ToArray()
                 };
             var boolToggle = new[] { false, true };
-            var protocols = new[]
+            var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
+#if TEST40
+            protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
+#else
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Tuple.Create(SslProtocols.Tls, SslProtocols.Tls),
-#if !TEST40
-                Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11),
-                Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12),
-                Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11),
-                Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11)
+                protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
+                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
+#if NETCOREAPP_3_0_GREATER
+                //protocols.Add(Tuple.Create(SslProtocols.Tls13, SslProtocols.Tls13));
 #endif
-            };
+                protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
+                protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+            }
+            else
+            {
+                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
+                protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls11, SslProtocols.Tls12 | SslProtocols.Tls11));
+                protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+            }
+#endif
             var writeStrategyFactories = new Func<IWriteStrategy>[]
             {
                 () => new AsIsWriteStrategy(),
@@ -103,7 +119,9 @@ namespace DotNetty.Handlers.Tests
                 }
                 await Task.WhenAll(writeTasks).WithTimeout(TimeSpan.FromSeconds(5));
                 IByteBuffer finalReadBuffer = Unpooled.Buffer(16 * 1024);
+#pragma warning disable CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
                 await ReadOutboundAsync(async () => ch.ReadInbound<IByteBuffer>(), expectedBuffer.ReadableBytes, finalReadBuffer, TestTimeout);
+#pragma warning restore CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
                 bool isEqual = ByteBufferUtil.Equals(expectedBuffer, finalReadBuffer);
                 if (!isEqual)
                 {
@@ -134,16 +152,29 @@ namespace DotNetty.Handlers.Tests
                     Enumerable.Repeat(0, 30).Select(_ => random.Next(0, 10) < 2 ? -1 : random.Next(0, 17000)).ToArray()
                 };
             var boolToggle = new[] { false, true };
-            var protocols = new[]
+            var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
+#if TEST40
+            protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
+#else
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Tuple.Create(SslProtocols.Tls, SslProtocols.Tls),
-#if !TEST40
-                Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11),
-                Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12),
-                Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11),
-                Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11)
+                protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
+                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
+#if NETCOREAPP_3_0_GREATER
+                //protocols.Add(Tuple.Create(SslProtocols.Tls13, SslProtocols.Tls13));
 #endif
-            };
+                protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls, SslProtocols.Tls12 | SslProtocols.Tls11));
+                protocols.Add(Tuple.Create(SslProtocols.Tls | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+            }
+            else
+            {
+                protocols.Add(Tuple.Create(SslProtocols.Tls11, SslProtocols.Tls11));
+                protocols.Add(Tuple.Create(SslProtocols.Tls12, SslProtocols.Tls12));
+                protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls11, SslProtocols.Tls12 | SslProtocols.Tls11));
+                protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
+            }
+#endif
 
             return
                 from frameLengths in lengthVariations
@@ -232,7 +263,11 @@ namespace DotNetty.Handlers.Tests
                 if (readResultBuffer.ReadableBytes < output.Count)
                 {
                     if (ch.Active)
+                    {
+#pragma warning disable CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
                         await ReadOutboundAsync(async () => ch.ReadOutbound<IByteBuffer>(), output.Count - readResultBuffer.ReadableBytes, readResultBuffer, TestTimeout, readResultBuffer.ReadableBytes != 0 ? 0 : 1);
+#pragma warning restore CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
+                    }
                 }
                 int read = Math.Min(output.Count, readResultBuffer.ReadableBytes);
                 readResultBuffer.ReadBytes(output.Array, output.Offset, read);

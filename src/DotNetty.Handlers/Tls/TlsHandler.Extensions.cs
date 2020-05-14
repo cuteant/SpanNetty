@@ -142,7 +142,7 @@ namespace DotNetty.Handlers.Tls
                 return new SslStream(stream,
                     leaveInnerStreamOpen: true,
                     userCertificateValidationCallback: new RemoteCertificateValidationCallback(LocalServerCertificateValidation)
-#if !NETCOREAPP_2_0_GREATER
+#if !(NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER)
                     , userCertificateSelectionCallback: clientSettings.UserCertSelector is null ? null : new LocalCertificateSelectionCallback((sender, targetHost, localCertificates, remoteCertificate, acceptableIssuers) =>
                     {
                         return clientSettings.UserCertSelector(sender as SslStream, targetHost, localCertificates, remoteCertificate, acceptableIssuers);
@@ -164,9 +164,12 @@ namespace DotNetty.Handlers.Tls
         [MethodImpl(InlineMethod.AggressiveInlining)]
         private static X509Certificate2 ConvertToX509Certificate2(X509Certificate certificate)
         {
-            if (certificate is X509Certificate2 cert2) { return cert2; }
-
-            return certificate is object ? new X509Certificate2(certificate) : null;
+            return certificate switch
+            {
+                null => null,
+                X509Certificate2 cert2 => cert2,
+                _ => new X509Certificate2(certificate),
+            };
         }
 
 #if !DESKTOPCLR && (NET40 || NET45 || NET451 || NET46 || NET461 || NET462 || NET47 || NET471 || NET472)

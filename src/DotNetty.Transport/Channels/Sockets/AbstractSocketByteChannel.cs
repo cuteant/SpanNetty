@@ -160,7 +160,7 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             var operation = this.ReadOperation;
             bool pending;
-#if NETSTANDARD || NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
             pending = this.Socket.ReceiveAsync(operation);
 #else
             if (ExecutionContext.IsFlowSuppressed())
@@ -317,7 +317,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 this.SetState(StateFlags.WriteScheduled);
                 bool pending;
 
-#if NETSTANDARD || NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
                 pending = this.Socket.SendAsync(operation);
 #else
                 if (ExecutionContext.IsFlowSuppressed())

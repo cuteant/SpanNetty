@@ -18,14 +18,6 @@
     <PackageReference Include="Moq" Version="$(MoqPackageVersion)" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(ImportLibs)' == 'netcore' ">
-    <PackageReference Include="System.ObjectModel" Version="$(SystemObjectModelPackageVersion)" />
-    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="$(SystemRuntimeSerializationPrimitivesPackageVersion)" />
-    <PackageReference Include="System.Runtime.Serialization.Xml" Version="$(SystemRuntimeSerializationXmlPackageVersion)" />
-    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="$(SystemRuntimeSerializationFormattersPackageVersion)" />
-    <PackageReference Include="System.Xml.XmlSerializer" Version="$(SystemXmlXmlSerializerPackageVersion)" />
-  </ItemGroup>
-
   <ItemGroup>
     <None Remove="Multipart\file-01.txt" />
     <None Remove="Multipart\file-02.txt" />

@@ -318,8 +318,10 @@ namespace DotNetty.Tests.End2End
                     }
                     finally
                     {
+#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
                         bossGroup.ShutdownGracefullyAsync();
                         workerGroup.ShutdownGracefullyAsync();
+#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
                     }
                 };
             }
@@ -327,8 +329,10 @@ namespace DotNetty.Tests.End2End
             {
                 if (!started)
                 {
+#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
                     bossGroup.ShutdownGracefullyAsync();
                     workerGroup.ShutdownGracefullyAsync();
+#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
                 }
             }
         }

@@ -52,9 +52,20 @@ namespace DotNetty.Transport.Libuv.Tests
             // Connect task should fail
             error = Assert.Throws<AggregateException>(() => connectTask.Wait(DefaultTimeout));
             Assert.Single(error.InnerExceptions);
-            Assert.IsType<OperationException>(error.InnerException);
-            var exception = (OperationException)error.InnerException;
-            Assert.Equal("EADDRNOTAVAIL", exception.Name); // address not available (port : 0)
+            var innerException = error.InnerException;
+            if (error.InnerException is ChannelException channelException)
+            {
+                innerException = channelException.InnerException;
+                Assert.IsType<OperationException>(innerException);
+                var exception = (OperationException)innerException;
+                Assert.Equal("ECONNREFUSED", exception.Name); // ubuntu-18.04.2
+            }
+            else
+            {
+                Assert.IsType<OperationException>(innerException);
+                var exception = (OperationException)innerException;
+                Assert.Equal("EADDRNOTAVAIL", exception.Name); // address not available (port : 0)
+            }
         }
 
         sealed class TestHandler : ChannelHandlerAdapter

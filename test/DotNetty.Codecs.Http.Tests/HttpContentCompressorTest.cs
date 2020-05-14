@@ -10,9 +10,38 @@ namespace DotNetty.Codecs.Http.Tests
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels.Embedded;
     using Xunit;
+#if !TEST40
+    using System.Runtime.InteropServices;
+#endif
 
     public sealed class HttpContentCompressorTest
     {
+        static readonly string Platform;
+
+        static HttpContentCompressorTest()
+        {
+#if TEST40
+            Platform = "0b";
+#else
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                Platform = "0b";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                Platform = "03";
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                Platform = "07";
+            }
+            else
+            {
+                Platform = "ff";
+            }
+#endif
+        }
+
         [Fact]
         public void GetTargetContentEncoding()
         {
@@ -70,7 +99,7 @@ namespace DotNetty.Codecs.Http.Tests
             AssertEncodedResponse(ch);
 
             var chunk = ch.ReadOutbound<IHttpContent>();
-            Assert.Equal("1f8b080000000000000bf248cdc901000000ffff", ByteBufferUtil.HexDump(chunk.Content));
+            Assert.Equal($"1f8b08000000000000{Platform}f248cdc901000000ffff", ByteBufferUtil.HexDump(chunk.Content));
             chunk.Release();
 
             chunk = ch.ReadOutbound<IHttpContent>();
@@ -111,7 +140,7 @@ namespace DotNetty.Codecs.Http.Tests
             ch.WriteOutbound(new DefaultLastHttpContent(Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes("orld"))));
 
             var chunk = ch.ReadOutbound<IHttpContent>();
-            Assert.Equal("1f8b080000000000000bf248cdc901000000ffff", ByteBufferUtil.HexDump(chunk.Content));
+            Assert.Equal($"1f8b08000000000000{Platform}f248cdc901000000ffff", ByteBufferUtil.HexDump(chunk.Content));
             chunk.Release();
 
             chunk = ch.ReadOutbound<IHttpContent>();
@@ -154,7 +183,7 @@ namespace DotNetty.Codecs.Http.Tests
             ch.WriteOutbound(content);
 
             var chunk = ch.ReadOutbound<IHttpContent>();
-            Assert.Equal("1f8b080000000000000bf248cdc901000000ffff", ByteBufferUtil.HexDump(chunk.Content));
+            Assert.Equal($"1f8b08000000000000{Platform}f248cdc901000000ffff", ByteBufferUtil.HexDump(chunk.Content));
             chunk.Release();
 
             chunk = ch.ReadOutbound<IHttpContent>();
@@ -203,7 +232,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var c = ch.ReadOutbound<IHttpContent>();
             observedLength += c.Content.ReadableBytes;
-            Assert.Equal("1f8b080000000000000bf248cdc9c9d75108cf2fca4901000000ffff", ByteBufferUtil.HexDump(c.Content));
+            Assert.Equal($"1f8b08000000000000{Platform}f248cdc9c9d75108cf2fca4901000000ffff", ByteBufferUtil.HexDump(c.Content));
             c.Release();
 
             c = ch.ReadOutbound<IHttpContent>();
@@ -233,7 +262,7 @@ namespace DotNetty.Codecs.Http.Tests
             AssertEncodedResponse(ch);
 
             var chunk = ch.ReadOutbound<IHttpContent>();
-            Assert.Equal("1f8b080000000000000bf248cdc9c9d75108cf2fca4901000000ffff", ByteBufferUtil.HexDump(chunk.Content));
+            Assert.Equal($"1f8b08000000000000{Platform}f248cdc9c9d75108cf2fca4901000000ffff", ByteBufferUtil.HexDump(chunk.Content));
             chunk.Release();
 
             chunk = ch.ReadOutbound<IHttpContent>();
@@ -260,7 +289,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             ch.WriteOutbound(EmptyLastHttpContent.Default);
             var chunk = ch.ReadOutbound<IHttpContent>();
-            Assert.Equal("1f8b080000000000000b03000000000000000000", ByteBufferUtil.HexDump(chunk.Content));
+            Assert.Equal($"1f8b08000000000000{Platform}03000000000000000000", ByteBufferUtil.HexDump(chunk.Content));
             chunk.Release();
 
             chunk = ch.ReadOutbound<IHttpContent>();

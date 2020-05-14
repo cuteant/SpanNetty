@@ -32,7 +32,8 @@ namespace DotNetty.Handlers.Tls
                     var foundCertificates = storeCertificates.Find(X509FindType.FindBySubjectName, subject, !allowInvalid);
                     foundCertificate = foundCertificates
                         .OfType<X509Certificate2>()
-                        .Where(IsCertificateAllowedForServerAuth)
+                        .Where(_ => IsCertificateAllowedForServerAuth(_))
+                        .Where(_ => DoesCertificateHaveAnAccessiblePrivateKey(_))
                         .OrderByDescending(certificate => certificate.NotAfter)
                         .FirstOrDefault();
 
@@ -92,6 +93,9 @@ namespace DotNetty.Handlers.Tls
 
             return !hasEkuExtension;
         }
+
+        internal static bool DoesCertificateHaveAnAccessiblePrivateKey(X509Certificate2 certificate)
+            => certificate.HasPrivateKey;
 
 #if !(NET40 || NET451)
         private static void DisposeCertificates(X509Certificate2Collection certificates, X509Certificate2 except)

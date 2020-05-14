@@ -348,7 +348,7 @@ namespace DotNetty.Codecs.Http2
             {
                 output.Method = request.Method.AsciiName;
                 // TODO java.net.URI isOriginForm  isAsteriskForm
-                if (Uri.TryCreate(request.Uri, UriKind.Absolute, out var requestTargetUri))
+                if (Uri.TryCreate(request.Uri, UriKind.Absolute, out var requestTargetUri) && !requestTargetUri.IsFile) // .NETCore 非Windows系统，会把 '/' 打头的相对 url 默认为 UnixFileUri
                 {
                     output.Path = ToHttp2Path(requestTargetUri);
                     SetHttp2Scheme(inHeaders, requestTargetUri, output);

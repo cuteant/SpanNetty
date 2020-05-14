@@ -48,7 +48,7 @@ namespace DotNetty.Codecs.Tests.Protobuf
             number = 266;
 
             data = new byte[size + number];
-            /**
+            /*
              * 8    A    0    2
              * 1000 1010 0000 0010
              * 0000 1010 0000 0010
@@ -77,7 +77,7 @@ namespace DotNetty.Codecs.Tests.Protobuf
             number = 0x4000;
 
             data = new byte[size + number];
-            /**
+            /*
              * 8    0    8    0    0    1
              * 1000 0000 1000 0000 0000 0001
              * 0000 0000 0000 0000 0000 0001
@@ -107,7 +107,7 @@ namespace DotNetty.Codecs.Tests.Protobuf
             number = 0x200000;
 
             data = new byte[size + number];
-            /**
+            /*
              * 8    0    8    0    8    0    0    1
              * 1000 0000 1000 0000 1000 0000 0000 0001
              * 0000 0000 0000 0000 0000 0000 0000 0001

@@ -155,7 +155,9 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             var pool = new FixedChannelPool(cb, handler, 1);
             IChannel channel1 = await pool.AcquireAsync();
             await channel1.CloseAsync();
+#pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
             pool.ReleaseAsync(channel1);
+#pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
 
             IChannel channel2 = await pool.AcquireAsync();
 

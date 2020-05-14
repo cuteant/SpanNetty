@@ -15,7 +15,7 @@ namespace DotNetty.Buffers
     using System.Runtime.InteropServices;
     using DotNetty.Common.Internal;
 
-    public ref partial struct ByteBufferReader
+    partial struct ByteBufferReader
     {
         /// <summary>Try to read everything up to the given <paramref name="delimiter"/>.</summary>
         /// <param name="span">The read data, if any.</param>

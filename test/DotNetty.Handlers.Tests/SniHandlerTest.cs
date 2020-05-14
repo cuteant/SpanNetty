@@ -19,6 +19,9 @@ namespace DotNetty.Handlers.Tests
     using DotNetty.Transport.Channels.Embedded;
     using Xunit;
     using Xunit.Abstractions;
+#if !TEST40
+    using System.Runtime.InteropServices;
+#endif
 
     public class SniHandlerTest : TestBase
     {
@@ -31,12 +34,14 @@ namespace DotNetty.Handlers.Tests
             X509Certificate2 tlsCertificate2 = TestResourceHelper.GetTestCertificate2();
 
 #if TEST40
-            SettingMap[tlsCertificate.GetNameInfo(X509NameType.DnsName, false)] = new ServerTlsSettings(tlsCertificate, false, false, SslProtocols.Tls);
-            SettingMap[tlsCertificate2.GetNameInfo(X509NameType.DnsName, false)] = new ServerTlsSettings(tlsCertificate2, false, false, SslProtocols.Tls);
+            SslProtocols serverProtocol = SslProtocols.Tls;
+//#elif NETCOREAPP_3_0_GREATER
+//            SslProtocols serverProtocol = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12;
 #else
-            SettingMap[tlsCertificate.GetNameInfo(X509NameType.DnsName, false)] = new ServerTlsSettings(tlsCertificate, false, false, SslProtocols.Tls12);
-            SettingMap[tlsCertificate2.GetNameInfo(X509NameType.DnsName, false)] = new ServerTlsSettings(tlsCertificate2, false, false, SslProtocols.Tls12);
+            SslProtocols serverProtocol = SslProtocols.Tls12;
 #endif
+            SettingMap[tlsCertificate.GetNameInfo(X509NameType.DnsName, false)] = new ServerTlsSettings(tlsCertificate, false, false, serverProtocol);
+            SettingMap[tlsCertificate2.GetNameInfo(X509NameType.DnsName, false)] = new ServerTlsSettings(tlsCertificate2, false, false, serverProtocol);
         }
 
         public SniHandlerTest(ITestOutputHelper output)
@@ -53,6 +58,8 @@ namespace DotNetty.Handlers.Tests
             var boolToggle = new[] { false, true };
 #if TEST40
             var protocols = new[] { SslProtocols.Tls };
+//#elif NETCOREAPP_3_0_GREATER
+//            var protocols = new[] { RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12 };
 #else
             var protocols = new[] { SslProtocols.Tls12 };
 #endif
@@ -101,7 +108,9 @@ namespace DotNetty.Handlers.Tests
                 }
                 await Task.WhenAll(writeTasks).WithTimeout(TimeSpan.FromSeconds(5));
                 IByteBuffer finalReadBuffer = Unpooled.Buffer(16 * 1024);
+#pragma warning disable CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
                 await ReadOutboundAsync(async () => ch.ReadInbound<IByteBuffer>(), expectedBuffer.ReadableBytes, finalReadBuffer, TestTimeout);
+#pragma warning restore CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
                 Assert.True(ByteBufferUtil.Equals(expectedBuffer, finalReadBuffer), $"---Expected:\n{ByteBufferUtil.PrettyHexDump(expectedBuffer)}\n---Actual:\n{ByteBufferUtil.PrettyHexDump(finalReadBuffer)}");
 
                 if (!isClient)
@@ -129,6 +138,8 @@ namespace DotNetty.Handlers.Tests
             var boolToggle = new[] { false, true };
 #if TEST40
             var protocols = new[] { SslProtocols.Tls };
+//#elif NETCOREAPP_3_0_GREATER
+//            var protocols = new[] { RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12 };
 #else
             var protocols = new[] { SslProtocols.Tls12 };
 #endif
@@ -231,7 +242,11 @@ namespace DotNetty.Handlers.Tests
                 if (readResultBuffer.ReadableBytes < output.Count)
                 {
                     if (ch.Active)
+                    {
+#pragma warning disable CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
                         await ReadOutboundAsync(async () => ch.ReadOutbound<IByteBuffer>(), output.Count - readResultBuffer.ReadableBytes, readResultBuffer, TestTimeout, readResultBuffer.ReadableBytes != 0 ? 0 : 1);
+#pragma warning restore CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
+                    }
                 }
                 int read = Math.Min(output.Count, readResultBuffer.ReadableBytes);
                 readResultBuffer.ReadBytes(output.Array, output.Offset, read);

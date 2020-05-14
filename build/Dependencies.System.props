@@ -2,10 +2,10 @@
   <!-- Shared Package Versions -->
   <PropertyGroup>
     <!-- Core packages -->
-    <MicrosoftBclAsyncInterfacesPackageVersion>1.1.0</MicrosoftBclAsyncInterfacesPackageVersion>
+    <MicrosoftBclAsyncInterfacesPackageVersion>1.1.1</MicrosoftBclAsyncInterfacesPackageVersion>
     <MicrosoftExperimentalCollectionsPackageVersion>1.0.6-e190117-3</MicrosoftExperimentalCollectionsPackageVersion>
     <MicrosoftCSharpPackageVersion>4.7.0</MicrosoftCSharpPackageVersion>
-    <MicrosoftDataSqlClientPackageVersion>1.1.1</MicrosoftDataSqlClientPackageVersion>
+    <MicrosoftDataSqlClientPackageVersion>1.1.2</MicrosoftDataSqlClientPackageVersion>
     <FSharpCorePackageVersion>4.7.1</FSharpCorePackageVersion>
     <MonoPosixPackageVersion>5.4.0.201</MonoPosixPackageVersion>
     <MonoPosixNETStandardPackageVersion>1.0.0</MonoPosixNETStandardPackageVersion>
@@ -15,17 +15,17 @@
     <WindowsAzureStoragePackageVersion>9.3.3</WindowsAzureStoragePackageVersion>
 
     <!-- IdentityModel packages -->
-    <MicrosoftIdentityModelKeyVaultExtensionsPackageVersion>6.5.0</MicrosoftIdentityModelKeyVaultExtensionsPackageVersion>
-    <MicrosoftIdentityModelLoggingPackageVersion>6.5.0</MicrosoftIdentityModelLoggingPackageVersion>
-    <MicrosoftIdentityModelManagedKeyVaultSecurityKeyPackageVersion>6.5.0</MicrosoftIdentityModelManagedKeyVaultSecurityKeyPackageVersion>
-    <MicrosoftIdentityModelJsonWebTokensPackageVersion>6.5.0</MicrosoftIdentityModelJsonWebTokensPackageVersion>
-    <MicrosoftIdentityModelProtocolsPackageVersion>6.5.0</MicrosoftIdentityModelProtocolsPackageVersion>
-    <MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>6.5.0</MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>
-    <MicrosoftIdentityModelProtocolsWsFederationPackageVersion>6.5.0</MicrosoftIdentityModelProtocolsWsFederationPackageVersion>
-    <MicrosoftIdentityModelTokensPackageVersion>6.5.0</MicrosoftIdentityModelTokensPackageVersion>
-    <MicrosoftIdentityModelTokensSamlPackageVersion>6.5.0</MicrosoftIdentityModelTokensSamlPackageVersion>
-    <MicrosoftIdentityModelXmlPackageVersion>6.5.0</MicrosoftIdentityModelXmlPackageVersion>
-    <SystemIdentityModelTokensJwtPackageVersion>6.5.0</SystemIdentityModelTokensJwtPackageVersion>
+    <MicrosoftIdentityModelKeyVaultExtensionsPackageVersion>6.5.1</MicrosoftIdentityModelKeyVaultExtensionsPackageVersion>
+    <MicrosoftIdentityModelLoggingPackageVersion>6.5.1</MicrosoftIdentityModelLoggingPackageVersion>
+    <MicrosoftIdentityModelManagedKeyVaultSecurityKeyPackageVersion>6.5.1</MicrosoftIdentityModelManagedKeyVaultSecurityKeyPackageVersion>
+    <MicrosoftIdentityModelJsonWebTokensPackageVersion>6.5.1</MicrosoftIdentityModelJsonWebTokensPackageVersion>
+    <MicrosoftIdentityModelProtocolsPackageVersion>6.5.1</MicrosoftIdentityModelProtocolsPackageVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>6.5.1</MicrosoftIdentityModelProtocolsOpenIdConnectPackageVersion>
+    <MicrosoftIdentityModelProtocolsWsFederationPackageVersion>6.5.1</MicrosoftIdentityModelProtocolsWsFederationPackageVersion>
+    <MicrosoftIdentityModelTokensPackageVersion>6.5.1</MicrosoftIdentityModelTokensPackageVersion>
+    <MicrosoftIdentityModelTokensSamlPackageVersion>6.5.1</MicrosoftIdentityModelTokensSamlPackageVersion>
+    <MicrosoftIdentityModelXmlPackageVersion>6.5.1</MicrosoftIdentityModelXmlPackageVersion>
+    <SystemIdentityModelTokensJwtPackageVersion>6.5.1</SystemIdentityModelTokensJwtPackageVersion>
 
     <!-- Compatibility packages -->
     <MicrosoftWin32RegistryPackageVersion>4.7.0</MicrosoftWin32RegistryPackageVersion>
@@ -58,17 +58,17 @@
     <SystemThreadingAccessControlPackageVersion>4.7.0</SystemThreadingAccessControlPackageVersion>
 
     <!-- System packages -->
-    <SystemCollectionsImmutablePackageVersion>1.7.0</SystemCollectionsImmutablePackageVersion>
-    <SystemReflectionMetadataPackageVersion>1.8.0</SystemReflectionMetadataPackageVersion>
+    <SystemCollectionsImmutablePackageVersion>1.7.1</SystemCollectionsImmutablePackageVersion>
+    <SystemReflectionMetadataPackageVersion>1.8.1</SystemReflectionMetadataPackageVersion>
 
     <SystemBuffersPackageVersion>4.5.1</SystemBuffersPackageVersion>
-    <SystemDiagnosticsDiagnosticSourcePackageVersion>4.7.0</SystemDiagnosticsDiagnosticSourcePackageVersion>
-    <SystemIOPipelinesPackageVersion>4.7.0</SystemIOPipelinesPackageVersion>
+    <SystemDiagnosticsDiagnosticSourcePackageVersion>4.7.1</SystemDiagnosticsDiagnosticSourcePackageVersion>
+    <SystemIOPipelinesPackageVersion>4.7.2</SystemIOPipelinesPackageVersion>
     <SystemMemoryPackageVersion>4.5.4</SystemMemoryPackageVersion>
     <SystemNetHttpPackageVersion>4.3.4</SystemNetHttpPackageVersion>
     <SystemNumericsVectorsPackageVersion>4.5.0</SystemNumericsVectorsPackageVersion>
 
-    <SystemReflectionDispatchProxyPackageVersion>4.7.0</SystemReflectionDispatchProxyPackageVersion>
+    <SystemReflectionDispatchProxyPackageVersion>4.7.1</SystemReflectionDispatchProxyPackageVersion>
     <SystemReflectionEmitPackageVersion>4.7.0</SystemReflectionEmitPackageVersion>
     <SystemReflectionEmitILGenerationPackageVersion>4.7.0</SystemReflectionEmitILGenerationPackageVersion>
     <SystemReflectionEmitLightweightPackageVersion>4.7.0</SystemReflectionEmitLightweightPackageVersion>
@@ -91,23 +91,23 @@
     <SystemSecurityCryptographyProtectedDataPackageVersion>4.7.0</SystemSecurityCryptographyProtectedDataPackageVersion>
     <SystemSecurityCryptographyXmlPackageVersion>4.7.0</SystemSecurityCryptographyXmlPackageVersion>
 
-    <SystemTextEncodingCodePagesPackageVersion>4.7.0</SystemTextEncodingCodePagesPackageVersion>
-    <SystemTextJsonPackageVersion>4.7.1</SystemTextJsonPackageVersion>
-    <SystemTextEncodingsWebPackageVersion>4.7.0</SystemTextEncodingsWebPackageVersion>
-    <SystemThreadingChannelsPackageVersion>4.7.0</SystemThreadingChannelsPackageVersion>
-    <SystemThreadingTasksDataflowPackageVersion>4.11.0</SystemThreadingTasksDataflowPackageVersion>
+    <SystemTextEncodingCodePagesPackageVersion>4.7.1</SystemTextEncodingCodePagesPackageVersion>
+    <SystemTextJsonPackageVersion>4.7.2</SystemTextJsonPackageVersion>
+    <SystemTextEncodingsWebPackageVersion>4.7.1</SystemTextEncodingsWebPackageVersion>
+    <SystemThreadingChannelsPackageVersion>4.7.1</SystemThreadingChannelsPackageVersion>
+    <SystemThreadingTasksDataflowPackageVersion>4.11.1</SystemThreadingTasksDataflowPackageVersion>
     <SystemThreadingTasksExtensionsPackageVersion>4.5.4</SystemThreadingTasksExtensionsPackageVersion>
     <SystemValueTuplePackageVersion>4.5.0</SystemValueTuplePackageVersion>
 
     <!-- Ix packages -->
-    <IxPackageVersion>4.0.0</IxPackageVersion>
-    <SystemInteractivePackageVersion>4.0.0</SystemInteractivePackageVersion>
-    <SystemInteractiveAsyncPackageVersion>4.0.0</SystemInteractiveAsyncPackageVersion>
-    <SystemInteractiveAsyncProvidersPackageVersion>4.0.0</SystemInteractiveAsyncProvidersPackageVersion>
+    <IxPackageVersion>4.1.1</IxPackageVersion>
+    <SystemInteractivePackageVersion>4.1.1</SystemInteractivePackageVersion>
+    <SystemInteractiveAsyncPackageVersion>4.1.1</SystemInteractiveAsyncPackageVersion>
+    <SystemInteractiveAsyncProvidersPackageVersion>4.1.1</SystemInteractiveAsyncProvidersPackageVersion>
 
     <!-- Rx packages -->
-    <RxPackageVersion>4.3.2</RxPackageVersion>
-    <SystemReactiveLinqPackageVersion>4.3.2</SystemReactiveLinqPackageVersion>
+    <RxPackageVersion>4.4.1</RxPackageVersion>
+    <SystemReactiveLinqPackageVersion>4.4.1</SystemReactiveLinqPackageVersion>
 
     <!-- Obsolete packages -->
     <SystemCollectionsPackageVersion>4.3.0</SystemCollectionsPackageVersion>

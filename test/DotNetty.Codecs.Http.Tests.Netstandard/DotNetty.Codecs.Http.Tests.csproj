@@ -15,15 +15,6 @@
     <PackageReference Include="Moq" Version="$(MoqPackageVersion)" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(ImportLibs)' == 'netcore' ">
-    <PackageReference Include="System.ObjectModel" Version="$(SystemObjectModelPackageVersion)" />
-    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="$(SystemRuntimeSerializationPrimitivesPackageVersion)" />
-    <PackageReference Include="System.Runtime.Serialization.Xml" Version="$(SystemRuntimeSerializationXmlPackageVersion)" />
-    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="$(SystemRuntimeSerializationFormattersPackageVersion)" />
-    <PackageReference Include="System.Xml.XmlSerializer" Version="$(SystemXmlXmlSerializerPackageVersion)" />
-  </ItemGroup>
-
-
   <ItemGroup>
     <Compile Include="..\DotNetty.Codecs.Http.Tests\**\*.cs" Exclude="..\DotNetty.Codecs.Http.Tests\bin\**;..\DotNetty.Codecs.Http.Tests\obj\**" />
     <EmbeddedResource Include="..\DotNetty.Codecs.Http.Tests\**\*.resx" Exclude="..\DotNetty.Codecs.Http.Tests\bin\**;..\DotNetty.Codecs.Http.Tests\obj\**;@(EmbeddedResource)" />

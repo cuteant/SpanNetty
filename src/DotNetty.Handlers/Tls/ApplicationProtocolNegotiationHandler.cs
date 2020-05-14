@@ -1,8 +1,9 @@
-﻿#if NETCOREAPP_2_0_GREATER
+﻿#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
 namespace DotNetty.Handlers.Tls
 {
     using System;
     using System.Net.Security;
+    using System.Runtime.CompilerServices;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
 
@@ -76,11 +77,8 @@ namespace DotNetty.Handlers.Tls
                 if (handshakeEvent.IsSuccessful)
                 {
                     var sslHandler = ctx.Pipeline.Get<TlsHandler>();
-                    if (sslHandler is null)
-                    {
-                        throw new InvalidOperationException(
-                            "cannot find a SslHandler in the pipeline (required for application-level protocol negotiation)");
-                    }
+                    if (sslHandler is null) { ThrowInvalidOperationException(); }
+
                     var protocol = sslHandler.NegotiatedApplicationProtocol;
                     this.ConfigurePipeline(ctx, !protocol.Protocol.IsEmpty ? protocol : fallbackProtocol);
                 }
@@ -91,6 +89,17 @@ namespace DotNetty.Handlers.Tls
             }
 
             ctx.FireUserEventTriggered(evt);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void ThrowInvalidOperationException()
+        {
+            throw GetException();
+            static InvalidOperationException GetException()
+            {
+                return new InvalidOperationException(
+                    "cannot find a SslHandler in the pipeline (required for application-level protocol negotiation)");
+            }
         }
 
         /// <summary>

@@ -17,14 +17,6 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="$(xUnitRunnerVsPackageVersion)" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(ImportLibs)' == 'netcore' ">
-    <PackageReference Include="System.ObjectModel" Version="$(SystemObjectModelPackageVersion)" />
-    <PackageReference Include="System.Runtime.Serialization.Primitives" Version="$(SystemRuntimeSerializationPrimitivesPackageVersion)" />
-    <PackageReference Include="System.Runtime.Serialization.Xml" Version="$(SystemRuntimeSerializationXmlPackageVersion)" />
-    <PackageReference Include="System.Runtime.Serialization.Formatters" Version="$(SystemRuntimeSerializationFormattersPackageVersion)" />
-    <PackageReference Include="System.Xml.XmlSerializer" Version="$(SystemXmlXmlSerializerPackageVersion)" />
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\DotNetty.Tests.Common\DotNetty.Tests.Common.csproj" />
   </ItemGroup>

@@ -7,10 +7,10 @@ namespace DotNetty.Common.Utilities
 
     public static class BitOps
     {
-        [MethodImpl(InlineMethod.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static int RightUShift(this int value, int bits) => unchecked((int)((uint)value >> bits));
 
-        [MethodImpl(InlineMethod.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static long RightUShift(this long value, int bits) => unchecked((long)((ulong)value >> bits));
     }
 }

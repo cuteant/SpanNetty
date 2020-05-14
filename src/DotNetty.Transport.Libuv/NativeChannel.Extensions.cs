@@ -15,7 +15,7 @@ namespace DotNetty.Transport.Libuv
     {
         private int State
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => Volatile.Read(ref _state);
             set => Interlocked.Exchange(ref _state, value);
         }

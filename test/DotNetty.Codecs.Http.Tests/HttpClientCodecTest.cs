@@ -190,7 +190,7 @@ namespace DotNetty.Codecs.Http.Tests
                 Assert.IsAssignableFrom<ISocketChannel>(ctx.Channel);
 
                 var sChannel = (ISocketChannel)ctx.Channel;
-                /**
+                /*
                  * The point of this test is to not add any content-length or content-encoding headers
                  * and the client should still handle this.
                  * See <a href="https://tools.ietf.org/html/rfc7230#section-3.3.3">RFC 7230, 3.3.3</a>.

@@ -203,7 +203,7 @@ namespace DotNetty.Codecs.Mqtt.Tests
             T recoded = this.RecodePacket(packet, useServer, true);
 
             this.contextMock.Verify(x => x.FireChannelRead(It.IsAny<T>()), Times.Once);
-            this.contextMock.ResetCalls();
+            this.contextMock.Invocations.Clear();
             Assert.Equal(packet.PacketId, recoded.PacketId);
         }
 

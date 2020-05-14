@@ -8,9 +8,29 @@ namespace DotNetty.Handlers.Tls
     using System.Security.Authentication;
     using System.Security.Cryptography.X509Certificates;
     using DotNetty.Transport.Channels;
+#if !NET40
+    using System.Runtime.InteropServices;
+#endif
 
     public sealed class ServerTlsSettings : TlsSettings
     {
+        private static readonly SslProtocols s_defaultServerProtocol;
+        static ServerTlsSettings()
+        {
+#if NET40
+            s_defaultServerProtocol = SslProtocols.Default;
+#else
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                s_defaultServerProtocol = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
+            }
+            else
+            {
+                s_defaultServerProtocol = SslProtocols.Tls12 | SslProtocols.Tls11;
+            }
+#endif
+        }
+
         public ServerTlsSettings(X509Certificate certificate)
             : this(certificate, ClientCertificateMode.NoCertificate)
         {
@@ -22,12 +42,7 @@ namespace DotNetty.Handlers.Tls
         }
 
         public ServerTlsSettings(X509Certificate certificate, bool negotiateClientCertificate, bool checkCertificateRevocation)
-            : this(certificate, negotiateClientCertificate, checkCertificateRevocation,
-#if NET40
-                SslProtocols.Default)
-#else
-                SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls)
-#endif
+            : this(certificate, negotiateClientCertificate, checkCertificateRevocation, s_defaultServerProtocol)
         {
         }
 
@@ -45,12 +60,7 @@ namespace DotNetty.Handlers.Tls
         }
 
         public ServerTlsSettings(X509Certificate certificate, ClientCertificateMode clientCertificateMode, bool checkCertificateRevocation)
-            : this(certificate, clientCertificateMode, checkCertificateRevocation,
-#if NET40
-                SslProtocols.Default)
-#else
-                SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls)
-#endif
+            : this(certificate, clientCertificateMode, checkCertificateRevocation, s_defaultServerProtocol)
         {
         }
 
@@ -95,7 +105,7 @@ namespace DotNetty.Handlers.Tls
         /// </summary>
         public Func<IChannelHandlerContext, string, X509Certificate2> ServerCertificateSelector { get; set; }
 
-#if NETCOREAPP_2_0_GREATER
+#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
         public System.Collections.Generic.List<SslApplicationProtocol> ApplicationProtocols { get; set; }
 #endif
     }

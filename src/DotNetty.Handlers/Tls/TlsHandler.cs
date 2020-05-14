@@ -33,7 +33,7 @@ namespace DotNetty.Handlers.Tls
         private readonly ClientTlsSettings _clientSettings;
         private readonly X509Certificate _serverCertificate;
         private readonly Func<IChannelHandlerContext, string, X509Certificate2> _serverCertificateSelector;
-#if NETCOREAPP_2_0_GREATER
+#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
         private readonly bool _hasHttp2Protocol;
         private readonly Func<IChannelHandlerContext, string, X509CertificateCollection, X509Certificate, string[], X509Certificate2> _userCertSelector;
 #endif
@@ -85,7 +85,7 @@ namespace DotNetty.Handlers.Tls
                     ThrowHelper.ThrowArgumentException_ServerCertificateRequired();
                 }
 
-#if NETCOREAPP_2_0_GREATER
+#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
                 var serverApplicationProtocols = _serverSettings.ApplicationProtocols;
                 if (serverApplicationProtocols is object)
                 {
@@ -105,7 +105,7 @@ namespace DotNetty.Handlers.Tls
                 }
             }
             _clientSettings = settings as ClientTlsSettings;
-#if NETCOREAPP_2_0_GREATER
+#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
             if (_clientSettings is object)
             {
                 var clientApplicationProtocols = _clientSettings.ApplicationProtocols;
@@ -149,7 +149,7 @@ namespace DotNetty.Handlers.Tls
             set => Interlocked.Exchange(ref _state, value);
         }
 
-#if NETCOREAPP_2_0_GREATER
+#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
         public SslApplicationProtocol NegotiatedApplicationProtocol => _sslStream.NegotiatedApplicationProtocol;
 #endif
 
@@ -414,7 +414,7 @@ namespace DotNetty.Handlers.Tls
                 while (!EnsureAuthenticated(ctx))
                 {
                     _mediationStream.ExpandSource(packetLengths[packetIndex]);
-                    if (++packetIndex == packetLengths.Count)
+                    if ((uint)(++packetIndex) >= (uint)packetLengths.Count)
                     {
                         return;
                     }
@@ -604,7 +604,7 @@ namespace DotNetty.Handlers.Tls
                 State = oldState | TlsHandlerState.Authenticating;
                 if (_isServer)
                 {
-#if NETCOREAPP_2_0_GREATER
+#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
                     // Adapt to the SslStream signature
                     ServerCertificateSelectionCallback selector = null;
                     if (_serverCertificateSelector is object)
@@ -668,7 +668,7 @@ namespace DotNetty.Handlers.Tls
                 }
                 else
                 {
-#if NETCOREAPP_2_0_GREATER
+#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
                     LocalCertificateSelectionCallback selector = null;
                     if (_userCertSelector is object)
                     {
@@ -894,15 +894,16 @@ namespace DotNetty.Handlers.Tls
                         break;
                     }
 
-                    if (messages.Count == 1)
+                    if (1u >= (uint)messages.Count) // messages.Count == 1; messages 最小数量为 1
                     {
                         buf = (IByteBuffer)messages[0];
                     }
                     else
                     {
                         buf = context.Allocator.Buffer((int)_pendingUnencryptedWrites.CurrentSize);
-                        foreach (IByteBuffer buffer in messages)
+                        for (int idx = 0; idx < messages.Count; idx++)
                         {
+                            var buffer = (IByteBuffer)messages[idx];
                             buffer.ReadBytes(buf, buffer.ReadableBytes);
                             buffer.Release();
                         }

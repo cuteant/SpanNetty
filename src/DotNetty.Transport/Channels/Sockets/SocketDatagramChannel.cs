@@ -117,7 +117,7 @@ namespace DotNetty.Transport.Channels.Sockets
 #endif
 
             bool pending;
-#if NETSTANDARD || NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
             pending = this.Socket.ReceiveFromAsync(operation);
 #else
             if (ExecutionContext.IsFlowSuppressed())

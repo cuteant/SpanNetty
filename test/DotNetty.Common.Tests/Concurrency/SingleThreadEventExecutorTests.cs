@@ -27,10 +27,8 @@ namespace DotNetty.Common.Tests.Concurrency
             var executor = new SingleThreadEventExecutor("test", TimeSpan.FromSeconds(5));
             IEnumerable<Task<int>> tasks = Enumerable.Range(1, 1).Select(async i =>
             {
-#if !NETCOREAPP2_1 // TODO4ME
                 //Clear SynchronizationContext set by xunit
                 SynchronizationContext.SetSynchronizationContext(null);
-#endif
 
                 var completion = new TaskCompletionSource();
                 executor.Execute(async () =>

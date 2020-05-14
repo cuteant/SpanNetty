@@ -17,6 +17,9 @@ namespace DotNetty.Transport.Tests.Channel.Sockets
     using DotNetty.Transport.Channels.Sockets;
     using Xunit;
     using Xunit.Abstractions;
+#if !TEST40
+    using System.Runtime.InteropServices;
+#endif
 
     [Collection("UDP Transport Tests")]
     public class SocketDatagramChannelMulticastTest : TestBase
@@ -96,6 +99,12 @@ namespace DotNetty.Transport.Tests.Channel.Sockets
         [MemberData(nameof(GetData))]
         public void Multicast(AddressFamily addressFamily, IByteBufferAllocator allocator)
         {
+#if !TEST40
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return;
+            }
+#endif
             SocketDatagramChannel serverChannel = null;
             IChannel clientChannel = null;
             var serverGroup = new MultithreadEventLoopGroup(1);
