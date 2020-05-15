@@ -4,7 +4,7 @@
 // ReSharper disable ConvertToAutoPropertyWithPrivateSetter
 namespace DotNetty.Codecs.Http
 {
-    using CuteAnt.Pool;
+    using DotNetty.Common.Internal;
 
     public class DefaultHttpResponse : DefaultHttpMessage, IHttpResponse
     {

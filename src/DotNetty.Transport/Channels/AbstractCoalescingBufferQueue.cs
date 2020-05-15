@@ -7,9 +7,9 @@ namespace DotNetty.Transport.Channels
     using System.Diagnostics;
     using System.Linq;
     using System.Threading.Tasks;
-    using CuteAnt.Collections;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 

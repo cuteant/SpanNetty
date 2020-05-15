@@ -7,7 +7,6 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.Collections.Generic;
-    using CuteAnt.Pool;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;

@@ -109,7 +109,7 @@ namespace HttpUpload.Client
                         pipeline.AddLast("tls", new TlsHandler(stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true), new ClientTlsSettings(targetHost)));
                     }
 
-                    //pipeline.AddLast(new MsLoggingHandler("CONN"));
+                    //pipeline.AddLast(new LoggingHandler("CONN"));
 
                     pipeline.AddLast("codec", new HttpClientCodec());
 

@@ -8,7 +8,7 @@ namespace DotNetty.Codecs.Http2
     using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
-    using CuteAnt.Collections;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;

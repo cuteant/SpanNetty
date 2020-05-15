@@ -33,7 +33,6 @@ namespace Examples.Common
         {
             var f = new LoggerFactory();
             f.AddNLog();
-            TraceLogger.Initialize(f);
             InternalLoggerFactory.DefaultFactory = f;
         }
     }

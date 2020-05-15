@@ -8,12 +8,13 @@
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http.Cookies;
     using DotNetty.Codecs.Http.Multipart;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
 
     public class HttpUploadClientHandler : SimpleChannelInboundHandler2<IHttpObject>
     {
-        static readonly ILogger s_logger = TraceLogger.GetLogger<HttpUploadClientHandler>();
+        static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<HttpUploadClientHandler>();
 
         bool readingChunks;
 

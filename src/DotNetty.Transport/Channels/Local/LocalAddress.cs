@@ -5,7 +5,7 @@ namespace DotNetty.Transport.Channels.Local
 {
     using System;
     using System.Net;
-    using CuteAnt.Text;
+    using DotNetty.Common.Internal;
 
     public class LocalAddress : EndPoint, IComparable<LocalAddress>
     {

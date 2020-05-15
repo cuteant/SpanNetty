@@ -3,7 +3,6 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using CuteAnt.Buffers;
 using DotNetty.Common.Internal;
 
 namespace DotNetty.Buffers
@@ -13,14 +12,7 @@ namespace DotNetty.Buffers
     {
         internal static readonly ArrayPooledByteBufferAllocator Allocator = ArrayPooledByteBufferAllocator.Default;
 
-        internal static readonly ArrayPool<byte> DefaultArrayPool;
-
-        static ArrayPooled()
-        {
-            BufferManager.MaxBufferPoolSize = DotNetty.Common.Internal.SystemPropertyUtil.GetInt("io.netty.allocator.maxBufferPoolSize", int.MaxValue);
-            BufferManager.MaxIndividualBufferSize = DotNetty.Common.Internal.SystemPropertyUtil.GetInt("io.netty.allocator.maxIndividualBufferSize", 1024 * 1024 * 10);
-            DefaultArrayPool = BufferManager.Shared;
-        }
+        internal static readonly ArrayPool<byte> DefaultArrayPool = ArrayPool<byte>.Shared;
 
         public static readonly IByteBuffer Empty = Unpooled.Empty;
 

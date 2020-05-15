@@ -5,7 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.Encodings.Web;
-using CuteAnt.Pool;
+using DotNetty.Common.Internal;
 
 namespace DotNetty.Codecs.Http.Utilities
 {

@@ -1,5 +1,4 @@
 ﻿using System.Threading;
-using CuteAnt.Buffers;
 using DotNetty.Common;
 using DotNetty.Common.Internal;
 using DotNetty.Common.Utilities;

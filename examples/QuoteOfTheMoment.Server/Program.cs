@@ -25,10 +25,10 @@ namespace QuoteOfTheMoment.Server
                     .Group(group)
                     .Channel<SocketDatagramChannel>()
                     .Option(ChannelOption.SoBroadcast, true)
-                    .Handler(new MsLoggingHandler("SRV-LSTN"))
+                    .Handler(new LoggingHandler("SRV-LSTN"))
                     .Handler(new ActionChannelInitializer<IChannel>(channel =>
                     {
-                        channel.Pipeline.AddLast(new MsLoggingHandler("CONN"));
+                        channel.Pipeline.AddLast(new LoggingHandler("CONN"));
                         channel.Pipeline.AddLast("Quote", new QuoteOfTheMomentServerHandler());
                     }));
 

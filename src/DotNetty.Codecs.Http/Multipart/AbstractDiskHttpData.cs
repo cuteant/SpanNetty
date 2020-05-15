@@ -4,9 +4,9 @@
 namespace DotNetty.Codecs.Http.Multipart
 {
     using System;
+    using System.Buffers;
     using System.IO;
     using System.Text;
-    using CuteAnt.Buffers;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Internal.Logging;
@@ -154,7 +154,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
             this.fileStream = this.TempFile();
             int written = 0;
-            var bytes = BufferManager.Shared.Rent(c_defaultCopyBufferSize);
+            var bytes = ArrayPool<byte>.Shared.Rent(c_defaultCopyBufferSize);
             try
             {
                 while (true)
@@ -172,7 +172,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             finally
             {
-                BufferManager.Shared.Return(bytes);
+                ArrayPool<byte>.Shared.Return(bytes);
             }
             this.fileStream.Flush();
             // Reset the position to start for reads
@@ -303,7 +303,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
 
             // must copy
-            var buffer = BufferManager.Shared.Rent(c_defaultCopyBufferSize);
+            var buffer = ArrayPool<byte>.Shared.Rent(c_defaultCopyBufferSize);
             int position = 0;
             var lastPosition = this.fileStream.Position;
             this.fileStream.Seek(0, SeekOrigin.Begin);
@@ -324,7 +324,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             finally
             {
-                BufferManager.Shared.Return(buffer);
+                ArrayPool<byte>.Shared.Return(buffer);
             }
 
             if (position == this.Size)

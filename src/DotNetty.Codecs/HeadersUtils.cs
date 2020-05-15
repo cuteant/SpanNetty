@@ -5,7 +5,7 @@ namespace DotNetty.Codecs
 {
     using System;
     using System.Collections.Generic;
-    using CuteAnt.Pool;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     public static class HeadersUtils

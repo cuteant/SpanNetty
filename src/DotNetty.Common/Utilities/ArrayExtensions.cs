@@ -4,7 +4,6 @@
 namespace DotNetty.Common.Utilities
 {
     using System;
-    using CuteAnt;
     using DotNetty.Common.Internal;
 
     /// <summary>

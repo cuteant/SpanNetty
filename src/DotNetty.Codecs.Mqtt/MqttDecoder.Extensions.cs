@@ -4,13 +4,7 @@
 namespace DotNetty.Codecs.Mqtt
 {
     using System;
-    using System.Collections.Generic;
-    using System.Runtime.CompilerServices;
-    using System.Text;
-    using CuteAnt.Collections;
-    using DotNetty.Buffers;
-    using DotNetty.Codecs.Mqtt.Packets;
-    using DotNetty.Transport.Channels;
+    using DotNetty.Common.Internal;
 
     partial class MqttDecoder
     {

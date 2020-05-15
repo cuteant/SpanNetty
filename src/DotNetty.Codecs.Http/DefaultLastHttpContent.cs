@@ -6,8 +6,8 @@
 namespace DotNetty.Codecs.Http
 {
     using System.Text;
-    using CuteAnt.Pool;
     using DotNetty.Buffers;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     public class DefaultLastHttpContent : DefaultHttpContent, ILastHttpContent

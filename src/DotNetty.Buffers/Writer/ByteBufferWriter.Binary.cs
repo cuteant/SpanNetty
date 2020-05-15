@@ -2,7 +2,6 @@
 {
     using System;
     using System.Runtime.InteropServices;
-    using CuteAnt;
 
     public ref partial struct ByteBufferWriter
     {
@@ -64,14 +63,6 @@
         {
             GrowAndEnsureIf(GuidValueLength);
             value.ToByteArray().AsSpan().CopyTo(_buffer);
-            AdvanceCore(GuidValueLength);
-        }
-
-        public void WriteCombGuid(CombGuid value)
-        {
-            GrowAndEnsureIf(GuidValueLength);
-            var raw = value.GetByteArray();
-            raw.AsSpan().CopyTo(_buffer);
             AdvanceCore(GuidValueLength);
         }
     }

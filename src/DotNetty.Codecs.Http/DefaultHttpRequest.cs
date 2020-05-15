@@ -6,7 +6,7 @@
 namespace DotNetty.Codecs.Http
 {
     using System;
-    using CuteAnt.Pool;
+    using DotNetty.Common.Internal;
     
     public class DefaultHttpRequest : DefaultHttpMessage, IHttpRequest
     {

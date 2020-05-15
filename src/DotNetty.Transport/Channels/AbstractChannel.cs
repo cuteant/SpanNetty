@@ -9,9 +9,9 @@ namespace DotNetty.Transport.Channels
     using System.Net.Sockets;
     using System.Threading;
     using System.Threading.Tasks;
-    using CuteAnt.Text;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 

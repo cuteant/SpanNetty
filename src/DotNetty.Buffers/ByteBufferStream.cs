@@ -3,9 +3,6 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using CuteAnt.AsyncEx;
-using CuteAnt.Buffers;
-using CuteAnt.Runtime;
 using DotNetty.Common.Utilities;
 
 namespace DotNetty.Buffers
@@ -186,7 +183,7 @@ namespace DotNetty.Buffers
             if (cancellationToken.IsCancellationRequested) { return; }
 
             var ioBuffers = _buffer.GetIoBuffers();
-            if (destination is MemoryStream || destination is BufferManagerOutputStream)
+            if (destination is MemoryStream)
             {
                 try
                 {
@@ -261,22 +258,11 @@ namespace DotNetty.Buffers
             return read;
         }
 
-        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-        {
-            var readNum = this.Read(buffer, offset, count);
-            return new CompletedAsyncResult<int>(readNum, callback, state);
-        }
-
-        public override int EndRead(IAsyncResult asyncResult)
-        {
-            return CompletedAsyncResult<int>.End(asyncResult);
-        }
-
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
-                return TaskConstants<int>.Canceled;
+                return TaskUtil.FromCanceled<int>(cancellationToken);
             }
             try
             {
@@ -289,7 +275,7 @@ namespace DotNetty.Buffers
             //}
             catch (Exception ex2)
             {
-                return AsyncUtils.FromException<int>(ex2);
+                return TaskUtil.FromException<int>(ex2);
             }
         }
 
@@ -318,25 +304,6 @@ namespace DotNetty.Buffers
             _buffer.WriteBytes(buffer, offset, count);
         }
 
-        public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-        {
-            if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
-            if (offset < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.offset); }
-            if (count < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.count); }
-            if (buffer.Length - offset < count) { ThrowHelper.ThrowArgumentException_InvalidOffLen(); }
-
-            EnsureNotClosed();
-            EnsureWriteable();
-
-            _buffer.WriteBytes(buffer, offset, count);
-            return new CompletedAsyncResult(callback, state);
-        }
-
-        public override void EndWrite(IAsyncResult asyncResult)
-        {
-            CompletedAsyncResult.End(asyncResult);
-        }
-
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
@@ -348,12 +315,12 @@ namespace DotNetty.Buffers
             EnsureWriteable();
 
             // If cancellation is already requested, bail early
-            if (cancellationToken.IsCancellationRequested) { return AsyncUtils.FromCanceled(cancellationToken); }
+            if (cancellationToken.IsCancellationRequested) { return TaskUtil.FromCanceled(cancellationToken); }
 
             try
             {
                 _buffer.WriteBytes(buffer, offset, count);
-                return TaskConstants.Completed;
+                return TaskUtil.Completed;
             }
             //catch (OperationCanceledException oce)
             //{
@@ -361,7 +328,7 @@ namespace DotNetty.Buffers
             //}
             catch (Exception exception)
             {
-                return AsyncUtils.FromException(exception);
+                return TaskUtil.FromException(exception);
             }
         }
 
@@ -392,16 +359,16 @@ namespace DotNetty.Buffers
 
         public override Task FlushAsync(CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested) { return AsyncUtils.FromCanceled(cancellationToken); }
+            if (cancellationToken.IsCancellationRequested) { return TaskUtil.FromCanceled(cancellationToken); }
 
             try
             {
                 Flush();
-                return TaskConstants.Completed;
+                return TaskUtil.Completed;
             }
             catch (Exception ex)
             {
-                return AsyncUtils.FromException(ex);
+                return TaskUtil.FromException(ex);
             }
         }
 

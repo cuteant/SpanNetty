@@ -9,9 +9,9 @@ namespace DotNetty.Codecs.Http
     using System.Diagnostics;
     using System.Globalization;
     using System.Threading.Tasks;
-    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;

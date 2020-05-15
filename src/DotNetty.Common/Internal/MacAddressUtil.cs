@@ -4,13 +4,11 @@
 namespace DotNetty.Common.Internal
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Net;
     using System.Net.NetworkInformation;
     using System.Net.Sockets;
-    using System.Text;
-    using System.Collections.Generic;
-    using CuteAnt.Text;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 

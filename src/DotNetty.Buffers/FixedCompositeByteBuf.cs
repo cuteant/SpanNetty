@@ -7,7 +7,6 @@ namespace DotNetty.Buffers
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using CuteAnt;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;

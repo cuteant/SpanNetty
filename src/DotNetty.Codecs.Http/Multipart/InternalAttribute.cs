@@ -8,9 +8,9 @@ namespace DotNetty.Codecs.Http.Multipart
     using System;
     using System.Collections.Generic;
     using System.Text;
-    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     sealed class InternalAttribute : AbstractReferenceCounted, IInterfaceHttpData

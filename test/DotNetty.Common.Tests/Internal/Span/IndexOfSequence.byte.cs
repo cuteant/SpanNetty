@@ -4,7 +4,6 @@
 
 using System;
 using System.Runtime.InteropServices;
-using CuteAnt;
 using DotNetty.Common.Internal;
 using Xunit;
 

@@ -91,7 +91,7 @@ namespace HttpUpload.Server
 
                 bootstrap
                     .Option(ChannelOption.SoBacklog, 8192)
-                    //.Handler(new MsLoggingHandler("LSTN"))
+                    //.Handler(new LoggingHandler("LSTN"))
                     .ChildHandler(new ActionChannelInitializer<IChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
@@ -102,7 +102,7 @@ namespace HttpUpload.Server
 
                         //pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 0, 120));
 
-                        //pipeline.AddLast(new MsLoggingHandler("CONN"));
+                        //pipeline.AddLast(new LoggingHandler("CONN"));
                         pipeline.AddLast(new HttpRequestDecoder());
                         pipeline.AddLast(new HttpResponseEncoder());
 

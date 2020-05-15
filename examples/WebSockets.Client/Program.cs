@@ -100,7 +100,7 @@ namespace WebSockets.Client
 
                     pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 0, 60));
 
-                    pipeline.AddLast(new MsLoggingHandler("CONN"));
+                    pipeline.AddLast(new LoggingHandler("CONN"));
                     pipeline.AddLast(
                         new HttpClientCodec(),
                         new HttpObjectAggregator(8192),

@@ -10,10 +10,9 @@ namespace DotNetty.Transport.Channels.Embedded
     using System.Runtime.CompilerServices;
     using System.Runtime.ExceptionServices;
     using System.Threading.Tasks;
-    using CuteAnt.AsyncEx;
-    using CuteAnt.Collections;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
 

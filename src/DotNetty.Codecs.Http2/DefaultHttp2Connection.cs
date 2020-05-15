@@ -9,7 +9,6 @@ namespace DotNetty.Codecs.Http2
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using CuteAnt.Collections;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;

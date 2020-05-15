@@ -7,6 +7,7 @@ namespace Http2Helloworld.FrameServer
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
 
@@ -17,7 +18,7 @@ namespace Http2Helloworld.FrameServer
      */
     public class HelloWorldHttp2Handler : ChannelDuplexHandler
     {
-        static readonly ILogger s_logger = TraceLogger.GetLogger<HelloWorldHttp2Handler>();
+        static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<HelloWorldHttp2Handler>();
 
         public override bool IsSharable => true;
 

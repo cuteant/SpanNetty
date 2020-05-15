@@ -117,4 +117,25 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ArgumentOutOfRange_Count" xml:space="preserve">
+    <value>Count must be positive and count must refer to a location within the collection.</value>
+  </data>
+  <data name="ArgumentOutOfRange_Index" xml:space="preserve">
+    <value>Index was out of range. Must be non-negative and less than the size of the collection.</value>
+  </data>
+  <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
+    <value>Non-negative number required.</value>
+  </data>
+  <data name="Capacity_May_Not_Be_Negative" xml:space="preserve">
+    <value>Capacity may not be negative.</value>
+  </data>
+  <data name="Dest_Array_Cannot_Be_Null" xml:space="preserve">
+    <value>Destination array cannot be null.</value>
+  </data>
+  <data name="Value_Cannot_Be_Null" xml:space="preserve">
+    <value>Value cannot be null.</value>
+  </data>
+  <data name="Value_Is_Of_Incorrect_Type" xml:space="preserve">
+    <value>Value is of incorrect type.</value>
+  </data>
 </root>

@@ -6,9 +6,8 @@ namespace DotNetty.Codecs.Http
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Threading.Tasks;
-    using CuteAnt.Pool;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;

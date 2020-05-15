@@ -11,7 +11,6 @@ namespace DotNetty.Buffers
     using System.Runtime.InteropServices;
     using System.Text;
     using System.Threading;
-    using CuteAnt.Pool;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 

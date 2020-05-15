@@ -4,7 +4,7 @@
 namespace DotNetty.Codecs
 {
     using System;
-    using CuteAnt.Pool;
+    using DotNetty.Common.Internal;
 
     /// <summary>
     ///     Thrown if an unsupported message is received by an codec.

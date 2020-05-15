@@ -4,7 +4,7 @@
 namespace DotNetty.Codecs.Http
 {
     using System;
-    using CuteAnt.Collections;
+    using DotNetty.Common.Internal;
 
     partial class HttpMethod : IEquatable<HttpMethod>
     {

@@ -9,12 +9,13 @@
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http.Cookies;
     using DotNetty.Codecs.Http.Multipart;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
 
     public class HttpUploadServerHandler : SimpleChannelInboundHandler2<IHttpObject>
     {
-        static readonly ILogger s_logger = TraceLogger.GetLogger<HttpUploadServerHandler>();
+        static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<HttpUploadServerHandler>();
         static readonly IHttpDataFactory factory =
             new DefaultHttpDataFactory(DefaultHttpDataFactory.MinSize); // Disk if size exceed
 

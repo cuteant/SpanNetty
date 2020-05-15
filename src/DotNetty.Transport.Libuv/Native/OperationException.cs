@@ -5,7 +5,7 @@
 namespace DotNetty.Transport.Libuv.Native
 {
     using System;
-    using CuteAnt.Collections;
+    using DotNetty.Common.Internal;
 
     public sealed class OperationException : Exception
     {

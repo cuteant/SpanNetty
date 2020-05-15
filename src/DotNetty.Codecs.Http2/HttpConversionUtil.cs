@@ -5,9 +5,9 @@ namespace DotNetty.Codecs.Http2
 {
     using System;
     using System.Collections.Generic;
-    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
     using DotNettyHttpVersion = DotNetty.Codecs.Http.HttpVersion;
 

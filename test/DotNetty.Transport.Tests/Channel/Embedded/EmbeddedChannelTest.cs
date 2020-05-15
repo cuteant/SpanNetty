@@ -6,12 +6,11 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using CuteAnt.Collections;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
-    using DotNetty.Tests.Common;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Embedded;
     using Xunit;

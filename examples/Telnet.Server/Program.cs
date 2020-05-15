@@ -40,7 +40,7 @@ namespace Telnet.Server
                     .Group(bossGroup, workerGroup)
                     .Channel<TcpServerSocketChannel>()
                     .Option(ChannelOption.SoBacklog, 100)
-                    .Handler(new MsLoggingHandler("LSTN"))
+                    .Handler(new LoggingHandler("LSTN"))
                     .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                     {
                         IChannelPipeline pipeline = channel.Pipeline;
@@ -49,7 +49,7 @@ namespace Telnet.Server
                             pipeline.AddLast(TlsHandler.Server(tlsCertificate));
                         }
 
-                        pipeline.AddLast(new MsLoggingHandler("CONN"));
+                        pipeline.AddLast(new LoggingHandler("CONN"));
                         pipeline.AddLast(new DelimiterBasedFrameDecoder(8192, Delimiters.LineDelimiter()));
                         pipeline.AddLast(STRING_ENCODER, STRING_DECODER, SERVER_HANDLER);
                     }));

@@ -4,8 +4,8 @@
 namespace DotNetty.Codecs.Http.WebSockets.Extensions
 {
     using System.Collections.Generic;
-    using System.Text;
     using System.Text.RegularExpressions;
+    using DotNetty.Common.Internal;
 
     public static class WebSocketExtensionUtil
     {
@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
         internal static string AppendExtension(string currentHeaderValue, string extensionName,
             Dictionary<string, string> extensionParameters)
         {
-            var newHeaderValue = CuteAnt.Pool.StringBuilderManager.Allocate(currentHeaderValue?.Length ?? extensionName.Length + 1);
+            var newHeaderValue = StringBuilderManager.Allocate(currentHeaderValue?.Length ?? extensionName.Length + 1);
             if (currentHeaderValue is object && currentHeaderValue.Trim() != string.Empty)
             {
                 newHeaderValue.Append(currentHeaderValue);
@@ -78,7 +78,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                     newHeaderValue.Append(extensionParameter.Value);
                 }
             }
-            return CuteAnt.Pool.StringBuilderManager.ReturnAndFree(newHeaderValue);
+            return StringBuilderManager.ReturnAndFree(newHeaderValue);
         }
     }
 }

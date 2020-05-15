@@ -6,9 +6,9 @@ namespace DotNetty.Handlers.Streams
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using CuteAnt.Collections;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;

@@ -9,8 +9,8 @@ namespace DotNetty.Codecs.Http.Cors
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
-    using CuteAnt.Pool;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     // Configuration for Cross-Origin Resource Sharing (CORS).
@@ -161,7 +161,7 @@ namespace DotNetty.Codecs.Http.Cors
             else
             {
                 builder.Append("(");
-                foreach(AsciiString value in this.allowedRequestHeaders)
+                foreach (AsciiString value in this.allowedRequestHeaders)
                 {
                     builder.Append($"'{value}'");
                 }

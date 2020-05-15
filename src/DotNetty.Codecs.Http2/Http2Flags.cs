@@ -4,7 +4,7 @@
 namespace DotNetty.Codecs.Http2
 {
     using System;
-    using CuteAnt.Pool;
+    using DotNetty.Common.Internal;
 
     /// <summary>
     /// Provides utility methods for accessing specific flags as defined by the HTTP/2 spec.

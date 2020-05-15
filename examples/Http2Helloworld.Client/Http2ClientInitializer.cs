@@ -11,11 +11,12 @@ namespace Http2Helloworld.Client
     using DotNetty.Codecs.Http2;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Channels;
+    using DotNetty.Common.Internal.Logging;
     using Microsoft.Extensions.Logging;
 
     public class Http2ClientInitializer : ChannelInitializer<IChannel>
     {
-        static readonly ILogger s_logger = TraceLogger.GetLogger<Http2ClientInitializer>();
+        static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<Http2ClientInitializer>();
         static readonly IHttp2FrameLogger Logger = new Http2FrameMsLogger(LogLevel.Information, typeof(Http2ClientInitializer));
 
         readonly X509Certificate2 cert;

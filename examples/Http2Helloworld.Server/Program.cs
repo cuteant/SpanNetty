@@ -107,7 +107,7 @@ namespace Http2Helloworld.Server
                 bootstrap
                     .Option(ChannelOption.SoBacklog, 8192)
 
-                    .Handler(new MsLoggingHandler("LSTN"))
+                    .Handler(new LoggingHandler("LSTN"))
                     //.Handler(new ServerChannelRebindHandler(DoBind))
 
                     .ChildHandler(new Http2ServerInitializer(tlsCertificate));

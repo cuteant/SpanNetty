@@ -8,6 +8,7 @@ namespace Http2Helloworld.Server
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
 
@@ -16,7 +17,7 @@ namespace Http2Helloworld.Server
     /// </summary>
     public class HelloWorldHttp1Handler : SimpleChannelInboundHandler2<IFullHttpRequest>
     {
-        static readonly ILogger s_logger = TraceLogger.GetLogger<HelloWorldHttp1Handler>();
+        static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<HelloWorldHttp1Handler>();
 
         internal static readonly IByteBuffer RESPONSE_BYTES = Unpooled.UnreleasableBuffer(Unpooled.CopiedBuffer("Hello World", Encoding.UTF8));
 

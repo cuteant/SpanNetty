@@ -5,7 +5,6 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using CuteAnt;
 using DotNetty.Common.Internal;
 using Xunit;
 

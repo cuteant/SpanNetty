@@ -4,7 +4,7 @@
 // ReSharper disable UseStringInterpolation
 namespace DotNetty.Codecs.Http.WebSockets
 {
-    using CuteAnt.Collections;
+    using DotNetty.Common.Internal;
     using DotNetty.Transport.Channels;
 
     internal static class ProtocolViolationHelper

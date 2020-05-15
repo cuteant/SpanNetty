@@ -3,9 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Text.Encodings.Web;
-using CuteAnt.Pool;
+using DotNetty.Common.Internal;
 using Microsoft.Extensions.Primitives;
 
 namespace DotNetty.Codecs.Http.Utilities

@@ -12,6 +12,7 @@ namespace Http2Helloworld.Client
     using DotNetty.Codecs.Http2;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
 
@@ -20,7 +21,7 @@ namespace Http2Helloworld.Client
     /// </summary>
     public class HttpResponseHandler : SimpleChannelInboundHandler2<IFullHttpResponse>
     {
-        static readonly ILogger s_logger = TraceLogger.GetLogger<HttpResponseHandler>();
+        static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<HttpResponseHandler>();
 
         readonly ConcurrentDictionary<int, KeyValuePair<Task, IPromise>> streamidPromiseMap;
 

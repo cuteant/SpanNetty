@@ -11,7 +11,6 @@ namespace DotNetty.Common.Utilities
     using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
-    using CuteAnt.Text;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;

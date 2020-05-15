@@ -2,7 +2,7 @@
   <Import Project="..\nuget.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <RootNamespace>DotNetty.Codecs</RootNamespace>
     <AssemblyName>DotNetty.Codecs</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -14,6 +14,13 @@
     <Description>General purpose codecs for DotNetty：the complete port of the DotNetty.Codecs assembly to support .NET 4.0 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;codec</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
+    <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutablePackageVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' != 'netstandard2.1' ">
+    <PackageReference Include="System.Collections.Immutable" Version="$(SystemCollectionsImmutable2PackageVersion)" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DotNetty.Transport\DotNetty.Transport.Netstandard.csproj" />

@@ -7,6 +7,7 @@ namespace Http2Tiles
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
 
@@ -15,7 +16,7 @@ namespace Http2Tiles
      */
     public class FallbackRequestHandler : SimpleChannelInboundHandler2<IHttpRequest>
     {
-        static readonly ILogger s_logger = TraceLogger.GetLogger<FallbackRequestHandler>();
+        static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<FallbackRequestHandler>();
 
         private static readonly IByteBuffer Response = Unpooled.UnreleasableBuffer(Unpooled.CopiedBuffer("<!DOCTYPE html>"
                 + "<html><body><h2>To view the example you need a browser that supports HTTP/2 ("

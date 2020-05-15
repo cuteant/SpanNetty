@@ -7,13 +7,14 @@ namespace Http2Helloworld.Server
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
 
     public class HelloWorldHttp2Handler : Http2ConnectionHandler, IHttp2FrameListener
     {
-        static readonly ILogger s_logger = TraceLogger.GetLogger<HelloWorldHttp2Handler>();
+        static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<HelloWorldHttp2Handler>();
 
 
         public HelloWorldHttp2Handler(IHttp2ConnectionDecoder decoder, IHttp2ConnectionEncoder encoder, Http2Settings initialSettings)

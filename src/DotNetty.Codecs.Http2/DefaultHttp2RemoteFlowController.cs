@@ -5,7 +5,7 @@ namespace DotNetty.Codecs.Http2
 {
     using System;
     using System.Diagnostics;
-    using CuteAnt.Collections;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
 

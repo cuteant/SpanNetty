@@ -3,15 +3,14 @@
     using System;
     using System.Net.Sockets;
     using System.Threading.Tasks;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
     using DotNetty.Transport.Libuv.Native;
-    using Microsoft.Extensions.Logging;
-    using MsLogLevel = Microsoft.Extensions.Logging.LogLevel;
 
     public sealed class ServerChannelRebindHandler : ChannelHandlerAdapter
     {
-        private readonly ILogger Logger = TraceLogger.GetLogger<ServerChannelRebindHandler>();
+        private readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ServerChannelRebindHandler>();
 
         private readonly Action _doBindAction;
         private readonly int _delaySeconds;
@@ -32,9 +31,9 @@
 
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
-            if (Logger.IsEnabled(MsLogLevel.Warning))
+            if (Logger.WarnEnabled)
             {
-                Logger.LogWarning(exception, "Channel {0} caught exception", context.Channel);
+                Logger.Warn($"Channel {context.Channel} caught exception", exception);
             }
             switch (exception)
             {

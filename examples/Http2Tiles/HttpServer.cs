@@ -51,7 +51,7 @@ namespace Http2Tiles
             bootstrap
                 .Option(ChannelOption.SoBacklog, 1024)
 
-                .Handler(new MsLoggingHandler("LSTN"))
+                .Handler(new LoggingHandler("LSTN"))
 
                 .ChildHandler(new ActionChannelInitializer<IChannel>(ch =>
                 {

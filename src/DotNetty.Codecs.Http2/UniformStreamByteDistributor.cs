@@ -5,7 +5,7 @@ namespace DotNetty.Codecs.Http2
 {
     using System;
     using System.Diagnostics;
-    using CuteAnt.Collections;
+    using DotNetty.Common.Internal;
 
     /// <summary>
     /// A <see cref="IStreamByteDistributor"/> that ignores stream priority and uniformly allocates bytes to all

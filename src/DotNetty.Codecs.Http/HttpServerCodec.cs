@@ -4,8 +4,8 @@
 namespace DotNetty.Codecs.Http
 {
     using System.Collections.Generic;
-    using CuteAnt.Collections;
     using DotNetty.Buffers;
+    using DotNetty.Common.Internal;
     using DotNetty.Transport.Channels;
 
     public class HttpServerCodec : CombinedChannelDuplexHandler<HttpRequestDecoder, HttpResponseEncoder>,

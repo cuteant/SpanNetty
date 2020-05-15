@@ -9,7 +9,7 @@ namespace DotNetty.Codecs.Http
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Text;
-    using CuteAnt.Pool;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     public class QueryStringDecoder

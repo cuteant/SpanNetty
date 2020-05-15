@@ -9,6 +9,7 @@ namespace Http2Helloworld.Server
     using System.Security.Cryptography.X509Certificates;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Channels;
@@ -16,7 +17,7 @@ namespace Http2Helloworld.Server
 
     public class Http2ServerInitializer : ChannelInitializer<IChannel>
     {
-        static readonly ILogger s_logger = TraceLogger.GetLogger<Http2ServerInitializer>();
+        static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<Http2ServerInitializer>();
 
         static readonly HttpServerUpgradeCodecFactory UpgradeCodecFactory = new HttpServerUpgradeCodecFactory();
 

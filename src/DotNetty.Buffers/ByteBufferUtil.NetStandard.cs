@@ -9,7 +9,6 @@ namespace DotNetty.Buffers
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
     using System.Text;
-    using CuteAnt.Buffers;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
@@ -96,7 +95,7 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static bool TryWriteUtf8Composite(AbstractByteBuffer buffer, int writerIndex, in ReadOnlySpan<char> utf16Span, out int written)
         {
-            var memory = BufferManager.Shared.Rent(buffer.Capacity);
+            var memory = ArrayPool<byte>.Shared.Rent(buffer.Capacity);
             try
             {
                 var status = TextEncodings.Utf16.ToUtf8(utf16Span, memory.AsSpan(), out _, out written);
@@ -108,7 +107,7 @@ namespace DotNetty.Buffers
             }
             finally
             {
-                BufferManager.Shared.Return(memory);
+                ArrayPool<byte>.Shared.Return(memory);
             }
             return false;
         }
@@ -317,7 +316,7 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void WriteAsciiComposite(AbstractByteBuffer buffer, int writerIndex, in ReadOnlySpan<char> utf16Source, int length)
         {
-            var memory = BufferManager.Shared.Rent(length);
+            var memory = ArrayPool<byte>.Shared.Rent(length);
             try
             {
                 WriteAscii0(utf16Source, memory.AsSpan(), length);
@@ -325,7 +324,7 @@ namespace DotNetty.Buffers
             }
             finally
             {
-                BufferManager.Shared.Return(memory);
+                ArrayPool<byte>.Shared.Return(memory);
             }
         }
 

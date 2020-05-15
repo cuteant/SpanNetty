@@ -5,10 +5,10 @@ namespace DotNetty.Codecs.Mqtt
 {
     using System;
     using System.Collections.Generic;
-    using CuteAnt.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Common;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
@@ -466,7 +466,7 @@ namespace DotNetty.Codecs.Mqtt
         static byte[] EncodeStringInUtf8(string s)
         {
             // todo: validate against extra limitations per MQTT's UTF-8 string definition
-            return StringHelper.UTF8NoBOM.GetBytes(s);
+            return TextEncodings.UTF8NoBOM.GetBytes(s);
         }
     }
 }

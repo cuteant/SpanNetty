@@ -5,9 +5,9 @@
 // ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http
 {
-    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     public class DefaultFullHttpRequest : DefaultHttpRequest, IFullHttpRequest

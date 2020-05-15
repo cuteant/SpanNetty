@@ -7,7 +7,6 @@ namespace DotNetty.Buffers
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
     using System.Text;
-    using CuteAnt.Pool;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;

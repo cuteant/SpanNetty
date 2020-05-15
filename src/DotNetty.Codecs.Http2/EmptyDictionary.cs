@@ -7,7 +7,7 @@ namespace DotNetty.Codecs.Http2
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
-    using CuteAnt;
+    using DotNetty.Common.Internal;
 
     sealed class EmptyDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {

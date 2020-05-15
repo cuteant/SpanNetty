@@ -6,7 +6,6 @@ namespace DotNetty.Common.Internal
     using System;
     using System.Net;
     using System.Net.Sockets;
-    using CuteAnt.Pool;
 
     public class SocketUtils
     {

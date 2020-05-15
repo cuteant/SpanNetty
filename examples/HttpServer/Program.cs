@@ -91,7 +91,7 @@ namespace HttpServer
                 bootstrap
                     .Option(ChannelOption.SoBacklog, 8192)
 #if DEBUG
-                    .Handler(new MsLoggingHandler("LSTN"))
+                    .Handler(new LoggingHandler("LSTN"))
 #endif
                     .ChildHandler(new ActionChannelInitializer<ISocketChannel>(channel =>
                     {
@@ -101,7 +101,7 @@ namespace HttpServer
                             pipeline.AddLast(TlsHandler.Server(tlsCertificate));
                         }
 #if DEBUG
-                        pipeline.AddLast(new MsLoggingHandler("CONN"));
+                        pipeline.AddLast(new LoggingHandler("CONN"));
 #endif
                         pipeline.AddLast("encoder", new HttpResponseEncoder());
                         pipeline.AddLast("decoder", new HttpRequestDecoder(4096, 8192, 8192, false));

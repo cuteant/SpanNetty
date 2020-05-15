@@ -9,6 +9,7 @@ namespace WebSockets.Server
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http.WebSockets;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using Examples.Common;
@@ -18,7 +19,7 @@ namespace WebSockets.Server
 
     public sealed class WebSocketServerHttpHandler : SimpleChannelInboundHandler2<IFullHttpRequest>
     {
-        static readonly ILogger s_logger = TraceLogger.GetLogger<WebSocketServerHttpHandler>();
+        static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<WebSocketServerHttpHandler>();
 
         readonly string websocketPath;
 

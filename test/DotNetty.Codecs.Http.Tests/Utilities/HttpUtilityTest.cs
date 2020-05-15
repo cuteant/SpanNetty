@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using CuteAnt;
+using DotNetty.Common.Internal;
 using Xunit;
 
 namespace DotNetty.Codecs.Http.Utilities.Tests

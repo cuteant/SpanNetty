@@ -8,11 +8,12 @@ namespace WebSockets.Server
     using DotNetty.Codecs.Http.WebSockets;
     using DotNetty.Handlers.Timeout;
     using DotNetty.Transport.Channels;
+    using DotNetty.Common.Internal.Logging;
     using Microsoft.Extensions.Logging;
 
     public sealed class WebSocketServerFrameHandler : SimpleChannelInboundHandler2<WebSocketFrame>
     {
-        static readonly ILogger s_logger = TraceLogger.GetLogger<WebSocketServerFrameHandler>();
+        static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<WebSocketServerFrameHandler>();
 
         protected override void ChannelRead0(IChannelHandlerContext ctx, WebSocketFrame frame)
         {

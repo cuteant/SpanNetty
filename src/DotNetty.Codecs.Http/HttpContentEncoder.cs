@@ -7,8 +7,8 @@ namespace DotNetty.Codecs.Http
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
-    using CuteAnt.Collections;
     using DotNetty.Buffers;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Embedded;

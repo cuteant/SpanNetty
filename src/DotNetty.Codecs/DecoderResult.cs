@@ -4,7 +4,7 @@
 namespace DotNetty.Codecs
 {
     using System;
-    using CuteAnt.Pool;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     public class DecoderResult

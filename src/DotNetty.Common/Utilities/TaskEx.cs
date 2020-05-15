@@ -14,15 +14,19 @@ namespace DotNetty.Common.Utilities
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance(typeof(TaskUtil));
 
-        public static readonly Task<int> Zero = CuteAnt.AsyncEx.TaskConstants.Int32Zero;
+        public static readonly Task<int> Zero = Task.FromResult(0);
 
-        public static readonly Task Completed = CuteAnt.AsyncEx.TaskConstants.Completed;
+#if NET451
+        public static readonly Task Completed = Zero;
+#else
+        public static readonly Task Completed = Task.CompletedTask;
+#endif
 
         public static readonly Task<int> Cancelled = CreateCancelledTask();
 
-        public static readonly Task<bool> True = CuteAnt.AsyncEx.TaskConstants.BooleanTrue;
+        public static readonly Task<bool> True = Task.FromResult(true);
 
-        public static readonly Task<bool> False = CuteAnt.AsyncEx.TaskConstants.BooleanFalse;
+        public static readonly Task<bool> False = Task.FromResult(false);
 
         static Task<int> CreateCancelledTask()
         {
@@ -31,18 +35,46 @@ namespace DotNetty.Common.Utilities
             return tcs.Task;
         }
 
+        public static Task FromCanceled(CancellationToken cancellationToken)
+        {
+#if NET451
+            return CreateCancelledTask();
+#else
+            return Task.FromCanceled(cancellationToken);
+#endif
+        }
+
+        public static Task<TResult> FromCanceled<TResult>(CancellationToken cancellationToken)
+        {
+#if NET451
+            var tcs = new TaskCompletionSource<TResult>();
+            tcs.SetCanceled();
+            return tcs.Task;
+#else
+            return Task.FromCanceled<TResult>(cancellationToken);
+#endif
+        }
+
         public static Task FromException(Exception exception)
         {
-            //var tcs = new TaskCompletionSource();
-            //tcs.TrySetException(exception);
-            return CuteAnt.AsyncEx.AsyncUtils.FromException(exception); //tcs.Task;
+#if NET451
+            var tcs = new TaskCompletionSource();
+            tcs.TrySetException(exception);
+            return tcs.Task;
+#else
+            return Task.FromException(exception);
+#endif
         }
 
         public static Task<T> FromException<T>(Exception exception)
         {
-            //var tcs = new TaskCompletionSource<T>();
-            //tcs.TrySetException(exception);
-            return CuteAnt.AsyncEx.AsyncUtils.FromException<T>(exception); //tcs.Task;
+#if NET451
+            var tcs = new TaskCompletionSource<T>();
+            tcs.TrySetException(exception);
+            return tcs.Task;
+#else
+            return Task.FromException<T>(exception);
+#endif
         }
 
         static readonly Action<Task, object> LinkOutcomeContinuationAction = LinkOutcomeContinuation;

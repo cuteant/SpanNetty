@@ -8,7 +8,7 @@ namespace DotNetty.Buffers
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using CuteAnt.Pool;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     sealed class PoolChunkList<T> : IPoolChunkListMetric

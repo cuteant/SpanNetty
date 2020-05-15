@@ -24,6 +24,7 @@ namespace DotNetty.Common
         s,
         str,
         source,
+        results,
         type,
         types,
         value,
@@ -50,6 +51,8 @@ namespace DotNetty.Common
         directories,
         dirEnumArgs,
         asm,
+        updateValueFactory,
+        converter,
         includedAssemblies,
         func,
         defaultFn,
@@ -107,6 +110,13 @@ namespace DotNetty.Common
     /// <summary>The convention for this enum is using the resource name as the enum name</summary>
     internal enum ExceptionResource
     {
+        Capacity_May_Not_Be_Negative,
+        Value_Cannot_Be_Null,
+        Value_Is_Of_Incorrect_Type,
+        Dest_Array_Cannot_Be_Null,
+        ArgumentOutOfRange_Index,
+        ArgumentOutOfRange_NeedNonNegNum,
+        ArgumentOutOfRange_Count,
     }
 
     #endregion
@@ -662,22 +672,6 @@ namespace DotNetty.Common
             static Exception GetException()
             {
                 return new Exception("Invalid UTF-8 character (badly encoded)");
-            }
-        }
-
-        #endregion
-
-        #region -- InvalidCastException --
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowInvalidCastException<T>()
-        {
-            throw GetException();
-
-            static InvalidCastException GetException()
-            {
-                var msg = $"Type of policy requires pooled object policy of type {typeof(IThreadLocalPooledObjectPolicy<T>)}.";
-                return new InvalidCastException(msg);
             }
         }
 

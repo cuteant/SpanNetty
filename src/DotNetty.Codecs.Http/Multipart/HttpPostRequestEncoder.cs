@@ -12,7 +12,6 @@ namespace DotNetty.Codecs.Http.Multipart
     using System.IO;
     using System.Text;
     using System.Text.RegularExpressions;
-    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Internal;

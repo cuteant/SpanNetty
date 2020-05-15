@@ -6,9 +6,10 @@ namespace DotNetty.Handlers.Logging
     using System;
     using System.Net;
     using System.Threading.Tasks;
-    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
     using MsLogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -29,7 +30,7 @@ namespace DotNetty.Handlers.Logging
         {
             if (type is null) { ThrowHelper.ThrowNullReferenceException(ExceptionArgument.type); }
 
-            Logger = TraceLogger.GetLogger(type);
+            Logger = InternalLoggerFactory.DefaultFactory.CreateLogger(type);
         }
 
         /// <summary>Creates a new instance with the specified logger name using the default log level.</summary>
@@ -38,7 +39,7 @@ namespace DotNetty.Handlers.Logging
         {
             if (name is null) { ThrowHelper.ThrowNullReferenceException(ExceptionArgument.name); }
 
-            Logger = TraceLogger.GetLogger(name);
+            Logger = InternalLoggerFactory.DefaultFactory.CreateLogger(name);
         }
 
         /// <inheritdoc />

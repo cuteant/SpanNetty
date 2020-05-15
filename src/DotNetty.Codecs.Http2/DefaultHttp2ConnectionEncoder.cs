@@ -5,10 +5,10 @@ namespace DotNetty.Codecs.Http2
 {
     using System;
     using System.Threading.Tasks;
-    using CuteAnt.Collections;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 

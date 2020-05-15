@@ -11,9 +11,9 @@ namespace DotNetty.Transport.Channels
     using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
-    using CuteAnt.Pool;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using Thread = DotNetty.Common.Concurrency.XThread;

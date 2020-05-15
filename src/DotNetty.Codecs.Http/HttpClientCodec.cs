@@ -5,8 +5,8 @@ namespace DotNetty.Codecs.Http
 {
     using System.Collections.Generic;
     using System.Threading;
-    using CuteAnt.Collections;
     using DotNetty.Buffers;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 

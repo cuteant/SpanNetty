@@ -10,6 +10,7 @@ namespace WebSockets.Client
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http.WebSockets;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Handlers.Timeout;
     using DotNetty.Transport.Channels;
@@ -17,7 +18,7 @@ namespace WebSockets.Client
 
     public class WebSocketClientHandler : SimpleChannelInboundHandler2<WebSocketFrame>
     {
-        static readonly ILogger s_logger = TraceLogger.GetLogger<WebSocketClientHandler>();
+        static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<WebSocketClientHandler>();
 
         readonly TaskCompletionSource completionSource;
 

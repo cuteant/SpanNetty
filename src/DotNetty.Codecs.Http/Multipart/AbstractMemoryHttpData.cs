@@ -3,9 +3,9 @@
 
 namespace DotNetty.Codecs.Http.Multipart
 {
+    using System.Buffers;
     using System.IO;
     using System.Text;
-    using CuteAnt.Buffers;
     using DotNetty.Buffers;
     using DotNetty.Common;
 
@@ -51,7 +51,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
 
             IByteBuffer buffer = ArrayPooled.Buffer();
-            var bytes = BufferManager.Shared.Rent(c_defaultCopyBufferSize);
+            var bytes = ArrayPool<byte>.Shared.Rent(c_defaultCopyBufferSize);
             int written = 0;
             try
             {
@@ -70,7 +70,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             finally
             {
-                BufferManager.Shared.Return(bytes);
+                ArrayPool<byte>.Shared.Return(bytes);
             }
             this.Size = written;
             if (this.DefinedSize > 0 && this.DefinedSize < this.Size)

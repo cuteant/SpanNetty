@@ -31,7 +31,7 @@ namespace QuoteOfTheMoment.Client
                     .Option(ChannelOption.SoBroadcast, true)
                     .Handler(new ActionChannelInitializer<IChannel>(channel =>
                     {
-                        channel.Pipeline.AddLast(new MsLoggingHandler("CONN"));
+                        channel.Pipeline.AddLast(new LoggingHandler("CONN"));
                         channel.Pipeline.AddLast("Quote", new QuoteOfTheMomentClientHandler());
                     }));
 

@@ -9,7 +9,6 @@ namespace DotNetty.Transport.Channels
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
-    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;

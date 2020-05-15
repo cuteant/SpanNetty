@@ -4,7 +4,7 @@
 namespace DotNetty.Buffers
 {
     using System.Collections.Generic;
-    using CuteAnt.Pool;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     public sealed class PooledByteBufferAllocatorMetric : IByteBufferAllocatorMetric

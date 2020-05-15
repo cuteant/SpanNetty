@@ -4,7 +4,7 @@
 namespace DotNetty.Common.Utilities
 {
     using System.Collections.Generic;
-    using CuteAnt.Pool;
+    using DotNetty.Common.Internal;
 
     public static class DebugExtensions
     {

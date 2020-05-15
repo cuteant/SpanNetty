@@ -35,7 +35,7 @@ namespace DotNetty.Codecs.Http2.Tests
     //        var workGroup = new WorkerEventLoopGroup(dispatcher);
     //        bootstrap.Group(bossGroup, workGroup)
     //                 .Channel<TcpServerChannel>();
-    //        //bootstrap.Handler(new DotNetty.Handlers.Logging.MsLoggingHandler("LSTN"));
+    //        //bootstrap.Handler(new DotNetty.Handlers.Logging.LoggingHandler("LSTN"));
     //    }
 
     //    protected override void SetupBootstrap(Bootstrap bootstrap)
@@ -680,7 +680,7 @@ namespace DotNetty.Codecs.Http2.Tests
             this.serverFrameCountDown =
                     new Http2TestUtil.FrameCountDown(this.serverListener.Object, this.serverSettingsAckLatch,
                             this.requestLatch, null, this.trailersLatch);
-            //p.AddLast(new DotNetty.Handlers.Logging.MsLoggingHandler("CONN"));
+            //p.AddLast(new DotNetty.Handlers.Logging.LoggingHandler("CONN"));
             p.AddLast((new HttpToHttp2ConnectionHandlerBuilder()
             {
                 IsServer = true,

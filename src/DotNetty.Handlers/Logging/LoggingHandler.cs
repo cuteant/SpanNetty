@@ -6,9 +6,9 @@ namespace DotNetty.Handlers.Logging
     using System;
     using System.Net;
     using System.Threading.Tasks;
-    using CuteAnt.Pool;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
 

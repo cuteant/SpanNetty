@@ -15,7 +15,7 @@
     <PackageTags>socket;tcp;udp;protocol;netty;dotnetty;network</PackageTags>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net471' and '$(TargetFramework)' == 'netstandard2.0' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="$(SystemThreadingTasksExtensions2PackageVersion)" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">

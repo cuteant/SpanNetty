@@ -6,8 +6,8 @@ namespace DotNetty.Codecs.Http2.Tests
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
-    using DotNetty.Tests.Common;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Embedded;
     using Xunit;
@@ -558,7 +558,7 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void ChannelClosedWhenWriteFutureFails()
         {
-            var writePromises = new CuteAnt.Collections.Deque<IPromise>();
+            var writePromises = new Deque<IPromise>();
             this.writer = (msg, promise) =>
             {
                 ReferenceCountUtil.Release(msg);
