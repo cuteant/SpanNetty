@@ -2,12 +2,14 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1;net471;net451;net40</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1;net471;net451</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
+  
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'net451' ">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
+  
   <ItemGroup>
     <None Include="..\..\shared\dotnetty.com.pfx" Link="dotnetty.com.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -19,6 +21,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\DotNetty.Buffers\DotNetty.Buffers.csproj" />
     <ProjectReference Include="..\..\src\DotNetty.Codecs.Http\DotNetty.Codecs.Http.csproj" />
@@ -26,10 +29,8 @@
     <ProjectReference Include="..\..\src\DotNetty.Common\DotNetty.Common.csproj" />
     <ProjectReference Include="..\..\src\DotNetty.Handlers\DotNetty.Handlers.csproj" />
     <ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.csproj" />
-    <ProjectReference Include="..\Examples.Common\Examples.Common.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'net40' ">
     <ProjectReference Include="..\..\src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
+    <ProjectReference Include="..\Examples.Common\Examples.Common.csproj" />
   </ItemGroup>
 
 </Project>

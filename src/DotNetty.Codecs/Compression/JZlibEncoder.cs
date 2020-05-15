@@ -219,12 +219,7 @@ namespace DotNetty.Codecs.Compression
         public override void Close(IChannelHandlerContext context, IPromise promise)
         {
             var completion = this.FinishEncode(context, context.NewPromise());
-#if NET40
-            void closeOnComplete(Task t) => context.CloseAsync(promise);
-            completion.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
-#else
             completion.ContinueWith(CloseOnCompleteAction, Tuple.Create(context, promise), TaskContinuationOptions.ExecuteSynchronously);
-#endif
             if (!completion.IsCompleted)
             {
                 ctx.Executor.Schedule(CloseHandlerContextAction, context, promise, TimeSpan.FromSeconds(10));

@@ -8,6 +8,7 @@ namespace DotNetty.Handlers.Tests
     using System.Diagnostics;
     using System.Linq;
     using System.Net.Security;
+    using System.Runtime.InteropServices;
     using System.Security.Authentication;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
@@ -19,9 +20,6 @@ namespace DotNetty.Handlers.Tests
     using DotNetty.Transport.Channels.Embedded;
     using Xunit;
     using Xunit.Abstractions;
-#if !TEST40
-    using System.Runtime.InteropServices;
-#endif
 
     public class TlsHandlerTest : TestBase
     {
@@ -49,9 +47,6 @@ namespace DotNetty.Handlers.Tests
                 };
             var boolToggle = new[] { false, true };
             var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
-#if TEST40
-            protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
-#else
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
@@ -70,7 +65,6 @@ namespace DotNetty.Handlers.Tests
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls11, SslProtocols.Tls12 | SslProtocols.Tls11));
                 protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
             }
-#endif
             var writeStrategyFactories = new Func<IWriteStrategy>[]
             {
                 () => new AsIsWriteStrategy(),
@@ -153,9 +147,6 @@ namespace DotNetty.Handlers.Tests
                 };
             var boolToggle = new[] { false, true };
             var protocols = new List<Tuple<SslProtocols, SslProtocols>>();
-#if TEST40
-            protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
-#else
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 protocols.Add(Tuple.Create(SslProtocols.Tls, SslProtocols.Tls));
@@ -174,7 +165,6 @@ namespace DotNetty.Handlers.Tests
                 protocols.Add(Tuple.Create(SslProtocols.Tls12 | SslProtocols.Tls11, SslProtocols.Tls12 | SslProtocols.Tls11));
                 protocols.Add(Tuple.Create(SslProtocols.Tls11 | SslProtocols.Tls12, SslProtocols.Tls | SslProtocols.Tls11));
             }
-#endif
 
             return
                 from frameLengths in lengthVariations

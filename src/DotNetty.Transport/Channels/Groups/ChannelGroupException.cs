@@ -10,11 +10,7 @@ namespace DotNetty.Transport.Channels.Groups
 
     public class ChannelGroupException : ChannelException, IEnumerable<KeyValuePair<IChannel, Exception>>
     {
-#if NET40
-        readonly ReadOnlyCollection<KeyValuePair<IChannel, Exception>> failed;
-#else
         readonly IReadOnlyCollection<KeyValuePair<IChannel, Exception>> failed;
-#endif
 
         public ChannelGroupException(IList<KeyValuePair<IChannel, Exception>> exceptions)
         {

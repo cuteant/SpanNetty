@@ -44,31 +44,17 @@ namespace DotNetty.Common.Concurrency
 
         public virtual bool TryComplete()
         {
-#if NET40
-            var result = false;
-            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetResult(0));
-            return result;
-#else
             return this.tcs.TrySetResult(0);
-#endif
         }
 
         public virtual void Complete()
         {
-#if NET40
-            FakeSynchronizationContext.Execute(() => this.tcs.SetResult(0));
-#else
             this.tcs.SetResult(0);
-#endif
         }
         public virtual void SetCanceled()
         {
             if (SharedConstants.True == Volatile.Read(ref this.uncancellable)) { return; }
-//#if NET40
-//            FakeSynchronizationContext.Execute(() => this.tcs.SetCanceled());
-//#else
             this.tcs.SetCanceled();
-//#endif
         }
 
         public virtual void SetException(Exception exception)
@@ -78,32 +64,18 @@ namespace DotNetty.Common.Concurrency
                 this.SetException(aggregateException.InnerExceptions);
                 return;
             }
-//#if NET40
-//            FakeSynchronizationContext.Execute(() => this.tcs.SetException(exception));
-//#else
             this.tcs.SetException(exception);
-//#endif
         }
 
         public virtual void SetException(IEnumerable<Exception> exceptions)
         {
-//#if NET40
-//            FakeSynchronizationContext.Execute(() => this.tcs.SetException(exceptions));
-//#else
             this.tcs.SetException(exceptions);
-//#endif
         }
 
         public virtual bool TrySetCanceled()
         {
             if (SharedConstants.True == Volatile.Read(ref this.uncancellable)) { return false; }
-//#if NET40
-//            var result = false;
-//            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetCanceled());
-//            return result;
-//#else
             return this.tcs.TrySetCanceled();
-//#endif
         }
 
         public virtual bool TrySetException(Exception exception)
@@ -112,24 +84,12 @@ namespace DotNetty.Common.Concurrency
             {
                 return this.TrySetException(aggregateException.InnerExceptions);
             }
-//#if NET40
-//            var result = false;
-//            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetException(exception));
-//            return result;
-//#else
             return this.tcs.TrySetException(exception);
-//#endif
         }
 
         public virtual bool TrySetException(IEnumerable<Exception> exceptions)
         {
-//#if NET40
-//            var result = false;
-//            FakeSynchronizationContext.Execute(() => result = this.tcs.TrySetException(exceptions));
-//            return result;
-//#else
             return this.tcs.TrySetException(exceptions);
-//#endif
         }
 
         public bool SetUncancellable()
@@ -145,59 +105,4 @@ namespace DotNetty.Common.Concurrency
 
         public IPromise Unvoid() => this;
     }
-
-#if NET40
-    /// <summary>FakeSynchronizationContext: http://stackoverflow.com/questions/21845495/synchronous-or-asynchronous-continuation-upon-taskcompletionsource-trysetresult </summary>
-    public sealed class FakeSynchronizationContext : SynchronizationContext
-    {
-        private static readonly ThreadLocal<FakeSynchronizationContext> s_context =
-            new ThreadLocal<FakeSynchronizationContext>(() => new FakeSynchronizationContext());
-
-        private FakeSynchronizationContext() { }
-
-        public static FakeSynchronizationContext Instance { get { return s_context.Value; } }
-
-        public static void Execute(Action action)
-        {
-            var savedContext = SynchronizationContext.Current;
-            SynchronizationContext.SetSynchronizationContext(FakeSynchronizationContext.Instance);
-            try
-            {
-                action();
-            }
-            catch { }
-            finally
-            {
-                SynchronizationContext.SetSynchronizationContext(savedContext);
-            }
-        }
-
-        // SynchronizationContext methods
-
-        public override SynchronizationContext CreateCopy()
-        {
-            return this;
-        }
-
-        public override void OperationStarted()
-        {
-            throw new NotImplementedException("OperationStarted");
-        }
-
-        public override void OperationCompleted()
-        {
-            throw new NotImplementedException("OperationCompleted");
-        }
-
-        public override void Post(SendOrPostCallback d, object state)
-        {
-            throw new NotImplementedException("Post");
-        }
-
-        public override void Send(SendOrPostCallback d, object state)
-        {
-            throw new NotImplementedException("Send");
-        }
-    }
-#endif
 }

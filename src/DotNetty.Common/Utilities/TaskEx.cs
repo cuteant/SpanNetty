@@ -107,17 +107,10 @@ namespace DotNetty.Common.Utilities
                 promise.TryComplete(); return;
             }
 #endif
-#if !NET40
             task.ContinueWith(
                 LinkOutcomeContinuationAction,
                 promise,
                 TaskContinuationOptions.ExecuteSynchronously);
-#else
-            Action<Task> continuationAction = completed => LinkOutcomeContinuation(completed, promise);
-            task.ContinueWith(
-                continuationAction,
-                TaskContinuationOptions.ExecuteSynchronously);
-#endif
         }
 
         static readonly Action<Task, object> CascadeToContinuationAction = CascadeToContinuation;
@@ -186,17 +179,10 @@ namespace DotNetty.Common.Utilities
                 promise.TryComplete(internalLogger); return;
             }
 #endif
-#if !NET40
             task.ContinueWith(
                 CascadeToContinuationAction,
                 Tuple.Create(promise, internalLogger),
                 TaskContinuationOptions.ExecuteSynchronously);
-#else
-            Action<Task> continuationAction = completed => CascadeToContinuation(completed, Tuple.Create(promise, internalLogger));
-            task.ContinueWith(
-                continuationAction,
-                TaskContinuationOptions.ExecuteSynchronously);
-#endif
         }
 
         static class LinkOutcomeActionHost<T>
@@ -264,12 +250,7 @@ namespace DotNetty.Common.Utilities
                 taskCompletionSource.TrySetResult(task.Result); return;
             }
 #endif
-#if !NET40
             task.ContinueWith(LinkOutcomeActionHost<T>.Action, taskCompletionSource, TaskContinuationOptions.ExecuteSynchronously);
-#else
-            Action<Task<T>> continuationAction = completed => LinkOutcomeActionHost<T>.Action(completed, taskCompletionSource);
-            task.ContinueWith(continuationAction, TaskContinuationOptions.ExecuteSynchronously);
-#endif
         }
 
         public static void TryUnwrap<T>(this TaskCompletionSource<T> completionSource, Exception exception)
@@ -341,11 +322,7 @@ namespace DotNetty.Common.Utilities
 
         public static async Task<bool> WaitAsync(Task task, TimeSpan timeout)
         {
-#if NET40
-            return await TaskEx.WhenAny(task, TaskEx.Delay(timeout)).ConfigureAwait(false) == task;
-#else
             return await Task.WhenAny(task, Task.Delay(timeout)).ConfigureAwait(false) == task;
-#endif
         }
     }
 }

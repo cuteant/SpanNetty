@@ -82,11 +82,7 @@ namespace DotNetty.Codecs.Http2
             get => this.gracefulShutdownTimeout;
             set
             {
-#if NET40
-                if (value < TimeSpan.FromMilliseconds(-1))
-#else
                 if (value < Timeout.InfiniteTimeSpan)
-#endif
                 {
                     ThrowHelper.ThrowArgumentException_GracefulShutdownTimeout(value);
                 }
@@ -349,21 +345,13 @@ namespace DotNetty.Codecs.Http2
                 {
                     // Clients must send the preface string as the first bytes on the connection.
                     ctx.WriteAsync(Http2CodecUtil.ConnectionPrefaceBuf())
-#if NET40
-                       .ContinueWith(t => CloseOnFailure(t, ctx), TaskContinuationOptions.ExecuteSynchronously);
-#else
                        .ContinueWith(CloseOnFailureAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
-#endif
                 }
 
                 // Both client and server must send their initial settings.
                 this.connHandler.encoder
                         .WriteSettingsAsync(ctx, this.connHandler.initialSettings, ctx.NewPromise())
-#if NET40
-                        .ContinueWith(t => CloseOnFailure(t, ctx), TaskContinuationOptions.ExecuteSynchronously);
-#else
                         .ContinueWith(CloseOnFailureAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
-#endif
 
                 if (isClient)
                 {
@@ -501,14 +489,9 @@ namespace DotNetty.Codecs.Http2
                 }
                 else
                 {
-#if NET40
-                    future.ContinueWith(t => CloseChannelOnComplete(t, Tuple.Create(ctx, promise)),
-                        TaskContinuationOptions.ExecuteSynchronously);
-#else
                     future.ContinueWith(CloseChannelOnCompleteAction,
                         Tuple.Create(ctx, promise),
                         TaskContinuationOptions.ExecuteSynchronously);
-#endif
                 }
             }
             else
@@ -631,11 +614,7 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-#if NET40
-                future.ContinueWith(t => CheckCloseConnOnComplete(t, this), TaskContinuationOptions.ExecuteSynchronously);
-#else
                 future.ContinueWith(CheckCloseConnOnCompleteAction, this, TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
         }
 
@@ -703,14 +682,9 @@ namespace DotNetty.Codecs.Http2
                     }
                     else
                     {
-#if NET40
-                        future.ContinueWith(t => CloseChannelOnComplete(t, Tuple.Create(ctx, promise)),
-                            TaskContinuationOptions.ExecuteSynchronously);
-#else
                         future.ContinueWith(CloseChannelOnCompleteAction,
                             Tuple.Create(ctx, promise),
                             TaskContinuationOptions.ExecuteSynchronously);
-#endif
                     }
                     break;
             }
@@ -811,11 +785,7 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-#if NET40
-                future.ContinueWith(t => CloseConnectionOnErrorOnComplete(t, Tuple.Create(this, ctx)), TaskContinuationOptions.ExecuteSynchronously);
-#else
                 future.ContinueWith(CloseConnectionOnErrorOnCompleteAction, Tuple.Create(this, ctx), TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
             return future;
         }
@@ -864,13 +834,8 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-#if NET40
-                future.ContinueWith(t => ProcessRstStreamWriteResultOnComplete(t, Tuple.Create(this, ctx, stream)),
-                    TaskContinuationOptions.ExecuteSynchronously);
-#else
                 future.ContinueWith(ProcessRstStreamWriteResultOnCompleteAction,
                     Tuple.Create(this, ctx, stream), TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
 
             return future;
@@ -907,13 +872,8 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-#if NET40
-                future.ContinueWith(t => ProcessGoAwayWriteResultOnComplete(t, Tuple.Create(ctx, lastStreamId, errorCode, debugData)),
-                    TaskContinuationOptions.ExecuteSynchronously);
-#else
                 future.ContinueWith(ProcessGoAwayWriteResultOnCompleteAction,
                     Tuple.Create(ctx, lastStreamId, errorCode, debugData), TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
 
             return future;

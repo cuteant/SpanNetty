@@ -346,12 +346,7 @@ namespace DotNetty.Transport.Channels.Groups
             bool added = map.TryAdd(channel.Id, channel);
             if (added)
             {
-#if NET40
-                void continueRemoveChannelAction(Task t) => this.Remove(channel);
-                channel.CloseCompletion.ContinueWith(continueRemoveChannelAction, TaskContinuationOptions.ExecuteSynchronously);
-#else
                 channel.CloseCompletion.ContinueWith(RemoveChannelAfterCloseAction, new Tuple<DefaultChannelGroup, IChannel>(this, channel), TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
 
             if (this.stayClosed && (SharedConstants.True == Volatile.Read(ref this.closed)))

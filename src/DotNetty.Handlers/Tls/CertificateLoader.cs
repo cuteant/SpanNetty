@@ -16,7 +16,7 @@ namespace DotNetty.Handlers.Tls
 
         public static X509Certificate2 LoadFromStoreCert(string subject, string storeName, StoreLocation storeLocation, bool allowInvalid)
         {
-#if NET40 || NET451
+#if NET451
             var store = new X509Store(storeName, storeLocation);
 #else
             using (var store = new X509Store(storeName, storeLocation))
@@ -46,7 +46,7 @@ namespace DotNetty.Handlers.Tls
                 }
                 finally
                 {
-#if NET40 || NET451
+#if NET451
                     store.Close();
 #else
                     DisposeCertificates(storeCertificates, except: foundCertificate);
@@ -97,7 +97,7 @@ namespace DotNetty.Handlers.Tls
         internal static bool DoesCertificateHaveAnAccessiblePrivateKey(X509Certificate2 certificate)
             => certificate.HasPrivateKey;
 
-#if !(NET40 || NET451)
+#if !NET451
         private static void DisposeCertificates(X509Certificate2Collection certificates, X509Certificate2 except)
         {
             if (certificates is object)

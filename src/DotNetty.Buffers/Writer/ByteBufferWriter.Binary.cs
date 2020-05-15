@@ -1,6 +1,4 @@
-﻿#if !NET40
-
-namespace DotNetty.Buffers
+﻿namespace DotNetty.Buffers
 {
     using System;
     using System.Runtime.InteropServices;
@@ -78,5 +76,3 @@ namespace DotNetty.Buffers
         }
     }
 }
-
-#endif

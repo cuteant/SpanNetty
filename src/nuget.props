@@ -2,12 +2,12 @@
   <!-- Set common properties regarding assembly information and nuget packages -->
   <PropertyGroup>
     <Authors>Seabiscuit</Authors>
-    <Product>DotNetty</Product>
+    <Product>SpanNetty</Product>
     <PackageIconUrl></PackageIconUrl>
-    <PackageProjectUrl>https://github.com/cuteant/dotnetty-net40-fork</PackageProjectUrl>
-    <PackageLicense>https://github.com/cuteant/dotnetty-net40-fork/blob/dev-net40/LICENSE.txt</PackageLicense>
+    <PackageProjectUrl>https://github.com/cuteant/dotnetty-span-fork</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/cuteant/dotnetty-net40-fork</RepositoryUrl>
+    <RepositoryUrl>https://github.com/cuteant/dotnetty-span-fork.git</RepositoryUrl>
     <NeutralLanguage>en-US</NeutralLanguage>
     <IncludeSymbols>false</IncludeSymbols>
     <IncludeSource>false</IncludeSource>

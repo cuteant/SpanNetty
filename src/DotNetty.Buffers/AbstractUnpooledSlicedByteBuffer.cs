@@ -65,9 +65,7 @@ namespace DotNetty.Buffers
 
         public override bool HasMemoryAddress => this.Unwrap().HasMemoryAddress;
 
-#if !NET40
         public override ref byte GetPinnableMemoryAddress() => ref Unsafe.Add(ref this.Unwrap().GetPinnableMemoryAddress(), this.adjustment);
-#endif
 
         public override IntPtr AddressOfPinnedMemory()
         {

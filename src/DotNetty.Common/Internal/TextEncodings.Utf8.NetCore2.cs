@@ -1,4 +1,5 @@
-﻿#if !NETCOREAPP_3_0_GREATER && !NET40
+﻿#if !NETCOREAPP_3_0_GREATER
+
 namespace DotNetty.Common.Internal
 {
     using System;
@@ -445,4 +446,5 @@ namespace DotNetty.Common.Internal
         }
     }
 }
+
 #endif

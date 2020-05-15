@@ -69,13 +69,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
 
         public override void Write(IChannelHandlerContext ctx, object msg, IPromise promise)
         {
-#if NET40
-            Action<Task> continuationAction = null;
-#else
-            Action<Task, object> continuationAction = null;
-#endif
-
-            if (msg is IHttpResponse response && WebSocketExtensionUtil.IsWebsocketUpgrade(response.Headers)                 )
+            if (msg is IHttpResponse response && WebSocketExtensionUtil.IsWebsocketUpgrade(response.Headers))
             {
                 if (this.validExtensions is object)
                 {
@@ -98,38 +92,11 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                     }
                 }
 
-#if NET40
-                continuationAction = t =>
-                {
-                    var pipeline = ctx.Pipeline;
-                    if (t.IsSuccess() && this.validExtensions is object)
-                    {
-                        foreach (IWebSocketServerExtension extension in this.validExtensions)
-                        {
-                            WebSocketExtensionDecoder decoder = extension.NewExtensionDecoder();
-                            WebSocketExtensionEncoder encoder = extension.NewExtensionEncoder();
-                            pipeline.AddAfter(ctx.Name, decoder.GetType().Name, decoder);
-                            pipeline.AddAfter(ctx.Name, encoder.GetType().Name, encoder);
-                        }
-                    }
-                    pipeline.Remove(ctx.Name);
-                };
-#else
-                continuationAction = s_switchWebSocketExtensionHandlerAction;
-#endif
-
-            }
-
-            if(continuationAction is object)
-            {
                 promise = promise.Unvoid();
-                promise.Task
-#if NET40
-                    .ContinueWith(continuationAction, TaskContinuationOptions.ExecuteSynchronously);
-#else
-                    .ContinueWith(continuationAction, Tuple.Create(ctx, this.validExtensions), TaskContinuationOptions.ExecuteSynchronously);
-#endif
+                promise.Task.ContinueWith(s_switchWebSocketExtensionHandlerAction, Tuple.Create(ctx, this.validExtensions), TaskContinuationOptions.ExecuteSynchronously);
+
             }
+
             base.Write(ctx, msg, promise);
         }
 

@@ -1619,11 +1619,7 @@ namespace DotNetty.Buffers.Tests
 
             Assert.Equal(0, this.buffer.ReaderIndex);
             Assert.Equal(Capacity / 2, this.buffer.WriterIndex);
-#if TEST40
-            Assert.True(copy.Slice(0, Capacity / 2).Equals(this.buffer.Slice(0, Capacity / 2)));
-#else
             Assert.Equal(copy.Slice(0, Capacity / 2), this.buffer.Slice(0, Capacity / 2));
-#endif
             this.buffer.ResetReaderIndex();
             Assert.Equal(Capacity / 4, this.buffer.ReaderIndex);
             this.buffer.ResetWriterIndex();
@@ -1636,11 +1632,7 @@ namespace DotNetty.Buffers.Tests
 
             Assert.Equal(0, this.buffer.ReaderIndex);
             Assert.Equal(Capacity / 2 - 1, this.buffer.WriterIndex);
-#if TEST40
-            Assert.True(copy.Slice(1, Capacity / 2 - 1).Equals(this.buffer.Slice(0, Capacity / 2 - 1)));
-#else
             Assert.Equal(copy.Slice(1, Capacity / 2 - 1), this.buffer.Slice(0, Capacity / 2 - 1));
-#endif
 
             if (this.DiscardReadBytesDoesNotMoveWritableBytes())
             {
@@ -1649,11 +1641,7 @@ namespace DotNetty.Buffers.Tests
             }
             else
             {
-#if TEST40
-                Assert.True(copy.Slice(Capacity / 2, Capacity / 2).Equals(this.buffer.Slice(Capacity / 2 - 1, Capacity / 2)));
-#else
                 Assert.Equal(copy.Slice(Capacity / 2, Capacity / 2), this.buffer.Slice(Capacity / 2 - 1, Capacity / 2));
-#endif
             }
 
             // Marks also should be relocated.
@@ -1686,11 +1674,7 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(Capacity / 2, this.buffer.WriterIndex);
             for (int i = 0; i < Capacity / 2; i++)
             {
-#if TEST40
-                Assert.True(copy.Slice(Capacity / 2 - 1 + i, Capacity / 2 - i).Equals(this.buffer.Slice(i, Capacity / 2 - i)));
-#else
                 Assert.Equal(copy.Slice(Capacity / 2 - 1 + i, Capacity / 2 - i), this.buffer.Slice(i, Capacity / 2 - i));
-#endif
             }
         }
 
@@ -1962,11 +1946,7 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(Capacity / 4 * 2, this.buffer.ReaderIndex);
         }
 
-#if TEST40
-        [Fact(Skip = "xunit 2.1 Assert.Contains 不支持")]
-#else
         [Fact]
-#endif
         public void HashCode()
         {
             IByteBuffer elemA = this.ReleaseLater(Unpooled.Buffer(15));
@@ -2024,20 +2004,12 @@ namespace DotNetty.Buffers.Tests
                     value =>
                     {
                         Assert.Equal(value, (byte)(i1 + 1));
-#if TEST40
-                        Interlocked.Exchange(ref lastIndex, i1);
-#else
                         Volatile.Write(ref lastIndex, i1);
-#endif
                         i1++;
                         return true;
                     })));
 
-#if TEST40
-            Assert.Equal(Capacity * 3 / 4 - 1, lastIndex);
-#else
             Assert.Equal(Capacity * 3 / 4 - 1, Volatile.Read(ref lastIndex));
-#endif
         }
 
         [Fact]
@@ -2078,20 +2050,12 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(-1, this.buffer.ForEachByteDesc(Capacity / 4, Capacity * 2 / 4, new ByteProcessor(value =>
             {
                 Assert.Equal((byte)(i1 + 1), value);
-#if TEST40
-                Interlocked.Exchange(ref lastIndex, i1);
-#else
                 Volatile.Write(ref lastIndex, i1);
-#endif
                 i1--;
                 return true;
             })));
 
-#if TEST40
-            Assert.Equal(Capacity / 4, lastIndex);
-#else
             Assert.Equal(Capacity / 4, Volatile.Read(ref lastIndex));
-#endif
         }
 
         [Fact]
@@ -2612,7 +2576,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer buf = this.NewBuffer(16);
             var sequence = new StringCharSequence("AB");
             int bytes = buf.SetCharSequence(1, sequence, encoding);
-            AssertEx.Equal(sequence, buf.GetCharSequence(1, bytes, encoding));
+            Assert.Equal(sequence, buf.GetCharSequence(1, bytes, encoding));
             buf.Release();
         }
 
@@ -3380,11 +3344,7 @@ namespace DotNetty.Buffers.Tests
                     Assert.True(released);
                     var t2 = new Thread(s2 =>
                     {
-#if TEST40
-                        Interlocked.Exchange(ref cnt, buf.ReferenceCount);
-#else
                         Volatile.Write(ref cnt, buf.ReferenceCount);
-#endif
                         latch.Set();
                     });
                     t2.Start();
@@ -3394,11 +3354,7 @@ namespace DotNetty.Buffers.Tests
                 t1.Start();
 
                 latch.Wait();
-#if TEST40
-                Assert.Equal(0, cnt);
-#else
                 Assert.Equal(0, Volatile.Read(ref cnt));
-#endif
                 innerLatch.Set();
             }
         }

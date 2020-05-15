@@ -21,10 +21,6 @@ namespace DotNetty.Transport.Channels.Pool
         {
         }
 
-#if NET40
-        public Task<bool> IsHealthyAsync(IChannel channel) => TaskEx.FromResult(channel.Active);
-#else
         public ValueTask<bool> IsHealthyAsync(IChannel channel) => new ValueTask<bool>(channel.Active);
-#endif
     }
 }

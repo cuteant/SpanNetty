@@ -4,11 +4,7 @@
 namespace DotNetty.Common.Concurrency
 {
     using System;
-#if !NET40
     using System.Runtime.CompilerServices;
-#else
-    using Microsoft.Runtime.CompilerServices;
-#endif
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;

@@ -5,21 +5,16 @@ namespace DotNetty.Handlers.Tls
 {
     using System;
     using System.Net.Security;
+    using System.Runtime.InteropServices;
     using System.Security.Authentication;
     using System.Security.Cryptography.X509Certificates;
     using DotNetty.Transport.Channels;
-#if !NET40
-    using System.Runtime.InteropServices;
-#endif
 
     public sealed class ServerTlsSettings : TlsSettings
     {
         private static readonly SslProtocols s_defaultServerProtocol;
         static ServerTlsSettings()
         {
-#if NET40
-            s_defaultServerProtocol = SslProtocols.Default;
-#else
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 s_defaultServerProtocol = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
@@ -28,7 +23,6 @@ namespace DotNetty.Handlers.Tls
             {
                 s_defaultServerProtocol = SslProtocols.Tls12 | SslProtocols.Tls11;
             }
-#endif
         }
 
         public ServerTlsSettings(X509Certificate certificate)

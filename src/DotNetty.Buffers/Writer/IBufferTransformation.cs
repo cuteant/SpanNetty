@@ -4,8 +4,6 @@
 //
 // borrowed from https://github.com/dotnet/corefxlab/tree/master/src/System.Buffers.Primitives/System/Buffers
 
-#if !NET40
-
 namespace DotNetty.Buffers
 {
     using System;
@@ -16,5 +14,3 @@ namespace DotNetty.Buffers
         OperationStatus Transform(Span<byte> destination, int dataLength, out int bytesWritten);
     }
 }
-
-#endif

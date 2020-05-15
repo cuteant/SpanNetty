@@ -19,16 +19,6 @@ namespace DotNetty.Buffers
         /// Returns the number of chunk lists for the arena.
         int NumChunkLists { get; }
 
-#if NET40
-        /// Returns an unmodifiable {@link List} which holds {@link PoolSubpageMetric}s for tiny sub-pages.
-        IList<IPoolSubpageMetric> TinySubpages { get; }
-
-        /// Returns an unmodifiable {@link List} which holds {@link PoolSubpageMetric}s for small sub-pages.
-        IList<IPoolSubpageMetric> SmallSubpages { get; }
-
-        /// Returns an unmodifiable {@link List} which holds {@link PoolChunkListMetric}s.
-        IList<IPoolChunkListMetric> ChunkLists { get; }
-#else
         /// Returns an unmodifiable {@link List} which holds {@link PoolSubpageMetric}s for tiny sub-pages.
         IReadOnlyList<IPoolSubpageMetric> TinySubpages { get; }
 
@@ -37,7 +27,6 @@ namespace DotNetty.Buffers
 
         /// Returns an unmodifiable {@link List} which holds {@link PoolChunkListMetric}s.
         IReadOnlyList<IPoolChunkListMetric> ChunkLists { get; }
-#endif
 
         /// Return the number of allocations done via the arena. This includes all sizes.
         long NumAllocations { get; }

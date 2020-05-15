@@ -103,19 +103,7 @@ namespace DotNetty.Transport.Channels
             var promise = new TaskCompletionSource();
             if (this.fireException)
             {
-#if NET40
-                void fireExceptionOnFailure(Task t)
-                {
-                    if (t.IsFaulted)// && this.channel.Registered)
-                    {
-                        this.channel.Pipeline.FireExceptionCaught(t.Exception.InnerException);
-                    }
-                }
-                promise.Task.ContinueWith(fireExceptionOnFailure, TaskContinuationOptions.ExecuteSynchronously);
-#else
                 promise.Task.ContinueWith(FireExceptionOnFailureAction, this.channel, TaskContinuationOptions.ExecuteSynchronously);
-#endif
-
             }
             return promise;
         }

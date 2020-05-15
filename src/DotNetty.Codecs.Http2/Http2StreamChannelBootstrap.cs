@@ -197,13 +197,8 @@ namespace DotNetty.Codecs.Http2
             {
                 promise.TrySetResult(streamChannel); return;
             }
-#if NET40
-            future.ContinueWith(t => LinkOutcomeContinuation(t, Tuple.Create(promise, streamChannel)),
-                TaskContinuationOptions.ExecuteSynchronously);
-#else
             future.ContinueWith(LinkOutcomeContinuationAction,
                 Tuple.Create(promise, streamChannel), TaskContinuationOptions.ExecuteSynchronously);
-#endif
         }
 
         void Init(IChannel channel)

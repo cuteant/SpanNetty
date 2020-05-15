@@ -5,7 +5,6 @@ namespace DotNetty.Common.Utilities
 {
     using System;
 
-#if !NET40
     public interface IHasAsciiSpan
     {
         int Count { get; }
@@ -26,5 +25,4 @@ namespace DotNetty.Common.Utilities
 
         ReadOnlySpan<byte> Utf8Span { get; }
     }
-#endif
 }

@@ -1,6 +1,4 @@
-﻿#if !NET40
-
-namespace DotNetty.Common.Internal
+﻿namespace DotNetty.Common.Internal
 {
     using System;
     using System.Buffers;
@@ -89,5 +87,3 @@ namespace DotNetty.Common.Internal
         }
     }
 }
-
-#endif

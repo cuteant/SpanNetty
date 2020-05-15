@@ -56,11 +56,7 @@ namespace DotNetty.Buffers.Tests
             AssertArenaMetrics(allocator.Metric.HeapArenas(), expectedActive, expectedAlloc, expectedDealloc);
         }
 
-#if TEST40
-        static void AssertArenaMetrics(IList<IPoolArenaMetric> arenaMetrics, long expectedActive, long expectedAlloc, long expectedDealloc)
-#else
         static void AssertArenaMetrics(IReadOnlyList<IPoolArenaMetric> arenaMetrics, long expectedActive, long expectedAlloc, long expectedDealloc)
-#endif
         {
             long active = 0;
             long alloc = 0;

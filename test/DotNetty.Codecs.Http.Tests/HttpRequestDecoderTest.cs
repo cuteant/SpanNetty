@@ -66,7 +66,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var c = channel.ReadInbound<ILastHttpContent>();
             Assert.Equal(ContentLength, c.Content.ReadableBytes);
-            AssertEx.Equal(
+            Assert.Equal(
                 Unpooled.WrappedBuffer(content, content.Length - ContentLength, ContentLength), 
                 c.Content.ReadSlice(ContentLength));
             c.Release();
@@ -94,7 +94,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             IList<ICharSequence> header1 = headers.GetAll(headerName);
             Assert.Equal(1, header1.Count);
-            AssertEx.Equal(headerValue, header1[0]);
+            Assert.Equal(headerValue, header1[0]);
         }
 
         [Fact]

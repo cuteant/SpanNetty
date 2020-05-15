@@ -611,11 +611,6 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int IndexOf(this IByteBuffer buf, byte value) => buf.IndexOf(buf.ReaderIndex, buf.WriterIndex, value);
 
-#if NET40
-        [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static int IndexOf(this IByteBuffer buf, int fromIndex, int toIndex, byte value) => ByteBufferUtil.IndexOf(buf, fromIndex, toIndex, value);
-#endif
-
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int BytesBefore(this IByteBuffer buf, byte value) => buf.BytesBefore(buf.ReaderIndex, buf.ReadableBytes, value);
 

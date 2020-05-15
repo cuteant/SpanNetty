@@ -119,7 +119,6 @@ namespace DotNetty.Buffers
 
         public sealed override int ArrayOffset => 0;
 
-#if !NET40
         public sealed override bool HasMemoryAddress => true;
 
         public sealed override ref byte GetPinnableMemoryAddress()
@@ -127,7 +126,6 @@ namespace DotNetty.Buffers
             this.EnsureAccessible();
             return ref this.array[0];
         }
-#endif
 
         public sealed override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
 
@@ -208,11 +206,7 @@ namespace DotNetty.Buffers
             }
             while (read > 0 && readTotal < length);
 
-#if NET40
-            return TaskEx.FromResult(readTotal);
-#else
             return Task.FromResult(readTotal);
-#endif
         }
 
         public sealed override bool IsSingleIoBuffer => true;

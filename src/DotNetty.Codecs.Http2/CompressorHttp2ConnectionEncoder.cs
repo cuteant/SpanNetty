@@ -105,11 +105,7 @@ namespace DotNetty.Codecs.Http2
                     padding = 0; // Padding is only communicated once on the first iteration
                     buf = nextBuf;
                 }
-#if NET40
-                TaskEx.WhenAll(tasks).LinkOutcome(promise);
-#else
                 Task.WhenAll(tasks).LinkOutcome(promise);
-#endif
             }
             catch (Exception cause)
             {

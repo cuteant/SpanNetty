@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2026
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30104.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{013DFD29-E1DB-4968-A67B-C2342E6F5B6E}"
 	ProjectSection(SolutionItems) = preProject
@@ -13,8 +13,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{01F3CC7E-F996-411E-AFD6-72673A826549}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{B6984E67-A4D0-459E-B3C9-01CA4DBBE241}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{3511E2D1-F581-420E-8DC4-8F0386947621}"
 EndProject
@@ -39,8 +37,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Common.Tests", "test\DotNetty.Common.Tests\DotNetty.Common.Tests.csproj", "{08E7FEC5-EE03-43EA-AC4F-94BE1B5EF555}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Handlers.Tests", "test\DotNetty.Handlers.Tests\DotNetty.Handlers.Tests.csproj", "{3F633E1E-CD49-455E-B05F-1DDEE54561D4}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Microbench", "test\DotNetty.Microbench\DotNetty.Microbench.csproj", "{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Tests", "test\DotNetty.Codecs.Tests\DotNetty.Codecs.Tests.csproj", "{4DF7D1DB-B3B2-4A73-A46A-1AB995BC2DB8}"
 EndProject
@@ -100,10 +96,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpUpload.Server", "exampl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HttpUpload.Client", "examples\HttpUpload.Client\HttpUpload.Client.csproj", "{374E33F2-658D-473B-A918-08766B3EAFA0}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CuteAnt.Extensions.Reflection.Sources", "shared\CuteAnt.Extensions.Reflection.Sources\CuteAnt.Extensions.Reflection.Sources.shproj", "{C7F8DBE6-77B7-494D-AF00-018F7579548C}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Nito.AsyncEx.ExceptionEnlightenment.Sources", "shared\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.shproj", "{D90E9B82-6317-4055-82E3-FE8625C143E9}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Http2", "src\DotNetty.Codecs.Http2\DotNetty.Codecs.Http2.csproj", "{23B1BB20-978A-4747-8AA0-FA009D71B8C3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Http2.Tests", "test\DotNetty.Codecs.Http2.Tests\DotNetty.Codecs.Http2.Tests.csproj", "{0EC9B5D2-3E6D-402E-B1AD-D89A827F6ECE}"
@@ -121,10 +113,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Buffers.ReaderWriter.Tests", "test\DotNetty.Buffers.ReaderWriter.Tests\DotNetty.Buffers.ReaderWriter.Tests.csproj", "{E238A908-56B1-4CFC-8790-DCB4F9C19DF0}"
 EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		shared\CuteAnt.Extensions.Reflection.Sources\CuteAnt.Extensions.Reflection.Sources.projitems*{c7f8dbe6-77b7-494d-af00-018f7579548c}*SharedItemsImports = 13
-		shared\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems*{d90e9b82-6317-4055-82e3-fe8625c143e9}*SharedItemsImports = 13
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|ARM = Debug|ARM
@@ -312,22 +300,6 @@ Global
 		{3F633E1E-CD49-455E-B05F-1DDEE54561D4}.Release|x64.Build.0 = Release|Any CPU
 		{3F633E1E-CD49-455E-B05F-1DDEE54561D4}.Release|x86.ActiveCfg = Release|Any CPU
 		{3F633E1E-CD49-455E-B05F-1DDEE54561D4}.Release|x86.Build.0 = Release|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Debug|ARM.Build.0 = Debug|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Debug|x64.Build.0 = Debug|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Debug|x86.Build.0 = Debug|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Release|ARM.ActiveCfg = Release|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Release|ARM.Build.0 = Release|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Release|x64.ActiveCfg = Release|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Release|x64.Build.0 = Release|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Release|x86.ActiveCfg = Release|Any CPU
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907}.Release|x86.Build.0 = Release|Any CPU
 		{4DF7D1DB-B3B2-4A73-A46A-1AB995BC2DB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4DF7D1DB-B3B2-4A73-A46A-1AB995BC2DB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4DF7D1DB-B3B2-4A73-A46A-1AB995BC2DB8}.Debug|ARM.ActiveCfg = Debug|Any CPU
@@ -920,7 +892,6 @@ Global
 		{34952808-CF66-4693-8733-78B543AE94E2} = {01F3CC7E-F996-411E-AFD6-72673A826549}
 		{08E7FEC5-EE03-43EA-AC4F-94BE1B5EF555} = {01F3CC7E-F996-411E-AFD6-72673A826549}
 		{3F633E1E-CD49-455E-B05F-1DDEE54561D4} = {01F3CC7E-F996-411E-AFD6-72673A826549}
-		{5DD65A95-E74E-4885-96A4-CAC8E9CF4907} = {78B5F58B-549D-42E7-BA3D-9E85B7CBCC78}
 		{4DF7D1DB-B3B2-4A73-A46A-1AB995BC2DB8} = {01F3CC7E-F996-411E-AFD6-72673A826549}
 		{4EAAC55D-B1C4-418C-A003-C0954095F734} = {01F3CC7E-F996-411E-AFD6-72673A826549}
 		{63815732-2108-4C10-B478-2FD40BF41AC0} = {01F3CC7E-F996-411E-AFD6-72673A826549}
@@ -949,8 +920,6 @@ Global
 		{DA148037-5219-49C2-B76F-9B0F2BFC5FA9} = {3511E2D1-F581-420E-8DC4-8F0386947621}
 		{CB072E56-8FA0-4F9B-8FC8-9FC9AD3B0ED9} = {3511E2D1-F581-420E-8DC4-8F0386947621}
 		{374E33F2-658D-473B-A918-08766B3EAFA0} = {3511E2D1-F581-420E-8DC4-8F0386947621}
-		{C7F8DBE6-77B7-494D-AF00-018F7579548C} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
-		{D90E9B82-6317-4055-82E3-FE8625C143E9} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
 		{23B1BB20-978A-4747-8AA0-FA009D71B8C3} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{0EC9B5D2-3E6D-402E-B1AD-D89A827F6ECE} = {01F3CC7E-F996-411E-AFD6-72673A826549}
 		{252F8798-A717-4DDD-9F4F-4CEA55622E03} = {3511E2D1-F581-420E-8DC4-8F0386947621}

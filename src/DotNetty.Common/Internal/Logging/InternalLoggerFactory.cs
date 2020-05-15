@@ -38,14 +38,10 @@ namespace DotNetty.Common.Internal.Logging
 
         static ILoggerFactory NewDefaultFactory(string name)
         {
-#if !NET40
             var f = new LoggerFactory();
             f.AddProvider(new EventSourceLoggerProvider());
             f.CreateLogger(name).LogDebug("Using EventSource as the default logging framework");
             return f;
-#else
-            return Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance;
-#endif
         }
 
         /// <summary>

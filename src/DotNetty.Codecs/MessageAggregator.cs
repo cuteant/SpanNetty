@@ -132,19 +132,11 @@ namespace DotNetty.Codecs
 
                     Task task = context
                         .WriteAndFlushAsync(continueResponse)
-#if NET40
-                        .ContinueWith(t => s_continueResponseWriteAction(t, context), TaskContinuationOptions.ExecuteSynchronously);
-#else
                         .ContinueWith(s_continueResponseWriteAction, context, TaskContinuationOptions.ExecuteSynchronously);
-#endif
 
                     if (closeAfterWrite)
                     {
-#if NET40
-                        task.ContinueWith(t => s_closeAfterWriteAction(t, context), TaskContinuationOptions.ExecuteSynchronously);
-#else
                         task.ContinueWith(s_closeAfterWriteAction, context, TaskContinuationOptions.ExecuteSynchronously);
-#endif
                         return;
                     }
 

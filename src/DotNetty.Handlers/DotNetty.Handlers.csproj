@@ -1,28 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\nuget.props" />
   
-  <ImportGroup Condition=" '$(TargetFramework)' == 'net40' ">
-    <Import Project="..\..\shared\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems" Label="Shared" />
-  </ImportGroup>
-  
   <PropertyGroup>
-    <TargetFrameworks>net471;net451;net40;netstandard2.0;netstandard2.1;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net471;net451;netstandard2.0;netstandard2.1;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
     <RootNamespace>DotNetty.Handlers</RootNamespace>
     <AssemblyName>DotNetty.Handlers</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>DotNetty.Handlers.Unofficial</PackageId>
-    <Title>DotNetty.Handlers.Unofficial</Title>
-    <Description>Application handlers for DotNetty：the complete port of the DotNetty.Handlers assembly to support .NET 4.0 and newer.</Description>
+    <PackageId>SpanNetty.Handlers</PackageId>
+    <Title>SpanNetty.Handlers</Title>
+    <Description>Application handlers for DotNetty：the complete port of the DotNetty.Handlers assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;tls;ssl</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DotNetty.Codecs\DotNetty.Codecs.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'net40' ">
     <ProjectReference Include="..\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
   </ItemGroup>
 

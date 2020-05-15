@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if !NET40
 namespace DotNetty.Buffers
 {
     using System;
@@ -153,11 +152,7 @@ namespace DotNetty.Buffers
             }
             while (read > 0 && readTotal < length);
 
-#if NET40
-            return TaskEx.FromResult(readTotal);
-#else
             return Task.FromResult(readTotal);
-#endif
         }
 
         public sealed override IByteBuffer Copy(int index, int length)
@@ -226,4 +221,3 @@ namespace DotNetty.Buffers
         }
     }
 }
-#endif

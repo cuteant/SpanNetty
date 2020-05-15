@@ -15,7 +15,7 @@ namespace DotNetty.Common.Utilities
             {
                 case null:
                     return false;
-#if !NET40
+
                 case IHasAsciiSpan hasAscii:
                     if ((uint)c > AsciiString.uMaxCharValue) { return false; }
                     var asciiSpan = hasAscii.AsciiSpan;
@@ -24,7 +24,7 @@ namespace DotNetty.Common.Utilities
                 case IHasUtf16Span hasUtf16:
                     var utf16Span = hasUtf16.Utf16Span;
                     return SpanHelpers.Contains(ref MemoryMarshal.GetReference(utf16Span), c, utf16Span.Length);
-#endif
+
                 default:
                     int length = sequence.Count;
                     for (int i = 0; i < length; i++)

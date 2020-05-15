@@ -18,12 +18,8 @@ namespace DotNetty.Transport.Channels.Sockets
         where TChannel : SocketDatagramChannel<TChannel>
     {
         public SocketDatagramChannel()
-#if NET40
-            : this(new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
-#else
             // .Net4.5+，默认为AddressFamily.InterNetworkV6，并设置 DualMode 为 true，双线绑定
             : this(new Socket(SocketType.Dgram, ProtocolType.Udp))
-#endif
         {
         }
     }

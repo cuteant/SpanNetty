@@ -44,7 +44,7 @@ namespace DotNetty.Codecs.Http.Utilities
         {
             if (str is null) { return null; }
 #if !DEBUG
-            if (e is null || Constants.UTF8CodePage == e.CodePage)
+            if (e is null || SharedConstants.UTF8CodePage == e.CodePage)
             {
                 return s_urlEncoder.Encode(str);
             }

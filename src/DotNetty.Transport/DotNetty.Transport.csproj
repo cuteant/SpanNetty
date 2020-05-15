@@ -1,22 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\nuget.props" />
 
-  <ImportGroup Condition=" '$(TargetFramework)' == 'net40' ">
-    <Import Project="..\..\shared\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems" Label="Shared" />
-    <Import Project="..\..\shared\CuteAnt.Extensions.Reflection.Sources\CuteAnt.Extensions.Reflection.Sources.projitems" Label="Shared" />
-  </ImportGroup>
-
   <PropertyGroup>
-    <TargetFrameworks>net471;net451;net40;netstandard2.0;netstandard2.1;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net471;net451;netstandard2.0;netstandard2.1;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
     <RootNamespace>DotNetty.Transport</RootNamespace>
     <AssemblyName>DotNetty.Transport</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>DotNetty.Transport.Unofficial</PackageId>
-    <Title>DotNetty.Transport.Unofficial</Title>
-    <Description>Transport model in DotNetty：the complete port of the DotNetty.Buffers assembly to support .NET 4.0 and newer.</Description>
+    <PackageId>SpanNetty.Transport</PackageId>
+    <Title>SpanNetty.Transport</Title>
+    <Description>Transport model in DotNetty：the complete port of the DotNetty.Buffers assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;udp;protocol;netty;dotnetty;network</PackageTags>
   </PropertyGroup>
 

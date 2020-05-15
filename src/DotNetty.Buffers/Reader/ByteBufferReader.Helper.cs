@@ -4,8 +4,6 @@
 //
 // borrowed from https://github.com/dotnet/corefxlab/blob/e075d78df60452b68d212e3333fd3f37cd28d4f0/src/System.Buffers.ReaderWriter/System/Buffers/Reader/BufferReader.cs#L38
 
-#if !NET40
-
 namespace DotNetty.Buffers
 {
     using System;
@@ -88,5 +86,3 @@ namespace DotNetty.Buffers
         }
     }
 }
-
-#endif

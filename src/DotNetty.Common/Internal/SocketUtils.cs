@@ -36,13 +36,8 @@ namespace DotNetty.Common.Internal
             {
                 return parseResult;
             }
-#if NET40
-            var hostEntry = DnsCache.Resolve(hostname);
-            return hostEntry.AddressList[0];
-#else
             var addressList = DnsCache.ResolveAsync(hostname).GetAwaiter().GetResult();
             return addressList[0];
-#endif
         }
     }
 }

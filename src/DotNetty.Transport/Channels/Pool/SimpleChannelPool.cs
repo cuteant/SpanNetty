@@ -135,21 +135,13 @@ namespace DotNetty.Transport.Channels.Pool
         /// </summary>
         internal bool ReleaseHealthCheck { get; }
 
-#if NET40
-        public virtual Task<IChannel> AcquireAsync()
-#else
         public virtual ValueTask<IChannel> AcquireAsync()
-#endif
         {
             if (!this.TryPollChannel(out IChannel channel))
             {
                 Bootstrap bs = this.Bootstrap.Clone();
                 bs.Attribute(PoolKey, this);
-#if NET40
-                return this.ConnectChannel(bs);
-#else
                 return new ValueTask<IChannel>(this.ConnectChannel(bs));
-#endif
             }
 
             IEventLoop eventLoop = channel.EventLoop;
@@ -161,11 +153,7 @@ namespace DotNetty.Transport.Channels.Pool
             {
                 var completionSource = new TaskCompletionSource<IChannel>();
                 eventLoop.Execute(this.DoHealthCheck, channel, completionSource);
-#if NET40
-                return completionSource.Task;
-#else
                 return new ValueTask<IChannel>(completionSource.Task);
-#endif
             }
         }
 
@@ -183,11 +171,7 @@ namespace DotNetty.Transport.Channels.Pool
             }
         }
 
-#if NET40
-        async Task<IChannel> DoHealthCheck(IChannel channel)
-#else
         async ValueTask<IChannel> DoHealthCheck(IChannel channel)
-#endif
         {
             Debug.Assert(channel.EventLoop.InEventLoop);
             try
@@ -231,11 +215,7 @@ namespace DotNetty.Transport.Channels.Pool
         /// <returns>The newly connected <see cref="IChannel"/>.</returns>
         protected virtual Task<IChannel> ConnectChannel(Bootstrap bs) => bs.ConnectAsync();
 
-#if NET40
-        public virtual async Task<bool> ReleaseAsync(IChannel channel)
-#else
         public virtual async ValueTask<bool> ReleaseAsync(IChannel channel)
-#endif
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
             try
@@ -273,11 +253,7 @@ namespace DotNetty.Transport.Channels.Pool
             }
         }
 
-#if NET40
-        async Task<bool> DoReleaseChannel(IChannel channel)
-#else
         async ValueTask<bool> DoReleaseChannel(IChannel channel)
-#endif
         {
             Debug.Assert(channel.EventLoop.InEventLoop);
 
@@ -318,11 +294,7 @@ namespace DotNetty.Transport.Channels.Pool
         /// <c>true</c> if the <see cref="IChannel"/> was healthy, released, and offered back to the pool.
         /// <c>false</c> if the <see cref="IChannel"/> was NOT healthy and was simply released.
         /// </returns>
-#if NET40
-        async Task<bool> DoHealthCheckOnRelease(IChannel channel)
-#else
         async ValueTask<bool> DoHealthCheckOnRelease(IChannel channel)
-#endif
         {
             if (await this.HealthChecker.IsHealthyAsync(channel))
             {

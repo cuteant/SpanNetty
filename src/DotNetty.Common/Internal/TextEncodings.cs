@@ -15,7 +15,7 @@
         private const char LowSurrogateStart = '\udc00';
         private const char LowSurrogateEnd = '\udfff';
 
-#if !NETCOREAPP_3_0_GREATER && !NET40
+#if !NETCOREAPP_3_0_GREATER
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private unsafe static int PtrDiff(char* a, char* b)

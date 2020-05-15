@@ -106,7 +106,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             object userEvent = this.userEvents[0];
             Assert.True(userEvent is HttpServerUpgradeHandler.UpgradeEvent);
-            AssertEx.Equal("h2c", ((HttpServerUpgradeHandler.UpgradeEvent)userEvent).Protocol);
+            Assert.Equal("h2c", ((HttpServerUpgradeHandler.UpgradeEvent)userEvent).Protocol);
             ReferenceCountUtil.Release(userEvent);
 
             Assert.Equal(100, this.http2ConnectionHandler.Connection.Local.MaxActiveStreams);

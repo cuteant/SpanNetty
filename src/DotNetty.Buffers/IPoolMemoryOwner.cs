@@ -1,6 +1,4 @@
-﻿#if !NET40
-
-using System;
+﻿using System;
 using System.Buffers;
 
 namespace DotNetty.Buffers
@@ -19,5 +17,3 @@ namespace DotNetty.Buffers
         int Length { get; }
     }
 }
-
-#endif

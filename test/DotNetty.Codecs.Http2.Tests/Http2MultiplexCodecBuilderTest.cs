@@ -125,7 +125,7 @@ namespace DotNetty.Codecs.Http2.Tests
             IHttp2DataFrame dataFrame = serverLastInboundHandler.BlockingReadInbound<IHttp2DataFrame>();
             Assert.NotNull(dataFrame);
             Assert.Equal(3, dataFrame.Stream.Id);
-            AssertEx.Equal(data.ResetReaderIndex(), dataFrame.Content);
+            Assert.Equal(data.ResetReaderIndex(), dataFrame.Content);
             Assert.True(dataFrame.IsEndStream);
             dataFrame.Release();
 

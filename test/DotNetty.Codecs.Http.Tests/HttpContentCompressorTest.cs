@@ -4,15 +4,13 @@
 namespace DotNetty.Codecs.Http.Tests
 {
     using System;
+    using System.Runtime.InteropServices;
     using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Compression;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels.Embedded;
     using Xunit;
-#if !TEST40
-    using System.Runtime.InteropServices;
-#endif
 
     public sealed class HttpContentCompressorTest
     {
@@ -20,9 +18,6 @@ namespace DotNetty.Codecs.Http.Tests
 
         static HttpContentCompressorTest()
         {
-#if TEST40
-            Platform = "0b";
-#else
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 Platform = "0b";
@@ -39,7 +34,6 @@ namespace DotNetty.Codecs.Http.Tests
             {
                 Platform = "ff";
             }
-#endif
         }
 
         [Fact]
@@ -341,7 +335,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.False(res.Headers.TryGet(HttpHeaderNames.ContentEncoding, out _));
             Assert.Equal(0, res.Content.ReadableBytes);
             Assert.Equal("", res.Content.ToString(Encoding.ASCII));
-            AssertEx.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test", null));
+            Assert.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test", null));
 
             var last = ch.ReadOutbound<object>();
             Assert.Null(last);
@@ -376,7 +370,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.False(res.Headers.TryGet(HttpHeaderNames.ContentEncoding, out _));
             Assert.Equal(0, res.Content.ReadableBytes);
             Assert.Equal("", res.Content.ToString(Encoding.ASCII));
-            AssertEx.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test", null));
+            Assert.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test", null));
 
             var last = ch.ReadOutbound<object>();
             Assert.Null(last);
@@ -533,9 +527,9 @@ namespace DotNetty.Codecs.Http.Tests
             var content = res as IHttpContent;
             Assert.Null(content);
 
-            AssertEx.Equal("chunked", res.Headers.Get(HttpHeaderNames.TransferEncoding, null));
+            Assert.Equal("chunked", res.Headers.Get(HttpHeaderNames.TransferEncoding, null));
             Assert.False(res.Headers.TryGet(HttpHeaderNames.ContentLength, out _));
-            AssertEx.Equal("gzip", res.Headers.Get(HttpHeaderNames.ContentEncoding, null));
+            Assert.Equal("gzip", res.Headers.Get(HttpHeaderNames.ContentEncoding, null));
         }
     }
 }

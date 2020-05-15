@@ -96,11 +96,7 @@ namespace DotNetty.Handlers.Tls
                 }
                 catch (AggregateException ex)
                 {
-#if !NET40
                     ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
-#else
-                    throw ExceptionEnlightenment.PrepareForRethrow(ex.InnerException);
-#endif
                     throw; // unreachable
                 }
             }
@@ -128,22 +124,14 @@ namespace DotNetty.Handlers.Tls
 
             public override void Write(byte[] buffer, int offset, int count) => _owner.FinishWrap(buffer, offset, count, _owner.CapturedContext.NewPromise());
 
-#if !NET40
             public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
                 => _owner.FinishWrapNonAppDataAsync(buffer, offset, count, _owner.CapturedContext.NewPromise());
-#endif
 
-#if !NET40
             private static readonly Action<Task, object> s_writeCompleteCallback = HandleChannelWriteComplete;
-#endif
 
             public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
             {
-#if NET40
-                Task task = _owner.FinishWrapNonAppDataAsync(buffer, offset, count, _owner.CapturedContext.NewPromise());
-#else
                 Task task = this.WriteAsync(buffer, offset, count);
-#endif
                 if (task.IsSuccess())
                 {
                     // write+flush completed synchronously (and successfully)
@@ -162,12 +150,7 @@ namespace DotNetty.Handlers.Tls
                         _writeCallback = callback;
                         var tcs = _owner.CapturedContext.NewPromise(state);
                         _writeCompletion = tcs;
-#if !NET40
                         task.ContinueWith(s_writeCompleteCallback, this, TaskContinuationOptions.ExecuteSynchronously);
-#else
-                        Action<Task> continuationAction = completed => HandleChannelWriteComplete(completed, this);
-                        task.ContinueWith(continuationAction, TaskContinuationOptions.ExecuteSynchronously);
-#endif
                         return tcs.Task;
                     }
                     else
@@ -216,11 +199,7 @@ namespace DotNetty.Handlers.Tls
                 }
                 catch (AggregateException ex)
                 {
-#if !NET40
                     ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
-#else
-                    throw ExceptionEnlightenment.PrepareForRethrow(ex.InnerException);
-#endif
                     throw;
                 }
             }

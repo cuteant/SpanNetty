@@ -27,12 +27,7 @@ namespace DotNetty.Handlers.IPFilter
             }
             else
             {
-#if NET40
-                void removeIpAddrAfterCloseAction(Task t) => this.connected.TryRemove(remoteIp, out _);
-                ctx.Channel.CloseCompletion.ContinueWith(removeIpAddrAfterCloseAction, TaskContinuationOptions.ExecuteSynchronously);
-#else
                 ctx.Channel.CloseCompletion.ContinueWith(s_removeIpAddrAfterCloseAction, Tuple.Create(this.connected, remoteIp), TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
             return true;
         }

@@ -159,35 +159,11 @@ namespace DotNetty.Codecs.Http
                 if (oversized is IFullHttpMessage ||
                     !HttpUtil.Is100ContinueExpected(oversized) && !HttpUtil.IsKeepAlive(oversized))
                 {
-#if NET40
-                    Action<Task> closeOnComplete = (Task t) =>
-                    {
-                        if (t.IsFaulted)
-                        {
-                            if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
-                        }
-                        ctx.CloseAsync();
-                    };
-                    ctx.WriteAndFlushAsync(TooLargeClose.RetainedDuplicate()).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
-#else
                     ctx.WriteAndFlushAsync(TooLargeClose.RetainedDuplicate()).ContinueWith(CloseOnCompleteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
-#endif
                 }
                 else
                 {
-#if NET40
-                    Action<Task> closeOnFault = (Task t) =>
-                    {
-                        if (t.IsFaulted)
-                        {
-                            if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
-                            ctx.CloseAsync();
-                        }
-                    };
-                    ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith(closeOnFault, TaskContinuationOptions.ExecuteSynchronously);
-#else
                     ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith(CloseOnFaultAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
-#endif
                 }
                 // If an oversized request was handled properly and the connection is still alive
                 // (i.e. rejected 100-continue). the decoder should prepare to handle a new message.

@@ -100,7 +100,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
         {
             CorsConfig cors = CorsConfigBuilder.ForAnyOrigin()
                 .PreflightResponseHeader((AsciiString)"SingleValue", (StringCharSequence)"value").Build();
-            AssertEx.Equal((AsciiString)"value", cors.PreflightResponseHeaders().Get((AsciiString)"SingleValue", null));
+            Assert.Equal((AsciiString)"value", cors.PreflightResponseHeaders().Get((AsciiString)"SingleValue", null));
         }
 
         [Fact]
@@ -119,7 +119,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
         {
             CorsConfig cors = CorsConfigBuilder.ForAnyOrigin().Build();
             Assert.NotNull(cors.PreflightResponseHeaders().Get(HttpHeaderNames.Date, null));
-            AssertEx.Equal("0", cors.PreflightResponseHeaders().Get(HttpHeaderNames.ContentLength, null));
+            Assert.Equal("0", cors.PreflightResponseHeaders().Get(HttpHeaderNames.ContentLength, null));
         }
 
         [Fact]

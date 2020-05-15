@@ -2,16 +2,16 @@
   <Import Project="..\nuget.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>net471;net451;net40;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net471;net451;netstandard2.0;netstandard2.1</TargetFrameworks>
     <RootNamespace>DotNetty.Codecs.Http</RootNamespace>
     <AssemblyName>DotNetty.Codecs.Http</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>DotNetty.Codecs.Http.Unofficial</PackageId>
-    <Title>DotNetty.Codecs.Unofficial</Title>
-    <Description>General purpose codecs for DotNetty：the complete port of the DotNetty.Codecs assembly to support .NET 4.0 and newer.</Description>
+    <PackageId>SpanNetty.Codecs.Http</PackageId>
+    <Title>SpanNetty.Codecs.Http</Title>
+    <Description>General purpose codecs for DotNetty：the complete port of the DotNetty.Codecs assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;http</PackageTags>
   </PropertyGroup>
   
@@ -20,9 +20,6 @@
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' or '$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'net451' ">
     <PackageReference Include="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWeb2PackageVersion)" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
-    <PackageReference Include="Net40.Text.Encodings.Web" Version="$(SystemTextEncodingsWebNet40PackageVersion)" />
   </ItemGroup>
 
   <ItemGroup>

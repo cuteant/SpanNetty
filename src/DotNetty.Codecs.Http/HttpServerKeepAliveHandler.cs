@@ -56,12 +56,7 @@ namespace DotNetty.Codecs.Http
             if (message is ILastHttpContent && !this.ShouldKeepAlive())
             {
                 promise = promise.Unvoid();
-#if NET40
-                Action<Task> closeOnComplete = (Task t) => context.CloseAsync();
-                promise.Task.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
-#else
                 promise.Task.ContinueWith(CloseOnCompleteAction, context, TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
             base.Write(context, message, promise);
         }

@@ -2,27 +2,23 @@
   <Import Project="..\nuget.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>net471;net451;net40;netstandard2.0;netstandard2.1;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net471;net451;netstandard2.0;netstandard2.1;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
     <RootNamespace>DotNetty.Common</RootNamespace>
     <AssemblyName>DotNetty.Common</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>DotNetty.Common.Unofficial</PackageId>
-    <Title>DotNetty.Common.Unofficial</Title>
-    <Description>DotNetty common routines：the complete port of the DotNetty.Common assembly to support .NET 4.0 and newer.</Description>
+    <PackageId>SpanNetty.Common</PackageId>
+    <Title>SpanNetty.Common</Title>
+    <Description>DotNetty common routines：the complete port of the DotNetty.Common assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CuteAnt.Runtime" Version="$(CuteAntRuntimePackageVersion)" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
-    <PackageReference Include="Microsoft.Bcl" Version="$(MicrosoftBclPackageVersion)" />
-    <PackageReference Include="Microsoft.Bcl.Async" Version="$(MicrosoftBclAsyncPackageVersion)" />
-    <PackageReference Include="Microsoft.Bcl.Build" Version="$(MicrosoftBclBuildPackageVersion)" />
-  </ItemGroup>
+
   <ItemGroup>
     <Compile Update="Internal\Strings.Designer.cs">
       <DesignTime>True</DesignTime>

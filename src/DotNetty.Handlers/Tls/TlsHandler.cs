@@ -41,9 +41,7 @@ namespace DotNetty.Handlers.Tls
         public static readonly AttributeKey<SslStream> SslStreamAttrKey = AttributeKey<SslStream>.ValueOf("SSLSTREAM");
 
         private static readonly Exception s_channelClosedException = new IOException("Channel is closed");
-#if !NET40
         private static readonly Action<Task, object> s_handshakeCompletionCallback = new Action<Task, object>(HandleHandshakeCompleted);
-#endif
 
         private readonly SslStream _sslStream;
         private readonly MediationStream _mediationStream;
@@ -650,20 +648,11 @@ namespace DotNetty.Handlers.Tls
                             serverCert = serverCert2;
                         }
                     }
-#if NET40
-                    _sslStream.BeginAuthenticateAsServer(serverCert,
-                                                         _serverSettings.NegotiateClientCertificate,
-                                                         _serverSettings.EnabledProtocols,
-                                                         _serverSettings.CheckCertificateRevocation,
-                                                         Server_HandleHandshakeCompleted,
-                                                         this);
-#else
                     _sslStream.AuthenticateAsServerAsync(serverCert,
                                                          _serverSettings.NegotiateClientCertificate,
                                                          _serverSettings.EnabledProtocols,
                                                          _serverSettings.CheckCertificateRevocation)
                               .ContinueWith(s_handshakeCompletionCallback, this, TaskContinuationOptions.ExecuteSynchronously);
-#endif
 #endif
                 }
                 else
@@ -695,13 +684,6 @@ namespace DotNetty.Handlers.Tls
                     }
                     _sslStream.AuthenticateAsClientAsync(sslOptions, CancellationToken.None)
                               .ContinueWith(s_handshakeCompletionCallback, this, TaskContinuationOptions.ExecuteSynchronously);
-#elif NET40
-                    _sslStream.BeginAuthenticateAsClient(_clientSettings.TargetHost,
-                                                         _clientSettings.X509CertificateCollection,
-                                                         _clientSettings.EnabledProtocols,
-                                                         _clientSettings.CheckCertificateRevocation,
-                                                         Client_HandleHandshakeCompleted,
-                                                         this);
 #else
                     _sslStream.AuthenticateAsClientAsync(_clientSettings.TargetHost,
                                                          _clientSettings.X509CertificateCollection,
@@ -720,81 +702,6 @@ namespace DotNetty.Handlers.Tls
 
         #region **& HandleHandshakeCompleted &**
 
-#if NET40
-        private static void Client_HandleHandshakeCompleted(IAsyncResult result)
-        {
-            var self = (TlsHandler)result.AsyncState;
-            int oldState;
-            try
-            {
-                self._sslStream.EndAuthenticateAsClient(result);
-            }
-            catch (Exception ex)
-            {
-                // ReSharper disable once AssignNullToNotNullAttribute -- task.Exception will be present as task is faulted
-                oldState = self.State;
-                Debug.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
-                self.HandleFailure(ex);
-                return;
-            }
-
-            oldState = self.State;
-
-            Debug.Assert(!oldState.HasAny(TlsHandlerState.AuthenticationCompleted));
-            self.State = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
-
-            var capturedContext = self.CapturedContext;
-            capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
-
-            if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !capturedContext.Channel.Configuration.AutoRead)
-            {
-                capturedContext.Read();
-            }
-
-            if (oldState.Has(TlsHandlerState.FlushedBeforeHandshake))
-            {
-                self.Wrap(capturedContext);
-                capturedContext.Flush();
-            }
-        }
-
-        private static void Server_HandleHandshakeCompleted(IAsyncResult result)
-        {
-            var self = (TlsHandler)result.AsyncState;
-            int oldState;
-            try
-            {
-                self._sslStream.EndAuthenticateAsServer(result);
-            }
-            catch (Exception ex)
-            {
-                // ReSharper disable once AssignNullToNotNullAttribute -- task.Exception will be present as task is faulted
-                oldState = self.State;
-                Debug.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
-                self.HandleFailure(ex);
-                return;
-            }
-
-            oldState = self.State;
-
-            Debug.Assert(!oldState.HasAny(TlsHandlerState.AuthenticationCompleted));
-            self.State = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
-
-            var capturedContext = self.CapturedContext;
-            capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
-
-            if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !capturedContext.Channel.Configuration.AutoRead)
-            {
-                capturedContext.Read();
-            }
-
-            if (oldState.Has(TlsHandlerState.FlushedBeforeHandshake))
-            {
-                self.Wrap(capturedContext);
-                capturedContext.Flush();
-            }
-        }
-#else
         private static void HandleHandshakeCompleted(Task task, object state)
         {
             var self = (TlsHandler)state;
@@ -827,7 +734,6 @@ namespace DotNetty.Handlers.Tls
                 }
             }
         }
-#endif
 
         #endregion
 

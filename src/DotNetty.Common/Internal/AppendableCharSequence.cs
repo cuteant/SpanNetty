@@ -129,11 +129,9 @@ namespace DotNetty.Common.Internal
                     this.pos += length;
                     break;
 
-#if !NET40
                 case IHasAsciiSpan hasAscii:
                     hasAscii.AsciiSpan.Slice(start, length).CopyTo(this.chars.AsSpan(this.pos, length));
                     break;
-#endif
 
                 default:
                     for (int idx = start; idx < end; idx++)

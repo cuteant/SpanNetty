@@ -228,65 +228,17 @@ namespace DotNetty.Handlers.Streams
                         // be closed before its not written.
                         //
                         // See https://github.com/netty/netty/issues/303
-#if NET40
-                        void linkOutcomeWhenIsEndOfChunkedInput(Task task)
-                        {
-                            var pendingTask = current;
-                            CloseInput((IChunkedInput<T>)pendingTask.Message);
-                            pendingTask.Success();
-                        }
-                        future.ContinueWith(linkOutcomeWhenIsEndOfChunkedInput, TaskContinuationOptions.ExecuteSynchronously);
-#else
                         future.ContinueWith(LinkOutcomeWhenIsEndOfChunkedInputAction, current, TaskContinuationOptions.ExecuteSynchronously);
-#endif
                     }
                     else if (channel.IsWritable)
                     {
-#if NET40
-                        void linkOutcomeWhenChanelIsWritable(Task task)
-                        {
-                            var pendingTask = current;
-                            if (task.IsFaulted)
-                            {
-                                CloseInput((IChunkedInput<T>)pendingTask.Message);
-                                pendingTask.Fail(task.Exception);
-                            }
-                            else
-                            {
-                                pendingTask.Progress(chunks.Progress, chunks.Length);
-                            }
-                        }
-                        future.ContinueWith(linkOutcomeWhenChanelIsWritable, TaskContinuationOptions.ExecuteSynchronously);
-#else
                         future.ContinueWith(LinkOutcomeWhenChanelIsWritableAction,
                             Tuple.Create(current, chunks), TaskContinuationOptions.ExecuteSynchronously);
-#endif
                     }
                     else
                     {
-#if NET40
-                        void linkOutcome(Task task)
-                        {
-                            var handler = this;
-                            if (task.IsFaulted)
-                            {
-                                CloseInput((IChunkedInput<T>)handler.currentWrite.Message);
-                                handler.currentWrite.Fail(task.Exception);
-                            }
-                            else
-                            {
-                                handler.currentWrite.Progress(chunks.Progress, chunks.Length);
-                                if (channel.IsWritable)
-                                {
-                                    handler.ResumeTransfer();
-                                }
-                            }
-                        }
-                        future.ContinueWith(linkOutcome, TaskContinuationOptions.ExecuteSynchronously);
-#else
                         future.ContinueWith(LinkOutcomeAction,
                             Tuple.Create(this, chunks, channel), TaskContinuationOptions.ExecuteSynchronously);
-#endif
                     }
 
                     // Flush each chunk to conserve memory
@@ -295,25 +247,8 @@ namespace DotNetty.Handlers.Streams
                 }
                 else
                 {
-#if NET40
-                    void linkNonChunkedOutcome(Task task)
-                    {
-                        var pendingTask = current;
-                        if (task.IsFaulted)
-                        {
-                            pendingTask.Fail(task.Exception);
-                        }
-                        else
-                        {
-                            pendingTask.Success();
-                        }
-                    }
-                    context.WriteAsync(pendingMessage)
-                        .ContinueWith(linkNonChunkedOutcome, TaskContinuationOptions.ExecuteSynchronously);
-#else
                     context.WriteAsync(pendingMessage)
                         .ContinueWith(LinkNonChunkedOutcomeAction, current, TaskContinuationOptions.ExecuteSynchronously);
-#endif
 
                     this.currentWrite = null;
                     requiresFlush = true;

@@ -71,7 +71,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(dr);
             Assert.False(dr.IsSuccess);
             Assert.True(dr.IsFailure);
-            AssertEx.Equal("Maybe OK", res.Status.ReasonPhrase);
+            Assert.Equal("Maybe OK", res.Status.ReasonPhrase);
             Assert.Equal("Good Value", res.Headers.Get((AsciiString)"Good_Name", null).ToString());
             this.EnsureInboundTrafficDiscarded(ch);
         }

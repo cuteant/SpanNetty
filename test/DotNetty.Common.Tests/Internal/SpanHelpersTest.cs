@@ -1,6 +1,4 @@
-﻿#if !TEST40
-
-namespace DotNetty.Common.Tests.Internal
+﻿namespace DotNetty.Common.Tests.Internal
 {
     using System;
     using System.Linq;
@@ -886,5 +884,3 @@ namespace DotNetty.Common.Tests.Internal
         }
     }
 }
-
-#endif

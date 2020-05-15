@@ -1,5 +1,4 @@
-﻿#if !NET40
-namespace DotNetty.Buffers
+﻿namespace DotNetty.Buffers
 {
     using System;
     using System.Buffers;
@@ -55,4 +54,3 @@ namespace DotNetty.Buffers
         int IndexOfAny(int fromIndex, int toIndex, in ReadOnlySpan<byte> values);
     }
 }
-#endif

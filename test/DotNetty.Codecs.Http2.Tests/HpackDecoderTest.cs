@@ -681,9 +681,9 @@ namespace DotNetty.Codecs.Http2.Tests
 
                 hpackDecoder.Decode(1, input, decoded, false);
 
-                AssertEx.Equal("1", decoded.GetAll((AsciiString)":test")[0]);
-                AssertEx.Equal("200", decoded.Status);
-                AssertEx.Equal("GET", decoded.Method);
+                Assert.Equal("1", decoded.GetAll((AsciiString)":test")[0]);
+                Assert.Equal("200", decoded.Status);
+                Assert.Equal("GET", decoded.Method);
             }
             finally
             {
@@ -786,9 +786,9 @@ namespace DotNetty.Codecs.Http2.Tests
                 hpackDecoder.Decode(1, in2, decoded, false);
 
                 Assert.Equal(3, decoded.Size);
-                AssertEx.Equal("GET", decoded.Method);
-                AssertEx.Equal("200", decoded.Status);
-                AssertEx.Equal("bar", decoded.Get((AsciiString)"foo", null));
+                Assert.Equal("GET", decoded.Method);
+                Assert.Equal("200", decoded.Status);
+                Assert.Equal("bar", decoded.Get((AsciiString)"foo", null));
             }
             finally
             {

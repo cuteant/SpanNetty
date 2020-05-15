@@ -1,14 +1,12 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.CompilerServices;
-using CuteAnt.Buffers;
-using CuteAnt.Runtime;
-using DotNetty.Common.Utilities;
-#if !NET40
 using System.Threading;
 using System.Threading.Tasks;
 using CuteAnt.AsyncEx;
-#endif
+using CuteAnt.Buffers;
+using CuteAnt.Runtime;
+using DotNetty.Common.Utilities;
 
 namespace DotNetty.Buffers
 {
@@ -175,7 +173,6 @@ namespace DotNetty.Buffers
         }
 #endif
 
-#if !NET40
         public override async Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
         {
             EnsureNotClosed();
@@ -215,7 +212,6 @@ namespace DotNetty.Buffers
                 }
             }
         }
-#endif
 
         #endregion
 
@@ -276,7 +272,6 @@ namespace DotNetty.Buffers
             return CompletedAsyncResult<int>.End(asyncResult);
         }
 
-#if !NET40
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
@@ -297,7 +292,6 @@ namespace DotNetty.Buffers
                 return AsyncUtils.FromException<int>(ex2);
             }
         }
-#endif
 
         #endregion
 
@@ -343,7 +337,6 @@ namespace DotNetty.Buffers
             CompletedAsyncResult.End(asyncResult);
         }
 
-#if !NET40
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
@@ -371,7 +364,6 @@ namespace DotNetty.Buffers
                 return AsyncUtils.FromException(exception);
             }
         }
-#endif
 
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
         public override void Write(ReadOnlySpan<byte> buffer)
@@ -398,7 +390,6 @@ namespace DotNetty.Buffers
 
         public override void Flush() { }
 
-#if !NET40
         public override Task FlushAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested) { return AsyncUtils.FromCanceled(cancellationToken); }
@@ -413,7 +404,6 @@ namespace DotNetty.Buffers
                 return AsyncUtils.FromException(ex);
             }
         }
-#endif
 
         #endregion
 

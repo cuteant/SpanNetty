@@ -9,9 +9,6 @@ namespace DotNetty.Handlers.Tls
     using System.Security.Authentication;
     using System.Security.Cryptography.X509Certificates;
     using DotNetty.Transport.Channels;
-#if NET40
-    using System.Collections.ObjectModel;
-#endif
 
     public sealed class ClientTlsSettings : TlsSettings
     {
@@ -27,14 +24,10 @@ namespace DotNetty.Handlers.Tls
 
         public ClientTlsSettings(bool checkCertificateRevocation, List<X509Certificate> certificates, string targetHost)
           : this(
-#if NET40
-            SslProtocols.Default
-#else
 //#if NETCOREAPP_3_0_GREATER
 //            SslProtocols.Tls13 |
 //#endif
             SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
-#endif
             , checkCertificateRevocation, certificates, targetHost)
         {
         }
@@ -49,11 +42,7 @@ namespace DotNetty.Handlers.Tls
 
         internal X509CertificateCollection X509CertificateCollection { get; set; }
 
-#if NET40
-        public ReadOnlyCollection<X509Certificate> Certificates { get; }
-#else
         public IReadOnlyCollection<X509Certificate> Certificates { get; }
-#endif
 
         public string TargetHost { get; }
 

@@ -47,11 +47,7 @@ namespace DotNetty.Common.Concurrency
             }
             else
             {
-#if NET40
-                future.ContinueWith(t => OperationComplete(t, this), TaskContinuationOptions.ExecuteSynchronously);
-#else
                 future.ContinueWith(OperationCompleteAction, this, TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
         }
 

@@ -133,11 +133,7 @@ namespace DotNetty.Buffers
             }
             while (read > 0 && readTotal < length);
 
-#if NET40
-            return TaskEx.FromResult(readTotal);
-#else
             return Task.FromResult(readTotal);
-#endif
         }
 
         public sealed override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
@@ -190,7 +186,6 @@ namespace DotNetty.Buffers
 
         public sealed override int ArrayOffset => this.Offset;
 
-#if !NET40
         public sealed override bool HasMemoryAddress => true;
 
         public sealed override ref byte GetPinnableMemoryAddress()
@@ -198,7 +193,6 @@ namespace DotNetty.Buffers
             this.EnsureAccessible();
             return ref this.Memory[this.Offset];
         }
-#endif
 
         public sealed override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
 

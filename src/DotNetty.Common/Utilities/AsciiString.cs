@@ -450,28 +450,11 @@ namespace DotNetty.Common.Utilities
         // 
         public int CompareTo(AsciiString other)
         {
-            if (ReferenceEquals(this, other))
-            {
-                return 0;
-            }
+            if (ReferenceEquals(this, other)) { return 0; }
 
-#if !NET40
-            return SpanHelpers.SequenceCompareTo(ref MemoryMarshal.GetReference(this.AsciiSpan), this.length, ref MemoryMarshal.GetReference(other.AsciiSpan), other.Count);
-#else
-            int length1 = this.length;
-            int length2 = other.length;
-            int minLength = Math.Min(length1, length2);
-            for (int i = 0, j = this.offset; i < minLength; i++, j++)
-            {
-                int result = ByteToChar(this.value[j]) - other[i];
-                if (result != 0)
-                {
-                    return result;
-                }
-            }
-
-            return length1 - length2;
-#endif
+            return SpanHelpers.SequenceCompareTo(
+                ref MemoryMarshal.GetReference(this.AsciiSpan), this.length,
+                ref MemoryMarshal.GetReference(other.AsciiSpan), other.Count);
         }
 
         public int CompareTo(object obj) => this.CompareTo(obj as AsciiString);

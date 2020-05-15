@@ -90,23 +90,9 @@ namespace DotNetty.Common.Utilities
 
             if (0u >= (uint)length) { return true; }
 
-#if !NET40
             ref char valueStart = ref MemoryMarshal.GetReference(value.AsSpan());
             ref char otherStart = ref MemoryMarshal.GetReference(other.AsSpan());
             return SpanHelpers.SequenceEqual(ref Unsafe.Add(ref valueStart, thisStart), ref Unsafe.Add(ref otherStart, start), length);
-#else
-            int o1 = thisStart;
-            int o2 = start;
-            for (int i = 0; i < length; ++i)
-            {
-                if (value[o1 + i] != other[o2 + i])
-                {
-                    return false;
-                }
-            }
-
-            return true;
-#endif
         }
 
         /// <summary>
@@ -571,7 +557,6 @@ namespace DotNetty.Common.Utilities
             if (0u >= ulength) { return value; }
 
             int start, end;
-#if !NET40
             if (value is IHasUtf16Span hasUtf16Span)
             {
                 var utf16Span = hasUtf16Span.Utf16Span;
@@ -580,16 +565,12 @@ namespace DotNetty.Common.Utilities
             }
             else
             {
-#endif
                 start = IndexOfFirstNonOwsChar(value, ulength);
                 end = IndexOfLastNonOwsChar(value, start, length);
-#if !NET40
             }
-#endif
             return 0u >= (uint)start && end == length - 1 ? value : value.SubSequence(start, end + 1);
         }
 
-#if !NET40
         static int IndexOfFirstNonOwsChar(in ReadOnlySpan<char> value, uint length)
         {
             int i = 0;
@@ -611,7 +592,6 @@ namespace DotNetty.Common.Utilities
 
             return i;
         }
-#endif
 
         static int IndexOfFirstNonOwsChar(IReadOnlyList<char> value, uint length)
         {

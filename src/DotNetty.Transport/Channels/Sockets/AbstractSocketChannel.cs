@@ -293,21 +293,8 @@ namespace DotNetty.Transport.Channels.Sockets
                                 remoteAddress, connectTimeout);
                         }
 
-#if NET40
-                        void continuationAction(Task t)
-                        {
-                            var c = ch;
-                            c.connectCancellationTask?.Cancel();
-                            c.connectPromise = null;
-                            c.CloseSafe();
-                        }
-                        ch.connectPromise.Task.ContinueWith(
-                            continuationAction,
-                            TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.ExecuteSynchronously);
-#else
                         ch.connectPromise.Task.ContinueWith(CloseSafeOnCompleteAction, ch,
                             TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.ExecuteSynchronously);
-#endif
 
                         return ch.connectPromise.Task;
                     }

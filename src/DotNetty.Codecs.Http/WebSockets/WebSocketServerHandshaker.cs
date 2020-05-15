@@ -115,23 +115,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 p.AddBefore(encoderName, "wsencoder", this.NewWebSocketEncoder());
             }
 
-#if NET40
-            Action<Task> removeHandlerAfterWrite = (Task t) =>
-            {
-                if (t.IsSuccess())
-                {
-                    p.Remove(encoderName);
-                    completion.TryComplete();
-                }
-                else
-                {
-                    completion.TrySetException(t.Exception.InnerExceptions);
-                }
-            };
-            channel.WriteAndFlushAsync(response).ContinueWith(removeHandlerAfterWrite, TaskContinuationOptions.ExecuteSynchronously);
-#else
             channel.WriteAndFlushAsync(response).ContinueWith(RemoveHandlerAfterWriteAction, Tuple.Create(completion, p, encoderName), TaskContinuationOptions.ExecuteSynchronously);
-#endif
         }
 
         public Task HandshakeAsync(IChannel channel, IHttpRequest req, HttpHeaders responseHeaders)
@@ -219,12 +203,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
-#if NET40
-            Action<Task> closeOnComplete = (Task t) => channel.CloseAsync();
-            return channel.WriteAndFlushAsync(frame).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
-#else
             return channel.WriteAndFlushAsync(frame).ContinueWith(CloseOnCompleteAction, channel, TaskContinuationOptions.ExecuteSynchronously);
-#endif
         }
 
         protected string SelectSubprotocol(string requestedSubprotocols)

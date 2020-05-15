@@ -5,13 +5,11 @@
 namespace DotNetty.Buffers
 {
     using System;
-    using DotNetty.Common.Internal;
-#if !NET40
     using System.IO;
     using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
-#endif
+    using DotNetty.Common.Internal;
 
     unsafe partial class UnpooledUnsafeDirectByteBuffer : AbstractReferenceCountedByteBuffer
     {
@@ -174,7 +172,6 @@ namespace DotNetty.Buffers
 
         public sealed override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
 
-#if !NET40
         public sealed override bool HasMemoryAddress => true;
 
         public sealed override ref byte GetPinnableMemoryAddress()
@@ -370,11 +367,7 @@ namespace DotNetty.Buffers
             }
             while (read > 0 && readTotal < length);
 
-#if NET40
-            return TaskEx.FromResult(readTotal);
-#else
             return Task.FromResult(readTotal);
-#endif
         }
 
         public sealed override IByteBuffer Copy(int index, int length)
@@ -408,6 +401,5 @@ namespace DotNetty.Buffers
 
             return this;
         }
-#endif
     }
 }

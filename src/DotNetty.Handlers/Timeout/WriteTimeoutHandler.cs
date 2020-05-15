@@ -117,12 +117,7 @@ namespace DotNetty.Handlers.Timeout
                 this.AddWriteTimeoutTask(task);
 
                 // Cancel the scheduled timeout if the flush promise is complete.
-#if NET40
-                Action<Task> continuationAction = completed => WriteTimeoutTask.HandleOperationComplete(completed, task);
-                future.ContinueWith(continuationAction, TaskContinuationOptions.ExecuteSynchronously);
-#else
                 future.ContinueWith(WriteTimeoutTask.OperationCompleteAction, task, TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
         }
 

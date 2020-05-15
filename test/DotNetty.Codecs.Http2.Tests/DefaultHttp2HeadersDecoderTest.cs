@@ -23,8 +23,8 @@ namespace DotNetty.Codecs.Http2.Tests
             {
                 var headers = decoder.DecodeHeaders(0, buf);
                 Assert.Equal(3, headers.Size);
-                AssertEx.Equal("GET", headers.Method);
-                AssertEx.Equal("avalue", headers.Get(new AsciiString("akey"), null));
+                Assert.Equal("GET", headers.Method);
+                Assert.Equal("avalue", headers.Get(new AsciiString("akey"), null));
             }
             finally
             {

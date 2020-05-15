@@ -185,10 +185,9 @@ namespace DotNetty.Common.Utilities
 #else
                         , StringComparison.Ordinal);
 #endif
-#if !NET40
                 case IHasUtf16Span hasUtf16:
                     return this.Span.SequenceEqual(hasUtf16.Utf16Span);
-#endif
+
                 default:
                     return other is ICharSequence seq && this.ContentEquals(seq);
             }
@@ -232,8 +231,6 @@ namespace DotNetty.Common.Utilities
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-#if !NET40
         public ReadOnlySpan<char> Span => this.builder.ToString(this.offset, this.size).AsSpan();
-#endif
     }
 }

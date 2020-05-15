@@ -5,12 +5,21 @@
     <TargetFrameworks>netcoreapp3.1;netcoreapp2.1;net471;net451</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
+  
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net471' or '$(TargetFramework)' == 'net451' ">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DotNetty.Codecs.Http2\DotNetty.Codecs.Http2.csproj" />
+    <ProjectReference Include="..\Examples.Common\Examples.Common.csproj" />
+    <ProjectReference Include="..\..\src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
+  </ItemGroup>
+
   <ItemGroup>
     <Compile Include="..\Http2Helloworld.Server\HelloWorldHttp1Handler.cs" Link="HelloWorldHttp1Handler.cs" />
   </ItemGroup>
+  
   <ItemGroup>
     <None Include="..\..\shared\dotnetty.com.pfx" Link="dotnetty.com.pfx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -18,14 +27,9 @@
     <None Include="..\NLog.config" Link="NLog.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <ProjectReference Include="..\..\src\DotNetty.Codecs.Http2\DotNetty.Codecs.Http2.csproj" />
-    <ProjectReference Include="..\Examples.Common\Examples.Common.csproj" />
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' != 'net40' ">
-    <ProjectReference Include="..\..\src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
   </ItemGroup>
 
 </Project>

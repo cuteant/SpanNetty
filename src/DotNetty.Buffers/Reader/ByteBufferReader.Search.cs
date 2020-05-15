@@ -4,8 +4,6 @@
 //
 // borrowed from https://github.com/dotnet/corefx/blob/release/3.0/src/System.Memory/src/System/Buffers/SequenceReader.Search.cs
 
-#if !NET40
-
 namespace DotNetty.Buffers
 {
     using System;
@@ -728,5 +726,3 @@ namespace DotNetty.Buffers
         }
     }
 }
-
-#endif

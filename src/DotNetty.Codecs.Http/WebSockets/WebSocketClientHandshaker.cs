@@ -76,39 +76,9 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 
             var completion = channel.NewPromise();
-#if NET40
-            Action<Task> linkOutcomeContinuationAction = (Task t) =>
-            {
-                if (t.IsCanceled)
-                {
-                    completion.TrySetCanceled(); return;
-                }
-                else if (t.IsFaulted)
-                {
-                    completion.TrySetException(t.Exception.InnerExceptions); return;
-                }
-                else if (t.IsCompleted)
-                {
-                    IChannelPipeline p = channel.Pipeline;
-                    IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
-                    if (ctx is null)
-                    {
-                        completion.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
-                        return;
-                    }
-
-                    p.AddAfter(ctx.Name, "ws-encoder", this.NewWebSocketEncoder());
-                    completion.TryComplete();
-                    return;
-                }
-                ThrowHelper.ThrowArgumentOutOfRangeException();
-            };
-            channel.WriteAndFlushAsync(request).ContinueWith(linkOutcomeContinuationAction, TaskContinuationOptions.ExecuteSynchronously);
-#else
             channel.WriteAndFlushAsync(request).ContinueWith(LinkOutcomeContinuationAction,
                 new Tuple<IPromise, IChannelPipeline, WebSocketClientHandshaker>(completion, channel.Pipeline, this),
                 TaskContinuationOptions.ExecuteSynchronously);
-#endif
 
             return completion.Task;
         }

@@ -466,17 +466,7 @@ namespace DotNetty.Codecs.Http2
 
         private static void NotifyLifecycleManagerOnError(Task future, IHttp2LifecycleManager lm, IChannelHandlerContext ctx)
         {
-#if NET40
-            future.ContinueWith(t =>
-            {
-                if (t.IsFaulted)
-                {
-                    lm.OnError(ctx, true, t.Exception.InnerException);
-                }
-            }, TaskContinuationOptions.ExecuteSynchronously);
-#else
             future.ContinueWith(NotifyLifecycleManagerOnErrorAction, Tuple.Create(lm, ctx), TaskContinuationOptions.ExecuteSynchronously);
-#endif
         }
 
         private static readonly Action<Task, object> NotifyLifecycleManagerOnErrorAction = NotifyLifecycleManagerOnError0;
@@ -584,18 +574,7 @@ namespace DotNetty.Codecs.Http2
 
             protected void AddListener(IPromise p)
             {
-#if NET40
-                Action<Task> continuationAction = (Task task) =>
-                {
-                    if (task.IsFaulted)
-                    {
-                        this.Error(this.encoder.FlowController.ChannelHandlerContext, task.Exception.InnerException);
-                    }
-                };
-                p.Task.ContinueWith(continuationAction, TaskContinuationOptions.ExecuteSynchronously);
-#else
                 p.Task.ContinueWith(LinkOutcomeContinuationAction, this, TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
 
             public abstract void Error(IChannelHandlerContext ctx, Exception cause);

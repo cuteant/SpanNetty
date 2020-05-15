@@ -1,5 +1,4 @@
-﻿#if !NET40
-namespace DotNetty.Handlers
+﻿namespace DotNetty.Handlers
 {
     using System;
     using System.Net.Sockets;
@@ -58,4 +57,3 @@ namespace DotNetty.Handlers
         }
     }
 }
-#endif

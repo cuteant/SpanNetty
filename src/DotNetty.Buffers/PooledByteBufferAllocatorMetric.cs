@@ -16,15 +16,9 @@ namespace DotNetty.Buffers
             this.allocator = allocator;
         }
 
-#if NET40
-        public IList<IPoolArenaMetric> HeapArenas() => this.allocator.HeapArenas();
-
-        public IList<IPoolArenaMetric> DirectArenas() => this.allocator.DirectArenas();
-#else
         public IReadOnlyList<IPoolArenaMetric> HeapArenas() => this.allocator.HeapArenas();
 
         public IReadOnlyList<IPoolArenaMetric> DirectArenas() => this.allocator.DirectArenas();
-#endif
 
         public int TinyCacheSize => this.allocator.TinyCacheSize;
 

@@ -95,12 +95,7 @@ namespace DotNetty.Handlers.Timeout
     public partial class IdleStateHandler : ChannelDuplexHandler
     {
         static readonly TimeSpan MinTimeout = TimeSpan.FromMilliseconds(1);
-
-#if NET40
-        readonly Action<Task> writeListener;
-#else
         static readonly Action<Task, object> writeListener = WrappingWriteListener;
-#endif
 
         readonly bool observeOutput;
         readonly TimeSpan readerIdleTime;
@@ -204,9 +199,6 @@ namespace DotNetty.Handlers.Timeout
             this.allIdleTime = allIdleTime > TimeSpan.Zero
                 ? TimeUtil.Max(allIdleTime, IdleStateHandler.MinTimeout)
                 : TimeSpan.Zero;
-#if NET40
-            this.writeListener = new Action<Task>(WrappingWriteListener);
-#endif
         }
 
         /// <summary>
@@ -309,11 +301,7 @@ namespace DotNetty.Handlers.Timeout
             if (this.writerIdleTime.Ticks > 0 || this.allIdleTime.Ticks > 0)
             {
                 Task task = context.WriteAsync(message, promise.Unvoid());
-#if NET40
-                task.ContinueWith(this.writeListener, TaskContinuationOptions.ExecuteSynchronously);
-#else
                 task.ContinueWith(writeListener, this, TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
             else
             {

@@ -44,9 +44,7 @@ namespace DotNetty.Buffers
 
         public sealed override int ArrayOffset => this.Idx(this.Unwrap().ArrayOffset);
 
-#if !NET40
         public sealed override ref byte GetPinnableMemoryAddress() => ref Unsafe.Add(ref this.Unwrap().GetPinnableMemoryAddress(), this.adjustment);
-#endif
 
         public sealed override IntPtr AddressOfPinnedMemory()
         {

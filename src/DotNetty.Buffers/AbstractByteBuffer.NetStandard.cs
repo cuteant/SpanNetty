@@ -1,5 +1,4 @@
-﻿#if !NET40
-namespace DotNetty.Buffers
+﻿namespace DotNetty.Buffers
 {
     using System;
     using System.Buffers;
@@ -492,4 +491,3 @@ namespace DotNetty.Buffers
         }
     }
 }
-#endif

@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net471;net451;net40;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net471;net451;netstandard2.0</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>../../build/DotNetty.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net451' or '$(TargetFramework)' == 'net40' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">
     <PackageReference Include="NetFx.Extensions.Configuration" Version="$(NetFxExtensionsConfigurationPackageVersion)" />
     <PackageReference Include="NetFx.Extensions.Configuration.FileExtensions" Version="$(NetFxExtensionsConfigurationPackageVersion)" />
     <PackageReference Include="NetFx.Extensions.Configuration.Json" Version="$(NetFxExtensionsConfigurationPackageVersion)" />

@@ -151,7 +151,6 @@ namespace DotNetty.Buffers.Tests
                 // NOOP
             }
 
-#if !TEST40
             public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count)
             {
                 throw new NotImplementedException();
@@ -194,7 +193,6 @@ namespace DotNetty.Buffers.Tests
             {
                 throw new NotImplementedException();
             }
-#endif
         }
     }
 }

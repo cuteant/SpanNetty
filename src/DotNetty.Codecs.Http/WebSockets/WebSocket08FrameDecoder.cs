@@ -404,12 +404,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     closeMessage = new CloseWebSocketFrame(1002, null);
                 }
-#if NET40
-                Action<Task> closeOnComplete = (Task t) => ctx.Channel.CloseAsync();
-                ctx.WriteAndFlushAsync(closeMessage).ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
-#else
                 ctx.WriteAndFlushAsync(closeMessage).ContinueWith(CloseOnCompleteAction, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
             throw ex;
         }

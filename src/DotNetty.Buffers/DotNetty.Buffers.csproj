@@ -2,16 +2,16 @@
   <Import Project="..\nuget.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>net471;net451;net40;netstandard2.0;netstandard2.1;netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>net471;net451;netstandard2.0;netstandard2.1;netcoreapp2.1</TargetFrameworks>
     <RootNamespace>DotNetty.Buffers</RootNamespace>
     <AssemblyName>DotNetty.Buffers</AssemblyName>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>DotNetty.Buffers.Unofficial</PackageId>
-    <Title>DotNetty.Buffers.Unofficial</Title>
-    <Description>Buffer management in DotNetty：the complete port of the DotNetty.Buffers assembly to support .NET 4.0 and newer.</Description>
+    <PackageId>SpanNetty.Buffers</PackageId>
+    <Title>SpanNetty.Buffers</Title>
+    <Description>Buffer management in DotNetty：the complete port of the DotNetty.Buffers assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network</PackageTags>
   </PropertyGroup>
 

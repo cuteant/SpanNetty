@@ -56,26 +56,16 @@ namespace DotNetty.Common.Internal
         {
             if (length <= 0) { return true; }
 
-#if NET40
-            fixed (byte* array1 = bytes1)
-            fixed (byte* array2 = bytes2)
-                return PlatformDependent0.ByteArrayEquals(array1, startPos1, array2, startPos2, length);
-#else
             return SpanHelpers.SequenceEqual(ref bytes1[startPos1], ref bytes2[startPos2], unchecked((uint)length));
-#endif
         }
 
         public static unsafe int ByteArrayEqualsConstantTime(byte[] bytes1, int startPos1, byte[] bytes2, int startPos2, int length)
         {
             if (length <= 0) { return 1; }
 
-#if NET40
-            return ConstantTimeUtils.EqualsConstantTime(bytes1, startPos1, bytes2, startPos2, length);
-#else
             fixed (byte* array1 = bytes1)
             fixed (byte* array2 = bytes2)
                 return PlatformDependent0.ByteArrayEqualsConstantTime(array1, startPos1, array2, startPos2, length);
-#endif
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
@@ -241,7 +231,6 @@ namespace DotNetty.Common.Internal
         [MethodImpl(InlineMethod.AggressiveInlining)]
         static int HashCodeAsciiSanitizsByte(char value) => value & 0x1f;
 
-#if !NET40
         // https://github.com/Azure/DotNetty/issues/371#issuecomment-372574610
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -334,6 +323,5 @@ namespace DotNetty.Common.Internal
             if (0u >= nlen) { return; }
             Unsafe.InitBlockUnaligned(ref src[srcIndex], value, nlen);
         }
-#endif
     }
 }

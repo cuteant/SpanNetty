@@ -21,16 +21,9 @@
             }
             channel.Flush();
 
-#if NET40
-            var writeCloseCompletion = TaskEx.WhenAll(taskList);
-            void returnAfterWriteAction(Task t) => taskList.Return();
-            writeCloseCompletion.ContinueWith(returnAfterWriteAction, TaskContinuationOptions.ExecuteSynchronously);
-            return writeCloseCompletion;
-#else
             var writeCloseCompletion = Task.WhenAll(taskList);
             writeCloseCompletion.ContinueWith(s_returnAfterWriteAction, taskList, TaskContinuationOptions.ExecuteSynchronously);
             return writeCloseCompletion;
-#endif
         }
 
         private static readonly Action<Task, object> s_returnAfterWriteAction = ReturnAfterWriteAction;

@@ -630,7 +630,7 @@ namespace DotNetty.Codecs.Http.Tests
             var buffer = ch.ReadInbound<IByteBuffer>();
             try
             {
-                AssertEx.Equal(expected, buffer);
+                Assert.Equal(expected, buffer);
             }
             finally
             {

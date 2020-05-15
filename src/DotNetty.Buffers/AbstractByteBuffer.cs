@@ -461,7 +461,7 @@ namespace DotNetty.Buffers
                 return StringCharSequence.Empty;
             }
 
-            if (SharedConstants.ASCIICodePage == encoding.CodePage)// || Constants.ISO88591CodePage == encoding.CodePage)
+            if (SharedConstants.ASCIICodePage == encoding.CodePage)// || SharedConstants.ISO88591CodePage == encoding.CodePage)
             {
                 // ByteBufUtil.getBytes(...) will return a new copy which the AsciiString uses directly
                 return new AsciiString(ByteBufferUtil.GetBytes(this, index, length, true), false);
@@ -1131,53 +1131,14 @@ namespace DotNetty.Buffers
         public virtual int ForEachByte(int index, int length, IByteProcessor processor)
         {
             this.CheckIndex(index, length);
-#if NET40
-            return this.ForEachByteAsc0(index, index + length, processor);
-#else
             return this.ForEachByteAsc0(index, length, processor);
-#endif
         }
-
-#if NET40
-        // 如此反人类的 ForEach 设计
-        internal protected virtual int ForEachByteAsc0(int start, int end, IByteProcessor processor)
-        {
-            for (; start < end; ++start)
-            {
-                if (!processor.Process(this._GetByte(start)))
-                {
-                    return start;
-                }
-            }
-
-            return IndexNotFound;
-        }
-#endif
 
         public virtual int ForEachByteDesc(int index, int length, IByteProcessor processor)
         {
             this.CheckIndex(index, length);
-#if NET40
-            return this.ForEachByteDesc0(index + length - 1, index, processor);
-#else
             return this.ForEachByteDesc0(index, length, processor);
-#endif
         }
-
-#if NET40
-        internal protected virtual int ForEachByteDesc0(int rStart, int rEnd, IByteProcessor processor)
-        {
-            for (; rStart >= rEnd; --rStart)
-            {
-                if (!processor.Process(this._GetByte(rStart)))
-                {
-                    return rStart;
-                }
-            }
-
-            return IndexNotFound;
-        }
-#endif
 
         public override int GetHashCode() => ByteBufferUtil.HashCode(this);
 

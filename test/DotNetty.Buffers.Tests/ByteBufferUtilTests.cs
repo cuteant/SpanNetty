@@ -88,7 +88,7 @@ namespace DotNetty.Buffers.Tests
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteAscii(buf2, usAscii);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
 
             buf.Release();
             buf2.Release();
@@ -103,7 +103,7 @@ namespace DotNetty.Buffers.Tests
         //    var buf2 = new SwappedByteBuf(Unpooled.Buffer(16));
         //    ByteBufferUtil.WriteAscii(buf2, usAscii);
 
-        //    AssertEx.Equal(buf, buf2);
+        //    Assert.Equal(buf, buf2);
 
         //    buf.Release();
         //    buf2.Release();
@@ -120,7 +120,7 @@ namespace DotNetty.Buffers.Tests
             AssertWrapped(buf2);
             ByteBufferUtil.WriteAscii(buf2, usAscii);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
 
             buf.Unwrap().Release();
             buf2.Unwrap().Release();
@@ -139,7 +139,7 @@ namespace DotNetty.Buffers.Tests
             ByteBufferUtil.WriteAscii(buf2, usAscii);
 
             // Skip the previously written byte.
-            AssertEx.Equal(buf, buf2.SkipBytes(1));
+            Assert.Equal(buf, buf2.SkipBytes(1));
 
             buf.Release();
             buf2.Release();
@@ -158,7 +158,7 @@ namespace DotNetty.Buffers.Tests
             ByteBufferUtil.WriteAscii(buf2, usAscii);
 
             // Skip the previously written byte.
-            AssertEx.Equal(buf, buf2.SkipBytes(1));
+            Assert.Equal(buf, buf2.SkipBytes(1));
 
             buf.Release();
             buf2.Release();
@@ -173,7 +173,7 @@ namespace DotNetty.Buffers.Tests
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, usAscii);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
 
             buf.Release();
             buf2.Release();
@@ -192,7 +192,7 @@ namespace DotNetty.Buffers.Tests
             ByteBufferUtil.WriteUtf8(buf2, utf8);
 
             // Skip the previously written byte.
-            AssertEx.Equal(buf, buf2.SkipBytes(1));
+            Assert.Equal(buf, buf2.SkipBytes(1));
 
             buf.Release();
             buf2.Release();
@@ -211,7 +211,7 @@ namespace DotNetty.Buffers.Tests
             ByteBufferUtil.WriteUtf8(buf2, utf8);
 
             // Skip the previously written byte.
-            AssertEx.Equal(buf, buf2.SkipBytes(1));
+            Assert.Equal(buf, buf2.SkipBytes(1));
 
             buf.Release();
             buf2.Release();
@@ -232,7 +232,7 @@ namespace DotNetty.Buffers.Tests
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
             Assert.Equal(buf.ReadableBytes, ByteBufferUtil.Utf8Bytes(surrogateString));
 
             buf.Release();
@@ -252,7 +252,7 @@ namespace DotNetty.Buffers.Tests
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
             Assert.Equal(buf.ReadableBytes, ByteBufferUtil.Utf8Bytes(surrogateString));
 
             buf.Release();
@@ -272,7 +272,7 @@ namespace DotNetty.Buffers.Tests
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
             Assert.Equal(buf.ReadableBytes, ByteBufferUtil.Utf8Bytes(surrogateString));
 
             buf.Release();
@@ -293,7 +293,7 @@ namespace DotNetty.Buffers.Tests
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
             Assert.Equal(buf.ReadableBytes, ByteBufferUtil.Utf8Bytes(surrogateString));
 
             buf.Release();
@@ -314,7 +314,7 @@ namespace DotNetty.Buffers.Tests
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
             Assert.Equal(buf.ReadableBytes, ByteBufferUtil.Utf8Bytes(surrogateString));
             buf.Release();
             buf2.Release();
@@ -334,7 +334,7 @@ namespace DotNetty.Buffers.Tests
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
             Assert.Equal(buf.ReadableBytes, ByteBufferUtil.Utf8Bytes(surrogateString));
 
             buf.Release();
@@ -352,7 +352,7 @@ namespace DotNetty.Buffers.Tests
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
             Assert.Equal(buf.ReadableBytes, ByteBufferUtil.Utf8Bytes(surrogateString));
 
             buf.Release();
@@ -370,7 +370,7 @@ namespace DotNetty.Buffers.Tests
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
             Assert.Equal(buf.ReadableBytes, ByteBufferUtil.Utf8Bytes(surrogateString));
 
             buf.Release();
@@ -386,7 +386,7 @@ namespace DotNetty.Buffers.Tests
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteAscii(buf2, usAscii);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
 
             buf.Release();
             buf2.Release();
@@ -403,7 +403,7 @@ namespace DotNetty.Buffers.Tests
             AssertWrapped(buf2);
             ByteBufferUtil.WriteUtf8(buf2, usAscii);
 
-            AssertEx.Equal(buf, buf2);
+            Assert.Equal(buf, buf2);
 
             buf.Release();
             buf2.Release();

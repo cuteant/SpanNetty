@@ -1,9 +1,7 @@
 ﻿using System.IO;
 using System.Text;
-using Xunit;
-#if !TEST40
 using System.Threading.Tasks;
-#endif
+using Xunit;
 
 namespace DotNetty.Buffers.Tests
 {
@@ -25,7 +23,6 @@ namespace DotNetty.Buffers.Tests
             bufferStream.Close();
         }
 
-#if !TEST40
         [Fact]
         public async Task CopyToAsync()
         {
@@ -41,6 +38,5 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(text, Encoding.UTF8.GetString(ms.ToArray()));
             bufferStream.Close();
         }
-#endif
     }
 }

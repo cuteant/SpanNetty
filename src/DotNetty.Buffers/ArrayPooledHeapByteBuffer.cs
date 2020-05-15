@@ -133,11 +133,7 @@ namespace DotNetty.Buffers
             }
             while (read > 0 && readTotal < length);
 
-#if NET40
-            return TaskEx.FromResult(readTotal);
-#else
             return Task.FromResult(readTotal);
-#endif
         }
 
         public sealed override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)

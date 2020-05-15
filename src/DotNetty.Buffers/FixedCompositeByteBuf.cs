@@ -399,18 +399,6 @@ namespace DotNetty.Buffers
             }
 
             var merged = new byte[length];
-#if NET40
-            ArraySegment<byte>[] bufs = this.GetIoBuffers(index, length);
-
-            int offset = 0;
-            foreach (ArraySegment<byte> buf in bufs)
-            {
-                Debug.Assert(merged.Length - offset >= buf.Count);
-
-                PlatformDependent.CopyMemory(buf.Array, buf.Offset, merged, offset, buf.Count);
-                offset += buf.Count;
-            }
-#else
             var memory = new Memory<byte>(merged);
             var bufs = this.GetSequence(index, length);
 
@@ -422,7 +410,6 @@ namespace DotNetty.Buffers
                 buf.CopyTo(memory.Slice(offset));
                 offset += buf.Length;
             }
-#endif
             return new ArraySegment<byte>(merged);
         }
 

@@ -71,7 +71,7 @@ namespace DotNetty.Transport.Channels.Pool
         /// The maximum number of pending acquires. Once this is exceeded, acquire attempts will be failed.
         /// </param>
         public FixedChannelPool(Bootstrap bootstrap, IChannelPoolHandler handler, int maxConnections, int maxPendingAcquires = int.MaxValue)
-            : this(bootstrap, handler, ChannelActiveHealthChecker.Instance, AcquireTimeoutAction.None, TimeoutShim.InfiniteTimeSpan, maxConnections, maxPendingAcquires)
+            : this(bootstrap, handler, ChannelActiveHealthChecker.Instance, AcquireTimeoutAction.None, Timeout.InfiniteTimeSpan, maxConnections, maxPendingAcquires)
         {
         }
 
@@ -181,11 +181,11 @@ namespace DotNetty.Transport.Channels.Pool
             }
 
             this.acquireTimeout = acquireTimeout;
-            if (action == AcquireTimeoutAction.None && acquireTimeout == TimeoutShim.InfiniteTimeSpan)
+            if (action == AcquireTimeoutAction.None && acquireTimeout == Timeout.InfiniteTimeSpan)
             {
                 this.timeoutTask = null;
             }
-            else if (action == AcquireTimeoutAction.None && acquireTimeout != TimeoutShim.InfiniteTimeSpan)
+            else if (action == AcquireTimeoutAction.None && acquireTimeout != Timeout.InfiniteTimeSpan)
             {
                 ThrowHelper.ThrowArgumentException_Action();
             }
@@ -216,11 +216,7 @@ namespace DotNetty.Transport.Channels.Pool
         /// <summary>Returns the number of acquired channels that this pool thinks it has.</summary>
         public int AcquiredChannelCount => Volatile.Read(ref this.acquiredChannelCount);
 
-#if NET40
-        public override Task<IChannel> AcquireAsync()
-#else
         public override ValueTask<IChannel> AcquireAsync()
-#endif
         {
             if (this.executor.InEventLoop)
             {
@@ -229,11 +225,7 @@ namespace DotNetty.Transport.Channels.Pool
 
             var promise = new TaskCompletionSource<IChannel>();
             this.executor.Execute(this.Acquire0, promise);
-#if NET40
-            return promise.Task;
-#else
             return new ValueTask<IChannel>(promise.Task);
-#endif
         }
 
         async void Acquire0(object state)
@@ -250,11 +242,7 @@ namespace DotNetty.Transport.Channels.Pool
             }
         }
 
-#if NET40
-        Task<IChannel> DoAcquireAsync(TaskCompletionSource<IChannel> promise)
-#else
         ValueTask<IChannel> DoAcquireAsync(TaskCompletionSource<IChannel> promise)
-#endif
         {
             Debug.Assert(this.executor.InEventLoop);
 
@@ -292,26 +280,14 @@ namespace DotNetty.Transport.Channels.Pool
                         ThrowHelper.ThrowInvalidOperationException_TooManyOutstandingAcquireOperations();
                     }
 
-#if NET40
-                    return promise.Task;
-#else
                     return new ValueTask<IChannel>(promise.Task);
-#endif
                 }
             }
         }
 
-#if NET40
-        Task<IChannel> DoAcquireAsync() => base.AcquireAsync();
-#else
         ValueTask<IChannel> DoAcquireAsync() => base.AcquireAsync();
-#endif
 
-#if NET40
-        public override async Task<bool> ReleaseAsync(IChannel channel)
-#else
         public override async ValueTask<bool> ReleaseAsync(IChannel channel)
-#endif
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
             
@@ -343,11 +319,7 @@ namespace DotNetty.Transport.Channels.Pool
             }
         }
 
-#if NET40
-        async Task<bool> DoReleaseAsync(IChannel channel)
-#else
         async ValueTask<bool> DoReleaseAsync(IChannel channel)
-#endif
         {
             Debug.Assert(this.executor.InEventLoop);
             
@@ -489,11 +461,7 @@ namespace DotNetty.Transport.Channels.Pool
 
             // Increment the acquire count and delegate to super to actually acquire a Channel which will
             // create a new connection.
-#if NET40
-            public Task<IChannel> AcquireAsync()
-#else
             public ValueTask<IChannel> AcquireAsync()
-#endif
             {
                 var promise = this.Promise;
                 
@@ -502,11 +470,7 @@ namespace DotNetty.Transport.Channels.Pool
                     if (promise is object)
                     {
                         promise.TrySetException(PoolClosedOnAcquireException);
-#if NET40
-                        return promise.Task;
-#else
                         return new ValueTask<IChannel>(promise.Task);
-#endif
                     }
                     else
                     {
@@ -516,31 +480,18 @@ namespace DotNetty.Transport.Channels.Pool
 
                 this.Acquired();
 
-#if NET40
-                Task<IChannel> future;
-#else
                 ValueTask<IChannel> future;
-#endif
-
                 try
                 {
                     future = this.pool.DoAcquireAsync();
-#if NET40
-                    if (future.IsCompleted && !future.IsFaulted)
-#else
                     if (future.IsCompletedSuccessfully)
-#endif
                     {
                         //pool never closed here
                         var channel = future.Result;
                         if (promise is object)
                         {
                             promise.TrySetResult(channel);
-#if NET40
-                            return promise.Task;
-#else
                             return new ValueTask<IChannel>(promise.Task);
-#endif
                         }
                         else
                         {
@@ -556,11 +507,7 @@ namespace DotNetty.Transport.Channels.Pool
                     if (promise is object)
                     {
                         promise.TrySetException(ex);
-#if NET40
-                        return promise.Task;
-#else
                         return new ValueTask<IChannel>(promise.Task);
-#endif
                     }
                     else
                     {
@@ -571,9 +518,7 @@ namespace DotNetty.Transport.Channels.Pool
                 //at this point 'future' is a real Task
                 promise = promise ?? new TaskCompletionSource<IChannel>();
                 future
-#if !NET40
                     .AsTask()
-#endif
                     .ContinueWith(
                     t =>
                     {
@@ -599,11 +544,7 @@ namespace DotNetty.Transport.Channels.Pool
                         }
                     });
 
-#if NET40
-                return promise.Task;
-#else
                 return new ValueTask<IChannel>(promise.Task);
-#endif
 
                 void ResumeQueue()
                 {

@@ -273,15 +273,7 @@ namespace DotNetty.Codecs.Http
                 // Add the listener last to avoid firing upgrade logic after
                 // the channel is already closed since the listener may fire
                 // immediately if the write failed eagerly.
-#if NET40
-                Action<Task> closeOnFailure = (Task t) =>
-                {
-                    if (!t.IsSuccess()) { ctx.Channel.CloseAsync(); }
-                };
-                writeComplete.ContinueWith(closeOnFailure, TaskContinuationOptions.ExecuteSynchronously);
-#else
                 writeComplete.ContinueWith(CloseOnFailureAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
             finally
             {

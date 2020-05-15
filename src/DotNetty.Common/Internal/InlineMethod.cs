@@ -6,19 +6,12 @@ namespace DotNetty
     public static class InlineMethod
     {
         /// <summary>Value for lining method</summary>
-        public const MethodImplOptions AggressiveInlining =
-#if NET40
-            (MethodImplOptions)256;
-#else
-            MethodImplOptions.AggressiveInlining;
-#endif
+        public const MethodImplOptions AggressiveInlining = MethodImplOptions.AggressiveInlining;
 
         /// <summary>Value for lining method</summary>
         public const MethodImplOptions AggressiveOptimization =
 #if NETCOREAPP_3_0_GREATER
             MethodImplOptions.AggressiveOptimization;
-#elif NET40
-            (MethodImplOptions)256;
 #else
             MethodImplOptions.AggressiveInlining;
 #endif

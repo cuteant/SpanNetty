@@ -68,23 +68,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 else
                 {
                     Task task = handshaker.HandshakeAsync(ctx.Channel, req);
-#if NET40
-                    Action<Task> onFireUserEventTriggered = (Task t) =>
-                    {
-                        if (t.IsSuccess())
-                        {
-                            ctx.FireUserEventTriggered(new WebSocketServerProtocolHandler.HandshakeComplete(
-                                req.Uri, req.Headers, handshaker.SelectedSubprotocol));
-                        }
-                        else
-                        {
-                            ctx.FireExceptionCaught(t.Exception);
-                        }
-                    };
-                    task.ContinueWith(onFireUserEventTriggered, TaskContinuationOptions.ExecuteSynchronously);
-#else
                     task.ContinueWith(FireUserEventTriggeredAction, Tuple.Create(ctx, req, handshaker), TaskContinuationOptions.ExecuteSynchronously);
-#endif
 
                     WebSocketServerProtocolHandler.SetHandshaker(ctx.Channel, handshaker);
                     ctx.Pipeline.Replace(this, "WS403Responder",
@@ -111,12 +95,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             Task task = ctx.Channel.WriteAndFlushAsync(res);
             if (!IsKeepAlive(req) || res.Status.Code != StatusCodes.Status200OK)
             {
-#if NET40
-                Action<Task> closeOnComplete = (Task t) => ctx.Channel.CloseAsync();
-                task.ContinueWith(closeOnComplete, TaskContinuationOptions.ExecuteSynchronously);
-#else
                 task.ContinueWith(CloseOnCompleteAction, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
-#endif
             }
         }
 

@@ -576,11 +576,7 @@ namespace DotNetty.Transport.Channels.Embedded
             this.lastException = null;
             if (promise.IsVoid)
             {
-#if NET40
-                throw ExceptionEnlightenment.PrepareForRethrow(e);
-#else
                 ExceptionDispatchInfo.Capture(e).Throw();
-#endif
             }
             promise.TrySetException(e);
         }

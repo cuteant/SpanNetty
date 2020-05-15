@@ -7,6 +7,7 @@ namespace DotNetty.Transport.Tests.Channel.Sockets
     using System.Collections.Generic;
     using System.Net;
     using System.Net.Sockets;
+    using System.Runtime.InteropServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
@@ -16,9 +17,6 @@ namespace DotNetty.Transport.Tests.Channel.Sockets
     using DotNetty.Transport.Channels.Sockets;
     using Xunit;
     using Xunit.Abstractions;
-#if !TEST40
-    using System.Runtime.InteropServices;
-#endif
 
     [Collection("UDP Transport Tests")]
     public class SocketDatagramChannelUnicastTest : TestBase
@@ -149,12 +147,10 @@ namespace DotNetty.Transport.Tests.Channel.Sockets
         [MemberData(nameof(GetData))]
         public void SimpleSend(IByteBuffer source, bool bindClient, IByteBufferAllocator allocator, AddressFamily addressFamily, byte[] expectedData, int count)
         {
-#if !TEST40
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 return;
             }
-#endif
             SocketDatagramChannel serverChannel = null;
             IChannel clientChannel = null;
             var serverGroup = new MultithreadEventLoopGroup(1);

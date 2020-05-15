@@ -7,15 +7,12 @@ namespace DotNetty.Transport.Channels.Sockets
     {
         internal static Socket CreateSocket()
         {
-#if NET40
-            var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-#else
             // .Net45+，默认为AddressFamily.InterNetworkV6，并设置 DualMode 为 true，双线绑定
             var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             socket.EnableFastpath();
-#endif
             return socket;
         }
+
         internal static Socket CreateSocket(AddressFamily addressFamily)
         {
             var socket = new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -73,9 +70,6 @@ namespace DotNetty.Transport.Channels.Sockets
         /// <remarks>Code take from Orleans(See https://github.com/dotnet/orleans/blob/master/src/Orleans.Core/Messaging/SocketExtensions.cs). </remarks>
         internal static void EnableFastpath(this Socket socket)
         {
-#if NET40
-            // nothing to do
-#else
             if (!PlatformApis.IsWindows) { return; }
 
             const int SIO_LOOPBACK_FAST_PATH = -1744830448;
@@ -90,7 +84,6 @@ namespace DotNetty.Transport.Channels.Sockets
                 // not support SIO_LOOPBACK_FAST_PATH (i.e. version
                 // prior to Windows 8 / Windows Server 2012), handle the exception
             }
-#endif
         }
 
         public static bool IsSocketAbortError(this SocketError errorCode)

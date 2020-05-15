@@ -10,6 +10,7 @@ namespace DotNetty.Handlers.Tests
     using System.Net.Security;
     using System.Security.Authentication;
     using System.Security.Cryptography.X509Certificates;
+    using System.Runtime.InteropServices;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
@@ -19,9 +20,6 @@ namespace DotNetty.Handlers.Tests
     using DotNetty.Transport.Channels.Embedded;
     using Xunit;
     using Xunit.Abstractions;
-#if !TEST40
-    using System.Runtime.InteropServices;
-#endif
 
     public class SniHandlerTest : TestBase
     {
@@ -33,13 +31,11 @@ namespace DotNetty.Handlers.Tests
             X509Certificate2 tlsCertificate = TestResourceHelper.GetTestCertificate();
             X509Certificate2 tlsCertificate2 = TestResourceHelper.GetTestCertificate2();
 
-#if TEST40
-            SslProtocols serverProtocol = SslProtocols.Tls;
-//#elif NETCOREAPP_3_0_GREATER
+//#if NETCOREAPP_3_0_GREATER
 //            SslProtocols serverProtocol = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12;
-#else
+//#else
             SslProtocols serverProtocol = SslProtocols.Tls12;
-#endif
+//#endif
             SettingMap[tlsCertificate.GetNameInfo(X509NameType.DnsName, false)] = new ServerTlsSettings(tlsCertificate, false, false, serverProtocol);
             SettingMap[tlsCertificate2.GetNameInfo(X509NameType.DnsName, false)] = new ServerTlsSettings(tlsCertificate2, false, false, serverProtocol);
         }
@@ -56,13 +52,11 @@ namespace DotNetty.Handlers.Tests
                 new[] { 1 }
             };
             var boolToggle = new[] { false, true };
-#if TEST40
-            var protocols = new[] { SslProtocols.Tls };
-//#elif NETCOREAPP_3_0_GREATER
+//#if NETCOREAPP_3_0_GREATER
 //            var protocols = new[] { RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12 };
-#else
+//#else
             var protocols = new[] { SslProtocols.Tls12 };
-#endif
+//#endif
             var writeStrategyFactories = new Func<IWriteStrategy>[]
             {
         () => new AsIsWriteStrategy()
@@ -136,13 +130,11 @@ namespace DotNetty.Handlers.Tests
                 new[] { 1 }
             };
             var boolToggle = new[] { false, true };
-#if TEST40
-            var protocols = new[] { SslProtocols.Tls };
-//#elif NETCOREAPP_3_0_GREATER
+//#if NETCOREAPP_3_0_GREATER
 //            var protocols = new[] { RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? SslProtocols.Tls13 : SslProtocols.Tls12 };
-#else
+//#else
             var protocols = new[] { SslProtocols.Tls12 };
-#endif
+//#endif
 
             return
                 from frameLengths in lengthVariations

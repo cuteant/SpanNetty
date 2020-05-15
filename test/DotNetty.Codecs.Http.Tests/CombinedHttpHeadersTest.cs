@@ -397,15 +397,9 @@ namespace DotNetty.Codecs.Http.Tests
 
             var strItr = headers.ValueCharSequenceIterator(HttpHeaderNames.SetCookie).ToList();
             Assert.Equal(3, strItr.Count);
-#if TEST40
-            Assert.Equal("a", strItr[0].ToString());
-            Assert.Equal("b", strItr[1].ToString());
-            Assert.Equal("c", strItr[2].ToString());
-#else
             Assert.Equal("a", strItr[0]);
             Assert.Equal("b", strItr[1]);
             Assert.Equal("c", strItr[2]);
-#endif
         }
 
         static void AssertValueIterator(IEnumerable<ICharSequence> values)

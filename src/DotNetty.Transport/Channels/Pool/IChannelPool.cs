@@ -19,11 +19,7 @@ namespace DotNetty.Transport.Channels.Pool
         /// </para>
         /// </summary>
         /// <returns>The aquired <see cref="IChannel"/>.</returns>
-#if NET40
-        Task<IChannel> AcquireAsync();
-#else
         ValueTask<IChannel> AcquireAsync();
-#endif
 
         /// <summary>
         /// Releases a previously aquired <see cref="IChannel"/> from this <see cref="IChannelPool"/>, allowing it to
@@ -33,10 +29,6 @@ namespace DotNetty.Transport.Channels.Pool
         /// <returns>
         /// <c>true</c> if the <see cref="IChannel"/> was successfully released, otherwise <c>false</c>.
         /// </returns>
-#if NET40
-        Task<bool> ReleaseAsync(IChannel channel);
-#else
         ValueTask<bool> ReleaseAsync(IChannel channel);
-#endif
     }
 }

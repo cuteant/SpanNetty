@@ -258,25 +258,25 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void WrappedBuffers()
         {
-            AssertEx.Equal(
+            Assert.Equal(
                 WrappedBuffer(new byte[] { 1, 2, 3 }),
                 WrappedBuffer(new byte[][] { new byte[] { 1, 2, 3 } }));
 
-            AssertEx.Equal(
+            Assert.Equal(
                 WrappedBuffer(new byte[] { 1, 2, 3 }),
                 this.FreeLater(WrappedBuffer(
                     new byte[] { 1 }, 
                     new byte[] { 2 }, 
                     new byte[] { 3 })));
 
-            AssertEx.Equal(
+            Assert.Equal(
                 WrappedBuffer(new byte[] { 1, 2, 3 }),
                 WrappedBuffer(new []
                 {
                     WrappedBuffer(new byte[] { 1, 2, 3 })
                 }));
 
-            AssertEx.Equal(
+            Assert.Equal(
                 WrappedBuffer(new byte[] { 1, 2, 3 }),
                 this.FreeLater(WrappedBuffer(
                     WrappedBuffer(new byte[] { 1 }),
@@ -327,22 +327,22 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void CopiedBuffers()
         {
-            AssertEx.Equal(
+            Assert.Equal(
                 WrappedBuffer(new byte[] { 1, 2, 3 }),
                 CopiedBuffer(new byte[][] { new byte[] { 1, 2, 3 } }));
 
-            AssertEx.Equal(
+            Assert.Equal(
                 WrappedBuffer(new byte[] { 1, 2, 3 }),
                 CopiedBuffer(
                     new byte[] { 1 }, 
                     new byte[] { 2 }, 
                     new byte[] { 3 }));
 
-            AssertEx.Equal(
+            Assert.Equal(
                 WrappedBuffer(new byte[] { 1, 2, 3 }),
                 CopiedBuffer(new [] { WrappedBuffer(new byte[] { 1, 2, 3 }) }));
 
-            AssertEx.Equal(
+            Assert.Equal(
                 WrappedBuffer(new byte[] { 1, 2, 3 }),
                 CopiedBuffer(
                     WrappedBuffer(new byte[] { 1 }),

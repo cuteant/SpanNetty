@@ -378,7 +378,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static string GetString(byte* src, int length, Encoding encoding)
         {
-#if NET40 || NET451
+#if NET451
             int charCount = encoding.GetCharCount(src, length);
             char* chars = stackalloc char[charCount];
             encoding.GetChars(src, length, chars, charCount);

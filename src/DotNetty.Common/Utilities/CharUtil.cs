@@ -49,7 +49,6 @@ namespace DotNetty.Common.Utilities
             if (ReferenceEquals(left, right)) { return true; }
             if (left.Count != right.Count) { return false; }
 
-#if !NET40
             if (left is IHasAsciiSpan thisHasAscii && right is IHasAsciiSpan otherHasAscii)
             {
                 return SpanHelpers.SequenceEqual(
@@ -64,7 +63,6 @@ namespace DotNetty.Common.Utilities
                     ref MemoryMarshal.GetReference(otherHasUtf16.Utf16Span),
                     left.Count);
             }
-#endif
 
             for (int i = 0; i < left.Count; i++)
             {
@@ -86,12 +84,11 @@ namespace DotNetty.Common.Utilities
             if (left is null || right is null) { return ReferenceEquals(left, right); }
             if (ReferenceEquals(left, right)) { return true; }
 
-#if !NET40
             if (left is IHasUtf16Span thisHasUtf16 && right is IHasUtf16Span otherHasUtf16)
             {
                 return thisHasUtf16.Utf16Span.Equals(otherHasUtf16.Utf16Span, StringComparison.OrdinalIgnoreCase);
             }
-#endif
+
             if (left.Count != right.Count) { return false; }
 
             for (int i = 0; i < left.Count; i++)
@@ -117,7 +114,6 @@ namespace DotNetty.Common.Utilities
             if ((uint)thisStart > SharedConstants.TooBigOrNegative || uLength > (uint)(value.Length - thisStart)) { return false; }
             if ((uint)start > SharedConstants.TooBigOrNegative || uLength > (uint)(other.Count - start)) { return false; }
 
-#if !NET40
             if (other is IHasUtf16Span hasUtf16)
             {
                 return SpanHelpers.SequenceEqual(
@@ -125,7 +121,6 @@ namespace DotNetty.Common.Utilities
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), start),
                     length);
             }
-#endif
             int o1 = thisStart;
             int o2 = start;
             for (int i = 0; i < length; ++i)
@@ -149,12 +144,10 @@ namespace DotNetty.Common.Utilities
             if ((uint)thisStart > SharedConstants.TooBigOrNegative || uLength > (uint)(value.Length - thisStart)) { return false; }
             if ((uint)start > SharedConstants.TooBigOrNegative || uLength > (uint)(other.Count - start)) { return false; }
 
-#if !NET40
             if (other is IHasUtf16Span hasUtf16)
             {
                 return value.AsSpan(thisStart, length).Equals(hasUtf16.Utf16Span.Slice(start, length), StringComparison.OrdinalIgnoreCase);
             }
-#endif
 
             int end = thisStart + length;
             while (thisStart < end)
@@ -182,7 +175,6 @@ namespace DotNetty.Common.Utilities
             if ((uint)thisStart > SharedConstants.TooBigOrNegative || uLength > (uint)(value.Count - thisStart)) { return false; }
             if ((uint)start > SharedConstants.TooBigOrNegative || uLength > (uint)(other.Count - start)) { return false; }
 
-#if !NET40
             if (value is IHasAsciiSpan thisHasAscii && other is IHasAsciiSpan otherHasAscii)
             {
                 return SpanHelpers.SequenceEqual(
@@ -197,7 +189,6 @@ namespace DotNetty.Common.Utilities
                     ref Unsafe.Add(ref MemoryMarshal.GetReference(otherHasUtf16.Utf16Span), start),
                     length);
             }
-#endif
 
             int o1 = thisStart;
             int o2 = start;
@@ -222,12 +213,10 @@ namespace DotNetty.Common.Utilities
             if ((uint)thisStart > SharedConstants.TooBigOrNegative || uLength > (uint)(value.Count - thisStart)) { return false; }
             if ((uint)start > SharedConstants.TooBigOrNegative || uLength > (uint)(other.Count - start)) { return false; }
 
-#if !NET40
             if (value is IHasUtf16Span thisHasUtf16 && other is IHasUtf16Span otherHasUtf16)
             {
                 return thisHasUtf16.Utf16Span.Slice(thisStart, length).Equals(otherHasUtf16.Utf16Span.Slice(start, length), StringComparison.OrdinalIgnoreCase);
             }
-#endif
 
             int end = thisStart + length;
             while (thisStart < end)

@@ -14,12 +14,7 @@ namespace DotNetty.Transport.Bootstrapping
         {
             if (address is DnsEndPoint asDns)
             {
-#if NET40
-                IPHostEntry resolved = Dns.GetHostEntry(asDns.Host);
-                await DotNetty.Common.Utilities.TaskUtil.Completed;
-#else
                 IPHostEntry resolved = await Dns.GetHostEntryAsync(asDns.Host);
-#endif
                 return new IPEndPoint(resolved.AddressList[0], asDns.Port);
             }
             else

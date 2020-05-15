@@ -4,6 +4,7 @@
 namespace DotNetty.Buffers
 {
     using System;
+    using System.Buffers;
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
@@ -13,9 +14,6 @@ namespace DotNetty.Buffers
     using CuteAnt.Pool;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
-#if !NET40
-    using System.Buffers;
-#endif
 
     enum SizeClass
     {
@@ -46,11 +44,7 @@ namespace DotNetty.Buffers
         readonly PoolChunkList<T> q075;
         readonly PoolChunkList<T> q100;
 
-#if NET40
-        readonly IList<IPoolChunkListMetric> chunkListMetrics;
-#else
         readonly IReadOnlyList<IPoolChunkListMetric> chunkListMetrics;
-#endif
 
         // Metrics for allocations and deallocations
         long allocationsNormal;
@@ -469,19 +463,11 @@ namespace DotNetty.Buffers
 
         public int NumChunkLists => this.chunkListMetrics.Count;
 
-#if NET40
-        public IList<IPoolSubpageMetric> TinySubpages => SubPageMetricList(this.tinySubpagePools);
-
-        public IList<IPoolSubpageMetric> SmallSubpages => SubPageMetricList(this.smallSubpagePools);
-
-        public IList<IPoolChunkListMetric> ChunkLists => this.chunkListMetrics;
-#else
         public IReadOnlyList<IPoolSubpageMetric> TinySubpages => SubPageMetricList(this.tinySubpagePools);
 
         public IReadOnlyList<IPoolSubpageMetric> SmallSubpages => SubPageMetricList(this.smallSubpagePools);
 
         public IReadOnlyList<IPoolChunkListMetric> ChunkLists => this.chunkListMetrics;
-#endif
 
         static List<IPoolSubpageMetric> SubPageMetricList(PoolSubpage<T>[] pages)
         {
@@ -774,11 +760,7 @@ namespace DotNetty.Buffers
             PooledUnsafeDirectByteBuffer.NewInstance(maxCapacity);
 
         protected override unsafe void MemoryCopy(byte[] src, int srcOffset, byte[] dst, int dstOffset, int length) =>
-#if NET40
-            PlatformDependent.CopyMemory(src, srcOffset, dst, dstOffset, length);
-#else
             PlatformDependent.CopyMemory((byte*)Unsafe.AsPointer(ref src[srcOffset]), (byte*)Unsafe.AsPointer(ref dst[dstOffset]), length);
-#endif
 
         protected internal override void DestroyChunk(PoolChunk<byte[]> chunk)
         {
@@ -797,25 +779,18 @@ namespace DotNetty.Buffers
         sealed class MemoryChunk : IDisposable
         {
             internal byte[] Bytes;
-#if !NET40
             GCHandle handle;
-#endif
             internal IntPtr NativePointer;
 
             internal MemoryChunk(int size)
             {
                 this.Bytes = new byte[size];
-#if !NET40
                 this.handle = GCHandle.Alloc(this.Bytes, GCHandleType.Pinned);
                 NativePointer = this.handle.AddrOfPinnedObject();
-#else
-                NativePointer = IntPtr.Zero;
-#endif
             }
 
             void Release()
             {
-#if !NET40
                 if (this.handle.IsAllocated)
                 {
                     try
@@ -828,7 +803,6 @@ namespace DotNetty.Buffers
                     }
                 }
                 this.NativePointer = IntPtr.Zero;
-#endif
                 this.Bytes = null;
             }
 
@@ -844,7 +818,6 @@ namespace DotNetty.Buffers
             }
         }
 
-#if !NET40
         sealed class OwnedPinnedBlock : MemoryManager<byte>, IPoolMemoryOwner<byte>
         {
             private byte[] _array;
@@ -918,6 +891,5 @@ namespace DotNetty.Buffers
                 }
             }
         }
-#endif
     }
 }

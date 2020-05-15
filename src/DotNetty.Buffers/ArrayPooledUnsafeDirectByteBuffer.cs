@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Buffers;
-using DotNetty.Common;
-#if !NET40
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-#endif
+using DotNetty.Common;
 
 namespace DotNetty.Buffers
 {
@@ -32,7 +30,6 @@ namespace DotNetty.Buffers
 
         protected internal sealed override void _SetByte(int index, int value) => this.Memory[index] = unchecked((byte)value);
 
-#if !NET40
         protected internal sealed override short _GetShort(int index)
         {
             fixed (byte* addr = &this.Addr(index))
@@ -256,6 +253,5 @@ namespace DotNetty.Buffers
 
             return this;
         }
-#endif
     }
 }

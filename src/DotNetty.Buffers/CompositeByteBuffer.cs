@@ -502,68 +502,6 @@ namespace DotNetty.Buffers
 
         IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
-#if NET40
-        internal protected override int ForEachByteAsc0(int start, int end, IByteProcessor processor)
-        {
-            if (end <= start)
-            {
-                return IndexNotFound;
-            }
-            for (int i = this.ToComponentIndex0(start), length = end - start; length > 0; i++)
-            {
-                ComponentEntry c = this.components[i];
-                if (c.Offset == c.EndOffset)
-                {
-                    continue; // empty
-                }
-                IByteBuffer s = c.Buffer;
-                int localStart = c.Idx(start);
-                int localLength = Math.Min(length, c.EndOffset - start);
-                // avoid additional checks in AbstractByteBuf case
-                int result = s is AbstractByteBuffer buf
-                    ? buf.ForEachByteAsc0(localStart, localStart + localLength, processor)
-                    : s.ForEachByte(localStart, localLength, processor);
-                if ((uint)result < NIndexNotFound)
-                {
-                    return result - c.Adjustment;
-                }
-                start += localLength;
-                length -= localLength;
-            }
-            return IndexNotFound;
-        }
-
-        internal protected override int ForEachByteDesc0(int rStart, int rEnd, IByteProcessor processor)
-        {
-            if (rEnd > rStart) // rStart *and* rEnd are inclusive
-            {
-                return IndexNotFound;
-            }
-            for (int i = this.ToComponentIndex0(rStart), length = 1 + rStart - rEnd; length > 0; i--)
-            {
-                ComponentEntry c = this.components[i];
-                if (c.Offset == c.EndOffset)
-                {
-                    continue; // empty
-                }
-                IByteBuffer s = c.Buffer;
-                int localRStart = c.Idx(length + rEnd);
-                int localLength = Math.Min(length, localRStart), localIndex = localRStart - localLength;
-                // avoid additional checks in AbstractByteBuf case
-                int result = s is AbstractByteBuffer buf
-                    ? buf.ForEachByteDesc0(localRStart - 1, localIndex, processor)
-                    : s.ForEachByteDesc(localIndex, localLength, processor);
-
-                if ((uint)result < NIndexNotFound)
-                {
-                    return result - c.Adjustment;
-                }
-                length -= localLength;
-            }
-            return IndexNotFound;
-        }
-#endif
-
         /// <summary>
         ///     Same with {@link #slice(int, int)} except that this method returns a list.
         /// </summary>
@@ -668,18 +606,6 @@ namespace DotNetty.Buffers
             }
 
             var merged = new byte[length];
-#if NET40
-            ArraySegment<byte>[] buffers = this.GetIoBuffers(index, length);
-
-            int offset = 0;
-            foreach (ArraySegment<byte> buf in buffers)
-            {
-                Debug.Assert(merged.Length - offset >= buf.Count);
-
-                PlatformDependent.CopyMemory(buf.Array, buf.Offset, merged, offset, buf.Count);
-                offset += buf.Count;
-            }
-#else
             var memory = new Memory<byte>(merged);
             var buffers = this.GetSequence(index, length);
 
@@ -691,7 +617,6 @@ namespace DotNetty.Buffers
                 buf.CopyTo(memory.Slice(offset));
                 offset += buf.Length;
             }
-#endif
             return new ArraySegment<byte>(merged);
         }
 

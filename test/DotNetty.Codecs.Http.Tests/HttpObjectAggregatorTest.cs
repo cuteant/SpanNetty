@@ -90,7 +90,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var response = ch.ReadOutbound<IFullHttpResponse>();
             Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
-            AssertEx.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
+            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
             Assert.False(ch.Open);
 
             try
@@ -186,7 +186,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(aggregatedMessage);
 
             Assert.Equal(chunk1.Content.ReadableBytes + chunk2.Content.ReadableBytes, HttpUtil.GetContentLength(aggregatedMessage));
-            AssertEx.Equal(bool.TrueString, aggregatedMessage.Headers.Get((AsciiString)"X-Test", null));
+            Assert.Equal(bool.TrueString, aggregatedMessage.Headers.Get((AsciiString)"X-Test", null));
             CheckContentBuffer(aggregatedMessage);
             var last = ch.ReadInbound<object>();
             Assert.Null(last);
@@ -467,7 +467,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.False(ch.WriteInbound(message));
             var response = ch.ReadOutbound<IHttpResponse>();
             Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
-            AssertEx.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
+            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
 
             if (ServerShouldCloseConnection(message, response))
             {

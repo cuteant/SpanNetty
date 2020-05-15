@@ -125,13 +125,8 @@ namespace DotNetty.Buffers
         readonly int tinyCacheSize;
         readonly int smallCacheSize;
         readonly int normalCacheSize;
-#if NET40
-        readonly IList<IPoolArenaMetric> heapArenaMetrics;
-        readonly IList<IPoolArenaMetric> directArenaMetrics;
-#else
         readonly IReadOnlyList<IPoolArenaMetric> heapArenaMetrics;
         readonly IReadOnlyList<IPoolArenaMetric> directArenaMetrics;
-#endif
         readonly PoolThreadLocalCache threadCache;
         readonly int chunkSize;
         readonly PooledByteBufferAllocatorMetric metric;
@@ -329,15 +324,9 @@ namespace DotNetty.Buffers
             }
         }
 
-#if NET40
-        internal IList<IPoolArenaMetric> HeapArenas() => this.heapArenaMetrics;
-
-        internal IList<IPoolArenaMetric> DirectArenas() => this.directArenaMetrics;
-#else
         internal IReadOnlyList<IPoolArenaMetric> HeapArenas() => this.heapArenaMetrics;
 
         internal IReadOnlyList<IPoolArenaMetric> DirectArenas() => this.directArenaMetrics;
-#endif
 
         internal int TinyCacheSize => this.tinyCacheSize;
 

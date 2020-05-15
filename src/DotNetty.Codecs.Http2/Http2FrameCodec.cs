@@ -425,13 +425,8 @@ namespace DotNetty.Codecs.Http2
                 else
                 {
                     Interlocked.Increment(ref numBufferedStreams);
-#if NET40
-                    writeCompltion.ContinueWith(t => NotifyHeaderWritePromise0(t, Tuple.Create(this, promise)),
-                        TaskContinuationOptions.ExecuteSynchronously);
-#else
                     writeCompltion.ContinueWith(NotifyHeaderWritePromiseAction,
                         Tuple.Create(this, promise), TaskContinuationOptions.ExecuteSynchronously);
-#endif
                 }
             }
         }
