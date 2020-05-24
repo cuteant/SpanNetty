@@ -195,10 +195,7 @@ namespace DotNetty.Buffers
         /// </exception>
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer GetBytes(this IByteBuffer buf, int index, IByteBuffer destination)
-        {
-            buf.GetBytes(index, destination, destination.WritableBytes);
-            return buf;
-        }
+            => buf.GetBytes(index, destination, destination.WritableBytes);
 
         /// <summary>
         ///     Transfers this buffers data to the specified <paramref name="destination" /> buffer starting at the specified
@@ -212,8 +209,8 @@ namespace DotNetty.Buffers
         public static IByteBuffer GetBytes(this IByteBuffer buf, int index, IByteBuffer destination, int length)
         {
             var writerIdx = destination.WriterIndex;
-            buf.GetBytes(index, destination, writerIdx, length);
-            destination.SetWriterIndex(writerIdx + length);
+            _ = buf.GetBytes(index, destination, writerIdx, length);
+            _ = destination.SetWriterIndex(writerIdx + length);
             return buf;
         }
 
@@ -328,8 +325,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer ReadBytes(this IByteBuffer buf, IByteBuffer dst)
         {
-            buf.ReadBytes(dst, dst.WritableBytes);
-            return buf;
+            return buf.ReadBytes(dst, dst.WritableBytes);
         }
 
         /// <summary>
@@ -343,11 +339,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetUnsignedShort(this IByteBuffer buf, int index, ushort value)
         {
-            unchecked
-            {
-                buf.SetShort(index, (short)value);
-            }
-            return buf;
+            return buf.SetShort(index, unchecked((short)value));
         }
 
         /// <summary>
@@ -380,8 +372,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetChar(this IByteBuffer buf, int index, char value)
         {
-            buf.SetShort(index, value);
-            return buf;
+            return buf.SetShort(index, value);
         }
 
         /// <summary>
@@ -395,11 +386,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetUnsignedInt(this IByteBuffer buf, int index, uint value)
         {
-            unchecked
-            {
-                buf.SetInt(index, (int)value);
-            }
-            return buf;
+            return buf.SetInt(index, unchecked((int)value));
         }
 
         /// <summary>
@@ -414,11 +401,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetUnsignedIntLE(this IByteBuffer buf, int index, uint value)
         {
-            unchecked
-            {
-                buf.SetIntLE(index, (int)value);
-            }
-            return buf;
+            return buf.SetIntLE(index, unchecked((int)value));
         }
 
         /// <summary>
@@ -432,8 +415,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetFloat(this IByteBuffer buf, int index, float value)
         {
-            buf.SetInt(index, ByteBufferUtil.SingleToInt32Bits(value));
-            return buf;
+            return buf.SetInt(index, ByteBufferUtil.SingleToInt32Bits(value));
         }
 
         /// <summary>
@@ -448,8 +430,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetFloatLE(this IByteBuffer buf, int index, float value)
         {
-            buf.SetIntLE(index, ByteBufferUtil.SingleToInt32Bits(value));
-            return buf;
+            return buf.SetIntLE(index, ByteBufferUtil.SingleToInt32Bits(value));
         }
 
         /// <summary>
@@ -463,8 +444,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetDouble(this IByteBuffer buf, int index, double value)
         {
-            buf.SetLong(index, BitConverter.DoubleToInt64Bits(value));
-            return buf;
+            return buf.SetLong(index, BitConverter.DoubleToInt64Bits(value));
         }
 
         /// <summary>
@@ -479,8 +459,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetDoubleLE(this IByteBuffer buf, int index, double value)
         {
-            buf.SetLongLE(index, BitConverter.DoubleToInt64Bits(value));
-            return buf;
+            return buf.SetLongLE(index, BitConverter.DoubleToInt64Bits(value));
         }
 
         /// <summary>
@@ -494,70 +473,55 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer SetBytes(this IByteBuffer buf, int index, IByteBuffer src)
         {
-            buf.SetBytes(index, src, src.ReadableBytes);
-            return buf;
+            return buf.SetBytes(index, src, src.ReadableBytes);
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteUnsignedShort(this IByteBuffer buf, ushort value)
         {
-            unchecked
-            {
-                buf.WriteShort((short)value);
-            }
-            return buf;
+            return buf.WriteShort(unchecked((short)value));
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteUnsignedShortLE(this IByteBuffer buf, ushort value)
         {
-            unchecked
-            {
-                buf.WriteShortLE((short)value);
-            }
-            return buf;
+            return buf.WriteShortLE(unchecked((short)value));
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteChar(this IByteBuffer buf, char value)
         {
-            buf.WriteShort(value);
-            return buf;
+            return buf.WriteShort(value);
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteFloat(this IByteBuffer buf, float value)
         {
-            buf.WriteInt(ByteBufferUtil.SingleToInt32Bits(value));
-            return buf;
+            return buf.WriteInt(ByteBufferUtil.SingleToInt32Bits(value));
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteFloatLE(this IByteBuffer buf, float value)
         {
-            buf.WriteIntLE(ByteBufferUtil.SingleToInt32Bits(value));
-            return buf;
+            return buf.WriteIntLE(ByteBufferUtil.SingleToInt32Bits(value));
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteDouble(this IByteBuffer buf, double value)
         {
-            buf.WriteLong(BitConverter.DoubleToInt64Bits(value));
-            return buf;
+            return buf.WriteLong(BitConverter.DoubleToInt64Bits(value));
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteDoubleLE(this IByteBuffer buf, double value)
         {
-            buf.WriteLongLE(BitConverter.DoubleToInt64Bits(value));
-            return buf;
+            return buf.WriteLongLE(BitConverter.DoubleToInt64Bits(value));
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static IByteBuffer WriteBytes(this IByteBuffer buf, IByteBuffer src)
         {
-            buf.WriteBytes(src, src.ReadableBytes);
-            return buf;
+            return buf.WriteBytes(src, src.ReadableBytes);
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]

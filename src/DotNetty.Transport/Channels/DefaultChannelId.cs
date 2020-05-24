@@ -162,7 +162,7 @@ namespace DotNetty.Transport.Channels
         {
             int pId = Platform.GetCurrentProcessId();
 
-            if (pId <= 0)
+            if ((uint)(pId - 1) > SharedConstants.TooBigOrNegative) // <= 0
             {
                 pId = ThreadLocalRandom.Value.Next(MaxProcessId + 1);
             }

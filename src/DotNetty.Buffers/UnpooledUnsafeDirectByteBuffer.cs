@@ -377,7 +377,7 @@ namespace DotNetty.Buffers
                 return UnsafeByteBufferUtil.Copy(this, addr, index, length);
         }
 
-        [MethodImpl(InlineMethod.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         ref byte Addr(int index) => ref this.buffer[index];
 
         public sealed override IByteBuffer SetZero(int index, int length)

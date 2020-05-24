@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable UseStringInterpolation
 namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
@@ -10,11 +9,16 @@ namespace DotNetty.Codecs.Http.WebSockets
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Internal.Logging;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
     using static Buffers.ByteBufferUtil;
 
-    public partial class WebSocket08FrameDecoder : ByteToMessageDecoder, IWebSocketFrameDecoder
+    /// <summary>
+    /// Decodes a web socket frame from wire protocol version 8 format. This code was forked from <a
+    /// href="https://github.com/joewalnes/webbit">webbit</a> and modified.
+    /// </summary>
+    public class WebSocket08FrameDecoder : ByteToMessageDecoder, IWebSocketFrameDecoder
     {
         enum State
         {
@@ -35,10 +39,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         const byte OpcodePing = 0x9;
         const byte OpcodePong = 0xA;
 
-        readonly long maxFramePayloadLength;
-        readonly bool allowExtensions;
-        readonly bool expectMaskedFrames;
-        readonly bool allowMaskMismatch;
+        private readonly WebSocketDecoderConfig _config;
 
         int fragmentedFramesCount;
         bool frameFinalFlag;
@@ -57,11 +58,19 @@ namespace DotNetty.Codecs.Http.WebSockets
         }
 
         public WebSocket08FrameDecoder(bool expectMaskedFrames, bool allowExtensions, int maxFramePayloadLength, bool allowMaskMismatch)
+            : this(WebSocketDecoderConfig.NewBuilder()
+                .ExpectMaskedFrames(expectMaskedFrames)
+                .AllowExtensions(allowExtensions)
+                .MaxFramePayloadLength(maxFramePayloadLength)
+                .AllowMaskMismatch(allowMaskMismatch)
+                .Build())
         {
-            this.expectMaskedFrames = expectMaskedFrames;
-            this.allowMaskMismatch = allowMaskMismatch;
-            this.allowExtensions = allowExtensions;
-            this.maxFramePayloadLength = maxFramePayloadLength;
+        }
+        public WebSocket08FrameDecoder(WebSocketDecoderConfig decoderConfig)
+        {
+            if (decoderConfig is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoderConfig); }
+
+            _config = decoderConfig;
         }
 
         protected override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
@@ -107,15 +116,15 @@ namespace DotNetty.Codecs.Http.WebSockets
                     this.frameMasked = (b & 0x80) != 0;
                     this.framePayloadLen1 = b & 0x7F;
 
-                    if (this.frameRsv != 0 && !this.allowExtensions)
+                    if (this.frameRsv != 0 && !_config.AllowExtensions)
                     {
-                        this.ProtocolViolation_RSVNoExtensionNegotiated(context, this.frameRsv);
+                        this.ProtocolViolation_RSVNoExtensionNegotiated(context, input, this.frameRsv);
                         return;
                     }
 
-                    if (!this.allowMaskMismatch && this.expectMaskedFrames != this.frameMasked)
+                    if (!_config.AllowMaskMismatch && _config.ExpectMaskedFrames != this.frameMasked)
                     {
-                        this.ProtocolViolation_RecAFrameThatIsNotMaskedAsExected(context);
+                        this.ProtocolViolation_RecAFrameThatIsNotMaskedAsExected(context, input);
                         return;
                     }
 
@@ -125,14 +134,14 @@ namespace DotNetty.Codecs.Http.WebSockets
                         // control frames MUST NOT be fragmented
                         if (!this.frameFinalFlag)
                         {
-                            this.ProtocolViolation_FragmentedControlFrame(context);
+                            this.ProtocolViolation_FragmentedControlFrame(context, input);
                             return;
                         }
 
                         // control frames MUST have payload 125 octets or less
                         if (this.framePayloadLen1 > 125)
                         {
-                            this.ProtocolViolation_ControlFrameWithPayloadLength125Octets(context);
+                            this.ProtocolViolation_ControlFrameWithPayloadLength125Octets(context, input);
                             return;
                         }
 
@@ -142,9 +151,9 @@ namespace DotNetty.Codecs.Http.WebSockets
                             // body MUST be a 2-byte unsigned integer (in network byte
                             // order) representing a getStatus code
                             case OpcodeClose:
-                                if(this.framePayloadLen1 == 1)
+                                if (this.framePayloadLen1 == 1)
                                 {
-                                    this.ProtocolViolation_RecCloseControlFrame(context);
+                                    this.ProtocolViolation_RecCloseControlFrame(context, input);
                                     return;
                                 }
                                 break;
@@ -155,7 +164,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
                             // check for reserved control frame opcodes
                             default:
-                                this.ProtocolViolation_ControlFrameUsingReservedOpcode(context, this.frameOpcode);
+                                this.ProtocolViolation_ControlFrameUsingReservedOpcode(context, input, this.frameOpcode);
                                 return;
                         }
                     }
@@ -169,7 +178,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                                 break;
                             // check for reserved data frame opcodes
                             default:
-                                this.ProtocolViolation_DataFrameUsingReservedOpcode(context, this.frameOpcode);
+                                this.ProtocolViolation_DataFrameUsingReservedOpcode(context, input, this.frameOpcode);
                                 return;
                         }
 
@@ -177,14 +186,14 @@ namespace DotNetty.Codecs.Http.WebSockets
                         // check opcode vs message fragmentation state 1/2
                         if (0u >= uFragmentedFramesCount && this.frameOpcode == OpcodeCont)
                         {
-                            this.ProtocolViolation_RecContionuationDataFrame(context);
+                            this.ProtocolViolation_RecContionuationDataFrame(context, input);
                             return;
                         }
 
                         // check opcode vs message fragmentation state 2/2
                         if (uFragmentedFramesCount > 0u && this.frameOpcode != OpcodeCont && this.frameOpcode != OpcodePing)
                         {
-                            this.ProtocolViolation_RecNonContionuationDataFrame(context);
+                            this.ProtocolViolation_RecNonContionuationDataFrame(context, input);
                             return;
                         }
                     }
@@ -203,7 +212,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                             this.framePayloadLength = input.ReadUnsignedShort();
                             if (this.framePayloadLength < 126)
                             {
-                                this.ProtocolViolation_InvalidDataFrameLength(context);
+                                this.ProtocolViolation_InvalidDataFrameLength(context, input);
                                 return;
                             }
                             break;
@@ -219,7 +228,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
                             if (this.framePayloadLength < 65536)
                             {
-                                this.ProtocolViolation_InvalidDataFrameLength(context);
+                                this.ProtocolViolation_InvalidDataFrameLength(context, input);
                                 return;
                             }
                             break;
@@ -229,9 +238,10 @@ namespace DotNetty.Codecs.Http.WebSockets
                             break;
                     }
 
-                    if (this.framePayloadLength > this.maxFramePayloadLength)
+                    var maxFramePayloadLength = _config.MaxFramePayloadLength;
+                    if (this.framePayloadLength > maxFramePayloadLength)
                     {
-                        this.ProtocolViolation_MaxFrameLengthHasBeenExceeded(context, this.maxFramePayloadLength);
+                        this.ProtocolViolation_MaxFrameLengthHasBeenExceeded(context, input, maxFramePayloadLength);
                         return;
                     }
 
@@ -388,12 +398,25 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
-        internal void ProtocolViolation0(IChannelHandlerContext ctx, string reason) => this.ProtocolViolation(ctx, new CorruptedFrameException(reason));
+        internal void ProtocolViolation0(IChannelHandlerContext ctx, IByteBuffer input, string reason)
+            => ProtocolViolation0(ctx, input, WebSocketCloseStatus.ProtocolError, reason);
 
-        void ProtocolViolation(IChannelHandlerContext ctx, CorruptedFrameException ex)
+        internal void ProtocolViolation0(IChannelHandlerContext ctx, IByteBuffer input, WebSocketCloseStatus status, string reason)
+        {
+            ProtocolViolation(ctx, input, new CorruptedWebSocketFrameException(status, reason));
+        }
+
+        void ProtocolViolation(IChannelHandlerContext ctx, IByteBuffer input, CorruptedWebSocketFrameException ex)
         {
             this.state = State.Corrupt;
-            if (ctx.Channel.Active)
+            int readableBytes = input.ReadableBytes;
+            if (readableBytes > 0)
+            {
+                // Fix for memory leak, caused by ByteToMessageDecoder#channelRead:
+                // buffer 'cumulation' is released ONLY when no more readable bytes available.
+                input.SkipBytes(readableBytes);
+            }
+            if (ctx.Channel.Active && _config.CloseOnProtocolViolation)
             {
                 object closeMessage;
                 if (this.receivedClosingHandshake)
@@ -402,12 +425,18 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
                 else
                 {
-                    closeMessage = new CloseWebSocketFrame(1002, null);
+                    WebSocketCloseStatus closeStatus = ex.CloseStatus;
+                    var errMsg = ex.Message;
+                    ICharSequence reasonText = !string.IsNullOrWhiteSpace(errMsg) ? new StringCharSequence(errMsg) : closeStatus.ReasonText;
+                    closeMessage = new CloseWebSocketFrame(closeStatus, reasonText);
                 }
                 ctx.WriteAndFlushAsync(closeMessage).ContinueWith(CloseOnCompleteAction, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
             }
             throw ex;
         }
+
+        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
+        static void CloseOnComplete(Task t, object c) => ((IChannel)c).CloseAsync();
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         static int ToFrameLength(long l)
@@ -438,7 +467,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
             if (buffer.ReadableBytes == 1)
             {
-                this.ProtocolViolation_InvalidCloseFrameBody(ctx);
+                this.ProtocolViolation_InvalidCloseFrameBody(ctx, buffer);
             }
 
             // Save reader index
@@ -447,9 +476,9 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             // Must have 2 byte integer within the valid range
             int statusCode = buffer.ReadShort();
-            if (statusCode.IsInvalidCloseFrameStatusCodeRfc6455())
+            if (!WebSocketCloseStatus.IsValidStatusCode(statusCode))
             {
-                this.ProtocolViolation_InvalidCloseFrameStatusCode(ctx, statusCode);
+                this.ProtocolViolation_InvalidCloseFrameStatusCode(ctx, buffer, statusCode);
             }
 
             // May have UTF-8 message
@@ -459,9 +488,9 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     new Utf8Validator().Check(buffer);
                 }
-                catch (CorruptedFrameException ex)
+                catch (CorruptedWebSocketFrameException ex)
                 {
-                    this.ProtocolViolation(ctx, ex);
+                    this.ProtocolViolation(ctx, buffer, ex);
                 }
             }
 

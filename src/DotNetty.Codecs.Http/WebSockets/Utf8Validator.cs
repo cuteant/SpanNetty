@@ -1,19 +1,19 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoPropertyWithPrivateSetter
 namespace DotNetty.Codecs.Http.WebSockets
 {
+    using System;
     using System.Runtime.CompilerServices;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
 
-    sealed partial class Utf8Validator : IByteProcessor
+    sealed class Utf8Validator : IByteProcessor
     {
         const int Utf8Accept = 0;
         const int Utf8Reject = 12;
 
-        static readonly byte[] Types = {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        static ReadOnlySpan<byte> Types => new byte[]{  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -24,7 +24,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             2, 2, 10, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3, 3, 11, 6, 6, 6, 5, 8, 8, 8, 8, 8,
             8, 8, 8, 8, 8, 8 };
 
-        static readonly byte[] States = { 0, 12, 24, 36, 60, 96, 84, 12, 12, 12, 48, 72, 12, 12,
+        static ReadOnlySpan<byte> States => new byte[]{ 0, 12, 24, 36, 60, 96, 84, 12, 12, 12, 48, 72, 12, 12,
             12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 0, 12, 12, 12, 12, 12, 0, 12, 0, 12, 12,
             12, 24, 12, 12, 12, 12, 12, 24, 12, 24, 12, 12, 12, 12, 12, 12, 12, 12, 12, 24, 12, 12,
             12, 12, 12, 24, 12, 12, 12, 12, 12, 12, 12, 24, 12, 12, 12, 12, 12, 12, 12, 12, 12, 36,
@@ -69,8 +69,16 @@ namespace DotNetty.Codecs.Http.WebSockets
             return true;
         }
 
-        //[MethodImpl(MethodImplOptions.NoInlining)]
-        //static void ThrowCorruptedFrameException() => throw new CorruptedFrameException("bytes are not UTF-8");
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowCorruptedFrameException()
+        {
+            throw GetCorruptedFrameException();
+
+            static CorruptedWebSocketFrameException GetCorruptedFrameException()
+            {
+                return new CorruptedWebSocketFrameException(WebSocketCloseStatus.InvalidPayloadData, "bytes are not UTF-8");
+            }
+        }
 
         public bool IsChecking => this.checking;
     }

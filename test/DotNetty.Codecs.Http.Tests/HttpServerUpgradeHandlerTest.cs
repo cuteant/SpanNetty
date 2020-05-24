@@ -18,7 +18,7 @@ namespace DotNetty.Codecs.Http.Tests
     {
         sealed class TestUpgradeCodec : HttpServerUpgradeHandler.IUpgradeCodec
         {
-            public ICollection<AsciiString> RequiredUpgradeHeaders => new List<AsciiString>();
+            public IReadOnlyList<AsciiString> RequiredUpgradeHeaders => new List<AsciiString>();
 
             public bool PrepareUpgradeResponse(IChannelHandlerContext ctx, IFullHttpRequest upgradeRequest, HttpHeaders upgradeHeaders) => true;
 

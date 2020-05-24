@@ -12,6 +12,31 @@ namespace DotNetty.Codecs.Http
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
+    /// <summary>
+    /// Splits an HTTP query string into a path string and key-value parameter pairs.
+    /// This decoder is for one time use only.  Create a new instance for each URI:
+    /// <para>
+    /// <code>QueryStringDecoder decoder = new QueryStringDecoder("/hello?recipient=world&amp;x=1;y=2");</code>
+    /// assert decoder.path().equals("/hello");
+    /// assert decoder.parameters().get("recipient").get(0).equals("world");
+    /// assert decoder.parameters().get("x").get(0).equals("1");
+    /// assert decoder.parameters().get("y").get(0).equals("2");
+    /// </para>
+    ///
+    /// This decoder can also decode the content of an HTTP POST request whose
+    /// content type is <tt>application/x-www-form-urlencoded</tt>:
+    /// <para>
+    /// QueryStringDecoder decoder = new QueryStringDecoder("recipient=world&amp;x=1;y=2", false);
+    /// ...
+    /// </para>
+    ///
+    /// <h3>HashDOS vulnerability fix</h3>
+    ///
+    /// As a workaround to the <a href="https://netty.io/s/hashdos">HashDOS</a> vulnerability, the decoder
+    /// limits the maximum number of decoded key-value parameter pairs, up to {@literal 1024} by
+    /// default, and you can configure it when you construct the decoder by passing an additional
+    /// integer parameter.
+    /// </summary>
     public class QueryStringDecoder
     {
         const int DefaultMaxParams = 1024;
@@ -43,7 +68,7 @@ namespace DotNetty.Codecs.Http
         {
             if (uri is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
             if (charset is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
-            if (maxParams <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxParams, ExceptionArgument.maxParams); }
+            if ((uint)(maxParams - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(maxParams, ExceptionArgument.maxParams); }
 
             this.uri = uri;
             this.charset = charset;
@@ -65,7 +90,7 @@ namespace DotNetty.Codecs.Http
         {
             if (uri is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
             if (charset is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
-            if (maxParams <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxParams, ExceptionArgument.maxParams); }
+            if ((uint)(maxParams - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(maxParams, ExceptionArgument.maxParams); }
 
             string rawPath = uri.AbsolutePath;
             // Also take care of cut of things like "http://localhost"
@@ -77,15 +102,15 @@ namespace DotNetty.Codecs.Http
 
         public override string ToString() => this.uri;
 
-        public string Path => this.path ?? 
+        public string Path => this.path ??
             (this.path = DecodeComponent(this.uri, 0, this.PathEndIdx(), this.charset, true));
 
-        public IDictionary<string, List<string>> Parameters => this.parameters ?? 
+        public IDictionary<string, List<string>> Parameters => this.parameters ??
             (this.parameters = DecodeParams(this.uri, this.PathEndIdx(), this.charset, this.maxParams));
 
         public string RawPath() => this.uri.Substring(0, this.PathEndIdx());
 
-        public string RawQuery() 
+        public string RawQuery()
         {
             int start = this.pathEndIdx + 1;
             return start < this.uri.Length ? this.uri.Substring(start) : StringUtil.EmptyString;
@@ -146,7 +171,7 @@ namespace DotNetty.Codecs.Http
                         goto loop;
                 }
             }
-            loop:
+        loop:
             AddParam(s, nameStart, valueStart, i, parameters, charset);
             return parameters;
         }
@@ -175,7 +200,7 @@ namespace DotNetty.Codecs.Http
 
         public static string DecodeComponent(string s) => DecodeComponent(s, HttpConstants.DefaultEncoding);
 
-        public static string DecodeComponent(string s, Encoding charset) => s is null 
+        public static string DecodeComponent(string s, Encoding charset) => s is null
             ? StringUtil.EmptyString : DecodeComponent(s, 0, s.Length, charset, false);
 
         static string DecodeComponent(string s, int from, int toExcluded, Encoding charset, bool isPath)

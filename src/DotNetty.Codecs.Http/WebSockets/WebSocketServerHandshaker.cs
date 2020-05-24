@@ -1,9 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoProperty
-// ReSharper disable ConvertToAutoPropertyWhenPossible
-// ReSharper disable ConvertToAutoPropertyWithPrivateSetter
 namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
@@ -16,28 +13,54 @@ namespace DotNetty.Codecs.Http.WebSockets
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public abstract partial class WebSocketServerHandshaker
+    /// <summary>
+    /// Base class for server side web socket opening and closing handshakes
+    /// </summary>
+    public abstract class WebSocketServerHandshaker
     {
         protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<WebSocketServerHandshaker>();
-        static readonly ClosedChannelException ClosedChannelException = new ClosedChannelException();
+        private static readonly ClosedChannelException ClosedChannelException = new ClosedChannelException();
 
-        readonly string uri;
+        private readonly string _uri;
 
-        readonly string[] subprotocols;
+        private readonly string[] _subprotocols;
 
-        readonly WebSocketVersion version;
+        private readonly WebSocketVersion _version;
 
-        readonly int maxFramePayloadLength;
+        private readonly WebSocketDecoderConfig _decoderConfig;
 
-        string selectedSubprotocol;
+        private string _selectedSubprotocol;
 
         // Use this as wildcard to support all requested sub-protocols
         public const string SubProtocolWildcard = "*";
 
+        /// <summary>
+        /// Constructor specifying the destination web socket location
+        /// </summary>
+        /// <param name="version">the protocol version</param>
+        /// <param name="uri">URL for web socket communications. e.g "ws://myhost.com/mypath". Subsequent web socket frames will be
+        /// sent to this URL.</param>
+        /// <param name="subprotocols">CSV of supported protocols. Null if sub protocols not supported.</param>
+        /// <param name="maxFramePayloadLength">Maximum length of a frame's payload</param>
         protected WebSocketServerHandshaker(WebSocketVersion version, string uri, string subprotocols, int maxFramePayloadLength)
+            : this(version, uri, subprotocols, WebSocketDecoderConfig.NewBuilder().MaxFramePayloadLength(maxFramePayloadLength).Build())
         {
-            this.version = version;
-            this.uri = uri;
+        }
+
+        /// <summary>
+        /// Constructor specifying the destination web socket location
+        /// </summary>
+        /// <param name="version">the protocol version</param>
+        /// <param name="uri">URL for web socket communications. e.g "ws://myhost.com/mypath". Subsequent web socket frames will be
+        /// sent to this URL.</param>
+        /// <param name="subprotocols">CSV of supported protocols. Null if sub protocols not supported.</param>
+        /// <param name="decoderConfig">Frames decoder configuration.</param>
+        protected WebSocketServerHandshaker(WebSocketVersion version, string uri, string subprotocols, WebSocketDecoderConfig decoderConfig)
+        {
+            if (decoderConfig is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoderConfig); }
+
+            _version = version;
+            _uri = uri;
             if (subprotocols is object)
             {
                 string[] subprotocolArray = subprotocols.Split(',');
@@ -45,44 +68,85 @@ namespace DotNetty.Codecs.Http.WebSockets
                 {
                     subprotocolArray[i] = subprotocolArray[i].Trim();
                 }
-                this.subprotocols = subprotocolArray;
+                _subprotocols = subprotocolArray;
             }
             else
             {
-                this.subprotocols = EmptyArrays.EmptyStrings;
+                _subprotocols = EmptyArrays.EmptyStrings;
             }
-            this.maxFramePayloadLength = maxFramePayloadLength;
+            _decoderConfig = decoderConfig;
         }
 
-        public string Uri => this.uri;
+        /// <summary>
+        /// Returns the URL of the web socket
+        /// </summary>
+        public string Uri => _uri;
 
+        /// <summary>
+        /// Returns the CSV of supported sub protocols
+        /// </summary>
+        /// <returns></returns>
         public ISet<string> Subprotocols()
         {
-            var ret = new HashSet<string>(this.subprotocols, StringComparer.Ordinal);
+            var ret = new HashSet<string>(_subprotocols, StringComparer.Ordinal);
             return ret;
         }
 
-        public WebSocketVersion Version => this.version;
+        /// <summary>
+        /// Returns the version of the specification being supported
+        /// </summary>
+        public WebSocketVersion Version => _version;
 
-        public int MaxFramePayloadLength => this.maxFramePayloadLength;
+        /// <summary>
+        /// Gets the maximum length for any frame's payload.
+        /// </summary>
+        public int MaxFramePayloadLength => _decoderConfig.MaxFramePayloadLength;
 
-        public Task HandshakeAsync(IChannel channel, IFullHttpRequest req) => this.HandshakeAsync(channel, req, null);
+        /// <summary>
+        /// Gets this decoder configuration.
+        /// </summary>
+        public WebSocketDecoderConfig DecoderConfig => _decoderConfig;
 
+        /// <summary>
+        /// Performs the opening handshake
+        /// When call this method you <c>MUST NOT</c> retain the <see cref="IFullHttpRequest"/> which is passed in.
+        /// </summary>
+        /// <param name="channel">Channel</param>
+        /// <param name="req">HTTP Request</param>
+        /// <returns></returns>
+        public Task HandshakeAsync(IChannel channel, IFullHttpRequest req) => HandshakeAsync(channel, req, null);
+
+        /// <summary>
+        /// Performs the opening handshake
+        /// When call this method you <c>MUST NOT</c> retain the <see cref="IFullHttpRequest"/> which is passed in.
+        /// </summary>
+        /// <param name="channel">Channel</param>
+        /// <param name="req">HTTP Request</param>
+        /// <param name="responseHeaders">Extra headers to add to the handshake response or <code>null</code> if no extra headers should be added</param>
+        /// <returns></returns>
         public Task HandshakeAsync(IChannel channel, IFullHttpRequest req, HttpHeaders responseHeaders)
         {
             var completion = channel.NewPromise();
-            this.Handshake(channel, req, responseHeaders, completion);
+            Handshake(channel, req, responseHeaders, completion);
             return completion.Task;
         }
 
+        /// <summary>
+        /// Performs the opening handshake
+        /// When call this method you <c>MUST NOT</c> retain the <see cref="IFullHttpRequest"/> which is passed in.
+        /// </summary>
+        /// <param name="channel">Channel</param>
+        /// <param name="req">HTTP Request</param>
+        /// <param name="responseHeaders">Extra headers to add to the handshake response or <code>null</code> if no extra headers should be added</param>
+        /// <param name="completion">the <see cref="IPromise"/> to be notified when the opening handshake is done</param>
         public void Handshake(IChannel channel, IFullHttpRequest req, HttpHeaders responseHeaders, IPromise completion)
         {
             if (Logger.DebugEnabled)
             {
-                Logger.WebSocketVersionServerHandshake(channel, this.version);
+                Logger.WebSocketVersionServerHandshake(channel, _version);
             }
 
-            IFullHttpResponse response = this.NewHandshakeResponse(req, responseHeaders);
+            IFullHttpResponse response = NewHandshakeResponse(req, responseHeaders);
             IChannelPipeline p = channel.Pipeline;
 
             if (p.Get<HttpObjectAggregator>() is object) { p.Remove<HttpObjectAggregator>(); }
@@ -104,29 +168,52 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
 
                 encoderName = ctx.Name;
-                p.AddBefore(encoderName, "wsdecoder", this.NewWebsocketDecoder());
-                p.AddBefore(encoderName, "wsencoder", this.NewWebSocketEncoder());
+                p.AddBefore(encoderName, "wsencoder", NewWebSocketEncoder());
+                p.AddBefore(encoderName, "wsdecoder", NewWebsocketDecoder());
             }
             else
             {
-                p.Replace(ctx.Name, "wsdecoder", this.NewWebsocketDecoder());
+                p.Replace(ctx.Name, "wsdecoder", NewWebsocketDecoder());
 
                 encoderName = p.Context<HttpResponseEncoder>().Name;
-                p.AddBefore(encoderName, "wsencoder", this.NewWebSocketEncoder());
+                p.AddBefore(encoderName, "wsencoder", NewWebSocketEncoder());
             }
 
             channel.WriteAndFlushAsync(response).ContinueWith(RemoveHandlerAfterWriteAction, Tuple.Create(completion, p, encoderName), TaskContinuationOptions.ExecuteSynchronously);
         }
 
+        static readonly Action<Task, object> RemoveHandlerAfterWriteAction = RemoveHandlerAfterWrite;
+        static void RemoveHandlerAfterWrite(Task t, object state)
+        {
+            var wrapped = (Tuple<IPromise, IChannelPipeline, string>)state;
+            if (t.IsSuccess())
+            {
+                wrapped.Item2.Remove(wrapped.Item3);
+                wrapped.Item1.TryComplete();
+            }
+            else
+            {
+                wrapped.Item1.TrySetException(t.Exception.InnerExceptions);
+            }
+        }
+
+        /// <summary>
+        /// Performs the opening handshake
+        /// When call this method you <c>MUST NOT</c> retain the <see cref="IHttpRequest"/> which is passed in.
+        /// </summary>
+        /// <param name="channel">Channel</param>
+        /// <param name="req">HTTP Request</param>
+        /// <param name="responseHeaders">Extra headers to add to the handshake response or <code>null</code> if no extra headers should be added</param>
+        /// <returns></returns>
         public Task HandshakeAsync(IChannel channel, IHttpRequest req, HttpHeaders responseHeaders)
         {
             if (req is IFullHttpRequest request)
             {
-                return this.HandshakeAsync(channel, request, responseHeaders);
+                return HandshakeAsync(channel, request, responseHeaders);
             }
             if (Logger.DebugEnabled)
             {
-                Logger.WebSocketVersionServerHandshake(channel, this.version);
+                Logger.WebSocketVersionServerHandshake(channel, _version);
             }
             IChannelPipeline p = channel.Pipeline;
             IChannelHandlerContext ctx = p.Context<HttpRequestDecoder>();
@@ -161,44 +248,58 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         sealed class Handshaker : SimpleChannelInboundHandler<IFullHttpRequest>
         {
-            readonly WebSocketServerHandshaker serverHandshaker;
-            readonly IChannel channel;
-            readonly HttpHeaders responseHeaders;
-            readonly IPromise completion;
+            readonly WebSocketServerHandshaker _serverHandshaker;
+            readonly IChannel _channel;
+            readonly HttpHeaders _responseHeaders;
+            readonly IPromise _completion;
 
             public Handshaker(WebSocketServerHandshaker serverHandshaker, IChannel channel, HttpHeaders responseHeaders, IPromise completion)
             {
-                this.serverHandshaker = serverHandshaker;
-                this.channel = channel;
-                this.responseHeaders = responseHeaders;
-                this.completion = completion;
+                _serverHandshaker = serverHandshaker;
+                _channel = channel;
+                _responseHeaders = responseHeaders;
+                _completion = completion;
             }
 
             protected override void ChannelRead0(IChannelHandlerContext ctx, IFullHttpRequest msg)
             {
                 // Remove ourself and do the actual handshake
                 ctx.Pipeline.Remove(this);
-                this.serverHandshaker.Handshake(this.channel, msg, this.responseHeaders, this.completion);
+                _serverHandshaker.Handshake(_channel, msg, _responseHeaders, _completion);
             }
 
             public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
             {
                 // Remove ourself and fail the handshake promise.
                 ctx.Pipeline.Remove(this);
-                this.completion.TrySetException(cause);
+                _completion.TrySetException(cause);
                 ctx.FireExceptionCaught(cause);
             }
 
             public override void ChannelInactive(IChannelHandlerContext ctx)
             {
                 // Fail promise if Channel was closed
-                this.completion.TrySetException(ClosedChannelException);
+                if (!_completion.IsCompleted)
+                {
+                    _completion.TrySetException(ClosedChannelException);
+                }
                 ctx.FireChannelInactive();
             }
         }
 
+        /// <summary>
+        /// Returns a new <see cref="IFullHttpResponse"/> which will be used for as response to the handshake request.
+        /// </summary>
+        /// <param name="req"></param>
+        /// <param name="responseHeaders"></param>
+        /// <returns></returns>
         protected abstract IFullHttpResponse NewHandshakeResponse(IFullHttpRequest req, HttpHeaders responseHeaders);
 
+        /// <summary>
+        /// Performs the closing handshake
+        /// </summary>
+        /// <param name="channel">Channel</param>
+        /// <param name="frame">Closing Frame that was received</param>
         public virtual Task CloseAsync(IChannel channel, CloseWebSocketFrame frame)
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
@@ -206,9 +307,17 @@ namespace DotNetty.Codecs.Http.WebSockets
             return channel.WriteAndFlushAsync(frame).ContinueWith(CloseOnCompleteAction, channel, TaskContinuationOptions.ExecuteSynchronously);
         }
 
+        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
+        static void CloseOnComplete(Task t, object s) => ((IChannel)s).CloseAsync();
+
+        /// <summary>
+        /// Selects the first matching supported sub protocol
+        /// </summary>
+        /// <param name="requestedSubprotocols">CSV of protocols to be supported. e.g. "chat, superchat"</param>
+        /// <returns>First matching supported sub protocol. Null if not found.</returns>
         protected string SelectSubprotocol(string requestedSubprotocols)
         {
-            if (requestedSubprotocols is null || 0u >= (uint)this.subprotocols.Length)
+            if (requestedSubprotocols is null || 0u >= (uint)_subprotocols.Length)
             {
                 return null;
             }
@@ -218,7 +327,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 string requestedSubprotocol = p.Trim();
 
-                foreach (string supportedSubprotocol in this.subprotocols)
+                foreach (string supportedSubprotocol in _subprotocols)
                 {
 #if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
                     if (string.Equals(SubProtocolWildcard, supportedSubprotocol)
@@ -228,7 +337,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                         || string.Equals(requestedSubprotocol, supportedSubprotocol, StringComparison.Ordinal))
 #endif
                     {
-                        this.selectedSubprotocol = requestedSubprotocol;
+                        _selectedSubprotocol = requestedSubprotocol;
                         return requestedSubprotocol;
                     }
                 }
@@ -238,10 +347,20 @@ namespace DotNetty.Codecs.Http.WebSockets
             return null;
         }
 
-        public string SelectedSubprotocol => this.selectedSubprotocol;
+        /// <summary>
+        /// Returns the selected subprotocol. Null if no subprotocol has been selected.
+        /// <para>This is only available AFTER <tt>handshake()</tt> has been called.</para>
+        /// </summary>
+        public string SelectedSubprotocol => _selectedSubprotocol;
 
+        /// <summary>
+        /// Returns the decoder to use after handshake is complete.
+        /// </summary>
         protected internal abstract IWebSocketFrameDecoder NewWebsocketDecoder();
 
+        /// <summary>
+        /// Returns the encoder to use after the handshake is complete.
+        /// </summary>
         protected internal abstract IWebSocketFrameEncoder NewWebSocketEncoder();
     }
 }

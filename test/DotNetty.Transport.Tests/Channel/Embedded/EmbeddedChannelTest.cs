@@ -18,6 +18,17 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
     public class EmbeddedChannelTest
     {
         [Fact]
+        public void TestParent()
+        {
+            EmbeddedChannel parent = new EmbeddedChannel();
+            EmbeddedChannel channel = new EmbeddedChannel(parent: parent, EmbeddedChannelId.Instance, hasDisconnect: false, register: true);
+            Assert.NotNull(channel.Parent);
+            Assert.Same(parent, channel.Parent);
+            Assert.False(channel.Finish());
+            Assert.False(parent.Finish());
+        }
+
+        [Fact]
         public void TestNotRegistered()
         {
             EmbeddedChannel channel = new EmbeddedChannel(hasDisconnect: false, register: false);
@@ -277,6 +288,23 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
             Assert.Equal(EventOutboundHandler.CLOSE, handler.PollEvent());
             Assert.Equal(EventOutboundHandler.CLOSE, handler.PollEvent());
             Assert.True(handler.queue.IsEmpty);
+        }
+
+        [Fact]
+        public async Task TestHasNoDisconnectSkipDisconnect()
+        {
+            EmbeddedChannel channel = new EmbeddedChannel(false, new ChannelHandlerHasNoDisconnectSkipDisconnect());
+            var e = await Assert.ThrowsAsync<Exception>(async () => await channel.DisconnectAsync());
+            Assert.Equal(nameof(TestHasNoDisconnectSkipDisconnect), e.Message);
+            //Assert.False(channel.DisconnectAsync().IsSuccess());
+        }
+
+        class ChannelHandlerHasNoDisconnectSkipDisconnect : ChannelHandlerAdapter
+        {
+            public override void Close(IChannelHandlerContext context, IPromise promise)
+            {
+                promise.TrySetException(new Exception(nameof(TestHasNoDisconnectSkipDisconnect)));
+            }
         }
 
         [Fact]

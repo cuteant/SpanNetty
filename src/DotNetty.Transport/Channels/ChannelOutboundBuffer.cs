@@ -60,7 +60,7 @@ namespace DotNetty.Transport.Channels
         /// <param name="promise">The <see cref="IPromise"/> to notify once the message is written.</param>
         public void AddMessage(object msg, int size, IPromise promise)
         {
-            Entry entry = Entry.NewInstance(msg, size, promise);
+            Entry entry = Entry.NewInstance(msg, size, Total(msg), promise);
             if (this.tailEntry is null)
             {
                 this.flushedEntry = null;
@@ -165,19 +165,47 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         public object Current => this.flushedEntry?.Message;
 
+        private static long Total(object msg)
+        {
+            switch (msg)
+            {
+                case IByteBuffer buf:
+                    return buf.ReadableBytes;
+
+                case IFileRegion fileRegion:
+                    return fileRegion.Count;
+
+                case IByteBufferHolder byteBufferHolder:
+                    return byteBufferHolder.Content.ReadableBytes;
+
+                default:
+                    return  -1L;
+            }
+        }
+
+        /// <summary>
+        /// Return the current message flush progress.
+        /// </summary>
+        /// <returns><c>0</c> if nothing was flushed before for the current message or there is no current message</returns>
+        public long CurrentProgress()
+        {
+            Entry entry = this.flushedEntry;
+            return entry is null ? 0 : entry.Progress;
+        }
+
         /// <summary>
         /// Notify the <see cref="IPromise"/> of the current message about writing progress.
         /// </summary>
         public void Progress(long amount)
         {
-            // todo: support progress report?
-            //Entry e = this.flushedEntry;
-            //Debug.Assert(e is object);
-            //var p = e.promise;
+            // TODO: support progress report?
+            Entry e = this.flushedEntry;
+            Debug.Assert(e is object);
+            var p = e.Promise;
+            long progress = e.Progress + amount;
+            e.Progress = progress;
             //if (p is ChannelProgressivePromise)
             //{
-            //    long progress = e.progress + amount;
-            //    e.progress = progress;
             //    ((ChannelProgressivePromise)p).tryProgress(progress, e.Total);
             //}
         }
@@ -805,6 +833,8 @@ namespace DotNetty.Transport.Channels
             public ArraySegment<byte>[] Buffers;
             public ArraySegment<byte> Buffer;
             public IPromise Promise;
+            public long Progress;
+            public long Total;
             public int PendingSize;
             public int Count = -1;
             public bool Cancelled;
@@ -814,11 +844,12 @@ namespace DotNetty.Transport.Channels
                 this.handle = handle;
             }
 
-            public static Entry NewInstance(object msg, int size, IPromise promise)
+            public static Entry NewInstance(object msg, int size, long total, IPromise promise)
             {
                 Entry entry = Pool.Take();
                 entry.Message = msg;
                 entry.PendingSize = size;
+                entry.Total = total;
                 entry.Promise = promise;
                 return entry;
             }
@@ -849,6 +880,8 @@ namespace DotNetty.Transport.Channels
                 this.Buffer = new ArraySegment<byte>();
                 this.Message = null;
                 this.Promise = null;
+                this.Progress = 0L;
+                this.Total = 0L;
                 this.PendingSize = 0;
                 this.Count = -1;
                 this.Cancelled = false;

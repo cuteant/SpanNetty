@@ -99,7 +99,10 @@ namespace DotNetty.Common
         public ResourceLeakDetector(string resourceType, int samplingInterval)
         {
             if (resourceType is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.resourceType); }
-            if (samplingInterval <= 0) { ThrowHelper.ThrowArgumentException_Positive(samplingInterval, ExceptionArgument.samplingInterval); }
+            if ((uint)(samplingInterval - 1) > SharedConstants.TooBigOrNegative) // <= 0
+            {
+                ThrowHelper.ThrowArgumentException_Positive(samplingInterval, ExceptionArgument.samplingInterval);
+            }
 
             this.resourceType = resourceType;
             this.samplingInterval = samplingInterval;

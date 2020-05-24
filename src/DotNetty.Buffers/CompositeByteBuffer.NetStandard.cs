@@ -98,7 +98,18 @@ namespace DotNetty.Buffers
                             ThrowHelper.ThrowNotSupportedException();
                             break;
                         case 1:
-                            buffers.Add(s.GetReadableMemory(c.Idx(index), localLength));
+                            if (s.IsSingleIoBuffer)
+                            {
+                                buffers.Add(s.GetReadableMemory(c.Idx(index), localLength));
+                            }
+                            else
+                            {
+                                var sequence0 = s.GetSequence(c.Idx(index), localLength);
+                                foreach (var memory in sequence0)
+                                {
+                                    buffers.Add(memory);
+                                }
+                            }
                             break;
                         default:
                             var sequence = s.GetSequence(c.Idx(index), localLength);
@@ -134,7 +145,7 @@ namespace DotNetty.Buffers
                     ComponentEntry c = this.components[0];
                     return c.Buffer.GetMemory(index, count);
                 default:
-                    throw new NotSupportedException();
+                    throw ThrowHelper.GetNotSupportedException();
             }
         }
 
@@ -150,7 +161,7 @@ namespace DotNetty.Buffers
                     ComponentEntry c = this.components[0];
                     return c.Buffer.GetSpan(index, count);
                 default:
-                    throw new NotSupportedException();
+                    throw ThrowHelper.GetNotSupportedException();
             }
         }
 

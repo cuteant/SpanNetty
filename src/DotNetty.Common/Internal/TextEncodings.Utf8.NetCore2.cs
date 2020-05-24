@@ -12,7 +12,7 @@ namespace DotNetty.Common.Internal
     {
         public static partial class Utf8
         {
-            // borrowed from https://github.com/dotnet/corefxlab/tree/master/src/System.Text.Primitives/System/Text/Encoders
+            // Largely based from https://github.com/dotnet/corefxlab/tree/master/src/System.Text.Primitives/System/Text/Encoders
 
             /// <summary>Converts a span containing a sequence of UTF-8 bytes into UTF-16 bytes.
             ///

@@ -167,7 +167,7 @@ namespace DotNetty.Codecs.Http
 
             void Decrement(object msg)
             {
-                if (ReferenceEquals(null, msg))
+                if (msg is null)
                 {
                     return;
                 }

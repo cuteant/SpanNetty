@@ -123,12 +123,15 @@ namespace DotNetty.Handlers.Tls
             return packetLength;
         }
 
-        public static void NotifyHandshakeFailure(IChannelHandlerContext ctx, Exception cause)
+        public static void NotifyHandshakeFailure(IChannelHandlerContext ctx, Exception cause, bool notify)
         {
             // We have may haven written some parts of data before an exception was thrown so ensure we always flush.
             // See https://github.com/netty/netty/issues/3900#issuecomment-172481830
             ctx.Flush();
-            ctx.FireUserEventTriggered(new TlsHandshakeCompletionEvent(cause));
+            if (notify)
+            {
+                ctx.FireUserEventTriggered(new TlsHandshakeCompletionEvent(cause));
+            }
             ctx.CloseAsync();
         }
     }

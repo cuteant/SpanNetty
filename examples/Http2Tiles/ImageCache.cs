@@ -25,7 +25,7 @@ namespace Http2Tiles
                         var fileBytes = Unpooled.UnreleasableBuffer(Http2ExampleUtil.ToByteBuffer(asm.GetManifestResourceStream(path + name)));
                         ImageBank.Add(name, fileBytes);
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         //e.printStackTrace();
                     }

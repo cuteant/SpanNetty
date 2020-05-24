@@ -1,9 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoPropertyWhenPossible
-// ReSharper disable ConvertToAutoProperty
-// ReSharper disable ConvertToAutoPropertyWithPrivateSetter
 namespace DotNetty.Codecs.Http.Multipart
 {
     using System.IO;
@@ -13,6 +10,9 @@ namespace DotNetty.Codecs.Http.Multipart
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
 
+    /// <summary>
+    /// Abstract HttpData implementation
+    /// </summary>
     public abstract class AbstractHttpData : AbstractReferenceCounted, IHttpData
     {
         static readonly Regex StripPattern = new Regex("(?:^\\s+|\\s+$|\\n)", RegexOptions.Compiled);

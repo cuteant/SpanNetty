@@ -86,55 +86,55 @@
             return this.Unwrap().IndexOfAny(fromIndex, toIndex, values);
         }
 
-        public override void Advance(int count) => throw new ReadOnlyBufferException();
+        public override void Advance(int count) => throw ThrowHelper.GetReadOnlyBufferException();
 
 
-        public override Memory<byte> FreeMemory => throw new ReadOnlyBufferException();
+        public override Memory<byte> FreeMemory => throw ThrowHelper.GetReadOnlyBufferException();
         public override Memory<byte> GetMemory(int sizeHintt = 0)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
         public override Memory<byte> GetMemory(int index, int count)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
         protected internal override Memory<byte> _GetMemory(int index, int count)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
 
-        public override Span<byte> FreeSpan => throw new ReadOnlyBufferException();
+        public override Span<byte> FreeSpan => throw ThrowHelper.GetReadOnlyBufferException();
         public override Span<byte> GetSpan(int sizeHintt = 0)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
         public override Span<byte> GetSpan(int index, int count)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
         protected internal override Span<byte> _GetSpan(int index, int count)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
 
         public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
         public override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer WriteBytes(in ReadOnlySpan<byte> src)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
         public override IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
     }
 }

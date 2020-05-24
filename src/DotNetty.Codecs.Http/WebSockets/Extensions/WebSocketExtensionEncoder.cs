@@ -3,7 +3,7 @@
 
 namespace DotNetty.Codecs.Http.WebSockets.Extensions
 {
-    public abstract class WebSocketExtensionEncoder : MessageToMessageEncoder2<WebSocketFrame>
+    public abstract class WebSocketExtensionEncoder : MessageToMessageEncoder<WebSocketFrame>
     {
     }
 }

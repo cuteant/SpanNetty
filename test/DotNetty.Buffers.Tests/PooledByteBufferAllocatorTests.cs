@@ -27,6 +27,22 @@ namespace DotNetty.Buffers.Tests
             return ((PooledByteBufferAllocator)allocator).Metric.ChunkSize;
         }
 
+        //[Fact]
+        //public void TestTrim()
+        //{
+        //    PooledByteBufferAllocator allocator = (PooledByteBufferAllocator)this.NewAllocator(true);
+
+        //    // Should return false as we never allocated from this thread yet.
+        //    //Assert.False(allocator.TrimCurrentThreadCache());
+
+        //    IByteBuffer directBuffer = allocator.DirectBuffer();
+
+        //    Assert.True(directBuffer.Release());
+
+        //    // Should return true now a cache exists for the calling thread.
+        //    //Assert.True(allocator.trimCurrentThreadCache());
+        //}
+
         [Fact]
         public void PooledUnsafeHeapBufferAndUnsafeDirectBuffer()
         {
@@ -39,6 +55,28 @@ namespace DotNetty.Buffers.Tests
             AssertInstanceOf<PooledHeapByteBuffer>(heapBuffer);
             heapBuffer.Release();
         }
+
+        //public void testIOBuffersAreDirectWhenUnsafeAvailableOrDirectBuffersPooled()
+        //{
+        //    PooledByteBufAllocator allocator = newAllocator(true);
+        //    ByteBuf ioBuffer = allocator.ioBuffer();
+
+        //    assertTrue(ioBuffer.isDirect());
+        //    ioBuffer.release();
+
+        //    PooledByteBufAllocator unpooledAllocator = newUnpooledAllocator();
+        //    ioBuffer = unpooledAllocator.ioBuffer();
+
+        //    if (PlatformDependent.hasUnsafe())
+        //    {
+        //        assertTrue(ioBuffer.isDirect());
+        //    }
+        //    else
+        //    {
+        //        assertFalse(ioBuffer.isDirect());
+        //    }
+        //    ioBuffer.release();
+        //}
 
         [Fact]
         public void ArenaMetricsNoCache() => ArenaMetrics0(new PooledByteBufferAllocator(true, 2, 2, 8192, 11, 0, 0, 0), 100, 0, 100, 100);

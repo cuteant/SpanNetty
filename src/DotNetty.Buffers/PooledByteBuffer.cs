@@ -9,7 +9,13 @@ namespace DotNetty.Buffers
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
 
-    abstract class PooledByteBuffer<T> : AbstractReferenceCountedByteBuffer
+    internal interface IPooledByteBuffer
+    {
+        long Handle { get; }
+        int MaxLength { get; }
+    }
+
+    abstract class PooledByteBuffer<T> : AbstractReferenceCountedByteBuffer, IPooledByteBuffer
     {
         readonly ThreadLocalPool.Handle recyclerHandle;
 
@@ -50,13 +56,16 @@ namespace DotNetty.Buffers
             this.MaxLength = maxLength;
         }
 
+        long IPooledByteBuffer.Handle => this.Handle;
+        int IPooledByteBuffer.MaxLength => this.MaxLength;
+
         /**
           * Method must be called before reuse this {@link PooledByteBufAllocator}
           */
         internal void Reuse(int maxCapacity)
         {
             this.SetMaxCapacity(maxCapacity);
-            this.SetReferenceCount(1);
+            this.ResetReferenceCount();
             this.SetIndex0(0, 0);
             this.DiscardMarks();
         }
@@ -67,52 +76,38 @@ namespace DotNetty.Buffers
             get => this.Length;
         }
 
+        public override int MaxFastWritableBytes => Math.Min(this.MaxLength, this.MaxCapacity) - this.WriterIndex;
+
         public sealed override IByteBuffer AdjustCapacity(int newCapacity)
         {
+            uint uLength = (uint)this.Length;
+            uint unewCapacity = (uint)newCapacity;
+            if (unewCapacity == uLength)
+            {
+                this.EnsureAccessible();
+                return this;
+            }
+
             this.CheckNewCapacity(newCapacity);
 
-            // If the request capacity does not require reallocation, just update the length of the memory.
-            if (this.Chunk.Unpooled)
+            if (!this.Chunk.Unpooled)
             {
-                if (newCapacity == this.Length)
+                uint uMaxLength = (uint)this.MaxLength;
+                // If the request capacity does not require reallocation, just update the length of the memory.
+                if (unewCapacity > uLength)
                 {
-                    return this;
-                }
-            }
-            else
-            {
-                if (newCapacity > this.Length)
-                {
-                    if (newCapacity <= this.MaxLength)
+                    if (unewCapacity <= uMaxLength)
                     {
                         this.Length = newCapacity;
                         return this;
                     }
                 }
-                else if (newCapacity < this.Length)
+                else if (unewCapacity > (uint)this.MaxLength.RightUShift(1)
+                    && (uMaxLength > 512u || unewCapacity > uMaxLength - 16u))
                 {
-                    if (newCapacity > this.MaxLength.RightUShift(1))
-                    {
-                        if (this.MaxLength <= 512)
-                        {
-                            if (newCapacity > this.MaxLength - 16)
-                            {
-                                this.Length = newCapacity;
-                                this.SetIndex(Math.Min(this.ReaderIndex, newCapacity), Math.Min(this.WriterIndex, newCapacity));
-                                return this;
-                            }
-                        }
-                        else
-                        {
-                            // > 512 (i.e. >= 1024)
-                            this.Length = newCapacity;
-                            this.SetIndex(Math.Min(this.ReaderIndex, newCapacity), Math.Min(this.WriterIndex, newCapacity));
-                            return this;
-                        }
-                    }
-                }
-                else
-                {
+                    // here newCapacity < length
+                    this.Length = newCapacity;
+                    this.SetIndex(Math.Min(this.ReaderIndex, newCapacity), Math.Min(this.WriterIndex, newCapacity));
                     return this;
                 }
             }
@@ -143,7 +138,7 @@ namespace DotNetty.Buffers
                 long handle = this.Handle;
                 this.Handle = -1;
                 this.Origin = IntPtr.Zero;
-                this.Memory = default(T);
+                this.Memory = default;
                 this.Chunk.Arena.Free(this.Chunk, handle, this.MaxLength, this.Cache);
                 this.Chunk = null;
                 this.Recycle();
@@ -152,7 +147,7 @@ namespace DotNetty.Buffers
 
         void Recycle() => this.recyclerHandle.Release(this);
 
-        [MethodImpl(InlineMethod.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         protected int Idx(int index) => this.Offset + index;
     }
 }

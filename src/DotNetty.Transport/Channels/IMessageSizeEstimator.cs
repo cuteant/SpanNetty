@@ -3,10 +3,14 @@
 
 namespace DotNetty.Transport.Channels
 {
+    /// <summary>
+    /// Responsible to estimate the size of a message. The size represents approximately how much memory the message will
+    /// reserve in memory.
+    /// </summary>
     public interface IMessageSizeEstimator
     {
         /// <summary>
-        ///     Creates a new handle. The handle provides the actual operations.
+        /// Creates a new handle. The handle provides the actual operations.
         /// </summary>
         IMessageSizeEstimatorHandle NewHandle();
     }

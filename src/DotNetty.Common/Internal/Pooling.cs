@@ -149,7 +149,10 @@ namespace DotNetty.Common.Internal
 
         public static StringBuilder Allocate(int capacity)
         {
-            if (capacity <= 0) { capacity = _defaultPolicy.InitialCapacity; }
+            if ((uint)(capacity - 1) > SharedConstants.TooBigOrNegative) // <= 0
+            {
+                capacity = _defaultPolicy.InitialCapacity;
+            }
 
             var sb = InnerPool.Take();
             if (sb.Capacity < capacity) { sb.Capacity = capacity; }

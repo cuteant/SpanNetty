@@ -3,31 +3,52 @@
 
 namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 {
-    class PerFrameDeflateEncoder : DeflateEncoder
+    /// <summary>
+    /// Per-frame implementation of deflate compressor.
+    /// </summary>
+    sealed class PerFrameDeflateEncoder : DeflateEncoder
     {
+        /// <summary>Constructor</summary>
+        /// <param name="compressionLevel">compression level of the compressor.</param>
+        /// <param name="windowSize">maximum size of the window compressor buffer.</param>
+        /// <param name="noContext">true to disable context takeover.</param>
         public PerFrameDeflateEncoder(int compressionLevel, int windowSize, bool noContext)
-            : base(compressionLevel, windowSize, noContext)
+            : base(compressionLevel, windowSize, noContext, NeverSkipWebSocketExtensionFilter.Instance)
         {
         }
 
-        public override bool TryAcceptOutboundMessage(object msg, out WebSocketFrame frame)
+        /// <summary>Constructor</summary>
+        /// <param name="compressionLevel">compression level of the compressor.</param>
+        /// <param name="windowSize">maximum size of the window compressor buffer.</param>
+        /// <param name="noContext">true to disable context takeover.</param>
+        /// <param name="extensionEncoderFilter">extension encoder filter for per frame deflate encoder.</param>
+        public PerFrameDeflateEncoder(int compressionLevel, int windowSize, bool noContext, IWebSocketExtensionFilter extensionEncoderFilter)
+            : base(compressionLevel, windowSize, noContext, extensionEncoderFilter)
         {
-            frame = msg as WebSocketFrame;
-            if (frame is null) { return false; }
+        }
 
-            switch (frame.Opcode)
+        /// <inheritdoc />
+        public override bool AcceptOutboundMessage(object msg)
+        {
+            if (!(msg is WebSocketFrame wsFrame)) { return false; }
+
+            if (ExtensionEncoderFilter.MustSkip(wsFrame)) { return false; }
+
+            switch (wsFrame.Opcode)
             {
                 case Opcode.Text:
                 case Opcode.Binary:
                 case Opcode.Cont:
-                    return frame.Content.ReadableBytes > 0 && 0u >= (uint)(frame.Rsv & WebSocketRsv.Rsv1);
+                    return (uint)wsFrame.Content.ReadableBytes > 0u && 0u >= (uint)(wsFrame.Rsv & WebSocketRsv.Rsv1);
                 default:
                     return false;
             }
         }
 
+        /// <inheritdoc />
         protected override int Rsv(WebSocketFrame msg) => msg.Rsv | WebSocketRsv.Rsv1;
 
+        /// <inheritdoc />
         protected override bool RemoveFrameTail(WebSocketFrame msg) => true;
     }
 }

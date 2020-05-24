@@ -21,9 +21,10 @@ namespace DotNetty.Buffers
         {
             get
             {
-                if (this.data.ReferenceCount <= 0)
+                var refCnt = this.data.ReferenceCount;
+                if ((uint)(refCnt - 1) > SharedConstants.TooBigOrNegative) // <= 0
                 {
-                    ThrowHelper.ThrowIllegalReferenceCountException(this.data.ReferenceCount);
+                    ThrowHelper.ThrowIllegalReferenceCountException(refCnt);
                 }
 
                 return this.data;

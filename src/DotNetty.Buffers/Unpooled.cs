@@ -310,7 +310,7 @@ namespace DotNetty.Buffers
             foreach (IByteBuffer b in buffers)
             {
                 int bLen = b.ReadableBytes;
-                if (bLen <= 0)
+                if ((uint)(bLen - 1) > SharedConstants.TooBigOrNegative) // bLen <= 0
                 {
                     continue;
                 }

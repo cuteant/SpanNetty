@@ -1,5 +1,6 @@
 ﻿namespace DotNetty.Codecs.Http.Tests.WebSockets
 {
+    using System;
     using System.Linq;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http.WebSockets;
@@ -25,7 +26,16 @@
         private void AssertCorruptedFrameExceptionHandling(byte[] data)
         {
             EmbeddedChannel channel = new EmbeddedChannel(new Utf8FrameValidator());
-            Assert.Throws<CorruptedFrameException>(() => channel.WriteInbound(new TextWebSocketFrame(Unpooled.CopiedBuffer(data))));
+            try
+            {
+                channel.WriteInbound(new TextWebSocketFrame(Unpooled.CopiedBuffer(data)));
+                Assert.False(true);
+            }
+            catch(Exception exc)
+            {
+                Assert.NotNull(exc as CorruptedFrameException);
+                Assert.IsType<CorruptedWebSocketFrameException>(exc);
+            }
             Assert.True(channel.Finish());
             var buf = channel.ReadOutbound<IByteBuffer>();
             Assert.NotNull(buf);

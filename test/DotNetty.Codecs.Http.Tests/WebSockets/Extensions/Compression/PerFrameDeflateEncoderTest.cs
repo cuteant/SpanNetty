@@ -14,11 +14,11 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets.Extensions.Compression
 
     public sealed class PerFrameDeflateEncoderTest
     {
-        readonly Random random;
+        readonly Random _random;
 
         public PerFrameDeflateEncoderTest()
         {
-            this.random = new Random();
+            _random = new Random();
         }
 
         [Fact]
@@ -28,27 +28,29 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets.Extensions.Compression
             var decoderChannel = new EmbeddedChannel(
                 ZlibCodecFactory.NewZlibDecoder(ZlibWrapper.None));
 
+            // initialize
             var payload = new byte[300];
-            this.random.NextBytes(payload);
+            _random.NextBytes(payload);
             var frame = new BinaryWebSocketFrame(true,
                 WebSocketRsv.Rsv3, Unpooled.WrappedBuffer(payload));
 
-            encoderChannel.WriteOutbound(frame);
+            // execute
+            Assert.True(encoderChannel.WriteOutbound(frame));
             var compressedFrame = encoderChannel.ReadOutbound<BinaryWebSocketFrame>();
 
+            // test
             Assert.NotNull(compressedFrame);
             Assert.NotNull(compressedFrame.Content);
-            Assert.IsType<BinaryWebSocketFrame>(compressedFrame);
             Assert.Equal(WebSocketRsv.Rsv1 | WebSocketRsv.Rsv3, compressedFrame.Rsv);
 
-            decoderChannel.WriteInbound(compressedFrame.Content);
-            decoderChannel.WriteInbound(DeflateDecoder.FrameTail);
+            Assert.True(decoderChannel.WriteInbound(compressedFrame.Content));
+            Assert.True(decoderChannel.WriteInbound(DeflateDecoder.FrameTail.Duplicate()));
             var uncompressedPayload = decoderChannel.ReadInbound<IByteBuffer>();
             Assert.Equal(300, uncompressedPayload.ReadableBytes);
 
             var finalPayload = new byte[300];
             uncompressedPayload.ReadBytes(finalPayload);
-            
+
             Assert.Equal(payload, finalPayload);
             uncompressedPayload.Release();
         }
@@ -57,18 +59,21 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets.Extensions.Compression
         public void AlreadyCompressedFrame()
         {
             var encoderChannel = new EmbeddedChannel(new PerFrameDeflateEncoder(9, 15, false));
+
+            // initialize
             var payload = new byte[300];
-            this.random.NextBytes(payload);
+            _random.NextBytes(payload);
 
             var frame = new BinaryWebSocketFrame(true,
                 WebSocketRsv.Rsv3 | WebSocketRsv.Rsv1, Unpooled.WrappedBuffer(payload));
 
-            encoderChannel.WriteOutbound(frame);
+            // execute
+            Assert.True(encoderChannel.WriteOutbound(frame));
             var newFrame = encoderChannel.ReadOutbound<BinaryWebSocketFrame>();
 
+            // test
             Assert.NotNull(newFrame);
             Assert.NotNull(newFrame.Content);
-            Assert.IsType<BinaryWebSocketFrame>(newFrame);
             Assert.Equal(WebSocketRsv.Rsv3 | WebSocketRsv.Rsv1, newFrame.Rsv);
             Assert.Equal(300, newFrame.Content.ReadableBytes);
 
@@ -85,12 +90,13 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets.Extensions.Compression
             var decoderChannel = new EmbeddedChannel(
                     ZlibCodecFactory.NewZlibDecoder(ZlibWrapper.None));
 
+            // initialize
             var payload1 = new byte[100];
-            this.random.NextBytes(payload1);
+            _random.NextBytes(payload1);
             var payload2 = new byte[100];
-            this.random.NextBytes(payload2);
+            _random.NextBytes(payload2);
             var payload3 = new byte[100];
-            this.random.NextBytes(payload3);
+            _random.NextBytes(payload3);
 
             var frame1 = new BinaryWebSocketFrame(false,
                     WebSocketRsv.Rsv3, Unpooled.WrappedBuffer(payload1));
@@ -99,9 +105,10 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets.Extensions.Compression
             var frame3 = new ContinuationWebSocketFrame(true,
                     WebSocketRsv.Rsv3, Unpooled.WrappedBuffer(payload3));
 
-            encoderChannel.WriteOutbound(frame1);
-            encoderChannel.WriteOutbound(frame2);
-            encoderChannel.WriteOutbound(frame3);
+            // execute
+            Assert.True(encoderChannel.WriteOutbound(frame1));
+            Assert.True(encoderChannel.WriteOutbound(frame2));
+            Assert.True(encoderChannel.WriteOutbound(frame3));
             var compressedFrame1 = encoderChannel.ReadOutbound<BinaryWebSocketFrame>();
             var compressedFrame2 = encoderChannel.ReadOutbound<ContinuationWebSocketFrame>();
             var compressedFrame3 = encoderChannel.ReadOutbound<ContinuationWebSocketFrame>();
@@ -116,29 +123,53 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets.Extensions.Compression
             Assert.False(compressedFrame2.IsFinalFragment);
             Assert.True(compressedFrame3.IsFinalFragment);
 
-            decoderChannel.WriteInbound(compressedFrame1.Content);
-            decoderChannel.WriteInbound(Unpooled.WrappedBuffer(DeflateDecoder.FrameTail));
+            Assert.True(decoderChannel.WriteInbound(compressedFrame1.Content));
+            Assert.True(decoderChannel.WriteInbound(Unpooled.WrappedBuffer(DeflateDecoder.FrameTail.Duplicate())));
             var uncompressedPayload1 = decoderChannel.ReadInbound<IByteBuffer>();
             var finalPayload1 = new byte[100];
             uncompressedPayload1.ReadBytes(finalPayload1);
             Assert.Equal(payload1, finalPayload1);
             uncompressedPayload1.Release();
 
-            decoderChannel.WriteInbound(compressedFrame2.Content);
-            decoderChannel.WriteInbound(Unpooled.WrappedBuffer(DeflateDecoder.FrameTail));
+            Assert.True(decoderChannel.WriteInbound(compressedFrame2.Content));
+            Assert.True(decoderChannel.WriteInbound(Unpooled.WrappedBuffer(DeflateDecoder.FrameTail.Duplicate())));
             var uncompressedPayload2 = decoderChannel.ReadInbound<IByteBuffer>();
             var finalPayload2 = new byte[100];
             uncompressedPayload2.ReadBytes(finalPayload2);
             Assert.Equal(payload2, finalPayload2);
             uncompressedPayload2.Release();
 
-            decoderChannel.WriteInbound(compressedFrame3.Content);
-            decoderChannel.WriteInbound(Unpooled.WrappedBuffer(DeflateDecoder.FrameTail));
+            Assert.True(decoderChannel.WriteInbound(compressedFrame3.Content));
+            Assert.True(decoderChannel.WriteInbound(Unpooled.WrappedBuffer(DeflateDecoder.FrameTail.Duplicate())));
             var uncompressedPayload3 = decoderChannel.ReadInbound<IByteBuffer>();
             var finalPayload3 = new byte[100];
             uncompressedPayload3.ReadBytes(finalPayload3);
             Assert.Equal(payload3, finalPayload3);
             uncompressedPayload3.Release();
+        }
+
+        [Fact]
+        public void CompressionSkip()
+        {
+            EmbeddedChannel encoderChannel = new EmbeddedChannel(
+                    new PerFrameDeflateEncoder(9, 15, false, AlwaysSkipWebSocketExtensionFilter.Instance));
+            byte[] payload = new byte[300];
+            _random.NextBytes(payload);
+            BinaryWebSocketFrame binaryFrame = new BinaryWebSocketFrame(true,
+                                                                        0, Unpooled.WrappedBuffer(payload));
+
+            // execute
+            Assert.True(encoderChannel.WriteOutbound(binaryFrame.Copy()));
+            var outboundFrame = encoderChannel.ReadOutbound<BinaryWebSocketFrame>();
+
+            // test
+            Assert.NotNull(outboundFrame);
+            Assert.NotNull(outboundFrame.Content);
+            Assert.Equal(payload, ByteBufferUtil.GetBytes(outboundFrame.Content));
+            Assert.Equal(0, outboundFrame.Rsv);
+            Assert.True(outboundFrame.Release());
+
+            Assert.False(encoderChannel.Finish());
         }
     }
 }

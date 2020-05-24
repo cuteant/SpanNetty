@@ -338,7 +338,7 @@ namespace DotNetty.Codecs.Http2
                     break;
 
                 default:
-                    if (msg is IHttp2Frame frame)
+                    if (msg is IHttp2Frame)
                     {
                         ReferenceCountUtil.Release(msg);
                         ThrowHelper.ThrowUnsupportedMessageTypeException();

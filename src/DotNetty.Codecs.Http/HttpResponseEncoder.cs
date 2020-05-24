@@ -7,12 +7,14 @@ namespace DotNetty.Codecs.Http
 
     public class HttpResponseEncoder : HttpObjectEncoder<IHttpResponse>
     {
-        public override bool TryAcceptOutboundMessage(object msg, out object cast)
+        /// <inheritdoc />
+        public override bool AcceptOutboundMessage(object msg)
         {
-            var result = base.TryAcceptOutboundMessage(msg, out cast);
+            var result = base.AcceptOutboundMessage(msg);
             return result && !(msg is IHttpRequest);
         }
 
+        /// <inheritdoc />
         protected internal override void EncodeInitialLine(IByteBuffer buf, IHttpResponse response)
         {
             response.ProtocolVersion.Encode(buf);
@@ -21,6 +23,7 @@ namespace DotNetty.Codecs.Http
             buf.WriteShort(HttpConstants.CrlfShort);
         }
 
+        /// <inheritdoc />
         protected override void SanitizeHeadersBeforeEncode(IHttpResponse msg, bool isAlwaysEmpty)
         {
             if (isAlwaysEmpty)
@@ -50,6 +53,7 @@ namespace DotNetty.Codecs.Http
             }
         }
 
+        /// <inheritdoc />
         protected override bool IsContentAlwaysEmpty(IHttpResponse msg)
         {
             // Correctly handle special cases as stated in:

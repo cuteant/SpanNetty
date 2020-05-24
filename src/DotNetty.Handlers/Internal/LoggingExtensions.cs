@@ -29,7 +29,7 @@ namespace DotNetty.Handlers
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void IsEndOfInputFailed<T>(this IInternalLogger logger, Exception exception)
         {
-            logger.Warn($"{StringUtil.SimpleClassName(typeof(ChunkedWriteHandler<T>))}.IsEndOfInput failed", exception);
+            logger.Warn($"{StringUtil.SimpleClassName(typeof(ChunkedWriteHandler<T>))} failed", exception);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

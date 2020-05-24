@@ -162,7 +162,7 @@ namespace DotNetty.Transport.Channels
         /// <param name="maximum">the inclusive upper bound of the expected buffer size</param>
         public AdaptiveRecvByteBufAllocator(int minimum, int initial, int maximum)
         {
-            if (minimum <= 0) { ThrowHelper.ThrowArgumentException_Positive(minimum, ExceptionArgument.minimum); }
+            if ((uint)(minimum - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(minimum, ExceptionArgument.minimum); }
             if (initial < minimum) { ThrowHelper.ThrowArgumentOutOfRangeException(); }
             if (maximum < initial) { ThrowHelper.ThrowArgumentOutOfRangeException(); }
 

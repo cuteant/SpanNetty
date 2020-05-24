@@ -46,7 +46,7 @@ namespace DotNetty.Transport.Channels.Local
             if (ReferenceEquals(this, other))
                 return 0;
             
-            if (ReferenceEquals(null, other))
+            if (other is null)
                 return 1;
             
             return string.Compare(this.id, other.id, StringComparison.Ordinal);

@@ -555,6 +555,12 @@ namespace DotNetty.Buffers
             return base.AddComponents(buffers);
         }
 
+        public override CompositeByteBuffer AddFlattenedComponents(bool increaseWriterIndex, IByteBuffer buffer)
+        {
+            RecordLeakNonRefCountingOperation(this.Leak);
+            return base.AddFlattenedComponents(increaseWriterIndex, buffer);
+        }
+
         public override CompositeByteBuffer RemoveComponent(int cIndex)
         {
             RecordLeakNonRefCountingOperation(this.Leak);

@@ -8,8 +8,19 @@ namespace DotNetty.Codecs
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
+    /// <summary>
+    /// Provides utility methods related to <see cref="IHeaders{TKey, TValue}"/>.
+    /// </summary>
     public static class HeadersUtils
     {
+        /// <summary>
+        /// <see cref="IHeaders{TKey, TValue}.GetAll(TKey)"/> and convert each element of <see cref="List{TValue}"/> to a <see cref="String"/>.
+        /// </summary>
+        /// <typeparam name="TKey"></typeparam>
+        /// <typeparam name="TValue"></typeparam>
+        /// <param name="headers">the headers to get the <paramref name="name"/> from</param>
+        /// <param name="name">the name of the header to retrieve</param>
+        /// <returns>a <see cref="List{String}"/> of header values or an empty <see cref="List{String}"/> if no values are found.</returns>
         public static List<string> GetAllAsString<TKey, TValue>(IHeaders<TKey, TValue> headers, TKey name)
             where TKey : class
         {
@@ -27,6 +38,14 @@ namespace DotNetty.Codecs
             return values;
         }
 
+        /// <summary>
+        /// <see cref="IHeaders{TKey, TValue}.Get(TKey, TValue)"/> and convert the result to a <see cref="String"/>.
+        /// </summary>
+        /// <typeparam name="TKey"></typeparam>
+        /// <typeparam name="TValue"></typeparam>
+        /// <param name="headers">the headers to get the <paramref name="name"/> from</param>
+        /// <param name="name">the name of the header to retrieve</param>
+        /// <param name="value">the first header value if the header is found. <c>null</c> if there's no such entry.</param>
         public static bool TryGetAsString<TKey, TValue>(IHeaders<TKey, TValue> headers, TKey name, out string value)
             where TKey : class
         {
@@ -37,11 +56,19 @@ namespace DotNetty.Codecs
             }
             else
             {
-                value = default(string);
+                value = default;
                 return false;
             }
         }
 
+        /// <summary>
+        /// Helper for implementing toString for <see cref="DefaultHeaders{TKey, TValue}"/> and wrappers such as DefaultHttpHeaders.
+        /// </summary>
+        /// <typeparam name="TKey"></typeparam>
+        /// <typeparam name="TValue"></typeparam>
+        /// <param name="headers">the headers</param>
+        /// <param name="size">the size of the headers</param>
+        /// <returns>a String representation of the headers</returns>
         public static string ToString<TKey, TValue>(IEnumerable<HeaderEntry<TKey, TValue>> headers, int size)
             where TKey : class
         {
@@ -60,11 +87,16 @@ namespace DotNetty.Codecs
                 {
                     sb.Append(header.Key).Append(": ").Append(header.Value).Append(", ");
                 }
-                sb.Length = sb.Length - 2;
+                sb.Length -= 2;
                 return StringBuilderManager.ReturnAndFree(sb.Append(']'));
             }
         }
 
+        /// <summary>
+        /// <see cref="IHeaders{TKey, TValue}.Names"/> and convert each element of <see cref="ISet{ICharSequence}"/> to a <see cref="String"/>.
+        /// </summary>
+        /// <param name="headers">the headers to get the names from</param>
+        /// <returns>a <see cref="IList{String}"/> of header values or an empty <see cref="IList{String}"/> if no values are found.</returns>
         public static IList<string> NamesAsString(IHeaders<ICharSequence, ICharSequence> headers)
         {
             ISet<ICharSequence> allNames = headers.Names();
@@ -78,11 +110,5 @@ namespace DotNetty.Codecs
 
             return names;
         }
-
-        internal static void ThrowArgumentNullException(string name) => throw new ArgumentNullException(name);
-
-        internal static void ThrowArgumentException(string message) => throw new ArgumentException(message);
-
-        internal static void ThrowInvalidOperationException(string message) => throw new InvalidOperationException(message);
     }
 }

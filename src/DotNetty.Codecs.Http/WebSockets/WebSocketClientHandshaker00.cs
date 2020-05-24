@@ -5,20 +5,61 @@ namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
     using System.Globalization;
-    using System.Runtime.CompilerServices;
     using DotNetty.Buffers;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
+    /// <summary>
+    /// Performs client side opening and closing handshakes for web socket specification version <a
+    /// href="http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-00" >draft-ietf-hybi-thewebsocketprotocol-00</a>
+    /// <para>A very large portion of this code was taken from the Netty 3.2 HTTP example.</para>
+    /// </summary>
     public class WebSocketClientHandshaker00 : WebSocketClientHandshaker
     {
-        static readonly AsciiString Websocket = AsciiString.Cached("WebSocket");
+        private static readonly AsciiString Websocket = AsciiString.Cached("WebSocket");
 
-        IByteBuffer expectedChallengeResponseBytes;
+        private IByteBuffer _expectedChallengeResponseBytes;
 
+        /// <summary>Creates a new instance with the specified destination WebSocket location and version to initiate.</summary>
+        /// <param name="webSocketUrl">URL for web socket communications. e.g "ws://myhost.com/mypath". Subsequent web socket frames will be
+        /// sent to this URL.</param>
+        /// <param name="version">Version of web socket specification to use to connect to the server</param>
+        /// <param name="subprotocol">Sub protocol request sent to the server.</param>
+        /// <param name="customHeaders">Map of custom headers to add to the client request</param>
+        /// <param name="maxFramePayloadLength">Maximum length of a frame's payload</param>
         public WebSocketClientHandshaker00(Uri webSocketUrl, WebSocketVersion version, string subprotocol,
             HttpHeaders customHeaders, int maxFramePayloadLength)
-            : base(webSocketUrl, version, subprotocol, customHeaders, maxFramePayloadLength)
+            : this(webSocketUrl, version, subprotocol, customHeaders, maxFramePayloadLength, DefaultForceCloseTimeoutMillis)
+        {
+        }
+
+        /// <summary>Creates a new instance with the specified destination WebSocket location and version to initiate.</summary>
+        /// <param name="webSocketUrl">URL for web socket communications. e.g "ws://myhost.com/mypath". Subsequent web socket frames will be
+        /// sent to this URL.</param>
+        /// <param name="version">Version of web socket specification to use to connect to the server</param>
+        /// <param name="subprotocol">Sub protocol request sent to the server.</param>
+        /// <param name="customHeaders">Map of custom headers to add to the client request</param>
+        /// <param name="maxFramePayloadLength">Maximum length of a frame's payload</param>
+        /// <param name="forceCloseTimeoutMillis">Close the connection if it was not closed by the server after timeout specified</param>
+        internal WebSocketClientHandshaker00(Uri webSocketUrl, WebSocketVersion version, string subprotocol,
+            HttpHeaders customHeaders, int maxFramePayloadLength, long forceCloseTimeoutMillis)
+            : this(webSocketUrl, version, subprotocol, customHeaders, maxFramePayloadLength, forceCloseTimeoutMillis, false)
+        {
+        }
+
+        /// <summary>Creates a new instance with the specified destination WebSocket location and version to initiate.</summary>
+        /// <param name="webSocketUrl">URL for web socket communications. e.g "ws://myhost.com/mypath". Subsequent web socket frames will be
+        /// sent to this URL.</param>
+        /// <param name="version">Version of web socket specification to use to connect to the server</param>
+        /// <param name="subprotocol">Sub protocol request sent to the server.</param>
+        /// <param name="customHeaders">Map of custom headers to add to the client request</param>
+        /// <param name="maxFramePayloadLength">Maximum length of a frame's payload</param>
+        /// <param name="forceCloseTimeoutMillis">Close the connection if it was not closed by the server after timeout specified</param>
+        /// <param name="absoluteUpgradeUrl">Use an absolute url for the Upgrade request, typically when connecting through an HTTP proxy over
+        /// clear HTTP</param>
+        internal WebSocketClientHandshaker00(Uri webSocketUrl, WebSocketVersion version, string subprotocol,
+            HttpHeaders customHeaders, int maxFramePayloadLength, long forceCloseTimeoutMillis, bool absoluteUpgradeUrl)
+            : base(webSocketUrl, version, subprotocol, customHeaders, maxFramePayloadLength, forceCloseTimeoutMillis, absoluteUpgradeUrl)
         {
         }
 
@@ -56,19 +97,18 @@ namespace DotNetty.Codecs.Http.WebSockets
                 PlatformDependent.CopyMemory(key3, 0, bytes + 8, 8);
             }
 
-            this.expectedChallengeResponseBytes = Unpooled.WrappedBuffer(WebSocketUtil.Md5(challenge));
+            _expectedChallengeResponseBytes = Unpooled.WrappedBuffer(WebSocketUtil.Md5(challenge));
 
-            // Get path
-            Uri wsUrl = this.Uri;
-            string path = RawPath(wsUrl);
+            Uri wsUrl = Uri;
 
             // Format request
-            var request = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, path);
+            var request = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, UpgradeUrl(wsUrl),
+                Unpooled.WrappedBuffer(key3));
             HttpHeaders headers = request.Headers;
 
-            if (this.CustomHeaders is object)
+            if (CustomHeaders is object)
             {
-                headers.Add(this.CustomHeaders);
+                headers.Add(CustomHeaders);
             }
 
             headers.Set(HttpHeaderNames.Upgrade, Websocket)
@@ -78,7 +118,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 .Set(HttpHeaderNames.SecWebsocketKey1, key1)
                 .Set(HttpHeaderNames.SecWebsocketKey2, key2);
 
-            string expectedSubprotocol = this.ExpectedSubprotocol;
+            string expectedSubprotocol = ExpectedSubprotocol;
             if (!string.IsNullOrEmpty(expectedSubprotocol))
             {
                 headers.Set(HttpHeaderNames.SecWebsocketProtocol, expectedSubprotocol);
@@ -87,7 +127,6 @@ namespace DotNetty.Codecs.Http.WebSockets
             // Set Content-Length to workaround some known defect.
             // See also: http://www.ietf.org/mail-archive/web/hybi/current/msg02149.html
             headers.Set(HttpHeaderNames.ContentLength, key3.Length);
-            request.Content.WriteBytes(key3);
             return request;
         }
 
@@ -100,8 +139,8 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             HttpHeaders headers = response.Headers;
 
-            if (!headers.TryGet(HttpHeaderNames.Upgrade, out ICharSequence upgrade) 
-                ||!Websocket.ContentEqualsIgnoreCase(upgrade))
+            if (!headers.TryGet(HttpHeaderNames.Upgrade, out ICharSequence upgrade)
+                || !Websocket.ContentEqualsIgnoreCase(upgrade))
             {
                 ThrowHelper.ThrowWebSocketHandshakeException_InvalidHandshakeResponseU(upgrade);
             }
@@ -113,7 +152,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 
             IByteBuffer challenge = response.Content;
-            if (!challenge.Equals(this.expectedChallengeResponseBytes))
+            if (!challenge.Equals(_expectedChallengeResponseBytes))
             {
                 ThrowHelper.ThrowWebSocketHandshakeException_InvalidChallenge();
             }
@@ -159,7 +198,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             return key;
         }
 
-        protected internal override IWebSocketFrameDecoder NewWebSocketDecoder() => new WebSocket00FrameDecoder(this.MaxFramePayloadLength);
+        protected internal override IWebSocketFrameDecoder NewWebSocketDecoder() => new WebSocket00FrameDecoder(MaxFramePayloadLength);
 
         protected internal override IWebSocketFrameEncoder NewWebSocketEncoder() => new WebSocket00FrameEncoder();
     }

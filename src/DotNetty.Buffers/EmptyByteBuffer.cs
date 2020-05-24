@@ -5,6 +5,7 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -31,7 +32,7 @@ namespace DotNetty.Buffers
 
         public int Capacity => 0;
 
-        public IByteBuffer AdjustCapacity(int newCapacity) => throw new NotSupportedException();
+        public IByteBuffer AdjustCapacity(int newCapacity) => throw ThrowHelper.GetNotSupportedException();
 
         public int MaxCapacity => 0;
 
@@ -40,6 +41,8 @@ namespace DotNetty.Buffers
         public IByteBuffer Unwrap() => null;
 
         public bool IsDirect => true;
+
+        public bool IsAccessible => true;
 
         public bool IsReadOnly => false;
 
@@ -65,6 +68,8 @@ namespace DotNetty.Buffers
         public int WritableBytes => 0;
 
         public int MaxWritableBytes => 0;
+
+        public int MaxFastWritableBytes => 0;
 
         public bool IsWritable() => false;
 
@@ -99,33 +104,28 @@ namespace DotNetty.Buffers
         {
             if (minWritableBytes < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(minWritableBytes, ExceptionArgument.minWritableBytes); }
 
-            if (0u >= (uint)minWritableBytes)
-            {
-                return 0;
-            }
-
-            return 1;
+            return 0u >= (uint)minWritableBytes ? 0 : 1;
         }
 
-        public bool GetBoolean(int index) => throw new IndexOutOfRangeException();
+        public bool GetBoolean(int index) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public byte GetByte(int index) => throw new IndexOutOfRangeException();
+        public byte GetByte(int index) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public short GetShort(int index) => throw new IndexOutOfRangeException();
+        public short GetShort(int index) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public short GetShortLE(int index) => throw new IndexOutOfRangeException();
+        public short GetShortLE(int index) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public int GetUnsignedMedium(int index) => throw new IndexOutOfRangeException();
+        public int GetUnsignedMedium(int index) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public int GetUnsignedMediumLE(int index) => throw new IndexOutOfRangeException();
+        public int GetUnsignedMediumLE(int index) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public int GetInt(int index) => throw new IndexOutOfRangeException();
+        public int GetInt(int index) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public int GetIntLE(int index) => throw new IndexOutOfRangeException();
+        public int GetIntLE(int index) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public long GetLong(int index) => throw new IndexOutOfRangeException();
+        public long GetLong(int index) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public long GetLongLE(int index) => throw new IndexOutOfRangeException();
+        public long GetLongLE(int index) => throw ThrowHelper.GetIndexOutOfRangeException();
 
         public IByteBuffer GetBytes(int index, IByteBuffer destination, int dstIndex, int length) => this.CheckIndex(index, length);
 
@@ -137,35 +137,35 @@ namespace DotNetty.Buffers
 
         public ICharSequence GetCharSequence(int index, int length, Encoding encoding)
         {
-            this.CheckIndex(index, length);
+            _ = this.CheckIndex(index, length);
             return null;
         }
 
         public string GetString(int index, int length, Encoding encoding)
         {
-            this.CheckIndex(index, length);
+            _ = this.CheckIndex(index, length);
             return null;
         }
 
-        public IByteBuffer SetBoolean(int index, bool value) => throw new IndexOutOfRangeException();
+        public IByteBuffer SetBoolean(int index, bool value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer SetByte(int index, int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer SetByte(int index, int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer SetShort(int index, int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer SetShort(int index, int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer SetShortLE(int index, int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer SetShortLE(int index, int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer SetMedium(int index, int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer SetMedium(int index, int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer SetMediumLE(int index, int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer SetMediumLE(int index, int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer SetInt(int index, int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer SetInt(int index, int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer SetIntLE(int index, int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer SetIntLE(int index, int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer SetLong(int index, long value) => throw new IndexOutOfRangeException();
+        public IByteBuffer SetLong(int index, long value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer SetLongLE(int index, long value) => throw new IndexOutOfRangeException();
+        public IByteBuffer SetLongLE(int index, long value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
         public IByteBuffer SetBytes(int index, IByteBuffer src, int length) => this.CheckIndex(index, length);
 
@@ -177,39 +177,39 @@ namespace DotNetty.Buffers
 
         public Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
-            this.CheckIndex(index, length);
+            _ = this.CheckIndex(index, length);
             return TaskUtil.Zero;
         }
 
         public IByteBuffer SetZero(int index, int length) => this.CheckIndex(index, length);
 
-        public int SetCharSequence(int index, ICharSequence sequence, Encoding encoding) => throw new IndexOutOfRangeException();
+        public int SetCharSequence(int index, ICharSequence sequence, Encoding encoding) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public int SetString(int index, string value, Encoding encoding) => throw new IndexOutOfRangeException();
+        public int SetString(int index, string value, Encoding encoding) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public bool ReadBoolean() => throw new IndexOutOfRangeException();
+        public bool ReadBoolean() => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public byte ReadByte() => throw new IndexOutOfRangeException();
+        public byte ReadByte() => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public short ReadShort() => throw new IndexOutOfRangeException();
+        public short ReadShort() => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public short ReadShortLE() => throw new IndexOutOfRangeException();
+        public short ReadShortLE() => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public int ReadMedium() => throw new IndexOutOfRangeException();
+        public int ReadMedium() => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public int ReadMediumLE() => throw new IndexOutOfRangeException();
+        public int ReadMediumLE() => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public int ReadUnsignedMedium() => throw new IndexOutOfRangeException();
+        public int ReadUnsignedMedium() => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public int ReadUnsignedMediumLE() => throw new IndexOutOfRangeException();
+        public int ReadUnsignedMediumLE() => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public int ReadInt() => throw new IndexOutOfRangeException();
+        public int ReadInt() => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public int ReadIntLE() => throw new IndexOutOfRangeException();
+        public int ReadIntLE() => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public long ReadLong() => throw new IndexOutOfRangeException();
+        public long ReadLong() => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public long ReadLongLE() => throw new IndexOutOfRangeException();
+        public long ReadLongLE() => throw ThrowHelper.GetIndexOutOfRangeException();
 
         public IByteBuffer ReadBytes(int length) => this.CheckLength(length);
 
@@ -225,41 +225,41 @@ namespace DotNetty.Buffers
 
         public ICharSequence ReadCharSequence(int length, Encoding encoding)
         {
-            this.CheckLength(length);
-            return null;
+            _ = this.CheckLength(length);
+            return StringCharSequence.Empty;
         }
 
         public string ReadString(int length, Encoding encoding)
         {
-            this.CheckLength(length);
-            return null;
+            _ = this.CheckLength(length);
+            return string.Empty;
         }
 
         public IByteBuffer SkipBytes(int length) => this.CheckLength(length);
 
-        public IByteBuffer WriteBoolean(bool value) => throw new IndexOutOfRangeException();
+        public IByteBuffer WriteBoolean(bool value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer WriteByte(int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer WriteByte(int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer WriteShort(int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer WriteShort(int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer WriteShortLE(int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer WriteShortLE(int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer WriteMedium(int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer WriteMedium(int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer WriteMediumLE(int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer WriteMediumLE(int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer WriteUnsignedMedium(int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer WriteUnsignedMedium(int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer WriteUnsignedMediumLE(int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer WriteUnsignedMediumLE(int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer WriteInt(int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer WriteInt(int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer WriteIntLE(int value) => throw new IndexOutOfRangeException();
+        public IByteBuffer WriteIntLE(int value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer WriteLong(long value) => throw new IndexOutOfRangeException();
+        public IByteBuffer WriteLong(long value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer WriteLongLE(long value) => throw new IndexOutOfRangeException();
+        public IByteBuffer WriteLongLE(long value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
         public IByteBuffer WriteBytes(IByteBuffer src, int length) => this.CheckLength(length);
 
@@ -271,25 +271,25 @@ namespace DotNetty.Buffers
 
         public IByteBuffer WriteZero(int length) => this.CheckLength(length);
 
-        public int WriteCharSequence(ICharSequence sequence, Encoding encoding) => throw new IndexOutOfRangeException();
+        public int WriteCharSequence(ICharSequence sequence, Encoding encoding) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public int WriteString(string value, Encoding encoding) => throw new IndexOutOfRangeException();
+        public int WriteString(string value, Encoding encoding) => throw ThrowHelper.GetIndexOutOfRangeException();
 
         public int ForEachByte(int index, int length, IByteProcessor processor)
         {
-            this.CheckIndex(index, length);
+            _ = this.CheckIndex(index, length);
             return IndexNotFound;
         }
 
         public int ForEachByteDesc(int index, int length, IByteProcessor processor)
         {
-            this.CheckIndex(index, length);
+            _ = this.CheckIndex(index, length);
             return IndexNotFound;
         }
 
         public IByteBuffer Copy(int index, int length)
         {
-            this.CheckIndex(index, length);
+            _ = this.CheckIndex(index, length);
             return this;
         }
 
@@ -309,13 +309,13 @@ namespace DotNetty.Buffers
 
         public ArraySegment<byte> GetIoBuffer(int index, int length)
         {
-            this.CheckIndex(index, length);
+            _ = this.CheckIndex(index, length);
             return EmptyBuffer;
         }
 
         public ArraySegment<byte>[] GetIoBuffers(int index, int length)
         {
-            this.CheckIndex(index, length);
+            _ = this.CheckIndex(index, length);
             return EmptyBuffers;
         }
 
@@ -329,7 +329,7 @@ namespace DotNetty.Buffers
 
         public bool HasMemoryAddress => false;
 
-        public ref byte GetPinnableMemoryAddress() => throw new NotSupportedException();
+        public ref byte GetPinnableMemoryAddress() => throw ThrowHelper.GetNotSupportedException();
 
         public IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
 
@@ -373,46 +373,62 @@ namespace DotNetty.Buffers
 
         public Task WriteBytesAsync(Stream stream, int length, CancellationToken cancellationToken)
         {
-            this.CheckLength(length);
+            _ = this.CheckLength(length);
             return TaskUtil.Completed;
         }
 
-        // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         IByteBuffer CheckIndex(int index)
         {
-            if (index != 0)
+            if ((uint)index > 0u) // != 0
             {
                 ThrowHelper.ThrowIndexOutOfRangeException();
             }
             return this;
         }
 
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         IByteBuffer CheckIndex(int index, int length)
         {
-            if (length < 0)
+            if ((uint)index > 0u || (uint)length > 0u)
             {
-                ThrowHelper.ThrowArgumentException_CheckIndex(length);
-            }
-            if (index != 0 || length != 0)
-            {
-                ThrowHelper.ThrowIndexOutOfRangeException();
+                CheckIndex0(index, length);
             }
 
             return this;
         }
-        // ReSharper restore ParameterOnlyUsedForPreconditionCheck.Local
 
-        IByteBuffer CheckLength(int length)
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        void CheckIndex0(int index, int length)
         {
             if (length < 0)
             {
-                ThrowHelper.ThrowArgumentException_CheckLength(length);
+                ThrowHelper.ThrowArgumentException_PositiveOrZero(length, ExceptionArgument.length);
             }
-            if (length != 0)
+            if ((uint)index > 0u || length > 0)
             {
                 ThrowHelper.ThrowIndexOutOfRangeException();
             }
+        }
+
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        IByteBuffer CheckLength(int length)
+        {
+            if ((uint)length > 0u) { CheckLength0(length); }
             return this;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        void CheckLength0(int length)
+        {
+            if (length < 0)
+            {
+                ThrowHelper.ThrowArgumentException_PositiveOrZero(length, ExceptionArgument.length);
+            }
+            if (length > 0)
+            {
+                ThrowHelper.ThrowIndexOutOfRangeException();
+            }
         }
     }
 }

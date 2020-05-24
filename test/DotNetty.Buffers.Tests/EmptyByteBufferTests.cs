@@ -50,5 +50,12 @@ namespace DotNetty.Buffers.Tests
             Assert.False(empty.HasMemoryAddress);
             Assert.Throws<NotSupportedException>(() => empty.GetPinnableMemoryAddress());
         }
+
+        [Fact]
+        public void GetCharSequence()
+        {
+            var empty = new EmptyByteBuffer(UnpooledByteBufferAllocator.Default);
+            Assert.Equal("", empty.ReadCharSequence(0, System.Text.Encoding.ASCII));
+        }
     }
 }

@@ -51,7 +51,6 @@ namespace DotNetty.Buffers
             int maxCachedBufferCapacity, int freeSweepAllocationThreshold)
         {
             if (maxCachedBufferCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxCachedBufferCapacity, ExceptionArgument.maxCachedBufferCapacity); }
-            if (freeSweepAllocationThreshold <= 0) { ThrowHelper.ThrowArgumentException_Positive(freeSweepAllocationThreshold, ExceptionArgument.freeSweepAllocationThreshold); }
 
             this.freeSweepAllocationThreshold = freeSweepAllocationThreshold;
             this.HeapArena = heapArena;
@@ -104,6 +103,7 @@ namespace DotNetty.Buffers
             if (this.tinySubPageDirectCaches is object || this.smallSubPageDirectCaches is object || this.normalDirectCaches is object
                 || this.tinySubPageHeapCaches is object || this.smallSubPageHeapCaches is object || this.normalHeapCaches is object)
             {
+                if (freeSweepAllocationThreshold < 1) { ThrowHelper.ThrowArgumentException_Positive(freeSweepAllocationThreshold, ExceptionArgument.freeSweepAllocationThreshold); }
                 this.freeTask = this.Free0;
                 this.deathWatchThread = Thread.CurrentThread;
 
@@ -121,7 +121,7 @@ namespace DotNetty.Buffers
         static MemoryRegionCache[] CreateSubPageCaches(
             int cacheSize, int numCaches, SizeClass sizeClass)
         {
-            if (cacheSize > 0)
+            if (cacheSize > 0 && numCaches > 0)
             {
                 var cache = new MemoryRegionCache[numCaches];
                 for (int i = 0; i < cache.Length; i++)
@@ -140,7 +140,7 @@ namespace DotNetty.Buffers
         static MemoryRegionCache[] CreateNormalCaches(
             int cacheSize, int maxCachedBufferCapacity, PoolArena<T> area)
         {
-            if (cacheSize > 0)
+            if (cacheSize > 0 && maxCachedBufferCapacity > 0)
             {
                 int max = Math.Min(area.ChunkSize, maxCachedBufferCapacity);
                 int arraySize = Math.Max(1, Log2(max / area.PageSize) + 1);
@@ -171,19 +171,19 @@ namespace DotNetty.Buffers
         }
 
         /**
-         * Try to allocate a tiny buffer out of the cache. Returns {@code true} if successful {@code false} otherwise
+         * Try to allocate a tiny buffer out of the cache. Returns <c>true</c> if successful <c>false</c> otherwise
          */
         internal bool AllocateTiny(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
             this.Allocate(this.CacheForTiny(area, normCapacity), buf, reqCapacity);
 
         /**
-         * Try to allocate a small buffer out of the cache. Returns {@code true} if successful {@code false} otherwise
+         * Try to allocate a small buffer out of the cache. Returns <c>true</c> if successful <c>false</c> otherwise
          */
         internal bool AllocateSmall(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
             this.Allocate(this.CacheForSmall(area, normCapacity), buf, reqCapacity);
 
         /**
-         * Try to allocate a small buffer out of the cache. Returns {@code true} if successful {@code false} otherwise
+         * Try to allocate a small buffer out of the cache. Returns <c>true</c> if successful <c>false</c> otherwise
          */
         internal bool AllocateNormal(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
             this.Allocate(this.CacheForNormal(area, normCapacity), buf, reqCapacity);
@@ -206,7 +206,7 @@ namespace DotNetty.Buffers
 
         /**
          * Add {@link PoolChunk} and {@code handle} to the cache if there is enough room.
-         * Returns {@code true} if it fit into the cache {@code false} otherwise.
+         * Returns <c>true</c> if it fit into the cache <c>false</c> otherwise.
          */
         internal bool Add(PoolArena<T> area, PoolChunk<T> chunk, long handle, int normCapacity, SizeClass sizeClass)
         {
@@ -474,7 +474,7 @@ namespace DotNetty.Buffers
                 // recycle now so PoolChunk can be GC'ed.
                 entry.Recycle();
 
-                chunk.Arena.FreeChunk(chunk, handle, this.sizeClass);
+                chunk.Arena.FreeChunk(chunk, handle, this.sizeClass, false);
             }
 
             sealed class Entry

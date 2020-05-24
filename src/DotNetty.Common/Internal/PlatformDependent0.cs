@@ -17,7 +17,7 @@ namespace DotNetty.Common.Internal
         [MethodImpl(InlineMethod.AggressiveInlining)]
         internal static unsafe bool ByteArrayEquals(byte* bytes1, int startPos1, byte* bytes2, int startPos2, int length)
         {
-            if (length <= 0)
+            if ((uint)(length - 1) > SharedConstants.TooBigOrNegative) // <= 0
             {
                 return true;
             }

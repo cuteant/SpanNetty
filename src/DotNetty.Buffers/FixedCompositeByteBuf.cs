@@ -101,7 +101,7 @@ namespace DotNetty.Buffers
                     case 1:
                         return this.Buffer(0).Array;
                     default:
-                        throw new NotSupportedException();
+                        throw ThrowHelper.GetNotSupportedException();
                 }
             }
         }
@@ -117,7 +117,7 @@ namespace DotNetty.Buffers
                     case 1:
                         return this.Buffer(0).ArrayOffset;
                     default:
-                        throw new NotSupportedException();
+                        throw ThrowHelper.GetNotSupportedException();
                 }
             }
         }
@@ -143,7 +143,7 @@ namespace DotNetty.Buffers
                 case 1:
                     return ref this.Buffer(0).GetPinnableMemoryAddress();
                 default:
-                    throw new NotSupportedException();
+                    throw ThrowHelper.GetNotSupportedException();
             }
         }
 
@@ -154,7 +154,7 @@ namespace DotNetty.Buffers
                 case 1:
                     return this.Buffer(0).AddressOfPinnedMemory();
                 default:
-                    throw new NotSupportedException();
+                    throw ThrowHelper.GetNotSupportedException();
             }
         }
 
@@ -315,7 +315,10 @@ namespace DotNetty.Buffers
                 dstIndex += localLength;
                 length -= localLength;
                 adjustment += s.ReadableBytes;
-                if (length <= 0) { break; }
+                if ((uint)(length - 1) > SharedConstants.TooBigOrNegative) // length <= 0
+                {
+                    break;
+                }
                 s = this.Buffer(++i);
             }
             return this;
@@ -338,7 +341,10 @@ namespace DotNetty.Buffers
                 dstIndex += localLength;
                 length -= localLength;
                 adjustment += s.ReadableBytes;
-                if (length <= 0) { break; }
+                if ((uint)(length - 1) > SharedConstants.TooBigOrNegative) // length <= 0
+                {
+                    break;
+                }
                 s = this.Buffer(++i);
             }
             return this;
@@ -360,7 +366,10 @@ namespace DotNetty.Buffers
                 index += localLength;
                 length -= localLength;
                 adjustment += s.ReadableBytes;
-                if (length <= 0) { break; }
+                if ((uint)(length - 1) > SharedConstants.TooBigOrNegative) // length <= 0
+                {
+                    break;
+                }
                 s = this.Buffer(++i);
             }
             return this;
@@ -443,7 +452,10 @@ namespace DotNetty.Buffers
                     index += localLength;
                     length -= localLength;
                     adjustment += s.ReadableBytes;
-                    if (length <= 0) { break; }
+                    if ((uint)(length - 1) > SharedConstants.TooBigOrNegative) // length <= 0
+                    {
+                        break;
+                    }
                     s = this.Buffer(++i);
                 }
 
@@ -463,149 +475,149 @@ namespace DotNetty.Buffers
             }
         }
 
-        public override IByteBuffer AdjustCapacity(int newCapacity) => throw new ReadOnlyBufferException();
+        public override IByteBuffer AdjustCapacity(int newCapacity) => throw ThrowHelper.GetReadOnlyBufferException();
 
-        public override IByteBuffer EnsureWritable(int minWritableBytes) => throw new ReadOnlyBufferException();
+        public override IByteBuffer EnsureWritable(int minWritableBytes) => throw ThrowHelper.GetReadOnlyBufferException();
 
         public override int EnsureWritable(int minWritableBytes, bool force) => 1;
 
-        public override IByteBuffer DiscardReadBytes() => throw new ReadOnlyBufferException();
+        public override IByteBuffer DiscardReadBytes() => throw ThrowHelper.GetReadOnlyBufferException();
 
-        public override IByteBuffer DiscardSomeReadBytes() => throw new ReadOnlyBufferException();
+        public override IByteBuffer DiscardSomeReadBytes() => throw ThrowHelper.GetReadOnlyBufferException();
 
         public override IByteBuffer SetBytes(int index, byte[] src)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int length)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetByte(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         protected internal override void _SetByte(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetInt(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         protected internal override void _SetInt(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetIntLE(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         protected internal override void _SetIntLE(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetLong(int index, long value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         protected internal override void _SetLong(int index, long value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetLongLE(int index, long value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         protected internal override void _SetLongLE(int index, long value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetMedium(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         protected internal override void _SetMedium(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetMediumLE(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         protected internal override void _SetMediumLE(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetShort(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         protected internal override void _SetShort(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetShortLE(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         protected internal override void _SetShortLE(int index, int value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetBoolean(int index, bool value)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override int SetCharSequence(int index, ICharSequence sequence, Encoding encoding)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override int SetString(int index, string value, Encoding encoding)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetZero(int index, int length)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         sealed class ComponentEntry : WrappedByteBuffer

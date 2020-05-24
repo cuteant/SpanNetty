@@ -31,7 +31,10 @@ namespace DotNetty.Transport.Channels
             get { return Volatile.Read(ref this.maxMessagesPerRead); }
             set
             {
-                if (value <= 0) { ThrowHelper.ThrowArgumentException_Positive(value, ExceptionArgument.value); }
+                if ((uint)(value - 1) > SharedConstants.TooBigOrNegative) // <= 0
+                {
+                    ThrowHelper.ThrowArgumentException_Positive(value, ExceptionArgument.value);
+                }
                 Interlocked.Exchange(ref this.maxMessagesPerRead, value);
             }
         }

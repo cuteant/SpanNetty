@@ -48,7 +48,7 @@ namespace DotNetty.Common.Utilities
             {
                 return 0;
             }
-            if (!ReferenceEquals(obj, null) && obj is Signal signal)
+            if (obj is object && obj is Signal signal)
             {
                 return this.CompareTo(signal);
             }

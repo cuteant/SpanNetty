@@ -3,24 +3,42 @@
 
 namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 {
+    using System;
     using System.Collections.Generic;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Compression;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Embedded;
 
+    /// <summary>
+    /// Deflate implementation of a payload decompressor for
+    /// <tt>io.netty.handler.codec.http.websocketx.WebSocketFrame</tt>.
+    /// </summary>
     abstract class DeflateDecoder : WebSocketExtensionDecoder
     {
-        internal static readonly byte[] FrameTail = { 0x00, 0x00, 0xff, 0xff };
+        internal static readonly IByteBuffer FrameTail = Unpooled.UnreleasableBuffer(
+                Unpooled.WrappedBuffer(new byte[] { 0x00, 0x00, 0xff, 0xff }))
+                .AsReadOnly();
 
-        readonly bool noContext;
+        private readonly bool _noContext;
+        private readonly IWebSocketExtensionFilter _extensionDecoderFilter;
 
-        EmbeddedChannel decoder;
+        private EmbeddedChannel _decoder;
 
-        protected DeflateDecoder(bool noContext)
+        /// <summary>Constructor</summary>
+        /// <param name="noContext">true to disable context takeover.</param>
+        /// <param name="extensionDecoderFilter">extension decoder filter.</param>
+        protected DeflateDecoder(bool noContext, IWebSocketExtensionFilter extensionDecoderFilter)
         {
-            this.noContext = noContext;
+            if (extensionDecoderFilter is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.extensionDecoderFilter); }
+            _noContext = noContext;
+            _extensionDecoderFilter = extensionDecoderFilter;
         }
+
+        /// <summary>
+        /// Returns the extension decoder filter.
+        /// </summary>
+        protected IWebSocketExtensionFilter ExtensionDecoderFilter => _extensionDecoderFilter;
 
         protected abstract bool AppendFrameTail(WebSocketFrame msg);
 
@@ -28,7 +46,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         protected override void Decode(IChannelHandlerContext ctx, WebSocketFrame msg, List<object> output)
         {
-            if (this.decoder is null)
+            if (_decoder is null)
             {
                 switch (msg.Opcode)
                 {
@@ -40,20 +58,20 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                         break;
                 }
 
-                this.decoder = new EmbeddedChannel(ZlibCodecFactory.NewZlibDecoder(ZlibWrapper.None));
+                _decoder = new EmbeddedChannel(ZlibCodecFactory.NewZlibDecoder(ZlibWrapper.None));
             }
 
             bool readable = msg.Content.IsReadable();
-            this.decoder.WriteInbound(msg.Content.Retain());
-            if (this.AppendFrameTail(msg))
+            _decoder.WriteInbound(msg.Content.Retain());
+            if (AppendFrameTail(msg))
             {
-                this.decoder.WriteInbound(Unpooled.WrappedBuffer(FrameTail));
+                _decoder.WriteInbound(FrameTail.Duplicate());
             }
 
             CompositeByteBuffer compositeUncompressedContent = ctx.Allocator.CompositeDirectBuffer();
-            while(true)
+            while (true)
             {
-                var partUncompressedContent = this.decoder.ReadInbound<IByteBuffer>();
+                var partUncompressedContent = _decoder.ReadInbound<IByteBuffer>();
                 if (partUncompressedContent is null)
                 {
                     break;
@@ -76,22 +94,22 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                 ThrowHelper.ThrowCodecException_CannotReadUncompressedBuf();
             }
 
-            if (msg.IsFinalFragment && this.noContext)
+            if (msg.IsFinalFragment && _noContext)
             {
-                this.Cleanup();
+                Cleanup();
             }
 
             WebSocketFrame outMsg = null;
             switch (msg.Opcode)
             {
                 case Opcode.Text:
-                    outMsg = new TextWebSocketFrame(msg.IsFinalFragment, this.NewRsv(msg), compositeUncompressedContent);
+                    outMsg = new TextWebSocketFrame(msg.IsFinalFragment, NewRsv(msg), compositeUncompressedContent);
                     break;
                 case Opcode.Binary:
-                    outMsg = new BinaryWebSocketFrame(msg.IsFinalFragment, this.NewRsv(msg), compositeUncompressedContent);
+                    outMsg = new BinaryWebSocketFrame(msg.IsFinalFragment, NewRsv(msg), compositeUncompressedContent);
                     break;
                 case Opcode.Cont:
-                    outMsg = new ContinuationWebSocketFrame(msg.IsFinalFragment, this.NewRsv(msg), compositeUncompressedContent);
+                    outMsg = new ContinuationWebSocketFrame(msg.IsFinalFragment, NewRsv(msg), compositeUncompressedContent);
                     break;
                 default:
                     ThrowHelper.ThrowCodecException_UnexpectedFrameType(msg);
@@ -102,26 +120,26 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         public override void HandlerRemoved(IChannelHandlerContext ctx)
         {
-            this.Cleanup();
+            Cleanup();
             base.HandlerRemoved(ctx);
         }
 
         public override void ChannelInactive(IChannelHandlerContext ctx)
         {
-            this.Cleanup();
+            Cleanup();
             base.ChannelInactive(ctx);
         }
 
         void Cleanup()
         {
-            if (this.decoder is object)
+            if (_decoder is object)
             {
                 // Clean-up the previous encoder if not cleaned up correctly.
-                if (this.decoder.Finish())
+                if (_decoder.Finish())
                 {
-                    while(true)
+                    while (true)
                     {
-                        var buf = this.decoder.ReadOutbound<IByteBuffer>();
+                        var buf = _decoder.ReadOutbound<IByteBuffer>();
                         if (buf is null)
                         {
                             break;
@@ -130,7 +148,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                         buf.Release();
                     }
                 }
-                this.decoder = null;
+                _decoder = null;
             }
         }
     }

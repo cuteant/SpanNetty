@@ -84,7 +84,7 @@ namespace DotNetty.Codecs.Compression
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 7
         };
 
-        internal static readonly byte[] bl_order =
+        internal static ReadOnlySpan<byte> BLOrder => new byte[]
         {
             16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
         };
@@ -99,7 +99,7 @@ namespace DotNetty.Codecs.Compression
         // see definition of array dist_code below
         internal static readonly int DIST_CODE_LEN = 512;
 
-        static readonly byte[] _dist_code =
+        static ReadOnlySpan<byte> DistCode => new byte[]
         {
             0, 1, 2, 3, 4, 4, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8,
             8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10, 10,
@@ -129,7 +129,7 @@ namespace DotNetty.Codecs.Compression
             29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29
         };
 
-        internal static readonly byte[] _length_code =
+        internal static ReadOnlySpan<byte> LengthCode => new byte[]
         {
             0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 12, 12,
             13, 13, 13, 13, 14, 14, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16, 16, 16, 16, 16,
@@ -162,8 +162,8 @@ namespace DotNetty.Codecs.Compression
         // Mapping from a distance to a distance code. dist is the distance - 1 and
         // must not have side effects. _dist_code[256] and _dist_code[257] are never
         // used.
-        internal static int D_code(int dist) => 
-            (dist < 256 ? _dist_code[dist] : _dist_code[256 + dist.RightUShift(7)]);
+        internal static int D_code(int dist) =>
+            (dist < 256 ? DistCode[dist] : DistCode[256 + dist.RightUShift(7)]);
 
         internal short[] dyn_tree; // the dynamic tree
         internal int max_code; // largest code with non zero frequency

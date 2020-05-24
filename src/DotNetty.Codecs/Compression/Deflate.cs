@@ -514,7 +514,7 @@ namespace DotNetty.Codecs.Compression
             // 3 but the actual value used is 4.)
             for (max_blindex = BL_CODES - 1; max_blindex >= 3; max_blindex--)
             {
-                if (bl_tree[Tree.bl_order[max_blindex] * 2 + 1] != 0) break;
+                if (bl_tree[Tree.BLOrder[max_blindex] * 2 + 1] != 0) break;
             }
             // Update opt_len to include the bit length tree and counts
             opt_len += 3 * (max_blindex + 1) + 5 + 5 + 4;
@@ -534,7 +534,7 @@ namespace DotNetty.Codecs.Compression
             Send_bits(blcodes - 4, 4); // not -3 as stated in appnote.txt
             for (rank = 0; rank < blcodes; rank++)
             {
-                Send_bits(bl_tree[Tree.bl_order[rank] * 2 + 1], 3);
+                Send_bits(bl_tree[Tree.BLOrder[rank] * 2 + 1], 3);
             }
             Send_tree(dyn_ltree, lcodes - 1); // literal tree
             Send_tree(dyn_dtree, dcodes - 1); // distance tree
@@ -702,7 +702,7 @@ namespace DotNetty.Codecs.Compression
                 matches++;
                 // Here, lc is the match length - MIN_MATCH
                 dist--;             // dist = match distance - 1
-                dyn_ltree[(Tree._length_code[lc] + LITERALS + 1) * 2]++;
+                dyn_ltree[(Tree.LengthCode[lc] + LITERALS + 1) * 2]++;
                 dyn_dtree[Tree.D_code(dist) * 2]++;
             }
 
@@ -751,7 +751,7 @@ namespace DotNetty.Codecs.Compression
                     else
                     {
                         // Here, lc is the match length - MIN_MATCH
-                        code = Tree._length_code[lc];
+                        code = Tree.LengthCode[lc];
 
                         Send_code(code + LITERALS + 1, ltree); // send the length code
                         extra = Tree.extra_lbits[code];

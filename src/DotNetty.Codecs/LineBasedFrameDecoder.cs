@@ -75,6 +75,7 @@ namespace DotNetty.Codecs
             this.stripDelimiter = stripDelimiter;
         }
 
+        /// <inheritdoc />
         protected internal override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
             object decode = this.Decode(context, input);
@@ -170,10 +171,12 @@ namespace DotNetty.Codecs
                     $"frame length ({length}) exceeds the allowed maximum ({this.maxLength})"));
         }
 
-        /**
-         * Returns the index in the buffer of the end of line found.
-         * Returns -1 if no end of line was found in the buffer.
-         */
+        /// <summary>
+        /// Returns the index in the buffer of the end of line found.
+        /// Returns <c>-1</c> if no end of line was found in the buffer.
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <returns></returns>
         int FindEndOfLine(IByteBuffer buffer)
         {
             const byte LineFeed = (byte)'\n';

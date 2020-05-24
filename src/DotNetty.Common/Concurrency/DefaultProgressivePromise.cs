@@ -4,18 +4,12 @@
 namespace DotNetty.Common.Concurrency
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
 
     public class DefaultProgressivePromise : TaskCompletionSource, IProgressivePromise
     {
-
         public DefaultProgressivePromise() : base() { }
 
         public DefaultProgressivePromise(object state) : base(state) { }
-
 
         public void SetProgress(long progress, long total)
         {

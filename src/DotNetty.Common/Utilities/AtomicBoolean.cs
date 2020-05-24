@@ -5,9 +5,6 @@ namespace DotNetty.Common.Utilities
 
     public sealed class AtomicBoolean
     {
-        const int False = 0;
-        const int True = 1;
-
         int value;
 
         public AtomicBoolean() => this.Value = false;
@@ -16,8 +13,8 @@ namespace DotNetty.Common.Utilities
 
         public bool Value
         {
-            get => True == Volatile.Read(ref this.value);
-            set => Interlocked.Exchange(ref this.value, value ? True : False);
+            get => 0u < (uint)Volatile.Read(ref this.value);
+            set => Interlocked.Exchange(ref this.value, value ? SharedConstants.True : SharedConstants.False);
         }
 
         public static implicit operator bool(AtomicBoolean aBool) => aBool.Value;

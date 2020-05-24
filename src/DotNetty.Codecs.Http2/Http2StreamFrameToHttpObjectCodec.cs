@@ -19,7 +19,7 @@ namespace DotNetty.Codecs.Http2
     /// <para>For simplicity, it converts to chunked encoding unless the entire stream
     /// is a single header.</para>
     /// </summary>
-    public class Http2StreamFrameToHttpObjectCodec : MessageToMessageCodec2<IHttp2StreamFrame, IHttpObject>
+    public class Http2StreamFrameToHttpObjectCodec : MessageToMessageCodec<IHttp2StreamFrame, IHttpObject>
     {
         private static readonly AttributeKey<HttpScheme> SchemeAttrKey =
             AttributeKey<HttpScheme>.ValueOf("STREAMFRAMECODEC_SCHEME");
@@ -40,23 +40,12 @@ namespace DotNetty.Codecs.Http2
 
         public override bool IsSharable => true;
 
-        public override bool TryAcceptInboundMessage(object msg, out IHttp2StreamFrame cast)
+        public override bool AcceptInboundMessage(object msg) => msg switch
         {
-            switch (msg)
-            {
-                case IHttp2HeadersFrame headersFrame:
-                    cast = headersFrame;
-                    return true;
-
-                case IHttp2DataFrame dataFrame:
-                    cast = dataFrame;
-                    return true;
-
-                default:
-                    cast = null;
-                    return false;
-            }
-        }
+            IHttp2HeadersFrame _ => true,
+            IHttp2DataFrame _ => true,
+            _ => false,
+        };
 
         protected override void Decode(IChannelHandlerContext ctx, IHttp2StreamFrame msg, List<object> output)
         {

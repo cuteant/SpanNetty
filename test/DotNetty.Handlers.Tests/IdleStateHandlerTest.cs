@@ -202,6 +202,7 @@ namespace DotNetty.Handlers.Tests
                 channel.WriteAndFlushAsync(Unpooled.WrappedBuffer(new byte[] { 1 }));
                 channel.WriteAndFlushAsync(Unpooled.WrappedBuffer(new byte[] { 2 }));
                 channel.WriteAndFlushAsync(Unpooled.WrappedBuffer(new byte[] { 3 }));
+                channel.WriteAndFlushAsync(Unpooled.WrappedBuffer(new byte[5 * 1024]));
 
                 // Establish a baseline. We're not consuming anything and let it idle once.
                 idleStateHandler.TickRun();
@@ -249,6 +250,30 @@ namespace DotNetty.Handlers.Tests
                 Assert.Empty(events);
                 Assert.Equal(TimeSpan.FromSeconds(26), idleStateHandler.Tick); // 23s + 2s + 1s
 
+                // Consume part of the message every 2 seconds, then be idle for 1 seconds,
+                // then run the task and we should get an IdleStateEvent because the first trigger
+                idleStateHandler.DoTick(TimeSpan.FromSeconds(2));
+                AssertNotNullAndRelease(channel.ConsumePart(1024));
+                idleStateHandler.DoTick(TimeSpan.FromSeconds(2));
+                AssertNotNullAndRelease(channel.ConsumePart(1024));
+                idleStateHandler.TickRun(TimeSpan.FromSeconds(1));
+                Assert.Single(events);
+                Assert.Equal(TimeSpan.FromSeconds(31), idleStateHandler.Tick); // 26s + 2s + 2s + 1s
+                events.Clear();
+
+                // Consume part of the message every 2 seconds, then be idle for 1 seconds,
+                // then consume all the rest of the message, then run the task and we shouldn't
+                // get an IdleStateEvent because the data is flowing and we haven't been idle for long enough!
+                idleStateHandler.DoTick(TimeSpan.FromSeconds(2));
+                AssertNotNullAndRelease(channel.ConsumePart(1024));
+                idleStateHandler.DoTick(TimeSpan.FromSeconds(2));
+                AssertNotNullAndRelease(channel.ConsumePart(1024));
+                idleStateHandler.TickRun(TimeSpan.FromSeconds(1));
+                Assert.Empty(events);
+                Assert.Equal(TimeSpan.FromSeconds(36), idleStateHandler.Tick); // 31s + 2s + 2s + 1s
+                idleStateHandler.DoTick(TimeSpan.FromSeconds(2));
+                AssertNotNullAndRelease(channel.ConsumePart(1024));
+
                 // There are no messages left! Advance the ticker by 3 seconds,
                 // attempt a consume() but it will be null, then advance the
                 // ticker by an another 2 seconds and we should get an IdleStateEvent
@@ -258,7 +283,7 @@ namespace DotNetty.Handlers.Tests
 
                 idleStateHandler.TickRun(TimeSpan.FromSeconds(2));
                 Assert.Single(events);
-                Assert.Equal(TimeSpan.FromSeconds(31), idleStateHandler.Tick); // 26s + 3s + 2s
+                Assert.Equal(TimeSpan.FromSeconds(43), idleStateHandler.Tick); // 36s + 2s + 3s + 2s
 
                 // q.e.d.
             }
@@ -352,6 +377,25 @@ namespace DotNetty.Handlers.Tests
                 {
                     ReferenceCountUtil.Retain(msg);
                     buf.Remove();
+                    return msg;
+                }
+                return null;
+            }
+
+            /**
+             * Consume the part of a message.
+             *
+             * @param byteCount count of byte to be consumed
+             * @return the message currently being consumed
+             */
+            public object ConsumePart(int byteCount)
+            {
+                ChannelOutboundBuffer buf = this.Unsafe.OutboundBuffer;
+                object msg = buf?.Current;
+                if (msg != null)
+                {
+                    ReferenceCountUtil.Retain(msg);
+                    buf.RemoveBytes(byteCount);
                     return msg;
                 }
                 return null;

@@ -9,7 +9,7 @@ namespace DotNetty.Codecs.Redis
     using DotNetty.Codecs.Redis.Messages;
     using DotNetty.Transport.Channels;
 
-    public sealed class RedisEncoder : MessageToMessageEncoder2<IRedisMessage>
+    public sealed class RedisEncoder : MessageToMessageEncoder<IRedisMessage>
     {
         readonly IRedisMessagePool messagePool;
 

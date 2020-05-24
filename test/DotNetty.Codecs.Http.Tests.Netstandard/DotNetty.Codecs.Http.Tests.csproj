@@ -27,6 +27,9 @@
     <Content Include="..\DotNetty.Codecs.Http.Tests\Multipart\file-02.txt" Link="Multipart\file-02.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\DotNetty.Codecs.Http.Tests\Multipart\file-03.txt" Link="Multipart\file-03.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

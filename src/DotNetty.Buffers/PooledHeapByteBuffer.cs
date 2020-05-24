@@ -148,8 +148,7 @@ namespace DotNetty.Buffers
         {
             this.CheckIndex(index, length);
             IByteBuffer copy = this.Allocator.HeapBuffer(length, this.MaxCapacity);
-            copy.WriteBytes(this.Memory, this.Idx(index), length);
-            return copy;
+            return copy.WriteBytes(this.Memory, this.Idx(index), length);
         }
 
 

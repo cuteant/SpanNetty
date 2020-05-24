@@ -5,103 +5,97 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using DotNetty.Common.Utilities;
 
 namespace DotNetty.Common.Concurrency
 {
     public class TaskCompletionSource : IPromise
     {
-        private readonly TaskCompletionSource<int> tcs;
-        private int uncancellable = SharedConstants.False;
+        private readonly TaskCompletionSource<int> _tcs;
+        private int _uncancellable = SharedConstants.False;
 
         public TaskCompletionSource()
         {
-            this.tcs = new TaskCompletionSource<int>();
+            _tcs = new TaskCompletionSource<int>();
         }
 
         public TaskCompletionSource(object state)
         {
-            this.tcs = new TaskCompletionSource<int>(state);
+            _tcs = new TaskCompletionSource<int>(state);
         }
 
-        public Task Task => this.tcs.Task;
+        public Task Task => _tcs.Task;
 
         public bool IsVoid => false;
 
-        public bool IsSuccess
-        {
-            get
-            {
-                var task = this.Task;
-                return task.IsCompleted && !task.IsFaulted && !task.IsCanceled;
-            }
-        }
+        public bool IsSuccess => Task.IsSuccess();
 
-        public bool IsCompleted => this.Task.IsCompleted;
+        public bool IsCompleted => Task.IsCompleted;
 
-        public bool IsFaulted => this.Task.IsFaulted;
+        public bool IsFaulted => Task.IsFaulted;
 
-        public bool IsCanceled => this.Task.IsCanceled;
+        public bool IsCanceled => Task.IsCanceled;
 
         public virtual bool TryComplete()
         {
-            return this.tcs.TrySetResult(0);
+            return _tcs.TrySetResult(0);
         }
 
         public virtual void Complete()
         {
-            this.tcs.SetResult(0);
+            _tcs.SetResult(0);
         }
         public virtual void SetCanceled()
         {
-            if (SharedConstants.True == Volatile.Read(ref this.uncancellable)) { return; }
-            this.tcs.SetCanceled();
+            if (SharedConstants.True == Volatile.Read(ref _uncancellable)) { return; }
+            _tcs.SetCanceled();
         }
 
         public virtual void SetException(Exception exception)
         {
             if (exception is AggregateException aggregateException)
             {
-                this.SetException(aggregateException.InnerExceptions);
+                SetException(aggregateException.InnerExceptions);
                 return;
             }
-            this.tcs.SetException(exception);
+            _tcs.SetException(exception);
         }
 
         public virtual void SetException(IEnumerable<Exception> exceptions)
         {
-            this.tcs.SetException(exceptions);
+            _tcs.SetException(exceptions);
         }
 
         public virtual bool TrySetCanceled()
         {
-            if (SharedConstants.True == Volatile.Read(ref this.uncancellable)) { return false; }
-            return this.tcs.TrySetCanceled();
+            if (SharedConstants.True == Volatile.Read(ref _uncancellable)) { return false; }
+            return _tcs.TrySetCanceled();
         }
 
         public virtual bool TrySetException(Exception exception)
         {
             if (exception is AggregateException aggregateException)
             {
-                return this.TrySetException(aggregateException.InnerExceptions);
+                return TrySetException(aggregateException.InnerExceptions);
             }
-            return this.tcs.TrySetException(exception);
+            return _tcs.TrySetException(exception);
         }
 
         public virtual bool TrySetException(IEnumerable<Exception> exceptions)
         {
-            return this.tcs.TrySetException(exceptions);
+            return _tcs.TrySetException(exceptions);
         }
 
         public bool SetUncancellable()
         {
-            if (SharedConstants.False == Interlocked.CompareExchange(ref this.uncancellable, SharedConstants.True, SharedConstants.False))
+            if (SharedConstants.False == Interlocked.CompareExchange(ref _uncancellable, SharedConstants.True, SharedConstants.False))
             {
                 return true;
             }
-            return !this.IsCompleted;
+            return !IsCompleted;
         }
 
-        public override string ToString() => "TaskCompletionSource[status: " + this.Task.Status.ToString() + "]";
+        public override string ToString() => "TaskCompletionSource[status: " + Task.Status.ToString() + "]";
 
         public IPromise Unvoid() => this;
     }

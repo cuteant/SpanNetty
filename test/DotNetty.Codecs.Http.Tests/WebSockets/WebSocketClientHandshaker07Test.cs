@@ -9,8 +9,8 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
 
     public class WebSocketClientHandshaker07Test : WebSocketClientHandshakerTest
     {
-        protected override WebSocketClientHandshaker NewHandshaker(Uri uri, string subprotocol, HttpHeaders headers) => 
-            new WebSocketClientHandshaker07(uri, WebSocketVersion.V07, subprotocol, false, headers, 1024);
+        protected override WebSocketClientHandshaker NewHandshaker(Uri uri, string subprotocol, HttpHeaders headers, bool absoluteUpgradeUrl) =>
+            new WebSocketClientHandshaker07(uri, WebSocketVersion.V07, subprotocol, false, headers, 1024, true, false, 10000, absoluteUpgradeUrl);
 
         protected override AsciiString GetOriginHeaderName() => HttpHeaderNames.SecWebsocketOrigin;
 
@@ -27,7 +27,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
                 HttpHeaderNames.Connection,
                 HttpHeaderNames.SecWebsocketKey,
                 HttpHeaderNames.Host,
-                HttpHeaderNames.SecWebsocketOrigin,
+                GetOriginHeaderName(),
                 HttpHeaderNames.SecWebsocketVersion,
             };
         }

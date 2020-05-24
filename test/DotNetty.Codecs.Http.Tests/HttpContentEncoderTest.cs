@@ -20,7 +20,7 @@ namespace DotNetty.Codecs.Http.Tests
                 new Result(new StringCharSequence("test"), new EmbeddedChannel(new EmbeddedMessageEncoder()));
         }
 
-        sealed class EmbeddedMessageEncoder : MessageToByteEncoder2<IByteBuffer>
+        sealed class EmbeddedMessageEncoder : MessageToByteEncoder<IByteBuffer>
         {
             protected override void Encode(IChannelHandlerContext context, IByteBuffer message, IByteBuffer output)
             {
@@ -134,6 +134,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(last);
             Assert.False(last.Content.IsReadable());
             Assert.Equal("Netty", last.TrailingHeaders.Get((AsciiString)"X-Test", null).ToString());
+            Assert.Equal(DecoderResult.Success, res.Result);
             last.Release();
 
             var next = ch.ReadOutbound<object>();
@@ -268,6 +269,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(0, res.Content.ReadableBytes);
             Assert.Equal("", res.Content.ToString(Encoding.ASCII));
             Assert.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test", null));
+            Assert.Equal(DecoderResult.Success, res.Result);
 
             var next = ch.ReadOutbound<object>();
             Assert.Null(next);

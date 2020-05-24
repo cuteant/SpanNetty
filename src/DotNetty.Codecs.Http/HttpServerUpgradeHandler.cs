@@ -33,17 +33,17 @@ namespace DotNetty.Codecs.Http
         {
             /// <summary>
             /// Gets all protocol-specific headers required by this protocol for a successful upgrade.
-            /// Any supplied header will be required to appear in the {@link HttpHeaderNames#CONNECTION} header as well.
+            /// Any supplied header will be required to appear in the <see cref="HttpHeaderNames.Connection"/> header as well.
             /// </summary>
-            ICollection<AsciiString> RequiredUpgradeHeaders { get; }
+            IReadOnlyList<AsciiString> RequiredUpgradeHeaders { get; }
 
             /// <summary>
-            /// Prepares the {@code upgradeHeaders} for a protocol update based upon the contents of {@code upgradeRequest}.
-            /// This method returns a boolean value to proceed or abort the upgrade in progress. If {@code false} is
-            /// returned, the upgrade is aborted and the {@code upgradeRequest} will be passed through the inbound pipeline
-            /// as if no upgrade was performed. If {@code true} is returned, the upgrade will proceed to the next
-            /// step which invokes {@link #upgradeTo}. When returning {@code true}, you can add headers to
-            /// the {@code upgradeHeaders} so that they are added to the 101 Switching protocols response.
+            /// Prepares the <paramref name="upgradeHeaders"/> for a protocol update based upon the contents of <paramref name="upgradeRequest"/>.
+            /// This method returns a boolean value to proceed or abort the upgrade in progress. If <c>false</c> is
+            /// returned, the upgrade is aborted and the <paramref name="upgradeRequest"/> will be passed through the inbound pipeline
+            /// as if no upgrade was performed. If <c>true</c> is returned, the upgrade will proceed to the next
+            /// step which invokes <see cref="UpgradeTo(IChannelHandlerContext, IFullHttpRequest)"/>. When returning <c>true</c>, you can add headers to
+            /// the <paramref name="upgradeHeaders"/> so that they are added to the 101 Switching protocols response.
             /// </summary>
             bool PrepareUpgradeResponse(IChannelHandlerContext ctx, IFullHttpRequest upgradeRequest, HttpHeaders upgradeHeaders);
 
@@ -58,18 +58,23 @@ namespace DotNetty.Codecs.Http
         }
 
         /// <summary>
-        ///  Creates a new UpgradeCodec for the requested protocol name.
+        ///  Creates a new <see cref="IUpgradeCodec"/> for the requested protocol name.
         /// </summary>
         public interface IUpgradeCodecFactory
         {
             /// <summary>
-            ///  Invoked by {@link HttpServerUpgradeHandler} for all the requested protocol names in the order of
-            ///  the client preference.The first non-{@code null} {@link UpgradeCodec} returned by this method
+            ///  Invoked by <see cref="HttpServerUpgradeHandler"/> for all the requested protocol names in the order of
+            ///  the client preference.The first non-<c>null</c> <see cref="IUpgradeCodec"/> returned by this method
             ///  will be selected.
             /// </summary>
             IUpgradeCodec NewUpgradeCodec(ICharSequence protocol);
         }
 
+        /// <summary>
+        /// User event that is fired to notify about the completion of an HTTP upgrade
+        /// to another protocol. Contains the original upgrade request so that the response
+        /// (if required) can be sent using the new protocol.
+        /// </summary>
         public sealed class UpgradeEvent : IReferenceCounted
         {
             readonly ICharSequence protocol;
@@ -81,8 +86,14 @@ namespace DotNetty.Codecs.Http
                 this.upgradeRequest = upgradeRequest;
             }
 
+            /// <summary>
+            /// The protocol that the channel has been upgraded to.
+            /// </summary>
             public ICharSequence Protocol => this.protocol;
 
+            /// <summary>
+            /// Gets the request that triggered the protocol upgrade.
+            /// </summary>
             public IFullHttpRequest UpgradeRequest => this.upgradeRequest;
 
             public int ReferenceCount => this.upgradeRequest.ReferenceCount;
@@ -122,11 +133,31 @@ namespace DotNetty.Codecs.Http
         readonly IUpgradeCodecFactory upgradeCodecFactory;
         bool handlingUpgrade;
 
+        /// <summary>
+        /// Constructs the upgrader with the supported codecs.
+        /// <para>
+        /// The handler instantiated by this constructor will reject an upgrade request with non-empty content.
+        /// It should not be a concern because an upgrade request is most likely a GET request.
+        /// If you have a client that sends a non-GET upgrade request, please consider using
+        /// <see cref="HttpServerUpgradeHandler(ISourceCodec, IUpgradeCodecFactory, int)"/> to specify the maximum
+        /// length of the content of an upgrade request.
+        /// </para>
+        /// </summary>
+        /// <param name="sourceCodec">the codec that is being used initially</param>
+        /// <param name="upgradeCodecFactory">the factory that creates a new upgrade codec
+        /// for one of the requested upgrade protocols</param>
         public HttpServerUpgradeHandler(ISourceCodec sourceCodec, IUpgradeCodecFactory upgradeCodecFactory)
             : this(sourceCodec, upgradeCodecFactory, 0)
         {
         }
 
+        /// <summary>
+        /// Constructs the upgrader with the supported codecs.
+        /// </summary>
+        /// <param name="sourceCodec">the codec that is being used initially</param>
+        /// <param name="upgradeCodecFactory">the factory that creates a new upgrade codec
+        /// for one of the requested upgrade protocols</param>
+        /// <param name="maxContentLength">the maximum length of the content of an upgrade request</param>
         public HttpServerUpgradeHandler(ISourceCodec sourceCodec, IUpgradeCodecFactory upgradeCodecFactory, int maxContentLength)
             : base(maxContentLength)
         {
@@ -182,19 +213,27 @@ namespace DotNetty.Codecs.Http
             // next handler.
         }
 
+        /// <summary>
+        /// Determines whether or not the message is an HTTP upgrade request.
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <returns></returns>
         static bool IsUpgradeRequest(IHttpObject msg)
         {
-            if (!(msg is IHttpRequest request))
-            {
-                return false;
-            }
-            return request.Headers.Contains(HttpHeaderNames.Upgrade);
+            return msg is IHttpRequest request && request.Headers.Contains(HttpHeaderNames.Upgrade);
         }
 
+        /// <summary>
+        /// Attempts to upgrade to the protocol(s) identified by the <see cref="HttpHeaderNames.Upgrade"/> header (if provided
+        /// in the request).
+        /// </summary>
+        /// <param name="ctx">the context for this handler.</param>
+        /// <param name="request">the HTTP request.</param>
+        /// <returns><c>true</c> if the upgrade occurred, otherwise <c>false</c>.</returns>
         bool Upgrade(IChannelHandlerContext ctx, IFullHttpRequest request)
         {
             // Select the best protocol based on those requested in the UPGRADE header.
-            IList<ICharSequence> requestedProtocols = SplitHeader(request.Headers.Get(HttpHeaderNames.Upgrade, null));
+            var requestedProtocols = SplitHeader(request.Headers.Get(HttpHeaderNames.Upgrade, null));
             int numRequestedProtocols = requestedProtocols.Count;
             IUpgradeCodec upgradeCodec = null;
             ICharSequence upgradeProtocol = null;
@@ -217,24 +256,32 @@ namespace DotNetty.Codecs.Http
             }
 
             // Make sure the CONNECTION header is present.
-            if (!request.Headers.TryGet(HttpHeaderNames.Connection, out ICharSequence connectionHeader))
+            var connectionHeaderValues = request.Headers.GetAll(HttpHeaderNames.Connection);
+            if (connectionHeaderValues is null) { return false; }
+
+            var concatenatedConnectionValue = StringBuilderManager.Allocate(connectionHeaderValues.Count * 10);
+            for (var idx = 0; idx < connectionHeaderValues.Count; idx++)
             {
-                return false;
+                var connectionHeaderValue = connectionHeaderValues[idx];
+                concatenatedConnectionValue
+                    .Append(connectionHeaderValue.ToString())
+                    .Append(StringUtil.Comma);
             }
+            concatenatedConnectionValue.Length -= 1;
 
             // Make sure the CONNECTION header contains UPGRADE as well as all protocol-specific headers.
-            ICollection<AsciiString> requiredHeaders = upgradeCodec.RequiredUpgradeHeaders;
-            IList<ICharSequence> values = SplitHeader(connectionHeader);
-            if (!AsciiString.ContainsContentEqualsIgnoreCase(values, HttpHeaderNames.Upgrade)
-                || !AsciiString.ContainsAllContentEqualsIgnoreCase(values, requiredHeaders))
+            var requiredHeaders = upgradeCodec.RequiredUpgradeHeaders;
+            var values = SplitHeader(StringBuilderManager.ReturnAndFree(concatenatedConnectionValue).AsSpan());
+            if (!AsciiString.ContainsContentEqualsIgnoreCase(values, HttpHeaderNames.Upgrade) ||
+                !AsciiString.ContainsAllContentEqualsIgnoreCase(values, requiredHeaders))
             {
                 return false;
             }
 
             // Ensure that all required protocol-specific headers are found in the request.
-            foreach (AsciiString requiredHeader in requiredHeaders)
+            for (int idx = 0; idx < requiredHeaders.Count; idx++)
             {
-                if (!request.Headers.Contains(requiredHeader))
+                if (!request.Headers.Contains(requiredHeaders[idx]))
                 {
                     return false;
                 }
@@ -292,6 +339,11 @@ namespace DotNetty.Codecs.Http
             }
         }
 
+        /// <summary>
+        /// Creates the 101 Switching Protocols response message.
+        /// </summary>
+        /// <param name="upgradeProtocol"></param>
+        /// <returns></returns>
         static IFullHttpResponse CreateUpgradeResponse(ICharSequence upgradeProtocol)
         {
             var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.SwitchingProtocols,
@@ -301,12 +353,61 @@ namespace DotNetty.Codecs.Http
             return res;
         }
 
-        static IList<ICharSequence> SplitHeader(ICharSequence header)
+        /// <summary>
+        /// Splits a comma-separated header value. The returned set is case-insensitive and contains each
+        /// part with whitespace removed.
+        /// </summary>
+        /// <param name="header"></param>
+        /// <returns></returns>
+        static IReadOnlyList<ICharSequence> SplitHeader(ICharSequence header)
         {
+            if (header is IHasUtf16Span hasUtf16) { return SplitHeader(hasUtf16.Utf16Span); }
+
             var builder = StringBuilderManager.Allocate(header.Count);
             var protocols = new List<ICharSequence>(4);
             // ReSharper disable once ForCanBeConvertedToForeach
             for (int i = 0; i < header.Count; ++i)
+            {
+                char c = header[i];
+                if (char.IsWhiteSpace(c))
+                {
+                    // Don't include any whitespace.
+                    continue;
+                }
+                if (c == HttpConstants.CommaChar)
+                {
+                    // Add the string and reset the builder for the next protocol.
+                    protocols.Add(new AsciiString(builder.ToString()));
+                    builder.Length = 0;
+                }
+                else
+                {
+                    builder.Append(c);
+                }
+            }
+
+            // Add the last protocol
+            if ((uint)builder.Length > 0u)
+            {
+                protocols.Add(new AsciiString(builder.ToString()));
+            }
+            StringBuilderManager.Free(builder);
+
+            return protocols;
+        }
+
+        /// <summary>
+        /// Splits a comma-separated header value. The returned set is case-insensitive and contains each
+        /// part with whitespace removed.
+        /// </summary>
+        /// <param name="header"></param>
+        /// <returns></returns>
+        static IReadOnlyList<ICharSequence> SplitHeader(in ReadOnlySpan<char> header)
+        {
+            var builder = StringBuilderManager.Allocate(header.Length);
+            var protocols = new List<ICharSequence>(4);
+            // ReSharper disable once ForCanBeConvertedToForeach
+            for (int i = 0; i < header.Length; ++i)
             {
                 char c = header[i];
                 if (char.IsWhiteSpace(c))

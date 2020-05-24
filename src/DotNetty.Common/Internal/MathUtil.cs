@@ -21,7 +21,7 @@ namespace DotNetty.Common.Internal
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int SafeFindNextPositivePowerOfTwo(int value) =>
-            value <= 0 ? 1 : value >= 0x40000000 ? 0x40000000 : FindNextPositivePowerOfTwo(value);
+            /*value <= 0*/(uint)(value - 1) > SharedConstants.TooBigOrNegative ? 1 : value >= 0x40000000 ? 0x40000000 : FindNextPositivePowerOfTwo(value);
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int NumberOfLeadingZeros(this int i)

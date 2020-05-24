@@ -72,17 +72,18 @@ namespace DotNetty.Codecs
         /// </param>
         public LengthFieldBasedFrameDecoder2(int maxFrameLength, int lengthFieldOffset, int lengthFieldLength, int lengthAdjustment, int initialBytesToStrip, bool failFast)
         {
-            if (maxFrameLength <= 0)
+            if ((uint)(maxFrameLength - 1) > SharedConstants.TooBigOrNegative) // <= 0
             {
-                throw new ArgumentOutOfRangeException(nameof(maxFrameLength), "maxFrameLength must be a positive integer: " + maxFrameLength);
+                ThrowHelper.ThrowArgumentException_Positive(maxFrameLength, ExceptionArgument.maxFrameLength);
             }
             if (lengthFieldOffset < 0)
             {
+                ThrowHelper.ThrowArgumentException_PositiveOrZero(lengthFieldOffset, ExceptionArgument.lengthFieldOffset);
                 throw new ArgumentOutOfRangeException(nameof(lengthFieldOffset), "lengthFieldOffset must be a non-negative integer: " + lengthFieldOffset);
             }
             if (initialBytesToStrip < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(initialBytesToStrip), "initialBytesToStrip must be a non-negative integer: " + initialBytesToStrip);
+                ThrowHelper.ThrowArgumentException_PositiveOrZero(initialBytesToStrip, ExceptionArgument.initialBytesToStrip);
             }
             if (lengthFieldOffset > maxFrameLength - lengthFieldLength)
             {
@@ -159,6 +160,7 @@ namespace DotNetty.Codecs
             CThrowHelper.ThrowCorruptedFrameException_InitialBytesToStrip(frameLength, initialBytesToStrip);
         }
 
+        /// <inheritdoc />
         protected internal override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
             if (this.discardingTooLongFrame)
@@ -229,23 +231,34 @@ namespace DotNetty.Codecs
         /// <returns>A long integer that represents the unadjusted length of the next frame.</returns>
         protected static long GetUnadjustedFrameLength(IByteBuffer buffer, int offset, int length)
         {
-            switch (length)
+            return length switch
             {
-                case 1:
-                    return buffer.GetByte(offset);
-                case 2:
-                    return buffer.GetUnsignedShort(offset);
-                case 3:
-                    return buffer.GetUnsignedMedium(offset);
-                case 4:
-                    return buffer.GetInt(offset);
-                case 8:
-                    return buffer.GetLong(offset);
-                default:
-                    return CThrowHelper.ThrowDecoderException(length);
-            }
+                1 => buffer.GetByte(offset),
+                2 => buffer.GetUnsignedShort(offset),
+                3 => buffer.GetUnsignedMedium(offset),
+                4 => buffer.GetInt(offset),
+                8 => buffer.GetLong(offset),
+                _ => CThrowHelper.ThrowDecoderException(length),
+            };
         }
 
+        /// <summary>
+        /// Extract the sub-region of the specified buffer.
+        /// <para>
+        /// If you are sure that the frame and its content are not accessed after
+        /// the current <see cref="Decode(IChannelHandlerContext, IByteBuffer, List{object})"/>
+        /// call returns, you can even avoid memory copy by returning the sliced
+        /// sub-region (i.e. <tt>return buffer.slice(index, length)</tt>).
+        /// It's often useful when you convert the extracted frame into an object.
+        /// Refer to the source code of <see cref="T:ObjectDecoder"/> to see how this method
+        /// is overridden to avoid memory copy.
+        /// </para>
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="buffer"></param>
+        /// <param name="index"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
         protected virtual IByteBuffer ExtractFrame(IChannelHandlerContext context, IByteBuffer buffer, int index, int length)
         {
             return buffer.RetainedSlice(index, length);

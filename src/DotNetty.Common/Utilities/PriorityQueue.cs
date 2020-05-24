@@ -222,7 +222,8 @@ namespace DotNetty.Common.Utilities
                     childIndex = rightChildIndex;
                     childItem = this.items[rightChildIndex];
                 }
-                if (this.comparer.Compare(item, childItem) <= 0)
+                var result = this.comparer.Compare(item, childItem);
+                if ((uint)(result - 1) > SharedConstants.TooBigOrNegative) // <= 0
                 {
                     break;
                 }

@@ -51,7 +51,7 @@ namespace DotNetty.Buffers
             {
                 this.SetMaxCapacity(maxCapacity);
                 this.SetIndex0(readerIndex, writerIndex); // It is assumed the bounds checking is done by the caller.
-                this.SetReferenceCount(1);
+                this.ResetReferenceCount();
                 
                 wrapped = null;
                 return (T)this;

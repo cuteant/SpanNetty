@@ -83,7 +83,7 @@ namespace DotNetty.Codecs.Http
                 return this;
             }
 
-            foreach(HeaderEntry<AsciiString, ICharSequence> pair in headers)
+            foreach (HeaderEntry<AsciiString, ICharSequence> pair in headers)
             {
                 this.Add(pair.Key, pair.Value);
             }
@@ -232,22 +232,18 @@ namespace DotNetty.Codecs.Http
                 value = v.ToString();
                 return true;
             }
-            else
-            {
-                value = default(string);
-                return false;
-            }
+            value = default;
+            return false;
         }
 
         public IList<string> GetAllAsString(AsciiString name)
         {
-            var values = new List<string>();
             IList<ICharSequence> list = this.GetAll(name);
-            foreach (ICharSequence value in list)
+            var values = new List<string>(list.Count);
+            for (int idx = 0; idx < list.Count; idx++)
             {
-                values.Add(value.ToString());
+                values.Add(list[idx].ToString());
             }
-
             return values;
         }
 

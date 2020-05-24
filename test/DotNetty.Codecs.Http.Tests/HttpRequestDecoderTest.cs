@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http.Tests
         static void DecodeWholeRequestAtOnce(byte[] content)
         {
             var channel = new EmbeddedChannel(new HttpRequestDecoder());
-            Assert.True(channel.WriteInbound(Unpooled.WrappedBuffer(content)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(content)));
             var req = channel.ReadInbound<IHttpRequest>();
             Assert.NotNull(req);
             CheckHeaders(req.Headers);
@@ -129,14 +129,14 @@ namespace DotNetty.Codecs.Http.Tests
                 }
 
                 // if header is done it should produce a HttpRequest
-                channel.WriteInbound(Unpooled.WrappedBuffer(content, a, amount));
+                channel.WriteInbound(Unpooled.CopiedBuffer(content, a, amount));
                 a += amount;
             }
 
             for (int i = ContentLength; i > 0; i--)
             {
                 // Should produce HttpContent
-                channel.WriteInbound(Unpooled.WrappedBuffer(content, content.Length - i, 1));
+                channel.WriteInbound(Unpooled.CopiedBuffer(content, content.Length - i, 1));
             }
 
             var req = channel.ReadInbound<IHttpRequest>();

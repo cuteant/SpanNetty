@@ -12,8 +12,11 @@ namespace DotNetty.Codecs.Http
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
 
-    public partial class HttpVersion : IComparable<HttpVersion>, IComparable
+    public class HttpVersion : IEquatable<HttpVersion>, IComparable<HttpVersion>, IComparable
     {
+        const byte OneByte = (byte)'1';
+        const byte ZeroByte = (byte)'0';
+
         static readonly Regex VersionPattern = new Regex("^(\\S+)/(\\d+)\\.(\\d+)$", RegexOptions.Compiled);
 
         internal static readonly AsciiString Http10String = new AsciiString("HTTP/1.0");
@@ -59,24 +62,23 @@ namespace DotNetty.Codecs.Http
         [MethodImpl(InlineMethod.AggressiveInlining)]
         static HttpVersion ValueOfInline(byte[] bytes)
         {
-            if (bytes.Length != 8) return null;
+            if ((uint)bytes.Length != 8u) return null;
 
-            if (bytes[0] != Http11Bytes[0]) return null;
-            if (bytes[1] != Http11Bytes[1]) return null;
-            if (bytes[2] != Http11Bytes[2]) return null;
-            if (bytes[3] != Http11Bytes[3]) return null;
-            if (bytes[4] != Http11Bytes[4]) return null;
-            if (bytes[5] != Http11Bytes[5]) return null;
-            if (bytes[6] != Http11Bytes[6]) return null;
-            switch (bytes[7])
+            var http11Bytes = HttpUtil.Http11Bytes;
+
+            if (bytes[0] != http11Bytes[0]) return null;
+            if (bytes[1] != http11Bytes[1]) return null;
+            if (bytes[2] != http11Bytes[2]) return null;
+            if (bytes[3] != http11Bytes[3]) return null;
+            if (bytes[4] != http11Bytes[4]) return null;
+            if (bytes[5] != http11Bytes[5]) return null;
+            if (bytes[6] != http11Bytes[6]) return null;
+            return (bytes[7]) switch
             {
-                case OneByte:
-                    return Http11;
-                case ZeroByte:
-                    return Http10;
-                default:
-                    return null;
-            }
+                OneByte => Http11,
+                ZeroByte => Http10,
+                _ => null,
+            };
         }
 
         static HttpVersion Version0(AsciiString text)
@@ -149,11 +151,11 @@ namespace DotNetty.Codecs.Http
 
             if (majorVersion < 0)
             {
-                ThrowHelper.ThrowArgumentException_NegativeVersion(ExceptionArgument.majorVersion);
+                ThrowHelper.ThrowArgumentException_PositiveOrZero(majorVersion, ExceptionArgument.majorVersion);
             }
             if (minorVersion < 0)
             {
-                ThrowHelper.ThrowArgumentException_NegativeVersion(ExceptionArgument.minorVersion);
+                ThrowHelper.ThrowArgumentException_PositiveOrZero(minorVersion, ExceptionArgument.minorVersion);
             }
 
             this.protocolName = protocolName;
@@ -194,6 +196,21 @@ namespace DotNetty.Codecs.Http
             }
 
             return false;
+        }
+
+        public bool Equals(HttpVersion other)
+        {
+            if (ReferenceEquals(this, other)) { return true; }
+
+            return other is object
+                && this.minorVersion == other.minorVersion
+                && this.majorVersion == other.majorVersion
+                && string.Equals(this.protocolName, other.protocolName
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                    );
+#else
+                    , StringComparison.Ordinal);
+#endif
         }
 
         public int CompareTo(HttpVersion other)

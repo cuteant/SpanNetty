@@ -19,7 +19,7 @@ namespace DotNetty.Handlers.Timeout
         /// Constructor for sub-classes.
         /// </summary>
         /// <param name="state">the <see cref="IdleStateEvent"/> which triggered the event.</param>
-        /// <param name="first"><code>true</code> if its the first idle event for the <see cref="IdleStateEvent"/>.</param>
+        /// <param name="first"><c>true</c> if its the first idle event for the <see cref="IdleStateEvent"/>.</param>
         protected IdleStateEvent(IdleState state, bool first)
         {
             this.State = state;
@@ -37,9 +37,9 @@ namespace DotNetty.Handlers.Timeout
         }
 
         /// <summary>
-        /// Returns <code>true</code> if this was the first event for the <see cref="IdleState"/>
+        /// Returns <c>true</c> if this was the first event for the <see cref="IdleState"/>
         /// </summary>
-        /// <returns><code>true</code> if first; otherwise, <code>false</code>.</returns>
+        /// <returns><c>true</c> if first; otherwise, <c>false</c>.</returns>
         public bool First
         {
             get;

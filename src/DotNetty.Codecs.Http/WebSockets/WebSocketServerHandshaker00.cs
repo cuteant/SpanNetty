@@ -10,16 +10,83 @@ namespace DotNetty.Codecs.Http.WebSockets
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
+    /// <summary>
+    /// Performs server side opening and closing handshakes for web socket specification version <a
+    /// href="http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-00" >draft-ietf-hybi-thewebsocketprotocol-00</a>
+    /// </summary>
     public class WebSocketServerHandshaker00 : WebSocketServerHandshaker
     {
         static readonly Regex BeginningDigit = new Regex("[^0-9]", RegexOptions.Compiled);
         static readonly Regex BeginningSpace = new Regex("[^ ]", RegexOptions.Compiled);
 
+        /// <summary>
+        /// Constructor specifying the destination web socket location
+        /// </summary>
+        /// <param name="webSocketUrl">URL for web socket communications. e.g "ws://myhost.com/mypath". Subsequent web socket frames will be
+        /// sent to this URL.</param>
+        /// <param name="subprotocols">CSV of supported protocols</param>
+        /// <param name="maxFramePayloadLength">Maximum allowable frame payload length. Setting this value to your application's requirement may
+        /// reduce denial of service attacks using long data frames.</param>
         public WebSocketServerHandshaker00(string webSocketUrl, string subprotocols, int maxFramePayloadLength)
-            : base(WebSocketVersion.V00, webSocketUrl, subprotocols, maxFramePayloadLength)
+            : base(WebSocketVersion.V00, webSocketUrl, subprotocols, WebSocketDecoderConfig.NewBuilder().MaxFramePayloadLength(maxFramePayloadLength).Build())
         {
         }
 
+        /// <summary>
+        /// Constructor specifying the destination web socket location
+        /// </summary>
+        /// <param name="webSocketUrl">URL for web socket communications. e.g "ws://myhost.com/mypath". Subsequent web socket frames will be
+        /// sent to this URL.</param>
+        /// <param name="subprotocols">CSV of supported protocols</param>
+        /// <param name="decoderConfig">Frames decoder configuration.</param>
+        public WebSocketServerHandshaker00(string webSocketUrl, string subprotocols, WebSocketDecoderConfig decoderConfig)
+            : base(WebSocketVersion.V00, webSocketUrl, subprotocols, decoderConfig)
+        {
+        }
+
+        /// <summary>
+        /// <para>
+        /// Handle the web socket handshake for the web socket specification <a href=
+        /// "http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-00">HyBi version 0</a> and lower. This standard
+        /// is really a rehash of <a href="http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-76" >hixie-76</a> and
+        /// <a href="http://tools.ietf.org/html/draft-hixie-thewebsocketprotocol-75" >hixie-75</a>.
+        /// </para>
+        ///
+        /// <para>
+        /// Browser request to the server:
+        /// </para>
+        ///
+        /// <![CDATA[
+        /// GET /demo HTTP/1.1
+        /// Upgrade: WebSocket
+        /// Connection: Upgrade
+        /// Host: example.com
+        /// Origin: http://example.com
+        /// Sec-WebSocket-Protocol: chat, sample
+        /// Sec-WebSocket-Key1: 4 @1  46546xW%0l 1 5
+        /// Sec-WebSocket-Key2: 12998 5 Y3 1  .P00
+        ///
+        /// ^n:ds[4U
+        /// ]]>
+        ///
+        /// <para>
+        /// Server response:
+        /// </para>
+        ///
+        /// <![CDATA[
+        /// HTTP/1.1 101 WebSocket Protocol Handshake
+        /// Upgrade: WebSocket
+        /// Connection: Upgrade
+        /// Sec-WebSocket-Origin: http://example.com
+        /// Sec-WebSocket-Location: ws://example.com/demo
+        /// Sec-WebSocket-Protocol: sample
+        ///
+        /// 8jKS'y:G*Co,Wxa-
+        /// ]]>
+        /// </summary>
+        /// <param name="req"></param>
+        /// <param name="headers"></param>
+        /// <returns></returns>
         protected override IFullHttpResponse NewHandshakeResponse(IFullHttpRequest req, HttpHeaders headers)
         {
             // Serve the WebSocket handshake request.
@@ -34,9 +101,17 @@ namespace DotNetty.Codecs.Http.WebSockets
             bool isHixie76 = req.Headers.Contains(HttpHeaderNames.SecWebsocketKey1)
                 && req.Headers.Contains(HttpHeaderNames.SecWebsocketKey2);
 
+            var origin = req.Headers.Get(HttpHeaderNames.Origin, null);
+            //throw before allocating FullHttpResponse
+            if (origin is null && !isHixie76)
+            {
+                ThrowHelper.ThrowWebSocketHandshakeException_Missing_origin_header(req);
+            }
+
             // Create the WebSocket handshake response.
-            var res = new DefaultFullHttpResponse(HttpVersion.Http11,
-                new HttpResponseStatus(101, new AsciiString(isHixie76 ? "WebSocket Protocol Handshake" : "Web Socket Protocol Handshake")));
+            var res = new DefaultFullHttpResponse(HttpVersion.Http11, new HttpResponseStatus(101,
+                    new AsciiString(isHixie76 ? "WebSocket Protocol Handshake" : "Web Socket Protocol Handshake")),
+                    req.Content.Allocator.Buffer(0));
             if (headers is object)
             {
                 res.Headers.Add(headers);
@@ -49,9 +124,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (isHixie76)
             {
                 // New handshake getMethod with a challenge:
-                value = req.Headers.Get(HttpHeaderNames.Origin, null);
-                Debug.Assert(value is object);
-                res.Headers.Add(HttpHeaderNames.SecWebsocketOrigin, value);
+                res.Headers.Add(HttpHeaderNames.SecWebsocketOrigin, origin);
                 res.Headers.Add(HttpHeaderNames.SecWebsocketLocation, this.Uri);
 
                 if (req.Headers.TryGet(HttpHeaderNames.SecWebsocketProtocol, out ICharSequence subprotocols))
@@ -82,7 +155,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 int b = (int)(long.Parse(BeginningDigit.Replace(key2, "")) /
                     BeginningSpace.Replace(key2, "").Length);
                 long c = req.Content.ReadLong();
-                IByteBuffer input = Unpooled.Buffer(16);
+                IByteBuffer input = Unpooled.WrappedBuffer(new byte[16]).SetIndex(0, 0);
                 input.WriteInt(a);
                 input.WriteInt(b);
                 input.WriteLong(c);
@@ -91,9 +164,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             else
             {
                 // Old Hixie 75 handshake getMethod with no challenge:
-                value = req.Headers.Get(HttpHeaderNames.Origin, null);
-                Debug.Assert(value is object);
-                res.Headers.Add(HttpHeaderNames.WebsocketOrigin, value);
+                res.Headers.Add(HttpHeaderNames.WebsocketOrigin, origin);
                 res.Headers.Add(HttpHeaderNames.WebsocketLocation, this.Uri);
 
                 if (req.Headers.TryGet(HttpHeaderNames.WebsocketProtocol, out ICharSequence protocol))
@@ -105,10 +176,18 @@ namespace DotNetty.Codecs.Http.WebSockets
             return res;
         }
 
+        /// <summary>
+        /// Echo back the closing frame
+        /// </summary>
+        /// <param name="channel">Channel</param>
+        /// <param name="frame">Web Socket frame that was received</param>
+        /// <returns></returns>
         public override Task CloseAsync(IChannel channel, CloseWebSocketFrame frame) => channel.WriteAndFlushAsync(frame);
 
-        protected internal override IWebSocketFrameDecoder NewWebsocketDecoder() => new WebSocket00FrameDecoder(this.MaxFramePayloadLength);
+        /// <inheritdoc/>
+        protected internal override IWebSocketFrameDecoder NewWebsocketDecoder() => new WebSocket00FrameDecoder(this.DecoderConfig);
 
+        /// <inheritdoc/>
         protected internal override IWebSocketFrameEncoder NewWebSocketEncoder() => new WebSocket00FrameEncoder();
     }
 }

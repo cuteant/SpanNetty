@@ -254,7 +254,11 @@ namespace DotNetty.Common.Utilities
             if (0u >= uThisLen) { return IndexNotFound; }
 
             uint uStart = (uint)start;
-            if (uStart > SharedConstants.TooBigOrNegative) { start = 0; }
+            if (uStart > SharedConstants.TooBigOrNegative)
+            {
+                start = 0;
+                uStart = 0u;
+            }
 
             int subCount = subString.Count;
             uint uSubCount = (uint)subCount;
@@ -281,14 +285,14 @@ namespace DotNetty.Common.Utilities
                 if (subString is IHasAsciiSpan hasAscii)
                 {
                     var result = SpanHelpers.IndexOf(
-                        ref Unsafe.Add(ref MemoryMarshal.GetReference(this.AsciiSpan), start), thisLen,
+                        ref Unsafe.Add(ref MemoryMarshal.GetReference(this.AsciiSpan), start), searchLen,
                         ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), subCount);
                     return SharedConstants.TooBigOrNegative >= (uint)result ? start + result : IndexNotFound;
                 }
                 if (subString is IHasUtf16Span hasUtf16)
                 {
                     var result = SpanHelpers.IndexOf(
-                        ref Unsafe.Add(ref MemoryMarshal.GetReference(this.Utf16Span), start), thisLen,
+                        ref Unsafe.Add(ref MemoryMarshal.GetReference(this.Utf16Span), start), searchLen,
                         ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), subCount);
                     return SharedConstants.TooBigOrNegative >= (uint)result ? start + result : IndexNotFound;
                 }
@@ -332,9 +336,14 @@ namespace DotNetty.Common.Utilities
             if (0u >= uThisLen) { return IndexNotFound; }
             if ((uint)ch > uMaxCharValue) { return IndexNotFound; }
 
-            if ((uint)start >= uThisLen) { start = 0; }
+            uint uStart = (uint)start;
+            if (uStart >= uThisLen)
+            {
+                start = 0;
+                uStart = 0u;
+            }
 
-            if (0u >= (uint)start)
+            if (0u >= uStart)
             {
                 return SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(this.AsciiSpan), (byte)ch, thisLen);
             }
@@ -349,41 +358,24 @@ namespace DotNetty.Common.Utilities
             uint uThisLen = (uint)thisLen;
             if (0u >= uThisLen) { return IndexNotFound; }
 
-            uint uStart = (uint)start;
-            if (uStart > SharedConstants.TooBigOrNegative) { start = 0; }
-
             int subCount = subString.Count;
-            uint uSubCount = (uint)subCount;
-            if (0u >= uSubCount) { return start < uThisLen ? start : thisLen; }
-            if (uSubCount > (uint)(thisLen - start)) { return IndexNotFound; }
+            start = Math.Min(start, thisLen - subCount);
+            uint uStart = (uint)start;
 
-            if (0u >= (uint)start)
+            if (uStart > SharedConstants.TooBigOrNegative) { return IndexNotFound; }
+            if (0u >= (uint)subCount) { return start; }
+
+            if (subString is IHasAsciiSpan hasAscii)
             {
-                if (subString is IHasAsciiSpan hasAscii)
-                {
-                    return SpanHelpers.LastIndexOf(ref MemoryMarshal.GetReference(this.AsciiSpan), thisLen, ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), subCount);
-                }
-                if (subString is IHasUtf16Span hasUtf16)
-                {
-                    return SpanHelpers.LastIndexOf(ref MemoryMarshal.GetReference(this.Utf16Span), thisLen, ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), subCount);
-                }
+                return SpanHelpers.LastIndexOf(
+                    ref MemoryMarshal.GetReference(this.AsciiSpan), start + subCount,
+                    ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), subCount);
             }
-            else
+            if (subString is IHasUtf16Span hasUtf16)
             {
-                if (subString is IHasAsciiSpan hasAscii)
-                {
-                    var result = SpanHelpers.LastIndexOf(
-                        ref Unsafe.Add(ref MemoryMarshal.GetReference(this.AsciiSpan), start), thisLen,
-                        ref MemoryMarshal.GetReference(hasAscii.AsciiSpan), subCount);
-                    return SharedConstants.TooBigOrNegative >= (uint)result ? start + result : IndexNotFound;
-                }
-                if (subString is IHasUtf16Span hasUtf16)
-                {
-                    var result = SpanHelpers.LastIndexOf(
-                        ref Unsafe.Add(ref MemoryMarshal.GetReference(this.Utf16Span), start), thisLen,
-                        ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), subCount);
-                    return SharedConstants.TooBigOrNegative >= (uint)result ? start + result : IndexNotFound;
-                }
+                return SpanHelpers.LastIndexOf(
+                    ref MemoryMarshal.GetReference(this.Utf16Span), start + subCount,
+                    ref MemoryMarshal.GetReference(hasUtf16.Utf16Span), subCount);
             }
 
             return LastIndexOf0(subString, start);
@@ -395,12 +387,11 @@ namespace DotNetty.Common.Utilities
             char firstChar = subString[0];
             if ((uint)firstChar > uMaxCharValue) { return IndexNotFound; }
 
-            int thisLen = this.length;
             int subCount = subString.Count;
 
             byte firstCharAsByte = (byte)firstChar;
-            int end = offset + start;
-            for (int i = offset + thisLen - subCount; i >= end; --i)
+            var thisOffset = this.offset;
+            for (int i = thisOffset + start; i >= 0; --i)
             {
                 if (value[i] == firstCharAsByte)
                 {
@@ -411,7 +402,7 @@ namespace DotNetty.Common.Utilities
                     }
                     if (o2 == subCount)
                     {
-                        return i - offset;
+                        return i - thisOffset;
                     }
                 }
             }

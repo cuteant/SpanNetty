@@ -54,9 +54,9 @@ namespace DotNetty.Codecs
         public DefaultHeaders(IHashingStrategy<TKey> nameHashingStrategy,
             IValueConverter<TValue> valueConverter, INameValidator<TKey> nameValidator, int arraySizeHint)
         {
-            if (ReferenceEquals(nameHashingStrategy, null)) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.nameHashingStrategy);
-            if (ReferenceEquals(valueConverter, null)) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.valueConverter);
-            if (ReferenceEquals(nameValidator, null)) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.nameValidator);
+            if (nameHashingStrategy is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.nameHashingStrategy);
+            if (valueConverter is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.valueConverter);
+            if (nameValidator is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.nameValidator);
 
             this.hashingStrategy = nameHashingStrategy;
             this.ValueConverter = valueConverter;
@@ -77,7 +77,7 @@ namespace DotNetty.Codecs
             int h = this.hashingStrategy.HashCode(name);
             int i = this.Index(h);
             HeaderEntry<TKey, TValue> e = this.entries[i];
-            value = default(TValue);
+            value = default;
             // loop until the first header was found
             while (e is object)
             {
@@ -204,7 +204,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> Add(TKey name, TValue value)
         {
-            if (ReferenceEquals(value, null)) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
+            if (value == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
 
             this.nameValidator.ValidateName(name);
             int h = this.hashingStrategy.HashCode(name);
@@ -319,7 +319,7 @@ namespace DotNetty.Codecs
 
         public IHeaders<TKey, TValue> Set(TKey name, TValue value)
         {
-            if (ReferenceEquals(value, null)) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
+            if (value == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
 
             this.nameValidator.ValidateName(name);
             int h = this.hashingStrategy.HashCode(name);
@@ -331,7 +331,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> Set(TKey name, IEnumerable<TValue> values)
         {
-            if (ReferenceEquals(values, null)) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.values);
+            if (values is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.values);
 
             this.nameValidator.ValidateName(name);
             int h = this.hashingStrategy.HashCode(name);
@@ -361,7 +361,7 @@ namespace DotNetty.Codecs
 
         public virtual IHeaders<TKey, TValue> SetObject(TKey name, IEnumerable<object> values)
         {
-            if (ReferenceEquals(values, null)) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.values);
+            if (values is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.values);
 
             this.nameValidator.ValidateName(name);
             int h = this.hashingStrategy.HashCode(name);
@@ -451,7 +451,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(bool);
+            value = default;
             return false;
         }
 
@@ -472,7 +472,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(byte);
+            value = default;
             return false;
         }
 
@@ -493,7 +493,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(char);
+            value = default;
             return false;
         }
 
@@ -514,7 +514,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(short);
+            value = default;
             return false;
         }
 
@@ -535,7 +535,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(int);
+            value = default;
             return false;
         }
 
@@ -556,7 +556,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(long);
+            value = default;
             return false;
         }
 
@@ -577,7 +577,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(float);
+            value = default;
             return false;
         }
 
@@ -598,7 +598,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(double);
+            value = default;
             return false;
         }
 
@@ -619,7 +619,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(long);
+            value = default;
             return false;
         }
 
@@ -640,7 +640,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(bool);
+            value = default;
             return false;
         }
 
@@ -660,7 +660,7 @@ namespace DotNetty.Codecs
                     // Ignore
                 }
             }
-            value = default(byte);
+            value = default;
             return false;
         }
 
@@ -681,7 +681,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(char);
+            value = default;
             return false;
         }
 
@@ -702,7 +702,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(short);
+            value = default;
             return false;
         }
 
@@ -723,7 +723,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(int);
+            value = default;
             return false;
         }
 
@@ -744,7 +744,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(long);
+            value = default;
             return false;
         }
 
@@ -765,7 +765,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(float);
+            value = default;
             return false;
         }
 
@@ -786,7 +786,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(double);
+            value = default;
             return false;
         }
 
@@ -807,7 +807,7 @@ namespace DotNetty.Codecs
                 }
             }
 
-            value = default(long);
+            value = default;
             return false;
         }
 
@@ -880,7 +880,7 @@ namespace DotNetty.Codecs
 
         bool TryRemove0(int h, int i, TKey name, out TValue value)
         {
-            value = default(TValue);
+            value = default;
 
             HeaderEntry<TKey, TValue> e = this.entries[i];
             if (e is null)
@@ -949,7 +949,7 @@ namespace DotNetty.Codecs
                 this.hash = this.hashingStrategy.HashCode(name);
                 this.name = name;
                 this.node = this.head = headers.entries[headers.Index(this.hash)];
-                this.current = default(TValue);
+                this.current = default;
             }
 
             bool IEnumerator.MoveNext()
@@ -985,13 +985,13 @@ namespace DotNetty.Codecs
             void IEnumerator.Reset()
             {
                 this.node = this.head;
-                this.current = default(TValue);
+                this.current = default;
             }
 
             void IDisposable.Dispose()
             {
                 this.node = null;
-                this.current = default(TValue);
+                this.current = default;
             }
 
             public IEnumerator<TValue> GetEnumerator() => this;
@@ -1088,7 +1088,7 @@ namespace DotNetty.Codecs
         internal HeaderEntry()
         {
             this.Hash = -1;
-            this.key = default(TKey);
+            this.key = default;
             this.Before = this;
             this.After = this;
         }
@@ -1126,7 +1126,7 @@ namespace DotNetty.Codecs
         public TValue SetValue(TValue newValue)
         {
             if (this.isReadonly) { CThrowHelper.ThrowNotSupportedException_Readonly(); }
-            if (ReferenceEquals(newValue, null)) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.newValue);
+            if (newValue == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.newValue);
 
             TValue oldValue = this.value;
             this.value = newValue;
@@ -1144,11 +1144,11 @@ namespace DotNetty.Codecs
         // ReSharper disable once MergeConditionalExpression
         public override bool Equals(object obj) => obj is HeaderEntry<TKey, TValue> other 
             && (this.key is null ? other.key is null : this.key.Equals(other.key))
-            && (ReferenceEquals(this.value, null) ? ReferenceEquals(other.value, null) : this.value.Equals(other.value));
+            && (this.value == null ? other.value == null : this.value.Equals(other.value));
 
         // ReSharper disable NonReadonlyMemberInGetHashCode
         public override int GetHashCode() => (this.key is null ? 0 : this.key.GetHashCode()) 
-                ^ (ReferenceEquals(this.value, null) ? 0 : this.value.GetHashCode());
+                ^ (this.value == null ? 0 : this.value.GetHashCode());
         // ReSharper restore NonReadonlyMemberInGetHashCode
     }
 }

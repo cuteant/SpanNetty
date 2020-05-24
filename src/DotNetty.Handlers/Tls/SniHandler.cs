@@ -44,94 +44,85 @@ namespace DotNetty.Handlers.Tls
         {
             if (!this.suppressRead && !this.handshakeFailed)
             {
-                int writerIndex = input.WriterIndex;
                 Exception error = null;
                 try
                 {
-                    bool continueLoop = true;
-                    for (int i = 0; i < MAX_SSL_RECORDS && continueLoop; i++)
+                    int readerIndex = input.ReaderIndex;
+                    int readableBytes = input.ReadableBytes;
+                    if (readableBytes < TlsUtils.SSL_RECORD_HEADER_LENGTH)
                     {
-                        int readerIndex = input.ReaderIndex;
-                        int readableBytes = writerIndex - readerIndex;
-                        if (readableBytes < TlsUtils.SSL_RECORD_HEADER_LENGTH)
-                        {
-                            // Not enough data to determine the record type and length.
-                            return;
-                        }
+                        // Not enough data to determine the record type and length.
+                        return;
+                    }
 
-                        int command = input.GetByte(readerIndex);
-                        // tls, but not handshake command
-                        switch (command)
-                        {
-                            case TlsUtils.SSL_CONTENT_TYPE_CHANGE_CIPHER_SPEC:
-                            case TlsUtils.SSL_CONTENT_TYPE_ALERT:
-                                int len = TlsUtils.GetEncryptedPacketLength(input, readerIndex);
+                    int command = input.GetByte(readerIndex);
+                    // tls, but not handshake command
+                    switch (command)
+                    {
+                        case TlsUtils.SSL_CONTENT_TYPE_CHANGE_CIPHER_SPEC:
+                        // fall-through
+                        case TlsUtils.SSL_CONTENT_TYPE_ALERT:
+                            int len = TlsUtils.GetEncryptedPacketLength(input, readerIndex);
 
-                                // Not an SSL/TLS packet
-                                if (len == TlsUtils.NOT_ENCRYPTED)
+                            // Not an SSL/TLS packet
+                            if (len == TlsUtils.NOT_ENCRYPTED)
+                            {
+                                this.handshakeFailed = true;
+                                var e = new NotSslRecordException(
+                                    "not an SSL/TLS record: " + ByteBufferUtil.HexDump(input));
+                                input.SkipBytes(input.ReadableBytes);
+                                context.FireUserEventTriggered(new SniCompletionEvent(e));
+                                TlsUtils.NotifyHandshakeFailure(context, e, true);
+                                throw e;
+                            }
+                            if (len == TlsUtils.NOT_ENOUGH_DATA)
+                            {
+                                // Not enough data
+                                return;
+                            }
+                            // SNI can't be present in an ALERT or CHANGE_CIPHER_SPEC record, so we'll fall back and assume
+                            // no SNI is present. Let's let the actual TLS implementation sort this out.
+                            break;
+
+                        case TlsUtils.SSL_CONTENT_TYPE_HANDSHAKE:
+                            int majorVersion = input.GetByte(readerIndex + 1);
+
+                            // SSLv3 or TLS
+                            if (majorVersion == 3)
+                            {
+                                int packetLength = input.GetUnsignedShort(readerIndex + 3) + TlsUtils.SSL_RECORD_HEADER_LENGTH;
+
+                                if (readableBytes < packetLength)
                                 {
-                                    this.handshakeFailed = true;
-                                    var e = new NotSslRecordException(
-                                        "not an SSL/TLS record: " + ByteBufferUtil.HexDump(input));
-                                    input.SkipBytes(input.ReadableBytes);
-
-                                    TlsUtils.NotifyHandshakeFailure(context, e);
-                                    throw e;
-                                }
-                                if (len == TlsUtils.NOT_ENOUGH_DATA ||
-                                    writerIndex - readerIndex - TlsUtils.SSL_RECORD_HEADER_LENGTH < len)
-                                {
-                                    // Not enough data
+                                    // client hello incomplete; try again to decode once more data is ready.
                                     return;
                                 }
 
-                                // increase readerIndex and try again.
-                                input.SkipBytes(len);
-                                continue;
+                                // See https://tools.ietf.org/html/rfc5246#section-7.4.1.2
+                                //
+                                // Decode the ssl client hello packet.
+                                // We have to skip bytes until SessionID (which sum to 43 bytes).
+                                //
+                                // struct {
+                                //    ProtocolVersion client_version;
+                                //    Random random;
+                                //    SessionID session_id;
+                                //    CipherSuite cipher_suites<2..2^16-2>;
+                                //    CompressionMethod compression_methods<1..2^8-1>;
+                                //    select (extensions_present) {
+                                //        case false:
+                                //            struct {};
+                                //        case true:
+                                //            Extension extensions<0..2^16-1>;
+                                //    };
+                                // } ClientHello;
+                                //
 
-                            case TlsUtils.SSL_CONTENT_TYPE_HANDSHAKE:
-                                int majorVersion = input.GetByte(readerIndex + 1);
+                                int endOffset = readerIndex + packetLength;
+                                int offset = readerIndex + 43;
 
-                                // SSLv3 or TLS
-                                if (majorVersion == 3)
+                                if (endOffset - offset >= 6)
                                 {
-                                    int packetLength = input.GetUnsignedShort(readerIndex + 3) + TlsUtils.SSL_RECORD_HEADER_LENGTH;
-
-                                    if (readableBytes < packetLength)
-                                    {
-                                        // client hello incomplete; try again to decode once more data is ready.
-                                        return;
-                                    }
-
-                                    // See https://tools.ietf.org/html/rfc5246#section-7.4.1.2
-                                    //
-                                    // Decode the ssl client hello packet.
-                                    // We have to skip bytes until SessionID (which sum to 43 bytes).
-                                    //
-                                    // struct {
-                                    //    ProtocolVersion client_version;
-                                    //    Random random;
-                                    //    SessionID session_id;
-                                    //    CipherSuite cipher_suites<2..2^16-2>;
-                                    //    CompressionMethod compression_methods<1..2^8-1>;
-                                    //    select (extensions_present) {
-                                    //        case false:
-                                    //            struct {};
-                                    //        case true:
-                                    //            Extension extensions<0..2^16-1>;
-                                    //    };
-                                    // } ClientHello;
-                                    //
-
-                                    int endOffset = readerIndex + packetLength;
-                                    int offset = readerIndex + 43;
-
-                                    if (endOffset - offset < 6)
-                                    {
-                                        continueLoop = false;
-                                        break;
-                                    }
-
                                     int sessionIdLength = input.GetByte(offset);
                                     offset += sessionIdLength + 1;
 
@@ -143,99 +134,85 @@ namespace DotNetty.Handlers.Tls
 
                                     int extensionsLength = input.GetUnsignedShort(offset);
                                     offset += 2;
-                                     int extensionsLimit = offset + extensionsLength;
+                                    int extensionsLimit = offset + extensionsLength;
 
-                                    if (extensionsLimit > endOffset)
+                                    // Extensions should never exceed the record boundary.
+                                    if (extensionsLimit <= endOffset)
                                     {
-                                        // Extensions should never exceed the record boundary.
-                                        continueLoop = false;
-                                        break;
-                                    }
-
-                                    while(true)
-                                    {
-                                        if (extensionsLimit - offset < 4)
+                                        while (extensionsLimit - offset >= 4)
                                         {
-                                            continueLoop = false;
-                                            break;
-                                        }
-
-                                        int extensionType = input.GetUnsignedShort(offset);
-                                        offset += 2;
-
-                                        int extensionLength = input.GetUnsignedShort(offset);
-                                        offset += 2;
-
-                                        if (extensionsLimit - offset < extensionLength)
-                                        {
-                                            continueLoop = false;
-                                            break;
-                                        }
-
-                                        // SNI
-                                        // See https://tools.ietf.org/html/rfc6066#page-6
-                                        if (0u >= (uint)extensionType)
-                                        {
+                                            int extensionType = input.GetUnsignedShort(offset);
                                             offset += 2;
-                                            if (extensionsLimit - offset < 3)
+
+                                            int extensionLength = input.GetUnsignedShort(offset);
+                                            offset += 2;
+
+                                            if (extensionsLimit - offset < extensionLength)
                                             {
-                                                continueLoop = false;
                                                 break;
                                             }
 
-                                            int serverNameType = input.GetByte(offset);
-                                            offset++;
-
-                                            if (0u >= (uint)serverNameType)
+                                            // SNI
+                                            // See https://tools.ietf.org/html/rfc6066#page-6
+                                            if (0u >= (uint)extensionType)
                                             {
-                                                int serverNameLength = input.GetUnsignedShort(offset);
                                                 offset += 2;
-
-                                                if (serverNameLength <= 0 || extensionsLimit - offset < serverNameLength)
+                                                if (extensionsLimit - offset < 3)
                                                 {
-                                                    continueLoop = false;
                                                     break;
                                                 }
 
-                                                string hostname = input.ToString(offset, serverNameLength, Encoding.UTF8);
-                                                //try
-                                                //{
-                                                //    select(ctx, IDN.toASCII(hostname,
-                                                //                            IDN.ALLOW_UNASSIGNED).toLowerCase(Locale.US));
-                                                //}
-                                                //catch (Throwable t)
-                                                //{
-                                                //    PlatformDependent.throwException(t);
-                                                //}
+                                                int serverNameType = input.GetByte(offset);
+                                                offset++;
 
-                                                var idn = new IdnMapping()
+                                                if (0u >= (uint)serverNameType)
                                                 {
-                                                    AllowUnassigned = true
-                                                };
+                                                    int serverNameLength = input.GetUnsignedShort(offset);
+                                                    offset += 2;
 
-                                                hostname = idn.GetAscii(hostname).ToLower(UnitedStatesCultureInfo);
-                                                this.Select(context, hostname);
-                                                return;
+                                                    if ((uint)(serverNameLength - 1) > SharedConstants.TooBigOrNegative/*serverNameLength <= 0*/ ||
+                                                        extensionsLimit - offset < serverNameLength)
+                                                    {
+                                                        break;
+                                                    }
+
+                                                    string hostname = input.ToString(offset, serverNameLength, Encoding.UTF8);
+                                                    //try
+                                                    //{
+                                                    //    select(ctx, IDN.toASCII(hostname,
+                                                    //                            IDN.ALLOW_UNASSIGNED).toLowerCase(Locale.US));
+                                                    //}
+                                                    //catch (Throwable t)
+                                                    //{
+                                                    //    PlatformDependent.throwException(t);
+                                                    //}
+
+                                                    var idn = new IdnMapping()
+                                                    {
+                                                        AllowUnassigned = true
+                                                    };
+
+                                                    hostname = idn.GetAscii(hostname).ToLower(UnitedStatesCultureInfo);
+                                                    this.Select(context, hostname);
+                                                    return;
+                                                }
+                                                else
+                                                {
+                                                    // invalid enum value
+                                                    break;
+                                                }
                                             }
-                                            else
-                                            {
-                                                // invalid enum value
-                                                continueLoop = false;
-                                                break;
-                                            }
+
+                                            offset += extensionLength;
                                         }
-
-                                        offset += extensionLength;
                                     }
                                 }
+                            }
+                            break;
 
-                                break;
-                            // Fall-through
-                            default:
-                                //not tls, ssl or application data, do not try sni
-                                continueLoop = false;
-                                break;
-                        }
+                        default:
+                            //not tls, ssl or application data, do not try sni
+                            break;
                     }
                 }
                 catch (Exception e)
@@ -252,13 +229,13 @@ namespace DotNetty.Handlers.Tls
                 if (this.serverTlsSniSettings.DefaultServerHostName is object)
                 {
                     // Just select the default server TLS setting
-                    this.Select(context, this.serverTlsSniSettings.DefaultServerHostName); 
+                    this.Select(context, this.serverTlsSniSettings.DefaultServerHostName);
                 }
                 else
                 {
                     this.handshakeFailed = true;
                     var e = new DecoderException($"failed to get the server TLS setting {error}");
-                    TlsUtils.NotifyHandshakeFailure(context, e);
+                    TlsUtils.NotifyHandshakeFailure(context, e, true);
                     throw e;
                 }
             }

@@ -100,7 +100,10 @@ namespace DotNetty.Buffers
                     index += localLength;
                     count -= localLength;
                     adjustment += s.ReadableBytes;
-                    if (count <= 0) { break; }
+                    if ((uint)(count - 1) > SharedConstants.TooBigOrNegative) // count <= 0
+                    {
+                        break;
+                    }
                     s = this.Buffer(++i);
                 }
 
@@ -114,40 +117,40 @@ namespace DotNetty.Buffers
 
         public override Memory<byte> GetMemory(int sizeHintt = 0)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         protected internal override Memory<byte> _GetMemory(int index, int count)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override Span<byte> GetSpan(int sizeHintt = 0)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         protected internal override Span<byte> _GetSpan(int index, int count)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
         public override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
 
         public override IByteBuffer WriteBytes(in ReadOnlySpan<byte> src)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
         public override IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src)
         {
-            throw new ReadOnlyBufferException();
+            throw ThrowHelper.GetReadOnlyBufferException();
         }
     }
 }

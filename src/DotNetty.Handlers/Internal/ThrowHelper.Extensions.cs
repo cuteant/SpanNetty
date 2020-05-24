@@ -15,79 +15,96 @@ namespace DotNetty.Handlers
     /// <summary>The convention for this enum is using the argument name as the enum name</summary>
     internal enum ExceptionArgument
     {
-        array,
-        assembly,
-        buffer,
-        destination,
-        key,
-        obj,
         s,
-        str,
-        source,
-        type,
-        types,
-        value,
-        values,
-        valueFactory,
-        name,
-        item,
-        options,
-        list,
-        ts,
-        other,
-        pool,
-        inner,
-        policy,
-        offset,
-        count,
-        path,
-        typeInfo,
-        method,
-        qualifiedTypeName,
-        fullName,
-        feature,
-        manager,
-        directories,
-        dirEnumArgs,
-        asm,
-        includedAssemblies,
-        func,
-        defaultFn,
-        returnType,
-        propertyInfo,
-        parameterTypes,
-        fieldInfo,
-        memberInfo,
-        attributeType,
+
         pi,
         fi,
-        invoker,
-        instanceType,
-        target,
-        member,
-        typeName,
-        predicate,
-        assemblyPredicate,
-        collection,
-        capacity,
+        ts,
+
+        asm,
+        key,
+        obj,
+        str,
+
+        func,
+        name,
+        item,
+        type,
+        list,
+        pool,
+        path,
+
+        count,
+        other,
+        inner,
+        types,
+        array,
+        cause,
+        value,
         match,
         index,
-        length,
-        startIndex,
-        newSize,
-        expression,
-        sslStreamFactory,
-        settings,
-        doBindAction,
         input,
-        chunkSize,
-        serverTlsSettingMap,
-        hostName,
-        serverTlsSetting,
-        exception,
-        protocol,
-        ipAddress,
         rules,
+
+        length,
+        method,
+        source,
+        buffer,
+        values,
+        policy,
+        offset,
+        target,
+        member,
+
+        options,
+        feature,
+        manager,
+        invoker,
+        newSize,
+
+        assembly,
+        typeInfo,
+        fullName,
+        typeName,
+        capacity,
+        settings,
+        hostName,
+        protocol,
+
+        ipAddress,
+        chunkSize,
+        defaultFn,
+        fieldInfo,
+        predicate,
+        exception,
+
+        returnType,
+        collection,
+        startIndex,
+        expression,
+        memberInfo,
+
+        directories,
+        dirEnumArgs,
+        destination,
+        valueFactory,
+        propertyInfo,
+        doBindAction,
+        instanceType,
+
+        attributeType,
+
+        parameterTypes,
+
+        serverTlsSetting,
+        sslStreamFactory,
+
+        qualifiedTypeName,
+        assemblyPredicate,
+
+        includedAssemblies,
+
+        serverTlsSettingMap,
     }
 
     #endregion
@@ -280,6 +297,12 @@ namespace DotNetty.Handlers
         internal static UnsupportedMessageTypeException GetUnsupportedMessageTypeException(object message)
         {
             return new UnsupportedMessageTypeException(message, typeof(IByteBuffer));
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static ClosedChannelException GetClosedChannelException()
+        {
+            return new ClosedChannelException();
         }
     }
 }

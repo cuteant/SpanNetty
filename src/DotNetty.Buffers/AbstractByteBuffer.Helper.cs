@@ -60,11 +60,11 @@
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void CheckRangeBounds(int index, int fieldLength, int capacity)
+        private static void CheckRangeBounds(ExceptionArgument indexName, int index, int fieldLength, int capacity)
         {
             if (MathUtil.IsOutOfBounds(index, fieldLength, capacity))
             {
-                ThrowHelper.ThrowIndexOutOfRangeException_Index(index, fieldLength, capacity);
+                ThrowHelper.ThrowIndexOutOfRangeException_Index(indexName, index, fieldLength, capacity);
             }
         }
     }

@@ -13,7 +13,7 @@ namespace DotNetty.Codecs.Http.Cookies
         string Value { get; set; }
 
         /// <summary>
-        /// Returns true if the raw value of this {@link Cookie},
+        /// Returns true if the raw value of this <see cref="ICookie"/>,
         /// was wrapped with double quotes in original Set-Cookie header.
         /// </summary>
         bool Wrap { get; set; }

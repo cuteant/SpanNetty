@@ -81,6 +81,44 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
+        public void ToComponentIndex()
+        {
+            var buf = (CompositeByteBuffer)Unpooled.WrappedBuffer(new byte[] { 1, 2, 3, 4, 5 },
+                    new byte[] { 4, 5, 6, 7, 8, 9, 26 }, new byte[] { 10, 9, 8, 7, 6, 5, 33 });
+
+            // spot checks
+            Assert.Equal(0, buf.ToComponentIndex(4));
+            Assert.Equal(1, buf.ToComponentIndex(5));
+            Assert.Equal(2, buf.ToComponentIndex(15));
+
+            //Loop through each byte
+
+            byte index = 0;
+
+            while (index < buf.Capacity)
+            {
+                int cindex = buf.ToComponentIndex(index++);
+                Assert.True(cindex >= 0 && cindex < buf.NumComponents);
+            }
+
+            buf.Release();
+        }
+
+        [Fact]
+        public void ToByteIndex()
+        {
+            var buf = (CompositeByteBuffer)Unpooled.WrappedBuffer(new byte[] { 1, 2, 3, 4, 5 },
+                    new byte[] { 4, 5, 6, 7, 8, 9, 26 }, new byte[] { 10, 9, 8, 7, 6, 5, 33 });
+
+            // spot checks
+            Assert.Equal(0, buf.ToByteIndex(0));
+            Assert.Equal(5, buf.ToByteIndex(1));
+            Assert.Equal(12, buf.ToByteIndex(2));
+
+            buf.Release();
+        }
+
+        [Fact]
         public void DiscardReadBytes3()
         {
             IByteBuffer a = Unpooled.WrappedBuffer(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
@@ -709,6 +747,243 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
+        public void RemoveComponents()
+        {
+            CompositeByteBuffer buf = Unpooled.CompositeBuffer();
+            for (int i = 0; i < 10; i++)
+            {
+                buf.AddComponent(Unpooled.WrappedBuffer(new byte[] { 1, 2 }));
+            }
+            Assert.Equal(10, buf.NumComponents);
+            Assert.Equal(20, buf.Capacity);
+            buf.RemoveComponents(4, 3);
+            Assert.Equal(7, buf.NumComponents);
+            Assert.Equal(14, buf.Capacity);
+            buf.Release();
+        }
+
+        //@Test
+        //public void testGatheringWritesHeap() throws Exception {
+        //    testGatheringWrites(buffer().order(order), buffer().order(order));
+        //}
+
+        //@Test
+        //public void testGatheringWritesDirect() throws Exception {
+        //    testGatheringWrites(directBuffer().order(order), directBuffer().order(order));
+        //}
+
+        //@Test
+        //public void testGatheringWritesMixes() throws Exception {
+        //    testGatheringWrites(buffer().order(order), directBuffer().order(order));
+        //}
+
+        //@Test
+        //public void testGatheringWritesHeapPooled() throws Exception {
+        //    testGatheringWrites(PooledByteBufAllocator.DEFAULT.heapBuffer().order(order),
+        //            PooledByteBufAllocator.DEFAULT.heapBuffer().order(order));
+        //}
+
+        //@Test
+        //public void testGatheringWritesDirectPooled() throws Exception {
+        //    testGatheringWrites(PooledByteBufAllocator.DEFAULT.directBuffer().order(order),
+        //            PooledByteBufAllocator.DEFAULT.directBuffer().order(order));
+        //}
+
+        //@Test
+        //public void testGatheringWritesMixesPooled() throws Exception {
+        //    testGatheringWrites(PooledByteBufAllocator.DEFAULT.heapBuffer().order(order),
+        //            PooledByteBufAllocator.DEFAULT.directBuffer().order(order));
+        //}
+
+        //private static void testGatheringWrites(ByteBuf buf1, ByteBuf buf2) throws Exception {
+        //    CompositeByteBuf buf = compositeBuffer();
+        //    buf.addComponent(buf1.writeBytes(new byte[]{1, 2}));
+        //    buf.addComponent(buf2.writeBytes(new byte[]{1, 2}));
+        //    buf.writerIndex(3);
+        //    buf.readerIndex(1);
+
+        //    TestGatheringByteChannel channel = new TestGatheringByteChannel();
+
+        //    buf.readBytes(channel, 2);
+
+        //    byte[] data = new byte[2];
+        //    buf.getBytes(1, data);
+        //    assertArrayEquals(data, channel.writtenBytes());
+
+        //    buf.release();
+        //}
+
+        //@Test
+        //public void testGatheringWritesPartialHeap() throws Exception {
+        //    testGatheringWritesPartial(buffer().order(order), buffer().order(order), false);
+        //}
+
+        //@Test
+        //public void testGatheringWritesPartialDirect() throws Exception {
+        //    testGatheringWritesPartial(directBuffer().order(order), directBuffer().order(order), false);
+        //}
+
+        //@Test
+        //public void testGatheringWritesPartialMixes() throws Exception {
+        //    testGatheringWritesPartial(buffer().order(order), directBuffer().order(order), false);
+        //}
+
+        //@Test
+        //public void testGatheringWritesPartialHeapSlice() throws Exception {
+        //    testGatheringWritesPartial(buffer().order(order), buffer().order(order), true);
+        //}
+
+        //@Test
+        //public void testGatheringWritesPartialDirectSlice() throws Exception {
+        //    testGatheringWritesPartial(directBuffer().order(order), directBuffer().order(order), true);
+        //}
+
+        //@Test
+        //public void testGatheringWritesPartialMixesSlice() throws Exception {
+        //    testGatheringWritesPartial(buffer().order(order), directBuffer().order(order), true);
+        //}
+
+        //@Test
+        //public void testGatheringWritesPartialHeapPooled() throws Exception {
+        //    testGatheringWritesPartial(PooledByteBufAllocator.DEFAULT.heapBuffer().order(order),
+        //            PooledByteBufAllocator.DEFAULT.heapBuffer().order(order), false);
+        //}
+
+        //@Test
+        //public void testGatheringWritesPartialDirectPooled() throws Exception {
+        //    testGatheringWritesPartial(PooledByteBufAllocator.DEFAULT.directBuffer().order(order),
+        //            PooledByteBufAllocator.DEFAULT.directBuffer().order(order), false);
+        //}
+
+        //@Test
+        //public void testGatheringWritesPartialMixesPooled() throws Exception {
+        //    testGatheringWritesPartial(PooledByteBufAllocator.DEFAULT.heapBuffer().order(order),
+        //            PooledByteBufAllocator.DEFAULT.directBuffer().order(order), false);
+        //}
+
+        //@Test
+        //public void testGatheringWritesPartialHeapPooledSliced() throws Exception {
+        //    testGatheringWritesPartial(PooledByteBufAllocator.DEFAULT.heapBuffer().order(order),
+        //            PooledByteBufAllocator.DEFAULT.heapBuffer().order(order), true);
+        //}
+
+        //@Test
+        //public void testGatheringWritesPartialDirectPooledSliced() throws Exception {
+        //    testGatheringWritesPartial(PooledByteBufAllocator.DEFAULT.directBuffer().order(order),
+        //            PooledByteBufAllocator.DEFAULT.directBuffer().order(order), true);
+        //}
+
+        //@Test
+        //public void testGatheringWritesPartialMixesPooledSliced() throws Exception {
+        //    testGatheringWritesPartial(PooledByteBufAllocator.DEFAULT.heapBuffer().order(order),
+        //            PooledByteBufAllocator.DEFAULT.directBuffer().order(order), true);
+        //}
+
+        //private static void testGatheringWritesPartial(ByteBuf buf1, ByteBuf buf2, boolean slice) throws Exception {
+        //    CompositeByteBuf buf = compositeBuffer();
+        //    buf1.writeBytes(new byte[]{1, 2, 3, 4});
+        //    buf2.writeBytes(new byte[]{1, 2, 3, 4});
+        //    if (slice) {
+        //        buf1 = buf1.readerIndex(1).slice();
+        //        buf2 = buf2.writerIndex(3).slice();
+        //        buf.addComponent(buf1);
+        //        buf.addComponent(buf2);
+        //        buf.writerIndex(6);
+        //    } else {
+        //        buf.addComponent(buf1);
+        //        buf.addComponent(buf2);
+        //        buf.writerIndex(7);
+        //        buf.readerIndex(1);
+        //    }
+
+        //    TestGatheringByteChannel channel = new TestGatheringByteChannel(1);
+
+        //    while (buf.isReadable()) {
+        //        buf.readBytes(channel, buf.readableBytes());
+        //    }
+
+        //    byte[] data = new byte[6];
+
+        //    if (slice) {
+        //        buf.getBytes(0, data);
+        //    } else {
+        //        buf.getBytes(1, data);
+        //    }
+        //    assertArrayEquals(data, channel.writtenBytes());
+
+        //    buf.release();
+        //}
+
+        //@Test
+        //public void testGatheringWritesSingleHeap() throws Exception {
+        //    testGatheringWritesSingleBuf(buffer().order(order));
+        //}
+
+        //@Test
+        //public void testGatheringWritesSingleDirect() throws Exception {
+        //    testGatheringWritesSingleBuf(directBuffer().order(order));
+        //}
+
+        //private static void testGatheringWritesSingleBuf(ByteBuf buf1) throws Exception {
+        //    CompositeByteBuf buf = compositeBuffer();
+        //    buf.addComponent(buf1.writeBytes(new byte[]{1, 2, 3, 4}));
+        //    buf.writerIndex(3);
+        //    buf.readerIndex(1);
+
+        //    TestGatheringByteChannel channel = new TestGatheringByteChannel();
+        //    buf.readBytes(channel, 2);
+
+        //    byte[] data = new byte[2];
+        //    buf.getBytes(1, data);
+        //    assertArrayEquals(data, channel.writtenBytes());
+
+        //    buf.release();
+        //}
+
+        //public void InternalNioBuffer()
+        //{
+        //    CompositeByteBuffer buf = Unpooled.CompositeBuffer();
+        //    Assert.Empty(buf.GetIoBuffer(0, 0));
+
+        //    // If non-derived buffer is added, its internal buffer should be returned
+        //    var concreteBuffer = Unpooled.DirectBuffer().WriteByte(1);
+        //    buf.AddComponent(concreteBuffer);
+        //    Assert.Same(concreteBuffer.GetIoBuffer(0, 1).Array, buf.GetIoBuffer(0, 1).Array);
+        //    buf.Release();
+
+        //    // In derived cases, the original internal buffer must not be used
+        //    buf = Unpooled.CompositeBuffer();
+        //    concreteBuffer = Unpooled.DirectBuffer().WriteByte(1);
+        //    buf.AddComponent(concreteBuffer.Slice());
+        //    Assert.NotSame(concreteBuffer.GetIoBuffer(0, 1).Array, buf.GetIoBuffer(0, 1).Array);
+        //    buf.Release();
+
+        //    buf = Unpooled.CompositeBuffer();
+        //    concreteBuffer = Unpooled.DirectBuffer().WriteByte(1);
+        //    buf.AddComponent(concreteBuffer.Duplicate());
+        //    Assert.NotSame(concreteBuffer.GetIoBuffer(0, 1).Array, buf.GetIoBuffer(0, 1).Array);
+        //    buf.Release();
+        //}
+
+        [Fact]
+        public void DirectMultipleBufs()
+        {
+            CompositeByteBuffer buf = Unpooled.CompositeBuffer();
+            Assert.False(buf.IsDirect);
+
+            buf.AddComponent(Unpooled.DirectBuffer().WriteByte(1));
+
+            Assert.True(buf.IsDirect);
+            buf.AddComponent(Unpooled.DirectBuffer().WriteByte(1));
+            Assert.True(buf.IsDirect);
+
+            buf.AddComponent(Unpooled.Buffer().WriteByte(1));
+            Assert.False(buf.IsDirect);
+
+            buf.Release();
+        }
+
+        [Fact]
         public void DiscardSomeReadBytes()
         {
             CompositeByteBuffer cbuf = Unpooled.CompositeBuffer();
@@ -813,6 +1088,158 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
+        public void AddFlattenedComponentsTest()
+        {
+            var b1 = Unpooled.WrappedBuffer(new byte[] { 1, 2, 3 });
+            CompositeByteBuffer newComposite = Unpooled.CompositeBuffer()
+                    .AddComponent(true, b1)
+                    .AddFlattenedComponents(true, (IByteBuffer)b1.Retain())
+                    .AddFlattenedComponents(true, Unpooled.Empty);
+
+            Assert.Equal(2, newComposite.NumComponents);
+            Assert.Equal(6, newComposite.Capacity);
+            Assert.Equal(6, newComposite.WriterIndex);
+
+            // It is important to use a pooled allocator here to ensure
+            // the slices returned by readRetainedSlice are of type
+            // PooledSlicedByteBuf, which maintains an independent refcount
+            // (so that we can be sure to cover this case)
+            var buffer = PooledByteBufferAllocator.Default.Buffer()
+                  .WriteBytes(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+
+            // use mixture of slice and retained slice
+            var s1 = buffer.ReadRetainedSlice(2);
+            var s2 = s1.RetainedSlice(0, 2);
+            var s3 = (IByteBuffer)buffer.Slice(0, 2).Retain();
+            var s4 = s2.RetainedSlice(0, 2);
+            buffer.Release();
+
+            var compositeToAdd = Unpooled.CompositeBuffer()
+                .AddComponent(s1)
+                .AddComponent(Unpooled.Empty)
+                .AddComponents(s2, s3, s4);
+            // set readable range to be from middle of first component
+            // to middle of penultimate component
+            compositeToAdd.SetIndex(1, 5);
+
+            Assert.Equal(1, compositeToAdd.ReferenceCount);
+            Assert.Equal(1, s4.ReferenceCount);
+
+            var compositeCopy = compositeToAdd.Copy();
+
+            newComposite.AddFlattenedComponents(true, compositeToAdd);
+
+            // verify that added range matches
+            ByteBufferUtil.Equals(compositeCopy, 0,
+                    newComposite, 6, compositeCopy.ReadableBytes);
+
+            // should not include empty component or last component
+            // (latter outside of the readable range)
+            Assert.Equal(5, newComposite.NumComponents);
+            Assert.Equal(10, newComposite.Capacity);
+            Assert.Equal(10, newComposite.WriterIndex);
+
+            Assert.Equal(0, compositeToAdd.ReferenceCount);
+            // s4 wasn't in added range so should have been jettisoned
+            Assert.Equal(0, s4.ReferenceCount);
+            Assert.Equal(1, newComposite.ReferenceCount);
+
+            // releasing composite should release the remaining components
+            newComposite.Release();
+            Assert.Equal(0, newComposite.ReferenceCount);
+            Assert.Equal(0, s1.ReferenceCount);
+            Assert.Equal(0, s2.ReferenceCount);
+            Assert.Equal(0, s3.ReferenceCount);
+            Assert.Equal(0, b1.ReferenceCount);
+        }
+
+        //    @Test
+        //public void testIterator()
+        //    {
+        //        CompositeByteBuf cbuf = compositeBuffer();
+        //        cbuf.addComponent(EMPTY_BUFFER);
+        //        cbuf.addComponent(EMPTY_BUFFER);
+
+        //        Iterator<ByteBuf> it = cbuf.iterator();
+        //        assertTrue(it.hasNext());
+        //        assertSame(EMPTY_BUFFER, it.next());
+        //        assertTrue(it.hasNext());
+        //        assertSame(EMPTY_BUFFER, it.next());
+        //        assertFalse(it.hasNext());
+
+        //        try
+        //        {
+        //            it.next();
+        //            fail();
+        //        }
+        //        catch (NoSuchElementException e)
+        //        {
+        //            //Expected
+        //        }
+        //        cbuf.release();
+        //    }
+
+        //    @Test
+        //public void testEmptyIterator()
+        //    {
+        //        CompositeByteBuf cbuf = compositeBuffer();
+
+        //        Iterator<ByteBuf> it = cbuf.iterator();
+        //        assertFalse(it.hasNext());
+
+        //        try
+        //        {
+        //            it.next();
+        //            fail();
+        //        }
+        //        catch (NoSuchElementException e)
+        //        {
+        //            //Expected
+        //        }
+        //        cbuf.release();
+        //    }
+
+        //    @Test(expected = ConcurrentModificationException.class)
+        //public void testIteratorConcurrentModificationAdd()
+        //    {
+        //        CompositeByteBuf cbuf = compositeBuffer();
+        //        cbuf.addComponent(EMPTY_BUFFER);
+
+        //        Iterator<ByteBuf> it = cbuf.iterator();
+        //        cbuf.addComponent(EMPTY_BUFFER);
+
+        //        assertTrue(it.hasNext());
+        //        try
+        //        {
+        //            it.next();
+        //        }
+        //        finally
+        //        {
+        //            cbuf.release();
+        //        }
+        //    }
+
+        //    @Test(expected = ConcurrentModificationException.class)
+        //public void testIteratorConcurrentModificationRemove()
+        //    {
+        //        CompositeByteBuf cbuf = compositeBuffer();
+        //        cbuf.addComponent(EMPTY_BUFFER);
+
+        //        Iterator<ByteBuf> it = cbuf.iterator();
+        //        cbuf.removeComponent(0);
+
+        //        assertTrue(it.hasNext());
+        //        try
+        //        {
+        //            it.next();
+        //        }
+        //        finally
+        //        {
+        //            cbuf.release();
+        //        }
+        //    }
+
+        [Fact]
         public void ReleasesItsComponents()
         {
             IByteBuffer buffer = PooledByteBufferAllocator.Default.Buffer(); // 1
@@ -897,6 +1324,41 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(0, composite.ReferenceCount);
             Assert.Equal(0, b1.ReferenceCount);
             Assert.Equal(0, b2.ReferenceCount);
+        }
+
+        [Fact]
+        public void ReleasesOnShrink2()
+        {
+            // It is important to use a pooled allocator here to ensure
+            // the slices returned by readRetainedSlice are of type
+            // PooledSlicedByteBuf, which maintains an independent refcount
+            // (so that we can be sure to cover this case)
+            IByteBuffer buffer = PooledByteBufferAllocator.Default.Buffer();
+
+            buffer.WriteShort(1).WriteShort(2);
+
+            IByteBuffer b1 = buffer.ReadRetainedSlice(2);
+            IByteBuffer b2 = b1.RetainedSlice(b1.ReaderIndex, 2);
+
+            // composite takes ownership of b1 and b2
+            IByteBuffer composite = Unpooled.CompositeBuffer()
+                .AddComponents(b1, b2);
+
+            Assert.Equal(4, composite.Capacity);
+
+            // reduce capacity down to two, will drop the second component
+            composite.AdjustCapacity(2);
+            Assert.Equal(2, composite.Capacity);
+
+            // releasing composite should release the components
+            composite.Release();
+            Assert.Equal(0, composite.ReferenceCount);
+            Assert.Equal(0, b1.ReferenceCount);
+            Assert.Equal(0, b2.ReferenceCount);
+
+            // release last remaining ref to buffer
+            buffer.Release();
+            Assert.Equal(0, buffer.ReferenceCount);
         }
 
         [Fact]
@@ -999,6 +1461,90 @@ namespace DotNetty.Buffers.Tests
 
             Assert.Equal(expectedMaxComponents, buf.MaxNumComponents);
             Assert.True(buf.Release());
+        }
+
+        [Fact]
+        public void DiscardSomeReadBytesCorrectlyUpdatesLastAccessed()
+        {
+            DiscardCorrectlyUpdatesLastAccessed0(true);
+        }
+
+        [Fact]
+        public void DiscardReadBytesCorrectlyUpdatesLastAccessed()
+        {
+            DiscardCorrectlyUpdatesLastAccessed0(false);
+        }
+
+        private static void DiscardCorrectlyUpdatesLastAccessed0(bool discardSome)
+        {
+            CompositeByteBuffer cbuf = Unpooled.CompositeBuffer();
+            List<IByteBuffer> buffers = new List<IByteBuffer>(4);
+            for (int i = 0; i < 4; i++)
+            {
+                IByteBuffer buf = Unpooled.Buffer().WriteInt(i);
+                cbuf.AddComponent(true, buf);
+                buffers.Add(buf);
+            }
+
+            // Skip the first 2 bytes which means even if we call discard*ReadBytes() later we can no drop the first
+            // component as it is still used.
+            cbuf.SkipBytes(2);
+            if (discardSome)
+            {
+                cbuf.DiscardSomeReadBytes();
+            }
+            else
+            {
+                cbuf.DiscardReadBytes();
+            }
+            Assert.Equal(4, cbuf.NumComponents);
+
+            // Now skip 3 bytes which means we should be able to drop the first component on the next discard*ReadBytes()
+            // call.
+            cbuf.SkipBytes(3);
+
+            if (discardSome)
+            {
+                cbuf.DiscardSomeReadBytes();
+            }
+            else
+            {
+                cbuf.DiscardReadBytes();
+            }
+            Assert.Equal(3, cbuf.NumComponents);
+            // Now skip again 3 bytes which should bring our readerIndex == start of the 3 component.
+            cbuf.SkipBytes(3);
+
+            // Read one int (4 bytes) which should bring our readerIndex == start of the 4 component.
+            Assert.Equal(2, cbuf.ReadInt());
+            if (discardSome)
+            {
+                cbuf.DiscardSomeReadBytes();
+            }
+            else
+            {
+                cbuf.DiscardReadBytes();
+            }
+
+            // Now all except the last component should have been dropped / released.
+            Assert.Equal(1, cbuf.NumComponents);
+            Assert.Equal(3, cbuf.ReadInt());
+            if (discardSome)
+            {
+                cbuf.DiscardSomeReadBytes();
+            }
+            else
+            {
+                cbuf.DiscardReadBytes();
+            }
+            Assert.Equal(0, cbuf.NumComponents);
+
+            // These should have been released already.
+            foreach (IByteBuffer buffer in buffers)
+            {
+                Assert.Equal(0, buffer.ReferenceCount);
+            }
+            Assert.True(cbuf.Release());
         }
     }
 }

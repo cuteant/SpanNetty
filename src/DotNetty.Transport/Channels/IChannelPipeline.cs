@@ -33,7 +33,7 @@ namespace DotNetty.Transport.Channels
     ///     <pre>
     ///         I/O Request
     ///         via <see cref="IChannel"/> or
-    ///         {@link ChannelHandlerContext} 
+    ///         <see cref="IChannelHandlerContext"/> 
     ///         |
     ///         +---------------------------------------------------+---------------+
     ///         |                           ChannelPipeline         |               |

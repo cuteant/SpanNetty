@@ -83,6 +83,8 @@ namespace DotNetty.Buffers
 
         public int MaxWritableBytes => this.Buf.MaxWritableBytes;
 
+        public int MaxFastWritableBytes => this.Buf.MaxFastWritableBytes;
+
         public bool IsReadable() => this.Buf.IsReadable();
 
         public bool IsWritable() => this.Buf.IsWritable();
@@ -522,5 +524,7 @@ namespace DotNetty.Buffers
         public virtual bool Release() => this.Buf.Release();
 
         public virtual bool Release(int decrement) => this.Buf.Release(decrement);
+
+        public virtual bool IsAccessible => this.Buf.IsAccessible;
     }
 }

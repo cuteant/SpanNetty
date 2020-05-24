@@ -11,6 +11,10 @@ namespace DotNetty.Codecs.Http.Multipart
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
 
+    /// <summary>
+    /// This decoder will decode Body and can handle POST BODY.
+    /// You <c>MUST</c> call <see cref="Destroy"/> after completion to release all resources.
+    /// </summary>
     public class HttpPostMultipartRequestDecoder : IInterfaceHttpPostRequestDecoder
     {
         // Factory used to create InterfaceHttpData
@@ -682,10 +686,6 @@ namespace DotNetty.Codecs.Http.Multipart
                             }
                         }
                     }
-                }
-                else
-                {
-                    ThrowHelper.ThrowErrorDataDecoderException_UnknownParams(newline);
                 }
             }
             // Is it a FileUpload

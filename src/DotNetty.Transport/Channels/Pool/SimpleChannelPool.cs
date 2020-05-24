@@ -364,7 +364,7 @@ namespace DotNetty.Transport.Channels.Pool
             }
         }
         
-        class CompatibleConcurrentStack<T> : ConcurrentStack<T>, IQueue<T>
+        sealed class CompatibleConcurrentStack<T> : ConcurrentStack<T>, IQueue<T>
         {
             public bool TryEnqueue(T item)
             {

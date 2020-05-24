@@ -11,31 +11,64 @@ namespace DotNetty.Codecs.Http
     public class HttpServerCodec : CombinedChannelDuplexHandler<HttpRequestDecoder, HttpResponseEncoder>,
         HttpServerUpgradeHandler.ISourceCodec
     {
-        /** A queue that is used for correlating a request and a response. */
+        /// <summary>
+        /// A queue that is used for correlating a request and a response.
+        /// </summary>
         readonly Deque<HttpMethod> queue = new Deque<HttpMethod>();
 
+        /// <summary>
+        /// Creates a new instance with the default decoder options
+        /// ({@code maxInitialLineLength (4096}}, {@code maxHeaderSize (8192)}, and
+        /// {@code maxChunkSize (8192)}).
+        /// </summary>
         public HttpServerCodec() : this(4096, 8192, 8192)
         {
         }
 
+        /// <summary>
+        /// Creates a new instance with the specified decoder options.
+        /// </summary>
+        /// <param name="maxInitialLineLength"></param>
+        /// <param name="maxHeaderSize"></param>
+        /// <param name="maxChunkSize"></param>
         public HttpServerCodec(int maxInitialLineLength, int maxHeaderSize, int maxChunkSize)
         {
             this.Init(new HttpServerRequestDecoder(this, maxInitialLineLength, maxHeaderSize, maxChunkSize),
                 new HttpServerResponseEncoder(this));
         }
 
+        /// <summary>
+        /// Creates a new instance with the specified decoder options.
+        /// </summary>
+        /// <param name="maxInitialLineLength"></param>
+        /// <param name="maxHeaderSize"></param>
+        /// <param name="maxChunkSize"></param>
+        /// <param name="validateHeaders"></param>
         public HttpServerCodec(int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool validateHeaders)
         {
-            this.Init(new HttpServerRequestDecoder(this, maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders), 
+            this.Init(new HttpServerRequestDecoder(this, maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders),
                 new HttpServerResponseEncoder(this));
         }
 
+        /// <summary>
+        /// Creates a new instance with the specified decoder options.
+        /// </summary>
+        /// <param name="maxInitialLineLength"></param>
+        /// <param name="maxHeaderSize"></param>
+        /// <param name="maxChunkSize"></param>
+        /// <param name="validateHeaders"></param>
+        /// <param name="initialBufferSize"></param>
         public HttpServerCodec(int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool validateHeaders, int initialBufferSize)
         {
-            this.Init(new HttpServerRequestDecoder(this, maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders, initialBufferSize), 
+            this.Init(new HttpServerRequestDecoder(this, maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders, initialBufferSize),
                 new HttpServerResponseEncoder(this));
         }
 
+        /// <summary>
+        /// Upgrades to another protocol from HTTP. Removes the <see cref="HttpRequestDecoder"/> and
+        /// <see cref="HttpResponseEncoder"/> from the pipeline.
+        /// </summary>
+        /// <param name="ctx"></param>
         public void UpgradeFrom(IChannelHandlerContext ctx) => ctx.Pipeline.Remove(this);
 
         sealed class HttpServerRequestDecoder : HttpRequestDecoder
@@ -49,12 +82,12 @@ namespace DotNetty.Codecs.Http
             }
 
             public HttpServerRequestDecoder(HttpServerCodec serverCodec, int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool validateHeaders)
-                :base(maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders)
+                : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders)
             {
                 this.serverCodec = serverCodec;
             }
 
-            public HttpServerRequestDecoder(HttpServerCodec serverCodec, 
+            public HttpServerRequestDecoder(HttpServerCodec serverCodec,
                 int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool validateHeaders, int initialBufferSize)
                 : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders, initialBufferSize)
             {
@@ -88,7 +121,8 @@ namespace DotNetty.Codecs.Http
 
             protected override void SanitizeHeadersBeforeEncode(IHttpResponse msg, bool isAlwaysEmpty)
             {
-                if (!isAlwaysEmpty && ReferenceEquals(this.method, HttpMethod.Connect) && msg.Status.CodeClass == HttpStatusClass.Success)
+                if (!isAlwaysEmpty && ReferenceEquals(this.method, HttpMethod.Connect) &&
+                    msg.Status.CodeClass == HttpStatusClass.Success)
                 {
                     // Stripping Transfer-Encoding:
                     // See https://tools.ietf.org/html/rfc7230#section-3.3.1

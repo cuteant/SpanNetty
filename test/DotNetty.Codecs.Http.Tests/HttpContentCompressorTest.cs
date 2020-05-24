@@ -195,6 +195,7 @@ namespace DotNetty.Codecs.Http.Tests
             var lastChunk = ch.ReadOutbound<ILastHttpContent>();
             Assert.NotNull(lastChunk);
             Assert.Equal("Netty", lastChunk.TrailingHeaders.Get((AsciiString)"X-Test", null).ToString());
+            Assert.Equal(DecoderResult.Success, chunk.Result);
             lastChunk.Release();
 
             var last = ch.ReadOutbound<object>();
@@ -249,7 +250,7 @@ namespace DotNetty.Codecs.Http.Tests
             var ch = new EmbeddedChannel(new HttpContentCompressor());
             ch.WriteInbound(NewRequest());
 
-            var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK, 
+            var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK,
                 Unpooled.CopiedBuffer("Hello, World", Encoding.ASCII));
             ch.WriteOutbound(res);
 
@@ -336,6 +337,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(0, res.Content.ReadableBytes);
             Assert.Equal("", res.Content.ToString(Encoding.ASCII));
             Assert.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test", null));
+            Assert.Equal(DecoderResult.Success, res.Result);
 
             var last = ch.ReadOutbound<object>();
             Assert.Null(last);
@@ -371,6 +373,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(0, res.Content.ReadableBytes);
             Assert.Equal("", res.Content.ToString(Encoding.ASCII));
             Assert.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test", null));
+            Assert.Equal(DecoderResult.Success, res.Result);
 
             var last = ch.ReadOutbound<object>();
             Assert.Null(last);
@@ -399,7 +402,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             Assert.True(ch.Finish());
 
-            for (;;)
+            for (; ; )
             {
                 var message = ch.ReadOutbound<object>();
                 if (message == null)
@@ -408,7 +411,7 @@ namespace DotNetty.Codecs.Http.Tests
                 }
                 ReferenceCountUtil.Release(message);
             }
-            for (;;)
+            for (; ; )
             {
                 var message = ch.ReadInbound<object>();
                 if (message == null)
@@ -425,7 +428,7 @@ namespace DotNetty.Codecs.Http.Tests
             var ch = new EmbeddedChannel(new HttpContentCompressor());
             Assert.True(ch.WriteInbound(NewRequest()));
 
-            var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK, 
+            var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK,
                 Unpooled.CopiedBuffer("Hello, World", Encoding.ASCII));
             int len = res.Content.ReadableBytes;
             res.Headers.Set(HttpHeaderNames.ContentLength, len);

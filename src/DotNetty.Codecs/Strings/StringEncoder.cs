@@ -31,7 +31,7 @@ namespace DotNetty.Codecs
     * </pre>
     */
 
-    public class StringEncoder : MessageToMessageEncoder2<string>
+    public class StringEncoder : MessageToMessageEncoder<string>
     {
         readonly Encoding encoding;
 

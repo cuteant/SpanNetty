@@ -146,7 +146,7 @@ namespace DotNetty.Transport.Channels
 
                 this.AddFirst0(newCtx);
 
-                // If the registered is false it means that the channel was not registered on an eventloop yet.
+                // If the registered is false it means that the channel was not registered on an eventLoop yet.
                 // In this case we add the context to the pipeline and add a task that will call
                 // ChannelHandler.handlerAdded(...) once the channel is registered.
                 if (!this.registered)
@@ -159,8 +159,7 @@ namespace DotNetty.Transport.Channels
                 var executor = newCtx.Executor;
                 if (!executor.InEventLoop)
                 {
-                    newCtx.SetAddPending();
-                    executor.Execute(CallHandlerAddedAction, this, newCtx);
+                    this.CallHandlerAddedInEventLoop(newCtx, executor);
                     return this;
                 }
             }
@@ -193,7 +192,7 @@ namespace DotNetty.Transport.Channels
 
                 this.AddLast0(newCtx);
 
-                // If the registered is false it means that the channel was not registered on an eventloop yet.
+                // If the registered is false it means that the channel was not registered on an eventLoop yet.
                 // In this case we add the context to the pipeline and add a task that will call
                 // ChannelHandler.handlerAdded(...) once the channel is registered.
                 if (!this.registered)
@@ -206,8 +205,7 @@ namespace DotNetty.Transport.Channels
                 var executor = newCtx.Executor;
                 if (!executor.InEventLoop)
                 {
-                    newCtx.SetAddPending();
-                    executor.Execute(CallHandlerAddedAction, this, newCtx);
+                    this.CallHandlerAddedInEventLoop(newCtx, executor);
                     return this;
                 }
             }
@@ -253,8 +251,7 @@ namespace DotNetty.Transport.Channels
                 var executor = newCtx.Executor;
                 if (!executor.InEventLoop)
                 {
-                    newCtx.SetAddPending();
-                    executor.Execute(CallHandlerAddedAction, this, newCtx);
+                    this.CallHandlerAddedInEventLoop(newCtx, executor);
                     return this;
                 }
             }
@@ -288,7 +285,7 @@ namespace DotNetty.Transport.Channels
 
                 AddAfter0(ctx, newCtx);
 
-                // If the registered is false it means that the channel was not registered on an eventloop yet.
+                // If the registered is false it means that the channel was not registered on an eventLoop yet.
                 // In this case we remove the context from the pipeline and add a task that will call
                 // ChannelHandler.handlerRemoved(...) once the channel is registered.
                 if (!this.registered)
@@ -301,8 +298,7 @@ namespace DotNetty.Transport.Channels
                 var executor = newCtx.Executor;
                 if (!executor.InEventLoop)
                 {
-                    newCtx.SetAddPending();
-                    executor.Execute(CallHandlerAddedAction, this, newCtx);
+                    this.CallHandlerAddedInEventLoop(newCtx, executor);
                     return this;
                 }
             }
@@ -1039,6 +1035,13 @@ namespace DotNetty.Transport.Channels
             }
         }
 
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        private void CallHandlerAddedInEventLoop(AbstractChannelHandlerContext newCtx, IEventExecutor executor)
+        {
+            newCtx.SetAddPending();
+            executor.Execute(CallHandlerAddedAction, this, newCtx);
+        }
+
         /// <summary>
         /// Called once the <see cref="IChannelHandler.ChannelActive(IChannelHandlerContext)" /> event hit
         /// the end of the <see cref="IChannelPipeline" />.
@@ -1070,6 +1073,12 @@ namespace DotNetty.Transport.Channels
             {
                 ReferenceCountUtil.Release(msg);
             }
+        }
+
+        protected virtual void OnUnhandledInboundMessage(IChannelHandlerContext ctx, object msg)
+        {
+            this.OnUnhandledInboundMessage(msg);
+            if (Logger.DebugEnabled) { Logger.DiscardedInboundMessage(ctx); }
         }
 
         /// <summary>

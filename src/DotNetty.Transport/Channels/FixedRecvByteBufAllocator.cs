@@ -32,7 +32,10 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         public FixedRecvByteBufAllocator(int bufferSize)
         {
-            if (bufferSize <= 0) { ThrowHelper.ThrowArgumentException_Positive(bufferSize, ExceptionArgument.bufferSize); }
+            if ((uint)(bufferSize - 1) > SharedConstants.TooBigOrNegative) // <= 0
+            {
+                ThrowHelper.ThrowArgumentException_Positive(bufferSize, ExceptionArgument.bufferSize);
+            }
 
             this.bufferSize = bufferSize;
         }

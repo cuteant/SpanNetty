@@ -281,7 +281,7 @@ namespace DotNetty.Common
                         }
                         else if (element.recycleId != element.lastRecycledId)
                         {
-                            throw new InvalidOperationException("recycled already");
+                            ThrowInvalidOperationException_recycled_already();
                         }
                         srcElems[i] = null;
 
@@ -313,6 +313,16 @@ namespace DotNetty.Common
                 {
                     // The destination stack is full already.
                     return false;
+                }
+            }
+
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            private static void ThrowInvalidOperationException_recycled_already()
+            {
+                throw GetException();
+                static InvalidOperationException GetException()
+                {
+                    return new InvalidOperationException("recycled already");
                 }
             }
         }
@@ -670,7 +680,7 @@ namespace DotNetty.Common
                        int ratio, int maxDelayedQueuesPerThread)
         {
             this.ratioMask = MathUtil.SafeFindNextPositivePowerOfTwo(ratio) - 1;
-            if (maxCapacityPerThread <= 0)
+            if ((uint)(maxCapacityPerThread - 1) > SharedConstants.TooBigOrNegative) // <= 0
             {
                 this.maxCapacityPerThread = 0;
                 this.maxSharedCapacityFactor = 1;

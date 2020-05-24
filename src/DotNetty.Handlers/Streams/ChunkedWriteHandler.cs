@@ -15,27 +15,22 @@ namespace DotNetty.Handlers.Streams
 
     public class ChunkedWriteHandler<T> : ChannelDuplexHandler
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChunkedWriteHandler<T>>();
-        static readonly Action<object> InvokeDoFlushAction = OnInvokeDoFlush;
-        static readonly Action<Task, object> LinkNonChunkedOutcomeAction = LinkNonChunkedOutcome;
-        static readonly Action<Task, object> LinkOutcomeWhenChanelIsWritableAction = LinkOutcomeWhenChanelIsWritable;
-        static readonly Action<Task, object> LinkOutcomeWhenIsEndOfChunkedInputAction = LinkOutcomeWhenIsEndOfChunkedInput;
-        static readonly Action<Task, object> LinkOutcomeAction = LinkOutcome;
+        private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChunkedWriteHandler<T>>();
 
-        readonly Deque<PendingWrite> queue = new Deque<PendingWrite>();
-        IChannelHandlerContext ctx;
-        PendingWrite currentWrite;
+        private readonly Deque<PendingWrite> _queue = new Deque<PendingWrite>();
+        private IChannelHandlerContext _ctx;
+        private PendingWrite _currentWrite;
 
-        public override void HandlerAdded(IChannelHandlerContext context) => Interlocked.Exchange(ref this.ctx, context);
+        public override void HandlerAdded(IChannelHandlerContext context) => Interlocked.Exchange(ref _ctx, context);
 
         public void ResumeTransfer()
         {
-            var ctx = Volatile.Read(ref this.ctx);
+            var ctx = Volatile.Read(ref _ctx);
             if (ctx is null) { return; }
 
             if (ctx.Executor.InEventLoop)
             {
-                this.InvokeDoFlush(ctx);
+                InvokeDoFlush(ctx);
             }
             else
             {
@@ -45,14 +40,14 @@ namespace DotNetty.Handlers.Streams
 
         public override void Write(IChannelHandlerContext context, object message, IPromise promise)
         {
-            this.queue.AddToBack(new PendingWrite(message, promise));
+            _queue.AddToBack(new PendingWrite(message, promise));
         }
 
-        public override void Flush(IChannelHandlerContext context) => this.DoFlush(context);
+        public override void Flush(IChannelHandlerContext context) => DoFlush(context);
 
         public override void ChannelInactive(IChannelHandlerContext context)
         {
-            this.DoFlush(context);
+            DoFlush(context);
             context.FireChannelInactive();
         }
 
@@ -61,7 +56,7 @@ namespace DotNetty.Handlers.Streams
             if (context.Channel.IsWritable)
             {
                 // channel is writable again try to continue flushing
-                this.DoFlush(context);
+                DoFlush(context);
             }
 
             context.FireChannelWritabilityChanged();
@@ -71,14 +66,14 @@ namespace DotNetty.Handlers.Streams
         {
             while (true)
             {
-                PendingWrite current = this.currentWrite;
+                PendingWrite current = _currentWrite;
                 if (current is null)
                 {
-                    this.queue.TryRemoveFromFront(out current);
+                    _queue.TryRemoveFromFront(out current);
                 }
                 else
                 {
-                    this.currentWrite = null;
+                    _currentWrite = null;
                 }
 
                 if (current is null)
@@ -89,30 +84,30 @@ namespace DotNetty.Handlers.Streams
                 object message = current.Message;
                 if (message is IChunkedInput<T> chunks)
                 {
+                    bool endOfInput;
+                    long inputLength;
                     try
                     {
-                        if (!chunks.IsEndOfInput)
-                        {
-                            if (cause is null)
-                            {
-                                cause = new ClosedChannelException();
-                            }
-
-                            current.Fail(cause);
-                        }
-                        else
-                        {
-                            current.Success();
-                        }
+                        endOfInput = chunks.IsEndOfInput;
+                        inputLength = chunks.Length;
+                        CloseInput(chunks);
                     }
-                    catch (Exception exception)
-                    {
-                        current.Fail(exception);
-                        if (Logger.WarnEnabled) Logger.IsEndOfInputFailed<T>(exception);
-                    }
-                    finally
+                    catch (Exception exc)
                     {
                         CloseInput(chunks);
+                        _currentWrite.Fail(exc);
+                        if (Logger.WarnEnabled) { Logger.IsEndOfInputFailed<T>(exc); }
+                        continue;
+                    }
+
+                    if (!endOfInput)
+                    {
+                        if (cause is null) { cause = ThrowHelper.GetClosedChannelException(); }
+                        _currentWrite.Fail(cause);
+                    }
+                    else
+                    {
+                        _currentWrite.Success(inputLength);
                     }
                 }
                 else
@@ -131,7 +126,7 @@ namespace DotNetty.Handlers.Streams
         {
             try
             {
-                this.DoFlush(context);
+                DoFlush(context);
             }
             catch (Exception exception)
             {
@@ -147,7 +142,7 @@ namespace DotNetty.Handlers.Streams
             IChannel channel = context.Channel;
             if (!channel.Active)
             {
-                this.Discard();
+                Discard();
                 return;
             }
 
@@ -155,17 +150,32 @@ namespace DotNetty.Handlers.Streams
             IByteBufferAllocator allocator = context.Allocator;
             while (channel.IsWritable)
             {
-                if (this.currentWrite is null)
+                if (_currentWrite is null)
                 {
-                    this.queue.TryRemoveFromFront(out currentWrite);
+                    _queue.TryRemoveFromFront(out _currentWrite);
                 }
 
-                if (this.currentWrite is null)
+                if (_currentWrite is null)
                 {
                     break;
                 }
 
-                PendingWrite current = this.currentWrite;
+                if (_currentWrite.Promise.IsCompleted)
+                {
+                    // This might happen e.g. in the case when a write operation
+                    // failed, but there're still unconsumed chunks left.
+                    // Most chunked input sources would stop generating chunks
+                    // and report end of input, but this doesn't work with any
+                    // source wrapped in HttpChunkedInput.
+                    // Note, that we're not trying to release the message/chunks
+                    // as this had to be done already by someone who resolved the
+                    // promise (using ChunkedInput.close method).
+                    // See https://github.com/netty/netty/issues/8700.
+                    _currentWrite = null;
+                    continue;
+                }
+
+                PendingWrite current = _currentWrite;
                 object pendingMessage = current.Message;
 
                 if (pendingMessage is IChunkedInput<T> chunks)
@@ -190,15 +200,15 @@ namespace DotNetty.Handlers.Streams
                     }
                     catch (Exception exception)
                     {
-                        this.currentWrite = null;
+                        _currentWrite = null;
 
                         if (message is object)
                         {
                             ReferenceCountUtil.Release(message);
                         }
 
-                        current.Fail(exception);
                         CloseInput(chunks);
+                        current.Fail(exception);
 
                         break;
                     }
@@ -221,7 +231,7 @@ namespace DotNetty.Handlers.Streams
                     Task future = context.WriteAsync(message);
                     if (endOfInput)
                     {
-                        this.currentWrite = null;
+                        _currentWrite = null;
 
                         // Register a listener which will close the input once the write is complete.
                         // This is needed because the Chunk may have some resource bound that can not
@@ -247,16 +257,14 @@ namespace DotNetty.Handlers.Streams
                 }
                 else
                 {
-                    context.WriteAsync(pendingMessage)
-                        .ContinueWith(LinkNonChunkedOutcomeAction, current, TaskContinuationOptions.ExecuteSynchronously);
-
-                    this.currentWrite = null;
+                    _currentWrite = null;
+                    context.WriteAsync(pendingMessage, current.Promise);
                     requiresFlush = true;
                 }
 
                 if (!channel.Active)
                 {
-                    this.Discard(new ClosedChannelException());
+                    Discard(new ClosedChannelException());
                     break;
                 }
             }
@@ -267,33 +275,49 @@ namespace DotNetty.Handlers.Streams
             }
         }
 
+        static readonly Action<Task, object> LinkOutcomeAction = LinkOutcome;
         static void LinkOutcome(Task task, object state)
         {
             var wrapped = (Tuple<ChunkedWriteHandler<T>, IChunkedInput<T>, IChannel>)state;
             var handler = wrapped.Item1;
-            if (task.IsFaulted)
-            {
-                CloseInput((IChunkedInput<T>)handler.currentWrite.Message);
-                handler.currentWrite.Fail(task.Exception);
-            }
-            else
+            if (task.IsSuccess())
             {
                 var chunks = wrapped.Item2;
-                handler.currentWrite.Progress(chunks.Progress, chunks.Length);
+                handler._currentWrite.Progress(chunks.Progress, chunks.Length);
                 if (wrapped.Item3.IsWritable)
                 {
                     handler.ResumeTransfer();
                 }
             }
+            else
+            {
+                CloseInput((IChunkedInput<T>)handler._currentWrite.Message);
+                handler._currentWrite.Fail(task.Exception);
+            }
         }
 
+        static readonly Action<Task, object> LinkOutcomeWhenIsEndOfChunkedInputAction = LinkOutcomeWhenIsEndOfChunkedInput;
         static void LinkOutcomeWhenIsEndOfChunkedInput(Task task, object state)
         {
             var pendingTask = (PendingWrite)state;
-            CloseInput((IChunkedInput<T>)pendingTask.Message);
-            pendingTask.Success();
+            if (task.IsSuccess())
+            {
+                var chunks = (IChunkedInput<T>)pendingTask.Message;
+                // read state of the input in local variables before closing it
+                long inputProgress = chunks.Progress;
+                long inputLength = chunks.Length;
+                CloseInput(chunks);
+                pendingTask.Progress(inputProgress, inputLength);
+                pendingTask.Success(inputLength);
+            }
+            else
+            {
+                CloseInput((IChunkedInput<T>)pendingTask.Message);
+                pendingTask.Fail(task.Exception);
+            }
         }
 
+        static readonly Action<Task, object> LinkOutcomeWhenChanelIsWritableAction = LinkOutcomeWhenChanelIsWritable;
         static void LinkOutcomeWhenChanelIsWritable(Task task, object state)
         {
             var wrapped = (Tuple<PendingWrite, IChunkedInput<T>>)state;
@@ -310,19 +334,7 @@ namespace DotNetty.Handlers.Streams
             }
         }
 
-        static void LinkNonChunkedOutcome(Task task, object state)
-        {
-            var pendingTask = (PendingWrite)state;
-            if (task.IsFaulted)
-            {
-                pendingTask.Fail(task.Exception);
-            }
-            else
-            {
-                pendingTask.Success();
-            }
-        }
-
+        static readonly Action<object> InvokeDoFlushAction = OnInvokeDoFlush;
         static void OnInvokeDoFlush(object state)
         {
             var wrapped = (Tuple<ChunkedWriteHandler<T>, IChannelHandlerContext>)state;
@@ -346,35 +358,42 @@ namespace DotNetty.Handlers.Streams
 
         sealed class PendingWrite
         {
-            readonly IPromise promise;
+            internal readonly IPromise Promise;
 
             public PendingWrite(object msg, IPromise promise)
             {
-                this.Message = msg;
-                this.promise = promise;
+                Message = msg;
+                Promise = promise;
             }
 
             public object Message { get; }
 
-            public void Success() => this.promise.TryComplete();
+            public void Success(long total)
+            {
+                if (Promise.IsCompleted)
+                {
+                    // No need to notify the progress or fulfill the promise because it's done already.
+                    return;
+                }
+                Progress(total, total);
+                Promise.TryComplete();
+            }
 
             public void Fail(Exception error)
             {
-                ReferenceCountUtil.Release(this.Message);
-                this.promise.TrySetException(error);
+                ReferenceCountUtil.Release(Message);
+                Promise.TrySetException(error);
             }
 
             public void Progress(long progress, long total)
             {
-                if (progress < total)
-                {
-                    return;
-                }
-
-                this.Success();
+                // TODO
+                //if (promise instanceof ChannelProgressivePromise) {
+                //    ((ChannelProgressivePromise)promise).tryProgress(progress, total);
+                //}
             }
 
-            public Task PendingTask => this.promise.Task;
+            public Task PendingTask => Promise.Task;
         }
     }
 }

@@ -9,94 +9,122 @@ namespace DotNetty.Buffers
     /// <summary>The convention for this enum is using the argument name as the enum name</summary>
     internal enum ExceptionArgument
     {
-        array,
-        bufferSize,
-        output,
-        maxCachedBufferCapacity,
-        freeSweepAllocationThreshold,
-        nHeapArena,
-        nDirectArena,
-        byteBuffer,
-        assembly,
-        buffer,
-        destination,
-        key,
-        obj,
         s,
-        str,
-        source,
-        elementIndex,
-        type,
-        types,
-        value,
-        values,
-        valueFactory,
-        name,
-        reqCapacity,
-        item,
-        options,
-        list,
-        ts,
-        other,
-        pool,
-        inner,
-        policy,
-        offset,
-        count,
-        path,
-        typeInfo,
-        method,
-        qualifiedTypeName,
-        fullName,
-        feature,
-        manager,
-        directories,
-        dirEnumArgs,
-        asm,
-        includedAssemblies,
-        func,
-        defaultFn,
-        returnType,
-        propertyInfo,
-        parameterTypes,
-        fieldInfo,
-        memberInfo,
-        attributeType,
+
         pi,
         fi,
-        invoker,
-        instanceType,
-        target,
-        member,
-        typeName,
-        predicate,
-        assemblyPredicate,
-        collection,
-        capacity,
+        ts,
+
+        asm,
+        buf,
+        dst,
+        key,
+        obj,
+        src,
+        str,
+
+        data,
+        leak,
+        func,
+        path,
+        type,
+        name,
+        item,
+        list,
+        pool,
+
+        alloc,
+        array,
+        count,
+        types,
+        value,
+        other,
         match,
         index,
+        inner,
+
+        buffer,
+        output,
+        values,
+        source,
+        policy,
+        offset,
+        method,
+        target,
         length,
-        startIndex,
-        newSize,
-        expression,
-        data,
-        maxCapacity,
-        newMaxCapacity,
-        minWritableBytes,
-        src,
-        increment,
-        decrement,
-        buf,
-        encoding,
-        allocator,
+        member,
+
         buffers,
-        trackedByteBuf,
-        leak,
-        alloc,
+        options,
+        feature,
+        manager,
+        invoker,
+        newSize,
+
+        assembly,
+        capacity,
+        dstIndex,
+        encoding,
+        fullName,
+        srcIndex,
+        typeInfo,
+        typeName,
+
+        allocator,
+        decrement,
+        defaultFn,
+        fieldInfo,
+        increment,
+        predicate,
+
+        returnType,
+        memberInfo,
+        bufferSize,
+        byteBuffer,
+        collection,
+        startIndex,
+        expression,
+        nHeapArena,
+
+        maxCapacity,
+        destination,
+        reqCapacity,
+        directories,
+        dirEnumArgs,
+        frameLength,
+
+        nDirectArena,
+        propertyInfo,
+        elementIndex,
         initialArray,
+        instanceType,
+        valueFactory,
+
+        attributeType,
         initialBuffer,
+
+        parameterTypes,
+        maxFrameLength,
+        newMaxCapacity,
+        trackedByteBuf,
+        minNewCapacity,
+
         initialCapacity,
-        dst,
+
+        minWritableBytes,
+
+        assemblyPredicate,
+        lengthFieldOffset,
+        qualifiedTypeName,
+
+        includedAssemblies,
+
+        initialBytesToStrip,
+
+        maxCachedBufferCapacity,
+
+        freeSweepAllocationThreshold,
+
     }
 
     #endregion
@@ -180,9 +208,9 @@ namespace DotNetty.Buffers
         {
             throw GetException(value, argument);
 
-            static ArgumentException GetException(int value, ExceptionArgument argument)
+            static ArgumentOutOfRangeException GetException(int value, ExceptionArgument argument)
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)}: {value} (expected: > 0)");
             }
         }
 
@@ -191,9 +219,9 @@ namespace DotNetty.Buffers
         {
             throw GetException(value, argument);
 
-            static ArgumentException GetException(long value, ExceptionArgument argument)
+            static ArgumentOutOfRangeException GetException(long value, ExceptionArgument argument)
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)}: {value} (expected: > 0)");
             }
         }
 
@@ -202,9 +230,9 @@ namespace DotNetty.Buffers
         {
             throw GetException(value, argument);
 
-            static ArgumentException GetException(int value, ExceptionArgument argument)
+            static ArgumentOutOfRangeException GetException(int value, ExceptionArgument argument)
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)}: {value} (expected: >= 0)");
             }
         }
 
@@ -213,9 +241,9 @@ namespace DotNetty.Buffers
         {
             throw GetException(value, argument);
 
-            static ArgumentException GetException(long value, ExceptionArgument argument)
+            static ArgumentOutOfRangeException GetException(long value, ExceptionArgument argument)
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)}: {value} (expected: >= 0)");
             }
         }
 
@@ -271,28 +299,6 @@ namespace DotNetty.Buffers
             static ArgumentException GetArgumentException(int maxNumComponents)
             {
                 return new ArgumentException("maxNumComponents: " + maxNumComponents + " (expected: >= 1)");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_CheckIndex(int length)
-        {
-            throw GetArgumentException(length);
-
-            static ArgumentException GetArgumentException(int length)
-            {
-                return new ArgumentException("length: " + length);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_CheckLength(int length)
-        {
-            throw GetArgumentException(length);
-
-            static ArgumentException GetArgumentException(int length)
-            {
-                return new ArgumentException("length: " + length + " (expected: >= 0)");
             }
         }
 
@@ -429,6 +435,18 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_Expected_Seq(int start, int seqCount, int end)
+        {
+            throw GetIndexOutOfRangeException(start, seqCount, end);
+
+            static IndexOutOfRangeException GetIndexOutOfRangeException(int start, int seqCount, int end)
+            {
+                return new IndexOutOfRangeException("expected: 0 <= start(" + start + ") <= end (" + end
+                        + ") <= seq.length(" + seqCount + ')');
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument argument)
         {
             throw GetArgumentOutOfRangeException(argument);
@@ -521,11 +539,12 @@ namespace DotNetty.Buffers
         internal static void ThrowNotSupportedException()
         {
             throw GetNotSupportedException();
+        }
 
-            static NotSupportedException GetNotSupportedException()
-            {
-                return new NotSupportedException();
-            }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static NotSupportedException GetNotSupportedException()
+        {
+            return new NotSupportedException();
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -575,23 +594,19 @@ namespace DotNetty.Buffers
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowReadOnlyBufferException()
         {
-            throw GetException();
-
-            static ReadOnlyBufferException GetException()
-            {
-                return new ReadOnlyBufferException();
-            }
+            throw GetReadOnlyBufferException();
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static T ThrowReadOnlyBufferException<T>()
         {
-            throw GetException();
+            throw GetReadOnlyBufferException();
+        }
 
-            static ReadOnlyBufferException GetException()
-            {
-                return new ReadOnlyBufferException();
-            }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static ReadOnlyBufferException GetReadOnlyBufferException()
+        {
+            return new ReadOnlyBufferException();
         }
     }
 }

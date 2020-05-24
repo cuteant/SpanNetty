@@ -343,15 +343,15 @@ namespace DotNetty.Common.Tests.Utilities
         public void LastIndexOfCharSequence()
         {
             Assert.Equal(0, new AsciiString("abcd").LastIndexOf(new AsciiString("abcd"), 0));
-            Assert.Equal(0, new AsciiString("abcd").LastIndexOf(new AsciiString("abc"), 0));
-            Assert.Equal(1, new AsciiString("abcd").LastIndexOf(new AsciiString("bcd"), 0));
-            Assert.Equal(1, new AsciiString("abcd").LastIndexOf(new AsciiString("bc"), 0));
-            Assert.Equal(5, new AsciiString("abcdabcd").LastIndexOf(new AsciiString("bcd"), 0));
-            Assert.Equal(0, new AsciiString("abcd", 1, 2).LastIndexOf(new AsciiString("bc"), 0));
-            Assert.Equal(0, new AsciiString("abcd", 1, 3).LastIndexOf(new AsciiString("bcd"), 0));
-            Assert.Equal(1, new AsciiString("abcdabcd", 4, 4).LastIndexOf(new AsciiString("bcd"), 0));
+            Assert.Equal(0, new AsciiString("abcd").LastIndexOf(new AsciiString("abc"), 4));
+            Assert.Equal(1, new AsciiString("abcd").LastIndexOf(new AsciiString("bcd"), 4));
+            Assert.Equal(1, new AsciiString("abcd").LastIndexOf(new AsciiString("bc"), 4));
+            Assert.Equal(5, new AsciiString("abcdabcd").LastIndexOf(new AsciiString("bcd"), 10));
+            Assert.Equal(0, new AsciiString("abcd", 1, 2).LastIndexOf(new AsciiString("bc"), 2));
+            Assert.Equal(0, new AsciiString("abcd", 1, 3).LastIndexOf(new AsciiString("bcd"), 3));
+            Assert.Equal(1, new AsciiString("abcdabcd", 4, 4).LastIndexOf(new AsciiString("bcd"), 4));
             Assert.Equal(3, new AsciiString("012345").LastIndexOf((AsciiString)"345", 3));
-            Assert.Equal(3, new AsciiString("012345").LastIndexOf((AsciiString)"345", 0));
+            Assert.Equal(3, new AsciiString("012345").LastIndexOf((AsciiString)"345", 6));
 
             // Test with empty string
             Assert.Equal(0, new AsciiString("abcd").LastIndexOf(new AsciiString(""), 0));
@@ -363,7 +363,7 @@ namespace DotNetty.Common.Tests.Utilities
             Assert.Equal(-1, new AsciiString("abcdbc").LastIndexOf(new AsciiString("bce"), 0));
             Assert.Equal(-1, new AsciiString("abcd", 1, 3).LastIndexOf(new AsciiString("abc"), 0));
             Assert.Equal(-1, new AsciiString("abcd", 1, 2).LastIndexOf(new AsciiString("bd"), 0));
-            Assert.Equal(-1, new AsciiString("012345").LastIndexOf((AsciiString)"345", 4));
+            Assert.Equal(-1, new AsciiString("012345").LastIndexOf((AsciiString)"345", 2));
             Assert.Equal(-1, new AsciiString("012345").LastIndexOf((AsciiString)"abc", 3));
             Assert.Equal(-1, new AsciiString("012345").LastIndexOf((AsciiString)"abc", 0));
             Assert.Equal(-1, new AsciiString("012345").LastIndexOf((AsciiString)"abcdefghi", 0));

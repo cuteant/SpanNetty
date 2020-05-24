@@ -18,6 +18,8 @@ namespace DotNetty.Buffers
         {
         }
 
+        public sealed override bool IsAccessible => this.Unwrap().IsAccessible;
+
         public sealed override int ReferenceCount => this.ReferenceCount0();
 
         protected virtual int ReferenceCount0() => this.Unwrap().ReferenceCount;

@@ -7,6 +7,7 @@ namespace DotNetty.Codecs.Http.Tests
     using System.Collections.Generic;
     using System.Text;
     using DotNetty.Buffers;
+    using DotNetty.Codecs.Http;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Embedded;
@@ -104,6 +105,58 @@ namespace DotNetty.Codecs.Http.Tests
             }
 
             Assert.False(ch.Finish());
+        }
+
+        [Fact]
+        public void OversizedRequestWithContentLengthAndDecoder()
+        {
+            EmbeddedChannel embedder = new EmbeddedChannel(new HttpRequestDecoder(), new HttpObjectAggregator(4, false));
+            Assert.False(embedder.WriteInbound(Unpooled.CopiedBuffer(
+                    "PUT /upload HTTP/1.1\r\n" +
+                            "Content-Length: 5\r\n\r\n", Encoding.ASCII)));
+
+            Assert.Null(embedder.ReadInbound<object>());
+
+            var response = embedder.ReadOutbound<IFullHttpResponse>();
+            Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
+            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
+
+            Assert.True(embedder.Open);
+
+            Assert.False(embedder.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 1, 2, 3, 4 })));
+            Assert.False(embedder.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 5 })));
+
+            Assert.Null(embedder.ReadOutbound<object>());
+
+            Assert.False(embedder.WriteInbound(Unpooled.CopiedBuffer(
+                    "PUT /upload HTTP/1.1\r\n" +
+                            "Content-Length: 2\r\n\r\n", Encoding.ASCII)));
+
+            Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
+            Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
+
+            Assert.NotNull(response as ILastHttpContent);
+            ReferenceCountUtil.Release(response);
+
+            Assert.True(embedder.Open);
+
+            Assert.False(embedder.WriteInbound(Unpooled.CopiedBuffer(new byte[] { 1 })));
+            Assert.Null(embedder.ReadOutbound<object>());
+            Assert.True(embedder.WriteInbound(Unpooled.CopiedBuffer(new byte[] { 2 })));
+            Assert.Null(embedder.ReadOutbound<object>());
+
+            var request = embedder.ReadInbound<IFullHttpRequest>();
+            Assert.Equal(HttpVersion.Http11, request.ProtocolVersion);
+            Assert.Equal(HttpMethod.Put, request.Method);
+            Assert.Equal("/upload", request.Uri);
+            Assert.Equal(2, HttpUtil.GetContentLength(request));
+
+            byte[] actual = new byte[request.Content.ReadableBytes];
+            request.Content.ReadBytes(actual);
+            Assert.Equal(new byte[] { 1, 2 }, actual);
+            request.Release();
+
+            Assert.False(embedder.Finish());
         }
 
         [Fact]
@@ -415,7 +468,7 @@ namespace DotNetty.Codecs.Http.Tests
             var fullMsg = ch.ReadInbound<IFullHttpRequest>();
             Assert.NotNull(fullMsg);
 
-            Assert.Equal(chunk2.Content.ReadableBytes + chunk3.Content.ReadableBytes,HttpUtil.GetContentLength(fullMsg));
+            Assert.Equal(chunk2.Content.ReadableBytes + chunk3.Content.ReadableBytes, HttpUtil.GetContentLength(fullMsg));
             Assert.Equal(HttpUtil.GetContentLength(fullMsg), fullMsg.Content.ReadableBytes);
 
             fullMsg.Release();
@@ -460,6 +513,153 @@ namespace DotNetty.Codecs.Http.Tests
             replacedRep.Release();
         }
 
+        [Fact]
+        public void SelectiveRequestAggregation()
+        {
+            EmbeddedChannel channel = new EmbeddedChannel(new TestPostHttpObjectAggregator(1024 * 1024));
+
+            try
+            {
+                // Aggregate: POST
+                IHttpRequest request1 = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/");
+                IHttpContent content1 = new DefaultHttpContent(Unpooled.CopiedBuffer("Hello, World!", Encoding.UTF8));
+                request1.Headers.Set(HttpHeaderNames.ContentType, HttpHeaderValues.TextPlain);
+
+                Assert.True(channel.WriteInbound(request1, content1, EmptyLastHttpContent.Default));
+
+                // Getting an aggregated response out
+                var msg1 = channel.ReadInbound<object>();
+                try
+                {
+                    Assert.True(msg1 is IFullHttpRequest);
+                }
+                finally
+                {
+                    ReferenceCountUtil.Release(msg1);
+                }
+
+                // Don't aggregate: non-POST
+                IHttpRequest request2 = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Put, "/");
+                IHttpContent content2 = new DefaultHttpContent(Unpooled.CopiedBuffer("Hello, World!", Encoding.UTF8));
+                request2.Headers.Set(HttpHeaderNames.ContentType, HttpHeaderValues.TextPlain);
+
+                try
+                {
+                    Assert.True(channel.WriteInbound(request2, content2, EmptyLastHttpContent.Default));
+
+                    // Getting the same response objects out
+                    Assert.Same(request2, channel.ReadInbound<IHttpRequest>());
+                    Assert.Same(content2, channel.ReadInbound<IHttpContent>());
+                    Assert.Same(EmptyLastHttpContent.Default, channel.ReadInbound<EmptyLastHttpContent>());
+                }
+                finally
+                {
+                    ReferenceCountUtil.Release(request2);
+                    ReferenceCountUtil.Release(content2);
+                }
+
+                Assert.False(channel.Finish());
+            }
+            finally
+            {
+                channel.CloseAsync();
+            }
+        }
+
+        class TestPostHttpObjectAggregator : HttpObjectAggregator
+        {
+            public TestPostHttpObjectAggregator(int maxContentLength) : base(maxContentLength) { }
+
+            protected override bool IsStartMessage(IHttpObject msg)
+            {
+                if (msg is IHttpRequest request)
+                {
+                    HttpMethod method = request.Method;
+
+                    if (method.Equals(HttpMethod.Post))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        [Fact]
+        public void SelectiveResponseAggregation()
+        {
+            EmbeddedChannel channel = new EmbeddedChannel(new TestTextHttpObjectAggregator(1024 * 1024));
+
+            try
+            {
+                // Aggregate: text/plain
+                IHttpResponse response1 = new DefaultHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK);
+                IHttpContent content1 = new DefaultHttpContent(Unpooled.CopiedBuffer("Hello, World!", Encoding.UTF8));
+                response1.Headers.Set(HttpHeaderNames.ContentType, HttpHeaderValues.TextPlain);
+
+                Assert.True(channel.WriteInbound(response1, content1, EmptyLastHttpContent.Default));
+
+                // Getting an aggregated response out
+                var msg1 = channel.ReadInbound<object>();
+                try
+                {
+                    Assert.True(msg1 is IFullHttpResponse);
+                }
+                finally
+                {
+                    ReferenceCountUtil.Release(msg1);
+                }
+
+                // Don't aggregate: application/json
+                IHttpResponse response2 = new DefaultHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK);
+                IHttpContent content2 = new DefaultHttpContent(Unpooled.CopiedBuffer("{key: 'value'}", Encoding.UTF8));
+                response2.Headers.Set(HttpHeaderNames.ContentType, HttpHeaderValues.ApplicationJson);
+
+                try
+                {
+                    Assert.True(channel.WriteInbound(response2, content2, EmptyLastHttpContent.Default));
+
+                    // Getting the same response objects out
+                    Assert.Same(response2, channel.ReadInbound<IHttpResponse>());
+                    Assert.Same(content2, channel.ReadInbound<IHttpContent>());
+                    Assert.Same(EmptyLastHttpContent.Default, channel.ReadInbound<EmptyLastHttpContent>());
+                }
+                finally
+                {
+                    ReferenceCountUtil.Release(response2);
+                    ReferenceCountUtil.Release(content2);
+                }
+
+                Assert.False(channel.Finish());
+            }
+            finally
+            {
+                channel.CloseAsync();
+            }
+        }
+
+        class TestTextHttpObjectAggregator : HttpObjectAggregator
+        {
+            public TestTextHttpObjectAggregator(int maxContentLength) : base(maxContentLength) { }
+
+            protected override bool IsStartMessage(IHttpObject msg)
+            {
+                if (msg is IHttpResponse response)
+                {
+                    HttpHeaders headers = response.Headers;
+
+                    var contentType = headers.Get(HttpHeaderNames.ContentType, null);
+                    if (AsciiString.ContentEqualsIgnoreCase(contentType, HttpHeaderValues.TextPlain))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
         static void CheckOversizedRequest(IHttpRequest message)
         {
             var ch = new EmbeddedChannel(new HttpObjectAggregator(4));
@@ -469,14 +669,53 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
             Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
 
+            Assert.NotNull(response as ILastHttpContent);
+            ReferenceCountUtil.Release(response);
+
             if (ServerShouldCloseConnection(message, response))
             {
                 Assert.False(ch.Open);
+                try
+                {
+                    ch.WriteInbound(new DefaultHttpContent(Unpooled.Empty));
+                    Assert.False(true);
+                }
+                catch (Exception exc)
+                {
+                    Assert.IsType<ClosedChannelException>(exc);
+                    // expected
+                }
                 Assert.False(ch.Finish());
             }
             else
             {
                 Assert.True(ch.Open);
+                Assert.False(ch.WriteInbound(new DefaultHttpContent(Unpooled.CopiedBuffer(new byte[8]))));
+                Assert.False(ch.WriteInbound(new DefaultHttpContent(Unpooled.CopiedBuffer(new byte[8]))));
+
+                // Now start a new message and ensure we will not reject it again.
+                IHttpRequest message2 = new DefaultHttpRequest(HttpVersion.Http10, HttpMethod.Put, "http://localhost");
+                HttpUtil.SetContentLength(message, 2);
+
+                Assert.False(ch.WriteInbound(message2));
+                Assert.Null(ch.ReadOutbound<object>());
+                Assert.False(ch.WriteInbound(new DefaultHttpContent(Unpooled.CopiedBuffer(new byte[] { 1 }))));
+                Assert.Null(ch.ReadOutbound<object>());
+                Assert.True(ch.WriteInbound(new DefaultLastHttpContent(Unpooled.CopiedBuffer(new byte[] { 2 }))));
+                Assert.Null(ch.ReadOutbound<object>());
+
+                var request = ch.ReadInbound<IFullHttpRequest>();
+                Assert.Equal(message2.ProtocolVersion, request.ProtocolVersion);
+                Assert.Equal(message2.Method, request.Method);
+                Assert.Equal(message2.Uri, request.Uri);
+                Assert.Equal(2, HttpUtil.GetContentLength(request));
+
+                byte[] actual = new byte[request.Content.ReadableBytes];
+                request.Content.ReadBytes(actual);
+                Assert.Equal(new byte[] { 1, 2 }, actual);
+                request.Release();
+
+                Assert.False(ch.Finish());
             }
         }
 

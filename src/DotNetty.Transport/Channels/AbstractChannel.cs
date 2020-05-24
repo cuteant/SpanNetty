@@ -832,7 +832,7 @@ namespace DotNetty.Transport.Channels
                      * will happen before the promises are notified.
                      *
                      * This is needed as otherwise {@link #isActive()} , {@link #isOpen()} and {@link #isWritable()}
-                     * may still return {@code true} even if the channel should be closed as result of the exception.
+                     * may still return <c>true</c> even if the channel should be closed as result of the exception.
                      */
                     this.Close(this.VoidPromise(), ex, Flush0ClosedChannelException, false);
                     //}

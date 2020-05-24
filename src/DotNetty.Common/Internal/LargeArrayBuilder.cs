@@ -32,7 +32,7 @@ namespace DotNetty.Common.Internal
         /// <summary>
         /// Represents a position at the start of a <see cref="LargeArrayBuilder{T}"/>.
         /// </summary>
-        public static CopyPosition Start => default(CopyPosition);
+        public static CopyPosition Start => default;
 
         /// <summary>
         /// The index of the buffer to select.

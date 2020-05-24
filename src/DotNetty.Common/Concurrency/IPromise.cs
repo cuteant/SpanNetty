@@ -6,9 +6,6 @@ namespace DotNetty.Common.Concurrency
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
-//#if NET_4_5_GREATER
-//    using System.Threading;
-//#endif
 
     public interface IPromise
     {
@@ -35,10 +32,6 @@ namespace DotNetty.Common.Concurrency
         void SetException(Exception exception);
 
         void SetException(IEnumerable<Exception> exceptions);
-
-//#if NET_4_5_GREATER
-//        bool TrySetCanceled(CancellationToken cancellationToken);
-//#endif
 
         bool TrySetCanceled();
 

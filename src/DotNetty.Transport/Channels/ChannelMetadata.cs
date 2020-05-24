@@ -29,7 +29,10 @@ namespace DotNetty.Transport.Channels
         /// </param>
         public ChannelMetadata(bool hasDisconnect, int defaultMaxMessagesPerRead)
         {
-            if (defaultMaxMessagesPerRead <= 0) { ThrowHelper.ThrowArgumentException_Positive(defaultMaxMessagesPerRead, ExceptionArgument.defaultMaxMessagesPerRead); }
+            if ((uint)(defaultMaxMessagesPerRead - 1) > SharedConstants.TooBigOrNegative) // <= 0
+            {
+                ThrowHelper.ThrowArgumentException_Positive(defaultMaxMessagesPerRead, ExceptionArgument.defaultMaxMessagesPerRead);
+            }
             this.HasDisconnect = hasDisconnect;
             this.DefaultMaxMessagesPerRead = defaultMaxMessagesPerRead;
         }

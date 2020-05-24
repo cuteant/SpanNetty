@@ -163,10 +163,12 @@ namespace DotNetty.Buffers
         {
             throw GetIndexOutOfRangeException();
 
-            static IndexOutOfRangeException GetIndexOutOfRangeException()
-            {
-                return new IndexOutOfRangeException();
-            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static IndexOutOfRangeException GetIndexOutOfRangeException()
+        {
+            return new IndexOutOfRangeException();
         }
 
         #endregion

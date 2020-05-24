@@ -87,7 +87,7 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public bool Equals(ICookie other)
         {
-            if (ReferenceEquals(null, other))
+            if (other is null)
             {
                 return false;
             }

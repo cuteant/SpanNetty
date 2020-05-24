@@ -352,8 +352,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     output.Path = ToHttp2Path(requestTargetUri);
                     SetHttp2Scheme(inHeaders, requestTargetUri, output);
-
-                    var authority = requestTargetUri.Authority;
+                    _ = requestTargetUri.Authority;
                     // Attempt to take from HOST header before taking from the request-line
                     var host = inHeaders.GetAsString(HttpHeaderNames.Host);
                     SetHttp2Authority(string.IsNullOrEmpty(host) ? requestTargetUri.Authority : host, output);
@@ -506,9 +505,8 @@ namespace DotNetty.Codecs.Http2
                                 output.Add(HttpHeaderNames.Cookie, value);
                             }
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
-                            var str = ex.ToString();
                             // This is not expect to happen because FIND_SEMI_COLON never throws but must be caught
                             // because of the ByteProcessor interface.
                             ThrowHelper.ThrowInvalidOperationException();

@@ -396,6 +396,40 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
         }
 
         [Fact]
+        public void DecodeOtherMimeHeaderFields()
+        {
+            string boundary = "74e78d11b0214bdcbc2f86491eeb4902";
+            string filecontent = "123456";
+
+            string body = "--" + boundary + "\r\n" +
+                            "Content-Disposition: form-data; name=\"file\"; filename=" + "\"" + "attached.txt" + "\"" +
+                            "\r\n" +
+                            "Content-Type: application/octet-stream" + "\r\n" +
+                            "Content-Encoding: gzip" + "\r\n" +
+                            "\r\n" +
+                            filecontent +
+                            "\r\n" +
+                            "--" + boundary + "--";
+
+            DefaultFullHttpRequest req = new DefaultFullHttpRequest(HttpVersion.Http11,
+                                                                          HttpMethod.Post,
+                                                                          "http://localhost",
+                                                                          Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes(body)));
+            req.Headers.Add(HttpHeaderNames.ContentType, "multipart/form-data; boundary=" + boundary);
+            req.Headers.Add(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
+            DefaultHttpDataFactory inMemoryFactory = new DefaultHttpDataFactory(false);
+            HttpPostRequestDecoder decoder = new HttpPostRequestDecoder(inMemoryFactory, req);
+            Assert.False(decoder.GetBodyHttpDatas().Count == 0);
+            IInterfaceHttpData part1 = decoder.GetBodyHttpDatas()[0];
+            Assert.True(part1 is IFileUpload, "the item should be a FileUpload");
+            IFileUpload fileUpload = (IFileUpload)part1;
+            byte[] fileBytes = fileUpload.GetBytes();
+            Assert.True(filecontent.Equals(Encoding.UTF8.GetString(fileBytes)), "the filecontent should not be decoded");
+            decoder.Destroy();
+            req.Release();
+        }
+
+        [Fact]
         public void MultipartRequestWithFileInvalidCharset()
         {
             const string Boundary = "dLV9Wyq26L_-JQxk6ferf-RT153LhOO";

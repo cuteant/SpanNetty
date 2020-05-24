@@ -6,25 +6,50 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
     using System;
     using System.Collections.Generic;
 
+    /// <summary>
+    /// <a href="https://tools.ietf.org/id/draft-tyoshino-hybi-websocket-perframe-deflate-06.txt">perframe-deflate</a>
+    /// handshake implementation.
+    /// </summary>
     public sealed class DeflateFrameServerExtensionHandshaker : IWebSocketServerExtensionHandshaker
     {
         internal const string XWebkitDeflateFrameExtension = "x-webkit-deflate-frame";
         internal const string DeflateFrameExtension = "deflate-frame";
 
-        readonly int compressionLevel;
+        private readonly int _compressionLevel;
+        private readonly IWebSocketExtensionFilterProvider _extensionFilterProvider;
 
+        /// <summary>
+        /// Constructor with default configuration.
+        /// </summary>
         public DeflateFrameServerExtensionHandshaker()
-            : this(6)
+            : this(6, WebSocketExtensionFilterProvider.Default)
         {
         }
 
+        /// <summary>
+        /// Constructor with custom configuration.
+        /// </summary>
+        /// <param name="compressionLevel">Compression level between 0 and 9 (default is 6).</param>
         public DeflateFrameServerExtensionHandshaker(int compressionLevel)
+            : this(compressionLevel, WebSocketExtensionFilterProvider.Default)
         {
-            if (compressionLevel < 0 || compressionLevel > 9)
+        }
+
+        /// <summary>
+        /// Constructor with custom configuration.
+        /// </summary>
+        /// <param name="compressionLevel">Compression level between 0 and 9 (default is 6).</param>
+        /// <param name="extensionFilterProvider">provides client extension filters for per frame deflate encoder and decoder.</param>
+        public DeflateFrameServerExtensionHandshaker(int compressionLevel, IWebSocketExtensionFilterProvider extensionFilterProvider)
+        {
+            if (/*compressionLevel < 0 || */(uint)compressionLevel > 9u)
             {
                 ThrowHelper.ThrowArgumentException_CompressionLevel(compressionLevel);
             }
-            this.compressionLevel = compressionLevel;
+            if (extensionFilterProvider is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.extensionFilterProvider); }
+
+            _compressionLevel = compressionLevel;
+            _extensionFilterProvider = extensionFilterProvider;
         }
 
         public IWebSocketServerExtension HandshakeExtension(WebSocketExtensionData extensionData)
@@ -36,13 +61,13 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             {
                 case XWebkitDeflateFrameExtension:
                 case DeflateFrameExtension:
-                    return new DeflateFrameServerExtension(this.compressionLevel, extensionDataName);
+                    return new DeflateFrameServerExtension(_compressionLevel, extensionDataName, _extensionFilterProvider);
 
                 default:
                     if (string.Equals(XWebkitDeflateFrameExtension, extensionDataName, StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(DeflateFrameExtension, extensionDataName, StringComparison.OrdinalIgnoreCase))
                     {
-                        return new DeflateFrameServerExtension(this.compressionLevel, extensionDataName);
+                        return new DeflateFrameServerExtension(_compressionLevel, extensionDataName, _extensionFilterProvider);
                     }
                     return null;
             }
@@ -50,22 +75,27 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         sealed class DeflateFrameServerExtension : IWebSocketServerExtension
         {
-            readonly string extensionName;
-            readonly int compressionLevel;
+            private readonly string _extensionName;
+            private readonly int _compressionLevel;
+            private readonly IWebSocketExtensionFilterProvider _extensionFilterProvider;
 
-            public DeflateFrameServerExtension(int compressionLevel, string extensionName)
+            public DeflateFrameServerExtension(int compressionLevel, string extensionName, IWebSocketExtensionFilterProvider extensionFilterProvider)
             {
-                this.extensionName = extensionName;
-                this.compressionLevel = compressionLevel;
+                _extensionName = extensionName;
+                _compressionLevel = compressionLevel;
+                _extensionFilterProvider = extensionFilterProvider;
             }
 
             public int Rsv => WebSocketRsv.Rsv1;
 
-            public WebSocketExtensionEncoder NewExtensionEncoder() => new PerFrameDeflateEncoder(this.compressionLevel, 15, false);
+            public WebSocketExtensionEncoder NewExtensionEncoder()
+                => new PerFrameDeflateEncoder(_compressionLevel, 15, false, _extensionFilterProvider.EncoderFilter);
 
-            public WebSocketExtensionDecoder NewExtensionDecoder() => new PerFrameDeflateDecoder(false);
+            public WebSocketExtensionDecoder NewExtensionDecoder()
+                => new PerFrameDeflateDecoder(false, _extensionFilterProvider.DecoderFilter);
 
-            public WebSocketExtensionData NewReponseData() => new WebSocketExtensionData(this.extensionName, new Dictionary<string, string>(StringComparer.Ordinal));
+            public WebSocketExtensionData NewReponseData()
+                => new WebSocketExtensionData(_extensionName, new Dictionary<string, string>(StringComparer.Ordinal));
         }
     }
 }

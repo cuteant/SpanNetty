@@ -4,13 +4,20 @@
 namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
+    using System.Buffers;
+    using System.Buffers.Text;
+    using System.Diagnostics;
+    using System.Runtime.InteropServices;
     using System.Security.Cryptography;
-    using System.Text;
-    using DotNetty.Codecs.Base64;
-    using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
+#if !(NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER)
+    using System.Runtime.CompilerServices;
+#endif
 
+    /// <summary>
+    /// A utility class mainly for use by web sockets
+    /// </summary>
     static class WebSocketUtil
     {
         static readonly Random Random = PlatformDependent.GetThreadLocalRandom();
@@ -52,11 +59,37 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         internal static string Base64String(byte[] data)
         {
-            IByteBuffer encodedData = Unpooled.WrappedBuffer(data);
-            IByteBuffer encoded = Base64.Encode(encodedData);
-            string encodedString = encoded.ToString(Encoding.UTF8);
-            encoded.Release();
-            return encodedString;
+            var maxLen = Base64.GetMaxEncodedToUtf8Length(data.Length);
+            byte[] utf8Array = null;
+            char[] utf16Array = null;
+            try
+            {
+                Span<byte> utf8Bytes = (uint)maxLen <= SharedConstants.uStackallocThreshold ?
+                    stackalloc byte[maxLen] :
+                    (utf8Array = ArrayPool<byte>.Shared.Rent(maxLen));
+                var result = Base64.EncodeToUtf8(data, utf8Bytes, out _, out int bytesWritten);
+                Debug.Assert(result == OperationStatus.Done);
+#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
+                ReadOnlySpan<byte> base64Bytes = MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(utf8Bytes), bytesWritten);
+#else
+                ReadOnlySpan<byte> base64Bytes;
+                unsafe
+                {
+                    base64Bytes = new ReadOnlySpan<byte>(Unsafe.AsPointer(ref MemoryMarshal.GetReference(utf8Bytes)), bytesWritten);
+                }
+#endif
+                var charCount = TextEncodings.Utf8.GetCharCount(base64Bytes);
+                Span<char> utf16Chars = (uint)charCount <= SharedConstants.uStackallocThreshold ?
+                    stackalloc char[charCount] :
+                    (utf16Array = ArrayPool<char>.Shared.Rent(charCount));
+                TextEncodings.Utf8.GetChars(base64Bytes, utf16Chars);
+                return utf16Chars.ToString();
+            }
+            finally
+            {
+                if (utf8Array is object) { ArrayPool<byte>.Shared.Return(utf8Array); }
+                if (utf16Array is object) { ArrayPool<char>.Shared.Return(utf16Array); }
+            }
         }
 
         internal static byte[] RandomBytes(int size)

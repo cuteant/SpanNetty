@@ -292,7 +292,7 @@ namespace DotNetty.Buffers
                     return;
                 }
 
-                this.FreeChunk(chunk, handle, sizeClass);
+                this.FreeChunk(chunk, handle, sizeClass, false);
             }
         }
 
@@ -306,24 +306,27 @@ namespace DotNetty.Buffers
             return IsTiny(normCapacity) ? Buffers.SizeClass.Tiny : Buffers.SizeClass.Small;
         }
 
-        internal void FreeChunk(PoolChunk<T> chunk, long handle, SizeClass sizeClass)
+        internal void FreeChunk(PoolChunk<T> chunk, long handle, SizeClass sizeClass, bool finalizer)
         {
             bool destroyChunk;
             lock (this)
             {
-                switch (sizeClass)
+                if (!finalizer)
                 {
-                    case Buffers.SizeClass.Normal:
-                        ++this.deallocationsNormal;
-                        break;
-                    case Buffers.SizeClass.Small:
-                        ++this.deallocationsSmall;
-                        break;
-                    case Buffers.SizeClass.Tiny:
-                        ++this.deallocationsTiny;
-                        break;
-                    default:
-                        ThrowHelper.ThrowArgumentOutOfRangeException(); break;
+                    switch (sizeClass)
+                    {
+                        case Buffers.SizeClass.Normal:
+                            ++this.deallocationsNormal;
+                            break;
+                        case Buffers.SizeClass.Small:
+                            ++this.deallocationsSmall;
+                            break;
+                        case Buffers.SizeClass.Tiny:
+                            ++this.deallocationsTiny;
+                            break;
+                        default:
+                            ThrowHelper.ThrowArgumentOutOfRangeException(); break;
+                    }
                 }
                 destroyChunk = !chunk.Parent.Free(chunk, handle);
             }
@@ -361,9 +364,10 @@ namespace DotNetty.Buffers
 
         internal int NormalizeCapacity(int reqCapacity)
         {
-            if (reqCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(reqCapacity, ExceptionArgument.reqCapacity); }
+            uint ureqCapacity = (uint)reqCapacity;
+            if (ureqCapacity > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(reqCapacity, ExceptionArgument.reqCapacity); }
 
-            if (reqCapacity >= this.ChunkSize)
+            if (ureqCapacity >= (uint)this.ChunkSize)
             {
                 return reqCapacity;
             }
@@ -401,7 +405,7 @@ namespace DotNetty.Buffers
 
         internal void Reallocate(PooledByteBuffer<T> buf, int newCapacity, bool freeOldMemory)
         {
-            if (newCapacity < 0 || newCapacity > buf.MaxCapacity) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            if (/*newCapacity < 0 || */(uint)newCapacity > (uint)buf.MaxCapacity) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             int oldCapacity = buf.Length;
             if (oldCapacity == newCapacity)

@@ -21,28 +21,53 @@ namespace DotNetty.Buffers
     /// </summary>
     public partial interface IByteBuffer : IReferenceCounted, IComparable<IByteBuffer>, IEquatable<IByteBuffer>
     {
+        /// <summary>
+        /// Returns the number of bytes (octets) this buffer can contain.
+        /// </summary>
         int Capacity { get; }
 
         /// <summary>
-        ///     Expands the capacity of this buffer so long as it is less than <see cref="MaxCapacity" />.
+        /// Adjusts the capacity of this buffer.  If the <paramref name="newCapacity"/> is less than the current
+        /// capacity, the content of this buffer is truncated.  If the <paramref name="newCapacity"/> is greater
+        /// than the current capacity, the buffer is appended with unspecified data whose length is
+        /// <code>newCapacity - currentCapacity</code>
         /// </summary>
         IByteBuffer AdjustCapacity(int newCapacity);
 
+        /// <summary>
+        /// Returns the maximum allowed capacity of this buffer. This value provides an upper bound on <see cref="Capacity"/>
+        /// </summary>
         int MaxCapacity { get; }
 
         /// <summary>
-        ///     The allocator who created this buffer
+        /// Returns the <see cref="IByteBufferAllocator"/> which created this buffer.
         /// </summary>
         IByteBufferAllocator Allocator { get; }
 
+        /// <summary>
+        /// Returns <c>true</c> if and only if this buffer is backed by an direct buffer.
+        /// </summary>
         bool IsDirect { get; }
 
+        /// <summary>
+        /// Returns <c>true</c> if and only if this buffer is read-only.
+        /// </summary>
         bool IsReadOnly { get; }
 
+        /// <summary>
+        /// Returns a read-only version of this buffer.
+        /// </summary>
+        /// <returns></returns>
         IByteBuffer AsReadOnly();
 
+        /// <summary>
+        /// Returns the <see cref="ReaderIndex"/> of this buffer.
+        /// </summary>
         int ReaderIndex { get; }
 
+        /// <summary>
+        /// Returns the <see cref="WriterIndex"/> of this buffer.
+        /// </summary>
         int WriterIndex { get; }
 
         /// <summary>
@@ -69,11 +94,36 @@ namespace DotNetty.Buffers
         /// </exception>
         IByteBuffer SetIndex(int readerIndex, int writerIndex);
 
+        /// <summary>
+        /// Returns the number of readable bytes which is equal to
+        /// <code>(this.writerIndex - this.readerIndex)</code>
+        /// </summary>
         int ReadableBytes { get; }
 
+        /// <summary>
+        /// Returns the number of writable bytes which is equal to
+        /// <code>(this.capacity - this.writerIndex)</code>
+        /// </summary>
         int WritableBytes { get; }
 
+        /// <summary>
+        /// Returns the maximum possible number of writable bytes, which is equal to
+        /// <code>(this.maxCapacity - this.writerIndex)</code>
+        /// </summary>
         int MaxWritableBytes { get; }
+
+        /// <summary>
+        /// Returns the maximum number of bytes which can be written for certain without involving
+        /// an internal reallocation or data-copy. The returned value will be <see cref="WritableBytes"/>
+        /// and <see cref="MaxWritableBytes"/>.
+        /// </summary>
+        int MaxFastWritableBytes { get; }
+
+        /// <summary>
+        /// Used internally by <see cref="AbstractByteBuffer.EnsureAccessible"/> to try to guard
+        /// against using the buffer after it was released (best-effort).
+        /// </summary>
+        bool IsAccessible { get; }
 
         /// <summary>
         ///     Returns true if <see cref="WriterIndex" /> - <see cref="ReaderIndex" /> is greater than <c>0</c>.
@@ -770,7 +820,7 @@ namespace DotNetty.Buffers
         byte[] Array { get; }
 
         /// <summary>
-        /// Returns {@code true} if and only if this buffer has a reference to the low-level memory address that points
+        /// Returns <c>true</c> if and only if this buffer has a reference to the low-level memory address that points
         /// to the backing data.
         /// </summary>
         bool HasMemoryAddress { get; }
@@ -795,8 +845,9 @@ namespace DotNetty.Buffers
         IByteBuffer RetainedDuplicate();
 
         /// <summary>
-        ///     Unwraps a nested buffer
+        /// Return the underlying buffer instance if this buffer is a wrapper of another buffer.
         /// </summary>
+        /// <remarks>return <code>null</code> if this buffer is not a wrapper</remarks>
         IByteBuffer Unwrap();
 
         IByteBuffer Copy(int index, int length);

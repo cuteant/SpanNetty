@@ -23,7 +23,10 @@ namespace DotNetty.Handlers.Streams
         public ChunkedStream(Stream input, int chunkSize)
         {
             if (input is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.input); }
-            if (chunkSize <= 0) { ThrowHelper.ThrowArgumentException_Positive(chunkSize, ExceptionArgument.chunkSize); }
+            if ((uint)(chunkSize - 1) > SharedConstants.TooBigOrNegative) // <= 0
+            {
+                ThrowHelper.ThrowArgumentException_Positive(chunkSize, ExceptionArgument.chunkSize);
+            }
 
             this.input = input;
             this.chunkSize = chunkSize;
@@ -47,8 +50,8 @@ namespace DotNetty.Handlers.Streams
             }
 
             long availableBytes = this.input.Length - this.input.Position;
-            int readChunkSize = availableBytes <= 0 
-                ? this.chunkSize 
+            int readChunkSize = availableBytes <= 0L
+                ? this.chunkSize
                 : (int)Math.Min(this.chunkSize, availableBytes);
 
             bool release = true;

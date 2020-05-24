@@ -168,7 +168,7 @@
             byte[] bytes = new byte[1024];
             s_randomNumberGeneratorCsp.GetBytes(bytes);
 
-            Assert.True(channel.WriteInbound(Unpooled.WrappedBuffer(bytes)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(bytes)));
             AssertEx.Equal(Unpooled.WrappedBuffer(bytes), channel.ReadInbound<IByteBuffer>(), true);
             Assert.Null(channel.ReadInbound<IByteBuffer>());
             Assert.False(channel.Finish());
@@ -183,7 +183,7 @@
             byte[] bytes = new byte[1024];
             s_randomNumberGeneratorCsp.GetBytes(bytes);
 
-            Assert.True(channel.WriteInbound(Unpooled.WrappedBuffer(bytes)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(bytes)));
             AssertEx.Equal(Unpooled.WrappedBuffer(bytes, 0, bytes.Length - 1), channel.ReadInbound<IByteBuffer>(), true);
             Assert.Null(channel.ReadInbound<IByteBuffer>());
             Assert.True(channel.Finish());
@@ -224,6 +224,62 @@
             var expected = Assert.Throws<Exception>(() => ByteToMessageDecoder.CompositionCumulation(UnpooledByteBufferAllocator.Default, cumulation, input));
             Assert.Same(error, expected);
             Assert.Equal(0, input.ReferenceCount);
+        }
+
+        [Fact]
+        public void DoesNotOverRead()
+        {
+            ReadInterceptingHandler interceptor = new ReadInterceptingHandler();
+
+            EmbeddedChannel channel = new EmbeddedChannel();
+            channel.Configuration.AutoRead =false;
+            channel.Pipeline.AddLast(interceptor, new FixedLengthFrameDecoder(3));
+            Assert.Equal(0, interceptor.readsTriggered);
+
+            // 0 complete frames, 1 partial frame: SHOULD trigger a read
+            channel.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 0, 1 }));
+            Assert.Equal(1, interceptor.readsTriggered);
+
+            // 2 complete frames, 0 partial frames: should NOT trigger a read
+            channel.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 2 }), Unpooled.WrappedBuffer(new byte[] { 3, 4, 5 }));
+            Assert.Equal(1, interceptor.readsTriggered);
+
+            // 1 complete frame, 1 partial frame: should NOT trigger a read
+            channel.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 6, 7, 8 }), Unpooled.WrappedBuffer(new byte[] { 9 }));
+            Assert.Equal(1, interceptor.readsTriggered);
+
+            // 1 complete frame, 1 partial frame: should NOT trigger a read
+            channel.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 10, 11 }), Unpooled.WrappedBuffer(new byte[] { 12 }));
+            Assert.Equal(1, interceptor.readsTriggered);
+
+            // 0 complete frames, 1 partial frame: SHOULD trigger a read
+            channel.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 13 }));
+            Assert.Equal(2, interceptor.readsTriggered);
+
+            // 1 complete frame, 0 partial frames: should NOT trigger a read
+            channel.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 14 }));
+            Assert.Equal(2, interceptor.readsTriggered);
+
+            for (int i = 0; i < 5; i++)
+            {
+                IByteBuffer read = channel.ReadInbound<IByteBuffer>();
+                Assert.Equal(i * 3 + 0, read.GetByte(0));
+                Assert.Equal(i * 3 + 1, read.GetByte(1));
+                Assert.Equal(i * 3 + 2, read.GetByte(2));
+                read.Release();
+            }
+            Assert.False(channel.Finish());
+        }
+    }
+
+    class ReadInterceptingHandler : ChannelHandlerAdapter
+    {
+        internal int readsTriggered;
+
+        public override void Read(IChannelHandlerContext context)
+        {
+            readsTriggered++;
+            base.Read(context);
         }
     }
 

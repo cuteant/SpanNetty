@@ -18,20 +18,13 @@ namespace DotNetty.Transport.Channels
 
             public int Size(object msg)
             {
-                switch (msg)
+                return msg switch
                 {
-                    case IByteBuffer byteBuffer:
-                        return byteBuffer.ReadableBytes;
-
-                    case IByteBufferHolder byteBufferHolder:
-                        return byteBufferHolder.Content.ReadableBytes;
-
-                    case IFileRegion fileRegion:
-                        return 0;
-
-                    default:
-                        return this.unknownSize;
-                }
+                    IByteBuffer byteBuffer => byteBuffer.ReadableBytes,
+                    IByteBufferHolder byteBufferHolder => byteBufferHolder.Content.ReadableBytes,
+                    IFileRegion fileRegion => 0,
+                    _ => this.unknownSize,
+                };
             }
         }
 
@@ -48,7 +41,10 @@ namespace DotNetty.Transport.Channels
         /// <param name="unknownSize">The size which is returned for unknown messages.</param>
         public DefaultMessageSizeEstimator(int unknownSize)
         {
-            if (unknownSize < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(unknownSize, ExceptionArgument.unknownSize); }
+            if ((uint)unknownSize > SharedConstants.TooBigOrNegative) // < 0
+            {
+                ThrowHelper.ThrowArgumentException_PositiveOrZero(unknownSize, ExceptionArgument.unknownSize);
+            }
             this.handle = new HandleImpl(unknownSize);
         }
 

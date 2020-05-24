@@ -142,6 +142,9 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         IChannelPipeline Pipeline { get; }
 
+        /// <summary>
+        /// Returns the configuration of this channel.
+        /// </summary>
         IChannelConfiguration Configuration { get; }
 
         Task CloseCompletion { get; }

@@ -9,6 +9,9 @@ namespace DotNetty.Codecs.Http.Multipart
     using DotNetty.Buffers;
     using DotNetty.Common;
 
+    /// <summary>
+    /// Abstract Memory HttpData implementation
+    /// </summary>
     public abstract class AbstractMemoryHttpData : AbstractHttpData
     {
         // We pick a value that is the largest multiple of 4096 that is still smaller than the large object heap threshold (85K).
@@ -161,6 +164,11 @@ namespace DotNetty.Codecs.Http.Multipart
             return this.byteBuf.ToString(encoding);
         }
 
+        /// <summary>
+        /// Utility to go from a In Memory FileUpload
+        /// to a Disk (or another implementation) FileUpload
+        /// </summary>
+        /// <returns>the attached ByteBuf containing the actual bytes</returns>
         public override IByteBuffer GetByteBuffer() => this.byteBuf;
 
         public override IByteBuffer GetChunk(int length)
@@ -199,6 +207,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             if (this.byteBuf is null)
             {
+                // empty file
                 return true;
             }
 

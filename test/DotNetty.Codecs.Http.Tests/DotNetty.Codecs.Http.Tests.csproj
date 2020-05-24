@@ -21,12 +21,16 @@
   <ItemGroup>
     <None Remove="Multipart\file-01.txt" />
     <None Remove="Multipart\file-02.txt" />
+    <None Remove="Multipart\file-03.txt" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Multipart\file-01.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Multipart\file-02.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Multipart\file-03.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

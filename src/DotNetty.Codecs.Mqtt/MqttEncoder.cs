@@ -12,7 +12,7 @@ namespace DotNetty.Codecs.Mqtt
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public sealed class MqttEncoder : MessageToMessageEncoder2<Packet>
+    public sealed class MqttEncoder : MessageToMessageEncoder<Packet>
     {
         public static readonly MqttEncoder Instance = new MqttEncoder();
         const int PacketIdLength = 2;

@@ -10,14 +10,19 @@ namespace DotNetty.Codecs
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
+    /// <summary>
+    /// <see cref="ChannelHandlerAdapter"/> which encodes from one message to an other message
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public abstract class MessageToMessageEncoder<T> : ChannelHandlerAdapter
     {
         /// <summary>
-        ///     Returns {@code true} if the given message should be handled. If {@code false} it will be passed to the next
-        ///     {@link ChannelHandler} in the {@link ChannelPipeline}.
+        /// Returns <c>true</c> if the given message should be handled. If <c>false</c> it will be passed to the next
+        /// <see cref="IChannelHandler"/> in the <see cref="IChannelPipeline"/>.
         /// </summary>
         public virtual bool AcceptOutboundMessage(object msg) => msg is T;
 
+        /// <inheritdoc />
         public override void Write(IChannelHandlerContext ctx, object msg, IPromise promise)
         {
             ThreadLocalObjectList output = null;
@@ -104,14 +109,13 @@ namespace DotNetty.Codecs
         }
 
         /// <summary>
-        ///     Encode from one message to an other. This method will be called for each written message that can be handled
-        ///     by this encoder.
-        ///     @param context           the {@link ChannelHandlerContext} which this {@link MessageToMessageEncoder} belongs to
-        ///     @param message           the message to encode to an other one
-        ///     @param output           the {@link List} into which the encoded message should be added
-        ///     needs to do some kind of aggragation
-        ///     @throws Exception    is thrown if an error accour
+        /// Encode from one message to an other. This method will be called for each written message that can be handled
+        /// by this encoder.
         /// </summary>
+        /// <param name="context">the <see cref="IChannelHandlerContext"/> which this <see cref="MessageToMessageEncoder{T}"/> belongs to</param>
+        /// <param name="message">the message to encode to an other one</param>
+        /// <param name="output">the <see cref="List{Object}"/> into which the encoded msg should be added
+        /// needs to do some kind of aggregation</param>
         protected internal abstract void Encode(IChannelHandlerContext context, T message, List<object> output);
     }
 }

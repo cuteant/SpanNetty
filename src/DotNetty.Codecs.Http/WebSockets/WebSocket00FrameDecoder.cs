@@ -10,6 +10,11 @@ namespace DotNetty.Codecs.Http.WebSockets
 
     using static Buffers.ByteBufferUtil;
 
+    /// <summary>
+    /// Decodes <see cref="IByteBuffer"/>s into <see cref="WebSocketFrame"/>s.
+    /// <para>For the detailed instruction on adding add Web Socket support to your HTTP server, take a look into the
+    /// <tt>WebSocketServer</tt> example located in the {@code examples.http.websocket} package.</para>
+    /// </summary>
     public class WebSocket00FrameDecoder : ReplayingDecoder<WebSocket00FrameDecoder.Void>, IWebSocketFrameDecoder
     {
         public enum Void
@@ -26,9 +31,20 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
         }
 
-        public WebSocket00FrameDecoder(int maxFrameSize) : base(default(Void))
+        /// <summary>
+        /// Creates a new instance of <see cref="IWebSocketFrameDecoder"/> with the specified <paramref name="maxFrameSize"/>. If the client
+        /// sends a frame size larger than <paramref name="maxFrameSize"/>, the channel will be closed.
+        /// </summary>
+        /// <param name="maxFrameSize">the maximum frame size to decode</param>
+        public WebSocket00FrameDecoder(int maxFrameSize) : base(default)
         {
             this.maxFrameSize = maxFrameSize;
+        }
+
+        public WebSocket00FrameDecoder(WebSocketDecoderConfig decoderConfig) : base(default)
+        {
+            if (decoderConfig is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoderConfig); }
+            this.maxFrameSize = decoderConfig.MaxFramePayloadLength;
         }
 
         protected override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
@@ -85,7 +101,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (type == 0xFF && 0ul >= (ulong)frameSize)
             {
                 this.receivedClosingHandshake = true;
-                return new CloseWebSocketFrame();
+                return new CloseWebSocketFrame(true, 0, ctx.Allocator.Buffer(0));
             }
             IByteBuffer payload = ReadBytes(ctx.Allocator, buffer, (int)frameSize);
             return new BinaryWebSocketFrame(payload);

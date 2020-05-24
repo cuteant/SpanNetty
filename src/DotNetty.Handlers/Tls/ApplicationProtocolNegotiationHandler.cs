@@ -72,19 +72,32 @@ namespace DotNetty.Handlers.Tls
         {
             if (evt is TlsHandshakeCompletionEvent handshakeEvent)
             {
-                ctx.Pipeline.Remove(this);
-
-                if (handshakeEvent.IsSuccessful)
+                try
                 {
-                    var sslHandler = ctx.Pipeline.Get<TlsHandler>();
-                    if (sslHandler is null) { ThrowInvalidOperationException(); }
+                    if (handshakeEvent.IsSuccessful)
+                    {
+                        var sslHandler = ctx.Pipeline.Get<TlsHandler>();
+                        if (sslHandler is null) { ThrowInvalidOperationException(); }
 
-                    var protocol = sslHandler.NegotiatedApplicationProtocol;
-                    this.ConfigurePipeline(ctx, !protocol.Protocol.IsEmpty ? protocol : fallbackProtocol);
+                        var protocol = sslHandler.NegotiatedApplicationProtocol;
+                        this.ConfigurePipeline(ctx, !protocol.Protocol.IsEmpty ? protocol : fallbackProtocol);
+                    }
+                    else
+                    {
+                        this.HandshakeFailure(ctx, handshakeEvent.Exception);
+                    }
                 }
-                else
+                catch (Exception exc)
                 {
-                    this.HandshakeFailure(ctx, handshakeEvent.Exception);
+                    this.ExceptionCaught(ctx, exc);
+                }
+                finally
+                {
+                    var pipeline = ctx.Pipeline;
+                    if (pipeline.Context(this) is object)
+                    {
+                        pipeline.Remove(this);
+                    }
                 }
             }
 
@@ -126,6 +139,7 @@ namespace DotNetty.Handlers.Tls
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
         {
             if (Logger.WarnEnabled) Logger.FailedToSelectAppProtocol(ctx, cause);
+            ctx.FireExceptionCaught(cause);
             ctx.CloseAsync();
         }
     }

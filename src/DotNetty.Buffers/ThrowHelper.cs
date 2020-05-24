@@ -24,6 +24,17 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_Index(ExceptionArgument indexName, int index, int length, int capacity)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("{0}: {1}, length: {2} (expected: range({1}, {3}))", indexName.ToString(), index, length, capacity));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowIndexOutOfRangeException_SrcIndex(int srcIndex)
         {
             throw GetIndexOutOfRangeException();
@@ -41,7 +52,7 @@ namespace DotNetty.Buffers
 
             IndexOutOfRangeException GetIndexOutOfRangeException()
             {
-                return new IndexOutOfRangeException(string.Format("srcIndex: {0}, length: {1} (expected: range(0, {2}))", srcIndex, length, srcCapacity));
+                return new IndexOutOfRangeException(string.Format("srcIndex: {0}, length: {1} (expected: range({0}, {2}))", srcIndex, length, srcCapacity));
             }
         }
 
@@ -57,13 +68,13 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowIndexOutOfRangeException_DstIndex(int dstIndex, int length,  int dstCapacity)
+        internal static void ThrowIndexOutOfRangeException_DstIndex(int dstIndex, int length, int dstCapacity)
         {
             throw GetIndexOutOfRangeException();
 
             IndexOutOfRangeException GetIndexOutOfRangeException()
             {
-                return new IndexOutOfRangeException(string.Format("dstIndex: {0}, length: {1} (expected: range(0, {2}))", dstIndex, length, dstCapacity));
+                return new IndexOutOfRangeException(string.Format("dstIndex: {0}, length: {1} (expected: range({0}, {2}))", dstIndex, length, dstCapacity));
             }
         }
 
@@ -178,17 +189,6 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentOutOfRangeException_InitialCapacity()
-        {
-            throw GetArgumentOutOfRangeException();
-
-            static ArgumentOutOfRangeException GetArgumentOutOfRangeException()
-            {
-                return new ArgumentOutOfRangeException("initialCapacity", "initialCapacity must be greater than zero");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentOutOfRangeException_InitialCapacity(int initialCapacity, int maxCapacity)
         {
             throw GetArgumentOutOfRangeException();
@@ -207,17 +207,6 @@ namespace DotNetty.Buffers
             static ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
                 return new ArgumentOutOfRangeException("minWritableBytes", "expected minWritableBytes to be greater than zero");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentOutOfRangeException_MinNewCapacity(int minNewCapacity)
-        {
-            throw GetArgumentOutOfRangeException();
-
-            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
-            {
-                return new ArgumentOutOfRangeException("minNewCapacity", string.Format("minNewCapacity: {0} (expected: 0+)", minNewCapacity));
             }
         }
 

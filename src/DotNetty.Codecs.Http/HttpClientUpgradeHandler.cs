@@ -12,49 +12,82 @@ namespace DotNetty.Codecs.Http
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    // Note HttpObjectAggregator already implements IChannelHandler
+    /// <summary>
+    /// Client-side handler for handling an HTTP upgrade handshake to another protocol. When the first
+    /// HTTP request is sent, this handler will add all appropriate headers to perform an upgrade to the
+    /// new protocol. If the upgrade fails (i.e. response is not 101 Switching Protocols), this handler
+    /// simply removes itself from the pipeline. If the upgrade is successful, upgrades the pipeline to
+    /// the new protocol.
+    /// </summary>
     public class HttpClientUpgradeHandler : HttpObjectAggregator
     {
-        // User events that are fired to notify about upgrade status.
+        /// <summary>
+        /// User events that are fired to notify about upgrade status.
+        /// </summary>
         public enum UpgradeEvent
         {
-            // The Upgrade request was sent to the server.
+            /// <summary>
+            /// The Upgrade request was sent to the server.
+            /// </summary>
             UpgradeIssued,
 
-            // The Upgrade to the new protocol was successful.
+            /// <summary>
+            /// The Upgrade to the new protocol was successful.
+            /// </summary>
             UpgradeSuccessful,
 
-            // The Upgrade was unsuccessful due to the server not issuing
-            // with a 101 Switching Protocols response.
+            /// <summary>
+            /// The Upgrade was unsuccessful due to the server not issuing
+            /// with a 101 Switching Protocols response.
+            /// </summary>
             UpgradeRejected
         }
 
+        /// <summary>
+        /// The source codec that is used in the pipeline initially.
+        /// </summary>
         public interface ISourceCodec
         {
-            // Removes or disables the encoder of this codec so that the {@link UpgradeCodec} can send an initial greeting
-            // (if any).
+            /// <summary>
+            /// Removes or disables the encoder of this codec so that the <see cref="IUpgradeCodec"/> can send an initial greeting
+            /// (if any).
+            /// </summary>
+            /// <param name="ctx"></param>
             void PrepareUpgradeFrom(IChannelHandlerContext ctx);
 
-            // Removes this codec (i.e. all associated handlers) from the pipeline.
+            /// <summary>
+            /// Removes this codec (i.e. all associated handlers) from the pipeline.
+            /// </summary>
+            /// <param name="ctx"></param>
             void UpgradeFrom(IChannelHandlerContext ctx);
         }
 
+        /// <summary>
+        /// A codec that the source can be upgraded to.
+        /// </summary>
         public interface IUpgradeCodec
         {
-            // Returns the name of the protocol supported by this codec, as indicated by the {@code 'UPGRADE'} header.
+            /// <summary>
+            /// Returns the name of the protocol supported by this codec, as indicated by the <c>'UPGRADE'</c> header.
+            /// </summary>
             ICharSequence Protocol { get; }
 
-            // Sets any protocol-specific headers required to the upgrade request. Returns the names of
-            // all headers that were added. These headers will be used to populate the CONNECTION header.
+            /// <summary>
+            /// Sets any protocol-specific headers required to the upgrade request. Returns the names of
+            /// all headers that were added. These headers will be used to populate the CONNECTION header.
+            /// </summary>
+            /// <param name="ctx">the context for the current handler.</param>
+            /// <param name="upgradeRequest"></param>
+            /// <returns></returns>
             ICollection<ICharSequence> SetUpgradeHeaders(IChannelHandlerContext ctx, IHttpRequest upgradeRequest);
 
-            ///
-            // Performs an HTTP protocol upgrade from the source codec. This method is responsible for
-            // adding all handlers required for the new protocol.
-            // 
-            // ctx the context for the current handler.
-            // upgradeResponse the 101 Switching Protocols response that indicates that the server
-            //            has switched to this protocol.
+            /// <summary>
+            /// Performs an HTTP protocol upgrade from the source codec. This method is responsible for
+            /// adding all handlers required for the new protocol.
+            /// </summary>
+            /// <param name="ctx">the context for the current handler.</param>
+            /// <param name="upgradeResponse">the 101 Switching Protocols response that indicates that the server
+            /// has switched to this protocol.</param>
             void UpgradeTo(IChannelHandlerContext ctx, IFullHttpResponse upgradeResponse);
         }
 
@@ -64,6 +97,10 @@ namespace DotNetty.Codecs.Http
         readonly IUpgradeCodec upgradeCodec;
         bool upgradeRequested;
 
+        /// <summary>Constructs the client upgrade handler.</summary>
+        /// <param name="sourceCodec">the codec that is being used initially.</param>
+        /// <param name="upgradeCodec">the codec that the client would like to upgrade to.</param>
+        /// <param name="maxContentLength">the maximum length of the aggregated content.</param>
         public HttpClientUpgradeHandler(ISourceCodec sourceCodec, IUpgradeCodec upgradeCodec, int maxContentLength)
             : base(maxContentLength)
         {
@@ -74,10 +111,10 @@ namespace DotNetty.Codecs.Http
             this.upgradeCodec = upgradeCodec;
         }
 
+        /// <inheritdoc />
         public override void Write(IChannelHandlerContext context, object message, IPromise promise)
         {
-            var request = message as IHttpRequest;
-            if (request is null)
+            if (!(message is IHttpRequest request))
             {
                 context.WriteAsync(message, promise);
                 return;
@@ -100,6 +137,7 @@ namespace DotNetty.Codecs.Http
             // Now we wait for the next HTTP response to see if we switch protocols.
         }
 
+        /// <inheritdoc />
         protected override void Decode(IChannelHandlerContext context, IHttpObject message, List<object> output)
         {
             IFullHttpResponse response = null;
@@ -178,6 +216,11 @@ namespace DotNetty.Codecs.Http
 
         static void RemoveThisHandler(IChannelHandlerContext ctx) => ctx.Pipeline.Remove(ctx.Name);
 
+        /// <summary>
+        /// Adds all upgrade request headers necessary for an upgrade to the supported protocols.
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="request"></param>
         void SetUpgradeRequestHeaders(IChannelHandlerContext ctx, IHttpRequest request)
         {
             // Set the UPGRADE header on the request.

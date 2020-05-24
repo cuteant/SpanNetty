@@ -8,7 +8,7 @@ namespace DotNetty.Codecs.Redis
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public sealed class RedisArrayAggregator : MessageToMessageDecoder2<IRedisMessage>
+    public sealed class RedisArrayAggregator : MessageToMessageDecoder<IRedisMessage>
     {
         readonly Stack<AggregateState> depths = new Stack<AggregateState>(4);
 

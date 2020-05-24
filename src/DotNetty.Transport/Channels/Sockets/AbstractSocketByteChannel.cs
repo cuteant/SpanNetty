@@ -199,7 +199,6 @@ namespace DotNetty.Transport.Channels.Sockets
 
                 if (msg is IByteBuffer buf)
                 {
-                    //var buf = (IByteBuffer)msg; // ## 苦竹 修改 ##
                     int readableBytes = buf.ReadableBytes;
                     if (0u >= (uint)readableBytes)
                     {

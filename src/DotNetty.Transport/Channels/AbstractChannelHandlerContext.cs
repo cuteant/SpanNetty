@@ -744,6 +744,12 @@ namespace DotNetty.Transport.Channels
 
         public Task DisconnectAsync(IPromise promise)
         {
+            if (!this.Channel.Metadata.HasDisconnect)
+            {
+                // Translate disconnect to close if the channel has no notion of disconnect-reconnect.
+                // So far, UDP/IP is the only transport that has such behavior.
+                return this.CloseAsync(promise);
+            }
             if (IsNotValidPromise(promise, false))
             {
                 // cancelled
@@ -754,27 +760,13 @@ namespace DotNetty.Transport.Channels
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
             {
-                if (!this.Channel.Metadata.HasDisconnect)
-                {
-                    next.InvokeClose(promise);
-                }
-                else
-                {
-                    next.InvokeDisconnect(promise);
-                }
+                next.InvokeDisconnect(promise);
             }
             else
             {
                 try
                 {
-                    if (!this.Channel.Metadata.HasDisconnect)
-                    {
-                        nextExecutor.Execute(InvokeCloseAction, next, promise);
-                    }
-                    else
-                    {
-                        nextExecutor.Execute(InvokeDisconnectAction, next, promise);
-                    }
+                    nextExecutor.Execute(InvokeDisconnectAction, next, promise);
                 }
                 catch (Exception exc)
                 {
@@ -943,23 +935,6 @@ namespace DotNetty.Transport.Channels
 
         public Task WriteAsync(object msg, IPromise promise)
         {
-            if (msg is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
-
-            try
-            {
-                if (IsNotValidPromise(promise, true))
-                {
-                    ReferenceCountUtil.Release(msg);
-                    // cancelled
-                    return promise.Task;
-                }
-            }
-            catch(Exception)
-            {
-                ReferenceCountUtil.Release(msg);
-                throw;
-            }
-
             this.Write(msg, false, promise);
             return promise.Task;
         }
@@ -1039,15 +1014,6 @@ namespace DotNetty.Transport.Channels
 
         public Task WriteAndFlushAsync(object message, IPromise promise)
         {
-            if (message is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.message); }
-
-            if (IsNotValidPromise(promise, true))
-            {
-                ReferenceCountUtil.Release(message);
-                // cancelled
-                return promise.Task;
-            }
-
             this.Write(message, true, promise);
             return promise.Task;
         }
@@ -1067,6 +1033,23 @@ namespace DotNetty.Transport.Channels
 
         void Write(object msg, bool flush, IPromise promise)
         {
+            if (msg is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
+
+            try
+            {
+                if (IsNotValidPromise(promise, true))
+                {
+                    ReferenceCountUtil.Release(msg);
+                    // cancelled
+                    return;
+                }
+            }
+            catch (Exception)
+            {
+                ReferenceCountUtil.Release(msg);
+                throw;
+            }
+
             AbstractChannelHandlerContext next = this.FindContextOutbound();
             object m = this.pipeline.Touch(msg, next);
             IEventExecutor nextExecutor = next.Executor;

@@ -3570,5 +3570,23 @@ namespace DotNetty.Buffers.Tests
         {
             public bool Process(byte value) => true;
         }
+
+        [Fact]
+        public virtual void MaxFastWritableBytes()
+        {
+            if (this.AssumedMaxCapacity)
+            {
+                return;
+            }
+
+            IByteBuffer buffer = this.NewBuffer(150, 500).SetWriterIndex(100);
+            Assert.Equal(50, buffer.WritableBytes);
+            Assert.Equal(150, buffer.Capacity);
+            Assert.Equal(500, buffer.MaxCapacity);
+            Assert.Equal(400, buffer.MaxWritableBytes);
+            // Default implementation has fast writable == writable
+            Assert.Equal(50, buffer.MaxFastWritableBytes);
+            buffer.Release();
+        }
     }
 }

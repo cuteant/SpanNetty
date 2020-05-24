@@ -34,7 +34,7 @@ namespace DotNetty.Codecs
     * </pre>
     */
 
-    public class StringDecoder : MessageToMessageDecoder2<IByteBuffer>
+    public class StringDecoder : MessageToMessageDecoder<IByteBuffer>
     {
         readonly Encoding encoding;
 

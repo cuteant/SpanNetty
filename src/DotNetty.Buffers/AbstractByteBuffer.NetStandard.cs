@@ -11,7 +11,6 @@
     partial class AbstractByteBuffer : IBufferWriter<byte>
     {
         private const int c_minimumGrowthSize = 256;
-        private const uint c_maxBufferSize = int.MaxValue;
 
         public virtual void AdvanceReader(int count)
         {
@@ -229,12 +228,12 @@
             //this.EnsureAccessible();
             //if (sizeHint < 0) ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.sizeHint);
             //if (sizeHint == 0)
-            if ((uint)(sizeHint - 1) > c_maxBufferSize)
+            if ((uint)(sizeHint - 1) > SharedConstants.TooBigOrNegative)
             {
                 sizeHint = c_minimumGrowthSize;
             }
 
-            if (sizeHint <= (this.Capacity - writerIdx)) { return; }
+            if ((uint)sizeHint <= (uint)(this.Capacity - writerIdx)) { return; }
 
             this.EnsureWritableInternal(writerIdx, sizeHint);
         }

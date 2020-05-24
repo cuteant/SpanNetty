@@ -8,7 +8,7 @@ namespace DotNetty.Codecs.Redis
     using DotNetty.Codecs.Redis.Messages;
     using DotNetty.Transport.Channels;
 
-    public sealed class RedisBulkStringAggregator : MessageAggregator2<IRedisMessage, BulkStringHeaderRedisMessage,
+    public sealed class RedisBulkStringAggregator : MessageAggregator<IRedisMessage, BulkStringHeaderRedisMessage,
         IBulkStringRedisContent, IFullBulkStringRedisMessage>
     {
         public RedisBulkStringAggregator() : base(RedisConstants.RedisMessageMaxLength)

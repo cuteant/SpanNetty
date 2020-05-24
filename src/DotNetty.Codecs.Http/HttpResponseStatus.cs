@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoPropertyWhenPossible
-// ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http
 {
     using System;
@@ -11,439 +9,297 @@ namespace DotNetty.Codecs.Http
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
-    /**
-     * The response code and its description of HTTP or its derived protocols, such as
-     * <a href="http://en.wikipedia.org/wiki/Real_Time_Streaming_Protocol">RTSP</a> and
-     * <a href="http://en.wikipedia.org/wiki/Internet_Content_Adaptation_Protocol">ICAP</a>.
-     */
-    public class HttpResponseStatus : IComparable<HttpResponseStatus>, IEquatable<HttpResponseStatus>
+    /// <summary>
+    /// The response code and its description of HTTP or its derived protocols, such as
+    /// RTSP (http://en.wikipedia.org/wiki/Real_Time_Streaming_Protocol) and 
+    /// ICAP (http://en.wikipedia.org/wiki/Internet_Content_Adaptation_Protocol) 
+    /// </summary>
+    public class HttpResponseStatus : IEquatable<HttpResponseStatus>, IComparable<HttpResponseStatus>, IComparable
     {
-        /**
-          * 100 Continue
-          */
+        /// <summary>100 Continue</summary>
         public static readonly HttpResponseStatus Continue = NewStatus(100, "Continue");
 
-        /**
-         * 101 Switching Protocols
-         */
+        /// <summary>101 Switching Protocols</summary>
         public static readonly HttpResponseStatus SwitchingProtocols = NewStatus(101, "Switching Protocols");
 
-        /**
-         * 102 Processing (WebDAV, RFC2518)
-         */
+        /// <summary>102 Processing (WebDAV, RFC2518)</summary>
         public static readonly HttpResponseStatus Processing = NewStatus(102, "Processing");
 
-        /**
-         * 200 OK
-         */
+        /// <summary>200 OK</summary>
         public static readonly HttpResponseStatus OK = NewStatus(200, "OK");
 
-        /**
-         * 201 Created
-         */
+        /// <summary>201 Created</summary>
         public static readonly HttpResponseStatus Created = NewStatus(201, "Created");
 
-        /**
-         * 202 Accepted
-         */
+        /// <summary>202 Accepted</summary>
         public static readonly HttpResponseStatus Accepted = NewStatus(202, "Accepted");
 
-        /**
-         * 203 Non-Authoritative Information (since HTTP/1.1)
-         */
+        /// <summary>203 Non-Authoritative Information (since HTTP/1.1)</summary>
         public static readonly HttpResponseStatus NonAuthoritativeInformation = NewStatus(203, "Non-Authoritative Information");
 
-        /**
-         * 204 No Content
-         */
+        /// <summary>204 No Content</summary>
         public static readonly HttpResponseStatus NoContent = NewStatus(204, "No Content");
 
-        /**
-         * 205 Reset Content
-         */
+        /// <summary>205 Reset Content</summary>
         public static readonly HttpResponseStatus ResetContent = NewStatus(205, "Reset Content");
 
-        /**
-         * 206 Partial Content
-         */
+        /// <summary>206 Partial Content</summary>
         public static readonly HttpResponseStatus PartialContent = NewStatus(206, "Partial Content");
 
-        /**
-         * 207 Multi-Status (WebDAV, RFC2518)
-         */
+        /// <summary>207 Multi-Status (WebDAV, RFC2518)</summary>
         public static readonly HttpResponseStatus MultiStatus = NewStatus(207, "Multi-Status");
 
-        /**
-         * 300 Multiple Choices
-         */
+        /// <summary>300 Multiple Choices</summary>
         public static readonly HttpResponseStatus MultipleChoices = NewStatus(300, "Multiple Choices");
 
-        /**
-         * 301 Moved Permanently
-         */
+        /// <summary>301 Moved Permanently</summary>
         public static readonly HttpResponseStatus MovedPermanently = NewStatus(301, "Moved Permanently");
 
-        /**
-         * 302 Found
-         */
+        /// <summary>302 Found</summary>
         public static readonly HttpResponseStatus Found = NewStatus(302, "Found");
 
-        /**
-         * 303 See Other (since HTTP/1.1)
-         */
+        /// <summary>303 See Other (since HTTP/1.1)</summary>
         public static readonly HttpResponseStatus SeeOther = NewStatus(303, "See Other");
 
-        /**
-         * 304 Not Modified
-         */
+        /// <summary>304 Not Modified</summary>
         public static readonly HttpResponseStatus NotModified = NewStatus(304, "Not Modified");
 
-        /**
-         * 305 Use Proxy (since HTTP/1.1)
-         */
+        /// <summary>305 Use Proxy (since HTTP/1.1)</summary>
         public static readonly HttpResponseStatus UseProxy = NewStatus(305, "Use Proxy");
 
-        /**
-         * 307 Temporary Redirect (since HTTP/1.1)
-         */
+        /// <summary>307 Temporary Redirect (since HTTP/1.1)</summary>
         public static readonly HttpResponseStatus TemporaryRedirect = NewStatus(307, "Temporary Redirect");
 
-        /**
-         * 308 Permanent Redirect (RFC7538)
-         */
+        /// <summary>308 Permanent Redirect (RFC7538)</summary>
         public static readonly HttpResponseStatus PermanentRedirect = NewStatus(308, "Permanent Redirect");
 
-        /**
-         * 400 Bad Request
-         */
+        /// <summary>400 Bad Request</summary>
         public static readonly HttpResponseStatus BadRequest = NewStatus(400, "Bad Request");
 
-        /**
-         * 401 Unauthorized
-         */
+        /// <summary>401 Unauthorized</summary>
         public static readonly HttpResponseStatus Unauthorized = NewStatus(401, "Unauthorized");
 
-        /**
-         * 402 Payment Required
-         */
+        /// <summary>402 Payment Required</summary>
         public static readonly HttpResponseStatus PaymentRequired = NewStatus(402, "Payment Required");
 
-        /**
-         * 403 Forbidden
-         */
+        /// <summary>403 Forbidden</summary>
         public static readonly HttpResponseStatus Forbidden = NewStatus(403, "Forbidden");
 
-        /**
-         * 404 Not Found
-         */
+        /// <summary>404 Not Found</summary>
         public static readonly HttpResponseStatus NotFound = NewStatus(404, "Not Found");
 
-        /**
-         * 405 Method Not Allowed
-         */
+        /// <summary>405 Method Not Allowed</summary>
         public static readonly HttpResponseStatus MethodNotAllowed = NewStatus(405, "Method Not Allowed");
 
-        /**
-         * 406 Not Acceptable
-         */
+        /// <summary>406 Not Acceptable</summary>
         public static readonly HttpResponseStatus NotAcceptable = NewStatus(406, "Not Acceptable");
 
-        /**
-         * 407 Proxy Authentication Required
-         */
+        /// <summary>407 Proxy Authentication Required</summary>
         public static readonly HttpResponseStatus ProxyAuthenticationRequired = NewStatus(407, "Proxy Authentication Required");
 
-        /**
-         * 408 Request Timeout
-         */
+        /// <summary>408 Request Timeout</summary>
         public static readonly HttpResponseStatus RequestTimeout = NewStatus(408, "Request Timeout");
 
-        /**
-         * 409 Conflict
-         */
+        /// <summary>409 Conflict</summary>
         public static readonly HttpResponseStatus Conflict = NewStatus(409, "Conflict");
 
-        /**
-         * 410 Gone
-         */
+        /// <summary>410 Gone</summary>
         public static readonly HttpResponseStatus Gone = NewStatus(410, "Gone");
 
-        /**
-         * 411 Length Required
-         */
+        /// <summary>411 Length Required</summary>
         public static readonly HttpResponseStatus LengthRequired = NewStatus(411, "Length Required");
 
-        /**
-         * 412 Precondition Failed
-         */
+        /// <summary>412 Precondition Failed</summary>
         public static readonly HttpResponseStatus PreconditionFailed = NewStatus(412, "Precondition Failed");
 
-        /**
-         * 413 Request Entity Too Large
-         */
+        /// <summary>413 Request Entity Too Large</summary>
         public static readonly HttpResponseStatus RequestEntityTooLarge = NewStatus(413, "Request Entity Too Large");
 
-        /**
-         * 414 Request-URI Too Long
-         */
+        /// <summary>414 Request-URI Too Long</summary>
         public static readonly HttpResponseStatus RequestUriTooLong = NewStatus(414, "Request-URI Too Long");
 
-        /**
-         * 415 Unsupported Media Type
-         */
+        /// <summary>415 Unsupported Media Type</summary>
         public static readonly HttpResponseStatus UnsupportedMediaType = NewStatus(415, "Unsupported Media Type");
 
-        /**
-         * 416 Requested Range Not Satisfiable
-         */
+        /// <summary>416 Requested Range Not Satisfiable</summary>
         public static readonly HttpResponseStatus RequestedRangeNotSatisfiable = NewStatus(416, "Requested Range Not Satisfiable");
 
-        /**
-         * 417 Expectation Failed
-         */
+        /// <summary>417 Expectation Failed</summary>
         public static readonly HttpResponseStatus ExpectationFailed = NewStatus(417, "Expectation Failed");
 
-        /**
-         * 421 Misdirected Request
-         *
-         * <a href="https://tools.ietf.org/html/draft-ietf-httpbis-http2-15#section-9.1.2">421 Status Code</a>
-         */
+        /// <summary>421 Misdirected Request
+        /// <para>421 Status Code (https://tools.ietf.org/html/draft-ietf-httpbis-http2-15#section-9.1.2)</para>
+        /// </summary>
         public static readonly HttpResponseStatus MisdirectedRequest = NewStatus(421, "Misdirected Request");
 
-        /**
-         * 422 Unprocessable Entity (WebDAV, RFC4918)
-         */
+        /// <summary>422 Unprocessable Entity (WebDAV, RFC4918)</summary>
         public static readonly HttpResponseStatus UnprocessableEntity = NewStatus(422, "Unprocessable Entity");
 
-        /**
-         * 423 Locked (WebDAV, RFC4918)
-         */
+        /// <summary>423 Locked (WebDAV, RFC4918)</summary>
         public static readonly HttpResponseStatus Locked = NewStatus(423, "Locked");
 
-        /**
-         * 424 Failed Dependency (WebDAV, RFC4918)
-         */
+        /// <summary>424 Failed Dependency (WebDAV, RFC4918)</summary>
         public static readonly HttpResponseStatus FailedDependency = NewStatus(424, "Failed Dependency");
 
-        /**
-         * 425 Unordered Collection (WebDAV, RFC3648)
-         */
+        /// <summary>425 Unordered Collection (WebDAV, RFC3648)</summary>
         public static readonly HttpResponseStatus UnorderedCollection = NewStatus(425, "Unordered Collection");
 
-        /**
-         * 426 Upgrade Required (RFC2817)
-         */
+        /// <summary>426 Upgrade Required (RFC2817)</summary>
         public static readonly HttpResponseStatus UpgradeRequired = NewStatus(426, "Upgrade Required");
 
-        /**
-         * 428 Precondition Required (RFC6585)
-         */
+        /// <summary>428 Precondition Required (RFC6585)</summary>
         public static readonly HttpResponseStatus PreconditionRequired = NewStatus(428, "Precondition Required");
 
-        /**
-         * 429 Too Many Requests (RFC6585)
-         */
+        /// <summary>429 Too Many Requests (RFC6585)</summary>
         public static readonly HttpResponseStatus TooManyRequests = NewStatus(429, "Too Many Requests");
 
-        /**
-         * 431 Request Header Fields Too Large (RFC6585)
-         */
+        /// <summary>431 Request Header Fields Too Large (RFC6585)</summary>
         public static readonly HttpResponseStatus RequestHeaderFieldsTooLarge = NewStatus(431, "Request Header Fields Too Large");
 
-        /**
-         * 500 Internal Server Error
-         */
+        /// <summary>500 Internal Server Error</summary>
         public static readonly HttpResponseStatus InternalServerError = NewStatus(500, "Internal Server Error");
 
-        /**
-         * 501 Not Implemented
-         */
+        /// <summary>501 Not Implemented</summary>
         public static readonly HttpResponseStatus NotImplemented = NewStatus(501, "Not Implemented");
 
-        /**
-         * 502 Bad Gateway
-         */
+        /// <summary>502 Bad Gateway</summary>
         public static readonly HttpResponseStatus BadGateway = NewStatus(502, "Bad Gateway");
 
-        /**
-         * 503 Service Unavailable
-         */
+        /// <summary>503 Service Unavailable</summary>
         public static readonly HttpResponseStatus ServiceUnavailable = NewStatus(503, "Service Unavailable");
 
-        /**
-         * 504 Gateway Timeout
-         */
+        /// <summary>504 Gateway Timeout</summary>
         public static readonly HttpResponseStatus GatewayTimeout = NewStatus(504, "Gateway Timeout");
 
-        /**
-         * 505 HTTP Version Not Supported
-         */
+        /// <summary>505 HTTP Version Not Supported</summary>
         public static readonly HttpResponseStatus HttpVersionNotSupported = NewStatus(505, "HTTP Version Not Supported");
 
-        /**
-         * 506 Variant Also Negotiates (RFC2295)
-         */
+        /// <summary>506 Variant Also Negotiates (RFC2295)</summary>
         public static readonly HttpResponseStatus VariantAlsoNegotiates = NewStatus(506, "Variant Also Negotiates");
 
-        /**
-         * 507 Insufficient Storage (WebDAV, RFC4918)
-         */
+        /// <summary>507 Insufficient Storage (WebDAV, RFC4918)</summary>
         public static readonly HttpResponseStatus InsufficientStorage = NewStatus(507, "Insufficient Storage");
 
-        /**
-         * 510 Not Extended (RFC2774)
-         */
+        /// <summary>510 Not Extended (RFC2774)</summary>
         public static readonly HttpResponseStatus NotExtended = NewStatus(510, "Not Extended");
 
-        /**
-         * 511 Network Authentication Required (RFC6585)
-         */
+        /// <summary>511 Network Authentication Required (RFC6585)</summary>
         public static readonly HttpResponseStatus NetworkAuthenticationRequired = NewStatus(511, "Network Authentication Required");
 
         static HttpResponseStatus NewStatus(int statusCode, string reasonPhrase) => new HttpResponseStatus(statusCode, new AsciiString(reasonPhrase), true);
 
-        // Returns the {@link HttpResponseStatus} represented by the specified code.
-        // If the specified code is a standard HTTP getStatus code, a cached instance
-        // will be returned.  Otherwise, a new instance will be returned.
+        /// <summary>
+        /// Returns the <see cref="HttpResponseStatus"/> represented by the specified code.
+        /// If the specified code is a standard HTTP getStatus code, a cached instance
+        /// will be returned.  Otherwise, a new instance will be returned.
+        /// </summary>
+        /// <param name="code">The response code value</param>
+        /// <returns>the <see cref="HttpResponseStatus"/> represented by the specified <paramref name="code"/>.</returns>
         public static HttpResponseStatus ValueOf(int code) => ValueOf0(code) ?? new HttpResponseStatus(code);
 
         static HttpResponseStatus ValueOf0(int code)
         {
-            switch (code)
+            return code switch
             {
-                case 100:
-                    return Continue;
-                case 101:
-                    return SwitchingProtocols;
-                case 102:
-                    return Processing;
-                case 200:
-                    return OK;
-                case 201:
-                    return Created;
-                case 202:
-                    return Accepted;
-                case 203:
-                    return NonAuthoritativeInformation;
-                case 204:
-                    return NoContent;
-                case 205:
-                    return ResetContent;
-                case 206:
-                    return PartialContent;
-                case 207:
-                    return MultiStatus;
-                case 300:
-                    return MultipleChoices;
-                case 301:
-                    return MovedPermanently;
-                case 302:
-                    return Found;
-                case 303:
-                    return SeeOther;
-                case 304:
-                    return NotModified;
-                case 305:
-                    return UseProxy;
-                case 307:
-                    return TemporaryRedirect;
-                case 308:
-                    return PermanentRedirect;
-                case 400:
-                    return BadRequest;
-                case 401:
-                    return Unauthorized;
-                case 402:
-                    return PaymentRequired;
-                case 403:
-                    return Forbidden;
-                case 404:
-                    return NotFound;
-                case 405:
-                    return MethodNotAllowed;
-                case 406:
-                    return NotAcceptable;
-                case 407:
-                    return ProxyAuthenticationRequired;
-                case 408:
-                    return RequestTimeout;
-                case 409:
-                    return Conflict;
-                case 410:
-                    return Gone;
-                case 411:
-                    return LengthRequired;
-                case 412:
-                    return PreconditionFailed;
-                case 413:
-                    return RequestEntityTooLarge;
-                case 414:
-                    return RequestUriTooLong;
-                case 415:
-                    return UnsupportedMediaType;
-                case 416:
-                    return RequestedRangeNotSatisfiable;
-                case 417:
-                    return ExpectationFailed;
-                case 421:
-                    return MisdirectedRequest;
-                case 422:
-                    return UnprocessableEntity;
-                case 423:
-                    return Locked;
-                case 424:
-                    return FailedDependency;
-                case 425:
-                    return UnorderedCollection;
-                case 426:
-                    return UpgradeRequired;
-                case 428:
-                    return PreconditionRequired;
-                case 429:
-                    return TooManyRequests;
-                case 431:
-                    return RequestHeaderFieldsTooLarge;
-                case 500:
-                    return InternalServerError;
-                case 501:
-                    return NotImplemented;
-                case 502:
-                    return BadGateway;
-                case 503:
-                    return ServiceUnavailable;
-                case 504:
-                    return GatewayTimeout;
-                case 505:
-                    return HttpVersionNotSupported;
-                case 506:
-                    return VariantAlsoNegotiates;
-                case 507:
-                    return InsufficientStorage;
-                case 510:
-                    return NotExtended;
-                case 511:
-                    return NetworkAuthenticationRequired;
-            }
-            return null;
+                100 => Continue,
+                101 => SwitchingProtocols,
+                102 => Processing,
+                200 => OK,
+                201 => Created,
+                202 => Accepted,
+                203 => NonAuthoritativeInformation,
+                204 => NoContent,
+                205 => ResetContent,
+                206 => PartialContent,
+                207 => MultiStatus,
+                300 => MultipleChoices,
+                301 => MovedPermanently,
+                302 => Found,
+                303 => SeeOther,
+                304 => NotModified,
+                305 => UseProxy,
+                307 => TemporaryRedirect,
+                308 => PermanentRedirect,
+                400 => BadRequest,
+                401 => Unauthorized,
+                402 => PaymentRequired,
+                403 => Forbidden,
+                404 => NotFound,
+                405 => MethodNotAllowed,
+                406 => NotAcceptable,
+                407 => ProxyAuthenticationRequired,
+                408 => RequestTimeout,
+                409 => Conflict,
+                410 => Gone,
+                411 => LengthRequired,
+                412 => PreconditionFailed,
+                413 => RequestEntityTooLarge,
+                414 => RequestUriTooLong,
+                415 => UnsupportedMediaType,
+                416 => RequestedRangeNotSatisfiable,
+                417 => ExpectationFailed,
+                421 => MisdirectedRequest,
+                422 => UnprocessableEntity,
+                423 => Locked,
+                424 => FailedDependency,
+                425 => UnorderedCollection,
+                426 => UpgradeRequired,
+                428 => PreconditionRequired,
+                429 => TooManyRequests,
+                431 => RequestHeaderFieldsTooLarge,
+                500 => InternalServerError,
+                501 => NotImplemented,
+                502 => BadGateway,
+                503 => ServiceUnavailable,
+                504 => GatewayTimeout,
+                505 => HttpVersionNotSupported,
+                506 => VariantAlsoNegotiates,
+                507 => InsufficientStorage,
+                510 => NotExtended,
+                511 => NetworkAuthenticationRequired,
+                _ => null,
+            };
         }
 
+        /// <summary>
+        /// Returns the <see cref="HttpResponseStatus"/> represented by the specified <paramref name="code"/> and <paramref name="reasonPhrase"/>.
+        /// If the specified code is a standard HTTP status <paramref name="code"/> and <paramref name="reasonPhrase"/>, a cached instance
+        /// will be returned. Otherwise, a new instance will be returned.
+        /// </summary>
+        /// <param name="code">The response code value.</param>
+        /// <param name="reasonPhrase">The response code reason phrase.</param>
+        /// <returns>the <see cref="HttpResponseStatus"/> represented by the specified <paramref name="code"/> and <paramref name="reasonPhrase"/>.</returns>
         public static HttpResponseStatus ValueOf(int code, AsciiString reasonPhrase)
         {
             HttpResponseStatus responseStatus = ValueOf0(code);
-            return responseStatus is object && responseStatus.ReasonPhrase.ContentEquals(reasonPhrase) 
-                ? responseStatus 
+            return responseStatus is object && responseStatus.ReasonPhrase.ContentEquals(reasonPhrase)
+                ? responseStatus
                 : new HttpResponseStatus(code, reasonPhrase);
         }
 
+        /// <summary>
+        /// Parses the specified HTTP status line into a <see cref="HttpResponseStatus"/>. The expected formats of the line are:
+        /// <para><see cref="Code"/> (e.g. 200)</para>
+        /// <para><see cref="Code"/> <see cref="ReasonPhrase"/> (e.g. 404 Not Found)</para>
+        /// </summary>
+        /// <param name="line"></param>
+        /// <returns></returns>
         public static HttpResponseStatus ParseLine(ICharSequence line) => line is AsciiString asciiString ? ParseLine(asciiString) : ParseLine(line.ToString());
 
+        /// <summary>
+        /// Parses the specified HTTP status line into a <see cref="HttpResponseStatus"/>. The expected formats of the line are:
+        /// <para><see cref="Code"/> (e.g. 200)</para>
+        /// <para><see cref="Code"/> <see cref="ReasonPhrase"/> (e.g. 404 Not Found)</para>
+        /// </summary>
+        /// <param name="line"></param>
+        /// <returns></returns>
         public static HttpResponseStatus ParseLine(string line)
         {
             try
             {
                 int space = line.IndexOf(' ');
-                return space == -1 
-                    ? ValueOf(int.Parse(line)) 
+                return space == -1
+                    ? ValueOf(int.Parse(line))
                     : ValueOf(int.Parse(line.Substring(0, space)), new AsciiString(line.Substring(space + 1)));
             }
             catch (Exception e)
@@ -452,6 +308,13 @@ namespace DotNetty.Codecs.Http
             }
         }
 
+        /// <summary>
+        /// Parses the specified HTTP status line into a <see cref="HttpResponseStatus"/>. The expected formats of the line are:
+        /// <para><see cref="Code"/> (e.g. 200)</para>
+        /// <para><see cref="Code"/> <see cref="ReasonPhrase"/> (e.g. 404 Not Found)</para>
+        /// </summary>
+        /// <param name="line"></param>
+        /// <returns></returns>
         public static HttpResponseStatus ParseLine(AsciiString line)
         {
             try
@@ -459,8 +322,8 @@ namespace DotNetty.Codecs.Http
                 //int space = line.ForEachByte(ByteProcessor.FindAsciiSpace);
                 const char Space = ' ';
                 int space = line.IndexOf(Space, 0);
-                return space == -1 
-                    ? ValueOf(line.ParseInt()) 
+                return space == -1
+                    ? ValueOf(line.ParseInt())
                     : ValueOf(line.ParseInt(0, space), (AsciiString)line.SubSequence(space + 1));
             }
             catch (Exception e)
@@ -477,19 +340,28 @@ namespace DotNetty.Codecs.Http
         readonly AsciiString reasonPhrase;
         readonly byte[] bytes;
 
-        HttpResponseStatus(int code) 
+        /// <summary>
+        /// Creates a new instance with the specified <paramref name="code"/> and the auto-generated default reason phrase.
+        /// </summary>
+        /// <param name="code"></param>
+        HttpResponseStatus(int code)
             : this(code, new AsciiString($"{HttpStatusClass.ValueOf(code).DefaultReasonPhrase} ({code})"), false)
         {
         }
 
+        /// <summary>
+        /// Creates a new instance with the specified <paramref name="code"/> and its <paramref name="reasonPhrase"/>.
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="reasonPhrase"></param>
         public HttpResponseStatus(int code, AsciiString reasonPhrase)
             : this(code, reasonPhrase, false)
         {
         }
 
-        public HttpResponseStatus(int code, AsciiString reasonPhrase, bool bytes)
+        private HttpResponseStatus(int code, AsciiString reasonPhrase, bool bytes)
         {
-            if (code < 0)
+            if ((uint)code > SharedConstants.TooBigOrNegative) // < 0
             {
                 ThrowHelper.ThrowArgumentException_InvalidResponseCode(code);
             }
@@ -518,29 +390,58 @@ namespace DotNetty.Codecs.Http
             this.codeClass = HttpStatusClass.ValueOf(code);
         }
 
+        /// <summary>
+        /// Returns the code of this <see cref="HttpResponseStatus"/>.
+        /// </summary>
         public int Code => this.code;
 
+        /// <summary>
+        /// Returns the status code as <see cref="AsciiString"/>.
+        /// </summary>
         public AsciiString CodeAsText => this.codeAsText;
 
+        /// <summary>
+        /// Returns the reason phrase of this <see cref="HttpResponseStatus"/>.
+        /// </summary>
         public AsciiString ReasonPhrase => this.reasonPhrase;
 
+        /// <summary>
+        /// Returns the class of this <see cref="HttpResponseStatus"/>
+        /// </summary>
         public HttpStatusClass CodeClass => this.codeClass;
 
+        /// <inheritdoc />
         public override int GetHashCode() => this.code;
 
+        /// <inheritdoc />
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(this, obj)) { return true; }
             return obj is HttpResponseStatus other && this.code == other.code;
         }
+
+        /// <summary>
+        /// Equality of <see cref="HttpResponseStatus"/> only depends on <see cref="Code"/>.
+        /// The reason phrase is not considered for equality.
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
         public bool Equals(HttpResponseStatus other)
         {
-            if(ReferenceEquals(this, other)) { return true; }
+            if (ReferenceEquals(this, other)) { return true; }
             return other is object && this.code == other.code;
         }
 
-        public int CompareTo(HttpResponseStatus other) => this.code - other.code;
+        public int CompareTo(object obj) => CompareTo(obj as HttpResponseStatus);
 
+        public int CompareTo(HttpResponseStatus other)
+        {
+            if (ReferenceEquals(this, other)) { return 0; }
+            if (other is null) { return 1; }
+            return this.code - other.code;
+        }
+
+        /// <inheritdoc />
         public override string ToString() =>
             StringBuilderManager.ReturnAndFree(StringBuilderManager.Allocate(this.ReasonPhrase.Count + 4)
             .Append(this.codeAsText)

@@ -54,14 +54,20 @@ namespace DotNetty.Common.Internal
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static unsafe bool ByteArrayEquals(byte[] bytes1, int startPos1, byte[] bytes2, int startPos2, int length)
         {
-            if (length <= 0) { return true; }
+            if ((uint)(length - 1) > SharedConstants.TooBigOrNegative) // <= 0
+            {
+                return true;
+            }
 
             return SpanHelpers.SequenceEqual(ref bytes1[startPos1], ref bytes2[startPos2], unchecked((uint)length));
         }
 
         public static unsafe int ByteArrayEqualsConstantTime(byte[] bytes1, int startPos1, byte[] bytes2, int startPos2, int length)
         {
-            if (length <= 0) { return 1; }
+            if ((uint)(length - 1) > SharedConstants.TooBigOrNegative) // <= 0
+            {
+                return 1;
+            }
 
             fixed (byte* array1 = bytes1)
             fixed (byte* array2 = bytes2)

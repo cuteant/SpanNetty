@@ -15,9 +15,9 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
 
     public abstract class WebSocketClientHandshakerTest
     {
-        protected abstract WebSocketClientHandshaker NewHandshaker(Uri uri, string subprotocol, HttpHeaders headers);
+        protected abstract WebSocketClientHandshaker NewHandshaker(Uri uri, string subprotocol, HttpHeaders headers, bool absoluteUpgradeUrl);
 
-        protected WebSocketClientHandshaker NewHandshaker(Uri uri) => NewHandshaker(uri, null, null);
+        protected WebSocketClientHandshaker NewHandshaker(Uri uri) => NewHandshaker(uri, null, null, false);
 
         protected abstract AsciiString GetOriginHeaderName();
 
@@ -170,7 +170,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         }
 
         [Fact]
-        public void RawPath()
+        public void UpgradeUrl()
         {
             var uri = new Uri("ws://localhost:9999/path%20with%20ws");
             WebSocketClientHandshaker handshaker = this.NewHandshaker(uri);
@@ -186,7 +186,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         }
 
         [Fact]
-        public void RawPathWithQuery()
+        public void UpgradeUrlWithQuery()
         {
             var uri = new Uri("ws://localhost:9999/path%20with%20ws?a=b%20c");
             WebSocketClientHandshaker handshaker = this.NewHandshaker(uri);
@@ -194,6 +194,22 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             try
             {
                 Assert.Equal("/path%20with%20ws?a=b%20c", request.Uri);
+            }
+            finally
+            {
+                request.Release();
+            }
+        }
+
+        [Fact]
+        public void AbsoluteUpgradeUrlWithQuery()
+        {
+            var uri = new Uri("ws://localhost:9999/path%20with%20ws?a=b%20c");
+            WebSocketClientHandshaker handshaker = NewHandshaker(uri, null, null, true);
+            IFullHttpRequest request = handshaker.NewHandshakeRequest();
+            try
+            {
+                Assert.Equal("ws://localhost:9999/path%20with%20ws?a=b%20c", request.Uri);
             }
             finally
             {
@@ -219,7 +235,9 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             // Create a EmbeddedChannel which we will use to encode a BinaryWebsocketFrame to bytes and so use these
             // to test the actual handshaker.
             var factory = new WebSocketServerHandshakerFactory(url, null, false);
-            WebSocketServerHandshaker socketServerHandshaker = factory.NewHandshaker(shaker.NewHandshakeRequest());
+            IFullHttpRequest request = shaker.NewHandshakeRequest();
+            WebSocketServerHandshaker socketServerHandshaker = factory.NewHandshaker(request);
+            request.Release();
             var websocketChannel = new EmbeddedChannel(socketServerHandshaker.NewWebSocketEncoder(),
                 socketServerHandshaker.NewWebsocketDecoder());
             Assert.True(websocketChannel.WriteOutbound(new BinaryWebSocketFrame(Unpooled.WrappedBuffer(data))));
@@ -228,7 +246,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
 
             CompositeByteBuffer compositeByteBuf = Unpooled.CompositeBuffer();
             compositeByteBuf.AddComponent(true, Unpooled.WrappedBuffer(bytes));
-            for (;;)
+            for (; ; )
             {
                 var frameBytes = websocketChannel.ReadOutbound<IByteBuffer>();
                 if (frameBytes == null)
@@ -251,7 +269,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             // We need to first write the request as HttpClientCodec will fail if we receive a response before a request
             // was written.
             shaker.HandshakeAsync(ch).Wait();
-            for (;;)
+            for (; ; )
             {
                 // Just consume the bytes, we are not interested in these.
                 var buf = ch.ReadOutbound<IByteBuffer>();
@@ -296,7 +314,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             inputHeaders.Add(GetProtocolHeaderName(), bogusSubProtocol);
 
             var realSubProtocol = "realSubProtocol";
-            var handshaker = NewHandshaker(uri, realSubProtocol, inputHeaders);
+            var handshaker = NewHandshaker(uri, realSubProtocol, inputHeaders, false);
             var request = handshaker.NewHandshakeRequest();
             var outputHeaders = request.Headers;
 
@@ -319,7 +337,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             readonly WebSocketClientHandshaker shaker;
 
             public Handshaker(WebSocketClientHandshaker shaker)
-                : base(shaker.Uri, shaker.Version, null, EmptyHttpHeaders.Default, int.MaxValue)
+                : base(shaker.Uri, shaker.Version, null, EmptyHttpHeaders.Default, int.MaxValue, -1L)
             {
                 this.shaker = shaker;
             }

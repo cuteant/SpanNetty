@@ -7,7 +7,7 @@ namespace DotNetty.Codecs.Base64
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
-    public sealed class Base64Decoder : MessageToMessageDecoder2<IByteBuffer>
+    public sealed class Base64Decoder : MessageToMessageDecoder<IByteBuffer>
     {
         readonly Base64Dialect dialect;
 

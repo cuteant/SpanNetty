@@ -18,6 +18,12 @@ namespace DotNetty.Codecs.Http
             this.trailingHeaders = trailingHeaders;
         }
 
+        internal ComposedLastHttpContent(HttpHeaders trailingHeaders, DecoderResult result)
+            : this(trailingHeaders)
+        {
+            this.result = result;
+        }
+
         public HttpHeaders TrailingHeaders => this.trailingHeaders;
 
         public IByteBufferHolder Copy()

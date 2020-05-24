@@ -22,5 +22,8 @@
         public const uint NIndexNotFound = unchecked((uint)IndexNotFound);
 
         public const uint TooBigOrNegative = int.MaxValue;
+
+        public const uint uStackallocThreshold = 256u;
+        public const int StackallocThreshold = 256;
     }
 }

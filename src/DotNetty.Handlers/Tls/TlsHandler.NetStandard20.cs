@@ -41,7 +41,7 @@ namespace DotNetty.Handlers.Tls
                     // there is no pending read operation - keep for future
                     return;
                 }
-                _sslOwnedBuffer = default(ArraySegment<byte>);
+                _sslOwnedBuffer = default;
 
                 _readByteCount = this.ReadFromInput(sslBuffer.Array, sslBuffer.Offset, sslBuffer.Count);
                 // hack: this tricks SslStream's continuation to run synchronously instead of dispatching to TP. Remove once Begin/EndRead are available. 

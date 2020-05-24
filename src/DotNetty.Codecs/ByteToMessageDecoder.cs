@@ -10,13 +10,65 @@ namespace DotNetty.Codecs
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
 
+    /// <summary>
+    /// <see cref="ChannelHandlerAdapter"/> which decodes bytes in a stream-like fashion from one <see cref="IByteBuffer"/> to an
+    /// other Message type.
+    ///
+    /// For example here is an implementation which reads all readable bytes from
+    /// the input <see cref="IByteBuffer"/> and create a new {<see cref="IByteBuffer"/>.
+    ///
+    /// <![CDATA[
+    ///     public class SquareDecoder : ByteToMessageDecoder
+    ///     {
+    ///         public override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
+    ///         {
+    ///             output.add(input.ReadBytes(input.ReadableBytes));
+    ///         }
+    ///     }
+    /// ]]>
+    ///
+    /// <c>Frame detection</c>
+    /// <para>
+    /// Generally frame detection should be handled earlier in the pipeline by adding a
+    /// <see cref="DelimiterBasedFrameDecoder"/>, <see cref="FixedLengthFrameDecoder"/>, <see cref="LengthFieldBasedFrameDecoder"/>,
+    /// or <see cref="LineBasedFrameDecoder"/>.
+    /// </para>
+    /// <para>
+    /// If a custom frame decoder is required, then one needs to be careful when implementing
+    /// one with <see cref="ByteToMessageDecoder"/>. Ensure there are enough bytes in the buffer for a
+    /// complete frame by checking <see cref="IByteBuffer.ReadableBytes"/>. If there are not enough bytes
+    /// for a complete frame, return without modifying the reader index to allow more bytes to arrive.
+    /// </para>
+    /// <para>
+    /// To check for complete frames without modifying the reader index, use methods like <see cref="IByteBuffer.GetInt(int)"/>.
+    /// One <c>MUST</c> use the reader index when using methods like <see cref="IByteBuffer.GetInt(int)"/>.
+    /// For example calling <tt>input.GetInt(0)</tt> is assuming the frame starts at the beginning of the buffer, which
+    /// is not always the case. Use <tt>input.GetInt(input.ReaderIndex)</tt> instead.
+    /// <c>Pitfalls</c>
+    /// </para>
+    /// <para>
+    /// Be aware that sub-classes of <see cref="ByteToMessageDecoder"/> <c>MUST NOT</c>
+    /// annotated with <see cref="ChannelHandlerAdapter.IsSharable"/>.
+    /// </para>
+    /// Some methods such as <see cref="IByteBuffer.ReadBytes(int)"/> will cause a memory leak if the returned buffer
+    /// is not released or added to the <tt>output</tt> <see cref="List{Object}"/>. Use derived buffers like <see cref="IByteBuffer.ReadSlice(int)"/>
+    /// to avoid leaking memory.
+    /// </summary>
     public abstract partial class ByteToMessageDecoder : ChannelHandlerAdapter
     {
+        /// <summary>
+        /// Cumulate the given <see cref="IByteBuffer"/>s and return the <see cref="IByteBuffer"/> that holds the cumulated bytes.
+        /// The implementation is responsible to correctly handle the life-cycle of the given <see cref="IByteBuffer"/>s and so
+        /// call <see cref="IReferenceCounted.Release()"/> if a <see cref="IByteBuffer"/> is fully consumed.
+        /// </summary>
+        /// <param name="alloc"></param>
+        /// <param name="cumulation"></param>
+        /// <param name="input"></param>
+        /// <returns></returns>
         public delegate IByteBuffer CumulationFunc(IByteBufferAllocator alloc, IByteBuffer cumulation, IByteBuffer input);
 
         /// <summary>
-        ///     Cumulates instances of <see cref="IByteBuffer" /> by merging them into one <see cref="IByteBuffer" />, using memory
-        ///     copies.
+        /// Cumulates instances of <see cref="IByteBuffer" /> by merging them into one <see cref="IByteBuffer" />, using memory copies.
         /// </summary>
         public static readonly CumulationFunc MergeCumulator = MergeCumulatorInternal;
         private static IByteBuffer MergeCumulatorInternal(IByteBufferAllocator alloc, IByteBuffer cumulation, IByteBuffer input)
@@ -52,13 +104,12 @@ namespace DotNetty.Codecs
         }
 
         /// <summary>
-        ///     Cumulate instances of <see cref="IByteBuffer" /> by add them to a <see cref="CompositeByteBuffer" /> and therefore
-        ///     avoiding memory copy when possible.
+        /// Cumulate instances of <see cref="IByteBuffer" /> by add them to a <see cref="CompositeByteBuffer" /> and therefore
+        /// avoiding memory copy when possible.
         /// </summary>
         /// <remarks>
-        ///     Be aware that <see cref="CompositeByteBuffer" /> use a more complex indexing implementation so depending on your
-        ///     use-case
-        ///     and the decoder implementation this may be slower then just use the <see cref="MergeCumulator" />.
+        /// Be aware that <see cref="CompositeByteBuffer" /> use a more complex indexing implementation so depending on your use-case
+        /// and the decoder implementation this may be slower then just use the <see cref="MergeCumulator" />.
         /// </remarks>
         public static readonly CumulationFunc CompositionCumulation = CompositionCumulationInternal;
         private static IByteBuffer CompositionCumulationInternal(IByteBufferAllocator alloc, IByteBuffer cumulation, IByteBuffer input)
@@ -107,73 +158,88 @@ namespace DotNetty.Codecs
         const byte STATE_CALLING_CHILD_DECODE = 1;
         const byte STATE_HANDLER_REMOVED_PENDING = 2;
 
-        IByteBuffer cumulation;
-        CumulationFunc cumulator = MergeCumulator;
-        bool decodeWasNull;
-        bool first;
-        /**
-         * A bitmask where the bits are defined as
-         * <ul>
-         *     <li>{@link #STATE_INIT}</li>
-         *     <li>{@link #STATE_CALLING_CHILD_DECODE}</li>
-         *     <li>{@link #STATE_HANDLER_REMOVED_PENDING}</li>
-         * </ul>
-         */
-        byte decodeState = STATE_INIT;
-        int discardAfterReads = 16;
-        int numReads;
+        private IByteBuffer _cumulation;
+        private CumulationFunc _cumulator = MergeCumulator;
+        private bool _first;
+
+        /// <summary>
+        /// This flag is used to determine if we need to call <see cref="IChannelHandlerContext.Read"/> to consume more data
+        /// when <see cref="IChannelConfiguration.AutoRead"/> is <c>false</c>.
+        /// </summary>
+        private bool _firedChannelRead;
+
+        /// <summary>
+        /// A bitmask where the bits are defined as
+        /// <see cref="STATE_INIT"/>
+        /// <see cref="STATE_CALLING_CHILD_DECODE"/>
+        /// <see cref="STATE_HANDLER_REMOVED_PENDING"/>
+        /// </summary>
+        private byte _decodeState = STATE_INIT;
+        private int _discardAfterReads = 16;
+        private int _numReads;
 
         protected ByteToMessageDecoder()
         {
             // ReSharper disable once DoNotCallOverridableMethodsInConstructor -- used for safety check only
-            if (this.IsSharable)
+            if (IsSharable)
             {
                 CThrowHelper.ThrowInvalidOperationException_ByteToMessageDecoder();
             }
         }
 
         /// <summary>
-        ///     Determines whether only one message should be decoded per <see cref="ChannelRead" /> call.
-        ///     Default is <code>false</code> as this has performance impacts.
+        /// Determines whether only one message should be decoded per <see cref="ChannelRead" /> call.
+        /// This may be useful if you need to do some protocol upgrade and want to make sure nothing is mixed up.
+        /// 
+        /// Default is <c>false</c> as this has performance impacts.
         /// </summary>
-        /// <remarks>Is particularly useful in support of protocol upgrade scenarios.</remarks>
         public bool SingleDecode { get; set; }
 
+        /// <summary>
+        /// Set the <see cref="CumulationFunc"/> to use for cumulate the received <see cref="IByteBuffer"/>s.
+        /// </summary>
+        /// <param name="cumulationFunc"></param>
         public void SetCumulator(CumulationFunc cumulationFunc)
         {
             if (cumulationFunc is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.cumulationFunc); }
 
-            this.cumulator = cumulationFunc;
-        }
-
-        /**
-         * Set the number of reads after which {@link ByteBuf#discardSomeReadBytes()} are called and so free up memory.
-         * The default is {@code 16}.
-         */
-        public void SetDiscardAfterReads(int discardAfterReads)
-        {
-            if (discardAfterReads <= 0)
-            {
-                CThrowHelper.ThrowArgumentException_DiscardAfterReads();
-            }
-            this.discardAfterReads = discardAfterReads;
+            _cumulator = cumulationFunc;
         }
 
         /// <summary>
-        ///     Returns the actual number of readable bytes in the internal cumulative
-        ///     buffer of this decoder. You usually do not need to rely on this value
-        ///     to write a decoder. Use it only when you must use it at your own risk.
-        ///     This method is a shortcut to <see cref="IByteBuffer.ReadableBytes" /> of <see cref="InternalBuffer" />.
+        /// Set the number of reads after which <see cref="IByteBuffer.DiscardSomeReadBytes"/> are called and so free up memory.
+        /// The default is <code>16</code>.
         /// </summary>
-        protected int ActualReadableBytes => this.InternalBuffer.ReadableBytes;
+        /// <param name="discardAfterReads"></param>
+        public void SetDiscardAfterReads(int discardAfterReads)
+        {
+            if ((uint)(discardAfterReads - 1) > SharedConstants.TooBigOrNegative) // <= 0
+            {
+                CThrowHelper.ThrowArgumentException_DiscardAfterReads();
+            }
+            _discardAfterReads = discardAfterReads;
+        }
 
+        /// <summary>
+        /// Returns the actual number of readable bytes in the internal cumulative
+        /// buffer of this decoder. You usually do not need to rely on this value
+        /// to write a decoder. Use it only when you must use it at your own risk.
+        /// This method is a shortcut to <see cref="IByteBuffer.ReadableBytes" /> of <see cref="InternalBuffer" />.
+        /// </summary>
+        protected int ActualReadableBytes => InternalBuffer.ReadableBytes;
+
+        /// <summary>
+        /// Returns the internal cumulative buffer of this decoder. You usually
+        /// do not need to access the internal buffer directly to write a decoder.
+        /// Use it only when you must use it at your own risk.
+        /// </summary>
         protected IByteBuffer InternalBuffer
         {
             get
             {
-                if (this.cumulation is object)
+                if (_cumulation is object)
                 {
-                    return this.cumulation;
+                    return _cumulation;
                 }
                 else
                 {
@@ -182,41 +248,46 @@ namespace DotNetty.Codecs
             }
         }
 
+        /// <inheritdoc />
         public override void HandlerRemoved(IChannelHandlerContext context)
         {
-            if (this.decodeState == STATE_CALLING_CHILD_DECODE)
+            if (_decodeState == STATE_CALLING_CHILD_DECODE)
             {
-                this.decodeState = STATE_HANDLER_REMOVED_PENDING;
+                _decodeState = STATE_HANDLER_REMOVED_PENDING;
                 return;
             }
-            IByteBuffer buf = this.cumulation;
+            IByteBuffer buf = _cumulation;
             if (buf is object)
             {
                 // Directly set this to null so we are sure we not access it in any other method here anymore.
-                this.cumulation = null;
-
+                _cumulation = null;
+                _numReads = 0;
                 int readable = buf.ReadableBytes;
                 if (readable > 0)
                 {
                     IByteBuffer bytes = buf.ReadBytes(readable);
                     buf.Release();
                     context.FireChannelRead(bytes);
+                    context.FireChannelReadComplete();
                 }
                 else
                 {
                     buf.Release();
                 }
-
-                this.numReads = 0;
-                context.FireChannelReadComplete();
             }
-            this.HandlerRemovedInternal(context);
+            HandlerRemovedInternal(context);
         }
 
+        /// <summary>
+        /// Gets called after the <see cref="ByteToMessageDecoder"/> was removed from the actual context and it doesn't handle
+        /// events anymore.
+        /// </summary>
+        /// <param name="context"></param>
         protected virtual void HandlerRemovedInternal(IChannelHandlerContext context)
         {
         }
 
+        /// <inheritdoc />
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
             if (message is IByteBuffer data)
@@ -224,16 +295,16 @@ namespace DotNetty.Codecs
                 ThreadLocalObjectList output = ThreadLocalObjectList.NewInstance();
                 try
                 {
-                    this.first = this.cumulation is null;
-                    if (this.first)
+                    _first = _cumulation is null;
+                    if (_first)
                     {
-                        this.cumulation = data;
+                        _cumulation = data;
                     }
                     else
                     {
-                        this.cumulation = this.cumulator(context.Allocator, this.cumulation, data);
+                        _cumulation = _cumulator(context.Allocator, _cumulation, data);
                     }
-                    this.CallDecode(context, this.cumulation, output);
+                    CallDecode(context, _cumulation, output);
                 }
                 catch (DecoderException)
                 {
@@ -245,22 +316,22 @@ namespace DotNetty.Codecs
                 }
                 finally
                 {
-                    if (this.cumulation is object && !this.cumulation.IsReadable())
+                    if (_cumulation is object && !_cumulation.IsReadable())
                     {
-                        this.numReads = 0;
-                        this.cumulation.Release();
-                        this.cumulation = null;
+                        _numReads = 0;
+                        _cumulation.Release();
+                        _cumulation = null;
                     }
-                    else if (++this.numReads >= this.discardAfterReads)
+                    else if (++_numReads >= _discardAfterReads)
                     {
                         // We did enough reads already try to discard some bytes so we not risk to see a OOME.
                         // See https://github.com/netty/netty/issues/4275
-                        this.numReads = 0;
-                        this.DiscardSomeReadBytes();
+                        _numReads = 0;
+                        DiscardSomeReadBytes();
                     }
 
                     int size = output.Count;
-                    this.decodeWasNull = 0u >= (uint)size;
+                    _firedChannelRead |= (uint)size > 0u;
 
                     for (int i = 0; i < size; i++)
                     {
@@ -275,9 +346,12 @@ namespace DotNetty.Codecs
             }
         }
 
-        /**
-         * Get {@code numElements} out of the {@link CodecOutputList} and forward these through the pipeline.
-         */
+        /// <summary>
+        /// Get <paramref name="numElements"/> out of the <paramref name="output"/> and forward these through the pipeline.
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="output"></param>
+        /// <param name="numElements"></param>
         protected static void FireChannelRead(IChannelHandlerContext ctx, List<object> output, int numElements)
         {
             for (int i = 0; i < numElements; i++)
@@ -286,24 +360,22 @@ namespace DotNetty.Codecs
             }
         }
 
+        /// <inheritdoc />
         public override void ChannelReadComplete(IChannelHandlerContext context)
         {
-            this.numReads = 0;
-            this.DiscardSomeReadBytes();
-            if (this.decodeWasNull)
+            _numReads = 0;
+            DiscardSomeReadBytes();
+            if (!_firedChannelRead && !context.Channel.Configuration.AutoRead)
             {
-                this.decodeWasNull = false;
-                if (!context.Channel.Configuration.AutoRead)
-                {
-                    context.Read();
-                }
+                context.Read();
             }
+            _firedChannelRead = false;
             context.FireChannelReadComplete();
         }
 
         protected void DiscardSomeReadBytes()
         {
-            if (this.cumulation is object && !this.first && this.cumulation.ReferenceCount == 1)
+            if (_cumulation is object && !_first && _cumulation.ReferenceCount == 1)
             {
                 // discard some bytes if possible to make more room input the
                 // buffer but only if the refCnt == 1  as otherwise the user may have
@@ -312,15 +384,17 @@ namespace DotNetty.Codecs
                 // See:
                 // - https://github.com/netty/netty/issues/2327
                 // - https://github.com/netty/netty/issues/1764
-                this.cumulation.DiscardSomeReadBytes();
+                _cumulation.DiscardSomeReadBytes();
             }
         }
 
+        /// <inheritdoc />
         public override void ChannelInactive(IChannelHandlerContext ctx)
         {
-            this.ChannelInputClosed(ctx, true);
+            ChannelInputClosed(ctx, true);
         }
 
+        /// <inheritdoc />
         public override void UserEventTriggered(IChannelHandlerContext ctx, object evt)
         {
             if(evt is ChannelInputShutdownEvent)
@@ -328,7 +402,7 @@ namespace DotNetty.Codecs
                 // The decodeLast method is invoked when a channelInactive event is encountered.
                 // This method is responsible for ending requests in some situations and must be called
                 // when the input has been shutdown.
-                this.ChannelInputClosed(ctx, false);
+                ChannelInputClosed(ctx, false);
             }
             ctx.FireUserEventTriggered(evt);
         }
@@ -338,16 +412,7 @@ namespace DotNetty.Codecs
             ThreadLocalObjectList output = ThreadLocalObjectList.NewInstance();
             try
             {
-                //this.ChannelInputClosed(ctx, output);
-                if (this.cumulation is object)
-                {
-                    this.CallDecode(ctx, this.cumulation, output);
-                    this.DecodeLast(ctx, this.cumulation, output);
-                }
-                else
-                {
-                    this.DecodeLast(ctx, Unpooled.Empty, output);
-                }
+                ChannelInputClosed(ctx, output);
             }
             catch (DecoderException e)
             {
@@ -361,10 +426,10 @@ namespace DotNetty.Codecs
             {
                 try
                 {
-                    if (this.cumulation is object)
+                    if (_cumulation is object)
                     {
-                        this.cumulation.Release();
-                        this.cumulation = null;
+                        _cumulation.Release();
+                        _cumulation = null;
                     }
                     int size = output.Count;
                     for (int i = 0; i < size; i++)
@@ -389,23 +454,32 @@ namespace DotNetty.Codecs
             }
         }
 
-        ///**
-        // * Called when the input of the channel was closed which may be because it changed to inactive or because of
-        // * {@link ChannelInputShutdownEvent}.
-        // */
-        //protected virtual void ChannelInputClosed(IChannelHandlerContext ctx, List<object> output)
-        //{
-        //    if (this.cumulation is object)
-        //    {
-        //        this.CallDecode(ctx, this.cumulation, output);
-        //        this.DecodeLast(ctx, this.cumulation, output);
-        //    }
-        //    else
-        //    {
-        //        this.DecodeLast(ctx, Unpooled.Empty, output);
-        //    }
-        //}
+        /// <summary>
+        /// Called when the input of the channel was closed which may be because it changed to inactive or because of
+        /// <see cref="ChannelInputShutdownEvent"/>
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="output"></param>
+        protected virtual void ChannelInputClosed(IChannelHandlerContext ctx, List<object> output)
+        {
+            if (_cumulation is object)
+            {
+                CallDecode(ctx, _cumulation, output);
+                DecodeLast(ctx, _cumulation, output);
+            }
+            else
+            {
+                DecodeLast(ctx, Unpooled.Empty, output);
+            }
+        }
 
+        /// <summary>
+        /// Called once data should be decoded from the given <see cref="IByteBuffer"/>. This method will call
+        /// <see cref="Decode(IChannelHandlerContext, IByteBuffer, List{object})"/> as long as decoding should take place.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="input"></param>
+        /// <param name="output"></param>
         protected virtual void CallDecode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
             if (context is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.context); }
@@ -438,7 +512,7 @@ namespace DotNetty.Codecs
                     }
 
                     int oldInputLength = input.ReadableBytes;
-                    this.DecodeRemovalReentryProtection(context, input, output);
+                    DecodeRemovalReentryProtection(context, input, output);
 
                     // Check if this handler was removed before continuing the loop.
                     // If it was removed, it is not safe to continue to operate on the buffer.
@@ -465,10 +539,10 @@ namespace DotNetty.Codecs
 
                     if (oldInputLength == input.ReadableBytes)
                     {
-                        CThrowHelper.ThrowDecoderException_ByteToMessageDecoder(this.GetType());
+                        CThrowHelper.ThrowDecoderException_ByteToMessageDecoder(GetType());
                     }
 
-                    if (this.SingleDecode)
+                    if (SingleDecode)
                     {
                         break;
                     }
@@ -484,43 +558,59 @@ namespace DotNetty.Codecs
             }
         }
 
+        /// <summary>
+        /// Decode the from one <see cref="IByteBuffer"/> to an other. This method will be called till either the input
+        /// <see cref="IByteBuffer"/> has nothing to read when return from this method or till nothing was read from the input
+        /// <see cref="IByteBuffer"/>.
+        /// </summary>
+        /// <param name="context">the <see cref="IChannelHandlerContext"/> which this <see cref="ByteToMessageDecoder"/> belongs to</param>
+        /// <param name="input">the <see cref="IByteBuffer"/> from which to read data</param>
+        /// <param name="output">the <see cref="List{Object}"/> to which decoded messages should be added</param>
         protected internal abstract void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output);
 
-        /**
-         * Decode the from one {@link ByteBuf} to an other. This method will be called till either the input
-         * {@link ByteBuf} has nothing to read when return from this method or till nothing was read from the input
-         * {@link ByteBuf}.
-         *
-         * @param ctx           the {@link ChannelHandlerContext} which this {@link ByteToMessageDecoder} belongs to
-         * @param in            the {@link ByteBuf} from which to read data
-         * @param out           the {@link List} to which decoded messages should be added
-         * @throws Exception    is thrown if an error occurs
-         */
+        /// <summary>
+        /// Decode the from one <see cref="IByteBuffer"/> to an other. This method will be called till either the input
+        /// <see cref="IByteBuffer"/> has nothing to read when return from this method or till nothing was read from the input
+        /// <see cref="IByteBuffer"/>.
+        /// </summary>
+        /// <param name="ctx">the <see cref="IChannelHandlerContext"/> which this <see cref="ByteToMessageDecoder"/> belongs to</param>
+        /// <param name="input">the <see cref="IByteBuffer"/> from which to read data</param>
+        /// <param name="output">the <see cref="List{Object}"/> to which decoded messages should be added</param>
         protected void DecodeRemovalReentryProtection(IChannelHandlerContext ctx, IByteBuffer input, List<object> output)
         {
-            this.decodeState = STATE_CALLING_CHILD_DECODE;
+            _decodeState = STATE_CALLING_CHILD_DECODE;
             try
             {
-                this.Decode(ctx, input, output);
+                Decode(ctx, input, output);
             }
             finally
             {
-                var removePending = this.decodeState == STATE_HANDLER_REMOVED_PENDING;
-                this.decodeState = STATE_INIT;
+                var removePending = _decodeState == STATE_HANDLER_REMOVED_PENDING;
+                _decodeState = STATE_INIT;
                 if (removePending)
                 {
-                    this.HandlerRemoved(ctx);
+                    HandlerRemoved(ctx);
                 }
             }
         }
 
+        /// <summary>
+        /// Is called one last time when the <see cref="IChannelHandlerContext"/> goes in-active. Which means the
+        /// <see cref="ChannelInactive(IChannelHandlerContext)"/> was triggered.
+        /// 
+        /// By default this will just call <see cref="Decode(IChannelHandlerContext, IByteBuffer, List{object})"/> but sub-classes may
+        /// override this for some special cleanup operation.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="input"></param>
+        /// <param name="output"></param>
         protected virtual void DecodeLast(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
             if (input.IsReadable())
             {
                 // Only call decode() if there is something left in the buffer to decode.
                 // See https://github.com/netty/netty/issues/4386
-                this.Decode(context, input, output);
+                Decode(context, input, output);
             }
         }
 

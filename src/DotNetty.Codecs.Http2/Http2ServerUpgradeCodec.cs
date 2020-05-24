@@ -86,7 +86,7 @@ namespace DotNetty.Codecs.Http2
             this.frameReader = new DefaultHttp2FrameReader();
         }
 
-        public virtual ICollection<AsciiString> RequiredUpgradeHeaders => REQUIRED_UPGRADE_HEADERS;
+        public virtual IReadOnlyList<AsciiString> RequiredUpgradeHeaders => REQUIRED_UPGRADE_HEADERS;
 
         public virtual bool PrepareUpgradeResponse(IChannelHandlerContext ctx, IFullHttpRequest upgradeRequest, HttpHeaders headers)
         {

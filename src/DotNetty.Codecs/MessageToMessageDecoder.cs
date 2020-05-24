@@ -10,12 +10,13 @@ namespace DotNetty.Codecs
     using DotNetty.Transport.Channels;
 
     /// <summary>
-    ///     Message to message decoder.
+    /// <see cref="ChannelHandlerAdapter"/> which decodes from one message to an other message.
     /// </summary>
     public abstract class MessageToMessageDecoder<T> : ChannelHandlerAdapter
     {
         public virtual bool AcceptInboundMessage(object msg) => msg is T;
 
+        /// <inheritdoc />
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
             ThreadLocalObjectList output = ThreadLocalObjectList.NewInstance();
@@ -59,12 +60,12 @@ namespace DotNetty.Codecs
         }
 
         /// <summary>
-        ///     Decode from one message to an other. This method will be called for each written message that can be handled
-        ///     by this decoder.
+        /// Decode from one message to an other. This method will be called for each written message that can be handled
+        /// by this decoder.
         /// </summary>
-        /// <param name="context">the {@link ChannelHandlerContext} which this {@link MessageToMessageDecoder} belongs to</param>
+        /// <param name="context">the <see cref="IChannelHandlerContext"/> which this <see cref="MessageToMessageDecoder{T}"/> belongs to</param>
         /// <param name="message">the message to decode to an other one</param>
-        /// <param name="output">the {@link List} to which decoded messages should be added</param>
+        /// <param name="output">the <see cref="List{Object}"/> to which decoded messages should be added</param>
         protected internal abstract void Decode(IChannelHandlerContext context, T message, List<object> output);
     }
 }

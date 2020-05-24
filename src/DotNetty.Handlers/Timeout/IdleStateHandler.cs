@@ -120,6 +120,7 @@ namespace DotNetty.Handlers.Timeout
         TimeSpan lastChangeCheckTimeStamp;
         int lastMessageHashCode;
         long lastPendingWriteBytes;
+        long lastFlushProgress;
 
         static readonly Action<object, object> ReadTimeoutAction = WrappingHandleReadTimeout; // WrapperTimeoutHandler(HandleReadTimeout);
         static readonly Action<object, object> WriteTimeoutAction = WrappingHandleWriteTimeout; // WrapperTimeoutHandler(HandleWriteTimeout);
@@ -166,7 +167,7 @@ namespace DotNetty.Handlers.Timeout
         /// </summary>
         /// <param name="observeOutput">
         ///     whether or not the consumption of <code>bytes</code> should be taken into
-        ///     consideration when assessing write idleness. The default is <code>false</code>.
+        ///     consideration when assessing write idleness. The default is <c>false</c>.
         /// </param>
         /// <param name="readerIdleTime">
         ///     an <see cref="IdleStateEvent"/> whose state is <see cref="IdleState.ReaderIdle"/>
@@ -287,7 +288,7 @@ namespace DotNetty.Handlers.Timeout
 
         public override void ChannelReadComplete(IChannelHandlerContext context)
         {
-            if ((this.readerIdleTime.Ticks > 0 || this.allIdleTime.Ticks > 0) && reading)
+            if ((this.readerIdleTime.Ticks > 0 || this.allIdleTime.Ticks > 0) && this.reading)
             {
                 this.lastReadTime = this.Ticks();
                 this.reading = false;
@@ -431,14 +432,15 @@ namespace DotNetty.Handlers.Timeout
 
                 if (buf is object)
                 {
-                    lastMessageHashCode = RuntimeHelpers.GetHashCode(buf.Current);
-                    lastPendingWriteBytes = buf.TotalPendingWriteBytes();
+                    this.lastMessageHashCode = RuntimeHelpers.GetHashCode(buf.Current);
+                    this.lastPendingWriteBytes = buf.TotalPendingWriteBytes();
+                    this.lastFlushProgress = buf.CurrentProgress();
                 }
             }
         }
 
         /// <summary>
-        /// Returns <code>true</code> if and only if the <see cref="IdleStateHandler.IdleStateHandler(bool, TimeSpan, TimeSpan, TimeSpan)"/>
+        /// Returns <c>true</c> if and only if the <see cref="IdleStateHandler.IdleStateHandler(bool, TimeSpan, TimeSpan, TimeSpan)"/>
         /// was constructed
         /// with <code>observeOutput</code> enabled and there has been an observed change in the
         /// <see cref="ChannelOutboundBuffer"/> between two consecutive calls of this method.
@@ -457,9 +459,9 @@ namespace DotNetty.Handlers.Timeout
                 // that there's change happening on byte level. If the user doesn't observe channel
                 // writability events then they'll eventually OOME and there's clearly a different
                 // problem and idleness is least of their concerns.
-                if (lastChangeCheckTimeStamp != lastWriteTime)
+                if (this.lastChangeCheckTimeStamp != this.lastWriteTime)
                 {
-                    lastChangeCheckTimeStamp = lastWriteTime;
+                    this.lastChangeCheckTimeStamp = this.lastWriteTime;
 
                     // But this applies only if it's the non-first call.
                     if (!first)
@@ -475,10 +477,21 @@ namespace DotNetty.Handlers.Timeout
                     int messageHashCode = RuntimeHelpers.GetHashCode(buf.Current);
                     long pendingWriteBytes = buf.TotalPendingWriteBytes();
 
-                    if (messageHashCode != lastMessageHashCode || pendingWriteBytes != lastPendingWriteBytes)
+                    if (messageHashCode != this.lastMessageHashCode || pendingWriteBytes != this.lastPendingWriteBytes)
                     {
-                        lastMessageHashCode = messageHashCode;
-                        lastPendingWriteBytes = pendingWriteBytes;
+                        this.lastMessageHashCode = messageHashCode;
+                        this.lastPendingWriteBytes = pendingWriteBytes;
+
+                        if (!first)
+                        {
+                            return true;
+                        }
+                    }
+
+                    long flushProgress = buf.CurrentProgress();
+                    if (flushProgress != this.lastFlushProgress)
+                    {
+                        this.lastFlushProgress = flushProgress;
 
                         if (!first)
                         {

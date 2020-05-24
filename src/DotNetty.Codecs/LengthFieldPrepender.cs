@@ -34,7 +34,7 @@ namespace DotNetty.Codecs
     ///         +--------+----------------+
     ///     </pre>
     /// </summary>
-    public class LengthFieldPrepender : MessageToMessageEncoder2<IByteBuffer>
+    public class LengthFieldPrepender : MessageToMessageEncoder<IByteBuffer>
     {
         readonly ByteOrder byteOrder;
         readonly int lengthFieldLength;

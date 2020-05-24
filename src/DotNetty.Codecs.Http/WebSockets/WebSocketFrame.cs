@@ -7,8 +7,13 @@ namespace DotNetty.Codecs.Http.WebSockets
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
 
-    public abstract partial class WebSocketFrame : DefaultByteBufferHolder
+    /// <summary>
+    /// Base class for web socket frames.
+    /// </summary>
+    public abstract class WebSocketFrame : DefaultByteBufferHolder
     {
+        internal readonly Opcode Opcode;
+
         // Flag to indicate if this frame is the final fragment in a message. The first fragment (frame) may also be the
         // final fragment.
         readonly bool finalFragment;
@@ -28,6 +33,14 @@ namespace DotNetty.Codecs.Http.WebSockets
             this.rsv = rsv;
         }
 
+        internal WebSocketFrame(bool finalFragment, int rsv, Opcode opcode, IByteBuffer binaryData)
+            : base(binaryData)
+        {
+            this.finalFragment = finalFragment;
+            this.rsv = rsv;
+            this.Opcode = opcode;
+        }
+
         /// <summary>
         /// Flag to indicate if this frame is the final fragment in a message. The first fragment (frame)
         /// may also be the final fragment.
@@ -39,6 +52,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// </summary>
         public int Rsv => this.rsv;
 
+        /// <inheritdoc />
         public override string ToString() => StringUtil.SimpleClassName(this) + "(data: " + this.ContentToString() + ')';
     }
 }

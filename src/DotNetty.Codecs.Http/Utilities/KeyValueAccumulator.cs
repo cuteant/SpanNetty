@@ -36,7 +36,7 @@ namespace DotNetty.Codecs.Http.Utilities
                 {
                     // Third value for this key
                     // Add zero count entry and move to data to expanding list dictionary
-                    _accumulator[key] = default(StringValues);
+                    _accumulator[key] = default;
 
                     if (_expandingAccumulator is null)
                     {

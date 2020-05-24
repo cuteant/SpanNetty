@@ -16,118 +16,146 @@ namespace DotNetty.Codecs.Http
     /// <summary>The convention for this enum is using the argument name as the enum name</summary>
     internal enum ExceptionArgument
     {
-        array,
-        channel,
-        assembly,
-        buffer,
-        destination,
-        key,
-        obj,
         s,
-        str,
-        source,
-        type,
-        types,
-        value,
-        values,
-        valueFactory,
-        name,
-        item,
-        options,
-        list,
+
         ts,
-        other,
-        pool,
-        inner,
-        policy,
-        offset,
-        count,
-        path,
-        typeInfo,
-        method,
-        qualifiedTypeName,
-        fullName,
-        feature,
-        manager,
-        directories,
-        dirEnumArgs,
-        asm,
-        includedAssemblies,
-        func,
-        defaultFn,
-        returnType,
-        propertyInfo,
-        parameterTypes,
-        fieldInfo,
-        memberInfo,
-        attributeType,
         pi,
         fi,
-        invoker,
-        instanceType,
-        target,
-        member,
-        typeName,
-        predicate,
-        assemblyPredicate,
-        collection,
-        capacity,
+
+        asm,
+        func,
+        key,
+        obj,
+        str,
+        uri,
+
+        data,
+        text,
+        name,
+        item,
+        type,
+        list,
+        pool,
+        path,
+
+        input,
+        query,
+        array,
+        inner,
+        other,
+        count,
+        types,
+        value,
         match,
         index,
-        length,
-        startIndex,
-        newSize,
-        expression,
-        contentTypeValue,
-        text,
-        protocolName,
-        preferredClientWindowSize,
-        requestedServerWindowSize,
-        reasonPhrase,
-        majorVersion,
-        minorVersion,
-        HttpPostMultipartRequestDecoder,
-        HttpPostStandardRequestDecoder,
-        ReadDelimiter,
-        ReadDelimiterStandard,
-        configList,
-        uri,
-        queryString,
+
         header,
         cookie,
+        output,
+        status,
+        target,
+        member,
+        policy,
+        offset,
+        values,
+        buffer,
+        source,
+        method,
+        length,
+
+        feature,
+        manager,
+        options,
+        channel,
+        newSize,
+        invoker,
+        content,
+        version,
+        headers,
         cookies,
-        inputStream,
-        filename,
-        contentType,
         request,
         charset,
         factory,
-        encoding,
-        fileStream,
-        data,
-        stringValue,
+
         fileName,
-        extensionHandshakers,
-        parameters,
-        input,
-        trailingHeader,
-        content,
-        trailingHeaders,
-        version,
-        headers,
-        status,
-        upgradeCodec,
-        sourceCodec,
-        contentEncoder,
-        targetContentEncoding,
-        upgradeCodecFactory,
+        filename,
+        encoding,
+        typeName,
+        assembly,
+        fullName,
+        typeInfo,
+        capacity,
+
         maxParams,
-        maxInitialLineLength,
-        maxHeaderSize,
+        fieldInfo,
+        predicate,
+        defaultFn,
+
+        memberInfo,
+        collection,
+        expression,
+        startIndex,
+        returnType,
+        parameters,
+        fileStream,
+        configList,
+
+        stringValue,
+        queryString,
+        inputStream,
+        contentType,
+        sourceCodec,
+        directories,
+        dirEnumArgs,
+        destination,
+
+        protocolName,
+        reasonPhrase,
+        majorVersion,
+        minorVersion,
+        upgradeCodec,
         maxChunkSize,
+        propertyInfo,
+        valueFactory,
+        instanceType,
+
+        ReadDelimiter,
+        decoderConfig,
+        maxHeaderSize,
+        attributeType,
+
+        contentEncoder,
+        trailingHeader,
+        parameterTypes,
+
+        trailingHeaders,
+
+        contentTypeValue,
+
+        qualifiedTypeName,
+        assemblyPredicate,
+        includedAssemblies,
+
+        upgradeCodecFactory,
+
+        maxInitialLineLength,
+        extensionHandshakers,
         contentSizeThreshold,
-        output,
-        query,
+
+        targetContentEncoding,
+        ReadDelimiterStandard,
+
+        extensionDecoderFilter,
+        extensionEncoderFilter,
+        handshakeTimeoutMillis,
+
+        extensionFilterProvider,
+
+        preferredClientWindowSize,
+        requestedServerWindowSize,
+
+        HttpPostMultipartRequestDecoder,
+        HttpPostStandardRequestDecoder,
     }
 
     #endregion
@@ -175,9 +203,9 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_Positive(int value, ExceptionArgument argument)
         {
             throw GetException();
-            ArgumentException GetException()
+            ArgumentOutOfRangeException GetException()
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+                return new ArgumentOutOfRangeException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
             }
         }
 
@@ -185,9 +213,9 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_Positive(long value, ExceptionArgument argument)
         {
             throw GetException();
-            ArgumentException GetException()
+            ArgumentOutOfRangeException GetException()
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+                return new ArgumentOutOfRangeException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
             }
         }
 
@@ -195,9 +223,9 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_PositiveOrZero(int value, ExceptionArgument argument)
         {
             throw GetException();
-            ArgumentException GetException()
+            ArgumentOutOfRangeException GetException()
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+                return new ArgumentOutOfRangeException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
             }
         }
 
@@ -205,9 +233,9 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_PositiveOrZero(long value, ExceptionArgument argument)
         {
             throw GetException();
-            ArgumentException GetException()
+            ArgumentOutOfRangeException GetException()
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+                return new ArgumentOutOfRangeException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
             }
         }
 
@@ -215,9 +243,9 @@ namespace DotNetty.Codecs.Http
         internal static void ThrowArgumentException_Positive(ExceptionArgument argument)
         {
             throw GetArgumentException();
-            ArgumentException GetArgumentException()
+            ArgumentOutOfRangeException GetArgumentException()
             {
-                return new ArgumentException($"{GetArgumentName(argument)} (expected: > 0)");
+                return new ArgumentOutOfRangeException($"{GetArgumentName(argument)} (expected: > 0)");
             }
         }
 
@@ -228,16 +256,6 @@ namespace DotNetty.Codecs.Http
             ArgumentException GetArgumentException()
             {
                 return new ArgumentException("empty " + GetArgumentName(argument));
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_NegativeVersion(ExceptionArgument argument)
-        {
-            throw GetArgumentException();
-            ArgumentException GetArgumentException()
-            {
-                return new ArgumentException("negative " + GetArgumentName(argument));
             }
         }
 
@@ -522,6 +540,16 @@ namespace DotNetty.Codecs.Http
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_WebSocket_close_status_code_does_NOT_comply(int statusCode)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("WebSocket close status code does NOT comply with RFC-6455: " + statusCode);
+            }
+        }
+
         #endregion
 
         #region -- IOException --
@@ -740,6 +768,26 @@ namespace DotNetty.Codecs.Http
             InvalidOperationException GetException()
             {
                 return new InvalidOperationException($"Switching Protocols response with unexpected UPGRADE protocol: {upgradeHeader}");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_Cannot_skip_per_message_deflate_decoder()
+        {
+            throw GetException();
+            static InvalidOperationException GetException()
+            {
+                return new InvalidOperationException("Cannot skip per message deflate decoder, compression in progress");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_Cannot_skip_per_message_deflate_encoder()
+        {
+            throw GetException();
+            static InvalidOperationException GetException()
+            {
+                return new InvalidOperationException("Cannot skip per message deflate encoder, compression in progress");
             }
         }
 
@@ -988,16 +1036,6 @@ namespace DotNetty.Codecs.Http
             static ErrorDataDecoderException GetErrorDataDecoderException()
             {
                 return new ErrorDataDecoderException("Mixed Multipart found in a previous Mixed Multipart");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowErrorDataDecoderException_UnknownParams(StringCharSequence newline)
-        {
-            throw GetErrorDataDecoderException();
-            ErrorDataDecoderException GetErrorDataDecoderException()
-            {
-                return new ErrorDataDecoderException($"Unknown Params: {newline}");
             }
         }
 
@@ -1301,6 +1339,17 @@ namespace DotNetty.Codecs.Http
             static WebSocketHandshakeException GetException()
             {
                 return new WebSocketHandshakeException("not a WebSocket request: missing key");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowWebSocketHandshakeException_Missing_origin_header(IFullHttpRequest req)
+        {
+            throw GetException();
+
+            WebSocketHandshakeException GetException()
+            {
+                return new WebSocketHandshakeException("Missing origin header, got only [" + string.Join(", ", req.Headers.Names()) + "]");
             }
         }
 

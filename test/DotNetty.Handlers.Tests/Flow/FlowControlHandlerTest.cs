@@ -357,18 +357,79 @@ namespace DotNetty.Handlers.Tests.Flow
             }
         }
 
+        [Fact]
+        public async Task TestReentranceNotCausesNPE()
+        {
+            IChannel channel = null;
+            var mre = new ManualResetEventSlim(false);
+            var latch = new CountdownEvent(3);
+            Exception causeRef = null;
+
+            ChannelHandlerAdapter handler = new TestHandler(
+                onActive: ctx =>
+                {
+                    ctx.FireChannelActive();
+                    //peerRef.exchange(ctx.Channel, 1L, SECONDS);
+                    Interlocked.Exchange(ref channel, ctx.Channel);
+                    mre.Set();
+                },
+                onRead: (ctx, msg) =>
+                {
+                    Signal(latch);
+                    ctx.Read();
+                },
+                onExceptionCaught: (ctx, exc) => Interlocked.Exchange(ref causeRef, exc)
+            );
+
+            var flow = new FlowControlHandler();
+            IChannel server = await this.NewServer(false, flow, handler);
+            IChannel client = await this.NewClient(server.LocalAddress);
+            try
+            {
+                // The client connection on the server side
+                mre.Wait(TimeSpan.FromSeconds(1));
+                IChannel peer = Interlocked.Exchange(ref channel, null);
+
+                // Write the message
+                await client.WriteAndFlushAsync(NewOneMessage());
+
+                // channelRead(1)
+                peer.Read();
+                Assert.True(latch.Wait(TimeSpan.FromSeconds(1)));
+                Assert.True(flow.IsQueueEmpty);
+
+                var exc = Volatile.Read(ref causeRef);
+                Assert.NotNull(exc);
+            }
+            finally
+            {
+                Task.WhenAll(client.CloseAsync(), server.CloseAsync()).Wait(TimeSpan.FromSeconds(5));
+            }
+
+            void Signal(CountdownEvent evt)
+            {
+                if (!evt.IsSet)
+                {
+                    evt.Signal();
+                }
+            }
+        }
+
         class TestHandler : ChannelHandlerAdapter
         {
             readonly Action<IChannelHandlerContext> onActive;
             readonly Action<IChannelHandlerContext, object> onRead;
+            readonly Action<IChannelHandlerContext, Exception> onExceptionCaught;
 
             public TestHandler(
                 Action<IChannelHandlerContext> onActive = null,
-                Action<IChannelHandlerContext, object> onRead = null
+                Action<IChannelHandlerContext, object> onRead = null,
+                Action<IChannelHandlerContext, Exception> onExceptionCaught = null
             )
             {
                 this.onActive = onActive;
                 this.onRead = onRead;
+                this.onExceptionCaught = onExceptionCaught;
             }
 
             public override void ChannelActive(IChannelHandlerContext context)
@@ -392,6 +453,18 @@ namespace DotNetty.Handlers.Tests.Flow
                 else
                 {
                     base.ChannelRead(context, message);
+                }
+            }
+
+            public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
+            {
+                if (this.onExceptionCaught is object)
+                {
+                    this.onExceptionCaught(context, exception);
+                }
+                else
+                {
+                    base.ExceptionCaught(context, exception);
                 }
             }
         }

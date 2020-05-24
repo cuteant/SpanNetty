@@ -5,37 +5,27 @@ namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
     using System.Collections.Generic;
-    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs;
     using DotNetty.Transport.Channels;
 
-    public class WebSocketFrameAggregator : MessageAggregator2<WebSocketFrame, WebSocketFrame, ContinuationWebSocketFrame, WebSocketFrame>
+    /// <summary>
+    /// Handler that aggregate fragmented <see cref="WebSocketFrame"/>'s.
+    /// 
+    /// Be aware if PING/PONG/CLOSE frames are send in the middle of a fragmented <see cref="WebSocketFrame"/> they will
+    /// just get forwarded to the next handler in the pipeline.
+    /// </summary>
+    public class WebSocketFrameAggregator : MessageAggregator<WebSocketFrame, WebSocketFrame, ContinuationWebSocketFrame, WebSocketFrame>
     {
+        /// <summary>Creates a new instance</summary>
+        /// <param name="maxContentLength">If the size of the aggregated frame exceeds this value,
+        /// a <see cref="TooLongFrameException"/> is thrown.</param>
         public WebSocketFrameAggregator(int maxContentLength)
             : base(maxContentLength)
         {
         }
 
-        public override bool TryAcceptInboundMessage(object msg, out WebSocketFrame message)
-        {
-            message = msg as WebSocketFrame;
-            if (message is null) { return false; }
-
-            switch (message.Opcode)
-            {
-                case Opcode.Text:
-                case Opcode.Binary:
-                    return !message.IsFinalFragment;
-                case Opcode.Cont:
-                    return true;
-                default:
-                    return false;
-            }
-            //return (this.IsContentMessage(message) || this.IsStartMessage(message))
-            //    && !this.IsAggregated(message);
-        }
-
+        /// <inheritdoc />
         protected override bool IsStartMessage(WebSocketFrame msg)
         {
             switch (msg.Opcode)
@@ -48,10 +38,13 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
+        /// <inheritdoc />
         protected override bool IsContentMessage(WebSocketFrame msg) => msg.Opcode == Opcode.Cont;
 
+        /// <inheritdoc />
         protected override bool IsLastContentMessage(ContinuationWebSocketFrame msg) => msg.Opcode == Opcode.Cont && msg.IsFinalFragment;
 
+        /// <inheritdoc />
         protected override bool IsAggregated(WebSocketFrame msg)
         {
             switch (msg.Opcode)
@@ -68,51 +61,50 @@ namespace DotNetty.Codecs.Http.WebSockets
             //return !this.IsStartMessage(msg) && msg.Opcode != Opcode.Cont;
         }
 
+        /// <inheritdoc />
         protected override bool IsContentLengthInvalid(WebSocketFrame start, int maxContentLength) => false;
 
+        /// <inheritdoc />
         protected override object NewContinueResponse(WebSocketFrame start, int maxContentLength, IChannelPipeline pipeline) => null;
 
+        /// <inheritdoc />
         protected override bool CloseAfterContinueResponse(object msg) => throw new NotSupportedException();
 
+        /// <inheritdoc />
         protected override bool IgnoreContentAfterContinueResponse(object msg) => throw new NotSupportedException();
 
-        protected override WebSocketFrame BeginAggregation(WebSocketFrame start, IByteBuffer content)
+        /// <inheritdoc />
+        protected override WebSocketFrame BeginAggregation(WebSocketFrame start, IByteBuffer content) => start.Opcode switch
         {
-            switch (start.Opcode)
-            {
-                case Opcode.Text:
-                    return new TextWebSocketFrame(true, start.Rsv, content);
-                case Opcode.Binary:
-                    return new BinaryWebSocketFrame(true, start.Rsv, content);
-                default:
-                    // Should not reach here.
-                    return ThrowHelper.ThrowException_UnkonwFrameType();
-            }
-        }
+            Opcode.Text => new TextWebSocketFrame(true, start.Rsv, content),
+            Opcode.Binary => new BinaryWebSocketFrame(true, start.Rsv, content),
+            _ => ThrowHelper.ThrowException_UnkonwFrameType(),// Should not reach here.
+        };
 
+        /// <inheritdoc />
         protected override void Decode(IChannelHandlerContext context, WebSocketFrame message, List<object> output)
         {
             switch (message.Opcode)
             {
                 case Opcode.Text:
                 case Opcode.Binary:
-                    this.handlingOversizedMessage = false;
-                    if (this.currentMessage is object)
+                    _handlingOversizedMessage = false;
+                    if (_currentMessage is object)
                     {
-                        this.currentMessage.Release();
-                        this.currentMessage = default;
+                        _currentMessage.Release();
+                        _currentMessage = default;
 
                         ThrowHelper.ThrowMessageAggregationException_StartMessage();
                     }
 
                     // A streamed message - initialize the cumulative buffer, and wait for incoming chunks.
-                    CompositeByteBuffer content0 = context.Allocator.CompositeBuffer(this.maxCumulationBufferComponents);
+                    CompositeByteBuffer content0 = context.Allocator.CompositeBuffer(MaxCumulationBufferComponents);
                     AppendPartialContent(content0, message.Content);
-                    this.currentMessage = this.BeginAggregation(message, content0);
+                    _currentMessage = BeginAggregation(message, content0);
                     break;
 
                 case Opcode.Cont:
-                    if (this.currentMessage is null)
+                    if (_currentMessage is null)
                     {
                         // it is possible that a TooLongFrameException was already thrown but we can still discard data
                         // until the begging of the next request/response.
@@ -120,27 +112,30 @@ namespace DotNetty.Codecs.Http.WebSockets
                     }
 
                     // Merge the received chunk into the content of the current message.
-                    var content = (CompositeByteBuffer)this.currentMessage.Content;
+                    var content = (CompositeByteBuffer)_currentMessage.Content;
 
                     var contMsg = (ContinuationWebSocketFrame)message;
 
                     // Handle oversized message.
-                    if (content.ReadableBytes > this.MaxContentLength - contMsg.Content.ReadableBytes)
+                    if (content.ReadableBytes > MaxContentLength - contMsg.Content.ReadableBytes)
                     {
-                        this.InvokeHandleOversizedMessage(context, this.currentMessage);
+                        InvokeHandleOversizedMessage(context, _currentMessage);
                         return;
                     }
 
                     // Append the content of the chunk.
                     AppendPartialContent(content, contMsg.Content);
 
-                    if (this.IsLastContentMessage(contMsg))
+                    // Give the subtypes a chance to merge additional information such as trailing headers.
+                    Aggregate(_currentMessage, contMsg);
+
+                    if (IsLastContentMessage(contMsg))
                     {
-                        //this.FinishAggregation(this.currentMessage);
+                        FinishAggregation0(_currentMessage);
 
                         // All done
-                        output.Add(this.currentMessage);
-                        this.currentMessage = default;
+                        output.Add(_currentMessage);
+                        _currentMessage = default;
                     }
                     break;
 

@@ -130,13 +130,13 @@ namespace DotNetty.Common.Internal
         {
             get
             {
-                if (index < 0 || index >= _count) { CheckExistingIndexArgument(_count, index); }
+                if (/*index < 0 || */(uint)index >= (uint)_count) { CheckExistingIndexArgument(_count, index); }
                 return DoGetItem(index);
             }
 
             set
             {
-                if (index < 0 || index >= _count) { CheckExistingIndexArgument(_count, index); }
+                if (/*index < 0 || */(uint)index >= (uint)_count) { CheckExistingIndexArgument(_count, index); }
                 DoSetItem(index, value);
             }
         }
@@ -152,7 +152,7 @@ namespace DotNetty.Common.Internal
         /// </exception>
         public void Insert(int index, T item)
         {
-            if (index < 0 || index > _count) { CheckNewIndexArgument(_count, index); }
+            if (/*index < 0 || */(uint)index > (uint)_count) { CheckNewIndexArgument(_count, index); }
             DoInsert(index, item);
         }
 
@@ -166,7 +166,7 @@ namespace DotNetty.Common.Internal
         /// </exception>
         public void RemoveAt(int index)
         {
-            if (index < 0 || index >= _count) { CheckExistingIndexArgument(_count, index); }
+            if (/*index < 0 || */(uint)index >= (uint)_count) { CheckExistingIndexArgument(_count, index); }
             DoRemoveAt(index);
         }
 
@@ -1014,7 +1014,7 @@ namespace DotNetty.Common.Internal
         /// <exception cref="ArgumentOutOfRangeException"><paramref name="index"/> is not a valid index to an insertion point for the source.</exception>
         public void InsertRange(int index, IEnumerable<T> collection)
         {
-            if (index < 0 || index > _count) { CheckNewIndexArgument(_count, index); }
+            if (/*index < 0 || */(uint)index > (uint)_count) { CheckNewIndexArgument(_count, index); }
             var source = CollectionHelpers.ReifyCollection(collection);
             int collectionCount = source.Count;
 
@@ -1054,7 +1054,7 @@ namespace DotNetty.Common.Internal
 
         public int RemoveAll(Predicate<T> match)
         {
-            if (null == match) { ThrowArgumentNullException_Match(); }
+            if (match is null) { ThrowArgumentNullException_Match(); }
 
             if (IsEmpty) { return 0; }
 
@@ -1099,8 +1099,8 @@ namespace DotNetty.Common.Internal
 
         public int UpdateAll(Predicate<T> match, Func<T, T> updateValueFactory)
         {
-            if (null == match) { ThrowArgumentNullException_Match(); }
-            if (null == updateValueFactory) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.updateValueFactory); }
+            if (match is null) { ThrowArgumentNullException_Match(); }
+            if (updateValueFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.updateValueFactory); }
             if (IsEmpty) { return 0; }
 
             var buffer = _buffer;
@@ -1296,7 +1296,7 @@ namespace DotNetty.Common.Internal
 
         public void ForEach(Action<T> action)
         {
-            if (null == action) { ThrowArgumentNullException_Action(); }
+            if (action is null) { ThrowArgumentNullException_Action(); }
             if (IsEmpty) { return; }
 
             var idx = 0;
@@ -1309,7 +1309,7 @@ namespace DotNetty.Common.Internal
 
         public void ForEach<TArg>(Action<T, TArg> action, TArg arg)
         {
-            if (null == action) { ThrowArgumentNullException_Action(); }
+            if (action is null) { ThrowArgumentNullException_Action(); }
             if (IsEmpty) { return; }
 
             var idx = 0;
@@ -1322,7 +1322,7 @@ namespace DotNetty.Common.Internal
 
         public void ForEach<TArg1, TArg2>(Action<T, TArg1, TArg2> action, TArg1 arg1, TArg2 arg2)
         {
-            if (null == action) { ThrowArgumentNullException_Action(); }
+            if (action is null) { ThrowArgumentNullException_Action(); }
             if (IsEmpty) { return; }
 
             var idx = 0;
@@ -1336,7 +1336,7 @@ namespace DotNetty.Common.Internal
 
         public void ForEach(Action<T, int> action)
         {
-            if (null == action) { ThrowArgumentNullException_Action(); }
+            if (action is null) { ThrowArgumentNullException_Action(); }
             if (IsEmpty) { return; }
 
             var idx = 0;
@@ -1349,7 +1349,7 @@ namespace DotNetty.Common.Internal
 
         public void ForEach<TArg>(Action<T, int, TArg> action, TArg arg)
         {
-            if (null == action) { ThrowArgumentNullException_Action(); }
+            if (action is null) { ThrowArgumentNullException_Action(); }
             if (IsEmpty) { return; }
 
             var idx = 0;
@@ -1362,7 +1362,7 @@ namespace DotNetty.Common.Internal
 
         public void ForEach<TArg1, TArg2>(Action<T, int, TArg1, TArg2> action, TArg1 arg1, TArg2 arg2)
         {
-            if (null == action) { ThrowArgumentNullException_Action(); }
+            if (action is null) { ThrowArgumentNullException_Action(); }
             if (IsEmpty) { return; }
 
             var idx = 0;
@@ -1379,7 +1379,7 @@ namespace DotNetty.Common.Internal
 
         public void Reverse(Action<T> action)
         {
-            if (null == action) { ThrowArgumentNullException_Action(); }
+            if (action is null) { ThrowArgumentNullException_Action(); }
             if (IsEmpty) { return; }
 
             var idx = _count - 1;
@@ -1392,7 +1392,7 @@ namespace DotNetty.Common.Internal
 
         public void Reverse<TArg>(Action<T, TArg> action, TArg arg)
         {
-            if (null == action) { ThrowArgumentNullException_Action(); }
+            if (action is null) { ThrowArgumentNullException_Action(); }
             if (IsEmpty) { return; }
 
             var idx = _count - 1;
@@ -1405,7 +1405,7 @@ namespace DotNetty.Common.Internal
 
         public void Reverse<TArg1, TArg2>(Action<T, TArg1, TArg2> action, TArg1 arg1, TArg2 arg2)
         {
-            if (null == action) { ThrowArgumentNullException_Action(); }
+            if (action is null) { ThrowArgumentNullException_Action(); }
             if (IsEmpty) { return; }
 
             var idx = _count - 1;
@@ -1418,7 +1418,7 @@ namespace DotNetty.Common.Internal
 
         public void Reverse(Action<T, int> action)
         {
-            if (null == action) { ThrowArgumentNullException_Action(); }
+            if (action is null) { ThrowArgumentNullException_Action(); }
             if (IsEmpty) { return; }
 
             var idx = _count - 1;
@@ -1431,7 +1431,7 @@ namespace DotNetty.Common.Internal
 
         public void Reverse<TArg>(Action<T, int, TArg> action, TArg arg)
         {
-            if (null == action) { ThrowArgumentNullException_Action(); }
+            if (action is null) { ThrowArgumentNullException_Action(); }
             if (IsEmpty) { return; }
 
             var idx = _count - 1;
@@ -1444,7 +1444,7 @@ namespace DotNetty.Common.Internal
 
         public void Reverse<TArg1, TArg2>(Action<T, int, TArg1, TArg2> action, TArg1 arg1, TArg2 arg2)
         {
-            if (null == action) { ThrowArgumentNullException_Action(); }
+            if (action is null) { ThrowArgumentNullException_Action(); }
             if (IsEmpty) { return; }
 
             var idx = _count - 1;
@@ -1540,7 +1540,7 @@ namespace DotNetty.Common.Internal
 
         public bool TryRemoveFromBack(List<T> results, int count)
         {
-            if (null == results) { ThrowArgumentNullException_Results(); }
+            if (results is null) { ThrowArgumentNullException_Results(); }
             if (count < 0) { CheckRangeArguments_Count(count); }
 
             if (IsEmpty) { return false; }
@@ -1720,7 +1720,7 @@ namespace DotNetty.Common.Internal
 
         public bool TryRemoveFromFront(List<T> results, int count)
         {
-            if (null == results) { ThrowArgumentNullException_Results(); }
+            if (results is null) { ThrowArgumentNullException_Results(); }
             if (count < 0) { CheckRangeArguments_Count(count); }
 
             if (IsEmpty) { return false; }

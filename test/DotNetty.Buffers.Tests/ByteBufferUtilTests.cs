@@ -4,9 +4,12 @@
 namespace DotNetty.Buffers.Tests
 {
     using System;
+    using System.Collections.Generic;
     using System.Text;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
     using Xunit;
+    using Xunit.Sdk;
 
     public class ByteBufferUtilTests
     {
@@ -25,7 +28,7 @@ namespace DotNetty.Buffers.Tests
             Assert.True(ByteBufferUtil.Equals(Unpooled.WrappedBuffer(b1), iB1, Unpooled.WrappedBuffer(b2), iB2, length));
         }
 
-        static int GetRandom(Random r, int min, int max) =>  r.Next((max - min) + 1) + min;
+        static int GetRandom(Random r, int min, int max) => r.Next((max - min) + 1) + min;
 
         [Fact]
         public void NotEqualsBufferSubsections()
@@ -78,6 +81,62 @@ namespace DotNetty.Buffers.Tests
             Assert.Throws<ArgumentException>(() => ByteBufferUtil.Equals(Unpooled.WrappedBuffer(b1), iB1, Unpooled.WrappedBuffer(b2), iB2, -1));
         }
 
+        //public void WriteShortBE()
+        //{
+        //    int expected = 0x1234;
+
+        //    var buf = Unpooled.Buffer(2)/*.order(ByteOrder.BIG_ENDIAN)*/;
+        //    ByteBufferUtil.WriteShortBE(buf, expected);
+        //    assertEquals(expected, buf.readShort());
+        //    buf.resetReaderIndex();
+        //    assertEquals(ByteBufUtil.swapShort((short)expected), buf.readShortLE());
+        //    buf.release();
+
+        //    buf = Unpooled.buffer(2).order(ByteOrder.LITTLE_ENDIAN);
+        //    ByteBufUtil.writeShortBE(buf, expected);
+        //    assertEquals((short)expected, buf.readShortLE());
+        //    buf.resetReaderIndex();
+        //    assertEquals(ByteBufUtil.swapShort((short)expected), buf.readShort());
+        //    buf.release();
+        //}
+
+        //public void setShortBE()
+        //{
+        //    int shortValue = 0x1234;
+
+        //    ByteBuf buf = Unpooled.wrappedBuffer(new byte[2]).order(ByteOrder.BIG_ENDIAN);
+        //    ByteBufUtil.setShortBE(buf, 0, shortValue);
+        //    assertEquals(shortValue, buf.readShort());
+        //    buf.resetReaderIndex();
+        //    assertEquals(ByteBufUtil.swapShort((short)shortValue), buf.readShortLE());
+        //    buf.release();
+
+        //    buf = Unpooled.wrappedBuffer(new byte[2]).order(ByteOrder.LITTLE_ENDIAN);
+        //    ByteBufUtil.setShortBE(buf, 0, shortValue);
+        //    assertEquals((short)shortValue, buf.readShortLE());
+        //    buf.resetReaderIndex();
+        //    assertEquals(ByteBufUtil.swapShort((short)shortValue), buf.readShort());
+        //    buf.release();
+        //}
+
+        //public void writeMediumBE()
+        //{
+        //    int mediumValue = 0x123456;
+
+        //    ByteBuf buf = Unpooled.buffer(4).order(ByteOrder.BIG_ENDIAN);
+        //    ByteBufUtil.writeMediumBE(buf, mediumValue);
+        //    assertEquals(mediumValue, buf.readMedium());
+        //    buf.resetReaderIndex();
+        //    assertEquals(ByteBufUtil.swapMedium(mediumValue), buf.readMediumLE());
+        //    buf.release();
+
+        //    buf = Unpooled.buffer(4).order(ByteOrder.LITTLE_ENDIAN);
+        //    ByteBufUtil.writeMediumBE(buf, mediumValue);
+        //    assertEquals(mediumValue, buf.readMediumLE());
+        //    buf.resetReaderIndex();
+        //    assertEquals(ByteBufUtil.swapMedium(mediumValue), buf.readMedium());
+        //    buf.release();
+        //}
 
         [Fact]
         public void WriteUsAscii()
@@ -169,7 +228,7 @@ namespace DotNetty.Buffers.Tests
         {
             string usAscii = "Some UTF-8 like äÄ∏ŒŒ";
             var buf = Unpooled.Buffer(16);
-            buf.WriteBytes(Encoding.UTF8.GetBytes(usAscii));
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(usAscii));
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, usAscii);
 
@@ -184,7 +243,7 @@ namespace DotNetty.Buffers.Tests
         {
             string utf8 = "Some UTF-8 like äÄ∏ŒŒ";
             var buf = Unpooled.Buffer(16);
-            buf.WriteBytes(Encoding.UTF8.GetBytes(utf8));
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(utf8));
             var buf2 = Unpooled.CompositeBuffer().AddComponent(
                     Unpooled.Buffer(8)).AddComponent(Unpooled.Buffer(24));
             // write some byte so we start writing with an offset.
@@ -203,7 +262,7 @@ namespace DotNetty.Buffers.Tests
         {
             string utf8 = "Some UTF-8 like äÄ∏ŒŒ";
             var buf = Unpooled.Buffer(16);
-            buf.WriteBytes(Encoding.UTF8.GetBytes(utf8));
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(utf8));
             var buf2 = new WrappedCompositeByteBuffer(Unpooled.CompositeBuffer().AddComponent(
                     Unpooled.Buffer(8)).AddComponent(Unpooled.Buffer(24)));
             // write some byte so we start writing with an offset.
@@ -228,7 +287,7 @@ namespace DotNetty.Buffers.Tests
                                     .Append('b')
                                     .ToString();
             var buf = Unpooled.Buffer(16);
-            buf.WriteBytes(Encoding.UTF8.GetBytes(surrogateString));
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(surrogateString));
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
@@ -248,7 +307,7 @@ namespace DotNetty.Buffers.Tests
                                     .Append('b')
                                     .ToString();
             var buf = Unpooled.Buffer(16);
-            buf.WriteBytes(Encoding.UTF8.GetBytes(surrogateString));
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(surrogateString));
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
@@ -268,7 +327,7 @@ namespace DotNetty.Buffers.Tests
                                     .Append('b')
                                     .ToString();
             var buf = Unpooled.Buffer(16);
-            buf.WriteBytes(Encoding.UTF8.GetBytes(surrogateString));
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(surrogateString));
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
@@ -289,7 +348,7 @@ namespace DotNetty.Buffers.Tests
                                     .Append('b')
                                     .ToString();
             var buf = Unpooled.Buffer(16);
-            buf.WriteBytes(Encoding.UTF8.GetBytes(surrogateString));
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(surrogateString));
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
@@ -310,7 +369,7 @@ namespace DotNetty.Buffers.Tests
                                     .Append('b')
                                     .ToString();
             var buf = Unpooled.Buffer(16);
-            buf.WriteBytes(Encoding.UTF8.GetBytes(surrogateString));
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(surrogateString));
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
@@ -330,7 +389,7 @@ namespace DotNetty.Buffers.Tests
                                     .Append('b')
                                     .ToString();
             var buf = Unpooled.Buffer(16);
-            buf.WriteBytes(Encoding.UTF8.GetBytes(surrogateString));
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(surrogateString));
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
@@ -348,7 +407,7 @@ namespace DotNetty.Buffers.Tests
                                     .Append('\uD800')
                                     .ToString();
             var buf = Unpooled.Buffer(16);
-            buf.WriteBytes(Encoding.UTF8.GetBytes(surrogateString));
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(surrogateString));
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
@@ -366,7 +425,7 @@ namespace DotNetty.Buffers.Tests
                                     .Append('\uDC00')
                                     .ToString();
             var buf = Unpooled.Buffer(16);
-            buf.WriteBytes(Encoding.UTF8.GetBytes(surrogateString));
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(surrogateString));
             var buf2 = Unpooled.Buffer(16);
             ByteBufferUtil.WriteUtf8(buf2, surrogateString);
 
@@ -398,7 +457,7 @@ namespace DotNetty.Buffers.Tests
             string usAscii = "Some UTF-8 like äÄ∏ŒŒ";
             var buf = Unpooled.UnreleasableBuffer(Unpooled.Buffer(16));
             AssertWrapped(buf);
-            buf.WriteBytes(Encoding.UTF8.GetBytes(usAscii));
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(usAscii));
             var buf2 = Unpooled.UnreleasableBuffer(Unpooled.Buffer(16));
             AssertWrapped(buf2);
             ByteBufferUtil.WriteUtf8(buf2, usAscii);
@@ -413,6 +472,104 @@ namespace DotNetty.Buffers.Tests
         {
             Assert.True(buf is WrappedByteBuffer);
         }
+
+        [Fact]
+        public void WriteUtf8Subsequence()
+        {
+            String usAscii = "Some UTF-8 like äÄ∏ŒŒ";
+            IByteBuffer buf = Unpooled.Buffer(16);
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(usAscii.Substring(5, 18 - 5)));
+            IByteBuffer buf2 = Unpooled.Buffer(16);
+            ByteBufferUtil.WriteUtf8(buf2, usAscii.AsSpan(5, 18 - 5));
+
+            Assert.Equal(buf, buf2);
+
+            buf.Release();
+            buf2.Release();
+        }
+
+        [Fact]
+        public void ReserveAndWriteUtf8Subsequence()
+        {
+            String usAscii = "Some UTF-8 like äÄ∏ŒŒ";
+            IByteBuffer buf = Unpooled.Buffer(16);
+            buf.WriteBytes(TextEncodings.UTF8NoBOM.GetBytes(usAscii.Substring(5, 18 - 5)));
+            IByteBuffer buf2 = Unpooled.Buffer(16);
+            int count = ByteBufferUtil.ReserveAndWriteUtf8(buf2, usAscii.AsSpan(5, 18 - 5), 16);
+
+            Assert.Equal(buf, buf2);
+            Assert.Equal(buf.ReadableBytes, count);
+
+            buf.Release();
+            buf2.Release();
+        }
+
+        [Fact]
+        public void Utf8BytesSubsequence()
+        {
+            String usAscii = "Some UTF-8 like äÄ∏ŒŒ";
+            Assert.Equal(TextEncodings.UTF8NoBOM.GetBytes(usAscii.Substring(5, 18 - 5)).Length,
+                    TextEncodings.Utf8.GetByteCount(usAscii.AsSpan(5, 18 - 5)));
+        }
+
+        public static IEnumerable<object[]> INVALID_RANGES() => new[]
+        {
+            new object[]{ -1, 5 },
+            new object[]{ 5, 30 },
+            new object[]{ 10, 5 }
+        };
+
+        [Theory]
+        [MemberData(nameof(INVALID_RANGES))]
+        public void WriteUtf8InvalidSubsequences(int start, int end)
+        {
+            IByteBuffer buf = Unpooled.Buffer(16);
+            try
+            {
+                ByteBufferUtil.WriteUtf8(buf, (AsciiString)"Some UTF-8 like äÄ∏ŒŒ", start, end);
+                Assert.False(true, "Did not throw IndexOutOfBoundsException for range (" + start + ", " + end + ")");
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // expected
+            }
+            finally
+            {
+                Assert.False(buf.IsReadable());
+                buf.Release();
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(INVALID_RANGES))]
+        public void ReserveAndWriteUtf8InvalidSubsequences(int start, int end)
+        {
+            IByteBuffer buf = Unpooled.Buffer(16);
+            try
+            {
+                ByteBufferUtil.ReserveAndWriteUtf8(buf, (AsciiString)"Some UTF-8 like äÄ∏ŒŒ", start, end, 32);
+                Assert.False(true, "Did not throw IndexOutOfBoundsException for range (" + start + ", " + end + ")");
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // expected
+            }
+            finally
+            {
+                Assert.False(buf.IsReadable());
+                buf.Release();
+            }
+        }
+
+        //public void testUtf8BytesInvalidSubsequences()
+        //{
+        //    testInvalidSubsequences(new TestMethod() {
+        //    @Override
+        //    public int invoke(Object... args) {
+        //        return ByteBufUtil.utf8Bytes((String)args[1], (Integer)args[2], (Integer)args[3]);
+        //    }
+        //    });
+        //}
 
         [Fact]
         public void DecodeUsAscii()
@@ -439,7 +596,7 @@ namespace DotNetty.Buffers.Tests
             var buffer = Unpooled.CompositeBuffer();
             try
             {
-                byte[] bytes = Encoding.UTF8.GetBytes("1234");
+                byte[] bytes = TextEncodings.UTF8NoBOM.GetBytes("1234");
                 buffer.AddComponent(Unpooled.Buffer(bytes.Length).WriteBytes(bytes));
                 buffer.AddComponent(Unpooled.Buffer(bytes.Length).WriteBytes(bytes));
                 Assert.Equal("1234", buffer.ToString(bytes.Length, bytes.Length, Encoding.UTF8));
@@ -454,7 +611,7 @@ namespace DotNetty.Buffers.Tests
         public void IsTextWithUtf8()
         {
             byte[][] validUtf8Bytes = new[] {
-                Encoding.UTF8.GetBytes("netty"),
+                TextEncodings.UTF8NoBOM.GetBytes("netty"),
                 new[] { (byte) 0x24},
                 new[] { (byte) 0xC2, (byte) 0xA2},
                 new[] { (byte) 0xE2, (byte) 0x82, (byte) 0xAC},
@@ -464,11 +621,11 @@ namespace DotNetty.Buffers.Tests
                         (byte) 0xE2, (byte) 0x82, (byte) 0xAC,
                         (byte) 0xF0, (byte) 0x90, (byte) 0x8D, (byte) 0x88} // multiple characters
         };
-            foreach(byte[] bytes in validUtf8Bytes)
+            foreach (byte[] bytes in validUtf8Bytes)
             {
                 AssertIsText(bytes, true, Encoding.UTF8);
             }
-            byte[][] invalidUtf8Bytes = new [] {
+            byte[][] invalidUtf8Bytes = new[] {
                 new [] {(byte) 0x80},
                 new [] {(byte) 0xF0, (byte) 0x82, (byte) 0x82, (byte) 0xAC}, // Overlong encodings
                 new [] {(byte) 0xC2},                                        // not enough bytes
@@ -481,7 +638,7 @@ namespace DotNetty.Buffers.Tests
                 new [] {(byte) 0xE0, (byte) 0x80, (byte) 0x80},              // out of lower bound
                 new [] {(byte) 0xED, (byte) 0xAF, (byte) 0x80}               // out of upper bound
         };
-            foreach(byte[] bytes in invalidUtf8Bytes)
+            foreach (byte[] bytes in invalidUtf8Bytes)
             {
                 AssertIsText(bytes, false, Encoding.UTF8);
             }
@@ -514,7 +671,7 @@ namespace DotNetty.Buffers.Tests
             try
             {
                 buffer.WriteBytes(new byte[4]);
-                int[][] validIndexLengthPairs =new[] {
+                int[][] validIndexLengthPairs = new[] {
                     new [] {4, 0},
                     new [] {0, 4},
                     new [] {1, 3},
@@ -523,7 +680,7 @@ namespace DotNetty.Buffers.Tests
                 {
                     Assert.True(ByteBufferUtil.IsText(buffer, pair[0], pair[1], Encoding.ASCII));
                 }
-                int[][] invalidIndexLengthPairs = new [] {
+                int[][] invalidIndexLengthPairs = new[] {
                     new [] {4, 1},
                     new [] {-1, 2},
                     new [] {3, -1},
@@ -545,21 +702,21 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void Utf8Bytes()
         {
-            var  s = "Some UTF-8 like äÄ∏ŒŒ";
+            var s = "Some UTF-8 like äÄ∏ŒŒ";
             CheckUtf8Bytes(s);
         }
 
         [Fact]
         public void Utf8BytesWithSurrogates()
         {
-            var  s = "a\uD800\uDC00b";
+            var s = "a\uD800\uDC00b";
             CheckUtf8Bytes(s);
         }
 
         [Fact]
         public void Utf8BytesWithNonSurrogates3Bytes()
         {
-            var  s = "a\uE000b";
+            var s = "a\uE000b";
             CheckUtf8Bytes(s);
         }
 
@@ -567,7 +724,7 @@ namespace DotNetty.Buffers.Tests
         public void Utf8BytesWithNonSurrogatesNonAscii()
         {
             char nonAscii = (char)0x81;
-            var  s = "a" + nonAscii + "b";
+            var s = "a" + nonAscii + "b";
             CheckUtf8Bytes(s);
         }
 

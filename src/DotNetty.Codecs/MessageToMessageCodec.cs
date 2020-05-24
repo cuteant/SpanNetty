@@ -4,15 +4,47 @@
 namespace DotNetty.Codecs
 {
     using System.Collections.Generic;
+    using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Transport.Channels;
 
+    /// <summary>
+    /// A Codec for on-the-fly encoding/decoding of message.
+    /// 
+    /// This can be thought of as a combination of <see cref="MessageToMessageDecoder{T}"/> and <see cref="MessageToMessageEncoder{T}"/>.
+    /// 
+    /// Here is an example of a <see cref="MessageToMessageCodec{TInbound, TOutbound}"/> which just decode from {@link Integer} to {@link Long}
+    /// and encode from {@link Long} to {@link Integer}.
+    /// 
+    /// <![CDATA[
+    ///     public class NumberCodec extends
+    ///             {@link MessageToMessageCodec}&lt;{@link Integer}, {@link Long}&gt; {
+    ///         {@code @Override}
+    ///         public {@link Long} decode({@link ChannelHandlerContext} ctx, {@link Integer} msg, List&lt;Object&gt; out)
+    ///                 throws {@link Exception} {
+    ///             out.add(msg.longValue());
+    ///         }
+    ///
+    ///         {@code @Override}
+    ///         public {@link Integer} encode({@link ChannelHandlerContext} ctx, {@link Long} msg, List&lt;Object&gt; out)
+    ///                 throws {@link Exception} {
+    ///             out.add(msg.intValue());
+    ///         }
+    ///     }
+    /// ]]>
+    /// 
+    /// Be aware that you need to call <see cref="IReferenceCounted.Retain()"/> on messages that are just passed through if they
+    /// are of type <see cref="IReferenceCounted"/>. This is needed as the <see cref="MessageToMessageCodec{TInbound, TOutbound}"/> will call
+    /// <see cref="IReferenceCounted.Release()"/> on encoded / decoded messages.
+    /// </summary>
+    /// <typeparam name="TInbound"></typeparam>
+    /// <typeparam name="TOutbound"></typeparam>
     public abstract class MessageToMessageCodec<TInbound, TOutbound> : ChannelDuplexHandler
     {
         readonly Encoder encoder;
         readonly Decoder decoder;
 
-        sealed class Encoder : MessageToMessageEncoder<object>
+        sealed class Encoder : MessageToMessageEncoder<TOutbound>
         {
             readonly MessageToMessageCodec<TInbound, TOutbound> codec;
 
@@ -21,12 +53,16 @@ namespace DotNetty.Codecs
                 this.codec = codec;
             }
 
-            public override bool AcceptOutboundMessage(object msg) => this.codec.AcceptOutboundMessage(msg);
+            /// <inheritdoc />
+            public override bool AcceptOutboundMessage(object msg)
+                => this.codec.AcceptOutboundMessage(msg);
 
-            protected internal override void Encode(IChannelHandlerContext context, object message, List<object> output) => this.codec.Encode(context, (TOutbound)message, output);
+            /// <inheritdoc />
+            protected internal override void Encode(IChannelHandlerContext context, TOutbound message, List<object> output)
+                => this.codec.Encode(context, message, output);
         }
 
-        sealed class Decoder : MessageToMessageDecoder<object>
+        sealed class Decoder : MessageToMessageDecoder<TInbound>
         {
             readonly MessageToMessageCodec<TInbound, TOutbound> codec;
 
@@ -35,30 +71,61 @@ namespace DotNetty.Codecs
                 this.codec = codec;
             }
 
-            public override bool AcceptInboundMessage(object msg) => this.codec.AcceptInboundMessage(msg);
+            /// <inheritdoc />
+            public override bool AcceptInboundMessage(object msg)
+                => this.codec.AcceptInboundMessage(msg);
 
-            protected internal override void Decode(IChannelHandlerContext context, object message, List<object> output) => 
-                this.codec.Decode(context, (TInbound)message, output);
+            /// <inheritdoc />
+            protected internal override void Decode(IChannelHandlerContext context, TInbound message, List<object> output)
+                => this.codec.Decode(context, message, output);
         }
 
+        /// <summary>
+        /// Create a new instance which will try to detect the types to decode and encode out of the type parameter
+        /// of the class.
+        /// </summary>
         protected MessageToMessageCodec()
         {
             this.encoder = new Encoder(this);
             this.decoder = new Decoder(this);
         }
 
-        public sealed override void ChannelRead(IChannelHandlerContext context, object message) => 
-            this.decoder.ChannelRead(context, message);
+        /// <inheritdoc />
+        public sealed override void ChannelRead(IChannelHandlerContext context, object message)
+            => this.decoder.ChannelRead(context, message);
 
-        public sealed override void Write(IChannelHandlerContext context, object message, IPromise promise) => 
-            this.encoder.Write(context, message, promise);
+        /// <inheritdoc />
+        public sealed override void Write(IChannelHandlerContext context, object message, IPromise promise)
+            => this.encoder.Write(context, message, promise);
 
+        /// <summary>
+        /// Returns <c>true</c> if and only if the specified message can be decoded by this codec.
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <returns></returns>
         public virtual bool AcceptInboundMessage(object msg) => msg is TInbound;
 
+        /// <summary>
+        /// Returns <c>true</c> if and only if the specified message can be encoded by this codec.
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <returns></returns>
         public virtual bool AcceptOutboundMessage(object msg) => msg is TOutbound;
 
+        /// <summary>
+        /// <see cref="MessageToMessageEncoder{T}.Encode(IChannelHandlerContext, T, List{object})"/>
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="msg"></param>
+        /// <param name="output"></param>
         protected abstract void Encode(IChannelHandlerContext ctx, TOutbound msg, List<object> output);
 
+        /// <summary>
+        /// <see cref="MessageToMessageDecoder{T}.Decode(IChannelHandlerContext, T, List{object})"/>
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <param name="msg"></param>
+        /// <param name="output"></param>
         protected abstract void Decode(IChannelHandlerContext ctx, TInbound msg, List<object> output);
     }
 }

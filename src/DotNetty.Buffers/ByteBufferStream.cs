@@ -158,7 +158,10 @@ namespace DotNetty.Buffers
             EnsureNotClosed();
 
             var remaining = _buffer.ReadableBytes;
-            if (remaining <= 0) { return; }
+            if ((uint)(remaining - 1) > SharedConstants.TooBigOrNegative) // remaining <= 0
+            {
+                return;
+            }
 
             ValidateCopyToArgs(destination);
 
@@ -175,7 +178,10 @@ namespace DotNetty.Buffers
             EnsureNotClosed();
 
             var remaining = _buffer.ReadableBytes;
-            if (remaining <= 0) { return; }
+            if ((uint)(remaining - 1) > SharedConstants.TooBigOrNegative) // remaining <= 0
+            {
+                return;
+            }
 
             ValidateCopyToArgs(destination);
 

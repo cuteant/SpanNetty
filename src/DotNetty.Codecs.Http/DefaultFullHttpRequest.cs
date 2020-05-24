@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoPropertyWhenPossible
-// ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http
 {
     using DotNetty.Buffers;
@@ -14,7 +12,9 @@ namespace DotNetty.Codecs.Http
     {
         readonly IByteBuffer content;
         readonly HttpHeaders trailingHeader;
-        // Used to cache the value of the hash code and avoid {@link IllegalReferenceCountException}.
+        /// <summary>
+        /// Used to cache the value of the hash code and avoid <see cref="IllegalReferenceCountException"/>.
+        /// </summary>
         int hash;
 
         public DefaultFullHttpRequest(HttpVersion httpVersion, HttpMethod method, string uri) 

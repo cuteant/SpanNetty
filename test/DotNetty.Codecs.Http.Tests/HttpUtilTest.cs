@@ -166,8 +166,8 @@ namespace DotNetty.Codecs.Http.Tests
 
             IList<ICharSequence> list = message.Headers.GetAll(HttpHeaderNames.TransferEncoding);
             Assert.NotNull(list);
-            
-            var expected = new List<string> {"chunked"};
+
+            var expected = new List<string> { "chunked" };
             Assert.True(expected.SequenceEqual(list.Select(x => x.ToString())));
         }
 
@@ -280,6 +280,28 @@ namespace DotNetty.Codecs.Http.Tests
             var http10Message = new DefaultHttpRequest(HttpVersion.Http10, HttpMethod.Get,
                 "http:localhost/http_1_0");
             Assert.False(HttpUtil.IsKeepAlive(http10Message));
+        }
+
+        [Fact]
+        public void KeepAliveIfConnectionHeaderMultipleValues()
+        {
+            IHttpMessage http11Message = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Get,
+                "http:localhost/http_1_1");
+            http11Message.Headers.Set(
+                    HttpHeaderNames.Connection, HttpHeaderValues.Upgrade + ", " + HttpHeaderValues.Close);
+            Assert.False(HttpUtil.IsKeepAlive(http11Message));
+
+            http11Message.Headers.Set(
+                    HttpHeaderNames.Connection, HttpHeaderValues.Upgrade + ", Close");
+            Assert.False(HttpUtil.IsKeepAlive(http11Message));
+
+            http11Message.Headers.Set(
+                    HttpHeaderNames.Connection, HttpHeaderValues.Close + ", " + HttpHeaderValues.Upgrade);
+            Assert.False(HttpUtil.IsKeepAlive(http11Message));
+
+            http11Message.Headers.Set(
+                    HttpHeaderNames.Connection, HttpHeaderValues.Upgrade + ", " + HttpHeaderValues.KeepAlive);
+            Assert.True(HttpUtil.IsKeepAlive(http11Message));
         }
     }
 }

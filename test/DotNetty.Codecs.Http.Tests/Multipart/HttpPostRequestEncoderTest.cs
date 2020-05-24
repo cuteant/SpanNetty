@@ -110,10 +110,13 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             this.files.Add(fileStream1);
             FileStream fileStream2 = File.Open("./Multipart/file-02.txt", FileMode.Open, FileAccess.Read);
             this.files.Add(fileStream2);
+            FileStream fileStream3 = File.Open("./Multipart/file-03.txt", FileMode.Open, FileAccess.Read);
+            this.files.Add(fileStream3);
 
             encoder.AddBodyAttribute("foo", "bar");
             encoder.AddBodyFileUpload("quux", fileStream1, "text/plain", false);
             encoder.AddBodyFileUpload("quux", fileStream2, "text/plain", false);
+            encoder.AddBodyFileUpload("quux", fileStream3, "text/plain", false);
 
             // We have to query the value of these two fields before finalizing
             // the request, which unsets one of them.
@@ -132,7 +135,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 HttpHeaderNames.ContentType + ": multipart/mixed; boundary=" + multipartMixedBoundary + "\r\n" +
                 "\r\n" +
                 "--" + multipartMixedBoundary + "\r\n" +
-                HttpHeaderNames.ContentDisposition + ": attachment; filename=\"file-02.txt\"" + "\r\n" +
+                HttpHeaderNames.ContentDisposition + ": attachment; filename=\"file-01.txt\"" + "\r\n" +
                 HttpHeaderNames.ContentLength + ": " + fileStream1.Length + "\r\n" +
                 HttpHeaderNames.ContentType + ": text/plain" + "\r\n" +
                 HttpHeaderNames.ContentTransferEncoding + ": binary" + "\r\n" +
@@ -146,6 +149,14 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 HttpHeaderNames.ContentTransferEncoding + ": binary" + "\r\n" +
                 "\r\n" +
                 "File 02" + /*StringUtil.*/Newline +
+                "\r\n" +
+                "--" + multipartMixedBoundary + "\r\n" +
+                HttpHeaderNames.ContentDisposition + ": attachment; filename=\"file-03.txt\"" + "\r\n" +
+                HttpHeaderNames.ContentLength + ": " + fileStream3.Length + "\r\n" +
+                HttpHeaderNames.ContentType + ": text/plain" + "\r\n" +
+                HttpHeaderNames.ContentTransferEncoding + ": binary" + "\r\n" +
+                "\r\n" +
+                "File 03" + /*StringUtil.*/Newline +
                 "\r\n" +
                 "--" + multipartMixedBoundary + "--" + "\r\n" +
                 "--" + multipartDataBoundary + "--" + "\r\n";
@@ -430,6 +441,29 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             bool expectedSize = readable >= expectedSizeMin && readable <= expectedSizeMax;
             Assert.True(expectedSize, $"Chunk size is not in expected range ({expectedSizeMin} - {expectedSizeMax}), was: {readable}");
             httpContent.Release();
+        }
+
+        [Fact]
+        public void EncodeChunkedContent()
+        {
+            IHttpRequest req = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/");
+            HttpPostRequestEncoder encoder = new HttpPostRequestEncoder(req, false);
+
+            int length = 8077 + 8096;
+            string longText = new string('a', length);
+
+            encoder.AddBodyAttribute("data", longText);
+            encoder.AddBodyAttribute("moreData", "abcd");
+
+            Assert.NotNull(encoder.FinalizeRequest());
+
+            while (!encoder.IsEndOfInput)
+            {
+                encoder.ReadChunk((IByteBufferAllocator)null).Release();
+            }
+
+            Assert.True(encoder.IsEndOfInput);
+            encoder.CleanFiles();
         }
 
         public void Dispose()

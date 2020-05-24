@@ -706,7 +706,7 @@ namespace DotNetty.Common.Internal
                 remainingSearchSpaceLength -= relativeIndex;
                 offset += relativeIndex;
 
-                if (remainingSearchSpaceLength <= 0)
+                if ((uint)(remainingSearchSpaceLength - 1) > SharedConstants.TooBigOrNegative) // <= 0
                     break;  // The unsearched portion is now shorter than the sequence we're looking for. So it can't be there.
 
                 // Found the first element of "value". See if the tail matches.
@@ -1512,7 +1512,7 @@ namespace DotNetty.Common.Internal
             {
                 Debug.Assert(0 <= offset && offset <= searchSpaceLength); // Ensures no deceptive underflows in the computation of "remainingSearchSpaceLength".
                 int remainingSearchSpaceLength = searchSpaceLength - offset - valueTailLength;
-                if (remainingSearchSpaceLength <= 0)
+                if ((uint)(remainingSearchSpaceLength - 1) > SharedConstants.TooBigOrNegative) // <= 0
                     break;  // The unsearched portion is now shorter than the sequence we're looking for. So it can't be there.
 
                 // Do a quick search for the first element of "value".

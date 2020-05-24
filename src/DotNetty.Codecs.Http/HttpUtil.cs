@@ -16,6 +16,8 @@ namespace DotNetty.Codecs.Http
         static readonly AsciiString CharsetEquals = new AsciiString(HttpHeaderValues.Charset + "=");
         static readonly AsciiString Semicolon = AsciiString.Cached(";");
 
+        public static ReadOnlySpan<byte> Http11Bytes => new byte[] { (byte)'H', (byte)'T', (byte)'T', (byte)'P', (byte)'/', (byte)'1', (byte)'.', (byte)'1' }; // "HTTP/1.1"
+
         ///// <summary>
         ///// Determine if a uri is in origin-form according to
         ///// <a href="https://tools.ietf.org/html/rfc7230#section-5.3">rfc7230, 5.3</a>.
@@ -44,20 +46,9 @@ namespace DotNetty.Codecs.Http
 
         public static bool IsKeepAlive(IHttpMessage message)
         {
-            if (message.Headers.TryGet(HttpHeaderNames.Connection, out ICharSequence connection)
-                && HttpHeaderValues.Close.ContentEqualsIgnoreCase(connection))
-            {
-                return false;
-            }
-
-            if (message.ProtocolVersion.IsKeepAliveDefault)
-            {
-                return !HttpHeaderValues.Close.ContentEqualsIgnoreCase(connection);
-            }
-            else
-            {
-                return HttpHeaderValues.KeepAlive.ContentEqualsIgnoreCase(connection);
-            }
+            return !message.Headers.ContainsValue(HttpHeaderNames.Connection, HttpHeaderValues.Close, true) &&
+                   (message.ProtocolVersion.IsKeepAliveDefault ||
+                    message.Headers.ContainsValue(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive, true));
         }
 
         public static void SetKeepAlive(IHttpMessage message, bool keepAlive) => SetKeepAlive(message.Headers, message.ProtocolVersion, keepAlive);
@@ -164,14 +155,9 @@ namespace DotNetty.Codecs.Http
 
         public static bool Is100ContinueExpected(IHttpMessage message)
         {
-            if (!IsExpectHeaderValid(message))
-            {
-                return false;
-            }
-
-            ICharSequence expectValue = message.Headers.Get(HttpHeaderNames.Expect, null);
-            // unquoted tokens in the expect header are case-insensitive, thus 100-continue is case insensitive
-            return HttpHeaderValues.Continue.ContentEqualsIgnoreCase(expectValue);
+            return IsExpectHeaderValid(message)
+              // unquoted tokens in the expect header are case-insensitive, thus 100-continue is case insensitive
+              && message.Headers.Contains(HttpHeaderNames.Expect, HttpHeaderValues.Continue, true);
         }
 
         internal static bool IsUnsupportedExpectation(IHttpMessage message)

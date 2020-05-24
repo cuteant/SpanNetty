@@ -8,52 +8,76 @@ namespace DotNetty.Buffers
     using System.Runtime.CompilerServices;
     using System.Threading;
     using DotNetty.Common;
-    using DotNetty.Common.Utilities;
 
     public abstract class AbstractReferenceCountedByteBuffer : AbstractByteBuffer
     {
-        // even => "real" refcount is (refCnt >>> 1); odd => "real" refcount is 0
-        int referenceCount = 2;
+        const int c_initialValue = 1;
+
+        int referenceCount = c_initialValue;
 
         protected AbstractReferenceCountedByteBuffer(int maxCapacity)
             : base(maxCapacity)
         {
         }
 
-        public override int ReferenceCount => RealRefCnt(Volatile.Read(ref this.referenceCount));
+        public override bool IsAccessible => (uint)Volatile.Read(ref this.referenceCount) > 0u ? true : false;
+
+        public override int ReferenceCount => Volatile.Read(ref this.referenceCount);
 
         /// <summary>
         /// An unsafe operation intended for use by a subclass that sets the reference count of the buffer directly
         /// </summary>
-        protected internal void SetReferenceCount(int newRefCnt) => Interlocked.Exchange(ref this.referenceCount, newRefCnt << 1); // overflow OK here
+        /// <param name="value"></param>
+        protected internal void SetReferenceCount(int value) => Interlocked.Exchange(ref this.referenceCount, value);
+
+        /// <summary>
+        /// An unsafe operation intended for use by a subclass that resets the reference count of the buffer to 1
+        /// </summary>
+        protected internal void ResetReferenceCount()
+        {
+            Interlocked.Exchange(ref this.referenceCount, c_initialValue);
+        }
 
         public override IReferenceCounted Retain() => this.Retain0(1);
 
         public override IReferenceCounted Retain(int increment)
         {
-            if (increment <= 0) { ThrowHelper.ThrowArgumentException_Positive(increment, ExceptionArgument.increment); }
+            if ((uint)(increment - 1) > SharedConstants.TooBigOrNegative) // increment <= 0
+            {
+                ThrowHelper.ThrowArgumentException_Positive(increment, ExceptionArgument.increment);
+            }
 
             return this.Retain0(increment);
         }
 
         IReferenceCounted Retain0(int increment)
         {
-            // all changes to the raw count are 2x the "real" change
-            int adjustedIncrement = increment << 1; // overflow OK here
-            int oldRef = this.GetAndAddRefCnt(adjustedIncrement);
-            if ((oldRef & 1) != 0)
-            {
-                ThrowHelper.ThrowIllegalReferenceCountException(0, increment);
-            }
-            // don't pass 0!
-            if ((oldRef <= 0 && oldRef + adjustedIncrement >= 0) ||
-                (oldRef >= 0 && oldRef + adjustedIncrement < oldRef))
-            {
-                // overflow case
-                this.GetAndAddRefCnt(-adjustedIncrement);
-                ThrowIllegalRawReferenceCountException(oldRef, increment);
-            }
+            int currRefCnt = Volatile.Read(ref this.referenceCount);
+
+            int nextCnt = currRefCnt + increment;
+            // Ensure we not resurrect (which means the refCnt was 0) and also that we encountered an overflow.
+            if (nextCnt <= increment) { ThrowHelper.ThrowIllegalReferenceCountException(currRefCnt, increment); }
+
+            var refCnt = Interlocked.CompareExchange(ref this.referenceCount, nextCnt, currRefCnt);
+            if (currRefCnt != refCnt) { RetainSlow(increment, refCnt); }
+
             return this;
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private void RetainSlow(int increment, int refCnt)
+        {
+            int oldRefCnt;
+            do
+            {
+                oldRefCnt = refCnt;
+                int nextCnt = refCnt + increment;
+
+                // Ensure we not resurrect (which means the refCnt was 0) and also that we encountered an overflow.
+                if (nextCnt <= increment) { ThrowHelper.ThrowIllegalReferenceCountException(refCnt, increment); }
+
+                refCnt = Interlocked.CompareExchange(ref this.referenceCount, nextCnt, refCnt);
+            } while (refCnt != oldRefCnt);
         }
 
         public override IReferenceCounted Touch() => this;
@@ -64,135 +88,44 @@ namespace DotNetty.Buffers
 
         public override bool Release(int decrement)
         {
-            if (decrement <= 0) { ThrowHelper.ThrowArgumentException_Positive(decrement, ExceptionArgument.decrement); }
+            if ((uint)(decrement - 1) > SharedConstants.TooBigOrNegative) // decrement <= 0
+            {
+                ThrowHelper.ThrowArgumentException_Positive(decrement, ExceptionArgument.decrement);
+            }
 
             return this.Release0(decrement);
         }
 
         bool Release0(int decrement)
         {
-            int rawCnt = Volatile.Read(ref this.referenceCount);
-            int realCnt = ToLiveRealCnt(rawCnt, decrement);
-            if (decrement == realCnt)
-            {
-                if (this.CompareAndSetRefCnt(rawCnt, 1))
-                {
-                    this.Deallocate();
-                    return true;
-                }
-                return this.RetryRelease0(decrement);
-            }
-            return this.ReleaseNonFinal0(decrement, rawCnt, realCnt);
-        }
+            int currRefCnt = Volatile.Read(ref this.referenceCount);
+            if (currRefCnt < decrement) { ThrowHelper.ThrowIllegalReferenceCountException(currRefCnt, -decrement); }
 
-        bool ReleaseNonFinal0(int decrement, int rawCnt, int realCnt)
-        {
-            if (decrement < realCnt
-                    // all changes to the raw count are 2x the "real" change
-                    && this.CompareAndSetRefCnt(rawCnt, rawCnt - (decrement << 1)))
-            {
-                return false;
-            }
-            return RetryRelease0(decrement);
-        }
+            var refCnt = Interlocked.CompareExchange(ref this.referenceCount, currRefCnt - decrement, currRefCnt);
+            if (currRefCnt != refCnt) { refCnt = ReleaseSlow(decrement, refCnt); }
 
-        bool RetryRelease0(int decrement)
-        {
-            var sw = new SpinWait();
-            int rawCnt = Volatile.Read(ref this.referenceCount);
-            int oldRawCnt;
-            while (true)
+            if (refCnt == decrement)
             {
-                oldRawCnt = rawCnt;
-                int realCnt = ToLiveRealCnt(rawCnt, decrement);
-                if (decrement == realCnt)
-                {
-                    rawCnt = Interlocked.CompareExchange(ref this.referenceCount, 1, oldRawCnt);
-                    if (rawCnt == oldRawCnt)
-                    {
-                        this.Deallocate();
-                        return true;
-                    }
-                }
-                else if (decrement < realCnt)
-                {
-                    // all changes to the raw count are 2x the "real" change
-                    rawCnt = Interlocked.CompareExchange(ref this.referenceCount, rawCnt - (decrement << 1), oldRawCnt);
-                    if (rawCnt == oldRawCnt)
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    ThrowHelper.ThrowIllegalReferenceCountException(realCnt, -decrement);
-                }
-                sw.SpinOnce(); // this benefits throughput under high contention
+                this.Deallocate();
+                return true;
             }
+            return false;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        int GetAndAddRefCnt(int delta)
+        int ReleaseSlow(int decrement, int refCnt)
         {
-            var refCnt = Volatile.Read(ref this.referenceCount);
             int oldRefCnt;
             do
             {
                 oldRefCnt = refCnt;
-                refCnt = Interlocked.CompareExchange(ref this.referenceCount, refCnt + delta, oldRefCnt);
+
+                if (refCnt < decrement) { ThrowHelper.ThrowIllegalReferenceCountException(refCnt, -decrement); }
+
+                refCnt = Interlocked.CompareExchange(ref this.referenceCount, refCnt - decrement, refCnt);
             } while (refCnt != oldRefCnt);
-            return oldRefCnt;
-        }
 
-        [MethodImpl(InlineMethod.AggressiveInlining)]
-        bool CompareAndSetRefCnt(int expect, int update)
-        {
-            return expect == Interlocked.CompareExchange(ref this.referenceCount, update, expect);
-        }
-
-        [MethodImpl(InlineMethod.AggressiveInlining)]
-        static int RealRefCnt(int rawCnt)
-        {
-            return (rawCnt & 1) != 0 ? 0 : rawCnt.RightUShift(1);
-        }
-
-        /// <summary>
-        /// Like <see cref="RealRefCnt(int)"/> but throws if refCnt == 0
-        /// </summary>
-        /// <param name="rawCnt"></param>
-        /// <param name="decrement"></param>
-        /// <returns></returns>
-        [MethodImpl(InlineMethod.AggressiveInlining)]
-        static int ToLiveRealCnt(int rawCnt, int decrement)
-        {
-            if (0u >= (uint)(rawCnt & 1))
-            {
-                return rawCnt.RightUShift(1);
-            }
-            // odd rawCnt => already deallocated
-            return ThrowIllegalReferenceCountException(-decrement);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static int ThrowIllegalReferenceCountException(int increment)
-        {
-            throw GetIllegalReferenceCountException();
-
-            IllegalReferenceCountException GetIllegalReferenceCountException()
-            {
-                return new IllegalReferenceCountException(0, increment);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static void ThrowIllegalRawReferenceCountException(int count, int increment)
-        {
-            throw GetIllegalReferenceCountException();
-
-            IllegalReferenceCountException GetIllegalReferenceCountException()
-            {
-                return new IllegalReferenceCountException(RealRefCnt(count), increment);
-            }
+            return refCnt;
         }
 
         protected internal abstract void Deallocate();

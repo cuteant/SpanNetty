@@ -60,7 +60,7 @@ namespace DotNetty.Buffers
 
         protected AbstractByteBuffer(int maxCapacity)
         {
-            if (maxCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxCapacity, ExceptionArgument.maxCapacity); }
+            if ((uint)maxCapacity > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxCapacity, ExceptionArgument.maxCapacity); }
 
             this.maxCapacity = maxCapacity;
         }
@@ -151,6 +151,8 @@ namespace DotNetty.Buffers
             [MethodImpl(InlineMethod.AggressiveInlining)]
             get => this.MaxCapacity - this.writerIndex;
         }
+
+        public virtual int MaxFastWritableBytes => this.WritableBytes;
 
         public virtual IByteBuffer MarkReaderIndex()
         {
@@ -263,7 +265,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer EnsureWritable(int minWritableBytes)
         {
-            if (minWritableBytes < 0)
+            if ((uint)minWritableBytes > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException_MinWritableBytes();
             }
@@ -292,7 +294,15 @@ namespace DotNetty.Buffers
             }
 
             // Normalize the current capacity to the power of 2.
-            int newCapacity = this.Allocator.CalculateNewCapacity(writerIdx + sizeHint, maxCapacity);
+            int minNewCapacity = writerIdx + sizeHint;
+            int newCapacity = this.Allocator.CalculateNewCapacity(minNewCapacity, maxCapacity);
+
+            int fastCapacity = writerIdx + this.MaxFastWritableBytes;
+            // Grow by a smaller amount if it will avoid reallocation
+            if (newCapacity > fastCapacity && minNewCapacity <= fastCapacity)
+            {
+                newCapacity = fastCapacity;
+            }
 
             // Adjust to the new capacity.
             this.AdjustCapacity(newCapacity);
@@ -300,17 +310,18 @@ namespace DotNetty.Buffers
 
         public virtual int EnsureWritable(int minWritableBytes, bool force)
         {
-            if (minWritableBytes < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(minWritableBytes, ExceptionArgument.minWritableBytes); }
+            uint uminWritableBytes = (uint)minWritableBytes;
+            if (uminWritableBytes > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(minWritableBytes, ExceptionArgument.minWritableBytes); }
 
             this.EnsureAccessible();
-            if (minWritableBytes <= this.WritableBytes)
+            if (uminWritableBytes <= (uint)this.WritableBytes)
             {
                 return 0;
             }
 
             var writerIdx = this.writerIndex;
             var maxCapacity = this.MaxCapacity;
-            if (minWritableBytes > maxCapacity - writerIdx)
+            if (uminWritableBytes > (uint)(maxCapacity - writerIdx))
             {
                 if (!force || this.Capacity == maxCapacity)
                 {
@@ -322,7 +333,15 @@ namespace DotNetty.Buffers
             }
 
             // Normalize the current capacity to the power of 2.
-            int newCapacity = this.Allocator.CalculateNewCapacity(writerIdx + minWritableBytes, maxCapacity);
+            int minNewCapacity = writerIdx + minWritableBytes;
+            int newCapacity = this.Allocator.CalculateNewCapacity(minNewCapacity, maxCapacity);
+
+            int fastCapacity = writerIdx + this.MaxFastWritableBytes;
+            // Grow by a smaller amount if it will avoid reallocation
+            if (newCapacity > fastCapacity && minNewCapacity <= fastCapacity)
+            {
+                newCapacity = fastCapacity;
+            }
 
             // Adjust to the new capacity.
             this.AdjustCapacity(newCapacity);
@@ -1185,27 +1204,34 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckIndex0(int index, int fieldLength)
         {
-            if (CheckBounds) { CheckRangeBounds(index, fieldLength, this.Capacity); }
+            if (CheckBounds) { CheckRangeBounds(ExceptionArgument.index, index, fieldLength, this.Capacity); }
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckSrcIndex(int index, int length, int srcIndex, int srcCapacity)
         {
             this.CheckIndex(index, length);
-            if (CheckBounds) { CheckRangeBounds(srcIndex, length, srcCapacity); }
+            if (CheckBounds) { CheckRangeBounds(ExceptionArgument.srcIndex, srcIndex, length, srcCapacity); }
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckDstIndex(int index, int length, int dstIndex, int dstCapacity)
         {
             this.CheckIndex(index, length);
-            if (CheckBounds) { CheckRangeBounds(dstIndex, length, dstCapacity); }
+            if (CheckBounds) { CheckRangeBounds(ExceptionArgument.dstIndex, dstIndex, length, dstCapacity); }
+        }
+
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        protected void CheckDstIndex(int length, int dstIndex, int dstCapacity)
+        {
+            this.CheckReadableBytes(length);
+            if (CheckBounds) { CheckRangeBounds(ExceptionArgument.dstIndex, dstIndex, length, dstCapacity); }
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckReadableBytes(int minimumReadableBytes)
         {
-            if (minimumReadableBytes < 0)
+            if ((uint)minimumReadableBytes > SharedConstants.TooBigOrNegative) // < 0
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException_MinimumReadableBytes(minimumReadableBytes);
             }
@@ -1217,7 +1243,7 @@ namespace DotNetty.Buffers
         protected void CheckNewCapacity(int newCapacity)
         {
             this.EnsureAccessible();
-            if (CheckBounds && (newCapacity < 0 || newCapacity > this.MaxCapacity))
+            if (CheckBounds && (/*newCapacity < 0 || */(uint)newCapacity > (uint)this.MaxCapacity))
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException_Capacity(newCapacity, this.MaxCapacity);
             }
@@ -1236,7 +1262,7 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void EnsureAccessible()
         {
-            if (CheckAccessible && 0u >= (uint)this.ReferenceCount)
+            if (CheckAccessible && !this.IsAccessible)
             {
                 ThrowHelper.ThrowIllegalReferenceCountException(0);
             }
@@ -1276,6 +1302,8 @@ namespace DotNetty.Buffers
         public abstract IByteBuffer Unwrap();
 
         public abstract bool IsDirect { get; }
+
+        public virtual bool IsAccessible => (uint)this.ReferenceCount > 0u ? true : false;
 
         public abstract int ReferenceCount { get; }
 

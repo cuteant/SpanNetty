@@ -9,7 +9,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public class WebSocket00FrameEncoder : MessageToMessageEncoder2<WebSocketFrame>, IWebSocketFrameEncoder
+    public class WebSocket00FrameEncoder : MessageToMessageEncoder<WebSocketFrame>, IWebSocketFrameEncoder
     {
         static readonly IByteBuffer _0X00 = Unpooled.UnreleasableBuffer(
             Unpooled.DirectBuffer(1, 1).WriteByte(0x00));

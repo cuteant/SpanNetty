@@ -22,13 +22,13 @@ namespace DotNetty.Codecs.Http
 
         public override bool TryGet(AsciiString name, out ICharSequence value)
         {
-            value = default(ICharSequence);
+            value = default;
             return false;
         }
 
         public override bool TryGetInt(AsciiString name, out int value)
         {
-            value = default(int);
+            value = default;
             return false;
         }
 
@@ -36,7 +36,7 @@ namespace DotNetty.Codecs.Http
 
         public override bool TryGetShort(AsciiString name, out short value)
         {
-            value = default(short);
+            value = default;
             return false;
         }
 
@@ -44,7 +44,7 @@ namespace DotNetty.Codecs.Http
 
         public override bool TryGetTimeMillis(AsciiString name, out long value)
         {
-            value = default(long);
+            value = default;
             return false;
         }
 

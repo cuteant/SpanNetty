@@ -34,7 +34,10 @@ namespace DotNetty.Common.Internal
 
         public AppendableCharSequence(int length)
         {
-            if (length <= 0) { ThrowHelper.ThrowArgumentException_Positive(length, ExceptionArgument.length); }
+            if ((uint)(length - 1) > SharedConstants.TooBigOrNegative) // <= 0
+            {
+                ThrowHelper.ThrowArgumentException_Positive(length, ExceptionArgument.length);
+            }
 
             this.chars = new byte[length];
         }
@@ -69,6 +72,13 @@ namespace DotNetty.Common.Internal
         public ICharSequence SubSequence(int start, int end)
         {
             int length = end - start;
+            if (0u >= (uint)length)
+            {
+                // If start and end index is the same we need to return an empty sequence to conform to the interface.
+                // As our expanding logic depends on the fact that we have a char[] with length > 0 we need to construct
+                // an instance for which this is true.
+                return new AppendableCharSequence(Math.Min(16, this.chars.Length));
+            }
             var data = new byte[length];
             PlatformDependent.CopyMemory(this.chars, start, data, 0, length);
             return new AppendableCharSequence(data);
@@ -131,6 +141,7 @@ namespace DotNetty.Common.Internal
 
                 case IHasAsciiSpan hasAscii:
                     hasAscii.AsciiSpan.Slice(start, length).CopyTo(this.chars.AsSpan(this.pos, length));
+                    this.pos += length;
                     break;
 
                 default:

@@ -231,63 +231,61 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        static bool MatchMonth(ICharSequence month, ICharSequence txt, int tokenStart) =>
-            AsciiString.RegionMatchesAscii(month, true, 0, txt, tokenStart, 3);
-
         bool TryParseMonth(ICharSequence txt, int tokenStart, int tokenEnd)
         {
             int len = tokenEnd - tokenStart;
 
-            if (len != 3)
-            {
-                return false;
-            }
+            if (len != 3) { return false; }
 
-            if (MatchMonth(Jan, txt, tokenStart))
+            char monthChar1 = AsciiString.ToLowerCase(txt[tokenStart]);
+            char monthChar2 = AsciiString.ToLowerCase(txt[tokenStart + 1]);
+            char monthChar3 = AsciiString.ToLowerCase(txt[tokenStart + 2]);
+
+            if (monthChar1 == 'j' && monthChar2 == 'a' && monthChar3 == 'n')
             {
                 this.month = 1;
             }
-            else if (MatchMonth(Feb, txt, tokenStart))
+            else if (monthChar1 == 'f' && monthChar2 == 'e' && monthChar3 == 'b')
             {
                 this.month = 2;
             }
-            else if (MatchMonth(Mar, txt, tokenStart))
+            else if (monthChar1 == 'm' && monthChar2 == 'a' && monthChar3 == 'r')
             {
                 this.month = 3;
             }
-            else if (MatchMonth(Apr, txt, tokenStart))
+            else if (monthChar1 == 'a' && monthChar2 == 'p' && monthChar3 == 'r')
             {
                 this.month = 4;
             }
-            else if (MatchMonth(May, txt, tokenStart))
+            else if (monthChar1 == 'm' && monthChar2 == 'a' && monthChar3 == 'y')
             {
                 this.month = 5;
             }
-            else if (MatchMonth(Jun, txt, tokenStart))
+            else if (monthChar1 == 'j' && monthChar2 == 'u' && monthChar3 == 'n')
             {
                 this.month = 6;
             }
-            else if (MatchMonth(Jul, txt, tokenStart))
+            else if (monthChar1 == 'j' && monthChar2 == 'u' && monthChar3 == 'l')
             {
                 this.month = 7;
             }
-            else if (MatchMonth(Aug, txt, tokenStart))
+            else if (monthChar1 == 'a' && monthChar2 == 'u' && monthChar3 == 'g')
             {
                 this.month = 8;
             }
-            else if (MatchMonth(Sep, txt, tokenStart))
+            else if (monthChar1 == 's' && monthChar2 == 'e' && monthChar3 == 'p')
             {
                 this.month = 9;
             }
-            else if (MatchMonth(Oct, txt, tokenStart))
+            else if (monthChar1 == 'o' && monthChar2 == 'c' && monthChar3 == 't')
             {
                 this.month = 10;
             }
-            else if (MatchMonth(Nov, txt, tokenStart))
+            else if (monthChar1 == 'n' && monthChar2 == 'o' && monthChar3 == 'v')
             {
                 this.month = 11;
             }
-            else if (MatchMonth(Dec, txt, tokenStart))
+            else if (monthChar1 == 'd' && monthChar2 == 'e' && monthChar3 == 'c')
             {
                 this.month = 12;
             }
@@ -298,19 +296,6 @@ namespace DotNetty.Codecs
 
             return true;
         }
-
-        static readonly AsciiString Jan = AsciiString.Cached("Jan");
-        static readonly AsciiString Feb = AsciiString.Cached("Feb");
-        static readonly AsciiString Mar = AsciiString.Cached("Mar");
-        static readonly AsciiString Apr = AsciiString.Cached("Apr");
-        static readonly AsciiString May = AsciiString.Cached("May");
-        static readonly AsciiString Jun = AsciiString.Cached("Jun");
-        static readonly AsciiString Jul = AsciiString.Cached("Jul");
-        static readonly AsciiString Aug = AsciiString.Cached("Aug");
-        static readonly AsciiString Sep = AsciiString.Cached("Sep");
-        static readonly AsciiString Oct = AsciiString.Cached("Oct");
-        static readonly AsciiString Nov = AsciiString.Cached("Nov");
-        static readonly AsciiString Dec = AsciiString.Cached("Dec");
 
         bool TryParseYear(ICharSequence txt, int tokenStart, int tokenEnd)
         {

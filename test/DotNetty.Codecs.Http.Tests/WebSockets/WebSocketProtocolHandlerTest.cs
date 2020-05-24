@@ -6,6 +6,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
     using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http.WebSockets;
+    using DotNetty.Handlers.Flow;
     using DotNetty.Transport.Channels.Embedded;
     using Xunit;
 
@@ -25,6 +26,66 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             Assert.Equal(pingData, response.Content);
 
             pingData.Release();
+            Assert.False(channel.Finish());
+        }
+
+        [Fact]
+        public void PingPongFlowControlWhenAutoReadIsDisabled()
+        {
+            string text1 = "Hello, world #1";
+            string text2 = "Hello, world #2";
+            string text3 = "Hello, world #3";
+            string text4 = "Hello, world #4";
+
+            EmbeddedChannel channel = new EmbeddedChannel();
+            channel.Configuration.AutoRead = false;
+            channel.Pipeline.AddLast(new FlowControlHandler());
+            channel.Pipeline.AddLast(new Handler() { });
+
+            // When
+            Assert.False(channel.WriteInbound(
+                new PingWebSocketFrame(Unpooled.CopiedBuffer(text1, Encoding.UTF8)),
+                new TextWebSocketFrame(text2),
+                new TextWebSocketFrame(text3),
+                new PingWebSocketFrame(Unpooled.CopiedBuffer(text4, Encoding.UTF8))
+            ));
+
+            // Then - no messages were handled or propagated
+            Assert.Null(channel.ReadInbound<object>());
+            Assert.Null(channel.ReadOutbound<object>());
+
+            // When
+            channel.Read();
+
+            // Then - pong frame was written to the outbound
+            var response1 = channel.ReadOutbound<PongWebSocketFrame>();
+            Assert.Equal(text1, response1.Content.ToString(Encoding.UTF8));
+
+            // And - one requested message was handled and propagated inbound
+            var message2 = channel.ReadInbound<TextWebSocketFrame>();
+            Assert.Equal(text2, message2.Text());
+
+            // And - no more messages were handled or propagated
+            Assert.Null(channel.ReadInbound<object>());
+            Assert.Null(channel.ReadOutbound<object>());
+
+            // When
+            channel.Read();
+
+            // Then - one requested message was handled and propagated inbound
+            var message3 = channel.ReadInbound<TextWebSocketFrame>();
+            Assert.Equal(text3, message3.Text());
+
+            // And - no more messages were handled or propagated
+            // Precisely, ping frame 'text4' was NOT read or handled.
+            // It would be handle ONLY on the next 'channel.read()' call.
+            Assert.Null(channel.ReadInbound<object>());
+            Assert.Null(channel.ReadOutbound<object>());
+
+            // Cleanup
+            response1.Release();
+            message2.Release();
+            message3.Release();
             Assert.False(channel.Finish());
         }
 
@@ -65,7 +126,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             Assert.False(channel.Finish());
         }
 
-        static void AssertPropagatedInbound<T>(T message, EmbeddedChannel channel) 
+        static void AssertPropagatedInbound<T>(T message, EmbeddedChannel channel)
             where T : WebSocketFrame
         {
             var propagatedResponse = channel.ReadInbound<T>();

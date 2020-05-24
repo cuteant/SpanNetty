@@ -150,12 +150,12 @@ namespace DotNetty.Common.Internal
                 }
                 else
                 {
-                    item = default(T);
+                    item = default;
                     return false;
                 }
             }
 
-            RefArrayAccessUtil.SpElement(buffer, offset, default(T));
+            RefArrayAccessUtil.SpElement(buffer, offset, default);
             this.ConsumerIndex = consumerIndex + 1; // StoreStore
             item = e;
             return true;
@@ -191,7 +191,7 @@ namespace DotNetty.Common.Internal
                 }
                 else
                 {
-                    item = default(T);
+                    item = default;
                     return false;
                 }
             }

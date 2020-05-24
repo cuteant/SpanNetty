@@ -12,10 +12,28 @@ namespace DotNetty.Codecs
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
 
+    /// <summary>
+    /// An encoder that encodes the content in <see cref="IAddressedEnvelope{T}"/> to <see cref="DatagramPacket"/> using
+    /// the specified message encoder. E.g.,
+    ///
+    /// <code>
+    /// <see cref="IChannelPipeline"/> pipeline = ...;
+    /// pipeline.addLast("udpEncoder", new <see cref="DatagramPacketEncoder{T}"/>(new <see cref="T:ProtobufEncoder"/>(...));
+    /// </code>
+    ///
+    /// Note: As UDP packets are out-of-order, you should make sure the encoded message size are not greater than
+    /// the max safe packet size in your particular network path which guarantees no packet fragmentation.
+    /// </summary>
+    /// <typeparam name="T">the type of message to be encoded</typeparam>
     public class DatagramPacketEncoder<T> : MessageToMessageEncoder<IAddressedEnvelope<T>>
     {
         readonly MessageToMessageEncoder<T> encoder;
 
+        /// <summary>
+        /// Create an encoder that encodes the content in <see cref="IAddressedEnvelope{T}"/> to <see cref="DatagramPacket"/> using
+        /// the specified message encoder.
+        /// </summary>
+        /// <param name="encoder">the specified message encoder</param>
         public DatagramPacketEncoder(MessageToMessageEncoder<T> encoder)
         {
             if (encoder is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.encoder); }
@@ -23,14 +41,15 @@ namespace DotNetty.Codecs
             this.encoder = encoder;
         }
 
+        /// <inheritdoc />
         public override bool AcceptOutboundMessage(object msg)
         {
-            var envelope = msg as IAddressedEnvelope<T>;
-            return envelope is object 
-                && this.encoder.AcceptOutboundMessage(envelope.Content) 
-                && (envelope.Sender is object || envelope.Recipient is object);
+            return msg is IAddressedEnvelope<T> envelope
+                && this.encoder.AcceptOutboundMessage(envelope.Content)
+                && (/*envelope.Sender is object ||*/ envelope.Recipient is object); // Allow null sender when using DatagramPacketEncoder
         }
 
+        /// <inheritdoc />
         protected internal override void Encode(IChannelHandlerContext context, IAddressedEnvelope<T> message, List<object> output)
         {
             this.encoder.Encode(context, message.Content, output);
@@ -48,26 +67,36 @@ namespace DotNetty.Codecs
             output[0] = new DatagramPacket(content, message.Sender, message.Recipient);
         }
 
+        /// <inheritdoc />
         public override Task BindAsync(IChannelHandlerContext context, EndPoint localAddress) => 
             this.encoder.BindAsync(context, localAddress);
 
+        /// <inheritdoc />
         public override Task ConnectAsync(IChannelHandlerContext context, EndPoint remoteAddress, EndPoint localAddress) => 
             this.encoder.ConnectAsync(context, remoteAddress, localAddress);
 
+        /// <inheritdoc />
         public override void Disconnect(IChannelHandlerContext context, IPromise promise) => this.encoder.Disconnect(context, promise);
 
+        /// <inheritdoc />
         public override void Close(IChannelHandlerContext context, IPromise promise) => this.encoder.Close(context, promise);
 
+        /// <inheritdoc />
         public override void Deregister(IChannelHandlerContext context, IPromise promise) => this.encoder.Deregister(context, promise);
 
+        /// <inheritdoc />
         public override void Read(IChannelHandlerContext context) => this.encoder.Read(context);
 
+        /// <inheritdoc />
         public override void Flush(IChannelHandlerContext context) => this.encoder.Flush(context);
 
+        /// <inheritdoc />
         public override void HandlerAdded(IChannelHandlerContext context) => this.encoder.HandlerAdded(context);
 
+        /// <inheritdoc />
         public override void HandlerRemoved(IChannelHandlerContext context) => this.encoder.HandlerRemoved(context);
 
+        /// <inheritdoc />
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception) => 
             this.encoder.ExceptionCaught(context, exception);
     }

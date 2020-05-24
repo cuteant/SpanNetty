@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
 {
     using System;
     using System.Text;
+    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http.WebSockets;
     using DotNetty.Common.Utilities;
@@ -21,12 +22,46 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         [Fact]
         public void PerformOpeningHandshakeSubProtocolNotSupported() => PerformOpeningHandshake0(false);
 
+        [Fact]
+        public async Task PerformHandshakeWithoutOriginHeader()
+        {
+            EmbeddedChannel ch = new EmbeddedChannel(
+                new HttpObjectAggregator(42), new HttpRequestDecoder(), new HttpResponseEncoder());
+
+            IFullHttpRequest req = new DefaultFullHttpRequest(
+                Http11, HttpMethod.Get, "/chat", Unpooled.CopiedBuffer("^n:ds[4U", Encoding.ASCII));
+
+            req.Headers.Set(HttpHeaderNames.Host, "server.example.com");
+            req.Headers.Set(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket);
+            req.Headers.Set(HttpHeaderNames.Connection, "Upgrade");
+            req.Headers.Set(HttpHeaderNames.SecWebsocketKey1, "4 @1  46546xW%0l 1 5");
+            req.Headers.Set(HttpHeaderNames.SecWebsocketProtocol, "chat, superchat");
+
+            WebSocketServerHandshaker00 handshaker00 = new WebSocketServerHandshaker00(
+                "ws://example.com/chat", "chat", int.MaxValue);
+            try
+            {
+                await handshaker00.HandshakeAsync(ch, req);
+                Assert.False(true, "Expecting WebSocketHandshakeException");
+            }
+            catch (WebSocketHandshakeException e)
+            {
+                Assert.Equal("Missing origin header, got only "
+                        + "[host, upgrade, connection, sec-websocket-key1, sec-websocket-protocol]",
+                    e.Message);
+            }
+            finally
+            {
+                req.Release();
+            }
+        }
+
         static void PerformOpeningHandshake0(bool subProtocol)
         {
             var ch = new EmbeddedChannel(
                 new HttpObjectAggregator(42), new HttpRequestDecoder(), new HttpResponseEncoder());
 
-            var req = new DefaultFullHttpRequest(Http11, HttpMethod.Get, "/chat", 
+            var req = new DefaultFullHttpRequest(Http11, HttpMethod.Get, "/chat",
                 Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes("^n:ds[4U")));
 
             req.Headers.Set(HttpHeaderNames.Host, "server.example.com");

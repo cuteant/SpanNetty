@@ -30,6 +30,8 @@ namespace DotNetty.Buffers
 
         public sealed override int WriterIndex => this.wrapped.WriterIndex;
 
+        public sealed override bool IsAccessible => this.wrapped.IsAccessible;
+
         public sealed override bool IsReadable() => this.wrapped.IsReadable();
 
         public sealed override bool IsReadable(int numBytes) => this.wrapped.IsReadable(numBytes);
@@ -41,6 +43,8 @@ namespace DotNetty.Buffers
         public sealed override int WritableBytes => this.wrapped.WritableBytes;
 
         public sealed override int MaxWritableBytes => this.wrapped.MaxWritableBytes;
+
+        public sealed override int MaxFastWritableBytes => this.wrapped.MaxFastWritableBytes;
 
         public override int EnsureWritable(int minWritableBytes, bool force) => this.wrapped.EnsureWritable(minWritableBytes, force);
 
@@ -175,6 +179,12 @@ namespace DotNetty.Buffers
         public override CompositeByteBuffer AddComponent(bool increaseWriterIndex, int cIndex, IByteBuffer buffer)
         {
             this.wrapped.AddComponent(increaseWriterIndex, cIndex, buffer);
+            return this;
+        }
+
+        public override CompositeByteBuffer AddFlattenedComponents(bool increaseWriterIndex, IByteBuffer buffer)
+        {
+            this.wrapped.AddFlattenedComponents(increaseWriterIndex, buffer);
             return this;
         }
 

@@ -51,7 +51,13 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public override IChannelConfiguration Configuration => this.config;
 
-        public override bool Active => this.Socket.IsBound;
+        public override bool Active
+        {
+            // 待测试
+            // As IsBound will continue to return true even after the channel was closed
+            // we will also need to check if it is open.
+            get => this.Open && this.Socket.IsBound;
+        }
 
         public override ChannelMetadata Metadata => METADATA;
 

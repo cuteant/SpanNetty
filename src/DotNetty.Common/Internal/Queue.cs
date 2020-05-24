@@ -307,7 +307,7 @@ namespace DotNetty.Common.Internal
         {
             if (0U >= (uint)_size)
             {
-                result = default(T);
+                result = default;
                 return false;
             }
 
@@ -436,13 +436,13 @@ namespace DotNetty.Common.Internal
                 _q = q;
                 _version = q._version;
                 _index = -1;
-                _currentElement = default(T);
+                _currentElement = default;
             }
 
             public void Dispose()
             {
                 _index = -2;
-                _currentElement = default(T);
+                _currentElement = default;
             }
 
             public bool MoveNext()
@@ -458,7 +458,7 @@ namespace DotNetty.Common.Internal
                 {
                     // We've run past the last element
                     _index = -2;
-                    _currentElement = default(T);
+                    _currentElement = default;
                     return false;
                 }
 
@@ -515,7 +515,7 @@ namespace DotNetty.Common.Internal
             {
                 if (_version != _q._version) ThrowInvalidOperationException_InvalidOperation_EnumFailedVersion();
                 _index = -1;
-                _currentElement = default(T);
+                _currentElement = default;
             }
         }
     }

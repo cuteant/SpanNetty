@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoProperty
-// ReSharper disable ConvertToAutoPropertyWhenPossible
 namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
@@ -12,82 +10,202 @@ namespace DotNetty.Codecs.Http.WebSockets
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
+    /// <summary>
+    /// Base class for web socket client handshake implementations
+    /// </summary>
     public abstract partial class WebSocketClientHandshaker
     {
-        static readonly ClosedChannelException DefaultClosedChannelException = new ClosedChannelException();
+        protected const int DefaultForceCloseTimeoutMillis = 10000;
 
-        static readonly string HttpSchemePrefix = HttpScheme.Http + "://";
-        static readonly string HttpsSchemePrefix = HttpScheme.Https + "://";
+        private static readonly ClosedChannelException DefaultClosedChannelException = new ClosedChannelException();
 
-        readonly Uri uri;
-
-        readonly WebSocketVersion version;
-
-        int handshakeComplete;
-
-        readonly string expectedSubprotocol;
-
-        string actualSubprotocol;
+        private static readonly string HttpSchemePrefix = HttpScheme.Http + "://";
+        private static readonly string HttpsSchemePrefix = HttpScheme.Https + "://";
 
         protected readonly HttpHeaders CustomHeaders;
 
-        readonly int maxFramePayloadLength;
+        private readonly Uri _uri;
+        private readonly WebSocketVersion _version;
+        private readonly string _expectedSubprotocol;
+        private readonly int _maxFramePayloadLength;
+        private readonly bool _absoluteUpgradeUrl;
 
+        // volatile
+        private long _forceCloseTimeoutMillis = DefaultForceCloseTimeoutMillis;
+        private int _forceCloseInit;
+        private int _forceCloseComplete;
+
+        private int _handshakeComplete;
+        private string _actualSubprotocol;
+
+        /// <summary>Base constructor</summary>
+        /// <param name="uri">URL for web socket communications. e.g "ws://myhost.com/mypath". Subsequent web socket frames will be
+        /// sent to this URL.</param>
+        /// <param name="version">Version of web socket specification to use to connect to the server</param>
+        /// <param name="subprotocol">Sub protocol request sent to the server.</param>
+        /// <param name="customHeaders">Map of custom headers to add to the client request</param>
+        /// <param name="maxFramePayloadLength">Maximum length of a frame's payload</param>
         protected WebSocketClientHandshaker(Uri uri, WebSocketVersion version, string subprotocol,
             HttpHeaders customHeaders, int maxFramePayloadLength)
+            : this(uri, version, subprotocol, customHeaders, maxFramePayloadLength, DefaultForceCloseTimeoutMillis)
         {
-            this.uri = uri;
-            this.version = version;
-            this.expectedSubprotocol = subprotocol;
-            this.CustomHeaders = customHeaders;
-            this.maxFramePayloadLength = maxFramePayloadLength;
         }
 
-        public Uri Uri => this.uri;
+        /// <summary>Base constructor</summary>
+        /// <param name="uri">URL for web socket communications. e.g "ws://myhost.com/mypath". Subsequent web socket frames will be
+        /// sent to this URL.</param>
+        /// <param name="version">Version of web socket specification to use to connect to the server</param>
+        /// <param name="subprotocol">Sub protocol request sent to the server.</param>
+        /// <param name="customHeaders">Map of custom headers to add to the client request</param>
+        /// <param name="maxFramePayloadLength">Maximum length of a frame's payload</param>
+        /// <param name="forceCloseTimeoutMillis">Close the connection if it was not closed by the server after timeout specified</param>
+        protected WebSocketClientHandshaker(Uri uri, WebSocketVersion version, string subprotocol,
+            HttpHeaders customHeaders, int maxFramePayloadLength, long forceCloseTimeoutMillis)
+            : this(uri, version, subprotocol, customHeaders, maxFramePayloadLength, forceCloseTimeoutMillis, false)
+        {
+        }
 
-        public WebSocketVersion Version => this.version;
+        /// <summary>Base constructor</summary>
+        /// <param name="uri">URL for web socket communications. e.g "ws://myhost.com/mypath". Subsequent web socket frames will be
+        /// sent to this URL.</param>
+        /// <param name="version">Version of web socket specification to use to connect to the server</param>
+        /// <param name="subprotocol">Sub protocol request sent to the server.</param>
+        /// <param name="customHeaders">Map of custom headers to add to the client request</param>
+        /// <param name="maxFramePayloadLength">Maximum length of a frame's payload</param>
+        /// <param name="forceCloseTimeoutMillis">Close the connection if it was not closed by the server after timeout specified</param>
+        /// <param name="absoluteUpgradeUrl">Use an absolute url for the Upgrade request, typically when connecting through an HTTP proxy over
+        /// clear HTTP</param>
+        protected WebSocketClientHandshaker(Uri uri, WebSocketVersion version, string subprotocol,
+            HttpHeaders customHeaders, int maxFramePayloadLength, long forceCloseTimeoutMillis, bool absoluteUpgradeUrl)
+        {
+            _uri = uri;
+            _version = version;
+            _expectedSubprotocol = subprotocol;
+            CustomHeaders = customHeaders;
+            _maxFramePayloadLength = maxFramePayloadLength;
+            _forceCloseTimeoutMillis = forceCloseTimeoutMillis;
+            _absoluteUpgradeUrl = absoluteUpgradeUrl;
+        }
 
-        public int MaxFramePayloadLength => this.maxFramePayloadLength;
+        /// <summary>
+        /// Returns the URI to the web socket. e.g. "ws://myhost.com/path"
+        /// </summary>
+        public Uri Uri => _uri;
 
-        public bool IsHandshakeComplete => SharedConstants.True == Volatile.Read(ref this.handshakeComplete);
+        /// <summary>
+        /// Version of the web socket specification that is being used
+        /// </summary>
+        public WebSocketVersion Version => _version;
 
-        void SetHandshakeComplete() => Interlocked.Exchange(ref this.handshakeComplete, SharedConstants.True);
+        /// <summary>
+        /// Returns the max length for any frame's payload
+        /// </summary>
+        public int MaxFramePayloadLength => _maxFramePayloadLength;
 
-        public string ExpectedSubprotocol => this.expectedSubprotocol;
+        /// <summary>
+        /// Flag to indicate if the opening handshake is complete
+        /// </summary>
+        public bool IsHandshakeComplete => SharedConstants.False < (uint)Volatile.Read(ref _handshakeComplete);
 
+        void SetHandshakeComplete() => Interlocked.Exchange(ref _handshakeComplete, SharedConstants.True);
+
+        /// <summary>
+        /// Returns the CSV of requested subprotocol(s) sent to the server as specified in the constructor
+        /// </summary>
+        public string ExpectedSubprotocol => _expectedSubprotocol;
+
+        /// <summary>
+        /// Returns the subprotocol response sent by the server. Only available after end of handshake.
+        /// Null if no subprotocol was requested or confirmed by the server.
+        /// </summary>
         public string ActualSubprotocol
         {
-            get => Volatile.Read(ref this.actualSubprotocol);
-            private set => Interlocked.Exchange(ref this.actualSubprotocol, value);
+            get => Volatile.Read(ref _actualSubprotocol);
+            private set => Interlocked.Exchange(ref _actualSubprotocol, value);
         }
 
+        /// <summary>
+        /// Gets or sets timeout to close the connection if it was not closed by the server.
+        /// </summary>
+        public long ForceCloseTimeoutMillis
+        {
+            get => Volatile.Read(ref _forceCloseTimeoutMillis);
+            set => Interlocked.Exchange(ref _forceCloseTimeoutMillis, value);
+        }
+
+        /// <summary>
+        /// Flag to indicate if the closing handshake was initiated because of timeout.
+        /// For testing only.
+        /// </summary>
+        protected internal bool IsForceCloseComplete => SharedConstants.False < (uint)Volatile.Read(ref _forceCloseComplete);
+
+        private int ForceCloseInit => Volatile.Read(ref _forceCloseInit);
+
+        /// <summary>Begins the opening handshake</summary>
+        /// <param name="channel">Channel</param>
         public Task HandshakeAsync(IChannel channel)
         {
-            IFullHttpRequest request = this.NewHandshakeRequest();
-
-            var decoder = channel.Pipeline.Get<HttpResponseDecoder>();
+            var pipeline = channel.Pipeline;
+            var decoder = pipeline.Get<HttpResponseDecoder>();
             if (decoder is null)
             {
-                var codec = channel.Pipeline.Get<HttpClientCodec>();
+                var codec = pipeline.Get<HttpClientCodec>();
                 if (codec is null)
                 {
                     return ThrowHelper.ThrowInvalidOperationException_HttpResponseDecoder();
                 }
             }
 
+            IFullHttpRequest request = NewHandshakeRequest();
+
             var completion = channel.NewPromise();
-            channel.WriteAndFlushAsync(request).ContinueWith(LinkOutcomeContinuationAction,
-                new Tuple<IPromise, IChannelPipeline, WebSocketClientHandshaker>(completion, channel.Pipeline, this),
+            channel.WriteAndFlushAsync(request).ContinueWith(HandshakeOnCompleteAction,
+                new Tuple<IPromise, IChannelPipeline, WebSocketClientHandshaker>(completion, pipeline, this),
                 TaskContinuationOptions.ExecuteSynchronously);
 
             return completion.Task;
         }
 
+        /// <summary>Returns a new <see cref="IFullHttpRequest"/> which will be used for the handshake.</summary>
         protected internal abstract IFullHttpRequest NewHandshakeRequest();
 
+        static readonly Action<Task, object> HandshakeOnCompleteAction = HandshakeOnComplete;
+        static void HandshakeOnComplete(Task t, object state)
+        {
+            var wrapped = (Tuple<IPromise, IChannelPipeline, WebSocketClientHandshaker>)state;
+            if (t.IsCanceled)
+            {
+                wrapped.Item1.TrySetCanceled(); return;
+            }
+            else if (t.IsFaulted)
+            {
+                wrapped.Item1.TrySetException(t.Exception.InnerExceptions); return;
+            }
+            else if (t.IsCompleted)
+            {
+                IChannelPipeline p = wrapped.Item2;
+                IChannelHandlerContext ctx = p.Context<HttpRequestEncoder>() ?? p.Context<HttpClientCodec>();
+                if (ctx is null)
+                {
+                    wrapped.Item1.TrySetException(ThrowHelper.GetInvalidOperationException<HttpRequestEncoder>());
+                    return;
+                }
+
+                p.AddAfter(ctx.Name, "ws-encoder", wrapped.Item3.NewWebSocketEncoder());
+                wrapped.Item1.TryComplete();
+                return;
+            }
+            ThrowHelper.ThrowArgumentOutOfRangeException();
+        }
+
+        /// <summary>
+        /// Validates and finishes the opening handshake initiated by <see cref="HandshakeAsync"/>.
+        /// </summary>
+        /// <param name="channel">Channel</param>
+        /// <param name="response">HTTP response containing the closing handshake details</param>
         public void FinishHandshake(IChannel channel, IFullHttpResponse response)
         {
-            this.Verify(response);
+            Verify(response);
 
             // Verify the subprotocol that we received from the server.
             // This must be one of our expected subprotocols - or null/empty if we didn't want to speak a subprotocol
@@ -97,14 +215,14 @@ namespace DotNetty.Codecs.Http.WebSockets
                 receivedProtocol = headerValue.ToString().Trim();
             }
 
-            string expectedProtocol = this.expectedSubprotocol ?? "";
+            string expectedProtocol = _expectedSubprotocol ?? "";
             bool protocolValid = false;
 
             if (0u >= (uint)expectedProtocol.Length && receivedProtocol is null)
             {
                 // No subprotocol required and none received
                 protocolValid = true;
-                this.ActualSubprotocol = this.expectedSubprotocol; // null or "" - we echo what the user requested
+                ActualSubprotocol = _expectedSubprotocol; // null or "" - we echo what the user requested
             }
             else if ((uint)expectedProtocol.Length > 0u && !string.IsNullOrEmpty(receivedProtocol))
             {
@@ -119,7 +237,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 #endif
                     {
                         protocolValid = true;
-                        this.ActualSubprotocol = receivedProtocol;
+                        ActualSubprotocol = receivedProtocol;
                         break;
                     }
                 }
@@ -127,10 +245,10 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             if (!protocolValid)
             {
-                ThrowHelper.ThrowWebSocketHandshakeException_InvalidSubprotocol(receivedProtocol, this.expectedSubprotocol);
+                ThrowHelper.ThrowWebSocketHandshakeException_InvalidSubprotocol(receivedProtocol, _expectedSubprotocol);
             }
 
-            this.SetHandshakeComplete();
+            SetHandshakeComplete();
 
             IChannelPipeline p = channel.Pipeline;
             // Remove decompressor from pipeline if its in use
@@ -160,7 +278,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 // Remove the encoder part of the codec as the user may start writing frames after this method returns.
                 codec.RemoveOutboundHandler();
 
-                p.AddAfter(ctx.Name, "ws-decoder", this.NewWebSocketDecoder());
+                p.AddAfter(ctx.Name, "ws-decoder", NewWebSocketDecoder());
 
                 // Delay the removal of the decoder so the user can setup the pipeline if needed to handle
                 // WebSocketFrame messages.
@@ -176,7 +294,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
 
                 IChannelHandlerContext context = ctx;
-                p.AddAfter(context.Name, "ws-decoder", this.NewWebSocketDecoder());
+                p.AddAfter(context.Name, "ws-decoder", NewWebSocketDecoder());
 
                 // Delay the removal of the decoder so the user can setup the pipeline if needed to handle
                 // WebSocketFrame messages.
@@ -185,6 +303,15 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
+        static readonly Action<object, object> RemoveHandlerAction = OnRemoveHandler;
+        static void OnRemoveHandler(object p, object h) => ((IChannelPipeline)p).Remove((IChannelHandler)h);
+
+        /// <summary>
+        /// Process the opening handshake initiated by <see cref="HandshakeAsync(IChannel)"/>.
+        /// </summary>
+        /// <param name="channel">Channel</param>
+        /// <param name="response">HTTP response containing the closing handshake details</param>
+        /// <returns> the <see cref="Task"/> which is notified once the handshake completes.</returns>
         public Task ProcessHandshakeAsync(IChannel channel, IHttpResponse response)
         {
             var completionSource = channel.NewPromise();
@@ -192,7 +319,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 try
                 {
-                    this.FinishHandshake(channel, res);
+                    FinishHandshake(channel, res);
                     completionSource.TryComplete();
                 }
                 catch (Exception cause)
@@ -237,15 +364,15 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         sealed class Handshaker : SimpleChannelInboundHandler<IFullHttpResponse>
         {
-            readonly WebSocketClientHandshaker clientHandshaker;
-            readonly IChannel channel;
-            readonly IPromise completion;
+            readonly WebSocketClientHandshaker _clientHandshaker;
+            readonly IChannel _channel;
+            readonly IPromise _completion;
 
             public Handshaker(WebSocketClientHandshaker clientHandshaker, IChannel channel, IPromise completion)
             {
-                this.clientHandshaker = clientHandshaker;
-                this.channel = channel;
-                this.completion = completion;
+                _clientHandshaker = clientHandshaker;
+                _channel = channel;
+                _completion = completion;
             }
 
             protected override void ChannelRead0(IChannelHandlerContext ctx, IFullHttpResponse msg)
@@ -254,12 +381,12 @@ namespace DotNetty.Codecs.Http.WebSockets
                 ctx.Pipeline.Remove(this);
                 try
                 {
-                    this.clientHandshaker.FinishHandshake(this.channel, msg);
-                    this.completion.TryComplete();
+                    _clientHandshaker.FinishHandshake(_channel, msg);
+                    _completion.TryComplete();
                 }
                 catch (Exception cause)
                 {
-                    this.completion.TrySetException(cause);
+                    _completion.TrySetException(cause);
                 }
             }
 
@@ -267,30 +394,109 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 // Remove ourself and fail the handshake promise.
                 ctx.Pipeline.Remove(this);
-                this.completion.TrySetException(cause);
+                _completion.TrySetException(cause);
             }
 
             public override void ChannelInactive(IChannelHandlerContext ctx)
             {
                 // Fail promise if Channel was closed
-                this.completion.TrySetException(DefaultClosedChannelException);
+                if (!_completion.IsCompleted)
+                {
+                    _completion.TrySetException(DefaultClosedChannelException);
+                }
                 ctx.FireChannelInactive();
             }
         }
 
+        /// <summary>
+        /// Verify the <see cref="IFullHttpResponse"/> and throws a <see cref="WebSocketHandshakeException"/> if something is wrong.
+        /// </summary>
+        /// <param name="response"></param>
         protected abstract void Verify(IFullHttpResponse response);
 
+        /// <summary>
+        /// Returns the decoder to use after handshake is complete.
+        /// </summary>
+        /// <returns></returns>
         protected internal abstract IWebSocketFrameDecoder NewWebSocketDecoder();
 
+        /// <summary>
+        /// Returns the encoder to use after the handshake is complete.
+        /// </summary>
+        /// <returns></returns>
         protected internal abstract IWebSocketFrameEncoder NewWebSocketEncoder();
 
+        /// <summary>
+        /// Performs the closing handshake
+        /// </summary>
+        /// <param name="channel">Channel</param>
+        /// <param name="frame">Closing Frame that was received</param>
+        /// <returns></returns>
         public Task CloseAsync(IChannel channel, CloseWebSocketFrame frame)
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
-            return channel.WriteAndFlushAsync(frame);
+            var completionSource = channel.NewPromise();
+            channel.WriteAndFlushAsync(frame, completionSource);
+            ApplyForceCloseTimeout(channel, completionSource);
+            return completionSource.Task;
         }
 
-        internal static string RawPath(Uri wsUrl) => wsUrl.IsAbsoluteUri ? wsUrl.PathAndQuery : "/";
+        private void ApplyForceCloseTimeout(IChannel channel, IPromise flushFuture)
+        {
+            if (ForceCloseTimeoutMillis <= 0 || !channel.Active || (uint)ForceCloseInit > 0u)
+            {
+                return;
+            }
+            flushFuture.Task.ContinueWith(CloseOnCompleteAction, Tuple.Create(channel, this), TaskContinuationOptions.ExecuteSynchronously);
+        }
+
+        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
+        static void CloseOnComplete(Task t, object state)
+        {
+            var wrapped = (Tuple<IChannel, WebSocketClientHandshaker>)state;
+            var channel = wrapped.Item1;
+            var self = wrapped.Item2;
+
+            // If flush operation failed, there is no reason to expect
+            // a server to receive CloseFrame. Thus this should be handled
+            // by the application separately.
+            // Also, close might be called twice from different threads.
+            if (t.IsSuccess() && channel.Active &&
+                0u >= (uint)Interlocked.CompareExchange(ref self._forceCloseInit, 1, 0))
+            {
+                var timeoutTask = channel.EventLoop.Schedule(CloseChannelAction, channel, self, TimeSpan.FromMilliseconds(self.ForceCloseTimeoutMillis));
+                channel.CloseCompletion.ContinueWith(AbortCloseChannelAfterChannelClosedAction, timeoutTask, TaskContinuationOptions.ExecuteSynchronously);
+            }
+        }
+
+        private static readonly Action<object, object> CloseChannelAction = CloseChannel;
+        private static void CloseChannel(object c, object p)
+        {
+            var channel = (IChannel)c;
+            if (channel.Active)
+            {
+                channel.CloseAsync();
+                Interlocked.Exchange(ref ((WebSocketClientHandshaker)p)._forceCloseComplete, SharedConstants.True);
+            }
+        }
+
+        private static readonly Action<Task, object> AbortCloseChannelAfterChannelClosedAction = AbortCloseChannelAfterChannelClosed;
+        private static void AbortCloseChannelAfterChannelClosed(Task t, object s)
+        {
+            ((IScheduledTask)s).Cancel();
+        }
+
+        /// <summary>
+        /// Return the constructed raw path for the give <paramref name="wsUrl"/>.
+        /// </summary>
+        protected string UpgradeUrl(Uri wsUrl)
+        {
+            if (_absoluteUpgradeUrl)
+            {
+                return wsUrl.OriginalString;
+            }
+            return wsUrl.IsAbsoluteUri ? wsUrl.PathAndQuery : "/";
+        }
 
         internal static string WebsocketHostValue(Uri wsUrl)
         {

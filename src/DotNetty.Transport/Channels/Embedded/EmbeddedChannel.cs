@@ -28,7 +28,7 @@ namespace DotNetty.Transport.Channels.Embedded
             Closed
         };
 
-        static readonly IChannelHandler[] EMPTY_HANDLERS = new IChannelHandler[0];
+        static readonly IChannelHandler[] EMPTY_HANDLERS = EmptyArray<IChannelHandler>.Instance;
 
         static readonly IInternalLogger logger = InternalLoggerFactory.GetInstance<EmbeddedChannel>();
 
@@ -99,7 +99,12 @@ namespace DotNetty.Transport.Channels.Embedded
         }
 
         public EmbeddedChannel(IChannelId id, bool hasDisconnect, bool register, params IChannelHandler[] handlers)
-            : base(null, id)
+            : this(null, id, hasDisconnect, register, handlers)
+        {
+        }
+
+        public EmbeddedChannel(IChannel parent, IChannelId id, bool hasDisconnect, bool register, params IChannelHandler[] handlers)
+            : base(parent, id)
         {
             this.Metadata = GetMetadata(hasDisconnect);
             this.Configuration = new DefaultChannelConfiguration(this);

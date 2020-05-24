@@ -103,8 +103,8 @@ namespace DotNetty.Buffers
         }
 
         /**
-         * @return {@code true} if this subpage is in use.
-         *         {@code false} if this subpage is not used by its chunk and thus it's OK to be released.
+         * @return <c>true</c> if this subpage is in use.
+         *         <c>false</c> if this subpage is not used by its chunk and thus it's OK to be released.
          */
 
         internal bool Free(PoolSubpage<T> head, int bitmapIdx)
@@ -227,20 +227,33 @@ namespace DotNetty.Buffers
             int maxNumElems;
             int numAvail;
             int elemSize;
-            lock (this.Chunk.Arena)
+
+            var thisChunk = this.Chunk;
+            if (thisChunk is null)
             {
-                if (!this.DoNotDestroy)
+                // This is the head so there is no need to synchronize at all as these never change.
+                doNotDestroy = true;
+                maxNumElems = 0;
+                numAvail = 0;
+                elemSize = -1;
+            }
+            else
+            {
+                lock (thisChunk.Arena)
                 {
-                    doNotDestroy = false;
-                    // Not used for creating the String.
-                    maxNumElems = numAvail = elemSize = -1;
-                }
-                else
-                {
-                    doNotDestroy = true;
-                    maxNumElems = this.maxNumElems;
-                    numAvail = this.numAvail;
-                    elemSize = this.ElemSize;
+                    if (!this.DoNotDestroy)
+                    {
+                        doNotDestroy = false;
+                        // Not used for creating the String.
+                        maxNumElems = numAvail = elemSize = -1;
+                    }
+                    else
+                    {
+                        doNotDestroy = true;
+                        maxNumElems = this.maxNumElems;
+                        numAvail = this.numAvail;
+                        elemSize = this.ElemSize;
+                    }
                 }
             }
 
@@ -257,7 +270,14 @@ namespace DotNetty.Buffers
         {
             get
             {
-                lock (this.Chunk.Arena)
+                var thisChunk = this.Chunk;
+                if (thisChunk is null)
+                {
+                    // It's the head.
+                    return 0;
+                }
+
+                lock (thisChunk.Arena)
                 {
                     return this.maxNumElems;
                 }
@@ -268,7 +288,14 @@ namespace DotNetty.Buffers
         {
             get
             {
-                lock (this.Chunk.Arena)
+                var thisChunk = this.Chunk;
+                if (thisChunk is null)
+                {
+                    // It's the head.
+                    return 0;
+                }
+
+                lock (thisChunk.Arena)
                 {
                     return this.numAvail;
                 }
@@ -279,7 +306,14 @@ namespace DotNetty.Buffers
         {
             get
             {
-                lock (this.Chunk.Arena)
+                var thisChunk = this.Chunk;
+                if (thisChunk is null)
+                {
+                    // It's the head.
+                    return -1;
+                }
+
+                lock (thisChunk.Arena)
                 {
                     return this.ElemSize;
                 }

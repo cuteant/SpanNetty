@@ -71,7 +71,7 @@ namespace DotNetty.Handlers.Flow
          * Determine if the underlying {@link Queue} is empty. This method exists for
          * testing, debugging and inspection purposes and it is not Thread safe!
          */
-        public bool IsQueueEmpty => this.queue.IsEmpty;
+        public bool IsQueueEmpty => this.queue is null || this.queue.IsEmpty;
 
         /**
          * Releases all messages and destroys the {@link Queue}.
@@ -160,28 +160,31 @@ namespace DotNetty.Handlers.Flow
          */
         int Dequeue(IChannelHandlerContext ctx, int minConsume)
         {
-            if (this.queue is object)
+            int consumed = 0;
+
+            var thisQueue = this.queue;
+            if (thisQueue is null) { return consumed; }
+
+            // fireChannelRead(...) may call ctx.read() and so this method may reentrance. Because of this we need to
+            // check if queue was set to null in the meantime and if so break the loop.
+            while ((consumed < minConsume || this.config.AutoRead) && thisQueue.TryDequeue(out object msg))
             {
-                int consumed = 0;
-
-                while ((consumed < minConsume || this.config.AutoRead) && this.queue.TryDequeue(out object msg))
-                {
-                    ++consumed;
-                    ctx.FireChannelRead(msg);
-                }
-
-                // We're firing a completion event every time one (or more)
-                // messages were consumed and the queue ended up being drained
-                // to an empty state.
-                if (this.queue.IsEmpty && consumed > 0)
-                {
-                    ctx.FireChannelReadComplete();
-                }
-
-                return consumed;
+                ++consumed;
+                ctx.FireChannelRead(msg);
             }
 
-            return 0;
+            // We're firing a completion event every time one (or more)
+            // messages were consumed and the queue ended up being drained
+            // to an empty state.
+            if (thisQueue.IsEmpty)
+            {
+                thisQueue.Recycle();
+                this.queue = null;
+
+                if (consumed > 0) { ctx.FireChannelReadComplete(); }
+            }
+
+            return consumed;
         }
     }
 

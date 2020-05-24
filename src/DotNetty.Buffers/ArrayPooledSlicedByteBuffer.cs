@@ -31,7 +31,7 @@ namespace DotNetty.Buffers
             return slice;
         }
 
-        int adjustment;
+        internal int adjustment;
 
         ArrayPooledSlicedByteBuffer(ThreadLocalPool.Handle handle)
             : base(handle)
@@ -305,7 +305,7 @@ namespace DotNetty.Buffers
             return ret - this.adjustment;
         }
 
-        [MethodImpl(InlineMethod.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         int Idx(int index) => index + this.adjustment;
     }
 }

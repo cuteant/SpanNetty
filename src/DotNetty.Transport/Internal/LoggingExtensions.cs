@@ -48,6 +48,13 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void DiscardedInboundMessage(this IInternalLogger logger, IChannelHandlerContext ctx)
+        {
+            logger.Debug("Discarded message pipeline : {}. Channel : {}.",
+                         ctx.Pipeline, ctx.Channel);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ExceptionOnAccept(this IInternalLogger logger, SocketException ex)
         {
             logger.Info("Exception on accept.", ex);

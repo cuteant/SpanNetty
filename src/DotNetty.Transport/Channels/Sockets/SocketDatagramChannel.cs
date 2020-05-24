@@ -151,7 +151,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 IRecvByteBufAllocatorHandle handle = this.Unsafe.RecvBufAllocHandle;
 
                 int received = operation.BytesTransferred;
-                if (received <= 0)
+                if ((uint)(received - 1) > SharedConstants.TooBigOrNegative) // <= 0
                 {
                     return 0;
                 }

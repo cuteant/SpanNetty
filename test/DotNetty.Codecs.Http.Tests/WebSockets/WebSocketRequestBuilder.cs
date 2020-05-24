@@ -120,7 +120,14 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             }
             if (this.origin != null)
             {
-                headers.Set(HttpHeaderNames.SecWebsocketOrigin, this.origin);
+                if (version == WebSocketVersion.V13 || version == WebSocketVersion.V00)
+                {
+                    headers.Set(HttpHeaderNames.Origin, this.origin);
+                }
+                else
+                {
+                    headers.Set(HttpHeaderNames.SecWebsocketOrigin, this.origin);
+                }
             }
             if (this.version != null)
             {

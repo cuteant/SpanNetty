@@ -68,6 +68,49 @@ namespace DotNetty.Codecs.Http.Tests
         }
 
         [Fact]
+        public void ChunkedRequestDecompression()
+        {
+            HttpResponseDecoder decoder = new HttpResponseDecoder();
+            HttpContentDecoder decompressor = new HttpContentDecompressor();
+
+            EmbeddedChannel channel = new EmbeddedChannel(decoder, decompressor, null);
+
+            string headers = "HTTP/1.1 200 OK\r\n"
+                    + "Transfer-Encoding: chunked\r\n"
+                    + "Trailer: My-Trailer\r\n"
+                    + "Content-Encoding: gzip\r\n\r\n";
+
+            channel.WriteInbound(Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes(headers)));
+
+            string chunkLength = GzHelloWorld.Length.ToString("x2");
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(chunkLength + "\r\n", Encoding.ASCII)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(GzHelloWorld)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes("\r\n"))));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer("0\r\n", Encoding.ASCII)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer("My-Trailer: 42\r\n\r\n\r\n", Encoding.ASCII)));
+
+            object ob1 = channel.ReadInbound<object>();
+            Assert.True(ob1 is DefaultHttpResponse);
+
+            object ob2 = channel.ReadInbound<object>();
+            Assert.True(ob1 is DefaultHttpResponse);
+            IHttpContent content = (IHttpContent)ob2;
+            Assert.Equal(HelloWorld, content.Content.ToString(Encoding.ASCII));
+            content.Release();
+
+            object ob3 = channel.ReadInbound<object>();
+            Assert.True(ob1 is DefaultHttpResponse);
+            ILastHttpContent lastContent = (ILastHttpContent)ob3;
+            Assert.NotNull(lastContent.Result);
+            Assert.True(lastContent.Result.IsSuccess);
+            Assert.False(lastContent.TrailingHeaders.IsEmpty);
+            Assert.Equal("42", lastContent.TrailingHeaders.Get((AsciiString)"My-Trailer", null));
+            AssertHasInboundMessages(channel, false);
+            AssertHasOutboundMessages(channel, false);
+            Assert.False(channel.Finish());
+        }
+
+        [Fact]
         public void ResponseDecompression()
         {
             // baseline test: response decoder, content decompressor && request aggregator work as expected
@@ -115,7 +158,7 @@ namespace DotNetty.Codecs.Http.Tests
             var resp = channel.ReadOutbound<IFullHttpResponse>();
             Assert.NotNull(resp);
             Assert.Equal(100, resp.Status.Code);
-            Assert.True(channel.WriteInbound(Unpooled.WrappedBuffer(GzHelloWorld)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(GzHelloWorld)));
             resp.Release();
 
             AssertHasInboundMessages(channel, true);
@@ -142,7 +185,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(resp);
             Assert.Equal(100, resp.Status.Code);
             resp.Release();
-            Assert.True(channel.WriteInbound(Unpooled.WrappedBuffer(GzHelloWorld)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(GzHelloWorld)));
 
             AssertHasInboundMessages(channel, true);
             AssertHasOutboundMessages(channel, false);
@@ -168,7 +211,7 @@ namespace DotNetty.Codecs.Http.Tests
             var resp = channel.ReadOutbound<IFullHttpResponse>();
             Assert.Equal(100, resp.Status.Code);
             resp.Release();
-            Assert.True(channel.WriteInbound(Unpooled.WrappedBuffer(GzHelloWorld)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(GzHelloWorld)));
 
             AssertHasInboundMessages(channel, true);
             AssertHasOutboundMessages(channel, false);
@@ -195,7 +238,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(resp);
             Assert.Equal(100, resp.Status.Code);
             resp.Release();
-            Assert.True(channel.WriteInbound(Unpooled.WrappedBuffer(GzHelloWorld)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(GzHelloWorld)));
 
             AssertHasInboundMessages(channel, true);
             AssertHasOutboundMessages(channel, false);
@@ -582,7 +625,7 @@ namespace DotNetty.Codecs.Http.Tests
         {
             ZlibDecoder decoder = ZlibCodecFactory.NewZlibDecoder(ZlibWrapper.Gzip);
             var channel = new EmbeddedChannel(decoder);
-            Assert.True(channel.WriteInbound(Unpooled.WrappedBuffer(input)));
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(input)));
             Assert.True(channel.Finish()); // close the channel to indicate end-of-data
 
             int outputSize = 0;

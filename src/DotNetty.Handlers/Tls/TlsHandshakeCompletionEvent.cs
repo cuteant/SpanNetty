@@ -30,12 +30,12 @@ namespace DotNetty.Handlers.Tls
         }
 
         /// <summary>
-        ///     Return {@code true} if the handshake was successful
+        ///     Return <c>true</c> if the handshake was successful
         /// </summary>
         public bool IsSuccessful => this.exception is null;
 
         /// <summary>
-        ///     Return the {@link Throwable} if {@link #isSuccess()} returns {@code false}
+        ///     Return the {@link Throwable} if {@link #isSuccess()} returns <c>false</c>
         ///     and so the handshake failed.
         /// </summary>
         public Exception Exception => this.exception;

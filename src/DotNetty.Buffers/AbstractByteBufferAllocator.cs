@@ -119,7 +119,7 @@ namespace DotNetty.Buffers
 
         public unsafe IByteBuffer DirectBuffer(int initialCapacity, int maxCapacity)
         {
-            if (initialCapacity == 0 && maxCapacity == 0)
+            if (0u >= (uint)initialCapacity && 0u >= (uint)maxCapacity)
             {
                 return this.emptyBuffer;
             }
@@ -146,9 +146,18 @@ namespace DotNetty.Buffers
         [MethodImpl(InlineMethod.AggressiveInlining)]
         static void Validate(int initialCapacity, int maxCapacity)
         {
+            if ((uint)initialCapacity > (uint)maxCapacity)
+            {
+                ThrowInvalidInitialCapacity(initialCapacity, maxCapacity);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowInvalidInitialCapacity(int initialCapacity, int maxCapacity)
+        {
             if (initialCapacity < 0)
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException_InitialCapacity();
+                ThrowHelper.ThrowArgumentException_PositiveOrZero(initialCapacity, ExceptionArgument.initialCapacity);
             }
 
             if (initialCapacity > maxCapacity)
@@ -165,13 +174,9 @@ namespace DotNetty.Buffers
 
         public int CalculateNewCapacity(int minNewCapacity, int maxCapacity)
         {
-            if (minNewCapacity < 0)
+            if ((uint)minNewCapacity > (uint)maxCapacity)
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException_MinNewCapacity(minNewCapacity);
-            }
-            if (minNewCapacity > maxCapacity)
-            {
-                ThrowHelper.ThrowArgumentOutOfRangeException_MaxCapacity(minNewCapacity, maxCapacity);
+                ThrowInvalidNewCapacity(minNewCapacity, maxCapacity);
             }
 
             const int Threshold = CalculateThreshold; // 4 MiB page
@@ -205,6 +210,19 @@ namespace DotNetty.Buffers
             }
 
             return Math.Min(newCapacity, maxCapacity);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void ThrowInvalidNewCapacity(int minNewCapacity, int maxCapacity)
+        {
+            if (minNewCapacity < 0)
+            {
+                ThrowHelper.ThrowArgumentException_PositiveOrZero(minNewCapacity, ExceptionArgument.minNewCapacity);
+            }
+            if (minNewCapacity > maxCapacity)
+            {
+                ThrowHelper.ThrowArgumentOutOfRangeException_MaxCapacity(minNewCapacity, maxCapacity);
+            }
         }
     }
 }

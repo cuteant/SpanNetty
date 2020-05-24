@@ -20,5 +20,9 @@ namespace DotNetty.Codecs
             : base(cause)
         {
         }
+        public CorruptedFrameException(string message, Exception cause)
+            : base(message, cause)
+        {
+        }
     }
 }

@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoPropertyWhenPossible
-// ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http
 {
     using System;
@@ -16,7 +14,53 @@ namespace DotNetty.Codecs.Http
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public partial class HttpObjectAggregator : MessageAggregator2<IHttpObject, IHttpMessage, IHttpContent, IFullHttpMessage>
+    /// <summary>
+    /// A <see cref="IChannelHandler"/> that aggregates an <see cref="IHttpMessage"/>
+    /// and its following <see cref="IHttpContent"/>s into a single <see cref="IFullHttpRequest"/>
+    /// or <see cref="IFullHttpResponse"/> (depending on if it used to handle requests or responses)
+    /// with no following <see cref="IHttpContent"/>s.  It is useful when you don't want to take
+    /// care of HTTP messages whose transfer encoding is 'chunked'.  Insert this
+    /// handler after <see cref="HttpResponseDecoder"/> in the <see cref="IChannelPipeline"/> if being used to handle
+    /// responses, or after <see cref="HttpRequestDecoder"/> and <see cref="HttpResponseEncoder"/> in the
+    /// <see cref="IChannelPipeline"/> if being used to handle requests.
+    /// <blockquote>
+    ///  <para>
+    ///  <see cref="IChannelPipeline"/> p = ...;
+    ///  ...
+    ///  p.addLast("decoder", <b>new <see cref="HttpRequestDecoder"/>()</b>);
+    ///  p.addLast("encoder", <b>new <see cref="HttpResponseEncoder"/>()</b>);
+    ///  p.addLast("aggregator", <b>new <see cref="HttpObjectAggregator"/>(1048576)</b>);
+    ///  ...
+    ///  p.addLast("handler", new HttpRequestHandler());
+    ///  </para>
+    /// </blockquote>
+    /// <p>
+    /// For convenience, consider putting a <see cref="HttpServerCodec"/> before the <see cref="HttpObjectAggregator"/>
+    /// as it functions as both a <see cref="HttpRequestDecoder"/> and a <see cref="HttpResponseEncoder"/>.
+    /// </p>
+    /// Be aware that <see cref="HttpObjectAggregator"/> may end up sending a <see cref="IHttpResponse"/>:
+    /// <table>
+    ///   <tbody>
+    ///     <tr>
+    ///       <th>Response Status</th>
+    ///       <th>Condition When Sent</th>
+    ///     </tr>
+    ///     <tr>
+    ///       <td>100 Continue</td>
+    ///       <td>A '100-continue' expectation is received and the 'content-length' doesn't exceed maxContentLength</td>
+    ///     </tr>
+    ///     <tr>
+    ///       <td>417 Expectation Failed</td>
+    ///       <td>A '100-continue' expectation is received and the 'content-length' exceeds maxContentLength</td>
+    ///     </tr>
+    ///     <tr>
+    ///       <td>413 Request Entity Too Large</td>
+    ///       <td>Either the 'content-length' or the bytes received so far exceed maxContentLength</td>
+    ///     </tr>
+    ///   </tbody>
+    /// </table>
+    /// </summary>
+    public class HttpObjectAggregator : MessageAggregator<IHttpObject, IHttpMessage, IHttpContent, IFullHttpMessage>
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<HttpObjectAggregator>();
         static readonly IFullHttpResponse Continue = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.Continue, Unpooled.Empty);
@@ -33,27 +77,43 @@ namespace DotNetty.Codecs.Http
             TooLargeClose.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.Close);
         }
 
-        readonly bool closeOnExpectationFailed;
+        private readonly bool _closeOnExpectationFailed;
 
+        /// <summary>Creates a new instance.</summary>
+        /// <param name="maxContentLength">the maximum length of the aggregated content in bytes.
+        /// If the length of the aggregated content exceeds this value,
+        /// <see cref="HandleOversizedMessage(IChannelHandlerContext, IHttpMessage)"/> will be called.</param>
         public HttpObjectAggregator(int maxContentLength) 
             : this(maxContentLength, false)
         {
         }
 
+        /// <summary>Creates a new instance.</summary>
+        /// <param name="maxContentLength">the maximum length of the aggregated content in bytes.
+        /// If the length of the aggregated content exceeds this value,
+        /// <see cref="HandleOversizedMessage(IChannelHandlerContext, IHttpMessage)"/> will be called.</param>
+        /// <param name="closeOnExpectationFailed">If a 100-continue response is detected but the content length is too large
+        /// then <c>true</c> means close the connection. otherwise the connection will remain open and data will be
+        /// consumed and discarded until the next request is received.</param>
         public HttpObjectAggregator(int maxContentLength, bool closeOnExpectationFailed) 
             : base(maxContentLength)
         {
-            this.closeOnExpectationFailed = closeOnExpectationFailed;
+            _closeOnExpectationFailed = closeOnExpectationFailed;
         }
 
+        /// <inheritdoc />
         protected override bool IsStartMessage(IHttpObject msg) => msg is IHttpMessage;
 
+        /// <inheritdoc />
         protected override bool IsContentMessage(IHttpObject msg) => msg is IHttpContent;
 
+        /// <inheritdoc />
         protected override bool IsLastContentMessage(IHttpContent msg) => msg is ILastHttpContent;
 
+        /// <inheritdoc />
         protected override bool IsAggregated(IHttpObject msg) => msg is IFullHttpMessage;
 
+        /// <inheritdoc />
         protected override bool IsContentLengthInvalid(IHttpMessage start, int maxContentLength)
         {
             try
@@ -88,6 +148,7 @@ namespace DotNetty.Codecs.Http
             return null;
         }
 
+        /// <inheritdoc />
         protected override object NewContinueResponse(IHttpMessage start, int maxContentLength, IChannelPipeline pipeline)
         {
             object response = ContinueResponse(start, maxContentLength, pipeline);
@@ -100,12 +161,15 @@ namespace DotNetty.Codecs.Http
             return response;
         }
 
+        /// <inheritdoc />
         protected override bool CloseAfterContinueResponse(object msg) => 
-            this.closeOnExpectationFailed && this.IgnoreContentAfterContinueResponse(msg);
+            _closeOnExpectationFailed && IgnoreContentAfterContinueResponse(msg);
 
+        /// <inheritdoc />
         protected override bool IgnoreContentAfterContinueResponse(object msg) => 
             msg is IHttpResponse response && response.Status.CodeClass.Equals(HttpStatusClass.ClientError);
 
+        /// <inheritdoc />
         protected override IFullHttpMessage BeginAggregation(IHttpMessage start, IByteBuffer content)
         {
             Debug.Assert(!(start is IFullHttpMessage));
@@ -123,6 +187,7 @@ namespace DotNetty.Codecs.Http
             }
         }
 
+        /// <inheritdoc />
         protected override void Aggregate(IFullHttpMessage aggregated, IHttpContent content)
         {
             if (content is ILastHttpContent httpContent)
@@ -132,6 +197,7 @@ namespace DotNetty.Codecs.Http
             }
         }
 
+        /// <inheritdoc />
         protected override void FinishAggregation(IFullHttpMessage aggregated)
         {
             // Set the 'Content-Length' header. If one isn't already set.
@@ -148,6 +214,7 @@ namespace DotNetty.Codecs.Http
             }
         }
 
+        /// <inheritdoc />
         protected override void HandleOversizedMessage(IChannelHandlerContext ctx, IHttpMessage oversized)
         {
             if (oversized is IHttpRequest)
@@ -165,10 +232,6 @@ namespace DotNetty.Codecs.Http
                 {
                     ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith(CloseOnFaultAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
                 }
-                // If an oversized request was handled properly and the connection is still alive
-                // (i.e. rejected 100-continue). the decoder should prepare to handle a new message.
-                var decoder = ctx.Pipeline.Get<HttpObjectDecoder>();
-                decoder?.Reset();
             }
             else if (oversized is IHttpResponse)
             {
@@ -181,76 +244,96 @@ namespace DotNetty.Codecs.Http
             }
         }
 
+        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
+        static void CloseOnComplete(Task t, object s)
+        {
+            if (t.IsFaulted)
+            {
+                if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
+            }
+            ((IChannelHandlerContext)s).CloseAsync();
+        }
+
+        static readonly Action<Task, object> CloseOnFaultAction = CloseOnFault;
+        static void CloseOnFault(Task t, object s)
+        {
+            if (t.IsFaulted)
+            {
+                if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
+                ((IChannelHandlerContext)s).CloseAsync();
+            }
+        }
+
         abstract class AggregatedFullHttpMessage : IFullHttpMessage
         {
             protected readonly IHttpMessage Message;
-            readonly IByteBuffer content;
-            HttpHeaders trailingHeaders;
+            private readonly IByteBuffer _content;
+            private HttpHeaders _trailingHeaders;
 
             protected AggregatedFullHttpMessage(IHttpMessage message, IByteBuffer content, HttpHeaders trailingHeaders)
             {
-                this.Message = message;
-                this.content = content;
-                this.trailingHeaders = trailingHeaders;
+                Message = message;
+                _content = content;
+                _trailingHeaders = trailingHeaders;
             }
 
             public HttpHeaders TrailingHeaders
             {
                 get
                 {
-                    HttpHeaders headers = this.trailingHeaders;
+                    HttpHeaders headers = _trailingHeaders;
                     return headers ?? EmptyHttpHeaders.Default;
                 }
-                internal set => this.trailingHeaders = value;
+                internal set => _trailingHeaders = value;
             }
 
-            public HttpVersion ProtocolVersion => this.Message.ProtocolVersion;
+            public HttpVersion ProtocolVersion => Message.ProtocolVersion;
 
             public IHttpMessage SetProtocolVersion(HttpVersion version)
             {
-                this.Message.SetProtocolVersion(version);
+                Message.SetProtocolVersion(version);
                 return this;
             }
 
-            public HttpHeaders Headers => this.Message.Headers;
+            public HttpHeaders Headers => Message.Headers;
 
             public DecoderResult Result
             {
-                get => this.Message.Result;
-                set => this.Message.Result = value;
+                get => Message.Result;
+                set => Message.Result = value;
             }
 
-            public IByteBuffer Content => this.content;
+            public IByteBuffer Content => _content;
 
-            public int ReferenceCount => this.content.ReferenceCount;
+            public int ReferenceCount => _content.ReferenceCount;
 
             public IReferenceCounted Retain()
             {
-                this.content.Retain();
+                _content.Retain();
                 return this;
             }
 
             public IReferenceCounted Retain(int increment)
             {
-                this.content.Retain(increment);
+                _content.Retain(increment);
                 return this;
             }
 
             public IReferenceCounted Touch()
             {
-                this.content.Touch();
+                _content.Touch();
                 return this;
             }
 
             public IReferenceCounted Touch(object hint)
             {
-                this.content.Touch(hint);
+                _content.Touch(hint);
                 return this;
             }
 
-            public bool Release() => this.content.Release();
+            public bool Release() => _content.Release();
 
-            public bool Release(int decrement) => this.content.Release(decrement);
+            public bool Release(int decrement) => _content.Release(decrement);
 
             public abstract IByteBufferHolder Copy();
 
@@ -268,33 +351,33 @@ namespace DotNetty.Codecs.Http
             {
             }
 
-            public override IByteBufferHolder Copy() => this.Replace(this.Content.Copy());
+            public override IByteBufferHolder Copy() => Replace(Content.Copy());
 
-            public override IByteBufferHolder Duplicate() => this.Replace(this.Content.Duplicate());
+            public override IByteBufferHolder Duplicate() => Replace(Content.Duplicate());
 
-            public override IByteBufferHolder RetainedDuplicate() => this.Replace(this.Content.RetainedDuplicate());
+            public override IByteBufferHolder RetainedDuplicate() => Replace(Content.RetainedDuplicate());
 
             public override IByteBufferHolder Replace(IByteBuffer content)
             {
-                var dup = new DefaultFullHttpRequest(this.ProtocolVersion, this.Method, this.Uri, content, 
-                    this.Headers.Copy(), this.TrailingHeaders.Copy());
-                dup.Result = this.Result;
+                var dup = new DefaultFullHttpRequest(ProtocolVersion, Method, Uri, content, 
+                    Headers.Copy(), TrailingHeaders.Copy());
+                dup.Result = Result;
                 return dup;
             }
 
-            public HttpMethod Method => ((IHttpRequest)this.Message).Method;
+            public HttpMethod Method => ((IHttpRequest)Message).Method;
 
             public IHttpRequest SetMethod(HttpMethod method)
             {
-                ((IHttpRequest)this.Message).SetMethod(method);
+                ((IHttpRequest)Message).SetMethod(method);
                 return this;
             }
 
-            public string Uri => ((IHttpRequest)this.Message).Uri;
+            public string Uri => ((IHttpRequest)Message).Uri;
 
             public IHttpRequest SetUri(string uri)
             {
-                ((IHttpRequest)this.Message).SetUri(uri);
+                ((IHttpRequest)Message).SetUri(uri);
                 return this;
             }
 
@@ -308,25 +391,25 @@ namespace DotNetty.Codecs.Http
             {
             }
 
-            public override IByteBufferHolder Copy() => this.Replace(this.Content.Copy());
+            public override IByteBufferHolder Copy() => Replace(Content.Copy());
 
-            public override IByteBufferHolder Duplicate() => this.Replace(this.Content.Duplicate());
+            public override IByteBufferHolder Duplicate() => Replace(Content.Duplicate());
 
-            public override IByteBufferHolder RetainedDuplicate() => this.Replace(this.Content.RetainedDuplicate());
+            public override IByteBufferHolder RetainedDuplicate() => Replace(Content.RetainedDuplicate());
 
             public override IByteBufferHolder Replace(IByteBuffer content)
             {
-                var dup = new DefaultFullHttpResponse(this.ProtocolVersion, this.Status, content, 
-                    this.Headers.Copy(), this.TrailingHeaders.Copy());
-                dup.Result = this.Result;
+                var dup = new DefaultFullHttpResponse(ProtocolVersion, Status, content, 
+                    Headers.Copy(), TrailingHeaders.Copy());
+                dup.Result = Result;
                 return dup;
             }
 
-            public HttpResponseStatus Status => ((IHttpResponse)this.Message).Status;
+            public HttpResponseStatus Status => ((IHttpResponse)Message).Status;
 
             public IHttpResponse SetStatus(HttpResponseStatus status)
             {
-                ((IHttpResponse)this.Message).SetStatus(status);
+                ((IHttpResponse)Message).SetStatus(status);
                 return this;
             }
 

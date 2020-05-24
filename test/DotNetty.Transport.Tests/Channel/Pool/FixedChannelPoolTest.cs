@@ -257,7 +257,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await group.GetNext().SubmitAsync(() => TaskUtil.Completed);
             var e = await Assert.ThrowsAsync<InvalidOperationException>(async () => await pool.ReleaseAsync(channel));
             Assert.Same(FixedChannelPool.PoolClosedOnReleaseException, e);
-            
+
             // Since the pool is closed, the Channel should have been closed as well.
             await channel.CloseCompletion;
             Assert.False(channel.Open, "Unexpected open channel");
@@ -306,5 +306,30 @@ namespace DotNetty.Transport.Tests.Channel.Pool
                 // NOOP
             }
         }
+
+        //[Fact]
+        //public async Task TestCloseAsync()
+        //{
+        //    LocalAddress addr = new LocalAddress(LOCAL_ADDR_ID);
+        //    Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(this.group).Channel<LocalChannel>();
+
+        //    ServerBootstrap sb = new ServerBootstrap()
+        //        .Group(this.group)
+        //        .Channel<LocalServerChannel>()
+        //        .ChildHandler(
+        //            new ActionChannelInitializer<LocalChannel>(
+        //                ch => ch.Pipeline.AddLast(new ChannelHandlerAdapter()))
+        //        );
+
+        //    // Start server
+        //    IChannel sc = await sb.BindAsync(addr);
+
+        //    var pool = new FixedChannelPool(cb, new TestChannelPoolHandler(), 2);
+        //    await pool.AcquireAsync();
+        //    await pool.AcquireAsync();
+
+        //    var closePromise = sc.NewPromise();
+        //    pool.clo
+        //}
     }
 }

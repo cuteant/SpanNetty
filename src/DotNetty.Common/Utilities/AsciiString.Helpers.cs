@@ -135,11 +135,11 @@ namespace DotNetty.Common.Utilities
             return true;
         }
 
-        public static bool ContainsContentEqualsIgnoreCase(ICollection<ICharSequence> collection, ICharSequence value)
+        public static bool ContainsContentEqualsIgnoreCase(IReadOnlyList<ICharSequence> collection, ICharSequence value)
         {
-            foreach (ICharSequence v in collection)
+            for (int idx = 0; idx < collection.Count; idx++)
             {
-                if (ContentEqualsIgnoreCase(value, v))
+                if (ContentEqualsIgnoreCase(value, collection[idx]))
                 {
                     return true;
                 }
@@ -148,11 +148,11 @@ namespace DotNetty.Common.Utilities
             return false;
         }
 
-        public static bool ContainsAllContentEqualsIgnoreCase(ICollection<ICharSequence> a, ICollection<AsciiString> b)
+        public static bool ContainsAllContentEqualsIgnoreCase(IReadOnlyList<ICharSequence> a, IReadOnlyList<AsciiString> b)
         {
-            foreach (AsciiString v in b)
+            for (int idx = 0; idx < b.Count; idx++)
             {
-                if (!ContainsContentEqualsIgnoreCase(a, v))
+                if (!ContainsContentEqualsIgnoreCase(a, b[idx]))
                 {
                     return false;
                 }

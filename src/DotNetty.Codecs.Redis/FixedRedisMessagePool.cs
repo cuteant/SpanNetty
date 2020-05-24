@@ -4,9 +4,9 @@
 namespace DotNetty.Codecs.Redis
 {
     using System.Collections.Generic;
-    using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Redis.Messages;
+    using DotNetty.Common.Internal;
 
     public sealed class FixedRedisMessagePool : IRedisMessagePool
     {
@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Redis
             foreach (string simpleString in DefaultSimpleStrings)
             {
                 IByteBuffer key = Unpooled.UnreleasableBuffer(
-                    Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes(simpleString)));
+                    Unpooled.WrappedBuffer(TextEncodings.UTF8NoBOM.GetBytes(simpleString)));
 
                 var cached = new SimpleStringRedisMessage(simpleString);
                 this.byteBufToSimpleStrings.Add(key, cached);
@@ -77,7 +77,7 @@ namespace DotNetty.Codecs.Redis
             foreach (string error in DefaultErrors)
             {
                 IByteBuffer key = Unpooled.UnreleasableBuffer(
-                    Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes(error)));
+                    Unpooled.WrappedBuffer(TextEncodings.UTF8NoBOM.GetBytes(error)));
 
                 var cached = new ErrorRedisMessage(error);
                 this.byteBufToErrors.Add(key, cached);

@@ -6,7 +6,7 @@ namespace DotNetty.Transport.Libuv.Native
     using System;
     using System.Diagnostics;
     using System.Runtime.InteropServices;
-    using System.Text;
+    using DotNetty.Common.Internal;
 
     /// <summary>
     /// IPC pipe for recieving handles from different libuv loops
@@ -146,7 +146,7 @@ namespace DotNetty.Transport.Libuv.Native
         sealed class Ping : NativeRequest
         {
             internal static readonly uv_watcher_cb WriteCallback = OnWriteCallback;
-            static readonly byte[] PingBuf = Encoding.UTF8.GetBytes("PING");
+            static readonly byte[] PingBuf = TextEncodings.UTF8NoBOM.GetBytes("PING");
 
             readonly NativeHandle sentHandle;
             GCHandle gcHandle;

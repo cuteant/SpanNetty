@@ -43,6 +43,70 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         }
 
         [Fact]
+        public void WebSocketProtocolViolation()
+        {
+            int maxPayloadLength = 255;
+            string errorMessage = "Max frame length of " + maxPayloadLength + " has been exceeded.";
+            WebSocketCloseStatus expectedStatus = WebSocketCloseStatus.MessageTooBig;
+
+            // With auto-close
+            WebSocketDecoderConfig config = WebSocketDecoderConfig.NewBuilder()
+                .MaxFramePayloadLength(maxPayloadLength)
+                .CloseOnProtocolViolation(true)
+                .Build();
+            EmbeddedChannel inChannel = new EmbeddedChannel(new WebSocket08FrameDecoder(config));
+            EmbeddedChannel outChannel = new EmbeddedChannel(new WebSocket08FrameEncoder(true));
+
+            ExecuteProtocolViolationTest(outChannel, inChannel, maxPayloadLength + 1, expectedStatus, errorMessage);
+
+            var response = inChannel.ReadOutbound<CloseWebSocketFrame>();
+            Assert.NotNull(response);
+            Assert.Equal(expectedStatus.Code, response.StatusCode());
+            Assert.Equal(errorMessage, response.ReasonText());
+            response.Release();
+
+            // Without auto-close
+            config = WebSocketDecoderConfig.NewBuilder()
+                .MaxFramePayloadLength(maxPayloadLength)
+                .CloseOnProtocolViolation(false)
+                .Build();
+            inChannel = new EmbeddedChannel(new WebSocket08FrameDecoder(config));
+            outChannel = new EmbeddedChannel(new WebSocket08FrameEncoder(true));
+
+            ExecuteProtocolViolationTest(outChannel, inChannel, maxPayloadLength + 1, expectedStatus, errorMessage);
+
+            response = inChannel.ReadOutbound<CloseWebSocketFrame>();
+            Assert.Null(response);
+
+            // Release test data
+            this.binTestData.Release();
+            Assert.False(inChannel.Finish());
+            Assert.False(outChannel.Finish());
+        }
+
+        private void ExecuteProtocolViolationTest(EmbeddedChannel outChannel, EmbeddedChannel inChannel,
+                int testDataLength, WebSocketCloseStatus expectedStatus, string errorMessage)
+        {
+            CorruptedWebSocketFrameException corrupted = null;
+
+            try
+            {
+                BinaryWithLen(outChannel, inChannel, testDataLength);
+            }
+            catch (CorruptedWebSocketFrameException e)
+            {
+                corrupted = e;
+            }
+
+            var exceedingFrame = inChannel.ReadInbound<BinaryWebSocketFrame>();
+            Assert.Null(exceedingFrame);
+
+            Assert.NotNull(corrupted);
+            Assert.Equal(expectedStatus, corrupted.CloseStatus);
+            Assert.Equal(errorMessage, corrupted.Message);
+        }
+
+        [Fact]
         public void WebSocketEncodingAndDecoding()
         {
             // Test without masking
@@ -96,20 +160,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             string testStr = this.strTestData.Substring(0, testDataLength);
             outChannel.WriteOutbound(new TextWebSocketFrame(testStr));
 
-            // Transfer encoded data into decoder
-            // Loop because there might be multiple frames (gathering write)
-            while (true)
-            {
-                var encoded = outChannel.ReadOutbound<IByteBuffer>();
-                if (encoded != null)
-                {
-                    inChannel.WriteInbound(encoded);
-                }
-                else
-                {
-                    break;
-                }
-            }
+            Transfer(outChannel, inChannel);
 
             var txt = inChannel.ReadInbound<TextWebSocketFrame>();
             Assert.NotNull(txt);
@@ -123,20 +174,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             this.binTestData.SetIndex(0, testDataLength); // Send only len bytes
             outChannel.WriteOutbound(new BinaryWebSocketFrame(this.binTestData));
 
-            // Transfer encoded data into decoder
-            // Loop because there might be multiple frames (gathering write)
-            while (true)
-            {
-                var encoded = outChannel.ReadOutbound<IByteBuffer>();
-                if (encoded != null)
-                {
-                    inChannel.WriteInbound(encoded);
-                }
-                else
-                {
-                    break;
-                }
-            }
+            Transfer(outChannel, inChannel);
 
             var binFrame = inChannel.ReadInbound<BinaryWebSocketFrame>();
             Assert.NotNull(binFrame);
@@ -148,6 +186,21 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             }
 
             binFrame.Release();
+        }
+
+        private void Transfer(EmbeddedChannel outChannel, EmbeddedChannel inChannel)
+        {
+            // Transfer encoded data into decoder
+            // Loop because there might be multiple frames (gathering write)
+            for (; ; )
+            {
+                var encoded = outChannel.ReadOutbound<IByteBuffer>();
+                if (encoded == null)
+                {
+                    return;
+                }
+                inChannel.WriteInbound(encoded);
+            }
         }
 
         public void Dispose()

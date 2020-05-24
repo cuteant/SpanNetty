@@ -1,9 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoPropertyWhenPossible
-// ReSharper disable ConvertToAutoProperty
-// ReSharper disable ConvertToAutoPropertyWithPrivateSetter
 namespace DotNetty.Codecs.Http.Multipart
 {
     using System;
@@ -19,22 +16,43 @@ namespace DotNetty.Codecs.Http.Multipart
     using DotNetty.Handlers.Streams;
     using System.Text.Encodings.Web;
 
+    /// <summary>
+    /// This encoder will help to encode Request for a FORM as POST.
+    ///
+    /// <para>According to RFC 7231, POST, PUT and OPTIONS allow to have a body.
+    /// This encoder will support widely all methods except TRACE since the RFC notes
+    /// for GET, DELETE, HEAD and CONNECT: (replaces XXX by one of these methods)</para>
+    /// <para>"A payload within a XXX request message has no defined semantics;
+    /// sending a payload body on a XXX request might cause some existing
+    /// implementations to reject the request."</para>
+    /// <para>On the contrary, for TRACE method, RFC says:</para>
+    /// <para>"A client MUST NOT send a message body in a TRACE request."</para>
+    /// </summary>
     public class HttpPostRequestEncoder : IChunkedInput<IHttpContent>
     {
+        /// <summary>
+        /// Different modes to use to encode form data.
+        /// </summary>
         public enum EncoderMode
         {
-            // Legacy mode which should work for most. It is known to not work with OAUTH. For OAUTH use
-            // {@link EncoderMode#RFC3986}. The W3C form recommendations this for submitting post form data.
+            /// <summary>
+            /// Legacy mode which should work for most. It is known to not work with OAUTH. For OAUTH use
+            /// <see cref="RFC3986"/>. The W3C form recommendations this for submitting post form data.
+            /// </summary>
             RFC1738,
 
-            // Mode which is more new and is used for OAUTH
+            /// <summary>
+            /// Mode which is more new and is used for OAUTH
+            /// </summary>
             RFC3986,
 
-            // The HTML5 spec disallows mixed mode in multipart/form-data
-            // requests. More concretely this means that more files submitted
-            // under the same name will not be encoded using mixed mode, but
-            // will be treated as distinct fields.
-            // Reference: http://www.w3.org/TR/html5/forms.html#multipart-form-data
+            /// <summary>
+            /// The HTML5 spec disallows mixed mode in multipart/form-data
+            /// requests. More concretely this means that more files submitted
+            /// under the same name will not be encoded using mixed mode, but
+            /// will be treated as distinct fields.
+            /// Reference: http://www.w3.org/TR/html5/forms.html#multipart-form-data
+            /// </summary>
             HTML5
         }
 
@@ -60,39 +78,57 @@ namespace DotNetty.Codecs.Http.Multipart
         readonly Encoding charset = HttpConstants.DefaultEncoding;
         readonly HtmlEncoder htmlEncoder = HtmlEncoder.Default;
 
-        //  Chunked false by default
+        /// <summary>Chunked false by default</summary>
         bool isChunked;
 
-        // InterfaceHttpData for Body (without encoding)
+        /// <summary>InterfaceHttpData for Body (without encoding)</summary>
         readonly List<IInterfaceHttpData> bodyListDatas;
 
-        // The final Multipart List of InterfaceHttpData including encoding
+        /// <summary>The final Multipart List of InterfaceHttpData including encoding</summary>
         internal readonly List<IInterfaceHttpData> MultipartHttpDatas;
 
-        //  Does this request is a Multipart request
+        /// <summary>Does this request is a Multipart request</summary>
         readonly bool isMultipart;
 
-        // If multipart, this is the boundary for the global multipart
+        /// <summary>If multipart, this is the boundary for the global multipart</summary>
         internal string MultipartDataBoundary;
 
-        // If multipart, there could be internal multiparts (mixed) to the global multipart. Only one level is allowed.
+        /// <summary>If multipart, there could be internal multiparts (mixed) to the global multipart. Only one level is allowed.</summary>
         internal string MultipartMixedBoundary;
 
-        // To check if the header has been finalized
+        /// <summary>To check if the header has been finalized</summary>
         bool headerFinalized;
 
         readonly EncoderMode encoderMode;
 
+        /// <summary>
+        /// TBD
+        /// </summary>
+        /// <param name="request">the request to encode</param>
+        /// <param name="multipart">True if the FORM is a ENCTYPE="multipart/form-data"</param>
         public HttpPostRequestEncoder(IHttpRequest request, bool multipart)
             : this(new DefaultHttpDataFactory(DefaultHttpDataFactory.MinSize), request, multipart, EncoderMode.RFC1738)
         {
         }
 
+        /// <summary>
+        /// TBD
+        /// </summary>
+        /// <param name="factory">the factory used to create InterfaceHttpData</param>
+        /// <param name="request">the request to encode</param>
+        /// <param name="multipart">True if the FORM is a ENCTYPE="multipart/form-data"</param>
         public HttpPostRequestEncoder(IHttpDataFactory factory, IHttpRequest request, bool multipart)
             : this(factory, request, multipart, EncoderMode.RFC1738)
         {
         }
 
+        /// <summary>
+        /// TBD
+        /// </summary>
+        /// <param name="factory">the factory used to create InterfaceHttpData</param>
+        /// <param name="request">the request to encode</param>
+        /// <param name="multipart">True if the FORM is a ENCTYPE="multipart/form-data"</param>
+        /// <param name="encoderMode">the mode for the encoder to use. See <see cref="EncoderMode"/> for the details.</param>
         public HttpPostRequestEncoder(IHttpDataFactory factory, IHttpRequest request, bool multipart, EncoderMode encoderMode)
         {
             if (request is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.request); }
@@ -140,17 +176,35 @@ namespace DotNetty.Codecs.Http.Multipart
         // Global Transfer progress
         long globalProgress;
 
+        /// <summary>
+        /// True if this request is a Multipart request
+        /// </summary>
         public bool IsMultipart => this.isMultipart;
 
+        /// <summary>
+        /// Init the delimiter for Global Part (Data).
+        /// </summary>
         void InitDataMultipart() => this.MultipartDataBoundary = GetNewMultipartDelimiter();
 
+        /// <summary>
+        /// Init the delimiter for Mixed Part (Mixed).
+        /// </summary>
         void InitMixedMultipart() => this.MultipartMixedBoundary = GetNewMultipartDelimiter();
 
-        // construct a generated delimiter
+        /// <summary>construct a generated delimiter</summary>
+        /// <returns>a newly generated Delimiter (either for DATA or MIXED)</returns>
         static string GetNewMultipartDelimiter() => Convert.ToString(PlatformDependent.GetThreadLocalRandom().NextLong(), 16).ToLowerInvariant();
 
+        /// <summary>
+        /// This getMethod returns a List of all InterfaceHttpData from body part.
+        /// </summary>
+        /// <returns>the list of InterfaceHttpData from Body part</returns>
         public List<IInterfaceHttpData> GetBodyListAttributes() => this.bodyListDatas;
 
+        /// <summary>
+        /// Set the Body HttpDatas list
+        /// </summary>
+        /// <param name="list"></param>
         public void SetBodyHttpDatas(List<IInterfaceHttpData> list)
         {
             if (list is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.list); }
@@ -166,6 +220,13 @@ namespace DotNetty.Codecs.Http.Multipart
             }
         }
 
+        /// <summary>
+        /// Add a simple attribute in the body as Name=Value
+        /// </summary>
+        /// <param name="name">name of the parameter</param>
+        /// <param name="value">the value of the parameter</param>
+        /// <exception cref="ArgumentNullException">for name</exception>
+        /// <exception cref="ErrorDataEncoderException">if the encoding is in error or if the finalize were already done</exception>
         public void AddBodyAttribute(string name, string value)
         {
             if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
@@ -448,7 +509,7 @@ namespace DotNetty.Codecs.Http.Multipart
                             replacement.Append("; ")
                                 .Append(HttpHeaderValues.FileName)
                                 .Append("=\"")
-                                .Append(fileUpload.FileName)
+                                .Append(this.currentFileUpload.FileName)
                                 .Append('"');
                         }
 
@@ -762,17 +823,17 @@ namespace DotNetty.Codecs.Http.Multipart
             if (this.isKey)
             {
                 string key = this.currentData.Name;
-                buffer = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes(key));
+                buffer = Unpooled.WrappedBuffer(TextEncodings.UTF8NoBOM.GetBytes(key));
                 this.isKey = false;
                 if (this.currentBuffer is null)
                 {
                     this.currentBuffer = Unpooled.WrappedBuffer(buffer,
-                        Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("=")));
+                        Unpooled.WrappedBuffer(TextEncodings.UTF8NoBOM.GetBytes("=")));
                 }
                 else
                 {
                     this.currentBuffer = Unpooled.WrappedBuffer(this.currentBuffer, buffer,
-                        Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("=")));
+                        Unpooled.WrappedBuffer(TextEncodings.UTF8NoBOM.GetBytes("=")));
                 }
                 // continue
                 size -= buffer.ReadableBytes + 1;
@@ -799,7 +860,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 this.isKey = true;
                 delimiter = this.iterator.HasNext()
-                    ? Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("&"))
+                    ? Unpooled.WrappedBuffer(TextEncodings.UTF8NoBOM.GetBytes("&"))
                     : null;
             }
 
@@ -809,7 +870,14 @@ namespace DotNetty.Codecs.Http.Multipart
                 this.currentData = null;
                 if (this.currentBuffer is null)
                 {
-                    this.currentBuffer = delimiter;
+                    if (delimiter is null)
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        this.currentBuffer = delimiter;
+                    }
                 }
                 else
                 {

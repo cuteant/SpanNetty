@@ -158,7 +158,7 @@ namespace DotNetty.Codecs.Http.Cors
         static bool IsPreflightRequest(IHttpRequest request)
         {
             HttpHeaders headers = request.Headers;
-            return request.Method.Equals(HttpMethod.Options)
+            return HttpMethod.Options.Equals(request.Method)
                 && headers.Contains(HttpHeaderNames.Origin)
                 && headers.Contains(HttpHeaderNames.AccessControlRequestMethod);
         }

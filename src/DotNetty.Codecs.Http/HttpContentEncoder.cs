@@ -30,6 +30,7 @@ namespace DotNetty.Codecs.Http
         EmbeddedChannel encoder;
         State state = State.AwaitHeaders;
 
+        /// <inheritdoc />
         public override bool AcceptOutboundMessage(object msg)
         {
             switch (msg)
@@ -43,16 +44,17 @@ namespace DotNetty.Codecs.Http
             }
         }
 
+        /// <inheritdoc />
         protected override void Decode(IChannelHandlerContext ctx, IHttpRequest msg, List<object> output)
         {
             ICharSequence acceptedEncoding = msg.Headers.Get(HttpHeaderNames.AcceptEncoding, HttpContentDecoder.Identity);
 
             HttpMethod meth = msg.Method;
-            if (meth.Equals(HttpMethod.Head))
+            if (HttpMethod.Head.Equals(meth))
             {
                 acceptedEncoding = ZeroLengthHead;
             }
-            else if (meth.Equals(HttpMethod.Connect))
+            else if (HttpMethod.Connect.Equals(meth))
             {
                 acceptedEncoding = ZeroLengthConnect;
             }
@@ -61,6 +63,7 @@ namespace DotNetty.Codecs.Http
             output.Add(ReferenceCountUtil.Retain(msg));
         }
 
+        /// <inheritdoc />
         protected override void Encode(IChannelHandlerContext ctx, IHttpObject msg, List<object> output)
         {
             var res = msg as IHttpResponse;
@@ -287,7 +290,7 @@ namespace DotNetty.Codecs.Http
                 }
                 else
                 {
-                    output.Add(new ComposedLastHttpContent(headers));
+                    output.Add(new ComposedLastHttpContent(headers, DecoderResult.Success));
                 }
                 return true;
             }

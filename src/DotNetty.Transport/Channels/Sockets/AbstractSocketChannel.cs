@@ -8,6 +8,7 @@ namespace DotNetty.Transport.Channels.Sockets
     using System.Diagnostics;
     using System.Net;
     using System.Net.Sockets;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
@@ -71,9 +72,17 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        public override bool Open => this.IsInState(StateFlags.Open);
+        public override bool Open
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => this.IsInState(StateFlags.Open);
+        }
 
-        public override bool Active => this.IsInState(StateFlags.Active);
+        public override bool Active
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => this.IsInState(StateFlags.Active);
+        }
 
         /// <summary>
         ///     Set read pending to <c>false</c>.
@@ -133,9 +142,9 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected bool IsInState(int stateToCheck) => (this.State & stateToCheck) == stateToCheck;
 
-        protected SocketChannelAsyncOperation<TChannel, TUnsafe> ReadOperation => this.readOperation ?? (this.readOperation = new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, true));
+        protected SocketChannelAsyncOperation<TChannel, TUnsafe> ReadOperation => this.readOperation ??= new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, true);
 
-        SocketChannelAsyncOperation<TChannel, TUnsafe> WriteOperation => this.writeOperation ?? (this.writeOperation = new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, false));
+        SocketChannelAsyncOperation<TChannel, TUnsafe> WriteOperation => this.writeOperation ??= new SocketChannelAsyncOperation<TChannel, TUnsafe>((TChannel)this, false);
 
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
         protected SocketChannelAsyncOperation<TChannel, TUnsafe> PrepareWriteOperation(in ReadOnlyMemory<byte> buffer)

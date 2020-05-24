@@ -136,7 +136,7 @@ namespace DotNetty.Transport.Libuv.Native
                     return (T)gcHandle.Target;
                 }
             }
-            return default(T);
+            return default;
         }
     }
 }

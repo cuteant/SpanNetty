@@ -481,7 +481,7 @@ namespace DotNetty.Handlers.Tls
 
                             // we've read out `read` bytes out of current packet to fulfil previously outstanding read
                             outputBufferLength = currentPacketLength - read;
-                            if (outputBufferLength <= 0)
+                            if ((uint)(outputBufferLength - 1) > SharedConstants.TooBigOrNegative) // <= 0
                             {
                                 // after feeding to SslStream current frame it read out more bytes than current packet size
                                 outputBufferLength = c_fallbackReadBufferSize;

@@ -370,7 +370,7 @@ namespace DotNetty.Common.Internal
             //var result = ((IDictionary<TKey, TValue>)_dictionary).Remove(key);
             //if (result) { InvalidateCache(); }
             //return result;
-            var result = _dictionary.TryRemove(key, out var value);
+            var result = _dictionary.TryRemove(key, out _);
             if (result) { InvalidateCache(); }
             return result;
         }
