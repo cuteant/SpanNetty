@@ -32,7 +32,7 @@ namespace DotNetty.Codecs.Http2.Tests
             {
                 buf[i] = (byte)0xFF;
             }
-            Assert.Throws<Http2Exception>(() => Decode(NewHuffmanDecoder(), buf));
+            Assert.Throws<Http2Exception>(() => Decode(buf));
         }
 
         [Fact]
@@ -40,56 +40,56 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             byte[] buf = new byte[1];
             buf[0] = 0x00; // '0', invalid padding
-            Assert.Throws<Http2Exception>(() => Decode(NewHuffmanDecoder(), buf));
+            Assert.Throws<Http2Exception>(() => Decode(buf));
         }
 
         [Fact]
         public void TestDecodeExtraPadding()
         {
             byte[] buf = MakeBuf(0x0f, 0xFF); // '1', 'EOS'
-            Assert.Throws<Http2Exception>(() => Decode(NewHuffmanDecoder(), buf));
+            Assert.Throws<Http2Exception>(() => Decode(buf));
         }
 
         [Fact]
         public void TestDecodeExtraPadding1byte()
         {
             byte[] buf = MakeBuf(0xFF);
-            Assert.Throws<Http2Exception>(() => Decode(NewHuffmanDecoder(), buf));
+            Assert.Throws<Http2Exception>(() => Decode(buf));
         }
 
         [Fact]
         public void TestDecodeExtraPadding2byte()
         {
             byte[] buf = MakeBuf(0x1F, 0xFF); // 'a'
-            Assert.Throws<Http2Exception>(() => Decode(NewHuffmanDecoder(), buf));
+            Assert.Throws<Http2Exception>(() => Decode(buf));
         }
 
         [Fact]
         public void TestDecodeExtraPadding3byte()
         {
             byte[] buf = MakeBuf(0x1F, 0xFF, 0xFF); // 'a'
-            Assert.Throws<Http2Exception>(() => Decode(NewHuffmanDecoder(), buf));
+            Assert.Throws<Http2Exception>(() => Decode(buf));
         }
 
         [Fact]
         public void TestDecodeExtraPadding4byte()
         {
             byte[] buf = MakeBuf(0x1F, 0xFF, 0xFF, 0xFF); // 'a'
-            Assert.Throws<Http2Exception>(() => Decode(NewHuffmanDecoder(), buf));
+            Assert.Throws<Http2Exception>(() => Decode(buf));
         }
 
         [Fact]
         public void TestDecodeExtraPadding29bit()
         {
             byte[] buf = MakeBuf(0xFF, 0x9F, 0xFF, 0xFF, 0xFF);  // '|'
-            Assert.Throws<Http2Exception>(() => Decode(NewHuffmanDecoder(), buf));
+            Assert.Throws<Http2Exception>(() => Decode(buf));
         }
 
         [Fact]
         public void TestDecodePartialSymbol()
         {
             byte[] buf = MakeBuf(0x52, 0xBC, 0x30, 0xFF, 0xFF, 0xFF, 0xFF); // " pFA\x00", 31 bits of padding, a.k.a. EOS
-            Assert.Throws<Http2Exception>(() => Decode(NewHuffmanDecoder(), buf));
+            Assert.Throws<Http2Exception>(() => Decode(buf));
         }
 
         private static byte[] MakeBuf(params int[] bytes)
@@ -104,20 +104,20 @@ namespace DotNetty.Codecs.Http2.Tests
 
         private static void RoundTrip(string s)
         {
-            RoundTrip(new HpackHuffmanEncoder(), NewHuffmanDecoder(), s);
+            RoundTrip(new HpackHuffmanEncoder(), s);
         }
 
-        private static void RoundTrip(HpackHuffmanEncoder encoder, HpackHuffmanDecoder decoder, string s)
+        private static void RoundTrip(HpackHuffmanEncoder encoder, string s)
         {
-            RoundTrip(encoder, decoder, Encoding.UTF8.GetBytes(s));
+            RoundTrip(encoder, Encoding.UTF8.GetBytes(s));
         }
 
         private static void RoundTrip(byte[] buf)
         {
-            RoundTrip(new HpackHuffmanEncoder(), NewHuffmanDecoder(), buf);
+            RoundTrip(new HpackHuffmanEncoder(), buf);
         }
 
-        private static void RoundTrip(HpackHuffmanEncoder encoder, HpackHuffmanDecoder decoder, byte[] buf)
+        private static void RoundTrip(HpackHuffmanEncoder encoder, byte[] buf)
         {
             var buffer = Unpooled.Buffer();
             try
@@ -126,7 +126,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 byte[] bytes = new byte[buffer.ReadableBytes];
                 buffer.ReadBytes(bytes);
 
-                byte[] actualBytes = Decode(decoder, bytes);
+                byte[] actualBytes = Decode(bytes);
 
                 Assert.Equal(buf, actualBytes);
             }
@@ -136,12 +136,12 @@ namespace DotNetty.Codecs.Http2.Tests
             }
         }
 
-        private static byte[] Decode(HpackHuffmanDecoder decoder, byte[] bytes)
+        private static byte[] Decode(byte[] bytes)
         {
             var buffer = Unpooled.WrappedBuffer(bytes);
             try
             {
-                AsciiString decoded = decoder.Decode(buffer, buffer.ReadableBytes);
+                AsciiString decoded = new HpackHuffmanDecoder().Decode(buffer, buffer.ReadableBytes);
                 Assert.False(buffer.IsReadable());
                 return decoded.ToByteArray();
             }
@@ -149,11 +149,6 @@ namespace DotNetty.Codecs.Http2.Tests
             {
                 buffer.Release();
             }
-        }
-
-        private static HpackHuffmanDecoder NewHuffmanDecoder()
-        {
-            return new HpackHuffmanDecoder(32);
         }
     }
 }

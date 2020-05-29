@@ -27,11 +27,14 @@ namespace DotNetty.Codecs.Http2
         {
         }
 
-        public DefaultHttp2HeadersEncoder(
-            ISensitivityDetector sensitivityDetector,
-            bool ignoreMaxHeaderListSize,
-            int dynamicTableArraySizeHint)
-            : this(sensitivityDetector, new HpackEncoder(ignoreMaxHeaderListSize, dynamicTableArraySizeHint))
+        public DefaultHttp2HeadersEncoder(ISensitivityDetector sensitivityDetector, bool ignoreMaxHeaderListSize, int dynamicTableArraySizeHint)
+            : this(sensitivityDetector, ignoreMaxHeaderListSize, dynamicTableArraySizeHint, HpackEncoder.HuffCodeThreshold)
+        {
+        }
+
+        public DefaultHttp2HeadersEncoder(ISensitivityDetector sensitivityDetector, bool ignoreMaxHeaderListSize,
+                                          int dynamicTableArraySizeHint, int huffCodeThreshold)
+            : this(sensitivityDetector, new HpackEncoder(ignoreMaxHeaderListSize, dynamicTableArraySizeHint, huffCodeThreshold))
         {
         }
 

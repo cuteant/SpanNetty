@@ -58,7 +58,7 @@ namespace DotNetty.Codecs.Http2
             get => this.extraStreamIds;
             set
             {
-                if (value < 0) { ThrowHelper.ThrowArgumentException_ExtraStreamIdsNonNegative(); }
+                if ((uint)value > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_ExtraStreamIdsNonNegative(); }
                 this.extraStreamIds = value;
             }
         }

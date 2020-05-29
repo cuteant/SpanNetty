@@ -36,31 +36,31 @@ namespace DotNetty.Codecs.Http2
         /// <summary>
         /// FireFox currently uses 5 streams to establish QoS classes.
         /// </summary>
-        const int DefaultMaxStateOnlySize = 5;
+        private const int DefaultMaxStateOnlySize = 5;
 
-        readonly IHttp2ConnectionPropertyKey stateKey;
+        private readonly IHttp2ConnectionPropertyKey _stateKey;
 
         /// <summary>
         /// If there is no <see cref="IHttp2Stream"/> object, but we still persist priority information then this is where the state will
         /// reside.
         /// </summary>
-        readonly IDictionary<int, State> stateOnlyMap;
+        private readonly IDictionary<int, State> _stateOnlyMap;
 
         /// <summary>
         /// This queue will hold streams that are not active and provides the capability to retain priority for streams which
         /// have no <see cref="IHttp2Stream"/> object. See <see cref="StateOnlyComparator"/> for the priority comparator.
         /// </summary>
-        readonly IPriorityQueue<State> stateOnlyRemovalQueue;
-        readonly IHttp2Connection connection;
+        private readonly IPriorityQueue<State> _stateOnlyRemovalQueue;
+        private readonly IHttp2Connection _connection;
 
-        readonly State connectionState;
+        private readonly State _connectionState;
 
         /// <summary>
         /// The minimum number of bytes that we will attempt to allocate to a stream. This is to
         /// help improve goodput on a per-stream basis.
         /// </summary>
-        int allocationQuantum = Http2CodecUtil.DefaultMinAllocationChunk;
-        readonly int maxStateOnlySize;
+        private int _allocationQuantum = Http2CodecUtil.DefaultMinAllocationChunk;
+        private readonly int _maxStateOnlySize;
 
         public WeightedFairQueueByteDistributor(IHttp2Connection connection)
             : this(connection, DefaultMaxStateOnlySize)
@@ -73,23 +73,23 @@ namespace DotNetty.Codecs.Http2
             if (uMaxStateOnlySize > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxStateOnlySize, ExceptionArgument.maxStateOnlySize); }
             if (0u >= uMaxStateOnlySize)
             {
-                this.stateOnlyMap = EmptyDictionary<int, State>.Instance;
-                this.stateOnlyRemovalQueue = EmptyPriorityQueue<State>.Instance;
+                _stateOnlyMap = EmptyDictionary<int, State>.Instance;
+                _stateOnlyRemovalQueue = EmptyPriorityQueue<State>.Instance;
             }
             else
             {
-                this.stateOnlyMap = new Dictionary<int, State>(maxStateOnlySize);
+                _stateOnlyMap = new Dictionary<int, State>(maxStateOnlySize);
                 // +2 because we may exceed the limit by 2 if a new dependency has no associated IHttp2Stream object. We need
                 // to create the State objects to put them into the dependency tree, which then impacts priority.
-                this.stateOnlyRemovalQueue = new PriorityQueue<State>(StateOnlyComparator.Instance, maxStateOnlySize + 2);
+                _stateOnlyRemovalQueue = new PriorityQueue<State>(StateOnlyComparator.Instance, maxStateOnlySize + 2);
             }
 
-            this.maxStateOnlySize = maxStateOnlySize;
+            _maxStateOnlySize = maxStateOnlySize;
 
-            this.connection = connection;
-            this.stateKey = connection.NewKey();
+            _connection = connection;
+            _stateKey = connection.NewKey();
             IHttp2Stream connectionStream = connection.ConnectionStream;
-            connectionStream.SetProperty(this.stateKey, this.connectionState = new State(this, connectionStream, 16));
+            connectionStream.SetProperty(_stateKey, _connectionState = new State(this, connectionStream, 16));
 
             // Register for notification of new streams.
             connection.AddListener(this);
@@ -98,19 +98,19 @@ namespace DotNetty.Codecs.Http2
         public override void OnStreamAdded(IHttp2Stream stream)
         {
             int streamId = stream.Id;
-            if (!this.stateOnlyMap.TryGetValue(streamId, out State state))
+            if (!_stateOnlyMap.TryGetValue(streamId, out State state))
             {
                 state = new State(this, stream);
                 // Only the stream which was just added will change parents. So we only need an array of size 1.
                 List<ParentChangedEvent> events = new List<ParentChangedEvent>(1);
-                this.connectionState.TakeChild(state, false, events);
-                this.NotifyParentChanged(events);
+                _connectionState.TakeChild(state, false, events);
+                NotifyParentChanged(events);
             }
             else
             {
-                this.stateOnlyMap.Remove(streamId);
-                this.stateOnlyRemovalQueue.TryRemove(state);
-                state.stream = stream;
+                _stateOnlyMap.Remove(streamId);
+                _stateOnlyRemovalQueue.TryRemove(state);
+                state._stream = stream;
             }
 
             Http2StreamState streamState = stream.State;
@@ -121,19 +121,19 @@ namespace DotNetty.Codecs.Http2
                 // need to reprioritize here because it will not be in stateOnlyRemovalQueue.
             }
 
-            stream.SetProperty(this.stateKey, state);
+            stream.SetProperty(_stateKey, state);
         }
 
         public override void OnStreamActive(IHttp2Stream stream)
         {
-            this.GetState(stream).SetStreamReservedOrActivated();
+            GetState(stream).SetStreamReservedOrActivated();
             // wasStreamReservedOrActivated is part of the comparator for stateOnlyRemovalQueue there is no need to
             // reprioritize here because it will not be in stateOnlyRemovalQueue.
         }
 
         public override void OnStreamClosed(IHttp2Stream stream)
         {
-            this.GetState(stream).Close();
+            GetState(stream).Close();
         }
 
         public override void OnStreamRemoved(IHttp2Stream stream)
@@ -141,120 +141,120 @@ namespace DotNetty.Codecs.Http2
             // The stream has been removed from the connection. We can no longer rely on the stream's property
             // storage to track the State. If we have room, and the precedence of the stream is sufficient, we
             // should retain the State in the stateOnlyMap.
-            State state = this.GetState(stream);
+            State state = GetState(stream);
 
             // Typically the stream is set to null when the stream is closed because it is no longer needed to write
             // data. However if the stream was not activated it may not be closed (reserved streams) so we ensure
             // the stream reference is set to null to avoid retaining a reference longer than necessary.
-            state.stream = null;
+            state._stream = null;
 
-            if (0u >= (uint)this.maxStateOnlySize)
+            if (0u >= (uint)_maxStateOnlySize)
             {
-                state.parent.RemoveChild(state);
+                state._parent.RemoveChild(state);
                 return;
             }
 
-            if (this.stateOnlyRemovalQueue.Count == this.maxStateOnlySize)
+            if (_stateOnlyRemovalQueue.Count == _maxStateOnlySize)
             {
-                this.stateOnlyRemovalQueue.TryPeek(out State stateToRemove);
+                _stateOnlyRemovalQueue.TryPeek(out State stateToRemove);
                 if (StateOnlyComparator.Instance.Compare(stateToRemove, state) >= 0)
                 {
                     // The "lowest priority" stream is a "higher priority" than the stream being removed, so we
                     // just discard the state.
-                    state.parent.RemoveChild(state);
+                    state._parent.RemoveChild(state);
                     return;
                 }
 
-                this.stateOnlyRemovalQueue.TryDequeue(out State _);
-                stateToRemove.parent.RemoveChild(stateToRemove);
-                this.stateOnlyMap.Remove(stateToRemove.streamId);
+                _stateOnlyRemovalQueue.TryDequeue(out State _);
+                stateToRemove._parent.RemoveChild(stateToRemove);
+                _stateOnlyMap.Remove(stateToRemove._streamId);
             }
 
-            this.stateOnlyRemovalQueue.TryEnqueue(state);
-            this.stateOnlyMap.Add(state.streamId, state);
+            _stateOnlyRemovalQueue.TryEnqueue(state);
+            _stateOnlyMap.Add(state._streamId, state);
         }
 
         public void UpdateStreamableBytes(IStreamByteDistributorStreamState state)
         {
-            this.GetState(state.Stream).UpdateStreamableBytes(
+            GetState(state.Stream).UpdateStreamableBytes(
                 Http2CodecUtil.StreamableBytes(state),
                 state.HasFrame && state.WindowSize >= 0);
         }
 
         public void UpdateDependencyTree(int childStreamId, int parentStreamId, short weight, bool exclusive)
         {
-            State state = this.GetState(childStreamId);
+            State state = GetState(childStreamId);
             if (state is null)
             {
                 // If there is no State object that means there is no IHttp2Stream object and we would have to keep the
                 // State object in the stateOnlyMap and stateOnlyRemovalQueue. However if maxStateOnlySize is 0 this means
                 // stateOnlyMap and stateOnlyRemovalQueue are empty collections and cannot be modified so we drop the State.
-                if (0u >= (uint)this.maxStateOnlySize) { return; }
+                if (0u >= (uint)_maxStateOnlySize) { return; }
 
                 state = new State(this, childStreamId);
-                this.stateOnlyRemovalQueue.TryEnqueue(state);
-                this.stateOnlyMap.Add(childStreamId, state);
+                _stateOnlyRemovalQueue.TryEnqueue(state);
+                _stateOnlyMap.Add(childStreamId, state);
             }
 
-            State newParent = this.GetState(parentStreamId);
+            State newParent = GetState(parentStreamId);
             if (newParent is null)
             {
                 // If there is no State object that means there is no IHttp2Stream object and we would have to keep the
                 // State object in the stateOnlyMap and stateOnlyRemovalQueue. However if maxStateOnlySize is 0 this means
                 // stateOnlyMap and stateOnlyRemovalQueue are empty collections and cannot be modified so we drop the State.
-                if (0u >= (uint)this.maxStateOnlySize) { return; }
+                if (0u >= (uint)_maxStateOnlySize) { return; }
 
                 newParent = new State(this, parentStreamId);
-                this.stateOnlyRemovalQueue.TryEnqueue(newParent);
-                this.stateOnlyMap.Add(parentStreamId, newParent);
+                _stateOnlyRemovalQueue.TryEnqueue(newParent);
+                _stateOnlyMap.Add(parentStreamId, newParent);
                 // Only the stream which was just added will change parents. So we only need an array of size 1.
                 List<ParentChangedEvent> events = new List<ParentChangedEvent>(1);
-                this.connectionState.TakeChild(newParent, false, events);
-                this.NotifyParentChanged(events);
+                _connectionState.TakeChild(newParent, false, events);
+                NotifyParentChanged(events);
             }
 
             // if activeCountForTree == 0 then it will not be in its parent's pseudoTimeQueue and thus should not be counted
             // toward parent.totalQueuedWeights.
-            if (state.activeCountForTree != 0 && state.parent is object)
+            if (state._activeCountForTree != 0 && state._parent is object)
             {
-                state.parent.totalQueuedWeights += weight - state.weight;
+                state._parent._totalQueuedWeights += weight - state._weight;
             }
 
-            state.weight = weight;
+            state._weight = weight;
 
-            if (newParent != state.parent || (exclusive && newParent.children.Count != 1))
+            if (newParent != state._parent || (exclusive && newParent._children.Count != 1))
             {
                 List<ParentChangedEvent> events;
                 if (newParent.IsDescendantOf(state))
                 {
-                    events = new List<ParentChangedEvent>(2 + (exclusive ? newParent.children.Count : 0));
-                    state.parent.TakeChild(newParent, false, events);
+                    events = new List<ParentChangedEvent>(2 + (exclusive ? newParent._children.Count : 0));
+                    state._parent.TakeChild(newParent, false, events);
                 }
                 else
                 {
-                    events = new List<ParentChangedEvent>(1 + (exclusive ? newParent.children.Count : 0));
+                    events = new List<ParentChangedEvent>(1 + (exclusive ? newParent._children.Count : 0));
                 }
 
                 newParent.TakeChild(state, exclusive, events);
-                this.NotifyParentChanged(events);
+                NotifyParentChanged(events);
             }
 
             // The location in the dependency tree impacts the priority in the stateOnlyRemovalQueue map. If we created new
             // State objects we must check if we exceeded the limit after we insert into the dependency tree to ensure the
             // stateOnlyRemovalQueue has been updated.
-            while ((uint)this.stateOnlyRemovalQueue.Count > (uint)this.maxStateOnlySize)
+            while ((uint)_stateOnlyRemovalQueue.Count > (uint)_maxStateOnlySize)
             {
-                this.stateOnlyRemovalQueue.TryDequeue(out State stateToRemove);
-                stateToRemove.parent.RemoveChild(stateToRemove);
-                this.stateOnlyMap.Remove(stateToRemove.streamId);
+                _stateOnlyRemovalQueue.TryDequeue(out State stateToRemove);
+                stateToRemove._parent.RemoveChild(stateToRemove);
+                _stateOnlyMap.Remove(stateToRemove._streamId);
             }
         }
 
-        public bool Distribute(int maxBytes, Action<IHttp2Stream, int> writer) => this.Distribute(maxBytes, new ActionStreamByteDistributorWriter(writer));
+        public bool Distribute(int maxBytes, Action<IHttp2Stream, int> writer) => Distribute(maxBytes, new ActionStreamByteDistributorWriter(writer));
         public bool Distribute(int maxBytes, IStreamByteDistributorWriter writer)
         {
             // As long as there is some active frame we should write at least 1 time.
-            if (0u >= (uint)this.connectionState.activeCountForTree) { return false; }
+            if (0u >= (uint)_connectionState._activeCountForTree) { return false; }
 
             // The goal is to write until we write all the allocated bytes or are no longer making progress.
             // We still attempt to write even after the number of allocated bytes has been exhausted to allow empty frames
@@ -262,14 +262,14 @@ namespace DotNetty.Codecs.Http2
             int oldIsActiveCountForTree;
             do
             {
-                oldIsActiveCountForTree = this.connectionState.activeCountForTree;
+                oldIsActiveCountForTree = _connectionState._activeCountForTree;
                 // connectionState will never be active, so go right to its children.
-                maxBytes -= this.DistributeToChildren(maxBytes, writer, this.connectionState);
+                maxBytes -= DistributeToChildren(maxBytes, writer, _connectionState);
             }
-            while (this.connectionState.activeCountForTree != 0 &&
-                  (maxBytes > 0 || oldIsActiveCountForTree != this.connectionState.activeCountForTree));
+            while (_connectionState._activeCountForTree != 0 &&
+                  (maxBytes > 0 || oldIsActiveCountForTree != _connectionState._activeCountForTree));
 
-            return this.connectionState.activeCountForTree != 0;
+            return _connectionState._activeCountForTree != 0;
         }
 
         /// <summary>
@@ -278,19 +278,19 @@ namespace DotNetty.Codecs.Http2
         /// <param name="allocationQuantum">the amount of bytes that will be allocated to each stream. Must be &gt; 0.</param>
         public void AllocationQuantum(int allocationQuantum)
         {
-            if (allocationQuantum <= 0)
+            if ((uint)(allocationQuantum - 1) > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_Positive(allocationQuantum, ExceptionArgument.allocationQuantum);
             }
 
-            this.allocationQuantum = allocationQuantum;
+            _allocationQuantum = allocationQuantum;
         }
 
         int Distribute(int maxBytes, IStreamByteDistributorWriter writer, State state)
         {
             if (state.IsActive())
             {
-                int nsent = Math.Min(maxBytes, state.streamableBytes);
+                int nsent = Math.Min(maxBytes, state._streamableBytes);
                 state.Write(nsent, writer);
                 if (0u >= (uint)nsent && maxBytes != 0)
                 {
@@ -298,13 +298,13 @@ namespace DotNetty.Codecs.Http2
                     // considered inactive until the next call to updateStreamableBytes. This allows descendant streams to
                     // be allocated bytes when the parent stream can't utilize them. This may be as a result of the
                     // stream's flow control window being 0.
-                    state.UpdateStreamableBytes(state.streamableBytes, false);
+                    state.UpdateStreamableBytes(state._streamableBytes, false);
                 }
 
                 return nsent;
             }
 
-            return this.DistributeToChildren(maxBytes, writer, state);
+            return DistributeToChildren(maxBytes, writer, state);
         }
 
         /// <summary>
@@ -323,29 +323,29 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         int DistributeToChildren(int maxBytes, IStreamByteDistributorWriter writer, State state)
         {
-            long oldTotalQueuedWeights = state.totalQueuedWeights;
+            long oldTotalQueuedWeights = state._totalQueuedWeights;
             State childState = state.PollPseudoTimeQueue();
             State nextChildState = state.PeekPseudoTimeQueue();
             childState.SetDistributing();
             try
             {
                 Debug.Assert(
-                    nextChildState is null || nextChildState.pseudoTimeToWrite >= childState.pseudoTimeToWrite,
-                    $"nextChildState[{nextChildState?.streamId}].pseudoTime({nextChildState?.pseudoTimeToWrite}) <  childState[{childState.streamId}].pseudoTime({childState.pseudoTimeToWrite})");
+                    nextChildState is null || nextChildState._pseudoTimeToWrite >= childState._pseudoTimeToWrite,
+                    $"nextChildState[{nextChildState?._streamId}].pseudoTime({nextChildState?._pseudoTimeToWrite}) <  childState[{childState._streamId}].pseudoTime({childState._pseudoTimeToWrite})");
 
-                int nsent = this.Distribute(
+                int nsent = Distribute(
                     nextChildState is null
                         ? maxBytes
                         : Math.Min(
                             maxBytes,
                             (int)Math.Min(
-                                (nextChildState.pseudoTimeToWrite - childState.pseudoTimeToWrite) * childState.weight / oldTotalQueuedWeights + this.allocationQuantum,
+                                (nextChildState._pseudoTimeToWrite - childState._pseudoTimeToWrite) * childState._weight / oldTotalQueuedWeights + _allocationQuantum,
                                 int.MaxValue
                             )
                         ),
                     writer,
                     childState);
-                state.pseudoTime += nsent;
+                state._pseudoTime += nsent;
                 childState.UpdatePseudoTime(state, nsent, oldTotalQueuedWeights);
                 return nsent;
             }
@@ -355,7 +355,7 @@ namespace DotNetty.Codecs.Http2
                 // Do in finally to ensure the internal flags is not corrupted if an exception is thrown.
                 // The offer operation is delayed until we unroll up the recursive stack, so we don't have to remove from
                 // the priority pseudoTimeQueue due to a write operation.
-                if (childState.activeCountForTree != 0)
+                if (childState._activeCountForTree != 0)
                 {
                     state.OfferPseudoTimeQueue(childState);
                 }
@@ -364,14 +364,14 @@ namespace DotNetty.Codecs.Http2
 
         State GetState(IHttp2Stream stream)
         {
-            return stream.GetProperty<State>(this.stateKey);
+            return stream.GetProperty<State>(_stateKey);
         }
 
         State GetState(int streamId)
         {
-            IHttp2Stream stream = this.connection.Stream(streamId);
+            IHttp2Stream stream = _connection.Stream(streamId);
 
-            return stream is object ? this.GetState(stream) : (this.stateOnlyMap.TryGetValue(streamId, out State state) ? state : null);
+            return stream is object ? GetState(stream) : (_stateOnlyMap.TryGetValue(streamId, out State state) ? state : null);
         }
 
         /// <summary>
@@ -383,10 +383,10 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         internal bool IsChild(int childId, int parentId, short weight)
         {
-            State parent = this.GetState(parentId);
+            State parent = GetState(parentId);
             State child;
-            return parent.children.ContainsKey(childId) &&
-                (child = this.GetState(childId)).parent == parent && child.weight == weight;
+            return parent._children.ContainsKey(childId) &&
+                (child = GetState(childId))._parent == parent && child._weight == weight;
         }
 
         /// <summary>
@@ -396,8 +396,8 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         internal int NumChildren(int streamId)
         {
-            State state = this.GetState(streamId);
-            return state is null ? 0 : state.children.Count;
+            State state = GetState(streamId);
+            return state is null ? 0 : state._children.Count;
         }
 
         /// <summary>
@@ -409,13 +409,13 @@ namespace DotNetty.Codecs.Http2
             for (int i = 0; i < events.Count; ++i)
             {
                 ParentChangedEvent evt = events[i];
-                var evtState = evt.state;
-                this.stateOnlyRemovalQueue.PriorityChanged(evtState);
-                var evtStateParent = evtState.parent;
-                if (evtStateParent is object && evtState.activeCountForTree != 0)
+                var evtState = evt._state;
+                _stateOnlyRemovalQueue.PriorityChanged(evtState);
+                var evtStateParent = evtState._parent;
+                if (evtStateParent is object && evtState._activeCountForTree != 0)
                 {
                     evtStateParent.OfferAndInitializePseudoTime(evtState);
-                    evtStateParent.ActiveCountChangeForTree(evtState.activeCountForTree);
+                    evtStateParent.ActiveCountChangeForTree(evtState._activeCountForTree);
                 }
             }
         }
@@ -445,7 +445,7 @@ namespace DotNetty.Codecs.Http2
                 }
 
                 // Numerically greater depth is higher priority.
-                int x = o2.dependencyTreeDepth - o1.dependencyTreeDepth;
+                int x = o2._dependencyTreeDepth - o1._dependencyTreeDepth;
 
                 // I also considered tracking the number of streams which are "activated" (eligible transfer data) at each
                 // subtree. This would require a traversal from each node to the root on dependency tree structural changes,
@@ -454,21 +454,19 @@ namespace DotNetty.Codecs.Http2
                 // benefit it provides to the heuristic. Instead folks should just increase maxStateOnlySize.
 
                 // Last resort is to give larger stream ids more priority.
-                return x != 0 ? x : o1.streamId - o2.streamId;
+                return x != 0 ? x : o1._streamId - o2._streamId;
             }
         }
 
         sealed class StatePseudoTimeComparator : IComparer<State>
         {
-            internal static readonly StatePseudoTimeComparator INSTANCE = new StatePseudoTimeComparator();
+            internal static readonly StatePseudoTimeComparator Instance = new StatePseudoTimeComparator();
 
-            StatePseudoTimeComparator()
-            {
-            }
+            private StatePseudoTimeComparator() { }
 
             public int Compare(State o1, State o2)
             {
-                return MathUtil.Compare(o1.pseudoTimeToWrite, o2.pseudoTimeToWrite);
+                return MathUtil.Compare(o1._pseudoTimeToWrite, o2._pseudoTimeToWrite);
             }
         }
 
@@ -477,48 +475,48 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         sealed class State : IPriorityQueueNode<State>
         {
-            const int IndexNotInQueue = -1;
+            private const int IndexNotInQueue = -1;
 
-            const byte StateIsActive = 0x1;
-            const byte StateIsDistributing = 0x2;
-            const byte StateStreamActivated = 0x4;
+            private const byte StateIsActive = 0x1;
+            private const byte StateIsDistributing = 0x2;
+            private const byte StateStreamActivated = 0x4;
 
             /// <summary>
             /// Maybe <c>null</c> if the stream if the stream is not active.
             /// </summary>
-            internal IHttp2Stream stream;
-            internal State parent;
+            internal IHttp2Stream _stream;
+            internal State _parent;
 
-            internal IDictionary<int, State> children = EmptyDictionary<int, State>.Instance;
+            internal IDictionary<int, State> _children = EmptyDictionary<int, State>.Instance;
 
-            readonly IPriorityQueue<State> pseudoTimeQueue;
-            internal readonly int streamId;
-            internal int streamableBytes;
+            readonly IPriorityQueue<State> _pseudoTimeQueue;
+            internal readonly int _streamId;
+            internal int _streamableBytes;
 
-            internal int dependencyTreeDepth;
+            internal int _dependencyTreeDepth;
 
             /// <summary>
             /// Count of nodes rooted at this sub tree with <see cref="IsActive"/> equal to <c>true</c>.
             /// </summary>
-            internal int activeCountForTree;
-            int pseudoTimeQueueIndex = IndexNotInQueue;
+            internal int _activeCountForTree;
+            private int _pseudoTimeQueueIndex = IndexNotInQueue;
 
-            int stateOnlyQueueIndex = IndexNotInQueue;
+            private int _stateOnlyQueueIndex = IndexNotInQueue;
 
             /// <summary>
             /// An estimate of when this node should be given the opportunity to write data.
             /// </summary>
-            internal long pseudoTimeToWrite;
+            internal long _pseudoTimeToWrite;
 
             /// <summary>
-            /// A pseudo time maintained for immediate children to base their <see cref="pseudoTimeToWrite"/> off of.
+            /// A pseudo time maintained for immediate children to base their <see cref="_pseudoTimeToWrite"/> off of.
             /// </summary>
-            internal long pseudoTime;
-            internal long totalQueuedWeights;
-            int flags;
-            internal short weight = Http2CodecUtil.DefaultPriorityWeight;
+            internal long _pseudoTime;
+            internal long _totalQueuedWeights;
+            private int _flags;
+            internal short _weight = Http2CodecUtil.DefaultPriorityWeight;
 
-            readonly WeightedFairQueueByteDistributor distributor;
+            private readonly WeightedFairQueueByteDistributor _distributor;
 
             internal State(WeightedFairQueueByteDistributor distributor, int streamId)
                 : this(distributor, streamId, null, 0)
@@ -537,20 +535,20 @@ namespace DotNetty.Codecs.Http2
 
             internal State(WeightedFairQueueByteDistributor distributor, int streamId, IHttp2Stream stream, int initialSize)
             {
-                this.distributor = distributor;
-                this.stream = stream;
-                this.streamId = streamId;
-                this.pseudoTimeQueue = new PriorityQueue<State>(StatePseudoTimeComparator.INSTANCE, initialSize);
+                _distributor = distributor;
+                _stream = stream;
+                _streamId = streamId;
+                _pseudoTimeQueue = new PriorityQueue<State>(StatePseudoTimeComparator.Instance, initialSize);
             }
 
             internal bool IsDescendantOf(State state)
             {
-                State next = this.parent;
+                State next = _parent;
                 while (next is object)
                 {
                     if (next == state) { return true; }
 
-                    next = next.parent;
+                    next = next._parent;
                 }
 
                 return false;
@@ -558,7 +556,7 @@ namespace DotNetty.Codecs.Http2
 
             internal void TakeChild(State child, bool exclusive, List<ParentChangedEvent> events)
             {
-                this.TakeChild(null, child, exclusive, events);
+                TakeChild(null, child, exclusive, events);
             }
 
             /// <summary>
@@ -571,7 +569,7 @@ namespace DotNetty.Codecs.Http2
             /// <param name="events"></param>
             void TakeChild(IDictionary<int, State> childItr, State child, bool exclusive, List<ParentChangedEvent> events)
             {
-                State oldParent = child.parent;
+                State oldParent = child._parent;
 
                 if (oldParent != this)
                 {
@@ -587,21 +585,21 @@ namespace DotNetty.Codecs.Http2
                     }
                     else if (oldParent is object)
                     {
-                        oldParent.children.Remove(child.streamId);
+                        oldParent._children.Remove(child._streamId);
                     }
 
                     // Lazily initialize the children to save object allocations.
-                    this.InitChildrenIfEmpty();
+                    InitChildrenIfEmpty();
 
-                    this.children.Add(child.streamId, child);
+                    _children.Add(child._streamId, child);
                     //Debug.Assert(added, "A stream with the same stream ID was already in the child map.");
                 }
 
-                if (exclusive && (uint)this.children.Count > 0u)
+                if (exclusive && (uint)_children.Count > 0u)
                 {
                     // If it was requested that this child be the exclusive dependency of this node,
                     // move any previous children to the child node, becoming grand children of this node.
-                    IDictionary<int, State> prevChildren = this.RemoveAllChildrenExcept(child);
+                    IDictionary<int, State> prevChildren = RemoveAllChildrenExcept(child);
                     /*IEnumerator<KeyValuePair<int, State>> itr = prevChildren.GetEnumerator();
                     while (itr.MoveNext())
                     {
@@ -622,11 +620,13 @@ namespace DotNetty.Codecs.Http2
             /// <param name="child"></param>
             internal void RemoveChild(State child)
             {
-                if (this.children.Remove(child.streamId))
+                if (_children.Remove(child._streamId))
                 {
-                    IDictionary<int, State> grandChildren = child.children;
-                    List<ParentChangedEvent> events = new List<ParentChangedEvent>(1 + grandChildren.Count);
-                    events.Add(new ParentChangedEvent(child, child.parent));
+                    IDictionary<int, State> grandChildren = child._children;
+                    List<ParentChangedEvent> events = new List<ParentChangedEvent>(1 + grandChildren.Count)
+                    {
+                        new ParentChangedEvent(child, child._parent)
+                    };
                     child.SetParent(null);
 
                     // Move up any grand children to be directly dependent on this node.
@@ -638,11 +638,11 @@ namespace DotNetty.Codecs.Http2
 
                     foreach (var item in grandChildren)
                     {
-                        this.TakeChild(grandChildren, item.Value, false, events);
+                        TakeChild(grandChildren, item.Value, false, events);
                     }
                     grandChildren.Clear();
 
-                    this.distributor.NotifyParentChanged(events);
+                    _distributor.NotifyParentChanged(events);
                 }
             }
 
@@ -654,14 +654,14 @@ namespace DotNetty.Codecs.Http2
             /// <returns>The map of children prior to this operation, excluding <paramref name="stateToRetain"/> if present.</returns>
             IDictionary<int, State> RemoveAllChildrenExcept(State stateToRetain)
             {
-                bool removed = this.children.TryGetValue(stateToRetain.streamId, out stateToRetain) && this.children.Remove(stateToRetain.streamId);
-                IDictionary<int, State> prevChildren = this.children;
+                bool removed = _children.TryGetValue(stateToRetain._streamId, out stateToRetain) && _children.Remove(stateToRetain._streamId);
+                IDictionary<int, State> prevChildren = _children;
                 // This map should be re-initialized in anticipation for the 1 exclusive child which will be added.
                 // It will either be added directly in this method, or after this method is called...but it will be added.
-                this.InitChildren();
+                InitChildren();
                 if (removed)
                 {
-                    this.children.Add(stateToRetain.streamId, stateToRetain);
+                    _children.Add(stateToRetain._streamId, stateToRetain);
                 }
 
                 return prevChildren;
@@ -670,37 +670,37 @@ namespace DotNetty.Codecs.Http2
             void SetParent(State newParent)
             {
                 // if activeCountForTree == 0 then it will not be in its parent's pseudoTimeQueue.
-                if (this.activeCountForTree != 0 && this.parent is object)
+                if (_activeCountForTree != 0 && _parent is object)
                 {
-                    this.parent.RemovePseudoTimeQueue(this);
-                    this.parent.ActiveCountChangeForTree(-1 * this.activeCountForTree);
+                    _parent.RemovePseudoTimeQueue(this);
+                    _parent.ActiveCountChangeForTree(-1 * _activeCountForTree);
                 }
 
-                this.parent = newParent;
+                _parent = newParent;
                 // Use MAX_VALUE if no parent because lower depth is considered higher priority by StateOnlyComparator.
-                this.dependencyTreeDepth = newParent is null ? int.MaxValue : newParent.dependencyTreeDepth + 1;
+                _dependencyTreeDepth = newParent is null ? int.MaxValue : newParent._dependencyTreeDepth + 1;
             }
 
             void InitChildrenIfEmpty()
             {
-                if (this.children == EmptyDictionary<int, State>.Instance)
+                if (_children == EmptyDictionary<int, State>.Instance)
                 {
-                    this.InitChildren();
+                    InitChildren();
                 }
             }
 
             void InitChildren()
             {
                 //children = new ConcurrentDictionary<int, State>(WeightedFairQueueByteDistributor.INITIAL_CHILDREN_MAP_SIZE);
-                this.children = new Dictionary<int, State>(InitialChildrenMapSize);
+                _children = new Dictionary<int, State>(InitialChildrenMapSize);
             }
 
             internal void Write(int numBytes, IStreamByteDistributorWriter writer)
             {
-                Debug.Assert(this.stream is object);
+                Debug.Assert(_stream is object);
                 try
                 {
-                    writer.Write(this.stream, numBytes);
+                    writer.Write(_stream, numBytes);
                 }
                 catch (Exception t)
                 {
@@ -710,18 +710,18 @@ namespace DotNetty.Codecs.Http2
 
             internal void ActiveCountChangeForTree(int increment)
             {
-                Debug.Assert(this.activeCountForTree + increment >= 0);
-                this.activeCountForTree += increment;
-                if (this.parent is object)
+                Debug.Assert(_activeCountForTree + increment >= 0);
+                _activeCountForTree += increment;
+                if (_parent is object)
                 {
                     Debug.Assert(
-                        this.activeCountForTree != increment || this.pseudoTimeQueueIndex == IndexNotInQueue || this.parent.pseudoTimeQueue.Contains(this),
-                        $"State[{this.streamId}].activeCountForTree changed from 0 to {increment} is in a pseudoTimeQueue, but not in parent[{this.parent.streamId}]'s pseudoTimeQueue");
-                    if (0u >= (uint)this.activeCountForTree)
+                        _activeCountForTree != increment || _pseudoTimeQueueIndex == IndexNotInQueue || _parent._pseudoTimeQueue.Contains(this),
+                        $"State[{_streamId}].activeCountForTree changed from 0 to {increment} is in a pseudoTimeQueue, but not in parent[{_parent._streamId}]'s pseudoTimeQueue");
+                    if (0u >= (uint)_activeCountForTree)
                     {
-                        this.parent.RemovePseudoTimeQueue(this);
+                        _parent.RemovePseudoTimeQueue(this);
                     }
-                    else if (this.activeCountForTree == increment && !this.IsDistributing())
+                    else if (_activeCountForTree == increment && !IsDistributing())
                     {
                         // If frame count was 0 but is now not, and this node is not already in a pseudoTimeQueue (assumed
                         // to be pState's pseudoTimeQueue) then enqueue it. If this State object is being processed the
@@ -731,30 +731,30 @@ namespace DotNetty.Codecs.Http2
                         // the tree, and is popped off the pseudoTimeQueue during processing, and then put back on the
                         // pseudoTimeQueue because a child changes position in the priority tree (or is closed because it is
                         // not blocked and finished writing all data).
-                        this.parent.OfferAndInitializePseudoTime(this);
+                        _parent.OfferAndInitializePseudoTime(this);
                     }
 
-                    this.parent.ActiveCountChangeForTree(increment);
+                    _parent.ActiveCountChangeForTree(increment);
                 }
             }
 
             internal void UpdateStreamableBytes(int newStreamableBytes, bool isActive)
             {
-                if (this.IsActive() != isActive)
+                if (IsActive() != isActive)
                 {
                     if (isActive)
                     {
-                        this.ActiveCountChangeForTree(1);
-                        this.SetActive();
+                        ActiveCountChangeForTree(1);
+                        SetActive();
                     }
                     else
                     {
-                        this.ActiveCountChangeForTree(-1);
-                        this.UnsetActive();
+                        ActiveCountChangeForTree(-1);
+                        UnsetActive();
                     }
                 }
 
-                this.streamableBytes = newStreamableBytes;
+                _streamableBytes = newStreamableBytes;
             }
 
             /// <summary>
@@ -765,28 +765,28 @@ namespace DotNetty.Codecs.Http2
             /// <param name="totalQueuedWeights"></param>
             internal void UpdatePseudoTime(State parentState, int nsent, long totalQueuedWeights)
             {
-                Debug.Assert(this.streamId != Http2CodecUtil.ConnectionStreamId && nsent >= 0);
+                Debug.Assert(_streamId != Http2CodecUtil.ConnectionStreamId && nsent >= 0);
                 // If the current pseudoTimeToSend is greater than parentState.pseudoTime then we previously over accounted
                 // and should use parentState.pseudoTime.
-                this.pseudoTimeToWrite = Math.Min(this.pseudoTimeToWrite, parentState.pseudoTime) + nsent * totalQueuedWeights / this.weight;
+                _pseudoTimeToWrite = Math.Min(_pseudoTimeToWrite, parentState._pseudoTime) + nsent * totalQueuedWeights / _weight;
             }
 
             /// <summary>
             /// The concept of pseudoTime can be influenced by priority tree manipulations or if a stream goes from "active"
-            /// to "non-active". This method accounts for that by initializing the <see cref="pseudoTimeToWrite"/>  for
-            /// <paramref name="state"/> to <see cref="pseudoTime"/> of this node and then calls <see cref="OfferPseudoTimeQueue(State)"/>.
+            /// to "non-active". This method accounts for that by initializing the <see cref="_pseudoTimeToWrite"/>  for
+            /// <paramref name="state"/> to <see cref="_pseudoTime"/> of this node and then calls <see cref="OfferPseudoTimeQueue(State)"/>.
             /// </summary>
             /// <param name="state"></param>
             internal void OfferAndInitializePseudoTime(State state)
             {
-                state.pseudoTimeToWrite = this.pseudoTime;
-                this.OfferPseudoTimeQueue(state);
+                state._pseudoTimeToWrite = _pseudoTime;
+                OfferPseudoTimeQueue(state);
             }
 
             internal void OfferPseudoTimeQueue(State state)
             {
-                this.pseudoTimeQueue.TryEnqueue(state);
-                this.totalQueuedWeights += state.weight;
+                _pseudoTimeQueue.TryEnqueue(state);
+                _totalQueuedWeights += state._weight;
             }
 
             /// <summary>
@@ -795,119 +795,119 @@ namespace DotNetty.Codecs.Http2
             /// <returns></returns>
             internal State PollPseudoTimeQueue()
             {
-                this.pseudoTimeQueue.TryDequeue(out State state);
+                _pseudoTimeQueue.TryDequeue(out State state);
                 // This method is only ever called if the pseudoTimeQueue is non-empty.
-                this.totalQueuedWeights -= state.weight;
+                _totalQueuedWeights -= state._weight;
                 return state;
             }
 
             void RemovePseudoTimeQueue(State state)
             {
-                if (this.pseudoTimeQueue.TryRemove(state))
+                if (_pseudoTimeQueue.TryRemove(state))
                 {
-                    this.totalQueuedWeights -= state.weight;
+                    _totalQueuedWeights -= state._weight;
                 }
             }
 
             internal State PeekPseudoTimeQueue()
             {
-                return this.pseudoTimeQueue.TryPeek(out State result) ? result : null;
+                return _pseudoTimeQueue.TryPeek(out State result) ? result : null;
             }
 
             internal void Close()
             {
-                this.UpdateStreamableBytes(0, false);
-                this.stream = null;
+                UpdateStreamableBytes(0, false);
+                _stream = null;
             }
 
             internal bool WasStreamReservedOrActivated()
             {
-                return (this.flags & StateStreamActivated) != 0;
+                return (_flags & StateStreamActivated) != 0;
             }
 
             internal void SetStreamReservedOrActivated()
             {
-                this.flags |= StateStreamActivated;
+                _flags |= StateStreamActivated;
             }
 
             internal bool IsActive()
             {
-                return (this.flags & StateIsActive) != 0;
+                return (_flags & StateIsActive) != 0;
             }
 
             void SetActive()
             {
-                this.flags |= StateIsActive;
+                _flags |= StateIsActive;
             }
 
             void UnsetActive()
             {
-                this.flags &= ~StateIsActive;
+                _flags &= ~StateIsActive;
             }
 
             bool IsDistributing()
             {
-                return (this.flags & StateIsDistributing) != 0;
+                return (_flags & StateIsDistributing) != 0;
             }
 
             internal void SetDistributing()
             {
-                this.flags |= StateIsDistributing;
+                _flags |= StateIsDistributing;
             }
 
             internal void UnsetDistributing()
             {
-                this.flags &= ~StateIsDistributing;
+                _flags &= ~StateIsDistributing;
             }
 
             public int GetPriorityQueueIndex(IPriorityQueue<State> queue)
             {
-                return queue == this.distributor.stateOnlyRemovalQueue ? this.stateOnlyQueueIndex : this.pseudoTimeQueueIndex;
+                return queue == _distributor._stateOnlyRemovalQueue ? _stateOnlyQueueIndex : _pseudoTimeQueueIndex;
             }
 
             public void SetPriorityQueueIndex(IPriorityQueue<State> queue, int i)
             {
-                if (queue == this.distributor.stateOnlyRemovalQueue)
+                if (queue == _distributor._stateOnlyRemovalQueue)
                 {
-                    this.stateOnlyQueueIndex = i;
+                    _stateOnlyQueueIndex = i;
                 }
                 else
                 {
-                    this.pseudoTimeQueueIndex = i;
+                    _pseudoTimeQueueIndex = i;
                 }
             }
 
             public override string ToString()
             {
                 // Use activeCountForTree as a rough estimate for how many nodes are in this subtree.
-                StringBuilder sb = new StringBuilder(256 * (this.activeCountForTree > 0 ? this.activeCountForTree : 1));
-                this.ToString(sb);
+                StringBuilder sb = new StringBuilder(256 * (_activeCountForTree > 0 ? _activeCountForTree : 1));
+                ToString(sb);
                 return sb.ToString();
             }
 
             void ToString(StringBuilder sb)
             {
-                sb.Append("{streamId ").Append(this.streamId)
-                  .Append(" streamableBytes ").Append(this.streamableBytes)
-                  .Append(" activeCountForTree ").Append(this.activeCountForTree)
-                  .Append(" pseudoTimeQueueIndex ").Append(this.pseudoTimeQueueIndex)
-                  .Append(" pseudoTimeToWrite ").Append(this.pseudoTimeToWrite)
-                  .Append(" pseudoTime ").Append(this.pseudoTime)
-                  .Append(" flags ").Append(this.flags)
-                  .Append(" pseudoTimeQueue.Count ").Append(this.pseudoTimeQueue.Count)
-                  .Append(" stateOnlyQueueIndex ").Append(this.stateOnlyQueueIndex)
-                  .Append(" parent.streamId ").Append(this.parent is null ? -1 : this.parent.streamId).Append("} [");
+                sb.Append("{streamId ").Append(_streamId)
+                  .Append(" streamableBytes ").Append(_streamableBytes)
+                  .Append(" activeCountForTree ").Append(_activeCountForTree)
+                  .Append(" pseudoTimeQueueIndex ").Append(_pseudoTimeQueueIndex)
+                  .Append(" pseudoTimeToWrite ").Append(_pseudoTimeToWrite)
+                  .Append(" pseudoTime ").Append(_pseudoTime)
+                  .Append(" flags ").Append(_flags)
+                  .Append(" pseudoTimeQueue.Count ").Append(_pseudoTimeQueue.Count)
+                  .Append(" stateOnlyQueueIndex ").Append(_stateOnlyQueueIndex)
+                  .Append(" parent.streamId ").Append(_parent is null ? -1 : _parent._streamId).Append("} [");
 
-                if ((uint)this.pseudoTimeQueue.Count > 0u)
+                if ((uint)_pseudoTimeQueue.Count > 0u)
                 {
-                    foreach (var s in this.pseudoTimeQueue)
+                    foreach (var s in _pseudoTimeQueue)
                     {
                         s.ToString(sb);
                         sb.Append(", ");
                     }
 
                     // Remove the last ", "
-                    sb.Length = sb.Length - 2;
+                    sb.Length -= 2;
                 }
 
                 sb.Append(']');
@@ -919,8 +919,8 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         sealed class ParentChangedEvent
         {
-            internal readonly State state;
-            readonly State oldParent;
+            internal readonly State _state;
+            private readonly State _oldParent;
 
             /// <summary>
             /// Create a new instance.
@@ -929,8 +929,8 @@ namespace DotNetty.Codecs.Http2
             /// <param name="oldParent">The previous parent.</param>
             internal ParentChangedEvent(State state, State oldParent)
             {
-                this.state = state;
-                this.oldParent = oldParent;
+                _state = state;
+                _oldParent = oldParent;
             }
         }
     }

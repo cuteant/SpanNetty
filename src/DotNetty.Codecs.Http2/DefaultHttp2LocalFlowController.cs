@@ -22,12 +22,12 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public static readonly float DefaultWindowUpdateRatio = 0.5f;
 
-        readonly IHttp2Connection connection;
-        readonly IHttp2ConnectionPropertyKey stateKey;
-        IHttp2FrameWriter frameWriter;
-        IChannelHandlerContext ctx;
-        float windowUpdateRatio;
-        int initialWindowSize = Http2CodecUtil.DefaultWindowSize;
+        private readonly IHttp2Connection _connection;
+        private readonly IHttp2ConnectionPropertyKey _stateKey;
+        private IHttp2FrameWriter _frameWriter;
+        private IChannelHandlerContext _ctx;
+        private float _windowUpdateRatio;
+        private int _initialWindowSize = Http2CodecUtil.DefaultWindowSize;
 
         public DefaultHttp2LocalFlowController(IHttp2Connection connection)
             : this(connection, DefaultWindowUpdateRatio, false)
@@ -51,15 +51,15 @@ namespace DotNetty.Codecs.Http2
         {
             if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
 
-            this.connection = connection;
-            this.WindowUpdateRatio(windowUpdateRatio);
+            _connection = connection;
+            WindowUpdateRatio(windowUpdateRatio);
 
             // Add a flow state for the connection.
-            this.stateKey = connection.NewKey();
+            _stateKey = connection.NewKey();
             IFlowState connectionState = autoRefillConnectionWindow
-                ? new AutoRefillState(this, connection.ConnectionStream, this.initialWindowSize)
-                : new DefaultState(this, connection.ConnectionStream, this.initialWindowSize);
-            connection.ConnectionStream.SetProperty(this.stateKey, connectionState);
+                ? new AutoRefillState(this, connection.ConnectionStream, _initialWindowSize)
+                : new DefaultState(this, connection.ConnectionStream, _initialWindowSize);
+            connection.ConnectionStream.SetProperty(_stateKey, connectionState);
 
             // Register for notification of new streams.
             connection.AddListener(this);
@@ -69,14 +69,14 @@ namespace DotNetty.Codecs.Http2
         {
             // Unconditionally used the reduced flow control state because it requires no object allocation
             // and the DefaultFlowState will be allocated in onStreamActive.
-            stream.SetProperty(this.stateKey, REDUCED_FLOW_STATE);
+            stream.SetProperty(_stateKey, REDUCED_FLOW_STATE);
         }
 
         public override void OnStreamActive(IHttp2Stream stream)
         {
             // Need to be sure the stream's initial window is adjusted for SETTINGS
             // frames which may have been exchanged while it was in IDLE
-            stream.SetProperty(this.stateKey, new DefaultState(this, stream, this.initialWindowSize));
+            stream.SetProperty(_stateKey, new DefaultState(this, stream, _initialWindowSize));
         }
 
         public override void OnStreamClosed(IHttp2Stream stream)
@@ -85,11 +85,11 @@ namespace DotNetty.Codecs.Http2
             {
                 // When a stream is closed, consume any remaining bytes so that they
                 // are restored to the connection window.
-                IFlowState state = this.GetState(stream);
+                IFlowState state = GetState(stream);
                 int unconsumedBytes = state.UnconsumedBytes;
-                if (this.ctx is object && unconsumedBytes > 0)
+                if (_ctx is object && unconsumedBytes > 0)
                 {
-                    this.ConnectionState().ConsumeBytes(unconsumedBytes);
+                    ConnectionState().ConsumeBytes(unconsumedBytes);
                     state.ConsumeBytes(unconsumedBytes);
                 }
             }
@@ -102,7 +102,7 @@ namespace DotNetty.Codecs.Http2
                 // Unconditionally reduce the amount of memory required for flow control because there is no
                 // object allocation costs associated with doing so and the stream will not have any more
                 // local flow control state to keep track of anymore.
-                stream.SetProperty(this.stateKey, REDUCED_FLOW_STATE);
+                stream.SetProperty(_stateKey, REDUCED_FLOW_STATE);
             }
         }
 
@@ -110,37 +110,37 @@ namespace DotNetty.Codecs.Http2
         public IHttp2LocalFlowController FrameWriter(IHttp2FrameWriter frameWriter)
         {
             if (frameWriter is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frameWriter); }
-            this.frameWriter = frameWriter;
+            _frameWriter = frameWriter;
             return this;
         }
 
         public void SetChannelHandlerContext(IChannelHandlerContext ctx)
         {
             if (ctx is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ctx); }
-            this.ctx = ctx;
+            _ctx = ctx;
         }
 
         public void SetInitialWindowSize(int newWindowSize)
         {
-            Debug.Assert(this.ctx is null || this.ctx.Executor.InEventLoop);
-            int delta = newWindowSize - this.initialWindowSize;
-            this.initialWindowSize = newWindowSize;
+            Debug.Assert(_ctx is null || _ctx.Executor.InEventLoop);
+            int delta = newWindowSize - _initialWindowSize;
+            _initialWindowSize = newWindowSize;
 
             WindowUpdateVisitor visitor = new WindowUpdateVisitor(this, delta);
-            this.connection.ForEachActiveStream(visitor);
+            _connection.ForEachActiveStream(visitor);
             visitor.ThrowIfError();
         }
 
-        public int InitialWindowSize => this.initialWindowSize;
+        public int InitialWindowSize => _initialWindowSize;
 
-        public int GetWindowSize(IHttp2Stream stream) => this.GetState(stream).WindowSize;
+        public int GetWindowSize(IHttp2Stream stream) => GetState(stream).WindowSize;
 
-        public int GetInitialWindowSize(IHttp2Stream stream) => this.GetState(stream).InitialWindowSize();
+        public int GetInitialWindowSize(IHttp2Stream stream) => GetState(stream).InitialWindowSize();
 
         public void IncrementWindowSize(IHttp2Stream stream, int delta)
         {
-            Debug.Assert(this.ctx is object && this.ctx.Executor.InEventLoop);
-            IFlowState state = this.GetState(stream);
+            Debug.Assert(_ctx is object && _ctx.Executor.InEventLoop);
+            IFlowState state = GetState(stream);
             // Just add the delta to the stream-specific initial window size so that the next time the window
             // expands it will grow to the new initial size.
             state.IncrementInitialStreamWindow(delta);
@@ -149,7 +149,7 @@ namespace DotNetty.Codecs.Http2
 
         public bool ConsumeBytes(IHttp2Stream stream, int numBytes)
         {
-            Debug.Assert(this.ctx is object && this.ctx.Executor.InEventLoop);
+            Debug.Assert(_ctx is object && _ctx.Executor.InEventLoop);
             uint uNumBytes = (uint)numBytes;
             if (uNumBytes > SharedConstants.TooBigOrNegative) // < 0
             {
@@ -167,15 +167,15 @@ namespace DotNetty.Codecs.Http2
                     ThrowHelper.ReturningBytesForTheConnectionWindowIsNotSupported();
                 }
 
-                bool windowUpdateSent = this.ConnectionState().ConsumeBytes(numBytes);
-                windowUpdateSent |= this.GetState(stream).ConsumeBytes(numBytes);
+                bool windowUpdateSent = ConnectionState().ConsumeBytes(numBytes);
+                windowUpdateSent |= GetState(stream).ConsumeBytes(numBytes);
                 return windowUpdateSent;
             }
 
             return false;
         }
 
-        public int UnconsumedBytes(IHttp2Stream stream) => this.GetState(stream).UnconsumedBytes;
+        public int UnconsumedBytes(IHttp2Stream stream) => GetState(stream).UnconsumedBytes;
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         static void CheckValidRatio(float ratio)
@@ -195,9 +195,9 @@ namespace DotNetty.Codecs.Http2
         /// <exception cref="ArgumentException">If the ratio is out of bounds (0, 1).</exception>
         public void WindowUpdateRatio(float ratio)
         {
-            Debug.Assert(this.ctx is null || this.ctx.Executor.InEventLoop);
+            Debug.Assert(_ctx is null || _ctx.Executor.InEventLoop);
             CheckValidRatio(ratio);
-            this.windowUpdateRatio = ratio;
+            _windowUpdateRatio = ratio;
         }
 
         /// <summary>
@@ -205,7 +205,7 @@ namespace DotNetty.Codecs.Http2
         /// of bytes processed since the last update has meet or exceeded this ratio then a window update will
         /// be sent. This is the global window update ratio that will be used for new streams.
         /// </summary>
-        public float WindowUpdateRatio() => this.windowUpdateRatio;
+        public float WindowUpdateRatio() => _windowUpdateRatio;
 
         /// <summary>
         /// The window update ratio is used to determine when a window update must be sent. If the ratio
@@ -221,9 +221,9 @@ namespace DotNetty.Codecs.Http2
         /// <remarks>If a protocol-error occurs while generating <c>WINDOW_UPDATE</c> frames</remarks>
         public void WindowUpdateRatio(IHttp2Stream stream, float ratio)
         {
-            Debug.Assert(this.ctx is object && this.ctx.Executor.InEventLoop);
+            Debug.Assert(_ctx is object && _ctx.Executor.InEventLoop);
             CheckValidRatio(ratio);
-            IFlowState state = this.GetState(stream);
+            IFlowState state = GetState(stream);
             state.WindowUpdateRatio(ratio);
             state.WriteWindowUpdateIfNeeded();
         }
@@ -234,21 +234,21 @@ namespace DotNetty.Codecs.Http2
         /// be sent. This window update ratio will only be applied to <c>streamId</c>.
         /// </summary>
         /// <remarks>If no stream corresponding to <paramref name="stream"/> could be found.</remarks>
-        public float WindowUpdateRatio(IHttp2Stream stream) => this.GetState(stream).WindowUpdateRatio();
+        public float WindowUpdateRatio(IHttp2Stream stream) => GetState(stream).WindowUpdateRatio();
 
         public void ReceiveFlowControlledFrame(IHttp2Stream stream, IByteBuffer data, int padding, bool endOfStream)
         {
-            Debug.Assert(this.ctx is object && this.ctx.Executor.InEventLoop);
+            Debug.Assert(_ctx is object && _ctx.Executor.InEventLoop);
             int dataLength = data.ReadableBytes + padding;
 
             // Apply the connection-level flow control
-            IFlowState connectionState = this.ConnectionState();
+            IFlowState connectionState = ConnectionState();
             connectionState.ReceiveFlowControlledFrame(dataLength);
 
             if (stream is object && !IsClosed(stream))
             {
                 // Apply the stream-level flow control
-                IFlowState state = this.GetState(stream);
+                IFlowState state = GetState(stream);
                 state.EndOfStream(endOfStream);
                 state.ReceiveFlowControlledFrame(dataLength);
             }
@@ -259,9 +259,9 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        IFlowState ConnectionState() => this.connection.ConnectionStream.GetProperty<IFlowState>(this.stateKey);
+        IFlowState ConnectionState() => _connection.ConnectionStream.GetProperty<IFlowState>(_stateKey);
 
-        IFlowState GetState(IHttp2Stream stream) => stream.GetProperty<IFlowState>(this.stateKey);
+        IFlowState GetState(IHttp2Stream stream) => stream.GetProperty<IFlowState>(_stateKey);
 
         static bool IsClosed(IHttp2Stream stream) => stream.State == Http2StreamState.Closed;
 
@@ -294,8 +294,8 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         class DefaultState : IFlowState
         {
-            readonly DefaultHttp2LocalFlowController controller;
-            readonly IHttp2Stream stream;
+            private readonly DefaultHttp2LocalFlowController _controller;
+            private readonly IHttp2Stream _stream;
 
             /// <summary>
             /// The actual flow control window that is decremented as soon as <c>DATA</c> arrives.
@@ -328,30 +328,30 @@ namespace DotNetty.Codecs.Http2
 
             public DefaultState(DefaultHttp2LocalFlowController controller, IHttp2Stream stream, int initialWindowSize)
             {
-                this.controller = controller;
-                this.stream = stream;
-                this.Window(initialWindowSize);
-                this.streamWindowUpdateRatio = controller.windowUpdateRatio;
+                _controller = controller;
+                _stream = stream;
+                Window(initialWindowSize);
+                streamWindowUpdateRatio = controller._windowUpdateRatio;
             }
 
             public void Window(int initialWindowSize)
             {
-                Debug.Assert(this.controller.ctx is null || this.controller.ctx.Executor.InEventLoop);
-                this.window = this.processedWindow = this.initialStreamWindowSize = initialWindowSize;
+                Debug.Assert(_controller._ctx is null || _controller._ctx.Executor.InEventLoop);
+                window = processedWindow = initialStreamWindowSize = initialWindowSize;
             }
 
-            public int WindowSize => this.window;
+            public int WindowSize => window;
 
-            public int InitialWindowSize() => this.initialStreamWindowSize;
+            public int InitialWindowSize() => initialStreamWindowSize;
 
             public void EndOfStream(bool endOfStream) => this.endOfStream = endOfStream;
 
-            public float WindowUpdateRatio() => this.streamWindowUpdateRatio;
+            public float WindowUpdateRatio() => streamWindowUpdateRatio;
 
             public void WindowUpdateRatio(float ratio)
             {
-                Debug.Assert(this.controller.ctx is null || this.controller.ctx.Executor.InEventLoop);
-                this.streamWindowUpdateRatio = ratio;
+                Debug.Assert(_controller._ctx is null || _controller._ctx.Executor.InEventLoop);
+                streamWindowUpdateRatio = ratio;
             }
 
             public void IncrementInitialStreamWindow(int delta)
@@ -359,22 +359,22 @@ namespace DotNetty.Codecs.Http2
                 // Clip the delta so that the resulting initialStreamWindowSize falls within the allowed range.
                 int newValue = (int)Math.Min(
                     Http2CodecUtil.MaxInitialWindowSize,
-                    Math.Max(Http2CodecUtil.MinInitialWindowSize, this.initialStreamWindowSize + (long)delta));
-                delta = newValue - this.initialStreamWindowSize;
+                    Math.Max(Http2CodecUtil.MinInitialWindowSize, initialStreamWindowSize + (long)delta));
+                delta = newValue - initialStreamWindowSize;
 
-                this.initialStreamWindowSize += delta;
+                initialStreamWindowSize += delta;
             }
 
             public void IncrementFlowControlWindows(int delta)
             {
-                if (delta > 0 && this.window > Http2CodecUtil.MaxInitialWindowSize - delta)
+                if (delta > 0 && window > Http2CodecUtil.MaxInitialWindowSize - delta)
                 {
-                    ThrowHelper.ThrowStreamError_FlowControlWindowOverflowedForStream(this.stream.Id);
+                    ThrowHelper.ThrowStreamError_FlowControlWindowOverflowedForStream(_stream.Id);
                 }
 
-                this.window += delta;
-                this.processedWindow += delta;
-                this.lowerBound = delta < 0 ? delta : 0;
+                window += delta;
+                processedWindow += delta;
+                lowerBound = delta < 0 ? delta : 0;
             }
 
             public virtual void ReceiveFlowControlledFrame(int dataLength)
@@ -382,49 +382,49 @@ namespace DotNetty.Codecs.Http2
                 Debug.Assert(dataLength >= 0);
 
                 // Apply the delta. Even if we throw an exception we want to have taken this delta into account.
-                this.window -= dataLength;
+                window -= dataLength;
 
                 // Window size can become negative if we sent a SETTINGS frame that reduces the
                 // size of the transfer window after the peer has written data frames.
                 // The value is bounded by the length that SETTINGS frame decrease the window.
                 // This difference is stored for the connection when writing the SETTINGS frame
                 // and is cleared once we send a WINDOW_UPDATE frame.
-                if (this.window < this.lowerBound)
+                if (window < lowerBound)
                 {
-                    ThrowHelper.ThrowStreamError_FlowControlWindowExceededForStream(this.stream.Id);
+                    ThrowHelper.ThrowStreamError_FlowControlWindowExceededForStream(_stream.Id);
                 }
             }
 
             void ReturnProcessedBytes(int delta)
             {
-                if (this.processedWindow - delta < this.window)
+                if (processedWindow - delta < window)
                 {
-                    ThrowHelper.ThrowStreamError_AttemptingToReturnTooManyBytesForStream(this.stream.Id);
+                    ThrowHelper.ThrowStreamError_AttemptingToReturnTooManyBytesForStream(_stream.Id);
                 }
 
-                this.processedWindow -= delta;
+                processedWindow -= delta;
             }
 
             public virtual bool ConsumeBytes(int numBytes)
             {
                 // Return the bytes processed and update the window.
-                this.ReturnProcessedBytes(numBytes);
-                return this.WriteWindowUpdateIfNeeded();
+                ReturnProcessedBytes(numBytes);
+                return WriteWindowUpdateIfNeeded();
             }
 
-            public int UnconsumedBytes => this.processedWindow - this.window;
+            public int UnconsumedBytes => processedWindow - window;
 
             public bool WriteWindowUpdateIfNeeded()
             {
-                if (this.endOfStream || this.initialStreamWindowSize <= 0)
+                if (endOfStream || initialStreamWindowSize <= 0)
                 {
                     return false;
                 }
 
-                int threshold = (int)(this.initialStreamWindowSize * this.streamWindowUpdateRatio);
-                if (this.processedWindow <= threshold)
+                int threshold = (int)(initialStreamWindowSize * streamWindowUpdateRatio);
+                if (processedWindow <= threshold)
                 {
-                    this.WriteWindowUpdate();
+                    WriteWindowUpdate();
                     return true;
                 }
 
@@ -438,18 +438,18 @@ namespace DotNetty.Codecs.Http2
             void WriteWindowUpdate()
             {
                 // Expand the window for this stream back to the size of the initial window.
-                int deltaWindowSize = this.initialStreamWindowSize - this.processedWindow;
+                int deltaWindowSize = initialStreamWindowSize - processedWindow;
                 try
                 {
-                    this.IncrementFlowControlWindows(deltaWindowSize);
+                    IncrementFlowControlWindows(deltaWindowSize);
                 }
                 catch (Exception t)
                 {
-                    ThrowHelper.ThrowConnectionError_AttemptingToReturnTooManyBytesForStream(this.stream.Id, t);
+                    ThrowHelper.ThrowConnectionError_AttemptingToReturnTooManyBytesForStream(_stream.Id, t);
                 }
 
                 // Send a window update for the stream/connection.
-                this.controller.frameWriter.WriteWindowUpdateAsync(this.controller.ctx, this.stream.Id, deltaWindowSize, this.controller.ctx.NewPromise());
+                _controller._frameWriter.WriteWindowUpdateAsync(_controller._ctx, _stream.Id, deltaWindowSize, _controller._ctx.NewPromise());
             }
         }
 
@@ -553,14 +553,14 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         sealed class WindowUpdateVisitor : IHttp2StreamVisitor
         {
-            CompositeStreamException compositeException;
-            readonly DefaultHttp2LocalFlowController controller;
-            readonly int delta;
+            private CompositeStreamException _compositeException;
+            private readonly DefaultHttp2LocalFlowController _controller;
+            private readonly int _delta;
 
             public WindowUpdateVisitor(DefaultHttp2LocalFlowController controller, int delta)
             {
-                this.controller = controller;
-                this.delta = delta;
+                _controller = controller;
+                _delta = delta;
             }
 
             public bool Visit(IHttp2Stream stream)
@@ -568,18 +568,18 @@ namespace DotNetty.Codecs.Http2
                 try
                 {
                     // Increment flow control window first so state will be consistent if overflow is detected.
-                    IFlowState state = this.controller.GetState(stream);
-                    state.IncrementFlowControlWindows(this.delta);
-                    state.IncrementInitialStreamWindow(this.delta);
+                    IFlowState state = _controller.GetState(stream);
+                    state.IncrementFlowControlWindows(_delta);
+                    state.IncrementInitialStreamWindow(_delta);
                 }
                 catch (StreamException e)
                 {
-                    if (this.compositeException is null)
+                    if (_compositeException is null)
                     {
-                        this.compositeException = new CompositeStreamException(e.Error, 4);
+                        _compositeException = new CompositeStreamException(e.Error, 4);
                     }
 
-                    this.compositeException.Add(e);
+                    _compositeException.Add(e);
                 }
 
                 return true;
@@ -587,9 +587,9 @@ namespace DotNetty.Codecs.Http2
 
             public void ThrowIfError()
             {
-                if (this.compositeException is object)
+                if (_compositeException is object)
                 {
-                    throw this.compositeException;
+                    throw _compositeException;
                 }
             }
         }

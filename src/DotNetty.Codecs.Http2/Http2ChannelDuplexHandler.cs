@@ -18,18 +18,18 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public abstract class Http2ChannelDuplexHandler : ChannelDuplexHandler
     {
-        private Http2FrameCodec frameCodec;
+        private Http2FrameCodec v_frameCodec;
 
         private Http2FrameCodec InternalframeCodec
         {
-            get => Volatile.Read(ref this.frameCodec);
-            set => Interlocked.Exchange(ref this.frameCodec, value);
+            get => Volatile.Read(ref v_frameCodec);
+            set => Interlocked.Exchange(ref v_frameCodec, value);
         }
 
         public sealed override void HandlerAdded(IChannelHandlerContext ctx)
         {
-            this.InternalframeCodec = RequireHttp2FrameCodec(ctx);
-            this.HandlerAdded0(ctx);
+            InternalframeCodec = RequireHttp2FrameCodec(ctx);
+            HandlerAdded0(ctx);
         }
 
         protected virtual void HandlerAdded0(IChannelHandlerContext ctx)
@@ -41,11 +41,11 @@ namespace DotNetty.Codecs.Http2
         {
             try
             {
-                this.HandlerRemoved0(ctx);
+                HandlerRemoved0(ctx);
             }
             finally
             {
-                this.InternalframeCodec = null;
+                InternalframeCodec = null;
             }
         }
 
@@ -60,7 +60,7 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public IHttp2FrameStream NewStream()
         {
-            Http2FrameCodec codec = this.InternalframeCodec;
+            Http2FrameCodec codec = InternalframeCodec;
             if (codec is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_RequireHttp2FrameCodec();
@@ -74,7 +74,12 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         protected void ForEachActiveStream(IHttp2FrameStreamVisitor streamVisitor)
         {
-            this.InternalframeCodec.ForEachActiveStream(streamVisitor);
+            InternalframeCodec.ForEachActiveStream(streamVisitor);
+        }
+
+        protected void ForEachActiveStream(Func<IHttp2FrameStream, bool> streamVisitor)
+        {
+            InternalframeCodec.ForEachActiveStream(streamVisitor);
         }
 
         private static Http2FrameCodec RequireHttp2FrameCodec(IChannelHandlerContext ctx)

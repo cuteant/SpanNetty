@@ -10,50 +10,45 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class DefaultHttp2PingFrame : IHttp2PingFrame
     {
-        private readonly long content;
-        private readonly bool ack;
+        private readonly long _content;
+        private readonly bool _ack;
 
         public DefaultHttp2PingFrame(long content)
             : this(content, false)
         {
         }
 
-        /// <summary>
-        /// A user cannot send a ping ack, as this is done automatically when a ping is received.
-        /// </summary>
-        /// <param name="content"></param>
-        /// <param name="ack"></param>
         public DefaultHttp2PingFrame(long content, bool ack)
         {
-            this.content = content;
-            this.ack = ack;
+            _content = content;
+            _ack = ack;
         }
 
         public virtual string Name => "PING";
 
-        public bool Ack => this.ack;
+        public bool Ack => _ack;
 
-        public long Content => this.content;
+        public long Content => _content;
 
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(this, obj)) { return true; }
 
             return obj is DefaultHttp2PingFrame pingFrame
-                && this.ack == pingFrame.ack
-                && this.content == pingFrame.content;
+                && _ack == pingFrame._ack
+                && _content == pingFrame._content;
         }
 
         public override int GetHashCode()
         {
             int hash = base.GetHashCode();
-            hash = hash * 31 + (this.ack ? 1 : 0);
+            hash = hash * 31 + (_ack ? 1 : 0);
             return hash;
         }
 
         public override string ToString()
         {
-            return StringUtil.SimpleClassName(this) + "(content=" + this.content + ", ack=" + this.ack + ')';
+            return StringUtil.SimpleClassName(this) + "(content=" + _content + ", ack=" + _ack + ')';
         }
     }
 }

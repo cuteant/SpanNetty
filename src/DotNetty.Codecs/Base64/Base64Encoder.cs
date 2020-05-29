@@ -10,7 +10,7 @@ namespace DotNetty.Codecs.Base64
     public sealed class Base64Encoder : MessageToMessageDecoder<IByteBuffer>
     {
         readonly bool breakLines;
-        readonly Base64Dialect dialect;
+        readonly IBase64Dialect dialect;
 
         public Base64Encoder() : this(true) { }
 
@@ -18,7 +18,7 @@ namespace DotNetty.Codecs.Base64
         {
         }
 
-        public Base64Encoder(bool breakLines, in Base64Dialect dialect)
+        public Base64Encoder(bool breakLines, IBase64Dialect dialect)
         {
             this.breakLines = breakLines;
             this.dialect = dialect;

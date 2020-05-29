@@ -17,20 +17,32 @@ namespace DotNetty.Codecs.Http2
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Http2StreamChannelBootstrap>();
 
-        readonly CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue> options =
+        private readonly CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue> _options =
             new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(ChannelOptionComparer.Default);
-        readonly CachedReadConcurrentDictionary<IConstant, AttributeValue> attrs =
+        private readonly CachedReadConcurrentDictionary<IConstant, AttributeValue> _attrs =
             new CachedReadConcurrentDictionary<IConstant, AttributeValue>(ConstantComparer.Default);
 
-        readonly IChannel channel;
+        private readonly IChannel _channel;
 
-        IChannelHandler _handler;
-        private IChannelHandler InternalHandler { get => Volatile.Read(ref _handler); set => Interlocked.Exchange(ref _handler, value); }
+        // Cache the ChannelHandlerContext to speed up open(...) operations.
+        private IChannelHandlerContext v_multiplexCtx;
+        private IChannelHandlerContext InternalMultiplexContext
+        {
+            get => Volatile.Read(ref v_multiplexCtx);
+            set => Interlocked.Exchange(ref v_multiplexCtx, value);
+        }
+
+        private IChannelHandler v_handler;
+        private IChannelHandler InternalHandler
+        {
+            get => Volatile.Read(ref v_handler);
+            set => Interlocked.Exchange(ref v_handler, value);
+        }
 
         public Http2StreamChannelBootstrap(IChannel channel)
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
-            this.channel = channel;
+            this._channel = channel;
         }
 
         /// <summary>
@@ -47,11 +59,11 @@ namespace DotNetty.Codecs.Http2
 
             if (value is null)
             {
-                this.options.TryRemove(option, out _);
+                this._options.TryRemove(option, out _);
             }
             else
             {
-                this.options[option] = new ChannelOptionValue<T>(option, value);
+                this._options[option] = new ChannelOptionValue<T>(option, value);
             }
             return this;
         }
@@ -71,11 +83,11 @@ namespace DotNetty.Codecs.Http2
 
             if (value is null)
             {
-                this.attrs.TryRemove(key, out _);
+                this._attrs.TryRemove(key, out _);
             }
             else
             {
-                this.attrs[key] = new AttributeValue<T>(key, value);
+                this._attrs[key] = new AttributeValue<T>(key, value);
             }
             return this;
         }
@@ -93,45 +105,84 @@ namespace DotNetty.Codecs.Http2
             return this;
         }
 
+        /// <summary>
+        /// Open a new <see cref="IHttp2StreamChannel"/> to use.
+        /// </summary>
+        /// <returns>the <see cref="Task{IHttp2StreamChannel}"/> that will be notified once the channel was opened successfully or it failed.</returns>
         public Task<IHttp2StreamChannel> OpenAsync()
         {
             return OpenAsync(new TaskCompletionSource<IHttp2StreamChannel>());
         }
 
+        /// <summary>
+        /// Open a new <see cref="IHttp2StreamChannel"/> to use and notifies the given <paramref name="promise"/>.
+        /// </summary>
+        /// <param name="promise"></param>
+        /// <returns>the <see cref="Task{IHttp2StreamChannel}"/> that will be notified once the channel was opened successfully or it failed.</returns>
         public Task<IHttp2StreamChannel> OpenAsync(TaskCompletionSource<IHttp2StreamChannel> promise)
         {
-            var ctx = channel.Pipeline.Context<Http2MultiplexCodec>();
-            if (ctx is null)
+            try
             {
-                if (channel.Active)
-                {
-                    promise.SetException(ThrowHelper.GetInvalidOperationException_MustBeInTheChannelPipelineOfChannel(channel));
-                }
-                else
-                {
-                    promise.SetException(new ClosedChannelException());
-                }
-            }
-            else
-            {
+                var ctx = FindCtx();
                 var executor = ctx.Executor;
                 if (executor.InEventLoop)
                 {
-                    Open0(ctx, promise);
+                    InternalOpen(ctx, promise);
                 }
                 else
                 {
-                    executor.Execute(() => Open0(ctx, promise));
+                    executor.Execute(() => InternalOpen(ctx, promise));
                 }
+            }
+            catch (Exception exc)
+            {
+                promise.TrySetException(exc);
             }
             return promise.Task;
         }
 
-        public void Open0(IChannelHandlerContext ctx, TaskCompletionSource<IHttp2StreamChannel> promise)
+        private IChannelHandlerContext FindCtx()
+        {
+            // First try to use cached context and if this not work lets try to lookup the context.
+            var ctx = InternalMultiplexContext;
+            if (ctx is object && !ctx.Removed)
+            {
+                return ctx;
+            }
+            var pipeline = _channel.Pipeline;
+            ctx = pipeline.Context<Http2MultiplexHandler>();
+            if (ctx is null) { ctx = pipeline.Context<Http2MultiplexCodec>(); }
+            if (ctx is null)
+            {
+                if (_channel.Active)
+                {
+                    ThrowHelper.ThrowInvalidOperationException_Multiplex_CodecOrHandler_must_be_in_pipeline_of_channel(_channel);
+                }
+                else
+                {
+                    ThrowHelper.ThrowClosedChannelException();
+                }
+            }
+            InternalMultiplexContext = ctx;
+            return ctx;
+        }
+
+        [Obsolete("should not be used directly. Use OpenAsync")]
+        public void Open0(IChannelHandlerContext ctx, TaskCompletionSource<IHttp2StreamChannel> promise) => InternalOpen(ctx, promise);
+
+        public void InternalOpen(IChannelHandlerContext ctx, TaskCompletionSource<IHttp2StreamChannel> promise)
         {
             Debug.Assert(ctx.Executor.InEventLoop);
 
-            var streamChannel = ((Http2MultiplexCodec)ctx.Handler).NewOutboundStream();
+            IHttp2StreamChannel streamChannel;
+            if (ctx.Handler is Http2MultiplexHandler multiplexHandler)
+            {
+                streamChannel = multiplexHandler.NewOutboundStream();
+            }
+            else
+            {
+                streamChannel = ((Http2MultiplexCodec)ctx.Handler).NewOutboundStream();
+            }
             try
             {
                 this.Init(streamChannel);
@@ -210,44 +261,44 @@ namespace DotNetty.Codecs.Http2
                 p.AddLast(handler);
             }
 
-            var options = this.options.Values;
+            var options = this._options.Values;
             foreach (var item in options)
             {
-                SetChannelOption(channel, item, Logger);
+                SetChannelOption(channel, item);
             }
-            var attrs = this.attrs.Values;
+            var attrs = this._attrs.Values;
             foreach (var item in attrs)
             {
                 item.Set(channel);
             }
         }
 
-        static void SetChannelOption(IChannel channel, ChannelOptionValue option, IInternalLogger logger)
+        static void SetChannelOption(IChannel channel, ChannelOptionValue option)
         {
-            var warnEnabled = logger.WarnEnabled;
+            var warnEnabled = Logger.WarnEnabled;
             try
             {
                 if (!option.Set(channel.Configuration))
                 {
-                    if (warnEnabled) UnknownChannelOptionForChannel(logger, channel, option);
+                    if (warnEnabled) UnknownChannelOptionForChannel(channel, option);
                 }
             }
             catch (Exception ex)
             {
-                if (warnEnabled) FailedToSetChannelOptionWithValueForChannel(logger, channel, option, ex);
+                if (warnEnabled) FailedToSetChannelOptionWithValueForChannel(channel, option, ex);
             }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void UnknownChannelOptionForChannel(IInternalLogger logger, IChannel channel, ChannelOptionValue option)
+        private static void UnknownChannelOptionForChannel(IChannel channel, ChannelOptionValue option)
         {
-            logger.Warn("Unknown channel option '{}' for channel '{}'", option.Option, channel);
+            Logger.Warn("Unknown channel option '{}' for channel '{}'", option.Option, channel);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void FailedToSetChannelOptionWithValueForChannel(IInternalLogger logger, IChannel channel, ChannelOptionValue option, Exception ex)
+        private static void FailedToSetChannelOptionWithValueForChannel(IChannel channel, ChannelOptionValue option, Exception ex)
         {
-            logger.Warn("Failed to set channel option '{}' with value '{}' for channel '{}'", option.Option, option, channel, ex);
+            Logger.Warn("Failed to set channel option '{}' with value '{}' for channel '{}'", option.Option, option, channel, ex);
         }
 
         abstract class ChannelOptionValue

@@ -12,17 +12,19 @@ namespace DotNetty.Codecs.Http2
 
     sealed class HpackEncoder
     {
+        internal const int HuffCodeThreshold = 512;
         static readonly Encoding Enc = Encoding.GetEncoding("ISO-8859-1");
 
         // a linked hash map of header fields
-        readonly HeaderEntry[] headerFields;
-        readonly HeaderEntry head = new HeaderEntry(-1, AsciiString.Empty, AsciiString.Empty, int.MaxValue, null);
-        readonly HpackHuffmanEncoder hpackHuffmanEncoder = new HpackHuffmanEncoder();
-        readonly byte hashMask;
-        readonly bool ignoreMaxHeaderListSize;
-        long size;
-        long maxHeaderTableSize;
-        long maxHeaderListSize;
+        private readonly HeaderEntry[] _headerFields;
+        private readonly HeaderEntry _head = new HeaderEntry(-1, AsciiString.Empty, AsciiString.Empty, int.MaxValue, null);
+        private readonly HpackHuffmanEncoder _hpackHuffmanEncoder = new HpackHuffmanEncoder();
+        private readonly byte _hashMask;
+        private readonly bool _ignoreMaxHeaderListSize;
+        private readonly int _huffCodeThreshold;
+        private long _size;
+        private long _maxHeaderTableSize;
+        private long _maxHeaderListSize;
 
         /// <summary>
         /// Creates a new encoder.
@@ -36,23 +38,24 @@ namespace DotNetty.Codecs.Http2
         /// Creates a new encoder.
         /// </summary>
         public HpackEncoder(bool ignoreMaxHeaderListSize)
-            : this(ignoreMaxHeaderListSize, 16)
+            : this(ignoreMaxHeaderListSize, 16, HuffCodeThreshold)
         {
         }
 
         /// <summary>
         /// Creates a new encoder.
         /// </summary>
-        public HpackEncoder(bool ignoreMaxHeaderListSize, int arraySizeHint)
+        public HpackEncoder(bool ignoreMaxHeaderListSize, int arraySizeHint, int huffCodeThreshold)
         {
-            this.ignoreMaxHeaderListSize = ignoreMaxHeaderListSize;
-            this.maxHeaderTableSize = Http2CodecUtil.DefaultHeaderTableSize;
-            this.maxHeaderListSize = Http2CodecUtil.MaxHeaderListSize;
+            _ignoreMaxHeaderListSize = ignoreMaxHeaderListSize;
+            _maxHeaderTableSize = Http2CodecUtil.DefaultHeaderTableSize;
+            _maxHeaderListSize = Http2CodecUtil.MaxHeaderListSize;
             // Enforce a bound of [2, 128] because hashMask is a byte. The max possible value of hashMask is one less
             // than the length of this array, and we want the mask to be > 0.
-            this.headerFields = new HeaderEntry[MathUtil.FindNextPositivePowerOfTwo(Math.Max(2, Math.Min(arraySizeHint, 128)))];
-            this.hashMask = (byte)(this.headerFields.Length - 1);
-            this.head.before = this.head.after = this.head;
+            _headerFields = new HeaderEntry[MathUtil.FindNextPositivePowerOfTwo(Math.Max(2, Math.Min(arraySizeHint, 128)))];
+            _hashMask = (byte)(_headerFields.Length - 1);
+            _head.Before = _head.After = _head;
+            _huffCodeThreshold = huffCodeThreshold;
         }
 
         /// <summary>
@@ -65,13 +68,13 @@ namespace DotNetty.Codecs.Http2
         /// <param name="sensitivityDetector"></param>
         public void EncodeHeaders(int streamId, IByteBuffer output, IHttp2Headers headers, ISensitivityDetector sensitivityDetector)
         {
-            if (this.ignoreMaxHeaderListSize)
+            if (_ignoreMaxHeaderListSize)
             {
-                this.EncodeHeadersIgnoreMaxHeaderListSize(output, headers, sensitivityDetector);
+                EncodeHeadersIgnoreMaxHeaderListSize(output, headers, sensitivityDetector);
             }
             else
             {
-                this.EncodeHeadersEnforceMaxHeaderListSize(streamId, output, headers, sensitivityDetector);
+                EncodeHeadersEnforceMaxHeaderListSize(streamId, output, headers, sensitivityDetector);
             }
         }
 
@@ -86,13 +89,13 @@ namespace DotNetty.Codecs.Http2
                 // OK to increment now and check for bounds after because this value is limited to unsigned int and will not
                 // overflow.
                 headerSize += HpackHeaderField.SizeOf(name, value);
-                if (headerSize > this.maxHeaderListSize)
+                if (headerSize > _maxHeaderListSize)
                 {
-                    Http2CodecUtil.HeaderListSizeExceeded(streamId, this.maxHeaderListSize, false);
+                    Http2CodecUtil.HeaderListSizeExceeded(streamId, _maxHeaderListSize, false);
                 }
             }
 
-            this.EncodeHeadersIgnoreMaxHeaderListSize(@output, headers, sensitivityDetector);
+            EncodeHeadersIgnoreMaxHeaderListSize(@output, headers, sensitivityDetector);
         }
 
         void EncodeHeadersIgnoreMaxHeaderListSize(IByteBuffer output, IHttp2Headers headers, ISensitivityDetector sensitivityDetector)
@@ -101,7 +104,7 @@ namespace DotNetty.Codecs.Http2
             {
                 ICharSequence name = header.Key;
                 ICharSequence value = header.Value;
-                this.EncodeHeader(output, name, value, sensitivityDetector.IsSensitive(name, value), HpackHeaderField.SizeOf(name, value));
+                EncodeHeader(output, name, value, sensitivityDetector.IsSensitive(name, value), HpackHeaderField.SizeOf(name, value));
             }
         }
 
@@ -119,19 +122,19 @@ namespace DotNetty.Codecs.Http2
             // If the header value is sensitive then it must never be indexed
             if (sensitive)
             {
-                int nameIndex = this.GetNameIndex(name);
-                this.EncodeLiteral(output, name, value, HpackUtil.IndexType.Never, nameIndex);
+                int nameIndex = GetNameIndex(name);
+                EncodeLiteral(output, name, value, HpackUtil.IndexType.Never, nameIndex);
                 return;
             }
 
             // If the peer will only use the static table
-            if (0ul >= (ulong)this.maxHeaderTableSize)
+            if (0ul >= (ulong)_maxHeaderTableSize)
             {
                 int staticTableIndex = HpackStaticTable.GetIndex(name, value);
                 if (staticTableIndex == -1)
                 {
                     int nameIndex = HpackStaticTable.GetIndex(name);
-                    this.EncodeLiteral(output, name, value, HpackUtil.IndexType.None, nameIndex);
+                    EncodeLiteral(output, name, value, HpackUtil.IndexType.None, nameIndex);
                 }
                 else
                 {
@@ -142,17 +145,17 @@ namespace DotNetty.Codecs.Http2
             }
 
             // If the headerSize is greater than the max table size then it must be encoded literally
-            if (headerSize > this.maxHeaderTableSize)
+            if (headerSize > _maxHeaderTableSize)
             {
-                int nameIndex = this.GetNameIndex(name);
-                this.EncodeLiteral(output, name, value, HpackUtil.IndexType.None, nameIndex);
+                int nameIndex = GetNameIndex(name);
+                EncodeLiteral(output, name, value, HpackUtil.IndexType.None, nameIndex);
                 return;
             }
 
-            HeaderEntry headerField = this.GetEntry(name, value);
+            HeaderEntry headerField = GetEntry(name, value);
             if (headerField is object)
             {
-                int index = this.GetIndex(headerField.index) + HpackStaticTable.Length;
+                int index = GetIndex(headerField.Index) + HpackStaticTable.Length;
                 // Section 6.1. Indexed Header Field Representation
                 EncodeInteger(output, 0x80, 7, index);
             }
@@ -166,9 +169,9 @@ namespace DotNetty.Codecs.Http2
                 }
                 else
                 {
-                    this.EnsureCapacity(headerSize);
-                    this.EncodeLiteral(output, name, value, HpackUtil.IndexType.Incremental, this.GetNameIndex(name));
-                    this.Add(name, value, headerSize);
+                    EnsureCapacity(headerSize);
+                    EncodeLiteral(output, name, value, HpackUtil.IndexType.Incremental, GetNameIndex(name));
+                    Add(name, value, headerSize);
                 }
             }
         }
@@ -185,13 +188,13 @@ namespace DotNetty.Codecs.Http2
                 ThrowHelper.ThrowConnectionError_SetMaxHeaderTableSize(maxHeaderTableSize);
             }
 
-            if (this.maxHeaderTableSize == maxHeaderTableSize)
+            if (_maxHeaderTableSize == maxHeaderTableSize)
             {
                 return;
             }
 
-            this.maxHeaderTableSize = maxHeaderTableSize;
-            this.EnsureCapacity(0);
+            _maxHeaderTableSize = maxHeaderTableSize;
+            EnsureCapacity(0);
             // Casting to integer is safe as we verified the maxHeaderTableSize is a valid unsigned int.
             EncodeInteger(output, 0x20, 5, maxHeaderTableSize);
         }
@@ -202,7 +205,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public long GetMaxHeaderTableSize()
         {
-            return this.maxHeaderTableSize;
+            return _maxHeaderTableSize;
         }
 
         public void SetMaxHeaderListSize(long maxHeaderListSize)
@@ -212,12 +215,12 @@ namespace DotNetty.Codecs.Http2
                 ThrowHelper.ThrowConnectionError_SetMaxHeaderListSize(maxHeaderListSize);
             }
 
-            this.maxHeaderListSize = maxHeaderListSize;
+            _maxHeaderListSize = maxHeaderListSize;
         }
 
         public long GetMaxHeaderListSize()
         {
-            return this.maxHeaderListSize;
+            return _maxHeaderListSize;
         }
 
         /// <summary>
@@ -267,11 +270,13 @@ namespace DotNetty.Codecs.Http2
         /// <param name="str"></param>
         void EncodeStringLiteral(IByteBuffer output, ICharSequence str)
         {
-            int huffmanLength = this.hpackHuffmanEncoder.GetEncodedLength(str);
-            if (huffmanLength < str.Count)
+            int huffmanLength;
+            uint ustrLen = (uint)str.Count;
+            if (ustrLen >= (uint)_huffCodeThreshold &&
+                (uint)(huffmanLength = _hpackHuffmanEncoder.GetEncodedLength(str)) < ustrLen)
             {
                 EncodeInteger(output, 0x80, 7, huffmanLength);
-                this.hpackHuffmanEncoder.Encode(output, str);
+                _hpackHuffmanEncoder.Encode(output, str);
             }
             else
             {
@@ -319,10 +324,10 @@ namespace DotNetty.Codecs.Http2
 
             if (!nameIndexValid)
             {
-                this.EncodeStringLiteral(output, name);
+                EncodeStringLiteral(output, name);
             }
 
-            this.EncodeStringLiteral(output, value);
+            EncodeStringLiteral(output, value);
         }
 
         int GetNameIndex(ICharSequence name)
@@ -330,7 +335,7 @@ namespace DotNetty.Codecs.Http2
             int index = HpackStaticTable.GetIndex(name);
             if (index == -1)
             {
-                index = this.GetIndex(name);
+                index = GetIndex(name);
                 if (index >= 0)
                 {
                     index += HpackStaticTable.Length;
@@ -347,15 +352,15 @@ namespace DotNetty.Codecs.Http2
         /// <param name="headerSize"></param>
         void EnsureCapacity(long headerSize)
         {
-            while (this.maxHeaderTableSize - this.size < headerSize)
+            while (_maxHeaderTableSize - _size < headerSize)
             {
-                int index = this.Length();
+                int index = Length();
                 if (0u >= (uint)index)
                 {
                     break;
                 }
 
-                this.Remove();
+                Remove();
             }
         }
 
@@ -364,7 +369,7 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         internal int Length()
         {
-            return 0ul >= (ulong)this.size ? 0 : this.head.after.index - this.head.before.index + 1;
+            return 0ul >= (ulong)_size ? 0 : _head.After.Index - _head.Before.Index + 1;
         }
 
         /// <summary>
@@ -372,7 +377,7 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         internal long Size()
         {
-            return this.size;
+            return _size;
         }
 
         /// <summary>
@@ -381,10 +386,10 @@ namespace DotNetty.Codecs.Http2
         /// <param name="index"></param>
         internal HpackHeaderField GetHeaderField(int index)
         {
-            HeaderEntry entry = this.head;
+            HeaderEntry entry = _head;
             while (index-- >= 0)
             {
-                entry = entry.before;
+                entry = entry.Before;
             }
 
             return entry;
@@ -398,17 +403,17 @@ namespace DotNetty.Codecs.Http2
         /// <param name="value"></param>
         HeaderEntry GetEntry(ICharSequence name, ICharSequence value)
         {
-            if (0u >= (uint)this.Length() || name is null || value is null)
+            if (0u >= (uint)Length() || name is null || value is null)
             {
                 return null;
             }
 
             int h = AsciiString.GetHashCode(name);
-            int i = this.Index(h);
-            for (HeaderEntry e = this.headerFields[i]; e is object; e = e.next)
+            int i = Index(h);
+            for (HeaderEntry e = _headerFields[i]; e is object; e = e.Next)
             {
                 // To avoid short circuit behavior a bitwise operator is used instead of a bool operator.
-                if (e.hash == h && (HpackUtil.EqualsConstantTime(name, e.name) & HpackUtil.EqualsConstantTime(value, e.value)) != 0)
+                if (e.Hash == h && (HpackUtil.EqualsConstantTime(name, e.name) & HpackUtil.EqualsConstantTime(value, e.value)) != 0)
                 {
                     return e;
                 }
@@ -425,18 +430,18 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         int GetIndex(ICharSequence name)
         {
-            if (0u >= (uint)this.Length() || name is null)
+            if (0u >= (uint)Length() || name is null)
             {
                 return -1;
             }
 
             int h = AsciiString.GetHashCode(name);
-            int i = this.Index(h);
-            for (HeaderEntry e = this.headerFields[i]; e is object; e = e.next)
+            int i = Index(h);
+            for (HeaderEntry e = _headerFields[i]; e is object; e = e.Next)
             {
-                if (e.hash == h && HpackUtil.EqualsConstantTime(name, e.name) != 0)
+                if (e.Hash == h && HpackUtil.EqualsConstantTime(name, e.name) != 0)
                 {
-                    return this.GetIndex(e.index);
+                    return GetIndex(e.Index);
                 }
             }
 
@@ -449,7 +454,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="index"></param>
         int GetIndex(int index)
         {
-            return index == -1 ? -1 : index - this.head.before.index + 1;
+            return index == -1 ? -1 : index - _head.Before.Index + 1;
         }
 
         /// <summary>
@@ -463,25 +468,25 @@ namespace DotNetty.Codecs.Http2
         void Add(ICharSequence name, ICharSequence value, long headerSize)
         {
             // Clear the table if the header field size is larger than the maxHeaderTableSize.
-            if (headerSize > this.maxHeaderTableSize)
+            if (headerSize > _maxHeaderTableSize)
             {
-                this.Clear();
+                Clear();
                 return;
             }
 
             // Evict oldest entries until we have enough maxHeaderTableSize.
-            while (this.maxHeaderTableSize - this.size < headerSize)
+            while (_maxHeaderTableSize - _size < headerSize)
             {
-                this.Remove();
+                Remove();
             }
 
             int h = AsciiString.GetHashCode(name);
-            int i = this.Index(h);
-            HeaderEntry old = this.headerFields[i];
-            HeaderEntry e = new HeaderEntry(h, name, value, this.head.before.index - 1, old);
-            this.headerFields[i] = e;
-            e.AddBefore(this.head);
-            this.size += headerSize;
+            int i = Index(h);
+            HeaderEntry old = _headerFields[i];
+            HeaderEntry e = new HeaderEntry(h, name, value, _head.Before.Index - 1, old);
+            _headerFields[i] = e;
+            e.AddBefore(_head);
+            _size += headerSize;
         }
 
         /// <summary>
@@ -490,32 +495,32 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         HpackHeaderField Remove()
         {
-            if (0ul >= (ulong)this.size)
+            if (0ul >= (ulong)_size)
             {
                 return null;
             }
 
-            HeaderEntry eldest = this.head.after;
-            int h = eldest.hash;
-            int i = this.Index(h);
-            HeaderEntry prev = this.headerFields[i];
+            HeaderEntry eldest = _head.After;
+            int h = eldest.Hash;
+            int i = Index(h);
+            HeaderEntry prev = _headerFields[i];
             HeaderEntry e = prev;
             while (e is object)
             {
-                HeaderEntry next = e.next;
+                HeaderEntry next = e.Next;
                 if (e == eldest)
                 {
                     if (prev == eldest)
                     {
-                        this.headerFields[i] = next;
+                        _headerFields[i] = next;
                     }
                     else
                     {
-                        prev.next = next;
+                        prev.Next = next;
                     }
 
                     eldest.Remove();
-                    this.size -= eldest.Size();
+                    _size -= eldest.Size();
                     return eldest;
                 }
 
@@ -531,14 +536,14 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         void Clear()
         {
-            for (var i = 0; i < this.headerFields.Length; i++)
+            for (var i = 0; i < _headerFields.Length; i++)
             {
-                this.headerFields[i] = null;
+                _headerFields[i] = null;
             }
 
             //Arrays.fill(headerFields, null);
-            this.head.before = this.head.after = this.head;
-            this.size = 0;
+            _head.Before = _head.After = _head;
+            _size = 0;
         }
 
         /// <summary>
@@ -548,7 +553,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         int Index(int h)
         {
-            return h & this.hashMask;
+            return h & _hashMask;
         }
 
         /// <summary>
@@ -557,15 +562,15 @@ namespace DotNetty.Codecs.Http2
         sealed class HeaderEntry : HpackHeaderField
         {
             // These fields comprise the doubly linked list used for iteration.
-            internal HeaderEntry before;
-            internal HeaderEntry after;
+            internal HeaderEntry Before;
+            internal HeaderEntry After;
 
             // These fields comprise the chained list for header fields with the same hash.
-            internal HeaderEntry next;
-            internal readonly int hash;
+            internal HeaderEntry Next;
+            internal readonly int Hash;
 
             // This is used to compute the index in the dynamic table.
-            internal readonly int index;
+            internal readonly int Index;
 
             /// <summary>
             /// Creates new entry.
@@ -578,9 +583,9 @@ namespace DotNetty.Codecs.Http2
             internal HeaderEntry(int hash, ICharSequence name, ICharSequence value, int index, HeaderEntry next)
                 : base(name, value)
             {
-                this.index = index;
-                this.hash = hash;
-                this.next = next;
+                Index = index;
+                Hash = hash;
+                Next = next;
             }
 
             /// <summary>
@@ -588,11 +593,11 @@ namespace DotNetty.Codecs.Http2
             /// </summary>
             internal void Remove()
             {
-                this.before.after = this.after;
-                this.after.before = this.before;
-                this.before = null; // null references to prevent nepotism in generational GC.
-                this.after = null;
-                this.next = null;
+                Before.After = After;
+                After.Before = Before;
+                Before = null; // null references to prevent nepotism in generational GC.
+                After = null;
+                Next = null;
             }
 
             /// <summary>
@@ -601,10 +606,10 @@ namespace DotNetty.Codecs.Http2
             /// <param name="existingEntry"></param>
             internal void AddBefore(HeaderEntry existingEntry)
             {
-                this.after = existingEntry;
-                this.before = existingEntry.before;
-                this.before.after = this;
-                this.after.before = this;
+                After = existingEntry;
+                Before = existingEntry.Before;
+                Before.After = this;
+                After.Before = this;
             }
         }
     }

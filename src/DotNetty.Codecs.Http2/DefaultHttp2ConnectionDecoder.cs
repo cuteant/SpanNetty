@@ -24,32 +24,96 @@ namespace DotNetty.Codecs.Http2
     public class DefaultHttp2ConnectionDecoder : IHttp2ConnectionDecoder
     {
         private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<DefaultHttp2ConnectionDecoder>();
-        private IHttp2FrameListener internalFrameListener;
-        private readonly IHttp2Connection connection;
-        private IHttp2LifecycleManager lifecycleManager;
-        private readonly IHttp2ConnectionEncoder encoder;
-        private readonly IHttp2FrameReader frameReader;
-        private IHttp2FrameListener listener;
-        private readonly IHttp2PromisedRequestVerifier requestVerifier;
+        private IHttp2FrameListener _internalFrameListener;
+        private readonly IHttp2Connection _connection;
+        private IHttp2LifecycleManager _lifecycleManager;
+        private readonly IHttp2ConnectionEncoder _encoder;
+        private readonly IHttp2FrameReader _frameReader;
+        private IHttp2FrameListener _listener;
+        private readonly IHttp2PromisedRequestVerifier _requestVerifier;
+        private readonly IHttp2SettingsReceivedConsumer _settingsReceivedConsumer;
+        private readonly bool _autoAckPing;
 
+        /// <summary>Create a new instance.</summary>
+        /// <param name="connection">The <see cref="IHttp2Connection"/> associated with this decoder.</param>
+        /// <param name="encoder">The <see cref="IHttp2ConnectionEncoder"/> associated with this decoder.</param>
+        /// <param name="frameReader">Responsible for reading/parsing the raw frames. As opposed to this object which applies
+        /// h2 semantics on top of the frames.</param>
         public DefaultHttp2ConnectionDecoder(IHttp2Connection connection,
             IHttp2ConnectionEncoder encoder, IHttp2FrameReader frameReader)
             : this(connection, encoder, frameReader, AlwaysVerifyPromisedRequestVerifier.Instance)
         {
         }
 
+        /// <summary>Create a new instance.</summary>
+        /// <param name="connection">The <see cref="IHttp2Connection"/> associated with this decoder.</param>
+        /// <param name="encoder">The <see cref="IHttp2ConnectionEncoder"/> associated with this decoder.</param>
+        /// <param name="frameReader">Responsible for reading/parsing the raw frames. As opposed to this object which applies
+        /// h2 semantics on top of the frames.</param>
+        /// <param name="requestVerifier">Determines if push promised streams are valid.</param>
         public DefaultHttp2ConnectionDecoder(IHttp2Connection connection,
             IHttp2ConnectionEncoder encoder, IHttp2FrameReader frameReader, IHttp2PromisedRequestVerifier requestVerifier)
+            : this(connection, encoder, frameReader, requestVerifier, true, true)
+        {
+        }
+
+        /// <summary>Create a new instance.</summary>
+        /// <param name="connection">The <see cref="IHttp2Connection"/> associated with this decoder.</param>
+        /// <param name="encoder">The <see cref="IHttp2ConnectionEncoder"/> associated with this decoder.</param>
+        /// <param name="frameReader">Responsible for reading/parsing the raw frames. As opposed to this object which applies
+        /// h2 semantics on top of the frames.</param>
+        /// <param name="requestVerifier">Determines if push promised streams are valid.</param>
+        /// <param name="autoAckSettings"><c>false</c> to disable automatically applying and sending settings acknowledge frame.
+        /// The <paramref name="encoder"/> is expected to be an instance of
+        /// <see cref="IHttp2SettingsReceivedConsumer"/> and will apply the earliest received but not yet
+        /// ACKed SETTINGS when writing the SETTINGS ACKs. <c>true</c> to enable automatically
+        /// applying and sending settings acknowledge frame.</param>
+        public DefaultHttp2ConnectionDecoder(IHttp2Connection connection,
+            IHttp2ConnectionEncoder encoder, IHttp2FrameReader frameReader, IHttp2PromisedRequestVerifier requestVerifier, bool autoAckSettings)
+            : this(connection, encoder, frameReader, requestVerifier, autoAckSettings, true)
+        {
+        }
+
+        /// <summary>Create a new instance.</summary>
+        /// <param name="connection">The <see cref="IHttp2Connection"/> associated with this decoder.</param>
+        /// <param name="encoder">The <see cref="IHttp2ConnectionEncoder"/> associated with this decoder.</param>
+        /// <param name="frameReader">Responsible for reading/parsing the raw frames. As opposed to this object which applies
+        /// h2 semantics on top of the frames.</param>
+        /// <param name="requestVerifier">Determines if push promised streams are valid.</param>
+        /// <param name="autoAckSettings"><c>false</c> to disable automatically applying and sending settings acknowledge frame.
+        /// The <paramref name="encoder"/> is expected to be an instance of
+        /// <see cref="IHttp2SettingsReceivedConsumer"/> and will apply the earliest received but not yet
+        /// ACKed SETTINGS when writing the SETTINGS ACKs. <c>true</c> to enable automatically
+        /// applying and sending settings acknowledge frame.</param>
+        /// <param name="autoAckPing"><c>false</c> to disable automatically sending ping acknowledge frame. <c>true</c> to enable
+        /// automatically sending ping ack frame.</param>
+        public DefaultHttp2ConnectionDecoder(IHttp2Connection connection,
+            IHttp2ConnectionEncoder encoder, IHttp2FrameReader frameReader, IHttp2PromisedRequestVerifier requestVerifier,
+            bool autoAckSettings, bool autoAckPing)
         {
             if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
             if (frameReader is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frameReader); }
             if (encoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoder); }
             if (requestVerifier is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.requestVerifier); }
 
-            this.connection = connection;
-            this.frameReader = frameReader;
-            this.encoder = encoder;
-            this.requestVerifier = requestVerifier;
+            _autoAckPing = autoAckPing;
+            if (autoAckSettings)
+            {
+                _settingsReceivedConsumer = null;
+            }
+            else
+            {
+                var receivedConsumer = encoder as IHttp2SettingsReceivedConsumer;
+                if (receivedConsumer is null)
+                {
+                    ThrowHelper.ThrowInvalidOperationException_disabling_autoAckSettings_requires_encoder_IHttp2SettingsReceivedConsumer();
+                }
+                _settingsReceivedConsumer = receivedConsumer;
+            }
+            _connection = connection;
+            _frameReader = frameReader;
+            _encoder = encoder;
+            _requestVerifier = requestVerifier;
             var connLocal = connection.Local;
             if (connLocal.FlowController is null)
             {
@@ -57,37 +121,37 @@ namespace DotNetty.Codecs.Http2
             }
             connLocal.FlowController.FrameWriter(encoder.FrameWriter);
 
-            this.internalFrameListener = new PrefaceFrameListener(this);
+            _internalFrameListener = new PrefaceFrameListener(this);
         }
 
         public void LifecycleManager(IHttp2LifecycleManager lifecycleManager)
         {
             if (lifecycleManager is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.lifecycleManager); }
-            this.lifecycleManager = lifecycleManager;
+            _lifecycleManager = lifecycleManager;
         }
 
-        public IHttp2Connection Connection => this.connection;
+        public IHttp2Connection Connection => _connection;
 
-        public IHttp2LocalFlowController FlowController => this.connection.Local.FlowController;
+        public IHttp2LocalFlowController FlowController => _connection.Local.FlowController;
 
         public IHttp2FrameListener FrameListener
         {
-            get => this.listener;
+            get => _listener;
             set
             {
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-                this.listener = value;
+                _listener = value;
             }
         }
 
         // Visible for testing
-        internal IHttp2FrameListener InternalFrameListener => this.internalFrameListener;
+        internal IHttp2FrameListener InternalFrameListener => _internalFrameListener;
 
-        public bool PrefaceReceived => this.internalFrameListener.GetType() == typeof(FrameReadListener);
+        public bool PrefaceReceived => _internalFrameListener.GetType() == typeof(FrameReadListener);
 
         public virtual void DecodeFrame(IChannelHandlerContext ctx, IByteBuffer input, List<object> output)
         {
-            this.frameReader.ReadFrame(ctx, input, this.internalFrameListener);
+            _frameReader.ReadFrame(ctx, input, _internalFrameListener);
         }
 
         public Http2Settings LocalSettings
@@ -95,18 +159,18 @@ namespace DotNetty.Codecs.Http2
             get
             {
                 Http2Settings settings = new Http2Settings();
-                var config = frameReader.Configuration;
+                var config = _frameReader.Configuration;
                 var headersConfig = config.HeadersConfiguration;
                 var frameSizePolicy = config.FrameSizePolicy;
-                settings.InitialWindowSize(this.FlowController.InitialWindowSize);
-                settings.MaxConcurrentStreams(this.connection.Remote.MaxActiveStreams);
+                settings.InitialWindowSize(FlowController.InitialWindowSize);
+                settings.MaxConcurrentStreams(_connection.Remote.MaxActiveStreams);
                 settings.HeaderTableSize(headersConfig.MaxHeaderTableSize);
                 settings.MaxFrameSize(frameSizePolicy.MaxFrameSize);
                 settings.MaxHeaderListSize(headersConfig.MaxHeaderListSize);
-                if (!this.connection.IsServer)
+                if (!_connection.IsServer)
                 {
                     // Only set the pushEnabled flag if this is a client endpoint.
-                    settings.PushEnabled(this.connection.Local.AllowPushTo());
+                    settings.PushEnabled(_connection.Local.AllowPushTo());
                 }
                 return settings;
             }
@@ -114,7 +178,7 @@ namespace DotNetty.Codecs.Http2
 
         public virtual void Close()
         {
-            this.frameReader.Close();
+            _frameReader.Close();
             Dispose(true);
             GC.SuppressFinalize(this);
         }
@@ -123,7 +187,7 @@ namespace DotNetty.Codecs.Http2
         {
         }
 
-        public void Dispose() => this.Close();
+        public void Dispose() => Close();
 
         /// <summary>
         /// Calculate the threshold in bytes which should trigger a <c>GO_AWAY</c> if a set of headers exceeds this amount.
@@ -138,18 +202,18 @@ namespace DotNetty.Codecs.Http2
 
         private int UnconsumedBytes(IHttp2Stream stream)
         {
-            return this.FlowController.UnconsumedBytes(stream);
+            return FlowController.UnconsumedBytes(stream);
         }
 
         internal void OnGoAwayRead0(IChannelHandlerContext ctx, int lastStreamId, Http2Error errorCode, IByteBuffer debugData)
         {
-            this.connection.GoAwayReceived(lastStreamId, errorCode, debugData);
-            this.listener.OnGoAwayRead(ctx, lastStreamId, errorCode, debugData);
+            _connection.GoAwayReceived(lastStreamId, errorCode, debugData);
+            _listener.OnGoAwayRead(ctx, lastStreamId, errorCode, debugData);
         }
 
         internal void OnUnknownFrame0(IChannelHandlerContext ctx, Http2FrameTypes frameType, int streamId, Http2Flags flags, IByteBuffer payload)
         {
-            this.listener.OnUnknownFrame(ctx, frameType, streamId, flags, payload);
+            _listener.OnUnknownFrame(ctx, frameType, streamId, flags, payload);
         }
 
         /// <summary>
@@ -157,20 +221,20 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         private sealed class FrameReadListener : IHttp2FrameListener
         {
-            private readonly DefaultHttp2ConnectionDecoder decoder;
+            private readonly DefaultHttp2ConnectionDecoder _owner;
 
-            public FrameReadListener(DefaultHttp2ConnectionDecoder decoder) => this.decoder = decoder;
+            public FrameReadListener(DefaultHttp2ConnectionDecoder owner) => _owner = owner;
 
             public int OnDataRead(IChannelHandlerContext ctx, int streamId, IByteBuffer data, int padding, bool endOfStream)
             {
-                var stream = this.decoder.connection.Stream(streamId);
-                var flowController = this.decoder.FlowController;
+                var stream = _owner._connection.Stream(streamId);
+                var flowController = _owner.FlowController;
                 int bytesToReturn = data.ReadableBytes + padding;
 
                 var shouldIgnore = false;
                 try
                 {
-                    shouldIgnore = this.ShouldIgnoreHeadersOrDataFrame(ctx, streamId, stream, Http2FrameTypes.Data);
+                    shouldIgnore = ShouldIgnoreHeadersOrDataFrame(ctx, streamId, stream, Http2FrameTypes.Data);
                 }
                 catch (Http2Exception e)
                 {
@@ -193,7 +257,7 @@ namespace DotNetty.Codecs.Http2
                     flowController.ConsumeBytes(stream, bytesToReturn);
 
                     // Verify that the stream may have existed after we apply flow control.
-                    this.VerifyStreamMayHaveExisted(streamId);
+                    VerifyStreamMayHaveExisted(streamId);
 
                     // All bytes have been consumed.
                     return bytesToReturn;
@@ -214,19 +278,19 @@ namespace DotNetty.Codecs.Http2
                     error = ThrowHelper.GetStreamError_StreamInUnexpectedState(Http2Error.ProtocolError, stream);
                 }
 
-                int unconsumedBytes = this.decoder.UnconsumedBytes(stream);
+                int unconsumedBytes = _owner.UnconsumedBytes(stream);
                 try
                 {
                     flowController.ReceiveFlowControlledFrame(stream, data, padding, endOfStream);
                     // Update the unconsumed bytes after flow control is applied.
-                    unconsumedBytes = this.decoder.UnconsumedBytes(stream);
+                    unconsumedBytes = _owner.UnconsumedBytes(stream);
 
                     // If the stream is in an invalid state to receive the frame, throw the error.
                     if (error is object) { throw error; }
 
                     // Call back the application and retrieve the number of bytes that have been
                     // immediately processed.
-                    bytesToReturn = this.decoder.listener.OnDataRead(ctx, streamId, data, padding, endOfStream);
+                    bytesToReturn = _owner._listener.OnDataRead(ctx, streamId, data, padding, endOfStream);
                     return bytesToReturn;
                 }
                 catch (Http2Exception)
@@ -234,7 +298,7 @@ namespace DotNetty.Codecs.Http2
                     // If an exception happened during delivery, the listener may have returned part
                     // of the bytes before the error occurred. If that's the case, subtract that from
                     // the total processed bytes so that we don't return too many bytes.
-                    int delta = unconsumedBytes - this.decoder.UnconsumedBytes(stream);
+                    int delta = unconsumedBytes - _owner.UnconsumedBytes(stream);
                     bytesToReturn -= delta;
                     throw;
                 }
@@ -243,7 +307,7 @@ namespace DotNetty.Codecs.Http2
                     // If an exception happened during delivery, the listener may have returned part
                     // of the bytes before the error occurred. If that's the case, subtract that from
                     // the total processed bytes so that we don't return too many bytes.
-                    int delta = unconsumedBytes - this.decoder.UnconsumedBytes(stream);
+                    int delta = unconsumedBytes - _owner.UnconsumedBytes(stream);
                     bytesToReturn -= delta;
                     throw;
                 }
@@ -254,24 +318,24 @@ namespace DotNetty.Codecs.Http2
 
                     if (endOfStream)
                     {
-                        this.decoder.lifecycleManager.CloseStreamRemote(stream, TaskUtil.Completed);
+                        _owner._lifecycleManager.CloseStreamRemote(stream, TaskUtil.Completed);
                     }
                 }
             }
 
             public void OnGoAwayRead(IChannelHandlerContext ctx, int lastStreamId, Http2Error errorCode, IByteBuffer debugData)
             {
-                this.decoder.OnGoAwayRead0(ctx, lastStreamId, errorCode, debugData);
+                _owner.OnGoAwayRead0(ctx, lastStreamId, errorCode, debugData);
             }
 
             public void OnHeadersRead(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int padding, bool endOfStream)
             {
-                this.OnHeadersRead(ctx, streamId, headers, 0, Http2CodecUtil.DefaultPriorityWeight, false, padding, endOfStream);
+                OnHeadersRead(ctx, streamId, headers, 0, Http2CodecUtil.DefaultPriorityWeight, false, padding, endOfStream);
             }
 
             public void OnHeadersRead(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int streamDependency, short weight, bool exclusive, int padding, bool endOfStream)
             {
-                var connection = this.decoder.connection;
+                var connection = _owner._connection;
                 var stream = connection.Stream(streamId);
                 var allowHalfClosedRemote = false;
                 if (stream is null && !connection.StreamMayHaveExisted(streamId))
@@ -281,7 +345,7 @@ namespace DotNetty.Codecs.Http2
                     allowHalfClosedRemote = stream.State == Http2StreamState.HalfClosedRemote;
                 }
 
-                if (this.ShouldIgnoreHeadersOrDataFrame(ctx, streamId, stream, Http2FrameTypes.Headers))
+                if (ShouldIgnoreHeadersOrDataFrame(ctx, streamId, stream, Http2FrameTypes.Headers))
                 {
                     return;
                 }
@@ -320,42 +384,44 @@ namespace DotNetty.Codecs.Http2
                 }
 
                 stream.HeadersReceived(isInformational);
-                this.decoder.encoder.FlowController.UpdateDependencyTree(streamId, streamDependency, weight, exclusive);
+                _owner._encoder.FlowController.UpdateDependencyTree(streamId, streamDependency, weight, exclusive);
 
-                this.decoder.listener.OnHeadersRead(ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream);
+                _owner._listener.OnHeadersRead(ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream);
 
                 // If the headers completes this stream, close it.
                 if (endOfStream)
                 {
-                    this.decoder.lifecycleManager.CloseStreamRemote(stream, TaskUtil.Completed);
+                    _owner._lifecycleManager.CloseStreamRemote(stream, TaskUtil.Completed);
                 }
             }
 
             public void OnPingAckRead(IChannelHandlerContext ctx, long data)
             {
-                this.decoder.listener.OnPingAckRead(ctx, data);
+                _owner._listener.OnPingAckRead(ctx, data);
             }
 
             public void OnPingRead(IChannelHandlerContext ctx, long data)
             {
-                // Send an ack back to the remote client.
-                // Need to retain the buffer here since it will be released after the write completes.
-                this.decoder.encoder.WritePingAsync(ctx, true, data, ctx.NewPromise());
+                if (_owner._autoAckPing)
+                {
+                    // Send an ack back to the remote client.
+                    _owner._encoder.WritePingAsync(ctx, true, data, ctx.NewPromise());
+                }
 
-                this.decoder.listener.OnPingRead(ctx, data);
+                _owner._listener.OnPingRead(ctx, data);
             }
 
             public void OnPriorityRead(IChannelHandlerContext ctx, int streamId, int streamDependency, short weight, bool exclusive)
             {
-                this.decoder.encoder.FlowController.UpdateDependencyTree(streamId, streamDependency, weight, exclusive);
+                _owner._encoder.FlowController.UpdateDependencyTree(streamId, streamDependency, weight, exclusive);
 
-                this.decoder.listener.OnPriorityRead(ctx, streamId, streamDependency, weight, exclusive);
+                _owner._listener.OnPriorityRead(ctx, streamId, streamDependency, weight, exclusive);
             }
 
             public void OnPushPromiseRead(IChannelHandlerContext ctx, int streamId, int promisedStreamId, IHttp2Headers headers, int padding)
             {
                 // A client cannot push.
-                var connection = this.decoder.connection;
+                var connection = _owner._connection;
                 if (connection.IsServer)
                 {
                     ThrowHelper.ThrowConnectionError_AClientCannotPush();
@@ -363,7 +429,7 @@ namespace DotNetty.Codecs.Http2
 
                 var parentStream = connection.Stream(streamId);
 
-                if (this.ShouldIgnoreHeadersOrDataFrame(ctx, streamId, parentStream, Http2FrameTypes.PushPromise))
+                if (ShouldIgnoreHeadersOrDataFrame(ctx, streamId, parentStream, Http2FrameTypes.PushPromise))
                 {
                     return;
                 }
@@ -384,7 +450,7 @@ namespace DotNetty.Codecs.Http2
                     ThrowHelper.ThrowConnectionError_StreamInUnexpectedStateForReceivingPushPromise(parentStream);
                 }
 
-                var requestVerifier = this.decoder.requestVerifier;
+                var requestVerifier = _owner._requestVerifier;
                 if (!requestVerifier.IsAuthoritative(ctx, headers))
                 {
                     ThrowHelper.ThrowStreamError_PromisedRequestOnStreamForPromisedStreamIsNotAuthoritative(streamId, promisedStreamId);
@@ -401,15 +467,15 @@ namespace DotNetty.Codecs.Http2
                 // Reserve the push stream based with a priority based on the current stream's priority.
                 connection.Remote.ReservePushStream(promisedStreamId, parentStream);
 
-                this.decoder.listener.OnPushPromiseRead(ctx, streamId, promisedStreamId, headers, padding);
+                _owner._listener.OnPushPromiseRead(ctx, streamId, promisedStreamId, headers, padding);
             }
 
             public void OnRstStreamRead(IChannelHandlerContext ctx, int streamId, Http2Error errorCode)
             {
-                var stream = this.decoder.connection.Stream(streamId);
+                var stream = _owner._connection.Stream(streamId);
                 if (stream is null)
                 {
-                    this.VerifyStreamMayHaveExisted(streamId);
+                    VerifyStreamMayHaveExisted(streamId);
                     return;
                 }
                 if (Http2StreamState.Idle == stream.State)
@@ -421,22 +487,22 @@ namespace DotNetty.Codecs.Http2
                     return; // RST_STREAM frames must be ignored for closed streams.
                 }
 
-                this.decoder.listener.OnRstStreamRead(ctx, streamId, errorCode);
+                _owner._listener.OnRstStreamRead(ctx, streamId, errorCode);
 
-                this.decoder.lifecycleManager.CloseStream(stream, TaskUtil.Completed);
+                _owner._lifecycleManager.CloseStream(stream, TaskUtil.Completed);
             }
 
             public void OnSettingsAckRead(IChannelHandlerContext ctx)
             {
                 // Apply oldest outstanding local settings here. This is a synchronization point between endpoints.
-                Http2Settings settings = this.decoder.encoder.PollSentSettings;
+                Http2Settings settings = _owner._encoder.PollSentSettings;
 
                 if (settings is object)
                 {
-                    this.ApplyLocalSettings(settings);
+                    ApplyLocalSettings(settings);
                 }
 
-                this.decoder.listener.OnSettingsAckRead(ctx);
+                _owner._listener.OnSettingsAckRead(ctx);
             }
 
             /// <summary>
@@ -447,10 +513,10 @@ namespace DotNetty.Codecs.Http2
             private void ApplyLocalSettings(Http2Settings settings)
             {
                 var pushEnabled = settings.PushEnabled();
-                var config = this.decoder.frameReader.Configuration;
+                var config = _owner._frameReader.Configuration;
                 var headerConfig = config.HeadersConfiguration;
                 var frameSizePolicy = config.FrameSizePolicy;
-                var connection = this.decoder.connection;
+                var connection = _owner._connection;
                 if (pushEnabled.HasValue)
                 {
                     if (connection.IsServer)
@@ -475,7 +541,7 @@ namespace DotNetty.Codecs.Http2
                 var maxHeaderListSize = settings.MaxHeaderListSize();
                 if (maxHeaderListSize.HasValue)
                 {
-                    headerConfig.SetMaxHeaderListSize(maxHeaderListSize.Value, this.decoder.CalculateMaxHeaderListSizeGoAway(maxHeaderListSize.Value));
+                    headerConfig.SetMaxHeaderListSize(maxHeaderListSize.Value, _owner.CalculateMaxHeaderListSizeGoAway(maxHeaderListSize.Value));
                 }
 
                 var maxFrameSize = settings.MaxFrameSize();
@@ -487,42 +553,49 @@ namespace DotNetty.Codecs.Http2
                 var initialWindowSize = settings.InitialWindowSize();
                 if (initialWindowSize.HasValue)
                 {
-                    this.decoder.FlowController.SetInitialWindowSize(initialWindowSize.Value);
+                    _owner.FlowController.SetInitialWindowSize(initialWindowSize.Value);
                 }
             }
 
             public void OnSettingsRead(IChannelHandlerContext ctx, Http2Settings settings)
             {
-                // Acknowledge receipt of the settings. We should do this before we process the settings to ensure our
-                // remote peer applies these settings before any subsequent frames that we may send which depend upon these
-                // new settings. See https://github.com/netty/netty/issues/6520.
-                var encoder = this.decoder.encoder;
-                encoder.WriteSettingsAckAsync(ctx, ctx.NewPromise());
+                var settingsReceivedConsumer = _owner._settingsReceivedConsumer;
+                if (settingsReceivedConsumer is null)
+                {
+                    // Acknowledge receipt of the settings. We should do this before we process the settings to ensure our
+                    // remote peer applies these settings before any subsequent frames that we may send which depend upon
+                    // these new settings. See https://github.com/netty/netty/issues/6520.
+                    var encoder = _owner._encoder;
+                    encoder.WriteSettingsAckAsync(ctx, ctx.NewPromise());
 
-                encoder.RemoteSettings(settings);
-
-                this.decoder.listener.OnSettingsRead(ctx, settings);
+                    encoder.RemoteSettings(settings);
+                }
+                else
+                {
+                    settingsReceivedConsumer.ConsumeReceivedSettings(settings);
+                }
+                _owner._listener.OnSettingsRead(ctx, settings);
             }
 
             public void OnUnknownFrame(IChannelHandlerContext ctx, Http2FrameTypes frameType, int streamId, Http2Flags flags, IByteBuffer payload)
             {
-                this.decoder.OnUnknownFrame0(ctx, frameType, streamId, flags, payload);
+                _owner.OnUnknownFrame0(ctx, frameType, streamId, flags, payload);
             }
 
             public void OnWindowUpdateRead(IChannelHandlerContext ctx, int streamId, int windowSizeIncrement)
             {
-                var stream = this.decoder.connection.Stream(streamId);
-                if (stream is null || stream.State == Http2StreamState.Closed || this.StreamCreatedAfterGoAwaySent(streamId))
+                var stream = _owner._connection.Stream(streamId);
+                if (stream is null || stream.State == Http2StreamState.Closed || StreamCreatedAfterGoAwaySent(streamId))
                 {
                     // Ignore this frame.
-                    this.VerifyStreamMayHaveExisted(streamId);
+                    VerifyStreamMayHaveExisted(streamId);
                     return;
                 }
 
                 // Update the outbound flow control window.
-                this.decoder.encoder.FlowController.IncrementWindowSize(stream, windowSizeIncrement);
+                _owner._encoder.FlowController.IncrementWindowSize(stream, windowSizeIncrement);
 
-                this.decoder.listener.OnWindowUpdateRead(ctx, streamId, windowSizeIncrement);
+                _owner._listener.OnWindowUpdateRead(ctx, streamId, windowSizeIncrement);
             }
 
             /// <summary>
@@ -538,7 +611,7 @@ namespace DotNetty.Codecs.Http2
             {
                 if (stream is null)
                 {
-                    if (this.StreamCreatedAfterGoAwaySent(streamId))
+                    if (StreamCreatedAfterGoAwaySent(streamId))
                     {
                         if (Logger.InfoEnabled) { Logger.IgnoringFrameForStream(ctx, frameName, streamId); }
                         return true;
@@ -548,7 +621,7 @@ namespace DotNetty.Codecs.Http2
                     // sent). We don't have enough information to know for sure, so we choose the lesser of the two errors.
                     ThrowHelper.ThrowStreamError_ReceivedFrameForAnUnknownStream(streamId, frameName);
                 }
-                else if (stream.IsResetSent || this.StreamCreatedAfterGoAwaySent(streamId))
+                else if (stream.IsResetSent || StreamCreatedAfterGoAwaySent(streamId))
                 {
                     // If we have sent a reset stream it is assumed the stream will be closed after the write completes.
                     // If we have not sent a reset, but the stream was created after a GoAway this is not supported by
@@ -558,7 +631,7 @@ namespace DotNetty.Codecs.Http2
                     if (Logger.InfoEnabled)
                     {
                         Logger.IgnoringFrameForStreamRst(ctx, frameName, stream.IsResetSent,
-                            this.decoder.connection.Remote.LastStreamKnownByPeer());
+                            _owner._connection.Remote.LastStreamKnownByPeer());
                     }
 
                     return true;
@@ -582,7 +655,7 @@ namespace DotNetty.Codecs.Http2
             /// <returns></returns>
             private bool StreamCreatedAfterGoAwaySent(int streamId)
             {
-                var conn = this.decoder.connection;
+                var conn = _owner._connection;
                 var remote = conn.Remote;
                 return conn.GoAwaySent() && remote.IsValidStreamId(streamId) &&
                     streamId > remote.LastStreamKnownByPeer();
@@ -591,7 +664,7 @@ namespace DotNetty.Codecs.Http2
             [MethodImpl(InlineMethod.AggressiveInlining)]
             private void VerifyStreamMayHaveExisted(int streamId)
             {
-                if (!this.decoder.connection.StreamMayHaveExisted(streamId))
+                if (!_owner._connection.StreamMayHaveExisted(streamId))
                 {
                     ThrowHelper.ThrowConnectionError_StreamDoesNotExist(streamId);
                 }
@@ -600,14 +673,14 @@ namespace DotNetty.Codecs.Http2
 
         private sealed class PrefaceFrameListener : IHttp2FrameListener
         {
-            private readonly DefaultHttp2ConnectionDecoder decoder;
+            private readonly DefaultHttp2ConnectionDecoder _owner;
 
-            public PrefaceFrameListener(DefaultHttp2ConnectionDecoder decoder) => this.decoder = decoder;
+            public PrefaceFrameListener(DefaultHttp2ConnectionDecoder owner) => _owner = owner;
 
             [MethodImpl(InlineMethod.AggressiveInlining)]
             private void VerifyPrefaceReceived()
             {
-                if (!this.decoder.PrefaceReceived)
+                if (!_owner.PrefaceReceived)
                 {
                     ThrowHelper.ThrowConnectionError_ReceivedNonSettingsAsFirstFrame();
                 }
@@ -616,83 +689,83 @@ namespace DotNetty.Codecs.Http2
             public int OnDataRead(IChannelHandlerContext ctx, int streamId, IByteBuffer data, int padding, bool endOfStream)
             {
                 VerifyPrefaceReceived();
-                return this.decoder.internalFrameListener.OnDataRead(ctx, streamId, data, padding, endOfStream);
+                return _owner._internalFrameListener.OnDataRead(ctx, streamId, data, padding, endOfStream);
             }
 
             public void OnGoAwayRead(IChannelHandlerContext ctx, int lastStreamId, Http2Error errorCode, IByteBuffer debugData)
             {
-                this.decoder.OnGoAwayRead0(ctx, lastStreamId, errorCode, debugData);
+                _owner.OnGoAwayRead0(ctx, lastStreamId, errorCode, debugData);
             }
 
             public void OnHeadersRead(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int padding, bool endOfStream)
             {
                 VerifyPrefaceReceived();
-                this.decoder.internalFrameListener.OnHeadersRead(ctx, streamId, headers, padding, endOfStream);
+                _owner._internalFrameListener.OnHeadersRead(ctx, streamId, headers, padding, endOfStream);
             }
 
             public void OnHeadersRead(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int streamDependency, short weight, bool exclusive, int padding, bool endOfStream)
             {
                 VerifyPrefaceReceived();
-                this.decoder.internalFrameListener.OnHeadersRead(ctx, streamId, headers, streamDependency, weight,
+                _owner._internalFrameListener.OnHeadersRead(ctx, streamId, headers, streamDependency, weight,
                         exclusive, padding, endOfStream);
             }
 
             public void OnPingAckRead(IChannelHandlerContext ctx, long data)
             {
                 VerifyPrefaceReceived();
-                this.decoder.internalFrameListener.OnPingAckRead(ctx, data);
+                _owner._internalFrameListener.OnPingAckRead(ctx, data);
             }
 
             public void OnPingRead(IChannelHandlerContext ctx, long data)
             {
                 VerifyPrefaceReceived();
-                this.decoder.internalFrameListener.OnPingRead(ctx, data);
+                _owner._internalFrameListener.OnPingRead(ctx, data);
             }
 
             public void OnPriorityRead(IChannelHandlerContext ctx, int streamId, int streamDependency, short weight, bool exclusive)
             {
                 VerifyPrefaceReceived();
-                this.decoder.internalFrameListener.OnPriorityRead(ctx, streamId, streamDependency, weight, exclusive);
+                _owner._internalFrameListener.OnPriorityRead(ctx, streamId, streamDependency, weight, exclusive);
             }
 
             public void OnPushPromiseRead(IChannelHandlerContext ctx, int streamId, int promisedStreamId, IHttp2Headers headers, int padding)
             {
                 VerifyPrefaceReceived();
-                this.decoder.internalFrameListener.OnPushPromiseRead(ctx, streamId, promisedStreamId, headers, padding);
+                _owner._internalFrameListener.OnPushPromiseRead(ctx, streamId, promisedStreamId, headers, padding);
             }
 
             public void OnRstStreamRead(IChannelHandlerContext ctx, int streamId, Http2Error errorCode)
             {
                 VerifyPrefaceReceived();
-                this.decoder.internalFrameListener.OnRstStreamRead(ctx, streamId, errorCode);
+                _owner._internalFrameListener.OnRstStreamRead(ctx, streamId, errorCode);
             }
 
             public void OnSettingsAckRead(IChannelHandlerContext ctx)
             {
                 VerifyPrefaceReceived();
-                this.decoder.internalFrameListener.OnSettingsAckRead(ctx);
+                _owner._internalFrameListener.OnSettingsAckRead(ctx);
             }
 
             public void OnSettingsRead(IChannelHandlerContext ctx, Http2Settings settings)
             {
                 // The first settings should change the internalFrameListener to the "real" listener
                 // that expects the preface to be verified.
-                if (!this.decoder.PrefaceReceived)
+                if (!_owner.PrefaceReceived)
                 {
-                    this.decoder.internalFrameListener = new FrameReadListener(this.decoder);
+                    _owner._internalFrameListener = new FrameReadListener(_owner);
                 }
-                this.decoder.internalFrameListener.OnSettingsRead(ctx, settings);
+                _owner._internalFrameListener.OnSettingsRead(ctx, settings);
             }
 
             public void OnUnknownFrame(IChannelHandlerContext ctx, Http2FrameTypes frameType, int streamId, Http2Flags flags, IByteBuffer payload)
             {
-                this.decoder.OnUnknownFrame0(ctx, frameType, streamId, flags, payload);
+                _owner.OnUnknownFrame0(ctx, frameType, streamId, flags, payload);
             }
 
             public void OnWindowUpdateRead(IChannelHandlerContext ctx, int streamId, int windowSizeIncrement)
             {
                 VerifyPrefaceReceived();
-                this.decoder.internalFrameListener.OnWindowUpdateRead(ctx, streamId, windowSizeIncrement);
+                _owner._internalFrameListener.OnWindowUpdateRead(ctx, streamId, windowSizeIncrement);
             }
         }
     }

@@ -25,6 +25,8 @@ namespace DotNetty.Codecs.Http2.Tests
                 channel.Configuration.RecvByteBufAllocator = new TestNumReadsRecvByteBufAllocator(maxReads);
             }
         }
+
+        public override bool IsSharable => true;
     }
 
     sealed class TestNumReadsRecvByteBufAllocator : IRecvByteBufAllocator

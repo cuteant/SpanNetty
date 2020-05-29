@@ -7,7 +7,7 @@ namespace DotNetty.Codecs.Http
     using System;
     using DotNetty.Common.Utilities;
 
-    public struct HttpStatusClass : IEquatable<HttpStatusClass>
+    public sealed class HttpStatusClass : IEquatable<HttpStatusClass>
     {
         public static readonly HttpStatusClass Informational = new HttpStatusClass(100, 200, "Informational");
 
@@ -51,7 +51,7 @@ namespace DotNetty.Codecs.Http
             if (code is object && code.Count == 3)
             {
                 char c0 = code[0];
-                return IsDigit(c0) && IsDigit(code[1]) && IsDigit(code[2]) 
+                return IsDigit(c0) && IsDigit(code[1]) && IsDigit(code[2])
                     ? ValueOf(Digit(c0) * 100)
                     : Unknown;
             }
@@ -88,9 +88,13 @@ namespace DotNetty.Codecs.Http
 
         public AsciiString DefaultReasonPhrase => this.defaultReasonPhrase;
 
-        public bool Equals(HttpStatusClass other) => this.min == other.min && this.max == other.max;
+        public bool Equals(HttpStatusClass other)
+        {
+            if (ReferenceEquals(this, other)) { return true; }
+            return other is object && this.min == other.min && this.max == other.max;
+        }
 
-        public override bool Equals(object obj) =>  obj is HttpStatusClass httpStatusClass && this.Equals(httpStatusClass);
+        public override bool Equals(object obj) => obj is HttpStatusClass httpStatusClass && this.Equals(httpStatusClass);
 
         public override int GetHashCode() => this.min.GetHashCode() ^ this.max.GetHashCode();
 

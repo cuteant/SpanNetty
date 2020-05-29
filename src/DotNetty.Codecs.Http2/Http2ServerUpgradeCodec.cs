@@ -115,24 +115,26 @@ namespace DotNetty.Codecs.Http2
         {
             try
             {
+                var pipeline = ctx.Pipeline;
                 // Add the HTTP/2 connection handler to the pipeline immediately following the current handler.
-                ctx.Pipeline.AddAfter(ctx.Name, handlerName, connectionHandler);
+                pipeline.AddAfter(ctx.Name, handlerName, connectionHandler);
+
+                // Add also all extra handlers as these may handle events / messages produced by the connectionHandler.
+                // See https://github.com/netty/netty/issues/9314
+                if (handlers != null)
+                {
+                    var name = pipeline.Context(connectionHandler).Name;
+                    for (int i = handlers.Length - 1; i >= 0; i--)
+                    {
+                        pipeline.AddAfter(name, null, handlers[i]);
+                    }
+                }
                 connectionHandler.OnHttpServerUpgrade(settings);
             }
             catch (Http2Exception e)
             {
                 ctx.FireExceptionCaught(e);
                 ctx.CloseAsync();
-                return;
-            }
-
-            if (handlers is object)
-            {
-                var name = ctx.Pipeline.Context(connectionHandler).Name;
-                for (int i = handlers.Length - 1; i >= 0; i--)
-                {
-                    ctx.Pipeline.AddAfter(name, null, handlers[i]);
-                }
             }
         }
 

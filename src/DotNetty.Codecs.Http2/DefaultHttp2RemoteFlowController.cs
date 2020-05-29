@@ -16,16 +16,16 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class DefaultHttp2RemoteFlowController : Http2ConnectionAdapter, IHttp2RemoteFlowController
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<DefaultHttp2RemoteFlowController>();
-        const int MinWritableChunk = 32 * 1024;
+        private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<DefaultHttp2RemoteFlowController>();
+        private const int MinWritableChunk = 32 * 1024;
 
-        readonly IHttp2Connection connection;
-        readonly IHttp2ConnectionPropertyKey stateKey;
-        readonly IStreamByteDistributor streamByteDistributor;
-        readonly FlowState connectionState;
-        int initialWindowSize = Http2CodecUtil.DefaultWindowSize;
-        WritabilityMonitor monitor;
-        IChannelHandlerContext ctx;
+        private readonly IHttp2Connection _connection;
+        private readonly IHttp2ConnectionPropertyKey _stateKey;
+        private readonly IStreamByteDistributor _streamByteDistributor;
+        private readonly FlowState _connectionState;
+        private int _initialWindowSize = Http2CodecUtil.DefaultWindowSize;
+        private WritabilityMonitor _monitor;
+        private IChannelHandlerContext _ctx;
 
         public DefaultHttp2RemoteFlowController(IHttp2Connection connection)
             : this(connection, (IHttp2RemoteFlowControllerListener)null)
@@ -46,17 +46,17 @@ namespace DotNetty.Codecs.Http2
         {
             if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
             if (streamByteDistributor is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.streamByteDistributor); }
-            this.connection = connection;
-            this.streamByteDistributor = streamByteDistributor;
+            _connection = connection;
+            _streamByteDistributor = streamByteDistributor;
 
             // Add a flow state for the connection.
-            this.stateKey = connection.NewKey();
-            this.connectionState = new FlowState(this, this.connection.ConnectionStream);
-            connection.ConnectionStream.SetProperty(this.stateKey, this.connectionState);
+            _stateKey = connection.NewKey();
+            _connectionState = new FlowState(this, _connection.ConnectionStream);
+            connection.ConnectionStream.SetProperty(_stateKey, _connectionState);
 
             // Monitor may depend upon connectionState, and so initialize after connectionState
-            this.Listener(listener);
-            this.monitor.WindowSize(this.connectionState, this.initialWindowSize);
+            Listener(listener);
+            _monitor.WindowSize(_connectionState, _initialWindowSize);
 
             // Register for notification of new streams.
             connection.AddListener(this);
@@ -66,21 +66,21 @@ namespace DotNetty.Codecs.Http2
         {
             // If the stream state is not open then the stream is not yet eligible for flow controlled frames and
             // only requires the ReducedFlowState. Otherwise the full amount of memory is required.
-            stream.SetProperty(this.stateKey, new FlowState(this, stream));
+            stream.SetProperty(_stateKey, new FlowState(this, stream));
         }
 
         public override void OnStreamActive(IHttp2Stream stream)
         {
             // If the object was previously created, but later activated then we have to ensure the proper
             // _initialWindowSize is used.
-            this.monitor.WindowSize(this.GetState(stream), this.initialWindowSize);
+            _monitor.WindowSize(GetState(stream), _initialWindowSize);
         }
 
         public override void OnStreamClosed(IHttp2Stream stream)
         {
             // Any pending frames can never be written, cancel and
             // write errors for any pending frames.
-            this.GetState(stream).Cancel(Http2Error.StreamClosed);
+            GetState(stream).Cancel(Http2Error.StreamClosed);
         }
 
         public override void OnStreamHalfClosed(IHttp2Stream stream)
@@ -96,7 +96,7 @@ namespace DotNetty.Codecs.Http2
                 // delaying the write.
                 //
                 // This is to cancel any such illegal writes.
-                this.GetState(stream).Cancel(Http2Error.StreamClosed);
+                GetState(stream).Cancel(Http2Error.StreamClosed);
             }
         }
 
@@ -105,45 +105,45 @@ namespace DotNetty.Codecs.Http2
         public void SetChannelHandlerContext(IChannelHandlerContext ctx)
         {
             if (ctx is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.ctx); }
-            this.ctx = ctx;
+            _ctx = ctx;
 
             // Writing the pending bytes will not check writability change and instead a writability change notification
             // to be provided by an explicit call.
-            this.ChannelWritabilityChanged();
+            ChannelWritabilityChanged();
 
             // Don't worry about cleaning up queued frames here if ctx is null. It is expected that all streams will be
             // closed and the queue cleanup will occur when the stream state transitions occur.
 
             // If any frames have been queued up, we should send them now that we have a channel context.
-            if (this.IsChannelWritable())
+            if (IsChannelWritable())
             {
-                this.WritePendingBytes();
+                WritePendingBytes();
             }
         }
 
-        public IChannelHandlerContext ChannelHandlerContext => this.ctx;
+        public IChannelHandlerContext ChannelHandlerContext => _ctx;
 
         public void SetInitialWindowSize(int newWindowSize)
         {
-            Debug.Assert(this.ctx is null || this.ctx.Executor.InEventLoop);
-            this.monitor.InitialWindowSize(newWindowSize);
+            Debug.Assert(_ctx is null || _ctx.Executor.InEventLoop);
+            _monitor.InitialWindowSize(newWindowSize);
         }
 
-        public int InitialWindowSize => this.initialWindowSize;
+        public int InitialWindowSize => _initialWindowSize;
 
         public int GetWindowSize(IHttp2Stream stream)
         {
-            return this.GetState(stream).WindowSize;
+            return GetState(stream).WindowSize;
         }
 
         public bool IsWritable(IHttp2Stream stream)
         {
-            return this.monitor.IsWritable(this.GetState(stream));
+            return _monitor.IsWritable(GetState(stream));
         }
 
         public void ChannelWritabilityChanged()
         {
-            this.monitor.ChannelWritabilityChange();
+            _monitor.ChannelWritabilityChange();
         }
 
         public void UpdateDependencyTree(int childStreamId, int parentStreamId, short weight, bool exclusive)
@@ -153,53 +153,53 @@ namespace DotNetty.Codecs.Http2
             Debug.Assert(childStreamId != parentStreamId, "A stream cannot depend on itself");
             Debug.Assert(childStreamId > 0 && parentStreamId >= 0, "childStreamId must be > 0. parentStreamId must be >= 0.");
 
-            this.streamByteDistributor.UpdateDependencyTree(childStreamId, parentStreamId, weight, exclusive);
+            _streamByteDistributor.UpdateDependencyTree(childStreamId, parentStreamId, weight, exclusive);
         }
 
         bool IsChannelWritable()
         {
-            return this.ctx is object && this.IsChannelWritable0();
+            return _ctx is object && IsChannelWritable0();
         }
 
         bool IsChannelWritable0()
         {
-            return this.ctx.Channel.IsWritable;
+            return _ctx.Channel.IsWritable;
         }
 
         public void Listener(IHttp2RemoteFlowControllerListener listener)
         {
-            this.monitor = listener is null ? new WritabilityMonitor(this) : new ListenerWritabilityMonitor(this, listener);
+            _monitor = listener is null ? new WritabilityMonitor(this) : new ListenerWritabilityMonitor(this, listener);
         }
 
         public void IncrementWindowSize(IHttp2Stream stream, int delta)
         {
-            Debug.Assert(this.ctx is null || this.ctx.Executor.InEventLoop);
-            this.monitor.IncrementWindowSize(this.GetState(stream), delta);
+            Debug.Assert(_ctx is null || _ctx.Executor.InEventLoop);
+            _monitor.IncrementWindowSize(GetState(stream), delta);
         }
 
         public void AddFlowControlled(IHttp2Stream stream, IHttp2RemoteFlowControlled frame)
         {
             // The context can be null assuming the frame will be queued and send later when the context is set.
-            Debug.Assert(this.ctx is null || this.ctx.Executor.InEventLoop);
+            Debug.Assert(_ctx is null || _ctx.Executor.InEventLoop);
             if (frame is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frame); }
             try
             {
-                this.monitor.EnqueueFrame(this.GetState(stream), frame);
+                _monitor.EnqueueFrame(GetState(stream), frame);
             }
             catch (Exception t)
             {
-                frame.Error(this.ctx, t);
+                frame.Error(_ctx, t);
             }
         }
 
         public bool HasFlowControlled(IHttp2Stream stream)
         {
-            return this.GetState(stream).HasFrame;
+            return GetState(stream).HasFrame;
         }
 
         FlowState GetState(IHttp2Stream stream)
         {
-            return stream.GetProperty<FlowState>(this.stateKey);
+            return stream.GetProperty<FlowState>(_stateKey);
         }
 
         /// <summary>
@@ -208,7 +208,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         int ConnectionWindowSize()
         {
-            return this.connectionState.WindowSize;
+            return _connectionState.WindowSize;
         }
 
         int MinUsableChannelBytes()
@@ -219,17 +219,17 @@ namespace DotNetty.Codecs.Http2
             // an "adequate" amount of connection window before allocation is attempted. This is not foolproof as if the
             // number of streams is >= this minimal number then we may still have the issue, but the idea is to narrow the
             // circumstances in which this can happen without rewriting the allocation algorithm.
-            return Math.Max(this.ctx.Channel.Configuration.WriteBufferLowWaterMark, MinWritableChunk);
+            return Math.Max(_ctx.Channel.Configuration.WriteBufferLowWaterMark, MinWritableChunk);
         }
 
         int MaxUsableChannelBytes()
         {
             // If the channel isWritable, allow at least minUsableChannelBytes.
-            int channelWritableBytes = (int)Math.Min(int.MaxValue, this.ctx.Channel.BytesBeforeUnwritable);
-            int usableBytes = channelWritableBytes > 0 ? Math.Max(channelWritableBytes, this.MinUsableChannelBytes()) : 0;
+            int channelWritableBytes = (int)Math.Min(int.MaxValue, _ctx.Channel.BytesBeforeUnwritable);
+            int usableBytes = channelWritableBytes > 0 ? Math.Max(channelWritableBytes, MinUsableChannelBytes()) : 0;
 
             // Clip the usable bytes by the connection window.
-            return Math.Min(this.connectionState.WindowSize, usableBytes);
+            return Math.Min(_connectionState.WindowSize, usableBytes);
         }
 
         /// <summary>
@@ -239,12 +239,12 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         int WritableBytes()
         {
-            return Math.Min(this.ConnectionWindowSize(), this.MaxUsableChannelBytes());
+            return Math.Min(ConnectionWindowSize(), MaxUsableChannelBytes());
         }
 
         public void WritePendingBytes()
         {
-            this.monitor.WritePendingBytes();
+            _monitor.WritePendingBytes();
         }
 
         /// <summary>
@@ -252,28 +252,28 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         sealed class FlowState : IStreamByteDistributorStreamState
         {
-            readonly DefaultHttp2RemoteFlowController controller;
-            readonly IHttp2Stream stream;
-            readonly Deque<IHttp2RemoteFlowControlled> pendingWriteQueue;
-            int window;
-            long pendingBytes;
-            bool markedWritable;
+            private readonly DefaultHttp2RemoteFlowController _controller;
+            private readonly IHttp2Stream _stream;
+            private readonly Deque<IHttp2RemoteFlowControlled> _pendingWriteQueue;
+            private int _window;
+            private long _pendingBytes;
+            private bool _markedWritable;
 
             /// <summary>
             /// Set to true while a frame is being written, false otherwise.
             /// </summary>
-            bool writing;
+            private bool _writing;
 
             /// <summary>
             /// Set to true if cancel() was called.
             /// </summary>
-            bool cancelled;
+            private bool _cancelled;
 
             internal FlowState(DefaultHttp2RemoteFlowController controller, IHttp2Stream stream)
             {
-                this.controller = controller;
-                this.stream = stream;
-                this.pendingWriteQueue = new Deque<IHttp2RemoteFlowControlled>(2);
+                _controller = controller;
+                _stream = stream;
+                _pendingWriteQueue = new Deque<IHttp2RemoteFlowControlled>(2);
             }
 
             /// <summary>
@@ -282,20 +282,20 @@ namespace DotNetty.Codecs.Http2
             /// <returns><c>true</c> if the stream associated with this object is writable.</returns>
             internal bool IsWritable()
             {
-                return this.WindowSize > this.PendingBytes && !this.cancelled;
+                return WindowSize > PendingBytes && !_cancelled;
             }
 
             /// <summary>
             /// The stream this state is associated with.
             /// </summary>
-            public IHttp2Stream Stream => this.stream;
+            public IHttp2Stream Stream => _stream;
 
             /// <summary>
             /// Returns the parameter from the last call to <see cref="MarkedWritability(bool)"/>.
             /// </summary>
             internal bool MarkedWritability()
             {
-                return this.markedWritable;
+                return _markedWritable;
             }
 
             /// <summary>
@@ -303,10 +303,10 @@ namespace DotNetty.Codecs.Http2
             /// </summary>
             internal void MarkedWritability(bool isWritable)
             {
-                this.markedWritable = isWritable;
+                _markedWritable = isWritable;
             }
 
-            public int WindowSize => this.window;
+            public int WindowSize => _window;
 
             /// <summary>
             /// Reset the window size for this stream.
@@ -314,7 +314,7 @@ namespace DotNetty.Codecs.Http2
             /// <param name="initialWindowSize"></param>
             internal void SetWindowSize(int initialWindowSize)
             {
-                this.window = initialWindowSize;
+                _window = initialWindowSize;
             }
 
             /// <summary>
@@ -331,14 +331,14 @@ namespace DotNetty.Codecs.Http2
                 IHttp2RemoteFlowControlled frame;
                 try
                 {
-                    Debug.Assert(!this.writing);
-                    this.writing = true;
+                    Debug.Assert(!_writing);
+                    _writing = true;
 
                     // Write the remainder of frames that we are allowed to
                     bool writeOccurred = false;
-                    while (!this.cancelled && (frame = this.Peek()) is object)
+                    while (!_cancelled && (frame = Peek()) is object)
                     {
-                        int maxBytes = Math.Min(allocated, this.WritableWindow());
+                        int maxBytes = Math.Min(allocated, WritableWindow());
                         if (maxBytes <= 0 && frame.Size > 0)
                         {
                             // The frame still has data, but the amount of allocated bytes has been exhausted.
@@ -350,13 +350,13 @@ namespace DotNetty.Codecs.Http2
                         int initialFrameSize = frame.Size;
                         try
                         {
-                            frame.Write(this.controller.ctx, Math.Max(0, maxBytes));
+                            frame.Write(_controller._ctx, Math.Max(0, maxBytes));
                             if (0u >= (uint)frame.Size)
                             {
                                 // This frame has been fully written, remove this frame and notify it.
                                 // Since we remove this frame first, we're guaranteed that its error
                                 // method will not be called when we call cancel.
-                                this.pendingWriteQueue.TryRemoveFromFront(out var _);//.remove();
+                                _pendingWriteQueue.TryRemoveFromFront(out var _);//.remove();
                                 frame.WriteComplete();
                             }
                         }
@@ -376,24 +376,24 @@ namespace DotNetty.Codecs.Http2
                 catch (Exception t)
                 {
                     // Mark the state as cancelled, we'll clear the pending queue via cancel() below.
-                    this.cancelled = true;
+                    _cancelled = true;
                     cause = t;
                 }
                 finally
                 {
-                    this.writing = false;
+                    _writing = false;
                     // Make sure we always decrement the flow control windows
                     // by the bytes written.
                     writtenBytes = initialAllocated - allocated;
 
-                    this.DecrementPendingBytes(writtenBytes, false);
-                    this.DecrementFlowControlWindow(writtenBytes);
+                    DecrementPendingBytes(writtenBytes, false);
+                    DecrementFlowControlWindow(writtenBytes);
 
                     // If a cancellation occurred while writing, call cancel again to
                     // clear and error all of the pending writes.
-                    if (this.cancelled)
+                    if (_cancelled)
                     {
-                        this.Cancel(Http2Error.InternalError, cause);
+                        Cancel(Http2Error.InternalError, cause);
                     }
                 }
 
@@ -407,15 +407,15 @@ namespace DotNetty.Codecs.Http2
             /// <returns></returns>
             internal int IncrementStreamWindow(int delta)
             {
-                if (delta > 0 && int.MaxValue - delta < this.window)
+                if (delta > 0 && int.MaxValue - delta < _window)
                 {
-                    ThrowHelper.ThrowStreamError_WindowSizeOverflowForStream(this.stream.Id);
+                    ThrowHelper.ThrowStreamError_WindowSizeOverflowForStream(_stream.Id);
                 }
 
-                this.window += delta;
+                _window += delta;
 
-                this.controller.streamByteDistributor.UpdateStreamableBytes(this);
-                return this.window;
+                _controller._streamByteDistributor.UpdateStreamableBytes(this);
+                return _window;
             }
 
             /// <summary>
@@ -423,10 +423,10 @@ namespace DotNetty.Codecs.Http2
             /// </summary>
             int WritableWindow()
             {
-                return Math.Min(this.window, this.controller.ConnectionWindowSize());
+                return Math.Min(_window, _controller.ConnectionWindowSize());
             }
 
-            public long PendingBytes => this.pendingBytes;
+            public long PendingBytes => _pendingBytes;
 
             /// <summary>
             /// Adds the <paramref name="frame"/> to the pending queue and increments the pending byte count.
@@ -434,39 +434,39 @@ namespace DotNetty.Codecs.Http2
             /// <param name="frame"></param>
             internal void EnqueueFrame(IHttp2RemoteFlowControlled frame)
             {
-                var last = this.pendingWriteQueue.LastOrDefault;
+                var last = _pendingWriteQueue.LastOrDefault;
                 if (last is null)
                 {
-                    this.EnqueueFrameWithoutMerge(frame);
+                    EnqueueFrameWithoutMerge(frame);
                     return;
                 }
 
                 int lastSize = last.Size;
-                if (last.Merge(this.controller.ctx, frame))
+                if (last.Merge(_controller._ctx, frame))
                 {
-                    this.IncrementPendingBytes(last.Size - lastSize, true);
+                    IncrementPendingBytes(last.Size - lastSize, true);
                     return;
                 }
 
-                this.EnqueueFrameWithoutMerge(frame);
+                EnqueueFrameWithoutMerge(frame);
             }
 
             void EnqueueFrameWithoutMerge(IHttp2RemoteFlowControlled frame)
             {
-                this.pendingWriteQueue.AddToBack(frame);
+                _pendingWriteQueue.AddToBack(frame);
                 // This must be called after adding to the queue in order so that hasFrame() is
                 // updated before updating the stream state.
-                this.IncrementPendingBytes(frame.Size, true);
+                IncrementPendingBytes(frame.Size, true);
             }
 
-            public bool HasFrame => this.pendingWriteQueue.NonEmpty;
+            public bool HasFrame => _pendingWriteQueue.NonEmpty;
 
             /// <summary>
             /// Returns the head of the pending queue, or <c>null</c> if empty.
             /// </summary>
             IHttp2RemoteFlowControlled Peek()
             {
-                return this.pendingWriteQueue.FirstOrDefault;
+                return _pendingWriteQueue.FirstOrDefault;
             }
 
             /// <summary>
@@ -476,24 +476,24 @@ namespace DotNetty.Codecs.Http2
             /// <param name="cause">the <see cref="Exception"/> that caused this method to be invoked.</param>
             internal void Cancel(Http2Error error, Exception cause = null)
             {
-                this.cancelled = true;
+                _cancelled = true;
                 // Ensure that the queue can't be modified while we are writing.
-                if (this.writing) { return; }
+                if (_writing) { return; }
 
-                if (this.pendingWriteQueue.TryRemoveFromFront(out IHttp2RemoteFlowControlled frame))
+                if (_pendingWriteQueue.TryRemoveFromFront(out IHttp2RemoteFlowControlled frame))
                 {
                     // Only create exception once and reuse to reduce overhead of filling in the stacktrace.
                     Http2Exception exception = ThrowHelper.GetStreamError_StreamClosedBeforeWriteCouldTakePlace(
-                        this.stream.Id, error, cause);
+                        _stream.Id, error, cause);
                     do
                     {
-                        this.WriteError(frame, exception);
-                    } while (this.pendingWriteQueue.TryRemoveFromFront(out frame));
+                        WriteError(frame, exception);
+                    } while (_pendingWriteQueue.TryRemoveFromFront(out frame));
                 }
 
-                this.controller.streamByteDistributor.UpdateStreamableBytes(this);
+                _controller._streamByteDistributor.UpdateStreamableBytes(this);
 
-                this.controller.monitor.StateCancelled(this);
+                _controller._monitor.StateCancelled(this);
             }
 
             /// <summary>
@@ -503,11 +503,11 @@ namespace DotNetty.Codecs.Http2
             /// <param name="updateStreamableBytes"></param>
             void IncrementPendingBytes(int numBytes, bool updateStreamableBytes)
             {
-                this.pendingBytes += numBytes;
-                this.controller.monitor.IncrementPendingBytes(numBytes);
+                _pendingBytes += numBytes;
+                _controller._monitor.IncrementPendingBytes(numBytes);
                 if (updateStreamableBytes)
                 {
-                    this.controller.streamByteDistributor.UpdateStreamableBytes(this);
+                    _controller._streamByteDistributor.UpdateStreamableBytes(this);
                 }
             }
 
@@ -518,7 +518,7 @@ namespace DotNetty.Codecs.Http2
             /// <param name="updateStreamableBytes"></param>
             void DecrementPendingBytes(int bytes, bool updateStreamableBytes)
             {
-                this.IncrementPendingBytes(-bytes, updateStreamableBytes);
+                IncrementPendingBytes(-bytes, updateStreamableBytes);
             }
 
             /// <summary>
@@ -530,8 +530,8 @@ namespace DotNetty.Codecs.Http2
                 try
                 {
                     int negativeBytes = -bytes;
-                    this.controller.connectionState.IncrementStreamWindow(negativeBytes);
-                    this.IncrementStreamWindow(negativeBytes);
+                    _controller._connectionState.IncrementStreamWindow(negativeBytes);
+                    IncrementStreamWindow(negativeBytes);
                 }
                 catch (Http2Exception e)
                 {
@@ -548,9 +548,9 @@ namespace DotNetty.Codecs.Http2
             /// <param name="cause"></param>
             void WriteError(IHttp2RemoteFlowControlled frame, Http2Exception cause)
             {
-                IChannelHandlerContext ctx = this.controller.ctx;
+                IChannelHandlerContext ctx = _controller._ctx;
                 Debug.Assert(ctx is object);
-                this.DecrementPendingBytes(frame.Size, true);
+                DecrementPendingBytes(frame.Size, true);
                 frame.Error(ctx, cause);
             }
         }
@@ -560,17 +560,17 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         class WritabilityMonitor : IStreamByteDistributorWriter
         {
-            protected readonly DefaultHttp2RemoteFlowController controller;
+            protected readonly DefaultHttp2RemoteFlowController _controller;
 
-            bool inWritePendingBytes;
-            long totalPendingBytes;
+            private bool _inWritePendingBytes;
+            private long _totalPendingBytes;
 
             internal WritabilityMonitor(DefaultHttp2RemoteFlowController controller)
             {
-                this.controller = controller;
+                _controller = controller;
             }
 
-            void IStreamByteDistributorWriter.Write(IHttp2Stream stream, int numBytes) => this.controller.GetState(stream).WriteAllocatedBytes(numBytes);
+            void IStreamByteDistributorWriter.Write(IHttp2Stream stream, int numBytes) => _controller.GetState(stream).WriteAllocatedBytes(numBytes);
 
             /// <summary>
             /// Called when the writability of the underlying channel changes.
@@ -623,7 +623,7 @@ namespace DotNetty.Codecs.Http2
             /// <param name="delta">The amount to increment by.</param>
             internal void IncrementPendingBytes(int delta)
             {
-                this.totalPendingBytes += delta;
+                _totalPendingBytes += delta;
 
                 // Notification of writibilty change should be delayed until the end of the top level event.
                 // This is to ensure the flow controller is more consistent state before calling external listener methods.
@@ -636,7 +636,7 @@ namespace DotNetty.Codecs.Http2
             /// <returns><c>true</c> if <see cref="FlowState.Stream"/> is writable. <c>false</c> otherwise.</returns>
             protected internal bool IsWritable(FlowState state)
             {
-                return this.IsWritableConnection() && state.IsWritable();
+                return IsWritableConnection() && state.IsWritable();
             }
 
             internal void WritePendingBytes()
@@ -646,22 +646,22 @@ namespace DotNetty.Codecs.Http2
                 // cause a distribution to occur. This may be useful for example if the channel's writability changes from
                 // Writable -> Not Writable (because we are writing) -> Writable (because the user flushed to make more room
                 // in the channel outbound buffer).
-                if (this.inWritePendingBytes)
+                if (_inWritePendingBytes)
                 {
                     return;
                 }
 
-                this.inWritePendingBytes = true;
+                _inWritePendingBytes = true;
                 try
                 {
-                    int bytesToWrite = this.controller.WritableBytes();
+                    int bytesToWrite = _controller.WritableBytes();
                     // Make sure we always write at least once, regardless if we have bytesToWrite or not.
                     // This ensures that zero-length frames will always be written.
                     while (true)
                     {
-                        if (!this.controller.streamByteDistributor.Distribute(bytesToWrite, this) ||
-                            (bytesToWrite = this.controller.WritableBytes()) <= 0 ||
-                            !this.controller.IsChannelWritable0())
+                        if (!_controller._streamByteDistributor.Distribute(bytesToWrite, this) ||
+                            (bytesToWrite = _controller.WritableBytes()) <= 0 ||
+                            !_controller.IsChannelWritable0())
                         {
                             break;
                         }
@@ -669,37 +669,37 @@ namespace DotNetty.Codecs.Http2
                 }
                 finally
                 {
-                    this.inWritePendingBytes = false;
+                    _inWritePendingBytes = false;
                 }
             }
 
             protected internal virtual void InitialWindowSize(int newWindowSize)
             {
-                if (newWindowSize < 0)
+                if ((uint)newWindowSize > SharedConstants.TooBigOrNegative)
                 {
-                    ThrowHelper.ThrowArgumentException_InvalidInitialWindowSize(newWindowSize);
+                    ThrowHelper.ThrowArgumentException_PositiveOrZero(newWindowSize, ExceptionArgument.newWindowSize);
                 }
 
-                int delta = newWindowSize - this.controller.initialWindowSize;
-                this.controller.initialWindowSize = newWindowSize;
-                this.controller.connection.ForEachActiveStream(Visit);
+                int delta = newWindowSize - _controller._initialWindowSize;
+                _controller._initialWindowSize = newWindowSize;
+                _controller._connection.ForEachActiveStream(Visit);
 
-                if (delta > 0 && this.controller.IsChannelWritable())
+                if (delta > 0 && _controller.IsChannelWritable())
                 {
                     // The window size increased, send any pending frames for all streams.
-                    this.WritePendingBytes();
+                    WritePendingBytes();
                 }
 
                 bool Visit(IHttp2Stream stream)
                 {
-                    this.controller.GetState(stream).IncrementStreamWindow(delta);
+                    _controller.GetState(stream).IncrementStreamWindow(delta);
                     return true;
                 }
             }
 
             protected bool IsWritableConnection()
             {
-                return this.controller.connectionState.WindowSize - this.totalPendingBytes > 0 && this.controller.IsChannelWritable();
+                return _controller._connectionState.WindowSize - _totalPendingBytes > 0 && _controller.IsChannelWritable();
             }
         }
 
@@ -713,20 +713,20 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         sealed class ListenerWritabilityMonitor : WritabilityMonitor, IHttp2StreamVisitor
         {
-            readonly IHttp2RemoteFlowControllerListener listener;
+            readonly IHttp2RemoteFlowControllerListener _listener;
 
             internal ListenerWritabilityMonitor(DefaultHttp2RemoteFlowController controller, IHttp2RemoteFlowControllerListener listener)
                 : base(controller)
             {
-                this.listener = listener;
+                _listener = listener;
             }
 
             bool IHttp2StreamVisitor.Visit(IHttp2Stream stream)
             {
-                FlowState state = this.controller.GetState(stream);
-                if (this.IsWritable(state) != state.MarkedWritability())
+                FlowState state = _controller.GetState(stream);
+                if (IsWritable(state) != state.MarkedWritability())
                 {
-                    this.NotifyWritabilityChanged(state);
+                    NotifyWritabilityChanged(state);
                 }
 
                 return true;
@@ -737,7 +737,7 @@ namespace DotNetty.Codecs.Http2
                 base.WindowSize(state, initialWindowSize);
                 try
                 {
-                    this.CheckStateWritability(state);
+                    CheckStateWritability(state);
                 }
                 catch (Http2Exception e)
                 {
@@ -748,31 +748,31 @@ namespace DotNetty.Codecs.Http2
             protected internal override void IncrementWindowSize(FlowState state, int delta)
             {
                 base.IncrementWindowSize(state, delta);
-                this.CheckStateWritability(state);
+                CheckStateWritability(state);
             }
 
             protected internal override void InitialWindowSize(int newWindowSize)
             {
                 base.InitialWindowSize(newWindowSize);
-                if (this.IsWritableConnection())
+                if (IsWritableConnection())
                 {
                     // If the write operation does not occur we still need to check all streams because they
                     // may have transitioned from writable to not writable.
-                    this.CheckAllWritabilityChanged();
+                    CheckAllWritabilityChanged();
                 }
             }
 
             protected internal override void EnqueueFrame(FlowState state, IHttp2RemoteFlowControlled frame)
             {
                 base.EnqueueFrame(state, frame);
-                this.CheckConnectionThenStreamWritabilityChanged(state);
+                CheckConnectionThenStreamWritabilityChanged(state);
             }
 
             protected internal override void StateCancelled(FlowState state)
             {
                 try
                 {
-                    this.CheckConnectionThenStreamWritabilityChanged(state);
+                    CheckConnectionThenStreamWritabilityChanged(state);
                 }
                 catch (Http2Exception e)
                 {
@@ -782,23 +782,23 @@ namespace DotNetty.Codecs.Http2
 
             protected internal override void ChannelWritabilityChange()
             {
-                if (this.controller.connectionState.MarkedWritability() != this.controller.IsChannelWritable())
+                if (_controller._connectionState.MarkedWritability() != _controller.IsChannelWritable())
                 {
-                    this.CheckAllWritabilityChanged();
+                    CheckAllWritabilityChanged();
                 }
             }
 
             void CheckStateWritability(FlowState state)
             {
-                if (this.IsWritable(state) != state.MarkedWritability())
+                if (IsWritable(state) != state.MarkedWritability())
                 {
-                    if (state == this.controller.connectionState)
+                    if (state == _controller._connectionState)
                     {
-                        this.CheckAllWritabilityChanged();
+                        CheckAllWritabilityChanged();
                     }
                     else
                     {
-                        this.NotifyWritabilityChanged(state);
+                        NotifyWritabilityChanged(state);
                     }
                 }
             }
@@ -808,7 +808,7 @@ namespace DotNetty.Codecs.Http2
                 state.MarkedWritability(!state.MarkedWritability());
                 try
                 {
-                    this.listener.WritabilityChanged(state.Stream);
+                    _listener.WritabilityChanged(state.Stream);
                 }
                 catch (Exception cause)
                 {
@@ -819,21 +819,21 @@ namespace DotNetty.Codecs.Http2
             void CheckConnectionThenStreamWritabilityChanged(FlowState state)
             {
                 // It is possible that the connection window and/or the individual stream writability could change.
-                if (this.IsWritableConnection() != this.controller.connectionState.MarkedWritability())
+                if (IsWritableConnection() != _controller._connectionState.MarkedWritability())
                 {
-                    this.CheckAllWritabilityChanged();
+                    CheckAllWritabilityChanged();
                 }
-                else if (this.IsWritable(state) != state.MarkedWritability())
+                else if (IsWritable(state) != state.MarkedWritability())
                 {
-                    this.NotifyWritabilityChanged(state);
+                    NotifyWritabilityChanged(state);
                 }
             }
 
             void CheckAllWritabilityChanged()
             {
                 // Make sure we mark that we have notified as a result of this change.
-                this.controller.connectionState.MarkedWritability(this.IsWritableConnection());
-                this.controller.connection.ForEachActiveStream(this);
+                _controller._connectionState.MarkedWritability(IsWritableConnection());
+                _controller._connection.ForEachActiveStream(this);
             }
         }
     }

@@ -32,8 +32,8 @@ namespace DotNetty.Codecs.Http2.Tests
             var jsonSerializer = JsonSerializer.Create(jsongSettings);
             using (var reader = new JsonTextReader(new StreamReader(stream)))
             {
-                var result= jsonSerializer.Deserialize<HpackTestCase>(reader);
-                foreach(var headerBlock in result.headerBlocks)
+                var result = jsonSerializer.Deserialize<HpackTestCase>(reader);
+                foreach (var headerBlock in result.headerBlocks)
                 {
                     headerBlock.encodedBytes = StringUtil.DecodeHexDump(headerBlock.GetEncodedStr());
                 }
@@ -153,7 +153,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 maxHeaderTableSize = Http2CodecUtil.DefaultHeaderTableSize; // TODO int.MaxValue sometimes throw OutOfMemoryException
             }
 
-            return new HpackDecoder(Http2CodecUtil.DefaultHeaderListSize, 32, maxHeaderTableSize);
+            return new HpackDecoder(Http2CodecUtil.DefaultHeaderListSize, maxHeaderTableSize);
         }
 
         private static byte[] Encode(HpackEncoder hpackEncoder, List<HpackHeaderField> headers, int maxHeaderTableSize, bool sensitive)

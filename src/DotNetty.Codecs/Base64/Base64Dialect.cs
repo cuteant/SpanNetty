@@ -1,16 +1,42 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
+
 namespace DotNetty.Codecs.Base64
 {
-    public readonly struct Base64Dialect
+    public interface IBase64Dialect
     {
+        public bool BreakLinesByDefault { get; }
+
+        public ReadOnlySpan<byte> Alphabet { get; }
+
+        public ReadOnlySpan<sbyte> Decodabet { get; }
+    }
+
+    public sealed class Base64Dialect
+    {
+        public static readonly IBase64Dialect STANDARD = StandardDialect.Instance;
+
+        public static readonly IBase64Dialect URL_SAFE = UrlSafeDialect.Instance;
+
         /// <summary>
-        ///     http://www.faqs.org/rfcs/rfc3548.html
-        ///     Table 1: The Base 64 Alphabet
+        /// http://www.faqs.org/rfcs/rfc3548.html
+        /// Table 1: The Base 64 Alphabet
         /// </summary>
-        public static readonly Base64Dialect STANDARD = new Base64Dialect(
-            new byte[]
+        sealed class StandardDialect : IBase64Dialect
+        {
+            public static readonly IBase64Dialect Instance = new StandardDialect();
+
+            private StandardDialect() { }
+
+            public bool BreakLinesByDefault => true;
+
+            public ReadOnlySpan<byte> Alphabet => InternalAlphabet;
+
+            public ReadOnlySpan<sbyte> Decodabet => InternalDecodabet;
+
+            private static ReadOnlySpan<byte> InternalAlphabet => new byte[]
             {
                 (byte)'A', (byte)'B', (byte)'C', (byte)'D', (byte)'E',
                 (byte)'F', (byte)'G', (byte)'H', (byte)'I', (byte)'J',
@@ -25,8 +51,9 @@ namespace DotNetty.Codecs.Base64
                 (byte)'y', (byte)'z', (byte)'0', (byte)'1', (byte)'2',
                 (byte)'3', (byte)'4', (byte)'5', (byte)'6', (byte)'7',
                 (byte)'8', (byte)'9', (byte)'+', (byte)'/'
-            },
-            new sbyte[]
+            };
+
+            private static ReadOnlySpan<sbyte> InternalDecodabet => new sbyte[]
             {
                 -9, -9, -9, -9, -9, -9,
                 -9, -9, -9, // Decimal  0 -  8
@@ -50,15 +77,26 @@ namespace DotNetty.Codecs.Base64
                 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, // Letters 'a' through 'm'
                 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, // Letters 'n' through 'z'
                 -9, -9, -9, -9, // Decimal 123 - 126
-            },
-            true);
+            };
+        }
 
         /// <summary>
-        ///     http://www.faqs.org/rfcs/rfc3548.html
-        ///     Table 2: The "URL and Filename safe" Base 64 Alphabet
+        /// http://www.faqs.org/rfcs/rfc3548.html
+        /// Table 2: The "URL and Filename safe" Base 64 Alphabet
         /// </summary>
-        public static readonly Base64Dialect URL_SAFE = new Base64Dialect(
-            new byte[]
+        sealed class UrlSafeDialect : IBase64Dialect
+        {
+            public static readonly IBase64Dialect Instance = new UrlSafeDialect();
+
+            private UrlSafeDialect() { }
+
+            public bool BreakLinesByDefault => false;
+
+            public ReadOnlySpan<byte> Alphabet => InternalAlphabet;
+
+            public ReadOnlySpan<sbyte> Decodabet => InternalDecodabet;
+
+            private static ReadOnlySpan<byte> InternalAlphabet => new byte[]
             {
                 (byte)'A', (byte)'B', (byte)'C', (byte)'D', (byte)'E',
                 (byte)'F', (byte)'G', (byte)'H', (byte)'I', (byte)'J',
@@ -73,8 +111,9 @@ namespace DotNetty.Codecs.Base64
                 (byte)'y', (byte)'z', (byte)'0', (byte)'1', (byte)'2',
                 (byte)'3', (byte)'4', (byte)'5', (byte)'6', (byte)'7',
                 (byte)'8', (byte)'9', (byte)'-', (byte)'_'
-            },
-            new sbyte[]
+            };
+
+            private static ReadOnlySpan<sbyte> InternalDecodabet => new sbyte[]
             {
                 -9, -9, -9, -9, -9, -9,
                 -9, -9, -9, // Decimal  0 -  8
@@ -102,18 +141,7 @@ namespace DotNetty.Codecs.Base64
                 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, // Letters 'a' through 'm'
                 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, // Letters 'n' through 'z'
                 -9, -9, -9, -9, // Decimal 123 - 126
-            },
-            false);
-
-        public readonly byte[] alphabet;
-        public readonly sbyte[] decodabet;
-        public readonly bool breakLinesByDefault;
-
-        Base64Dialect(byte[] alphabet, sbyte[] decodabet, bool breakLinesByDefault)
-        {
-            this.alphabet = alphabet;
-            this.decodabet = decodabet;
-            this.breakLinesByDefault = breakLinesByDefault;
+            };
         }
     }
 }

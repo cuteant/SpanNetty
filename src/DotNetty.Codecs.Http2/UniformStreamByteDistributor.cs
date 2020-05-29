@@ -53,7 +53,7 @@ namespace DotNetty.Codecs.Http2
         /// Must be > 0.</param>
         public void MinAllocationChunk(int minAllocationChunk)
         {
-            if (minAllocationChunk <= 0)
+            if ((uint)(minAllocationChunk - 1) > SharedConstants.TooBigOrNegative) // <= 0
             {
                 ThrowHelper.ThrowArgumentException_Positive(minAllocationChunk, ExceptionArgument.minAllocationChunk);
             }

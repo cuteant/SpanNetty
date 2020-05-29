@@ -10,7 +10,7 @@ namespace DotNetty.Codecs.Http2
     {
         protected override Http2ConnectionHandler Build(IHttp2ConnectionDecoder decoder, IHttp2ConnectionEncoder encoder, Http2Settings initialSettings)
         {
-            return new Http2ConnectionHandler(decoder, encoder, initialSettings);
+            return new Http2ConnectionHandler(decoder, encoder, initialSettings, DecoupleCloseAndGoAway);
         }
     }
 }

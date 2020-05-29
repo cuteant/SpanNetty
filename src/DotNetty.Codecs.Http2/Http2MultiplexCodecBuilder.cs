@@ -8,17 +8,22 @@ namespace DotNetty.Codecs.Http2
 
     /// <summary>
     /// A builder for <see cref="Http2MultiplexCodec"/>.
+    /// 
+    /// <para>Deprecated use <see cref="Http2FrameCodecBuilder"/> together with <see cref="Http2MultiplexHandler"/>.</para>
     /// </summary>
     public class Http2MultiplexCodecBuilder : AbstractHttp2ConnectionHandlerBuilder<Http2MultiplexCodec, Http2MultiplexCodecBuilder>
     {
-        internal readonly IChannelHandler childHandler;
-        IChannelHandler upgradeStreamHandler;
+        internal readonly IChannelHandler _childHandler;
+        private IChannelHandler _upgradeStreamHandler;
+        private IHttp2FrameWriter _frameWriter;
 
         public Http2MultiplexCodecBuilder(bool server, IChannelHandler childHandler)
         {
             if (childHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.childHandler); }
-            this.IsServer = server;
-            this.childHandler = CheckSharable(childHandler);
+            IsServer = server;
+            _childHandler = CheckSharable(childHandler);
+            // For backwards compatibility we should disable to timeout by default at this layer.
+            GracefulShutdownTimeout = TimeSpan.Zero;
         }
 
         private static IChannelHandler CheckSharable(IChannelHandler handler)
@@ -28,6 +33,14 @@ namespace DotNetty.Codecs.Http2
                 ThrowHelper.ThrowArgumentException_TheHandlerMustBeSharable();
             }
             return handler;
+        }
+
+        // For testing only.
+        internal Http2MultiplexCodecBuilder FrameWriter(IHttp2FrameWriter frameWriter)
+        {
+            if (frameWriter is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frameWriter); }
+            _frameWriter = frameWriter;
+            return this;
         }
 
         /// <summary>
@@ -54,17 +67,54 @@ namespace DotNetty.Codecs.Http2
 
         public Http2MultiplexCodecBuilder WithUpgradeStreamHandler(IChannelHandler upgradeStreamHandler)
         {
-            if (this.IsServer)
+            if (IsServer)
             {
                 ThrowHelper.ThrowArgumentException_ServerCodecsDonotUseAnExtraHandlerForTheUpgradeStream();
             }
-            this.upgradeStreamHandler = upgradeStreamHandler;
+            _upgradeStreamHandler = upgradeStreamHandler;
             return this;
         }
 
+        /// <inheritdoc />
+        public override Http2MultiplexCodec Build()
+        {
+            var frameWriter = _frameWriter;
+            if (frameWriter is object)
+            {
+                // This is to support our tests and will never be executed by the user as frameWriter(...)
+                // is package-private.
+                var connection = new DefaultHttp2Connection(IsServer, MaxReservedStreams);
+                var maxHeaderListSize = InitialSettings.MaxHeaderListSize();
+                IHttp2FrameReader frameReader = new DefaultHttp2FrameReader(!maxHeaderListSize.HasValue ?
+                        new DefaultHttp2HeadersDecoder(true) :
+                        new DefaultHttp2HeadersDecoder(true, maxHeaderListSize.Value));
+
+                var frameLogger = FrameLogger;
+                if (frameLogger is object)
+                {
+                    frameWriter = new Http2OutboundFrameLogger(frameWriter, frameLogger);
+                    frameReader = new Http2InboundFrameLogger(frameReader, frameLogger);
+                }
+                IHttp2ConnectionEncoder encoder = new DefaultHttp2ConnectionEncoder(connection, frameWriter);
+                if (EncoderEnforceMaxConcurrentStreams)
+                {
+                    encoder = new StreamBufferingEncoder(encoder);
+                }
+                IHttp2ConnectionDecoder decoder = new DefaultHttp2ConnectionDecoder(connection, encoder, frameReader,
+                        PromisedRequestVerifier, AutoAckSettingsFrame, AutoAckPingFrame);
+
+                return Build(decoder, encoder, InitialSettings);
+            }
+            return base.Build();
+        }
+
+        /// <inheritdoc />
         protected override Http2MultiplexCodec Build(IHttp2ConnectionDecoder decoder, IHttp2ConnectionEncoder encoder, Http2Settings initialSettings)
         {
-            return new Http2MultiplexCodec(encoder, decoder, initialSettings, childHandler, upgradeStreamHandler);
+            return new Http2MultiplexCodec(encoder, decoder, initialSettings, _childHandler, _upgradeStreamHandler, DecoupleCloseAndGoAway)
+            {
+                GracefulShutdownTimeout = GracefulShutdownTimeout
+            };
         }
     }
 }

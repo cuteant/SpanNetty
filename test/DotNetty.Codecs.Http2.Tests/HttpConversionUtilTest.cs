@@ -132,5 +132,20 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal(1, output.Size);
             Assert.Same("world", output.Get((AsciiString)"hello", null).ToString());
         }
+
+        [Fact]
+        public void AddHttp2ToHttpHeadersCombinesCookies()
+        {
+            var inHeaders = new DefaultHttp2Headers();
+            inHeaders.Add((AsciiString)"yes", (AsciiString)"no");
+            inHeaders.Add(HttpHeaderNames.Cookie, (AsciiString)"foo=bar");
+            inHeaders.Add(HttpHeaderNames.Cookie, (AsciiString)"bax=baz");
+
+            HttpHeaders outHeaders = new DefaultHttpHeaders();
+
+            HttpConversionUtil.AddHttp2ToHttpHeaders(5, inHeaders, outHeaders, HttpVersion.Http11, false, false);
+            Assert.Equal("no", outHeaders.Get((AsciiString)"yes", null));
+            Assert.Equal("foo=bar; bax=baz", outHeaders.Get(HttpHeaderNames.Cookie, null));
+        }
     }
 }

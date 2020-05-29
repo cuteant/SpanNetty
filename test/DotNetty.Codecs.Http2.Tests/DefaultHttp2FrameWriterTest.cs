@@ -30,15 +30,17 @@ namespace DotNetty.Codecs.Http2.Tests
 
         public DefaultHttp2FrameWriterTest()
         {
-            this.frameWriter = new DefaultHttp2FrameWriter();
+            this.http2HeadersEncoder = new DefaultHttp2HeadersEncoder(
+                    NeverSensitiveDetector.Instance, new HpackEncoder(false, 16, 0));
+
+            this.frameWriter = new DefaultHttp2FrameWriter(new DefaultHttp2HeadersEncoder(
+                    NeverSensitiveDetector.Instance, new HpackEncoder(false, 16, 0)));
 
             this.outbound = Unpooled.Buffer();
 
             this.expectedOutbound = Unpooled.Empty;
 
             this.promise = new TaskCompletionSource();
-
-            this.http2HeadersEncoder = new DefaultHttp2HeadersEncoder();
 
             this.channel = new Mock<IChannel>();
 

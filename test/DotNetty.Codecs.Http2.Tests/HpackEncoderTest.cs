@@ -15,7 +15,7 @@ namespace DotNetty.Codecs.Http2.Tests
         public HpackEncoderTest()
         {
             hpackEncoder = new HpackEncoder();
-            hpackDecoder = new HpackDecoder(Http2CodecUtil.DefaultHeaderListSize, 32);
+            hpackDecoder = new HpackDecoder(Http2CodecUtil.DefaultHeaderListSize);
             mockHeaders = new Mock<IHttp2Headers>(MockBehavior.Strict);
         }
 

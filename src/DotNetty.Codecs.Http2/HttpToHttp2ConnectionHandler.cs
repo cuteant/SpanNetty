@@ -15,14 +15,22 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class HttpToHttp2ConnectionHandler : Http2ConnectionHandler
     {
-        private readonly bool validateHeaders;
-        private int currentStreamId;
+        private readonly bool _validateHeaders;
+        private int _currentStreamId;
 
         public HttpToHttp2ConnectionHandler(IHttp2ConnectionDecoder decoder, IHttp2ConnectionEncoder encoder,
             Http2Settings initialSettings, bool validateHeaders)
             : base(decoder, encoder, initialSettings)
         {
-            this.validateHeaders = validateHeaders;
+            _validateHeaders = validateHeaders;
+        }
+
+        public HttpToHttp2ConnectionHandler(IHttp2ConnectionDecoder decoder, IHttp2ConnectionEncoder encoder,
+                                               Http2Settings initialSettings, bool validateHeaders,
+                                               bool decoupleCloseAndGoAway)
+            : base(decoder, encoder, initialSettings, decoupleCloseAndGoAway)
+        {
+            _validateHeaders = validateHeaders;
         }
 
         /// <summary>
@@ -34,7 +42,7 @@ namespace DotNetty.Codecs.Http2
         private int GetStreamId(HttpHeaders httpHeaders)
         {
             return httpHeaders.GetInt(HttpConversionUtil.ExtensionHeaderNames.StreamId,
-                                      this.Connection.Local.IncrementAndGetNextStreamId);
+                                      Connection.Local.IncrementAndGetNextStreamId);
         }
 
         /// <summary>
@@ -55,17 +63,17 @@ namespace DotNetty.Codecs.Http2
             var promiseAggregator = new SimplePromiseAggregator(promise);
             try
             {
-                var encoder = this.Encoder;
+                var encoder = Encoder;
                 var endStream = false;
                 if (httpMsg is object)
                 {
                     // Provide the user the opportunity to specify the streamId
-                    this.currentStreamId = this.GetStreamId(httpMsg.Headers);
+                    _currentStreamId = GetStreamId(httpMsg.Headers);
 
                     // Convert and write the headers.
-                    var http2Headers = HttpConversionUtil.ToHttp2Headers(httpMsg, this.validateHeaders);
+                    var http2Headers = HttpConversionUtil.ToHttp2Headers(httpMsg, _validateHeaders);
                     endStream = msg is IFullHttpMessage fullHttpMsg && !fullHttpMsg.Content.IsReadable();
-                    WriteHeaders(ctx, encoder, this.currentStreamId, httpMsg.Headers, http2Headers, endStream, promiseAggregator);
+                    WriteHeaders(ctx, encoder, _currentStreamId, httpMsg.Headers, http2Headers, endStream, promiseAggregator);
                 }
 
                 if (!endStream && contentMsg is object)
@@ -79,25 +87,25 @@ namespace DotNetty.Codecs.Http2
 
                         // Convert any trailing headers.
                         trailers = lastContentMsg.TrailingHeaders;
-                        http2Trailers = HttpConversionUtil.ToHttp2Headers(trailers, this.validateHeaders);
+                        http2Trailers = HttpConversionUtil.ToHttp2Headers(trailers, _validateHeaders);
                     }
 
                     // Write the data
                     var content = contentMsg.Content;
                     endStream = isLastContent && trailers.IsEmpty;
                     release = false;
-                    encoder.WriteDataAsync(ctx, this.currentStreamId, content, 0, endStream, promiseAggregator.NewPromise());
+                    encoder.WriteDataAsync(ctx, _currentStreamId, content, 0, endStream, promiseAggregator.NewPromise());
 
                     if (!trailers.IsEmpty)
                     {
                         // Write trailing headers.
-                        WriteHeaders(ctx, encoder, this.currentStreamId, trailers, http2Trailers, true, promiseAggregator);
+                        WriteHeaders(ctx, encoder, _currentStreamId, trailers, http2Trailers, true, promiseAggregator);
                     }
                 }
             }
             catch (Exception t)
             {
-                this.OnError(ctx, true, t);
+                OnError(ctx, true, t);
                 promiseAggregator.SetException(t);
             }
             finally

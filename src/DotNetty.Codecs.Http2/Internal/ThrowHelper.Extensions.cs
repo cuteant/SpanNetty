@@ -55,6 +55,9 @@ namespace DotNetty.Codecs.Http2
         hpackEncoder,
         LastStreamId,
 
+        newWindowSize,
+        parentContext,
+
         flowController,
 
         requestVerifier,
@@ -71,6 +74,7 @@ namespace DotNetty.Codecs.Http2
 
         allocationQuantum,
         connectionHandler,
+        decompressedBytes,
         maxHeaderListSize,
 
         http2ServerHandler,
@@ -79,6 +83,8 @@ namespace DotNetty.Codecs.Http2
 
         windowSizeIncrement,
         sensitivityDetector,
+
+        inboundStreamHandler,
 
         streamByteDistributor,
 
@@ -192,9 +198,9 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_Positive(ExceptionArgument argument)
         {
             throw GetException();
-            ArgumentException GetException()
+            ArgumentOutOfRangeException GetException()
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: must be > 0");
+                return new ArgumentOutOfRangeException($"{GetArgumentName(argument)}: must be > 0");
             }
         }
 
@@ -202,9 +208,9 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_Positive(int value, ExceptionArgument argument)
         {
             throw GetException();
-            ArgumentException GetException()
+            ArgumentOutOfRangeException GetException()
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+                return new ArgumentOutOfRangeException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
             }
         }
 
@@ -212,9 +218,9 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_Positive(long value, ExceptionArgument argument)
         {
             throw GetException();
-            ArgumentException GetException()
+            ArgumentOutOfRangeException GetException()
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
+                return new ArgumentOutOfRangeException($"{GetArgumentName(argument)}: {value} (expected: > 0)");
             }
         }
 
@@ -222,9 +228,9 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_PositiveOrZero(ExceptionArgument argument)
         {
             throw GetException();
-            ArgumentException GetException()
+            ArgumentOutOfRangeException GetException()
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: must be >= 0");
+                return new ArgumentOutOfRangeException($"{GetArgumentName(argument)}: must be >= 0");
             }
         }
 
@@ -232,9 +238,9 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_PositiveOrZero(int value, ExceptionArgument argument)
         {
             throw GetException();
-            ArgumentException GetException()
+            ArgumentOutOfRangeException GetException()
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+                return new ArgumentOutOfRangeException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
             }
         }
 
@@ -242,9 +248,9 @@ namespace DotNetty.Codecs.Http2
         internal static void ThrowArgumentException_PositiveOrZero(long value, ExceptionArgument argument)
         {
             throw GetException();
-            ArgumentException GetException()
+            ArgumentOutOfRangeException GetException()
             {
-                return new ArgumentException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+                return new ArgumentOutOfRangeException($"{GetArgumentName(argument)}: {value} (expected: >= 0)");
             }
         }
 
@@ -498,26 +504,6 @@ namespace DotNetty.Codecs.Http2
             {
                 return new ArgumentException(StringUtil.SimpleClassName<Http2FrameCodec>()
                         + " was not found in the channel pipeline.");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_DecompressedBytesMustNotBeNegative(int decompressedBytes)
-        {
-            throw GetException();
-            ArgumentException GetException()
-            {
-                return new ArgumentException("decompressedBytes must not be negative: " + decompressedBytes);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_InvalidInitialWindowSize(int newWindowSize)
-        {
-            throw GetException();
-            ArgumentException GetException()
-            {
-                return new ArgumentException("Invalid initial window size: " + newWindowSize);
             }
         }
 
@@ -798,33 +784,46 @@ namespace DotNetty.Codecs.Http2
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_Delegate_is_not_IHttp2SettingsReceivedConsumer(IHttp2ConnectionEncoder encoder)
+        {
+            throw GetException();
+            InvalidOperationException GetException()
+            {
+                return new InvalidOperationException("delegate " + encoder.GetType() + " is not an instance of " + nameof(IHttp2SettingsReceivedConsumer));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_disabling_autoAckSettings_requires_encoder_IHttp2SettingsReceivedConsumer()
+        {
+            throw GetException();
+            static InvalidOperationException GetException()
+            {
+                return new InvalidOperationException("disabling autoAckSettings requires the encoder to be a " + nameof(IHttp2SettingsReceivedConsumer));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_Multiplex_CodecOrHandler_must_be_in_pipeline_of_channel(IChannel channel)
+        {
+            throw GetException();
+            InvalidOperationException GetException()
+            {
+                return new InvalidOperationException(StringUtil.SimpleClassName<Http2MultiplexCodec>() + " or "
+                        + StringUtil.SimpleClassName<Http2MultiplexHandler>()
+                        + " must be in the ChannelPipeline of Channel " + channel);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static InvalidOperationException GetInvalidOperationException_StreamNoLongerExists(int streamId, Exception cause)
         {
             return new InvalidOperationException("Stream no longer exists: " + streamId, cause);
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static InvalidOperationException GetInvalidOperationException_MustBeInTheChannelPipelineOfChannel(IChannel channel)
-        {
-            return new InvalidOperationException(StringUtil.SimpleClassName<Http2MultiplexCodec>() +
-                    " must be in the ChannelPipeline of Channel " + channel);
-        }
-
         #endregion
 
         #region -- Http2Exception --
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowHttp2Exception_EOSDecoded()
-        {
-            throw HpackHuffmanDecoder.EOSDecoded;
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowHttp2Exception_InvalidPadding()
-        {
-            throw HpackHuffmanDecoder.InvalidPadding;
-        }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static long ThrowHttp2Exception_DecodeULE128Decompression()
@@ -890,6 +889,12 @@ namespace DotNetty.Codecs.Http2
         internal static Http2Exception GetConnectionError_ErrorDecodeSizeError(Exception cause2)
         {
             return Http2Exception.ConnectionError(Http2Error.InternalError, cause2, "Error DecodeSizeError");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Http2Exception GetConnectionError_attempted_to_write_a_SETTINGS_ACK_with_no_pending_SETTINGS()
+        {
+            return new Http2Exception(Http2Error.InternalError, "attempted to write a SETTINGS ACK with no " + " pending SETTINGS");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -1592,6 +1597,29 @@ namespace DotNetty.Codecs.Http2
             {
                 return new Http2NoMoreStreamIdsException();
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotSupportedException_Re_register_is_not_supported()
+        {
+            throw GetException();
+
+            static NotSupportedException GetException()
+            {
+                return new NotSupportedException("Re-register is not supported");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowClosedChannelException()
+        {
+            throw GetClosedChannelException();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static ClosedChannelException GetClosedChannelException()
+        {
+            return new ClosedChannelException();
         }
 
         #endregion

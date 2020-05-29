@@ -4,7 +4,9 @@
 namespace DotNetty.Codecs.Http2
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Diagnostics;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
@@ -121,30 +123,32 @@ namespace DotNetty.Codecs.Http2
     {
         private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Http2FrameCodec>();
 
-        protected readonly IHttp2ConnectionPropertyKey streamKey;
-        private readonly IHttp2ConnectionPropertyKey upgradeKey;
+        protected internal readonly IHttp2ConnectionPropertyKey _streamKey;
+        private readonly IHttp2ConnectionPropertyKey _upgradeKey;
 
-        private readonly int? initialFlowControlWindowSize;
+        private readonly int? _initialFlowControlWindowSize;
 
-        private IChannelHandlerContext ctx;
+        internal IChannelHandlerContext _ctx;
 
         /// <summary>
         /// Number of buffered streams if the <see cref="StreamBufferingEncoder"/> is used.
         /// </summary>
-        private int numBufferedStreams;
-        private DefaultHttp2FrameStream frameStreamToInitialize;
+        private int _numBufferedStreams;
+        private readonly ConcurrentDictionary<int, DefaultHttp2FrameStream> _frameStreamToInitializeMap;
 
-        public Http2FrameCodec(IHttp2ConnectionEncoder encoder, IHttp2ConnectionDecoder decoder, Http2Settings initialSettings)
-            : base(decoder, encoder, initialSettings)
+        public Http2FrameCodec(IHttp2ConnectionEncoder encoder, IHttp2ConnectionDecoder decoder, Http2Settings initialSettings, bool decoupleCloseAndGoAway)
+            : base(decoder, encoder, initialSettings, decoupleCloseAndGoAway)
         {
 
+            _frameStreamToInitializeMap = new ConcurrentDictionary<int, DefaultHttp2FrameStream>();
+
             decoder.FrameListener = new FrameListener(this);
-            var connection = this.Connection;
+            var connection = Connection;
             connection.AddListener(new ConnectionListener(this));
             connection.Remote.FlowController.Listener(new Http2RemoteFlowControllerListener(this));
-            this.streamKey = connection.NewKey();
-            this.upgradeKey = connection.NewKey();
-            this.initialFlowControlWindowSize = initialSettings.InitialWindowSize();
+            _streamKey = connection.NewKey();
+            _upgradeKey = connection.NewKey();
+            _initialFlowControlWindowSize = initialSettings.InitialWindowSize();
         }
 
         /// <summary>
@@ -163,47 +167,56 @@ namespace DotNetty.Codecs.Http2
         /// <param name="streamVisitor"></param>
         public void ForEachActiveStream(IHttp2FrameStreamVisitor streamVisitor)
         {
-            Debug.Assert(this.ctx.Executor.InEventLoop);
-            bool LocalVisit(IHttp2Stream stream)
+            Debug.Assert(_ctx.Executor.InEventLoop);
+            var connection = Connection;
+            if (connection.NumActiveStreams > 0)
             {
-                try
-                {
-                    return streamVisitor.Visit(stream.GetProperty<IHttp2FrameStream>(this.streamKey));
-                }
-                catch (Exception cause)
-                {
-                    this.OnError(ctx, false, cause);
-                    return false;
-                }
+                connection.ForEachActiveStream(stream => InternalVisit(stream, streamVisitor));
             }
-            this.Connection.ForEachActiveStream(LocalVisit);
         }
+        private bool InternalVisit(IHttp2Stream stream, IHttp2FrameStreamVisitor streamVisitor)
+        {
+            try
+            {
+                return streamVisitor.Visit(stream.GetProperty<IHttp2FrameStream>(_streamKey));
+            }
+            catch (Exception cause)
+            {
+                OnError(_ctx, false, cause);
+                return false;
+            }
+        }
+
         public void ForEachActiveStream(Func<IHttp2FrameStream, bool> streamVisitor)
         {
-            Debug.Assert(this.ctx.Executor.InEventLoop);
-            bool LocalVisit(IHttp2Stream stream)
+            Debug.Assert(_ctx.Executor.InEventLoop);
+            var connection = Connection;
+            if (connection.NumActiveStreams > 0)
             {
-                try
-                {
-                    return streamVisitor(stream.GetProperty<IHttp2FrameStream>(this.streamKey));
-                }
-                catch (Exception cause)
-                {
-                    this.OnError(ctx, false, cause);
-                    return false;
-                }
+                connection.ForEachActiveStream(stream => InternalVisit(stream, streamVisitor));
             }
-            this.Connection.ForEachActiveStream(LocalVisit);
+        }
+        private bool InternalVisit(IHttp2Stream stream, Func<IHttp2FrameStream, bool> streamVisitor)
+        {
+            try
+            {
+                return streamVisitor(stream.GetProperty<IHttp2FrameStream>(_streamKey));
+            }
+            catch (Exception cause)
+            {
+                OnError(_ctx, false, cause);
+                return false;
+            }
         }
 
         public override void HandlerAdded(IChannelHandlerContext ctx)
         {
-            this.ctx = ctx;
+            _ctx = ctx;
             base.HandlerAdded(ctx);
-            this.HandlerAdded0(ctx);
+            HandlerAdded0(ctx);
             // Must be after Http2ConnectionHandler does its initialization in handlerAdded above.
             // The server will not send a connection preface so we are good to send a window update.
-            var connection = this.Connection;
+            var connection = Connection;
             if (connection.IsServer)
             {
                 TryExpandConnectionFlowControlWindow(connection);
@@ -212,19 +225,19 @@ namespace DotNetty.Codecs.Http2
 
         private void TryExpandConnectionFlowControlWindow(IHttp2Connection connection)
         {
-            if (this.initialFlowControlWindowSize.HasValue)
+            if (_initialFlowControlWindowSize.HasValue)
             {
                 // The window size in the settings explicitly excludes the connection window. So we manually manipulate the
                 // connection window to accommodate more concurrent data per connection.
                 var connectionStream = connection.ConnectionStream;
                 var localFlowController = connection.Local.FlowController;
-                int delta = initialFlowControlWindowSize.Value - localFlowController.GetInitialWindowSize(connectionStream);
+                int delta = _initialFlowControlWindowSize.Value - localFlowController.GetInitialWindowSize(connectionStream);
                 // Only increase the connection window, don't decrease it.
                 if (delta > 0)
                 {
                     // Double the delta just so a single stream can't exhaust the connection window.
                     localFlowController.IncrementWindowSize(connectionStream, Math.Max(delta << 1, delta));
-                    this.Flush(ctx);
+                    Flush(_ctx);
                 }
             }
         }
@@ -245,26 +258,26 @@ namespace DotNetty.Codecs.Http2
             if (evt == Http2ConnectionPrefaceAndSettingsFrameWrittenEvent.Instance)
             {
                 // The user event implies that we are on the client.
-                TryExpandConnectionFlowControlWindow(this.Connection);
+                TryExpandConnectionFlowControlWindow(Connection);
             }
             else if (evt is HttpServerUpgradeHandler.UpgradeEvent upgrade)
             {
                 try
                 {
                     OnUpgradeEvent(ctx, (HttpServerUpgradeHandler.UpgradeEvent)upgrade.Retain());
-                    var stream = this.Connection.Stream(Http2CodecUtil.HttpUpgradeStreamId);
-                    if (stream.GetProperty<IHttp2FrameStream>(this.streamKey) is null)
+                    var stream = Connection.Stream(Http2CodecUtil.HttpUpgradeStreamId);
+                    if (stream.GetProperty<IHttp2FrameStream>(_streamKey) is null)
                     {
                         // TODO: improve handler/stream lifecycle so that stream isn't active before handler added.
                         // The stream was already made active, but ctx may have been null so it wasn't initialized.
                         // https://github.com/netty/netty/issues/4942
-                        this.OnStreamActive0(stream);
+                        OnStreamActive0(stream);
                     }
                     upgrade.UpgradeRequest.Headers.SetInt(
                             HttpConversionUtil.ExtensionHeaderNames.StreamId, Http2CodecUtil.HttpUpgradeStreamId);
-                    stream.SetProperty(this.upgradeKey, true);
+                    stream.SetProperty(_upgradeKey, true);
                     InboundHttpToHttp2Adapter.Handle(
-                            ctx, this.Connection, this.Decoder.FrameListener, (IFullHttpMessage)upgrade.UpgradeRequest.Retain());
+                            ctx, Connection, Decoder.FrameListener, (IFullHttpMessage)upgrade.UpgradeRequest.Retain());
                 }
                 finally
                 {
@@ -286,7 +299,7 @@ namespace DotNetty.Codecs.Http2
             switch (msg)
             {
                 case IHttp2DataFrame dataFrame:
-                    this.Encoder.WriteDataAsync(ctx, dataFrame.Stream.Id, dataFrame.Content,
+                    Encoder.WriteDataAsync(ctx, dataFrame.Stream.Id, dataFrame.Content,
                         dataFrame.Padding, dataFrame.IsEndStream, promise);
                     break;
 
@@ -302,11 +315,11 @@ namespace DotNetty.Codecs.Http2
                     {
                         if (frameStream is null)
                         {
-                            this.IncreaseInitialConnectionWindow(windowUpdateFrame.WindowSizeIncrement);
+                            IncreaseInitialConnectionWindow(windowUpdateFrame.WindowSizeIncrement);
                         }
                         else
                         {
-                            this.ConsumeBytes(frameStream.Id, windowUpdateFrame.WindowSizeIncrement);
+                            ConsumeBytes(frameStream.Id, windowUpdateFrame.WindowSizeIncrement);
                         }
                         promise.Complete();
                     }
@@ -317,23 +330,40 @@ namespace DotNetty.Codecs.Http2
                     break;
 
                 case IHttp2ResetFrame rstFrame:
-                    this.Encoder.WriteRstStreamAsync(ctx, rstFrame.Stream.Id, rstFrame.ErrorCode, promise);
+                    int id = rstFrame.Stream.Id;
+                    // Only ever send a reset frame if stream may have existed before as otherwise we may send a RST on a
+                    // stream in an invalid state and cause a connection error.
+                    if (Connection.StreamMayHaveExisted(id))
+                    {
+                        Encoder.WriteRstStreamAsync(ctx, id, rstFrame.ErrorCode, promise);
+                    }
+                    else
+                    {
+                        ReferenceCountUtil.Release(rstFrame);
+                        promise.SetException(GetStreamNeverExistedException(id));
+                    }
                     break;
 
                 case IHttp2PingFrame pingFrame:
-                    this.Encoder.WritePingAsync(ctx, pingFrame.Ack, pingFrame.Content, promise);
+                    Encoder.WritePingAsync(ctx, pingFrame.Ack, pingFrame.Content, promise);
+                    break;
+
+                case IHttp2SettingsAckFrame _:
+                    // In the event of manual SETTINGS ACK is is assumed the encoder will apply the earliest received but not
+                    // yet ACKed settings.
+                    Encoder.WriteSettingsAckAsync(ctx, promise);
                     break;
 
                 case IHttp2SettingsFrame settingsFrame:
-                    this.Encoder.WriteSettingsAsync(ctx, settingsFrame.Settings, promise);
+                    Encoder.WriteSettingsAsync(ctx, settingsFrame.Settings, promise);
                     break;
 
                 case IHttp2GoAwayFrame goAwayFrame:
-                    this.WriteGoAwayFrame(ctx, goAwayFrame, promise);
+                    WriteGoAwayFrame(ctx, goAwayFrame, promise);
                     break;
 
                 case IHttp2UnknownFrame unknownFrame:
-                    this.Encoder.WriteFrameAsync(ctx, unknownFrame.FrameType, unknownFrame.Stream.Id,
+                    Encoder.WriteFrameAsync(ctx, unknownFrame.FrameType, unknownFrame.Stream.Id,
                             unknownFrame.Flags, unknownFrame.Content, promise);
                     break;
 
@@ -348,22 +378,28 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static Http2Exception GetStreamNeverExistedException(int streamId)
+        {
+            return Http2Exception.StreamError(streamId, Http2Error.ProtocolError, "Stream never existed");
+        }
+
         private void IncreaseInitialConnectionWindow(int deltaBytes)
         {
             // The LocalFlowController is responsible for detecting over/under flow.
-            var connection = this.Connection;
+            var connection = Connection;
             connection.Local.FlowController.IncrementWindowSize(connection.ConnectionStream, deltaBytes);
         }
 
         internal bool ConsumeBytes(int streamId, int bytes)
         {
-            var connection = this.Connection;
+            var connection = Connection;
             var stream = connection.Stream(streamId);
             // Upgraded requests are ineligible for stream control. We add the null check
             // in case the stream has been deregistered.
             if (stream is object && streamId == Http2CodecUtil.HttpUpgradeStreamId)
             {
-                var upgraded = stream.GetProperty<bool>(upgradeKey);
+                var upgraded = stream.GetProperty<bool>(_upgradeKey);
                 if (upgraded) { return false; }
             }
 
@@ -372,138 +408,125 @@ namespace DotNetty.Codecs.Http2
 
         private void WriteGoAwayFrame(IChannelHandlerContext ctx, IHttp2GoAwayFrame frame, IPromise promise)
         {
-            if (frame.LastStreamId > -1)
+            if (SharedConstants.TooBigOrNegative >= (uint)frame.LastStreamId) // > -1
             {
                 frame.Release();
                 ThrowHelper.ThrowArgumentException_LastStreamIdMustNotBeSetOnGoAwayFrame();
             }
 
-            int lastStreamCreated = this.Connection.Remote.LastStreamCreated;
+            int lastStreamCreated = Connection.Remote.LastStreamCreated;
             long lastStreamId = lastStreamCreated + ((long)frame.ExtraStreamIds) * 2;
             // Check if the computation overflowed.
             if (lastStreamId > int.MaxValue)
             {
                 lastStreamId = int.MaxValue;
             }
-            this.GoAwayAsync(ctx, (int)lastStreamId, frame.ErrorCode, frame.Content, promise);
+            GoAwayAsync(ctx, (int)lastStreamId, frame.ErrorCode, frame.Content, promise);
         }
 
         private void WriteHeadersFrame(IChannelHandlerContext ctx, IHttp2HeadersFrame headersFrame, IPromise promise)
         {
             if (Http2CodecUtil.IsStreamIdValid(headersFrame.Stream.Id))
             {
-                this.Encoder.WriteHeadersAsync(ctx, headersFrame.Stream.Id, headersFrame.Headers, headersFrame.Padding,
+                Encoder.WriteHeadersAsync(ctx, headersFrame.Stream.Id, headersFrame.Headers, headersFrame.Padding,
                         headersFrame.IsEndStream, promise);
             }
             else
             {
                 var stream = (DefaultHttp2FrameStream)headersFrame.Stream;
-                var connection = this.Connection;
+                var connection = Connection;
                 var streamId = connection.Local.IncrementAndGetNextStreamId;
                 if (streamId < 0)
                 {
                     promise.SetException(new Http2NoMoreStreamIdsException());
+
+                    // Simulate a GOAWAY being received due to stream exhaustion on this connection. We use the maximum
+                    // valid stream ID for the current peer.
+                    OnHttp2Frame(ctx, new DefaultHttp2GoAwayFrame(connection.IsServer ? int.MaxValue :
+                            int.MaxValue - 1, Http2Error.NoError,
+                            ByteBufferUtil.WriteAscii(ctx.Allocator, "Stream IDs exhausted on local stream creation")));
                     return;
                 }
                 stream.Id = streamId;
 
-                // TODO: This depends on the fact that the connection based API will create Http2Stream objects
-                // synchronously. We should investigate how to refactor this later on when we consolidate some layers.
-                Debug.Assert(frameStreamToInitialize is null);
-                frameStreamToInitialize = stream;
+                // Use a Map to store all pending streams as we may have multiple. This is needed as if we would store the
+                // stream in a field directly we may override the stored field before onStreamAdded(...) was called
+                // and so not correctly set the property for the buffered stream.
+                //
+                // See https://github.com/netty/netty/issues/8692
+                var result = _frameStreamToInitializeMap.TryAdd(streamId, stream);
 
-                // TODO(buchgr): Once Http2Stream2 and Http2Stream are merged this is no longer necessary.
-                var writePromise = ctx.NewPromise();
+                // We should not re-use ids.
+                Debug.Assert(result);
 
-                this.Encoder.WriteHeadersAsync(ctx, streamId, headersFrame.Headers, headersFrame.Padding,
-                        headersFrame.IsEndStream, writePromise);
-                var writeCompltion = writePromise.Task;
-                if (writeCompltion.IsCompleted)
+                Encoder.WriteHeadersAsync(ctx, streamId, headersFrame.Headers, headersFrame.Padding,
+                        headersFrame.IsEndStream, promise);
+                if (!promise.IsCompleted)
                 {
-                    NotifyHeaderWritePromise(writeCompltion, promise);
-                }
-                else
-                {
-                    Interlocked.Increment(ref numBufferedStreams);
-                    writeCompltion.ContinueWith(NotifyHeaderWritePromiseAction,
-                        Tuple.Create(this, promise), TaskContinuationOptions.ExecuteSynchronously);
+                    Interlocked.Increment(ref _numBufferedStreams);
+                    promise.Task.ContinueWith(ResetNufferedStreamsAction, this, TaskContinuationOptions.ExecuteSynchronously);
                 }
             }
         }
 
-        private static readonly Action<Task, object> NotifyHeaderWritePromiseAction = NotifyHeaderWritePromise0;
-        private static void NotifyHeaderWritePromise0(Task t, object s)
+        private static readonly Action<Task, object> ResetNufferedStreamsAction = ResetNufferedStreams;
+        private static void ResetNufferedStreams(Task t, object s)
         {
-            var wrapped = (Tuple<Http2FrameCodec, IPromise>)s;
-            Interlocked.Decrement(ref wrapped.Item1.numBufferedStreams);
-            NotifyHeaderWritePromise(t, wrapped.Item2);
-        }
-
-        private static void NotifyHeaderWritePromise(Task future, IPromise promise)
-        {
-            if (future.IsCanceled)
-            {
-                promise.TrySetCanceled();
-            }
-            else if (future.IsFaulted)
-            {
-                promise.TrySetException(future.Exception);
-            }
-            else //if (future.IsCompleted)
-            {
-                promise.TryComplete();
-            }
+            var self = (Http2FrameCodec)s;
+            Interlocked.Decrement(ref self._numBufferedStreams);
         }
 
         private void OnStreamActive0(IHttp2Stream stream)
         {
-            if (this.Connection.Local.IsValidStreamId(stream.Id)) { return; }
+            if (stream.Id != Http2CodecUtil.HttpUpgradeStreamId && Connection.Local.IsValidStreamId(stream.Id)) { return; }
 
-            DefaultHttp2FrameStream stream2 = this.NewStream().SetStreamAndProperty(streamKey, stream);
-            this.OnHttp2StreamStateChanged(ctx, stream2);
+            DefaultHttp2FrameStream stream2 = NewStream().SetStreamAndProperty(_streamKey, stream);
+            OnHttp2StreamStateChanged(_ctx, stream2);
         }
 
         sealed class ConnectionListener : Http2ConnectionAdapter
         {
-            readonly Http2FrameCodec frameCodec;
+            private readonly Http2FrameCodec _frameCodec;
 
-            public ConnectionListener(Http2FrameCodec frameCodec) => this.frameCodec = frameCodec;
+            public ConnectionListener(Http2FrameCodec frameCodec) => _frameCodec = frameCodec;
 
             public override void OnStreamAdded(IHttp2Stream stream)
             {
-                var frameStreamToInitialize = this.frameCodec.frameStreamToInitialize;
-                if (frameStreamToInitialize is object && stream.Id == frameStreamToInitialize.Id)
+                _frameCodec._frameStreamToInitializeMap.TryRemove(stream.Id, out var frameStream);
+
+                if (frameStream is object)
                 {
-                    frameStreamToInitialize.SetStreamAndProperty(this.frameCodec.streamKey, stream);
-                    this.frameCodec.frameStreamToInitialize = null;
+                    frameStream.SetStreamAndProperty(_frameCodec._streamKey, stream);
                 }
             }
 
             public override void OnStreamActive(IHttp2Stream stream)
             {
-                this.frameCodec.OnStreamActive0(stream);
+                _frameCodec.OnStreamActive0(stream);
             }
 
             public override void OnStreamClosed(IHttp2Stream stream)
             {
-                var stream2 = stream.GetProperty<DefaultHttp2FrameStream>(this.frameCodec.streamKey);
-                if (stream2 is object)
-                {
-                    this.frameCodec.OnHttp2StreamStateChanged(this.frameCodec.ctx, stream2);
-                }
+                OnHttp2StreamStateChanged0(stream);
             }
 
             public override void OnStreamHalfClosed(IHttp2Stream stream)
             {
-                var stream2 = stream.GetProperty<DefaultHttp2FrameStream>(this.frameCodec.streamKey);
+                OnHttp2StreamStateChanged0(stream);
+            }
+
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            private void OnHttp2StreamStateChanged0(IHttp2Stream stream)
+            {
+                var stream2 = stream.GetProperty<DefaultHttp2FrameStream>(_frameCodec._streamKey);
                 if (stream2 is object)
                 {
-                    this.frameCodec.OnHttp2StreamStateChanged(this.frameCodec.ctx, stream2);
+                    _frameCodec.OnHttp2StreamStateChanged(_frameCodec._ctx, stream2);
                 }
             }
         }
 
-        protected override void OnConnectionError(IChannelHandlerContext ctx, bool outbound, Exception cause, Http2Exception http2Ex)
+        protected internal override void OnConnectionError(IChannelHandlerContext ctx, bool outbound, Exception cause, Http2Exception http2Ex)
         {
             if (!outbound)
             {
@@ -527,16 +550,16 @@ namespace DotNetty.Codecs.Http2
         protected override void OnStreamError(IChannelHandlerContext ctx, bool outbound, Exception cause, StreamException streamException)
         {
             int streamId = streamException.StreamId;
-            var connectionStream = this.Connection.Stream(streamId);
+            var connectionStream = Connection.Stream(streamId);
             if (connectionStream is null)
             {
-                this.OnHttp2UnknownStreamError(ctx, cause, streamException);
+                OnHttp2UnknownStreamError(ctx, cause, streamException);
                 // Write a RST_STREAM
                 base.OnStreamError(ctx, outbound, cause, streamException);
                 return;
             }
 
-            var stream = connectionStream.GetProperty<IHttp2FrameStream>(streamKey);
+            var stream = connectionStream.GetProperty<IHttp2FrameStream>(_streamKey);
             if (stream is null)
             {
                 if (Logger.WarnEnabled) { Logger.StreamExceptionThrownWithoutStreamObjectAttached(cause); }
@@ -548,7 +571,7 @@ namespace DotNetty.Codecs.Http2
             if (!outbound)
             {
                 // We only forward non outbound errors as outbound errors will already be reflected by failing the promise.
-                this.OnHttp2FrameStreamException(ctx, new Http2FrameStreamException(stream, streamException.Error, cause));
+                OnHttp2FrameStreamException(ctx, new Http2FrameStreamException(stream, streamException.Error, cause));
             }
         }
 
@@ -559,22 +582,22 @@ namespace DotNetty.Codecs.Http2
         }
 
         protected override bool IsGracefulShutdownComplete =>
-            base.IsGracefulShutdownComplete && 0u >= (uint)Volatile.Read(ref this.numBufferedStreams);
+            base.IsGracefulShutdownComplete && 0u >= (uint)Volatile.Read(ref _numBufferedStreams);
 
         sealed class FrameListener : IHttp2FrameListener
         {
-            readonly Http2FrameCodec frameCodec;
+            private readonly Http2FrameCodec _frameCodec;
 
-            public FrameListener(Http2FrameCodec frameCodec) => this.frameCodec = frameCodec;
+            public FrameListener(Http2FrameCodec frameCodec) => _frameCodec = frameCodec;
 
             public int OnDataRead(IChannelHandlerContext ctx, int streamId, IByteBuffer data, int padding, bool endOfStream)
             {
                 var frame = new DefaultHttp2DataFrame(data, endOfStream, padding)
                 {
-                    Stream = this.RequireStream(streamId)
+                    Stream = RequireStream(streamId)
                 };
                 frame.Retain();
-                this.frameCodec.OnHttp2Frame(ctx, frame);
+                _frameCodec.OnHttp2Frame(ctx, frame);
                 // We return the bytes in consumeBytes() once the stream channel consumed the bytes.
                 return 0;
             }
@@ -583,31 +606,31 @@ namespace DotNetty.Codecs.Http2
             {
                 var frame = new DefaultHttp2GoAwayFrame(lastStreamId, errorCode, debugData);
                 frame.Retain();
-                this.frameCodec.OnHttp2Frame(ctx, frame);
+                _frameCodec.OnHttp2Frame(ctx, frame);
             }
 
             public void OnHeadersRead(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int padding, bool endOfStream)
             {
                 var frame = new DefaultHttp2HeadersFrame(headers, endOfStream, padding)
                 {
-                    Stream = this.RequireStream(streamId)
+                    Stream = RequireStream(streamId)
                 };
-                this.frameCodec.OnHttp2Frame(ctx, frame);
+                _frameCodec.OnHttp2Frame(ctx, frame);
             }
 
             public void OnHeadersRead(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int streamDependency, short weight, bool exclusive, int padding, bool endOfStream)
             {
-                this.OnHeadersRead(ctx, streamId, headers, padding, endOfStream);
+                OnHeadersRead(ctx, streamId, headers, padding, endOfStream);
             }
 
             public void OnPingAckRead(IChannelHandlerContext ctx, long data)
             {
-                this.frameCodec.OnHttp2Frame(ctx, new DefaultHttp2PingFrame(data, true));
+                _frameCodec.OnHttp2Frame(ctx, new DefaultHttp2PingFrame(data, true));
             }
 
             public void OnPingRead(IChannelHandlerContext ctx, long data)
             {
-                this.frameCodec.OnHttp2Frame(ctx, new DefaultHttp2PingFrame(data, false));
+                _frameCodec.OnHttp2Frame(ctx, new DefaultHttp2PingFrame(data, false));
             }
 
             public void OnPriorityRead(IChannelHandlerContext ctx, int streamId, int streamDependency, short weight, bool exclusive)
@@ -624,29 +647,29 @@ namespace DotNetty.Codecs.Http2
             {
                 var frame = new DefaultHttp2ResetFrame(errorCode)
                 {
-                    Stream = this.RequireStream(streamId)
+                    Stream = RequireStream(streamId)
                 };
-                this.frameCodec.OnHttp2Frame(ctx, frame);
+                _frameCodec.OnHttp2Frame(ctx, frame);
             }
 
             public void OnSettingsAckRead(IChannelHandlerContext ctx)
             {
-                // TODO: Maybe handle me
+                _frameCodec.OnHttp2Frame(ctx, DefaultHttp2SettingsAckFrame.Instance);
             }
 
             public void OnSettingsRead(IChannelHandlerContext ctx, Http2Settings settings)
             {
-                this.frameCodec.OnHttp2Frame(ctx, new DefaultHttp2SettingsFrame(settings));
+                _frameCodec.OnHttp2Frame(ctx, new DefaultHttp2SettingsFrame(settings));
             }
 
             public void OnUnknownFrame(IChannelHandlerContext ctx, Http2FrameTypes frameType, int streamId, Http2Flags flags, IByteBuffer payload)
             {
                 var frame = new DefaultHttp2UnknownFrame(frameType, flags, payload)
                 {
-                    Stream = this.RequireStream(streamId)
+                    Stream = RequireStream(streamId)
                 };
                 frame.Retain();
-                this.frameCodec.OnHttp2Frame(ctx, frame);
+                _frameCodec.OnHttp2Frame(ctx, frame);
             }
 
             public void OnWindowUpdateRead(IChannelHandlerContext ctx, int streamId, int windowSizeIncrement)
@@ -658,14 +681,14 @@ namespace DotNetty.Codecs.Http2
                 }
                 var frame = new DefaultHttp2WindowUpdateFrame(windowSizeIncrement)
                 {
-                    Stream = this.RequireStream(streamId)
+                    Stream = RequireStream(streamId)
                 };
-                this.frameCodec.OnHttp2Frame(ctx, frame);
+                _frameCodec.OnHttp2Frame(ctx, frame);
             }
 
             private IHttp2FrameStream RequireStream(int streamId)
             {
-                var stream = this.frameCodec.Connection.Stream(streamId).GetProperty<IHttp2FrameStream>(this.frameCodec.streamKey);
+                var stream = _frameCodec.Connection.Stream(streamId).GetProperty<IHttp2FrameStream>(_frameCodec._streamKey);
                 if (stream is null)
                 {
                     ThrowHelper.ThrowInvalidOperationException_StreamObjectRequiredForIdentifier(streamId);
@@ -674,19 +697,19 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        protected virtual void OnUpgradeEvent(IChannelHandlerContext ctx, HttpServerUpgradeHandler.UpgradeEvent evt)
+        private void OnUpgradeEvent(IChannelHandlerContext ctx, HttpServerUpgradeHandler.UpgradeEvent evt)
         {
             ctx.FireUserEventTriggered(evt);
         }
 
-        protected virtual void OnHttp2StreamWritabilityChanged(IChannelHandlerContext ctx, IHttp2FrameStream stream, bool writable)
+        private void OnHttp2StreamWritabilityChanged(IChannelHandlerContext ctx, DefaultHttp2FrameStream stream, bool writable)
         {
-            ctx.FireUserEventTriggered(Http2FrameStreamEvent.WritabilityChanged(stream));
+            ctx.FireUserEventTriggered(stream.WritabilityChanged);
         }
 
-        protected virtual void OnHttp2StreamStateChanged(IChannelHandlerContext ctx, IHttp2FrameStream stream)
+        protected virtual void OnHttp2StreamStateChanged(IChannelHandlerContext ctx, DefaultHttp2FrameStream stream)
         {
-            ctx.FireUserEventTriggered(Http2FrameStreamEvent.StateChanged(stream));
+            ctx.FireUserEventTriggered(stream.StateChanged);
         }
 
         protected virtual void OnHttp2Frame(IChannelHandlerContext ctx, IHttp2Frame frame)
@@ -699,24 +722,18 @@ namespace DotNetty.Codecs.Http2
             ctx.FireExceptionCaught(cause);
         }
 
-        internal bool IsWritable(DefaultHttp2FrameStream stream)
-        {
-            var s = stream.InternalStream;
-            return s is object && this.Connection.Remote.FlowController.IsWritable(s);
-        }
-
         sealed class Http2RemoteFlowControllerListener : IHttp2RemoteFlowControllerListener
         {
-            readonly Http2FrameCodec frameCodec;
+            private readonly Http2FrameCodec _frameCodec;
 
-            public Http2RemoteFlowControllerListener(Http2FrameCodec frameCodec) => this.frameCodec = frameCodec;
+            public Http2RemoteFlowControllerListener(Http2FrameCodec frameCodec) => _frameCodec = frameCodec;
 
             public void WritabilityChanged(IHttp2Stream stream)
             {
-                var frameStream = stream.GetProperty<IHttp2FrameStream>(this.frameCodec.streamKey);
+                var frameStream = stream.GetProperty<DefaultHttp2FrameStream>(_frameCodec._streamKey);
                 if (frameStream is null) { return; }
-                this.frameCodec.OnHttp2StreamWritabilityChanged(
-                    this.frameCodec.ctx, frameStream, this.frameCodec.Connection.Remote.FlowController.IsWritable(stream));
+                _frameCodec.OnHttp2StreamWritabilityChanged(
+                    _frameCodec._ctx, frameStream, _frameCodec.Connection.Remote.FlowController.IsWritable(stream));
             }
         }
     }

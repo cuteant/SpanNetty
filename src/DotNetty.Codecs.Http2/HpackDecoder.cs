@@ -12,28 +12,28 @@ namespace DotNetty.Codecs.Http2
     sealed class HpackDecoder
     {
         internal static readonly Http2Exception DecodeULE128DecompressionException =
-            Http2Exception.ConnectionError(Http2Error.CompressionError, "HPACK - decompression failure");
+            new Http2Exception(Http2Error.CompressionError, "HPACK - decompression failure", ShutdownHint.HardShutdown);
 
         internal static readonly Http2Exception DecodeULE128ToLongDecompressionException =
-            Http2Exception.ConnectionError(Http2Error.CompressionError, "HPACK - long overflow");
+            new Http2Exception(Http2Error.CompressionError, "HPACK - long overflow", ShutdownHint.HardShutdown);
 
         internal static readonly Http2Exception DecodeULE128ToIntDecompressionException =
-            Http2Exception.ConnectionError(Http2Error.CompressionError, "HPACK - int overflow");
+            new Http2Exception(Http2Error.CompressionError, "HPACK - int overflow", ShutdownHint.HardShutdown);
 
         internal static readonly Http2Exception DecodeIllegalIndexValue =
-            Http2Exception.ConnectionError(Http2Error.CompressionError, "HPACK - illegal index value");
+            new Http2Exception(Http2Error.CompressionError, "HPACK - illegal index value", ShutdownHint.HardShutdown);
 
         internal static readonly Http2Exception IndexHeaderIllegalIndexValue =
-            Http2Exception.ConnectionError(Http2Error.CompressionError, "HPACK - illegal index value");
+            new Http2Exception(Http2Error.CompressionError, "HPACK - illegal index value", ShutdownHint.HardShutdown);
 
         internal static readonly Http2Exception ReadNameIllegalIndexValue =
-            Http2Exception.ConnectionError(Http2Error.CompressionError, "HPACK - illegal index value");
+            new Http2Exception(Http2Error.CompressionError, "HPACK - illegal index value", ShutdownHint.HardShutdown);
 
         internal static readonly Http2Exception InvalidMaxDynamicTableSize =
-            Http2Exception.ConnectionError(Http2Error.CompressionError, "HPACK - invalid max dynamic table size");
+            new Http2Exception(Http2Error.CompressionError, "HPACK - invalid max dynamic table size", ShutdownHint.HardShutdown);
 
         internal static readonly Http2Exception MaxDynamicTableSizeChangeRequired =
-            Http2Exception.ConnectionError(Http2Error.CompressionError, "HPACK - max dynamic table size change required");
+            new Http2Exception(Http2Error.CompressionError, "HPACK - max dynamic table size change required", ShutdownHint.HardShutdown);
 
         const byte ReadHeaderRepresentation = 0;
 
@@ -55,14 +55,13 @@ namespace DotNetty.Codecs.Http2
 
         const byte ReadLiteralHeaderValue = 9;
 
-        readonly HpackDynamicTable hpackDynamicTable;
+        private readonly HpackHuffmanDecoder _huffmanDecoder = new HpackHuffmanDecoder();
+        private readonly HpackDynamicTable _hpackDynamicTable;
 
-        readonly HpackHuffmanDecoder hpackHuffmanDecoder;
-
-        long maxHeaderListSize;
-        long maxDynamicTableSize;
-        long encoderMaxDynamicTableSize;
-        bool maxDynamicTableSizeChangeRequired;
+        private long _maxHeaderListSize;
+        private long _maxDynamicTableSize;
+        private long _encoderMaxDynamicTableSize;
+        private bool _maxDynamicTableSizeChangeRequired;
 
         /// <summary>
         /// Create a new instance.
@@ -71,9 +70,8 @@ namespace DotNetty.Codecs.Http2
         /// This is because <a href="https://tools.ietf.org/html/rfc7540#section-6.5.1">SETTINGS_Http2CodecUtil.MAX_HEADER_LIST_SIZE</a>
         /// allows a lower than advertised limit from being enforced, and the default limit is unlimited
         /// (which is dangerous).</param>
-        /// <param name="initialHuffmanDecodeCapacity">Size of an intermediate buffer used during huffman decode.</param>
-        internal HpackDecoder(long maxHeaderListSize, int initialHuffmanDecodeCapacity)
-            : this(maxHeaderListSize, initialHuffmanDecodeCapacity, Http2CodecUtil.DefaultHeaderTableSize)
+        internal HpackDecoder(long maxHeaderListSize)
+            : this(maxHeaderListSize, Http2CodecUtil.DefaultHeaderTableSize)
         {
 
         }
@@ -83,17 +81,18 @@ namespace DotNetty.Codecs.Http2
         /// for testing but violate the RFC if used outside the scope of testing.
         /// </summary>
         /// <param name="maxHeaderListSize"></param>
-        /// <param name="initialHuffmanDecodeCapacity"></param>
         /// <param name="maxHeaderTableSize"></param>
-        internal HpackDecoder(long maxHeaderListSize, int initialHuffmanDecodeCapacity, int maxHeaderTableSize)
+        internal HpackDecoder(long maxHeaderListSize, int maxHeaderTableSize)
         {
-            if (maxHeaderListSize <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxHeaderListSize, ExceptionArgument.maxHeaderListSize); }
-            this.maxHeaderListSize = maxHeaderListSize;
+            if (maxHeaderListSize <= 0L)
+            {
+                ThrowHelper.ThrowArgumentException_Positive(maxHeaderListSize, ExceptionArgument.maxHeaderListSize);
+            }
+            _maxHeaderListSize = maxHeaderListSize;
 
-            this.maxDynamicTableSize = this.encoderMaxDynamicTableSize = maxHeaderTableSize;
-            this.maxDynamicTableSizeChangeRequired = false;
-            this.hpackDynamicTable = new HpackDynamicTable(maxHeaderTableSize);
-            this.hpackHuffmanDecoder = new HpackHuffmanDecoder(initialHuffmanDecodeCapacity);
+            _maxDynamicTableSize = _encoderMaxDynamicTableSize = maxHeaderTableSize;
+            _maxDynamicTableSizeChangeRequired = false;
+            _hpackDynamicTable = new HpackDynamicTable(maxHeaderTableSize);
         }
 
         /// <summary>
@@ -106,8 +105,8 @@ namespace DotNetty.Codecs.Http2
         /// <param name="validateHeaders"></param>
         public void Decode(int streamId, IByteBuffer input, IHttp2Headers headers, bool validateHeaders)
         {
-            var sink = new Http2HeadersSink(streamId, headers, this.maxHeaderListSize, validateHeaders);
-            this.Decode(input, sink);
+            var sink = new Http2HeadersSink(streamId, headers, _maxHeaderListSize, validateHeaders);
+            Decode(input, sink);
 
             // Now that we've read all of our headers we can perform the validation steps. We must
             // delay throwing until this point to prevent dynamic table corruption.
@@ -130,7 +129,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     case ReadHeaderRepresentation:
                         byte b = input.ReadByte();
-                        if (this.maxDynamicTableSizeChangeRequired && (b & 0xE0) != 0x20)
+                        if (_maxDynamicTableSizeChangeRequired && (b & 0xE0) != 0x20)
                         {
                             // HpackEncoder MUST signal maximum dynamic table size change
                             ThrowHelper.ThrowHttp2Exception_MaxDynamicTableSizeChangeRequired();
@@ -149,7 +148,7 @@ namespace DotNetty.Codecs.Http2
                                     state = ReadIndexedHeader;
                                     break;
                                 default:
-                                    HpackHeaderField idxHeader = this.GetIndexedHeader(index);
+                                    HpackHeaderField idxHeader = GetIndexedHeader(index);
                                     sink.AppendToHeaderList(idxHeader.name, idxHeader.value);
                                     break;
                             }
@@ -169,7 +168,7 @@ namespace DotNetty.Codecs.Http2
                                     break;
                                 default:
                                     // Index was stored as the prefix
-                                    name = this.ReadName(index);
+                                    name = ReadName(index);
                                     nameLength = name.Count;
                                     state = ReadLiteralHeaderValueLengthPrefix;
                                     break;
@@ -185,7 +184,7 @@ namespace DotNetty.Codecs.Http2
                             }
                             else
                             {
-                                this.SetDynamicTableSize(index);
+                                SetDynamicTableSize(index);
                                 state = ReadHeaderRepresentation;
                             }
                         }
@@ -204,7 +203,7 @@ namespace DotNetty.Codecs.Http2
                                     break;
                                 default:
                                     // Index was stored as the prefix
-                                    name = this.ReadName(index);
+                                    name = ReadName(index);
                                     nameLength = name.Count;
                                     state = ReadLiteralHeaderValueLengthPrefix;
                                     break;
@@ -214,19 +213,19 @@ namespace DotNetty.Codecs.Http2
                         break;
 
                     case ReadMaxDynamicTableSize:
-                        this.SetDynamicTableSize(DecodeULE128(input, (long)index));
+                        SetDynamicTableSize(DecodeULE128(input, (long)index));
                         state = ReadHeaderRepresentation;
                         break;
 
                     case ReadIndexedHeader:
-                        HpackHeaderField indexedHeader = this.GetIndexedHeader(DecodeULE128(input, index));
+                        HpackHeaderField indexedHeader = GetIndexedHeader(DecodeULE128(input, index));
                         sink.AppendToHeaderList(indexedHeader.name, indexedHeader.value);
                         state = ReadHeaderRepresentation;
                         break;
 
                     case ReadIndexedHeaderName:
                         // Header Name matches an entry in the Header Table
-                        name = this.ReadName(DecodeULE128(input, index));
+                        name = ReadName(DecodeULE128(input, index));
                         nameLength = name.Count;
                         state = ReadLiteralHeaderValueLengthPrefix;
                         break;
@@ -260,7 +259,7 @@ namespace DotNetty.Codecs.Http2
                             ThrowHelper.ThrowArgumentException_NotEnoughData(input);
                         }
 
-                        name = this.ReadStringLiteral(input, nameLength, huffmanEncoded);
+                        name = ReadStringLiteral(input, nameLength, huffmanEncoded);
 
                         state = ReadLiteralHeaderValueLengthPrefix;
                         break;
@@ -275,7 +274,7 @@ namespace DotNetty.Codecs.Http2
                                 state = ReadLiteralHeaderValueLength;
                                 break;
                             case 0:
-                                this.InsertHeader(sink, name, AsciiString.Empty, indexType);
+                                InsertHeader(sink, name, AsciiString.Empty, indexType);
                                 state = ReadHeaderRepresentation;
                                 break;
                             default:
@@ -299,8 +298,8 @@ namespace DotNetty.Codecs.Http2
                             ThrowHelper.ThrowArgumentException_NotEnoughData(input);
                         }
 
-                        ICharSequence value = this.ReadStringLiteral(input, valueLength, huffmanEncoded);
-                        this.InsertHeader(sink, name, value, indexType);
+                        ICharSequence value = ReadStringLiteral(input, valueLength, huffmanEncoded);
+                        InsertHeader(sink, name, value, indexType);
                         state = ReadHeaderRepresentation;
                         break;
 
@@ -328,20 +327,20 @@ namespace DotNetty.Codecs.Http2
                 ThrowHelper.ThrowConnectionError_SetMaxHeaderTableSize(maxHeaderTableSize);
             }
 
-            this.maxDynamicTableSize = maxHeaderTableSize;
-            if (this.maxDynamicTableSize < this.encoderMaxDynamicTableSize)
+            _maxDynamicTableSize = maxHeaderTableSize;
+            if (_maxDynamicTableSize < _encoderMaxDynamicTableSize)
             {
                 // decoder requires less space than encoder
                 // encoder MUST signal this change
-                this.maxDynamicTableSizeChangeRequired = true;
-                this.hpackDynamicTable.SetCapacity(this.maxDynamicTableSize);
+                _maxDynamicTableSizeChangeRequired = true;
+                _hpackDynamicTable.SetCapacity(_maxDynamicTableSize);
             }
         }
 
         [Obsolete("=> SetMaxHeaderListSize(long maxHeaderListSize)")]
         public void SetMaxHeaderListSize(long maxHeaderListSize, long maxHeaderListSizeGoAway)
         {
-            this.SetMaxHeaderListSize(maxHeaderListSize);
+            SetMaxHeaderListSize(maxHeaderListSize);
         }
 
         public void SetMaxHeaderListSize(long maxHeaderListSize)
@@ -350,12 +349,12 @@ namespace DotNetty.Codecs.Http2
             {
                 ThrowHelper.ThrowConnectionError_SetMaxHeaderListSize(maxHeaderListSize);
             }
-            this.maxHeaderListSize = maxHeaderListSize;
+            _maxHeaderListSize = maxHeaderListSize;
         }
 
         public long GetMaxHeaderListSize()
         {
-            return this.maxHeaderListSize;
+            return _maxHeaderListSize;
         }
 
         /// <summary>
@@ -365,7 +364,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public long GetMaxHeaderTableSize()
         {
-            return this.hpackDynamicTable.Capacity();
+            return _hpackDynamicTable.Capacity();
         }
 
         /// <summary>
@@ -374,7 +373,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         internal int Length()
         {
-            return this.hpackDynamicTable.Length();
+            return _hpackDynamicTable.Length();
         }
 
         /// <summary>
@@ -383,7 +382,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         internal long Size()
         {
-            return this.hpackDynamicTable.Size();
+            return _hpackDynamicTable.Size();
         }
 
         /// <summary>
@@ -393,19 +392,19 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         internal HpackHeaderField GetHeaderField(int index)
         {
-            return this.hpackDynamicTable.GetEntry(index + 1);
+            return _hpackDynamicTable.GetEntry(index + 1);
         }
 
         private void SetDynamicTableSize(long dynamicTableSize)
         {
-            if (dynamicTableSize > this.maxDynamicTableSize)
+            if (dynamicTableSize > _maxDynamicTableSize)
             {
                 ThrowHelper.ThrowHttp2Exception_InvalidMaxDynamicTableSize();
             }
 
-            this.encoderMaxDynamicTableSize = dynamicTableSize;
-            this.maxDynamicTableSizeChangeRequired = false;
-            this.hpackDynamicTable.SetCapacity(dynamicTableSize);
+            _encoderMaxDynamicTableSize = dynamicTableSize;
+            _maxDynamicTableSizeChangeRequired = false;
+            _hpackDynamicTable.SetCapacity(dynamicTableSize);
         }
 
         internal static HeaderType Validate(int streamId, ICharSequence name, HeaderType? previousHeaderType)
@@ -444,9 +443,9 @@ namespace DotNetty.Codecs.Http2
                 return hpackHeaderField.name;
             }
 
-            if ((uint)(index - HpackStaticTable.Length) <= (uint)this.hpackDynamicTable.Length())
+            if ((uint)(index - HpackStaticTable.Length) <= (uint)_hpackDynamicTable.Length())
             {
-                HpackHeaderField hpackHeaderField = this.hpackDynamicTable.GetEntry(index - HpackStaticTable.Length);
+                HpackHeaderField hpackHeaderField = _hpackDynamicTable.GetEntry(index - HpackStaticTable.Length);
                 return hpackHeaderField.name;
             }
 
@@ -459,9 +458,9 @@ namespace DotNetty.Codecs.Http2
             {
                 return HpackStaticTable.GetEntry(index);
             }
-            if ((uint)(index - HpackStaticTable.Length) <= (uint)this.hpackDynamicTable.Length())
+            if ((uint)(index - HpackStaticTable.Length) <= (uint)_hpackDynamicTable.Length())
             {
-                return this.hpackDynamicTable.GetEntry(index - HpackStaticTable.Length);
+                return _hpackDynamicTable.GetEntry(index - HpackStaticTable.Length);
             }
             ThrowHelper.ThrowHttp2Exception_IndexHeaderIllegalIndexValue(); return null;
         }
@@ -477,7 +476,7 @@ namespace DotNetty.Codecs.Http2
                     break;
 
                 case HpackUtil.IndexType.Incremental:
-                    this.hpackDynamicTable.Add(new HpackHeaderField(name, value));
+                    _hpackDynamicTable.Add(new HpackHeaderField(name, value));
                     break;
 
                 default:
@@ -490,7 +489,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (huffmanEncoded)
             {
-                return this.hpackHuffmanDecoder.Decode(input, length);
+                return _huffmanDecoder.Decode(input, length);
             }
 
             byte[] buf = new byte[length];
@@ -581,29 +580,29 @@ namespace DotNetty.Codecs.Http2
 
     sealed class Http2HeadersSink : ISink
     {
-        private readonly IHttp2Headers headers;
-        private readonly long maxHeaderListSize;
-        private readonly int streamId;
-        private readonly bool validate;
-        private long headersLength;
-        private bool exceededMaxLength;
-        private HeaderType? previousType;
-        private Http2Exception validationException;
+        private readonly IHttp2Headers _headers;
+        private readonly long _maxHeaderListSize;
+        private readonly int _streamId;
+        private readonly bool _validate;
+        private long _headersLength;
+        private bool _exceededMaxLength;
+        private HeaderType? _previousType;
+        private Http2Exception _validationException;
 
         public Http2HeadersSink(int streamId, IHttp2Headers headers, long maxHeaderListSize, bool validate)
         {
-            this.headers = headers;
-            this.maxHeaderListSize = maxHeaderListSize;
-            this.streamId = streamId;
-            this.validate = validate;
+            _headers = headers;
+            _maxHeaderListSize = maxHeaderListSize;
+            _streamId = streamId;
+            _validate = validate;
         }
         public void Finish()
         {
-            if (exceededMaxLength)
+            if (_exceededMaxLength)
             {
-                Http2CodecUtil.HeaderListSizeExceeded(this.streamId, this.maxHeaderListSize, true);
+                Http2CodecUtil.HeaderListSizeExceeded(_streamId, _maxHeaderListSize, true);
             }
-            else if (validationException is object)
+            else if (_validationException is object)
             {
                 ThrowValidationException();
             }
@@ -612,34 +611,34 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void ThrowValidationException()
         {
-            throw validationException;
+            throw _validationException;
         }
 
         public void AppendToHeaderList(ICharSequence name, ICharSequence value)
         {
-            this.headersLength += HpackHeaderField.SizeOf(name, value);
-            this.exceededMaxLength |= this.headersLength > this.maxHeaderListSize;
+            _headersLength += HpackHeaderField.SizeOf(name, value);
+            _exceededMaxLength |= _headersLength > _maxHeaderListSize;
 
-            if (this.exceededMaxLength || this.validationException is object)
+            if (_exceededMaxLength || _validationException is object)
             {
                 // We don't store the header since we've already failed validation requirements.
                 return;
             }
 
-            if (this.validate)
+            if (_validate)
             {
                 try
                 {
-                    this.previousType = HpackDecoder.Validate(this.streamId, name, this.previousType);
+                    _previousType = HpackDecoder.Validate(_streamId, name, _previousType);
                 }
                 catch (Http2Exception ex)
                 {
-                    this.validationException = ex;
+                    _validationException = ex;
                     return;
                 }
             }
 
-            this.headers.Add(name, value);
+            _headers.Add(name, value);
         }
     }
 }

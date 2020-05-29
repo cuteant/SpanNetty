@@ -132,8 +132,6 @@ namespace DotNetty.Codecs.Http2
 
         public const int DefaultMinAllocationChunk = 1024;
 
-        public const int DefaultInitialHuffmanDecodeCapacity = 32;
-
         /// <summary>
         /// Calculate the threshold in bytes which should trigger a <c>GO_AWAY</c> if a set of headers exceeds this amount.
         /// </summary>
@@ -165,9 +163,15 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         /// <param name="streamId"></param>
         /// <returns></returns>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool IsStreamIdValid(int streamId)
         {
             return streamId >= 0;
+        }
+
+        internal static bool IsStreamIdValid(int streamId, bool server)
+        {
+            return IsStreamIdValid(streamId) && server == (0u >= (uint)(streamId & 1));
         }
 
         /// <summary>
@@ -286,7 +290,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static void VerifyPadding(int padding)
         {
-            if (padding < 0 || padding > MaxPadding)
+            if (/*padding < 0 || */(uint)padding > (uint)MaxPadding)
             {
                 ThrowHelper.ThrowArgumentException_InvalidPadding(padding);
             }
@@ -303,7 +307,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void HeaderListSizeExceeded(int streamId, long maxHeaderListSize, bool onDecode)
         {
-            throw Http2Exception.HeaderListSizeError(streamId, Http2Error.ProtocolError, onDecode, 
+            throw Http2Exception.HeaderListSizeError(streamId, Http2Error.ProtocolError, onDecode,
                 "Header size exceeded max allowed size ({0})", maxHeaderListSize);
         }
 
@@ -317,7 +321,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void HeaderListSizeExceeded(long maxHeaderListSize)
         {
-            throw Http2Exception.ConnectionError(Http2Error.ProtocolError, 
+            throw Http2Exception.ConnectionError(Http2Error.ProtocolError,
                 "Header size exceeded max allowed size ({0})", maxHeaderListSize);
         }
 

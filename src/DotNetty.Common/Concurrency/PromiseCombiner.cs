@@ -53,17 +53,21 @@ namespace DotNetty.Common.Concurrency
 
         public void AddAll(params IPromise[] promises)
         {
-            foreach (var promise in promises)
+            if (promises is null || 0u >= (uint)promises.Length) { return; }
+
+            for (int i = 0; i < promises.Length; i++)
             {
-                this.Add(promise.Task);
+                this.Add(promises[i].Task);
             }
         }
 
         public void AddAll(params Task[] futures)
         {
-            foreach (var future in futures)
+            if (futures is null || 0u >= (uint)futures.Length) { return; }
+
+            for (int i = 0; i < futures.Length; i++)
             {
-                this.Add(future);
+                this.Add(futures[i]);
             }
         }
 

@@ -11,7 +11,6 @@ namespace DotNetty.Codecs.Http2.Tests
 
     public class HpackDecoderTest
     {
-
         private HpackDecoder hpackDecoder;
         private Mock<IHttp2Headers> mockHeaders;
 
@@ -36,7 +35,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
         public HpackDecoderTest()
         {
-            this.hpackDecoder = new HpackDecoder(8192, 32);
+            this.hpackDecoder = new HpackDecoder(8192);
             this.mockHeaders = new Mock<IHttp2Headers>(MockBehavior.Default);
         }
 

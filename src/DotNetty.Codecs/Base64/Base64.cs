@@ -3,8 +3,8 @@
 
 namespace DotNetty.Codecs.Base64
 {
-    using System;
     using System.Diagnostics;
+    using System.Runtime.InteropServices;
     using DotNetty.Buffers;
 
     public static class Base64
@@ -17,11 +17,11 @@ namespace DotNetty.Codecs.Base64
 
         public static IByteBuffer Encode(IByteBuffer src) => Encode(src, Base64Dialect.STANDARD);
 
-        public static IByteBuffer Encode(IByteBuffer src, in Base64Dialect dialect) => Encode(src, src.ReaderIndex, src.ReadableBytes, dialect.breakLinesByDefault, dialect);
+        public static IByteBuffer Encode(IByteBuffer src, IBase64Dialect dialect) => Encode(src, src.ReaderIndex, src.ReadableBytes, dialect.BreakLinesByDefault, dialect);
 
-        public static IByteBuffer Encode(IByteBuffer src, bool breakLines, in Base64Dialect dialect) => Encode(src, src.ReaderIndex, src.ReadableBytes, breakLines, dialect);
+        public static IByteBuffer Encode(IByteBuffer src, bool breakLines, IBase64Dialect dialect) => Encode(src, src.ReaderIndex, src.ReadableBytes, breakLines, dialect);
 
-        public static IByteBuffer Encode(IByteBuffer src, int offset, int length, bool breakLines, in Base64Dialect dialect) => Encode(src, offset, length, breakLines, dialect, src.Allocator);
+        public static IByteBuffer Encode(IByteBuffer src, int offset, int length, bool breakLines, IBase64Dialect dialect) => Encode(src, offset, length, breakLines, dialect, src.Allocator);
 
         static unsafe int EncodeUsingPointer(byte* alphabet, IByteBuffer src, IByteBuffer dest, int offset, int length, bool breakLines)
         {
@@ -144,17 +144,17 @@ namespace DotNetty.Codecs.Base64
             return destLength;
         }
 
-        public static unsafe IByteBuffer Encode(IByteBuffer src, int offset, int length, bool breakLines, in Base64Dialect dialect, IByteBufferAllocator allocator)
+        public static unsafe IByteBuffer Encode(IByteBuffer src, int offset, int length, bool breakLines, IBase64Dialect dialect, IByteBufferAllocator allocator)
         {
             if (src is null)
             {
                 CThrowHelper.ThrowArgumentNullException(CExceptionArgument.src);
             }
-            if (dialect.alphabet is null)
-            {
-                CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dialect_alphabet);
-            }
-            Debug.Assert(dialect.alphabet.Length == 64, "alphabet.Length must be 64!");
+            //if (dialect.alphabet is null)
+            //{
+            //    CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dialect_alphabet);
+            //}
+            Debug.Assert(dialect.Alphabet.Length == 64, "alphabet.Length must be 64!");
             if ((offset < src.ReaderIndex) || (offset + length > src.ReaderIndex + src.ReadableBytes))
             {
                 CThrowHelper.ThrowArgumentOutOfRangeException(CExceptionArgument.offset);
@@ -171,7 +171,7 @@ namespace DotNetty.Codecs.Base64
             int destLength = 0;
             int destIndex = dest.WriterIndex;
 
-            fixed (byte* alphabet = dialect.alphabet)
+            fixed (byte* alphabet = &MemoryMarshal.GetReference(dialect.Alphabet))
             {
                 if (src.IsSingleIoBuffer && dest.IsSingleIoBuffer)
                 {
@@ -187,9 +187,9 @@ namespace DotNetty.Codecs.Base64
 
         public static IByteBuffer Decode(IByteBuffer src) => Decode(src, Base64Dialect.STANDARD);
 
-        public static IByteBuffer Decode(IByteBuffer src, in Base64Dialect dialect) => Decode(src, src.ReaderIndex, src.ReadableBytes, dialect);
+        public static IByteBuffer Decode(IByteBuffer src, IBase64Dialect dialect) => Decode(src, src.ReaderIndex, src.ReadableBytes, dialect);
 
-        public static IByteBuffer Decode(IByteBuffer src, int offset, int length, in Base64Dialect dialect) => Decode(src, offset, length, dialect, src.Allocator);
+        public static IByteBuffer Decode(IByteBuffer src, int offset, int length, IBase64Dialect dialect) => Decode(src, offset, length, dialect, src.Allocator);
 
         static unsafe int DecodeUsingPointer(IByteBuffer src, IByteBuffer dest, sbyte* decodabet, int offset, int length)
         {
@@ -306,21 +306,21 @@ namespace DotNetty.Codecs.Base64
             return charCount;
         }
 
-        public static unsafe IByteBuffer Decode(IByteBuffer src, int offset, int length, in Base64Dialect dialect, IByteBufferAllocator allocator)
+        public static unsafe IByteBuffer Decode(IByteBuffer src, int offset, int length, IBase64Dialect dialect, IByteBufferAllocator allocator)
         {
             if (src is null)
             {
                 CThrowHelper.ThrowArgumentNullException(CExceptionArgument.src);
             }
-            if (dialect.decodabet is null)
-            {
-                CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dialect_decodabet);
-            }
+            //if (dialect.Decodabet is null)
+            //{
+            //    CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dialect_decodabet);
+            //}
             if ((offset < src.ReaderIndex) || (offset + length > src.ReaderIndex + src.ReadableBytes))
             {
                 CThrowHelper.ThrowArgumentOutOfRangeException(CExceptionArgument.offset);
             }
-            Debug.Assert(dialect.decodabet.Length == 127, "decodabet.Length must be 127!");
+            Debug.Assert(dialect.Decodabet.Length == 127, "decodabet.Length must be 127!");
             if (length <= 0)
             {
                 return Unpooled.Empty;
@@ -331,7 +331,7 @@ namespace DotNetty.Codecs.Base64
             int charCount = 0;
             int destIndex = dest.WriterIndex;
 
-            fixed (sbyte* decodabet = dialect.decodabet)
+            fixed (sbyte* decodabet = &MemoryMarshal.GetReference(dialect.Decodabet))
             {
                 if (src.IsSingleIoBuffer && dest.IsSingleIoBuffer)
                 {

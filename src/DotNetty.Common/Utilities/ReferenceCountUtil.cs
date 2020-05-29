@@ -65,7 +65,7 @@ namespace DotNetty.Common.Utilities
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool Release(object msg)
         {
-            return msg is IReferenceCounted counted ? counted.Release() : false;
+            return msg is IReferenceCounted counted && counted.Release();
         }
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace DotNetty.Common.Utilities
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool Release(object msg, int decrement)
         {
-            return msg is IReferenceCounted counted ? counted.Release(decrement) : false;
+            return msg is IReferenceCounted counted && counted.Release(decrement);
         }
 
         /// <summary>

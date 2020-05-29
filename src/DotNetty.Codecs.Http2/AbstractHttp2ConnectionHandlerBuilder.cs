@@ -7,6 +7,7 @@ namespace DotNetty.Codecs.Http2
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
     using System.Threading;
+    using DotNetty.Transport.Channels;
 
     /// <summary>
     /// Abstract base class which defines commonly used features required to build <see cref="Http2ConnectionHandler"/> instances.
@@ -58,42 +59,45 @@ namespace DotNetty.Codecs.Http2
         where TBuilder : AbstractHttp2ConnectionHandlerBuilder<THandler, TBuilder>
     {
         // The properties that can always be set.
-        private Http2Settings initialSettings = Http2Settings.DefaultSettings();
-        private IHttp2FrameListener frameListener;
-        private TimeSpan gracefulShutdownTimeout = Http2CodecUtil.DefaultGracefulShutdownTimeout;
+        private Http2Settings _initialSettings = Http2Settings.DefaultSettings();
+        private IHttp2FrameListener _frameListener;
+        private TimeSpan _gracefulShutdownTimeout = Http2CodecUtil.DefaultGracefulShutdownTimeout;
+        private bool _decoupleCloseAndGoAway;
 
         // The property that will prohibit connection() and codec() if set by server(),
         // because this property is used only when this builder creates a Http2Connection.
-        private bool isServer = true;
-        private int maxReservedStreams = Http2CodecUtil.DefaultMaxReservedStreams;
+        private bool _isServer = true;
+        private int _maxReservedStreams = Http2CodecUtil.DefaultMaxReservedStreams;
 
         // The property that will prohibit server() and codec() if set by connection().
-        private IHttp2Connection connection;
+        private IHttp2Connection _connection;
 
         // The properties that will prohibit server() and connection() if set by codec().
-        private IHttp2ConnectionDecoder decoder;
-        private IHttp2ConnectionEncoder encoder;
+        private IHttp2ConnectionDecoder _decoder;
+        private IHttp2ConnectionEncoder _encoder;
 
         // The properties that are:
         // * mutually exclusive against codec() and
         // * OK to use with server() and connection()
-        private bool validateHeaders = true;
-        private IHttp2FrameLogger frameLogger;
-        private ISensitivityDetector headerSensitivityDetector;
-        private bool encoderEnforceMaxConcurrentStreams = false;
-        private bool encoderIgnoreMaxHeaderListSize;
-        private int initialHuffmanDecodeCapacity = Http2CodecUtil.DefaultInitialHuffmanDecodeCapacity;
+        private bool _validateHeaders = true;
+        private IHttp2FrameLogger _frameLogger;
+        private ISensitivityDetector _headerSensitivityDetector;
+        private bool _encoderEnforceMaxConcurrentStreams = false;
+        private bool _encoderIgnoreMaxHeaderListSize;
+        private IHttp2PromisedRequestVerifier _promisedRequestVerifier = AlwaysVerifyPromisedRequestVerifier.Instance;
+        private bool _autoAckSettingsFrame = true;
+        private bool _autoAckPingFrame = true;
 
         /// <summary>
         /// Gets or sets the <see cref="Http2Settings"/> to use for the initial connection settings exchange.
         /// </summary>
         public Http2Settings InitialSettings
         {
-            get => this.initialSettings;
+            get => _initialSettings;
             set
             {
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-                this.initialSettings = value;
+                _initialSettings = value;
             }
         }
 
@@ -103,11 +107,11 @@ namespace DotNetty.Codecs.Http2
         /// <remarks>This listener will only be set if the decoder's listener is <c>null</c>.</remarks>
         public IHttp2FrameListener FrameListener
         {
-            get => this.frameListener;
+            get => _frameListener;
             set
             {
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-                this.frameListener = value;
+                _frameListener = value;
             }
         }
 
@@ -117,14 +121,14 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public TimeSpan GracefulShutdownTimeout
         {
-            get => this.gracefulShutdownTimeout;
+            get => _gracefulShutdownTimeout;
             set
             {
                 if (value < Timeout.InfiniteTimeSpan)
                 {
                     ThrowHelper.ThrowArgumentException_InvalidGracefulShutdownTimeout(value);
                 }
-                this.gracefulShutdownTimeout = value;
+                _gracefulShutdownTimeout = value;
             }
         }
 
@@ -134,13 +138,13 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public bool IsServer
         {
-            get => this.isServer;
+            get => _isServer;
             set
             {
-                EnforceConstraint("server", "connection", this.connection);
-                EnforceConstraint("server", "codec", this.decoder);
-                EnforceConstraint("server", "codec", this.encoder);
-                this.isServer = value;
+                EnforceConstraint("server", "connection", _connection);
+                EnforceConstraint("server", "codec", _decoder);
+                EnforceConstraint("server", "codec", _encoder);
+                _isServer = value;
             }
         }
 
@@ -153,15 +157,15 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public int MaxReservedStreams
         {
-            get => this.maxReservedStreams;
+            get => _maxReservedStreams;
             set
             {
-                EnforceConstraint("server", "connection", this.connection);
-                EnforceConstraint("server", "codec", this.decoder);
-                EnforceConstraint("server", "codec", this.encoder);
+                EnforceConstraint("server", "connection", _connection);
+                EnforceConstraint("server", "codec", _decoder);
+                EnforceConstraint("server", "codec", _encoder);
                 if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
 
-                this.maxReservedStreams = value;
+                _maxReservedStreams = value;
             }
         }
 
@@ -170,27 +174,27 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public IHttp2Connection Connection
         {
-            get => this.connection;
+            get => _connection;
             set
             {
                 //EnforceConstraint("connection", "maxReservedStreams", maxReservedStreams);
                 //EnforceConstraint("connection", "server", isServer);
-                EnforceConstraint("connection", "codec", this.decoder);
-                EnforceConstraint("connection", "codec", this.encoder);
+                EnforceConstraint("connection", "codec", _decoder);
+                EnforceConstraint("connection", "codec", _encoder);
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-                this.connection = value;
+                _connection = value;
             }
         }
 
         /// <summary>
         /// Gets the <see cref="IHttp2ConnectionDecoder"/> to use.
         /// </summary>
-        public IHttp2ConnectionDecoder Decoder => this.decoder;
+        public IHttp2ConnectionDecoder Decoder => _decoder;
 
         /// <summary>
         /// Gets the <see cref="IHttp2ConnectionEncoder"/> to use.
         /// </summary>
-        public IHttp2ConnectionEncoder Encoder => this.encoder;
+        public IHttp2ConnectionEncoder Encoder => _encoder;
 
         /// <summary>
         /// Sets the <see cref="IHttp2ConnectionDecoder"/> and <see cref="IHttp2ConnectionEncoder"/> to use.
@@ -202,10 +206,10 @@ namespace DotNetty.Codecs.Http2
         {
             //EnforceConstraint("codec", "server", isServer);
             //EnforceConstraint("codec", "maxReservedStreams", maxReservedStreams);
-            EnforceConstraint("codec", "connection", this.connection);
-            EnforceConstraint("codec", "frameLogger", this.frameLogger);
+            EnforceConstraint("codec", "connection", _connection);
+            EnforceConstraint("codec", "frameLogger", _frameLogger);
             //EnforceConstraint("codec", "validateHeaders", validateHeaders);
-            EnforceConstraint("codec", "headerSensitivityDetector", this.headerSensitivityDetector);
+            EnforceConstraint("codec", "headerSensitivityDetector", _headerSensitivityDetector);
             //EnforceConstraint("codec", "encoderEnforceMaxConcurrentStreams", encoderEnforceMaxConcurrentStreams);
             if (decoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoder); }
             if (encoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.encoder); }
@@ -215,10 +219,10 @@ namespace DotNetty.Codecs.Http2
                 ThrowHelper.ThrowArgumentException_DifferentConnections();
             }
 
-            this.decoder = decoder;
-            this.encoder = encoder;
+            _decoder = decoder;
+            _encoder = encoder;
 
-            return this.Self();
+            return Self();
         }
 
         /// <summary>
@@ -227,11 +231,11 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public bool IsValidateHeaders
         {
-            get => this.validateHeaders;
+            get => _validateHeaders;
             set
             {
                 EnforceNonCodecConstraints("validateHeaders");
-                this.validateHeaders = value;
+                _validateHeaders = value;
             }
         }
 
@@ -240,12 +244,12 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public IHttp2FrameLogger FrameLogger
         {
-            get => this.frameLogger;
+            get => _frameLogger;
             set
             {
                 EnforceNonCodecConstraints("frameLogger");
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-                this.frameLogger = value;
+                _frameLogger = value;
             }
         }
 
@@ -255,11 +259,11 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public bool EncoderEnforceMaxConcurrentStreams
         {
-            get => this.encoderEnforceMaxConcurrentStreams;
+            get => _encoderEnforceMaxConcurrentStreams;
             set
             {
                 EnforceNonCodecConstraints("encoderEnforceMaxConcurrentStreams");
-                this.encoderEnforceMaxConcurrentStreams = value;
+                _encoderEnforceMaxConcurrentStreams = value;
             }
         }
 
@@ -268,12 +272,12 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public ISensitivityDetector HeaderSensitivityDetector
         {
-            get => this.headerSensitivityDetector ?? NeverSensitiveDetector.Instance;
+            get => _headerSensitivityDetector ?? NeverSensitiveDetector.Instance;
             set
             {
                 EnforceNonCodecConstraints("headerSensitivityDetector");
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-                this.headerSensitivityDetector = value;
+                _headerSensitivityDetector = value;
             }
         }
 
@@ -285,26 +289,67 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public bool EncoderIgnoreMaxHeaderListSize
         {
-            get => this.encoderIgnoreMaxHeaderListSize;
+            get => _encoderIgnoreMaxHeaderListSize;
             set
             {
                 EnforceNonCodecConstraints("encoderIgnoreMaxHeaderListSize");
-                this.encoderIgnoreMaxHeaderListSize = value;
+                _encoderIgnoreMaxHeaderListSize = value;
             }
         }
 
         /// <summary>
-        /// Gets or sets the initial size of an intermediate buffer used during HPACK huffman decoding.
+        /// Does nothing, do not call.
         /// </summary>
-        public int InitialHuffmanDecodeCapacity
+        [Obsolete("Huffman decoding no longer depends on having a decode capacity.")]
+        public int InitialHuffmanDecodeCapacity { get; set; }
+
+        /// <summary>
+        /// Gets or sets <see cref="IHttp2PromisedRequestVerifier"/> to use.
+        /// </summary>
+        public IHttp2PromisedRequestVerifier PromisedRequestVerifier
         {
-            get => this.initialHuffmanDecodeCapacity;
+            get => _promisedRequestVerifier;
             set
             {
-                EnforceNonCodecConstraints("initialHuffmanDecodeCapacity");
-                if (value <= 0) { ThrowHelper.ThrowArgumentException_Positive(value, ExceptionArgument.value); }
-                this.initialHuffmanDecodeCapacity = value;
+                EnforceNonCodecConstraints("promisedRequestVerifier");
+                if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
+                _promisedRequestVerifier = value;
             }
+        }
+
+        /// <summary>
+        /// Determine if settings frame should automatically be acknowledged and applied.
+        /// </summary>
+        public bool AutoAckSettingsFrame
+        {
+            get => _autoAckSettingsFrame;
+            set
+            {
+                EnforceNonCodecConstraints("autoAckSettingsFrame");
+                _autoAckSettingsFrame = value;
+            }
+        }
+
+        /// <summary>
+        /// Determine if PING frame should automatically be acknowledged or not.
+        /// </summary>
+        public bool AutoAckPingFrame
+        {
+            get => _autoAckPingFrame;
+            set
+            {
+                EnforceNonCodecConstraints("autoAckPingFrame");
+                _autoAckPingFrame = value;
+            }
+        }
+
+        /// <summary>
+        /// Determine if the <see cref="IChannel.CloseAsync()"/> should be coupled with goaway and graceful close.
+        /// </summary>
+        public bool DecoupleCloseAndGoAway
+        {
+            get => _decoupleCloseAndGoAway;
+            set => _decoupleCloseAndGoAway = value;
         }
 
         /// <summary>
@@ -313,16 +358,16 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public virtual THandler Build()
         {
-            if (this.encoder is object)
+            if (_encoder is object)
             {
-                Debug.Assert(this.decoder is object);
-                return BuildFromCodec(this.decoder, this.encoder);
+                Debug.Assert(_decoder is object);
+                return BuildFromCodec(_decoder, _encoder);
             }
 
-            IHttp2Connection connection = this.connection;
+            IHttp2Connection connection = _connection;
             if (connection is null)
             {
-                connection = new DefaultHttp2Connection(this.isServer, this.maxReservedStreams);
+                connection = new DefaultHttp2Connection(_isServer, _maxReservedStreams);
             }
 
             return BuildFromConnection(connection);
@@ -330,33 +375,34 @@ namespace DotNetty.Codecs.Http2
 
         private THandler BuildFromConnection(IHttp2Connection connection)
         {
-            var maxHeaderListSize = initialSettings.MaxHeaderListSize();
-            IHttp2FrameReader reader = new DefaultHttp2FrameReader(new DefaultHttp2HeadersDecoder(this.validateHeaders,
+            var maxHeaderListSize = _initialSettings.MaxHeaderListSize();
+            IHttp2FrameReader reader = new DefaultHttp2FrameReader(new DefaultHttp2HeadersDecoder(_validateHeaders,
                     maxHeaderListSize ?? Http2CodecUtil.DefaultHeaderListSize,
-                    this.initialHuffmanDecodeCapacity));
-            IHttp2FrameWriter writer = new DefaultHttp2FrameWriter(this.HeaderSensitivityDetector, this.encoderIgnoreMaxHeaderListSize);
+                    -1));
+            IHttp2FrameWriter writer = new DefaultHttp2FrameWriter(HeaderSensitivityDetector, _encoderIgnoreMaxHeaderListSize);
 
-            if (this.frameLogger is object)
+            if (_frameLogger is object)
             {
-                reader = new Http2InboundFrameLogger(reader, this.frameLogger);
-                writer = new Http2OutboundFrameLogger(writer, this.frameLogger);
+                reader = new Http2InboundFrameLogger(reader, _frameLogger);
+                writer = new Http2OutboundFrameLogger(writer, _frameLogger);
             }
 
             IHttp2ConnectionEncoder encoder = new DefaultHttp2ConnectionEncoder(connection, writer);
 
-            if (this.encoderEnforceMaxConcurrentStreams)
+            if (_encoderEnforceMaxConcurrentStreams)
             {
                 if (connection.IsServer)
                 {
                     encoder.Close();
                     reader.Close();
                     ThrowHelper.ThrowArgumentException_EncoderEnforceMaxConcurrentStreamsNotSupportedForServer(
-                        this.encoderEnforceMaxConcurrentStreams);
+                        _encoderEnforceMaxConcurrentStreams);
                 }
                 encoder = new StreamBufferingEncoder(encoder);
             }
 
-            IHttp2ConnectionDecoder decoder = new DefaultHttp2ConnectionDecoder(connection, encoder, reader);
+            var decoder = new DefaultHttp2ConnectionDecoder(connection, encoder, reader,
+                    PromisedRequestVerifier, AutoAckSettingsFrame, AutoAckPingFrame);
             return BuildFromCodec(decoder, encoder);
         }
 
@@ -366,7 +412,7 @@ namespace DotNetty.Codecs.Http2
             try
             {
                 // Call the abstract build method
-                handler = this.Build(decoder, encoder, initialSettings);
+                handler = Build(decoder, encoder, _initialSettings);
             }
             catch (Exception t)
             {
@@ -376,10 +422,10 @@ namespace DotNetty.Codecs.Http2
             }
 
             // Setup post build options
-            handler.GracefulShutdownTimeout = this.gracefulShutdownTimeout;
+            handler.GracefulShutdownTimeout = _gracefulShutdownTimeout;
             if (handler.Decoder.FrameListener is null)
             {
-                handler.Decoder.FrameListener = frameListener;
+                handler.Decoder.FrameListener = _frameListener;
             }
             return handler;
         }
@@ -401,8 +447,8 @@ namespace DotNetty.Codecs.Http2
 
         private void EnforceNonCodecConstraints(string rejected)
         {
-            EnforceConstraint(rejected, "server/connection", this.decoder);
-            EnforceConstraint(rejected, "server/connection", this.encoder);
+            EnforceConstraint(rejected, "server/connection", _decoder);
+            EnforceConstraint(rejected, "server/connection", _encoder);
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]

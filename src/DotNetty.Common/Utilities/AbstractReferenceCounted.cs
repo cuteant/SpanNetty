@@ -22,6 +22,7 @@ namespace DotNetty.Common.Utilities
             return this.RetainCore(increment);
         }
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         protected virtual IReferenceCounted RetainCore(int increment)
         {
             var currRefCnt = Volatile.Read(ref this.referenceCount);
@@ -68,6 +69,7 @@ namespace DotNetty.Common.Utilities
             return this.ReleaseCore(decrement);
         }
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         bool ReleaseCore(int decrement)
         {
             var currRefCnt = Volatile.Read(ref this.referenceCount);

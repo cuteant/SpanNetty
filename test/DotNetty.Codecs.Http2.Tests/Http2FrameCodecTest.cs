@@ -10,6 +10,7 @@ namespace DotNetty.Codecs.Http2.Tests
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
+    using DotNetty.Tests.Common;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Embedded;
     using Moq;
@@ -21,45 +22,46 @@ namespace DotNetty.Codecs.Http2.Tests
     public class Http2FrameCodecTest : IDisposable
     {
         // For verifying outbound frames
-        private Mock<VerifiableHttp2FrameWriter> frameWriter;
-        private Http2FrameCodec frameCodec;
-        private EmbeddedChannel channel;
-        // For injecting inbound frames
-        private IHttp2FrameListener frameListener;
-        private IChannelHandlerContext http2HandlerCtx;
-        private LastInboundHandler inboundHandler;
+        private Mock<IHttp2FrameWriter> _frameWriter;
+        private Http2FrameCodec _frameCodec;
+        private EmbeddedChannel _channel;
 
-        private readonly IHttp2Headers request;
-        private readonly IHttp2Headers response;
+        // For injecting inbound frames
+        private Http2FrameInboundWriter _frameInboundWriter;
+
+        private LastInboundHandler _inboundHandler;
+
+        private readonly IHttp2Headers _request;
+        private readonly IHttp2Headers _response;
 
         public Http2FrameCodecTest()
         {
-            this.request = new DefaultHttp2Headers();
-            this.request.Method = HttpMethod.Get.AsciiName;
-            this.request.Scheme = HttpScheme.Https.Name;
-            this.request.Authority = new AsciiString("example.org");
-            this.request.Path = new AsciiString("/foo");
-            this.response = new DefaultHttp2Headers();
-            this.response.Status = HttpResponseStatus.OK.CodeAsText;
-            this.SetUp(Http2FrameCodecBuilder.ForServer(), new Http2Settings());
+            _request = new DefaultHttp2Headers();
+            _request.Method = HttpMethod.Get.AsciiName;
+            _request.Scheme = HttpScheme.Https.Name;
+            _request.Authority = new AsciiString("example.org");
+            _request.Path = new AsciiString("/foo");
+            _response = new DefaultHttp2Headers();
+            _response.Status = HttpResponseStatus.OK.CodeAsText;
+            SetUp(Http2FrameCodecBuilder.ForServer(), new Http2Settings());
         }
 
         public void Dispose()
         {
-            this.Dispose0();
+            Dispose0();
         }
 
         private void Dispose0()
         {
-            if (this.inboundHandler != null)
+            if (_inboundHandler != null)
             {
-                this.inboundHandler.FinishAndReleaseAll();
-                this.inboundHandler = null;
+                _inboundHandler.FinishAndReleaseAll();
+                _inboundHandler = null;
             }
-            var ch = this.channel;
+            var ch = _channel;
             if (ch != null)
             {
-                this.channel = null;
+                _channel = null;
                 ch.FinishAndReleaseAll();
                 ch.CloseAsync();
             }
@@ -70,127 +72,129 @@ namespace DotNetty.Codecs.Http2.Tests
             // Some tests call this method twice. Once with JUnit's @Before and once directly to pass special settings.
             // This call ensures that in case of two consecutive calls to setUp(), the previous channel is shutdown and
             // ByteBufs are released correctly.
-            this.Dispose0();
+            Dispose0();
 
-            this.frameWriter = new Mock<VerifiableHttp2FrameWriter>() { CallBase = true };
-            var builder = frameCodecBuilder.FrameWriter(this.frameWriter.Object);
+            _frameWriter = Http2TestUtil.MockedFrameWriter();
+
+            var builder = frameCodecBuilder.FrameWriter(_frameWriter.Object);
             builder.FrameLogger = new Http2FrameLogger(Common.Internal.Logging.InternalLogLevel.TRACE);
             builder.InitialSettings = initialRemoteSettings;
-            this.frameCodec = frameCodecBuilder.Build();
-            this.frameListener = ((DefaultHttp2ConnectionDecoder)this.frameCodec.Decoder).InternalFrameListener;
-            this.inboundHandler = new LastInboundHandler();
+            _frameCodec = frameCodecBuilder.Build();
+            _inboundHandler = new LastInboundHandler();
 
-            this.channel = new EmbeddedChannel();
+            _channel = new EmbeddedChannel();
+            _frameInboundWriter = new Http2FrameInboundWriter(_channel);
             //channel.Connect(new InetSocketAddress(0));
-            this.channel.Pipeline.AddLast(this.frameCodec);
-            this.channel.Pipeline.AddLast(this.inboundHandler);
-            this.channel.Pipeline.FireChannelActive();
-
-            this.http2HandlerCtx = this.channel.Pipeline.Context(this.frameCodec);
+            _channel.Pipeline.AddLast(_frameCodec);
+            _channel.Pipeline.AddLast(_inboundHandler);
+            _channel.Pipeline.FireChannelActive();
 
             // Handshake
-            this.frameWriter.Verify(
+            _frameWriter.Verify(
                 x => x.WriteSettingsAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.IsAny<Http2Settings>(),
                     It.IsAny<IPromise>()));
-            this.frameWriter.VerifyNoOtherCalls();
-            this.channel.WriteInbound(Http2CodecUtil.ConnectionPrefaceBuf());
-            this.frameListener.OnSettingsRead(this.http2HandlerCtx, initialRemoteSettings);
-            this.frameWriter.Verify(
-                x => x.WriteSettingsAckAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
-                    It.IsAny<IPromise>()));
-            this.frameListener.OnSettingsAckRead(this.http2HandlerCtx);
+            _frameWriter.VerifyNoOtherCalls();
+            _channel.WriteInbound(Http2CodecUtil.ConnectionPrefaceBuf());
 
-            var settingsFrame = this.inboundHandler.ReadInbound<IHttp2SettingsFrame>();
+            _frameInboundWriter.WriteInboundSettings(initialRemoteSettings);
+            _frameWriter.Verify(
+                x => x.WriteSettingsAckAsync(
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
+                    It.IsAny<IPromise>()));
+            _frameInboundWriter.WriteInboundSettingsAck();
+
+            var settingsFrame = _inboundHandler.ReadInbound<IHttp2SettingsFrame>();
             Assert.NotNull(settingsFrame);
+            var settingsAckFrame = _inboundHandler.ReadInbound<IHttp2SettingsAckFrame>();
+            Assert.NotNull(settingsAckFrame);
         }
 
         [Fact]
         public void StateChanges()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 1, this.request, 31, true);
+            _frameInboundWriter.WriteInboundHeaders(1, _request, 31, true);
 
-            IHttp2Stream stream = this.frameCodec.Connection.Stream(1);
+            IHttp2Stream stream = _frameCodec.Connection.Stream(1);
             Assert.NotNull(stream);
             Assert.Equal(Http2StreamState.HalfClosedRemote, stream.State);
 
-            var evt = this.inboundHandler.ReadInboundMessageOrUserEvent<Http2FrameStreamEvent>();
+            var evt = _inboundHandler.ReadInboundMessageOrUserEvent<Http2FrameStreamEvent>();
             Assert.Equal(Http2StreamState.HalfClosedRemote, evt.Stream.State);
 
-            var inboundFrame = this.inboundHandler.ReadInbound<IHttp2StreamFrame>();
+            var inboundFrame = _inboundHandler.ReadInbound<IHttp2StreamFrame>();
             IHttp2FrameStream stream2 = inboundFrame.Stream;
             Assert.NotNull(stream2);
             Assert.Equal(1, stream2.Id);
-            Assert.Equal(inboundFrame, new DefaultHttp2HeadersFrame(this.request, true, 31) { Stream = stream2 });
-            Assert.Null(this.inboundHandler.ReadInbound<object>());
+            Assert.Equal(inboundFrame, new DefaultHttp2HeadersFrame(_request, true, 31) { Stream = stream2 });
+            Assert.Null(_inboundHandler.ReadInbound<object>());
 
-            this.inboundHandler.WriteOutbound(new DefaultHttp2HeadersFrame(this.response, true, 27) { Stream = stream2 });
-            this.frameWriter.Verify(
+            _channel.WriteOutbound(new DefaultHttp2HeadersFrame(_response, true, 27) { Stream = stream2 });
+            _frameWriter.Verify(
                 x => x.WriteHeadersAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<int>(v => v == 1),
-                    It.Is<IHttp2Headers>(v => v.Equals(this.response)),
+                    It.Is<IHttp2Headers>(v => v.Equals(_response)),
                     It.IsAny<int>(),
                     It.IsAny<short>(),
                     It.IsAny<bool>(),
                     It.Is<int>(v => v == 27),
                     It.Is<bool>(v => v == true),
                     It.IsAny<IPromise>()));
-            this.frameWriter.Verify(
+            _frameWriter.Verify(
                 x => x.WriteRstStreamAsync(
-                    It.IsAny<IChannelHandlerContext>(),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.IsAny<int>(),
                     It.IsAny<Http2Error>(),
                     It.IsAny<IPromise>()),
                 Times.Never());
 
             Assert.Equal(Http2StreamState.Closed, stream.State);
-            evt = this.inboundHandler.ReadInboundMessageOrUserEvent<Http2FrameStreamEvent>();
+            evt = _inboundHandler.ReadInboundMessageOrUserEvent<Http2FrameStreamEvent>();
             Assert.Equal(Http2StreamState.Closed, evt.Stream.State);
 
-            Assert.True(this.channel.Active);
+            Assert.True(_channel.Active);
         }
 
         [Fact]
         public void HeaderRequestHeaderResponse()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 1, this.request, 31, true);
+            _frameInboundWriter.WriteInboundHeaders(1, _request, 31, true);
 
-            IHttp2Stream stream = this.frameCodec.Connection.Stream(1);
+            IHttp2Stream stream = _frameCodec.Connection.Stream(1);
             Assert.NotNull(stream);
             Assert.Equal(Http2StreamState.HalfClosedRemote, stream.State);
 
-            var inboundFrame = this.inboundHandler.ReadInbound<IHttp2StreamFrame>();
+            var inboundFrame = _inboundHandler.ReadInbound<IHttp2StreamFrame>();
             IHttp2FrameStream stream2 = inboundFrame.Stream;
             Assert.NotNull(stream2);
             Assert.Equal(1, stream2.Id);
-            Assert.Equal(inboundFrame, new DefaultHttp2HeadersFrame(this.request, true, 31) { Stream = stream2 });
-            Assert.Null(this.inboundHandler.ReadInbound<object>());
+            Assert.Equal(inboundFrame, new DefaultHttp2HeadersFrame(_request, true, 31) { Stream = stream2 });
+            Assert.Null(_inboundHandler.ReadInbound<object>());
 
-            this.inboundHandler.WriteOutbound(new DefaultHttp2HeadersFrame(this.response, true, 27) { Stream = stream2 });
-            this.frameWriter.Verify(
+            _channel.WriteOutbound(new DefaultHttp2HeadersFrame(_response, true, 27) { Stream = stream2 });
+            _frameWriter.Verify(
                 x => x.WriteHeadersAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<int>(v => v == 1),
-                    It.Is<IHttp2Headers>(v => v.Equals(this.response)),
+                    It.Is<IHttp2Headers>(v => v.Equals(_response)),
                     It.IsAny<int>(),
                     It.IsAny<short>(),
                     It.IsAny<bool>(),
                     It.Is<int>(v => v == 27),
                     It.Is<bool>(v => v == true),
                     It.IsAny<IPromise>()));
-            this.frameWriter.Verify(
+            _frameWriter.Verify(
                 x => x.WriteRstStreamAsync(
-                    It.IsAny<IChannelHandlerContext>(),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.IsAny<int>(),
                     It.IsAny<Http2Error>(),
                     It.IsAny<IPromise>()),
                 Times.Never());
 
             Assert.Equal(Http2StreamState.Closed, stream.State);
-            Assert.True(this.channel.Active);
+            Assert.True(_channel.Active);
         }
 
         [Fact]
@@ -199,7 +203,7 @@ namespace DotNetty.Codecs.Http2.Tests
             IHttp2Connection conn = new DefaultHttp2Connection(true);
             IHttp2ConnectionEncoder enc = new DefaultHttp2ConnectionEncoder(conn, new DefaultHttp2FrameWriter());
             IHttp2ConnectionDecoder dec = new DefaultHttp2ConnectionDecoder(conn, enc, new DefaultHttp2FrameReader());
-            Http2FrameCodec codec = new Http2FrameCodec(enc, dec, new Http2Settings());
+            Http2FrameCodec codec = new Http2FrameCodec(enc, dec, new Http2Settings(), false);
             EmbeddedChannel em = new EmbeddedChannel(codec);
 
             // We call #consumeBytes on a stream id which has not been seen yet to emulate the case
@@ -212,38 +216,33 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void EntityRequestEntityResponse()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 1, this.request, 0, false);
+            _frameInboundWriter.WriteInboundHeaders(1, _request, 0, false);
 
-            IHttp2Stream stream = this.frameCodec.Connection.Stream(1);
+            IHttp2Stream stream = _frameCodec.Connection.Stream(1);
             Assert.NotNull(stream);
             Assert.Equal(Http2StreamState.Open, stream.State);
 
-            IHttp2HeadersFrame inboundHeaders = this.inboundHandler.ReadInbound<IHttp2HeadersFrame>();
+            IHttp2HeadersFrame inboundHeaders = _inboundHandler.ReadInbound<IHttp2HeadersFrame>();
             IHttp2FrameStream stream2 = inboundHeaders.Stream;
             Assert.NotNull(stream2);
             Assert.Equal(1, stream2.Id);
-            Assert.Equal(new DefaultHttp2HeadersFrame(this.request, false) { Stream = stream2 }, inboundHeaders);
-            Assert.Null(this.inboundHandler.ReadInbound<object>());
+            Assert.Equal(new DefaultHttp2HeadersFrame(_request, false) { Stream = stream2 }, inboundHeaders);
+            Assert.Null(_inboundHandler.ReadInbound<object>());
 
-            IByteBuffer hello = BB("hello");
-            this.frameListener.OnDataRead(this.http2HandlerCtx, 1, hello, 31, true);
-            // Release hello to emulate ByteToMessageDecoder
-            hello.Release();
-            IHttp2DataFrame inboundData = this.inboundHandler.ReadInbound<IHttp2DataFrame>();
-            IHttp2DataFrame expected = new DefaultHttp2DataFrame(BB("hello"), true, 31) { Stream = stream2 };
-            Assert.Equal(expected, inboundData);
+            IByteBuffer hello = Http2TestUtil.BB("hello");
+            _frameInboundWriter.WriteInboundData(1, hello, 31, true);
+            IHttp2DataFrame inboundData = _inboundHandler.ReadInbound<IHttp2DataFrame>();
+            IHttp2DataFrame expected = new DefaultHttp2DataFrame(Http2TestUtil.BB("hello"), true, 31) { Stream = stream2 };
+            Http2TestUtil.AssertEqualsAndRelease(expected, inboundData);
 
-            Assert.Equal(1, inboundData.ReferenceCount);
-            expected.Release();
-            inboundData.Release();
-            Assert.Null(this.inboundHandler.ReadInbound<object>());
+            Assert.Null(_inboundHandler.ReadInbound<object>());
 
-            this.inboundHandler.WriteOutbound(new DefaultHttp2HeadersFrame(this.response, false) { Stream = stream2 });
-            this.frameWriter.Verify(
+            _channel.WriteOutbound(new DefaultHttp2HeadersFrame(_response, false) { Stream = stream2 });
+            _frameWriter.Verify(
                 x => x.WriteHeadersAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<int>(v => v == 1),
-                    It.Is<IHttp2Headers>(v => v.Equals(this.response)),
+                    It.Is<IHttp2Headers>(v => v.Equals(_response)),
                     It.IsAny<int>(),
                     It.IsAny<short>(),
                     It.IsAny<bool>(),
@@ -251,40 +250,42 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<bool>(v => v == false),
                     It.IsAny<IPromise>()));
 
-            this.inboundHandler.WriteOutbound(new DefaultHttp2DataFrame(BB("world"), true, 27) { Stream = stream2 });
+            _channel.WriteOutbound(new DefaultHttp2DataFrame(Http2TestUtil.BB("world"), true, 27) { Stream = stream2 });
             var outboundData = new ArgumentCaptor<IByteBuffer>();
-            this.frameWriter.Verify(
+            _frameWriter.Verify(
                 x => x.WriteDataAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<int>(v => v == 1),
                     It.Is<IByteBuffer>(v => outboundData.Capture(v)),
                     It.Is<int>(v => v == 27),
                     It.Is<bool>(v => v == true),
                     It.IsAny<IPromise>()));
 
-            IByteBuffer bb = BB("world");
+            IByteBuffer bb = Http2TestUtil.BB("world");
             Assert.Equal(bb, outboundData.GetValue());
             Assert.Equal(1, outboundData.GetValue().ReferenceCount);
             bb.Release();
-            this.frameWriter.Verify(
+            outboundData.GetValue().Release();
+
+            _frameWriter.Verify(
                 x => x.WriteRstStreamAsync(
-                    It.IsAny<IChannelHandlerContext>(),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.IsAny<int>(),
                     It.IsAny<Http2Error>(),
                     It.IsAny<IPromise>()), Times.Never());
-            Assert.True(this.channel.Active);
+            Assert.True(_channel.Active);
         }
 
         [Fact]
         public void SendRstStream()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 3, this.request, 31, true);
+            _frameInboundWriter.WriteInboundHeaders(3, _request, 31, true);
 
-            IHttp2Stream stream = this.frameCodec.Connection.Stream(3);
+            IHttp2Stream stream = _frameCodec.Connection.Stream(3);
             Assert.NotNull(stream);
             Assert.Equal(Http2StreamState.HalfClosedRemote, stream.State);
 
-            IHttp2HeadersFrame inboundHeaders = this.inboundHandler.ReadInbound<IHttp2HeadersFrame>();
+            IHttp2HeadersFrame inboundHeaders = _inboundHandler.ReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(inboundHeaders);
             Assert.True(inboundHeaders.IsEndStream);
 
@@ -292,84 +293,79 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.NotNull(stream2);
             Assert.Equal(3, stream2.Id);
 
-            this.inboundHandler.WriteOutbound(new DefaultHttp2ResetFrame((Http2Error)314 /* non-standard error */) { Stream = stream2 });
-            this.frameWriter.Verify(
+            _channel.WriteOutbound(new DefaultHttp2ResetFrame((Http2Error)314 /* non-standard error */) { Stream = stream2 });
+            _frameWriter.Verify(
                 x => x.WriteRstStreamAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<int>(v => v == 3),
                     It.Is<Http2Error>(v => v == (Http2Error)314L),
                     It.IsAny<IPromise>()));
             Assert.Equal(Http2StreamState.Closed, stream.State);
-            Assert.True(this.channel.Active);
+            Assert.True(_channel.Active);
         }
 
         [Fact]
         public void ReceiveRstStream()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 3, this.request, 31, false);
+            _frameInboundWriter.WriteInboundHeaders(3, _request, 31, false);
 
-            IHttp2Stream stream = this.frameCodec.Connection.Stream(3);
+            IHttp2Stream stream = _frameCodec.Connection.Stream(3);
             Assert.NotNull(stream);
             Assert.Equal(Http2StreamState.Open, stream.State);
 
-            IHttp2HeadersFrame expectedHeaders = new DefaultHttp2HeadersFrame(this.request, false, 31);
-            IHttp2HeadersFrame actualHeaders = this.inboundHandler.ReadInbound<IHttp2HeadersFrame>();
+            IHttp2HeadersFrame expectedHeaders = new DefaultHttp2HeadersFrame(_request, false, 31);
+            IHttp2HeadersFrame actualHeaders = _inboundHandler.ReadInbound<IHttp2HeadersFrame>();
             expectedHeaders.Stream = actualHeaders.Stream;
             Assert.Equal(expectedHeaders, actualHeaders);
 
-            this.frameListener.OnRstStreamRead(this.http2HandlerCtx, 3, Http2Error.NoError);
+            _frameInboundWriter.WriteInboundRstStream(3, Http2Error.NoError);
 
             IHttp2ResetFrame expectedRst = new DefaultHttp2ResetFrame(Http2Error.NoError) { Stream = actualHeaders.Stream };
-            IHttp2ResetFrame actualRst = this.inboundHandler.ReadInbound<IHttp2ResetFrame>();
+            IHttp2ResetFrame actualRst = _inboundHandler.ReadInbound<IHttp2ResetFrame>();
             Assert.Equal(expectedRst, actualRst);
 
-            Assert.Null(this.inboundHandler.ReadInbound<object>());
+            Assert.Null(_inboundHandler.ReadInbound<object>());
         }
 
         [Fact]
         public void SendGoAway()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 3, this.request, 31, false);
+            _frameInboundWriter.WriteInboundHeaders(3, _request, 31, false);
 
-            IHttp2Stream stream = this.frameCodec.Connection.Stream(3);
+            IHttp2Stream stream = _frameCodec.Connection.Stream(3);
             Assert.NotNull(stream);
             Assert.Equal(Http2StreamState.Open, stream.State);
 
-            IByteBuffer debugData = BB("debug");
+            IByteBuffer debugData = Http2TestUtil.BB("debug");
             IByteBuffer expected = debugData.Copy();
 
-            IHttp2GoAwayFrame goAwayFrame = new DefaultHttp2GoAwayFrame(Http2Error.NoError, debugData.Slice());
+            IHttp2GoAwayFrame goAwayFrame = new DefaultHttp2GoAwayFrame(Http2Error.NoError, debugData.RetainedDuplicate());
             goAwayFrame.ExtraStreamIds = 2;
 
-            this.inboundHandler.WriteOutbound(goAwayFrame);
-            this.frameWriter.Verify(
+            _channel.WriteOutbound(goAwayFrame);
+            _frameWriter.Verify(
                 x => x.WriteGoAwayAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<int>(v => v == 7),
                     It.Is<Http2Error>(v => v == Http2Error.NoError),
                     It.Is<IByteBuffer>(v => v.Equals(expected)),
                     It.IsAny<IPromise>()));
-            Assert.Equal(1, debugData.ReferenceCount);
             Assert.Equal(Http2StreamState.Open, stream.State);
-            Assert.True(this.channel.Active);
+            Assert.True(_channel.Active);
             expected.Release();
+            debugData.Release();
         }
 
         [Fact]
         public void ReceiveGoaway()
         {
-            IByteBuffer debugData = BB("foo");
-            this.frameListener.OnGoAwayRead(this.http2HandlerCtx, 2, Http2Error.NoError, debugData);
-            // Release debugData to emulate ByteToMessageDecoder
-            debugData.Release();
-            IHttp2GoAwayFrame expectedFrame = new DefaultHttp2GoAwayFrame(2, Http2Error.NoError, BB("foo"));
-            IHttp2GoAwayFrame actualFrame = this.inboundHandler.ReadInbound<IHttp2GoAwayFrame>();
+            IByteBuffer debugData = Http2TestUtil.BB("foo");
+            _frameInboundWriter.WriteInboundGoAway(2, Http2Error.NoError, debugData);
+            IHttp2GoAwayFrame expectedFrame = new DefaultHttp2GoAwayFrame(2, Http2Error.NoError, Http2TestUtil.BB("foo"));
+            IHttp2GoAwayFrame actualFrame = _inboundHandler.ReadInbound<IHttp2GoAwayFrame>();
 
-            Assert.Equal(expectedFrame, actualFrame);
-            Assert.Null(this.inboundHandler.ReadInbound<object>());
-
-            expectedFrame.Release();
-            actualFrame.Release();
+            Http2TestUtil.AssertEqualsAndRelease(expectedFrame, actualFrame);
+            Assert.Null(_inboundHandler.ReadInbound<object>());
         }
 
         sealed class TestUnknownHttp2Frame : AbstractReferenceCounted, IHttp2Frame
@@ -391,7 +387,7 @@ namespace DotNetty.Codecs.Http2.Tests
             var frame = new TestUnknownHttp2Frame();
             Assert.Equal(1, frame.ReferenceCount);
 
-            var f = this.channel.WriteAsync(frame);
+            var f = _channel.WriteAsync(frame);
             try
             {
                 await f;
@@ -410,50 +406,50 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void GoAwayLastStreamIdOverflowed()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 5, request, 31, false);
+            _frameInboundWriter.WriteInboundHeaders(5, _request, 31, false);
 
-            IHttp2Stream stream = this.frameCodec.Connection.Stream(5);
+            IHttp2Stream stream = _frameCodec.Connection.Stream(5);
             Assert.NotNull(stream);
             Assert.Equal(Http2StreamState.Open, stream.State);
 
-            var debugData = BB("debug");
-            IHttp2GoAwayFrame goAwayFrame = new DefaultHttp2GoAwayFrame(Http2Error.NoError, debugData.Slice());
+            var debugData = Http2TestUtil.BB("debug");
+            IHttp2GoAwayFrame goAwayFrame = new DefaultHttp2GoAwayFrame(Http2Error.NoError, debugData.RetainedDuplicate());
             goAwayFrame.ExtraStreamIds = int.MaxValue;
 
-            inboundHandler.WriteOutbound(goAwayFrame);
+            _channel.WriteOutbound(goAwayFrame);
             // When the last stream id computation overflows, the last stream id should just be set to 2^31 - 1.
-            this.frameWriter.Verify(
+            _frameWriter.Verify(
                 x => x.WriteGoAwayAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<int>(v => v == int.MaxValue),
                     It.Is<Http2Error>(v => v == Http2Error.NoError),
                     It.Is<IByteBuffer>(v => v.Equals(debugData)),
                     It.IsAny<IPromise>()));
-            Assert.Equal(1, debugData.ReferenceCount);
+            debugData.Release();
             Assert.Equal(Http2StreamState.Open, stream.State);
-            Assert.True(channel.Active);
+            Assert.True(_channel.Active);
         }
 
         [Fact]
         public void StreamErrorShouldFireExceptionForInbound()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 3, request, 31, false);
+            _frameInboundWriter.WriteInboundHeaders(3, _request, 31, false);
 
-            IHttp2Stream stream = this.frameCodec.Connection.Stream(3);
+            IHttp2Stream stream = _frameCodec.Connection.Stream(3);
             Assert.NotNull(stream);
 
             StreamException streamEx = new StreamException(3, Http2Error.InternalError, "foo");
-            frameCodec.OnError(http2HandlerCtx, false, streamEx);
+            _channel.Pipeline.FireExceptionCaught(streamEx);
 
-            Http2FrameStreamEvent evt = inboundHandler.ReadInboundMessageOrUserEvent<Http2FrameStreamEvent>();
+            Http2FrameStreamEvent evt = _inboundHandler.ReadInboundMessageOrUserEvent<Http2FrameStreamEvent>();
             Assert.Equal(Http2FrameStreamEvent.EventType.State, evt.Type);
             Assert.Equal(Http2StreamState.Open, evt.Stream.State);
-            IHttp2HeadersFrame headersFrame = inboundHandler.ReadInboundMessageOrUserEvent<IHttp2HeadersFrame>();
+            IHttp2HeadersFrame headersFrame = _inboundHandler.ReadInboundMessageOrUserEvent<IHttp2HeadersFrame>();
             Assert.NotNull(headersFrame);
 
             try
             {
-                inboundHandler.CheckException();
+                _inboundHandler.CheckException();
                 Assert.False(true, "stream exception expected");
             }
             catch (Http2FrameStreamException e)
@@ -461,73 +457,72 @@ namespace DotNetty.Codecs.Http2.Tests
                 Assert.Equal(streamEx, e.InnerException);
             }
 
-            Assert.Null(inboundHandler.ReadInboundMessageOrUserEvent<object>());
+            Assert.Null(_inboundHandler.ReadInboundMessageOrUserEvent<object>());
         }
 
         [Fact]
         public void StreamErrorShouldNotFireExceptionForOutbound()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 3, request, 31, false);
+            _frameInboundWriter.WriteInboundHeaders(3, _request, 31, false);
 
-            IHttp2Stream stream = this.frameCodec.Connection.Stream(3);
+            IHttp2Stream stream = _frameCodec.Connection.Stream(3);
             Assert.NotNull(stream);
 
             StreamException streamEx = new StreamException(3, Http2Error.InternalError, "foo");
-            frameCodec.OnError(http2HandlerCtx, true, streamEx);
+            _frameCodec.OnError(_frameCodec._ctx, true, streamEx);
 
-            Http2FrameStreamEvent evt = inboundHandler.ReadInboundMessageOrUserEvent<Http2FrameStreamEvent>();
+            Http2FrameStreamEvent evt = _inboundHandler.ReadInboundMessageOrUserEvent<Http2FrameStreamEvent>();
             Assert.Equal(Http2FrameStreamEvent.EventType.State, evt.Type);
             Assert.Equal(Http2StreamState.Open, evt.Stream.State);
-            IHttp2HeadersFrame headersFrame = inboundHandler.ReadInboundMessageOrUserEvent<IHttp2HeadersFrame>();
+            IHttp2HeadersFrame headersFrame = _inboundHandler.ReadInboundMessageOrUserEvent<IHttp2HeadersFrame>();
             Assert.NotNull(headersFrame);
 
             // No exception expected
-            inboundHandler.CheckException();
+            _inboundHandler.CheckException();
 
-            Assert.Null(inboundHandler.ReadInboundMessageOrUserEvent<object>());
+            Assert.Null(_inboundHandler.ReadInboundMessageOrUserEvent<object>());
         }
 
         [Fact]
         public void WindowUpdateFrameDecrementsConsumedBytes()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 3, request, 31, false);
+            _frameInboundWriter.WriteInboundHeaders(3, _request, 31, false);
 
-            var connection = frameCodec.Connection;
+            var connection = _frameCodec.Connection;
             var stream = connection.Stream(3);
             Assert.NotNull(stream);
 
             var data = Unpooled.Buffer(100).WriteZero(100);
-            frameListener.OnDataRead(http2HandlerCtx, 3, data, 0, true);
+            _frameInboundWriter.WriteInboundData(3, data, 0, false);
 
-            IHttp2HeadersFrame inboundHeaders = inboundHandler.ReadInbound<IHttp2HeadersFrame>();
+            IHttp2HeadersFrame inboundHeaders = _inboundHandler.ReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(inboundHeaders);
             Assert.NotNull(inboundHeaders.Stream);
 
             IHttp2FrameStream stream2 = inboundHeaders.Stream;
 
             int before = connection.Local.FlowController.UnconsumedBytes(stream);
-            var f = channel.WriteAsync(new DefaultHttp2WindowUpdateFrame(100) { Stream = stream2 });
+            var f = _channel.WriteAsync(new DefaultHttp2WindowUpdateFrame(100) { Stream = stream2 });
             int after = connection.Local.FlowController.UnconsumedBytes(stream);
             Assert.Equal(100, before - after);
             Assert.True(f.IsSuccess());
-            data.Release();
         }
 
         [Fact]
         public void WindowUpdateMayFail()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 3, request, 31, false);
-            var connection = frameCodec.Connection;
+            _frameInboundWriter.WriteInboundHeaders(3, _request, 31, false);
+            var connection = _frameCodec.Connection;
             IHttp2Stream stream = connection.Stream(3);
             Assert.NotNull(stream);
 
-            IHttp2HeadersFrame inboundHeaders = inboundHandler.ReadInbound<IHttp2HeadersFrame>();
+            IHttp2HeadersFrame inboundHeaders = _inboundHandler.ReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(inboundHeaders);
 
             IHttp2FrameStream stream2 = inboundHeaders.Stream;
 
             // Fails, cause trying to return too many bytes to the flow controller
-            var f = channel.WriteAsync(new DefaultHttp2WindowUpdateFrame(100) { Stream = stream2 });
+            var f = _channel.WriteAsync(new DefaultHttp2WindowUpdateFrame(100) { Stream = stream2 });
             Assert.True(f.IsCompleted);
             Assert.False(f.IsSuccess());
             Assert.IsType<Http2Exception>(f.Exception.InnerException);
@@ -536,27 +531,27 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void InboundWindowUpdateShouldBeForwarded()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 3, request, 31, false);
-            frameListener.OnWindowUpdateRead(http2HandlerCtx, 3, 100);
+            _frameInboundWriter.WriteInboundHeaders(3, _request, 31, false);
+            _frameInboundWriter.WriteInboundWindowUpdate(3, 100);
             // Connection-level window update
-            frameListener.OnWindowUpdateRead(http2HandlerCtx, 0, 100);
+            _frameInboundWriter.WriteInboundWindowUpdate(0, 100);
 
-            IHttp2HeadersFrame headersFrame = inboundHandler.ReadInbound<IHttp2HeadersFrame>();
+            IHttp2HeadersFrame headersFrame = _inboundHandler.ReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(headersFrame);
 
-            IHttp2WindowUpdateFrame windowUpdateFrame = inboundHandler.ReadInbound<IHttp2WindowUpdateFrame>();
+            IHttp2WindowUpdateFrame windowUpdateFrame = _inboundHandler.ReadInbound<IHttp2WindowUpdateFrame>();
             Assert.NotNull(windowUpdateFrame);
             Assert.Equal(3, windowUpdateFrame.Stream.Id);
             Assert.Equal(100, windowUpdateFrame.WindowSizeIncrement);
 
             // Window update for the connection should not be forwarded.
-            Assert.Null(inboundHandler.ReadInbound<object>());
+            Assert.Null(_inboundHandler.ReadInbound<object>());
         }
 
         [Fact]
         public void StreamZeroWindowUpdateIncrementsConnectionWindow()
         {
-            IHttp2Connection connection = frameCodec.Connection;
+            IHttp2Connection connection = _frameCodec.Connection;
             IHttp2LocalFlowController localFlow = connection.Local.FlowController;
             int initialWindowSizeBefore = localFlow.InitialWindowSize;
             IHttp2Stream connectionStream = connection.ConnectionStream;
@@ -567,7 +562,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             int windowUpdate = 1024;
 
-            channel.WriteAsync(new DefaultHttp2WindowUpdateFrame(windowUpdate));
+            _channel.WriteAsync(new DefaultHttp2WindowUpdateFrame(windowUpdate));
 
             // The initial window size is only changed by Http2Settings, so it shouldn't change.
             Assert.Equal(initialWindowSizeBefore, localFlow.InitialWindowSize);
@@ -578,11 +573,11 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void WindowUpdateDoesNotOverflowConnectionWindow()
         {
-            IHttp2Connection connection = frameCodec.Connection;
+            IHttp2Connection connection = _frameCodec.Connection;
             IHttp2LocalFlowController localFlow = connection.Local.FlowController;
             int initialWindowSizeBefore = localFlow.InitialWindowSize;
 
-            channel.WriteAsync(new DefaultHttp2WindowUpdateFrame(int.MaxValue));
+            _channel.WriteAsync(new DefaultHttp2WindowUpdateFrame(int.MaxValue));
 
             // The initial window size is only changed by Http2Settings, so it shouldn't change.
             Assert.Equal(initialWindowSizeBefore, localFlow.InitialWindowSize);
@@ -593,17 +588,17 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void WriteUnknownFrame()
         {
-            IHttp2FrameStream stream = frameCodec.NewStream();
+            IHttp2FrameStream stream = _frameCodec.NewStream();
 
             var buffer = Unpooled.Buffer().WriteByte(1);
             DefaultHttp2UnknownFrame unknownFrame = new DefaultHttp2UnknownFrame(
                     (Http2FrameTypes)20, new Http2Flags().Ack(true), buffer);
             unknownFrame.Stream = stream;
-            channel.WriteAsync(unknownFrame);
+            _channel.WriteAsync(unknownFrame);
 
-            this.frameWriter.Verify(
+            _frameWriter.Verify(
                 x => x.WriteFrameAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<Http2FrameTypes>(v => v == unknownFrame.FrameType),
                     It.Is<int>(v => v == unknownFrame.Stream.Id),
                     It.Is<Http2Flags>(v => v == unknownFrame.Flags),
@@ -615,11 +610,11 @@ namespace DotNetty.Codecs.Http2.Tests
         public void SendSettingsFrame()
         {
             Http2Settings settings = new Http2Settings();
-            channel.WriteAsync(new DefaultHttp2SettingsFrame(settings));
+            _channel.WriteAsync(new DefaultHttp2SettingsFrame(settings));
 
-            this.frameWriter.Verify(
+            _frameWriter.Verify(
                 x => x.WriteSettingsAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<Http2Settings>(v => v == settings),
                     It.IsAny<IPromise>()));
         }
@@ -627,18 +622,18 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]//(timeout = 5000)
         public async Task NewOutboundStream()
         {
-            IHttp2FrameStream stream = frameCodec.NewStream();
+            IHttp2FrameStream stream = _frameCodec.NewStream();
 
             Assert.NotNull(stream);
             Assert.False(Http2CodecUtil.IsStreamIdValid(stream.Id));
 
             var listenerExecuted = new TaskCompletionSource();
 
-            await channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers(), false) { Stream = stream });
+            await _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers(), false) { Stream = stream });
             Assert.True(Http2CodecUtil.IsStreamIdValid(stream.Id));
 
             var data = Unpooled.Buffer().WriteZero(100);
-            await channel.WriteAndFlushAsync(new DefaultHttp2DataFrame(data) { Stream = stream });
+            await _channel.WriteAndFlushAsync(new DefaultHttp2DataFrame(data) { Stream = stream });
         }
 
         [Fact]
@@ -646,30 +641,117 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             var builder = Http2FrameCodecBuilder.ForServer();
             builder.EncoderEnforceMaxConcurrentStreams = true;
-            this.SetUp(builder, new Http2Settings().MaxConcurrentStreams(1));
+            SetUp(builder, new Http2Settings().MaxConcurrentStreams(1));
 
-            var stream1 = frameCodec.NewStream();
-            var stream2 = frameCodec.NewStream();
+            var stream1 = _frameCodec.NewStream();
+            var stream2 = _frameCodec.NewStream();
 
-            var promise1 = channel.NewPromise();
-            var promise2 = channel.NewPromise();
+            var promise1 = _channel.NewPromise();
+            var promise2 = _channel.NewPromise();
 
-            channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream1 }, promise1);
-            channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream2 }, promise2);
+            _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream1 }, promise1);
+            _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream2 }, promise2);
 
             Assert.True(Http2CodecUtil.IsStreamIdValid(stream1.Id));
-            channel.RunPendingTasks();
+            _channel.RunPendingTasks();
             Assert.True(Http2CodecUtil.IsStreamIdValid(stream2.Id));
 
             Assert.True(promise1.IsSuccess);
             Assert.False(promise2.IsCompleted);
 
             // Increase concurrent streams limit to 2
-            frameListener.OnSettingsRead(http2HandlerCtx, new Http2Settings().MaxConcurrentStreams(2));
+            _frameInboundWriter.WriteInboundSettings(new Http2Settings().MaxConcurrentStreams(2));
 
-            channel.Flush();
+            _channel.Flush();
 
             Assert.True(promise2.IsSuccess);
+        }
+
+        [Fact]
+        public void MultipleNewOutboundStreamsShouldBeBuffered()
+        {
+            var builder = Http2FrameCodecBuilder.ForServer();
+            builder.EncoderEnforceMaxConcurrentStreams = true;
+            // We use a limit of 1 and then increase it step by step.
+            SetUp(builder, new Http2Settings().MaxConcurrentStreams(1));
+
+            IHttp2FrameStream stream1 = _frameCodec.NewStream();
+            IHttp2FrameStream stream2 = _frameCodec.NewStream();
+            IHttp2FrameStream stream3 = _frameCodec.NewStream();
+
+            IPromise promise1 = _channel.NewPromise();
+            IPromise promise2 = _channel.NewPromise();
+            IPromise promise3 = _channel.NewPromise();
+
+            _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream1 }, promise1);
+            _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream2 }, promise2);
+            _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream3 }, promise3);
+
+            Assert.True(Http2CodecUtil.IsStreamIdValid(stream1.Id));
+            _channel.RunPendingTasks();
+            Assert.True(Http2CodecUtil.IsStreamIdValid(stream2.Id));
+
+            if (promise1.IsCompleted)
+            {
+                Assert.True(promise1.Task.IsSuccess());
+            }
+            else
+            {
+                try
+                {
+                    promise1.Task.GetAwaiter().GetResult();
+                }
+                catch (Exception)
+                {
+                    Assert.False(true);
+                }
+            }
+            Assert.False(promise2.IsCompleted);
+            Assert.False(promise3.IsCompleted);
+
+            // Increase concurrent streams limit to 2
+            _frameInboundWriter.WriteInboundSettings(new Http2Settings().MaxConcurrentStreams(2));
+            _channel.Flush();
+
+            // As we increased the limit to 2 we should have also succeed the second frame.
+            if (promise2.IsCompleted)
+            {
+                Assert.True(promise2.Task.IsSuccess());
+            }
+            else
+            {
+                try
+                {
+                    promise2.Task.GetAwaiter().GetResult();
+                }
+                catch (Exception)
+                {
+                    Assert.False(true);
+                }
+            }
+            Assert.False(promise3.IsCompleted);
+
+            _frameInboundWriter.WriteInboundSettings(new Http2Settings().MaxConcurrentStreams(3));
+            _channel.Flush();
+
+            // With the max streams of 3 all streams should be succeed now.
+            if (promise3.IsCompleted)
+            {
+                Assert.True(promise3.Task.IsSuccess());
+            }
+            else
+            {
+                try
+                {
+                    promise3.Task.GetAwaiter().GetResult();
+                }
+                catch (Exception)
+                {
+                    Assert.False(true);
+                }
+            }
+
+            Assert.False(_channel.FinishAndReleaseAll());
         }
 
         [Fact]
@@ -677,13 +759,19 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             int maxServerStreamId = int.MaxValue - 1;
 
-            Assert.NotNull(frameCodec.Connection.Local.CreateStream(maxServerStreamId, false));
+            Assert.NotNull(_frameCodec.Connection.Local.CreateStream(maxServerStreamId, false));
 
-            IHttp2FrameStream stream = frameCodec.NewStream();
+            IHttp2FrameStream stream = _frameCodec.NewStream();
             Assert.NotNull(stream);
 
-            var writePromise = channel.NewPromise();
-            channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream }, writePromise);
+            var writePromise = _channel.NewPromise();
+            _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream }, writePromise);
+
+            var goAwayFrame = _inboundHandler.ReadInbound<IHttp2GoAwayFrame>();
+            Assert.NotNull(goAwayFrame);
+            Assert.Equal(Http2Error.NoError, goAwayFrame.ErrorCode);
+            Assert.Equal(int.MaxValue, goAwayFrame.LastStreamId);
+            goAwayFrame.Release();
 
             Assert.IsType<Http2NoMoreStreamIdsException>(writePromise.Task.Exception.InnerException);
         }
@@ -691,9 +779,9 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void ReceivePing()
         {
-            frameListener.OnPingRead(http2HandlerCtx, 12345L);
+            _frameInboundWriter.WriteInboundPing(false, 12345L);
 
-            IHttp2PingFrame pingFrame = inboundHandler.ReadInbound<IHttp2PingFrame>();
+            IHttp2PingFrame pingFrame = _inboundHandler.ReadInbound<IHttp2PingFrame>();
             Assert.NotNull(pingFrame);
 
             Assert.Equal(12345, pingFrame.Content);
@@ -703,11 +791,11 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void SendPing()
         {
-            channel.WriteAndFlushAsync(new DefaultHttp2PingFrame(12345));
+            _channel.WriteAndFlushAsync(new DefaultHttp2PingFrame(12345));
 
-            this.frameWriter.Verify(
+            _frameWriter.Verify(
                 x => x.WritePingAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<bool>(v => v == false),
                     It.Is<long>(v => v == 12345L),
                     It.IsAny<IPromise>()));
@@ -717,9 +805,9 @@ namespace DotNetty.Codecs.Http2.Tests
         public void ReceiveSettings()
         {
             Http2Settings settings = new Http2Settings().MaxConcurrentStreams(1);
-            frameListener.OnSettingsRead(http2HandlerCtx, settings);
+            _frameInboundWriter.WriteInboundSettings(settings);
 
-            IHttp2SettingsFrame settingsFrame = inboundHandler.ReadInbound<IHttp2SettingsFrame>();
+            IHttp2SettingsFrame settingsFrame = _inboundHandler.ReadInbound<IHttp2SettingsFrame>();
             Assert.NotNull(settingsFrame);
             Assert.Equal(settings, settingsFrame.Settings);
         }
@@ -728,11 +816,11 @@ namespace DotNetty.Codecs.Http2.Tests
         public void SendSettings()
         {
             Http2Settings settings = new Http2Settings().MaxConcurrentStreams(1);
-            channel.WriteAndFlushAsync(new DefaultHttp2SettingsFrame(settings));
+            _channel.WriteAndFlushAsync(new DefaultHttp2SettingsFrame(settings));
 
-            this.frameWriter.Verify(
+            _frameWriter.Verify(
                 x => x.WriteSettingsAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.http2HandlerCtx),
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<Http2Settings>(v => v == settings),
                     It.IsAny<IPromise>()));
         }
@@ -742,23 +830,23 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             var builder = Http2FrameCodecBuilder.ForServer();
             builder.EncoderEnforceMaxConcurrentStreams = true;
-            this.SetUp(builder, new Http2Settings().MaxConcurrentStreams(1));
+            SetUp(builder, new Http2Settings().MaxConcurrentStreams(1));
 
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, 3, request, 0, false);
+            _frameInboundWriter.WriteInboundHeaders(3, _request, 0, false);
 
-            IHttp2HeadersFrame headersFrame = inboundHandler.ReadInbound<IHttp2HeadersFrame>();
+            IHttp2HeadersFrame headersFrame = _inboundHandler.ReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(headersFrame);
 
             IHttp2FrameStream activeInbond = headersFrame.Stream;
 
-            IHttp2FrameStream activeOutbound = frameCodec.NewStream();
-            channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = activeOutbound });
+            IHttp2FrameStream activeOutbound = _frameCodec.NewStream();
+            _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = activeOutbound });
 
-            IHttp2FrameStream bufferedOutbound = frameCodec.NewStream();
-            channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = bufferedOutbound });
+            IHttp2FrameStream bufferedOutbound = _frameCodec.NewStream();
+            _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = bufferedOutbound });
 
             //@SuppressWarnings("unused")
-            IHttp2FrameStream idleStream = frameCodec.NewStream();
+            IHttp2FrameStream idleStream = _frameCodec.NewStream();
 
             ISet<IHttp2FrameStream> activeStreams = new HashSet<IHttp2FrameStream>();
             bool localVisit(IHttp2FrameStream stream)
@@ -766,7 +854,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 activeStreams.Add(stream);
                 return true;
             }
-            frameCodec.ForEachActiveStream(localVisit);
+            _frameCodec.ForEachActiveStream(localVisit);
 
             Assert.Equal(2, activeStreams.Count);
 
@@ -777,19 +865,65 @@ namespace DotNetty.Codecs.Http2.Tests
         }
 
         [Fact]
+        public void AutoAckPingTrue()
+        {
+            var builder = Http2FrameCodecBuilder.ForServer();
+            builder.AutoAckPingFrame = true;
+            SetUp(builder, new Http2Settings());
+            _frameInboundWriter.WriteInboundPing(false, 8);
+            var frame = _inboundHandler.ReadInbound<IHttp2PingFrame>();
+            Assert.False(frame.Ack);
+            Assert.Equal(8, frame.Content);
+            _frameWriter.Verify(
+                x => x.WritePingAsync(
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
+                    It.Is<bool>(v => v == true),
+                    It.Is<long>(v => v == 8L),
+                    It.IsAny<IPromise>()));
+        }
+
+        [Fact]
+        public void AutoAckPingFalse()
+        {
+            var builder = Http2FrameCodecBuilder.ForServer();
+            builder.AutoAckPingFrame = false;
+            SetUp(builder, new Http2Settings());
+            _frameInboundWriter.WriteInboundPing(false, 8);
+            _frameWriter.Verify(
+                x => x.WritePingAsync(
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
+                    It.Is<bool>(v => v == true),
+                    It.Is<long>(v => v == 8L),
+                    It.IsAny<IPromise>()),
+                Times.Never());
+            var frame = _inboundHandler.ReadInbound<IHttp2PingFrame>();
+            Assert.False(frame.Ack);
+            Assert.Equal(8, frame.Content);
+
+            // Now ack the frame manually.
+            _channel.WriteAndFlushAsync(new DefaultHttp2PingFrame(8, true));
+            _frameWriter.Verify(
+                x => x.WritePingAsync(
+                    It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
+                    It.Is<bool>(v => v == true),
+                    It.Is<long>(v => v == 8L),
+                    It.IsAny<IPromise>()));
+        }
+
+        [Fact]
         public async Task StreamShouldBeOpenInListener()
         {
-            IHttp2FrameStream stream2 = frameCodec.NewStream();
+            IHttp2FrameStream stream2 = _frameCodec.NewStream();
             Assert.Equal(Http2StreamState.Idle, stream2.State);
 
-            await channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream2 });
+            await _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream2 });
             Assert.Equal(Http2StreamState.Open, stream2.State);
         }
 
         [Fact]
         public void UpgradeEventNoRefCntError()
         {
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, Http2CodecUtil.HttpUpgradeStreamId, request, 31, false);
+            _frameInboundWriter.WriteInboundHeaders(Http2CodecUtil.HttpUpgradeStreamId, _request, 31, false);
 
             var constructors = typeof(HttpServerUpgradeHandler.UpgradeEvent).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             var upgradeEvent = (HttpServerUpgradeHandler.UpgradeEvent)constructors[0].Invoke(new object[]
@@ -797,7 +931,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 (AsciiString)"HTTP/2",
                 new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, "/")
             });
-            channel.Pipeline.FireUserEventTriggered(upgradeEvent);
+            _channel.Pipeline.FireUserEventTriggered(upgradeEvent);
             Assert.Equal(1, upgradeEvent.ReferenceCount);
         }
 
@@ -822,14 +956,13 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void UpgradeWithoutFlowControlling()
         {
-            channel.Pipeline.AddAfter(http2HandlerCtx.Name, null, new TestUpgradeChannelHandler());
+            _channel.Pipeline.AddAfter(_frameCodec._ctx.Name, null, new TestUpgradeChannelHandler());
 
-            this.frameListener.OnHeadersRead(this.http2HandlerCtx, Http2CodecUtil.HttpUpgradeStreamId, this.request, 31, false);
-
+            _frameInboundWriter.WriteInboundHeaders(Http2CodecUtil.HttpUpgradeStreamId, _request, 31, false);
 
             string longString = "*".PadRight(70000, '*');
             DefaultFullHttpRequest request =
-                new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, "/", BB(longString));
+                new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, "/", Http2TestUtil.BB(longString));
 
             var constructors = typeof(HttpServerUpgradeHandler.UpgradeEvent).GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             var upgradeEvent = (HttpServerUpgradeHandler.UpgradeEvent)constructors[0].Invoke(new object[]
@@ -837,21 +970,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 (AsciiString)"HTTP/2",
                 request
             });
-            channel.Pipeline.FireUserEventTriggered(upgradeEvent);
-        }
-
-        private static IByteBuffer BB(string s)
-        {
-            return ByteBufferUtil.WriteUtf8(UnpooledByteBufferAllocator.Default, s);
-        }
-    }
-
-    public class VerifiableHttp2FrameWriter : DefaultHttp2FrameWriter
-    {
-        public override Task WriteDataAsync(IChannelHandlerContext ctx, int streamId, IByteBuffer data, int padding, bool endOfStream, IPromise promise)
-        {
-            // duplicate 'data' to prevent readerIndex from being changed, to ease verification
-            return base.WriteDataAsync(ctx, streamId, data.Duplicate(), padding, endOfStream, promise);
+            _channel.Pipeline.FireUserEventTriggered(upgradeEvent);
         }
     }
 }

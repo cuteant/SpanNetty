@@ -40,7 +40,7 @@ namespace DotNetty.Codecs.Http2
         /// allows a lower than advertised limit from being enforced, and the default limit is unlimited
         /// (which is dangerous).</param>
         public DefaultHttp2HeadersDecoder(bool validateHeaders, long maxHeaderListSize)
-            : this(validateHeaders, maxHeaderListSize, Http2CodecUtil.DefaultInitialHuffmanDecodeCapacity)
+            : this(validateHeaders, maxHeaderListSize, -1)
         {
         }
 
@@ -52,10 +52,10 @@ namespace DotNetty.Codecs.Http2
         /// This is because <a href="https://tools.ietf.org/html/rfc7540#section-6.5.1">SETTINGS_MAX_HEADER_LIST_SIZE</a>
         /// allows a lower than advertised limit from being enforced, and the default limit is unlimited
         /// (which is dangerous).</param>
-        /// <param name="initialHuffmanDecodeCapacity">Size of an intermediate buffer used during huffman decode.</param>
+        /// <param name="initialHuffmanDecodeCapacity">Does nothing, do not use.</param>
         public DefaultHttp2HeadersDecoder(
             bool validateHeaders, long maxHeaderListSize, int initialHuffmanDecodeCapacity)
-            : this(validateHeaders, new HpackDecoder(maxHeaderListSize, initialHuffmanDecodeCapacity))
+            : this(validateHeaders, new HpackDecoder(maxHeaderListSize))
         {
         }
 

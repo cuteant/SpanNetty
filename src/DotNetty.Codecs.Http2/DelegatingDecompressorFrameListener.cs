@@ -19,10 +19,10 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class DelegatingDecompressorFrameListener : Http2FrameListenerDecorator
     {
-        private readonly IHttp2Connection connection;
-        private readonly bool strict;
-        private bool flowControllerInitialized;
-        private readonly IHttp2ConnectionPropertyKey propertyKey;
+        private readonly IHttp2Connection _connection;
+        private readonly bool _strict;
+        private bool _flowControllerInitialized;
+        private readonly IHttp2ConnectionPropertyKey _propertyKey;
 
         public DelegatingDecompressorFrameListener(IHttp2Connection connection, IHttp2FrameListener listener)
             : this(connection, listener, true)
@@ -32,21 +32,21 @@ namespace DotNetty.Codecs.Http2
         public DelegatingDecompressorFrameListener(IHttp2Connection connection, IHttp2FrameListener listener, bool strict)
             : base(listener)
         {
-            this.connection = connection;
-            this.strict = strict;
+            _connection = connection;
+            _strict = strict;
 
-            this.propertyKey = connection.NewKey();
-            this.connection.AddListener(new DelegatingConnectionAdapter(this));
+            _propertyKey = connection.NewKey();
+            _connection.AddListener(new DelegatingConnectionAdapter(this));
         }
 
         public override int OnDataRead(IChannelHandlerContext ctx, int streamId, IByteBuffer data, int padding, bool endOfStream)
         {
-            IHttp2Stream stream = this.connection.Stream(streamId);
-            Http2Decompressor decompressor = this.Decompressor(stream);
+            IHttp2Stream stream = _connection.Stream(streamId);
+            Http2Decompressor decompressor = Decompressor(stream);
             if (decompressor is null)
             {
                 // The decompressor may be null if no compatible encoding type was found in this stream's headers
-                return this.listener.OnDataRead(ctx, streamId, data, padding, endOfStream);
+                return listener.OnDataRead(ctx, streamId, data, padding, endOfStream);
             }
 
             EmbeddedChannel channel = decompressor.Decompressor;
@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     if (endOfStream)
                     {
-                        this.listener.OnDataRead(ctx, streamId, Unpooled.Empty, padding, true);
+                        listener.OnDataRead(ctx, streamId, Unpooled.Empty, padding, true);
                     }
                     // No new decompressed data was extracted from the compressed data. This means the application could
                     // not be provided with data and thus could not return how many bytes were processed. We will assume
@@ -76,7 +76,7 @@ namespace DotNetty.Codecs.Http2
                 }
                 try
                 {
-                    IHttp2LocalFlowController flowController = this.connection.Local.FlowController;
+                    IHttp2LocalFlowController flowController = _connection.Local.FlowController;
                     decompressor.IncrementDecompressedBytes(padding);
                     while (true)
                     {
@@ -93,7 +93,7 @@ namespace DotNetty.Codecs.Http2
                         // from the decompressed amount which the user knows about to the compressed amount which flow
                         // control knows about.
                         flowController.ConsumeBytes(stream,
-                                this.listener.OnDataRead(ctx, streamId, buf, padding, decompressedEndOfStream));
+                                listener.OnDataRead(ctx, streamId, buf, padding, decompressedEndOfStream));
                         if (nextBuf is null)
                         {
                             break;
@@ -127,13 +127,13 @@ namespace DotNetty.Codecs.Http2
         public override void OnHeadersRead(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int padding, bool endOfStream)
         {
             InitDecompressor(ctx, streamId, headers, endOfStream);
-            this.listener.OnHeadersRead(ctx, streamId, headers, padding, endOfStream);
+            listener.OnHeadersRead(ctx, streamId, headers, padding, endOfStream);
         }
 
         public override void OnHeadersRead(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int streamDependency, short weight, bool exclusive, int padding, bool endOfStream)
         {
             InitDecompressor(ctx, streamId, headers, endOfStream);
-            this.listener.OnHeadersRead(ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream);
+            listener.OnHeadersRead(ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream);
         }
 
         /// <summary>
@@ -157,7 +157,7 @@ namespace DotNetty.Codecs.Http2
             if (HttpHeaderValues.Deflate.ContentEqualsIgnoreCase(contentEncoding) ||
                 HttpHeaderValues.XDeflate.ContentEqualsIgnoreCase(contentEncoding))
             {
-                ZlibWrapper wrapper = this.strict ? ZlibWrapper.Zlib : ZlibWrapper.ZlibOrNone;
+                ZlibWrapper wrapper = _strict ? ZlibWrapper.Zlib : ZlibWrapper.ZlibOrNone;
                 // To be strict, 'deflate' means ZLIB, but some servers were not implemented correctly.
                 return new EmbeddedChannel(channel.Id, channel.Metadata.HasDisconnect,
                         channel.Configuration, ZlibCodecFactory.NewZlibDecoder(wrapper));
@@ -190,10 +190,10 @@ namespace DotNetty.Codecs.Http2
         /// <exception cref="Http2Exception">If the <c>content-encoding</c> is not supported</exception>
         private void InitDecompressor(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, bool endOfStream)
         {
-            var stream = this.connection.Stream(streamId);
+            var stream = _connection.Stream(streamId);
             if (stream is null) { return; }
 
-            Http2Decompressor decompressor = this.Decompressor(stream);
+            Http2Decompressor decompressor = Decompressor(stream);
             if (decompressor is null && !endOfStream)
             {
                 // Determine the content encoding.
@@ -205,7 +205,7 @@ namespace DotNetty.Codecs.Http2
                 if (channel is object)
                 {
                     decompressor = new Http2Decompressor(channel);
-                    stream.SetProperty(this.propertyKey, decompressor);
+                    stream.SetProperty(_propertyKey, decompressor);
                     // Decode the content and remove or replace the existing headers
                     // so that the message looks like a decoded message.
                     var targetContentEncoding = GetTargetContentEncoding(contentEncoding);
@@ -229,10 +229,10 @@ namespace DotNetty.Codecs.Http2
 
                 // The first time that we initialize a decompressor, decorate the local flow controller to
                 // properly convert consumed bytes.
-                if (!this.flowControllerInitialized)
+                if (!_flowControllerInitialized)
                 {
-                    this.flowControllerInitialized = true;
-                    var localEndpoint = this.connection.Local;
+                    _flowControllerInitialized = true;
+                    var localEndpoint = _connection.Local;
                     localEndpoint.FlowController = new ConsumedBytesConverter(this, localEndpoint.FlowController);
                 }
             }
@@ -240,7 +240,7 @@ namespace DotNetty.Codecs.Http2
 
         Http2Decompressor Decompressor(IHttp2Stream stream)
         {
-            return stream?.GetProperty<Http2Decompressor>(this.propertyKey);
+            return stream?.GetProperty<Http2Decompressor>(_propertyKey);
         }
 
         /// <summary>
@@ -275,16 +275,16 @@ namespace DotNetty.Codecs.Http2
 
         sealed class DelegatingConnectionAdapter : Http2ConnectionAdapter
         {
-            readonly DelegatingDecompressorFrameListener frameListener;
+            readonly DelegatingDecompressorFrameListener _frameListener;
 
             public DelegatingConnectionAdapter(DelegatingDecompressorFrameListener frameListener)
             {
-                this.frameListener = frameListener;
+                _frameListener = frameListener;
             }
 
             public override void OnStreamRemoved(IHttp2Stream stream)
             {
-                Http2Decompressor decompressor = this.frameListener.Decompressor(stream);
+                Http2Decompressor decompressor = _frameListener.Decompressor(stream);
                 if (decompressor is object)
                 {
                     Cleanup(decompressor);
@@ -297,24 +297,24 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         sealed class ConsumedBytesConverter : IHttp2LocalFlowController
         {
-            readonly IHttp2LocalFlowController flowController;
-            readonly DelegatingDecompressorFrameListener frameListener;
+            readonly IHttp2LocalFlowController _flowController;
+            readonly DelegatingDecompressorFrameListener _frameListener;
 
             public ConsumedBytesConverter(DelegatingDecompressorFrameListener frameListener, IHttp2LocalFlowController flowController)
             {
                 if (flowController is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.flowController); }
-                this.flowController = flowController;
-                this.frameListener = frameListener;
+                _flowController = flowController;
+                _frameListener = frameListener;
             }
 
             public void SetChannelHandlerContext(IChannelHandlerContext ctx)
             {
-                this.flowController.SetChannelHandlerContext(ctx);
+                _flowController.SetChannelHandlerContext(ctx);
             }
 
             public bool ConsumeBytes(IHttp2Stream stream, int numBytes)
             {
-                Http2Decompressor decompressor = this.frameListener.Decompressor(stream);
+                Http2Decompressor decompressor = _frameListener.Decompressor(stream);
                 if (decompressor is object)
                 {
                     // Convert the decompressed bytes to compressed (on the wire) bytes.
@@ -322,7 +322,7 @@ namespace DotNetty.Codecs.Http2
                 }
                 try
                 {
-                    return this.flowController.ConsumeBytes(stream, numBytes);
+                    return _flowController.ConsumeBytes(stream, numBytes);
                 }
                 catch (Http2Exception e)
                 {
@@ -338,39 +338,39 @@ namespace DotNetty.Codecs.Http2
 
             public IHttp2LocalFlowController FrameWriter(IHttp2FrameWriter frameWriter)
             {
-                return this.flowController.FrameWriter(frameWriter);
+                return _flowController.FrameWriter(frameWriter);
             }
 
             public void IncrementWindowSize(IHttp2Stream stream, int delta)
             {
-                this.flowController.IncrementWindowSize(stream, delta);
+                _flowController.IncrementWindowSize(stream, delta);
             }
 
             public int GetInitialWindowSize(IHttp2Stream stream)
             {
-                return this.flowController.GetInitialWindowSize(stream);
+                return _flowController.GetInitialWindowSize(stream);
             }
 
             public void SetInitialWindowSize(int newWindowSize)
             {
-                this.flowController.SetInitialWindowSize(newWindowSize);
+                _flowController.SetInitialWindowSize(newWindowSize);
             }
 
-            public int InitialWindowSize => this.flowController.InitialWindowSize;
+            public int InitialWindowSize => _flowController.InitialWindowSize;
 
             public void ReceiveFlowControlledFrame(IHttp2Stream stream, IByteBuffer data, int padding, bool endOfStream)
             {
-                this.flowController.ReceiveFlowControlledFrame(stream, data, padding, endOfStream);
+                _flowController.ReceiveFlowControlledFrame(stream, data, padding, endOfStream);
             }
 
             public int UnconsumedBytes(IHttp2Stream stream)
             {
-                return this.flowController.UnconsumedBytes(stream);
+                return _flowController.UnconsumedBytes(stream);
             }
 
             public int GetWindowSize(IHttp2Stream stream)
             {
-                return this.flowController.GetWindowSize(stream);
+                return _flowController.GetWindowSize(stream);
             }
         }
 
@@ -379,19 +379,19 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         sealed class Http2Decompressor
         {
-            private readonly EmbeddedChannel decompressor;
-            private int compressed;
-            private int decompressed;
+            private readonly EmbeddedChannel _decompressor;
+            private int _compressed;
+            private int _decompressed;
 
             public Http2Decompressor(EmbeddedChannel decompressor)
             {
-                this.decompressor = decompressor;
+                _decompressor = decompressor;
             }
 
             /// <summary>
             /// Responsible for taking compressed bytes in and producing decompressed bytes.
             /// </summary>
-            public EmbeddedChannel Decompressor => this.decompressor;
+            public EmbeddedChannel Decompressor => _decompressor;
 
             /// <summary>
             /// Increment the number of bytes received prior to doing any decompression.
@@ -400,7 +400,7 @@ namespace DotNetty.Codecs.Http2
             public void IncrementCompressedBytes(int delta)
             {
                 Debug.Assert(delta >= 0);
-                this.compressed += delta;
+                _compressed += delta;
             }
 
             /// <summary>
@@ -410,37 +410,37 @@ namespace DotNetty.Codecs.Http2
             public void IncrementDecompressedBytes(int delta)
             {
                 Debug.Assert(delta >= 0);
-                this.decompressed += delta;
+                _decompressed += delta;
             }
 
             /// <summary>
-            /// Determines the ratio between {@code numBytes} and <see cref="Http2Decompressor.decompressed"/>.
-            /// This ratio is used to decrement <see cref="Http2Decompressor.decompressed"/> and
-            /// <see cref="Http2Decompressor.compressed"/>.
+            /// Determines the ratio between {@code numBytes} and <see cref="Http2Decompressor._decompressed"/>.
+            /// This ratio is used to decrement <see cref="Http2Decompressor._decompressed"/> and
+            /// <see cref="Http2Decompressor._compressed"/>.
             /// </summary>
             /// <param name="streamId">the stream ID</param>
             /// <param name="decompressedBytes">The number of post-decompressed bytes to return to flow control</param>
             /// <returns>The number of pre-decompressed bytes that have been consumed.</returns>
             public int ConsumeBytes(int streamId, int decompressedBytes)
             {
-                if (decompressedBytes < 0)
+                if ((uint)decompressedBytes > SharedConstants.TooBigOrNegative)
                 {
-                    ThrowHelper.ThrowArgumentException_DecompressedBytesMustNotBeNegative(decompressedBytes);
+                    ThrowHelper.ThrowArgumentException_PositiveOrZero(decompressedBytes, ExceptionArgument.decompressedBytes);
                 }
-                if (this.decompressed - decompressedBytes < 0)
+                if ((uint)(_decompressed - decompressedBytes) > SharedConstants.TooBigOrNegative)
                 {
                     ThrowHelper.ThrowStreamError_AttemptingToReturnTooManyBytesForStream(
-                        streamId, this.decompressed, decompressedBytes);
+                        streamId, _decompressed, decompressedBytes);
                 }
-                double consumedRatio = decompressedBytes / (double)this.decompressed;
-                int consumedCompressed = Math.Min(this.compressed, (int)Math.Ceiling(this.compressed * consumedRatio));
-                if (this.compressed - consumedCompressed < 0)
+                double consumedRatio = decompressedBytes / (double)_decompressed;
+                int consumedCompressed = Math.Min(_compressed, (int)Math.Ceiling(_compressed * consumedRatio));
+                if ((uint)(_compressed - consumedCompressed) > SharedConstants.TooBigOrNegative)
                 {
                     ThrowHelper.ThrowStreamError_OverflowWhenConvertingDecompressedBytesToCompressedBytesForStream(
-                        streamId, decompressedBytes, this.decompressed, this.compressed, consumedCompressed);
+                        streamId, decompressedBytes, _decompressed, _compressed, consumedCompressed);
                 }
-                this.decompressed -= decompressedBytes;
-                this.compressed -= consumedCompressed;
+                _decompressed -= decompressedBytes;
+                _compressed -= consumedCompressed;
 
                 return consumedCompressed;
             }

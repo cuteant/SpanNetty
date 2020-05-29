@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void StreamExceptionThrownForUnkownStream(this IInternalLogger logger, int streamId, Exception cause)
         {
-            logger.Warn("Stream exception thrown for unkown stream {}.", streamId, cause);
+            logger.Warn("Stream exception thrown for unknown stream {}.", streamId, cause);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

@@ -393,7 +393,7 @@ namespace DotNetty.Codecs.Http2
         {
             const int MetaStateSentRst = 1;
             const int MetaStateSentHeaders = 1 << 1;
-            const int MetaStatesentTrailers = 1 << 2;
+            const int MetaStateSentTrailers = 1 << 2;
             const int MetaStateSentPushpromise = 1 << 3;
             const int MetaStateRecvHeaders = 1 << 4;
             const int MetaStateRecvTrailers = 1 << 5;
@@ -428,7 +428,7 @@ namespace DotNetty.Codecs.Http2
             {
                 if (!isInformational)
                 {
-                    this.metaState |= this.IsHeadersSent ? MetaStatesentTrailers : MetaStateSentHeaders;
+                    this.metaState |= this.IsHeadersSent ? MetaStateSentTrailers : MetaStateSentHeaders;
                 }
 
                 return this;
@@ -436,7 +436,7 @@ namespace DotNetty.Codecs.Http2
 
             public virtual bool IsHeadersSent => (this.metaState & MetaStateSentHeaders) != 0;
 
-            public bool IsTrailersSent => (this.metaState & MetaStatesentTrailers) != 0;
+            public bool IsTrailersSent => (this.metaState & MetaStateSentTrailers) != 0;
 
             public IHttp2Stream HeadersReceived(bool isInformational)
             {
@@ -463,7 +463,7 @@ namespace DotNetty.Codecs.Http2
             public V SetProperty<V>(IHttp2ConnectionPropertyKey key, object value)
             {
                 var prevValue = this.properties.Add(this.conn.VerifyKey(key), value);
-                return prevValue is V ? (V)prevValue : default;
+                return prevValue is V v ? v : default;
             }
 
             public object SetProperty(IHttp2ConnectionPropertyKey key, object value)

@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Http2
 {
     using System;
     using System.Collections.Generic;
+    using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Common.Internal;
@@ -307,10 +308,7 @@ namespace DotNetty.Codecs.Http2
             Http2ToHttpHeaderTranslator translator = new Http2ToHttpHeaderTranslator(streamId, outputHeaders, isRequest);
             try
             {
-                foreach (var entry in inputHeaders)
-                {
-                    translator.Translate(entry);
-                }
+                translator.TranslateHeaders(inputHeaders);
             }
             catch (Http2Exception ex)
             {
@@ -615,48 +613,64 @@ namespace DotNetty.Codecs.Http2
                 ResponseHeaderTranslations.Add(PseudoHeaderName.Path.Value, ExtensionHeaderNames.Path);
             }
 
-
-            private readonly int streamId;
-            private readonly HttpHeaders output;
-            private readonly CharSequenceMap<AsciiString> translations;
+            private readonly int _streamId;
+            private readonly HttpHeaders _output;
+            private readonly CharSequenceMap<AsciiString> _translations;
 
             public Http2ToHttpHeaderTranslator(int streamId, HttpHeaders output, bool request)
             {
-                this.streamId = streamId;
-                this.output = output;
-                this.translations = request ? RequestHeaderTranslations : ResponseHeaderTranslations;
+                _streamId = streamId;
+                _output = output;
+                _translations = request ? RequestHeaderTranslations : ResponseHeaderTranslations;
             }
 
-            public void Translate(HeaderEntry<ICharSequence, ICharSequence> entry)
+            public void TranslateHeaders(IEnumerable<HeaderEntry<ICharSequence, ICharSequence>> inputHeaders)
             {
-                var name = entry.Key;
-                var value = entry.Value;
+                // lazily created as needed
+                StringBuilder cookies = null;
 
-                if (this.translations.TryGet(name, out var translatedName))
+                foreach (var entry in inputHeaders)
                 {
-                    output.Add(translatedName, AsciiString.Of(value));
+                    var name = entry.Key;
+                    var value = entry.Value;
+
+                    if (_translations.TryGet(name, out var translatedName))
+                    {
+                        _output.Add(translatedName, AsciiString.Of(value));
+                    }
+                    else if (!PseudoHeaderName.IsPseudoHeader(name))
+                    {
+                        // https://tools.ietf.org/html/rfc7540#section-8.1.2.3
+                        // All headers that start with ':' are only valid in HTTP/2 context
+                        if (0u >= (uint)name.Count || name[0] == ':')
+                        {
+                            StringBuilderManager.Free(cookies);
+                            ThrowHelper.ThrowStreamError_InvalidHttp2HeaderEncounteredInTranslationToHttp1(_streamId, name);
+                        }
+                        var cookie = HttpHeaderNames.Cookie;
+                        if (cookie.Equals(name))
+                        {
+                            // combine the cookie values into 1 header entry.
+                            // https://tools.ietf.org/html/rfc7540#section-8.1.2.5
+                            if (cookies is null)
+                            {
+                                cookies = StringBuilderManager.Allocate();
+                            }
+                            else if ((uint)cookies.Length > 0u)
+                            {
+                                cookies.Append("; ");
+                            }
+                            cookies.Append(value.ToString());
+                        }
+                        else
+                        {
+                            _output.Add(AsciiString.Of(name), value);
+                        }
+                    }
                 }
-                else if (!PseudoHeaderName.IsPseudoHeader(name))
+                if (cookies is object)
                 {
-                    // https://tools.ietf.org/html/rfc7540#section-8.1.2.3
-                    // All headers that start with ':' are only valid in HTTP/2 context
-                    if (0u >= (uint)name.Count || name[0] == ':')
-                    {
-                        ThrowHelper.ThrowStreamError_InvalidHttp2HeaderEncounteredInTranslationToHttp1(streamId, name);
-                    }
-                    var cookie = HttpHeaderNames.Cookie;
-                    if (cookie.Equals(name))
-                    {
-                        // combine the cookie values into 1 header entry.
-                        // https://tools.ietf.org/html/rfc7540#section-8.1.2.5
-                        var existingCookie = output.Get(cookie, null);
-                        output.Set(cookie,
-                                   (existingCookie is object) ? new StringCharSequence(existingCookie + "; " + value) : value);
-                    }
-                    else
-                    {
-                        output.Add(AsciiString.Of(name), value);
-                    }
+                    _output.Add(HttpHeaderNames.Cookie, StringBuilderManager.ReturnAndFree(cookies));
                 }
             }
         }

@@ -687,8 +687,15 @@ namespace DotNetty.Common.Internal
             Debug.Assert(searchSpaceLength >= 0);
             Debug.Assert(valueLength >= 0);
 
-            if (0u >= (uint)valueLength)
+            uint uValueLength = (uint)valueLength;
+            if (0u >= uValueLength)
+            {
                 return 0;  // A zero-length sequence is always treated as "found" at the start of the search space.
+            }
+            if (1u >= (uValueLength))
+            {
+                return IndexOf(ref searchSpace, value, searchSpaceLength);
+            }
 
             byte valueHead = value;
             ref byte valueTail = ref Unsafe.Add(ref value, 1);
@@ -1500,8 +1507,15 @@ namespace DotNetty.Common.Internal
             Debug.Assert(searchSpaceLength >= 0);
             Debug.Assert(valueLength >= 0);
 
-            if (0u >= (uint)valueLength)
+            uint uValueLength = (uint)valueLength;
+            if (0u >= uValueLength)
+            {
                 return 0;  // A zero-length sequence is always treated as "found" at the start of the search space.
+            }
+            if (1u >= uValueLength)
+            {
+                return LastIndexOf(ref searchSpace, value, searchSpaceLength);
+            }
 
             byte valueHead = value;
             ref byte valueTail = ref Unsafe.Add(ref value, 1);
@@ -3273,10 +3287,10 @@ namespace DotNetty.Common.Internal
             else
             {
 #endif
-                // Flag least significant power of two bit
-                var powerOfTwoFlag = match ^ (match - 1);
-                // Shift all powers of two into the high byte and extract
-                return (int)((powerOfTwoFlag * XorPowerOfTwoToHighByte) >> 57);
+            // Flag least significant power of two bit
+            var powerOfTwoFlag = match ^ (match - 1);
+            // Shift all powers of two into the high byte and extract
+            return (int)((powerOfTwoFlag * XorPowerOfTwoToHighByte) >> 57);
 #if NETCOREAPP_3_0_GREATER
             }
 #endif

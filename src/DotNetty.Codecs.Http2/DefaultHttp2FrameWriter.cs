@@ -29,8 +29,8 @@ namespace DotNetty.Codecs.Http2
         static readonly IByteBuffer ZeroBuffer =
             Unpooled.UnreleasableBuffer(Unpooled.DirectBuffer(Http2CodecUtil.MaxUnsignedByte).WriteZero(Http2CodecUtil.MaxUnsignedByte).AsReadOnly());
 
-        readonly IHttp2HeadersEncoder headersEncoder;
-        int maxFrameSize;
+        private readonly IHttp2HeadersEncoder _headersEncoder;
+        private int _maxFrameSize;
 
         public DefaultHttp2FrameWriter()
             : this(new DefaultHttp2HeadersEncoder())
@@ -49,13 +49,13 @@ namespace DotNetty.Codecs.Http2
 
         public DefaultHttp2FrameWriter(IHttp2HeadersEncoder headersEncoder)
         {
-            this.headersEncoder = headersEncoder;
-            this.maxFrameSize = Http2CodecUtil.DefaultMaxFrameSize;
+            _headersEncoder = headersEncoder;
+            _maxFrameSize = Http2CodecUtil.DefaultMaxFrameSize;
         }
 
         public IHttp2FrameWriterConfiguration Configuration => this;
 
-        public IHttp2HeadersEncoderConfiguration HeadersConfiguration => this.headersEncoder.Configuration;
+        public IHttp2HeadersEncoderConfiguration HeadersConfiguration => _headersEncoder.Configuration;
 
         public IHttp2FrameSizePolicy FrameSizePolicy => this;
 
@@ -66,10 +66,10 @@ namespace DotNetty.Codecs.Http2
                 ThrowHelper.ThrowConnectionError_InvalidMaxFrameSizeSpecifiedInSentSettings(max);
             }
 
-            this.maxFrameSize = max;
+            _maxFrameSize = max;
         }
 
-        public int MaxFrameSize => this.maxFrameSize;
+        public int MaxFrameSize => _maxFrameSize;
 
         public virtual Task WriteDataAsync(IChannelHandlerContext ctx, int streamId, IByteBuffer data, int padding, bool endOfStream, IPromise promise)
         {
@@ -77,7 +77,7 @@ namespace DotNetty.Codecs.Http2
             IByteBuffer frameHeader = null;
             try
             {
-                if (streamId <= 0) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
+                if ((uint)(streamId - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
                 Http2CodecUtil.VerifyPadding(padding);
 
                 int remainingData = data.ReadableBytes;
@@ -85,22 +85,22 @@ namespace DotNetty.Codecs.Http2
                 flags.EndOfStream(false);
                 flags.PaddingPresent(false);
                 // Fast path to write frames of payload size maxFrameSize first.
-                if (remainingData > this.maxFrameSize)
+                if (remainingData > _maxFrameSize)
                 {
                     frameHeader = ctx.Allocator.Buffer(Http2CodecUtil.FrameHeaderLength);
-                    Http2CodecUtil.WriteFrameHeaderInternal(frameHeader, this.maxFrameSize, Http2FrameTypes.Data, flags, streamId);
+                    Http2CodecUtil.WriteFrameHeaderInternal(frameHeader, _maxFrameSize, Http2FrameTypes.Data, flags, streamId);
                     do
                     {
                         // Write the header.
                         ctx.WriteAsync(frameHeader.RetainedSlice(), promiseAggregator.NewPromise());
 
                         // Write the payload.
-                        ctx.WriteAsync(data.ReadRetainedSlice(this.maxFrameSize), promiseAggregator.NewPromise());
+                        ctx.WriteAsync(data.ReadRetainedSlice(_maxFrameSize), promiseAggregator.NewPromise());
 
-                        remainingData -= this.maxFrameSize;
+                        remainingData -= _maxFrameSize;
                         // Stop iterating if remainingData ==  _maxFrameSize so we can take care of reference counts below.
                     }
-                    while (remainingData > this.maxFrameSize);
+                    while (remainingData > _maxFrameSize);
                 }
 
                 if (0u >= (uint)padding)
@@ -124,7 +124,7 @@ namespace DotNetty.Codecs.Http2
                 }
                 else
                 {
-                    if (remainingData != this.maxFrameSize)
+                    if (remainingData != _maxFrameSize)
                     {
                         if (frameHeader is object)
                         {
@@ -134,13 +134,13 @@ namespace DotNetty.Codecs.Http2
                     }
                     else
                     {
-                        remainingData -= this.maxFrameSize;
+                        remainingData -= _maxFrameSize;
                         // Write the header.
                         IByteBuffer lastFrame;
                         if (frameHeader is null)
                         {
                             lastFrame = ctx.Allocator.Buffer(Http2CodecUtil.FrameHeaderLength);
-                            Http2CodecUtil.WriteFrameHeaderInternal(lastFrame, this.maxFrameSize, Http2FrameTypes.Data, flags, streamId);
+                            Http2CodecUtil.WriteFrameHeaderInternal(lastFrame, _maxFrameSize, Http2FrameTypes.Data, flags, streamId);
                         }
                         else
                         {
@@ -151,15 +151,15 @@ namespace DotNetty.Codecs.Http2
                         ctx.WriteAsync(lastFrame, promiseAggregator.NewPromise());
 
                         // Write the payload.
-                        lastFrame = data.ReadableBytes != this.maxFrameSize ? data.ReadSlice(this.maxFrameSize) : data;
+                        lastFrame = data.ReadableBytes != _maxFrameSize ? data.ReadSlice(_maxFrameSize) : data;
                         data = null;
                         ctx.WriteAsync(lastFrame, promiseAggregator.NewPromise());
                     }
 
                     do
                     {
-                        int frameDataBytes = Math.Min(remainingData, this.maxFrameSize);
-                        int framePaddingBytes = Math.Min(padding, Math.Max(0, (this.maxFrameSize - 1) - frameDataBytes));
+                        int frameDataBytes = Math.Min(remainingData, _maxFrameSize);
+                        int framePaddingBytes = Math.Min(padding, Math.Max(0, (_maxFrameSize - 1) - frameDataBytes));
 
                         // Decrement the remaining counters.
                         padding -= framePaddingBytes;
@@ -225,14 +225,14 @@ namespace DotNetty.Codecs.Http2
         public virtual Task WriteHeadersAsync(IChannelHandlerContext ctx, int streamId,
             IHttp2Headers headers, int padding, bool endOfStream, IPromise promise)
         {
-            return this.WriteHeadersInternal(ctx, streamId, headers, padding, endOfStream, false, 0, 0, false, promise);
+            return WriteHeadersInternal(ctx, streamId, headers, padding, endOfStream, false, 0, 0, false, promise);
         }
 
         public virtual Task WriteHeadersAsync(IChannelHandlerContext ctx, int streamId,
             IHttp2Headers headers, int streamDependency, short weight, bool exclusive,
             int padding, bool endOfStream, IPromise promise)
         {
-            return this.WriteHeadersInternal(
+            return WriteHeadersInternal(
                 ctx,
                 streamId,
                 headers,
@@ -249,7 +249,7 @@ namespace DotNetty.Codecs.Http2
         {
             try
             {
-                if (streamId <= 0) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
+                if ((uint)(streamId - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
                 if (streamDependency <= 0) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamDependency); }
                 VerifyWeight(weight);
 
@@ -271,7 +271,7 @@ namespace DotNetty.Codecs.Http2
         {
             try
             {
-                if (streamId <= 0) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
+                if ((uint)(streamId - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
                 VerifyErrorCode((long)errorCode);
 
                 IByteBuffer buf = ctx.Allocator.Buffer(Http2CodecUtil.RstStreamFrameLength);
@@ -343,19 +343,19 @@ namespace DotNetty.Codecs.Http2
             SimplePromiseAggregator promiseAggregator = new SimplePromiseAggregator(promise);
             try
             {
-                if (streamId <= 0) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
+                if ((uint)(streamId - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
                 if (promisedStreamId <= 0) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.PromisedStreamId); }
                 Http2CodecUtil.VerifyPadding(padding);
 
                 // Encode the entire header block into an intermediate buffer.
                 headerBlock = ctx.Allocator.Buffer();
-                this.headersEncoder.EncodeHeaders(streamId, headers, headerBlock);
+                _headersEncoder.EncodeHeaders(streamId, headers, headerBlock);
 
                 // Read the first fragment (possibly everything).
                 Http2Flags flags = new Http2Flags().PaddingPresent(padding > 0);
                 // IntFieldLength is for the length of the promisedStreamId
                 int nonFragmentLength = Http2CodecUtil.IntFieldLength + padding;
-                int maxFragmentLength = this.maxFrameSize - nonFragmentLength;
+                int maxFragmentLength = _maxFrameSize - nonFragmentLength;
                 IByteBuffer fragment = headerBlock.ReadRetainedSlice(Math.Min(headerBlock.ReadableBytes, maxFragmentLength));
 
                 flags.EndOfHeaders(!headerBlock.IsReadable());
@@ -380,7 +380,7 @@ namespace DotNetty.Codecs.Http2
 
                 if (!flags.EndOfHeaders())
                 {
-                    this.WriteContinuationFramesAsync(ctx, streamId, headerBlock, padding, promiseAggregator);
+                    WriteContinuationFramesAsync(ctx, streamId, headerBlock, padding, promiseAggregator);
                 }
             }
             catch (Http2Exception e)
@@ -508,7 +508,7 @@ namespace DotNetty.Codecs.Http2
             return promiseAggregator.Task;
         }
 
-        public void Dispose() => this.Close();
+        public void Dispose() => Close();
 
         protected virtual void Dispose(bool disposing)
         {
@@ -516,7 +516,7 @@ namespace DotNetty.Codecs.Http2
 
         public virtual void Close()
         {
-            this.Dispose(true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
@@ -528,7 +528,7 @@ namespace DotNetty.Codecs.Http2
             SimplePromiseAggregator promiseAggregator = new SimplePromiseAggregator(promise);
             try
             {
-                if (streamId <= 0) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
+                if ((uint)(streamId - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(ExceptionArgument.StreamID); }
                 if (hasPriority)
                 {
                     if (streamDependency < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(ExceptionArgument.StreamDependency); }
@@ -538,14 +538,14 @@ namespace DotNetty.Codecs.Http2
 
                 // Encode the entire header block.
                 headerBlock = ctx.Allocator.Buffer();
-                this.headersEncoder.EncodeHeaders(streamId, headers, headerBlock);
+                _headersEncoder.EncodeHeaders(streamId, headers, headerBlock);
 
                 Http2Flags flags =
                     new Http2Flags().EndOfStream(endOfStream).PriorityPresent(hasPriority).PaddingPresent(padding > 0);
 
                 // Read the first fragment (possibly everything).
                 int nonFragmentBytes = padding + flags.GetNumPriorityBytes();
-                int maxFragmentLength = this.maxFrameSize - nonFragmentBytes;
+                int maxFragmentLength = _maxFrameSize - nonFragmentBytes;
                 IByteBuffer fragment = headerBlock.ReadRetainedSlice(Math.Min(headerBlock.ReadableBytes, maxFragmentLength));
 
                 // Set the end of headers flag for the first frame.
@@ -577,7 +577,7 @@ namespace DotNetty.Codecs.Http2
 
                 if (!flags.EndOfHeaders())
                 {
-                    this.WriteContinuationFramesAsync(ctx, streamId, headerBlock, padding, promiseAggregator);
+                    WriteContinuationFramesAsync(ctx, streamId, headerBlock, padding, promiseAggregator);
                 }
             }
             catch (Http2Exception e)
@@ -612,11 +612,11 @@ namespace DotNetty.Codecs.Http2
             IByteBuffer headerBlock, int padding, SimplePromiseAggregator promiseAggregator)
         {
             Http2Flags flags = new Http2Flags().PaddingPresent(padding > 0);
-            int maxFragmentLength = this.maxFrameSize - padding;
+            int maxFragmentLength = _maxFrameSize - padding;
             // TODO: same padding is applied to all frames, is this desired?
             if (maxFragmentLength <= 0)
             {
-                promiseAggregator.SetException(ThrowHelper.GetArgumentException_PaddingIsTooLarge(padding, this.maxFrameSize));
+                promiseAggregator.SetException(ThrowHelper.GetArgumentException_PaddingIsTooLarge(padding, _maxFrameSize));
                 return promiseAggregator.Task;
             }
 
@@ -708,7 +708,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(InlineMethod.AggressiveInlining)]
         static void VerifyWindowSizeIncrement(int windowSizeIncrement)
         {
-            if (windowSizeIncrement < 0)
+            if ((uint)windowSizeIncrement > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_PositiveOrZero(ExceptionArgument.windowSizeIncrement);
             }

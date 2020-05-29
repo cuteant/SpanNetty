@@ -15,21 +15,22 @@ namespace DotNetty.Codecs.Http2
     /// <summary>
     /// Default implementation of <see cref="IHttp2ConnectionEncoder"/>.
     /// </summary>
-    public class DefaultHttp2ConnectionEncoder : IHttp2ConnectionEncoder
+    public class DefaultHttp2ConnectionEncoder : IHttp2ConnectionEncoder, IHttp2SettingsReceivedConsumer
     {
-        private readonly IHttp2FrameWriter frameWriter;
-        private readonly IHttp2Connection connection;
-        private IHttp2LifecycleManager lifecycleManager;
+        private readonly IHttp2FrameWriter _frameWriter;
+        private readonly IHttp2Connection _connection;
+        private IHttp2LifecycleManager _lifecycleManager;
         // We prefer ArrayDeque to LinkedList because later will produce more GC.
         // This initial capacity is plenty for SETTINGS traffic.
-        private readonly Deque<Http2Settings> outstandingLocalSettingsQueue = new Deque<Http2Settings>(4);
+        private readonly Deque<Http2Settings> _outstandingLocalSettingsQueue = new Deque<Http2Settings>(4);
+        private Deque<Http2Settings> _outstandingRemoteSettingsQueue;
 
         public DefaultHttp2ConnectionEncoder(IHttp2Connection connection, IHttp2FrameWriter frameWriter)
         {
             if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
             if (frameWriter is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.frameWriter); }
-            this.connection = connection;
-            this.frameWriter = frameWriter;
+            _connection = connection;
+            _frameWriter = frameWriter;
             var connRemote = connection.Remote;
             if (connRemote.FlowController is null)
             {
@@ -40,36 +41,36 @@ namespace DotNetty.Codecs.Http2
         public void LifecycleManager(IHttp2LifecycleManager lifecycleManager)
         {
             if (lifecycleManager is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.lifecycleManager); }
-            this.lifecycleManager = lifecycleManager;
+            _lifecycleManager = lifecycleManager;
         }
 
-        public IHttp2FrameWriter FrameWriter => this.frameWriter;
+        public IHttp2FrameWriter FrameWriter => _frameWriter;
 
-        public IHttp2Connection Connection => this.connection;
+        public IHttp2Connection Connection => _connection;
 
-        public IHttp2RemoteFlowController FlowController => this.connection.Remote.FlowController;
+        public IHttp2RemoteFlowController FlowController => _connection.Remote.FlowController;
 
-        public Http2Settings PollSentSettings => this.outstandingLocalSettingsQueue.RemoveFromFront();
+        public Http2Settings PollSentSettings => _outstandingLocalSettingsQueue.RemoveFromFront();
 
         public virtual void RemoteSettings(Http2Settings settings)
         {
             var pushEnabled = settings.PushEnabled();
-            var config = this.Configuration;
+            var config = Configuration;
             var outboundHeaderConfig = config.HeadersConfiguration;
             var outboundFrameSizePolicy = config.FrameSizePolicy;
             if (pushEnabled.HasValue)
             {
-                if (!this.connection.IsServer && pushEnabled.Value)
+                if (!_connection.IsServer && pushEnabled.Value)
                 {
                     ThrowHelper.ThrowConnectionError_ClientReceivedAValueOfEnablePushSpecifiedToOtherThan0();
                 }
-                this.connection.Remote.AllowPushTo(pushEnabled.Value);
+                _connection.Remote.AllowPushTo(pushEnabled.Value);
             }
 
             var maxConcurrentStreams = settings.MaxConcurrentStreams();
             if (maxConcurrentStreams.HasValue)
             {
-                this.connection.Local.SetMaxActiveStreams((int)Math.Min(maxConcurrentStreams.Value, int.MaxValue));
+                _connection.Local.SetMaxActiveStreams((int)Math.Min(maxConcurrentStreams.Value, int.MaxValue));
             }
 
             var headerTableSize = settings.HeaderTableSize();
@@ -93,7 +94,7 @@ namespace DotNetty.Codecs.Http2
             var initialWindowSize = settings.InitialWindowSize();
             if (initialWindowSize.HasValue)
             {
-                this.FlowController.SetInitialWindowSize(initialWindowSize.Value);
+                FlowController.SetInitialWindowSize(initialWindowSize.Value);
             }
         }
 
@@ -103,7 +104,7 @@ namespace DotNetty.Codecs.Http2
             IHttp2Stream stream;
             try
             {
-                stream = this.RequireStream(streamId);
+                stream = RequireStream(streamId);
 
                 // Verify that the stream is in the appropriate state for sending DATA frames.
                 var steamState = stream.State;
@@ -124,7 +125,7 @@ namespace DotNetty.Codecs.Http2
             }
 
             // Hand control of the frame to the flow controller.
-            this.FlowController.AddFlowControlled(stream,
+            FlowController.AddFlowControlled(stream,
                     new FlowControlledData(this, stream, data, padding, endOfStream, promise, ctx.Channel));
             return promise.Task;
         }
@@ -150,7 +151,7 @@ namespace DotNetty.Codecs.Http2
         {
             try
             {
-                var stream = this.connection.Stream(streamId);
+                var stream = _connection.Stream(streamId);
                 if (stream is null)
                 {
                     try
@@ -160,11 +161,11 @@ namespace DotNetty.Codecs.Http2
                         // been sent until after they have been encoded and placed in the outbound buffer.
                         // Therefore, we let the `LifeCycleManager` will take care of transitioning the state
                         // as appropriate.
-                        stream = this.connection.Local.CreateStream(streamId, /*endOfStream*/ false);
+                        stream = _connection.Local.CreateStream(streamId, /*endOfStream*/ false);
                     }
                     catch (Http2Exception cause)
                     {
-                        if (this.connection.Remote.MayHaveCreatedStream(streamId))
+                        if (_connection.Remote.MayHaveCreatedStream(streamId))
                         {
                             promise.TrySetException(ThrowHelper.GetInvalidOperationException_StreamNoLongerExists(streamId, cause));
                             return promise.Task;
@@ -191,20 +192,20 @@ namespace DotNetty.Codecs.Http2
 
                 // Trailing headers must go through flow control if there are other frames queued in flow control
                 // for this stream.
-                var flowController = this.FlowController;
+                var flowController = FlowController;
                 if (!endOfStream || !flowController.HasFlowControlled(stream))
                 {
                     // The behavior here should mirror that in FlowControlledHeaders
                     promise = promise.Unvoid();
 
-                    var isInformational = ValidateHeadersSentState(stream, headers, this.connection.IsServer, endOfStream);
+                    var isInformational = ValidateHeadersSentState(stream, headers, _connection.IsServer, endOfStream);
 
-                    var future = this.frameWriter.WriteHeadersAsync(ctx, streamId, headers, streamDependency,
-                                                                    weight, exclusive, padding, endOfStream, promise);
+                    var future = _frameWriter.WriteHeadersAsync(ctx, streamId, headers, streamDependency,
+                                                                weight, exclusive, padding, endOfStream, promise);
                     // Writing headers may fail during the encode state if they violate HPACK limits.
                     if (future.IsFaulted || future.IsCanceled)
                     {
-                        this.lifecycleManager.OnError(ctx, true, future.Exception.InnerException);
+                        _lifecycleManager.OnError(ctx, true, future.Exception.InnerException);
                     }
                     else
                     {
@@ -217,7 +218,7 @@ namespace DotNetty.Codecs.Http2
                         if (!future.IsCompleted)
                         {
                             // Either the future is not done or failed in the meantime.
-                            NotifyLifecycleManagerOnError(future, this.lifecycleManager, ctx);
+                            NotifyLifecycleManagerOnError(future, _lifecycleManager, ctx);
                         }
                     }
 
@@ -226,7 +227,7 @@ namespace DotNetty.Codecs.Http2
                         // Must handle calling onError before calling closeStreamLocal, otherwise the error handler will
                         // incorrectly think the stream no longer exists and so may not send RST_STREAM or perform similar
                         // appropriate action.
-                        this.lifecycleManager.CloseStreamLocal(stream, future);
+                        _lifecycleManager.CloseStreamLocal(stream, future);
                     }
 
                     return future;
@@ -242,7 +243,7 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Exception t)
             {
-                this.lifecycleManager.OnError(ctx, true, t);
+                _lifecycleManager.OnError(ctx, true, t);
                 promise.TrySetException(t);
                 return promise.Task;
             }
@@ -251,22 +252,22 @@ namespace DotNetty.Codecs.Http2
         public virtual Task WritePriorityAsync(IChannelHandlerContext ctx, int streamId, int streamDependency,
             short weight, bool exclusive, IPromise promise)
         {
-            return this.frameWriter.WritePriorityAsync(ctx, streamId, streamDependency, weight, exclusive, promise);
+            return _frameWriter.WritePriorityAsync(ctx, streamId, streamDependency, weight, exclusive, promise);
         }
 
         public virtual Task WriteRstStreamAsync(IChannelHandlerContext ctx, int streamId, Http2Error errorCode, IPromise promise)
         {
             // Delegate to the lifecycle manager for proper updating of connection state.
-            return this.lifecycleManager.ResetStreamAsync(ctx, streamId, errorCode, promise);
+            return _lifecycleManager.ResetStreamAsync(ctx, streamId, errorCode, promise);
         }
 
         public virtual Task WriteSettingsAsync(IChannelHandlerContext ctx, Http2Settings settings, IPromise promise)
         {
-            this.outstandingLocalSettingsQueue.AddToBack(settings);
+            _outstandingLocalSettingsQueue.AddToBack(settings);
             try
             {
                 var pushEnabled = settings.PushEnabled();
-                if (pushEnabled.HasValue && this.connection.IsServer)
+                if (pushEnabled.HasValue && _connection.IsServer)
                 {
                     ThrowHelper.ThrowConnectionError_ServerSendingSettintsFrameWithEnablePushSpecified();
                 }
@@ -277,17 +278,46 @@ namespace DotNetty.Codecs.Http2
                 return promise.Task;
             }
 
-            return this.frameWriter.WriteSettingsAsync(ctx, settings, promise);
+            return _frameWriter.WriteSettingsAsync(ctx, settings, promise);
         }
 
         public virtual Task WriteSettingsAckAsync(IChannelHandlerContext ctx, IPromise promise)
         {
-            return this.frameWriter.WriteSettingsAckAsync(ctx, promise);
+            if (_outstandingRemoteSettingsQueue is null)
+            {
+                return _frameWriter.WriteSettingsAckAsync(ctx, promise);
+            }
+            Http2Settings settings = _outstandingRemoteSettingsQueue.RemoveFromFront();
+            if (settings is null)
+            {
+                promise.TrySetException(ThrowHelper.GetConnectionError_attempted_to_write_a_SETTINGS_ACK_with_no_pending_SETTINGS());
+                return promise.Task;
+            }
+            SimplePromiseAggregator aggregator = new SimplePromiseAggregator(promise); // , ctx.channel(), ctx.executor()
+            // Acknowledge receipt of the settings. We should do this before we process the settings to ensure our
+            // remote peer applies these settings before any subsequent frames that we may send which depend upon
+            // these new settings. See https://github.com/netty/netty/issues/6520.
+            _frameWriter.WriteSettingsAckAsync(ctx, aggregator.NewPromise());
+
+            // We create a "new promise" to make sure that status from both the write and the application are taken into
+            // account independently.
+            var applySettingsPromise = aggregator.NewPromise();
+            try
+            {
+                RemoteSettings(settings);
+                applySettingsPromise.Complete();
+            }
+            catch (Exception e)
+            {
+                applySettingsPromise.SetException(e);
+                _lifecycleManager.OnError(ctx, true, e);
+            }
+            return aggregator.DoneAllocatingPromises().Task;
         }
 
         public virtual Task WritePingAsync(IChannelHandlerContext ctx, bool ack, long data, IPromise promise)
         {
-            return this.frameWriter.WritePingAsync(ctx, ack, data, promise);
+            return _frameWriter.WritePingAsync(ctx, ack, data, promise);
         }
 
         public virtual Task WritePushPromiseAsync(IChannelHandlerContext ctx, int streamId, int promisedStreamId,
@@ -295,21 +325,21 @@ namespace DotNetty.Codecs.Http2
         {
             try
             {
-                if (this.connection.GoAwayReceived())
+                if (_connection.GoAwayReceived())
                 {
                     ThrowHelper.ThrowConnectionError_SendingPushPromiseAfterGoAwayReceived();
                 }
 
-                var stream = this.RequireStream(streamId);
+                var stream = RequireStream(streamId);
                 // Reserve the promised stream.
-                this.connection.Local.ReservePushStream(promisedStreamId, stream);
+                _connection.Local.ReservePushStream(promisedStreamId, stream);
 
                 promise = promise.Unvoid();
-                var future = this.frameWriter.WritePushPromiseAsync(ctx, streamId, promisedStreamId, headers, padding, promise);
+                var future = _frameWriter.WritePushPromiseAsync(ctx, streamId, promisedStreamId, headers, padding, promise);
                 // Writing headers may fail during the encode state if they violate HPACK limits.
                 if (future.IsFaulted || future.IsCanceled)
                 {
-                    this.lifecycleManager.OnError(ctx, true, future.Exception.InnerException);
+                    _lifecycleManager.OnError(ctx, true, future.Exception.InnerException);
                 }
                 else
                 {
@@ -319,14 +349,14 @@ namespace DotNetty.Codecs.Http2
                     if (!future.IsCompleted)
                     {
                         // Either the future is not done or failed in the meantime.
-                        NotifyLifecycleManagerOnError(future, this.lifecycleManager, ctx);
+                        NotifyLifecycleManagerOnError(future, _lifecycleManager, ctx);
                     }
                 }
                 return future;
             }
             catch (Exception t)
             {
-                this.lifecycleManager.OnError(ctx, true, t);
+                _lifecycleManager.OnError(ctx, true, t);
                 promise.TrySetException(t);
                 return promise.Task;
             }
@@ -335,7 +365,7 @@ namespace DotNetty.Codecs.Http2
         public virtual Task WriteGoAwayAsync(IChannelHandlerContext ctx, int lastStreamId, Http2Error errorCode,
             IByteBuffer debugData, IPromise promise)
         {
-            return this.lifecycleManager.GoAwayAsync(ctx, lastStreamId, errorCode, debugData, promise);
+            return _lifecycleManager.GoAwayAsync(ctx, lastStreamId, errorCode, debugData, promise);
         }
 
         public virtual Task WriteWindowUpdateAsync(IChannelHandlerContext ctx, int streamId,
@@ -349,12 +379,12 @@ namespace DotNetty.Codecs.Http2
         public virtual Task WriteFrameAsync(IChannelHandlerContext ctx, Http2FrameTypes frameType, int streamId,
             Http2Flags flags, IByteBuffer payload, IPromise promise)
         {
-            return this.frameWriter.WriteFrameAsync(ctx, frameType, streamId, flags, payload, promise);
+            return _frameWriter.WriteFrameAsync(ctx, frameType, streamId, flags, payload, promise);
         }
 
         public virtual void Close()
         {
-            this.frameWriter.Close();
+            _frameWriter.Close();
             Dispose(true);
             GC.SuppressFinalize(this);
         }
@@ -363,18 +393,27 @@ namespace DotNetty.Codecs.Http2
         {
         }
 
-        public void Dispose() => this.Close();
+        public void Dispose() => Close();
 
-        public IHttp2FrameWriterConfiguration Configuration => this.frameWriter.Configuration;
+        public IHttp2FrameWriterConfiguration Configuration => _frameWriter.Configuration;
 
         private IHttp2Stream RequireStream(int streamId)
         {
-            var stream = this.connection.Stream(streamId);
+            var stream = _connection.Stream(streamId);
             if (stream is null)
             {
-                ThrowHelper.ThrowArgumentException_RequireStream(this.connection, streamId);
+                ThrowHelper.ThrowArgumentException_RequireStream(_connection, streamId);
             }
             return stream;
+        }
+
+        public void ConsumeReceivedSettings(Http2Settings settings)
+        {
+            if (_outstandingRemoteSettingsQueue == null)
+            {
+                _outstandingRemoteSettingsQueue = new Deque<Http2Settings>(2);
+            }
+            _outstandingRemoteSettingsQueue.AddToBack(settings);
         }
 
         /// <summary>
@@ -388,41 +427,57 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         sealed class FlowControlledData : FlowControlledBase
         {
-            private readonly CoalescingBufferQueue queue;
-            private int dataSize;
+            private readonly CoalescingBufferQueue _queue;
+            private int _dataSize;
 
             public FlowControlledData(DefaultHttp2ConnectionEncoder encoder,
                 IHttp2Stream stream, IByteBuffer buf, int padding, bool endOfStream, IPromise promise, IChannel channel)
                 : base(encoder, stream, padding, endOfStream, promise)
             {
-                this.queue = new CoalescingBufferQueue(channel);
-                this.queue.Add(buf, promise);
-                this.dataSize = this.queue.ReadableBytes();
+                _queue = new CoalescingBufferQueue(channel);
+                _queue.Add(buf, promise);
+                _dataSize = _queue.ReadableBytes();
             }
 
-            public override int Size => this.dataSize + this.padding;
+            public override int Size => _dataSize + _padding;
 
             public override void Error(IChannelHandlerContext ctx, Exception cause)
             {
-                this.queue.ReleaseAndFailAll(cause);
+                _queue.ReleaseAndFailAll(cause);
                 // Don't update dataSize because we need to ensure the size() method returns a consistent size even after
                 // error so we don't invalidate flow control when returning bytes to flow control.
-                this.encoder.lifecycleManager.OnError(ctx, true, cause);
+                //
+                // That said we will set dataSize and padding to 0 in the write(...) method if we cleared the queue
+                // because of an error.
+                _owner._lifecycleManager.OnError(ctx, true, cause);
             }
 
             public override void Write(IChannelHandlerContext ctx, int allowedBytes)
             {
-                int queuedData = this.queue.ReadableBytes();
-                if (!endOfStream)
+                int queuedData = _queue.ReadableBytes();
+                if (!_endOfStream)
                 {
                     if (0u >= (uint)queuedData)
                     {
-                        // There's no need to write any data frames because there are only empty data frames in the queue
-                        // and it is not end of stream yet. Just complete their promises by getting the buffer corresponding
-                        // to 0 bytes and writing it to the channel (to preserve notification order).
-                        var writePromise0 = ctx.NewPromise();
-                        this.AddListener(writePromise0);
-                        ctx.WriteAsync(this.queue.Remove(0, writePromise0), writePromise0);
+                        if (_queue.IsEmpty())
+                        {
+                            // When the queue is empty it means we did clear it because of an error(...) call
+                            // (as otherwise we will have at least 1 entry in there), which will happen either when called
+                            // explicit or when the write itself fails. In this case just set dataSize and padding to 0
+                            // which will signal back that the whole frame was consumed.
+                            //
+                            // See https://github.com/netty/netty/issues/8707.
+                            _padding = _dataSize = 0;
+                        }
+                        else
+                        {
+                            // There's no need to write any data frames because there are only empty data frames in the
+                            // queue and it is not end of stream yet. Just complete their promises by getting the buffer
+                            // corresponding to 0 bytes and writing it to the channel (to preserve notification order).
+                            var writePromise0 = ctx.NewPromise();
+                            AddListener(writePromise0);
+                            ctx.WriteAsync(_queue.Remove(0, writePromise0), writePromise0);
+                        }
                         return;
                     }
 
@@ -435,31 +490,30 @@ namespace DotNetty.Codecs.Http2
                 // Determine how much data to write.
                 int writableData = Math.Min(queuedData, allowedBytes);
                 var writePromise = ctx.NewPromise();
-                this.AddListener(writePromise);
-                var toWrite = this.queue.Remove(writableData, writePromise);
-                dataSize = this.queue.ReadableBytes();
+                AddListener(writePromise);
+                var toWrite = _queue.Remove(writableData, writePromise);
+                _dataSize = _queue.ReadableBytes();
 
                 // Determine how much padding to write.
-                int writablePadding = Math.Min(allowedBytes - writableData, padding);
-                padding -= writablePadding;
+                int writablePadding = Math.Min(allowedBytes - writableData, _padding);
+                _padding -= writablePadding;
 
                 // Write the frame(s).
-                this.encoder.frameWriter.WriteDataAsync(ctx, stream.Id, toWrite, writablePadding,
-                        endOfStream && 0u >= (uint)this.Size, writePromise);
+                _owner._frameWriter.WriteDataAsync(ctx, _stream.Id, toWrite, writablePadding,
+                        _endOfStream && 0u >= (uint)Size, writePromise);
             }
 
             public override bool Merge(IChannelHandlerContext ctx, IHttp2RemoteFlowControlled next)
             {
-                var nextData = next as FlowControlledData;
-                if (nextData is null || (uint)this.Size > (uint)(int.MaxValue - nextData.Size))
+                if (!(next is FlowControlledData nextData) || (uint)Size > (uint)(int.MaxValue - nextData.Size))
                 {
                     return false;
                 }
-                nextData.queue.CopyTo(this.queue);
-                dataSize = this.queue.ReadableBytes();
+                nextData._queue.CopyTo(_queue);
+                _dataSize = _queue.ReadableBytes();
                 // Given that we're merging data into a frame it doesn't really make sense to accumulate padding.
-                padding = Math.Max(padding, nextData.padding);
-                endOfStream = nextData.endOfStream;
+                _padding = Math.Max(_padding, nextData._padding);
+                _endOfStream = nextData._endOfStream;
                 return true;
             }
         }
@@ -486,20 +540,20 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         sealed class FlowControlledHeaders : FlowControlledBase
         {
-            private readonly IHttp2Headers headers;
-            private readonly int streamDependency;
-            private readonly short weight;
-            private readonly bool exclusive;
+            private readonly IHttp2Headers _headers;
+            private readonly int _streamDependency;
+            private readonly short _weight;
+            private readonly bool _exclusive;
 
             public FlowControlledHeaders(DefaultHttp2ConnectionEncoder encoder,
                 IHttp2Stream stream, IHttp2Headers headers, int streamDependency, short weight,
                 bool exclusive, int padding, bool endOfStream, IPromise promise)
                 : base(encoder, stream, padding, endOfStream, promise.Unvoid())
             {
-                this.headers = headers;
-                this.streamDependency = streamDependency;
-                this.weight = weight;
-                this.exclusive = exclusive;
+                _headers = headers;
+                _streamDependency = streamDependency;
+                _weight = weight;
+                _exclusive = exclusive;
             }
 
             public override int Size => 0;
@@ -508,26 +562,26 @@ namespace DotNetty.Codecs.Http2
             {
                 if (ctx is object)
                 {
-                    this.encoder.lifecycleManager.OnError(ctx, true, cause);
+                    _owner._lifecycleManager.OnError(ctx, true, cause);
                 }
-                promise.TrySetException(cause);
+                _promise.TrySetException(cause);
             }
 
             public override void Write(IChannelHandlerContext ctx, int allowedBytes)
             {
-                var isInformational = ValidateHeadersSentState(stream, headers, this.encoder.connection.IsServer, endOfStream);
+                var isInformational = ValidateHeadersSentState(_stream, _headers, _owner._connection.IsServer, _endOfStream);
                 // The code is currently requiring adding this listener before writing, in order to call onError() before
                 // closeStreamLocal().
-                this.AddListener(this.promise);
+                AddListener(_promise);
 
-                var f = this.encoder.frameWriter.WriteHeadersAsync(ctx, stream.Id, headers, streamDependency, weight, exclusive,
-                                                                   padding, endOfStream, promise);
+                var f = _owner._frameWriter.WriteHeadersAsync(ctx, _stream.Id, _headers, _streamDependency, _weight, _exclusive,
+                                                                   _padding, _endOfStream, _promise);
                 // Writing headers may fail during the encode state if they violate HPACK limits.
                 if (f.IsSuccess())
                 {
                     // This just sets internal stream state which is used elsewhere in the codec and doesn't
                     // necessarily mean the write will complete successfully.
-                    this.stream.HeadersSent(isInformational);
+                    _stream.HeadersSent(isInformational);
                 }
             }
 
@@ -542,23 +596,23 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public abstract class FlowControlledBase : IHttp2RemoteFlowControlled
         {
-            protected readonly DefaultHttp2ConnectionEncoder encoder;
-            protected readonly IHttp2Stream stream;
-            protected IPromise promise;
-            protected bool endOfStream;
-            protected int padding;
+            protected readonly DefaultHttp2ConnectionEncoder _owner;
+            protected readonly IHttp2Stream _stream;
+            protected IPromise _promise;
+            protected bool _endOfStream;
+            protected int _padding;
 
             public FlowControlledBase(DefaultHttp2ConnectionEncoder encoder, IHttp2Stream stream, int padding, bool endOfStream, IPromise promise)
             {
-                if (padding < 0)
+                if ((uint)padding > SharedConstants.TooBigOrNegative)
                 {
                     ThrowHelper.ThrowArgumentException_PositiveOrZero(ExceptionArgument.padding);
                 }
-                this.encoder = encoder;
-                this.padding = padding;
-                this.endOfStream = endOfStream;
-                this.stream = stream;
-                this.promise = promise;
+                _owner = encoder;
+                _padding = padding;
+                _endOfStream = endOfStream;
+                _stream = stream;
+                _promise = promise;
 
             }
 
@@ -568,7 +622,7 @@ namespace DotNetty.Codecs.Http2
                 var self = (FlowControlledBase)state;
                 if (task.IsFaulted)
                 {
-                    self.Error(self.encoder.FlowController.ChannelHandlerContext, task.Exception.InnerException);
+                    self.Error(self._owner.FlowController.ChannelHandlerContext, task.Exception.InnerException);
                 }
             }
 
@@ -587,9 +641,9 @@ namespace DotNetty.Codecs.Http2
 
             public void WriteComplete()
             {
-                if (this.endOfStream)
+                if (_endOfStream)
                 {
-                    this.encoder.lifecycleManager.CloseStreamLocal(stream, promise.Task);
+                    _owner._lifecycleManager.CloseStreamLocal(_stream, _promise.Task);
                 }
             }
         }

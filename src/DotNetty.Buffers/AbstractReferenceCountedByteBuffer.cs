@@ -50,6 +50,7 @@ namespace DotNetty.Buffers
             return this.Retain0(increment);
         }
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         IReferenceCounted Retain0(int increment)
         {
             int currRefCnt = Volatile.Read(ref this.referenceCount);
@@ -96,6 +97,7 @@ namespace DotNetty.Buffers
             return this.Release0(decrement);
         }
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         bool Release0(int decrement)
         {
             int currRefCnt = Volatile.Read(ref this.referenceCount);

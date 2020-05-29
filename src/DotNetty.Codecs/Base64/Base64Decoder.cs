@@ -9,14 +9,14 @@ namespace DotNetty.Codecs.Base64
 
     public sealed class Base64Decoder : MessageToMessageDecoder<IByteBuffer>
     {
-        readonly Base64Dialect dialect;
+        readonly IBase64Dialect dialect;
 
         public Base64Decoder()
             : this(Base64Dialect.STANDARD)
         {
         }
 
-        public Base64Decoder(in Base64Dialect dialect)
+        public Base64Decoder(IBase64Dialect dialect)
         {
             this.dialect = dialect;
         }

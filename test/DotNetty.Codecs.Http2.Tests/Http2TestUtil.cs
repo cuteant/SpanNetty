@@ -2,12 +2,18 @@
 namespace DotNetty.Codecs.Http2.Tests
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Threading;
+    using System.Threading.Tasks;
     using DotNetty.Buffers;
+    using DotNetty.Codecs.Http2;
+    using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
+    using Moq;
+    using Xunit;
 
     /**
      * Interface that allows for running a operation that throws a {@link Http2Exception}.
@@ -99,7 +105,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
         internal static HpackEncoder NewTestEncoder(bool ignoreMaxHeaderListSize, long maxHeaderListSize, long maxHeaderTableSize)
         {
-            HpackEncoder hpackEncoder = new HpackEncoder();
+            HpackEncoder hpackEncoder = new HpackEncoder(false, 16, 0);
             var buf = Unpooled.Buffer();
             try
             {
@@ -127,7 +133,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
         internal static HpackDecoder NewTestDecoder(long maxHeaderListSize, long maxHeaderTableSize)
         {
-            HpackDecoder hpackDecoder = new HpackDecoder(maxHeaderListSize, 32);
+            HpackDecoder hpackDecoder = new HpackDecoder(maxHeaderListSize);
             hpackDecoder.SetMaxHeaderTableSize(maxHeaderTableSize);
             return hpackDecoder;
         }
@@ -475,6 +481,251 @@ namespace DotNetty.Codecs.Http2.Tests
             public bool HasFrame => this.hasFrame;
 
             public int WindowSize => this.isWriteAllowed ? (int)Math.Min(pendingBytes, int.MaxValue) : -1;
+        }
+
+        public static Mock<IHttp2FrameWriter> MockedFrameWriter()
+        {
+            ConcurrentQueue<IByteBuffer> buffers = new ConcurrentQueue<IByteBuffer>();
+            var frameWriter = new Mock<IHttp2FrameWriter>();
+
+            frameWriter
+                .Setup(x => x.Close())
+                .Callback(() =>
+                {
+                    while (buffers.TryDequeue(out var buf))
+                    {
+                        buf.Release();
+                    }
+                });
+            frameWriter.Setup(x => x.Configuration).Returns(MockHttp2FrameWriterConfiguration.Instance);
+
+            frameWriter
+                .Setup(x => x.WriteDataAsync(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.IsAny<int>(),
+                    It.IsAny<IByteBuffer>(),
+                    It.IsAny<int>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, int, IByteBuffer, int, bool, IPromise>((c, i, buf, x, y, p) =>
+                {
+                    buffers.Enqueue(buf);
+                    p.Complete();
+                    return p.Task;
+                });
+
+            frameWriter
+                .Setup(x => x.WriteFrameAsync(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.IsAny<Http2FrameTypes>(),
+                    It.IsAny<int>(),
+                    It.IsAny<Http2Flags>(),
+                    It.IsAny<IByteBuffer>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, Http2FrameTypes, int, Http2Flags, IByteBuffer, IPromise>((ctx, ft, streamId, flag, payload, p) =>
+                {
+                    buffers.Enqueue(payload);
+                    p.Complete();
+                    return p.Task;
+                });
+
+            frameWriter
+                .Setup(x => x.WriteGoAwayAsync(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.IsAny<int>(),
+                    It.IsAny<Http2Error>(),
+                    It.IsAny<IByteBuffer>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, int, Http2Error, IByteBuffer, IPromise>((ctx, streamId, errCode, debugData, p) =>
+                {
+                    buffers.Enqueue(debugData);
+                    p.Complete();
+                    return p.Task;
+                });
+
+            frameWriter
+                .Setup(x => x.WriteHeadersAsync(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.IsAny<int>(),
+                    It.IsAny<IHttp2Headers>(),
+                    It.IsAny<int>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, bool, IPromise>((ctx, streamId, headers, padding, endOfStream, p) =>
+                {
+                    p.Complete();
+                    return p.Task;
+                });
+
+            frameWriter
+                .Setup(x => x.WriteHeadersAsync(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.IsAny<int>(),
+                    It.IsAny<IHttp2Headers>(),
+                    It.IsAny<int>(),
+                    It.IsAny<short>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<int>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, short, bool, int, bool, IPromise>((ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream, p) =>
+                {
+                    p.Complete();
+                    return p.Task;
+                });
+
+            frameWriter
+                .Setup(x => x.WritePingAsync(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<long>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, bool, long, IPromise>((ctx, ack, data, p) =>
+                {
+                    p.Complete();
+                    return p.Task;
+                });
+
+            frameWriter
+                .Setup(x => x.WritePriorityAsync(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<short>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, int, int, short, bool, IPromise>((ctx, streamId, streamDependency, weight, exclusive, p) =>
+                {
+                    p.Complete();
+                    return p.Task;
+                });
+
+            frameWriter
+                .Setup(x => x.WritePushPromiseAsync(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<IHttp2Headers>(),
+                    It.IsAny<int>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, int, int, IHttp2Headers, int, IPromise>((ctx, streamId, promisedStreamId, headers, padding, p) =>
+                {
+                    p.Complete();
+                    return p.Task;
+                });
+
+            frameWriter
+                .Setup(x => x.WriteRstStreamAsync(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.IsAny<int>(),
+                    It.IsAny<Http2Error>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, int, Http2Error, IPromise>((ctx, streamId, errorCode, p) =>
+                {
+                    p.Complete();
+                    return p.Task;
+                });
+
+            frameWriter
+                .Setup(x => x.WriteSettingsAckAsync(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, IPromise>((ctx, p) =>
+                {
+                    p.Complete();
+                    return p.Task;
+                });
+
+            frameWriter
+                .Setup(x => x.WriteSettingsAsync(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.IsAny<Http2Settings>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, Http2Settings, IPromise>((ctx, settings, p) =>
+                {
+                    p.Complete();
+                    return p.Task;
+                });
+
+            frameWriter
+                .Setup(x => x.WriteWindowUpdateAsync(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, int, int, IPromise>((ctx, streamId, windowSizeIncrement, p) =>
+                {
+                    p.Complete();
+                    return p.Task;
+                });
+
+            return frameWriter;
+        }
+
+        sealed class MockHttp2FrameWriterConfiguration : IHttp2FrameWriterConfiguration
+        {
+            public static readonly MockHttp2FrameWriterConfiguration Instance = new MockHttp2FrameWriterConfiguration();
+
+            public IHttp2HeadersEncoderConfiguration HeadersConfiguration => MockHttp2HeadersEncoderConfiguration.Instance;
+
+            public IHttp2FrameSizePolicy FrameSizePolicy => MockHttp2FrameSizePolicy.Instance;
+        }
+
+        sealed class MockHttp2HeadersEncoderConfiguration : IHttp2HeadersEncoderConfiguration
+        {
+            public static readonly MockHttp2HeadersEncoderConfiguration Instance = new MockHttp2HeadersEncoderConfiguration();
+
+            public long MaxHeaderTableSize => 0L;
+
+            public long MaxHeaderListSize => 0L;
+
+            public void SetMaxHeaderListSize(long max)
+            {
+                // NOOP
+            }
+
+            public void SetMaxHeaderTableSize(long max)
+            {
+                // NOOP
+            }
+        }
+
+        sealed class MockHttp2FrameSizePolicy : IHttp2FrameSizePolicy
+        {
+            public static readonly MockHttp2FrameSizePolicy Instance = new MockHttp2FrameSizePolicy();
+
+            public int MaxFrameSize => 0;
+
+            public void SetMaxFrameSize(int max)
+            {
+                // NOOP
+            }
+        }
+
+        public static IByteBuffer BB(string s)
+        {
+            return ByteBufferUtil.WriteUtf8(UnpooledByteBufferAllocator.Default, s);
+        }
+
+        public static void AssertEqualsAndRelease(IHttp2Frame expected, IHttp2Frame actual)
+        {
+            try
+            {
+                Assert.Equal(expected, actual);
+            }
+            finally
+            {
+                ReferenceCountUtil.Release(expected);
+                ReferenceCountUtil.Release(actual);
+                // Will return -1 when not implements ReferenceCounted.
+                Assert.True(RefCnt(expected) <= 0);
+                Assert.True(RefCnt(actual) <= 0);
+            }
+        }
+
+        private static int RefCnt(object msg)
+        {
+            return msg is IReferenceCounted counted ? counted.ReferenceCount : -1;
         }
     }
 }
