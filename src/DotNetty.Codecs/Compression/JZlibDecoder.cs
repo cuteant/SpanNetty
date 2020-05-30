@@ -40,11 +40,11 @@ namespace DotNetty.Codecs.Compression
             }
         }
 
-        public override bool IsClosed => SharedConstants.True == Volatile.Read(ref this.finished);
+        public override bool IsClosed => SharedConstants.False < (uint)Volatile.Read(ref this.finished);
 
         protected internal override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
-            if (SharedConstants.True == Volatile.Read(ref this.finished))
+            if (SharedConstants.False < (uint)Volatile.Read(ref this.finished))
             {
                 // Skip data received after finished.
                 input.SkipBytes(input.ReadableBytes);

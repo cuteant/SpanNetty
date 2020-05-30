@@ -112,7 +112,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         void ClearReadPending0() => this.ReadPending = false;
 
-        protected bool InputShutdown => SharedConstants.True == Volatile.Read(ref this.inputShutdown);
+        protected bool InputShutdown => SharedConstants.False < (uint)Volatile.Read(ref this.inputShutdown);
 
         protected void ShutdownInput() => Interlocked.Exchange(ref this.inputShutdown, SharedConstants.True);
 
@@ -431,7 +431,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override void DoBeginRead()
         {
-            if (SharedConstants.True == Volatile.Read(ref this.inputShutdown))
+            if (SharedConstants.False < (uint)Volatile.Read(ref this.inputShutdown))
             {
                 return;
             }

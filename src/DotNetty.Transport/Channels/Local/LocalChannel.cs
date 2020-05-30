@@ -172,7 +172,7 @@ namespace DotNetty.Transport.Channels.Local
                     Interlocked.Exchange(ref this.state, State.Closed);
 
                     // Preserve order of event and force a read operation now before the close operation is processed.
-                    if (SharedConstants.True == Volatile.Read(ref this.writeInProgress) && peer is object) { this.FinishPeerRead(peer); }
+                    if (SharedConstants.False < (uint)Volatile.Read(ref this.writeInProgress) && peer is object) { this.FinishPeerRead(peer); }
 
                     TaskCompletionSource promise = Volatile.Read(ref this.connectPromise);
                     if (promise is object)
@@ -264,7 +264,7 @@ namespace DotNetty.Transport.Channels.Local
 
         protected override void DoBeginRead()
         {
-            if (SharedConstants.True == Volatile.Read(ref this.readInProgress))
+            if (SharedConstants.False < (uint)Volatile.Read(ref this.readInProgress))
             {
                 return;
             }
@@ -368,7 +368,7 @@ namespace DotNetty.Transport.Channels.Local
         void FinishPeerRead(LocalChannel peer)
         {
             // If the peer is also writing, then we must schedule the event on the event loop to preserve read order.
-            if (peer.EventLoop == this.EventLoop && SharedConstants.False == Volatile.Read(ref peer.writeInProgress))
+            if (peer.EventLoop == this.EventLoop && SharedConstants.False >= (uint)Volatile.Read(ref peer.writeInProgress))
             {
                 this.FinishPeerRead0(peer);
             }
@@ -384,7 +384,7 @@ namespace DotNetty.Transport.Channels.Local
             // we keep track of the task, and coordinate later that our read can't happen until the peer is done.
             try
             {
-                if (SharedConstants.True == Volatile.Read(ref peer.writeInProgress))
+                if (SharedConstants.False < (uint)Volatile.Read(ref peer.writeInProgress))
                 {
                     Interlocked.Exchange(ref peer.finishReadFuture, peer.EventLoop.SubmitAsync(
                         () =>
@@ -438,7 +438,7 @@ namespace DotNetty.Transport.Channels.Local
             // We should only set readInProgress to false if there is any data that was read as otherwise we may miss to
             // forward data later on.
             IChannelPipeline peerPipeline = peer.Pipeline;
-            if (SharedConstants.True == Volatile.Read(ref peer.readInProgress) && peer.inboundBuffer.NonEmpty)
+            if (SharedConstants.False < (uint)Volatile.Read(ref peer.readInProgress) && peer.inboundBuffer.NonEmpty)
             {
                 Interlocked.Exchange(ref peer.readInProgress, SharedConstants.False);
                 peer.ReadInbound();

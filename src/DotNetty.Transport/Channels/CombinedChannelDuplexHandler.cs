@@ -71,7 +71,7 @@ namespace DotNetty.Transport.Channels
         [MethodImpl(InlineMethod.AggressiveInlining)]
         void CheckAdded()
         {
-            if (SharedConstants.False == Volatile.Read(ref this.handlerAdded))
+            if (SharedConstants.False >= (uint)Volatile.Read(ref this.handlerAdded))
             {
                 ThrowHelper.ThrowInvalidOperationException_HandlerNotAddedToPipeYet();
             }

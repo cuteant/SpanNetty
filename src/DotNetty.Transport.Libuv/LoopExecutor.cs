@@ -436,7 +436,7 @@ namespace DotNetty.Transport.Libuv
             //
             // If the executor is in the event loop and in the middle of RunAllTasks, no need to 
             // wake up the loop again because this is normally called by the current running task.
-            if (!inEventLoop || SharedConstants.True == Volatile.Read(ref this.wakeUp))
+            if (!inEventLoop || SharedConstants.False < (uint)Volatile.Read(ref this.wakeUp))
             {
                 this.asyncHandle.Send();
             }
@@ -448,7 +448,7 @@ namespace DotNetty.Transport.Libuv
             {
                 this.ScheduledTaskQueue.TryEnqueue(task);
                 //this.WakeUp(true);
-                if (SharedConstants.True == Volatile.Read(ref this.wakeUp))
+                if (SharedConstants.False < (uint)Volatile.Read(ref this.wakeUp))
                 {
                     this.asyncHandle.Send();
                 }

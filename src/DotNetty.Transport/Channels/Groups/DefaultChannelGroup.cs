@@ -349,7 +349,7 @@ namespace DotNetty.Transport.Channels.Groups
                 channel.CloseCompletion.ContinueWith(RemoveChannelAfterCloseAction, new Tuple<DefaultChannelGroup, IChannel>(this, channel), TaskContinuationOptions.ExecuteSynchronously);
             }
 
-            if (this.stayClosed && (SharedConstants.True == Volatile.Read(ref this.closed)))
+            if (this.stayClosed && (SharedConstants.False < (uint)Volatile.Read(ref this.closed)))
             {
 
                 // First add channel, than check if closed.

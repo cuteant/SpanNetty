@@ -246,7 +246,7 @@ namespace DotNetty.Transport.Channels.Pool
         {
             Debug.Assert(this.executor.InEventLoop);
 
-            if (SharedConstants.True == Volatile.Read(ref this.closed))
+            if (SharedConstants.False < (uint)Volatile.Read(ref this.closed))
             {
                 ThrowHelper.ThrowInvalidOperationException_PoolClosedOnAcquireException();
             }
@@ -344,7 +344,7 @@ namespace DotNetty.Transport.Channels.Pool
 
             void FailIfClosed(IChannel ch)
             {
-                if (SharedConstants.True == Volatile.Read(ref this.closed))
+                if (SharedConstants.False < (uint)Volatile.Read(ref this.closed))
                 {
                     ch.CloseAsync();
                     ThrowHelper.ThrowInvalidOperationException_PoolClosedOnReleaseException();
@@ -393,7 +393,7 @@ namespace DotNetty.Transport.Channels.Pool
 
         void Close()
         {
-            if (SharedConstants.True == Interlocked.Exchange(ref this.closed, SharedConstants.True))
+            if (SharedConstants.False < (uint)Interlocked.Exchange(ref this.closed, SharedConstants.True))
             {
                 return;
             }
@@ -465,7 +465,7 @@ namespace DotNetty.Transport.Channels.Pool
             {
                 var promise = this.Promise;
                 
-                if (SharedConstants.True == Volatile.Read(ref this.pool.closed))
+                if (SharedConstants.False < (uint)Volatile.Read(ref this.pool.closed))
                 {
                     if (promise is object)
                     {
@@ -524,7 +524,7 @@ namespace DotNetty.Transport.Channels.Pool
                     {
                         Debug.Assert(this.pool.executor.InEventLoop);
 
-                        if (SharedConstants.True == Volatile.Read(ref this.pool.closed)) 
+                        if (SharedConstants.False < (uint)Volatile.Read(ref this.pool.closed)) 
                         {
                             if (t.IsSuccess())
                             {

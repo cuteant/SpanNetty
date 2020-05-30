@@ -129,7 +129,7 @@ namespace DotNetty.Common.Utilities
 
             // Will be set to true one the attribute is removed via GetAndRemove() or Remove()
             protected int removed = SharedConstants.False;
-            public bool Removed => SharedConstants.True == Volatile.Read(ref this.removed);
+            public bool Removed => SharedConstants.False < (uint)Volatile.Read(ref this.removed);
 
             public abstract IConstant GetKey();
 

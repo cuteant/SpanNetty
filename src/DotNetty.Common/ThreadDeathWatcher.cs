@@ -58,7 +58,7 @@ namespace DotNetty.Common
         {
             PendingEntries.TryEnqueue(new Entry(thread, task, isWatch));
 
-            if (Interlocked.CompareExchange(ref started, SharedConstants.True, SharedConstants.False) == SharedConstants.False)
+            if (SharedConstants.False >= (uint)Interlocked.CompareExchange(ref started, SharedConstants.True, SharedConstants.False))
             {
                 var watcherThread = new Thread(s => ((IRunnable)s).Run());
                 watcherThread.Start(watcher);
@@ -111,7 +111,7 @@ namespace DotNetty.Common
                         // Mark the current worker thread as stopped.
                         // The following CAS must always success and must be uncontended,
                         // because only one watcher thread should be running at the same time.
-                        bool stopped = Interlocked.CompareExchange(ref started, SharedConstants.False, SharedConstants.True) == SharedConstants.True;
+                        bool stopped = SharedConstants.False < (uint)Interlocked.CompareExchange(ref started, SharedConstants.False, SharedConstants.True);
                         Debug.Assert(stopped);
 
                         // Check if there are pending entries added by watch() while we do CAS above.
@@ -125,7 +125,7 @@ namespace DotNetty.Common
                         }
 
                         // There are pending entries again, added by watch()
-                        if (Interlocked.CompareExchange(ref started, SharedConstants.True, SharedConstants.False) != SharedConstants.False)
+                        if (SharedConstants.False < (uint)Interlocked.CompareExchange(ref started, SharedConstants.True, SharedConstants.False))
                         {
                             // watch() started a new watcher thread and set 'started' to true.
                             // -> terminate this thread so that the new watcher reads from pendingEntries exclusively.

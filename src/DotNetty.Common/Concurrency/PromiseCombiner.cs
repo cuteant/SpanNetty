@@ -34,7 +34,7 @@ namespace DotNetty.Common.Concurrency
 
         public void Add(Task future)
         {
-            if (SharedConstants.True == Volatile.Read(ref this.doneAdding))
+            if (SharedConstants.False < (uint)Volatile.Read(ref this.doneAdding))
             {
                 ThrowHelper.ThrowInvalidOperationException_AddingPromisesIsNotAllowedAfterFinishedAdding();
             }
@@ -77,7 +77,7 @@ namespace DotNetty.Common.Concurrency
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.aggregatePromise);
             }
-            if (SharedConstants.True == Volatile.Read(ref this.doneAdding))
+            if (SharedConstants.False < (uint)Volatile.Read(ref this.doneAdding))
             {
                 ThrowHelper.ThrowInvalidOperationException_AlreadyFinished();
             }
@@ -104,7 +104,7 @@ namespace DotNetty.Common.Concurrency
             {
                 Interlocked.Exchange(ref self.causes, future.Exception.InnerExceptions);
             }
-            if (Volatile.Read(ref self.doneCount) == Volatile.Read(ref self.expectedCount) && SharedConstants.True == Volatile.Read(ref self.doneAdding))
+            if (Volatile.Read(ref self.doneCount) == Volatile.Read(ref self.expectedCount) && SharedConstants.False < (uint)Volatile.Read(ref self.doneAdding))
             {
                 self.TryPromise();
             }

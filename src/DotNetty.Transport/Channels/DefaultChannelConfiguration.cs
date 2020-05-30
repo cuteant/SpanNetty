@@ -208,11 +208,11 @@ namespace DotNetty.Transport.Channels
 
         public bool AutoRead
         {
-            get { return SharedConstants.True == Volatile.Read(ref this.autoRead); }
+            get { return SharedConstants.False < (uint)Volatile.Read(ref this.autoRead); }
             set
             {
 #pragma warning disable 420 // atomic exchange is ok
-                bool oldAutoRead = SharedConstants.True == Interlocked.Exchange(ref this.autoRead, value ? SharedConstants.True : SharedConstants.False);
+                bool oldAutoRead = SharedConstants.False < (uint)Interlocked.Exchange(ref this.autoRead, value ? SharedConstants.True : SharedConstants.False);
 #pragma warning restore 420
                 if (value && !oldAutoRead)
                 {
@@ -231,7 +231,7 @@ namespace DotNetty.Transport.Channels
 
         public bool AutoClose
         {
-            get { return SharedConstants.True == Volatile.Read(ref this.autoClose); }
+            get { return SharedConstants.False < (uint)Volatile.Read(ref this.autoClose); }
             set { Interlocked.Exchange(ref this.autoClose, value ? SharedConstants.True : SharedConstants.False); }
         }
 

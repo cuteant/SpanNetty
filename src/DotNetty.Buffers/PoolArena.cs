@@ -873,11 +873,11 @@ namespace DotNetty.Buffers
                 // no-op
             }
 
-            public bool IsDisposed => SharedConstants.True == _disposed;
+            public bool IsDisposed => SharedConstants.False < (uint)_disposed;
 
             protected override void Dispose(bool disposing)
             {
-                if (Interlocked.Exchange(ref _disposed, SharedConstants.True) == SharedConstants.True) { return; }
+                if (SharedConstants.False < (uint)Interlocked.Exchange(ref _disposed, SharedConstants.True)) { return; }
 
                 _array = null;
                 _origin = IntPtr.Zero;

@@ -182,7 +182,7 @@ namespace DotNetty.Codecs.Http
 
         protected override void Decode(IChannelHandlerContext context, IByteBuffer buffer, List<object> output)
         {
-            if (SharedConstants.True == Volatile.Read(ref this.resetRequested))
+            if (SharedConstants.False < (uint)Volatile.Read(ref this.resetRequested))
             {
                 this.ResetNow();
             }
@@ -450,7 +450,7 @@ namespace DotNetty.Codecs.Http
         {
             base.DecodeLast(context, input, output);
 
-            if (SharedConstants.True == Volatile.Read(ref this.resetRequested))
+            if (SharedConstants.False < (uint)Volatile.Read(ref this.resetRequested))
             {
                 // If a reset was requested by decodeLast() we need to do it now otherwise we may produce a
                 // LastHttpContent while there was already one.

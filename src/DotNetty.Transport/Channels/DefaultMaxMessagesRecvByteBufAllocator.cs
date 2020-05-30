@@ -41,7 +41,7 @@ namespace DotNetty.Transport.Channels
 
         public bool RespectMaybeMoreData
         {
-            get => SharedConstants.True == Volatile.Read(ref this.respectMaybeMoreData);
+            get => SharedConstants.False < (uint)Volatile.Read(ref this.respectMaybeMoreData);
             set => Interlocked.Exchange(ref this.respectMaybeMoreData, value ? SharedConstants.True : SharedConstants.False);
         }
 
