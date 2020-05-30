@@ -20,21 +20,21 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
 
     public class WebSocketServerProtocolHandlerTest : IDisposable
     {
-        readonly Queue<IFullHttpResponse> responses;
+        readonly Queue<IFullHttpResponse> _responses;
 
         public WebSocketServerProtocolHandlerTest()
         {
-            this.responses = new Queue<IFullHttpResponse>();
+            _responses = new Queue<IFullHttpResponse>();
         }
 
         [Fact]
         public void HttpUpgradeRequest()
         {
-            EmbeddedChannel ch = this.CreateChannel(new MockOutboundHandler(this));
+            EmbeddedChannel ch = CreateChannel(new MockOutboundHandler(this));
             IChannelHandlerContext handshakerCtx = ch.Pipeline.Context<WebSocketServerProtocolHandshakeHandler>();
             WriteUpgradeRequest(ch);
 
-            IFullHttpResponse response = this.responses.Dequeue();
+            IFullHttpResponse response = _responses.Dequeue();
             Assert.Equal(SwitchingProtocols, response.Status);
             response.Release();
             Assert.NotNull(WebSocketServerProtocolHandler.GetHandshaker(handshakerCtx.Channel));
@@ -44,16 +44,16 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         [Fact]
         public void SubsequentHttpRequestsAfterUpgradeShouldReturn403()
         {
-            EmbeddedChannel ch = this.CreateChannel();
+            EmbeddedChannel ch = CreateChannel();
 
             WriteUpgradeRequest(ch);
 
-            IFullHttpResponse response = this.responses.Dequeue();
+            IFullHttpResponse response = _responses.Dequeue();
             Assert.Equal(SwitchingProtocols, response.Status);
             response.Release();
 
             ch.WriteInbound(new DefaultFullHttpRequest(Http11, HttpMethod.Get, "/test"));
-            response = this.responses.Dequeue();
+            response = _responses.Dequeue();
             Assert.Equal(Forbidden, response.Status);
             response.Release();
             Assert.False(ch.Finish());
@@ -62,7 +62,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         [Fact]
         public void HttpUpgradeRequestInvalidUpgradeHeader()
         {
-            EmbeddedChannel ch = this.CreateChannel();
+            EmbeddedChannel ch = CreateChannel();
             IFullHttpRequest httpRequestWithEntity = new WebSocketRequestBuilder()
                 .HttpVersion(Http11)
                 .Method(HttpMethod.Get)
@@ -74,7 +74,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
 
             ch.WriteInbound(httpRequestWithEntity);
 
-            IFullHttpResponse response = this.responses.Dequeue();
+            IFullHttpResponse response = _responses.Dequeue();
             Assert.Equal(BadRequest, response.Status);
             Assert.Equal("not a WebSocket handshake request: missing upgrade", GetResponseMessage(response));
             response.Release();
@@ -84,7 +84,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         [Fact]
         public void HttpUpgradeRequestMissingWsKeyHeader()
         {
-            EmbeddedChannel ch = this.CreateChannel();
+            EmbeddedChannel ch = CreateChannel();
             IHttpRequest httpRequest = new WebSocketRequestBuilder()
                 .HttpVersion(Http11)
                 .Method(HttpMethod.Get)
@@ -97,7 +97,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
 
             ch.WriteInbound(httpRequest);
 
-            IFullHttpResponse response = this.responses.Dequeue();
+            IFullHttpResponse response = _responses.Dequeue();
             Assert.Equal(BadRequest, response.Status);
             Assert.Equal("not a WebSocket request: missing key", GetResponseMessage(response));
             response.Release();
@@ -105,13 +105,55 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         }
 
         [Fact]
+        public void CreateUTF8Validator()
+        {
+            WebSocketDecoderConfig config = WebSocketDecoderConfig.NewBuilder()
+                    .WithUTF8Validator(true)
+                    .Build();
+
+            EmbeddedChannel ch = new EmbeddedChannel(
+                    new WebSocketServerProtocolHandler("/test", null, false, false, 1000L, config),
+                    new HttpRequestDecoder(),
+                    new HttpResponseEncoder(),
+                    new MockOutboundHandler(this));
+            WriteUpgradeRequest(ch);
+
+            IFullHttpResponse response = _responses.Dequeue();
+            Assert.Equal(HttpResponseStatus.SwitchingProtocols, response.Status);
+            response.Release();
+
+            Assert.NotNull(ch.Pipeline.Get<Utf8FrameValidator>());
+        }
+
+        [Fact]
+        public void DoNotCreateUTF8Validator()
+        {
+            WebSocketDecoderConfig config = WebSocketDecoderConfig.NewBuilder()
+                    .WithUTF8Validator(false)
+                    .Build();
+
+            EmbeddedChannel ch = new EmbeddedChannel(
+                    new WebSocketServerProtocolHandler("/test", null, false, false, 1000L, config),
+                    new HttpRequestDecoder(),
+                    new HttpResponseEncoder(),
+                    new MockOutboundHandler(this));
+            WriteUpgradeRequest(ch);
+
+            IFullHttpResponse response = _responses.Dequeue();
+            Assert.Equal(HttpResponseStatus.SwitchingProtocols, response.Status);
+            response.Release();
+
+            Assert.Null(ch.Pipeline.Get<Utf8FrameValidator>());
+        }
+
+        [Fact]
         public void HandleTextFrame()
         {
             var customTextFrameHandler = new CustomTextFrameHandler();
-            EmbeddedChannel ch = this.CreateChannel(customTextFrameHandler);
+            EmbeddedChannel ch = CreateChannel(customTextFrameHandler);
             WriteUpgradeRequest(ch);
 
-            IFullHttpResponse response = responses.Dequeue();
+            IFullHttpResponse response = _responses.Dequeue();
             Assert.Equal(HttpResponseStatus.SwitchingProtocols, response.Status);
             response.Release();
 
@@ -128,7 +170,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             Assert.False(ch.Finish());
         }
 
-        EmbeddedChannel CreateChannel() => this.CreateChannel(null);
+        EmbeddedChannel CreateChannel() => CreateChannel(null);
 
         EmbeddedChannel CreateChannel(IChannelHandler handler) =>
             new EmbeddedChannel(
@@ -144,16 +186,16 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
 
         sealed class MockOutboundHandler : ChannelHandlerAdapter
         {
-            readonly WebSocketServerProtocolHandlerTest owner;
+            readonly WebSocketServerProtocolHandlerTest _owner;
 
             public MockOutboundHandler(WebSocketServerProtocolHandlerTest owner)
             {
-                this.owner = owner;
+                _owner = owner;
             }
 
             public override void Write(IChannelHandlerContext ctx, object msg, IPromise promise)
             {
-                this.owner.responses.Enqueue((IFullHttpResponse)msg);
+                _owner._responses.Enqueue((IFullHttpResponse)msg);
                 promise.TryComplete();
             }
 
@@ -166,14 +208,14 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         {
             public override void ChannelRead(IChannelHandlerContext ctx, object msg)
             {
-                Assert.Null(this.Content);
-                this.Content = "processed: " + ((TextWebSocketFrame)msg).Text();
+                Assert.Null(Content);
+                Content = "processed: " + ((TextWebSocketFrame)msg).Text();
                 ReferenceCountUtil.Release(msg);
             }
 
             public string Content { get; private set; }
         }
 
-        public void Dispose() => this.responses.Clear();
+        public void Dispose() => _responses.Clear();
     }
 }

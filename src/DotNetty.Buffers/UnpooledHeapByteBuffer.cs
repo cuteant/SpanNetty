@@ -384,10 +384,7 @@ namespace DotNetty.Buffers
         public sealed override IByteBuffer Copy(int index, int length)
         {
             this.CheckIndex(index, length);
-            var copiedArray = new byte[length];
-            PlatformDependent.CopyMemory(this.array, index, copiedArray, 0, length);
-
-            return new UnpooledHeapByteBuffer(this.Allocator, copiedArray, this.MaxCapacity);
+            return this.allocator.HeapBuffer(length, this.MaxCapacity).WriteBytes(this.array, index, length);
         }
 
         protected internal sealed override void Deallocate()

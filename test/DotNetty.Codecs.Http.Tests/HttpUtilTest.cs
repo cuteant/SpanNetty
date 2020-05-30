@@ -94,6 +94,7 @@ namespace DotNetty.Codecs.Http.Tests
         {
             const string SimpleContentType = "text/html";
             const string ContentTypeWithIncorrectCharset = "text/html; charset=UTFFF";
+            const string ContentTypeWithIllegalCharsetName = "text/html; charset=!illegal!";
 
             var message = new DefaultHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK);
             message.Headers.Set(HttpHeaderNames.ContentType, SimpleContentType);
@@ -111,6 +112,14 @@ namespace DotNetty.Codecs.Http.Tests
             message.Headers.Set(HttpHeaderNames.ContentType, ContentTypeWithIncorrectCharset);
             Assert.Equal(Encoding.UTF8, HttpUtil.GetCharset(message, Encoding.UTF8));
             Assert.Equal(Encoding.UTF8, HttpUtil.GetCharset(new AsciiString(ContentTypeWithIncorrectCharset), Encoding.UTF8));
+
+            message.Headers.Set(HttpHeaderNames.ContentType, ContentTypeWithIllegalCharsetName);
+            Assert.Equal(Encoding.UTF8, HttpUtil.GetCharset(message));
+            Assert.Equal(Encoding.UTF8, HttpUtil.GetCharset(new AsciiString(ContentTypeWithIllegalCharsetName)));
+
+            message.Headers.Set(HttpHeaderNames.ContentType, ContentTypeWithIllegalCharsetName);
+            Assert.Equal(Encoding.UTF8, HttpUtil.GetCharset(message, Encoding.UTF8));
+            Assert.Equal(Encoding.UTF8, HttpUtil.GetCharset(new AsciiString(ContentTypeWithIllegalCharsetName), Encoding.UTF8));
         }
 
         [Fact]

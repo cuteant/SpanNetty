@@ -146,6 +146,8 @@ namespace DotNetty.Codecs.Http2
 
         public static readonly TimeSpan DefaultGracefulShutdownTimeout = TimeSpan.FromSeconds(30);
 
+        public const int DefaultMaxQueuedControlFrames = 10000;
+
         /// <summary>
         /// Returns <c>true</c> if the stream is an outbound stream.
         /// </summary>

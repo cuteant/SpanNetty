@@ -98,7 +98,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     this.frameRsv = (b & 0x70) >> 4;
                     this.frameOpcode = b & 0x0F;
 
-                    if (Logger.DebugEnabled)
+                    if (Logger.TraceEnabled)
                     {
                         Logger.DecodingWebSocketFrameOpCode(this.frameOpcode);
                     }
@@ -245,7 +245,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                         return;
                     }
 
-                    if (Logger.DebugEnabled)
+                    if (Logger.TraceEnabled)
                     {
                         Logger.DecodingWebSocketFrameLength(this.framePayloadLength);
                     }

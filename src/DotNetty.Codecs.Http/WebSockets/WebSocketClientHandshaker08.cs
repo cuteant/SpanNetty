@@ -144,8 +144,12 @@ namespace DotNetty.Codecs.Http.WebSockets
             headers.Set(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket)
                 .Set(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade)
                 .Set(HttpHeaderNames.SecWebsocketKey, key)
-                .Set(HttpHeaderNames.Host, WebsocketHostValue(wsUrl))
-                .Set(HttpHeaderNames.SecWebsocketOrigin, WebsocketOriginValue(wsUrl));
+                .Set(HttpHeaderNames.Host, WebsocketHostValue(wsUrl));
+
+            if (!headers.Contains(HttpHeaderNames.SecWebsocketOrigin))
+            {
+                headers.Set(HttpHeaderNames.SecWebsocketOrigin, WebsocketOriginValue(wsUrl));
+            }
 
             string expectedSubprotocol = ExpectedSubprotocol;
             if (!string.IsNullOrEmpty(expectedSubprotocol))

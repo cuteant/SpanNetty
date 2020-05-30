@@ -488,6 +488,23 @@ namespace DotNetty.Buffers.Tests
             buf2.Release();
         }
 
+        [Fact(Skip = "Not Support!")]
+        public void WriteUtf8SubsequenceSplitSurrogate()
+        {
+            string usAscii = "\uD800\uDC00"; // surrogate pair: one code point, two chars
+            IByteBuffer buf = Unpooled.Buffer(16);
+            buf.WriteBytes(Encoding.UTF8.GetBytes(usAscii.Substring(0, 1)));
+            IByteBuffer buf2 = Unpooled.Buffer(16);
+            var sb = new StringBuilder(usAscii);
+            ByteBufferUtil.WriteUtf8(buf2, new StringBuilderCharSequence(sb), 0, 1);
+            //ByteBufferUtil.WriteUtf8(buf2, new StringCharSequence(usAscii), 0, 1);
+
+            Assert.Equal(buf, buf2);
+
+            buf.Release();
+            buf2.Release();
+        }
+
         [Fact]
         public void ReserveAndWriteUtf8Subsequence()
         {

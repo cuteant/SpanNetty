@@ -6,13 +6,14 @@
     public sealed class WebSocketDecoderConfig
     {
         private WebSocketDecoderConfig(int maxFramePayloadLength, bool expectMaskedFrames, bool allowMaskMismatch,
-                                      bool allowExtensions, bool closeOnProtocolViolation)
+                                       bool allowExtensions, bool closeOnProtocolViolation, bool withUTF8Validator)
         {
             MaxFramePayloadLength = maxFramePayloadLength;
             ExpectMaskedFrames = expectMaskedFrames;
             AllowMaskMismatch = allowMaskMismatch;
             AllowExtensions = allowExtensions;
             CloseOnProtocolViolation = closeOnProtocolViolation;
+            WithUTF8Validator = withUTF8Validator;
         }
 
         /// <summary>
@@ -43,10 +44,17 @@
         /// </summary>
         public bool CloseOnProtocolViolation { get; }
 
+        /// <summary>
+        /// Allows you to avoid adding of Utf8FrameValidator to the pipeline on the
+        /// WebSocketServerProtocolHandler creation. This is useful (less overhead)
+        /// when you use only BinaryWebSocketFrame within your web socket connection.
+        /// </summary>
+        public bool WithUTF8Validator { get; }
+
         /// <inheritdoc />
         public override string ToString()
         {
-            return $"WebSocketDecoderConfig [maxFramePayloadLength={MaxFramePayloadLength}, expectMaskedFrames={ExpectMaskedFrames}, allowMaskMismatch={AllowMaskMismatch}, allowExtensions={AllowExtensions}, closeOnProtocolViolation={CloseOnProtocolViolation}]";
+            return $"WebSocketDecoderConfig [maxFramePayloadLength={MaxFramePayloadLength}, expectMaskedFrames={ExpectMaskedFrames}, allowMaskMismatch={AllowMaskMismatch}, allowExtensions={AllowExtensions}, closeOnProtocolViolation={CloseOnProtocolViolation}, withUTF8Validator={WithUTF8Validator}]";
         }
 
         public Builder ToBuilder()
@@ -66,6 +74,7 @@
             private bool _allowMaskMismatch;
             private bool _allowExtensions;
             private bool _closeOnProtocolViolation = true;
+            private bool _withUTF8Validator = true;
 
             internal Builder() { }
 
@@ -78,6 +87,7 @@
                 _allowMaskMismatch = decoderConfig.AllowMaskMismatch;
                 _allowExtensions = decoderConfig.AllowExtensions;
                 _closeOnProtocolViolation = decoderConfig.CloseOnProtocolViolation;
+                _withUTF8Validator = decoderConfig.WithUTF8Validator;
             }
 
             public Builder MaxFramePayloadLength(int maxFramePayloadLength)
@@ -110,11 +120,17 @@
                 return this;
             }
 
+            public Builder WithUTF8Validator(bool withUTF8Validator)
+            {
+                _withUTF8Validator = withUTF8Validator;
+                return this;
+            }
+
             public WebSocketDecoderConfig Build()
             {
                 return new WebSocketDecoderConfig(
                     _maxFramePayloadLength, _expectMaskedFrames, _allowMaskMismatch,
-                    _allowExtensions, _closeOnProtocolViolation);
+                    _allowExtensions, _closeOnProtocolViolation, _withUTF8Validator);
             }
         }
     }

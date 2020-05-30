@@ -53,6 +53,13 @@ namespace DotNetty.Codecs.Http2
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void Maximum_number_of_outstanding_control_frames_reached(this IInternalLogger logger, int maxOutstandingControlFrames, IChannelHandlerContext ctx, Http2Exception exception)
+        {
+            logger.Info("Maximum number {} of outstanding control frames reached. Closing channel {}",
+                    maxOutstandingControlFrames, ctx.Channel, exception);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void StreamExceptionThrownWithoutStreamObjectAttached(this IInternalLogger logger, Exception cause)
         {
             logger.Warn("Stream exception thrown without stream object attached.", cause);

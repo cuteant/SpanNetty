@@ -20,14 +20,13 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
 
         }
 
-        protected override AsciiString[] GetHandshakeHeaderNames()
+        protected override AsciiString[] GetHandshakeRequiredHeaderNames()
         {
             return new AsciiString[] {
                 HttpHeaderNames.Upgrade,
                 HttpHeaderNames.Connection,
                 HttpHeaderNames.SecWebsocketKey,
                 HttpHeaderNames.Host,
-                GetOriginHeaderName(),
                 HttpHeaderNames.SecWebsocketVersion,
             };
         }

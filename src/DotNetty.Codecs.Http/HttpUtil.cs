@@ -248,18 +248,15 @@ namespace DotNetty.Codecs.Http
                     }
                     catch (ArgumentException)
                     {
-                        return defaultCharset;
+                        // just return the default charset
+                    }
+                    catch (NotSupportedException) // 平台不支持
+                    {
+                        // just return the default charset
                     }
                 }
-                else
-                {
-                    return defaultCharset;
-                }
             }
-            else
-            {
-                return defaultCharset;
-            }
+            return defaultCharset;
         }
 
         public static ICharSequence GetCharsetAsSequence(IHttpMessage message)

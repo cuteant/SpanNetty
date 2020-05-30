@@ -72,7 +72,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             int length = data.ReadableBytes;
 
-            if (Logger.DebugEnabled)
+            if (Logger.TraceEnabled)
             {
                 Logger.EncodingWebSocketFrameOpCode(opcode, length);
             }

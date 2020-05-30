@@ -76,7 +76,6 @@ namespace DotNetty.Codecs.Http.WebSockets
         private readonly string _websocketPath;
         private readonly string _subprotocols;
         private readonly bool _checkStartsWith;
-        private readonly bool _enableUtf8Validator;
         private readonly long _handshakeTimeoutMillis;
         private readonly WebSocketDecoderConfig _decoderConfig;
 
@@ -181,13 +180,14 @@ namespace DotNetty.Codecs.Http.WebSockets
                     .MaxFramePayloadLength(maxFrameSize)
                     .AllowMaskMismatch(allowMaskMismatch)
                     .AllowExtensions(allowExtensions)
-                    .Build(), enableUtf8Validator)
+                    .WithUTF8Validator(enableUtf8Validator)
+                    .Build())
         {
         }
 
         public WebSocketServerProtocolHandler(string websocketPath, string subprotocols, bool checkStartsWith,
                                               bool dropPongFrames, long handshakeTimeoutMillis,
-                                              WebSocketDecoderConfig decoderConfig, bool enableUtf8Validator = true)
+                                              WebSocketDecoderConfig decoderConfig)
             : base(dropPongFrames)
         {
             if (handshakeTimeoutMillis <= 0L) { ThrowHelper.ThrowArgumentException_Positive(handshakeTimeoutMillis, ExceptionArgument.handshakeTimeoutMillis); }
@@ -198,7 +198,6 @@ namespace DotNetty.Codecs.Http.WebSockets
             _checkStartsWith = checkStartsWith;
             _handshakeTimeoutMillis = handshakeTimeoutMillis;
             _decoderConfig = decoderConfig;
-            _enableUtf8Validator = enableUtf8Validator;
         }
 
         public override void HandlerAdded(IChannelHandlerContext ctx)
@@ -212,7 +211,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                         _websocketPath, _subprotocols, _checkStartsWith, _handshakeTimeoutMillis, _decoderConfig));
             }
 
-            if (_enableUtf8Validator && cp.Get<Utf8FrameValidator>() is null)
+            if (_decoderConfig.WithUTF8Validator && cp.Get<Utf8FrameValidator>() is null)
             {
                 // Add the UFT8 checking before this one.
                 cp.AddBefore(ctx.Name, nameof(Utf8FrameValidator), new Utf8FrameValidator());

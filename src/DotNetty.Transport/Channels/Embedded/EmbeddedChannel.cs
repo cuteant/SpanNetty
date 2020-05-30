@@ -767,7 +767,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
             protected override void OnUnhandledInboundException(Exception cause) => this.embeddedChannel.RecordException(cause);
 
-            protected override void OnUnhandledInboundMessage(object msg) => this.embeddedChannel.HandleInboundMessage(msg);
+            protected override void OnUnhandledInboundMessage(IChannelHandlerContext ctx, object msg) => this.embeddedChannel.HandleInboundMessage(msg);
         }
     }
 }

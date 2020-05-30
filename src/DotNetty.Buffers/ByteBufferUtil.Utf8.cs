@@ -213,31 +213,14 @@ namespace DotNetty.Buffers
                         buffer._SetByte(writerIndex++, WriteUtfUnknown);
                         continue;
                     }
-                    char c2;
-                    try
-                    {
-                        // Surrogate Pair consumes 2 characters. Optimistically try to get the next character to avoid
-                        // duplicate bounds checking with charAt. If an IndexOutOfBoundsException is thrown we will
-                        // re-throw a more informative exception describing the problem.
-                        c2 = value[++i];
-                    }
-                    catch (IndexOutOfRangeException)
+                    // Surrogate Pair consumes 2 characters.
+                    if (++i == end)
                     {
                         buffer._SetByte(writerIndex++, WriteUtfUnknown);
                         break;
                     }
-                    if (!char.IsLowSurrogate(c2))
-                    {
-                        buffer._SetByte(writerIndex++, WriteUtfUnknown);
-                        buffer._SetByte(writerIndex++, char.IsHighSurrogate(c2) ? WriteUtfUnknown : c2);
-                        continue;
-                    }
-                    int codePoint = CharUtil.ToCodePoint(c, c2);
-                    // See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf#G2630.
-                    buffer._SetByte(writerIndex++, (byte)(0xf0 | (codePoint >> 18)));
-                    buffer._SetByte(writerIndex++, (byte)(0x80 | ((codePoint >> 12) & 0x3f)));
-                    buffer._SetByte(writerIndex++, (byte)(0x80 | ((codePoint >> 6) & 0x3f)));
-                    buffer._SetByte(writerIndex++, (byte)(0x80 | (codePoint & 0x3f)));
+                    // Extra method to allow inlining the rest of writeUtf8 which is the most likely code path.
+                    writerIndex = WriteUtf8Surrogate(buffer, writerIndex, c, value[i]);
                 }
                 else
                 {
@@ -365,21 +348,14 @@ namespace DotNetty.Buffers
                         buffer._SetByte(writerIndex++, WriteUtfUnknown);
                         continue;
                     }
-                    char c2;
-                    try
-                    {
-                        // Surrogate Pair consumes 2 characters. Optimistically try to get the next character to avoid
-                        // duplicate bounds checking with charAt. If an IndexOutOfBoundsException is thrown we will
-                        // re-throw a more informative exception describing the problem.
-                        c2 = chars[++i];
-                    }
-                    catch (IndexOutOfRangeException)
+                    // Surrogate Pair consumes 2 characters.
+                    if (++i == len)
                     {
                         buffer._SetByte(writerIndex++, WriteUtfUnknown);
                         break;
                     }
                     // Extra method to allow inlining the rest of writeUtf8 which is the most likely code path.
-                    writerIndex = WriteUtf8Surrogate(buffer, writerIndex, c, c2);
+                    writerIndex = WriteUtf8Surrogate(buffer, writerIndex, c, chars[i]);
                 }
                 else
                 {

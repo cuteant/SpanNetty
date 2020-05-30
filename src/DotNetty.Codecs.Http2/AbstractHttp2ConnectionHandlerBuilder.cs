@@ -87,6 +87,8 @@ namespace DotNetty.Codecs.Http2
         private IHttp2PromisedRequestVerifier _promisedRequestVerifier = AlwaysVerifyPromisedRequestVerifier.Instance;
         private bool _autoAckSettingsFrame = true;
         private bool _autoAckPingFrame = true;
+        private int _maxQueuedControlFrames = Http2CodecUtil.DefaultMaxQueuedControlFrames;
+        private int _maxConsecutiveEmptyFrames = 2;
 
         /// <summary>
         /// Gets or sets the <see cref="Http2Settings"/> to use for the initial connection settings exchange.
@@ -268,6 +270,22 @@ namespace DotNetty.Codecs.Http2
         }
 
         /// <summary>
+        ///  Gets or sets the maximum number of queued control frames that are allowed before the connection is closed.
+        ///  This allows to protected against various attacks that can lead to high CPU / memory usage if the remote-peer
+        ///  floods us with frames that would have us produce control frames, but stops to read from the underlying socket.
+        /// </summary>
+        public int EncoderEnforceMaxQueuedControlFrames
+        {
+            get => _maxQueuedControlFrames;
+            set
+            {
+                EnforceNonCodecConstraints("encoderEnforceMaxQueuedControlFrames");
+                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+                _maxQueuedControlFrames = value;
+            }
+        }
+
+        /// <summary>
         /// Gets or sets the <see cref="ISensitivityDetector"/> to use.
         /// </summary>
         public ISensitivityDetector HeaderSensitivityDetector
@@ -314,6 +332,22 @@ namespace DotNetty.Codecs.Http2
                 EnforceNonCodecConstraints("promisedRequestVerifier");
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
                 _promisedRequestVerifier = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the maximum number of consecutive empty DATA frames (without end_of_stream flag) that are allowed before
+        /// the connection is closed. This allows to protected against the remote peer flooding us with such frames and
+        /// so use up a lot of CPU. There is no valid use-case for empty DATA frames without end_of_stream flag.
+        /// </summary>
+        public int DecoderEnforceMaxConsecutiveEmptyDataFrames
+        {
+            get => _maxConsecutiveEmptyFrames;
+            set
+            {
+                EnforceNonCodecConstraints("maxConsecutiveEmptyFrames");
+                if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
+                _maxConsecutiveEmptyFrames = value;
             }
         }
 
@@ -389,6 +423,10 @@ namespace DotNetty.Codecs.Http2
 
             IHttp2ConnectionEncoder encoder = new DefaultHttp2ConnectionEncoder(connection, writer);
 
+            if ((uint)_maxQueuedControlFrames > 0u)
+            {
+                encoder = new Http2ControlFrameLimitEncoder(encoder, _maxQueuedControlFrames);
+            }
             if (_encoderEnforceMaxConcurrentStreams)
             {
                 if (connection.IsServer)
@@ -408,6 +446,10 @@ namespace DotNetty.Codecs.Http2
 
         private THandler BuildFromCodec(IHttp2ConnectionDecoder decoder, IHttp2ConnectionEncoder encoder)
         {
+            if ((uint)_maxConsecutiveEmptyFrames > 0u)
+            {
+                decoder = new Http2EmptyDataFrameConnectionDecoder(decoder, _maxConsecutiveEmptyFrames);
+            }
             THandler handler = null;
             try
             {

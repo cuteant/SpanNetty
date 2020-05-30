@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
     using System.Globalization;
+    using System.Runtime.CompilerServices;
     using DotNetty.Buffers;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
@@ -92,8 +93,8 @@ namespace DotNetty.Codecs.Http.WebSockets
             var challenge = new byte[16];
             fixed (byte* bytes = challenge)
             {
-                //Unsafe.WriteUnaligned(bytes, number1);
-                //Unsafe.WriteUnaligned(bytes + 4, number2);
+                Unsafe.WriteUnaligned(bytes, number1);
+                Unsafe.WriteUnaligned(bytes + 4, number2);
                 PlatformDependent.CopyMemory(key3, 0, bytes + 8, 8);
             }
 
@@ -114,9 +115,13 @@ namespace DotNetty.Codecs.Http.WebSockets
             headers.Set(HttpHeaderNames.Upgrade, Websocket)
                 .Set(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade)
                 .Set(HttpHeaderNames.Host, WebsocketHostValue(wsUrl))
-                .Set(HttpHeaderNames.Origin, WebsocketOriginValue(wsUrl))
                 .Set(HttpHeaderNames.SecWebsocketKey1, key1)
                 .Set(HttpHeaderNames.SecWebsocketKey2, key2);
+
+            if (!headers.Contains(HttpHeaderNames.Origin))
+            {
+                headers.Set(HttpHeaderNames.Origin, WebsocketOriginValue(wsUrl));
+            }
 
             string expectedSubprotocol = ExpectedSubprotocol;
             if (!string.IsNullOrEmpty(expectedSubprotocol))

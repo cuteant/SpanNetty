@@ -89,6 +89,10 @@ namespace DotNetty.Codecs.Http2
         streamByteDistributor,
 
         httpServerUpgradeHandler,
+
+        maxConsecutiveEmptyFrames,
+
+        maxOutstandingControlFrames,
     }
 
     #endregion
@@ -898,6 +902,12 @@ namespace DotNetty.Codecs.Http2
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static Http2Exception GetConnectionError_Maximum_number_of_outstanding_control_frames_reached(int maxOutstandingControlFrames)
+        {
+            return Http2Exception.ConnectionError(Http2Error.EnhanceYourCalm, "Maximum number {0} of outstanding control frames reached", maxOutstandingControlFrames);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowConnectionError_SetMaxHeaderListSize(long maxHeaderListSize)
         {
             throw Http2Exception.ConnectionError(Http2Error.ProtocolError, "Header List Size must be >= {0} and <= {1} but was {2}",
@@ -1515,6 +1525,14 @@ namespace DotNetty.Codecs.Http2
                 Http2Error.FlowControlError,
                 "Flow control window overflowed for stream: {0}",
                 streamId);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowStreamError_Maximum_number_of_empty_data_frames_without_end_of_stream_flag_received(int maxConsecutiveEmptyFrames)
+        {
+            throw Http2Exception.ConnectionError(Http2Error.EnhanceYourCalm,
+                    "Maximum number {0} of empty data frames without end_of_stream flag received",
+                    maxConsecutiveEmptyFrames);
         }
 
         #endregion

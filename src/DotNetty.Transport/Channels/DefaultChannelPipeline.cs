@@ -1151,7 +1151,7 @@ namespace DotNetty.Transport.Channels
 
             public void ExceptionCaught(IChannelHandlerContext context, Exception exception) => this.pipeline.OnUnhandledInboundException(exception);
 
-            public void ChannelRead(IChannelHandlerContext context, object message) => this.pipeline.OnUnhandledInboundMessage(message);
+            public void ChannelRead(IChannelHandlerContext context, object message) => this.pipeline.OnUnhandledInboundMessage(context, message);
 
             public void ChannelReadComplete(IChannelHandlerContext context) => this.pipeline.OnUnhandledInboundChannelReadComplete();
 

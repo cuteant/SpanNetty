@@ -5,17 +5,34 @@ using System;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using DotNetty.Common.Concurrency;
-using DotNetty.Common.Internal.Logging;
-using DotNetty.Common.Utilities;
 using DotNetty.Codecs.Http.Cors;
 using DotNetty.Codecs.Http.WebSockets;
+using DotNetty.Common.Internal.Logging;
+using DotNetty.Common.Utilities;
 using DotNetty.Transport.Channels;
 
 namespace DotNetty.Codecs.Http
 {
     internal static class HttpLoggingExtensions
     {
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void DecodingWebSocketFrameOpCode(this IInternalLogger logger, int frameOpcode)
+        {
+            logger.Trace("Decoding WebSocket Frame opCode={}", frameOpcode);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void DecodingWebSocketFrameLength(this IInternalLogger logger, long framePayloadLength)
+        {
+            logger.Trace("Decoding WebSocket Frame length={}", framePayloadLength);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void EncodingWebSocketFrameOpCode(this IInternalLogger logger, byte opcode, int length)
+        {
+            logger.Trace($"Encoding WebSocket Frame opCode={opcode} length={length}");
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void SkippingCookieWithNullName(this IInternalLogger logger)
         {
@@ -50,24 +67,6 @@ namespace DotNetty.Codecs.Http
         public static void RequestOriginWasNotAmongTheConfiguredOrigins(this IInternalLogger logger, ICharSequence origin, CorsConfig config)
         {
             logger.Debug("Request origin [{}]] was not among the configured origins [{}]", origin, config.Origins);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void DecodingWebSocketFrameOpCode(this IInternalLogger logger, int frameOpcode)
-        {
-            logger.Debug("Decoding WebSocket Frame opCode={}", frameOpcode);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void DecodingWebSocketFrameLength(this IInternalLogger logger, long framePayloadLength)
-        {
-            logger.Debug("Decoding WebSocket Frame length={}", framePayloadLength);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void EncodingWebSocketFrameOpCode(this IInternalLogger logger, byte opcode, int length)
-        {
-            logger.Debug($"Encoding WebSocket Frame opCode={opcode} length={length}");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

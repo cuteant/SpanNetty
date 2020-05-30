@@ -73,6 +73,12 @@ namespace DotNetty.Codecs.Http2
                 IHttp2ConnectionDecoder decoder = new DefaultHttp2ConnectionDecoder(connection, encoder, frameReader,
                     PromisedRequestVerifier, AutoAckSettingsFrame, AutoAckPingFrame);
 
+                int maxConsecutiveEmptyDataFrames = DecoderEnforceMaxConsecutiveEmptyDataFrames;
+                if ((uint)maxConsecutiveEmptyDataFrames > 0u)
+                {
+                    decoder = new Http2EmptyDataFrameConnectionDecoder(decoder, maxConsecutiveEmptyDataFrames);
+                }
+
                 return Build(decoder, encoder, InitialSettings);
             }
             return base.Build();

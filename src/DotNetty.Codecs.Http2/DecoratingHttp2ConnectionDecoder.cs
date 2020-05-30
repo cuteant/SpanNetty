@@ -1,7 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-namespace DotNetty.Codecs.Http2
+﻿namespace DotNetty.Codecs.Http2
 {
     using System;
     using System.Collections.Generic;
@@ -26,7 +23,7 @@ namespace DotNetty.Codecs.Http2
 
         public IHttp2LocalFlowController FlowController => this.innerDecoder.FlowController;
 
-        public IHttp2FrameListener FrameListener { get => this.innerDecoder.FrameListener; set => this.innerDecoder.FrameListener = value; }
+        public virtual IHttp2FrameListener FrameListener { get => this.innerDecoder.FrameListener; set => this.innerDecoder.FrameListener = value; }
 
         public Http2Settings LocalSettings => this.innerDecoder.LocalSettings;
 
