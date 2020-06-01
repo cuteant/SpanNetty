@@ -1,21 +1,28 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoPropertyWithPrivateSetter
 namespace DotNetty.Transport.Libuv
 {
-    using System;
     using System.Net;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
+    using DotNetty.Transport.Channels.Sockets;
 
-    public partial class TcpChannel<TChannel> : NativeChannel<TChannel, TcpChannel<TChannel>.TcpChannelUnsafe>
+    public sealed class TcpChannel : TcpChannel<TcpChannel>
     {
-        static readonly ChannelMetadata TcpMetadata = new ChannelMetadata(false);
+        public TcpChannel() : base() { }
 
-        readonly TcpChannelConfig config;
-        Tcp tcp;
-        bool isBound;
+        internal TcpChannel(IChannel parent, Tcp tcp) : base(parent, tcp) { }
+    }
+
+    public partial class TcpChannel<TChannel> : NativeChannel<TChannel, TcpChannel<TChannel>.TcpChannelUnsafe>, ISocketChannel
+        where TChannel : TcpChannel<TChannel>
+    {
+        private static readonly ChannelMetadata TcpMetadata = new ChannelMetadata(false);
+
+        private readonly TcpChannelConfig _config;
+        private Tcp _tcp;
+        private bool _isBound;
 
         public TcpChannel() : this(null, null)
         {
@@ -23,80 +30,80 @@ namespace DotNetty.Transport.Libuv
 
         internal TcpChannel(IChannel parent, Tcp tcp) : base(parent)
         {
-            this.config = new TcpChannelConfig(this);
-            this.SetState(StateFlags.Open);
-            this.tcp = tcp;
+            _config = new TcpChannelConfig(this);
+            SetState(StateFlags.Open);
+            _tcp = tcp;
         }
 
-        public override IChannelConfiguration Configuration => this.config;
+        public override IChannelConfiguration Configuration => _config;
 
         public override ChannelMetadata Metadata => TcpMetadata;
 
-        protected override EndPoint LocalAddressInternal => this.tcp?.GetLocalEndPoint();
+        protected override EndPoint LocalAddressInternal => _tcp?.GetLocalEndPoint();
 
-        protected override EndPoint RemoteAddressInternal => this.tcp?.GetPeerEndPoint();
+        protected override EndPoint RemoteAddressInternal => _tcp?.GetPeerEndPoint();
 
         //protected override IChannelUnsafe NewUnsafe() => new TcpChannelUnsafe(this); ## 苦竹 屏蔽 ##
 
         protected override void DoRegister()
         {
-            if (this.tcp is null)
+            if (_tcp is null)
             {
-                var loopExecutor = (LoopExecutor)this.EventLoop;
-                this.tcp = new Tcp(loopExecutor.UnsafeLoop);
+                var loopExecutor = (LoopExecutor)EventLoop;
+                _tcp = new Tcp(loopExecutor.UnsafeLoop);
             }
             else
             {
-                this.OnConnected();
+                OnConnected();
             }
         }
 
         internal override NativeHandle GetHandle()
         {
-            if (this.tcp is null)
+            if (_tcp is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_TcpHandle();
             }
-            return this.tcp;
+            return _tcp;
         }
 
         protected override void DoBind(EndPoint localAddress)
         {
-            this.tcp.Bind((IPEndPoint)localAddress);
-            this.config.Apply();
-            this.isBound = true;
-            this.CacheLocalAddress();
+            _tcp.Bind((IPEndPoint)localAddress);
+            _config.Apply();
+            _isBound = true;
+            CacheLocalAddress();
         }
 
-        internal override bool IsBound => this.isBound;
+        internal override bool IsBound => _isBound;
 
         protected override void OnConnected()
         {
-            if (!this.isBound)
+            if (!_isBound)
             {
                 // Either channel is created by tcp server channel
                 // or connect to remote without bind first
-                this.config.Apply();
-                this.isBound = true;
+                _config.Apply();
+                _isBound = true;
             }
 
             base.OnConnected();
         }
 
-        protected override void DoDisconnect() => this.DoClose();
+        protected override void DoDisconnect() => DoClose();
 
         protected override void DoClose()
         {
             try
             {
-                if (this.TryResetState(StateFlags.Open | StateFlags.Active))
+                if (TryResetState(StateFlags.Open | StateFlags.Active))
                 {
-                    if (this.tcp is object)
+                    if (_tcp is object)
                     {
-                        this.tcp.ReadStop();
-                        this.tcp.CloseHandle();
+                        _tcp.ReadStop();
+                        _tcp.CloseHandle();
                     }
-                    this.tcp = null;
+                    _tcp = null;
                 }
             }
             finally
@@ -107,30 +114,30 @@ namespace DotNetty.Transport.Libuv
 
         protected override void DoBeginRead()
         {
-            if (!this.Open)
+            if (!Open)
             {
                 return;
             }
 
-            this.ReadPending = true;
-            if (!this.IsInState(StateFlags.ReadScheduled))
+            ReadPending = true;
+            if (!IsInState(StateFlags.ReadScheduled))
             {
-                this.SetState(StateFlags.ReadScheduled);
-                this.tcp.ReadStart(this.Unsafe);
+                SetState(StateFlags.ReadScheduled);
+                _tcp.ReadStart(Unsafe);
             }
         }
 
         protected override void DoStopRead()
         {
-            if (!this.Open)
+            if (!Open)
             {
                 return;
             }
 
-            if (this.IsInState(StateFlags.ReadScheduled))
+            if (IsInState(StateFlags.ReadScheduled))
             {
-                this.ResetState(StateFlags.ReadScheduled);
-                this.tcp.ReadStop();
+                ResetState(StateFlags.ReadScheduled);
+                _tcp.ReadStop();
             }
         }
 
@@ -138,20 +145,12 @@ namespace DotNetty.Transport.Libuv
         {
             if (input.Size > 0)
             {
-                this.SetState(StateFlags.WriteScheduled);
-                var loopExecutor = (LoopExecutor)this.EventLoop;
+                SetState(StateFlags.WriteScheduled);
+                var loopExecutor = (LoopExecutor)EventLoop;
                 WriteRequest request = loopExecutor.WriteRequestPool.Take();
-                request.DoWrite(this.Unsafe, input);
+                request.DoWrite(Unsafe, input);
             }
         }
 
-        public sealed class TcpChannelUnsafe : NativeChannelUnsafe
-        {
-            public TcpChannelUnsafe() : base() //TcpChannel channel) : base(channel)
-            {
-            }
-
-            public override IntPtr UnsafeHandle => this._channel.tcp.Handle;
-        }
     }
 }

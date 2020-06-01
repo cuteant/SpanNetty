@@ -10,7 +10,7 @@ namespace DotNetty.Transport.Libuv.Native
     {
         static readonly uv_watcher_cb ConnectionCallback = OnConnectionCallback;
 
-        IServerNativeUnsafe nativeUnsafe;
+        IServerNativeUnsafe _nativeUnsafe;
 
         public TcpListener(Loop loop, uint flags) : base(loop, flags)
         {
@@ -18,13 +18,13 @@ namespace DotNetty.Transport.Libuv.Native
 
         public void Listen(IServerNativeUnsafe channel, int backlog)
         {
-            Debug.Assert(channel is object && this.nativeUnsafe is null);
+            Debug.Assert(channel is object && _nativeUnsafe is null);
             Debug.Assert(backlog > 0);
 
-            int result = NativeMethods.uv_listen(this.Handle, backlog, ConnectionCallback);
+            int result = NativeMethods.uv_listen(Handle, backlog, ConnectionCallback);
             NativeMethods.ThrowIfError(result);
 
-            this.nativeUnsafe = channel;
+            _nativeUnsafe = channel;
         }
 
         unsafe void OnConnectionCallback(int status)
@@ -39,11 +39,11 @@ namespace DotNetty.Transport.Libuv.Native
                 }
                 else
                 {
-                    IntPtr loopHandle = ((uv_stream_t*)this.Handle)->loop;
+                    IntPtr loopHandle = ((uv_stream_t*)Handle)->loop;
                     var loop = GetTarget<Loop>(loopHandle);
 
                     client = new Tcp(loop);
-                    int result = NativeMethods.uv_accept(this.Handle, client.Handle);
+                    int result = NativeMethods.uv_accept(Handle, client.Handle);
                     if (result < 0)
                     {
                         error = NativeMethods.CreateError((uv_err_code)result);
@@ -55,7 +55,7 @@ namespace DotNetty.Transport.Libuv.Native
                 error = exception;
             }
 
-            this.nativeUnsafe.Accept(new RemoteConnection(client, error));
+            _nativeUnsafe.Accept(new RemoteConnection(client, error));
         }
 
         static void OnConnectionCallback(IntPtr handle, int status)
@@ -66,7 +66,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         protected override void OnClosed()
         {
-            this.nativeUnsafe = null;
+            _nativeUnsafe = null;
             base.OnClosed();
         }
     }

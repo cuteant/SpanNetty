@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoProperty
-// ReSharper disable ConvertToAutoPropertyWithPrivateSetter
 namespace DotNetty.Transport.Libuv
 {
     using System;
@@ -10,59 +8,68 @@ namespace DotNetty.Transport.Libuv
     using System.Net;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
-
     using TcpListener = Native.TcpListener;
 
-    public partial class TcpServerChannel<TServerChannel, TChannelFactory> : NativeChannel<TServerChannel, TcpServerChannel<TServerChannel, TChannelFactory>.TcpServerChannelUnsafe>, IServerChannel
+    public sealed class TcpServerChannel : TcpServerChannel<TcpServerChannel, TcpChannelFactory>
     {
-        static readonly ChannelMetadata TcpServerMetadata = new ChannelMetadata(false);
+        public TcpServerChannel() : base() { }
+    }
 
-        readonly TcpServerChannelConfig config;
-        TcpListener tcpListener;
-        bool isBound;
+    public partial class TcpServerChannel<TServerChannel, TChannelFactory> : NativeChannel<TServerChannel, TcpServerChannel<TServerChannel, TChannelFactory>.TcpServerChannelUnsafe>, IServerChannel
+        where TServerChannel : TcpServerChannel<TServerChannel, TChannelFactory>
+        where TChannelFactory : ITcpChannelFactory, new()
+    {
+        private static readonly ChannelMetadata TcpServerMetadata = new ChannelMetadata(false);
 
-        //public TcpServerChannel() : base(null)
-        //{
-        //    this.config = new TcpServerChannelConfig(this);
-        //}
+        private readonly TChannelFactory _channelFactory;
 
-        public override IChannelConfiguration Configuration => this.config;
+        private readonly TcpServerChannelConfig _config;
+        private TcpListener _tcpListener;
+        private bool _isBound;
+
+        public TcpServerChannel() : base(null)
+        {
+            _config = new TcpServerChannelConfig(this);
+            _channelFactory = new TChannelFactory();
+        }
+
+        public override IChannelConfiguration Configuration => _config;
 
         public override ChannelMetadata Metadata => TcpServerMetadata;
 
-        protected override EndPoint LocalAddressInternal => this.tcpListener?.GetLocalEndPoint();
+        protected override EndPoint LocalAddressInternal => _tcpListener?.GetLocalEndPoint();
 
         protected override EndPoint RemoteAddressInternal => null;
 
-        internal override bool IsBound => this.isBound;
+        internal override bool IsBound => _isBound;
 
         protected override void DoBind(EndPoint localAddress)
         {
-            if (!this.Open)
+            if (!Open)
             {
                 return;
             }
 
-            Debug.Assert(this.EventLoop.InEventLoop);
-            if (!this.IsInState(StateFlags.Active))
+            Debug.Assert(EventLoop.InEventLoop);
+            if (!IsInState(StateFlags.Active))
             {
                 var address = (IPEndPoint)localAddress;
-                var loopExecutor = (LoopExecutor)this.EventLoop;
+                var loopExecutor = (LoopExecutor)EventLoop;
 
                 uint flags = PlatformApi.GetAddressFamily(address.AddressFamily);
-                this.tcpListener = new TcpListener(loopExecutor.UnsafeLoop, flags);
+                _tcpListener = new TcpListener(loopExecutor.UnsafeLoop, flags);
 
                 // Apply the configuration right after the tcp handle is created
                 // because SO_REUSEPORT cannot be configured after bind
-                this.config.Apply();
+                _config.Apply();
 
-                this.tcpListener.Bind(address);
-                this.isBound = true;
+                _tcpListener.Bind(address);
+                _isBound = true;
 
-                this.tcpListener.Listen(this.Unsafe, this.config.Backlog);
+                _tcpListener.Listen(Unsafe, _config.Backlog);
 
-                this.CacheLocalAddress();
-                this.SetState(StateFlags.Active);
+                CacheLocalAddress();
+                SetState(StateFlags.Active);
             }
         }
 
@@ -70,159 +77,47 @@ namespace DotNetty.Transport.Libuv
 
         internal override NativeHandle GetHandle()
         {
-            if (this.tcpListener is null)
+            if (_tcpListener is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_HandleNotInit();
             }
 
-            return this.tcpListener;
+            return _tcpListener;
         }
 
         protected override void DoClose()
         {
-            if (this.TryResetState(StateFlags.Open | StateFlags.Active))
+            if (TryResetState(StateFlags.Open | StateFlags.Active))
             {
-                this.tcpListener?.CloseHandle();
-                this.tcpListener = null;
+                _tcpListener?.CloseHandle();
+                _tcpListener = null;
             }
         }
 
         protected override void DoBeginRead()
         {
-            if (!this.Open)
+            if (!Open)
             {
                 return;
             }
 
-            if (!this.IsInState(StateFlags.ReadScheduled))
+            if (!IsInState(StateFlags.ReadScheduled))
             {
-                if (this.EventLoop is DispatcherEventLoop dispatcher)
+                if (EventLoop is DispatcherEventLoop dispatcher)
                 {
                     // Set up the dispatcher callback, all dispatched handles 
                     // need to call Accept on this channel to setup pipeline
-                    dispatcher.Register(this.Unsafe);
+                    dispatcher.Register(Unsafe);
                 }
-                this.SetState(StateFlags.ReadScheduled);
+                SetState(StateFlags.ReadScheduled);
             }
         }
 
-        public sealed partial class TcpServerChannelUnsafe : NativeChannelUnsafe, IServerNativeUnsafe
-        {
-            static readonly Action<object, object> AcceptAction = OnAccept; // (u, e) => ((TcpServerChannelUnsafe)u).Accept((Tcp)e);
-
-            public TcpServerChannelUnsafe() : base() // TcpServerChannel channel) : base(channel)
-            {
-            }
-
-            public override IntPtr UnsafeHandle => this._channel.tcpListener.Handle;
-
-            // Connection callback from Libuv thread
-            void IServerNativeUnsafe.Accept(RemoteConnection connection)
-            {
-                var ch = this._channel;
-                NativeHandle client = connection.Client;
-
-                var connError = connection.Error;
-                // If the AutoRead is false, reject the connection
-                if (!ch.config.AutoRead || connError is object)
-                {
-                    if (connError is object)
-                    {
-                        if (Logger.InfoEnabled) Logger.AcceptClientConnectionFailed(connError);
-                        this._channel.Pipeline.FireExceptionCaught(connError);
-                    }
-                    try
-                    {
-                        client?.Dispose();
-                    }
-                    catch (Exception ex)
-                    {
-                        if (Logger.WarnEnabled) Logger.FailedToDisposeAClientConnection(ex);
-                    }
-                    finally
-                    {
-                        client = null;
-                    }
-                }
-                if (client is null)
-                {
-                    return;
-                }
-
-                if (ch.EventLoop is DispatcherEventLoop dispatcher)
-                {
-                    // Dispatch handle to other Libuv loop/thread
-                    dispatcher.Dispatch(client);
-                }
-                else
-                {
-                    this.Accept((Tcp)client);
-                }
-            }
-
-            // Called from other Libuv loop/thread received tcp handle from pipe
-            void IServerNativeUnsafe.Accept(NativeHandle handle)
-            {
-                var ch = this._channel;
-                if (ch.EventLoop.InEventLoop)
-                {
-                    this.Accept((Tcp)handle);
-                }
-                else
-                {
-                    this._channel.EventLoop.Execute(AcceptAction, this, handle);
-                }
-            }
-
-            void Accept(Tcp tcp)
-            {
-                var ch = this._channel;
-                IChannelPipeline pipeline = ch.Pipeline;
-                IRecvByteBufAllocatorHandle allocHandle = this.RecvBufAllocHandle;
-
-                bool closed = false;
-                Exception exception = null;
-                try
-                {
-                    var tcpChannel = ch._channelFactory.CreateChannel(ch, tcp); // ## 苦竹 修改 ## new TcpChannel(ch, tcp);
-                    ch.Pipeline.FireChannelRead(tcpChannel);
-                    allocHandle.IncMessagesRead(1);
-                }
-                catch (ObjectDisposedException)
-                {
-                    closed = true;
-                }
-                catch (Exception ex)
-                {
-                    exception = ex;
-                }
-
-                allocHandle.ReadComplete();
-                pipeline.FireChannelReadComplete();
-
-                if (exception is object)
-                {
-                    pipeline.FireExceptionCaught(exception);
-                }
-
-                if (closed && ch.Open)
-                {
-                    this.CloseSafe();
-                }
-            }
-        }
 
         protected override void DoDisconnect() => throw new NotSupportedException($"{nameof(TcpServerChannel)}");
 
         protected override void DoStopRead() => throw new NotSupportedException($"{nameof(TcpServerChannel)}");
 
         protected override void DoWrite(ChannelOutboundBuffer input) => throw new NotSupportedException($"{nameof(TcpServerChannel)}");
-    }
-
-    internal interface IServerNativeUnsafe
-    {
-        void Accept(RemoteConnection connection);
-
-        void Accept(NativeHandle handle);
     }
 }

@@ -13,7 +13,7 @@ namespace DotNetty.Transport.Libuv.Native
     {
         protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<NativeRequest>();
 
-        readonly uv_req_type requestType;
+        readonly uv_req_type _requestType;
         protected internal IntPtr Handle;
 
         protected NativeRequest(uv_req_type requestType, int size)
@@ -23,19 +23,19 @@ namespace DotNetty.Transport.Libuv.Native
             GCHandle gcHandle = GCHandle.Alloc(this, GCHandleType.Normal);
             *(IntPtr*)handle = GCHandle.ToIntPtr(gcHandle);
 
-            this.Handle = handle;
-            this.requestType = requestType;
+            Handle = handle;
+            _requestType = requestType;
         }
 
         protected bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => this.Handle != IntPtr.Zero;
+            get => Handle != IntPtr.Zero;
         }
 
         protected void CloseHandle()
         {
-            IntPtr handle = this.Handle;
+            IntPtr handle = Handle;
             if (handle == IntPtr.Zero)
             {
                 return;
@@ -56,21 +56,21 @@ namespace DotNetty.Transport.Libuv.Native
 
             // Release memory
             NativeMethods.FreeMemory(handle);
-            this.Handle = IntPtr.Zero;
+            Handle = IntPtr.Zero;
         }
 
         protected virtual void Dispose(bool disposing)
         {
             try
             {
-                if (this.IsValid)
+                if (IsValid)
                 {
-                    this.CloseHandle();
+                    CloseHandle();
                 }
             }
             catch (Exception exception)
             {
-                Logger.ErrorWhilstClosingHandle(this.requestType ,this.Handle, exception);
+                Logger.ErrorWhilstClosingHandle(_requestType ,Handle, exception);
 
                 // For finalizer, we cannot allow this to escape.
                 if (disposing) throw;
@@ -79,11 +79,11 @@ namespace DotNetty.Transport.Libuv.Native
 
         public void Dispose()
         {
-            this.Dispose(true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        ~NativeRequest() => this.Dispose(false);
+        ~NativeRequest() => Dispose(false);
 
         internal static T GetTarget<T>(IntPtr handle)
         {

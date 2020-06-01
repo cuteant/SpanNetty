@@ -12,49 +12,49 @@ namespace DotNetty.Transport.Libuv.Native
         static readonly uv_alloc_cb AllocateCallback = OnAllocateCallback;
         static readonly uv_read_cb ReadCallback = OnReadCallback;
 
-        readonly ReadOperation pendingRead;
-        INativeUnsafe nativeUnsafe;
+        readonly ReadOperation _pendingRead;
+        INativeUnsafe _nativeUnsafe;
 
         internal Tcp(Loop loop, uint flags = 0 /* AF_UNSPEC */ ) : base(loop, flags)
         {
-            this.pendingRead = new ReadOperation();
+            _pendingRead = new ReadOperation();
         }
 
         internal void ReadStart(INativeUnsafe channel)
         {
             Debug.Assert(channel is object);
 
-            this.Validate();
-            int result = NativeMethods.uv_read_start(this.Handle, AllocateCallback, ReadCallback);
+            Validate();
+            int result = NativeMethods.uv_read_start(Handle, AllocateCallback, ReadCallback);
             NativeMethods.ThrowIfError(result);
-            this.nativeUnsafe = channel;
+            _nativeUnsafe = channel;
         }
 
         public void ReadStop()
         {
-            if (this.Handle == IntPtr.Zero)
+            if (Handle == IntPtr.Zero)
             {
                 return;
             }
 
             // This function is idempotent and may be safely called on a stopped stream.
-            NativeMethods.uv_read_stop(this.Handle);
+            NativeMethods.uv_read_stop(Handle);
         }
 
         void OnReadCallback(int statusCode, OperationException error)
         {
             try
             {
-                this.pendingRead.Complete(statusCode, error);
-                this.nativeUnsafe.FinishRead(this.pendingRead);
+                _pendingRead.Complete(statusCode, error);
+                _nativeUnsafe.FinishRead(_pendingRead);
             }
             catch (Exception exception)
             {
-                if (Logger.WarnEnabled) Logger.TcpHandleReadCallbcakError(this.Handle, exception);
+                if (Logger.WarnEnabled) Logger.TcpHandleReadCallbcakError(Handle, exception);
             }
             finally
             {
-                this.pendingRead.Reset();
+                _pendingRead.Reset();
             }
         }
 
@@ -76,13 +76,13 @@ namespace DotNetty.Transport.Libuv.Native
         {
             base.OnClosed();
 
-            this.pendingRead.Dispose();
-            this.nativeUnsafe = null;
+            _pendingRead.Dispose();
+            _nativeUnsafe = null;
         }
 
         void OnAllocateCallback(out uv_buf_t buf)
         {
-            buf = this.nativeUnsafe.PrepareRead(this.pendingRead);
+            buf = _nativeUnsafe.PrepareRead(_pendingRead);
         }
 
         static void OnAllocateCallback(IntPtr handle, IntPtr suggestedSize, out uv_buf_t buf)
@@ -93,8 +93,8 @@ namespace DotNetty.Transport.Libuv.Native
 
         public IPEndPoint GetPeerEndPoint()
         {
-            this.Validate();
-            return NativeMethods.TcpGetPeerName(this.Handle);
+            Validate();
+            return NativeMethods.TcpGetPeerName(Handle);
         }
     }
 }

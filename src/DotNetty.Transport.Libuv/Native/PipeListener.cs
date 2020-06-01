@@ -16,55 +16,55 @@ namespace DotNetty.Transport.Libuv.Native
         const int DefaultPipeBacklog = 128;
         static readonly uv_watcher_cb ConnectionCallback = OnConnectionCallback;
 
-        readonly List<Pipe> pipes;
-        readonly WindowsApi windowsApi;
-        int requestId;
+        readonly List<Pipe> _pipes;
+        readonly WindowsApi _windowsApi;
+        int _requestId;
 
         public PipeListener(Loop loop, bool ipc) : base(loop, ipc)
         {
-            this.onReadAction = this.OnRead;
+            onReadAction = OnRead;
 
-            this.pipes = new List<Pipe>();
-            this.windowsApi = new WindowsApi();
-            this.requestId = 0;
+            _pipes = new List<Pipe>();
+            _windowsApi = new WindowsApi();
+            _requestId = 0;
         }
 
         public void Listen(string name, int backlog = DefaultPipeBacklog)
         {
             Debug.Assert(backlog > 0);
 
-            this.Validate();
-            int result = NativeMethods.uv_pipe_bind(this.Handle, name);
+            Validate();
+            int result = NativeMethods.uv_pipe_bind(Handle, name);
             NativeMethods.ThrowIfError(result);
 
-            result = NativeMethods.uv_listen(this.Handle, backlog, ConnectionCallback);
+            result = NativeMethods.uv_listen(Handle, backlog, ConnectionCallback);
             NativeMethods.ThrowIfError(result);
         }
 
         internal void Shutdown()
         {
-            Pipe[] handles = this.pipes.ToArray();
-            this.pipes.Clear();
+            Pipe[] handles = _pipes.ToArray();
+            _pipes.Clear();
 
             foreach (Pipe pipe in handles)
             {
                 pipe.CloseHandle();
             }
 
-            this.CloseHandle();
+            CloseHandle();
         }
 
         internal void DispatchHandle(NativeHandle handle)
         {
-            if (0u >= (uint)this.pipes.Count)
+            if (0u >= (uint)_pipes.Count)
             {
                 ThrowHelper.ThrowInvalidOperationException_Dispatch();
             }
 
-            int id = Interlocked.Increment(ref this.requestId);
-            Pipe pipe = this.pipes[Math.Abs(id % this.pipes.Count)];
+            int id = Interlocked.Increment(ref _requestId);
+            Pipe pipe = _pipes[Math.Abs(id % _pipes.Count)];
 
-            this.windowsApi.DetachFromIOCP(handle);
+            _windowsApi.DetachFromIOCP(handle);
             pipe.Send(handle);
         }
 
@@ -79,15 +79,15 @@ namespace DotNetty.Transport.Libuv.Native
                 }
                 else
                 {
-                    IntPtr loopHandle = ((uv_stream_t*)this.Handle)->loop;
+                    IntPtr loopHandle = ((uv_stream_t*)Handle)->loop;
                     var loop = GetTarget<Loop>(loopHandle);
 
                     client = new Pipe(loop, true); // IPC pipe
-                    int result = NativeMethods.uv_accept(this.Handle, client.Handle);
+                    int result = NativeMethods.uv_accept(Handle, client.Handle);
                     NativeMethods.ThrowIfError(result);
 
-                    this.pipes.Add(client);
-                    client.ReadStart(this.onReadAction);
+                    _pipes.Add(client);
+                    client.ReadStart(onReadAction);
                 }
             }
             catch (Exception exception)
@@ -108,8 +108,8 @@ namespace DotNetty.Transport.Libuv.Native
                 return;
             }
 
-            this.windowsApi.Dispose();
-            this.pipes.Remove(pipe);
+            _windowsApi.Dispose();
+            _pipes.Remove(pipe);
             pipe.CloseHandle();
 
             if (status != NativeMethods.EOF)

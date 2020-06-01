@@ -35,17 +35,17 @@ namespace DotNetty.Codecs.Http
     ///     header exceeds this value, a <see cref="TooLongFrameException"/> will be raised.</td>
     /// </tr>
     /// <tr>
-    /// <td><see cref="maxChunkSize"/></td>
+    /// <td><see cref="_maxChunkSize"/></td>
     /// <td>The maximum length of the content or each chunk.  If the content length
     ///     (or the length of each chunk) exceeds this value, the content or chunk
     ///     will be split into multiple <see cref="IHttpContent"/>s whose length is
-    ///     <see cref="maxChunkSize"/> at maximum.</td>
+    ///     <see cref="_maxChunkSize"/> at maximum.</td>
     /// </tr>
     /// </table>
     ///
     /// <h3>Chunked Content</h3>
     ///
-    /// If the content of an HTTP message is greater than <see cref="maxChunkSize"/> or
+    /// If the content of an HTTP message is greater than <see cref="_maxChunkSize"/> or
     /// the transfer encoding of the HTTP message is 'chunked', this decoder
     /// generates one <see cref="IHttpMessage"/> instance and its following
     /// <see cref="IHttpContent"/>s per single HTTP message to avoid excessive memory
@@ -89,24 +89,25 @@ namespace DotNetty.Codecs.Http
         private const byte c_space = (byte)' ';
         private const byte c_tab = (byte)'\t';
 
-        readonly int maxChunkSize;
-        readonly bool chunkedSupported;
         protected readonly bool ValidateHeaders;
-        readonly HeaderParser headerParser;
-        readonly LineParser lineParser;
 
-        IHttpMessage message;
-        long chunkSize;
-        long contentLength = long.MinValue;
-        int resetRequested;
+        private readonly int _maxChunkSize;
+        private readonly bool _chunkedSupported;
+        private readonly HeaderParser _headerParser;
+        private readonly LineParser _lineParser;
+
+        private IHttpMessage _message;
+        private long _chunkSize;
+        private long _contentLength = long.MinValue;
+        private int _resetRequested;
 
         // These will be updated by splitHeader(...)
-        AsciiString name;
-        AsciiString value;
+        private AsciiString _name;
+        private AsciiString _value;
 
-        ILastHttpContent trailer;
+        private ILastHttpContent _trailer;
 
-        enum State
+        private enum State
         {
             SkipControlChars,
             ReadInitial,
@@ -121,7 +122,7 @@ namespace DotNetty.Codecs.Http
             Upgraded
         }
 
-        State currentState = State.SkipControlChars;
+        private State _currentState = State.SkipControlChars;
 
         /// <summary>
         /// Creates a new instance with the default
@@ -176,21 +177,21 @@ namespace DotNetty.Codecs.Http
             if ((uint)(maxChunkSize - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(maxChunkSize, ExceptionArgument.maxChunkSize); }
 
             var seq = new AppendableCharSequence(initialBufferSize);
-            this.lineParser = new LineParser(seq, maxInitialLineLength);
-            this.headerParser = new HeaderParser(seq, maxHeaderSize);
-            this.maxChunkSize = maxChunkSize;
-            this.chunkedSupported = chunkedSupported;
-            this.ValidateHeaders = validateHeaders;
+            _lineParser = new LineParser(seq, maxInitialLineLength);
+            _headerParser = new HeaderParser(seq, maxHeaderSize);
+            _maxChunkSize = maxChunkSize;
+            _chunkedSupported = chunkedSupported;
+            ValidateHeaders = validateHeaders;
         }
 
         protected override void Decode(IChannelHandlerContext context, IByteBuffer buffer, List<object> output)
         {
-            if (SharedConstants.False < (uint)Volatile.Read(ref this.resetRequested))
+            if (SharedConstants.False < (uint)Volatile.Read(ref _resetRequested))
             {
-                this.ResetNow();
+                ResetNow();
             }
 
-            switch (this.currentState)
+            switch (_currentState)
             {
                 case State.SkipControlChars:
                     {
@@ -198,14 +199,14 @@ namespace DotNetty.Codecs.Http
                         {
                             return;
                         }
-                        this.currentState = State.ReadInitial;
+                        _currentState = State.ReadInitial;
                         goto case State.ReadInitial; // Fall through
                     }
                 case State.ReadInitial:
                     {
                         try
                         {
-                            AppendableCharSequence line = this.lineParser.Parse(buffer);
+                            AppendableCharSequence line = _lineParser.Parse(buffer);
                             if (line is null)
                             {
                                 return;
@@ -214,17 +215,17 @@ namespace DotNetty.Codecs.Http
                             if ((uint)initialLine.Length < 3u)
                             {
                                 // Invalid initial line - ignore.
-                                this.currentState = State.SkipControlChars;
+                                _currentState = State.SkipControlChars;
                                 return;
                             }
 
-                            this.message = this.CreateMessage(initialLine);
-                            this.currentState = State.ReadHeader;
+                            _message = CreateMessage(initialLine);
+                            _currentState = State.ReadHeader;
                             goto case State.ReadHeader; // Fall through
                         }
                         catch (Exception e)
                         {
-                            output.Add(this.InvalidMessage(buffer, e));
+                            output.Add(InvalidMessage(buffer, e));
                             return;
                         }
                     }
@@ -232,31 +233,31 @@ namespace DotNetty.Codecs.Http
                     {
                         try
                         {
-                            State? nextState = this.ReadHeaders(buffer);
+                            State? nextState = ReadHeaders(buffer);
                             if (nextState is null)
                             {
                                 return;
                             }
-                            this.currentState = nextState.Value;
+                            _currentState = nextState.Value;
                             switch (nextState.Value)
                             {
                                 case State.SkipControlChars:
                                     {
                                         // fast-path
                                         // No content is expected.
-                                        output.Add(this.message);
+                                        output.Add(_message);
                                         output.Add(EmptyLastHttpContent.Default);
-                                        this.ResetNow();
+                                        ResetNow();
                                         return;
                                     }
                                 case State.ReadChunkSize:
                                     {
-                                        if (!this.chunkedSupported)
+                                        if (!_chunkedSupported)
                                         {
                                             ThrowHelper.ThrowArgumentException_ChunkedMsgNotSupported();
                                         }
                                         // Chunked encoding - generate HttpMessage first.  HttpChunks will follow.
-                                        output.Add(this.message);
+                                        output.Add(_message);
                                         return;
                                     }
                                 default:
@@ -265,24 +266,24 @@ namespace DotNetty.Codecs.Http
                                         // request does not have either a transfer-encoding or a content-length header then the message body
                                         // length is 0. However for a response the body length is the number of octets received prior to the
                                         // server closing the connection. So we treat this as variable length chunked encoding.
-                                        long length = this.ContentLength();
-                                        if (0u >= (uint)length || length == -1 && this.IsDecodingRequest())
+                                        long length = ContentLength();
+                                        if (0u >= (uint)length || length == -1 && IsDecodingRequest())
                                         {
-                                            output.Add(this.message);
+                                            output.Add(_message);
                                             output.Add(EmptyLastHttpContent.Default);
-                                            this.ResetNow();
+                                            ResetNow();
                                             return;
                                         }
 
                                         Debug.Assert(nextState.Value == State.ReadFixedLengthContent
                                             || nextState.Value == State.ReadVariableLengthContent);
 
-                                        output.Add(this.message);
+                                        output.Add(_message);
 
                                         if (nextState == State.ReadFixedLengthContent)
                                         {
                                             // chunkSize will be decreased as the READ_FIXED_LENGTH_CONTENT state reads data chunk by chunk.
-                                            this.chunkSize = length;
+                                            _chunkSize = length;
                                         }
 
                                         // We return here, this forces decode to be called again where we will decode the content
@@ -292,14 +293,14 @@ namespace DotNetty.Codecs.Http
                         }
                         catch (Exception exception)
                         {
-                            output.Add(this.InvalidMessage(buffer, exception));
+                            output.Add(InvalidMessage(buffer, exception));
                             return;
                         }
                     }
                 case State.ReadVariableLengthContent:
                     {
                         // Keep reading data as a chunk until the end of connection is reached.
-                        int toRead = Math.Min(buffer.ReadableBytes, this.maxChunkSize);
+                        int toRead = Math.Min(buffer.ReadableBytes, _maxChunkSize);
                         if (toRead > 0)
                         {
                             IByteBuffer content = buffer.ReadRetainedSlice(toRead);
@@ -322,19 +323,19 @@ namespace DotNetty.Codecs.Http
                             return;
                         }
 
-                        int toRead = Math.Min(readLimit, this.maxChunkSize);
-                        if (toRead > this.chunkSize)
+                        int toRead = Math.Min(readLimit, _maxChunkSize);
+                        if (toRead > _chunkSize)
                         {
-                            toRead = (int)this.chunkSize;
+                            toRead = (int)_chunkSize;
                         }
                         IByteBuffer content = buffer.ReadRetainedSlice(toRead);
-                        this.chunkSize -= toRead;
+                        _chunkSize -= toRead;
 
-                        if (0ul >= (ulong)this.chunkSize)
+                        if (0ul >= (ulong)_chunkSize)
                         {
                             // Read all content.
-                            output.Add(new DefaultLastHttpContent(content, this.ValidateHeaders));
-                            this.ResetNow();
+                            output.Add(new DefaultLastHttpContent(content, ValidateHeaders));
+                            ResetNow();
                         }
                         else
                         {
@@ -348,47 +349,47 @@ namespace DotNetty.Codecs.Http
                     {
                         try
                         {
-                            AppendableCharSequence line = this.lineParser.Parse(buffer);
+                            AppendableCharSequence line = _lineParser.Parse(buffer);
                             if (line is null)
                             {
                                 return;
                             }
                             int size = GetChunkSize(line.ToAsciiString());
-                            this.chunkSize = size;
+                            _chunkSize = size;
                             if (0u >= (uint)size)
                             {
-                                this.currentState = State.ReadChunkFooter;
+                                _currentState = State.ReadChunkFooter;
                                 return;
                             }
-                            this.currentState = State.ReadChunkedContent;
+                            _currentState = State.ReadChunkedContent;
                             goto case State.ReadChunkedContent; // fall-through
                         }
                         catch (Exception e)
                         {
-                            output.Add(this.InvalidChunk(buffer, e));
+                            output.Add(InvalidChunk(buffer, e));
                             return;
                         }
                     }
                 case State.ReadChunkedContent:
                     {
-                        Debug.Assert(this.chunkSize <= int.MaxValue);
+                        Debug.Assert(_chunkSize <= int.MaxValue);
 
-                        int toRead = Math.Min((int)this.chunkSize, this.maxChunkSize);
+                        int toRead = Math.Min((int)_chunkSize, _maxChunkSize);
                         toRead = Math.Min(toRead, buffer.ReadableBytes);
                         if (0u >= (uint)toRead)
                         {
                             return;
                         }
                         IHttpContent chunk = new DefaultHttpContent(buffer.ReadRetainedSlice(toRead));
-                        this.chunkSize -= toRead;
+                        _chunkSize -= toRead;
 
                         output.Add(chunk);
 
-                        if (this.chunkSize != 0)
+                        if (_chunkSize != 0)
                         {
                             return;
                         }
-                        this.currentState = State.ReadChunkDelimiter;
+                        _currentState = State.ReadChunkDelimiter;
                         goto case State.ReadChunkDelimiter; // fall-through
                     }
                 case State.ReadChunkDelimiter:
@@ -401,7 +402,7 @@ namespace DotNetty.Codecs.Http
                             byte next = buffer.GetByte(rIdx++);
                             if (next == HttpConstants.LineFeed)
                             {
-                                this.currentState = State.ReadChunkSize;
+                                _currentState = State.ReadChunkSize;
                                 break;
                             }
                         }
@@ -412,18 +413,18 @@ namespace DotNetty.Codecs.Http
                     {
                         try
                         {
-                            ILastHttpContent lastTrialer = this.ReadTrailingHeaders(buffer);
+                            ILastHttpContent lastTrialer = ReadTrailingHeaders(buffer);
                             if (lastTrialer is null)
                             {
                                 return;
                             }
                             output.Add(lastTrialer);
-                            this.ResetNow();
+                            ResetNow();
                             return;
                         }
                         catch (Exception exception)
                         {
-                            output.Add(this.InvalidChunk(buffer, exception));
+                            output.Add(InvalidChunk(buffer, exception));
                             return;
                         }
                     }
@@ -453,39 +454,39 @@ namespace DotNetty.Codecs.Http
         {
             base.DecodeLast(context, input, output);
 
-            if (SharedConstants.False < (uint)Volatile.Read(ref this.resetRequested))
+            if (SharedConstants.False < (uint)Volatile.Read(ref _resetRequested))
             {
                 // If a reset was requested by decodeLast() we need to do it now otherwise we may produce a
                 // LastHttpContent while there was already one.
-                this.ResetNow();
+                ResetNow();
             }
 
             // Handle the last unfinished message.
-            if (this.message is object)
+            if (_message is object)
             {
-                bool chunked = HttpUtil.IsTransferEncodingChunked(this.message);
-                if (this.currentState == State.ReadVariableLengthContent
+                bool chunked = HttpUtil.IsTransferEncodingChunked(_message);
+                if (_currentState == State.ReadVariableLengthContent
                     && !input.IsReadable() && !chunked)
                 {
                     // End of connection.
                     output.Add(EmptyLastHttpContent.Default);
-                    this.ResetNow();
+                    ResetNow();
                     return;
                 }
 
-                if (this.currentState == State.ReadHeader)
+                if (_currentState == State.ReadHeader)
                 {
                     // If we are still in the state of reading headers we need to create a new invalid message that
                     // signals that the connection was closed before we received the headers.
-                    output.Add(this.InvalidMessage(Unpooled.Empty,
+                    output.Add(InvalidMessage(Unpooled.Empty,
                         new PrematureChannelClosureException("Connection closed before received headers")));
-                    this.ResetNow();
+                    ResetNow();
                     return;
                 }
 
                 // Check if the closure of the connection signifies the end of the content.
                 bool prematureClosure;
-                if (this.IsDecodingRequest() || chunked)
+                if (IsDecodingRequest() || chunked)
                 {
                     // The last request did not wait for a response.
                     prematureClosure = true;
@@ -495,14 +496,14 @@ namespace DotNetty.Codecs.Http
                     // Compare the length of the received content and the 'Content-Length' header.
                     // If the 'Content-Length' header is absent, the length of the content is determined by the end of the
                     // connection, so it is perfectly fine.
-                    prematureClosure = this.ContentLength() > 0;
+                    prematureClosure = ContentLength() > 0;
                 }
 
                 if (!prematureClosure)
                 {
                     output.Add(EmptyLastHttpContent.Default);
                 }
-                this.ResetNow();
+                ResetNow();
             }
         }
 
@@ -510,12 +511,12 @@ namespace DotNetty.Codecs.Http
         {
             if (evt is HttpExpectationFailedEvent)
             {
-                switch (this.currentState)
+                switch (_currentState)
                 {
                     case State.ReadFixedLengthContent:
                     case State.ReadVariableLengthContent:
                     case State.ReadChunkSize:
-                        this.Reset();
+                        Reset();
                         break;
                 }
             }
@@ -571,62 +572,64 @@ namespace DotNetty.Codecs.Http
         /// Resets the state of the decoder so that it is ready to decode a new message.
         /// This method is useful for handling a rejected request with {@code Expect: 100-continue} header.
         /// </summary>
-        public void Reset() => Interlocked.Exchange(ref this.resetRequested, SharedConstants.True);
+        public void Reset() => Interlocked.Exchange(ref _resetRequested, SharedConstants.True);
 
         void ResetNow()
         {
-            IHttpMessage msg = this.message;
-            this.message = null;
-            this.name = null;
-            this.value = null;
-            this.contentLength = long.MinValue;
-            this.lineParser.Reset();
-            this.headerParser.Reset();
-            this.trailer = null;
-            if (!this.IsDecodingRequest())
+            IHttpMessage msg = _message;
+            _message = null;
+            _name = null;
+            _value = null;
+            _contentLength = long.MinValue;
+            _lineParser.Reset();
+            _headerParser.Reset();
+            _trailer = null;
+            if (!IsDecodingRequest())
             {
-                if (msg is IHttpResponse res && this.IsSwitchingToNonHttp1Protocol(res))
+                if (msg is IHttpResponse res && IsSwitchingToNonHttp1Protocol(res))
                 {
-                    this.currentState = State.Upgraded;
+                    _currentState = State.Upgraded;
                     return;
                 }
             }
 
-            Interlocked.Exchange(ref this.resetRequested, SharedConstants.False);
-            this.currentState = State.SkipControlChars;
+            Interlocked.Exchange(ref _resetRequested, SharedConstants.False);
+            _currentState = State.SkipControlChars;
         }
 
         IHttpMessage InvalidMessage(IByteBuffer buf, Exception cause)
         {
-            this.currentState = State.BadMessage;
+            _currentState = State.BadMessage;
 
             // Advance the readerIndex so that ByteToMessageDecoder does not complain
             // when we produced an invalid message without consuming anything.
             buf.SkipBytes(buf.ReadableBytes);
 
-            if (this.message is null)
+            if (_message is null)
             {
-                this.message = this.CreateInvalidMessage();
+                _message = CreateInvalidMessage();
             }
-            this.message.Result = DecoderResult.Failure(cause);
+            _message.Result = DecoderResult.Failure(cause);
 
-            IHttpMessage ret = this.message;
-            this.message = null;
+            IHttpMessage ret = _message;
+            _message = null;
             return ret;
         }
 
         IHttpContent InvalidChunk(IByteBuffer buf, Exception cause)
         {
-            this.currentState = State.BadMessage;
+            _currentState = State.BadMessage;
 
             // Advance the readerIndex so that ByteToMessageDecoder does not complain
             // when we produced an invalid message without consuming anything.
             buf.SkipBytes(buf.ReadableBytes);
 
-            IHttpContent chunk = new DefaultLastHttpContent(Unpooled.Empty);
-            chunk.Result = DecoderResult.Failure(cause);
-            this.message = null;
-            this.trailer = null;
+            IHttpContent chunk = new DefaultLastHttpContent(Unpooled.Empty)
+            {
+                Result = DecoderResult.Failure(cause)
+            };
+            _message = null;
+            _trailer = null;
             return chunk;
         }
 
@@ -652,10 +655,10 @@ namespace DotNetty.Codecs.Http
 
         State? ReadHeaders(IByteBuffer buffer)
         {
-            IHttpMessage httpMessage = this.message;
+            IHttpMessage httpMessage = _message;
             HttpHeaders headers = httpMessage.Headers;
 
-            AppendableCharSequence line = this.headerParser.Parse(buffer);
+            AppendableCharSequence line = _headerParser.Parse(buffer);
             if (line is null)
             {
                 return null;
@@ -666,23 +669,23 @@ namespace DotNetty.Codecs.Http
                 do
                 {
                     byte firstChar = line.Bytes[0];
-                    if (this.name is object && (firstChar == c_space || firstChar == c_tab))
+                    if (_name is object && (firstChar == c_space || firstChar == c_tab))
                     {
                         //please do not make one line from below code
                         //as it breaks +XX:OptimizeStringConcat optimization
                         ICharSequence trimmedLine = CharUtil.Trim(line);
-                        this.value = new AsciiString($"{this.value} {trimmedLine}");
+                        _value = new AsciiString($"{_value} {trimmedLine}");
                     }
                     else
                     {
-                        if (this.name is object)
+                        if (_name is object)
                         {
-                            headers.Add(this.name, this.value);
+                            headers.Add(_name, _value);
                         }
-                        this.SplitHeader(line);
+                        SplitHeader(line);
                     }
 
-                    line = this.headerParser.Parse(buffer);
+                    line = _headerParser.Parse(buffer);
                     if (line is null)
                     {
                         return null;
@@ -691,17 +694,17 @@ namespace DotNetty.Codecs.Http
             }
 
             // Add the last header.
-            if (this.name is object)
+            if (_name is object)
             {
-                headers.Add(this.name, this.value);
+                headers.Add(_name, _value);
             }
             // reset name and value fields
-            this.name = null;
-            this.value = null;
+            _name = null;
+            _value = null;
 
             State nextState;
 
-            if (this.IsContentAlwaysEmpty(httpMessage))
+            if (IsContentAlwaysEmpty(httpMessage))
             {
                 HttpUtil.SetTransferEncodingChunked(httpMessage, false);
                 nextState = State.SkipControlChars;
@@ -710,7 +713,7 @@ namespace DotNetty.Codecs.Http
             {
                 nextState = State.ReadChunkSize;
             }
-            else if (this.ContentLength() >= 0)
+            else if (ContentLength() >= 0)
             {
                 nextState = State.ReadFixedLengthContent;
             }
@@ -723,21 +726,21 @@ namespace DotNetty.Codecs.Http
 
         long ContentLength()
         {
-            if (this.contentLength == long.MinValue)
+            if (_contentLength == long.MinValue)
             {
-                this.contentLength = HttpUtil.GetContentLength(this.message, -1L);
+                _contentLength = HttpUtil.GetContentLength(_message, -1L);
             }
-            return this.contentLength;
+            return _contentLength;
         }
 
         ILastHttpContent ReadTrailingHeaders(IByteBuffer buffer)
         {
-            AppendableCharSequence line = this.headerParser.Parse(buffer);
+            AppendableCharSequence line = _headerParser.Parse(buffer);
             if (line is null)
             {
                 return null;
             }
-            ILastHttpContent trailingHeaders = this.trailer;
+            ILastHttpContent trailingHeaders = _trailer;
             if (0u >= (uint)line.Count && trailingHeaders is null)
             {
                 // We have received the empty line which signals the trailer is complete and did not parse any trailers
@@ -748,8 +751,8 @@ namespace DotNetty.Codecs.Http
             AsciiString lastHeader = null;
             if (trailingHeaders is null)
             {
-                trailingHeaders = new DefaultLastHttpContent(Unpooled.Empty, this.ValidateHeaders);
-                this.trailer = trailingHeaders;
+                trailingHeaders = new DefaultLastHttpContent(Unpooled.Empty, ValidateHeaders);
+                _trailer = trailingHeaders;
             }
             while ((uint)line.Count > 0u)
             {
@@ -768,28 +771,28 @@ namespace DotNetty.Codecs.Http
                 }
                 else
                 {
-                    this.SplitHeader(line);
-                    AsciiString headerName = this.name;
+                    SplitHeader(line);
+                    AsciiString headerName = _name;
                     if (!HttpHeaderNames.ContentLength.ContentEqualsIgnoreCase(headerName)
                         && !HttpHeaderNames.TransferEncoding.ContentEqualsIgnoreCase(headerName)
                         && !HttpHeaderNames.Trailer.ContentEqualsIgnoreCase(headerName))
                     {
-                        trailingHeaders.TrailingHeaders.Add(headerName, this.value);
+                        trailingHeaders.TrailingHeaders.Add(headerName, _value);
                     }
-                    lastHeader = this.name;
+                    lastHeader = _name;
                     // reset name and value fields
-                    this.name = null;
-                    this.value = null;
+                    _name = null;
+                    _value = null;
                 }
 
-                line = this.headerParser.Parse(buffer);
+                line = _headerParser.Parse(buffer);
                 if (line is null)
                 {
                     return null;
                 }
             }
 
-            this.trailer = null;
+            _trailer = null;
             return trailingHeaders;
         }
 
@@ -848,7 +851,21 @@ namespace DotNetty.Codecs.Http
             for (nameEnd = nameStart; nameEnd < length; nameEnd++)
             {
                 byte ch = chars[nameEnd];
-                if (IsWhiteSpaceOrColon(ch))
+                // https://tools.ietf.org/html/rfc7230#section-3.2.4
+                //
+                // No whitespace is allowed between the header field-name and colon. In
+                // the past, differences in the handling of such whitespace have led to
+                // security vulnerabilities in request routing and response handling. A
+                // server MUST reject any received request message that contains
+                // whitespace between a header field-name and colon with a response code
+                // of 400 (Bad Request). A proxy MUST remove any such whitespace from a
+                // response message before forwarding the message downstream.
+                if (ch == ':' ||
+                        // In case of decoding a request we will just continue processing and header validation
+                        // is done in the DefaultHttpHeaders implementation.
+                        //
+                        // In the case of decoding a response we will "skip" the whitespace.
+                        (!IsDecodingRequest() && IsWhiteSpace(ch)))
                 {
                     break;
                 }
@@ -863,16 +880,16 @@ namespace DotNetty.Codecs.Http
                 }
             }
 
-            this.name = sb.SubStringUnsafe(nameStart, nameEnd);
+            _name = sb.SubStringUnsafe(nameStart, nameEnd);
             int valueStart = FindNonWhitespace(chars, colonEnd, length);
             if (valueStart == length)
             {
-                this.value = AsciiString.Empty;
+                _value = AsciiString.Empty;
             }
             else
             {
                 int valueEnd = FindEndOfString(chars, length);
-                this.value = sb.SubStringUnsafe(valueStart, valueEnd);
+                _value = sb.SubStringUnsafe(valueStart, valueEnd);
             }
         }
 
@@ -914,31 +931,31 @@ namespace DotNetty.Codecs.Http
 
         class HeaderParser : IByteProcessor
         {
-            readonly AppendableCharSequence seq;
-            readonly int maxLength;
-            int size;
+            readonly AppendableCharSequence _seq;
+            readonly int _maxLength;
+            int _size;
 
             internal HeaderParser(AppendableCharSequence seq, int maxLength)
             {
-                this.seq = seq;
-                this.maxLength = maxLength;
+                _seq = seq;
+                _maxLength = maxLength;
             }
 
             public virtual AppendableCharSequence Parse(IByteBuffer buffer)
             {
-                int oldSize = this.size;
-                this.seq.Reset();
+                int oldSize = _size;
+                _seq.Reset();
                 int i = buffer.ForEachByte(this);
                 if (i == -1)
                 {
-                    this.size = oldSize;
+                    _size = oldSize;
                     return null;
                 }
                 buffer.SetReaderIndex(i + 1);
-                return this.seq;
+                return _seq;
             }
 
-            public void Reset() => this.size = 0;
+            public void Reset() => _size = 0;
 
             [MethodImpl(InlineMethod.AggressiveInlining)]
             public bool Process(byte value)
@@ -952,16 +969,16 @@ namespace DotNetty.Codecs.Http
                     return false;
                 }
 
-                if (++this.size > this.maxLength)
+                if (++_size > _maxLength)
                 {
                     // TODO: Respond with Bad Request and discard the traffic
                     //    or close the connection.
                     //       No need to notify the upstream handlers - just log.
                     //       If decoding a response, just throw an exception.
-                    ThrowTooLongFrameException(this, this.maxLength);
+                    ThrowTooLongFrameException(this, _maxLength);
                 }
 
-                this.seq.Append(value);
+                _seq.Append(value);
                 return true;
             }
 
@@ -987,7 +1004,7 @@ namespace DotNetty.Codecs.Http
 
             public override AppendableCharSequence Parse(IByteBuffer buffer)
             {
-                this.Reset();
+                Reset();
                 return base.Parse(buffer);
             }
 
@@ -1004,22 +1021,9 @@ namespace DotNetty.Codecs.Http
                 case HttpConstants.HorizontalTab:
                 case HttpConstants.CarriageReturn:
                     return true;
+                default:
+                    return false;
             }
-            return false;
-        }
-
-        [MethodImpl(InlineMethod.AggressiveInlining)]
-        static bool IsWhiteSpaceOrColon(byte c)
-        {
-            switch (c)
-            {
-                case HttpConstants.Colon:
-                case HttpConstants.HorizontalSpace:
-                case HttpConstants.HorizontalTab:
-                case HttpConstants.CarriageReturn:
-                    return true;
-            }
-            return false;
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]

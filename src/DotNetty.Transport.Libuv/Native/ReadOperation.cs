@@ -1,9 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoProperty
-// ReSharper disable ConvertToAutoPropertyWithPrivateSetter
-// ReSharper disable ConvertToAutoPropertyWhenPossible
 namespace DotNetty.Transport.Libuv.Native
 {
     using System;
@@ -13,37 +10,37 @@ namespace DotNetty.Transport.Libuv.Native
 
     sealed class ReadOperation : IDisposable
     {
-        int status;
-        bool endOfStream;
-        IByteBuffer buffer;
-        OperationException error;
-        GCHandle pin;
+        private int _status;
+        private bool _endOfStream;
+        private IByteBuffer _buffer;
+        private OperationException _error;
+        private GCHandle _pin;
 
         internal ReadOperation()
         {
-            this.Reset();
+            Reset();
         }
 
-        internal IByteBuffer Buffer => this.buffer;
+        internal IByteBuffer Buffer => _buffer;
 
-        internal OperationException Error => this.error;
+        internal OperationException Error => _error;
 
-        internal int Status => this.status;
+        internal int Status => _status;
 
-        internal bool EndOfStream => this.endOfStream;
+        internal bool EndOfStream => _endOfStream;
 
         internal void Complete(int statusCode, OperationException operationException)
         {
-            this.Release();
+            Release();
 
-            this.status = statusCode;
-            this.endOfStream = statusCode == NativeMethods.EOF;
-            this.error = operationException;
+            _status = statusCode;
+            _endOfStream = statusCode == NativeMethods.EOF;
+            _error = operationException;
         }
 
         internal uv_buf_t GetBuffer(IByteBuffer buf)
         {
-            Debug.Assert(!this.pin.IsAllocated);
+            Debug.Assert(!_pin.IsAllocated);
 
             // Do not pin the buffer again if it is already pinned
             IntPtr arrayHandle = IntPtr.Zero;
@@ -55,36 +52,36 @@ namespace DotNetty.Transport.Libuv.Native
 
             if (arrayHandle == IntPtr.Zero)
             {
-                this.pin = GCHandle.Alloc(buf.Array, GCHandleType.Pinned);
-                arrayHandle = this.pin.AddrOfPinnedObject();
+                _pin = GCHandle.Alloc(buf.Array, GCHandleType.Pinned);
+                arrayHandle = _pin.AddrOfPinnedObject();
                 index += buf.ArrayOffset;
             }
             int length = buf.WritableBytes;
-            this.buffer = buf;
+            _buffer = buf;
 
             return new uv_buf_t(arrayHandle + index, length);
         }
 
         internal void Reset()
         {
-            this.status = 0;
-            this.endOfStream = false;
-            this.buffer = Unpooled.Empty;
-            this.error = null;
+            _status = 0;
+            _endOfStream = false;
+            _buffer = Unpooled.Empty;
+            _error = null;
         }
 
         void Release()
         {
-            if (this.pin.IsAllocated)
+            if (_pin.IsAllocated)
             {
-                this.pin.Free();
+                _pin.Free();
             }
         }
 
         public void Dispose()
         {
-            this.Release();
-            this.Reset();
+            Release();
+            Reset();
         }
     }
 }

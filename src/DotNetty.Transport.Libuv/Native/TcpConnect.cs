@@ -8,7 +8,7 @@ namespace DotNetty.Transport.Libuv.Native
 
     sealed class TcpConnect : ConnectRequest
     {
-        readonly INativeUnsafe nativeUnsafe;
+        readonly INativeUnsafe _nativeUnsafe;
 
         public TcpConnect(INativeUnsafe nativeUnsafe, IPEndPoint remoteEndPoint)
         {
@@ -17,15 +17,15 @@ namespace DotNetty.Transport.Libuv.Native
 
             NativeMethods.GetSocketAddress(remoteEndPoint, out sockaddr addr);
             int result = NativeMethods.uv_tcp_connect(
-                this.Handle,
+                Handle,
                 nativeUnsafe.UnsafeHandle,
                 ref addr,
                 WatcherCallback);
             NativeMethods.ThrowIfError(result);
 
-            this.nativeUnsafe = nativeUnsafe;
+            _nativeUnsafe = nativeUnsafe;
         }
 
-        protected override void OnWatcherCallback() => this.nativeUnsafe.FinishConnect(this);
+        protected override void OnWatcherCallback() => _nativeUnsafe.FinishConnect(this);
     }
 }

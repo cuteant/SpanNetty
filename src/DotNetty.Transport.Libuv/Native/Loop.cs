@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoPropertyWithPrivateSetter
 namespace DotNetty.Transport.Libuv.Native
 {
     using DotNetty.Common.Internal.Logging;
@@ -9,12 +8,12 @@ namespace DotNetty.Transport.Libuv.Native
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
 
-    sealed unsafe partial class Loop : IDisposable
+    sealed unsafe class Loop : IDisposable
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Loop>();
-        static readonly uv_walk_cb WalkCallback = OnWalkCallback;
+        private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Loop>();
+        private static readonly uv_walk_cb WalkCallback = OnWalkCallback;
 
-        IntPtr handle;
+        private IntPtr _handle;
 
         public Loop()
         {
@@ -32,29 +31,29 @@ namespace DotNetty.Transport.Libuv.Native
 
             GCHandle gcHandle = GCHandle.Alloc(this, GCHandleType.Normal);
             ((uv_loop_t*)loopHandle)->data = GCHandle.ToIntPtr(gcHandle);
-            this.handle = loopHandle;
+            _handle = loopHandle;
             if (Logger.InfoEnabled)
             {
-                Logger.LoopAllocated(this.handle);
+                Logger.LoopAllocated(_handle);
             }
         }
 
-        internal IntPtr Handle => this.handle;
+        internal IntPtr Handle => _handle;
 
-        public bool IsAlive => this.handle != IntPtr.Zero && NativeMethods.uv_loop_alive(this.handle) != 0;
+        public bool IsAlive => _handle != IntPtr.Zero && NativeMethods.uv_loop_alive(_handle) != 0;
 
         public void UpdateTime()
         {
-            this.Validate();
-            NativeMethods.uv_update_time(this.Handle);
+            Validate();
+            NativeMethods.uv_update_time(Handle);
         }
 
         public long Now
         {
             get
             {
-                this.Validate();
-                return NativeMethods.uv_now(this.handle);
+                Validate();
+                return NativeMethods.uv_now(_handle);
             }
         }
 
@@ -62,56 +61,67 @@ namespace DotNetty.Transport.Libuv.Native
         {
             get
             {
-                this.Validate();
-                return NativeMethods.uv_hrtime(this.handle);
+                Validate();
+                return NativeMethods.uv_hrtime(_handle);
             }
         }
 
         public int GetBackendTimeout()
         {
-            this.Validate();
-            return NativeMethods.uv_backend_timeout(this.handle);
+            Validate();
+            return NativeMethods.uv_backend_timeout(_handle);
         }
 
         public int ActiveHandleCount() => 
-            this.handle != IntPtr.Zero
-            ? (int)((uv_loop_t*)this.handle)->active_handles 
+            _handle != IntPtr.Zero
+            ? (int)((uv_loop_t*)_handle)->active_handles 
             : 0;
 
         public int Run(uv_run_mode mode)
         {
-            this.Validate();
-            return NativeMethods.uv_run(this.handle, mode);
+            Validate();
+            return NativeMethods.uv_run(_handle, mode);
         }
 
         public void Stop()
         {
-            if (this.handle != IntPtr.Zero)
+            if (_handle != IntPtr.Zero)
             {
-                NativeMethods.uv_stop(this.handle);
+                NativeMethods.uv_stop(_handle);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void Validate()
         {
-            if (this.handle == IntPtr.Zero)
+            if (_handle == IntPtr.Zero)
             {
-                ThrowObjectDisposedException(); // NativeMethods.ThrowObjectDisposedException($"{this.GetType()}");
+                ThrowObjectDisposedException();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowObjectDisposedException()
+        {
+            throw GetObjectDisposedException();
+
+            static ObjectDisposedException GetObjectDisposedException()
+            {
+                return new ObjectDisposedException($"{typeof(Loop)}");
             }
         }
 
         public void Dispose()
         {
-            this.Close();
+            Close();
             GC.SuppressFinalize(this);
         }
 
         void Close()
         {
-            IntPtr loopHandle = this.handle;
+            IntPtr loopHandle = _handle;
             Close(loopHandle);
-            this.handle = IntPtr.Zero;
+            _handle = IntPtr.Zero;
         }
 
         static void Close(IntPtr handle)
@@ -191,6 +201,6 @@ namespace DotNetty.Transport.Libuv.Native
             }
         }
 
-        ~Loop() => this.Close();
+        ~Loop() => Close();
     }
 }

@@ -745,5 +745,21 @@ namespace DotNetty.Codecs.Http.Tests
 
             Assert.False(channel.Finish());
         }
+
+        [Fact]
+        public void Whitespace()
+        {
+            EmbeddedChannel channel = new EmbeddedChannel(new HttpResponseDecoder());
+            string requestStr = "HTTP/1.1 200 OK\r\n" +
+                    "Transfer-Encoding : chunked\r\n" +
+                    "Host: netty.io\n\r\n";
+
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(requestStr, Encoding.ASCII)));
+            var response = channel.ReadInbound<IHttpResponse>();
+            Assert.False(response.Result.IsFailure);
+            Assert.Equal(HttpHeaderValues.Chunked.ToString(), response.Headers.Get(HttpHeaderNames.TransferEncoding, null));
+            Assert.Equal("netty.io", response.Headers.Get(HttpHeaderNames.Host, null));
+            Assert.False(channel.Finish());
+        }
     }
 }

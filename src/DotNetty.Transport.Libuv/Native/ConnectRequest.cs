@@ -10,7 +10,7 @@ namespace DotNetty.Transport.Libuv.Native
     {
         protected static readonly uv_watcher_cb WatcherCallback = OnWatcherCallback;
 
-        OperationException error;
+        OperationException _error;
 
         protected ConnectRequest() : base(uv_req_type.UV_CONNECT, 0)
         {
@@ -18,14 +18,14 @@ namespace DotNetty.Transport.Libuv.Native
 
         protected abstract void OnWatcherCallback();
 
-        internal OperationException Error => this.error;
+        internal OperationException Error => _error;
 
         static void OnWatcherCallback(IntPtr handle, int status)
         {
             var request = GetTarget<ConnectRequest>(handle);
             if (status < 0)
             {
-                request.error = NativeMethods.CreateError((uv_err_code)status);
+                request._error = NativeMethods.CreateError((uv_err_code)status);
             }
             request.OnWatcherCallback();
         }

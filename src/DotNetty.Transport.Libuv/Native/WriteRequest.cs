@@ -19,64 +19,64 @@ namespace DotNetty.Transport.Libuv.Native
 
     sealed class WriteRequest : NativeRequest, ChannelOutboundBuffer.IMessageProcessor
     {
-        static readonly int BufferSize;
-        static readonly uv_watcher_cb WriteCallback = OnWriteCallback;
+        private static readonly int BufferSize;
+        private static readonly uv_watcher_cb WriteCallback = OnWriteCallback;
 
-        const int MaximumBytes = int.MaxValue;
-        const int MaximumLimit = 64;
+        private const int MaximumBytes = int.MaxValue;
+        private const int MaximumLimit = 64;
 
         static WriteRequest()
         {
             BufferSize = Marshal.SizeOf<uv_buf_t>();
         }
 
-        readonly int maxBytes;
-        readonly ThreadLocalPool.Handle recyclerHandle;
-        readonly List<MemoryHandle> handles;
+        private readonly int _maxBytes;
+        private readonly ThreadLocalPool.Handle _recyclerHandle;
+        private readonly List<MemoryHandle> _handles;
 
-        IntPtr bufs;
-        GCHandle pin;
-        int count;
-        int size;
+        private IntPtr _bufs;
+        private GCHandle _pin;
+        private int _count;
+        private int _size;
 
-        INativeUnsafe nativeUnsafe;
+        private INativeUnsafe _nativeUnsafe;
 
         public WriteRequest(ThreadLocalPool.Handle recyclerHandle)
             : base(uv_req_type.UV_WRITE, BufferSize * MaximumLimit)
         {
-            this.recyclerHandle = recyclerHandle;
+            _recyclerHandle = recyclerHandle;
 
             int offset = NativeMethods.GetSize(uv_req_type.UV_WRITE);
-            IntPtr addr = this.Handle;
+            IntPtr addr = Handle;
 
-            this.maxBytes = MaximumBytes;
-            this.bufs = addr + offset;
-            this.pin = GCHandle.Alloc(addr, GCHandleType.Pinned);
-            this.handles = new List<MemoryHandle>(MaximumLimit + 1);
+            _maxBytes = MaximumBytes;
+            _bufs = addr + offset;
+            _pin = GCHandle.Alloc(addr, GCHandleType.Pinned);
+            _handles = new List<MemoryHandle>(MaximumLimit + 1);
         }
 
         internal void DoWrite(INativeUnsafe channelUnsafe, ChannelOutboundBuffer input)
         {
-            Debug.Assert(this.nativeUnsafe is null);
+            Debug.Assert(_nativeUnsafe is null);
 
-            this.nativeUnsafe = channelUnsafe;
+            _nativeUnsafe = channelUnsafe;
             input.ForEachFlushedMessage(this);
-            this.DoWrite();
+            DoWrite();
         }
 
         bool Add(IByteBuffer buf)
         {
-            if (this.count == MaximumLimit) { return false; }
+            if (_count == MaximumLimit) { return false; }
 
             int len = buf.ReadableBytes;
             if (0u >= (uint)len) { return true; }
 
-            if (this.maxBytes - len < this.size && this.count > 0) { return false; }
+            if (_maxBytes - len < _size && _count > 0) { return false; }
 
             if (buf.IsSingleIoBuffer)
             {
                 var memory = buf.UnreadMemory;
-                this.Add(memory.Pin(), memory.Length);
+                Add(memory.Pin(), memory.Length);
                 return true;
             }
 
@@ -86,12 +86,12 @@ namespace DotNetty.Transport.Libuv.Native
         [MethodImpl(MethodImplOptions.NoInlining)]
         bool AddMany(IByteBuffer buf)
         {
-            if (MaximumLimit - buf.IoBufferCount < this.count) { return false; }
+            if (MaximumLimit - buf.IoBufferCount < _count) { return false; }
 
             var segments = buf.UnreadSequence;
             foreach (var memory in segments)
             {
-                this.Add(memory.Pin(), memory.Length);
+                Add(memory.Pin(), memory.Length);
             }
             return true;
         }
@@ -99,54 +99,54 @@ namespace DotNetty.Transport.Libuv.Native
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         unsafe void Add(MemoryHandle memoryHandle, int len)
         {
-            this.handles.Add(memoryHandle);
-            IntPtr baseOffset = this.MemoryAddress(this.count);
-            this.size += len;
-            ++this.count;
+            _handles.Add(memoryHandle);
+            IntPtr baseOffset = MemoryAddress(_count);
+            _size += len;
+            ++_count;
             uv_buf_t.InitMemory(baseOffset, (IntPtr)memoryHandle.Pointer, len);
         }
 
         unsafe void DoWrite()
         {
             int result = NativeMethods.uv_write(
-                this.Handle,
-                this.nativeUnsafe.UnsafeHandle,
-                (uv_buf_t*)this.bufs,
-                this.count,
+                Handle,
+                _nativeUnsafe.UnsafeHandle,
+                (uv_buf_t*)_bufs,
+                _count,
                 WriteCallback);
 
             if (result < 0)
             {
-                this.Release();
+                Release();
                 NativeMethods.ThrowOperationException((uv_err_code)result);
             }
         }
 
-        public bool ProcessMessage(object msg) => msg is IByteBuffer buf && this.Add(buf);
+        public bool ProcessMessage(object msg) => msg is IByteBuffer buf && Add(buf);
 
         void Release()
         {
-            var handleCount = this.handles.Count;
+            var handleCount = _handles.Count;
             if (handleCount > 0)
             {
                 for (int i = 0; i < handleCount; i++)
                 {
-                    this.handles[i].Dispose();
+                    _handles[i].Dispose();
                 }
-                this.handles.Clear();
+                _handles.Clear();
             }
 
-            this.nativeUnsafe = null;
-            this.count = 0;
-            this.size = 0;
-            this.recyclerHandle.Release(this);
+            _nativeUnsafe = null;
+            _count = 0;
+            _size = 0;
+            _recyclerHandle.Release(this);
         }
 
         void OnWriteCallback(int status)
         {
-            INativeUnsafe @unsafe = this.nativeUnsafe;
-            int bytesWritten = this.size;
-            this.Release();
+            INativeUnsafe @unsafe = _nativeUnsafe;
+            int bytesWritten = _size;
+            Release();
 
             OperationException error = null;
             if (status < 0)
@@ -157,7 +157,7 @@ namespace DotNetty.Transport.Libuv.Native
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        IntPtr MemoryAddress(int offset) => this.bufs + BufferSize * offset;
+        IntPtr MemoryAddress(int offset) => _bufs + BufferSize * offset;
 
         static void OnWriteCallback(IntPtr handle, int status)
         {
@@ -167,19 +167,19 @@ namespace DotNetty.Transport.Libuv.Native
 
         void Free()
         {
-            this.Release();
-            if (this.pin.IsAllocated)
+            Release();
+            if (_pin.IsAllocated)
             {
-                this.pin.Free();
+                _pin.Free();
             }
-            this.bufs = IntPtr.Zero;
+            _bufs = IntPtr.Zero;
         }
 
         protected override void Dispose(bool disposing)
         {
-            if (this.bufs != IntPtr.Zero)
+            if (_bufs != IntPtr.Zero)
             {
-                this.Free();
+                Free();
             }
             base.Dispose(disposing);
         }

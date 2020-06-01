@@ -9,50 +9,60 @@ namespace DotNetty.Transport.Libuv.Native
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
 
-    public abstract unsafe partial class NativeHandle : IDisposable
+    public abstract unsafe class NativeHandle : IDisposable
     {
         protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<NativeHandle>();
-        static readonly uv_close_cb CloseCallback = OnCloseHandle;
+        private static readonly uv_close_cb CloseCallback = OnCloseHandle;
         internal readonly uv_handle_type HandleType;
         internal IntPtr Handle;
 
         internal NativeHandle(uv_handle_type handleType)
         {
-            this.HandleType = handleType;
+            HandleType = handleType;
         }
 
         internal IntPtr LoopHandle()
         {
-            this.Validate();
-            return ((uv_handle_t*)this.Handle)->loop;
+            Validate();
+            return ((uv_handle_t*)Handle)->loop;
         }
 
         protected bool IsValid
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => this.Handle != IntPtr.Zero;
+            get => Handle != IntPtr.Zero;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void Validate()
         {
-            if (!this.IsValid)
+            if (!IsValid)
             {
-                ThrowObjectDisposedException(); // NativeMethods.ThrowObjectDisposedException($"{this.GetType()}");
+                ThrowObjectDisposedException();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal void ThrowObjectDisposedException()
+        {
+            throw GetObjectDisposedException();
+            ObjectDisposedException GetObjectDisposedException()
+            {
+                return new ObjectDisposedException($"{GetType()}");
             }
         }
 
         internal void RemoveReference()
         {
-            this.Validate();
-            NativeMethods.uv_unref(this.Handle);
+            Validate();
+            NativeMethods.uv_unref(Handle);
         }
 
-        internal bool IsActive => this.IsValid && NativeMethods.uv_is_active(this.Handle) > 0;
+        internal bool IsActive => IsValid && NativeMethods.uv_is_active(Handle) > 0;
 
         internal void CloseHandle()
         {
-            IntPtr handle = this.Handle;
+            IntPtr handle = Handle;
             if (handle == IntPtr.Zero)
             {
                 return;
@@ -67,7 +77,7 @@ namespace DotNetty.Transport.Libuv.Native
 
         protected virtual void OnClosed()
         {
-            this.Handle = IntPtr.Zero;
+            Handle = IntPtr.Zero;
         }
 
         static void OnCloseHandle(IntPtr handle)
@@ -102,14 +112,14 @@ namespace DotNetty.Transport.Libuv.Native
         {
             try
             {
-                if (this.IsValid)
+                if (IsValid)
                 {
-                    this.CloseHandle();
+                    CloseHandle();
                 }
             }
             catch (Exception exception)
             {
-                Logger.ErrorWhilstClosingHandle(this.Handle, exception);
+                Logger.ErrorWhilstClosingHandle(Handle, exception);
                 // For finalizer, we cannot allow this to escape.
                 if (disposing) throw;
             }
@@ -117,11 +127,11 @@ namespace DotNetty.Transport.Libuv.Native
 
         public void Dispose()
         {
-            this.Dispose(true);
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        ~NativeHandle() => this.Dispose(false);
+        ~NativeHandle() => Dispose(false);
 
         internal static T GetTarget<T>(IntPtr handle)
         {

@@ -29,26 +29,26 @@ namespace DotNetty.Transport.Libuv.Native
 
             GCHandle gcHandle = GCHandle.Alloc(this, GCHandleType.Normal);
             ((uv_handle_t*)handle)->data = GCHandle.ToIntPtr(gcHandle);
-            this.Handle = handle;
+            Handle = handle;
         }
 
         public void Bind(string name)
         {
             Debug.Assert(!string.IsNullOrEmpty(name));
 
-            this.Validate();
-            int result = NativeMethods.uv_pipe_bind(this.Handle, name);
+            Validate();
+            int result = NativeMethods.uv_pipe_bind(Handle, name);
             NativeMethods.ThrowIfError(result);
         }
 
         public string GetSocketName()
         {
-            this.Validate();
+            Validate();
             var buf = stackalloc byte[NameBufferSize];
             var length = (IntPtr)NameBufferSize;
             var ptr = (IntPtr)buf;
 
-            int result = NativeMethods.uv_pipe_getsockname(this.Handle, ptr, ref length);
+            int result = NativeMethods.uv_pipe_getsockname(Handle, ptr, ref length);
             NativeMethods.ThrowIfError(result);
 
             string socketName = Marshal.PtrToStringAnsi(ptr, length.ToInt32());
@@ -57,13 +57,13 @@ namespace DotNetty.Transport.Libuv.Native
 
         public string GetPeerName()
         {
-            this.Validate();
+            Validate();
 
             var buf = stackalloc byte[NameBufferSize];
             var length = (IntPtr)NameBufferSize;
             var ptr = (IntPtr)buf;
 
-            int result = NativeMethods.uv_pipe_getpeername(this.Handle, ptr, ref length);
+            int result = NativeMethods.uv_pipe_getpeername(Handle, ptr, ref length);
             NativeMethods.ThrowIfError(result);
 
             string peerName = Marshal.PtrToStringAnsi(ptr, length.ToInt32());

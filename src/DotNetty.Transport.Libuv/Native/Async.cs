@@ -11,8 +11,8 @@ namespace DotNetty.Transport.Libuv.Native
     {
         static readonly uv_work_cb WorkCallback = OnWorkCallback;
 
-        readonly Action<object> callback;
-        readonly object state;
+        readonly Action<object> _callback;
+        readonly object _state;
 
         public Async(Loop loop, Action<object> callback, object state)
             : base(uv_handle_type.UV_ASYNC)
@@ -35,19 +35,19 @@ namespace DotNetty.Transport.Libuv.Native
             GCHandle gcHandle = GCHandle.Alloc(this, GCHandleType.Normal);
             ((uv_handle_t*)handle)->data = GCHandle.ToIntPtr(gcHandle);
 
-            this.Handle = handle;
-            this.callback = callback;
-            this.state = state;
+            Handle = handle;
+            _callback = callback;
+            _state = state;
         }
 
         public void Send()
         {
-            if (!this.IsValid)
+            if (!IsValid)
             {
                 return;
             }
 
-            int result = NativeMethods.uv_async_send(this.Handle);
+            int result = NativeMethods.uv_async_send(Handle);
             NativeMethods.ThrowIfError(result);
         }
 
@@ -55,11 +55,11 @@ namespace DotNetty.Transport.Libuv.Native
         {
             try
             {
-                this.callback(this.state);
+                _callback(_state);
             }
             catch (Exception exception)
             {
-                Logger.CallbackRrror(this.HandleType, this.Handle, exception);
+                Logger.CallbackRrror(HandleType, Handle, exception);
             }
         }
 

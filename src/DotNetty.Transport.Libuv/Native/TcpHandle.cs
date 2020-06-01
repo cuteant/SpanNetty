@@ -36,29 +36,29 @@ namespace DotNetty.Transport.Libuv.Native
 
             GCHandle gcHandle = GCHandle.Alloc(this, GCHandleType.Normal);
             ((uv_handle_t*)handle)->data = GCHandle.ToIntPtr(gcHandle);
-            this.Handle = handle;
+            Handle = handle;
         }
 
         internal void Bind(IPEndPoint endPoint, bool dualStack = false)
         {
             Debug.Assert(endPoint is object);
 
-            this.Validate();
+            Validate();
             NativeMethods.GetSocketAddress(endPoint, out sockaddr addr);
-            int result = NativeMethods.uv_tcp_bind(this.Handle, ref addr, (uint)(dualStack ? 1 : 0));
+            int result = NativeMethods.uv_tcp_bind(Handle, ref addr, (uint)(dualStack ? 1 : 0));
             NativeMethods.ThrowIfError(result);
         }
 
         public IPEndPoint GetLocalEndPoint()
         {
-            this.Validate();
-            return NativeMethods.TcpGetSocketName(this.Handle);
+            Validate();
+            return NativeMethods.TcpGetSocketName(Handle);
         }
 
         public void NoDelay(int value)
         {
-            this.Validate();
-            int result = NativeMethods.uv_tcp_nodelay(this.Handle, value);
+            Validate();
+            int result = NativeMethods.uv_tcp_nodelay(Handle, value);
             NativeMethods.ThrowIfError(result);
         }
 
@@ -66,9 +66,9 @@ namespace DotNetty.Transport.Libuv.Native
         {
             if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
 
-            this.Validate();
+            Validate();
             var size = (IntPtr)value;
-            int result = NativeMethods.uv_send_buffer_size(this.Handle, ref size);
+            int result = NativeMethods.uv_send_buffer_size(Handle, ref size);
             NativeMethods.ThrowIfError(result);
 
             return size.ToInt32();
@@ -78,10 +78,10 @@ namespace DotNetty.Transport.Libuv.Native
         {
             if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
 
-            this.Validate();
+            Validate();
             var size = (IntPtr)value;
 
-            int result = NativeMethods.uv_recv_buffer_size(this.Handle, ref size);
+            int result = NativeMethods.uv_recv_buffer_size(Handle, ref size);
             NativeMethods.ThrowIfError(result);
 
             return size.ToInt32();
@@ -89,15 +89,15 @@ namespace DotNetty.Transport.Libuv.Native
 
         public void KeepAlive(int value, int delay)
         {
-            this.Validate();
-            int result = NativeMethods.uv_tcp_keepalive(this.Handle, value, delay);
+            Validate();
+            int result = NativeMethods.uv_tcp_keepalive(Handle, value, delay);
             NativeMethods.ThrowIfError(result);
         }
 
         public void SimultaneousAccepts(bool value)
         {
-            this.Validate();
-            int result = NativeMethods.uv_tcp_simultaneous_accepts(this.Handle, value ? 1 : 0);
+            Validate();
+            int result = NativeMethods.uv_tcp_simultaneous_accepts(Handle, value ? 1 : 0);
             NativeMethods.ThrowIfError(result);
         }
     }

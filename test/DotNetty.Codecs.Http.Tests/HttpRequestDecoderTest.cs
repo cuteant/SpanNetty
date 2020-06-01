@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs.Http.Tests
 {
+    using System;
     using System.Collections.Generic;
     using System.Text;
     using DotNetty.Buffers;
@@ -67,7 +68,7 @@ namespace DotNetty.Codecs.Http.Tests
             var c = channel.ReadInbound<ILastHttpContent>();
             Assert.Equal(ContentLength, c.Content.ReadableBytes);
             Assert.Equal(
-                Unpooled.WrappedBuffer(content, content.Length - ContentLength, ContentLength), 
+                Unpooled.WrappedBuffer(content, content.Length - ContentLength, ContentLength),
                 c.Content.ReadSlice(ContentLength));
             c.Release();
 
@@ -332,6 +333,21 @@ namespace DotNetty.Codecs.Http.Tests
             var request = channel.ReadInbound<IHttpRequest>();
             Assert.True(request.Result.IsFailure);
             Assert.IsType<TooLongFrameException>(request.Result.Cause);
+            Assert.False(channel.Finish());
+        }
+
+        [Fact]
+        public void Whitespace()
+        {
+            EmbeddedChannel channel = new EmbeddedChannel(new HttpRequestDecoder());
+            string requestStr = "GET /some/path HTTP/1.1\r\n" +
+                    "Transfer-Encoding : chunked\r\n" +
+                    "Host: netty.io\n\r\n";
+
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(requestStr, Encoding.ASCII)));
+            var request = channel.ReadInbound<IHttpRequest>();
+            Assert.True(request.Result.IsFailure);
+            Assert.True(request.Result.Cause is ArgumentException);
             Assert.False(channel.Finish());
         }
     }

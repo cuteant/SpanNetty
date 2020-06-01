@@ -7,15 +7,30 @@ namespace DotNetty.Transport.Channels.Sockets
     using System.Net;
     using System.Net.Sockets;
 
+    public sealed class TcpServerSocketChannel : TcpServerSocketChannel<TcpServerSocketChannel, TcpSocketChannelFactory>
+    {
+        public TcpServerSocketChannel() : base() { }
+
+        /// <summary>Create a new instance</summary>
+        public TcpServerSocketChannel(AddressFamily addressFamily) : base(addressFamily) { }
+
+        /// <summary>Create a new instance using the given <see cref="Socket"/>.</summary>
+        public TcpServerSocketChannel(Socket socket) : base(socket) { }
+    }
+
     /// <summary>
     ///     A <see cref="IServerSocketChannel" /> implementation which uses Socket-based implementation to accept new
     ///     connections.
     /// </summary>
     public partial class TcpServerSocketChannel<TServerChannel, TChannelFactory> : AbstractSocketChannel<TServerChannel, TcpServerSocketChannel<TServerChannel, TChannelFactory>.TcpServerSocketChannelUnsafe>, IServerSocketChannel
+        where TServerChannel : TcpServerSocketChannel<TServerChannel, TChannelFactory>
+        where TChannelFactory : ITcpSocketChannelFactory, new()
     {
         private static readonly ChannelMetadata METADATA = new ChannelMetadata(false);
 
         private static readonly Action<object, object> ReadCompletedSyncCallback = OnReadCompletedSync;
+
+        private readonly TChannelFactory _channelFactory;
 
         private readonly IServerSocketChannelConfiguration _config;
 
@@ -25,7 +40,7 @@ namespace DotNetty.Transport.Channels.Sockets
         ///     Create a new instance
         /// </summary>
         public TcpServerSocketChannel()
-          : this(SocketEx.CreateSocket()) //new Socket(SocketType.Stream, ProtocolType.Tcp))
+          : this(SocketEx.CreateSocket())
         {
         }
 
@@ -33,18 +48,19 @@ namespace DotNetty.Transport.Channels.Sockets
         ///     Create a new instance
         /// </summary>
         public TcpServerSocketChannel(AddressFamily addressFamily)
-            : this(SocketEx.CreateSocket(addressFamily)) //new Socket(addressFamily, SocketType.Stream, ProtocolType.Tcp))
+            : this(SocketEx.CreateSocket(addressFamily))
         {
         }
 
-        ///// <summary>
-        /////     Create a new instance using the given <see cref="Socket"/>.
-        ///// </summary>
-        //public TcpServerSocketChannel(Socket socket)
-        //    : base(null, socket)
-        //{
-        //    this.config = new TcpServerSocketChannelConfig(this, socket);
-        //}
+        /// <summary>
+        ///     Create a new instance using the given <see cref="Socket"/>.
+        /// </summary>
+        public TcpServerSocketChannel(Socket socket)
+            : base(null, socket)
+        {
+            this._config = new TcpServerSocketChannelConfig((TServerChannel)this, socket);
+            _channelFactory = new TChannelFactory();
+        }
 
         public override IChannelConfiguration Configuration => _config;
 

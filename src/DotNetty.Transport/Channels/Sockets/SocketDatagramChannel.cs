@@ -8,14 +8,23 @@ namespace DotNetty.Transport.Channels.Sockets
     using System.Net;
     using System.Net.NetworkInformation;
     using System.Net.Sockets;
-    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
 
+    public sealed class SocketDatagramChannel : SocketDatagramChannel<SocketDatagramChannel>
+    {
+        public SocketDatagramChannel() : base() { }
+
+        public SocketDatagramChannel(AddressFamily addressFamily) : base(addressFamily) { }
+
+        public SocketDatagramChannel(Socket socket) : base(socket) { }
+    }
+
     public partial class SocketDatagramChannel<TChannel> : AbstractSocketMessageChannel<TChannel, SocketDatagramChannel<TChannel>.DatagramChannelUnsafe>, IDatagramChannel
+        where TChannel : SocketDatagramChannel<TChannel>
     {
         //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<SocketDatagramChannel>();
         private static readonly Action<object, object> ReceiveFromCompletedSyncCallback = OnReceiveFromCompletedSync;
@@ -24,10 +33,10 @@ namespace DotNetty.Transport.Channels.Sockets
         private readonly DefaultDatagramChannelConfig _config;
         private readonly IPEndPoint _anyRemoteEndPoint;
 
-        //public SocketDatagramChannel()
-        //    : this(new Socket(SocketType.Dgram, ProtocolType.Udp))
-        //{
-        //}
+        public SocketDatagramChannel()
+            : this(new Socket(SocketType.Dgram, ProtocolType.Udp))
+        {
+        }
 
         public SocketDatagramChannel(AddressFamily addressFamily)
             : this(new Socket(addressFamily, SocketType.Dgram, ProtocolType.Udp))

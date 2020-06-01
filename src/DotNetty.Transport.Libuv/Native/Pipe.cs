@@ -16,49 +16,49 @@ namespace DotNetty.Transport.Libuv.Native
         static readonly uv_alloc_cb AllocateCallback = OnAllocateCallback;
         static readonly uv_read_cb ReadCallback = OnReadCallback;
 
-        readonly Scratch scratch;
+        readonly Scratch _scratch;
 
-        Action<Pipe, int> readCallback;
+        Action<Pipe, int> _readCallback;
 
         internal Pipe(Loop loop, bool ipc) : base(loop, ipc)
         {
-            this.scratch = new Scratch();
+            _scratch = new Scratch();
         }
 
         public void ReadStart(Action<Pipe, int> readAction)
         {
-            this.Validate();
+            Validate();
 
-            int result = NativeMethods.uv_read_start(this.Handle, AllocateCallback, ReadCallback);
+            int result = NativeMethods.uv_read_start(Handle, AllocateCallback, ReadCallback);
             NativeMethods.ThrowIfError(result);
-            this.readCallback = readAction;
+            _readCallback = readAction;
         }
 
         public void ReadStop()
         {
-            if (this.Handle == IntPtr.Zero)
+            if (Handle == IntPtr.Zero)
             {
                 return;
             }
 
             // This function is idempotent and may be safely called on a stopped stream.
-            int result = NativeMethods.uv_read_stop(this.Handle);
+            int result = NativeMethods.uv_read_stop(Handle);
             NativeMethods.ThrowIfError(result);
         }
 
-        void OnReadCallback(int status) => this.readCallback(this, status);
+        void OnReadCallback(int status) => _readCallback(this, status);
 
         internal Tcp GetPendingHandle()
         {
             Tcp client = null;
 
-            IntPtr loopHandle = ((uv_stream_t*)this.Handle)->loop;
+            IntPtr loopHandle = ((uv_stream_t*)Handle)->loop;
             var loop = GetTarget<Loop>(loopHandle);
-            int count = NativeMethods.uv_pipe_pending_count(this.Handle);
+            int count = NativeMethods.uv_pipe_pending_count(Handle);
 
             if (count > 0)
             {
-                var type = (uv_handle_type)NativeMethods.uv_pipe_pending_type(this.Handle);
+                var type = (uv_handle_type)NativeMethods.uv_pipe_pending_type(Handle);
                 if (type == uv_handle_type.UV_TCP)
                 {
                     client = new Tcp(loop);
@@ -68,7 +68,7 @@ namespace DotNetty.Transport.Libuv.Native
                     ThrowHelper.ThrowInvalidOperationException_ExpectingTcpHandle(type);
                 }
 
-                int result = NativeMethods.uv_accept(this.Handle, client.Handle);
+                int result = NativeMethods.uv_accept(Handle, client.Handle);
                 NativeMethods.ThrowIfError(result);
             }
 
@@ -83,7 +83,7 @@ namespace DotNetty.Transport.Libuv.Native
             uv_buf_t[] bufs = ping.Bufs;
             int result = NativeMethods.uv_write2(
                 ping.Handle,
-                this.Handle,
+                Handle,
                 bufs,
                 bufs.Length,
                 serverHandle.Handle,
@@ -99,7 +99,7 @@ namespace DotNetty.Transport.Libuv.Native
         protected override void OnClosed()
         {
             base.OnClosed();
-            this.scratch.Dispose();
+            _scratch.Dispose();
         }
 
         static void OnReadCallback(IntPtr handle, IntPtr nread, ref uv_buf_t buf)
@@ -116,29 +116,29 @@ namespace DotNetty.Transport.Libuv.Native
 
         void OnAllocateCallback(out uv_buf_t buf)
         {
-            buf = this.scratch.Buf;
+            buf = _scratch.Buf;
         }
 
         sealed class Scratch : IDisposable
         {
             static readonly byte[] ScratchBuf = new byte[64];
-            GCHandle gcHandle;
+            GCHandle _gcHandle;
 
             public Scratch()
             {
                 byte[] scratch = ScratchBuf;
-                this.gcHandle = GCHandle.Alloc(scratch, GCHandleType.Pinned);
-                IntPtr arrayHandle = this.gcHandle.AddrOfPinnedObject();
-                this.Buf = new uv_buf_t(arrayHandle, scratch.Length);
+                _gcHandle = GCHandle.Alloc(scratch, GCHandleType.Pinned);
+                IntPtr arrayHandle = _gcHandle.AddrOfPinnedObject();
+                Buf = new uv_buf_t(arrayHandle, scratch.Length);
             }
 
             internal readonly uv_buf_t Buf;
 
             public void Dispose()
             {
-                if (this.gcHandle.IsAllocated)
+                if (_gcHandle.IsAllocated)
                 {
-                    this.gcHandle.Free();
+                    _gcHandle.Free();
                 }
             }
         }
@@ -148,20 +148,20 @@ namespace DotNetty.Transport.Libuv.Native
             internal static readonly uv_watcher_cb WriteCallback = OnWriteCallback;
             static readonly byte[] PingBuf = TextEncodings.UTF8NoBOM.GetBytes("PING");
 
-            readonly NativeHandle sentHandle;
-            GCHandle gcHandle;
+            readonly NativeHandle _sentHandle;
+            GCHandle _gcHandle;
 
             public Ping(NativeHandle sentHandle) : base(uv_req_type.UV_WRITE, 0)
             {
-                this.sentHandle = sentHandle;
+                _sentHandle = sentHandle;
                 byte[] array = PingBuf;
-                this.Bufs = new uv_buf_t[1];
+                Bufs = new uv_buf_t[1];
 
                 GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
                 IntPtr arrayHandle = handle.AddrOfPinnedObject();
-                this.gcHandle = handle;
+                _gcHandle = handle;
 
-                this.Bufs[0] = new uv_buf_t(arrayHandle, array.Length);
+                Bufs[0] = new uv_buf_t(arrayHandle, array.Length);
             }
 
             internal readonly uv_buf_t[] Bufs;
@@ -174,8 +174,8 @@ namespace DotNetty.Transport.Libuv.Native
                     if (Logger.WarnEnabled) Logger.FailedToWriteServerHandleToClient(error);
                 }
 
-                this.sentHandle.CloseHandle();
-                this.Dispose();
+                _sentHandle.CloseHandle();
+                Dispose();
             }
 
             static void OnWriteCallback(IntPtr handle, int status)
@@ -186,9 +186,9 @@ namespace DotNetty.Transport.Libuv.Native
 
             protected override void Dispose(bool disposing)
             {
-                if (this.gcHandle.IsAllocated)
+                if (_gcHandle.IsAllocated)
                 {
-                    this.gcHandle.Free();
+                    _gcHandle.Free();
                 }
                 base.Dispose(disposing);
             }

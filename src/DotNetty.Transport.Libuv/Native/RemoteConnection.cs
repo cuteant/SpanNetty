@@ -9,8 +9,8 @@ namespace DotNetty.Transport.Libuv.Native
     {
         public RemoteConnection(NativeHandle client, Exception error)
         {
-            this.Client = client;
-            this.Error = error;
+            Client = client;
+            Error = error;
         }
 
         internal NativeHandle Client { get; }

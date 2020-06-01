@@ -204,6 +204,9 @@ namespace DotNetty.Transport.Channels
                 try
                 {
                     ch.DoDisconnect();
+                    // Reset remoteAddress and localAddress
+                    Interlocked.Exchange(ref ch.v_remoteAddress, null);
+                    Interlocked.Exchange(ref ch.v_localAddress, null);
                 }
                 catch (Exception t)
                 {
