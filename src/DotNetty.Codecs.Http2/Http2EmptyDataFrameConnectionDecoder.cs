@@ -25,7 +25,16 @@
 
         public override IHttp2FrameListener FrameListener
         {
-            get => base.FrameListener;
+            get
+            {
+                IHttp2FrameListener frameListener = base.FrameListener;
+                // Unwrap the original Http2FrameListener as we add this decoder under the hood.
+                if (frameListener is Http2EmptyDataFrameListener emptyDataFrameListener)
+                {
+                    return emptyDataFrameListener._listener;
+                }
+                return frameListener;
+            }
             set
             {
                 if (value is object)
@@ -38,5 +47,8 @@
                 }
             }
         }
+
+        // Package-private for testing
+        internal IHttp2FrameListener FrameListener0 => base.FrameListener;
     }
 }

@@ -10,18 +10,18 @@ namespace DotNetty.Codecs.Http
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    public class HttpClientCodec : CombinedChannelDuplexHandler<HttpResponseDecoder, HttpRequestEncoder>, 
+    public class HttpClientCodec : CombinedChannelDuplexHandler<HttpResponseDecoder, HttpRequestEncoder>,
         HttpClientUpgradeHandler.ISourceCodec
     {
         // A queue that is used for correlating a request and a response.
-        readonly Deque<HttpMethod> queue = new Deque<HttpMethod>();
-        readonly bool parseHttpAfterConnectRequest;
+        private readonly Deque<HttpMethod> _queue = new Deque<HttpMethod>();
+        private readonly bool _parseHttpAfterConnectRequest;
 
         // If true, decoding stops (i.e. pass-through)
-        bool done;
+        private bool _done;
 
-        long requestResponseCounter;
-        readonly bool failOnMissingResponse;
+        private long _requestResponseCounter;
+        private readonly bool _failOnMissingResponse;
 
         public HttpClientCodec() : this(4096, 8192, 8192, false)
         {
@@ -46,12 +46,12 @@ namespace DotNetty.Codecs.Http
         }
 
         public HttpClientCodec(
-            int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool failOnMissingResponse, 
+            int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool failOnMissingResponse,
             bool validateHeaders, bool parseHttpAfterConnectRequest)
         {
-            this.Init(new Decoder(this, maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders), new Encoder(this));
-            this.failOnMissingResponse = failOnMissingResponse;
-            this.parseHttpAfterConnectRequest = parseHttpAfterConnectRequest;
+            Init(new Decoder(this, maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders), new Encoder(this));
+            _failOnMissingResponse = failOnMissingResponse;
+            _parseHttpAfterConnectRequest = parseHttpAfterConnectRequest;
         }
 
         public HttpClientCodec(
@@ -65,12 +65,12 @@ namespace DotNetty.Codecs.Http
             int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool failOnMissingResponse,
             bool validateHeaders, int initialBufferSize, bool parseHttpAfterConnectRequest)
         {
-            this.Init(new Decoder(this, maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders, initialBufferSize), new Encoder(this));
-            this.parseHttpAfterConnectRequest = parseHttpAfterConnectRequest;
-            this.failOnMissingResponse = failOnMissingResponse;
+            Init(new Decoder(this, maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders, initialBufferSize), new Encoder(this));
+            _parseHttpAfterConnectRequest = parseHttpAfterConnectRequest;
+            _failOnMissingResponse = failOnMissingResponse;
         }
 
-        public void PrepareUpgradeFrom(IChannelHandlerContext ctx) => ((Encoder)this.OutboundHandler).Upgraded = true;
+        public void PrepareUpgradeFrom(IChannelHandlerContext ctx) => ((Encoder)OutboundHandler).Upgraded = true;
 
         public void UpgradeFrom(IChannelHandlerContext ctx)
         {
@@ -80,42 +80,42 @@ namespace DotNetty.Codecs.Http
 
         public bool SingleDecode
         {
-            get => this.InboundHandler.SingleDecode;
-            set => this.InboundHandler.SingleDecode = value;
+            get => InboundHandler.SingleDecode;
+            set => InboundHandler.SingleDecode = value;
         }
 
         sealed class Encoder : HttpRequestEncoder
         {
-            readonly HttpClientCodec clientCodec;
+            private readonly HttpClientCodec _clientCodec;
             internal bool Upgraded;
 
             public Encoder(HttpClientCodec clientCodec)
             {
-                this.clientCodec = clientCodec;
+                _clientCodec = clientCodec;
             }
 
             protected override void Encode(IChannelHandlerContext context, object message, List<object> output)
             {
-                if (this.Upgraded)
+                if (Upgraded)
                 {
                     output.Add(ReferenceCountUtil.Retain(message));
                     return;
                 }
 
-                if (message is IHttpRequest request && !this.clientCodec.done)
+                if (message is IHttpRequest request)
                 {
-                    this.clientCodec.queue.AddToBack(request.Method);
+                    _clientCodec._queue.AddToBack(request.Method);
                 }
 
                 base.Encode(context, message, output);
 
-                if (this.clientCodec.failOnMissingResponse && !this.clientCodec.done)
+                if (_clientCodec._failOnMissingResponse && !_clientCodec._done)
                 {
                     // check if the request is chunked if so do not increment
                     if (message is ILastHttpContent)
                     {
                         // increment as its the last chunk
-                        Interlocked.Increment(ref this.clientCodec.requestResponseCounter);
+                        Interlocked.Increment(ref _clientCodec._requestResponseCounter);
                     }
                 }
             }
@@ -123,25 +123,25 @@ namespace DotNetty.Codecs.Http
 
         sealed class Decoder : HttpResponseDecoder
         {
-            readonly HttpClientCodec clientCodec;
+            private readonly HttpClientCodec _clientCodec;
 
             internal Decoder(HttpClientCodec clientCodec, int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool validateHeaders)
                 : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders)
             {
-                this.clientCodec = clientCodec;
+                _clientCodec = clientCodec;
             }
 
             internal Decoder(HttpClientCodec clientCodec, int maxInitialLineLength, int maxHeaderSize, int maxChunkSize, bool validateHeaders, int initialBufferSize)
                 : base(maxInitialLineLength, maxHeaderSize, maxChunkSize, validateHeaders, initialBufferSize)
             {
-                this.clientCodec = clientCodec;
+                _clientCodec = clientCodec;
             }
 
             protected override void Decode(IChannelHandlerContext context, IByteBuffer buffer, List<object> output)
             {
-                if (this.clientCodec.done)
+                if (_clientCodec._done)
                 {
-                    int readable = this.ActualReadableBytes;
+                    int readable = ActualReadableBytes;
                     if (0u >= (uint)readable)
                     {
                         // if non is readable just return null
@@ -154,12 +154,12 @@ namespace DotNetty.Codecs.Http
                 {
                     int oldSize = output.Count;
                     base.Decode(context, buffer, output);
-                    if (this.clientCodec.failOnMissingResponse)
+                    if (_clientCodec._failOnMissingResponse)
                     {
                         int size = output.Count;
                         for (int i = oldSize; i < size; i++)
                         {
-                            this.Decrement(output[i]);
+                            Decrement(output[i]);
                         }
                     }
                 }
@@ -175,7 +175,7 @@ namespace DotNetty.Codecs.Http
                 // check if it's an Header and its transfer encoding is not chunked.
                 if (msg is ILastHttpContent)
                 {
-                    Interlocked.Decrement(ref this.clientCodec.requestResponseCounter);
+                    Interlocked.Decrement(ref _clientCodec._requestResponseCounter);
                 }
             }
 
@@ -186,58 +186,60 @@ namespace DotNetty.Codecs.Http
                 {
                     // 100-continue and 101 switching protocols response should be excluded from paired comparison.
                     // Just delegate to super method which has all the needed handling.
-                    return  base.IsContentAlwaysEmpty(msg);
+                    return base.IsContentAlwaysEmpty(msg);
                 }
 
                 // Get the getMethod of the HTTP request that corresponds to the
                 // current response.
-                HttpMethod method = this.clientCodec.queue.RemoveFromFront();
-
-                char firstChar = method.AsciiName[0];
-                switch (firstChar)
+                // If the remote peer did for example send multiple responses for one request (which is not allowed per
+                // spec but may still be possible) method will be null so guard against it.
+                if (_clientCodec._queue.TryRemoveFromFront(out var method))
                 {
-                    case 'H':
-                        // According to 4.3, RFC2616:
-                        // All responses to the HEAD request getMethod MUST NOT include a
-                        // message-body, even though the presence of entity-header fields
-                        // might lead one to believe they do.
-                        if (HttpMethod.Head.Equals(method))
-                        {
-                            return true;
-
-                            // The following code was inserted to work around the servers
-                            // that behave incorrectly.  It has been commented out
-                            // because it does not work with well behaving servers.
-                            // Please note, even if the 'Transfer-Encoding: chunked'
-                            // header exists in the HEAD response, the response should
-                            // have absolutely no content.
-                            //
-                            // Interesting edge case:
-                            // Some poorly implemented servers will send a zero-byte
-                            // chunk if Transfer-Encoding of the response is 'chunked'.
-                            //
-                            // return !msg.isChunked();
-                        }
-                        break;
-                    case 'C':
-                        // Successful CONNECT request results in a response with empty body.
-                        if (statusCode == 200)
-                        {
-                            if (HttpMethod.Connect.Equals(method))
+                    char firstChar = method.AsciiName[0];
+                    switch (firstChar)
+                    {
+                        case 'H':
+                            // According to 4.3, RFC2616:
+                            // All responses to the HEAD request getMethod MUST NOT include a
+                            // message-body, even though the presence of entity-header fields
+                            // might lead one to believe they do.
+                            if (HttpMethod.Head.Equals(method))
                             {
-                                // Proxy connection established - Parse HTTP only if configured by parseHttpAfterConnectRequest,
-                                // else pass through.
-                                if (!this.clientCodec.parseHttpAfterConnectRequest)
-                                {
-                                    this.clientCodec.done = true;
-                                    this.clientCodec.queue.Clear();
-                                }
                                 return true;
-                            }
-                        }
-                        break;
-                }
 
+                                // The following code was inserted to work around the servers
+                                // that behave incorrectly.  It has been commented out
+                                // because it does not work with well behaving servers.
+                                // Please note, even if the 'Transfer-Encoding: chunked'
+                                // header exists in the HEAD response, the response should
+                                // have absolutely no content.
+                                //
+                                // Interesting edge case:
+                                // Some poorly implemented servers will send a zero-byte
+                                // chunk if Transfer-Encoding of the response is 'chunked'.
+                                //
+                                // return !msg.isChunked();
+                            }
+                            break;
+                        case 'C':
+                            // Successful CONNECT request results in a response with empty body.
+                            if (statusCode == 200)
+                            {
+                                if (HttpMethod.Connect.Equals(method))
+                                {
+                                    // Proxy connection established - Parse HTTP only if configured by parseHttpAfterConnectRequest,
+                                    // else pass through.
+                                    if (!_clientCodec._parseHttpAfterConnectRequest)
+                                    {
+                                        _clientCodec._done = true;
+                                        _clientCodec._queue.Clear();
+                                    }
+                                    return true;
+                                }
+                            }
+                            break;
+                    }
+                }
                 return base.IsContentAlwaysEmpty(msg);
             }
 
@@ -245,9 +247,9 @@ namespace DotNetty.Codecs.Http
             {
                 base.ChannelInactive(ctx);
 
-                if (this.clientCodec.failOnMissingResponse)
+                if (_clientCodec._failOnMissingResponse)
                 {
-                    long missingResponses = Volatile.Read(ref this.clientCodec.requestResponseCounter);
+                    long missingResponses = Volatile.Read(ref _clientCodec._requestResponseCounter);
                     if (missingResponses > 0)
                     {
                         ctx.FireExceptionCaught(new PrematureChannelClosureException(

@@ -7,14 +7,14 @@ namespace DotNetty.Common.Concurrency
 
     sealed class StateActionScheduledTask : ScheduledTask
     {
-        readonly Action<object> action;
+        readonly Action<object> _action;
 
         public StateActionScheduledTask(AbstractScheduledEventExecutor executor, Action<object> action, object state, in PreciseTimeSpan deadline)
             : base(executor, deadline, executor.NewPromise(state))
         {
-            this.action = action;
+            _action = action;
         }
 
-        protected override void Execute() => this.action(this.Completion.AsyncState);
+        protected override void Execute() => _action(Completion.AsyncState);
     }
 }

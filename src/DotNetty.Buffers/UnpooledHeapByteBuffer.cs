@@ -70,39 +70,28 @@ namespace DotNetty.Buffers
         {
             this.CheckNewCapacity(newCapacity);
 
-            int oldCapacity = this.array.Length;
-            if (newCapacity > oldCapacity)
+            uint unewCapacity = (uint)newCapacity;
+            byte[] oldArray = this.array;
+            uint oldCapacity = (uint)oldArray.Length;
+            if (oldCapacity == unewCapacity)
             {
-                byte[] oldArray = this.array;
-                byte[] newArray = this.AllocateArray(newCapacity);
-                PlatformDependent.CopyMemory(oldArray, 0, newArray, 0, oldCapacity);
-
-                this.SetArray(newArray);
-                this.FreeArray(oldArray);
+                return this;
             }
-            else if (newCapacity < oldCapacity)
+
+            int bytesToCopy;
+            if (unewCapacity > oldCapacity)
             {
-                byte[] oldArray = this.array;
-                byte[] newArray = this.AllocateArray(newCapacity);
-                int readerIndex = this.ReaderIndex;
-                if (readerIndex < newCapacity)
-                {
-                    int writerIndex = this.WriterIndex;
-                    if (writerIndex > newCapacity)
-                    {
-                        this.SetWriterIndex0(writerIndex = newCapacity);
-                    }
-
-                    PlatformDependent.CopyMemory(oldArray, readerIndex, newArray, 0, writerIndex - readerIndex);
-                }
-                else
-                {
-                    this.SetIndex(newCapacity, newCapacity);
-                }
-
-                this.SetArray(newArray);
-                this.FreeArray(oldArray);
+                bytesToCopy = oldArray.Length;
             }
+            else
+            {
+                this.TrimIndicesToCapacity(newCapacity);
+                bytesToCopy = newCapacity;
+            }
+            byte[] newArray = this.AllocateArray(newCapacity);
+            PlatformDependent.CopyMemory(oldArray, 0, newArray, 0, bytesToCopy);
+            this.SetArray(newArray);
+            this.FreeArray(oldArray);
             return this;
         }
 

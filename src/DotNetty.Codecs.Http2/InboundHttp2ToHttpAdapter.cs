@@ -10,7 +10,7 @@ namespace DotNetty.Codecs.Http2
 
     /// <summary>
     /// This adapter provides just header/data events from the HTTP message flow defined
-    /// here <a href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-8.1.">HTTP/2 Spec Message Flow</a>.
+    /// in <a href="https://tools.ietf.org/html/rfc7540#section-8.1">[RFC 7540], Section 8.1</a>.
     /// <para>See <see cref="HttpToHttp2ConnectionHandler"/> to get translation from HTTP/1.x objects to HTTP/2 frames for writes.</para>
     /// </summary>
     public class InboundHttp2ToHttpAdapter : Http2EventAdapter

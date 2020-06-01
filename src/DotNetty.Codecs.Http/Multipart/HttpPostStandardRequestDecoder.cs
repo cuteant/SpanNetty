@@ -66,16 +66,24 @@ namespace DotNetty.Codecs.Http.Multipart
             this.factory = factory;
             this.request = request;
             this.charset = charset;
-            if (request is IHttpContent content)
+            try
             {
-                // Offer automatically if the given request is als type of HttpContent
-                // See #1089
-                this.Offer(content);
+                if (request is IHttpContent content)
+                {
+                    // Offer automatically if the given request is als type of HttpContent
+                    // See #1089
+                    this.Offer(content);
+                }
+                else
+                {
+                    this.undecodedChunk = ArrayPooled.Buffer();
+                    this.ParseBody();
+                }
             }
-            else
+            catch (ErrorDataDecoderException e)
             {
-                this.undecodedChunk = ArrayPooled.Buffer();
-                this.ParseBody();
+                Destroy();
+                throw e;
             }
         }
 
@@ -475,7 +483,7 @@ namespace DotNetty.Codecs.Http.Multipart
                             goto loop;
                     }
                 }
-                loop:
+            loop:
                 if (this.isLastChunk && this.currentAttribute is object)
                 {
                     // special case

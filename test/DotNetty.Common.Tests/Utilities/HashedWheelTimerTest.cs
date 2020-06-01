@@ -203,6 +203,35 @@ namespace DotNetty.Common.Tests.Utilities
             timer.StopAsync().Wait();
         }
 
+        [Fact]
+        public void ReportPendingTimeouts()
+        {
+            var latch = new CountdownEvent(1);
+            var timer = new HashedWheelTimer();
+            var t1 = timer.NewTimeout(CreateNoOpTimerTask(), TimeSpan.FromMinutes(100));
+            var t2 = timer.NewTimeout(CreateNoOpTimerTask(), TimeSpan.FromMinutes(100));
+            timer.NewTimeout(CreateCountdownEventTimerTask(latch), TimeSpan.FromMilliseconds(90));
+
+            Assert.Equal(3, timer.PendingTimeouts);
+            t1.Cancel();
+            t2.Cancel();
+            latch.Wait();
+
+            Assert.Equal(0, timer.PendingTimeouts);
+            timer.StopAsync().GetAwaiter().GetResult();
+        }
+
+        //[Fact]
+        //public void TestOverflow()
+        //{
+        //    var timer = new HashedWheelTimer();
+        //    var latch = new CountdownEvent(1);
+        //    var timeout = timer.NewTimeout(CreateCountdownEventTimerTask(latch), TimeSpan.FromMilliseconds(long.MaxValue));
+        //    Assert.False(latch.Wait(TimeSpan.FromSeconds(1)));
+        //    timeout.Cancel();
+        //    timer.StopAsync().GetAwaiter().GetResult();
+        //}
+
         static ActionTimerTask CreateNoOpTimerTask() => new ActionTimerTask(t => { });
 
         static ActionTimerTask CreateCountdownEventTimerTask(CountdownEvent latch) => new ActionTimerTask(t => { latch.Signal(); });

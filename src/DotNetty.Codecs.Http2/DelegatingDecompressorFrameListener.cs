@@ -46,7 +46,7 @@ namespace DotNetty.Codecs.Http2
             if (decompressor is null)
             {
                 // The decompressor may be null if no compatible encoding type was found in this stream's headers
-                return listener.OnDataRead(ctx, streamId, data, padding, endOfStream);
+                return _listener.OnDataRead(ctx, streamId, data, padding, endOfStream);
             }
 
             EmbeddedChannel channel = decompressor.Decompressor;
@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     if (endOfStream)
                     {
-                        listener.OnDataRead(ctx, streamId, Unpooled.Empty, padding, true);
+                        _listener.OnDataRead(ctx, streamId, Unpooled.Empty, padding, true);
                     }
                     // No new decompressed data was extracted from the compressed data. This means the application could
                     // not be provided with data and thus could not return how many bytes were processed. We will assume
@@ -93,7 +93,7 @@ namespace DotNetty.Codecs.Http2
                         // from the decompressed amount which the user knows about to the compressed amount which flow
                         // control knows about.
                         flowController.ConsumeBytes(stream,
-                                listener.OnDataRead(ctx, streamId, buf, padding, decompressedEndOfStream));
+                                _listener.OnDataRead(ctx, streamId, buf, padding, decompressedEndOfStream));
                         if (nextBuf is null)
                         {
                             break;
@@ -127,13 +127,13 @@ namespace DotNetty.Codecs.Http2
         public override void OnHeadersRead(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int padding, bool endOfStream)
         {
             InitDecompressor(ctx, streamId, headers, endOfStream);
-            listener.OnHeadersRead(ctx, streamId, headers, padding, endOfStream);
+            _listener.OnHeadersRead(ctx, streamId, headers, padding, endOfStream);
         }
 
         public override void OnHeadersRead(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int streamDependency, short weight, bool exclusive, int padding, bool endOfStream)
         {
             InitDecompressor(ctx, streamId, headers, endOfStream);
-            listener.OnHeadersRead(ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream);
+            _listener.OnHeadersRead(ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream);
         }
 
         /// <summary>

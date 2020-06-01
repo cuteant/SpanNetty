@@ -53,6 +53,49 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
         protected override void Encode(IChannelHandlerContext ctx, WebSocketFrame msg, List<object> output)
         {
+            IByteBuffer compressedContent = null;
+            if (msg.Content.IsReadable())
+            {
+                compressedContent = CompressContent(ctx, msg);
+            }
+            else if (msg.IsFinalFragment)
+            {
+                // Set empty DEFLATE block manually for unknown buffer size
+                // https://tools.ietf.org/html/rfc7692#section-7.2.3.6
+                compressedContent = DeflateDecoder.EmptyDeflateBlock.Duplicate();
+            }
+            else
+            {
+                ThrowHelper.ThrowCodecException_CannotCompressContentBuffer();
+            }
+
+            WebSocketFrame outMsg = null;
+            switch (msg.Opcode)
+            {
+                case Opcode.Text:
+                    outMsg = new TextWebSocketFrame(msg.IsFinalFragment, Rsv(msg), compressedContent);
+                    break;
+                case Opcode.Binary:
+                    outMsg = new BinaryWebSocketFrame(msg.IsFinalFragment, Rsv(msg), compressedContent);
+                    break;
+                case Opcode.Cont:
+                    outMsg = new ContinuationWebSocketFrame(msg.IsFinalFragment, Rsv(msg), compressedContent);
+                    break;
+                default:
+                    ThrowHelper.ThrowCodecException_UnexpectedFrameType(msg);
+                    break;
+            }
+            output.Add(outMsg);
+        }
+
+        public override void HandlerRemoved(IChannelHandlerContext ctx)
+        {
+            Cleanup();
+            base.HandlerRemoved(ctx);
+        }
+
+        private IByteBuffer CompressContent(IChannelHandlerContext ctx, WebSocketFrame msg)
+        {
             if (_encoder is null)
             {
                 _encoder = new EmbeddedChannel(
@@ -104,30 +147,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             {
                 compressedContent = fullCompressedContent;
             }
-
-            WebSocketFrame outMsg = null;
-            switch (msg.Opcode)
-            {
-                case Opcode.Text:
-                    outMsg = new TextWebSocketFrame(msg.IsFinalFragment, Rsv(msg), compressedContent);
-                    break;
-                case Opcode.Binary:
-                    outMsg = new BinaryWebSocketFrame(msg.IsFinalFragment, Rsv(msg), compressedContent);
-                    break;
-                case Opcode.Cont:
-                    outMsg = new ContinuationWebSocketFrame(msg.IsFinalFragment, Rsv(msg), compressedContent);
-                    break;
-                default:
-                    ThrowHelper.ThrowCodecException_UnexpectedFrameType(msg);
-                    break;
-            }
-            output.Add(outMsg);
-        }
-
-        public override void HandlerRemoved(IChannelHandlerContext ctx)
-        {
-            Cleanup();
-            base.HandlerRemoved(ctx);
+            return compressedContent;
         }
 
         void Cleanup()

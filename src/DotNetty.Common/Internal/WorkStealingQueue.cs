@@ -9,26 +9,26 @@ namespace DotNetty.Common.Internal
     public class WorkStealingQueue<T> : IDeque<T>
         where T : class
     {
-        const int InitialSize = 32;
-        const int StartIndex = 0;
+        private const int c_initialSize = 32;
+        private const int c_startIndex = 0;
 
-        volatile T[] array = new T[InitialSize];
-        volatile int mask = InitialSize - 1;
+        private volatile T[] _array = new T[c_initialSize];
+        private volatile int v_mask = c_initialSize - 1;
 
-        volatile int headIndex = StartIndex;
-        volatile int tailIndex = StartIndex;
+        private volatile int v_headIndex = c_startIndex;
+        private volatile int v_tailIndex = c_startIndex;
 
-        readonly SpinLock foreignLock = new SpinLock(false);
+        private readonly SpinLock _foreignLock = new SpinLock(false);
 
-        public int Count => this.tailIndex - this.headIndex;
+        public int Count => v_tailIndex - v_headIndex;
 
-        public bool IsEmpty => this.headIndex >= this.tailIndex;
+        public bool IsEmpty => v_headIndex >= v_tailIndex;
 
-        public bool NonEmpty => this.tailIndex > this.headIndex;
+        public bool NonEmpty => v_tailIndex > v_headIndex;
 
         public bool TryEnqueue(T item)
         {
-            int tail = this.tailIndex;
+            int tail = v_tailIndex;
 
             // We're going to increment the tail; if we'll overflow, then we need to reset our counts
             if (tail == int.MaxValue)
@@ -36,9 +36,9 @@ namespace DotNetty.Common.Internal
                 bool lockTaken = false;
                 try
                 {
-                    this.foreignLock.Enter(ref lockTaken);
+                    _foreignLock.Enter(ref lockTaken);
 
-                    if (this.tailIndex == int.MaxValue)
+                    if (v_tailIndex == int.MaxValue)
                     {
                         //
                         // Rather than resetting to zero, we'll just mask off the bits we don't care about.
@@ -50,26 +50,26 @@ namespace DotNetty.Common.Internal
                         // for the head to end up > than the tail, since you can't set any more bits than all of 
                         // them.
                         //
-                        Interlocked.Exchange(ref this.headIndex , this.headIndex & this.mask);
-                        tail = this.tailIndex & this.mask;
-                        Interlocked.Exchange(ref this.tailIndex , tail);
-                        Debug.Assert(this.headIndex <= this.tailIndex);
+                        Interlocked.Exchange(ref v_headIndex , v_headIndex & v_mask);
+                        tail = v_tailIndex & v_mask;
+                        Interlocked.Exchange(ref v_tailIndex , tail);
+                        Debug.Assert(v_headIndex <= v_tailIndex);
                     }
                 }
                 finally
                 {
                     if (lockTaken)
                     {
-                        this.foreignLock.Exit(true);
+                        _foreignLock.Exit(true);
                     }
                 }
             }
 
             // When there are at least 2 elements' worth of space, we can take the fast path.
-            if (tail < this.headIndex + this.mask)
+            if (tail < v_headIndex + v_mask)
             {
-                Interlocked.Exchange(ref this.array[tail & this.mask], item);
-                Interlocked.Exchange(ref this.tailIndex, tail + 1);
+                Interlocked.Exchange(ref _array[tail & v_mask], item);
+                Interlocked.Exchange(ref v_tailIndex, tail + 1);
             }
             else
             {
@@ -77,36 +77,36 @@ namespace DotNetty.Common.Internal
                 bool lockTaken = false;
                 try
                 {
-                    this.foreignLock.Enter(ref lockTaken);
+                    _foreignLock.Enter(ref lockTaken);
 
-                    int head = this.headIndex;
-                    int count = this.tailIndex - this.headIndex;
+                    int head = v_headIndex;
+                    int count = v_tailIndex - v_headIndex;
 
                     // If there is still space (one left), just add the element.
-                    if (count >= this.mask)
+                    if (count >= v_mask)
                     {
                         // We're full; expand the queue by doubling its size.
-                        var newArray = new T[this.array.Length << 1];
-                        for (int i = 0; i < this.array.Length; i++)
+                        var newArray = new T[_array.Length << 1];
+                        for (int i = 0; i < _array.Length; i++)
                         {
-                            newArray[i] = this.array[(i + head) & this.mask];
+                            newArray[i] = _array[(i + head) & v_mask];
                         }
 
                         // Reset the field values, incl. the mask.
-                        Interlocked.Exchange(ref this.array, newArray);
-                        Interlocked.Exchange(ref this.headIndex, 0);
-                        Interlocked.Exchange(ref this.tailIndex, tail = count);
-                        Interlocked.Exchange(ref this.mask, (this.mask << 1) | 1);
+                        Interlocked.Exchange(ref _array, newArray);
+                        Interlocked.Exchange(ref v_headIndex, 0);
+                        Interlocked.Exchange(ref v_tailIndex, tail = count);
+                        Interlocked.Exchange(ref v_mask, (v_mask << 1) | 1);
                     }
 
-                    Interlocked.Exchange(ref this.array[tail & this.mask], item);
-                    Interlocked.Exchange(ref this.tailIndex, tail + 1);
+                    Interlocked.Exchange(ref _array[tail & v_mask], item);
+                    Interlocked.Exchange(ref v_tailIndex, tail + 1);
                 }
                 finally
                 {
                     if (lockTaken)
                     {
-                        this.foreignLock.Exit(false);
+                        _foreignLock.Exit(false);
                     }
                 }
             }
@@ -118,16 +118,16 @@ namespace DotNetty.Common.Internal
         {
             while (true)
             {
-                int tail = this.tailIndex;
-                if (this.headIndex >= tail)
+                int tail = v_tailIndex;
+                if (v_headIndex >= tail)
                 {
                     item = null;
                     return false;
                 }
                 else
                 {
-                    int idx = tail & this.mask;
-                    item = Volatile.Read(ref this.array[idx]);
+                    int idx = tail & v_mask;
+                    item = Volatile.Read(ref _array[idx]);
 
                     // Check for nulls in the array.
                     if (item is null)
@@ -145,21 +145,21 @@ namespace DotNetty.Common.Internal
             while (true)
             {
                 // Decrement the tail using a fence to ensure subsequent read doesn't come before.
-                int tail = this.tailIndex;
-                if (this.headIndex >= tail)
+                int tail = v_tailIndex;
+                if (v_headIndex >= tail)
                 {
                     item = null;
                     return false;
                 }
 
                 tail -= 1;
-                Interlocked.Exchange(ref this.tailIndex, tail);
+                Interlocked.Exchange(ref v_tailIndex, tail);
 
                 // If there is no interaction with a take, we can head down the fast path.
-                if (this.headIndex <= tail)
+                if (v_headIndex <= tail)
                 {
-                    int idx = tail & this.mask;
-                    item = Volatile.Read(ref this.array[idx]);
+                    int idx = tail & v_mask;
+                    item = Volatile.Read(ref _array[idx]);
 
                     // Check for nulls in the array.
                     if (item is null)
@@ -167,7 +167,7 @@ namespace DotNetty.Common.Internal
                         continue;
                     }
 
-                    Interlocked.Exchange(ref this.array[idx], null);
+                    Interlocked.Exchange(ref _array[idx], null);
                     return true;
                 }
                 else
@@ -176,13 +176,13 @@ namespace DotNetty.Common.Internal
                     bool lockTaken = false;
                     try
                     {
-                        this.foreignLock.Enter(ref lockTaken);
+                        _foreignLock.Enter(ref lockTaken);
 
-                        if (this.headIndex <= tail)
+                        if (v_headIndex <= tail)
                         {
                             // Element still available. Take it.
-                            int idx = tail & this.mask;
-                            item = Volatile.Read(ref this.array[idx]);
+                            int idx = tail & v_mask;
+                            item = Volatile.Read(ref _array[idx]);
 
                             // Check for nulls in the array.
                             if (item is null)
@@ -190,13 +190,13 @@ namespace DotNetty.Common.Internal
                                 continue;
                             }
 
-                            Interlocked.Exchange(ref this.array[idx], null);
+                            Interlocked.Exchange(ref _array[idx], null);
                             return true;
                         }
                         else
                         {
                             // We lost the ----, element was stolen, restore the tail.
-                            Interlocked.Exchange(ref this.tailIndex, tail + 1);
+                            Interlocked.Exchange(ref v_tailIndex, tail + 1);
                             item = null;
                             return false;
                         }
@@ -205,7 +205,7 @@ namespace DotNetty.Common.Internal
                     {
                         if (lockTaken)
                         {
-                            this.foreignLock.Exit(false);
+                            _foreignLock.Exit(false);
                         }
                     }
                 }
@@ -218,7 +218,7 @@ namespace DotNetty.Common.Internal
 
             while (true)
             {
-                if (this.headIndex >= this.tailIndex)
+                if (v_headIndex >= v_tailIndex)
                 {
                     return false;
                 }
@@ -226,17 +226,17 @@ namespace DotNetty.Common.Internal
                 bool taken = false;
                 try
                 {
-                    this.foreignLock.TryEnter(0, ref taken);
+                    _foreignLock.TryEnter(0, ref taken);
                     if (taken)
                     {
                         // Increment head, and ensure read of tail doesn't move before it (fence).
-                        int head = this.headIndex;
-                        Interlocked.Exchange(ref this.headIndex, head + 1);
+                        int head = v_headIndex;
+                        Interlocked.Exchange(ref v_headIndex, head + 1);
 
-                        if (head < this.tailIndex)
+                        if (head < v_tailIndex)
                         {
-                            int idx = head & this.mask;
-                            item = Volatile.Read(ref this.array[idx]);
+                            int idx = head & v_mask;
+                            item = Volatile.Read(ref _array[idx]);
 
                             // Check for nulls in the array.
                             if (item is null)
@@ -244,13 +244,13 @@ namespace DotNetty.Common.Internal
                                 continue;
                             }
 
-                            Interlocked.Exchange(ref this.array[idx], null);
+                            Interlocked.Exchange(ref _array[idx], null);
                             return true;
                         }
                         else
                         {
                             // Failed, restore head.
-                            Interlocked.Exchange(ref this.headIndex, head);
+                            Interlocked.Exchange(ref v_headIndex, head);
                             item = null;
                         }
                     }
@@ -259,7 +259,7 @@ namespace DotNetty.Common.Internal
                 {
                     if (taken)
                     {
-                        this.foreignLock.Exit(false);
+                        _foreignLock.Exit(false);
                     }
                 }
 
@@ -269,8 +269,8 @@ namespace DotNetty.Common.Internal
 
         public void Clear()
         {
-            Interlocked.Exchange(ref this.headIndex, StartIndex);
-            Interlocked.Exchange(ref this.tailIndex, StartIndex);
+            Interlocked.Exchange(ref v_headIndex, c_startIndex);
+            Interlocked.Exchange(ref v_tailIndex, c_startIndex);
         }
     }
 }

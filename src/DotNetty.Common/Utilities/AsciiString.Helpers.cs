@@ -403,7 +403,7 @@ namespace DotNetty.Common.Utilities
         {
             var ua = (uint)a;
             var ub = (uint)b;
-            return (ua == ub || ToLowerCase0(ua) == ToLowerCase0(ub)) ? true : false;
+            return ua == ub || ToLowerCase0(ua) == ToLowerCase0(ub);
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
@@ -411,10 +411,10 @@ namespace DotNetty.Common.Utilities
         {
             var ua = (uint)a;
             var ub = (uint)b;
-            return (ua == ub || ToLowerCase0(ua) == ToLowerCase0(ub)) ? true : false;
+            return ua == ub || ToLowerCase0(ua) == ToLowerCase0(ub);
         }
 
-        [MethodImpl(InlineMethod.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static byte ToLowerCase(byte b) => unchecked((byte)ToLowerCase0(b));
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
@@ -440,18 +440,18 @@ namespace DotNetty.Common.Utilities
         const uint AsciiA = 'A';
         const uint Asciia = 'a';
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        public static bool IsLowerCase(byte value) => (value - Asciia <= AsciiCharDiff) ? true : false;
+        public static bool IsLowerCase(byte value) => value - Asciia <= AsciiCharDiff;
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        public static bool IsLowerCase(uint value) => (value - Asciia <= AsciiCharDiff) ? true : false;
+        public static bool IsLowerCase(uint value) => value - Asciia <= AsciiCharDiff;
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        public static bool IsLowerCase(char value) => (value - Asciia <= AsciiCharDiff) ? true : false;
+        public static bool IsLowerCase(char value) => value - Asciia <= AsciiCharDiff;
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        public static bool IsUpperCase(byte value) => (value - AsciiA <= AsciiCharDiff) ? true : false;
+        public static bool IsUpperCase(byte value) => value - AsciiA <= AsciiCharDiff;
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        public static bool IsUpperCase(uint value) => (value - AsciiA <= AsciiCharDiff) ? true : false;
+        public static bool IsUpperCase(uint value) => value - AsciiA <= AsciiCharDiff;
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        public static bool IsUpperCase(char value) => (value - AsciiA <= AsciiCharDiff) ? true : false;
+        public static bool IsUpperCase(char value) => value - AsciiA <= AsciiCharDiff;
 
         /// <summary>
         /// A hex digit is valid if it is in the range: [0..9] | [A..F] | [a..f]
@@ -462,26 +462,26 @@ namespace DotNetty.Common.Utilities
         public static bool IsHexDigit(char value) => IsHexDigit((uint)value);
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static bool IsHexDigit(uint value) =>
-            ((value - Ascii0) <= DigitDiff ||
+            (value - Ascii0) <= DigitDiff ||
             (value - AsciiA) <= HexCharDiff ||
-            (value - Asciia) <= HexCharDiff) ? true : false;
+            (value - Asciia) <= HexCharDiff;
 
         /// <summary>
         /// Returns <see langword="true"/> iff <paramref name="value"/> is in the range [0..9].
         /// Otherwise, returns <see langword="false"/>.
         /// </summary>
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static bool IsDigit(byte value) => (value - Ascii0 <= DigitDiff) ? true : false;
+        public static bool IsDigit(byte value) => value - Ascii0 <= DigitDiff;
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static bool IsDigit(char value) => (value - Ascii0 <= DigitDiff) ? true : false;
+        public static bool IsDigit(char value) => value - Ascii0 <= DigitDiff;
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static bool IsDigit(uint value) => (value - Ascii0 <= DigitDiff) ? true : false;
+        public static bool IsDigit(uint value) => value - Ascii0 <= DigitDiff;
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static byte CharToByte(char c) => c > uMaxCharValue ? Replacement : unchecked((byte)c);
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static char ByteToChar(byte b) => (char)(b);
+        public static char ByteToChar(byte b) => (char)b;
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         static void ThrowIndexOutOfRangeException_Start(int start, int length, int count)

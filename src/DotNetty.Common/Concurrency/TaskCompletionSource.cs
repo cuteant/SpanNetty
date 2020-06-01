@@ -12,7 +12,7 @@ namespace DotNetty.Common.Concurrency
     public class TaskCompletionSource : IPromise
     {
         private readonly TaskCompletionSource<int> _tcs;
-        private int _uncancellable = SharedConstants.False;
+        private int v_uncancellable = SharedConstants.False;
 
         public TaskCompletionSource()
         {
@@ -47,7 +47,7 @@ namespace DotNetty.Common.Concurrency
         }
         public virtual void SetCanceled()
         {
-            if (SharedConstants.False < (uint)Volatile.Read(ref _uncancellable)) { return; }
+            if (SharedConstants.False < (uint)Volatile.Read(ref v_uncancellable)) { return; }
             _tcs.SetCanceled();
         }
 
@@ -68,7 +68,7 @@ namespace DotNetty.Common.Concurrency
 
         public virtual bool TrySetCanceled()
         {
-            if (SharedConstants.False < (uint)Volatile.Read(ref _uncancellable)) { return false; }
+            if (SharedConstants.False < (uint)Volatile.Read(ref v_uncancellable)) { return false; }
             return _tcs.TrySetCanceled();
         }
 
@@ -88,7 +88,7 @@ namespace DotNetty.Common.Concurrency
 
         public bool SetUncancellable()
         {
-            if (SharedConstants.False >= (uint)Interlocked.CompareExchange(ref _uncancellable, SharedConstants.True, SharedConstants.False))
+            if (SharedConstants.False >= (uint)Interlocked.CompareExchange(ref v_uncancellable, SharedConstants.True, SharedConstants.False))
             {
                 return true;
             }

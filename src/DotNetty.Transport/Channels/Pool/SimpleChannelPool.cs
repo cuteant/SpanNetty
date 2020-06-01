@@ -16,13 +16,12 @@ namespace DotNetty.Transport.Channels.Pool
     /// a <see cref="IChannel"/> but none is in the pool atm. No limit on the maximal concurrent <see cref="IChannel"/>s is enforced.
     /// This implementation uses LIFO order for <see cref="IChannel"/>s in the <see cref="IChannelPool"/>.
     /// </summary>
-    public partial class SimpleChannelPool : IChannelPool
+    public class SimpleChannelPool : IChannelPool
     {
-        public static readonly AttributeKey<SimpleChannelPool> PoolKey = AttributeKey<SimpleChannelPool>.NewInstance("channelPool");
-
         internal static readonly InvalidOperationException FullException = new InvalidOperationException("ChannelPool full");
 
-        readonly IQueue<IChannel> store;
+        private readonly AttributeKey<SimpleChannelPool> _poolKey;
+        private readonly IQueue<IChannel> _store;
 
         /// <summary>
         /// Creates a new <see cref="SimpleChannelPool"/> instance using the <see cref="ChannelActiveHealthChecker"/>.
@@ -94,14 +93,16 @@ namespace DotNetty.Transport.Channels.Pool
             if (healthChecker is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.healthChecker); }
             if (bootstrap is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.bootstrap); }
 
-            this.Handler = handler;
-            this.HealthChecker = healthChecker;
-            this.ReleaseHealthCheck = releaseHealthCheck;
+            _poolKey = AttributeKey<SimpleChannelPool>.NewInstance("channelPool." + this.GetHashCode());
+
+            Handler = handler;
+            HealthChecker = healthChecker;
+            ReleaseHealthCheck = releaseHealthCheck;
 
             // Clone the original Bootstrap as we want to set our own handler
-            this.Bootstrap = bootstrap.Clone();
-            this.Bootstrap.Handler(new ActionChannelInitializer<IChannel>(this.OnChannelInitializing));
-            this.store =
+            Bootstrap = bootstrap.Clone();
+            Bootstrap.Handler(new ActionChannelInitializer<IChannel>(OnChannelInitializing));
+            _store =
                 lastRecentUsed
                     ? (IQueue<IChannel>)new CompatibleConcurrentStack<IChannel>()
                     : new CompatibleConcurrentQueue<IChannel>();
@@ -110,7 +111,7 @@ namespace DotNetty.Transport.Channels.Pool
         void OnChannelInitializing(IChannel channel)
         {
             Debug.Assert(channel.EventLoop.InEventLoop);
-            this.Handler.ChannelCreated(channel);
+            Handler.ChannelCreated(channel);
         }
 
         /// <summary>
@@ -137,22 +138,22 @@ namespace DotNetty.Transport.Channels.Pool
 
         public virtual ValueTask<IChannel> AcquireAsync()
         {
-            if (!this.TryPollChannel(out IChannel channel))
+            if (!TryPollChannel(out IChannel channel))
             {
-                Bootstrap bs = this.Bootstrap.Clone();
-                bs.Attribute(PoolKey, this);
-                return new ValueTask<IChannel>(this.ConnectChannel(bs));
+                Bootstrap bs = Bootstrap.Clone();
+                bs.Attribute(_poolKey, this);
+                return new ValueTask<IChannel>(ConnectChannel(bs));
             }
 
             IEventLoop eventLoop = channel.EventLoop;
             if (eventLoop.InEventLoop)
             {
-                return this.DoHealthCheck(channel);
+                return DoHealthCheck(channel);
             }
             else
             {
                 var completionSource = new TaskCompletionSource<IChannel>();
-                eventLoop.Execute(this.DoHealthCheck, channel, completionSource);
+                eventLoop.Execute(DoHealthCheck, channel, completionSource);
                 return new ValueTask<IChannel>(completionSource.Task);
             }
         }
@@ -162,7 +163,7 @@ namespace DotNetty.Transport.Channels.Pool
             var promise = state as TaskCompletionSource<IChannel>;
             try
             {
-                var result = await this.DoHealthCheck((IChannel)channel);
+                var result = await DoHealthCheck((IChannel)channel);
                 promise.TrySetResult(result);
             }
             catch (Exception ex)
@@ -176,12 +177,12 @@ namespace DotNetty.Transport.Channels.Pool
             Debug.Assert(channel.EventLoop.InEventLoop);
             try
             {
-                if (await this.HealthChecker.IsHealthyAsync(channel))
+                if (await HealthChecker.IsHealthyAsync(channel))
                 {
                     try
                     {
-                        channel.GetAttribute(PoolKey).Set(this);
-                        this.Handler.ChannelAcquired(channel);
+                        channel.GetAttribute(_poolKey).Set(this);
+                        Handler.ChannelAcquired(channel);
                         return channel;
                     }
                     catch (Exception)
@@ -193,13 +194,13 @@ namespace DotNetty.Transport.Channels.Pool
                 else
                 {
                     CloseChannel(channel);
-                    return await this.AcquireAsync();
+                    return await AcquireAsync();
                 }
             }
             catch
             {
                 CloseChannel(channel);
-                return await this.AcquireAsync();
+                return await AcquireAsync();
             }
         }
 
@@ -223,12 +224,12 @@ namespace DotNetty.Transport.Channels.Pool
                 IEventLoop loop = channel.EventLoop;
                 if (loop.InEventLoop)
                 {
-                    return await this.DoReleaseChannel(channel);
+                    return await DoReleaseChannel(channel);
                 }
                 else
                 {
                     var promise = new TaskCompletionSource<bool>();
-                    loop.Execute(this.DoReleaseChannel, channel, promise);
+                    loop.Execute(DoReleaseChannel, channel, promise);
                     return await promise.Task;
                 }
             }
@@ -244,7 +245,7 @@ namespace DotNetty.Transport.Channels.Pool
             var promise = state as TaskCompletionSource<bool>;
             try
             {
-                var result = await this.DoReleaseChannel((IChannel)channel);
+                var result = await DoReleaseChannel((IChannel)channel);
                 promise.TrySetResult(result);
             }
             catch (Exception ex)
@@ -258,7 +259,7 @@ namespace DotNetty.Transport.Channels.Pool
             Debug.Assert(channel.EventLoop.InEventLoop);
 
             // Remove the POOL_KEY attribute from the Channel and check if it was acquired from this pool, if not fail.
-            if (channel.GetAttribute(PoolKey).GetAndSet(null) != this)
+            if (channel.GetAttribute(_poolKey).GetAndSet(null) != this)
             {
                 CloseChannel(channel);
                 // Better include a stacktrace here as this is an user error.
@@ -268,13 +269,13 @@ namespace DotNetty.Transport.Channels.Pool
             {
                 try
                 {
-                    if (this.ReleaseHealthCheck)
+                    if (ReleaseHealthCheck)
                     {
-                        return await this.DoHealthCheckOnRelease(channel);
+                        return await DoHealthCheckOnRelease(channel);
                     }
                     else
                     {
-                        this.ReleaseAndOffer(channel);
+                        ReleaseAndOffer(channel);
                         return true;
                     }
                 }
@@ -296,25 +297,25 @@ namespace DotNetty.Transport.Channels.Pool
         /// </returns>
         async ValueTask<bool> DoHealthCheckOnRelease(IChannel channel)
         {
-            if (await this.HealthChecker.IsHealthyAsync(channel))
+            if (await HealthChecker.IsHealthyAsync(channel))
             {
                 //channel turns out to be healthy, offering and releasing it.
-                this.ReleaseAndOffer(channel);
+                ReleaseAndOffer(channel);
                 return true;
             }
             else
             {
                 //channel not healthy, just releasing it.
-                this.Handler.ChannelReleased(channel);
+                Handler.ChannelReleased(channel);
                 return false;
             }
         }
         
         void ReleaseAndOffer(IChannel channel)
         {
-            if (this.TryOfferChannel(channel))
+            if (TryOfferChannel(channel))
             {
-                this.Handler.ChannelReleased(channel);
+                Handler.ChannelReleased(channel);
             }
             else
             {
@@ -323,9 +324,9 @@ namespace DotNetty.Transport.Channels.Pool
             }
         }
        
-        static void CloseChannel(IChannel channel)
+        private void CloseChannel(IChannel channel)
         {
-            channel.GetAttribute(PoolKey).GetAndSet(null);
+            channel.GetAttribute(_poolKey).GetAndSet(null);
             channel.CloseAsync();
         }
 
@@ -342,7 +343,7 @@ namespace DotNetty.Transport.Channels.Pool
         /// <returns>
         /// <c>true</c> if an <see cref="IChannel"/> was retrieved from the pool, otherwise <c>false</c>.
         /// </returns>
-        protected virtual bool TryPollChannel(out IChannel channel) => this.store.TryDequeue(out channel);
+        protected virtual bool TryPollChannel(out IChannel channel) => _store.TryDequeue(out channel);
 
         /// <summary>
         /// Offers a <see cref="IChannel"/> back to the internal storage. This will return 
@@ -353,11 +354,11 @@ namespace DotNetty.Transport.Channels.Pool
         /// </remarks>
         /// <param name="channel"></param>
         /// <returns><c>true</c> if the <see cref="IChannel"/> could be added, otherwise <c>false</c>.</returns>
-        protected virtual bool TryOfferChannel(IChannel channel) => this.store.TryEnqueue(channel);
+        protected virtual bool TryOfferChannel(IChannel channel) => _store.TryEnqueue(channel);
 
         public virtual void Dispose()
         {
-            while (this.TryPollChannel(out IChannel channel))
+            while (TryPollChannel(out IChannel channel))
             {
                 // Just ignore any errors that are reported back from CloseAsync().
                 channel.CloseAsync().Ignore();
@@ -368,13 +369,13 @@ namespace DotNetty.Transport.Channels.Pool
         {
             public bool TryEnqueue(T item)
             {
-                this.Push(item);
+                Push(item);
                 return true;
             }
 
-            public bool TryDequeue(out T item) => this.TryPop(out item);
+            public bool TryDequeue(out T item) => TryPop(out item);
 
-            public bool NonEmpty => !this.IsEmpty;
+            public bool NonEmpty => !IsEmpty;
         }
     }
 }

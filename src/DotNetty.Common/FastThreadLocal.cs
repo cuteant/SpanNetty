@@ -89,7 +89,7 @@ namespace DotNetty.Common
     public class FastThreadLocal<T> : FastThreadLocal
         where T : class
     {
-        readonly int index;
+        private readonly int _index;
 
         /// <summary>
         ///     Returns the number of thread local variables bound to the current thread.
@@ -98,7 +98,7 @@ namespace DotNetty.Common
 
         public FastThreadLocal()
         {
-            this.index = InternalThreadLocalMap.NextVariableIndex();
+            _index = InternalThreadLocalMap.NextVariableIndex();
         }
 
         /// <summary>
@@ -106,8 +106,8 @@ namespace DotNetty.Common
         /// </summary>
         public T Value
         {
-            get { return this.Get(InternalThreadLocalMap.Get()); }
-            set { this.Set(InternalThreadLocalMap.Get(), value); }
+            get { return Get(InternalThreadLocalMap.Get()); }
+            set { Set(InternalThreadLocalMap.Get(), value); }
         }
 
         /// <summary>
@@ -117,21 +117,21 @@ namespace DotNetty.Common
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public T Get(InternalThreadLocalMap threadLocalMap)
         {
-            object v = threadLocalMap.GetIndexedVariable(this.index);
+            object v = threadLocalMap.GetIndexedVariable(_index);
             if (v != InternalThreadLocalMap.Unset)
             {
                 return (T)v;
             }
 
-            return this.Initialize(threadLocalMap);
+            return Initialize(threadLocalMap);
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         T Initialize(InternalThreadLocalMap threadLocalMap)
         {
-            T v = this.GetInitialValue();
+            T v = GetInitialValue();
 
-            threadLocalMap.SetIndexedVariable(this.index, v);
+            threadLocalMap.SetIndexedVariable(_index, v);
             AddToVariablesToRemove(threadLocalMap, this);
             return v;
         }
@@ -142,7 +142,7 @@ namespace DotNetty.Common
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public void Set(InternalThreadLocalMap threadLocalMap, T value)
         {
-            if (threadLocalMap.SetIndexedVariable(this.index, value))
+            if (threadLocalMap.SetIndexedVariable(_index, value))
             {
                 AddToVariablesToRemove(threadLocalMap, this);
             }
@@ -151,21 +151,21 @@ namespace DotNetty.Common
         /// <summary>
         /// Returns <c>true</c> if and only if this thread-local variable is set.
         /// </summary>
-        public bool IsSet() => this.IsSet(InternalThreadLocalMap.GetIfSet());
+        public bool IsSet() => IsSet(InternalThreadLocalMap.GetIfSet());
 
         /// <summary>
         /// Returns <c>true</c> if and only if this thread-local variable is set.
         /// The specified thread local map must be for the current thread.
         /// </summary>
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public bool IsSet(InternalThreadLocalMap threadLocalMap) => threadLocalMap is object && threadLocalMap.IsIndexedVariableSet(this.index);
+        public bool IsSet(InternalThreadLocalMap threadLocalMap) => threadLocalMap is object && threadLocalMap.IsIndexedVariableSet(_index);
 
         /// <summary>
         /// Returns the initial value for this thread-local variable.
         /// </summary>
         protected virtual T GetInitialValue() => null;
 
-        public void Remove() => this.Remove(InternalThreadLocalMap.GetIfSet());
+        public void Remove() => Remove(InternalThreadLocalMap.GetIfSet());
 
         /// <summary>
         /// Sets the value to uninitialized for the specified thread local map;
@@ -183,12 +183,12 @@ namespace DotNetty.Common
                 return;
             }
 
-            object v = threadLocalMap.RemoveIndexedVariable(this.index);
+            object v = threadLocalMap.RemoveIndexedVariable(_index);
             RemoveFromVariablesToRemove(threadLocalMap, this);
 
             if (v != InternalThreadLocalMap.Unset)
             {
-                this.OnRemoval((T)v);
+                OnRemoval((T)v);
             }
         }
 

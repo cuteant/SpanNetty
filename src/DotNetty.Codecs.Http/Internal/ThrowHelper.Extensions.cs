@@ -1236,6 +1236,17 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowCodecException_CannotCompressContentBuffer()
+        {
+            throw GetException();
+
+            static CodecException GetException()
+            {
+                return new CodecException("cannot compress content buffer");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowCodecException_UnexpectedInitialFrameType(WebSocketFrame msg)
         {
             throw GetException();

@@ -292,6 +292,23 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets.Extensions.Compression
             }
         }
 
+        [Fact]
+        public void EmptyFrameDecompression()
+        {
+            EmbeddedChannel decoderChannel = new EmbeddedChannel(new PerMessageDeflateDecoder(false));
+
+            TextWebSocketFrame emptyDeflateBlockFrame = new TextWebSocketFrame(true, WebSocketRsv.Rsv1, DeflateDecoder.EmptyDeflateBlock);
+
+            Assert.True(decoderChannel.WriteInbound(emptyDeflateBlockFrame));
+            var emptyBufferFrame = decoderChannel.ReadInbound<TextWebSocketFrame>();
+
+            Assert.False(emptyBufferFrame.Content.IsReadable());
+
+            // Composite empty buffer
+            Assert.True(emptyBufferFrame.Release());
+            Assert.False(decoderChannel.Finish());
+        }
+
         sealed class SelectivityDecompressionFilter0 : IWebSocketExtensionFilter
         {
             public bool MustSkip(WebSocketFrame frame)

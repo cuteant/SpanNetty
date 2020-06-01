@@ -3,6 +3,10 @@
 
 namespace DotNetty.Handlers.Timeout
 {
+    /// <summary>
+    /// A <see cref="TimeoutException"/> raised by <see cref="WriteTimeoutHandler"/> when a write operation
+    /// cannot finish in a certain period of time.
+    /// </summary>
     public sealed class WriteTimeoutException : TimeoutException
     {
         public readonly static WriteTimeoutException Instance = new WriteTimeoutException();

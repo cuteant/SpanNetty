@@ -152,7 +152,8 @@ namespace DotNetty.Common.Utilities
             if (uStart > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(start, ExceptionArgument.start); }
             if (uStart >= (uint)this.size) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.start); }
 
-            return this.builder.ToString(this.offset + start, this.size);
+
+            return this.builder.ToString(this.offset + start, this.size - start);
         }
 
         public override string ToString() => 0u >= (uint)this.size ? string.Empty : this.ToString(0);

@@ -1,9 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoProperty
-// ReSharper disable ConvertToAutoPropertyWithPrivateSetter
-
 namespace DotNetty.Transport.Libuv
 {
     using System;
@@ -11,15 +8,14 @@ namespace DotNetty.Transport.Libuv
     using System.Diagnostics;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
-    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Libuv.Native;
 
     sealed class WorkerEventLoop : LoopExecutor, IEventLoop
     {
-        readonly IPromise connectCompletion;
-        readonly string pipeName;
-        Pipe pipe;
+        readonly IPromise _connectCompletion;
+        readonly string _pipeName;
+        Pipe _pipe;
 
         public WorkerEventLoop(WorkerEventLoopGroup parent)
             : base(parent, null)
@@ -32,21 +28,21 @@ namespace DotNetty.Transport.Libuv
                 ThrowHelper.ThrowArgumentException_PipeName();
             }
 
-            this.pipeName = name;
-            this.connectCompletion = this.NewPromise();
-            this.Start();
+            _pipeName = name;
+            _connectCompletion = NewPromise();
+            Start();
         }
 
         /// <summary>
         /// Awaitable for connecting to the dispatcher pipe.
         /// </summary>
-        internal Task ConnectTask => this.connectCompletion.Task;
+        internal Task ConnectTask => _connectCompletion.Task;
 
         protected override void Initialize()
         {
-            Debug.Assert(this.pipe is null);
+            Debug.Assert(_pipe is null);
 
-            this.pipe = new Pipe(this.UnsafeLoop, true);
+            _pipe = new Pipe(UnsafeLoop, true);
             PipeConnect request = null;
             try
             {
@@ -56,11 +52,11 @@ namespace DotNetty.Transport.Libuv
             {
                 if (Logger.WarnEnabled) Logger.FailedToCreateConnectRequestToDispatcher(exception);
                 request?.Dispose();
-                this.connectCompletion.TrySetException(exception);
+                _connectCompletion.TrySetException(exception);
             }
         }
 
-        protected override void Release() => this.pipe.CloseHandle();
+        protected override void Release() => _pipe.CloseHandle();
 
         void OnConnected(ConnectRequest request)
         {
@@ -69,17 +65,17 @@ namespace DotNetty.Transport.Libuv
                 if (request.Error is object)
                 {
                     if (Logger.WarnEnabled) Logger.FailedToConnectToDispatcher(request);
-                    this.connectCompletion.TrySetException(request.Error);
+                    _connectCompletion.TrySetException(request.Error);
                 }
                 else
                 {
                     if (Logger.InfoEnabled)
                     {
-                        Logger.DispatcherPipeConnected(this.LoopThreadId, this.pipeName);
+                        Logger.DispatcherPipeConnected(LoopThreadId, _pipeName);
                     }
 
-                    this.pipe.ReadStart(this.OnRead);
-                    this.connectCompletion.TryComplete();
+                    _pipe.ReadStart(OnRead);
+                    _connectCompletion.TryComplete();
                 }
             }
             finally
@@ -102,7 +98,7 @@ namespace DotNetty.Transport.Libuv
             else
             {
                 Tcp tcp = handle.GetPendingHandle();
-                ((WorkerEventLoopGroup)this.Parent).Accept(tcp);
+                ((WorkerEventLoopGroup)Parent).Accept(tcp);
             }
         }
 
@@ -118,36 +114,36 @@ namespace DotNetty.Transport.Libuv
         {
             const int MaximumRetryCount = 10;
 
-            readonly WorkerEventLoop workerEventLoop;
-            int retryCount;
+            readonly WorkerEventLoop _workerEventLoop;
+            int _retryCount;
 
             public PipeConnect(WorkerEventLoop workerEventLoop)
             {
                 Debug.Assert(workerEventLoop is object);
 
-                this.workerEventLoop = workerEventLoop;
-                this.Connect();
-                this.retryCount = 0;
+                _workerEventLoop = workerEventLoop;
+                Connect();
+                _retryCount = 0;
             }
 
             protected override void OnWatcherCallback()
             {
-                if (this.Error is object && this.retryCount < MaximumRetryCount)
+                if (Error is object && _retryCount < MaximumRetryCount)
                 {
-                    if (Logger.InfoEnabled) Logger.FailedToConnectToDispatcher(this.retryCount, this.Error);
-                    this.Connect();
-                    this.retryCount++;
+                    if (Logger.InfoEnabled) Logger.FailedToConnectToDispatcher(_retryCount, Error);
+                    Connect();
+                    _retryCount++;
                 }
                 else
                 {
-                    this.workerEventLoop.OnConnected(this);
+                    _workerEventLoop.OnConnected(this);
                 }
             }
 
             void Connect() => NativeMethods.uv_pipe_connect(
-                this.Handle,
-                this.workerEventLoop.pipe.Handle,
-                this.workerEventLoop.pipeName,
+                Handle,
+                _workerEventLoop._pipe.Handle,
+                _workerEventLoop._pipeName,
                 WatcherCallback);
         }
     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
@@ -945,6 +946,16 @@ namespace DotNetty.Transport
             static NullReferenceException GetException()
             {
                 return new NullReferenceException("command");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIOException_Underlying_file_size_smaller_then_requested_count(long size, long regionCount)
+        {
+            throw GetException();
+            IOException GetException()
+            {
+                return new IOException("Underlying file size " + size + " smaller then requested count " + regionCount);
             }
         }
 

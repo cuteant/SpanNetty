@@ -18,8 +18,9 @@ namespace DotNetty.Codecs.Http2.Tests
             var listener = new Mock<IHttp2FrameListener>();
             Http2EmptyDataFrameConnectionDecoder decoder = new Http2EmptyDataFrameConnectionDecoder(decoder0.Object, 2);
             decoder.FrameListener = listener.Object;
-            // verify(delegate).frameListener(listenerArgumentCaptor.capture());
-            Assert.IsType<Http2EmptyDataFrameListener>(decoder.FrameListener);
+            // verify(delegate).frameListener(listenerArgumentCaptor.capture())
+            Assert.False(decoder.FrameListener is Http2EmptyDataFrameListener);
+            Assert.IsType<Http2EmptyDataFrameListener>(decoder.FrameListener0);
         }
 
         [Fact]

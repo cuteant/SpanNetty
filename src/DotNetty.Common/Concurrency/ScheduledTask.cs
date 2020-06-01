@@ -11,73 +11,73 @@ namespace DotNetty.Common.Concurrency
 
     abstract class ScheduledTask : IScheduledRunnable
     {
-        const int CancellationProhibited = 1;
-        const int CancellationRequested = 1 << 1;
+        private const int CancellationProhibited = 1;
+        private const int CancellationRequested = 1 << 1;
 
         protected readonly IPromise Promise;
         protected readonly AbstractScheduledEventExecutor Executor;
-        int volatileCancellationState;
-        int queueIndex = PriorityQueue<IScheduledRunnable>.IndexNotInQueue;
+        private int v_cancellationState;
+        private int _queueIndex = PriorityQueue<IScheduledRunnable>.IndexNotInQueue;
 
         protected ScheduledTask(AbstractScheduledEventExecutor executor, in PreciseTimeSpan deadline, IPromise promise)
         {
-            this.Executor = executor;
-            this.Promise = promise;
-            this.Deadline = deadline;
+            Executor = executor;
+            Promise = promise;
+            Deadline = deadline;
         }
 
         public PreciseTimeSpan Deadline { get; }
 
         public bool Cancel()
         {
-            if (!this.AtomicCancellationStateUpdate(CancellationRequested, CancellationProhibited))
+            if (!AtomicCancellationStateUpdate(CancellationRequested, CancellationProhibited))
             {
                 return false;
             }
 
-            bool canceled = this.Promise.TrySetCanceled();
+            bool canceled = Promise.TrySetCanceled();
             if (canceled)
             {
-                this.Executor.RemoveScheduled(this);
+                Executor.RemoveScheduled(this);
             }
             return canceled;
         }
 
-        public Task Completion => this.Promise.Task;
+        public Task Completion => Promise.Task;
 
-        public TaskAwaiter GetAwaiter() => this.Completion.GetAwaiter();
+        public TaskAwaiter GetAwaiter() => Completion.GetAwaiter();
 
         int IComparable<IScheduledRunnable>.CompareTo(IScheduledRunnable other)
         {
             if (other is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.other); }
 
-            return this.Deadline.CompareTo(other.Deadline);
+            return Deadline.CompareTo(other.Deadline);
         }
 
         public virtual void Run()
         {
-            if (this.TrySetUncancelable())
+            if (TrySetUncancelable())
             {
                 try
                 {
-                    this.Execute();
-                    this.Promise.TryComplete();
+                    Execute();
+                    Promise.TryComplete();
                 }
                 catch (Exception ex)
                 {
                     // todo: check for fatal
-                    this.Promise.TrySetException(ex);
+                    Promise.TrySetException(ex);
                 }
             }
         }
 
         protected abstract void Execute();
 
-        bool TrySetUncancelable() => this.AtomicCancellationStateUpdate(CancellationProhibited, CancellationRequested);
+        bool TrySetUncancelable() => AtomicCancellationStateUpdate(CancellationProhibited, CancellationRequested);
 
         bool AtomicCancellationStateUpdate(int newBits, int illegalBits)
         {
-            int cancellationState = Volatile.Read(ref this.volatileCancellationState);
+            int cancellationState = Volatile.Read(ref v_cancellationState);
             int oldCancellationState;
             do
             {
@@ -86,15 +86,15 @@ namespace DotNetty.Common.Concurrency
                 {
                     return false;
                 }
-                cancellationState = Interlocked.CompareExchange(ref this.volatileCancellationState, cancellationState | newBits, cancellationState);
+                cancellationState = Interlocked.CompareExchange(ref v_cancellationState, cancellationState | newBits, cancellationState);
             }
             while (cancellationState != oldCancellationState);
 
             return true;
         }
 
-        public int GetPriorityQueueIndex(IPriorityQueue<IScheduledRunnable> queue) => this.queueIndex;
+        public int GetPriorityQueueIndex(IPriorityQueue<IScheduledRunnable> queue) => _queueIndex;
 
-        public void SetPriorityQueueIndex(IPriorityQueue<IScheduledRunnable> queue, int i) => this.queueIndex = i;
+        public void SetPriorityQueueIndex(IPriorityQueue<IScheduledRunnable> queue, int i) => _queueIndex = i;
     }
 }

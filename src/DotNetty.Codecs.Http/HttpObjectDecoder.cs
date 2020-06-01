@@ -86,6 +86,9 @@ namespace DotNetty.Codecs.Http
     /// </summary>
     public abstract class HttpObjectDecoder : ByteToMessageDecoder
     {
+        private const byte c_space = (byte)' ';
+        private const byte c_tab = (byte)'\t';
+
         readonly int maxChunkSize;
         readonly bool chunkedSupported;
         protected readonly bool ValidateHeaders;
@@ -647,7 +650,6 @@ namespace DotNetty.Codecs.Http
             return skiped;
         }
 
-        private static readonly HashSet<byte> s_whiteSpaceChars = new HashSet<byte>(new[] { (byte)' ', (byte)'\t' });
         State? ReadHeaders(IByteBuffer buffer)
         {
             IHttpMessage httpMessage = this.message;
@@ -664,7 +666,7 @@ namespace DotNetty.Codecs.Http
                 do
                 {
                     byte firstChar = line.Bytes[0];
-                    if (this.name is object && s_whiteSpaceChars.Contains(firstChar))
+                    if (this.name is object && (firstChar == c_space || firstChar == c_tab))
                     {
                         //please do not make one line from below code
                         //as it breaks +XX:OptimizeStringConcat optimization
@@ -752,7 +754,7 @@ namespace DotNetty.Codecs.Http
             while ((uint)line.Count > 0u)
             {
                 byte firstChar = line.Bytes[0];
-                if (lastHeader is object && s_whiteSpaceChars.Contains(firstChar))
+                if (lastHeader is object && (firstChar == c_space || firstChar == c_tab))
                 {
                     IList<ICharSequence> current = trailingHeaders.TrailingHeaders.GetAll(lastHeader);
                     if ((uint)current.Count > 0u)

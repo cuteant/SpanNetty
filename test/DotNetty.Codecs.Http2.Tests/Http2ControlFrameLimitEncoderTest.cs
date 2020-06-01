@@ -4,6 +4,7 @@ namespace DotNetty.Codecs.Http2.Tests
     using System;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
     using Moq;
@@ -19,6 +20,7 @@ namespace DotNetty.Codecs.Http2.Tests
         private readonly Mock<IChannelConfiguration> _config;
         private readonly Mock<IEventExecutor> _executor;
         private int _numWrites;
+        private Deque<IPromise> _goAwayPromises = new Deque<IPromise>();
 
         public Http2ControlFrameLimitEncoderTest()
         {
@@ -80,7 +82,8 @@ namespace DotNetty.Codecs.Http2.Tests
                 .Returns<IChannelHandlerContext, int, Http2Error, IByteBuffer, IPromise>((ctx, streamId, errCode, debugData, p) =>
                 {
                     ReferenceCountUtil.Release(debugData);
-                    return HandlePromise(p, 4).Task;
+                    _goAwayPromises.AddToBack(p);
+                    return p.Task;
                 });
             IHttp2Connection connection = new DefaultHttp2Connection(false);
             connection.Remote.FlowController = new DefaultHttp2RemoteFlowController(connection);
@@ -118,6 +121,13 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             // Close and release any buffered frames.
             _encoder.Close();
+
+            // Notify all goAway ChannelPromise instances now as these will also release the retained ByteBuf for the
+            // debugData.
+            while (_goAwayPromises.TryRemoveFromFront(out var p))
+            {
+                p.Complete();
+            }
         }
 
         [Fact]

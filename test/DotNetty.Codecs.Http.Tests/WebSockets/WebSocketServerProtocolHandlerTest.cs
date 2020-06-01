@@ -41,6 +41,33 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             Assert.False(ch.Finish());
         }
 
+        class ReplacedBeforeHandshakeHandler : ChannelHandlerAdapter
+        {
+            public override void UserEventTriggered(IChannelHandlerContext context, object evt)
+            {
+                if (evt is WebSocketServerProtocolHandler.HandshakeComplete)
+                {
+                    // We should have removed the handler already.
+                    Assert.Null(context.Pipeline.Context<WebSocketServerProtocolHandshakeHandler>());
+                }
+            }
+        }
+
+        [Fact]
+        public void WebSocketServerProtocolHandshakeHandlerReplacedBeforeHandshake()
+        {
+            EmbeddedChannel ch = CreateChannel(new MockOutboundHandler(this));
+            IChannelHandlerContext handshakerCtx = ch.Pipeline.Context<WebSocketServerProtocolHandshakeHandler>();
+            ch.Pipeline.AddLast(new ReplacedBeforeHandshakeHandler());
+            WriteUpgradeRequest(ch);
+
+            IFullHttpResponse response = _responses.Dequeue();
+            Assert.Equal(SwitchingProtocols, response.Status);
+            response.Release();
+            Assert.NotNull(WebSocketServerProtocolHandler.GetHandshaker(handshakerCtx.Channel));
+            Assert.False(ch.Finish());
+        }
+
         [Fact]
         public void SubsequentHttpRequestsAfterUpgradeShouldReturn403()
         {

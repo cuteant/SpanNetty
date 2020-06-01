@@ -128,7 +128,7 @@ namespace DotNetty.Codecs.Http
         public static readonly HttpResponseStatus ExpectationFailed = NewStatus(417, "Expectation Failed");
 
         /// <summary>421 Misdirected Request
-        /// <para>421 Status Code (https://tools.ietf.org/html/draft-ietf-httpbis-http2-15#section-9.1.2)</para>
+        /// <para><a href="https://tools.ietf.org/html/rfc7540#section-9.1.2">421 (Misdirected Request) Status Code</a></para>
         /// </summary>
         public static readonly HttpResponseStatus MisdirectedRequest = NewStatus(421, "Misdirected Request");
 

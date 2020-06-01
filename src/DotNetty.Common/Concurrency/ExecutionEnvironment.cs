@@ -8,14 +8,14 @@ namespace DotNetty.Common.Concurrency
     public static class ExecutionEnvironment
     {
         [ThreadStatic]
-        static IEventExecutor currentExecutor;
+        static IEventExecutor s_currentExecutor;
 
         public static bool TryGetCurrentExecutor(out IEventExecutor executor)
         {
-            executor = currentExecutor;
+            executor = s_currentExecutor;
             return executor is object;
         }
 
-        internal static void SetCurrentExecutor(IEventExecutor executor) => currentExecutor = executor;
+        internal static void SetCurrentExecutor(IEventExecutor executor) => s_currentExecutor = executor;
     }
 }

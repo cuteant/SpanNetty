@@ -7,22 +7,22 @@ namespace DotNetty.Common.Concurrency
 
     abstract class ScheduledAsyncTask : ScheduledTask
     {
-        readonly CancellationToken cancellationToken;
-        CancellationTokenRegistration cancellationTokenRegistration;
+        private readonly CancellationToken _cancellationToken;
+        private CancellationTokenRegistration _cancellationTokenRegistration;
 
         protected ScheduledAsyncTask(AbstractScheduledEventExecutor executor, in PreciseTimeSpan deadline, IPromise promise, CancellationToken cancellationToken)
             : base(executor, deadline, promise)
         {
-            this.cancellationToken = cancellationToken;
-            this.cancellationTokenRegistration = cancellationToken.Register(s => ((ScheduledAsyncTask)s).Cancel(), this);
+            _cancellationToken = cancellationToken;
+            _cancellationTokenRegistration = cancellationToken.Register(s => ((ScheduledAsyncTask)s).Cancel(), this);
         }
 
         public override void Run()
         {
-            this.cancellationTokenRegistration.Dispose();
-            if (this.cancellationToken.IsCancellationRequested)
+            _cancellationTokenRegistration.Dispose();
+            if (_cancellationToken.IsCancellationRequested)
             {
-                this.Promise.TrySetCanceled();
+                Promise.TrySetCanceled();
             }
             else
             {

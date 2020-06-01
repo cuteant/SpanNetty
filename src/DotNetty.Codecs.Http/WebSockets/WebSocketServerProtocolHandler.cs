@@ -85,7 +85,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         }
 
         public WebSocketServerProtocolHandler(string websocketPath, long handshakeTimeoutMillis, bool enableUtf8Validator = true)
-            : this(websocketPath, null, false, handshakeTimeoutMillis, enableUtf8Validator)
+            : this(websocketPath, false, handshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 

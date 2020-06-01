@@ -8,6 +8,7 @@ namespace DotNetty.Buffers
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
     using System.Text;
+    using DotNetty.Common.Internal;
 
     partial class ByteBufferUtil
     {
@@ -26,10 +27,10 @@ namespace DotNetty.Buffers
             }
             switch (encoding.CodePage)
             {
-                case SharedConstants.UTF8CodePage:
+                case TextEncodings.UTF8CodePage:
                     return IsUtf8(buf, index, length);
 
-                case SharedConstants.ASCIICodePage:
+                case TextEncodings.ASCIICodePage:
                     return IsAscii(buf, index, length);
 
                 default:

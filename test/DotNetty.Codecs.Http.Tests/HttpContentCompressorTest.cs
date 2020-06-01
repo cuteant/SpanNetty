@@ -515,6 +515,40 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.True(ch.FinishAndReleaseAll());
         }
 
+        [Fact]
+        public void MultipleAcceptEncodingHeaders()
+        {
+            IFullHttpRequest request = NewRequest();
+            request.Headers.Set(HttpHeaderNames.AcceptEncoding, "unknown; q=1.0")
+                   .Add(HttpHeaderNames.AcceptEncoding, "gzip; q=0.5")
+                   .Add(HttpHeaderNames.AcceptEncoding, "deflate; q=0");
+
+            EmbeddedChannel ch = new EmbeddedChannel(new HttpContentCompressor());
+
+            Assert.True(ch.WriteInbound(request));
+
+            IFullHttpResponse res = new DefaultFullHttpResponse(
+                    HttpVersion.Http11, HttpResponseStatus.OK,
+                    Unpooled.CopiedBuffer("Gzip Win", Encoding.ASCII));
+            Assert.True(ch.WriteOutbound(res));
+
+            AssertEncodedResponse(ch);
+            var c = ch.ReadOutbound<IHttpContent>();
+            Assert.Equal($"1f8b08000000000000{Platform}72afca2c5008cfcc03000000ffff", ByteBufferUtil.HexDump(c.Content));
+            c.Release();
+
+            c = ch.ReadOutbound<IHttpContent>();
+            Assert.Equal("03001f2ebf0f08000000", ByteBufferUtil.HexDump(c.Content));
+            c.Release();
+
+            var last = ch.ReadOutbound<ILastHttpContent>();
+            Assert.Equal(0, last.Content.ReadableBytes);
+            last.Release();
+
+            Assert.Null(ch.ReadOutbound<object>());
+            Assert.True(ch.FinishAndReleaseAll());
+        }
+
         static IFullHttpRequest NewRequest()
         {
             var req = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, "/");

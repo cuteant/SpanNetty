@@ -15,12 +15,12 @@ namespace DotNetty.Buffers
         {
             if (0u >= (uint)count) { return ReadOnlyMemory<byte>.Empty; }
 
-            switch (this.componentCount)
+            switch (_componentCount)
             {
                 case 0:
                     return ReadOnlyMemory<byte>.Empty;
                 case 1:
-                    ComponentEntry c = this.components[0];
+                    ComponentEntry c = _components[0];
                     IByteBuffer buf = c.Buffer;
                     if (buf.IsSingleIoBuffer)
                     {
@@ -30,7 +30,7 @@ namespace DotNetty.Buffers
             }
 
             var merged = new Memory<byte>(new byte[count]);
-            var buffers = this.GetSequence(index, count);
+            var buffers = GetSequence(index, count);
 
             int offset = 0;
             foreach (var buf in buffers)
@@ -48,14 +48,14 @@ namespace DotNetty.Buffers
         {
             if (0u >= (uint)count) { return ReadOnlySpan<byte>.Empty; }
 
-            switch (this.componentCount)
+            switch (_componentCount)
             {
                 case 0:
                     return ReadOnlySpan<byte>.Empty;
                 case 1:
                     //ComponentEntry c = this.components[0];
                     //return c.Buffer.GetReadableSpan(index, count);
-                    ComponentEntry c = this.components[0];
+                    ComponentEntry c = _components[0];
                     IByteBuffer buf = c.Buffer;
                     if (buf.IsSingleIoBuffer)
                     {
@@ -65,7 +65,7 @@ namespace DotNetty.Buffers
             }
 
             var merged = new Memory<byte>(new byte[count]);
-            var buffers = this.GetSequence(index, count);
+            var buffers = GetSequence(index, count);
 
             int offset = 0;
             foreach (var buf in buffers)
@@ -83,13 +83,13 @@ namespace DotNetty.Buffers
         {
             if (0u >= (uint)count) { return ReadOnlySequence<byte>.Empty; }
 
-            var buffers = ThreadLocalList<ReadOnlyMemory<byte>>.NewInstance(this.componentCount);
+            var buffers = ThreadLocalList<ReadOnlyMemory<byte>>.NewInstance(_componentCount);
             try
             {
-                int i = this.ToComponentIndex0(index);
+                int i = ToComponentIndex0(index);
                 while (count > 0)
                 {
-                    ComponentEntry c = this.components[i];
+                    ComponentEntry c = _components[i];
                     IByteBuffer s = c.Buffer;
                     int localLength = Math.Min(count, c.EndOffset - index);
                     switch (s.IoBufferCount)
@@ -137,12 +137,12 @@ namespace DotNetty.Buffers
         {
             if (0u >= (uint)count) { return Memory<byte>.Empty; }
 
-            switch (this.componentCount)
+            switch (_componentCount)
             {
                 case 0:
                     return Memory<byte>.Empty;
                 case 1:
-                    ComponentEntry c = this.components[0];
+                    ComponentEntry c = _components[0];
                     return c.Buffer.GetMemory(index, count);
                 default:
                     throw ThrowHelper.GetNotSupportedException();
@@ -153,12 +153,12 @@ namespace DotNetty.Buffers
         {
             if (0u >= (uint)count) { return Span<byte>.Empty; }
 
-            switch (this.componentCount)
+            switch (_componentCount)
             {
                 case 0:
                     return Span<byte>.Empty;
                 case 1:
-                    ComponentEntry c = this.components[0];
+                    ComponentEntry c = _components[0];
                     return c.Buffer.GetSpan(index, count);
                 default:
                     throw ThrowHelper.GetNotSupportedException();
@@ -168,14 +168,14 @@ namespace DotNetty.Buffers
         public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src)
         {
             var length = src.Length;
-            this.CheckIndex(index, length);
+            CheckIndex(index, length);
             if (0u >= (uint)length) { return this; }
 
             var srcIndex = 0;
-            int i = this.ToComponentIndex0(index);
+            int i = ToComponentIndex0(index);
             while (length > 0)
             {
-                ComponentEntry c = this.components[i];
+                ComponentEntry c = _components[i];
                 int localLength = Math.Min(length, c.EndOffset - index);
                 c.Buffer.SetBytes(c.Idx(index), src.Slice(srcIndex, localLength));
                 index += localLength;
@@ -189,14 +189,14 @@ namespace DotNetty.Buffers
         public override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src)
         {
             var length = src.Length;
-            this.CheckIndex(index, length);
+            CheckIndex(index, length);
             if (0u >= (uint)length) { return this; }
 
             var srcIndex = 0;
-            int i = this.ToComponentIndex0(index);
+            int i = ToComponentIndex0(index);
             while (length > 0)
             {
-                ComponentEntry c = this.components[i];
+                ComponentEntry c = _components[i];
                 int localLength = Math.Min(length, c.EndOffset - index);
                 c.Buffer.SetBytes(c.Idx(index), src.Slice(srcIndex, localLength));
                 index += localLength;
@@ -209,14 +209,15 @@ namespace DotNetty.Buffers
 
         protected internal override int ForEachByteAsc0(int index, int count, IByteProcessor processor)
         {
+            CheckIndex(index, count);
             if (0u >= (uint)count) { return IndexNotFound; }
 
             var start = index;
             var end = index + count;
 
-            for (int i = this.ToComponentIndex0(start), length = end - start; length > 0; i++)
+            for (int i = ToComponentIndex0(start), length = end - start; length > 0; i++)
             {
-                ComponentEntry c = this.components[i];
+                ComponentEntry c = _components[i];
                 if (c.Offset == c.EndOffset)
                 {
                     continue; // empty
@@ -240,14 +241,15 @@ namespace DotNetty.Buffers
 
         protected internal override int ForEachByteDesc0(int index, int count, IByteProcessor processor)
         {
+            CheckIndex(index, count);
             if (0u >= (uint)count) { return IndexNotFound; }
 
             var rStart = index + count - 1;  // rStart *and* rEnd are inclusive
             var rEnd = index;
 
-            for (int i = this.ToComponentIndex0(rStart), length = 1 + rStart - rEnd; length > 0; i--)
+            for (int i = ToComponentIndex0(rStart), length = 1 + rStart - rEnd; length > 0; i--)
             {
-                ComponentEntry c = this.components[i];
+                ComponentEntry c = _components[i];
                 if (c.Offset == c.EndOffset)
                 {
                     continue; // empty
@@ -271,14 +273,15 @@ namespace DotNetty.Buffers
 
         protected internal override int FindIndex0(int index, int count, Predicate<byte> match)
         {
+            CheckIndex(index, count);
             if (0u >= (uint)count) { return IndexNotFound; }
 
             var start = index;
             var end = index + count;
 
-            for (int i = this.ToComponentIndex0(start), length = end - start; length > 0; i++)
+            for (int i = ToComponentIndex0(start), length = end - start; length > 0; i++)
             {
-                ComponentEntry c = this.components[i];
+                ComponentEntry c = _components[i];
                 if (c.Offset == c.EndOffset)
                 {
                     continue; // empty
@@ -302,14 +305,15 @@ namespace DotNetty.Buffers
 
         protected internal override int FindLastIndex0(int index, int count, Predicate<byte> match)
         {
+            CheckIndex(index, count);
             if (0u >= (uint)count) { return IndexNotFound; }
 
             var rStart = Math.Max(index + count - 1, 0);  // rStart *and* rEnd are inclusive
             var rEnd = index;
 
-            for (int i = this.ToComponentIndex0(rStart), length = 1 + rStart - rEnd; length > 0; i--)
+            for (int i = ToComponentIndex0(rStart), length = 1 + rStart - rEnd; length > 0; i--)
             {
-                ComponentEntry c = this.components[i];
+                ComponentEntry c = _components[i];
                 if (c.Offset == c.EndOffset)
                 {
                     continue; // empty
@@ -333,14 +337,15 @@ namespace DotNetty.Buffers
 
         internal protected override int IndexOf0(int index, int count, byte value)
         {
+            CheckIndex(index, count);
             if (0u >= (uint)count) { return IndexNotFound; }
 
             var start = index;
             var end = index + count;
 
-            for (int i = this.ToComponentIndex0(start), length = end - start; length > 0; i++)
+            for (int i = ToComponentIndex0(start), length = end - start; length > 0; i++)
             {
-                ComponentEntry c = this.components[i];
+                ComponentEntry c = _components[i];
                 if (c.Offset == c.EndOffset)
                 {
                     continue; // empty
@@ -364,14 +369,15 @@ namespace DotNetty.Buffers
 
         internal protected override int LastIndexOf0(int index, int count, byte value)
         {
+            CheckIndex(index, count);
             if (0u >= (uint)count) { return IndexNotFound; }
 
             var rStart = Math.Max(index + count - 1, 0);  // rStart *and* rEnd are inclusive
             var rEnd = index;
 
-            for (int i = this.ToComponentIndex0(rStart), length = 1 + rStart - rEnd; length > 0; i--)
+            for (int i = ToComponentIndex0(rStart), length = 1 + rStart - rEnd; length > 0; i--)
             {
-                ComponentEntry c = this.components[i];
+                ComponentEntry c = _components[i];
                 if (c.Offset == c.EndOffset)
                 {
                     continue; // empty
@@ -395,14 +401,15 @@ namespace DotNetty.Buffers
 
         protected internal override int IndexOfAny0(int index, int count, byte value0, byte value1)
         {
+            CheckIndex(index, count);
             if (0u >= (uint)count) { return IndexNotFound; }
 
             var start = index;
             var end = index + count;
 
-            for (int i = this.ToComponentIndex0(start), length = end - start; length > 0; i++)
+            for (int i = ToComponentIndex0(start), length = end - start; length > 0; i++)
             {
-                ComponentEntry c = this.components[i];
+                ComponentEntry c = _components[i];
                 if (c.Offset == c.EndOffset)
                 {
                     continue; // empty
@@ -426,14 +433,15 @@ namespace DotNetty.Buffers
 
         protected internal override int LastIndexOfAny0(int index, int count, byte value0, byte value1)
         {
+            CheckIndex(index, count);
             if (0u >= (uint)count) { return IndexNotFound; }
 
             var rStart = Math.Max(index + count - 1, 0);  // rStart *and* rEnd are inclusive
             var rEnd = index;
 
-            for (int i = this.ToComponentIndex0(rStart), length = 1 + rStart - rEnd; length > 0; i--)
+            for (int i = ToComponentIndex0(rStart), length = 1 + rStart - rEnd; length > 0; i--)
             {
-                ComponentEntry c = this.components[i];
+                ComponentEntry c = _components[i];
                 if (c.Offset == c.EndOffset)
                 {
                     continue; // empty
@@ -457,14 +465,15 @@ namespace DotNetty.Buffers
 
         protected internal override int IndexOfAny0(int index, int count, byte value0, byte value1, byte value2)
         {
+            CheckIndex(index, count);
             if (0u >= (uint)count) { return IndexNotFound; }
 
             var start = index;
             var end = index + count;
 
-            for (int i = this.ToComponentIndex0(start), length = end - start; length > 0; i++)
+            for (int i = ToComponentIndex0(start), length = end - start; length > 0; i++)
             {
-                ComponentEntry c = this.components[i];
+                ComponentEntry c = _components[i];
                 if (c.Offset == c.EndOffset)
                 {
                     continue; // empty
@@ -488,14 +497,15 @@ namespace DotNetty.Buffers
 
         protected internal override int LastIndexOfAny0(int index, int count, byte value0, byte value1, byte value2)
         {
+            CheckIndex(index, count);
             if (0u >= (uint)count) { return IndexNotFound; }
 
             var rStart = Math.Max(index + count - 1, 0);  // rStart *and* rEnd are inclusive
             var rEnd = index;
 
-            for (int i = this.ToComponentIndex0(rStart), length = 1 + rStart - rEnd; length > 0; i--)
+            for (int i = ToComponentIndex0(rStart), length = 1 + rStart - rEnd; length > 0; i--)
             {
-                ComponentEntry c = this.components[i];
+                ComponentEntry c = _components[i];
                 if (c.Offset == c.EndOffset)
                 {
                     continue; // empty

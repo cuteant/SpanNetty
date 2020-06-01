@@ -13,7 +13,7 @@ namespace DotNetty.Common.Concurrency
     /// <summary>
     ///     Abstract base class for <see cref="IEventExecutor" />s that need to support scheduling.
     /// </summary>
-    public abstract partial class AbstractScheduledEventExecutor : AbstractEventExecutor
+    public abstract class AbstractScheduledEventExecutor : AbstractEventExecutor
     {
         protected readonly IPriorityQueue<IScheduledRunnable> ScheduledTaskQueue = new PriorityQueue<IScheduledRunnable>();
 
@@ -40,8 +40,8 @@ namespace DotNetty.Common.Concurrency
         /// </summary>
         protected virtual void CancelScheduledTasks()
         {
-            Debug.Assert(this.InEventLoop);
-            IPriorityQueue<IScheduledRunnable> scheduledTaskQueue = this.ScheduledTaskQueue;
+            Debug.Assert(InEventLoop);
+            IPriorityQueue<IScheduledRunnable> scheduledTaskQueue = ScheduledTaskQueue;
             if (IsNullOrEmpty(scheduledTaskQueue))
             {
                 return;
@@ -53,23 +53,23 @@ namespace DotNetty.Common.Concurrency
                 t.Cancel();
             }
 
-            this.ScheduledTaskQueue.Clear();
+            ScheduledTaskQueue.Clear();
         }
 
-        internal protected IScheduledRunnable PollScheduledTask() => this.PollScheduledTask(GetNanos());
+        internal protected IScheduledRunnable PollScheduledTask() => PollScheduledTask(GetNanos());
 
         protected IScheduledRunnable PollScheduledTask(in PreciseTimeSpan nanoTime)
         {
-            Debug.Assert(this.InEventLoop);
+            Debug.Assert(InEventLoop);
 
-            if (!this.ScheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask))
+            if (!ScheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask))
             {
                 return null;
             }
 
             if (scheduledTask.Deadline <= nanoTime)
             {
-                this.ScheduledTaskQueue.TryDequeue(out var _);
+                ScheduledTaskQueue.TryDequeue(out var _);
                 return scheduledTask;
             }
             return null;
@@ -77,47 +77,47 @@ namespace DotNetty.Common.Concurrency
 
         protected PreciseTimeSpan NextScheduledTaskNanos()
         {
-            IScheduledRunnable nextScheduledRunnable = this.PeekScheduledTask();
+            IScheduledRunnable nextScheduledRunnable = PeekScheduledTask();
             return nextScheduledRunnable?.Deadline ?? PreciseTimeSpan.MinusOne;
         }
 
         protected IScheduledRunnable PeekScheduledTask()
         {
-            IPriorityQueue<IScheduledRunnable> scheduledTaskQueue = this.ScheduledTaskQueue;
+            IPriorityQueue<IScheduledRunnable> scheduledTaskQueue = ScheduledTaskQueue;
             return !IsNullOrEmpty(scheduledTaskQueue) && scheduledTaskQueue.TryPeek(out IScheduledRunnable task) ? task : null;
         }
 
         protected bool HasScheduledTasks()
         {
-            return this.ScheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask) && scheduledTask.Deadline <= PreciseTimeSpan.FromStart;
+            return ScheduledTaskQueue.TryPeek(out IScheduledRunnable scheduledTask) && scheduledTask.Deadline <= PreciseTimeSpan.FromStart;
         }
 
         public override IScheduledTask Schedule(IRunnable action, TimeSpan delay)
         {
             if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
-            return this.Schedule(new RunnableScheduledTask(this, action, PreciseTimeSpan.Deadline(delay)));
+            return Schedule(new RunnableScheduledTask(this, action, PreciseTimeSpan.Deadline(delay)));
         }
 
         public override IScheduledTask Schedule(Action action, TimeSpan delay)
         {
             if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
-            return this.Schedule(new ActionScheduledTask(this, action, PreciseTimeSpan.Deadline(delay)));
+            return Schedule(new ActionScheduledTask(this, action, PreciseTimeSpan.Deadline(delay)));
         }
 
         public override IScheduledTask Schedule(Action<object> action, object state, TimeSpan delay)
         {
             if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
-            return this.Schedule(new StateActionScheduledTask(this, action, state, PreciseTimeSpan.Deadline(delay)));
+            return Schedule(new StateActionScheduledTask(this, action, state, PreciseTimeSpan.Deadline(delay)));
         }
 
         public override IScheduledTask Schedule(Action<object, object> action, object context, object state, TimeSpan delay)
         {
             if (action is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.action); }
 
-            return this.Schedule(new StateActionWithContextScheduledTask(this, action, context, state, PreciseTimeSpan.Deadline(delay)));
+            return Schedule(new StateActionWithContextScheduledTask(this, action, context, state, PreciseTimeSpan.Deadline(delay)));
         }
 
         public override Task ScheduleAsync(Action action, TimeSpan delay, CancellationToken cancellationToken)
@@ -131,10 +131,10 @@ namespace DotNetty.Common.Concurrency
 
             if (!cancellationToken.CanBeCanceled)
             {
-                return this.Schedule(action, delay).Completion;
+                return Schedule(action, delay).Completion;
             }
 
-            return this.Schedule(new ActionScheduledAsyncTask(this, action, PreciseTimeSpan.Deadline(delay), cancellationToken)).Completion;
+            return Schedule(new ActionScheduledAsyncTask(this, action, PreciseTimeSpan.Deadline(delay), cancellationToken)).Completion;
         }
 
         public override Task ScheduleAsync(Action<object> action, object state, TimeSpan delay, CancellationToken cancellationToken)
@@ -146,10 +146,10 @@ namespace DotNetty.Common.Concurrency
 
             if (!cancellationToken.CanBeCanceled)
             {
-                return this.Schedule(action, state, delay).Completion;
+                return Schedule(action, state, delay).Completion;
             }
 
-            return this.Schedule(new StateActionScheduledAsyncTask(this, action, state, PreciseTimeSpan.Deadline(delay), cancellationToken)).Completion;
+            return Schedule(new StateActionScheduledAsyncTask(this, action, state, PreciseTimeSpan.Deadline(delay), cancellationToken)).Completion;
         }
 
         public override Task ScheduleAsync(Action<object, object> action, object context, object state, TimeSpan delay, CancellationToken cancellationToken)
@@ -161,35 +161,47 @@ namespace DotNetty.Common.Concurrency
 
             if (!cancellationToken.CanBeCanceled)
             {
-                return this.Schedule(action, context, state, delay).Completion;
+                return Schedule(action, context, state, delay).Completion;
             }
 
-            return this.Schedule(new StateActionWithContextScheduledAsyncTask(this, action, context, state, PreciseTimeSpan.Deadline(delay), cancellationToken)).Completion;
+            return Schedule(new StateActionWithContextScheduledAsyncTask(this, action, context, state, PreciseTimeSpan.Deadline(delay), cancellationToken)).Completion;
         }
 
         protected virtual IScheduledRunnable Schedule(IScheduledRunnable task)
         {
-            if (this.InEventLoop)
+            if (InEventLoop)
             {
-                this.ScheduledTaskQueue.TryEnqueue(task);
+                ScheduledTaskQueue.TryEnqueue(task);
             }
             else
             {
-                this.Execute(EnqueueRunnableAction, this, task);
+                Execute(EnqueueRunnableAction, this, task);
             }
             return task;
         }
 
+        protected static readonly Action<object, object> EnqueueRunnableAction = OnEnqueueRunnable;
+        static void OnEnqueueRunnable(object e, object t)
+        {
+            ((AbstractScheduledEventExecutor)e).ScheduledTaskQueue.TryEnqueue((IScheduledRunnable)t);
+        }
+
         internal void RemoveScheduled(IScheduledRunnable task)
         {
-            if (this.InEventLoop)
+            if (InEventLoop)
             {
-                this.ScheduledTaskQueue.TryRemove(task);
+                ScheduledTaskQueue.TryRemove(task);
             }
             else
             {
-                this.Execute(RemoveRunnableAction, this, task);
+                Execute(RemoveRunnableAction, this, task);
             }
+        }
+
+        static readonly Action<object, object> RemoveRunnableAction = OnRemoveRunnable;
+        static void OnRemoveRunnable(object e, object t)
+        {
+            ((AbstractScheduledEventExecutor)e).ScheduledTaskQueue.TryRemove((IScheduledRunnable)t);
         }
     }
 }

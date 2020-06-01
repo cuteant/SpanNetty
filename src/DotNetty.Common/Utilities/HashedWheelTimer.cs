@@ -1,9 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-
-#pragma warning disable 420
-
 namespace DotNetty.Common.Utilities
 {
     using System;
@@ -17,51 +14,47 @@ namespace DotNetty.Common.Utilities
 
     public sealed class HashedWheelTimer : ITimer
     {
-        static readonly IInternalLogger Logger =
+        private static readonly IInternalLogger Logger =
             InternalLoggerFactory.GetInstance<HashedWheelTimer>();
 
-        static int instanceCounter;
-        static int warnedTooManyInstances;
+        private static int v_instanceCounter;
+        private static int v_warnedTooManyInstances;
 
-        const int InstanceCountLimit = 64;
+        private const int InstanceCountLimit = 64;
 
-        readonly Worker worker;
-        readonly XThread workerThread;
-        readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private readonly Worker _worker;
+        private readonly XThread _workerThread;
+        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
-        const int WorkerStateInit = 0;
-        const int WorkerStateStarted = 1;
-        const int WorkerStateShutdown = 2;
-        int workerStateVolatile = WorkerStateInit; // 0 - init, 1 - started, 2 - shut down
+        private const int WorkerStateInit = 0;
+        private const int WorkerStateStarted = 1;
+        private const int WorkerStateShutdown = 2;
+        private int v_workerState = WorkerStateInit; // 0 - init, 1 - started, 2 - shut down
 
-        readonly long tickDuration;
-        readonly HashedWheelBucket[] wheel;
-        readonly int mask;
-        readonly CountdownEvent startTimeInitialized = new CountdownEvent(1);
-        readonly IQueue<HashedWheelTimeout> timeouts = PlatformDependent.NewMpscQueue<HashedWheelTimeout>();
-        readonly IQueue<HashedWheelTimeout> cancelledTimeouts = PlatformDependent.NewMpscQueue<HashedWheelTimeout>();
-        internal long PendingTimeouts;
-        readonly long maxPendingTimeouts;
-        long startTimeVolatile;
+        private readonly long _tickDuration;
+        private readonly HashedWheelBucket[] _wheel;
+        private readonly int _mask;
+        private readonly CountdownEvent _startTimeInitialized = new CountdownEvent(1);
+        private readonly IQueue<HashedWheelTimeout> _timeouts = PlatformDependent.NewMpscQueue<HashedWheelTimeout>();
+        private readonly IQueue<HashedWheelTimeout> _cancelledTimeouts = PlatformDependent.NewMpscQueue<HashedWheelTimeout>();
+        private readonly long _maxPendingTimeouts;
+        private long v_pendingTimeouts;
+        private long v_startTime;
 
+        /// <summary>Creates a new timer.</summary>
         public HashedWheelTimer()
             : this(TimeSpan.FromMilliseconds(100), 512, -1)
         {
         }
 
-        /// <summary>
-        /// Creates a new timer.
-        /// </summary>
+        /// <summary>Creates a new timer.</summary>
         /// <param name="tickInterval">the interval between two consecutive ticks</param>
         /// <param name="ticksPerWheel">the size of the wheel</param>
         /// <param name="maxPendingTimeouts">The maximum number of pending timeouts after which call to
         /// <c>newTimeout</c> will result in <see cref="RejectedExecutionException"/> being thrown.
         /// No maximum pending timeouts limit is assumed if this value is 0 or negative.</param>
         /// <exception cref="ArgumentException">if either of <c>tickInterval</c> and <c>ticksPerWheel</c> is &lt;= 0</exception>
-        public HashedWheelTimer(
-            TimeSpan tickInterval,
-            int ticksPerWheel,
-            long maxPendingTimeouts)
+        public HashedWheelTimer(TimeSpan tickInterval, int ticksPerWheel, long maxPendingTimeouts)
         {
             if (tickInterval <= TimeSpan.Zero)
             {
@@ -81,27 +74,27 @@ namespace DotNetty.Common.Utilities
             }
 
             // Normalize ticksPerWheel to power of two and initialize the wheel.
-            this.wheel = CreateWheel(ticksPerWheel);
-            this.worker = new Worker(this);
-            this.mask = this.wheel.Length - 1;
+            _wheel = CreateWheel(ticksPerWheel);
+            _worker = new Worker(this);
+            _mask = _wheel.Length - 1;
 
-            this.tickDuration = tickInterval.Ticks;
+            _tickDuration = tickInterval.Ticks;
 
             // Prevent overflow
-            if (this.tickDuration >= long.MaxValue / this.wheel.Length)
+            if (_tickDuration >= long.MaxValue / _wheel.Length)
             {
                 throw new ArgumentException(
                     string.Format(
                         "tickInterval: {0} (expected: 0 < tickInterval in nanos < {1}",
                         tickInterval,
-                        long.MaxValue / this.wheel.Length));
+                        long.MaxValue / _wheel.Length));
             }
-            this.workerThread = new XThread(st => this.worker.Run());
+            _workerThread = new XThread(st => _worker.Run());
 
-            this.maxPendingTimeouts = maxPendingTimeouts;
+            _maxPendingTimeouts = maxPendingTimeouts;
 
-            if (Interlocked.Increment(ref instanceCounter) > InstanceCountLimit &&
-                0u >= (uint)Interlocked.CompareExchange(ref warnedTooManyInstances, 1, 0))
+            if (Interlocked.Increment(ref v_instanceCounter) > InstanceCountLimit &&
+                0u >= (uint)Interlocked.CompareExchange(ref v_warnedTooManyInstances, 1, 0))
             {
                 ReportTooManyInstances();
             }
@@ -111,23 +104,23 @@ namespace DotNetty.Common.Utilities
         {
             // This object is going to be GCed and it is assumed the ship has sailed to do a proper shutdown. If
             // we have not yet shutdown then we want to make sure we decrement the active instance count.
-            if (Interlocked.Exchange(ref this.workerStateVolatile, WorkerStateShutdown) != WorkerStateShutdown)
+            if (Interlocked.Exchange(ref v_workerState, WorkerStateShutdown) != WorkerStateShutdown)
             {
-                Interlocked.Decrement(ref instanceCounter);
+                Interlocked.Decrement(ref v_instanceCounter);
             }
         }
 
-        internal CancellationToken CancellationToken => this.cancellationTokenSource.Token;
+        internal long PendingTimeouts => Volatile.Read(ref v_pendingTimeouts);
 
-        bool ShouldLimitTimeouts => this.maxPendingTimeouts > 0;
+        internal CancellationToken CancellationToken => _cancellationTokenSource.Token;
 
         PreciseTimeSpan StartTime
         {
-            get => PreciseTimeSpan.FromTicks(Volatile.Read(ref this.startTimeVolatile));
-            set => Interlocked.Exchange(ref this.startTimeVolatile, value.Ticks);
+            get => PreciseTimeSpan.FromTicks(Volatile.Read(ref v_startTime));
+            set => Interlocked.Exchange(ref v_startTime, value.Ticks);
         }
 
-        int WorkerState => Volatile.Read(ref this.workerStateVolatile);
+        int WorkerState => Volatile.Read(ref v_workerState);
 
         static HashedWheelBucket[] CreateWheel(int ticksPerWheel)
         {
@@ -158,12 +151,12 @@ namespace DotNetty.Common.Utilities
         /// stopped already.</exception>
         public void Start()
         {
-            switch (this.WorkerState)
+            switch (WorkerState)
             {
                 case WorkerStateInit:
-                    if (Interlocked.CompareExchange(ref this.workerStateVolatile, WorkerStateStarted, WorkerStateInit) == WorkerStateInit)
+                    if (Interlocked.CompareExchange(ref v_workerState, WorkerStateStarted, WorkerStateInit) == WorkerStateInit)
                     {
-                        this.workerThread.Start();
+                        _workerThread.Start();
                     }
                     break;
                 case WorkerStateStarted:
@@ -175,9 +168,9 @@ namespace DotNetty.Common.Utilities
             }
 
             // Wait until the startTime is initialized by the worker.
-            if (this.StartTime == PreciseTimeSpan.Zero)
+            if (StartTime == PreciseTimeSpan.Zero)
             {
-                this.startTimeInitialized.Wait(this.CancellationToken);
+                _startTimeInitialized.Wait(CancellationToken);
             }
         }
 
@@ -185,18 +178,18 @@ namespace DotNetty.Common.Utilities
         {
             GC.SuppressFinalize(this);
 
-            if (XThread.CurrentThread == this.workerThread)
+            if (XThread.CurrentThread == _workerThread)
             {
                 ThrowHelper.ThrowInvalidOperationException_CannotBeCalledFromTimerTask();
             }
 
-            if (Interlocked.CompareExchange(ref this.workerStateVolatile, WorkerStateShutdown, WorkerStateStarted) != WorkerStateStarted)
+            if (Interlocked.CompareExchange(ref v_workerState, WorkerStateShutdown, WorkerStateStarted) != WorkerStateStarted)
             {
                 // workerState can be 0 or 2 at this moment - let it always be 2.
-                if (Interlocked.Exchange(ref this.workerStateVolatile, WorkerStateShutdown) != WorkerStateShutdown)
+                if (Interlocked.Exchange(ref v_workerState, WorkerStateShutdown) != WorkerStateShutdown)
                 {
-                    this.cancellationTokenSource.Cancel();
-                    Interlocked.Decrement(ref instanceCounter);
+                    _cancellationTokenSource.Cancel();
+                    Interlocked.Decrement(ref v_instanceCounter);
                 }
 
                 return new HashSet<ITimeout>();
@@ -204,14 +197,14 @@ namespace DotNetty.Common.Utilities
 
             try
             {
-                this.cancellationTokenSource.Cancel();
+                _cancellationTokenSource.Cancel();
             }
             finally
             {
-                Interlocked.Decrement(ref instanceCounter);
+                Interlocked.Decrement(ref v_instanceCounter);
             }
-            await this.worker.ClosedFuture;
-            return this.worker.UnprocessedTimeouts;
+            await _worker.ClosedFuture;
+            return _worker.UnprocessedTimeouts;
         }
 
         public ITimeout NewTimeout(ITimerTask task, TimeSpan delay)
@@ -220,35 +213,33 @@ namespace DotNetty.Common.Utilities
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task);
             }
-            if (this.WorkerState == WorkerStateShutdown)
+            if (WorkerState == WorkerStateShutdown)
             {
                 ThrowHelper.ThrowRejectedExecutionException_TimerStopped();
             }
-            if (this.ShouldLimitTimeouts)
+            long pendingTimeoutsCount = Interlocked.Increment(ref v_pendingTimeouts);
+            long maxPendingTimeouts = _maxPendingTimeouts;
+            if (maxPendingTimeouts > 0L && pendingTimeoutsCount > maxPendingTimeouts)
             {
-                long pendingTimeoutsCount = Interlocked.Increment(ref this.PendingTimeouts);
-                if (pendingTimeoutsCount > this.maxPendingTimeouts)
-                {
-                    Interlocked.Decrement(ref this.PendingTimeouts);
-                    ThrowHelper.ThrowRejectedExecutionException_NumOfPendingTimeouts(pendingTimeoutsCount, this.maxPendingTimeouts);
-                }
+                Interlocked.Decrement(ref v_pendingTimeouts);
+                ThrowHelper.ThrowRejectedExecutionException_NumOfPendingTimeouts(pendingTimeoutsCount, maxPendingTimeouts);
             }
 
-            this.Start();
+            Start();
 
             // Add the timeout to the timeout queue which will be processed on the next tick.
             // During processing all the queued HashedWheelTimeouts will be added to the correct HashedWheelBucket.
-            TimeSpan deadline = CeilTimeSpanToMilliseconds((PreciseTimeSpan.Deadline(delay) - this.StartTime).ToTimeSpan());
+            TimeSpan deadline = CeilTimeSpanToMilliseconds((PreciseTimeSpan.Deadline(delay) - StartTime).ToTimeSpan());
             var timeout = new HashedWheelTimeout(this, task, deadline);
-            this.timeouts.TryEnqueue(timeout);
+            _timeouts.TryEnqueue(timeout);
             return timeout;
         }
 
         void ScheduleCancellation(HashedWheelTimeout timeout)
         {
-            if (this.WorkerState != WorkerStateShutdown)
+            if (WorkerState != WorkerStateShutdown)
             {
-                this.cancelledTimeouts.TryEnqueue(timeout);
+                _cancelledTimeouts.TryEnqueue(timeout);
             }
         }
 
@@ -263,65 +254,65 @@ namespace DotNetty.Common.Utilities
 
         sealed class Worker : IRunnable
         {
-            readonly HashedWheelTimer owner;
+            readonly HashedWheelTimer _owner;
 
-            long tick;
-            readonly TaskCompletionSource closedPromise;
+            long _tick;
+            readonly TaskCompletionSource _closedPromise;
 
             public Worker(HashedWheelTimer owner)
             {
-                this.owner = owner;
-                this.closedPromise = new TaskCompletionSource();
+                _owner = owner;
+                _closedPromise = new TaskCompletionSource();
             }
 
-            public Task ClosedFuture => this.closedPromise.Task;
+            public Task ClosedFuture => _closedPromise.Task;
 
             public void Run()
             {
                 try
                 {
                     // Initialize the startTime.
-                    this.owner.StartTime = PreciseTimeSpan.FromStart;
-                    if (this.owner.StartTime == PreciseTimeSpan.Zero)
+                    _owner.StartTime = PreciseTimeSpan.FromStart;
+                    if (_owner.StartTime == PreciseTimeSpan.Zero)
                     {
                         // We use 0 as an indicator for the uninitialized value here, so make sure it's not 0 when initialized.
-                        this.owner.StartTime = PreciseTimeSpan.FromTicks(1);
+                        _owner.StartTime = PreciseTimeSpan.FromTicks(1);
                     }
 
                     // Notify the other threads waiting for the initialization at start().
-                    this.owner.startTimeInitialized.Signal();
+                    _owner._startTimeInitialized.Signal();
 
                     while (true)
                     {
-                        TimeSpan deadline = this.WaitForNextTick();
-                        if (Volatile.Read(ref this.owner.workerStateVolatile) != WorkerStateStarted)
+                        TimeSpan deadline = WaitForNextTick();
+                        if (Volatile.Read(ref _owner.v_workerState) != WorkerStateStarted)
                         {
                             break;
                         }
                         if (deadline > TimeSpan.Zero)
                         {
-                            int idx = (int)(this.tick & this.owner.mask);
-                            this.ProcessCancelledTasks();
-                            HashedWheelBucket bucket = this.owner.wheel[idx];
-                            this.TransferTimeoutsToBuckets();
+                            int idx = (int)(_tick & _owner._mask);
+                            ProcessCancelledTasks();
+                            HashedWheelBucket bucket = _owner._wheel[idx];
+                            TransferTimeoutsToBuckets();
                             bucket.ExpireTimeouts(deadline);
-                            this.tick++;
+                            _tick++;
                         }
                     }
 
                     // Fill the unprocessedTimeouts so we can return them from stop() method.
-                    foreach (HashedWheelBucket bucket in this.owner.wheel)
+                    foreach (HashedWheelBucket bucket in _owner._wheel)
                     {
-                        bucket.ClearTimeouts(this.UnprocessedTimeouts);
+                        bucket.ClearTimeouts(UnprocessedTimeouts);
                     }
-                    while (this.owner.timeouts.TryDequeue(out var timeout))
+                    while (_owner._timeouts.TryDequeue(out var timeout))
                     {
                         if (!timeout.Canceled)
                         {
-                            this.UnprocessedTimeouts.Add(timeout);
+                            UnprocessedTimeouts.Add(timeout);
                         }
                     }
-                    this.ProcessCancelledTasks();
+                    ProcessCancelledTasks();
                 }
                 catch (Exception ex)
                 {
@@ -329,7 +320,7 @@ namespace DotNetty.Common.Utilities
                 }
                 finally
                 {
-                    this.closedPromise.TryComplete();
+                    _closedPromise.TryComplete();
                 }
             }
 
@@ -339,8 +330,7 @@ namespace DotNetty.Common.Utilities
                 // adds new timeouts in a loop.
                 for (int i = 0; i < 100000; i++)
                 {
-                    HashedWheelTimeout timeout;
-                    if (!this.owner.timeouts.TryDequeue(out timeout))
+                    if (!_owner._timeouts.TryDequeue(out HashedWheelTimeout timeout))
                     {
                         // all processed
                         break;
@@ -351,13 +341,13 @@ namespace DotNetty.Common.Utilities
                         continue;
                     }
 
-                    long calculated = timeout.Deadline.Ticks / this.owner.tickDuration;
-                    timeout.RemainingRounds = (calculated - this.tick) / this.owner.wheel.Length;
+                    long calculated = timeout._Deadline.Ticks / _owner._tickDuration;
+                    timeout.RemainingRounds = (calculated - _tick) / _owner._wheel.Length;
 
-                    long ticks = Math.Max(calculated, this.tick); // Ensure we don't schedule for past.
-                    int stopIndex = (int)(ticks & this.owner.mask);
+                    long ticks = Math.Max(calculated, _tick); // Ensure we don't schedule for past.
+                    int stopIndex = (int)(ticks & _owner._mask);
 
-                    HashedWheelBucket bucket = this.owner.wheel[stopIndex];
+                    HashedWheelBucket bucket = _owner._wheel[stopIndex];
                     bucket.AddTimeout(timeout);
                 }
             }
@@ -366,8 +356,7 @@ namespace DotNetty.Common.Utilities
             {
                 while (true)
                 {
-                    HashedWheelTimeout timeout;
-                    if (!this.owner.cancelledTimeouts.TryDequeue(out timeout))
+                    if (!_owner._cancelledTimeouts.TryDequeue(out HashedWheelTimeout timeout))
                     {
                         // all processed
                         break;
@@ -395,16 +384,16 @@ namespace DotNetty.Common.Utilities
             /// </returns>
             TimeSpan WaitForNextTick()
             {
-                long deadline = this.owner.tickDuration * (this.tick + 1);
+                long deadline = _owner._tickDuration * (_tick + 1);
 
                 while (true)
                 {
-                    TimeSpan currentTime = (PreciseTimeSpan.FromStart - this.owner.StartTime).ToTimeSpan();
+                    TimeSpan currentTime = (PreciseTimeSpan.FromStart - _owner.StartTime).ToTimeSpan();
                     TimeSpan sleepTime = CeilTimeSpanToMilliseconds(TimeSpan.FromTicks(deadline - currentTime.Ticks));
 
                     if (sleepTime <= TimeSpan.Zero)
                     {
-                        return currentTime.Ticks == long.MinValue 
+                        return currentTime.Ticks == long.MinValue
                             ? TimeSpan.FromTicks(-long.MaxValue)
                             : currentTime;
                     }
@@ -414,12 +403,12 @@ namespace DotNetty.Common.Utilities
                     {
                         long sleepTimeMs = sleepTime.Ticks / TimeSpan.TicksPerMillisecond; // we've already rounded so no worries about the remainder > 0 here
                         Debug.Assert(sleepTimeMs <= int.MaxValue);
-                        delay = Task.Delay((int)sleepTimeMs, this.owner.CancellationToken);
+                        delay = Task.Delay((int)sleepTimeMs, _owner.CancellationToken);
                         delay.Wait();
                     }
                     catch (AggregateException) when (delay is object && delay.IsCanceled)
                     {
-                        if (Volatile.Read(ref this.owner.workerStateVolatile) == WorkerStateShutdown)
+                        if (Volatile.Read(ref _owner.v_workerState) == WorkerStateShutdown)
                         {
                             return TimeSpan.FromTicks(long.MinValue);
                         }
@@ -436,10 +425,10 @@ namespace DotNetty.Common.Utilities
             internal const int StCanceled = 1;
             const int StExpired = 2;
 
-            internal readonly HashedWheelTimer timer;
-            internal readonly TimeSpan Deadline;
+            internal readonly HashedWheelTimer _timer;
+            internal readonly TimeSpan _Deadline;
 
-            int state = StInit;
+            int v_state = StInit;
 
             // remainingRounds will be calculated and set by Worker.transferTimeoutsToBuckets() before the
             // HashedWheelTimeout will be added to the correct HashedWheelBucket.
@@ -456,81 +445,81 @@ namespace DotNetty.Common.Utilities
 
             internal HashedWheelTimeout(HashedWheelTimer timer, ITimerTask task, TimeSpan deadline)
             {
-                this.timer = timer;
-                this.Task = task;
-                this.Deadline = deadline;
+                _timer = timer;
+                Task = task;
+                _Deadline = deadline;
             }
 
-            public ITimer Timer => this.timer;
+            public ITimer Timer => _timer;
 
             public ITimerTask Task { get; }
 
             public bool Cancel()
             {
                 // only update the state it will be removed from HashedWheelBucket on next tick.
-                if (!this.CompareAndSetState(StInit, StCanceled))
+                if (!CompareAndSetState(StInit, StCanceled))
                 {
                     return false;
                 }
                 // If a task should be canceled we put this to another queue which will be processed on each tick.
                 // So this means that we will have a GC latency of max. 1 tick duration which is good enough. This way
                 // we can make again use of our MpscLinkedQueue and so minimize the locking / overhead as much as possible.
-                this.timer.ScheduleCancellation(this);
+                _timer.ScheduleCancellation(this);
                 return true;
             }
 
             internal void Remove()
             {
-                HashedWheelBucket bucket = this.Bucket;
+                HashedWheelBucket bucket = Bucket;
                 if (bucket is object)
                 {
                     // timeout got canceled before it was added to the bucket
                     bucket.Remove(this);
                 }
-                else if (this.timer.ShouldLimitTimeouts)
+                else
                 {
-                    Interlocked.Decrement(ref this.timer.PendingTimeouts);
+                    Interlocked.Decrement(ref _timer.v_pendingTimeouts);
                 }
             }
 
             bool CompareAndSetState(int expected, int state)
             {
-                return Interlocked.CompareExchange(ref this.state, state, expected) == expected;
+                return Interlocked.CompareExchange(ref v_state, state, expected) == expected;
             }
 
-            internal int State => Volatile.Read(ref this.state);
+            internal int State => Volatile.Read(ref v_state);
 
-            public bool Canceled => this.State == StCanceled;
+            public bool Canceled => State == StCanceled;
 
-            public bool Expired => this.State == StExpired;
+            public bool Expired => State == StExpired;
 
             internal void Expire()
             {
-                if (!this.CompareAndSetState(StInit, StExpired))
+                if (!CompareAndSetState(StInit, StExpired))
                 {
                     return;
                 }
 
                 try
                 {
-                    this.Task.Run(this);
+                    Task.Run(this);
                 }
                 catch (Exception t)
                 {
                     if (Logger.WarnEnabled)
                     {
-                        Logger.AnExceptionWasThrownBy(this.Task, t);
+                        Logger.AnExceptionWasThrownBy(Task, t);
                     }
                 }
             }
 
             public override string ToString()
             {
-                PreciseTimeSpan currentTime = PreciseTimeSpan.FromStart - this.timer.StartTime;
-                TimeSpan remaining = this.Deadline - currentTime.ToTimeSpan();
+                PreciseTimeSpan currentTime = PreciseTimeSpan.FromStart - _timer.StartTime;
+                TimeSpan remaining = _Deadline - currentTime.ToTimeSpan();
 
                 var buf = StringBuilderCache.Acquire() // new StringBuilder(192)
-                    .Append(this.GetType().Name)
+                    .Append(GetType().Name)
                     .Append('(')
                     .Append("deadline: ");
                 if (remaining > TimeSpan.Zero)
@@ -548,13 +537,13 @@ namespace DotNetty.Common.Utilities
                     buf.Append("now");
                 }
 
-                if (this.Canceled)
+                if (Canceled)
                 {
                     buf.Append(", cancelled");
                 }
 
                 var result = buf.Append(", task: ")
-                    .Append(this.Task)
+                    .Append(Task)
                     .Append(')')
                     .ToString();
                 StringBuilderCache.Release(buf);
@@ -570,8 +559,8 @@ namespace DotNetty.Common.Utilities
         sealed class HashedWheelBucket
         {
             // Used for the linked-list datastructure
-            HashedWheelTimeout head;
-            HashedWheelTimeout tail;
+            HashedWheelTimeout _head;
+            HashedWheelTimeout _tail;
 
             /// <summary>
             /// Add a <see cref="HashedWheelTimeout"/> to this bucket.
@@ -580,15 +569,15 @@ namespace DotNetty.Common.Utilities
             {
                 Debug.Assert(timeout.Bucket is null);
                 timeout.Bucket = this;
-                if (this.head is null)
+                if (_head is null)
                 {
-                    this.head = this.tail = timeout;
+                    _head = _tail = timeout;
                 }
                 else
                 {
-                    this.tail.Next = timeout;
-                    timeout.Prev = this.tail;
-                    this.tail = timeout;
+                    _tail.Next = timeout;
+                    timeout.Prev = _tail;
+                    _tail = timeout;
                 }
             }
 
@@ -597,7 +586,7 @@ namespace DotNetty.Common.Utilities
             /// </summary>
             public void ExpireTimeouts(TimeSpan deadline)
             {
-                HashedWheelTimeout timeout = this.head;
+                HashedWheelTimeout timeout = _head;
 
                 // process all timeouts
                 while (timeout is object)
@@ -605,15 +594,15 @@ namespace DotNetty.Common.Utilities
                     HashedWheelTimeout next = timeout.Next;
                     if (timeout.RemainingRounds <= 0)
                     {
-                        next = this.Remove(timeout);
-                        if (timeout.Deadline <= deadline)
+                        next = Remove(timeout);
+                        if (timeout._Deadline <= deadline)
                         {
                             timeout.Expire();
                         }
                         else
                         {
                             // The timeout was placed into a wrong slot. This should never happen.
-                            ThrowHelper.ThrowInvalidOperationException_Deadline(timeout.Deadline, deadline);
+                            ThrowHelper.ThrowInvalidOperationException_Deadline(timeout._Deadline, deadline);
                         }
                     }
                     else
@@ -637,32 +626,29 @@ namespace DotNetty.Common.Utilities
                     timeout.Next.Prev = timeout.Prev;
                 }
 
-                if (timeout == this.head)
+                if (timeout == _head)
                 {
                     // if timeout is also the tail we need to adjust the entry too
-                    if (timeout == this.tail)
+                    if (timeout == _tail)
                     {
-                        this.tail = null;
-                        this.head = null;
+                        _tail = null;
+                        _head = null;
                     }
                     else
                     {
-                        this.head = next;
+                        _head = next;
                     }
                 }
-                else if (timeout == this.tail)
+                else if (timeout == _tail)
                 {
                     // if the timeout is the tail modify the tail to be the prev node.
-                    this.tail = timeout.Prev;
+                    _tail = timeout.Prev;
                 }
                 // null out prev, next and bucket to allow for GC.
                 timeout.Prev = null;
                 timeout.Next = null;
                 timeout.Bucket = null;
-                if (timeout.timer.ShouldLimitTimeouts)
-                {
-                    Interlocked.Decrement(ref timeout.timer.PendingTimeouts);
-                }
+                Interlocked.Decrement(ref timeout._timer.v_pendingTimeouts);
                 return next;
             }
 
@@ -673,7 +659,7 @@ namespace DotNetty.Common.Utilities
             {
                 while (true)
                 {
-                    HashedWheelTimeout timeout = this.PollTimeout();
+                    HashedWheelTimeout timeout = PollTimeout();
                     if (timeout is null)
                     {
                         return;
@@ -688,7 +674,7 @@ namespace DotNetty.Common.Utilities
 
             HashedWheelTimeout PollTimeout()
             {
-                HashedWheelTimeout head = this.head;
+                HashedWheelTimeout head = _head;
                 if (head is null)
                 {
                     return null;
@@ -696,11 +682,11 @@ namespace DotNetty.Common.Utilities
                 HashedWheelTimeout next = head.Next;
                 if (next is null)
                 {
-                    this.tail = this.head = null;
+                    _tail = _head = null;
                 }
                 else
                 {
-                    this.head = next;
+                    _head = next;
                     next.Prev = null;
                 }
 

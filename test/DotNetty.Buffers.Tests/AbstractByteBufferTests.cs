@@ -1874,6 +1874,9 @@ namespace DotNetty.Buffers.Tests
         public void IndexOf()
         {
             this.buffer.Clear();
+            // Ensure the buffer is completely zero'ed.
+            this.buffer.SetZero(0, buffer.Capacity);
+
             this.buffer.WriteByte(1);
             this.buffer.WriteByte(2);
             this.buffer.WriteByte(3);
@@ -1884,6 +1887,51 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(-1, this.buffer.IndexOf(4, 1, 1));
             Assert.Equal(1, this.buffer.IndexOf(1, 4, 2));
             Assert.Equal(3, this.buffer.IndexOf(4, 1, 2));
+
+            try
+            {
+                this.buffer.IndexOf(0, this.buffer.Capacity + 1, (byte)0);
+                Assert.False(true);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // expected
+            }
+
+            try
+            {
+                this.buffer.IndexOf(this.buffer.Capacity, -1, (byte)0);
+                Assert.False(true);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // expected
+            }
+
+            Assert.Equal(4, this.buffer.IndexOf(this.buffer.Capacity + 1, 0, (byte)1));
+            Assert.Equal(0, this.buffer.IndexOf(-1, this.buffer.Capacity, (byte)1));
+        }
+
+        [Fact]
+        public void IndexOfReleaseBuffer()
+        {
+            IByteBuffer buffer = ReleasedBuffer();
+            if (buffer.Capacity != 0)
+            {
+                try
+                {
+                    buffer.IndexOf(0, 1, (byte)1);
+                    Assert.False(true);
+                }
+                catch (IllegalReferenceCountException)
+                {
+                    // expected
+                }
+            }
+            else
+            {
+                Assert.Equal(-1, buffer.IndexOf(0, 1, (byte)1));
+            }
         }
 
         [Fact]
@@ -2130,6 +2178,9 @@ namespace DotNetty.Buffers.Tests
         IByteBuffer ReleasedBuffer()
         {
             IByteBuffer buf = this.NewBuffer(8);
+            // Clear the buffer so we are sure the reader and writer indices are 0.
+            // This is important as we may return a slice from newBuffer(...).
+            buf.Clear();
             Assert.True(buf.Release());
             return buf;
         }

@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs.Http.Tests.Multipart
 {
+    using System;
     using System.Collections.Generic;
     using System.Text;
     using DotNetty.Buffers;
@@ -637,6 +638,60 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             var fileUpload = (IFileUpload)part1;
             Assert.Equal(Filename, fileUpload.FileName);
             decoder.Destroy();
+        }
+
+        // https://github.com/netty/netty/issues/8575
+        [Fact]
+        public void MultipartRequest()
+        {
+            string BOUNDARY = "01f136d9282f";
+
+            IByteBuffer byteBuf = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("--" + BOUNDARY + "\n" +
+                    "Content-Disposition: form-data; name=\"msg_id\"\n" +
+                    "\n" +
+                    "15200\n" +
+                    "--" + BOUNDARY + "\n" +
+                    "Content-Disposition: form-data; name=\"msg\"\n" +
+                    "\n" +
+                    "test message\n" +
+                    "--" + BOUNDARY + "--"));
+
+            IFullHttpRequest req = new DefaultFullHttpRequest(HttpVersion.Http10, HttpMethod.Post, "/up", byteBuf);
+            req.Headers.Add(HttpHeaderNames.ContentType, "multipart/form-data; boundary=" + BOUNDARY);
+
+            HttpPostRequestDecoder decoder =
+                    new HttpPostRequestDecoder(new DefaultHttpDataFactory(DefaultHttpDataFactory.MinSize),
+                            req,
+                            Encoding.UTF8);
+
+            Assert.True(decoder.IsMultipart);
+            Assert.NotEmpty(decoder.GetBodyHttpDatas());
+            Assert.Equal(2, decoder.GetBodyHttpDatas().Count);
+            Assert.Equal("test message", ((IAttribute)decoder.GetBodyHttpData(AsciiString.Of("msg"))).Value);
+            Assert.Equal("15200", ((IAttribute)decoder.GetBodyHttpData(AsciiString.Of("msg_id"))).Value);
+
+            decoder.Destroy();
+            Assert.Equal(1, req.ReferenceCount);
+        }
+
+        [Fact]
+        public void NotLeak()
+        {
+            IFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/",
+                    Unpooled.CopiedBuffer("a=1&&b=2", Encoding.UTF8));
+            try
+            {
+                new HttpPostStandardRequestDecoder(request);
+                Assert.False(true);
+            }
+            catch (Exception exc)
+            {
+                Assert.IsType<ErrorDataDecoderException>(exc);
+            }
+            finally
+            {
+                Assert.True(request.Release());
+            }
         }
     }
 }

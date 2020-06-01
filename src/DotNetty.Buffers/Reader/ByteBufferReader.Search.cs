@@ -249,7 +249,7 @@ namespace DotNetty.Buffers
 
             while (_moreData)
             {
-                int index = remaining.IndexOf(delimiter);
+                int index = SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(remaining), delimiter, remaining.Length);
                 uint uIndex = (uint)index;
                 if (SharedConstants.TooBigOrNegative >= uIndex) // index != -1
                 {

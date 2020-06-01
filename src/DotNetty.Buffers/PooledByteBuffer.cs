@@ -107,7 +107,7 @@ namespace DotNetty.Buffers
                 {
                     // here newCapacity < length
                     this.Length = newCapacity;
-                    this.SetIndex(Math.Min(this.ReaderIndex, newCapacity), Math.Min(this.WriterIndex, newCapacity));
+                    this.TrimIndicesToCapacity(newCapacity);
                     return this;
                 }
             }

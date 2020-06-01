@@ -70,12 +70,18 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
                 else
                 {
+                    // Ensure we set the handshaker and replace this handler before we
+                    // trigger the actual handshake. Otherwise we may receive websocket bytes in this handler
+                    // before we had a chance to replace it.
+                    //
+                    // See https://github.com/netty/netty/issues/9471.
+                    WebSocketServerProtocolHandler.SetHandshaker(ctx.Channel, handshaker);
+                    ctx.Pipeline.Replace(this, "WS403Responder",
+                            WebSocketServerProtocolHandler.ForbiddenHttpRequestResponder());
+
                     Task task = handshaker.HandshakeAsync(ctx.Channel, req);
                     task.ContinueWith(FireUserEventTriggeredAction, Tuple.Create(ctx, req, handshaker, _handshakePromise), TaskContinuationOptions.ExecuteSynchronously);
                     ApplyHandshakeTimeout();
-                    WebSocketServerProtocolHandler.SetHandshaker(ctx.Channel, handshaker);
-                    ctx.Pipeline.Replace(this, "WS403Responder",
-                        WebSocketServerProtocolHandler.ForbiddenHttpRequestResponder());
                 }
             }
             finally

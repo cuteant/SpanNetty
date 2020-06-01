@@ -21,7 +21,7 @@ namespace DotNetty.Transport.Channels.Pool
     {
         new internal static readonly InvalidOperationException FullException = new InvalidOperationException("Too many outstanding acquire operations");
 
-        static readonly TimeoutException TimeoutException = new TimeoutException("Acquire operation took longer then configured maximum time");
+        private static readonly TimeoutException TimeoutException = new TimeoutException("Acquire operation took longer then configured maximum time");
 
         internal static readonly InvalidOperationException PoolClosedOnReleaseException = new InvalidOperationException("FixedChannelPool was closed");
 
@@ -42,19 +42,19 @@ namespace DotNetty.Transport.Channels.Pool
             Fail
         }
 
-        readonly IEventExecutor executor;
-        readonly TimeSpan acquireTimeout;
-        readonly IRunnable timeoutTask;
+        private readonly IEventExecutor _executor;
+        private readonly TimeSpan _acquireTimeout;
+        private readonly IRunnable _timeoutTask;
 
         // There is no need to worry about synchronization as everything that modified the queue or counts is done
         // by the above EventExecutor.
-        readonly IQueue<AcquireTask> pendingAcquireQueue = PlatformDependent.NewMpscQueue<AcquireTask>();
+        private readonly IQueue<AcquireTask> _pendingAcquireQueue = PlatformDependent.NewMpscQueue<AcquireTask>();
 
-        readonly int maxConnections;
-        readonly int maxPendingAcquires;
-        int acquiredChannelCount;
-        int pendingAcquireCount;
-        int closed;
+        private readonly int _maxConnections;
+        private readonly int _maxPendingAcquires;
+        private int v_acquiredChannelCount;
+        private int v_pendingAcquireCount;
+        private int v_closed;
 
         /// <summary>
         /// Creates a new <see cref="FixedChannelPool"/> instance using the <see cref="ChannelActiveHealthChecker"/>.
@@ -180,10 +180,10 @@ namespace DotNetty.Transport.Channels.Pool
                 ThrowHelper.ThrowArgumentException_MaxPendingAcquires(maxPendingAcquires);
             }
 
-            this.acquireTimeout = acquireTimeout;
+            _acquireTimeout = acquireTimeout;
             if (action == AcquireTimeoutAction.None && acquireTimeout == Timeout.InfiniteTimeSpan)
             {
-                this.timeoutTask = null;
+                _timeoutTask = null;
             }
             else if (action == AcquireTimeoutAction.None && acquireTimeout != Timeout.InfiniteTimeSpan)
             {
@@ -198,33 +198,33 @@ namespace DotNetty.Transport.Channels.Pool
                 switch (action)
                 {
                     case AcquireTimeoutAction.Fail:
-                        this.timeoutTask = new TimeoutTask(this, this.OnTimeoutFail);
+                        _timeoutTask = new TimeoutTask(this, OnTimeoutFail);
                         break;
                     case AcquireTimeoutAction.New:
-                        this.timeoutTask = new TimeoutTask(this, this.OnTimeoutNew);
+                        _timeoutTask = new TimeoutTask(this, OnTimeoutNew);
                         break;
                     default:
                         ThrowHelper.ThrowArgumentException_Action(); break;
                 }
             }
 
-            this.executor = bootstrap.Group().GetNext();
-            this.maxConnections = maxConnections;
-            this.maxPendingAcquires = maxPendingAcquires;
+            _executor = bootstrap.Group().GetNext();
+            _maxConnections = maxConnections;
+            _maxPendingAcquires = maxPendingAcquires;
         }
 
         /// <summary>Returns the number of acquired channels that this pool thinks it has.</summary>
-        public int AcquiredChannelCount => Volatile.Read(ref this.acquiredChannelCount);
+        public int AcquiredChannelCount => Volatile.Read(ref v_acquiredChannelCount);
 
         public override ValueTask<IChannel> AcquireAsync()
         {
-            if (this.executor.InEventLoop)
+            if (_executor.InEventLoop)
             {
-                return this.DoAcquireAsync(null);
+                return DoAcquireAsync(null);
             }
 
             var promise = new TaskCompletionSource<IChannel>();
-            this.executor.Execute(this.Acquire0, promise);
+            _executor.Execute(Acquire0, promise);
             return new ValueTask<IChannel>(promise.Task);
         }
 
@@ -233,7 +233,7 @@ namespace DotNetty.Transport.Channels.Pool
             var promise = (TaskCompletionSource<IChannel>)state;
             try
             {
-                var result = await this.DoAcquireAsync(promise);
+                var result = await DoAcquireAsync(promise);
                 promise.TrySetResult(result);
             }
             catch (Exception ex)
@@ -244,35 +244,35 @@ namespace DotNetty.Transport.Channels.Pool
 
         ValueTask<IChannel> DoAcquireAsync(TaskCompletionSource<IChannel> promise)
         {
-            Debug.Assert(this.executor.InEventLoop);
+            Debug.Assert(_executor.InEventLoop);
 
-            if (SharedConstants.False < (uint)Volatile.Read(ref this.closed))
+            if (SharedConstants.False < (uint)Volatile.Read(ref v_closed))
             {
                 ThrowHelper.ThrowInvalidOperationException_PoolClosedOnAcquireException();
             }
 
-            if (Volatile.Read(ref this.acquiredChannelCount) < this.maxConnections)
+            if (Volatile.Read(ref v_acquiredChannelCount) < _maxConnections)
             {
-                Debug.Assert(Volatile.Read(ref this.acquiredChannelCount) >= 0);
+                Debug.Assert(Volatile.Read(ref v_acquiredChannelCount) >= 0);
                 return new AcquireTask(this, promise).AcquireAsync();
             }
             else
             {
-                if (Volatile.Read(ref this.pendingAcquireCount) >= this.maxPendingAcquires)
+                if (Volatile.Read(ref v_pendingAcquireCount) >= _maxPendingAcquires)
                 {
                     ThrowHelper.ThrowInvalidOperationException_TooManyOutstandingAcquireOperations(); return default;
                 }
                 else
                 {
-                    promise = promise ?? new TaskCompletionSource<IChannel>();
+                    promise ??= new TaskCompletionSource<IChannel>();
                     var task = new AcquireTask(this, promise);
-                    if (this.pendingAcquireQueue.TryEnqueue(task))
+                    if (_pendingAcquireQueue.TryEnqueue(task))
                     {
-                        Interlocked.Increment(ref this.pendingAcquireCount);
+                        Interlocked.Increment(ref v_pendingAcquireCount);
 
-                        if (this.timeoutTask is object)
+                        if (_timeoutTask is object)
                         {
-                            task.TimeoutTask = this.executor.Schedule(this.timeoutTask, this.acquireTimeout);
+                            task.TimeoutTask = _executor.Schedule(_timeoutTask, _acquireTimeout);
                         }
                     }
                     else
@@ -290,16 +290,16 @@ namespace DotNetty.Transport.Channels.Pool
         public override async ValueTask<bool> ReleaseAsync(IChannel channel)
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
-            
-            if (this.executor.InEventLoop)
+
+            if (_executor.InEventLoop)
             {
-                return await this.DoReleaseAsync(channel);
+                return await DoReleaseAsync(channel);
             }
             else
             {
                 var promise = new TaskCompletionSource<bool>();
 #pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-                this.executor.Schedule(this.Release0, channel, promise, TimeSpan.Zero);
+                _executor.Schedule(Release0, channel, promise, TimeSpan.Zero);
 #pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
                 return await promise.Task;
             }
@@ -310,7 +310,7 @@ namespace DotNetty.Transport.Channels.Pool
             var tsc = promise as TaskCompletionSource<bool>;
             try
             {
-                var result = await this.DoReleaseAsync((IChannel)channel);
+                var result = await DoReleaseAsync((IChannel)channel);
                 tsc.TrySetResult(result);
             }
             catch (Exception ex)
@@ -321,14 +321,14 @@ namespace DotNetty.Transport.Channels.Pool
 
         async ValueTask<bool> DoReleaseAsync(IChannel channel)
         {
-            Debug.Assert(this.executor.InEventLoop);
-            
+            Debug.Assert(_executor.InEventLoop);
+
             try
             {
                 await base.ReleaseAsync(channel);
                 FailIfClosed(channel);
-                
-                this.DecrementAndRunTaskQueue();
+
+                DecrementAndRunTaskQueue();
                 return true;
             }
             catch (Exception ex)
@@ -336,7 +336,7 @@ namespace DotNetty.Transport.Channels.Pool
                 FailIfClosed(channel);
                 if (!(ex is ArgumentException))
                 {
-                    this.DecrementAndRunTaskQueue();
+                    DecrementAndRunTaskQueue();
                 }
 
                 throw;
@@ -344,18 +344,18 @@ namespace DotNetty.Transport.Channels.Pool
 
             void FailIfClosed(IChannel ch)
             {
-                if (SharedConstants.False < (uint)Volatile.Read(ref this.closed))
+                if (SharedConstants.False < (uint)Volatile.Read(ref v_closed))
                 {
                     ch.CloseAsync();
                     ThrowHelper.ThrowInvalidOperationException_PoolClosedOnReleaseException();
                 }
             }
         }
-        
+
 
         void DecrementAndRunTaskQueue()
         {
-            var acquiredCount = Interlocked.Decrement(ref this.acquiredChannelCount);
+            var acquiredCount = Interlocked.Decrement(ref v_acquiredChannelCount);
 
             // We should never have a negative value.
             Debug.Assert(acquiredCount >= 0);
@@ -364,14 +364,14 @@ namespace DotNetty.Transport.Channels.Pool
             // try to acquire again from the ChannelFutureListener and the pendingAcquireCount is >=
             // maxPendingAcquires we may be able to run some pending tasks first and so allow to add
             // more.
-            this.RunTaskQueue();
+            RunTaskQueue();
         }
 
         void RunTaskQueue()
         {
-            while (Volatile.Read(ref this.acquiredChannelCount) < this.maxConnections)
+            while (Volatile.Read(ref v_acquiredChannelCount) < _maxConnections)
             {
-                if (!this.pendingAcquireQueue.TryDequeue(out AcquireTask task))
+                if (!_pendingAcquireQueue.TryDequeue(out AcquireTask task))
                 {
                     break;
                 }
@@ -379,33 +379,47 @@ namespace DotNetty.Transport.Channels.Pool
                 // Cancel the timeout if one was scheduled
                 task.TimeoutTask?.Cancel();
 
-                Interlocked.Decrement(ref this.pendingAcquireCount);
+                Interlocked.Decrement(ref v_pendingAcquireCount);
 
                 task.AcquireAsync();
             }
 
             // We should never have a negative value.
-            Debug.Assert(Volatile.Read(ref this.pendingAcquireCount) >= 0);
-            Debug.Assert(Volatile.Read(ref this.acquiredChannelCount) >= 0);
+            Debug.Assert(Volatile.Read(ref v_pendingAcquireCount) >= 0);
+            Debug.Assert(Volatile.Read(ref v_acquiredChannelCount) >= 0);
         }
 
-        public override void Dispose() => this.executor.Execute(this.Close);
+        public override void Dispose()
+        {
+            if (_executor.InEventLoop)
+            {
+                Close();
+            }
+            else
+            {
+                _executor.Execute(Close);
+            }
+        }
 
         void Close()
         {
-            if (SharedConstants.False < (uint)Interlocked.Exchange(ref this.closed, SharedConstants.True))
+            if (SharedConstants.False < (uint)Interlocked.Exchange(ref v_closed, SharedConstants.True))
             {
                 return;
             }
-            
-            while(this.pendingAcquireQueue.TryDequeue(out AcquireTask task))
+
+            while (_pendingAcquireQueue.TryDequeue(out AcquireTask task))
             {
                 task.TimeoutTask?.Cancel();
                 task.Promise.TrySetException(ThrowHelper.GetClosedChannelException());
             }
 
-            Interlocked.Exchange(ref this.acquiredChannelCount, 0);
-            Interlocked.Exchange(ref this.pendingAcquireCount, 0);
+            Interlocked.Exchange(ref v_acquiredChannelCount, 0);
+            Interlocked.Exchange(ref v_pendingAcquireCount, 0);
+
+            // Ensure we dispatch this on another Thread as close0 will be called from the EventExecutor and we need
+            // to ensure we will not block in a EventExecutor.
+            // TODO GlobalEventExecutor.INSTANCE.execute
             base.Dispose();
         }
 
@@ -415,57 +429,57 @@ namespace DotNetty.Transport.Channels.Pool
 
         sealed class TimeoutTask : IRunnable
         {
-            readonly FixedChannelPool pool;
-            readonly Action<AcquireTask> onTimeout;
+            private readonly FixedChannelPool _pool;
+            private readonly Action<AcquireTask> _onTimeout;
 
             public TimeoutTask(FixedChannelPool pool, Action<AcquireTask> onTimeout)
             {
-                this.pool = pool;
-                this.onTimeout = onTimeout;
+                _pool = pool;
+                _onTimeout = onTimeout;
             }
 
             public void Run()
             {
-                Debug.Assert(this.pool.executor.InEventLoop);
+                Debug.Assert(_pool._executor.InEventLoop);
                 while (true)
                 {
-                    if (!this.pool.pendingAcquireQueue.TryPeek(out AcquireTask task) || PreciseTimeSpan.FromTicks(Stopwatch.GetTimestamp()) < task.ExpireTime)
+                    if (!_pool._pendingAcquireQueue.TryPeek(out AcquireTask task) || PreciseTimeSpan.FromTicks(Stopwatch.GetTimestamp()) < task.ExpireTime)
                     {
                         break;
                     }
 
-                    this.pool.pendingAcquireQueue.TryDequeue(out _);
+                    _pool._pendingAcquireQueue.TryDequeue(out _);
 
-                    Interlocked.Decrement(ref this.pool.pendingAcquireCount);
-                    this.onTimeout(task);
+                    Interlocked.Decrement(ref _pool.v_pendingAcquireCount);
+                    _onTimeout(task);
                 }
             }
         }
 
-        class AcquireTask
+        sealed class AcquireTask
         {
-            readonly FixedChannelPool pool;
-            
+            private readonly FixedChannelPool _pool;
+
             public readonly TaskCompletionSource<IChannel> Promise;
             public readonly PreciseTimeSpan ExpireTime;
             public IScheduledTask TimeoutTask;
-            
-            bool acquired;
+
+            private bool _acquired;
 
             public AcquireTask(FixedChannelPool pool, TaskCompletionSource<IChannel> promise)
             {
-                this.pool = pool;
-                this.Promise = promise;
-                this.ExpireTime = PreciseTimeSpan.FromTicks(Stopwatch.GetTimestamp()) + pool.acquireTimeout;
+                _pool = pool;
+                Promise = promise;
+                ExpireTime = PreciseTimeSpan.FromTicks(Stopwatch.GetTimestamp()) + pool._acquireTimeout;
             }
 
             // Increment the acquire count and delegate to super to actually acquire a Channel which will
             // create a new connection.
             public ValueTask<IChannel> AcquireAsync()
             {
-                var promise = this.Promise;
-                
-                if (SharedConstants.False < (uint)Volatile.Read(ref this.pool.closed))
+                var promise = Promise;
+
+                if (SharedConstants.False < (uint)Volatile.Read(ref _pool.v_closed))
                 {
                     if (promise is object)
                     {
@@ -478,12 +492,12 @@ namespace DotNetty.Transport.Channels.Pool
                     }
                 }
 
-                this.Acquired();
+                Acquired();
 
                 ValueTask<IChannel> future;
                 try
                 {
-                    future = this.pool.DoAcquireAsync();
+                    future = _pool.DoAcquireAsync();
                     if (future.IsCompletedSuccessfully)
                     {
                         //pool never closed here
@@ -495,7 +509,7 @@ namespace DotNetty.Transport.Channels.Pool
                         }
                         else
                         {
-                            return future;    
+                            return future;
                         }
                     }
                 }
@@ -516,15 +530,15 @@ namespace DotNetty.Transport.Channels.Pool
                 }
 
                 //at this point 'future' is a real Task
-                promise = promise ?? new TaskCompletionSource<IChannel>();
+                promise ??= new TaskCompletionSource<IChannel>();
                 future
                     .AsTask()
                     .ContinueWith(
                     t =>
                     {
-                        Debug.Assert(this.pool.executor.InEventLoop);
+                        Debug.Assert(_pool._executor.InEventLoop);
 
-                        if (SharedConstants.False < (uint)Volatile.Read(ref this.pool.closed)) 
+                        if (SharedConstants.False < (uint)Volatile.Read(ref _pool.v_closed))
                         {
                             if (t.IsSuccess())
                             {
@@ -537,7 +551,7 @@ namespace DotNetty.Transport.Channels.Pool
                         {
                             promise.TrySetResult(future.Result);
                         }
-                        else 
+                        else
                         {
                             ResumeQueue();
                             promise.TrySetException(t.Exception);
@@ -548,26 +562,26 @@ namespace DotNetty.Transport.Channels.Pool
 
                 void ResumeQueue()
                 {
-                    if (this.acquired)
+                    if (_acquired)
                     {
-                        this.pool.DecrementAndRunTaskQueue();
+                        _pool.DecrementAndRunTaskQueue();
                     }
                     else
                     {
-                        this.pool.RunTaskQueue();
+                        _pool.RunTaskQueue();
                     }
                 }
             }
-            
+
             void Acquired()
             {
-                if (this.acquired)
+                if (_acquired)
                 {
                     return;
                 }
 
-                Interlocked.Increment(ref this.pool.acquiredChannelCount);
-                this.acquired = true;
+                Interlocked.Increment(ref _pool.v_acquiredChannelCount);
+                _acquired = true;
             }
         }
     }

@@ -16,30 +16,30 @@ namespace DotNetty.Common.Concurrency
         public abstract bool IsTerminated { get; }
 
         /// <inheritdoc cref="IExecutorService"/>
-        public Task<T> SubmitAsync<T>(Func<T> func) => this.SubmitAsync(func, CancellationToken.None);
+        public Task<T> SubmitAsync<T>(Func<T> func) => SubmitAsync(func, CancellationToken.None);
 
         /// <inheritdoc cref="IExecutorService"/>
         public Task<T> SubmitAsync<T>(Func<T> func, CancellationToken cancellationToken)
         {
             var node = new FuncSubmitQueueNode<T>(func, cancellationToken);
-            this.Execute(node);
+            Execute(node);
             return node.Completion;
         }
 
         /// <inheritdoc cref="IExecutorService"/>
-        public Task<T> SubmitAsync<T>(Func<object, T> func, object state) => this.SubmitAsync(func, state, CancellationToken.None);
+        public Task<T> SubmitAsync<T>(Func<object, T> func, object state) => SubmitAsync(func, state, CancellationToken.None);
 
         /// <inheritdoc cref="IExecutorService"/>
         public Task<T> SubmitAsync<T>(Func<object, T> func, object state, CancellationToken cancellationToken)
         {
             var node = new StateFuncSubmitQueueNode<T>(func, state, cancellationToken);
-            this.Execute(node);
+            Execute(node);
             return node.Completion;
         }
 
         /// <inheritdoc cref="IExecutorService"/>
         public Task<T> SubmitAsync<T>(Func<object, object, T> func, object context, object state) =>
-            this.SubmitAsync(func, context, state, CancellationToken.None);
+            SubmitAsync(func, context, state, CancellationToken.None);
 
         /// <inheritdoc cref="IExecutorService"/>
         public Task<T> SubmitAsync<T>(
@@ -49,7 +49,7 @@ namespace DotNetty.Common.Concurrency
             CancellationToken cancellationToken)
         {
             var node = new StateFuncWithContextSubmitQueueNode<T>(func, context, state, cancellationToken);
-            this.Execute(node);
+            Execute(node);
             return node.Completion;
         }
 
@@ -57,88 +57,88 @@ namespace DotNetty.Common.Concurrency
         public abstract void Execute(IRunnable task);
 
         /// <inheritdoc cref="IExecutor"/>
-        public void Execute(Action<object> action, object state) => this.Execute(new StateActionTaskQueueNode(action, state));
+        public void Execute(Action<object> action, object state) => Execute(new StateActionTaskQueueNode(action, state));
 
         /// <inheritdoc cref="IExecutor"/>
-        public void Execute(Action<object, object> action, object context, object state) => this.Execute(new StateActionWithContextTaskQueueNode(action, context, state));
+        public void Execute(Action<object, object> action, object context, object state) => Execute(new StateActionWithContextTaskQueueNode(action, context, state));
 
         /// <inheritdoc cref="IExecutor"/>
-        public void Execute(Action action) => this.Execute(new ActionTaskQueueNode(action));
+        public void Execute(Action action) => Execute(new ActionTaskQueueNode(action));
 
         #region Queuing data structures
 
         sealed class ActionTaskQueueNode : IRunnable
         {
-            readonly Action action;
+            readonly Action _action;
 
             public ActionTaskQueueNode(Action action)
             {
-                this.action = action;
+                _action = action;
             }
 
-            public void Run() => this.action();
+            public void Run() => _action();
         }
 
         sealed class StateActionTaskQueueNode : IRunnable
         {
-            readonly Action<object> action;
-            readonly object state;
+            readonly Action<object> _action;
+            readonly object _state;
 
             public StateActionTaskQueueNode(Action<object> action, object state)
             {
-                this.action = action;
-                this.state = state;
+                _action = action;
+                _state = state;
             }
 
-            public void Run() => this.action(this.state);
+            public void Run() => _action(_state);
         }
 
         sealed class StateActionWithContextTaskQueueNode : IRunnable
         {
-            readonly Action<object, object> action;
-            readonly object context;
-            readonly object state;
+            readonly Action<object, object> _action;
+            readonly object _context;
+            readonly object _state;
 
             public StateActionWithContextTaskQueueNode(Action<object, object> action, object context, object state)
             {
-                this.action = action;
-                this.context = context;
-                this.state = state;
+                _action = action;
+                _context = context;
+                _state = state;
             }
 
-            public void Run() => this.action(this.context, this.state);
+            public void Run() => _action(_context, _state);
         }
 
         abstract class FuncQueueNodeBase<T> : IRunnable
         {
-            readonly TaskCompletionSource<T> promise;
-            readonly CancellationToken cancellationToken;
+            readonly TaskCompletionSource<T> _promise;
+            readonly CancellationToken _cancellationToken;
 
             protected FuncQueueNodeBase(TaskCompletionSource<T> promise, CancellationToken cancellationToken)
             {
-                this.promise = promise;
-                this.cancellationToken = cancellationToken;
+                _promise = promise;
+                _cancellationToken = cancellationToken;
             }
 
-            public Task<T> Completion => this.promise.Task;
+            public Task<T> Completion => _promise.Task;
 
             public void Run()
             {
-                if (this.cancellationToken.IsCancellationRequested)
+                if (_cancellationToken.IsCancellationRequested)
                 {
-                    this.promise.TrySetCanceled();
+                    _promise.TrySetCanceled();
                     return;
                 }
 
                 try
                 {
-                    T result = this.Call();
-                    this.promise.TrySetResult(result);
+                    T result = Call();
+                    _promise.TrySetResult(result);
                 }
                 catch (Exception ex)
                 {
                     // todo: handle fatal
-                    this.promise.TrySetException(ex);
+                    _promise.TrySetException(ex);
                 }
             }
 
@@ -147,34 +147,34 @@ namespace DotNetty.Common.Concurrency
 
         sealed class FuncSubmitQueueNode<T> : FuncQueueNodeBase<T>
         {
-            readonly Func<T> func;
+            readonly Func<T> _func;
 
             public FuncSubmitQueueNode(Func<T> func, CancellationToken cancellationToken)
                 : base(new TaskCompletionSource<T>(), cancellationToken)
             {
-                this.func = func;
+                _func = func;
             }
 
-            protected override T Call() => this.func();
+            protected override T Call() => _func();
         }
 
         sealed class StateFuncSubmitQueueNode<T> : FuncQueueNodeBase<T>
         {
-            readonly Func<object, T> func;
+            readonly Func<object, T> _func;
 
             public StateFuncSubmitQueueNode(Func<object, T> func, object state, CancellationToken cancellationToken)
                 : base(new TaskCompletionSource<T>(state), cancellationToken)
             {
-                this.func = func;
+                _func = func;
             }
 
-            protected override T Call() => this.func(this.Completion.AsyncState);
+            protected override T Call() => _func(Completion.AsyncState);
         }
 
         sealed class StateFuncWithContextSubmitQueueNode<T> : FuncQueueNodeBase<T>
         {
-            readonly Func<object, object, T> func;
-            readonly object context;
+            readonly Func<object, object, T> _func;
+            readonly object _context;
 
             public StateFuncWithContextSubmitQueueNode(
                 Func<object, object, T> func,
@@ -183,11 +183,11 @@ namespace DotNetty.Common.Concurrency
                 CancellationToken cancellationToken)
                 : base(new TaskCompletionSource<T>(state), cancellationToken)
             {
-                this.func = func;
-                this.context = context;
+                _func = func;
+                _context = context;
             }
 
-            protected override T Call() => this.func(this.context, this.Completion.AsyncState);
+            protected override T Call() => _func(_context, Completion.AsyncState);
         }
 
         #endregion

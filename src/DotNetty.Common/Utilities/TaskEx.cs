@@ -308,7 +308,7 @@ namespace DotNetty.Common.Utilities
         }
 
         /// <summary>TBD</summary>
-        [MethodImpl(InlineMethod.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool IsSuccess(this Task task)
         {
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
@@ -319,7 +319,7 @@ namespace DotNetty.Common.Utilities
         }
 
         /// <summary>TBD</summary>
-        [MethodImpl(InlineMethod.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool IsSuccess<T>(this Task<T> task)
         {
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER

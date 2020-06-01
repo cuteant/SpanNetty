@@ -16,7 +16,7 @@ namespace DotNetty.Codecs.Http2
         /// Ciphers</a> and <a
         /// href="https://wiki.mozilla.org/Security/Server_Side_TLS#Modern_compatibility">Mozilla Modern Cipher
         /// Suites</a> in accordance with the <a
-        /// href="https://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-9.2.2">HTTP/2 Specification</a>.
+        /// href="https://tools.ietf.org/html/rfc7540#section-9.2.2">HTTP/2 Specification</a>.
         ///
         /// According to the <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html">
         /// JSSE documentation</a> "the names mentioned in the TLS RFCs prefixed with TLS_ are functionally equivalent

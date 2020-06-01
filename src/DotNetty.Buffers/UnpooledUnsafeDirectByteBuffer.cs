@@ -90,34 +90,26 @@ namespace DotNetty.Buffers
         {
             this.CheckNewCapacity(newCapacity);
 
-            int oldCapacity = this.capacity;
-            if (newCapacity > oldCapacity)
+            uint unewCapacity = (uint)newCapacity;
+            uint oldCapacity = (uint)this.capacity;
+            if (oldCapacity == unewCapacity)
             {
-                byte[] oldBuffer = this.buffer;
-                byte[] newBuffer = this.AllocateDirect(newCapacity);
-                PlatformDependent.CopyMemory(oldBuffer, 0, newBuffer, 0, oldCapacity);
-                this.SetByteBuffer(newBuffer, true);
+                return this;
             }
-            else if (newCapacity < oldCapacity)
+            int bytesToCopy;
+            if (unewCapacity > oldCapacity)
             {
-                byte[] oldBuffer = this.buffer;
-                byte[] newBuffer = this.AllocateDirect(newCapacity);
-                int readerIndex = this.ReaderIndex;
-                if (readerIndex < newCapacity)
-                {
-                    int writerIndex = this.WriterIndex;
-                    if (writerIndex > newCapacity)
-                    {
-                        this.SetWriterIndex(writerIndex = newCapacity);
-                    }
-                    PlatformDependent.CopyMemory(oldBuffer, readerIndex, newBuffer, 0, writerIndex - readerIndex);
-                }
-                else
-                {
-                    this.SetIndex(newCapacity, newCapacity);
-                }
-                this.SetByteBuffer(newBuffer, true);
+                bytesToCopy = this.capacity;
             }
+            else
+            {
+                this.TrimIndicesToCapacity(newCapacity);
+                bytesToCopy = newCapacity;
+            }
+            byte[] oldBuffer = this.buffer;
+            byte[] newBuffer = this.AllocateDirect(newCapacity);
+            PlatformDependent.CopyMemory(oldBuffer, 0, newBuffer, 0, bytesToCopy);
+            this.SetByteBuffer(newBuffer, true);
             return this;
         }
 

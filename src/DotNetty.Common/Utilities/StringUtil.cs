@@ -13,7 +13,7 @@ namespace DotNetty.Common.Utilities
     /// <summary>
     ///     String utility class.
     /// </summary>
-    public static partial class StringUtil
+    public static class StringUtil
     {
         public static readonly string EmptyString = "";
         public static readonly string Newline = SystemPropertyUtil.Get("line.separator", Environment.NewLine);
@@ -525,7 +525,7 @@ namespace DotNetty.Common.Utilities
         public static int Length(string s) => s?.Length ?? 0;
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        public static bool IsEmpty(string s) => 0u >= (uint)s.Length ? true : false;
+        public static bool IsEmpty(string s) => 0u >= (uint)s.Length;
 
         public static int IndexOfNonWhiteSpace(IReadOnlyList<char> seq, int offset)
         {
@@ -569,6 +569,26 @@ namespace DotNetty.Common.Utilities
                 end = IndexOfLastNonOwsChar(value, start, length);
             }
             return 0u >= (uint)start && end == length - 1 ? value : value.SubSequence(start, end + 1);
+        }
+
+        public static ICharSequence Join(string separator, IList<ICharSequence> elements)
+        {
+            if (separator is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.separator); }
+            if (elements is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.elements); }
+
+            var count = elements.Count;
+            uint uCount = (uint)count;
+            if (0u >= uCount) { return StringCharSequence.Empty; }
+
+            var firstElement = elements[0];
+            if (1u >= uCount) { return firstElement; }
+
+            var builder = StringBuilderManager.Allocate().Append(firstElement.ToString());
+            for (var idx = 1; idx < count; idx++)
+            {
+                builder.Append(separator).Append(elements[idx].ToString());
+            }
+            return new StringCharSequence(StringBuilderManager.ReturnAndFree(builder));
         }
 
         static int IndexOfFirstNonOwsChar(in ReadOnlySpan<char> value, uint length)
@@ -617,5 +637,11 @@ namespace DotNetty.Common.Utilities
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         static bool IsOws(uint c) => c == uSpace || c == uTab;
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static int ThrowInvalidEscapedCsvFieldException(ICharSequence value, int index)
+        {
+            throw NewInvalidEscapedCsvFieldException(value, index);
+        }
     }
 }

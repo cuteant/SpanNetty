@@ -925,7 +925,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void Destroy()
         {
-            this.CheckDestroyed();
+            // Release all data items, including those not yet pulled
             this.CleanFiles();
             this.destroyed = true;
 
@@ -933,12 +933,6 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 this.undecodedChunk.Release();
                 this.undecodedChunk = null;
-            }
-
-            // release all data which was not yet pulled
-            for (int i = this.bodyListHttpDataRank; i < this.bodyListHttpData.Count; i++)
-            {
-                this.bodyListHttpData[i].Release();
             }
         }
 

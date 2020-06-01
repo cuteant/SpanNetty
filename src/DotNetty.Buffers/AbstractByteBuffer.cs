@@ -263,6 +263,15 @@ namespace DotNetty.Buffers
             }
         }
 
+        // Called after a capacity reduction
+        protected internal void TrimIndicesToCapacity(int newCapacity)
+        {
+            if ((uint)this.writerIndex > (uint)newCapacity)
+            {
+                SetIndex0(Math.Min(this.readerIndex, newCapacity), newCapacity);
+            }
+        }
+
         public virtual IByteBuffer EnsureWritable(int minWritableBytes)
         {
             if ((uint)minWritableBytes > SharedConstants.TooBigOrNegative)
@@ -479,7 +488,7 @@ namespace DotNetty.Buffers
                 return StringCharSequence.Empty;
             }
 
-            if (SharedConstants.ASCIICodePage == encoding.CodePage)// || SharedConstants.ISO88591CodePage == encoding.CodePage)
+            if (TextEncodings.ASCIICodePage == encoding.CodePage)// || SharedConstants.ISO88591CodePage == encoding.CodePage)
             {
                 // ByteBufUtil.getBytes(...) will return a new copy which the AsciiString uses directly
                 return new AsciiString(ByteBufferUtil.GetBytes(this, index, length, true), false);
@@ -674,7 +683,7 @@ namespace DotNetty.Buffers
         {
             switch (encoding.CodePage)
             {
-                case SharedConstants.UTF8CodePage:
+                case TextEncodings.UTF8CodePage:
                     int len = ByteBufferUtil.Utf8MaxBytes(value);
                     if (expand)
                     {
@@ -687,7 +696,7 @@ namespace DotNetty.Buffers
                     }
                     return ByteBufferUtil.WriteUtf8(this, index, value);
 
-                case SharedConstants.ASCIICodePage:
+                case TextEncodings.ASCIICodePage:
                     int length = value.Length;
                     if (expand)
                     {
@@ -718,7 +727,7 @@ namespace DotNetty.Buffers
         {
             switch (encoding.CodePage)
             {
-                case SharedConstants.UTF8CodePage:
+                case TextEncodings.UTF8CodePage:
                     int len = ByteBufferUtil.Utf8MaxBytes(sequence);
                     if (expand)
                     {
@@ -731,7 +740,7 @@ namespace DotNetty.Buffers
                     }
                     return ByteBufferUtil.WriteUtf8(this, index, sequence);
 
-                case SharedConstants.ASCIICodePage:
+                case TextEncodings.ASCIICodePage:
                     int length = sequence.Count;
                     if (expand)
                     {

@@ -8,37 +8,37 @@ namespace DotNetty.Common.Concurrency
 
     public sealed class ExecutorTaskScheduler : TaskScheduler
     {
-        readonly IEventExecutor executor;
-        bool started;
+        private readonly IEventExecutor _executor;
+        private bool _started;
 
         public ExecutorTaskScheduler(IEventExecutor executor)
         {
-            this.executor = executor;
+            _executor = executor;
         }
 
         protected override void QueueTask(Task task)
         {
-            if (this.started)
+            if (_started)
             {
-                this.executor.Execute(new TaskQueueNode(this, task));
+                _executor.Execute(new TaskQueueNode(this, task));
             }
             else
             {
                 // hack: enables this executor to be seen as default on Executor's worker thread.
                 // This is a special case for SingleThreadEventExecutor.Loop initiated task.
-                this.started = true;
-                this.TryExecuteTask(task);
+                _started = true;
+                TryExecuteTask(task);
             }
         }
 
         protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
         {
-            if (taskWasPreviouslyQueued || !this.executor.InEventLoop)
+            if (taskWasPreviouslyQueued || !_executor.InEventLoop)
             {
                 return false;
             }
 
-            return this.TryExecuteTask(task);
+            return TryExecuteTask(task);
         }
 
         protected override IEnumerable<Task> GetScheduledTasks() => null;
@@ -47,16 +47,16 @@ namespace DotNetty.Common.Concurrency
 
         sealed class TaskQueueNode : IRunnable
         {
-            readonly ExecutorTaskScheduler scheduler;
-            readonly Task task;
+            readonly ExecutorTaskScheduler _scheduler;
+            readonly Task _task;
 
             public TaskQueueNode(ExecutorTaskScheduler scheduler, Task task)
             {
-                this.scheduler = scheduler;
-                this.task = task;
+                _scheduler = scheduler;
+                _task = task;
             }
 
-            public void Run() => this.scheduler.TryExecuteTask(this.task);
+            public void Run() => _scheduler.TryExecuteTask(_task);
         }
     }
 }

@@ -128,7 +128,7 @@ namespace DotNetty.Codecs.Http2
         /// <summary>
         /// Handles an inbound <c>PUSH_PROMISE</c> frame. Only called if <c>END_HEADERS</c> encountered.
         /// <para>Promised requests MUST be authoritative, cacheable, and safe.
-        /// See <a href="https://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-8.2">[RFC http2], Section 8.2</a>.</para>
+        /// See <a href="https://tools.ietf.org/html/rfc7540#section-8.2">[RFC 7540], Section 8.2</a>.</para>
         /// Only one of the following methods will be called for each <c>HEADERS</c> frame sequence.
         /// One will be called when the <c>END_HEADERS</c> flag has been received.
         /// <para><see cref="OnHeadersRead(IChannelHandlerContext, int, IHttp2Headers, int, bool)"/></para>

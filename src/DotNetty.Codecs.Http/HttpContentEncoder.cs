@@ -15,20 +15,20 @@ namespace DotNetty.Codecs.Http
 
     public abstract class HttpContentEncoder : MessageToMessageCodec<IHttpRequest, IHttpObject>
     {
-        enum State
+        private enum State
         {
             PassThrough,
             AwaitHeaders,
             AwaitContent
         }
 
-        static readonly AsciiString ZeroLengthHead = AsciiString.Cached("HEAD");
-        static readonly AsciiString ZeroLengthConnect = AsciiString.Cached("CONNECT");
-        static readonly int ContinueCode = HttpResponseStatus.Continue.Code;
+        private static readonly AsciiString ZeroLengthHead = AsciiString.Cached("HEAD");
+        private static readonly AsciiString ZeroLengthConnect = AsciiString.Cached("CONNECT");
+        private static readonly int ContinueCode = HttpResponseStatus.Continue.Code;
 
-        readonly Deque<ICharSequence> acceptEncodingQueue = new Deque<ICharSequence>();
-        EmbeddedChannel encoder;
-        State state = State.AwaitHeaders;
+        private readonly Deque<ICharSequence> _acceptEncodingQueue = new Deque<ICharSequence>();
+        private EmbeddedChannel _encoder;
+        private State _state = State.AwaitHeaders;
 
         /// <inheritdoc />
         public override bool AcceptOutboundMessage(object msg)
@@ -47,19 +47,24 @@ namespace DotNetty.Codecs.Http
         /// <inheritdoc />
         protected override void Decode(IChannelHandlerContext ctx, IHttpRequest msg, List<object> output)
         {
-            ICharSequence acceptedEncoding = msg.Headers.Get(HttpHeaderNames.AcceptEncoding, HttpContentDecoder.Identity);
-
+            var acceptEncodingHeaders = msg.Headers.GetAll(HttpHeaderNames.AcceptEncoding);
+            ICharSequence acceptEncoding = acceptEncodingHeaders.Count switch
+            {
+                0 => HttpContentDecoder.Identity,
+                1 => acceptEncodingHeaders[0],
+                _ => StringUtil.Join(",", acceptEncodingHeaders),// Multiple message-header fields https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
+            };
             HttpMethod meth = msg.Method;
             if (HttpMethod.Head.Equals(meth))
             {
-                acceptedEncoding = ZeroLengthHead;
+                acceptEncoding = ZeroLengthHead;
             }
             else if (HttpMethod.Connect.Equals(meth))
             {
-                acceptedEncoding = ZeroLengthConnect;
+                acceptEncoding = ZeroLengthConnect;
             }
 
-            this.acceptEncodingQueue.AddToBack(acceptedEncoding);
+            _acceptEncodingQueue.AddToBack(acceptEncoding);
             output.Add(ReferenceCountUtil.Retain(msg));
         }
 
@@ -69,151 +74,151 @@ namespace DotNetty.Codecs.Http
             var res = msg as IHttpResponse;
             var lastContent = msg as ILastHttpContent;
             bool isFull = res is object && lastContent is object;
-            switch (this.state)
+            switch (_state)
             {
                 case State.AwaitHeaders:
-                {
-                    EnsureHeaders(msg);
-                    Debug.Assert(this.encoder is null);
+                    {
+                        EnsureHeaders(msg);
+                        Debug.Assert(_encoder is null);
 
-                    int code = res.Status.Code;
-                    ICharSequence acceptEncoding;
-                    if (code == StatusCodes.Status100Continue)
-                    {
-                        // We need to not poll the encoding when response with CONTINUE as another response will follow
-                        // for the issued request. See https://github.com/netty/netty/issues/4079
-                        acceptEncoding = null;
-                    }
-                    else
-                    {
-                        // Get the list of encodings accepted by the peer.
-                        if (!this.acceptEncodingQueue.TryRemoveFromFront(out acceptEncoding))
+                        int code = res.Status.Code;
+                        ICharSequence acceptEncoding;
+                        if (code == StatusCodes.Status100Continue)
                         {
-                            ThrowHelper.ThrowInvalidOperationException_CannotSendMore();
-                        }
-                    }
-
-                    //
-                    // per rfc2616 4.3 Message Body
-                    // All 1xx (informational), 204 (no content), and 304 (not modified) responses MUST NOT include a
-                    // message-body. All other responses do include a message-body, although it MAY be of zero length.
-                    //
-                    // 9.4 HEAD
-                    // The HEAD method is identical to GET except that the server MUST NOT return a message-body
-                    // in the response.
-                    //
-                    // Also we should pass through HTTP/1.0 as transfer-encoding: chunked is not supported.
-                    //
-                    // See https://github.com/netty/netty/issues/5382
-                    //
-                    if (IsPassthru(res.ProtocolVersion, code, acceptEncoding))
-                    {
-                        if (isFull)
-                        {
-                            output.Add(ReferenceCountUtil.Retain(res));
+                            // We need to not poll the encoding when response with CONTINUE as another response will follow
+                            // for the issued request. See https://github.com/netty/netty/issues/4079
+                            acceptEncoding = null;
                         }
                         else
                         {
-                            output.Add(res);
-                            // Pass through all following contents.
-                            this.state = State.PassThrough;
+                            // Get the list of encodings accepted by the peer.
+                            if (!_acceptEncodingQueue.TryRemoveFromFront(out acceptEncoding))
+                            {
+                                ThrowHelper.ThrowInvalidOperationException_CannotSendMore();
+                            }
                         }
-                        break;
-                    }
 
-                    if (isFull)
-                    {
-                        // Pass through the full response with empty content and continue waiting for the next resp.
-                        if (!((IByteBufferHolder)res).Content.IsReadable())
+                        //
+                        // per rfc2616 4.3 Message Body
+                        // All 1xx (informational), 204 (no content), and 304 (not modified) responses MUST NOT include a
+                        // message-body. All other responses do include a message-body, although it MAY be of zero length.
+                        //
+                        // 9.4 HEAD
+                        // The HEAD method is identical to GET except that the server MUST NOT return a message-body
+                        // in the response.
+                        //
+                        // Also we should pass through HTTP/1.0 as transfer-encoding: chunked is not supported.
+                        //
+                        // See https://github.com/netty/netty/issues/5382
+                        //
+                        if (IsPassthru(res.ProtocolVersion, code, acceptEncoding))
                         {
-                            output.Add(ReferenceCountUtil.Retain(res));
+                            if (isFull)
+                            {
+                                output.Add(ReferenceCountUtil.Retain(res));
+                            }
+                            else
+                            {
+                                output.Add(res);
+                                // Pass through all following contents.
+                                _state = State.PassThrough;
+                            }
                             break;
                         }
-                    }
 
-                    // Prepare to encode the content.
-                    Result result = this.BeginEncode(res, acceptEncoding);
-
-                    // If unable to encode, pass through.
-                    if (result is null)
-                    {
                         if (isFull)
                         {
-                            output.Add(ReferenceCountUtil.Retain(res));
+                            // Pass through the full response with empty content and continue waiting for the next resp.
+                            if (!((IByteBufferHolder)res).Content.IsReadable())
+                            {
+                                output.Add(ReferenceCountUtil.Retain(res));
+                                break;
+                            }
+                        }
+
+                        // Prepare to encode the content.
+                        Result result = BeginEncode(res, acceptEncoding);
+
+                        // If unable to encode, pass through.
+                        if (result is null)
+                        {
+                            if (isFull)
+                            {
+                                output.Add(ReferenceCountUtil.Retain(res));
+                            }
+                            else
+                            {
+                                output.Add(res);
+                                // Pass through all following contents.
+                                _state = State.PassThrough;
+                            }
+                            break;
+                        }
+
+                        _encoder = result.ContentEncoder;
+
+                        // Encode the content and remove or replace the existing headers
+                        // so that the message looks like a decoded message.
+                        res.Headers.Set(HttpHeaderNames.ContentEncoding, result.TargetContentEncoding);
+
+                        // Output the rewritten response.
+                        if (isFull)
+                        {
+                            // Convert full message into unfull one.
+                            var newRes = new DefaultHttpResponse(res.ProtocolVersion, res.Status);
+                            newRes.Headers.Set(res.Headers);
+                            output.Add(newRes);
+
+                            EnsureContent(res);
+                            EncodeFullResponse(newRes, (IHttpContent)res, output);
+                            break;
                         }
                         else
                         {
+                            // Make the response chunked to simplify content transformation.
+                            res.Headers.Remove(HttpHeaderNames.ContentLength);
+                            res.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
+
                             output.Add(res);
-                            // Pass through all following contents.
-                            this.state = State.PassThrough;
+                            _state = State.AwaitContent;
+
+                            if (!(msg is IHttpContent))
+                            {
+                                // only break out the switch statement if we have not content to process
+                                // See https://github.com/netty/netty/issues/2006
+                                break;
+                            }
+                            // Fall through to encode the content
+                            goto case State.AwaitContent;
                         }
-                        break;
                     }
-
-                    this.encoder = result.ContentEncoder;
-
-                    // Encode the content and remove or replace the existing headers
-                    // so that the message looks like a decoded message.
-                    res.Headers.Set(HttpHeaderNames.ContentEncoding, result.TargetContentEncoding);
-
-                    // Output the rewritten response.
-                    if (isFull)
-                    {
-                        // Convert full message into unfull one.
-                        var newRes = new DefaultHttpResponse(res.ProtocolVersion, res.Status);
-                        newRes.Headers.Set(res.Headers);
-                        output.Add(newRes);
-
-                        EnsureContent(res);
-                        this.EncodeFullResponse(newRes, (IHttpContent)res, output);
-                        break;
-                    }
-                    else
-                    {
-                        // Make the response chunked to simplify content transformation.
-                        res.Headers.Remove(HttpHeaderNames.ContentLength);
-                        res.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
-
-                        output.Add(res);
-                        this.state = State.AwaitContent;
-
-                        if (!(msg is IHttpContent))
-                        {
-                            // only break out the switch statement if we have not content to process
-                            // See https://github.com/netty/netty/issues/2006
-                            break;
-                        }
-                        // Fall through to encode the content
-                        goto case State.AwaitContent;
-                    }
-                }
                 case State.AwaitContent:
-                {
-                    EnsureContent(msg);
-                    if (this.EncodeContent((IHttpContent)msg, output))
                     {
-                        this.state = State.AwaitHeaders;
+                        EnsureContent(msg);
+                        if (EncodeContent((IHttpContent)msg, output))
+                        {
+                            _state = State.AwaitHeaders;
+                        }
+                        break;
                     }
-                    break;
-                }
                 case State.PassThrough:
-                {
-                    EnsureContent(msg);
-                    output.Add(ReferenceCountUtil.Retain(msg));
-                    // Passed through all following contents of the current response.
-                    if (lastContent is object)
                     {
-                        this.state = State.AwaitHeaders;
+                        EnsureContent(msg);
+                        output.Add(ReferenceCountUtil.Retain(msg));
+                        // Passed through all following contents of the current response.
+                        if (lastContent is object)
+                        {
+                            _state = State.AwaitHeaders;
+                        }
+                        break;
                     }
-                    break;
-                }
             }
         }
 
         void EncodeFullResponse(IHttpResponse newRes, IHttpContent content, IList<object> output)
         {
             int existingMessages = output.Count;
-            this.EncodeContent(content, output);
+            EncodeContent(content, output);
 
             if (HttpUtil.IsContentLengthSet(newRes))
             {
@@ -275,11 +280,11 @@ namespace DotNetty.Codecs.Http
         {
             IByteBuffer content = c.Content;
 
-            this.Encode(content, output);
+            Encode(content, output);
 
             if (c is ILastHttpContent last)
             {
-                this.FinishEncode(output);
+                FinishEncode(output);
 
                 // Generate an additional chunk if the decoder produced
                 // the last product on closure,
@@ -301,23 +306,23 @@ namespace DotNetty.Codecs.Http
 
         public override void HandlerRemoved(IChannelHandlerContext context)
         {
-            this.CleanupSafely(context);
+            CleanupSafely(context);
             base.HandlerRemoved(context);
         }
 
         public override void ChannelInactive(IChannelHandlerContext context)
         {
-            this.CleanupSafely(context);
+            CleanupSafely(context);
             base.ChannelInactive(context);
         }
 
         void Cleanup()
         {
-            if (this.encoder is object)
+            if (_encoder is object)
             {
                 // Clean-up the previous encoder if not cleaned up correctly.
-                this.encoder.FinishAndReleaseAll();
-                this.encoder = null;
+                _encoder.FinishAndReleaseAll();
+                _encoder = null;
             }
         }
 
@@ -325,7 +330,7 @@ namespace DotNetty.Codecs.Http
         {
             try
             {
-                this.Cleanup();
+                Cleanup();
             }
             catch (Exception cause)
             {
@@ -338,24 +343,24 @@ namespace DotNetty.Codecs.Http
         void Encode(IByteBuffer buf, IList<object> output)
         {
             // call retain here as it will call release after its written to the channel
-            this.encoder.WriteOutbound(buf.Retain());
-            this.FetchEncoderOutput(output);
+            _encoder.WriteOutbound(buf.Retain());
+            FetchEncoderOutput(output);
         }
 
         void FinishEncode(IList<object> output)
         {
-            if (this.encoder.Finish())
+            if (_encoder.Finish())
             {
-                this.FetchEncoderOutput(output);
+                FetchEncoderOutput(output);
             }
-            this.encoder = null;
+            _encoder = null;
         }
 
         void FetchEncoderOutput(ICollection<object> output)
         {
-            while(true)
+            while (true)
             {
-                var buf = this.encoder.ReadOutbound<IByteBuffer>();
+                var buf = _encoder.ReadOutbound<IByteBuffer>();
                 if (buf is null)
                 {
                     break;
@@ -376,8 +381,8 @@ namespace DotNetty.Codecs.Http
                 if (targetContentEncoding is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.targetContentEncoding); }
                 if (contentEncoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentEncoder); }
 
-                this.TargetContentEncoding = targetContentEncoding;
-                this.ContentEncoder = contentEncoder;
+                TargetContentEncoding = targetContentEncoding;
+                ContentEncoder = contentEncoder;
             }
 
             public ICharSequence TargetContentEncoding { get; }

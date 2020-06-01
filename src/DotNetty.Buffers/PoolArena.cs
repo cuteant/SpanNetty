@@ -418,35 +418,20 @@ namespace DotNetty.Buffers
             T oldMemory = buf.Memory;
             int oldOffset = buf.Offset;
             int oldMaxLength = buf.MaxLength;
-            int readerIndex = buf.ReaderIndex;
-            int writerIndex = buf.WriterIndex;
 
+            // This does not touch buf's reader/writer indices
             this.Allocate(this.Parent.ThreadCache<T>(), buf, newCapacity);
+            int bytesToCopy;
             if (newCapacity > oldCapacity)
             {
-                this.MemoryCopy(
-                    oldMemory, oldOffset,
-                    buf.Memory, buf.Offset, oldCapacity);
+                bytesToCopy = oldCapacity;
             }
-            else if (newCapacity < oldCapacity)
+            else
             {
-                if (readerIndex < newCapacity)
-                {
-                    if (writerIndex > newCapacity)
-                    {
-                        writerIndex = newCapacity;
-                    }
-                    this.MemoryCopy(
-                        oldMemory, oldOffset + readerIndex,
-                        buf.Memory, buf.Offset + readerIndex, writerIndex - readerIndex);
-                }
-                else
-                {
-                    readerIndex = writerIndex = newCapacity;
-                }
+                buf.TrimIndicesToCapacity(newCapacity);
+                bytesToCopy = newCapacity;
             }
-
-            buf.SetIndex(readerIndex, writerIndex);
+            this.MemoryCopy(oldMemory, oldOffset, buf.Memory, buf.Offset, bytesToCopy);
 
             if (freeOldMemory)
             {

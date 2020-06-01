@@ -12,16 +12,11 @@
 
         public const long Zero64 = 0L;
 
-        public const int ASCIICodePage = 20127;
-
-        public const int ISO88591CodePage = 28591;
-
-        public const int UTF8CodePage = 65001;
-
         public const int IndexNotFound = -1;
-        public const uint NIndexNotFound = unchecked((uint)IndexNotFound);
+        public const uint uIndexNotFound = unchecked((uint)IndexNotFound);
 
         public const uint TooBigOrNegative = int.MaxValue;
+        public const ulong TooBigOrNegative64 = long.MaxValue;
 
         public const uint uStackallocThreshold = 256u;
         public const int StackallocThreshold = 256;

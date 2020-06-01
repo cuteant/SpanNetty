@@ -173,7 +173,13 @@ namespace DotNetty.Codecs.Http2
         public void InternalOpen(IChannelHandlerContext ctx, TaskCompletionSource<IHttp2StreamChannel> promise)
         {
             Debug.Assert(ctx.Executor.InEventLoop);
-
+            // netty-4.1.40 Support cancellation in the Http2StreamChannelBootstrap (#9519)
+            // https://github.com/netty/netty/pull/9519
+            // 使用 TaskCompletionSource<IHttp2StreamChannel>.TrySetResult 可避免
+            //if (!promise.setUncancellable())
+            //{
+            //    return;
+            //}
             IHttp2StreamChannel streamChannel;
             if (ctx.Handler is Http2MultiplexHandler multiplexHandler)
             {
@@ -203,15 +209,15 @@ namespace DotNetty.Codecs.Http2
         {
             var wrapped = (Tuple<TaskCompletionSource<IHttp2StreamChannel>, IHttp2StreamChannel>)state;
             var streamChannel = wrapped.Item2;
-            if (future.IsCanceled)
-            {
-                wrapped.Item1.TrySetCanceled();
-            }
-            else if (future.IsFaulted)
+            if (future.IsSuccess())
             {
                 wrapped.Item1.TrySetResult(streamChannel);
             }
-            else //if (future.IsCompleted)
+            else if (future.IsCanceled)
+            {
+                wrapped.Item1.TrySetCanceled();
+            }
+            else
             {
                 if (streamChannel.Registered)
                 {
@@ -227,11 +233,21 @@ namespace DotNetty.Codecs.Http2
 
         private static void LinkOutcome(Task future, TaskCompletionSource<IHttp2StreamChannel> promise, IHttp2StreamChannel streamChannel)
         {
-            if (future.IsCanceled)
+            if (!future.IsCompleted)
             {
-                promise.TrySetCanceled(); return;
+                future.ContinueWith(LinkOutcomeContinuationAction,
+                    Tuple.Create(promise, streamChannel), TaskContinuationOptions.ExecuteSynchronously);
+                return;
             }
-            else if (future.IsFaulted)
+            if (future.IsSuccess())
+            {
+                promise.TrySetResult(streamChannel);
+            }
+            else if (future.IsCanceled)
+            {
+                promise.TrySetCanceled();
+            }
+            else
             {
                 if (streamChannel.Registered)
                 {
@@ -242,14 +258,7 @@ namespace DotNetty.Codecs.Http2
                     streamChannel.Unsafe.CloseForcibly();
                 }
                 promise.TrySetException(future.Exception.InnerExceptions);
-                return;
             }
-            else if (future.IsCompleted)
-            {
-                promise.TrySetResult(streamChannel); return;
-            }
-            future.ContinueWith(LinkOutcomeContinuationAction,
-                Tuple.Create(promise, streamChannel), TaskContinuationOptions.ExecuteSynchronously);
         }
 
         void Init(IChannel channel)

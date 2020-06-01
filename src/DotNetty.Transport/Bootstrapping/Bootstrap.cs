@@ -6,6 +6,8 @@ namespace DotNetty.Transport.Bootstrapping
     using System;
     using System.Collections.Generic;
     using System.Net;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
@@ -19,14 +21,27 @@ namespace DotNetty.Transport.Bootstrapping
     /// in combination with connectionless transports such as datagram (UDP). For regular TCP connections,
     /// please use the provided <see cref="ConnectAsync(EndPoint,EndPoint)"/> methods.
     /// </summary>
-    public partial class Bootstrap : AbstractBootstrap<Bootstrap, IChannel>
+    public class Bootstrap : AbstractBootstrap<Bootstrap, IChannel>
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Bootstrap>();
+        private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<Bootstrap>();
 
-        static readonly INameResolver DefaultResolver = new DefaultNameResolver();
+        private static readonly INameResolver DefaultResolver = new DefaultNameResolver();
 
-        INameResolver _resolver = DefaultResolver;
-        EndPoint _remoteAddress;
+        private INameResolver v_resolver = DefaultResolver;
+        private INameResolver InternalResolver
+        {
+            [MethodImpl(InlineMethod.AggressiveInlining)]
+            get => Volatile.Read(ref v_resolver);
+            set => Interlocked.Exchange(ref v_resolver, value);
+        }
+
+        private EndPoint v_remoteAddress;
+        private EndPoint InternalRemoteAddress
+        {
+            [MethodImpl(InlineMethod.AggressiveInlining)]
+            get => Volatile.Read(ref v_remoteAddress);
+            set => Interlocked.Exchange(ref v_remoteAddress, value);
+        }
 
         public Bootstrap()
         {
@@ -92,14 +107,14 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="IChannel"/>.</returns>
         public Task<IChannel> ConnectAsync()
         {
-            this.Validate();
+            Validate();
             EndPoint remoteAddress = InternalRemoteAddress;
             if (remoteAddress is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_RemoteAddrNotSet();
             }
 
-            return this.DoResolveAndConnectAsync(remoteAddress, this.LocalAddress());
+            return DoResolveAndConnectAsync(remoteAddress, LocalAddress());
         }
 
         /// <summary>
@@ -108,7 +123,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <param name="inetHost">The hostname of the endpoint to connect to.</param>
         /// <param name="inetPort">The port at the remote host to connect to.</param>
         /// <returns>The <see cref="IChannel"/>.</returns>
-        public Task<IChannel> ConnectAsync(string inetHost, int inetPort) => this.ConnectAsync(new DnsEndPoint(inetHost, inetPort));
+        public Task<IChannel> ConnectAsync(string inetHost, int inetPort) => ConnectAsync(new DnsEndPoint(inetHost, inetPort));
 
         /// <summary>
         /// Connects an <see cref="IChannel"/> to the remote peer.
@@ -116,7 +131,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <param name="inetHost">The <see cref="IPAddress"/> of the endpoint to connect to.</param>
         /// <param name="inetPort">The port at the remote host to connect to.</param>
         /// <returns>The <see cref="IChannel"/>.</returns>
-        public Task<IChannel> ConnectAsync(IPAddress inetHost, int inetPort) => this.ConnectAsync(new IPEndPoint(inetHost, inetPort));
+        public Task<IChannel> ConnectAsync(IPAddress inetHost, int inetPort) => ConnectAsync(new IPEndPoint(inetHost, inetPort));
 
         /// <summary>
         /// Connects an <see cref="IChannel"/> to the remote peer.
@@ -127,8 +142,8 @@ namespace DotNetty.Transport.Bootstrapping
         {
             if (remoteAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
 
-            this.Validate();
-            return this.DoResolveAndConnectAsync(remoteAddress, this.LocalAddress());
+            Validate();
+            return DoResolveAndConnectAsync(remoteAddress, LocalAddress());
         }
 
         /// <summary>
@@ -141,8 +156,8 @@ namespace DotNetty.Transport.Bootstrapping
         {
             if (remoteAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
 
-            this.Validate();
-            return this.DoResolveAndConnectAsync(remoteAddress, localAddress);
+            Validate();
+            return DoResolveAndConnectAsync(remoteAddress, localAddress);
         }
 
         /// <summary>
@@ -153,7 +168,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The <see cref="IChannel"/>.</returns>
         async Task<IChannel> DoResolveAndConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
         {
-            IChannel channel = await this.InitAndRegisterAsync();
+            IChannel channel = await InitAndRegisterAsync();
 
             var resolver = InternalResolver;
             if (resolver.IsResolved(remoteAddress))
@@ -217,12 +232,12 @@ namespace DotNetty.Transport.Bootstrapping
         protected override void Init(IChannel channel)
         {
             IChannelPipeline p = channel.Pipeline;
-            p.AddLast(null, (string)null, this.Handler());
+            p.AddLast(null, (string)null, Handler());
 
-            ICollection<ChannelOptionValue> options = this.Options;
+            ICollection<ChannelOptionValue> options = Options;
             SetChannelOptions(channel, options, Logger);
 
-            ICollection<AttributeValue> attrs = this.Attributes;
+            ICollection<AttributeValue> attrs = Attributes;
             foreach (AttributeValue e in attrs)
             {
                 e.Set(channel);
@@ -232,7 +247,7 @@ namespace DotNetty.Transport.Bootstrapping
         public override Bootstrap Validate()
         {
             base.Validate();
-            if (this.Handler() is null)
+            if (Handler() is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_HandlerNotSet();
             }

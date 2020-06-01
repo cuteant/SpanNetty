@@ -12,7 +12,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
     sealed class EmbeddedEventLoop : AbstractScheduledEventExecutor, IEventLoop
     {
-        readonly Queue<IRunnable> tasks = new Queue<IRunnable>(2);
+        readonly Queue<IRunnable> _tasks = new Queue<IRunnable>(2);
 
         public new IEventLoop GetNext() => this;
 
@@ -40,7 +40,7 @@ namespace DotNetty.Transport.Channels.Embedded
             {
                 ThrowHelper.ThrowNullReferenceException_Command();
             }
-            this.tasks.Enqueue(command);
+            _tasks.Enqueue(command);
         }
 
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
@@ -48,18 +48,18 @@ namespace DotNetty.Transport.Channels.Embedded
             throw new NotSupportedException();
         }
 
-        internal PreciseTimeSpan NextScheduledTask() => this.NextScheduledTaskNanos();
+        internal PreciseTimeSpan NextScheduledTask() => NextScheduledTaskNanos();
 
         internal void RunTasks()
         {
             while(true)
             {
                 // have to perform an additional check since Queue<T> throws upon empty dequeue in .NET
-                if (0u >= (uint)this.tasks.Count)
+                if (0u >= (uint)_tasks.Count)
                 {
                     break;
                 }
-                IRunnable task = this.tasks.Dequeue();
+                IRunnable task = _tasks.Dequeue();
                 if (task is null)
                 {
                     break;
@@ -73,10 +73,10 @@ namespace DotNetty.Transport.Channels.Embedded
             PreciseTimeSpan time = GetNanos();
             while(true)
             {
-                IRunnable task = this.PollScheduledTask(time);
+                IRunnable task = PollScheduledTask(time);
                 if (task is null)
                 {
-                    return this.NextScheduledTaskNanos();
+                    return NextScheduledTaskNanos();
                 }
                 task.Run();
             }

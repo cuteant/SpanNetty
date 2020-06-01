@@ -67,7 +67,18 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         }
 
         [Fact]
-        public async Task TestAcquireTimeout()
+        public Task TestAcquireTimeout()
+        {
+            return TestAcquireTimeout0(500);
+        }
+
+        [Fact]
+        public Task TestAcquireWithZeroTimeout()
+        {
+            return TestAcquireTimeout0(0);
+        }
+
+        private async Task TestAcquireTimeout0(long timeoutMillis)
         {
             var addr = new LocalAddress(LOCAL_ADDR_ID);
             Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(this.group).Channel<LocalChannel>();
@@ -83,7 +94,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             // Start server
             IChannel sc = await sb.BindAsync(addr);
             var handler = new TestChannelPoolHandler();
-            var pool = new FixedChannelPool(cb, handler, ChannelActiveHealthChecker.Instance, FixedChannelPool.AcquireTimeoutAction.Fail, TimeSpan.FromMilliseconds(500), 1, int.MaxValue);
+            var pool = new FixedChannelPool(cb, handler, ChannelActiveHealthChecker.Instance, FixedChannelPool.AcquireTimeoutAction.Fail, TimeSpan.FromMilliseconds(timeoutMillis), 1, int.MaxValue);
 
             IChannel channel = await pool.AcquireAsync();
             try
@@ -308,7 +319,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         }
 
         //[Fact]
-        //public async Task TestCloseAsync()
+        // TODO public async Task TestCloseAsync()
         //{
         //    LocalAddress addr = new LocalAddress(LOCAL_ADDR_ID);
         //    Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(this.group).Channel<LocalChannel>();

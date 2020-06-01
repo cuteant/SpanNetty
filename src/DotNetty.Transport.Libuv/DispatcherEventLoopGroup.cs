@@ -13,37 +13,37 @@ namespace DotNetty.Transport.Libuv
 
     public sealed class DispatcherEventLoopGroup : AbstractEventExecutorGroup, IEventLoopGroup
     {
-        readonly DispatcherEventLoop dispatcherEventLoop;
+        readonly DispatcherEventLoop _dispatcherEventLoop;
 
         public DispatcherEventLoopGroup()
         {
-            this.dispatcherEventLoop = new DispatcherEventLoop(this);
+            _dispatcherEventLoop = new DispatcherEventLoop(this);
         }
 
-        public override bool IsShutdown => this.dispatcherEventLoop.IsShutdown;
+        public override bool IsShutdown => _dispatcherEventLoop.IsShutdown;
 
-        public override bool IsTerminated => this.dispatcherEventLoop.IsTerminated;
+        public override bool IsTerminated => _dispatcherEventLoop.IsTerminated;
 
-        public override bool IsShuttingDown => this.dispatcherEventLoop.IsShuttingDown;
+        public override bool IsShuttingDown => _dispatcherEventLoop.IsShuttingDown;
 
-        public override Task TerminationCompletion => this.dispatcherEventLoop.TerminationCompletion;
+        public override Task TerminationCompletion => _dispatcherEventLoop.TerminationCompletion;
 
-        internal DispatcherEventLoop Dispatcher => this.dispatcherEventLoop;
+        internal DispatcherEventLoop Dispatcher => _dispatcherEventLoop;
 
-        protected override IEnumerable<IEventExecutor> GetItems() => new[] { this.dispatcherEventLoop };
+        protected override IEnumerable<IEventExecutor> GetItems() => new[] { _dispatcherEventLoop };
 
-        public new IEnumerable<IEventLoop> Items => new[] { this.dispatcherEventLoop };
+        public new IEnumerable<IEventLoop> Items => new[] { _dispatcherEventLoop };
 
-        IEventLoop IEventLoopGroup.GetNext() => (IEventLoop)this.GetNext();
+        IEventLoop IEventLoopGroup.GetNext() => (IEventLoop)GetNext();
 
-        public override IEventExecutor GetNext() => this.dispatcherEventLoop;
+        public override IEventExecutor GetNext() => _dispatcherEventLoop;
 
-        public Task RegisterAsync(IChannel channel) => ((IEventLoop)this.GetNext()).RegisterAsync(channel);
+        public Task RegisterAsync(IChannel channel) => ((IEventLoop)GetNext()).RegisterAsync(channel);
 
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
         {
-            this.dispatcherEventLoop.ShutdownGracefullyAsync(quietPeriod, timeout);
-            return this.TerminationCompletion;
+            _dispatcherEventLoop.ShutdownGracefullyAsync(quietPeriod, timeout);
+            return TerminationCompletion;
         }
     }
 }

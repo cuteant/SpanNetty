@@ -13,20 +13,20 @@ namespace DotNetty.Transport.Channels
     /// </summary>
     public class AffinitizedEventLoopGroup : AbstractEventExecutorGroup, IEventLoopGroup
     {
-        readonly IEventLoopGroup innerGroup;
+        readonly IEventLoopGroup _innerGroup;
 
-        public override bool IsShutdown => this.innerGroup.IsShutdown;
+        public override bool IsShutdown => _innerGroup.IsShutdown;
 
-        public override bool IsTerminated => this.innerGroup.IsTerminated;
+        public override bool IsTerminated => _innerGroup.IsTerminated;
 
-        public override bool IsShuttingDown => this.innerGroup.IsShuttingDown;
+        public override bool IsShuttingDown => _innerGroup.IsShuttingDown;
 
         /// <inheritdoc cref="IEventExecutorGroup"/>
-        public override Task TerminationCompletion => this.innerGroup.TerminationCompletion;
+        public override Task TerminationCompletion => _innerGroup.TerminationCompletion;
 
-        protected override IEnumerable<IEventExecutor> GetItems() => this.innerGroup.Items;
+        protected override IEnumerable<IEventExecutor> GetItems() => _innerGroup.Items;
 
-        public new IEnumerable<IEventLoop> Items => ((IEventLoopGroup)this.innerGroup).Items;
+        public new IEnumerable<IEventLoop> Items => ((IEventLoopGroup)_innerGroup).Items;
 
         /// <summary>
         /// Creates a new instance of <see cref="AffinitizedEventLoopGroup"/>.
@@ -34,7 +34,7 @@ namespace DotNetty.Transport.Channels
         /// <param name="innerGroup"><see cref="IEventLoopGroup"/> serving as an actual provider of <see cref="IEventLoop"/>s.</param>
         public AffinitizedEventLoopGroup(IEventLoopGroup innerGroup)
         {
-            this.innerGroup = innerGroup;
+            _innerGroup = innerGroup;
         }
 
         /// <summary>
@@ -45,19 +45,19 @@ namespace DotNetty.Transport.Channels
         {
             if (ExecutionEnvironment.TryGetCurrentExecutor(out var executor))
             {
-                if (executor is IEventLoop loop && loop.Parent == this.innerGroup)
+                if (executor is IEventLoop loop && loop.Parent == _innerGroup)
                 {
                     return loop;
                 }
             }
-            return this.innerGroup.GetNext();
+            return _innerGroup.GetNext();
         }
 
-        IEventLoop IEventLoopGroup.GetNext() => (IEventLoop)this.GetNext();
+        IEventLoop IEventLoopGroup.GetNext() => (IEventLoop)GetNext();
 
-        public Task RegisterAsync(IChannel channel) => ((IEventLoop)this.GetNext()).RegisterAsync(channel);
+        public Task RegisterAsync(IChannel channel) => ((IEventLoop)GetNext()).RegisterAsync(channel);
 
         /// <inheritdoc cref="IEventExecutorGroup"/>
-        public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout) => this.innerGroup.ShutdownGracefullyAsync(quietPeriod, timeout);
+        public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout) => _innerGroup.ShutdownGracefullyAsync(quietPeriod, timeout);
     }
 }

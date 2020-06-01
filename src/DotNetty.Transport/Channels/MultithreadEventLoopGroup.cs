@@ -18,23 +18,23 @@ namespace DotNetty.Transport.Channels
         static readonly int DefaultEventLoopThreadCount = Environment.ProcessorCount * 2;
         static readonly Func<IEventLoopGroup, IEventLoop> DefaultEventLoopFactory = group => new SingleThreadEventLoop(group);
 
-        readonly IEventLoop[] eventLoops;
-        int requestId;
+        readonly IEventLoop[] _eventLoops;
+        int _requestId;
 
-        public override bool IsShutdown => eventLoops.All(eventLoop => eventLoop.IsShutdown);
+        public override bool IsShutdown => _eventLoops.All(eventLoop => eventLoop.IsShutdown);
 
-        public override bool IsTerminated => eventLoops.All(eventLoop => eventLoop.IsTerminated);
+        public override bool IsTerminated => _eventLoops.All(eventLoop => eventLoop.IsTerminated);
 
-        public override bool IsShuttingDown => eventLoops.All(eventLoop => eventLoop.IsShuttingDown);
+        public override bool IsShuttingDown => _eventLoops.All(eventLoop => eventLoop.IsShuttingDown);
 
         /// <inheritdoc />
         public override Task TerminationCompletion { get; }
 
         /// <inheritdoc />
-        protected override IEnumerable<IEventExecutor> GetItems() => this.eventLoops;
+        protected override IEnumerable<IEventExecutor> GetItems() => _eventLoops;
 
         /// <inheritdoc />
-        public new IEnumerable<IEventLoop> Items => this.eventLoops;
+        public new IEnumerable<IEventLoop> Items => _eventLoops;
 
         /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
         public MultithreadEventLoopGroup()
@@ -57,7 +57,7 @@ namespace DotNetty.Transport.Channels
         /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
         public MultithreadEventLoopGroup(Func<IEventLoopGroup, IEventLoop> eventLoopFactory, int eventLoopCount)
         {
-            this.eventLoops = new IEventLoop[eventLoopCount];
+            _eventLoops = new IEventLoop[eventLoopCount];
             var terminationTasks = new Task[eventLoopCount];
             for (int i = 0; i < eventLoopCount; i++)
             {
@@ -76,39 +76,39 @@ namespace DotNetty.Transport.Channels
                 {
                     if (!success)
                     {
-                        Task.WhenAll(this.eventLoops
+                        Task.WhenAll(_eventLoops
                                 .Take(i)
                                 .Select(loop => loop.ShutdownGracefullyAsync()))
                             .Wait();
                     }
                 }
 
-                this.eventLoops[i] = eventLoop;
+                _eventLoops[i] = eventLoop;
                 terminationTasks[i] = eventLoop.TerminationCompletion;
             }
-            this.TerminationCompletion = Task.WhenAll(terminationTasks);
+            TerminationCompletion = Task.WhenAll(terminationTasks);
         }
 
         /// <inheritdoc />
-        IEventLoop IEventLoopGroup.GetNext() => (IEventLoop)this.GetNext();
+        IEventLoop IEventLoopGroup.GetNext() => (IEventLoop)GetNext();
 
         /// <inheritdoc />
         public override IEventExecutor GetNext()
         {
-            int id = Interlocked.Increment(ref this.requestId);
-            return this.eventLoops[Math.Abs(id % this.eventLoops.Length)];
+            int id = Interlocked.Increment(ref _requestId);
+            return _eventLoops[Math.Abs(id % _eventLoops.Length)];
         }
 
-        public Task RegisterAsync(IChannel channel) => ((IEventLoop)this.GetNext()).RegisterAsync(channel);
+        public Task RegisterAsync(IChannel channel) => ((IEventLoop)GetNext()).RegisterAsync(channel);
 
         /// <inheritdoc cref="IEventExecutorGroup.ShutdownGracefullyAsync()" />
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
         {
-            foreach (IEventLoop eventLoop in this.eventLoops)
+            foreach (IEventLoop eventLoop in _eventLoops)
             {
                 eventLoop.ShutdownGracefullyAsync(quietPeriod, timeout);
             }
-            return this.TerminationCompletion;
+            return TerminationCompletion;
         }
     }
 }

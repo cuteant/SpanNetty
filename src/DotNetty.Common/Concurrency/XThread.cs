@@ -101,7 +101,7 @@ namespace DotNetty.Common.Concurrency
 
         public bool IsAlive { get; private set; }
 
-        public static XThread CurrentThread => currentThread ?? (currentThread = new XThread());
+        public static XThread CurrentThread => currentThread ??= new XThread();
 
         public bool Join(TimeSpan timeout) => this.completed.WaitOne(timeout);
 

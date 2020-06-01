@@ -164,7 +164,7 @@ namespace DotNetty.Common.Internal
         public string ToString(int start)
         {
             if ((uint)start >= (uint)this.pos) { ThrowHelper.ThrowIndexOutOfRangeException(); }
-            return Encoding.ASCII.GetString(this.chars, start, this.pos);
+            return Encoding.ASCII.GetString(this.chars, start, this.pos - start);
         }
 
         public override string ToString() => 0u >= (uint)this.pos ? string.Empty : this.ToString(0);

@@ -12,7 +12,7 @@ namespace DotNetty.Transport.Libuv
         public EventLoop(IEventLoopGroup parent, string threadName)
             : base(parent, threadName)
         {
-            this.Start();
+            Start();
         }
 
         public new IEventLoop GetNext() => (IEventLoop)base.GetNext();

@@ -6,8 +6,10 @@ namespace DotNetty.Transport.Bootstrapping
     using System;
     using System.Collections.Generic;
     using System.Net;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
@@ -20,23 +22,51 @@ namespace DotNetty.Transport.Bootstrapping
     /// When not used in a <see cref="ServerBootstrap"/> context, the <see cref="BindAsync(EndPoint)"/> methods
     /// are useful for connectionless transports such as datagram (UDP).
     /// </summary>
-    public abstract partial class AbstractBootstrap<TBootstrap, TChannel>
+    public abstract class AbstractBootstrap<TBootstrap, TChannel>
         where TBootstrap : AbstractBootstrap<TBootstrap, TChannel>
         where TChannel : IChannel
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractBootstrap<TBootstrap, TChannel>>();
 
-        IEventLoopGroup _group;
-        Func<TChannel> _channelFactory;
-        EndPoint _localAddress;
-        readonly CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue> options;
-        readonly CachedReadConcurrentDictionary<IConstant, AttributeValue> attrs;
-        IChannelHandler _handler;
+        private IEventLoopGroup v_group;
+        private Func<TChannel> v_channelFactory;
+        private EndPoint v_localAddress;
+        private readonly CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue> _options;
+        private readonly CachedReadConcurrentDictionary<IConstant, AttributeValue> _attrs;
+        private IChannelHandler v_handler;
+
+        private IEventLoopGroup InternalGroup
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => Volatile.Read(ref v_group);
+            set => Interlocked.Exchange(ref v_group, value);
+        }
+
+        private Func<TChannel> InternalChannelFactory
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => Volatile.Read(ref v_channelFactory);
+            set => Interlocked.Exchange(ref v_channelFactory, value);
+        }
+
+        private EndPoint InternalLocalAddress
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => Volatile.Read(ref v_localAddress);
+            set => Interlocked.Exchange(ref v_localAddress, value);
+        }
+
+        private IChannelHandler InternalHandler
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => Volatile.Read(ref v_handler);
+            set => Interlocked.Exchange(ref v_handler, value);
+        }
 
         protected internal AbstractBootstrap()
         {
-            this.options = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(ChannelOptionComparer.Default);
-            this.attrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(ConstantComparer.Default);
+            _options = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(ChannelOptionComparer.Default);
+            _attrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(ConstantComparer.Default);
             // Disallow extending from a different package.
         }
 
@@ -46,8 +76,8 @@ namespace DotNetty.Transport.Bootstrapping
             InternalChannelFactory = bootstrap.InternalChannelFactory;
             InternalHandler = bootstrap.InternalHandler;
             InternalLocalAddress = bootstrap.InternalLocalAddress;
-            this.options = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(bootstrap.options, ChannelOptionComparer.Default);
-            this.attrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(bootstrap.attrs, ConstantComparer.Default);
+            _options = new CachedReadConcurrentDictionary<ChannelOption, ChannelOptionValue>(bootstrap._options, ChannelOptionComparer.Default);
+            _attrs = new CachedReadConcurrentDictionary<IConstant, AttributeValue>(bootstrap._attrs, ConstantComparer.Default);
         }
 
         /// <summary>
@@ -72,7 +102,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         /// <typeparam name="T">The <see cref="Type"/> which is used to create <see cref="IChannel"/> instances from.</typeparam>
         /// <returns>The <see cref="AbstractBootstrap{TBootstrap,TChannel}"/> instance.</returns>
-        public TBootstrap Channel<T>() where T : TChannel, new() => this.ChannelFactory(() => new T());
+        public TBootstrap Channel<T>() where T : TChannel, new() => ChannelFactory(() => new T());
 
         public TBootstrap ChannelFactory(Func<TChannel> channelFactory)
         {
@@ -98,7 +128,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         /// <param name="inetPort">The port to bind the local "end" to.</param>
         /// <returns>The <see cref="AbstractBootstrap{TBootstrap,TChannel}"/> instance.</returns>
-        public TBootstrap LocalAddress(int inetPort) => this.LocalAddress(new IPEndPoint(IPAddress.Any, inetPort));
+        public TBootstrap LocalAddress(int inetPort) => LocalAddress(new IPEndPoint(IPAddress.Any, inetPort));
 
         /// <summary>
         /// Assigns the local <see cref="EndPoint"/> which is used to bind the local "end" to.
@@ -107,7 +137,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <param name="inetHost">The hostname to bind the local "end" to.</param>
         /// <param name="inetPort">The port to bind the local "end" to.</param>
         /// <returns>The <see cref="AbstractBootstrap{TBootstrap,TChannel}"/> instance.</returns>
-        public TBootstrap LocalAddress(string inetHost, int inetPort) => this.LocalAddress(new DnsEndPoint(inetHost, inetPort));
+        public TBootstrap LocalAddress(string inetHost, int inetPort) => LocalAddress(new DnsEndPoint(inetHost, inetPort));
 
         /// <summary>
         /// Assigns the local <see cref="EndPoint"/> which is used to bind the local "end" to.
@@ -116,7 +146,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <param name="inetHost">The <see cref="IPAddress"/> to bind the local "end" to.</param>
         /// <param name="inetPort">The port to bind the local "end" to.</param>
         /// <returns>The <see cref="AbstractBootstrap{TBootstrap,TChannel}"/> instance.</returns>
-        public TBootstrap LocalAddress(IPAddress inetHost, int inetPort) => this.LocalAddress(new IPEndPoint(inetHost, inetPort));
+        public TBootstrap LocalAddress(IPAddress inetHost, int inetPort) => LocalAddress(new IPEndPoint(inetHost, inetPort));
 
         /// <summary>
         /// Allows the specification of a <see cref="ChannelOption{T}"/> which is used for the
@@ -132,11 +162,11 @@ namespace DotNetty.Transport.Bootstrapping
             if (value is null)
             {
                 //ChannelOptionValue removed;
-                this.options.TryRemove(option, out _);
+                _options.TryRemove(option, out _);
             }
             else
             {
-                this.options[option] = new ChannelOptionValue<T>(option, value);
+                _options[option] = new ChannelOptionValue<T>(option, value);
             }
             return (TBootstrap)this;
         }
@@ -153,11 +183,11 @@ namespace DotNetty.Transport.Bootstrapping
             if (value is null)
             {
                 //AttributeValue removed;
-                this.attrs.TryRemove(key, out _);
+                _attrs.TryRemove(key, out _);
             }
             else
             {
-                this.attrs[key] = new AttributeValue<T>(key, value);
+                _attrs[key] = new AttributeValue<T>(key, value);
             }
             return (TBootstrap)this;
         }
@@ -190,8 +220,8 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         public Task RegisterAsync()
         {
-            this.Validate();
-            return this.InitAndRegisterAsync();
+            Validate();
+            return InitAndRegisterAsync();
         }
 
         /// <summary>
@@ -200,13 +230,13 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The bound <see cref="IChannel"/>.</returns>
         public Task<IChannel> BindAsync()
         {
-            this.Validate();
+            Validate();
             EndPoint address = InternalLocalAddress;
             if (address is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_LocalAddrMustBeSetBeforehand();
             }
-            return this.DoBindAsync(address);
+            return DoBindAsync(address);
         }
 
         /// <summary>
@@ -215,7 +245,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// </summary>
         /// <param name="inetPort">The port to bind the local "end" to.</param>
         /// <returns>The bound <see cref="IChannel"/>.</returns>
-        public Task<IChannel> BindAsync(int inetPort) => this.BindAsync(new IPEndPoint(IPAddress.Any, inetPort));
+        public Task<IChannel> BindAsync(int inetPort) => BindAsync(new IPEndPoint(IPAddress.Any, inetPort));
 
         /// <summary>
         /// Creates a new <see cref="IChannel"/> and binds it.
@@ -224,7 +254,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <param name="inetHost">The hostname to bind the local "end" to.</param>
         /// <param name="inetPort">The port to bind the local "end" to.</param>
         /// <returns>The bound <see cref="IChannel"/>.</returns>
-        public Task<IChannel> BindAsync(string inetHost, int inetPort) => this.BindAsync(new DnsEndPoint(inetHost, inetPort));
+        public Task<IChannel> BindAsync(string inetHost, int inetPort) => BindAsync(new DnsEndPoint(inetHost, inetPort));
 
         /// <summary>
         /// Creates a new <see cref="IChannel"/> and binds it.
@@ -233,7 +263,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <param name="inetHost">The <see cref="IPAddress"/> to bind the local "end" to.</param>
         /// <param name="inetPort">The port to bind the local "end" to.</param>
         /// <returns>The bound <see cref="IChannel"/>.</returns>
-        public Task<IChannel> BindAsync(IPAddress inetHost, int inetPort) => this.BindAsync(new IPEndPoint(inetHost, inetPort));
+        public Task<IChannel> BindAsync(IPAddress inetHost, int inetPort) => BindAsync(new IPEndPoint(inetHost, inetPort));
 
         /// <summary>
         /// Creates a new <see cref="IChannel"/> and binds it.
@@ -242,15 +272,15 @@ namespace DotNetty.Transport.Bootstrapping
         /// <returns>The bound <see cref="IChannel"/>.</returns>
         public Task<IChannel> BindAsync(EndPoint localAddress)
         {
-            this.Validate();
+            Validate();
             if (localAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.localAddress); }
 
-            return this.DoBindAsync(localAddress);
+            return DoBindAsync(localAddress);
         }
 
         async Task<IChannel> DoBindAsync(EndPoint localAddress)
         {
-            IChannel channel = await this.InitAndRegisterAsync();
+            IChannel channel = await InitAndRegisterAsync();
             await DoBind0Async(channel, localAddress);
 
             return channel;
@@ -261,7 +291,7 @@ namespace DotNetty.Transport.Bootstrapping
             IChannel channel = InternalChannelFactory();
             try
             {
-                this.Init(channel);
+                Init(channel);
             }
             catch (Exception)
             {
@@ -272,7 +302,7 @@ namespace DotNetty.Transport.Bootstrapping
 
             try
             {
-                await this.Group().GetNext().RegisterAsync(channel);
+                await Group().GetNext().RegisterAsync(channel);
             }
             catch (Exception)
             {
@@ -326,6 +356,21 @@ namespace DotNetty.Transport.Bootstrapping
             return promise.Task;
         }
 
+        static readonly Action<object> BindlocalAddressAction = OnBindlocalAddress;
+        private static void OnBindlocalAddress(object state)
+        {
+            var wrapped = (Tuple<IChannel, EndPoint, IPromise>)state;
+            try
+            {
+                wrapped.Item1.BindAsync(wrapped.Item2).LinkOutcome(wrapped.Item3);
+            }
+            catch (Exception ex)
+            {
+                wrapped.Item1.CloseSafe();
+                wrapped.Item3.TrySetException(ex);
+            }
+        }
+
         protected abstract void Init(IChannel channel);
 
         /// <summary>
@@ -340,18 +385,18 @@ namespace DotNetty.Transport.Bootstrapping
             return (TBootstrap)this;
         }
 
-        protected EndPoint LocalAddress() => Volatile.Read(ref _localAddress);
+        protected EndPoint LocalAddress() => Volatile.Read(ref v_localAddress);
 
-        protected IChannelHandler Handler() => Volatile.Read(ref _handler);
+        protected IChannelHandler Handler() => Volatile.Read(ref v_handler);
 
         /// <summary>
         /// Returns the configured <see cref="IEventLoopGroup"/> or <c>null</c> if none is configured yet.
         /// </summary>
-        public IEventLoopGroup Group() => Volatile.Read(ref _group);
+        public IEventLoopGroup Group() => Volatile.Read(ref v_group);
 
-        protected ICollection<ChannelOptionValue> Options => this.options.Values;
+        protected ICollection<ChannelOptionValue> Options => _options.Values;
 
-        protected ICollection<AttributeValue> Attributes => this.attrs.Values;
+        protected ICollection<AttributeValue> Attributes => _attrs.Values;
 
         protected static void SetChannelOptions(IChannel channel, ICollection<ChannelOptionValue> options, IInternalLogger logger)
         {
@@ -385,10 +430,22 @@ namespace DotNetty.Transport.Bootstrapping
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void UnknownChannelOptionForChannel(IInternalLogger logger, IChannel channel, ChannelOptionValue option)
+        {
+            logger.Warn("Unknown channel option '{}' for channel '{}'", option.Option, channel);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void FailedToSetChannelOptionWithValueForChannel(IInternalLogger logger, IChannel channel, ChannelOptionValue option, Exception ex)
+        {
+            logger.Warn("Failed to set channel option '{}' with value '{}' for channel '{}'", option.Option, option, channel, ex);
+        }
+
         public override string ToString()
         {
             var buf = StringBuilderManager.Allocate()
-                .Append(this.GetType().Name)
+                .Append(GetType().Name)
                 .Append('(');
 
             var group = InternalGroup;
@@ -415,17 +472,17 @@ namespace DotNetty.Transport.Bootstrapping
                     .Append(", ");
             }
 
-            if ((uint)this.options.Count > 0u)
+            if ((uint)_options.Count > 0u)
             {
                 buf.Append("options: ")
-                    .Append(this.options.ToDebugString())
+                    .Append(_options.ToDebugString())
                     .Append(", ");
             }
 
-            if ((uint)this.attrs.Count > 0u)
+            if ((uint)_attrs.Count > 0u)
             {
                 buf.Append("attrs: ")
-                    .Append(this.attrs.ToDebugString())
+                    .Append(_attrs.ToDebugString())
                     .Append(", ");
             }
 
@@ -484,17 +541,17 @@ namespace DotNetty.Transport.Bootstrapping
         protected sealed class ChannelOptionValue<T> : ChannelOptionValue
         {
             public override ChannelOption Option { get; }
-            readonly T value;
+            readonly T _value;
 
             public ChannelOptionValue(ChannelOption<T> option, T value)
             {
-                this.Option = option;
-                this.value = value;
+                Option = option;
+                _value = value;
             }
 
-            public override bool Set(IChannelConfiguration config) => config.SetOption(this.Option, this.value);
+            public override bool Set(IChannelConfiguration config) => config.SetOption(Option, _value);
 
-            public override string ToString() => this.value.ToString();
+            public override string ToString() => _value.ToString();
         }
 
         protected abstract class AttributeValue
@@ -505,16 +562,16 @@ namespace DotNetty.Transport.Bootstrapping
         protected sealed class AttributeValue<T> : AttributeValue
             where T : class
         {
-            readonly AttributeKey<T> key;
-            readonly T value;
+            readonly AttributeKey<T> _key;
+            readonly T _value;
 
             public AttributeValue(AttributeKey<T> key, T value)
             {
-                this.key = key;
-                this.value = value;
+                _key = key;
+                _value = value;
             }
 
-            public override void Set(IAttributeMap config) => config.GetAttribute(this.key).Set(this.value);
+            public override void Set(IAttributeMap config) => config.GetAttribute(_key).Set(_value);
         }
     }
 }

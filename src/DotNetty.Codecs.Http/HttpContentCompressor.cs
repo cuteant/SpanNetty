@@ -102,6 +102,7 @@ namespace DotNetty.Codecs.Http
                 {
                     try
                     {
+                        var ddd = encoding.ToString(equalsPos + 1);
                         q = float.Parse(encoding.ToString(equalsPos + 1));
                     }
                     catch (FormatException)

@@ -7,14 +7,14 @@ namespace DotNetty.Codecs.Http2
 
     /// <summary>
     /// Provides an extensibility point for users to define the validity of push requests.
-    /// @see <a href="https://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-8.2">[RFC http2], Section 8.2</a>.
+    /// See <a href="https://tools.ietf.org/html/rfc7540#section-8.2">[RFC 7540], Section 8.2</a>.
     /// </summary>
     public interface IHttp2PromisedRequestVerifier
     {
         /// <summary>
         /// Determine if a <see cref="IHttp2Headers"/> are authoritative for a particular {@link ChannelHandlerContext}.
         /// </summary>
-        /// <remarks>See <a href="https://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-10.1">[RFC http2], Section 10.1</a>.</remarks>
+        /// <remarks>See <a href="https://tools.ietf.org/html/rfc7540#section-10.1">[RFC 7540], Section 10.1</a>.</remarks>
         /// <param name="ctx">The context on which the <paramref name="headers"/> where received on.</param>
         /// <param name="headers">The headers to be verified.</param>
         /// <returns>Return <c>true</c> if the <paramref name="ctx"/> is authoritative for the <paramref name="headers"/>, <c>false</c> otherwise.</returns>

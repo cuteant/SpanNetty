@@ -12,8 +12,8 @@ namespace DotNetty.Transport.Libuv
 
     sealed class DispatcherEventLoop : LoopExecutor, IEventLoop
     {
-        PipeListener pipeListener;
-        IServerNativeUnsafe nativeUnsafe;
+        PipeListener _pipeListener;
+        IServerNativeUnsafe _nativeUnsafe;
 
         internal DispatcherEventLoop(IEventLoopGroup parent, string threadName = null)
             : base(parent, threadName)
@@ -21,10 +21,10 @@ namespace DotNetty.Transport.Libuv
             if (parent is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parent); }
 
             string pipeName = "DotNetty_" + Guid.NewGuid().ToString("n");
-            this.PipeName = (PlatformApi.IsWindows
+            PipeName = (PlatformApi.IsWindows
                 ? @"\\.\pipe\"
                 : "/tmp/") + pipeName;
-            this.Start();
+            Start();
         }
 
         internal string PipeName { get; }
@@ -32,27 +32,27 @@ namespace DotNetty.Transport.Libuv
         internal void Register(IServerNativeUnsafe serverChannel)
         {
             Debug.Assert(serverChannel is object);
-            this.nativeUnsafe = serverChannel;
+            _nativeUnsafe = serverChannel;
         }
 
         protected override void Initialize()
         {
-            this.pipeListener = new PipeListener(this.UnsafeLoop, false);
-            this.pipeListener.Listen(this.PipeName);
+            _pipeListener = new PipeListener(UnsafeLoop, false);
+            _pipeListener.Listen(PipeName);
 
             if (Logger.InfoEnabled)
             {
-                Logger.ListeningOnPipe(this.LoopThreadId, this.PipeName);
+                Logger.ListeningOnPipe(LoopThreadId, PipeName);
             }
         }
 
-        protected override void Release() => this.pipeListener.Shutdown();
+        protected override void Release() => _pipeListener.Shutdown();
 
         internal void Dispatch(NativeHandle handle)
         {
             try
             {
-                this.pipeListener.DispatchHandle(handle);
+                _pipeListener.DispatchHandle(handle);
             }
             catch
             {
@@ -61,7 +61,7 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        internal void Accept(NativeHandle handle) => this.nativeUnsafe.Accept(handle);
+        internal void Accept(NativeHandle handle) => _nativeUnsafe.Accept(handle);
 
         public new IEventLoop GetNext() => (IEventLoop)base.GetNext();
 

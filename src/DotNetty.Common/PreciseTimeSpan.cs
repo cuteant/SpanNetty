@@ -8,19 +8,15 @@ namespace DotNetty.Common
 
     public readonly struct PreciseTimeSpan : IComparable<PreciseTimeSpan>, IEquatable<PreciseTimeSpan>
     {
-        static readonly long StartTime = Stopwatch.GetTimestamp();
-        static readonly double PrecisionRatio = (double)Stopwatch.Frequency / TimeSpan.TicksPerSecond;
-        static readonly double ReversePrecisionRatio = (double)TimeSpan.TicksPerSecond / Stopwatch.Frequency;
-
-        readonly long ticks;
+        private readonly long _ticks;
 
         PreciseTimeSpan(long ticks)
             : this()
         {
-            this.ticks = ticks;
+            _ticks = ticks;
         }
 
-        public long Ticks => this.ticks;
+        public long Ticks => _ticks;
 
         public static readonly PreciseTimeSpan Zero = new PreciseTimeSpan(0);
 
@@ -34,58 +30,60 @@ namespace DotNetty.Common
 
         public static PreciseTimeSpan Deadline(TimeSpan deadline) => new PreciseTimeSpan(GetTimeChangeSinceStart() + TicksToPreciseTicks(deadline.Ticks));
 
-        public static PreciseTimeSpan Deadline(in PreciseTimeSpan deadline) => new PreciseTimeSpan(GetTimeChangeSinceStart() + deadline.ticks);
+        public static PreciseTimeSpan Deadline(in PreciseTimeSpan deadline) => new PreciseTimeSpan(GetTimeChangeSinceStart() + deadline._ticks);
 
-        static long TicksToPreciseTicks(long ticks) => Stopwatch.IsHighResolution ? (long)(ticks * PrecisionRatio) : ticks;
+        static long TicksToPreciseTicks(long ticks) => Stopwatch.IsHighResolution ? (long)(ticks * PreciseTimeSpanHelper.PrecisionRatio) : ticks;
 
-        public TimeSpan ToTimeSpan() => TimeSpan.FromTicks((long)(this.ticks * ReversePrecisionRatio));
+        public TimeSpan ToTimeSpan() => TimeSpan.FromTicks((long)(_ticks * PreciseTimeSpanHelper.ReversePrecisionRatio));
 
-        static long GetTimeChangeSinceStart() => Stopwatch.GetTimestamp() - StartTime;
+        static long GetTimeChangeSinceStart() => Stopwatch.GetTimestamp() - PreciseTimeSpanHelper.StartTime;
 
-        public bool Equals(PreciseTimeSpan other) => this.ticks == other.ticks;
+        public bool Equals(PreciseTimeSpan other) => _ticks == other._ticks;
 
         public override bool Equals(object obj)
         {
-            if (obj is PreciseTimeSpan preciseTimeSpan)
-            {
-                return this.Equals(preciseTimeSpan);
-            }
-
-            return false;
+            return obj is PreciseTimeSpan preciseTimeSpan && Equals(preciseTimeSpan);
         }
 
-        public override int GetHashCode() => this.ticks.GetHashCode();
+        public override int GetHashCode() => _ticks.GetHashCode();
 
-        public int CompareTo(PreciseTimeSpan other) => this.ticks.CompareTo(other.ticks);
+        public int CompareTo(PreciseTimeSpan other) => _ticks.CompareTo(other._ticks);
 
-        public static bool operator ==(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1.ticks == t2.ticks;
+        public static bool operator ==(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1._ticks == t2._ticks;
 
-        public static bool operator !=(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1.ticks != t2.ticks;
+        public static bool operator !=(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1._ticks != t2._ticks;
 
-        public static bool operator >(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1.ticks > t2.ticks;
+        public static bool operator >(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1._ticks > t2._ticks;
 
-        public static bool operator <(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1.ticks < t2.ticks;
+        public static bool operator <(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1._ticks < t2._ticks;
 
-        public static bool operator >=(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1.ticks >= t2.ticks;
+        public static bool operator >=(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1._ticks >= t2._ticks;
 
-        public static bool operator <=(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1.ticks <= t2.ticks;
+        public static bool operator <=(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1._ticks <= t2._ticks;
 
         public static PreciseTimeSpan operator +(PreciseTimeSpan t, TimeSpan duration)
         {
-            long ticks = t.ticks + TicksToPreciseTicks(duration.Ticks);
+            long ticks = t._ticks + TicksToPreciseTicks(duration.Ticks);
             return new PreciseTimeSpan(ticks);
         }
 
         public static PreciseTimeSpan operator -(PreciseTimeSpan t, TimeSpan duration)
         {
-            long ticks = t.ticks - TicksToPreciseTicks(duration.Ticks);
+            long ticks = t._ticks - TicksToPreciseTicks(duration.Ticks);
             return new PreciseTimeSpan(ticks);
         }
 
         public static PreciseTimeSpan operator -(PreciseTimeSpan t1, PreciseTimeSpan t2)
         {
-            long ticks = t1.ticks - t2.ticks;
+            long ticks = t1._ticks - t2._ticks;
             return new PreciseTimeSpan(ticks);
         }
+    }
+
+    sealed class PreciseTimeSpanHelper
+    {
+        public static readonly long StartTime = Stopwatch.GetTimestamp();
+        public static readonly double PrecisionRatio = (double)Stopwatch.Frequency / TimeSpan.TicksPerSecond;
+        public static readonly double ReversePrecisionRatio = (double)TimeSpan.TicksPerSecond / Stopwatch.Frequency;
     }
 }

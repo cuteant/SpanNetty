@@ -21,55 +21,55 @@ namespace DotNetty.Common
 
         public static readonly object Unset = new object();
         [ThreadStatic]
-        static InternalThreadLocalMap slowThreadLocalMap;
+        private static InternalThreadLocalMap s_slowThreadLocalMap;
 
-        static int nextIndex;
+        private static int s_nextIndex;
 
         /// <summary>
         /// Used by <see cref="FastThreadLocal"/>.
         /// </summary>
-        object[] indexedVariables;
+        private object[] _indexedVariables;
 
         // Core thread-locals
-        int futureListenerStackDepth;
-        int localChannelReaderStackDepth;
+        int _futureListenerStackDepth;
+        int _localChannelReaderStackDepth;
 
         // String-related thread-locals
-        StringBuilder stringBuilder;
+        StringBuilder _stringBuilder;
 
         // ArrayList-related thread-locals
-        List<ICharSequence> charSequences;
-        List<AsciiString> asciiStrings;
+        List<ICharSequence> _charSequences;
+        List<AsciiString> _asciiStrings;
 
         internal static int NextVariableIndex()
         {
-            int index = Interlocked.Increment(ref nextIndex);
+            int index = Interlocked.Increment(ref s_nextIndex);
             if (index < 0)
             {
-                Interlocked.Decrement(ref nextIndex);
+                Interlocked.Decrement(ref s_nextIndex);
                 ThrowHelper.ThrowInvalidOperationException_TooMany();
             }
             return index;
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static InternalThreadLocalMap GetIfSet() => slowThreadLocalMap;
+        public static InternalThreadLocalMap GetIfSet() => s_slowThreadLocalMap;
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static InternalThreadLocalMap Get()
         {
-            InternalThreadLocalMap ret = slowThreadLocalMap;
+            InternalThreadLocalMap ret = s_slowThreadLocalMap;
             if (ret is null)
             {
                 ret = new InternalThreadLocalMap();
-                slowThreadLocalMap = ret;
+                s_slowThreadLocalMap = ret;
             }
             return ret;
         }
 
-        public static void Remove() => slowThreadLocalMap = null;
+        public static void Remove() => s_slowThreadLocalMap = null;
 
-        public static void Destroy() => slowThreadLocalMap = null;
+        public static void Destroy() => s_slowThreadLocalMap = null;
 
         // Cache line padding (must be public)
         // With CompressedOops enabled, an instance of this class should occupy at least 128 bytes.
@@ -79,7 +79,7 @@ namespace DotNetty.Common
 
         InternalThreadLocalMap()
         {
-            this.indexedVariables = CreateIndexedVariableTable();
+            _indexedVariables = CreateIndexedVariableTable();
         }
 
         static object[] CreateIndexedVariableTable()
@@ -96,19 +96,19 @@ namespace DotNetty.Common
             {
                 int count = 0;
 
-                if (this.futureListenerStackDepth != 0)
+                if (_futureListenerStackDepth != 0)
                 {
                     count++;
                 }
-                if (this.localChannelReaderStackDepth != 0)
+                if (_localChannelReaderStackDepth != 0)
                 {
                     count++;
                 }
-                if (this.stringBuilder is object)
+                if (_stringBuilder is object)
                 {
                     count++;
                 }
-                foreach (object o in this.indexedVariables)
+                foreach (object o in _indexedVariables)
                 {
                     if (o != Unset)
                     {
@@ -126,10 +126,10 @@ namespace DotNetty.Common
         {
             get
             {
-                StringBuilder builder = this.stringBuilder;
+                StringBuilder builder = _stringBuilder;
                 if (builder is null)
                 {
-                    this.stringBuilder = builder = new StringBuilder(512);
+                    _stringBuilder = builder = new StringBuilder(512);
                 }
                 else
                 {
@@ -141,11 +141,11 @@ namespace DotNetty.Common
 
         public List<ICharSequence> CharSequenceList(int minCapacity = DefaultArrayListInitialCapacity)
         {
-            List<ICharSequence> localList = this.charSequences;
+            List<ICharSequence> localList = _charSequences;
             if (localList is null)
             {
-                this.charSequences = new List<ICharSequence>(minCapacity);
-                return this.charSequences;
+                _charSequences = new List<ICharSequence>(minCapacity);
+                return _charSequences;
             }
 
             localList.Clear();
@@ -156,11 +156,11 @@ namespace DotNetty.Common
 
         public List<AsciiString> AsciiStringList(int minCapacity = DefaultArrayListInitialCapacity)
         {
-            List<AsciiString> localList = this.asciiStrings;
+            List<AsciiString> localList = _asciiStrings;
             if (localList is null)
             {
-                this.asciiStrings = new List<AsciiString>(minCapacity);
-                return this.asciiStrings;
+                _asciiStrings = new List<AsciiString>(minCapacity);
+                return _asciiStrings;
             }
 
             localList.Clear();
@@ -171,20 +171,20 @@ namespace DotNetty.Common
 
         public int FutureListenerStackDepth
         {
-            get => this.futureListenerStackDepth;
-            set => this.futureListenerStackDepth = value;
+            get => _futureListenerStackDepth;
+            set => _futureListenerStackDepth = value;
         }
 
         public int LocalChannelReaderStackDepth
         {
-            get => this.localChannelReaderStackDepth;
-            set => this.localChannelReaderStackDepth = value;
+            get => _localChannelReaderStackDepth;
+            set => _localChannelReaderStackDepth = value;
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public object GetIndexedVariable(int index)
         {
-            object[] lookup = this.indexedVariables;
+            object[] lookup = _indexedVariables;
             return (uint)index < (uint)lookup.Length ? lookup[index] : Unset;
         }
 
@@ -196,7 +196,7 @@ namespace DotNetty.Common
         /// <returns><c>true</c> if and only if a new thread-local variable has been created.</returns>
         public bool SetIndexedVariable(int index, object value)
         {
-            object[] lookup = this.indexedVariables;
+            object[] lookup = _indexedVariables;
             if ((uint)index < (uint)lookup.Length)
             {
                 object oldValue = lookup[index];
@@ -205,14 +205,14 @@ namespace DotNetty.Common
             }
             else
             {
-                this.ExpandIndexedVariableTableAndSet(index, value);
+                ExpandIndexedVariableTableAndSet(index, value);
                 return true;
             }
         }
 
         void ExpandIndexedVariableTableAndSet(int index, object value)
         {
-            object[] oldArray = this.indexedVariables;
+            object[] oldArray = _indexedVariables;
             int oldCapacity = oldArray.Length;
             int newCapacity = index;
             newCapacity |= newCapacity.RightUShift(1);
@@ -226,12 +226,12 @@ namespace DotNetty.Common
             oldArray.CopyTo(newArray, 0);
             newArray.Fill(oldCapacity, newArray.Length - oldCapacity, Unset);
             newArray[index] = value;
-            this.indexedVariables = newArray;
+            _indexedVariables = newArray;
         }
 
         public object RemoveIndexedVariable(int index)
         {
-            object[] lookup = this.indexedVariables;
+            object[] lookup = _indexedVariables;
             if ((uint)index < (uint)lookup.Length)
             {
                 object v = lookup[index];
@@ -246,7 +246,7 @@ namespace DotNetty.Common
 
         public bool IsIndexedVariableSet(int index)
         {
-            object[] lookup = this.indexedVariables;
+            object[] lookup = _indexedVariables;
             return (uint)index < (uint)lookup.Length && lookup[index] != Unset;
         }
     }

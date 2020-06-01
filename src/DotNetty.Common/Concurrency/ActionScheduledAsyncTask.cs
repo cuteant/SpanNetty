@@ -8,14 +8,14 @@ namespace DotNetty.Common.Concurrency
 
     sealed class ActionScheduledAsyncTask : ScheduledAsyncTask
     {
-        readonly Action action;
+        readonly Action _action;
 
         public ActionScheduledAsyncTask(AbstractScheduledEventExecutor executor, Action action, in PreciseTimeSpan deadline, CancellationToken cancellationToken)
             : base(executor, deadline, executor.NewPromise(), cancellationToken)
         {
-            this.action = action;
+            _action = action;
         }
 
-        protected override void Execute() => this.action();
+        protected override void Execute() => _action();
     }
 }

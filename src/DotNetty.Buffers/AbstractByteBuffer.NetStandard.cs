@@ -346,14 +346,14 @@
         internal protected virtual int IndexOf0(int index, int count, byte value)
         {
             var span = this.GetReadableSpan(index, count);
-            var result = span.IndexOf(value);
+            var result = SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(span), value, span.Length);
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOf0(int index, int count, byte value)
         {
             var span = this.GetReadableSpan(index, count);
-            var result = span.LastIndexOf(value);
+            var result = SpanHelpers.LastIndexOf(ref MemoryMarshal.GetReference(span), value, span.Length);
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
@@ -379,14 +379,14 @@
         internal protected virtual int IndexOf0(int index, int count, in ReadOnlySpan<byte> values)
         {
             var span = this.GetReadableSpan(index, count);
-            var result = span.IndexOf(values);
+            var result = SpanHelpers.IndexOf(ref MemoryMarshal.GetReference(span), span.Length, ref MemoryMarshal.GetReference(values), values.Length);
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOf0(int index, int count, in ReadOnlySpan<byte> values)
         {
             var span = this.GetReadableSpan(index, count);
-            var result = span.LastIndexOf(values);
+            var result = SpanHelpers.LastIndexOf(ref MemoryMarshal.GetReference(span), span.Length, ref MemoryMarshal.GetReference(values), values.Length);
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
@@ -412,14 +412,14 @@
         internal protected virtual int IndexOfAny0(int index, int count, byte value0, byte value1)
         {
             var span = this.GetReadableSpan(index, count);
-            var result = span.IndexOfAny(value0, value1);
+            var result = SpanHelpers.IndexOfAny(ref MemoryMarshal.GetReference(span), value0, value1, span.Length);
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOfAny0(int index, int count, byte value0, byte value1)
         {
             var span = this.GetReadableSpan(index, count);
-            var result = span.LastIndexOfAny(value0, value1);
+            var result = SpanHelpers.LastIndexOfAny(ref MemoryMarshal.GetReference(span), value0, value1, span.Length);
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
@@ -445,14 +445,14 @@
         internal protected virtual int IndexOfAny0(int index, int count, byte value0, byte value1, byte value2)
         {
             var span = this.GetReadableSpan(index, count);
-            var result = span.IndexOfAny(value0, value1, value2);
+            var result = SpanHelpers.IndexOfAny(ref MemoryMarshal.GetReference(span), value0, value1, value2, span.Length);
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOfAny0(int index, int count, byte value0, byte value1, byte value2)
         {
             var span = this.GetReadableSpan(index, count);
-            var result = span.LastIndexOfAny(value0, value1, value2);
+            var result = SpanHelpers.LastIndexOfAny(ref MemoryMarshal.GetReference(span), value0, value1, value2, span.Length);
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
@@ -478,14 +478,14 @@
         internal protected virtual int IndexOfAny0(int index, int count, in ReadOnlySpan<byte> values)
         {
             var span = this.GetReadableSpan(index, count);
-            var result = span.IndexOfAny(values);
+            var result = SpanHelpers.IndexOfAny(ref MemoryMarshal.GetReference(span), span.Length, ref MemoryMarshal.GetReference(values), values.Length);
             return (uint)result < NIndexNotFound ? index + result : result;
         }
 
         internal protected virtual int LastIndexOfAny0(int index, int count, in ReadOnlySpan<byte> values)
         {
             var span = this.GetReadableSpan(index, count);
-            var result = span.LastIndexOfAny(values);
+            var result = SpanHelpers.LastIndexOfAny(ref MemoryMarshal.GetReference(span), span.Length, ref MemoryMarshal.GetReference(values), values.Length);
             return (uint)result < NIndexNotFound ? index + result : result;
         }
     }

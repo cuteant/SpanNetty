@@ -106,7 +106,7 @@ namespace DotNetty.Common.Utilities
             if (0u >= uCount) { return string.Empty; }
             if ((uint)start >= uCount) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
-            return this.value.Substring(this.offset + start, this.count);
+            return this.value.Substring(this.offset + start, this.count - start);
         }
 
         public override string ToString() => 0u >= (uint)this.count ? string.Empty : this.ToString(0);

@@ -29,7 +29,7 @@ namespace DotNetty.Common.Concurrency
         /// <summary>Creates an instance of <see cref="AbstractEventExecutor"/>.</summary>
         protected AbstractEventExecutor(IEventExecutorGroup parent)
         {
-            this.Parent = parent;
+            Parent = parent;
         }
 
         /// <inheritdoc cref="IEventExecutorGroup"/>
@@ -45,10 +45,10 @@ namespace DotNetty.Common.Concurrency
         public IEventExecutorGroup Parent { get; }
 
         /// <inheritdoc cref="IEventExecutor"/>
-        public bool InEventLoop => this.IsInEventLoop(Thread.CurrentThread);
+        public bool InEventLoop => IsInEventLoop(Thread.CurrentThread);
 
         /// <inheritdoc cref="IEventExecutor" />
-        public IEnumerable<IEventExecutor> Items => this.GetItems();
+        public IEnumerable<IEventExecutor> Items => GetItems();
 
         protected abstract IEnumerable<IEventExecutor> GetItems();
 
@@ -81,7 +81,7 @@ namespace DotNetty.Common.Concurrency
 
         /// <inheritdoc cref="IScheduledExecutorService"/>
         public virtual Task ScheduleAsync(Action action, TimeSpan delay) =>
-            this.ScheduleAsync(action, delay, CancellationToken.None);
+            ScheduleAsync(action, delay, CancellationToken.None);
 
         /// <inheritdoc cref="IScheduledExecutorService"/>
         public virtual Task ScheduleAsync(Action<object> action, object state, TimeSpan delay, CancellationToken cancellationToken)
@@ -91,7 +91,7 @@ namespace DotNetty.Common.Concurrency
 
         /// <inheritdoc cref="IScheduledExecutorService"/>
         public virtual Task ScheduleAsync(Action<object> action, object state, TimeSpan delay) =>
-            this.ScheduleAsync(action, state, delay, CancellationToken.None);
+            ScheduleAsync(action, state, delay, CancellationToken.None);
 
         /// <inheritdoc cref="IScheduledExecutorService"/>
         public virtual Task ScheduleAsync(Action action, TimeSpan delay, CancellationToken cancellationToken)
@@ -101,7 +101,7 @@ namespace DotNetty.Common.Concurrency
 
         /// <inheritdoc cref="IScheduledExecutorService"/>
         public virtual Task ScheduleAsync(Action<object, object> action, object context, object state, TimeSpan delay) =>
-            this.ScheduleAsync(action, context, state, delay, CancellationToken.None);
+            ScheduleAsync(action, context, state, delay, CancellationToken.None);
 
         /// <inheritdoc cref="IScheduledExecutorService"/>
         public virtual Task ScheduleAsync(
@@ -115,7 +115,7 @@ namespace DotNetty.Common.Concurrency
         }
 
         /// <inheritdoc cref="IScheduledExecutorService"/>
-        public Task ShutdownGracefullyAsync() => this.ShutdownGracefullyAsync(DefaultShutdownQuietPeriod, DefaultShutdownTimeout);
+        public Task ShutdownGracefullyAsync() => ShutdownGracefullyAsync(DefaultShutdownQuietPeriod, DefaultShutdownTimeout);
 
         /// <inheritdoc cref="IScheduledExecutorService"/>
         public abstract Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout);

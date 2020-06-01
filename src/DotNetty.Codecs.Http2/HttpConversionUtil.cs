@@ -24,24 +24,24 @@ namespace DotNetty.Codecs.Http2
 
         /// <summary>
         /// This will be the method used for <see cref="IHttpRequest"/> objects generated out of the HTTP message flow defined in <a
-        /// href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-8.1.">HTTP/2 Spec Message Flow</a>
+        /// href="https://tools.ietf.org/html/rfc7540#section-8.1">[RFC 7540], Section 8.1</a>
         /// </summary>
         public static readonly HttpMethod OutOfMessageSequenceMethod = HttpMethod.Options;
 
         /// <summary>
         /// This will be the path used for <see cref="IHttpRequest"/> objects generated out of the HTTP message flow defined in <a
-        /// href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-8.1.">HTTP/2 Spec Message Flow</a>
+        /// href="https://tools.ietf.org/html/rfc7540#section-8.1">[RFC 7540], Section 8.1</a>
         /// </summary>
-        public static readonly string OutOfMessageSequencePath = "";
+        public static readonly string OutOfMessageSequencePath = string.Empty;
 
         /// <summary>
         /// This will be the status code used for <see cref="IHttpRequest"/> objects generated out of the HTTP message flow defined
-        /// in <a href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-8.1.">HTTP/2 Spec Message Flow</a>
+        /// in <a href="https://tools.ietf.org/html/rfc7540#section-8.1">[RFC 7540], Section 8.1</a>
         /// </summary>
         public static readonly HttpResponseStatus OutOfMessageSequenceReturnCode = HttpResponseStatus.OK;
 
         /// <summary>
-        /// <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.3">rfc7540, 8.1.2.3</a> states the path must not
+        /// <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.3">[RFC 7540], 8.1.2.3</a> states the path must not
         /// be empty, and instead should be <c>"/"</c>.
         /// </summary>
         private static readonly AsciiString EmptyRequestPath = AsciiString.Cached(@"/");

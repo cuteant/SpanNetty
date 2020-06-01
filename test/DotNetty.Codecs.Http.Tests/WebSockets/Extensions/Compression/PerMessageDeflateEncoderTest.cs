@@ -84,7 +84,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets.Extensions.Compression
         }
 
         [Fact]
-        public void FramementedFrame()
+        public void FragmentedFrame()
         {
             var encoderChannel = new EmbeddedChannel(new PerMessageDeflateEncoder(9, 15, false, NeverSkipWebSocketExtensionFilter.Instance));
             var decoderChannel = new EmbeddedChannel(
@@ -248,6 +248,55 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets.Extensions.Compression
             {
                 Assert.True(finalPart.Release());
                 Assert.False(encoderChannel.FinishAndReleaseAll());
+            }
+        }
+
+        [Fact]
+        public void EmptyFrameCompression()
+        {
+            EmbeddedChannel encoderChannel = new EmbeddedChannel(new PerMessageDeflateEncoder(9, 15, false));
+
+            TextWebSocketFrame emptyFrame = new TextWebSocketFrame("");
+
+            Assert.True(encoderChannel.WriteOutbound(emptyFrame));
+            var emptyDeflateFrame = encoderChannel.ReadOutbound<TextWebSocketFrame>();
+
+            Assert.Equal(WebSocketRsv.Rsv1, emptyDeflateFrame.Rsv);
+            Assert.True(ByteBufferUtil.Equals(DeflateDecoder.EmptyDeflateBlock, emptyDeflateFrame.Content));
+            // Unreleasable buffer
+            Assert.False(emptyDeflateFrame.Release());
+
+            Assert.False(encoderChannel.Finish());
+        }
+
+        [Fact]
+        public void CodecExceptionForNotFinEmptyFrame()
+        {
+            EmbeddedChannel encoderChannel = new EmbeddedChannel(new PerMessageDeflateEncoder(9, 15, false));
+
+            TextWebSocketFrame emptyNotFinFrame = new TextWebSocketFrame(false, 0, "");
+
+            try
+            {
+                encoderChannel.WriteOutbound(emptyNotFinFrame);
+                Assert.False(true);
+            }
+            catch (Exception exc)
+            {
+                if (exc is AggregateException aggregateException)
+                {
+                    Assert.IsType<EncoderException>(aggregateException.InnerException);
+                }
+                else
+                {
+                    Assert.IsType<EncoderException>(exc);
+                }
+            }
+            finally
+            {
+                // EmptyByteBuf buffer
+                Assert.False(emptyNotFinFrame.Release());
+                Assert.False(encoderChannel.Finish());
             }
         }
 

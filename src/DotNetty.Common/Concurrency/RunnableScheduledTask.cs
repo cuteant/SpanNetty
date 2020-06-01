@@ -5,14 +5,14 @@ namespace DotNetty.Common.Concurrency
 {
     sealed class RunnableScheduledTask : ScheduledTask
     {
-        readonly IRunnable action;
+        readonly IRunnable _action;
 
         public RunnableScheduledTask(AbstractScheduledEventExecutor executor, IRunnable action, in PreciseTimeSpan deadline)
             : base(executor, deadline, executor.NewPromise())
         {
-            this.action = action;
+            _action = action;
         }
 
-        protected override void Execute() => this.action.Run();
+        protected override void Execute() => _action.Run();
     }
 }

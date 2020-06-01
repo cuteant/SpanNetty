@@ -8,31 +8,31 @@ namespace DotNetty.Common.Utilities
 
     public abstract class AbstractConstant : IConstant
     {
-        static long nextUniquifier;
+        static long s_nextUniquifier;
 
-        long volatileUniquifier;
+        long v_uniquifier;
 
         protected AbstractConstant(int id, string name)
         {
-            this.Id = id;
-            this.Name = name;
+            Id = id;
+            Name = name;
         }
 
         public int Id { get; }
 
         public string Name { get; }
 
-        public sealed override string ToString() => this.Name;
+        public sealed override string ToString() => Name;
 
         protected long Uniquifier
         {
             get
             {
                 long result;
-                if ((result = Volatile.Read(ref this.volatileUniquifier)) == SharedConstants.Zero64)
+                if ((result = Volatile.Read(ref v_uniquifier)) == SharedConstants.Zero64)
                 {
-                    result = Interlocked.Increment(ref nextUniquifier);
-                    long previousUniquifier = Interlocked.CompareExchange(ref this.volatileUniquifier, result, SharedConstants.Zero64);
+                    result = Interlocked.Increment(ref s_nextUniquifier);
+                    long previousUniquifier = Interlocked.CompareExchange(ref v_uniquifier, result, SharedConstants.Zero64);
                     if (previousUniquifier != SharedConstants.Zero64)
                     {
                         result = previousUniquifier;
@@ -72,13 +72,13 @@ namespace DotNetty.Common.Utilities
 
             AbstractConstant<T> other = o;
 
-            int returnCode = this.GetHashCode() - other.GetHashCode();
+            int returnCode = GetHashCode() - other.GetHashCode();
             if (returnCode != 0)
             {
                 return returnCode;
             }
 
-            long thisUV = this.Uniquifier;
+            long thisUV = Uniquifier;
             long otherUV = other.Uniquifier;
             if (thisUV < otherUV)
             {

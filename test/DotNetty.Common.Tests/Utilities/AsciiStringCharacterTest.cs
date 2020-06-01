@@ -14,6 +14,17 @@ namespace DotNetty.Common.Tests.Utilities
         static readonly Random Rand = new Random();
 
         [Fact]
+        public void ContentEqualsIgnoreCase()
+        {
+            byte[] bytes = { 32, (byte)'a' };
+            AsciiString asciiString = new AsciiString(bytes, 1, 1, false);
+            // https://github.com/netty/netty/issues/9475
+            Assert.False(asciiString.ContentEqualsIgnoreCase(new StringCharSequence("b")));
+            Assert.False(asciiString.ContentEqualsIgnoreCase(AsciiString.Of("b")));
+
+        }
+
+        [Fact]
         public void GetBytes()
         {
             var b = new StringBuilder();
@@ -329,14 +340,14 @@ namespace DotNetty.Common.Tests.Utilities
         [Fact]
         public void StaticIndexOfChar()
         {
-            Assert.Equal(-1, CharUtil.IndexOf(null, 'a', 0));
-            Assert.Equal(-1, CharUtil.IndexOf((AsciiString)"", 'a', 0));
-            Assert.Equal(-1, CharUtil.IndexOf((AsciiString)"abc", 'd', 0));
-            Assert.Equal(-1, CharUtil.IndexOf((AsciiString)"aabaabaa", 'A', 0));
-            Assert.Equal(0, CharUtil.IndexOf((AsciiString)"aabaabaa", 'a', 0));
-            Assert.Equal(1, CharUtil.IndexOf((AsciiString)"aabaabaa", 'a', 1));
-            Assert.Equal(3, CharUtil.IndexOf((AsciiString)"aabaabaa", 'a', 2));
-            Assert.Equal(3, CharUtil.IndexOf((AsciiString)"aabdabaa", 'd', 1));
+            Assert.Equal(-1, AsciiString.IndexOf(null, 'a', 0));
+            Assert.Equal(-1, AsciiString.IndexOf((AsciiString)"", 'a', 0));
+            Assert.Equal(-1, AsciiString.IndexOf((AsciiString)"abc", 'd', 0));
+            Assert.Equal(-1, AsciiString.IndexOf((AsciiString)"aabaabaa", 'A', 0));
+            Assert.Equal(0, AsciiString.IndexOf((AsciiString)"aabaabaa", 'a', 0));
+            Assert.Equal(1, AsciiString.IndexOf((AsciiString)"aabaabaa", 'a', 1));
+            Assert.Equal(3, AsciiString.IndexOf((AsciiString)"aabaabaa", 'a', 2));
+            Assert.Equal(3, AsciiString.IndexOf((AsciiString)"aabdabaa", 'd', 1));
         }
 
         [Fact]

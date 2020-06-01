@@ -214,6 +214,8 @@
                 var ch = _channel;
                 if (!ch.Active) { return; }
 
+                UpdateLocalWindowIfNeeded();
+
                 switch (ch._readStatus)
                 {
                     case ReadStatus.Idle:
@@ -302,8 +304,6 @@
                 {
                     ch._readStatus = ReadStatus.Idle;
                 }
-
-                UpdateLocalWindowIfNeeded();
 
                 allocHandle.ReadComplete();
                 ch._pipeline.FireChannelReadComplete();

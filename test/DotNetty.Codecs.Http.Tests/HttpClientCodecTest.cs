@@ -255,7 +255,7 @@ namespace DotNetty.Codecs.Http.Tests
                 ch.WriteInbound(Unpooled.CopiedBuffer(Encoding.UTF8.GetBytes(response))),
                 "Channel inbound write failed.");
 
-            for (;;)
+            for (; ; )
             {
                 var msg = ch.ReadOutbound<object>();
                 if (msg == null)
@@ -264,7 +264,7 @@ namespace DotNetty.Codecs.Http.Tests
                 }
                 ReferenceCountUtil.Release(msg);
             }
-            for (;;)
+            for (; ; )
             {
                 var msg = ch.ReadInbound<object>();
                 if (msg == null)
@@ -353,6 +353,30 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.False(ch.Finish());
             var next = ch.ReadInbound<object>();
             Assert.Null(next);
+        }
+
+        [Fact]
+        public void MultipleResponses()
+        {
+            string response = "HTTP/1.1 200 OK\r\n" +
+                    "Content-Length: 0\r\n\r\n";
+
+            HttpClientCodec codec = new HttpClientCodec(4096, 8192, 8192, true);
+            EmbeddedChannel ch = new EmbeddedChannel(codec, new HttpObjectAggregator(1024));
+
+            IHttpRequest request = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, "http://localhost/");
+            Assert.True(ch.WriteOutbound(request));
+
+            Assert.True(ch.WriteInbound(Unpooled.CopiedBuffer(response, Encoding.UTF8)));
+            Assert.True(ch.WriteInbound(Unpooled.CopiedBuffer(response, Encoding.UTF8)));
+            var resp = ch.ReadInbound<IFullHttpResponse>();
+            Assert.True(resp.Result.IsSuccess);
+            resp.Release();
+
+            resp = ch.ReadInbound<IFullHttpResponse>();
+            Assert.True(resp.Result.IsSuccess);
+            resp.Release();
+            Assert.True(ch.FinishAndReleaseAll());
         }
     }
 }

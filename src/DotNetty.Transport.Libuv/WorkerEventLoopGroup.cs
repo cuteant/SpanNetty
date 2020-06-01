@@ -20,15 +20,15 @@ namespace DotNetty.Transport.Libuv
         static readonly int DefaultEventLoopThreadCount = Environment.ProcessorCount;
         static readonly TimeSpan StartTimeout = TimeSpan.FromMilliseconds(500);
 
-        readonly WorkerEventLoop[] eventLoops;
-        readonly DispatcherEventLoop dispatcherLoop;
-        int requestId;
+        readonly WorkerEventLoop[] _eventLoops;
+        readonly DispatcherEventLoop _dispatcherLoop;
+        int _requestId;
 
-        public override bool IsShutdown => this.eventLoops.All(eventLoop => eventLoop.IsShutdown);
+        public override bool IsShutdown => _eventLoops.All(eventLoop => eventLoop.IsShutdown);
 
-        public override bool IsTerminated => this.eventLoops.All(eventLoop => eventLoop.IsTerminated);
+        public override bool IsTerminated => _eventLoops.All(eventLoop => eventLoop.IsTerminated);
 
-        public override bool IsShuttingDown => this.eventLoops.All(eventLoop => eventLoop.IsShuttingDown);
+        public override bool IsShuttingDown => _eventLoops.All(eventLoop => eventLoop.IsShuttingDown);
 
         public override Task TerminationCompletion { get; }
 
@@ -41,13 +41,13 @@ namespace DotNetty.Transport.Libuv
         {
             if (eventLoopGroup is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventLoopGroup); }
 
-            this.dispatcherLoop = eventLoopGroup.Dispatcher;
-            this.PipeName = this.dispatcherLoop.PipeName;
+            _dispatcherLoop = eventLoopGroup.Dispatcher;
+            PipeName = _dispatcherLoop.PipeName;
 
             // Wait until the pipe is listening to connect
-            this.dispatcherLoop.WaitForLoopRun(StartTimeout);
+            _dispatcherLoop.WaitForLoopRun(StartTimeout);
 
-            this.eventLoops = new WorkerEventLoop[eventLoopCount];
+            _eventLoops = new WorkerEventLoop[eventLoopCount];
             var terminationTasks = new Task[eventLoopCount];
             for (int i = 0; i < eventLoopCount; i++)
             {
@@ -59,7 +59,7 @@ namespace DotNetty.Transport.Libuv
                     success = eventLoop.ConnectTask.Wait(StartTimeout);
                     if (!success)
                     {
-                        ThrowHelper.ThrowTimeoutException(this.PipeName);
+                        ThrowHelper.ThrowTimeoutException(PipeName);
                     }
                 }
                 catch (Exception ex)
@@ -70,33 +70,33 @@ namespace DotNetty.Transport.Libuv
                 {
                     if (!success)
                     {
-                        Task.WhenAll(this.eventLoops.Take(i).Select(loop => loop.ShutdownGracefullyAsync())).Wait();
+                        Task.WhenAll(_eventLoops.Take(i).Select(loop => loop.ShutdownGracefullyAsync())).Wait();
                     }
                 }
 
-                this.eventLoops[i] = eventLoop;
+                _eventLoops[i] = eventLoop;
                 terminationTasks[i] = eventLoop.TerminationCompletion;
             }
 
-            this.TerminationCompletion = Task.WhenAll(terminationTasks);
+            TerminationCompletion = Task.WhenAll(terminationTasks);
         }
 
         internal string PipeName { get; }
 
-        IEnumerable<IEventLoop> IEventLoopGroup.Items => this.eventLoops;
+        IEnumerable<IEventLoop> IEventLoopGroup.Items => _eventLoops;
 
         internal void Accept(NativeHandle handle)
         {
-            Debug.Assert(this.dispatcherLoop is object);
-            this.dispatcherLoop.Accept(handle);
+            Debug.Assert(_dispatcherLoop is object);
+            _dispatcherLoop.Accept(handle);
         }
 
-        IEventLoop IEventLoopGroup.GetNext() => (IEventLoop)this.GetNext();
+        IEventLoop IEventLoopGroup.GetNext() => (IEventLoop)GetNext();
 
         public override IEventExecutor GetNext()
         {
-            int id = Interlocked.Increment(ref this.requestId);
-            return this.eventLoops[Math.Abs(id % this.eventLoops.Length)];
+            int id = Interlocked.Increment(ref _requestId);
+            return _eventLoops[Math.Abs(id % _eventLoops.Length)];
         }
 
         public Task RegisterAsync(IChannel channel)
@@ -109,11 +109,11 @@ namespace DotNetty.Transport.Libuv
 
             NativeHandle handle = nativeChannel.GetHandle();
             IntPtr loopHandle = handle.LoopHandle();
-            for (int i = 0; i < this.eventLoops.Length; i++)
+            for (int i = 0; i < _eventLoops.Length; i++)
             {
-                if (this.eventLoops[i].UnsafeLoop.Handle == loopHandle)
+                if (_eventLoops[i].UnsafeLoop.Handle == loopHandle)
                 {
-                    return this.eventLoops[i].RegisterAsync(nativeChannel);
+                    return _eventLoops[i].RegisterAsync(nativeChannel);
                 }
             }
 
@@ -122,13 +122,13 @@ namespace DotNetty.Transport.Libuv
 
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
         {
-            foreach (WorkerEventLoop eventLoop in this.eventLoops)
+            foreach (WorkerEventLoop eventLoop in _eventLoops)
             {
                 eventLoop.ShutdownGracefullyAsync(quietPeriod, timeout);
             }
-            return this.TerminationCompletion;
+            return TerminationCompletion;
         }
 
-        protected override IEnumerable<IEventExecutor> GetItems() => this.eventLoops;
+        protected override IEnumerable<IEventExecutor> GetItems() => _eventLoops;
     }
 }

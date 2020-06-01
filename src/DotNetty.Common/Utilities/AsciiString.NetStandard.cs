@@ -208,7 +208,7 @@ namespace DotNetty.Common.Utilities
         {
             if (other is AsciiString rhs)
             {
-                for (int i = this.offset, j = rhs.offset; i < this.length; ++i, ++j)
+                for (int i = this.offset, j = rhs.offset, end = i + this.length; i < end; ++i, ++j)
                 {
                     if (!EqualsIgnoreCase(this.value[i], rhs.value[j]))
                     {
@@ -218,7 +218,7 @@ namespace DotNetty.Common.Utilities
                 return true;
             }
 
-            for (int i = this.offset, j = 0; i < this.length; ++i, ++j)
+            for (int i = this.offset, j = 0, end = this.length; i < end; ++i, ++j)
             {
                 if (!EqualsIgnoreCase(ByteToChar(this.value[i]), other[j]))
                 {

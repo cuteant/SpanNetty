@@ -705,14 +705,7 @@ namespace DotNetty.Handlers.Tls
         private static void HandleHandshakeCompleted(Task task, object state)
         {
             var self = (TlsHandler)state;
-            if (task.IsCanceled || task.IsFaulted)
-            {
-                // ReSharper disable once AssignNullToNotNullAttribute -- task.Exception will be present as task is faulted
-                var oldState = self.State;
-                Debug.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
-                self.HandleFailure(task.Exception);
-            }
-            else //if (task.IsCompleted)
+            if (task.IsSuccess())
             {
                 var oldState = self.State;
 
@@ -732,6 +725,13 @@ namespace DotNetty.Handlers.Tls
                     self.Wrap(capturedContext);
                     capturedContext.Flush();
                 }
+            }
+            else if (task.IsCanceled || task.IsFaulted)
+            {
+                // ReSharper disable once AssignNullToNotNullAttribute -- task.Exception will be present as task is faulted
+                var oldState = self.State;
+                Debug.Assert(!oldState.HasAny(TlsHandlerState.Authenticated));
+                self.HandleFailure(task.Exception);
             }
         }
 
