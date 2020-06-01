@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Encodings.Web;
+using DotNetty.Common.Internal;
 
 namespace DotNetty.Codecs.Http.Utilities
 {
@@ -44,7 +45,7 @@ namespace DotNetty.Codecs.Http.Utilities
         {
             if (str is null) { return null; }
 #if !DEBUG
-            if (e is null || SharedConstants.UTF8CodePage == e.CodePage)
+            if (e is null || TextEncodings.UTF8CodePage == e.CodePage)
             {
                 return s_urlEncoder.Encode(str);
             }
@@ -204,7 +205,11 @@ namespace DotNetty.Codecs.Http.Utilities
             int i = value.IndexOf('?');
             if (i >= 0)
             {
+//#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+//                return string.Concat(UrlPathEncodeImpl(value.Substring(0, i)), value.AsSpan(i));
+//#else
                 return UrlPathEncodeImpl(value.Substring(0, i)) + value.Substring(i);
+//#endif
             }
 
             // encode DBCS characters and spaces only
@@ -487,7 +492,7 @@ namespace DotNetty.Codecs.Http.Utilities
             if (decodedBytesCount < decodedBytes.Length)
             {
                 byte[] newDecodedBytes = new byte[decodedBytesCount];
-                Array.Copy(decodedBytes, newDecodedBytes, decodedBytesCount);
+                Array.Copy(decodedBytes, 0, newDecodedBytes, 0, decodedBytesCount);
                 decodedBytes = newDecodedBytes;
             }
 
