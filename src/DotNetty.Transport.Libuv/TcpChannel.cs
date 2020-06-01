@@ -151,7 +151,7 @@ namespace DotNetty.Transport.Libuv
             {
             }
 
-            public override IntPtr UnsafeHandle => this.channel.tcp.Handle;
+            public override IntPtr UnsafeHandle => this._channel.tcp.Handle;
         }
     }
 }

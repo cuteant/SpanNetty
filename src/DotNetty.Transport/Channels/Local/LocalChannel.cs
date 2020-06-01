@@ -459,27 +459,27 @@ namespace DotNetty.Transport.Channels.Local
             {
                 var promise = new TaskCompletionSource();
 
-                if (Volatile.Read(ref this.channel.state) == State.Connected)
+                if (Volatile.Read(ref this._channel.state) == State.Connected)
                 {
                     var cause = new AlreadyConnectedException();
                     Util.SafeSetFailure(promise, cause, Logger);
-                    this.channel.Pipeline.FireExceptionCaught(cause);
+                    this._channel.Pipeline.FireExceptionCaught(cause);
                     return promise.Task;
                 }
 
-                if (Volatile.Read(ref this.channel.connectPromise) is object)
+                if (Volatile.Read(ref this._channel.connectPromise) is object)
                 {
                     ThrowHelper.ThrowConnectionPendingException();
                 }
 
-                Interlocked.Exchange(ref this.channel.connectPromise, promise);
+                Interlocked.Exchange(ref this._channel.connectPromise, promise);
 
-                if (Volatile.Read(ref this.channel.state) != State.Bound)
+                if (Volatile.Read(ref this._channel.state) != State.Bound)
                 {
                     // Not bound yet and no localAddress specified - get one.
                     if (localAddress is null)
                     {
-                        localAddress = new LocalAddress(this.channel);
+                        localAddress = new LocalAddress(this._channel);
                     }
                 }
 
@@ -487,12 +487,12 @@ namespace DotNetty.Transport.Channels.Local
                 {
                     try
                     {
-                        this.channel.DoBind(localAddress);
+                        this._channel.DoBind(localAddress);
                     }
                     catch (Exception ex)
                     {
                         Util.SafeSetFailure(promise, ex, Logger);
-                        this.channel.CloseAsync();
+                        this._channel.CloseAsync();
                         return promise.Task;
                     }
                 }
@@ -502,11 +502,11 @@ namespace DotNetty.Transport.Channels.Local
                 {
                     Exception cause = new ConnectException($"connection refused: {remoteAddress}", null);
                     Util.SafeSetFailure(promise, cause, Logger);
-                    this.channel.CloseAsync();
+                    this._channel.CloseAsync();
                     return promise.Task;
                 }
 
-                Interlocked.Exchange(ref this.channel.peer, ((LocalServerChannel)boundChannel).Serve(this.channel));
+                Interlocked.Exchange(ref this._channel.peer, ((LocalServerChannel)boundChannel).Serve(this._channel));
                 return promise.Task;
             }
         }

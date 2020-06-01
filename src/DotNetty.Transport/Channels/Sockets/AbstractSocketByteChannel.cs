@@ -13,15 +13,17 @@ namespace DotNetty.Transport.Channels.Sockets
     /// <see cref="AbstractSocketChannel{TChannel, TUnsafe}"/> base class for <see cref="IChannel"/>s that operate on bytes.
     /// </summary>
     public abstract partial class AbstractSocketByteChannel<TChannel, TUnsafe> : AbstractSocketChannel<TChannel, TUnsafe>
+        where TChannel : AbstractSocketByteChannel<TChannel, TUnsafe>
+        where TUnsafe : AbstractSocketByteChannel<TChannel, TUnsafe>.SocketByteChannelUnsafe, new()
     {
-        static readonly string ExpectedTypes =
+        private static readonly string ExpectedTypes =
             $" (expected: {StringUtil.SimpleClassName<IByteBuffer>()})"; //+ ", " +
 
         // todo: FileRegion support        
         //typeof(FileRegion).Name + ')';
 
-        static readonly Action<object> FlushAction = OnFlushSync; // _ => ((TChannel)_).Flush();
-        static readonly Action<object, object> ReadCompletedSyncCallback = OnReadCompletedSync;
+        private static readonly Action<object> FlushAction = OnFlushSync;
+        private static readonly Action<object, object> ReadCompletedSyncCallback = OnReadCompletedSync;
 
         /// <summary>Create a new instance</summary>
         /// <param name="parent">the parent <see cref="IChannel"/> by which this instance was created. May be <c>null</c></param>
@@ -33,156 +35,38 @@ namespace DotNetty.Transport.Channels.Sockets
 
         //protected override IChannelUnsafe NewUnsafe() => new SocketByteChannelUnsafe(this); ## 苦竹 屏蔽 ##
 
-        public partial class SocketByteChannelUnsafe : AbstractSocketUnsafe
-        {
-            public SocketByteChannelUnsafe() //(AbstractSocketByteChannel channel)
-                : base() //channel)
-            {
-            }
-
-            //new AbstractSocketByteChannel Channel => (AbstractSocketByteChannel)this.channel;
-
-            void CloseOnRead()
-            {
-                var ch = this.channel;
-                ch.ShutdownInput();
-                if (ch.Open)
-                {
-                    // todo: support half-closure
-                    //if (bool.TrueString.Equals(this.channel.Configuration.getOption(ChannelOption.ALLOW_HALF_CLOSURE))) {
-                    //    key.interestOps(key.interestOps() & ~readInterestOp);
-                    //    this.channel.Pipeline.FireUserEventTriggered(ChannelInputShutdownEvent.INSTANCE);
-                    //} else {
-                    this.Close(this.VoidPromise());
-                    //}
-                }
-            }
-
-            void HandleReadException(IChannelPipeline pipeline, IByteBuffer byteBuf, Exception cause, bool close,
-                IRecvByteBufAllocatorHandle allocHandle)
-            {
-                if (byteBuf is object)
-                {
-                    if (byteBuf.IsReadable())
-                    {
-                        this.channel.ReadPending = false;
-                        pipeline.FireChannelRead(byteBuf);
-                    }
-                    else
-                    {
-                        byteBuf.Release();
-                    }
-                }
-                allocHandle.ReadComplete();
-                pipeline.FireChannelReadComplete();
-                pipeline.FireExceptionCaught(cause);
-                if (close || cause is SocketException)
-                {
-                    this.CloseOnRead();
-                }
-            }
-
-            public override void FinishRead(SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
-            {
-                var ch = this.channel;
-                if (0u >= (uint)(ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active))
-                {
-                    return; // read was signaled as a result of channel closure
-                }
-                IChannelConfiguration config = ch.Configuration;
-                IChannelPipeline pipeline = ch.Pipeline;
-                IByteBufferAllocator allocator = config.Allocator;
-                IRecvByteBufAllocatorHandle allocHandle = this.RecvBufAllocHandle;
-                allocHandle.Reset(config);
-
-                IByteBuffer byteBuf = null;
-                bool close = false;
-                try
-                {
-                    operation.Validate();
-
-                    do
-                    {
-                        byteBuf = allocHandle.Allocate(allocator);
-                        //int writable = byteBuf.WritableBytes;
-                        allocHandle.LastBytesRead = ch.DoReadBytes(byteBuf);
-                        if (allocHandle.LastBytesRead <= 0)
-                        {
-                            // nothing was read -> release the buffer.
-                            byteBuf.Release();
-                            byteBuf = null;
-                            close = allocHandle.LastBytesRead < 0;
-                            if (close)
-                            {
-                                // There is nothing left to read as we received an EOF.
-                                ch.ReadPending = false;
-                            }
-                            break;
-                        }
-
-                        allocHandle.IncMessagesRead(1);
-                        ch.ReadPending = false;
-
-                        pipeline.FireChannelRead(byteBuf);
-                        byteBuf = null;
-                    }
-                    while (allocHandle.ContinueReading());
-
-                    allocHandle.ReadComplete();
-                    pipeline.FireChannelReadComplete();
-
-                    if (close)
-                    {
-                        this.CloseOnRead();
-                    }
-                }
-                catch (Exception t)
-                {
-                    this.HandleReadException(pipeline, byteBuf, t, close, allocHandle);
-                }
-                finally
-                {
-                    // Check if there is a readPending which was not processed yet.
-                    // This could be for two reasons:
-                    // /// The user called Channel.read() or ChannelHandlerContext.read() input channelRead(...) method
-                    // /// The user called Channel.read() or ChannelHandlerContext.read() input channelReadComplete(...) method
-                    //
-                    // See https://github.com/netty/netty/issues/2254
-                    if (!close && (ch.ReadPending || config.AutoRead))
-                    {
-                        ch.DoBeginRead();
-                    }
-                }
-            }
-        }
-
         protected override void ScheduleSocketRead()
         {
-            var operation = this.ReadOperation;
+            var operation = ReadOperation;
             bool pending;
 #if NETCOREAPP || NETSTANDARD
-            pending = this.Socket.ReceiveAsync(operation);
+            pending = Socket.ReceiveAsync(operation);
 #else
             if (ExecutionContext.IsFlowSuppressed())
             {
-                pending = this.Socket.ReceiveAsync(operation);
+                pending = Socket.ReceiveAsync(operation);
             }
             else
             {
                 using (ExecutionContext.SuppressFlow())
                 {
-                    pending = this.Socket.ReceiveAsync(operation);
+                    pending = Socket.ReceiveAsync(operation);
                 }
             }
 #endif
             if (!pending)
             {
                 // todo: potential allocation / non-static field?
-                this.EventLoop.Execute(ReadCompletedSyncCallback, this.Unsafe, operation);
+                EventLoop.Execute(ReadCompletedSyncCallback, Unsafe, operation);
             }
         }
 
         static void OnReadCompletedSync(object u, object e) => ((TUnsafe)u).FinishRead((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
+
+        private static void OnFlushSync(object channel)
+        {
+            ((TChannel)channel).Unsafe.InternalFlush0();
+        }
 
         protected override void DoWrite(ChannelOutboundBuffer input)
         {
@@ -211,11 +95,11 @@ namespace DotNetty.Transport.Channels.Sockets
                     long flushedAmount = 0;
                     if (writeSpinCount == -1)
                     {
-                        writeSpinCount = this.Configuration.WriteSpinCount;
+                        writeSpinCount = Configuration.WriteSpinCount;
                     }
                     for (int i = writeSpinCount - 1; i >= 0; i--)
                     {
-                        int localFlushedAmount = this.DoWriteBytes(buf);
+                        int localFlushedAmount = DoWriteBytes(buf);
                         if (0u >= (uint)localFlushedAmount) // todo: check for "sent less than attempted bytes" to avoid unnecessary extra doWriteBytes call?
                         {
                             scheduleAsync = true;
@@ -237,9 +121,9 @@ namespace DotNetty.Transport.Channels.Sockets
                         input.Remove();
                     }
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
-                    else if (this.IncompleteWrite(scheduleAsync, this.PrepareWriteOperation(buf.UnreadMemory)))
+                    else if (IncompleteWrite(scheduleAsync, PrepareWriteOperation(buf.UnreadMemory)))
 #else
-                    else if (this.IncompleteWrite(scheduleAsync, this.PrepareWriteOperation(buf.GetIoBuffer())))
+                    else if (IncompleteWrite(scheduleAsync, PrepareWriteOperation(buf.GetIoBuffer())))
 #endif
                     {
                         break;
@@ -313,28 +197,28 @@ namespace DotNetty.Transport.Channels.Sockets
             // Did not write completely.
             if (scheduleAsync)
             {
-                this.SetState(StateFlags.WriteScheduled);
+                SetState(StateFlags.WriteScheduled);
                 bool pending;
 
 #if NETCOREAPP || NETSTANDARD
-                pending = this.Socket.SendAsync(operation);
+                pending = Socket.SendAsync(operation);
 #else
                 if (ExecutionContext.IsFlowSuppressed())
                 {
-                    pending = this.Socket.SendAsync(operation);
+                    pending = Socket.SendAsync(operation);
                 }
                 else
                 {
                     using (ExecutionContext.SuppressFlow())
                     {
-                        pending = this.Socket.SendAsync(operation);
+                        pending = Socket.SendAsync(operation);
                     }
                 }
 #endif
 
                 if (!pending)
                 {
-                    this.Unsafe.FinishWrite(operation); // ## 苦竹 修改 ## ((ISocketChannelUnsafe)this.Unsafe).FinishWrite(operation);
+                    Unsafe.FinishWrite(operation); // ## 苦竹 修改 ## ((ISocketChannelUnsafe)this.Unsafe).FinishWrite(operation);
                 }
 
                 return pending;
@@ -342,7 +226,7 @@ namespace DotNetty.Transport.Channels.Sockets
             else
             {
                 // Schedule flush again later so other tasks can be picked up input the meantime
-                this.EventLoop.Execute(FlushAction, this);
+                EventLoop.Execute(FlushAction, this);
 
                 return true;
             }

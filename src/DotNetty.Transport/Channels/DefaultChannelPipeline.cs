@@ -508,7 +508,7 @@ namespace DotNetty.Transport.Channels
                     }
                 }
 
-                newCtx = NewContext(ctx.executor, newName, newHandler);
+                newCtx = NewContext(ctx._executor, newName, newHandler);
 
                 Replace0(ctx, newCtx);
 
@@ -1173,17 +1173,17 @@ namespace DotNetty.Transport.Channels
 
             public void ChannelUnregistered(IChannelHandlerContext context) { }
 
-            public void ChannelActive(IChannelHandlerContext context) => pipeline.OnUnhandledInboundChannelActive();
+            public void ChannelActive(IChannelHandlerContext context) => _pipeline.OnUnhandledInboundChannelActive();
 
-            public void ChannelInactive(IChannelHandlerContext context) => pipeline.OnUnhandledInboundChannelInactive();
+            public void ChannelInactive(IChannelHandlerContext context) => _pipeline.OnUnhandledInboundChannelInactive();
 
-            public void ExceptionCaught(IChannelHandlerContext context, Exception exception) => pipeline.OnUnhandledInboundException(exception);
+            public void ExceptionCaught(IChannelHandlerContext context, Exception exception) => _pipeline.OnUnhandledInboundException(exception);
 
-            public void ChannelRead(IChannelHandlerContext context, object message) => pipeline.OnUnhandledInboundMessage(context, message);
+            public void ChannelRead(IChannelHandlerContext context, object message) => _pipeline.OnUnhandledInboundMessage(context, message);
 
-            public void ChannelReadComplete(IChannelHandlerContext context) => pipeline.OnUnhandledInboundChannelReadComplete();
+            public void ChannelReadComplete(IChannelHandlerContext context) => _pipeline.OnUnhandledInboundChannelReadComplete();
 
-            public void ChannelWritabilityChanged(IChannelHandlerContext context) => pipeline.OnUnhandledChannelWritabilityChanged();
+            public void ChannelWritabilityChanged(IChannelHandlerContext context) => _pipeline.OnUnhandledChannelWritabilityChanged();
 
             [Skip]
             public void HandlerAdded(IChannelHandlerContext context) { }
@@ -1203,7 +1203,7 @@ namespace DotNetty.Transport.Channels
             [Skip]
             public void Read(IChannelHandlerContext context) => context.Read();
 
-            public void UserEventTriggered(IChannelHandlerContext context, object evt) => pipeline.OnUnhandledInboundUserEventTriggered(evt);
+            public void UserEventTriggered(IChannelHandlerContext context, object evt) => _pipeline.OnUnhandledInboundUserEventTriggered(evt);
 
             [Skip]
             public void Write(IChannelHandlerContext ctx, object message, IPromise promise) => ctx.WriteAsync(message, promise);
@@ -1261,7 +1261,7 @@ namespace DotNetty.Transport.Channels
 
             public void ChannelRegistered(IChannelHandlerContext context)
             {
-                pipeline.InvokeHandlerAddedIfNeeded();
+                _pipeline.InvokeHandlerAddedIfNeeded();
                 context.FireChannelRegistered();
             }
 
@@ -1270,9 +1270,9 @@ namespace DotNetty.Transport.Channels
                 context.FireChannelUnregistered();
 
                 // Remove all handlers sequentially if channel is closed and unregistered.
-                if (!pipeline._channel.Open)
+                if (!_pipeline._channel.Open)
                 {
-                    pipeline.Destroy();
+                    _pipeline.Destroy();
                 }
             }
 
@@ -1298,9 +1298,9 @@ namespace DotNetty.Transport.Channels
 
             void ReadIfIsAutoRead()
             {
-                if (pipeline._channel.Configuration.AutoRead)
+                if (_pipeline._channel.Configuration.AutoRead)
                 {
-                    pipeline._channel.Read();
+                    _pipeline._channel.Read();
                 }
             }
 

@@ -19,7 +19,7 @@ namespace DotNetty.Transport.Channels
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels.Sockets;
 
-    public sealed partial class ChannelOutboundBuffer
+    public sealed class ChannelOutboundBuffer
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChannelOutboundBuffer>();
 
@@ -179,7 +179,7 @@ namespace DotNetty.Transport.Channels
                     return byteBufferHolder.Content.ReadableBytes;
 
                 default:
-                    return  -1L;
+                    return -1L;
             }
         }
 
@@ -616,6 +616,12 @@ namespace DotNetty.Transport.Channels
             {
                 pipeline.FireChannelWritabilityChanged();
             }
+        }
+
+        private static readonly Action<object> FireChannelWritabilityChangedAction = OnFireChannelWritabilityChanged;
+        static void OnFireChannelWritabilityChanged(object p)
+        {
+            ((IChannelPipeline)p).FireChannelWritabilityChanged();
         }
 
         /// <summary>

@@ -114,12 +114,12 @@ namespace DotNetty.Transport.Libuv
             {
             }
 
-            public override IntPtr UnsafeHandle => this.channel.tcpListener.Handle;
+            public override IntPtr UnsafeHandle => this._channel.tcpListener.Handle;
 
             // Connection callback from Libuv thread
             void IServerNativeUnsafe.Accept(RemoteConnection connection)
             {
-                var ch = this.channel;
+                var ch = this._channel;
                 NativeHandle client = connection.Client;
 
                 var connError = connection.Error;
@@ -129,7 +129,7 @@ namespace DotNetty.Transport.Libuv
                     if (connError is object)
                     {
                         if (Logger.InfoEnabled) Logger.AcceptClientConnectionFailed(connError);
-                        this.channel.Pipeline.FireExceptionCaught(connError);
+                        this._channel.Pipeline.FireExceptionCaught(connError);
                     }
                     try
                     {
@@ -163,20 +163,20 @@ namespace DotNetty.Transport.Libuv
             // Called from other Libuv loop/thread received tcp handle from pipe
             void IServerNativeUnsafe.Accept(NativeHandle handle)
             {
-                var ch = this.channel;
+                var ch = this._channel;
                 if (ch.EventLoop.InEventLoop)
                 {
                     this.Accept((Tcp)handle);
                 }
                 else
                 {
-                    this.channel.EventLoop.Execute(AcceptAction, this, handle);
+                    this._channel.EventLoop.Execute(AcceptAction, this, handle);
                 }
             }
 
             void Accept(Tcp tcp)
             {
-                var ch = this.channel;
+                var ch = this._channel;
                 IChannelPipeline pipeline = ch.Pipeline;
                 IRecvByteBufAllocatorHandle allocHandle = this.RecvBufAllocHandle;
 

@@ -18,11 +18,11 @@ namespace DotNetty.Transport.Channels.Sockets
     public partial class SocketDatagramChannel<TChannel> : AbstractSocketMessageChannel<TChannel, SocketDatagramChannel<TChannel>.DatagramChannelUnsafe>, IDatagramChannel
     {
         //static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<SocketDatagramChannel>();
-        static readonly Action<object, object> ReceiveFromCompletedSyncCallback = OnReceiveFromCompletedSync;
-        static readonly ChannelMetadata ChannelMetadata = new ChannelMetadata(true);
+        private static readonly Action<object, object> ReceiveFromCompletedSyncCallback = OnReceiveFromCompletedSync;
+        private static readonly ChannelMetadata ChannelMetadata = new ChannelMetadata(true);
 
-        readonly DefaultDatagramChannelConfig config;
-        readonly IPEndPoint anyRemoteEndPoint;
+        private readonly DefaultDatagramChannelConfig _config;
+        private readonly IPEndPoint _anyRemoteEndPoint;
 
         //public SocketDatagramChannel()
         //    : this(new Socket(SocketType.Dgram, ProtocolType.Udp))
@@ -37,41 +37,41 @@ namespace DotNetty.Transport.Channels.Sockets
         public SocketDatagramChannel(Socket socket)
             : base(null, socket)
         {
-            this.config = new DefaultDatagramChannelConfig(this, socket);
-            this.anyRemoteEndPoint = new IPEndPoint(
+            _config = new DefaultDatagramChannelConfig(this, socket);
+            _anyRemoteEndPoint = new IPEndPoint(
                 socket.AddressFamily == AddressFamily.InterNetwork ? IPAddress.Any : IPAddress.IPv6Any,
                 IPEndPoint.MinPort);
         }
 
-        public override IChannelConfiguration Configuration => this.config;
+        public override IChannelConfiguration Configuration => _config;
 
         public override ChannelMetadata Metadata => ChannelMetadata;
 
-        protected override EndPoint LocalAddressInternal => this.Socket.LocalEndPoint;
+        protected override EndPoint LocalAddressInternal => Socket.LocalEndPoint;
 
-        protected override EndPoint RemoteAddressInternal => this.Socket.RemoteEndPoint;
+        protected override EndPoint RemoteAddressInternal => Socket.RemoteEndPoint;
 
         protected override void DoBind(EndPoint localAddress)
         {
-            this.Socket.Bind(localAddress);
-            this.CacheLocalAddress();
+            Socket.Bind(localAddress);
+            CacheLocalAddress();
 
-            this.SetState(StateFlags.Active);
+            SetState(StateFlags.Active);
         }
 
-        public override bool Active => this.Open && this.Socket.IsBound;
+        public override bool Active => Open && Socket.IsBound;
 
         protected override bool DoConnect(EndPoint remoteAddress, EndPoint localAddress)
         {
             if (localAddress is object)
             {
-                this.DoBind(localAddress);
+                DoBind(localAddress);
             }
 
             bool success = false;
             try
             {
-                this.Socket.Connect(remoteAddress);
+                Socket.Connect(remoteAddress);
                 success = true;
                 return true;
             }
@@ -79,7 +79,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 if (!success)
                 {
-                    this.DoClose();
+                    DoClose();
                 }
             }
         }
@@ -89,23 +89,23 @@ namespace DotNetty.Transport.Channels.Sockets
             throw new NotSupportedException();
         }
 
-        protected override void DoDisconnect() => this.DoClose();
+        protected override void DoDisconnect() => DoClose();
 
         protected override void DoClose()
         {
-            if (this.TryResetState(StateFlags.Open | StateFlags.Active))
+            if (TryResetState(StateFlags.Open | StateFlags.Active))
             {
-                this.Socket.SafeClose(); //this.Socket.Dispose();
+                Socket.SafeClose(); //this.Socket.Dispose();
             }
         }
 
         protected override void ScheduleSocketRead()
         {
-            var operation = this.ReadOperation;
-            operation.RemoteEndPoint = this.anyRemoteEndPoint;
+            var operation = ReadOperation;
+            operation.RemoteEndPoint = _anyRemoteEndPoint;
 
-            IRecvByteBufAllocatorHandle handle = this.Unsafe.RecvBufAllocHandle;
-            IByteBuffer buffer = handle.Allocate(this.config.Allocator);
+            IRecvByteBufAllocatorHandle handle = Unsafe.RecvBufAllocHandle;
+            IByteBuffer buffer = handle.Allocate(_config.Allocator);
             handle.AttemptedBytesRead = buffer.WritableBytes;
             operation.UserToken = buffer;
 
@@ -118,23 +118,23 @@ namespace DotNetty.Transport.Channels.Sockets
 
             bool pending;
 #if NETCOREAPP || NETSTANDARD
-            pending = this.Socket.ReceiveFromAsync(operation);
+            pending = Socket.ReceiveFromAsync(operation);
 #else
             if (ExecutionContext.IsFlowSuppressed())
             {
-                pending = this.Socket.ReceiveFromAsync(operation);
+                pending = Socket.ReceiveFromAsync(operation);
             }
             else
             {
                 using (ExecutionContext.SuppressFlow())
                 {
-                    pending = this.Socket.ReceiveFromAsync(operation);
+                    pending = Socket.ReceiveFromAsync(operation);
                 }
             }
 #endif
             if (!pending)
             {
-                this.EventLoop.Execute(ReceiveFromCompletedSyncCallback, this.Unsafe, operation);
+                EventLoop.Execute(ReceiveFromCompletedSyncCallback, Unsafe, operation);
             }
         }
 
@@ -142,13 +142,13 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             if (buf is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buf); }
 
-            var operation = this.ReadOperation;
+            var operation = ReadOperation;
             var data = (IByteBuffer)operation.UserToken;
             bool free = true;
 
             try
             {
-                IRecvByteBufAllocatorHandle handle = this.Unsafe.RecvBufAllocHandle;
+                IRecvByteBufAllocatorHandle handle = Unsafe.RecvBufAllocHandle;
 
                 int received = operation.BytesTransferred;
                 if ((uint)(received - 1) > SharedConstants.TooBigOrNegative) // <= 0
@@ -159,7 +159,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 handle.LastBytesRead = received;
                 data.SetWriterIndex(data.WriterIndex + received);
                 EndPoint remoteAddress = operation.RemoteEndPoint;
-                buf.Add(new DatagramPacket(data, remoteAddress, this.LocalAddress));
+                buf.Add(new DatagramPacket(data, remoteAddress, LocalAddress));
                 free = false;
 
                 return 1;
@@ -194,30 +194,20 @@ namespace DotNetty.Transport.Channels.Sockets
             }
 
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
-            var operation = this.PrepareWriteOperation(data.GetReadableMemory(data.ReaderIndex, length));
+            var operation = PrepareWriteOperation(data.GetReadableMemory(data.ReaderIndex, length));
 #else
-            var operation = this.PrepareWriteOperation(data.GetIoBuffer(data.ReaderIndex, length));
+            var operation = PrepareWriteOperation(data.GetIoBuffer(data.ReaderIndex, length));
 #endif
             operation.RemoteEndPoint = envelope.Recipient;
-            this.SetState(StateFlags.WriteScheduled);
-            bool pending = this.Socket.SendToAsync(operation);
+            SetState(StateFlags.WriteScheduled);
+            bool pending = Socket.SendToAsync(operation);
             if (!pending)
             {
-                this.Unsafe.FinishWrite(operation);
+                Unsafe.FinishWrite(operation);
             }
         }
 
         //protected override IChannelUnsafe NewUnsafe() => new DatagramChannelUnsafe(this); ## 苦竹 屏蔽 ##
-
-        public sealed class DatagramChannelUnsafe : SocketMessageUnsafe
-        {
-            public DatagramChannelUnsafe() //SocketDatagramChannel channel)
-                : base() //channel)
-            {
-            }
-
-            protected override bool CanWrite => this.channel.Open && this.channel.Registered;
-        }
 
         protected override bool DoWriteMessage(object msg, ChannelOutboundBuffer input)
         {
@@ -232,7 +222,7 @@ namespace DotNetty.Transport.Channels.Sockets
             else if (msg is IByteBuffer buffer)
             {
                 data = buffer;//  (IByteBuffer)msg;
-                remoteAddress = this.RemoteAddressInternal;
+                remoteAddress = RemoteAddressInternal;
             }
 
             if (data is null || remoteAddress is null)
@@ -247,7 +237,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
 
             ArraySegment<byte> bytes = data.GetIoBuffer(data.ReaderIndex, length);
-            int writtenBytes = this.Socket.SendTo(bytes.Array, bytes.Offset, bytes.Count, SocketFlags.None, remoteAddress);
+            int writtenBytes = Socket.SendTo(bytes.Array, bytes.Offset, bytes.Count, SocketFlags.None, remoteAddress);
 
             return writtenBytes > 0;
         }
@@ -258,14 +248,14 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 return packet.Content.IsSingleIoBuffer
                     ? packet
-                    : new DatagramPacket(this.CreateNewDirectBuffer(packet, packet.Content), packet.Recipient);
+                    : new DatagramPacket(CreateNewDirectBuffer(packet, packet.Content), packet.Recipient);
             }
 
             if (msg is IByteBuffer buffer)
             {
                 return buffer.IsSingleIoBuffer
                     ? buffer
-                    : this.CreateNewDirectBuffer(buffer);
+                    : CreateNewDirectBuffer(buffer);
             }
 
             if (msg is IAddressedEnvelope<IByteBuffer> envolope)
@@ -276,7 +266,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
 
                 return new DefaultAddressedEnvelope<IByteBuffer>(
-                    this.CreateNewDirectBuffer(envolope, envolope.Content), envolope.Recipient);
+                    CreateNewDirectBuffer(envolope, envolope.Content), envolope.Recipient);
             }
 
             throw new NotSupportedException(
@@ -295,7 +285,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
 
             // Composite
-            IByteBuffer data = this.Allocator.Buffer(readableBytes);
+            IByteBuffer data = Allocator.Buffer(readableBytes);
             data.WriteBytes(buffer, buffer.ReaderIndex, readableBytes);
             buffer.SafeRelease();
 
@@ -315,7 +305,7 @@ namespace DotNetty.Transport.Channels.Sockets
             }
 
             // Composite
-            IByteBuffer data = this.Allocator.Buffer(readableBytes);
+            IByteBuffer data = Allocator.Buffer(readableBytes);
             data.WriteBytes(buffer, buffer.ReaderIndex, readableBytes);
             holder.SafeRelease();
 
@@ -336,29 +326,29 @@ namespace DotNetty.Transport.Channels.Sockets
         // See https://github.com/netty/netty/issues/2665
         protected override bool ContinueOnWriteError => true;
 
-        public bool IsConnected() => this.Socket.Connected;
+        public bool IsConnected() => Socket.Connected;
 
-        public Task JoinGroup(IPEndPoint multicastAddress) => this.JoinGroup(multicastAddress, null, null, this.NewPromise());
+        public Task JoinGroup(IPEndPoint multicastAddress) => JoinGroup(multicastAddress, null, null, NewPromise());
 
-        public Task JoinGroup(IPEndPoint multicastAddress, IPromise promise) => this.JoinGroup(multicastAddress, null, null, promise);
+        public Task JoinGroup(IPEndPoint multicastAddress, IPromise promise) => JoinGroup(multicastAddress, null, null, promise);
 
-        public Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface) => this.JoinGroup(multicastAddress, networkInterface, null, this.NewPromise());
+        public Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface) => JoinGroup(multicastAddress, networkInterface, null, NewPromise());
 
-        public Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPromise promise) => this.JoinGroup(multicastAddress, networkInterface, null, this.NewPromise());
+        public Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPromise promise) => JoinGroup(multicastAddress, networkInterface, null, NewPromise());
 
-        public Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source) => this.JoinGroup(multicastAddress, networkInterface, source, this.NewPromise());
+        public Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source) => JoinGroup(multicastAddress, networkInterface, source, NewPromise());
 
         public Task JoinGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source, IPromise promise)
         {
-            if (this.EventLoop.InEventLoop)
+            if (EventLoop.InEventLoop)
             {
-                this.DoJoinGroup(multicastAddress, networkInterface, source, promise);
+                DoJoinGroup(multicastAddress, networkInterface, source, promise);
             }
             else
             {
                 try
                 {
-                    this.EventLoop.Execute(() => this.DoJoinGroup(multicastAddress, networkInterface, source, promise));
+                    EventLoop.Execute(() => DoJoinGroup(multicastAddress, networkInterface, source, promise));
                 }
                 catch (Exception ex)
                 {
@@ -373,10 +363,10 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             try
             {
-                this.Socket.SetSocketOption(
-                    this.config.AddressFamilyOptionLevel,
+                Socket.SetSocketOption(
+                    _config.AddressFamilyOptionLevel,
                     SocketOptionName.AddMembership,
-                    this.CreateMulticastOption(multicastAddress, networkInterface, source));
+                    CreateMulticastOption(multicastAddress, networkInterface, source));
 
                 promise.Complete();
             }
@@ -386,27 +376,27 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        public Task LeaveGroup(IPEndPoint multicastAddress) => this.LeaveGroup(multicastAddress, null, null, this.NewPromise());
+        public Task LeaveGroup(IPEndPoint multicastAddress) => LeaveGroup(multicastAddress, null, null, NewPromise());
 
-        public Task LeaveGroup(IPEndPoint multicastAddress, IPromise promise) => this.LeaveGroup(multicastAddress, null, null, promise);
+        public Task LeaveGroup(IPEndPoint multicastAddress, IPromise promise) => LeaveGroup(multicastAddress, null, null, promise);
 
-        public Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface) => this.LeaveGroup(multicastAddress, networkInterface, null, this.NewPromise());
+        public Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface) => LeaveGroup(multicastAddress, networkInterface, null, NewPromise());
 
-        public Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPromise promise) => this.LeaveGroup(multicastAddress, networkInterface, null, promise);
+        public Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPromise promise) => LeaveGroup(multicastAddress, networkInterface, null, promise);
 
-        public Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source) => this.LeaveGroup(multicastAddress, networkInterface, source, this.NewPromise());
+        public Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source) => LeaveGroup(multicastAddress, networkInterface, source, NewPromise());
 
         public Task LeaveGroup(IPEndPoint multicastAddress, NetworkInterface networkInterface, IPEndPoint source, IPromise promise)
         {
-            if (this.EventLoop.InEventLoop)
+            if (EventLoop.InEventLoop)
             {
-                this.DoLeaveGroup(multicastAddress, networkInterface, source, promise);
+                DoLeaveGroup(multicastAddress, networkInterface, source, promise);
             }
             else
             {
                 try
                 {
-                    this.EventLoop.Execute(() => this.DoLeaveGroup(multicastAddress, networkInterface, source, promise));
+                    EventLoop.Execute(() => DoLeaveGroup(multicastAddress, networkInterface, source, promise));
                 }
                 catch (Exception ex)
                 {
@@ -421,10 +411,10 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             try
             {
-                this.Socket.SetSocketOption(
-                    this.config.AddressFamilyOptionLevel,
+                Socket.SetSocketOption(
+                    _config.AddressFamilyOptionLevel,
                     SocketOptionName.DropMembership,
-                    this.CreateMulticastOption(multicastAddress, networkInterface, source));
+                    CreateMulticastOption(multicastAddress, networkInterface, source));
 
                 promise.Complete();
             }
@@ -439,14 +429,14 @@ namespace DotNetty.Transport.Channels.Sockets
             int interfaceIndex = -1;
             if (networkInterface is object)
             {
-                int index = this.config.GetNetworkInterfaceIndex(networkInterface);
+                int index = _config.GetNetworkInterfaceIndex(networkInterface);
                 if (index >= 0)
                 {
                     interfaceIndex = index;
                 }
             }
 
-            if (this.Socket.AddressFamily == AddressFamily.InterNetwork)
+            if (Socket.AddressFamily == AddressFamily.InterNetwork)
             {
                 var multicastOption = new MulticastOption(multicastAddress.Address);
                 if (interfaceIndex >= 0)
@@ -461,7 +451,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 return multicastOption;
             }
 
-            if (this.Socket.AddressFamily == AddressFamily.InterNetworkV6)
+            if (Socket.AddressFamily == AddressFamily.InterNetworkV6)
             {
                 var multicastOption = new IPv6MulticastOption(multicastAddress.Address);
 
@@ -475,7 +465,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 return multicastOption;
             }
 
-            throw new NotSupportedException($"Socket address family {this.Socket.AddressFamily} not supported, expecting InterNetwork or InterNetworkV6");
+            throw new NotSupportedException($"Socket address family {Socket.AddressFamily} not supported, expecting InterNetwork or InterNetworkV6");
         }
     }
 }

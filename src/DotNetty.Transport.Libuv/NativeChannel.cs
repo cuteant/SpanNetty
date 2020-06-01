@@ -119,7 +119,7 @@ namespace DotNetty.Transport.Libuv
 
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
             {
-                var ch = this.channel;
+                var ch = this._channel;
                 if (!ch.Open)
                 {
                     return this.CreateClosedChannelExceptionTask();
@@ -167,7 +167,7 @@ namespace DotNetty.Transport.Libuv
             // Connect request callback from libuv thread
             void INativeUnsafe.FinishConnect(ConnectRequest request)
             {
-                var ch = this.channel;
+                var ch = this._channel;
                 ch.connectCancellationTask?.Cancel();
 
                 var promise = ch.connectPromise;
@@ -222,7 +222,7 @@ namespace DotNetty.Transport.Libuv
             {
                 Debug.Assert(readOperation is object);
 
-                var ch = this.channel;
+                var ch = this._channel;
                 IChannelConfiguration config = ch.Configuration;
                 IByteBufferAllocator allocator = config.Allocator;
 
@@ -236,7 +236,7 @@ namespace DotNetty.Transport.Libuv
             // Read callback from libuv thread
             void INativeUnsafe.FinishRead(ReadOperation operation)
             {
-                var ch = this.channel;
+                var ch = this._channel;
                 IChannelConfiguration config = ch.Configuration;
                 IChannelPipeline pipeline = ch.Pipeline;
                 OperationException error = operation.Error;
@@ -291,7 +291,7 @@ namespace DotNetty.Transport.Libuv
                 }
             }
 
-            internal void CloseSafe() => CloseSafe(this.channel, this.channel.CloseAsync());
+            internal void CloseSafe() => CloseSafe(this._channel, this._channel.CloseAsync());
 
             internal static async void CloseSafe(object channelObject, Task closeTask)
             {
@@ -313,7 +313,7 @@ namespace DotNetty.Transport.Libuv
 
             protected sealed override void Flush0()
             {
-                var ch = this.channel;
+                var ch = this._channel;
                 if (!ch.IsInState(StateFlags.WriteScheduled))
                 {
                     base.Flush0();
@@ -323,7 +323,7 @@ namespace DotNetty.Transport.Libuv
             // Write request callback from libuv thread
             void INativeUnsafe.FinishWrite(int bytesWritten, OperationException error)
             {
-                var ch = this.channel;
+                var ch = this._channel;
                 bool resetWritePending = ch.TryResetState(StateFlags.WriteScheduled);
                 Debug.Assert(resetWritePending);
 

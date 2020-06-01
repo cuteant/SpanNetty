@@ -4,36 +4,28 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
-    using System.Runtime.CompilerServices;
-    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
 
     partial class AbstractChannelHandlerContext
     {
-        static readonly Action<object> InvokeChannelRegisteredAction = OnInvokeChannelRegistered;
-        static readonly Action<object> InvokeChannelUnregisteredAction = OnInvokeChannelUnregistered;
-        static readonly Action<object> InvokeChannelActiveAction = OnInvokeChannelActive;
-        static readonly Action<object> InvokeChannelInactiveAction = OnInvokeChannelInactive;
-        static readonly Action<object, object> InvokeExceptionCaughtAction = OnInvokeExceptionCaught;
-        static readonly Action<object, object> SafeExecuteOutboundAsyncAction = OnSafeExecuteOutbound;
-        static readonly Action<object, object> InvokeCloseAction = OnInvokeClose;
-        static readonly Action<object, object> InvokeDisconnectAction = OnInvokeDisconnect;
-        static readonly Action<object, object> InvokeDeregisterAction = OnInvokeDeregister;
+        private static readonly Action<object> InvokeChannelReadCompleteAction = OnInvokeChannelReadComplete;
+        private static readonly Action<object> InvokeReadAction = OnInvokeRead;
+        private static readonly Action<object> InvokeChannelWritabilityChangedAction = OnInvokeChannelWritabilityChanged;
+        private static readonly Action<object> InvokeFlushAction = OnInvokeFlush;
+        private static readonly Action<object> InvokeChannelRegisteredAction = OnInvokeChannelRegistered;
+        private static readonly Action<object> InvokeChannelUnregisteredAction = OnInvokeChannelUnregistered;
+        private static readonly Action<object> InvokeChannelActiveAction = OnInvokeChannelActive;
+        private static readonly Action<object> InvokeChannelInactiveAction = OnInvokeChannelInactive;
 
-        internal AbstractChannelHandlerContext Next
-        {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
-            get => Volatile.Read(ref _next);
-            set => Interlocked.Exchange(ref _next, value);
-        }
-        internal AbstractChannelHandlerContext Prev
-        {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
-            get => Volatile.Read(ref _prev);
-            set => Interlocked.Exchange(ref _prev, value);
-        }
+        private static readonly Action<object, object> InvokeUserEventTriggeredAction = OnInvokeUserEventTriggered;
+        private static readonly Action<object, object> InvokeChannelReadAction = OnInvokeChannelRead;
+        private static readonly Action<object, object> InvokeExceptionCaughtAction = OnInvokeExceptionCaught;
+        private static readonly Action<object, object> SafeExecuteOutboundAsyncAction = OnSafeExecuteOutbound;
+        private static readonly Action<object, object> InvokeCloseAction = OnInvokeClose;
+        private static readonly Action<object, object> InvokeDisconnectAction = OnInvokeDisconnect;
+        private static readonly Action<object, object> InvokeDeregisterAction = OnInvokeDeregister;
 
         private static void OnInvokeChannelReadComplete(object ctx)
         {

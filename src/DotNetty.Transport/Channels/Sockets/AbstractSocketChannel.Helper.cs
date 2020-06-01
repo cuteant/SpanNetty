@@ -4,25 +4,18 @@
 namespace DotNetty.Transport.Channels.Sockets
 {
     using System;
-    using System.Runtime.CompilerServices;
-    using System.Threading;
+    using System.Net.Sockets;
     using System.Threading.Tasks;
-    using DotNetty.Common.Concurrency;
 
-    partial class AbstractSocketChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>
-        where TChannel : AbstractSocketChannel<TChannel, TUnsafe>
-        where TUnsafe : AbstractSocketChannel<TChannel, TUnsafe>.AbstractSocketUnsafe, new()
+    partial class AbstractSocketChannel<TChannel, TUnsafe>
     {
+        internal static readonly EventHandler<SocketAsyncEventArgs> IoCompletedCallback = OnIoCompleted;
+        private static readonly Action<object, object> ConnectCallbackAction = OnConnectCompletedSync;
+        private static readonly Action<object, object> ReadCallbackAction = OnReadCompletedSync;
+        private static readonly Action<object, object> WriteCallbackAction = OnWriteCompletedSync;
         private static readonly Action<object> ClearReadPendingAction = OnClearReadPending;
         private static readonly Action<object, object> ConnectTimeoutAction = OnConnectTimeout;
         private static readonly Action<Task, object> CloseSafeOnCompleteAction = OnCloseSafeOnComplete;
-
-        private int State
-        {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
-            get => Volatile.Read(ref _state);
-            set => Interlocked.Exchange(ref _state, value);
-        }
 
         private static void OnConnectCompletedSync(object u, object e) => ((ISocketChannelUnsafe)u).FinishConnect((SocketChannelAsyncOperation<TChannel, TUnsafe>)e);
 
@@ -36,7 +29,7 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             var self = (TChannel)c;
             // todo: call Socket.CancelConnectAsync(...)
-            var promise = self.connectPromise;
+            var promise = self._connectPromise;
             var cause = new ConnectTimeoutException("connection timed out: " + a.ToString());
             if (promise is object && promise.TrySetException(cause))
             {
@@ -47,8 +40,8 @@ namespace DotNetty.Transport.Channels.Sockets
         private static void OnCloseSafeOnComplete(Task t, object s)
         {
             var c = (TChannel)s;
-            c.connectCancellationTask?.Cancel();
-            c.connectPromise = null;
+            c._connectCancellationTask?.Cancel();
+            c._connectPromise = null;
             c.CloseSafe();
         }
     }

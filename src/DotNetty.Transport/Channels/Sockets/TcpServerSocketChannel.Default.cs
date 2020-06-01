@@ -28,7 +28,7 @@ namespace DotNetty.Transport.Channels.Sockets
         public TcpServerSocketChannel(Socket socket)
             : base(null, socket)
         {
-            this.config = new TcpServerSocketChannelConfig((TServerChannel)this, socket);
+            this._config = new TcpServerSocketChannelConfig((TServerChannel)this, socket);
             _channelFactory = new TChannelFactory();
         }
     }

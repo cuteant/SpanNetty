@@ -14,7 +14,9 @@ namespace DotNetty.Transport.Channels
     /// <see cref="IChannel.DisconnectAsync()"/>, <see cref="IChannel.WriteAsync(object)"/>,
     /// <see cref="IChannel.Flush()"/>.
     /// </summary>
-    public abstract partial class AbstractServerChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>, IServerChannel
+    public abstract class AbstractServerChannel<TChannel, TUnsafe> : AbstractChannel<TChannel, TUnsafe>, IServerChannel
+        where TChannel : AbstractServerChannel<TChannel, TUnsafe>
+        where TUnsafe : AbstractServerChannel<TChannel, TUnsafe>.DefaultServerUnsafe, new()
     {
         static readonly ChannelMetadata METADATA = new ChannelMetadata(false, 16);
 
@@ -40,15 +42,15 @@ namespace DotNetty.Transport.Channels
 
         public class DefaultServerUnsafe : AbstractUnsafe
         {
-            Task err;
+            private Task _err;
 
             public override void Initialize(IChannel channel)
             {
                 base.Initialize(channel);
-                this.err = TaskUtil.FromException(new NotSupportedException());
+                _err = TaskUtil.FromException(new NotSupportedException());
             }
 
-            public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress) => this.err;
+            public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress) => _err;
         }
     }
 }

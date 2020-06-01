@@ -3,15 +3,15 @@
 
 namespace DotNetty.Transport.Channels.Sockets
 {
-    using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Net.Sockets;
 
     /// <summary>
     /// <see cref="AbstractSocketChannel{TChannel, TUnsafe}"/> base class for <see cref="IChannel"/>s that operate on messages.
     /// </summary>
     public abstract partial class AbstractSocketMessageChannel<TChannel, TUnsafe> : AbstractSocketChannel<TChannel, TUnsafe>
+        where TChannel : AbstractSocketMessageChannel<TChannel, TUnsafe>
+        where TUnsafe : AbstractSocketMessageChannel<TChannel, TUnsafe>.SocketMessageUnsafe, new()
     {
         /// <summary>
         /// Creates a new <see cref="AbstractSocketMessageChannel{TChannel, TUnsafe}"/> instance.
@@ -25,107 +25,6 @@ namespace DotNetty.Transport.Channels.Sockets
 
         //protected override IChannelUnsafe NewUnsafe() => new SocketMessageUnsafe(this); ## 苦竹 屏蔽 ##
 
-        public class SocketMessageUnsafe : AbstractSocketUnsafe
-        {
-            readonly List<object> readBuf = new List<object>();
-
-            public SocketMessageUnsafe() // (AbstractSocketMessageChannel channel)
-                : base() //channel)
-            {
-            }
-
-            //new AbstractSocketMessageChannel Channel => (AbstractSocketMessageChannel)this.channel;
-
-            public override void FinishRead(SocketChannelAsyncOperation<TChannel, TUnsafe> operation)
-            {
-                Debug.Assert(this.channel.EventLoop.InEventLoop);
-
-                var ch = this.channel;
-                if (0u >= (uint)(ch.ResetState(StateFlags.ReadScheduled) & StateFlags.Active))
-                {
-                    return; // read was signaled as a result of channel closure
-                }
-                IChannelConfiguration config = ch.Configuration;
-
-                IChannelPipeline pipeline = ch.Pipeline;
-                IRecvByteBufAllocatorHandle allocHandle = ch.Unsafe.RecvBufAllocHandle;
-                allocHandle.Reset(config);
-
-                bool closed = false;
-                Exception exception = null;
-                try
-                {
-                    try
-                    {
-                        do
-                        {
-                            int localRead = ch.DoReadMessages(this.readBuf);
-                            uint uLocalRead = (uint)localRead;
-                            if (0u >= uLocalRead)
-                            {
-                                break;
-                            }
-                            if (uLocalRead > SharedConstants.TooBigOrNegative) // localRead < 0
-                            {
-                                closed = true;
-                                break;
-                            }
-
-                            allocHandle.IncMessagesRead(localRead);
-                        }
-                        while (allocHandle.ContinueReading());
-                    }
-                    catch (Exception t)
-                    {
-                        exception = t;
-                    }
-                    int size = this.readBuf.Count;
-                    for (int i = 0; i < size; i++)
-                    {
-                        ch.ReadPending = false;
-                        pipeline.FireChannelRead(this.readBuf[i]);
-                    }
-
-                    this.readBuf.Clear();
-                    allocHandle.ReadComplete();
-                    pipeline.FireChannelReadComplete();
-
-                    if (exception is object)
-                    {
-                        if (exception is SocketException asSocketException && asSocketException.SocketErrorCode != SocketError.TryAgain) // todo: other conditions for not closing message-based socket?
-                        {
-                            // ServerChannel should not be closed even on SocketException because it can often continue
-                            // accepting incoming connections. (e.g. too many open files)
-                            closed = !(ch is IServerChannel);
-                        }
-
-                        pipeline.FireExceptionCaught(exception);
-                    }
-
-                    if (closed)
-                    {
-                        if (ch.Open)
-                        {
-                            this.Close(this.VoidPromise());
-                        }
-                    }
-                }
-                finally
-                {
-                    // Check if there is a readPending which was not processed yet.
-                    // This could be for two reasons:
-                    // /// The user called Channel.read() or ChannelHandlerContext.read() in channelRead(...) method
-                    // /// The user called Channel.read() or ChannelHandlerContext.read() in channelReadComplete(...) method
-                    //
-                    // See https://github.com/netty/netty/issues/2254
-                    if (!closed && (ch.ReadPending || config.AutoRead))
-                    {
-                        ch.DoBeginRead();
-                    }
-                }
-            }
-        }
-
         protected override void DoWrite(ChannelOutboundBuffer input)
         {
             while (true)
@@ -138,9 +37,9 @@ namespace DotNetty.Transport.Channels.Sockets
                 try
                 {
                     var done = false;
-                    for (int i = this.Configuration.WriteSpinCount - 1; i >= 0; i--)
+                    for (int i = Configuration.WriteSpinCount - 1; i >= 0; i--)
                     {
-                        if (this.DoWriteMessage(msg, input))
+                        if (DoWriteMessage(msg, input))
                         {
                             done = true;
                             break;
@@ -154,13 +53,13 @@ namespace DotNetty.Transport.Channels.Sockets
                     else
                     {
                         // Did not write all messages.
-                        this.ScheduleMessageWrite(msg);
+                        ScheduleMessageWrite(msg);
                         break;
                     }
                 }
                 catch (SocketException e)
                 {
-                    if (this.ContinueOnWriteError)
+                    if (ContinueOnWriteError)
                     {
                         input.Remove(e);
                     }

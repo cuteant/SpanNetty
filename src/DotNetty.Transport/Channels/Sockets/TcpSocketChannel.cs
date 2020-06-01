@@ -17,9 +17,9 @@ namespace DotNetty.Transport.Channels.Sockets
     /// </summary>
     public partial class TcpSocketChannel<TChannel> : AbstractSocketByteChannel<TChannel, TcpSocketChannel<TChannel>.TcpSocketChannelUnsafe>, ISocketChannel
     {
-        static readonly ChannelMetadata METADATA = new ChannelMetadata(false, 16);
+        private static readonly ChannelMetadata METADATA = new ChannelMetadata(false, 16);
 
-        readonly ISocketChannelConfiguration config;
+        private readonly ISocketChannelConfiguration _config;
 
         /// <summary>Create a new instance</summary>
         public TcpSocketChannel()
@@ -53,20 +53,20 @@ namespace DotNetty.Transport.Channels.Sockets
         protected TcpSocketChannel(IChannel parent, Socket socket, bool connected)
             : base(parent, socket)
         {
-            this.config = new TcpSocketChannelConfig((TChannel)this, socket);
+            _config = new TcpSocketChannelConfig((TChannel)this, socket);
             if (connected)
             {
-                this.OnConnected();
+                OnConnected();
             }
         }
 
         public override ChannelMetadata Metadata => METADATA;
 
-        public override IChannelConfiguration Configuration => this.config;
+        public override IChannelConfiguration Configuration => _config;
 
-        protected override EndPoint LocalAddressInternal => this.Socket.LocalEndPoint;
+        protected override EndPoint LocalAddressInternal => Socket.LocalEndPoint;
 
-        protected override EndPoint RemoteAddressInternal => this.Socket.RemoteEndPoint;
+        protected override EndPoint RemoteAddressInternal => Socket.RemoteEndPoint;
 
         public bool IsOutputShutdown
         {
@@ -75,7 +75,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public Task ShutdownOutputAsync()
         {
-            var tcs = this.NewPromise();
+            var tcs = NewPromise();
             // todo: use closeExecutor if available
             //Executor closeExecutor = ((TcpSocketChannelUnsafe) unsafe()).closeExecutor();
             //if (closeExecutor is object) {
@@ -86,10 +86,10 @@ namespace DotNetty.Transport.Channels.Sockets
             //        }
             //    });
             //} else {
-            IEventLoop loop = this.EventLoop;
+            IEventLoop loop = EventLoop;
             if (loop.InEventLoop)
             {
-                this.ShutdownOutput0(tcs);
+                ShutdownOutput0(tcs);
             }
             else
             {
@@ -103,7 +103,7 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             try
             {
-                this.Socket.Shutdown(SocketShutdown.Send);
+                Socket.Shutdown(SocketShutdown.Send);
                 promise.Complete();
             }
             catch (Exception ex)
@@ -112,13 +112,13 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        protected override void DoBind(EndPoint localAddress) => this.Socket.Bind(localAddress);
+        protected override void DoBind(EndPoint localAddress) => Socket.Bind(localAddress);
 
         protected override bool DoConnect(EndPoint remoteAddress, EndPoint localAddress)
         {
             if (localAddress is object)
             {
-                this.Socket.Bind(localAddress);
+                Socket.Bind(localAddress);
             }
 
             bool success = false;
@@ -128,10 +128,10 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     RemoteEndPoint = remoteAddress
                 };
-                bool connected = !this.Socket.ConnectAsync(eventPayload);
+                bool connected = !Socket.ConnectAsync(eventPayload);
                 if (connected)
                 {
-                    this.DoFinishConnect(eventPayload);
+                    DoFinishConnect(eventPayload);
                 }
                 success = true;
                 return connected;
@@ -140,7 +140,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 if (!success)
                 {
-                    this.DoClose();
+                    DoClose();
                 }
             }
         }
@@ -155,31 +155,31 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 operation.Dispose();
             }
-            this.OnConnected();
+            OnConnected();
         }
 
         void OnConnected()
         {
-            this.SetState(StateFlags.Active);
+            SetState(StateFlags.Active);
 
             // preserve local and remote addresses for later availability even if Socket fails
-            this.CacheLocalAddress();
-            this.CacheRemoteAddress();
+            CacheLocalAddress();
+            CacheRemoteAddress();
         }
 
-        protected override void DoDisconnect() => this.DoClose();
+        protected override void DoDisconnect() => DoClose();
 
         protected override void DoClose()
         {
             try
             {
-                if (this.TryResetState(StateFlags.Open))
+                if (TryResetState(StateFlags.Open))
                 {
-                    if (this.TryResetState(StateFlags.Active))
+                    if (TryResetState(StateFlags.Active))
                     {
-                        this.Socket.Shutdown(SocketShutdown.Both);
+                        Socket.Shutdown(SocketShutdown.Both);
                     }
-                    this.Socket.SafeClose(); //this.Socket.Dispose();
+                    Socket.SafeClose(); //this.Socket.Dispose();
                 }
             }
             finally
@@ -195,15 +195,15 @@ namespace DotNetty.Transport.Channels.Sockets
                 ThrowHelper.ThrowNotImplementedException_OnlyIByteBufferImpl();
             }
 
-            if (!this.Socket.Connected)
+            if (!Socket.Connected)
             {
                 return -1; // prevents ObjectDisposedException from being thrown in case connection has been lost in the meantime
             }
 
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
-            int received = this.Socket.Receive(byteBuf.FreeSpan, SocketFlags.None, out SocketError errorCode);
+            int received = Socket.Receive(byteBuf.FreeSpan, SocketFlags.None, out SocketError errorCode);
 #else
-            int received = this.Socket.Receive(byteBuf.Array, byteBuf.ArrayOffset + byteBuf.WriterIndex, byteBuf.WritableBytes, SocketFlags.None, out SocketError errorCode);
+            int received = Socket.Receive(byteBuf.Array, byteBuf.ArrayOffset + byteBuf.WriterIndex, byteBuf.WritableBytes, SocketFlags.None, out SocketError errorCode);
 #endif
 
             switch (errorCode)
@@ -236,7 +236,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 ThrowHelper.ThrowNotImplementedException_OnlyIByteBufferImpl();
             }
 
-            int sent = this.Socket.Send(buf.Array, buf.ArrayOffset + buf.ReaderIndex, buf.ReadableBytes, SocketFlags.None, out SocketError errorCode);
+            int sent = Socket.Send(buf.Array, buf.ArrayOffset + buf.ReaderIndex, buf.ReadableBytes, SocketFlags.None, out SocketError errorCode);
 
             if (errorCode != SocketError.Success && errorCode != SocketError.WouldBlock)
             {
@@ -260,8 +260,8 @@ namespace DotNetty.Transport.Channels.Sockets
         protected override void DoWrite(ChannelOutboundBuffer input)
         {
             List<ArraySegment<byte>> sharedBufferList = null;
-            var socketConfig = (TcpSocketChannelConfig)this.config;
-            Socket socket = this.Socket;
+            var socketConfig = (TcpSocketChannelConfig)_config;
+            Socket socket = Socket;
             var writeSpinCount = socketConfig.WriteSpinCount;
             try
             {
@@ -314,7 +314,7 @@ namespace DotNetty.Transport.Channels.Sockets
                                 }
                                 else
                                 {
-                                    bufferList = this.AdjustBufferList(localWrittenBytes, bufferList);
+                                    bufferList = AdjustBufferList(localWrittenBytes, bufferList);
                                 }
                             }
                             break;
@@ -333,10 +333,10 @@ namespace DotNetty.Transport.Channels.Sockets
                         {
                             asyncBufferList = sharedBufferList.ToArray(); // move out of shared list that will be reused which could corrupt buffers still pending update
                         }
-                        var asyncOperation = this.PrepareWriteOperation(asyncBufferList);
+                        var asyncOperation = PrepareWriteOperation(asyncBufferList);
 
                         // Not all buffers were written out completely
-                        if (this.IncompleteWrite(true, asyncOperation))
+                        if (IncompleteWrite(true, asyncOperation))
                         {
                             break;
                         }
@@ -379,58 +379,5 @@ namespace DotNetty.Transport.Channels.Sockets
         }
 
         //protected override IChannelUnsafe NewUnsafe() => new TcpSocketChannelUnsafe(this); ## 苦竹 屏蔽 ##
-
-        public sealed class TcpSocketChannelUnsafe : SocketByteChannelUnsafe
-        {
-            public TcpSocketChannelUnsafe() //TcpSocketChannel channel)
-                : base() //channel)
-            {
-            }
-
-            // todo: review
-            //protected Executor closeExecutor()
-            //{
-            //    if (javaChannel().isOpen() && config().getSoLinger() > 0)
-            //    {
-            //        return GlobalEventExecutor.INSTANCE;
-            //    }
-            //    return null;
-            //}
-        }
-
-        sealed class TcpSocketChannelConfig : DefaultSocketChannelConfiguration
-        {
-            int maxBytesPerGatheringWrite = int.MaxValue;
-
-            public TcpSocketChannelConfig(TChannel channel, Socket javaSocket)
-                : base(channel, javaSocket)
-            {
-                this.CalculateMaxBytesPerGatheringWrite();
-            }
-
-            public int GetMaxBytesPerGatheringWrite() => Volatile.Read(ref this.maxBytesPerGatheringWrite);
-
-            public override int SendBufferSize
-            {
-                get => base.SendBufferSize;
-                set
-                {
-                    base.SendBufferSize = value;
-                    this.CalculateMaxBytesPerGatheringWrite();
-                }
-            }
-
-            void CalculateMaxBytesPerGatheringWrite()
-            {
-                // Multiply by 2 to give some extra space in case the OS can process write data faster than we can provide.
-                int newSendBufferSize = this.SendBufferSize << 1;
-                if (newSendBufferSize > 0)
-                {
-                    Interlocked.Exchange(ref this.maxBytesPerGatheringWrite, newSendBufferSize);
-                }
-            }
-
-            protected override void AutoReadCleared() => ((TChannel)this.Channel).ClearReadPending();
-        }
     }
 }
