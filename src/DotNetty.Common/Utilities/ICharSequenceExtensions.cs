@@ -3,6 +3,7 @@
 
 namespace DotNetty.Common.Utilities
 {
+    using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
     using DotNetty.Common.Internal;
 
@@ -37,5 +38,13 @@ namespace DotNetty.Common.Utilities
                     return false;
             }
         }
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        public static bool StartsWith(this ICharSequence seq, ICharSequence prefix)
+            => seq.StartsWith(prefix, 0) ? true : false;
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        public static bool StartsWith(this ICharSequence seq, ICharSequence prefix, int start)
+            => seq.RegionMatches(start, prefix, 0, prefix.Count) ? true : false;
     }
 }

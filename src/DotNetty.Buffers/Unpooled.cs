@@ -45,12 +45,13 @@ namespace DotNetty.Buffers
         /// </summary>
         public static IByteBuffer WrappedBuffer(byte[] array, int offset, int length)
         {
-            if (0u >= (uint)length)
+            uint uLen = (uint)length;
+            if (0u >= uLen)
             {
                 return Empty;
             }
 
-            if (0u >= (uint)offset && length == array.Length)
+            if (0u >= (uint)offset && uLen >= (uint)array.Length)
             {
                 return WrappedBuffer(array);
             }

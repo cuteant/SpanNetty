@@ -13,6 +13,9 @@ namespace DotNetty.Transport.Channels.Sockets
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
+#if DESKTOPCLR
+    using System.Threading;
+#endif
 
     public sealed class SocketDatagramChannel : SocketDatagramChannel<SocketDatagramChannel>
     {

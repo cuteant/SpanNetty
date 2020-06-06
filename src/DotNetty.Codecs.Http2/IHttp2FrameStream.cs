@@ -6,7 +6,7 @@ namespace DotNetty.Codecs.Http2
     using System;
 
     /// <summary>
-    /// A single stream within a HTTP/2 connection. To be used with the <see cref="Http2FrameCodec"/>.
+    /// A single stream within an HTTP/2 connection. To be used with the <see cref="Http2FrameCodec"/>.
     /// </summary>
     public interface IHttp2FrameStream : IEquatable<IHttp2FrameStream>
     {

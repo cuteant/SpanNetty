@@ -159,7 +159,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             string encoderName;
             if (ctx is null)
             {
-                // this means the user use a HttpServerCodec
+                // this means the user use an HttpServerCodec
                 ctx = p.Context<HttpServerCodec>();
                 if (ctx is null)
                 {
@@ -219,7 +219,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             IChannelHandlerContext ctx = p.Context<HttpRequestDecoder>();
             if (ctx is null)
             {
-                // this means the user use a HttpServerCodec
+                // this means the user use an HttpServerCodec
                 ctx = p.Context<HttpServerCodec>();
                 if (ctx is null)
                 {

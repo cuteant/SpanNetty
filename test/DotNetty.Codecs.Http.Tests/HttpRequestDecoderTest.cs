@@ -129,7 +129,7 @@ namespace DotNetty.Codecs.Http.Tests
                     amount = headerLength - a;
                 }
 
-                // if header is done it should produce a HttpRequest
+                // if header is done it should produce an HttpRequest
                 channel.WriteInbound(Unpooled.CopiedBuffer(content, a, amount));
                 a += amount;
             }

@@ -93,8 +93,8 @@ namespace DotNetty.Codecs.Http2
                     // Write the data
                     var content = contentMsg.Content;
                     endStream = isLastContent && trailers.IsEmpty;
-                    release = false;
                     encoder.WriteDataAsync(ctx, _currentStreamId, content, 0, endStream, promiseAggregator.NewPromise());
+                    release = false;
 
                     if (!trailers.IsEmpty)
                     {

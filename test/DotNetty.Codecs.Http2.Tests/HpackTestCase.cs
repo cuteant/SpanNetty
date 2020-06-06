@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
                 List<HpackHeaderField> expectedDynamicTable = headerBlock.GetDynamicTable();
 
-                if (!expectedDynamicTable.SequenceEqual(actualDynamicTable))
+                if (!HeadersEqual(expectedDynamicTable, actualDynamicTable))
                 {
                     throw new Exception(
                             "\nEXPECTED DYNAMIC TABLE:\n" + expectedDynamicTable +
@@ -93,10 +93,10 @@ namespace DotNetty.Codecs.Http2.Tests
                 List<HpackHeaderField> expectedHeaders = new List<HpackHeaderField>();
                 foreach (HpackHeaderField h in headerBlock.GetHeaders())
                 {
-                    expectedHeaders.Add(new HpackHeaderField(h.name, h.value));
+                    expectedHeaders.Add(new HpackHeaderField(h._name, h._value));
                 }
 
-                if (!expectedHeaders.SequenceEqual(actualHeaders))
+                if (!HeadersEqual(expectedHeaders, actualHeaders))
                 {
                     throw new Exception(
                             "\nEXPECTED:\n" + expectedHeaders +
@@ -111,7 +111,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
                 List<HpackHeaderField> expectedDynamicTable = headerBlock.GetDynamicTable();
 
-                if (!expectedDynamicTable.SequenceEqual(actualDynamicTable))
+                if (!HeadersEqual(expectedDynamicTable, actualDynamicTable))
                 {
                     throw new Exception(
                             "\nEXPECTED DYNAMIC TABLE:\n" + expectedDynamicTable +
@@ -184,7 +184,7 @@ namespace DotNetty.Codecs.Http2.Tests
             IHttp2Headers headers = new DefaultHttp2Headers(false);
             foreach (HpackHeaderField e in inHeaders)
             {
-                headers.Add(e.name, e.value);
+                headers.Add(e._name, e._value);
             }
             return headers;
         }
@@ -235,6 +235,22 @@ namespace DotNetty.Codecs.Http2.Tests
             {
                 //
             }
+        }
+
+        private static bool HeadersEqual(List<HpackHeaderField> expected, List<HpackHeaderField> actual)
+        {
+            if (expected.Count != actual.Count)
+            {
+                return false;
+            }
+            for (int i = 0; i < expected.Count; i++)
+            {
+                if (!expected[i].EqualsForTest(actual[i]))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         internal sealed class HeaderBlock

@@ -8,9 +8,9 @@ namespace DotNetty.Codecs.Http2
 
     public sealed class DefaultHttp2UnknownFrame : DefaultByteBufferHolder, IHttp2UnknownFrame
     {
-        private readonly Http2FrameTypes frameType;
-        private readonly Http2Flags flags;
-        private IHttp2FrameStream stream;
+        private readonly Http2FrameTypes _frameType;
+        private readonly Http2Flags _flags;
+        private IHttp2FrameStream _stream;
 
         public DefaultHttp2UnknownFrame(Http2FrameTypes frameType, Http2Flags flags)
             : this(frameType, flags, Unpooled.Empty)
@@ -20,62 +20,61 @@ namespace DotNetty.Codecs.Http2
         public DefaultHttp2UnknownFrame(Http2FrameTypes frameType, Http2Flags flags, IByteBuffer data)
             : base(data)
         {
-            this.frameType = frameType;
-            this.flags = flags;
+            _frameType = frameType;
+            _flags = flags;
         }
 
-        public Http2FrameTypes FrameType => this.frameType;
+        public Http2FrameTypes FrameType => _frameType;
 
-        public Http2Flags Flags => this.flags;
+        public Http2Flags Flags => _flags;
 
-        public IHttp2FrameStream Stream { get => this.stream; set => this.stream = value; }
+        public IHttp2FrameStream Stream { get => _stream; set => _stream = value; }
 
         public string Name => "UNKNOWN";
 
         public override IByteBufferHolder Copy()
         {
-            return this.Replace(this.Content.Copy());
+            return Replace(Content.Copy());
         }
 
         public override IByteBufferHolder Duplicate()
         {
-            return this.Replace(this.Content.Duplicate());
+            return Replace(Content.Duplicate());
         }
 
         public override IByteBufferHolder RetainedDuplicate()
         {
-            return this.Replace(this.Content.RetainedDuplicate());
+            return Replace(Content.RetainedDuplicate());
         }
 
         public override IByteBufferHolder Replace(IByteBuffer content)
         {
-            return new DefaultHttp2UnknownFrame(this.frameType, this.flags, content) { Stream = this.stream };
+            return new DefaultHttp2UnknownFrame(_frameType, _flags, content) { Stream = _stream };
         }
 
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(this, obj)) { return true; }
 
-            var unknownFrame = obj as DefaultHttp2UnknownFrame;
-            if (unknownFrame is null) { return false; }
+            var otherFrame = obj as DefaultHttp2UnknownFrame;
+            if (otherFrame is null) { return false; }
 
-            var thisStream = this.stream;
-            var otherStream = unknownFrame.Stream;
-
-            return base.Equals(obj)
-                && this.flags.Equals(unknownFrame.flags)
-                && this.frameType == unknownFrame.frameType
-                && (ReferenceEquals(thisStream, otherStream) || (thisStream is object && thisStream.Equals(otherStream)));
+            var thisStream = _stream;
+            var otherStream = otherFrame.Stream;
+            return (ReferenceEquals(thisStream, otherStream) || otherStream is object && otherStream.Equals(thisStream))
+                   && _flags.Equals(otherFrame._flags)
+                   && _frameType == otherFrame._frameType
+                   && base.Equals(otherFrame);
         }
 
         public override int GetHashCode()
         {
             int hash = base.GetHashCode();
-            hash = hash * 31 + (byte)this.frameType;
-            hash = hash * 31 + this.flags.GetHashCode();
-            if (this.stream is object)
+            hash = hash * 31 + (byte)_frameType;
+            hash = hash * 31 + _flags.GetHashCode();
+            if (_stream is object)
             {
-                hash = hash * 31 + this.stream.GetHashCode();
+                hash = hash * 31 + _stream.GetHashCode();
             }
 
             return hash;
@@ -83,8 +82,8 @@ namespace DotNetty.Codecs.Http2
 
         public override string ToString()
         {
-            return StringUtil.SimpleClassName(this) + "(frameType=" + this.frameType + ", stream=" + this.stream +
-                    ", flags=" + this.flags + ", content=" + this.ContentToString() + ')';
+            return StringUtil.SimpleClassName(this) + "(frameType=" + _frameType + ", stream=" + _stream +
+                    ", flags=" + _flags + ", content=" + ContentToString() + ')';
         }
     }
 }

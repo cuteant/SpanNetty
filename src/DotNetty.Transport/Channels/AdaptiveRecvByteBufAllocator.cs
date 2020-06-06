@@ -118,7 +118,7 @@ namespace DotNetty.Transport.Channels
 
             void Record(int actualReadBytes)
             {
-                if (actualReadBytes <= SizeTable[Math.Max(0, this.index - IndexDecrement - 1)])
+                if (actualReadBytes <= SizeTable[Math.Max(0, this.index - IndexDecrement)])
                 {
                     if (this.decreaseNow)
                     {

@@ -755,6 +755,42 @@ namespace DotNetty.Codecs.Http2.Tests
         }
 
         [Fact]
+        public void DoNotLeakOnFailedInitializationForChannels()
+        {
+            // We use a limit of 1 and then increase it step by step.
+            SetUp(Http2FrameCodecBuilder.ForServer(), new Http2Settings().MaxConcurrentStreams(2));
+
+            IHttp2FrameStream stream1 = _frameCodec.NewStream();
+            IHttp2FrameStream stream2 = _frameCodec.NewStream();
+
+            var stream1HeaderPromise = _channel.NewPromise();
+            var stream2HeaderPromise = _channel.NewPromise();
+
+            _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream1 },
+                                  stream1HeaderPromise);
+            _channel.RunPendingTasks();
+
+            _frameInboundWriter.WriteInboundGoAway(stream1.Id, 0L, Unpooled.Empty);
+
+            _channel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()) { Stream = stream2 },
+                                  stream2HeaderPromise);
+            _channel.RunPendingTasks();
+
+            try
+            {
+                stream1HeaderPromise.Task.GetAwaiter().GetResult();
+            }
+            catch
+            {
+                Assert.False(true);
+            }
+            Assert.True(stream2HeaderPromise.IsCompleted);
+
+            Assert.Equal(0, _frameCodec.NumInitializingStreams);
+            Assert.False(_channel.FinishAndReleaseAll());
+        }
+
+        [Fact]
         public void StreamIdentifiersExhausted()
         {
             int maxServerStreamId = int.MaxValue - 1;

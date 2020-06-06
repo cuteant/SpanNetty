@@ -254,7 +254,7 @@ namespace DotNetty.Codecs
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_BadBase64InputChar(int index, sbyte value)
+        internal static void ThrowArgumentException_BadBase64InputChar(int index, byte value)
         {
             throw GetException();
             ArgumentException GetException()

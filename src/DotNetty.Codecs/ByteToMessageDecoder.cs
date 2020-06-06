@@ -265,9 +265,7 @@ namespace DotNetty.Codecs
                 int readable = buf.ReadableBytes;
                 if (readable > 0)
                 {
-                    IByteBuffer bytes = buf.ReadBytes(readable);
-                    buf.Release();
-                    context.FireChannelRead(bytes);
+                    context.FireChannelRead(buf);
                     context.FireChannelReadComplete();
                 }
                 else
@@ -397,7 +395,7 @@ namespace DotNetty.Codecs
         /// <inheritdoc />
         public override void UserEventTriggered(IChannelHandlerContext ctx, object evt)
         {
-            if(evt is ChannelInputShutdownEvent)
+            if (evt is ChannelInputShutdownEvent)
             {
                 // The decodeLast method is invoked when a channelInactive event is encountered.
                 // This method is responsible for ending requests in some situations and must be called
@@ -414,9 +412,9 @@ namespace DotNetty.Codecs
             {
                 ChannelInputClosed(ctx, output);
             }
-            catch (DecoderException e)
+            catch (DecoderException)
             {
-                throw e;
+                throw;
             }
             catch (Exception e)
             {
@@ -589,6 +587,8 @@ namespace DotNetty.Codecs
                 _decodeState = STATE_INIT;
                 if (removePending)
                 {
+                    FireChannelRead(ctx, output, output.Count);
+                    output.Clear();
                     HandlerRemoved(ctx);
                 }
             }

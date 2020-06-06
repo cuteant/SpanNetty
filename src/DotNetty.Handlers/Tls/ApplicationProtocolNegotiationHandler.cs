@@ -111,7 +111,7 @@ namespace DotNetty.Handlers.Tls
             static InvalidOperationException GetException()
             {
                 return new InvalidOperationException(
-                    "cannot find a SslHandler in the pipeline (required for application-level protocol negotiation)");
+                    "cannot find an SslHandler in the pipeline (required for application-level protocol negotiation)");
             }
         }
 

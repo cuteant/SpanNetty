@@ -12,7 +12,7 @@ namespace DotNetty.Codecs.Base64
         readonly IBase64Dialect dialect;
 
         public Base64Decoder()
-            : this(Base64Dialect.STANDARD)
+            : this(Base64Dialect.Standard)
         {
         }
 

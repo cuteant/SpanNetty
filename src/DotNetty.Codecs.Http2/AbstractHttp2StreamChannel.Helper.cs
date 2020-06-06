@@ -2,10 +2,36 @@
 {
     using System;
     using System.Threading;
+    using System.Threading.Tasks;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
     partial class AbstractHttp2StreamChannel
     {
+        private static readonly Action<Task, object> WindowUpdateFrameWriteListenerAction = WindowUpdateFrameWriteListener;
+        private static void WindowUpdateFrameWriteListener(Task future, object state)
+        {
+            WindowUpdateFrameWriteComplete(future, (AbstractHttp2StreamChannel)state);
+        }
+
+        private static void WindowUpdateFrameWriteComplete(Task future, IChannel streamChannel)
+        {
+            var cause = future.Exception.Unwrap();
+            if (cause is object)
+            {
+                Exception unwrappedCause;
+                // Unwrap if needed
+                if (cause is Http2FrameStreamException && ((unwrappedCause = cause.InnerException) is object))
+                {
+                    cause = unwrappedCause;
+                }
+
+                // Notify the child-channel and close it.
+                streamChannel.Pipeline.FireExceptionCaught(cause);
+                streamChannel.Unsafe.Close(streamChannel.Unsafe.VoidPromise());
+            }
+        }
+
         private void IncrementPendingOutboundBytes(long size, bool invokeLater)
         {
             if (0ul >= (ulong)size) { return; }

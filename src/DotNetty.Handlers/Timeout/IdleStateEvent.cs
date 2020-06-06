@@ -3,17 +3,19 @@
 
 namespace DotNetty.Handlers.Timeout
 {
+    using DotNetty.Common.Utilities;
+
     /// <summary>
     /// A user event triggered by <see cref="IdleStateHandler"/> when a <see cref="DotNetty.Transport.Channels.IChannel"/> is idle.
     /// </summary>
     public class IdleStateEvent
     {
-        public static readonly IdleStateEvent FirstReaderIdleStateEvent = new IdleStateEvent(IdleState.ReaderIdle, true);
-        public static readonly IdleStateEvent ReaderIdleStateEvent = new IdleStateEvent(IdleState.ReaderIdle, false);
-        public static readonly IdleStateEvent FirstWriterIdleStateEvent = new IdleStateEvent(IdleState.WriterIdle, true);
-        public static readonly IdleStateEvent WriterIdleStateEvent = new IdleStateEvent(IdleState.WriterIdle, false);
-        public static readonly IdleStateEvent FirstAllIdleStateEvent = new IdleStateEvent(IdleState.AllIdle, true);
-        public static readonly IdleStateEvent AllIdleStateEvent = new IdleStateEvent(IdleState.AllIdle, false);
+        public static readonly IdleStateEvent FirstReaderIdleStateEvent = new DefaultIdleStateEvent(IdleState.ReaderIdle, true);
+        public static readonly IdleStateEvent ReaderIdleStateEvent = new DefaultIdleStateEvent(IdleState.ReaderIdle, false);
+        public static readonly IdleStateEvent FirstWriterIdleStateEvent = new DefaultIdleStateEvent(IdleState.WriterIdle, true);
+        public static readonly IdleStateEvent WriterIdleStateEvent = new DefaultIdleStateEvent(IdleState.WriterIdle, false);
+        public static readonly IdleStateEvent FirstAllIdleStateEvent = new DefaultIdleStateEvent(IdleState.AllIdle, true);
+        public static readonly IdleStateEvent AllIdleStateEvent = new DefaultIdleStateEvent(IdleState.AllIdle, false);
 
         /// <summary>
         /// Constructor for sub-classes.
@@ -22,28 +24,38 @@ namespace DotNetty.Handlers.Timeout
         /// <param name="first"><c>true</c> if its the first idle event for the <see cref="IdleStateEvent"/>.</param>
         protected IdleStateEvent(IdleState state, bool first)
         {
-            this.State = state;
-            this.First = first;
+            State = state;
+            First = first;
         }
 
         /// <summary>
         /// Returns the idle state.
         /// </summary>
         /// <value>The state.</value>
-        public IdleState State
-        {
-            get;
-            private set;
-        }
+        public IdleState State { get; }
 
         /// <summary>
         /// Returns <c>true</c> if this was the first event for the <see cref="IdleState"/>
         /// </summary>
         /// <returns><c>true</c> if first; otherwise, <c>false</c>.</returns>
-        public bool First
+        public bool First { get; }
+
+        public override string ToString()
         {
-            get;
-            private set;
+            return $"{StringUtil.SimpleClassName(this)}({State}{(First ? ", first" : "")})";
+        }
+
+        private sealed class DefaultIdleStateEvent : IdleStateEvent
+        {
+            private readonly string _representation;
+
+            public DefaultIdleStateEvent(IdleState state, bool first)
+                : base(state, first)
+            {
+                _representation = $"IdleStateEvent({state}{(first ? ", first" : "")})";
+            }
+
+            public override string ToString() => _representation;
         }
     }
 }

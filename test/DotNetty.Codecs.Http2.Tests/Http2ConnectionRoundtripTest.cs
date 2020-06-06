@@ -624,7 +624,6 @@ namespace DotNetty.Codecs.Http2.Tests
             var serverWriteHeadersLatch = new CountdownEvent(1);
             var serverWriteHeadersCauseRef = new AtomicReference<Exception>();
 
-            IHttp2Headers headers = DummyHeaders();
             int streamId = 3;
 
             _serverListener
@@ -640,6 +639,7 @@ namespace DotNetty.Codecs.Http2.Tests
                     }
                 });
 
+            IHttp2Headers headers = DummyHeaders();
             Http2TestUtil.RunInChannel(_clientChannel, () =>
             {
                 _http2Client.Encoder.WriteHeadersAsync(Ctx(), streamId, headers, Http2CodecUtil.ConnectionStreamId,

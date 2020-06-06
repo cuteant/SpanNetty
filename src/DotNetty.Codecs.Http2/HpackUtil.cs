@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs.Http2
 {
+    using System.Runtime.CompilerServices;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
@@ -35,6 +36,18 @@ namespace DotNetty.Codecs.Http2
             }
 
             return ConstantTimeUtils.EqualsConstantTime(s1, s2);
+        }
+
+        /// <summary>
+        /// Compare two <see cref="ICharSequence"/>s.
+        /// </summary>
+        /// <param name="s1">the first value.</param>
+        /// <param name="s2">the second value.</param>
+        /// <returns><c>false</c> if not equal. <c>true</c> if equal.</returns>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        internal static bool EqualsVariableTime(ICharSequence s1, ICharSequence s2)
+        {
+            return AsciiString.ContentEquals(s1, s2);
         }
 
         // Section 6.2. Literal Header Field Representation

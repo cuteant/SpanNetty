@@ -2,13 +2,13 @@
 
 namespace DotNetty.Handlers.Tls
 {
-    public abstract class SslCompletionEvent
+    public abstract class TlsCompletionEvent
     {
         private readonly Exception _cause;
 
-        public SslCompletionEvent() { }
+        public TlsCompletionEvent() { }
 
-        public SslCompletionEvent(Exception cause)
+        public TlsCompletionEvent(Exception cause)
         {
             if (cause is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.cause); }
             _cause = cause;
@@ -21,8 +21,8 @@ namespace DotNetty.Handlers.Tls
         public override string ToString()
         {
             return IsSuccess
-                ? $"{nameof(SslCompletionEvent)}(SUCCESS)"
-                : $"{nameof(SslCompletionEvent)}({_cause.Message})";
+                ? $"{nameof(TlsCompletionEvent)}(SUCCESS)"
+                : $"{nameof(TlsCompletionEvent)}({_cause.Message})";
         }
     }
 }

@@ -783,7 +783,7 @@ namespace DotNetty.Codecs.Http2
             throw GetException();
             InvalidOperationException GetException()
             {
-                return new InvalidOperationException("failed to build a Http2ConnectionHandler", t);
+                return new InvalidOperationException("failed to build an Http2ConnectionHandler", t);
             }
         }
 

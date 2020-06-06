@@ -236,13 +236,13 @@ namespace DotNetty.Codecs.Http2
                 {
                     shouldIgnore = ShouldIgnoreHeadersOrDataFrame(ctx, streamId, stream, Http2FrameTypes.Data);
                 }
-                catch (Http2Exception e)
+                catch (Http2Exception)
                 {
                     // Ignoring this frame. We still need to count the frame towards the connection flow control
                     // window, but we immediately mark all bytes as consumed.
                     flowController.ReceiveFlowControlledFrame(stream, data, padding, endOfStream);
                     flowController.ConsumeBytes(stream, bytesToReturn);
-                    throw e;
+                    throw;
                 }
                 catch (Exception t)
                 {

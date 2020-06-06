@@ -16,7 +16,7 @@ namespace DotNetty.Handlers.Flow
      * many events as they like for any given input. A channel's auto reading configuration doesn't usually
      * apply in these scenarios. This is causing problems in downstream {@link ChannelHandler}s that would
      * like to hold subsequent events while they're processing one event. It's a common problem with the
-     * {@code HttpObjectDecoder} that will very often fire a {@code HttpRequest} that is immediately followed
+     * {@code HttpObjectDecoder} that will very often fire an {@code HttpRequest} that is immediately followed
      * by a {@code LastHttpContent} event.
      *
      * <pre>{@code
@@ -49,13 +49,13 @@ namespace DotNetty.Handlers.Flow
 
         static readonly ThreadLocalPool<RecyclableQueue> Recycler = new ThreadLocalPool<RecyclableQueue>(h => new RecyclableQueue(h));
 
-        readonly bool releaseMessages;
+        readonly bool _releaseMessages;
 
-        RecyclableQueue queue;
+        RecyclableQueue _queue;
 
-        IChannelConfiguration config;
+        IChannelConfiguration _config;
 
-        bool shouldConsume;
+        bool _shouldConsume;
 
         public FlowControlHandler()
             : this(true)
@@ -64,86 +64,93 @@ namespace DotNetty.Handlers.Flow
 
         public FlowControlHandler(bool releaseMessages)
         {
-            this.releaseMessages = releaseMessages;
+            _releaseMessages = releaseMessages;
         }
 
         /**
          * Determine if the underlying {@link Queue} is empty. This method exists for
          * testing, debugging and inspection purposes and it is not Thread safe!
          */
-        public bool IsQueueEmpty => this.queue is null || this.queue.IsEmpty;
+        public bool IsQueueEmpty => _queue is null || _queue.IsEmpty;
 
         /**
          * Releases all messages and destroys the {@link Queue}.
          */
         void Destroy()
         {
-            if (this.queue is object)
+            if (_queue is object)
             {
-                if (this.queue.NonEmpty)
+                if (_queue.NonEmpty)
                 {
-                    if (Logger.TraceEnabled) Logger.NonEmptyQueue(this.queue);
+                    if (Logger.TraceEnabled) Logger.NonEmptyQueue(_queue);
 
-                    if (this.releaseMessages)
+                    if (_releaseMessages)
                     {
-                        while (this.queue.TryDequeue(out object msg))
+                        while (_queue.TryDequeue(out object msg))
                         {
                             ReferenceCountUtil.SafeRelease(msg);
                         }
                     }
                 }
 
-                this.queue.Recycle();
-                this.queue = null;
+                _queue.Recycle();
+                _queue = null;
             }
         }
 
         public override void HandlerAdded(IChannelHandlerContext ctx)
         {
-            this.config = ctx.Channel.Configuration;
+            _config = ctx.Channel.Configuration;
         }
 
         public override void ChannelInactive(IChannelHandlerContext ctx)
         {
-            this.Destroy();
+            Destroy();
             ctx.FireChannelInactive();
         }
 
         public override void Read(IChannelHandlerContext ctx)
         {
-            if (0u >= (uint)this.Dequeue(ctx, 1))
+            if (0u >= (uint)Dequeue(ctx, 1))
             {
                 // It seems no messages were consumed. We need to read() some
                 // messages from upstream and once one arrives it need to be
                 // relayed to downstream to keep the flow going.
-                this.shouldConsume = true;
+                _shouldConsume = true;
                 ctx.Read();
             }
         }
 
         public override void ChannelRead(IChannelHandlerContext ctx, object msg)
         {
-            if (this.queue is null)
+            if (_queue is null)
             {
-                this.queue = Recycler.Take();
+                _queue = Recycler.Take();
             }
 
-            this.queue.TryEnqueue(msg);
+            _queue.TryEnqueue(msg);
 
             // We just received one message. Do we need to relay it regardless
             // of the auto reading configuration? The answer is yes if this
             // method was called as a result of a prior read() call.
-            int minConsume = this.shouldConsume ? 1 : 0;
-            this.shouldConsume = false;
+            int minConsume = _shouldConsume ? 1 : 0;
+            _shouldConsume = false;
 
-            this.Dequeue(ctx, minConsume);
+            Dequeue(ctx, minConsume);
         }
 
         public override void ChannelReadComplete(IChannelHandlerContext ctx)
         {
-            // Don't relay completion events from upstream as they
-            // make no sense in this context. See dequeue() where
-            // a new set of completion events is being produced.
+            if (IsQueueEmpty)
+            {
+                ctx.FireChannelReadComplete();
+            }
+            else
+            {
+                // Don't relay completion events from upstream as they
+                // make no sense in this context. See dequeue() where
+                // a new set of completion events is being produced.
+            }
         }
 
         /**
@@ -162,13 +169,12 @@ namespace DotNetty.Handlers.Flow
         {
             int consumed = 0;
 
-            var thisQueue = this.queue;
-            if (thisQueue is null) { return consumed; }
-
             // fireChannelRead(...) may call ctx.read() and so this method may reentrance. Because of this we need to
             // check if queue was set to null in the meantime and if so break the loop.
-            while ((consumed < minConsume || this.config.AutoRead) && thisQueue.TryDequeue(out object msg))
+            while (_queue is object && (consumed < minConsume || _config.AutoRead))
             {
+                if (!_queue.TryDequeue(out object msg) || msg is null) { break; }
+
                 ++consumed;
                 ctx.FireChannelRead(msg);
             }
@@ -176,10 +182,10 @@ namespace DotNetty.Handlers.Flow
             // We're firing a completion event every time one (or more)
             // messages were consumed and the queue ended up being drained
             // to an empty state.
-            if (thisQueue.IsEmpty)
+            if (_queue is object && _queue.IsEmpty)
             {
-                thisQueue.Recycle();
-                this.queue = null;
+                _queue.Recycle();
+                _queue = null;
 
                 if (consumed > 0) { ctx.FireChannelReadComplete(); }
             }
@@ -190,17 +196,17 @@ namespace DotNetty.Handlers.Flow
 
     sealed class RecyclableQueue : CompatibleConcurrentQueue<object>
     {
-        readonly ThreadLocalPool.Handle handle;
+        readonly ThreadLocalPool.Handle _handle;
 
         internal RecyclableQueue(ThreadLocalPool.Handle handle)
         {
-            this.handle = handle;
+            _handle = handle;
         }
 
         public void Recycle()
         {
             ((IQueue<object>)this).Clear();
-            this.handle.Release(this);
+            _handle.Release(this);
         }
     }
 }

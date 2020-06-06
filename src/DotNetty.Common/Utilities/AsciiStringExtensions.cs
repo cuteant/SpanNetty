@@ -23,14 +23,6 @@ namespace DotNetty.Common.Utilities
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int LastIndexOf(this AsciiString ascii, ICharSequence charSequence) => ascii.LastIndexOf(charSequence, ascii.Count);
 
-        [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static bool StartsWith(this AsciiString ascii, ICharSequence prefix)
-            => ascii.StartsWith(prefix, 0) ? true : false;
-
-        [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static bool StartsWith(this AsciiString ascii, ICharSequence prefix, int start)
-            => ascii.RegionMatches(start, prefix, 0, prefix.Count) ? true : false;
-
         public static bool EndsWith(this AsciiString ascii, ICharSequence suffix)
         {
             int suffixLen = suffix.Count;

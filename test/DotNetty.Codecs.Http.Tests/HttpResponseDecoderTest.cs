@@ -457,7 +457,7 @@ namespace DotNetty.Codecs.Http.Tests
                     amount = HeaderLength - a;
                 }
 
-                // if header is done it should produce a HttpRequest
+                // if header is done it should produce an HttpRequest
                 bool headerDone = a + amount == HeaderLength;
                 Assert.Equal(headerDone, ch.WriteInbound(Unpooled.CopiedBuffer(content, a, amount)));
                 a += amount;

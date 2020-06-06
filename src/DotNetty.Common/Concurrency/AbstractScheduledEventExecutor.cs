@@ -15,6 +15,9 @@ namespace DotNetty.Common.Concurrency
     /// </summary>
     public abstract class AbstractScheduledEventExecutor : AbstractEventExecutor
     {
+        protected static readonly Action<object, object> EnqueueRunnableAction = OnEnqueueRunnable;
+        private static readonly Action<object, object> RemoveRunnableAction = OnRemoveRunnable;
+
         protected readonly IPriorityQueue<IScheduledRunnable> ScheduledTaskQueue = new PriorityQueue<IScheduledRunnable>();
 
         protected AbstractScheduledEventExecutor()
@@ -48,9 +51,9 @@ namespace DotNetty.Common.Concurrency
             }
 
             IScheduledRunnable[] tasks = scheduledTaskQueue.ToArray();
-            foreach (IScheduledRunnable t in tasks)
+            for (int i = 0; i < tasks.Length; i++)
             {
-                t.Cancel();
+                tasks[i].Cancel();
             }
 
             ScheduledTaskQueue.Clear();
@@ -180,7 +183,6 @@ namespace DotNetty.Common.Concurrency
             return task;
         }
 
-        protected static readonly Action<object, object> EnqueueRunnableAction = OnEnqueueRunnable;
         static void OnEnqueueRunnable(object e, object t)
         {
             ((AbstractScheduledEventExecutor)e).ScheduledTaskQueue.TryEnqueue((IScheduledRunnable)t);
@@ -198,7 +200,6 @@ namespace DotNetty.Common.Concurrency
             }
         }
 
-        static readonly Action<object, object> RemoveRunnableAction = OnRemoveRunnable;
         static void OnRemoveRunnable(object e, object t)
         {
             ((AbstractScheduledEventExecutor)e).ScheduledTaskQueue.TryRemove((IScheduledRunnable)t);

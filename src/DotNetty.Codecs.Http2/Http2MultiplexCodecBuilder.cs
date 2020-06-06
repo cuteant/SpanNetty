@@ -44,7 +44,7 @@ namespace DotNetty.Codecs.Http2
         }
 
         /// <summary>
-        /// Creates a builder for a HTTP/2 client.
+        /// Creates a builder for an HTTP/2 client.
         /// </summary>
         /// <param name="childHandler">the handler added to channels for remotely-created streams. It must be
         /// {@link ChannelHandler.Sharable}</param>
@@ -55,7 +55,7 @@ namespace DotNetty.Codecs.Http2
         }
 
         /// <summary>
-        /// Creates a builder for a HTTP/2 server.
+        /// Creates a builder for an HTTP/2 server.
         /// </summary>
         /// <param name="childHandler">the handler added to channels for remotely-created streams. It must be
         /// {@link ChannelHandler.Sharable}.</param>
@@ -86,8 +86,8 @@ namespace DotNetty.Codecs.Http2
                 var connection = new DefaultHttp2Connection(IsServer, MaxReservedStreams);
                 var maxHeaderListSize = InitialSettings.MaxHeaderListSize();
                 IHttp2FrameReader frameReader = new DefaultHttp2FrameReader(!maxHeaderListSize.HasValue ?
-                        new DefaultHttp2HeadersDecoder(true) :
-                        new DefaultHttp2HeadersDecoder(true, maxHeaderListSize.Value));
+                        new DefaultHttp2HeadersDecoder(IsValidateHeaders) :
+                        new DefaultHttp2HeadersDecoder(IsValidateHeaders, maxHeaderListSize.Value));
 
                 var frameLogger = FrameLogger;
                 if (frameLogger is object)

@@ -142,7 +142,7 @@ namespace DotNetty.Codecs.Http2
                 }
 
                 // Base64 encode the payload and then convert to a string for the header.
-                encodedBuf = Base64.Encode(buf, Base64Dialect.URL_SAFE);
+                encodedBuf = Base64.Encode(buf, Base64Dialect.UrlSafe);
                 return new StringCharSequence(encodedBuf.ToString(Encoding.UTF8));
             }
             finally

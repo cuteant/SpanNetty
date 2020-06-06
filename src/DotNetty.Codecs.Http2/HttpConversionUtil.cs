@@ -52,28 +52,28 @@ namespace DotNetty.Codecs.Http2
         public static class ExtensionHeaderNames
         {
             /// <summary>
-            /// HTTP extension header which will identify the stream id from the HTTP/2 event(s) responsible for generating a
-            /// <c>HttpObject</c>
+            /// HTTP extension header which will identify the stream id from the HTTP/2 event(s) responsible for
+            /// generating an <see cref="IHttpObject"/>
             /// <para><c>"x-http2-stream-id"</c></para>
             /// </summary>
             public static readonly AsciiString StreamId = AsciiString.Cached("x-http2-stream-id");
 
             /// <summary>
             /// HTTP extension header which will identify the scheme pseudo header from the HTTP/2 event(s) responsible for
-            /// generating a <c>HttpObject</c>
+            /// generating an <see cref="IHttpObject"/>
             /// <para><c>"x-http2-scheme"</c></para>
             /// </summary>
             public static readonly AsciiString Scheme = AsciiString.Cached("x-http2-scheme");
 
             /// <summary>
             /// HTTP extension header which will identify the path pseudo header from the HTTP/2 event(s) responsible for
-            /// generating a <c>HttpObject</c>
+            /// generating an <see cref="IHttpObject"/>
             /// <para><c>"x-http2-path"</c></para>
             /// </summary>
             public static readonly AsciiString Path = AsciiString.Cached("x-http2-path");
 
             /// <summary>
-            /// HTTP extension header which will identify the stream id used to create this stream in a HTTP/2 push promise
+            /// HTTP extension header which will identify the stream id used to create this stream in an HTTP/2 push promise
             /// frame
             /// <para><c>"x-http2-stream-promise-id"</c></para>
             /// </summary>
@@ -88,7 +88,7 @@ namespace DotNetty.Codecs.Http2
 
             /// <summary>
             /// HTTP extension header which will identify the weight (if non-default and the priority is not on the default
-            /// stream) of the associated HTTP/2 stream responsible responsible for generating a <c>HttpObject</c>
+            /// stream) of the associated HTTP/2 stream responsible responsible for generating an <see cref="IHttpObject"/>
             /// <para><c>"x-http2-stream-weight"</c></para>
             /// </summary>
             public static readonly AsciiString StreamWeight = AsciiString.Cached("x-http2-stream-weight");
@@ -127,9 +127,9 @@ namespace DotNetty.Codecs.Http2
                     ThrowHelper.ThrowConnectionError_InvalidHttp2StatusCode(result.Code);
                 }
             }
-            catch (Http2Exception e)
+            catch (Http2Exception)
             {
-                throw e;
+                throw;
             }
             catch (Exception t)
             {
@@ -160,10 +160,10 @@ namespace DotNetty.Codecs.Http2
             {
                 AddHttp2ToHttpHeaders(streamId, http2Headers, msg, false);
             }
-            catch (Http2Exception e)
+            catch (Http2Exception)
             {
                 msg.Release();
-                throw e;
+                throw;
             }
             catch (Exception t)
             {
@@ -197,10 +197,10 @@ namespace DotNetty.Codecs.Http2
             {
                 AddHttp2ToHttpHeaders(streamId, http2Headers, msg, false);
             }
-            catch (Http2Exception e)
+            catch (Http2Exception)
             {
                 msg.Release();
-                throw e;
+                throw;
             }
             catch (Exception t)
             {
@@ -233,9 +233,9 @@ namespace DotNetty.Codecs.Http2
             {
                 AddHttp2ToHttpHeaders(streamId, http2Headers, msg.Headers, msg.ProtocolVersion, false, true);
             }
-            catch (Http2Exception e)
+            catch (Http2Exception)
             {
-                throw e;
+                throw;
             }
             catch (Exception t)
             {
@@ -263,9 +263,9 @@ namespace DotNetty.Codecs.Http2
             {
                 AddHttp2ToHttpHeaders(streamId, http2Headers, msg.Headers, msg.ProtocolVersion, false, true);
             }
-            catch (Http2Exception e)
+            catch (Http2Exception)
             {
-                throw e;
+                throw;
             }
             catch (Exception t)
             {
@@ -310,9 +310,9 @@ namespace DotNetty.Codecs.Http2
             {
                 translator.TranslateHeaders(inputHeaders);
             }
-            catch (Http2Exception ex)
+            catch (Http2Exception)
             {
-                throw ex;
+                throw;
             }
             catch (Exception t)
             {
@@ -518,10 +518,8 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-
-
         /// <summary>
-        /// Generate a HTTP/2 <c> :path</c> from a URI in accordance with
+        /// Generate an HTTP/2 <c> :path</c> from a URI in accordance with
         /// <a href="https://tools.ietf.org/html/rfc7230#section-5.3">rfc7230, 5.3</a>.
         /// </summary>
         /// <param name="uri"></param>

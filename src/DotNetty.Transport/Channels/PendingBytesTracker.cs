@@ -2,12 +2,12 @@
 {
     public abstract class PendingBytesTracker : IMessageSizeEstimatorHandle
     {
-        readonly IMessageSizeEstimatorHandle estimatorHandle;
+        readonly IMessageSizeEstimatorHandle _estimatorHandle;
 
         protected PendingBytesTracker(IMessageSizeEstimatorHandle estimatorHandle)
         {
             if (estimatorHandle is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.estimatorHandle); }
-            this.estimatorHandle = estimatorHandle;
+            _estimatorHandle = estimatorHandle;
         }
 
         public static PendingBytesTracker NewTracker(IChannel channel)
@@ -29,7 +29,7 @@
             }
         }
 
-        public virtual int Size(object msg) => this.estimatorHandle.Size(msg);
+        public virtual int Size(object msg) => _estimatorHandle.Size(msg);
 
         public abstract void IncrementPendingOutboundBytes(long bytes);
 
@@ -38,43 +38,43 @@
 
     sealed class DefaultChannelPipelinePendingBytesTracker : PendingBytesTracker
     {
-        readonly DefaultChannelPipeline pipeline;
+        readonly DefaultChannelPipeline _pipeline;
 
         public DefaultChannelPipelinePendingBytesTracker(DefaultChannelPipeline pipeline)
             : base(pipeline.EstimatorHandle)
         {
-            this.pipeline = pipeline;
+            _pipeline = pipeline;
         }
 
         public override void IncrementPendingOutboundBytes(long bytes)
         {
-            this.pipeline.IncrementPendingOutboundBytes(bytes);
+            _pipeline.IncrementPendingOutboundBytes(bytes);
         }
 
         public override void DecrementPendingOutboundBytes(long bytes)
         {
-            this.pipeline.DecrementPendingOutboundBytes(bytes);
+            _pipeline.DecrementPendingOutboundBytes(bytes);
         }
     }
 
     sealed class ChannelOutboundBufferPendingBytesTracker : PendingBytesTracker
     {
-        readonly ChannelOutboundBuffer buffer;
+        readonly ChannelOutboundBuffer _buffer;
 
         public ChannelOutboundBufferPendingBytesTracker(ChannelOutboundBuffer buffer, IMessageSizeEstimatorHandle estimatorHandle)
             : base(estimatorHandle)
         {
-            this.buffer = buffer;
+            _buffer = buffer;
         }
 
         public override void IncrementPendingOutboundBytes(long bytes)
         {
-            this.buffer.IncrementPendingOutboundBytes(bytes);
+            _buffer.IncrementPendingOutboundBytes(bytes);
         }
 
         public override void DecrementPendingOutboundBytes(long bytes)
         {
-            this.buffer.DecrementPendingOutboundBytes(bytes);
+            _buffer.DecrementPendingOutboundBytes(bytes);
         }
     }
 

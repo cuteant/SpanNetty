@@ -118,7 +118,8 @@
 
                 bool wasActive = ch.Active;
 
-                UpdateLocalWindowIfNeeded();
+                // There is no need to update the local window as once the stream is closed all the pending bytes will be
+                // given back to the connection window by the controller itself.
 
                 // Only ever send a reset frame if the connection is still alive and if the stream was created before
                 // as otherwise we may send a RST on a stream in an invalid state and cause a connection error.
@@ -251,7 +252,7 @@
                     var continueReading = false;
                     do
                     {
-                        ch._flowControlledBytes += DoRead0((IHttp2Frame)message, allocHandle);
+                        DoRead0((IHttp2Frame)message, allocHandle);
                     } while ((ReadEOS || (continueReading = allocHandle.ContinueReading())) &&
                              inboundBuffer.TryRemoveFromFront(out message));
 
@@ -280,9 +281,21 @@
                 int bytes = ch._flowControlledBytes;
                 if (bytes != 0)
                 {
-                    Interlocked.Exchange(ref ch._flowControlledBytes, 0);
-                    ch.Write0Async(ch.ParentContext, new DefaultHttp2WindowUpdateFrame(bytes) { Stream = ch._stream });
-                    _writeDoneAndNoFlush = true;
+                    ch._flowControlledBytes = 0;
+                    var future = ch.Write0Async(ch.ParentContext, new DefaultHttp2WindowUpdateFrame(bytes) { Stream = ch._stream });
+                    // Add a listener which will notify and teardown the stream
+                    // when a window update fails if needed or check the result of the future directly if it was completed
+                    // already.
+                    // See https://github.com/netty/netty/issues/9663
+                    if (future.IsCompleted)
+                    {
+                        WindowUpdateFrameWriteComplete(future, ch);
+                    }
+                    else
+                    {
+                        future.ContinueWith(WindowUpdateFrameWriteListenerAction, ch, TaskContinuationOptions.ExecuteSynchronously);
+                        _writeDoneAndNoFlush = true;
+                    }
                 }
             }
 
@@ -317,24 +330,31 @@
                 }
             }
 
-            internal int DoRead0(IHttp2Frame frame, IRecvByteBufAllocatorHandle allocHandle)
+            internal void DoRead0(IHttp2Frame frame, IRecvByteBufAllocatorHandle allocHandle)
             {
                 var ch = _channel;
-                var pipeline = ch._pipeline;
-                pipeline.FireChannelRead(frame);
-                allocHandle.IncMessagesRead(1);
-
+                int bytes;
                 if (frame is IHttp2DataFrame dataFrame)
                 {
-                    int numBytesToBeConsumed = dataFrame.InitialFlowControlledBytes;
-                    allocHandle.AttemptedBytesRead = numBytesToBeConsumed;
-                    allocHandle.LastBytesRead = numBytesToBeConsumed;
-                    return numBytesToBeConsumed;
-                }
+                    bytes = dataFrame.InitialFlowControlledBytes;
 
-                allocHandle.AttemptedBytesRead = MinHttp2FrameSize;
-                allocHandle.LastBytesRead = MinHttp2FrameSize;
-                return 0;
+                    // It is important that we increment the flowControlledBytes before we call fireChannelRead(...)
+                    // as it may cause a read() that will call updateLocalWindowIfNeeded() and we need to ensure
+                    // in this case that we accounted for it.
+                    //
+                    // See https://github.com/netty/netty/issues/9663
+                    ch._flowControlledBytes += bytes;
+                }
+                else
+                {
+                    bytes = MinHttp2FrameSize;
+                }
+                // Update before firing event through the pipeline to be consistent with other Channel implementation.
+                allocHandle.AttemptedBytesRead = bytes;
+                allocHandle.LastBytesRead = bytes;
+                allocHandle.IncMessagesRead(1);
+
+                ch._pipeline.FireChannelRead(frame);
             }
 
             public void Write(object msg, IPromise promise)

@@ -16,9 +16,9 @@ namespace DotNetty.Transport.Channels
     public abstract class AbstractCoalescingBufferQueue
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractCoalescingBufferQueue>();
-        readonly Deque<object> bufAndListenerPairs;
-        readonly PendingBytesTracker tracker;
-        int readableBytes;
+        readonly Deque<object> _bufAndListenerPairs;
+        readonly PendingBytesTracker _tracker;
+        int _readableBytes;
 
         /// <summary>
         /// Create a new instance.
@@ -28,18 +28,18 @@ namespace DotNetty.Transport.Channels
         /// <param name="initSize">the initial size of the underlying queue.</param>
         protected AbstractCoalescingBufferQueue(IChannel channel, int initSize)
         {
-            this.bufAndListenerPairs = new Deque<object>(initSize);
-            this.tracker = channel is null ? null : PendingBytesTracker.NewTracker(channel);
+            _bufAndListenerPairs = new Deque<object>(initSize);
+            _tracker = channel is null ? null : PendingBytesTracker.NewTracker(channel);
         }
 
         public void AddFirst(IByteBuffer buf, IPromise promise)
         {
             if (promise is object && !promise.IsVoid)
             {
-                this.bufAndListenerPairs.AddToFront(promise);
+                _bufAndListenerPairs.AddToFront(promise);
             }
-            this.bufAndListenerPairs.AddToFront(buf);
-            this.IncrementReadableBytes(buf.ReadableBytes);
+            _bufAndListenerPairs.AddToFront(buf);
+            IncrementReadableBytes(buf.ReadableBytes);
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace DotNetty.Transport.Channels
         /// <param name="buf"></param>
         public void Add(IByteBuffer buf)
         {
-            this.Add(buf, null);
+            Add(buf, null);
         }
 
         /// <summary>
@@ -61,10 +61,10 @@ namespace DotNetty.Transport.Channels
         {
             // buffers are added before promises so that we naturally 'consume' the entire buffer during removal
             // before we complete it's promise.
-            this.bufAndListenerPairs.AddToBack(buf);
+            _bufAndListenerPairs.AddToBack(buf);
             if (promise is object && !promise.IsVoid)
             {
-                this.bufAndListenerPairs.AddToBack(promise);
+                _bufAndListenerPairs.AddToBack(promise);
             }
             IncrementReadableBytes(buf.ReadableBytes);
         }
@@ -76,18 +76,18 @@ namespace DotNetty.Transport.Channels
         /// <returns>the first <see cref="IByteBuffer"/> from the queue.</returns>
         public IByteBuffer RemoveFirst(IPromise aggregatePromise)
         {
-            if (!this.bufAndListenerPairs.TryRemoveFromFront(out var entry)) { return null; }
+            if (!_bufAndListenerPairs.TryRemoveFromFront(out var entry)) { return null; }
             Debug.Assert(entry is IByteBuffer);
             var result = (IByteBuffer)entry;
 
             DecrementReadableBytes(result.ReadableBytes);
 
-            entry = this.bufAndListenerPairs.FirstOrDefault();
+            entry = _bufAndListenerPairs.FirstOrDefault();
 
             if (entry is IPromise promise)
             {
                 aggregatePromise.Task.CascadeTo(promise, Logger);
-                bufAndListenerPairs.RemoveFromFront();
+                _bufAndListenerPairs.RemoveFromFront();
             }
             return result;
         }
@@ -108,18 +108,18 @@ namespace DotNetty.Transport.Channels
             if (aggregatePromise is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.aggregatePromise); }
 
             // Use isEmpty rather than readableBytes==0 as we may have a promise associated with an empty buffer.
-            if (bufAndListenerPairs.IsEmpty)
+            if (_bufAndListenerPairs.IsEmpty)
             {
                 return RemoveEmptyValue();
             }
-            bytes = Math.Min(bytes, readableBytes);
+            bytes = Math.Min(bytes, _readableBytes);
 
             IByteBuffer toReturn = null;
             IByteBuffer entryBuffer = null;
             int originalBytes = bytes;
             try
             {
-                while (bufAndListenerPairs.TryRemoveFromFront(out var entry))
+                while (_bufAndListenerPairs.TryRemoveFromFront(out var entry))
                 {
                     if (entry is IPromise promise)
                     {
@@ -130,7 +130,7 @@ namespace DotNetty.Transport.Channels
                     if (entryBuffer.ReadableBytes > bytes)
                     {
                         // Add the buffer back to the queue as we can't consume all of it.
-                        bufAndListenerPairs.AddToFront(entryBuffer);
+                        _bufAndListenerPairs.AddToFront(entryBuffer);
                         if (bytes > 0)
                         {
                             // Take a slice of what we can consume and retain it.
@@ -155,7 +155,7 @@ namespace DotNetty.Transport.Channels
                 ReferenceCountUtil.SafeRelease(entryBuffer);
                 ReferenceCountUtil.SafeRelease(toReturn);
                 aggregatePromise.SetException(cause);
-                throw cause;
+                throw;
             }
             DecrementReadableBytes(originalBytes - bytes);
             return toReturn;
@@ -166,7 +166,7 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         public int ReadableBytes()
         {
-            return this.readableBytes;
+            return _readableBytes;
         }
 
         /// <summary>
@@ -174,7 +174,7 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         public bool IsEmpty()
         {
-            return this.bufAndListenerPairs.IsEmpty;
+            return _bufAndListenerPairs.IsEmpty;
         }
 
         /// <summary>
@@ -191,11 +191,12 @@ namespace DotNetty.Transport.Channels
         /// <param name="dest">to copy pending buffers to.</param>
         public void CopyTo(AbstractCoalescingBufferQueue dest)
         {
-            foreach (var item in this.bufAndListenerPairs)
+            var bufAndListenerPairs = _bufAndListenerPairs;
+            for (int idx = 0; idx < bufAndListenerPairs.Count; idx++)
             {
-                dest.bufAndListenerPairs.AddToBack(item);
+                dest._bufAndListenerPairs.AddToBack(bufAndListenerPairs[idx]);
             }
-            dest.IncrementReadableBytes(this.readableBytes);
+            dest.IncrementReadableBytes(_readableBytes);
         }
 
         /// <summary>
@@ -204,42 +205,42 @@ namespace DotNetty.Transport.Channels
         /// <param name="ctx">The context to write all elements to.</param>
         public void WriteAndRemoveAll(IChannelHandlerContext ctx)
         {
-            DecrementReadableBytes(this.readableBytes);
+            DecrementReadableBytes(_readableBytes);
             Exception pending = null;
             IByteBuffer previousBuf = null;
             while (true)
             {
-                bufAndListenerPairs.TryRemoveFromFront(out var entry);
+                _bufAndListenerPairs.TryRemoveFromFront(out var entry);
                 try
                 {
-                    if (entry is null)
+                    switch (entry)
                     {
-                        if (previousBuf is object)
-                        {
-                            ctx.WriteAsync(previousBuf, ctx.VoidPromise());
-                        }
-                        break;
-                    }
+                        case null:
+                            if (previousBuf is object)
+                            {
+                                ctx.WriteAsync(previousBuf, ctx.VoidPromise());
+                            }
+                            goto LoopEnd;
 
-                    if (entry is IByteBuffer byteBuffer)
-                    {
-                        if (previousBuf is object)
-                        {
-                            ctx.WriteAsync(previousBuf, ctx.VoidPromise());
-                        }
-                        previousBuf = byteBuffer;
+                        case IByteBuffer byteBuffer:
+                            if (previousBuf is object)
+                            {
+                                ctx.WriteAsync(previousBuf, ctx.VoidPromise());
+                            }
+                            previousBuf = byteBuffer;
+                            break;
+
+                        case IPromise promise:
+                            ctx.WriteAsync(previousBuf, promise);
+                            previousBuf = null;
+                            break;
+
+                        default:
+                            //    // todo
+                            //    //ctx.WriteAsync(previousBuf).addListener((ChannelFutureListener)entry);
+                            //    previousBuf = null;
+                            break;
                     }
-                    else if (entry is IPromise)
-                    {
-                        ctx.WriteAsync(previousBuf, (IPromise)entry);
-                        previousBuf = null;
-                    }
-                    //else
-                    //{
-                    //    // todo
-                    //    //ctx.WriteAsync(previousBuf).addListener((ChannelFutureListener)entry);
-                    //    previousBuf = null;
-                    //}
                 }
                 catch (Exception t)
                 {
@@ -249,10 +250,11 @@ namespace DotNetty.Transport.Channels
                     }
                     else
                     {
-                        if (Logger.InfoEnabled)                        {                            Logger.ThrowableBeingSuppressedBecauseIsAlreadyPending(pending, t);                        }
+                        if (Logger.InfoEnabled) { Logger.ThrowableBeingSuppressedBecauseIsAlreadyPending(pending, t); }
                     }
                 }
             }
+        LoopEnd:
             if (pending is object)
             {
                 ThrowHelper.ThrowInvalidOperationException_CoalescingBufferQueuePending(pending);
@@ -285,11 +287,11 @@ namespace DotNetty.Transport.Channels
                 composite.AddComponent(true, cumulation);
                 composite.AddComponent(true, next);
             }
-            catch (Exception cause)
+            catch (Exception)
             {
                 composite.Release();
                 ReferenceCountUtil.SafeRelease(next);
-                throw cause;
+                throw;
             }
             return composite;
         }
@@ -308,11 +310,11 @@ namespace DotNetty.Transport.Channels
             {
                 newCumulation.WriteBytes(cumulation).WriteBytes(next);
             }
-            catch (Exception cause)
+            catch (Exception)
             {
                 newCumulation.Release();
                 ReferenceCountUtil.SafeRelease(next);
-                throw cause;
+                throw;
             }
             cumulation.Release();
             next.Release();
@@ -343,14 +345,14 @@ namespace DotNetty.Transport.Channels
         /// <returns>the number of elements in this queue.</returns>
         protected int Size()
         {
-            return this.bufAndListenerPairs.Count;
+            return _bufAndListenerPairs.Count;
         }
 
         private void ReleaseAndCompleteAll(Task future)
         {
-            DecrementReadableBytes(this.readableBytes);
+            DecrementReadableBytes(_readableBytes);
             Exception pending = null;
-            while (bufAndListenerPairs.TryRemoveFromFront(out var entry))
+            while (_bufAndListenerPairs.TryRemoveFromFront(out var entry))
             {
                 try
                 {
@@ -383,25 +385,25 @@ namespace DotNetty.Transport.Channels
 
         private void IncrementReadableBytes(int increment)
         {
-            int nextReadableBytes = readableBytes + increment;
-            if (nextReadableBytes < readableBytes)
+            int nextReadableBytes = _readableBytes + increment;
+            if (nextReadableBytes < _readableBytes)
             {
-                ThrowHelper.ThrowInvalidOperationException_BufferQueueLengthOverflow(readableBytes, increment);
+                ThrowHelper.ThrowInvalidOperationException_BufferQueueLengthOverflow(_readableBytes, increment);
             }
-            readableBytes = nextReadableBytes;
-            if (tracker is object)
+            _readableBytes = nextReadableBytes;
+            if (_tracker is object)
             {
-                tracker.IncrementPendingOutboundBytes(increment);
+                _tracker.IncrementPendingOutboundBytes(increment);
             }
         }
 
         private void DecrementReadableBytes(int decrement)
         {
-            this.readableBytes -= decrement;
-            Debug.Assert(this.readableBytes >= 0);
-            if (tracker is object)
+            _readableBytes -= decrement;
+            Debug.Assert(_readableBytes >= 0);
+            if (_tracker is object)
             {
-                tracker.DecrementPendingOutboundBytes(decrement);
+                _tracker.DecrementPendingOutboundBytes(decrement);
             }
         }
     }

@@ -2,7 +2,7 @@
 
 namespace DotNetty.Handlers.Tls
 {
-    public class SniCompletionEvent : SslCompletionEvent
+    public class SniCompletionEvent : TlsCompletionEvent
     {
         private readonly string _hostName;
 

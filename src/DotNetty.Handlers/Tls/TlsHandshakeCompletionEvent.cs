@@ -9,14 +9,14 @@ namespace DotNetty.Handlers.Tls
     {
         public static readonly TlsHandshakeCompletionEvent Success = new TlsHandshakeCompletionEvent();
 
-        readonly Exception exception;
+        readonly Exception _exception;
 
         /// <summary>
         ///     Creates a new event that indicates a successful handshake.
         /// </summary>
         TlsHandshakeCompletionEvent()
         {
-            this.exception = null;
+            _exception = null;
         }
 
         /// <summary>
@@ -26,23 +26,23 @@ namespace DotNetty.Handlers.Tls
         public TlsHandshakeCompletionEvent(Exception exception)
         {
             if (exception is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.exception); }
-            this.exception = exception;
+            _exception = exception;
         }
 
         /// <summary>
         ///     Return <c>true</c> if the handshake was successful
         /// </summary>
-        public bool IsSuccessful => this.exception is null;
+        public bool IsSuccessful => _exception is null;
 
         /// <summary>
         ///     Return the {@link Throwable} if {@link #isSuccess()} returns <c>false</c>
         ///     and so the handshake failed.
         /// </summary>
-        public Exception Exception => this.exception;
+        public Exception Exception => _exception;
 
         public override string ToString()
         {
-            Exception ex = this.Exception;
+            Exception ex = Exception;
             return ex is null ? "TlsHandshakeCompletionEvent(SUCCESS)" : $"TlsHandshakeCompletionEvent({ex})";
         }
     }

@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http2
         private bool _decoupleCloseAndGoAway;
 
         // The property that will prohibit connection() and codec() if set by server(),
-        // because this property is used only when this builder creates a Http2Connection.
+        // because this property is used only when this builder creates an Http2Connection.
         private bool _isServer = true;
         private int _maxReservedStreams = Http2CodecUtil.DefaultMaxReservedStreams;
 

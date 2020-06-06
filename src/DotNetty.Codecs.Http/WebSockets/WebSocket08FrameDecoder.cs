@@ -6,6 +6,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
+    using System.Runtime.ExceptionServices;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Internal.Logging;
@@ -432,7 +433,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
                 ctx.WriteAndFlushAsync(closeMessage).ContinueWith(CloseOnCompleteAction, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
             }
-            throw ex;
+            ExceptionDispatchInfo.Capture(ex).Throw();
         }
 
         static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;

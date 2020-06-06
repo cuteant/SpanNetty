@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using DotNetty.Common.Utilities;
@@ -24,7 +25,11 @@ namespace DotNetty.Common.Concurrency
             _tcs = new TaskCompletionSource<int>(state);
         }
 
-        public Task Task => _tcs.Task;
+        public Task Task
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => _tcs.Task;
+        }
 
         public bool IsVoid => false;
 

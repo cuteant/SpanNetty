@@ -32,9 +32,9 @@ namespace DotNetty.Codecs.Http2
         /// Buffer for any streams and corresponding frames that could not be created due to the maximum
         /// concurrent stream limit being hit.
         /// </summary>
-        private readonly SortedDictionary<int, PendingStream> pendingStreams = new SortedDictionary<int, PendingStream>();
-        private int maxConcurrentStreams;
-        private bool closed;
+        private readonly SortedDictionary<int, PendingStream> _pendingStreams;
+        private int _maxConcurrentStreams;
+        private bool _closed;
 
         public StreamBufferingEncoder(IHttp2ConnectionEncoder encoder)
             : this(encoder, Http2CodecUtil.SmallestMaxConcurrentStreams)
@@ -44,57 +44,59 @@ namespace DotNetty.Codecs.Http2
         public StreamBufferingEncoder(IHttp2ConnectionEncoder encoder, int initialMaxConcurrentStreams)
             : base(encoder)
         {
-            this.maxConcurrentStreams = initialMaxConcurrentStreams;
-            this.Connection.AddListener(new DelegatingConnectionAdapter(this));
+            _pendingStreams = new SortedDictionary<int, PendingStream>();
+
+            _maxConcurrentStreams = initialMaxConcurrentStreams;
+            Connection.AddListener(new DelegatingConnectionAdapter(this));
         }
 
         /// <summary>
         /// Indicates the number of streams that are currently buffered, awaiting creation.
         /// </summary>
-        public int NumBufferedStreams() => this.pendingStreams.Count;
+        public int NumBufferedStreams() => _pendingStreams.Count;
 
         public override Task WriteHeadersAsync(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int padding, bool endOfStream, IPromise promise)
         {
-            return this.WriteHeadersAsync(ctx, streamId, headers, 0, Http2CodecUtil.DefaultPriorityWeight,
+            return WriteHeadersAsync(ctx, streamId, headers, 0, Http2CodecUtil.DefaultPriorityWeight,
                 false, padding, endOfStream, promise);
         }
 
         public override Task WriteHeadersAsync(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int streamDependency, short weight, bool exclusive, int padding, bool endOfStream, IPromise promise)
         {
-            if (this.closed)
+            if (_closed)
             {
                 promise.SetException(new Http2ChannelClosedException());
                 return promise.Task;
             }
-            if (this.IsExistingStream(streamId) || this.Connection.GoAwayReceived())
+            if (IsExistingStream(streamId) || Connection.GoAwayReceived())
             {
                 return base.WriteHeadersAsync(ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream, promise);
             }
-            if (this.CanCreateStream())
+            if (CanCreateStream())
             {
                 return base.WriteHeadersAsync(ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream, promise);
             }
-            if (!this.pendingStreams.TryGetValue(streamId, out var pendingStream))
+            if (!_pendingStreams.TryGetValue(streamId, out var pendingStream))
             {
                 pendingStream = new PendingStream(ctx, streamId);
-                this.pendingStreams.Add(streamId, pendingStream);
+                _pendingStreams.Add(streamId, pendingStream);
             }
-            pendingStream.frames.Add(new HeadersFrame(this, headers, streamDependency, weight, exclusive,
+            pendingStream._frames.Add(new HeadersFrame(this, headers, streamDependency, weight, exclusive,
                     padding, endOfStream, promise));
             return promise.Task;
         }
 
         public override Task WriteRstStreamAsync(IChannelHandlerContext ctx, int streamId, Http2Error errorCode, IPromise promise)
         {
-            if (this.IsExistingStream(streamId))
+            if (IsExistingStream(streamId))
             {
                 return base.WriteRstStreamAsync(ctx, streamId, errorCode, promise);
             }
             // Since the delegate doesn't know about any buffered streams we have to handle cancellation
             // of the promises and releasing of the ByteBufs here.
-            if (this.pendingStreams.TryGetValue(streamId, out var stream))
+            if (_pendingStreams.TryGetValue(streamId, out var stream))
             {
-                this.pendingStreams.Remove(streamId);
+                _pendingStreams.Remove(streamId);
                 // Sending a RST_STREAM to a buffered stream will succeed the promise of all frames
                 // associated with the stream, as sending a RST_STREAM means that someone "doesn't care"
                 // about the stream anymore and thus there is not point in failing the promises and invoking
@@ -111,14 +113,14 @@ namespace DotNetty.Codecs.Http2
 
         public override Task WriteDataAsync(IChannelHandlerContext ctx, int streamId, IByteBuffer data, int padding, bool endOfStream, IPromise promise)
         {
-            if (this.IsExistingStream(streamId))
+            if (IsExistingStream(streamId))
             {
                 return base.WriteDataAsync(ctx, streamId, data, padding, endOfStream, promise);
             }
 
-            if (this.pendingStreams.TryGetValue(streamId, out var pendingStream))
+            if (_pendingStreams.TryGetValue(streamId, out var pendingStream))
             {
-                pendingStream.frames.Add(new DataFrame(this, data, padding, endOfStream, promise));
+                pendingStream._frames.Add(new DataFrame(this, data, padding, endOfStream, promise));
             }
             else
             {
@@ -135,29 +137,29 @@ namespace DotNetty.Codecs.Http2
             base.RemoteSettings(settings);
 
             // Get the updated value for SETTINGS_MAX_CONCURRENT_STREAMS.
-            this.maxConcurrentStreams = this.Connection.Local.MaxActiveStreams;
+            _maxConcurrentStreams = Connection.Local.MaxActiveStreams;
 
             // Try to create new streams up to the new threshold.
-            this.TryCreatePendingStreams();
+            TryCreatePendingStreams();
         }
 
         public override void Close()
         {
             try
             {
-                if (!this.closed)
+                if (!_closed)
                 {
-                    this.closed = true;
+                    _closed = true;
 
                     // Fail all buffered streams.
                     Http2ChannelClosedException e = new Http2ChannelClosedException();
-                    if ((uint)this.pendingStreams.Count > 0u)
+                    if ((uint)_pendingStreams.Count > 0u)
                     {
-                        foreach (var stream in this.pendingStreams.Values)
+                        foreach (var stream in _pendingStreams.Values)
                         {
                             stream.Close(e);
                         }
-                        this.pendingStreams.Clear();
+                        _pendingStreams.Clear();
                     }
                 }
             }
@@ -169,12 +171,12 @@ namespace DotNetty.Codecs.Http2
 
         private void TryCreatePendingStreams()
         {
-            if (0u >= (uint)this.pendingStreams.Count) { return; }
+            if (0u >= (uint)_pendingStreams.Count) { return; }
 
-            var keyList = new List<int>(this.pendingStreams.Count);
-            foreach (var item in this.pendingStreams)
+            var keyList = new List<int>(_pendingStreams.Count);
+            foreach (var item in _pendingStreams)
             {
-                if (!this.CanCreateStream()) { break; }
+                if (!CanCreateStream()) { break; }
 
                 keyList.Add(item.Key);
                 var pendingStream = item.Value;
@@ -189,28 +191,28 @@ namespace DotNetty.Codecs.Http2
             }
             foreach (var item in keyList)
             {
-                this.pendingStreams.Remove(item);
+                _pendingStreams.Remove(item);
             }
         }
 
         private void CancelGoAwayStreams(int lastStreamId, Http2Error errorCode, IByteBuffer debugData)
         {
-            if (0u >= (uint)this.pendingStreams.Count) { return; }
+            if (0u >= (uint)_pendingStreams.Count) { return; }
 
             var e = new Http2GoAwayException(lastStreamId, errorCode, ByteBufferUtil.GetBytes(debugData));
 
-            var keyList = new List<int>(this.pendingStreams.Count);
-            foreach (var stream in this.pendingStreams.Values)
+            var keyList = new List<int>(_pendingStreams.Count);
+            foreach (var stream in _pendingStreams.Values)
             {
-                if (stream.streamId > lastStreamId)
+                if (stream._streamId > lastStreamId)
                 {
-                    keyList.Add(stream.streamId);
+                    keyList.Add(stream._streamId);
                     stream.Close(e);
                 }
             }
             foreach (var item in keyList)
             {
-                this.pendingStreams.Remove(item);
+                _pendingStreams.Remove(item);
             }
         }
 
@@ -219,54 +221,54 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         private bool CanCreateStream()
         {
-            return this.Connection.Local.NumActiveStreams < this.maxConcurrentStreams;
+            return Connection.Local.NumActiveStreams < _maxConcurrentStreams;
         }
 
         private bool IsExistingStream(int streamId)
         {
-            return streamId <= this.Connection.Local.LastStreamCreated;
+            return streamId <= Connection.Local.LastStreamCreated;
         }
 
         sealed class DelegatingConnectionAdapter : Http2ConnectionAdapter
         {
-            readonly StreamBufferingEncoder encoder;
+            readonly StreamBufferingEncoder _encoder;
 
-            public DelegatingConnectionAdapter(StreamBufferingEncoder encoder) => this.encoder = encoder;
+            public DelegatingConnectionAdapter(StreamBufferingEncoder encoder) => _encoder = encoder;
 
             public override void OnGoAwayReceived(int lastStreamId, Http2Error errorCode, IByteBuffer debugData)
             {
-                this.encoder.CancelGoAwayStreams(lastStreamId, errorCode, debugData);
+                _encoder.CancelGoAwayStreams(lastStreamId, errorCode, debugData);
             }
 
             public override void OnStreamClosed(IHttp2Stream stream)
             {
-                this.encoder.TryCreatePendingStreams();
+                _encoder.TryCreatePendingStreams();
             }
         }
 
         private sealed class PendingStream
         {
-            readonly IChannelHandlerContext ctx;
-            internal readonly int streamId;
-            internal readonly List<Frame> frames = new List<Frame>(2);
+            readonly IChannelHandlerContext _ctx;
+            internal readonly int _streamId;
+            internal readonly List<Frame> _frames = new List<Frame>(2);
 
             public PendingStream(IChannelHandlerContext ctx, int streamId)
             {
-                this.ctx = ctx;
-                this.streamId = streamId;
+                _ctx = ctx;
+                _streamId = streamId;
             }
 
             public void SendFrames()
             {
-                foreach (Frame frame in frames)
+                foreach (Frame frame in _frames)
                 {
-                    frame.Send(ctx, streamId);
+                    frame.Send(_ctx, _streamId);
                 }
             }
 
             public void Close(Exception t)
             {
-                foreach (Frame frame in frames)
+                foreach (Frame frame in _frames)
                 {
                     frame.Release(t);
                 }
@@ -275,9 +277,9 @@ namespace DotNetty.Codecs.Http2
 
         private abstract class Frame
         {
-            protected readonly IPromise promise;
+            protected readonly IPromise _promise;
 
-            public Frame(IPromise promise) => this.promise = promise;
+            public Frame(IPromise promise) => _promise = promise;
 
             /// <summary>
             /// Release any resources (features, buffers, ...) associated with the frame.
@@ -287,11 +289,11 @@ namespace DotNetty.Codecs.Http2
             {
                 if (ex is null)
                 {
-                    promise.Complete();
+                    _promise.Complete();
                 }
                 else
                 {
-                    promise.SetException(ex);
+                    _promise.SetException(ex);
                 }
             }
 
@@ -300,59 +302,59 @@ namespace DotNetty.Codecs.Http2
 
         private sealed class HeadersFrame : Frame
         {
-            readonly StreamBufferingEncoder encoder;
-            readonly IHttp2Headers headers;
-            readonly int streamDependency;
-            readonly short weight;
-            readonly bool exclusive;
-            readonly int padding;
-            readonly bool endOfStream;
+            readonly StreamBufferingEncoder _encoder;
+            readonly IHttp2Headers _headers;
+            readonly int _streamDependency;
+            readonly short _weight;
+            readonly bool _exclusive;
+            readonly int _padding;
+            readonly bool _endOfStream;
 
             public HeadersFrame(StreamBufferingEncoder encoder, IHttp2Headers headers, int streamDependency, short weight, bool exclusive,
                 int padding, bool endOfStream, IPromise promise)
                 : base(promise)
             {
-                this.encoder = encoder;
-                this.headers = headers;
-                this.streamDependency = streamDependency;
-                this.weight = weight;
-                this.exclusive = exclusive;
-                this.padding = padding;
-                this.endOfStream = endOfStream;
+                _encoder = encoder;
+                _headers = headers;
+                _streamDependency = streamDependency;
+                _weight = weight;
+                _exclusive = exclusive;
+                _padding = padding;
+                _endOfStream = endOfStream;
             }
 
             public override void Send(IChannelHandlerContext ctx, int streamId)
             {
-                this.encoder.WriteHeadersAsync(ctx, streamId, this.headers, this.streamDependency,
-                    this.weight, this.exclusive, this.padding, this.endOfStream, this.promise);
+                _encoder.WriteHeadersAsync(ctx, streamId, _headers, _streamDependency,
+                    _weight, _exclusive, _padding, _endOfStream, _promise);
             }
         }
 
         private sealed class DataFrame : Frame
         {
-            readonly StreamBufferingEncoder encoder;
-            readonly IByteBuffer data;
-            readonly int padding;
-            readonly bool endOfStream;
+            readonly StreamBufferingEncoder _encoder;
+            readonly IByteBuffer _data;
+            readonly int _padding;
+            readonly bool _endOfStream;
 
             public DataFrame(StreamBufferingEncoder encoder, IByteBuffer data, int padding, bool endOfStream, IPromise promise)
                 : base(promise)
             {
-                this.encoder = encoder;
-                this.data = data;
-                this.padding = padding;
-                this.endOfStream = endOfStream;
+                _encoder = encoder;
+                _data = data;
+                _padding = padding;
+                _endOfStream = endOfStream;
             }
 
             public override void Release(Exception ex)
             {
                 base.Release(ex);
-                ReferenceCountUtil.SafeRelease(this.data);
+                ReferenceCountUtil.SafeRelease(_data);
             }
 
             public override void Send(IChannelHandlerContext ctx, int streamId)
             {
-                this.encoder.WriteDataAsync(ctx, streamId, this.data, this.padding, this.endOfStream, this.promise);
+                _encoder.WriteDataAsync(ctx, streamId, _data, _padding, _endOfStream, _promise);
             }
         }
     }

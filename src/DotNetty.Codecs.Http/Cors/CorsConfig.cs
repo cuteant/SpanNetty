@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoProperty
-// ReSharper disable ConvertToAutoPropertyWhenPossible
 namespace DotNetty.Codecs.Http.Cors
 {
     using System;
@@ -13,64 +11,152 @@ namespace DotNetty.Codecs.Http.Cors
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
-    // Configuration for Cross-Origin Resource Sharing (CORS).
+    /// <summary>
+    /// Configuration for Cross-Origin Resource Sharing (CORS).
+    /// </summary>
     public sealed class CorsConfig
     {
-        readonly ISet<ICharSequence> origins;
-        readonly bool anyOrigin;
-        readonly bool enabled;
-        readonly ISet<ICharSequence> exposeHeaders;
-        readonly bool allowCredentials;
-        readonly long maxAge;
-        readonly ISet<HttpMethod> allowedRequestMethods;
-        readonly ISet<AsciiString> allowedRequestHeaders;
-        readonly bool allowNullOrigin;
-        readonly IDictionary<AsciiString, ICallable<object>> preflightHeaders;
-        readonly bool shortCircuit;
+        readonly ISet<ICharSequence> _origins;
+        readonly bool _anyOrigin;
+        readonly bool _enabled;
+        readonly ISet<ICharSequence> _exposeHeaders;
+        readonly bool _allowCredentials;
+        readonly long _maxAge;
+        readonly ISet<HttpMethod> _allowedRequestMethods;
+        readonly ISet<AsciiString> _allowedRequestHeaders;
+        readonly bool _allowNullOrigin;
+        readonly IDictionary<AsciiString, ICallable<object>> _preflightHeaders;
+        readonly bool _shortCircuit;
 
         internal CorsConfig(CorsConfigBuilder builder)
         {
-            this.origins = new HashSet<ICharSequence>(builder.origins, AsciiString.CaseSensitiveHasher);
-            this.anyOrigin = builder.anyOrigin;
-            this.enabled = builder.enabled;
-            this.exposeHeaders = builder.exposeHeaders;
-            this.allowCredentials = builder.allowCredentials;
-            this.maxAge = builder.maxAge;
-            this.allowedRequestMethods = builder.requestMethods;
-            this.allowedRequestHeaders = builder.requestHeaders;
-            this.allowNullOrigin = builder.allowNullOrigin;
-            this.preflightHeaders = builder.preflightHeaders;
-            this.shortCircuit = builder.shortCircuit;
+            _origins = new HashSet<ICharSequence>(builder.origins, AsciiString.CaseSensitiveHasher);
+            _anyOrigin = builder.anyOrigin;
+            _enabled = builder.enabled;
+            _exposeHeaders = builder.exposeHeaders;
+            _allowCredentials = builder.allowCredentials;
+            _maxAge = builder.maxAge;
+            _allowedRequestMethods = builder.requestMethods;
+            _allowedRequestHeaders = builder.requestHeaders;
+            _allowNullOrigin = builder.allowNullOrigin;
+            _preflightHeaders = builder.preflightHeaders;
+            _shortCircuit = builder.shortCircuit;
         }
 
-        public bool IsCorsSupportEnabled => this.enabled;
+        /// <summary>
+        /// Determines if support for CORS is enabled.
+        /// </summary>
+        /// <returns><c>true</c> if support for CORS is enabled, false otherwise.</returns>
+        public bool IsCorsSupportEnabled => _enabled;
 
-        public bool IsAnyOriginSupported => this.anyOrigin;
+        /// <summary>
+        /// Determines whether a wildcard origin, '*', is supported.
+        /// </summary>
+        /// <returns><c>true</c> if any origin is allowed.</returns>
+        public bool IsAnyOriginSupported => _anyOrigin;
 
-        public ICharSequence Origin => 0u >= (uint)this.origins.Count ? CorsHandler.AnyOrigin : this.origins.First();
+        /// <summary>
+        /// Returns the allowed origin. This can either be a wildcard or an origin value.
+        /// </summary>
+        /// <returns>the value that will be used for the CORS response header 'Access-Control-Allow-Origin'</returns>
+        public ICharSequence Origin => 0u >= (uint)_origins.Count ? CorsHandler.AnyOrigin : _origins.First();
 
-        public ISet<ICharSequence> Origins => this.origins;
+        /// <summary>
+        /// Returns the set of allowed origins.
+        /// </summary>
+        public ISet<ICharSequence> Origins => _origins;
 
-        public bool IsNullOriginAllowed => this.allowNullOrigin;
+        /// <summary>
+        /// Web browsers may set the 'Origin' request header to 'null' if a resource is loaded
+        /// from the local file system.
+        /// 
+        /// <para>If isNullOriginAllowed is true then the server will response with the wildcard for the
+        /// the CORS response header 'Access-Control-Allow-Origin'.</para>
+        /// </summary>
+        /// <returns><c>true</c> if a 'null' origin should be supported.</returns>
+        public bool IsNullOriginAllowed => _allowNullOrigin;
 
-        public ISet<ICharSequence> ExposedHeaders() => this.exposeHeaders.ToImmutableHashSet();
+        /// <summary>
+        /// Returns a set of headers to be exposed to calling clients.
+        /// 
+        /// <para>During a simple CORS request only certain response headers are made available by the
+        /// browser, for example using:</para>
+        /// <code>
+        /// xhr.getResponseHeader("Content-Type");
+        /// </code>
+        /// The headers that are available by default are:
+        /// <ul>
+        /// <li>Cache-Control</li>
+        /// <li>Content-Language</li>
+        /// <li>Content-Type</li>
+        /// <li>Expires</li>
+        /// <li>Last-Modified</li>
+        /// <li>Pragma</li>
+        /// </ul>
+        /// <para>To expose other headers they need to be specified, which is what this method enables by
+        /// adding the headers names to the CORS 'Access-Control-Expose-Headers' response header.</para>
+        /// </summary>
+        /// <returns><see cref="ISet{ICharSequence}"/> a list of the headers to expose.</returns>
+        public ISet<ICharSequence> ExposedHeaders() => _exposeHeaders.ToImmutableHashSet();
 
-        public bool IsCredentialsAllowed => this.allowCredentials;
+        /// <summary>
+        /// Determines if cookies are supported for CORS requests.
+        ///
+        /// <para>By default cookies are not included in CORS requests but if isCredentialsAllowed returns
+        /// true cookies will be added to CORS requests. Setting this value to true will set the
+        /// CORS 'Access-Control-Allow-Credentials' response header to true.</para>
+        ///
+        /// <para>Please note that cookie support needs to be enabled on the client side as well.
+        /// The client needs to opt-in to send cookies by calling:</para>
+        /// <code>
+        /// xhr.withCredentials = true;
+        /// </code>
+        /// <para>The default value for 'withCredentials' is false in which case no cookies are sent.
+        /// Setting this to true will included cookies in cross origin requests.</para>
+        /// </summary>
+        /// <returns><c>true</c> if cookies are supported.</returns>
+        public bool IsCredentialsAllowed => _allowCredentials;
 
-        public long MaxAge => this.maxAge;
+        /// <summary>
+        /// Gets the maxAge setting.
+        ///
+        /// <para>When making a preflight request the client has to perform two request with can be inefficient.
+        /// This setting will set the CORS 'Access-Control-Max-Age' response header and enables the
+        /// caching of the preflight response for the specified time. During this time no preflight
+        /// request will be made.</para>
+        /// </summary>
+        /// <returns>the time in seconds that a preflight request may be cached.</returns>
+        public long MaxAge => _maxAge;
 
-        public ISet<HttpMethod> AllowedRequestMethods() => this.allowedRequestMethods.ToImmutableHashSet();
+        /// <summary>
+        /// Returns the allowed set of Request Methods. The Http methods that should be returned in the
+        /// CORS 'Access-Control-Request-Method' response header.
+        /// </summary>
+        /// <returns><see cref="ISet{T}"/> of <see cref="HttpMethod"/>s that represent the allowed Request Methods.</returns>
+        public ISet<HttpMethod> AllowedRequestMethods() => _allowedRequestMethods.ToImmutableHashSet();
 
-        public ISet<AsciiString> AllowedRequestHeaders() => this.allowedRequestHeaders.ToImmutableHashSet();
+        /// <summary>
+        /// Returns the allowed set of Request Headers.
+        /// </summary>
+        /// <remarks>
+        /// The header names returned from this method will be used to set the CORS
+        /// 'Access-Control-Allow-Headers' response header.
+        /// </remarks>
+        /// <returns><see cref="ISet{AsciiString}"/> of strings that represent the allowed Request Headers.</returns>
+        public ISet<AsciiString> AllowedRequestHeaders() => _allowedRequestHeaders.ToImmutableHashSet();
 
+        /// <summary>
+        /// Returns HTTP response headers that should be added to a CORS preflight response.
+        /// </summary>
+        /// <returns><see cref="HttpHeaders"/> the HTTP response headers to be added.</returns>
         public HttpHeaders PreflightResponseHeaders()
         {
-            if (0u >= (uint)this.preflightHeaders.Count)
+            if (0u >= (uint)_preflightHeaders.Count)
             {
                 return EmptyHttpHeaders.Default;
             }
             HttpHeaders headers = new DefaultHttpHeaders();
-            foreach (KeyValuePair<AsciiString, ICallable<object>> entry in this.preflightHeaders)
+            foreach (KeyValuePair<AsciiString, ICallable<object>> entry in _preflightHeaders)
             {
                 object value = GetValue(entry.Value);
                 if (value is IEnumerable<object> values)
@@ -85,7 +171,17 @@ namespace DotNetty.Codecs.Http.Cors
             return headers;
         }
 
-        public bool IsShortCircuit => this.shortCircuit;
+        /// <summary>
+        /// Determines whether a CORS request should be rejected if it's invalid before being
+        /// further processing.
+        /// </summary>
+        /// <remarks>
+        /// CORS headers are set after a request is processed. This may not always be desired
+        /// and this setting will check that the Origin is valid and if it is not valid no
+        /// further processing will take place, and an error will be returned to the calling client.
+        /// </remarks>
+        /// <returns><c>true</c> if a CORS request should short-circuit upon receiving an invalid Origin header.</returns>
+        public bool IsShortCircuit => _shortCircuit;
 
         static object GetValue(ICallable<object> callable)
         {
@@ -99,21 +195,22 @@ namespace DotNetty.Codecs.Http.Cors
             }
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             var builder = StringBuilderManager.Allocate();
             builder.Append($"{StringUtil.SimpleClassName(this)}")
-                .Append($"[enabled = {this.enabled}");
+                .Append($"[enabled = {_enabled}");
 
             builder.Append(", origins=");
-            if (0u >= (uint)this.Origins.Count)
+            if (0u >= (uint)Origins.Count)
             {
                 builder.Append("*");
             }
             else
             {
                 builder.Append("(");
-                foreach (ICharSequence value in this.Origins)
+                foreach (ICharSequence value in Origins)
                 {
                     builder.Append($"'{value}'");
                 }
@@ -121,32 +218,32 @@ namespace DotNetty.Codecs.Http.Cors
             }
 
             builder.Append(", exposedHeaders=");
-            if (0u >= (uint)this.exposeHeaders.Count)
+            if (0u >= (uint)_exposeHeaders.Count)
             {
                 builder.Append("*");
             }
             else
             {
                 builder.Append("(");
-                foreach (ICharSequence value in this.exposeHeaders)
+                foreach (ICharSequence value in _exposeHeaders)
                 {
                     builder.Append($"'{value}'");
                 }
                 builder.Append(")");
             }
 
-            builder.Append($", isCredentialsAllowed={this.allowCredentials}");
-            builder.Append($", maxAge={this.maxAge}");
+            builder.Append($", isCredentialsAllowed={_allowCredentials}");
+            builder.Append($", maxAge={_maxAge}");
 
             builder.Append(", allowedRequestMethods=");
-            if (0u >= (uint)this.allowedRequestMethods.Count)
+            if (0u >= (uint)_allowedRequestMethods.Count)
             {
                 builder.Append("*");
             }
             else
             {
                 builder.Append("(");
-                foreach (HttpMethod value in this.allowedRequestMethods)
+                foreach (HttpMethod value in _allowedRequestMethods)
                 {
                     builder.Append($"'{value}'");
                 }
@@ -154,14 +251,14 @@ namespace DotNetty.Codecs.Http.Cors
             }
 
             builder.Append(", allowedRequestHeaders=");
-            if (0u >= (uint)this.allowedRequestHeaders.Count)
+            if (0u >= (uint)_allowedRequestHeaders.Count)
             {
                 builder.Append("*");
             }
             else
             {
                 builder.Append("(");
-                foreach (AsciiString value in this.allowedRequestHeaders)
+                foreach (AsciiString value in _allowedRequestHeaders)
                 {
                     builder.Append($"'{value}'");
                 }
@@ -169,14 +266,14 @@ namespace DotNetty.Codecs.Http.Cors
             }
 
             builder.Append(", preflightHeaders=");
-            if (0u >= (uint)this.preflightHeaders.Count)
+            if (0u >= (uint)_preflightHeaders.Count)
             {
                 builder.Append("*");
             }
             else
             {
                 builder.Append("(");
-                foreach (AsciiString value in this.preflightHeaders.Keys)
+                foreach (AsciiString value in _preflightHeaders.Keys)
                 {
                     builder.Append($"'{value}'");
                 }

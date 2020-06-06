@@ -15,22 +15,22 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public sealed class UniformStreamByteDistributor : Http2ConnectionAdapter, IStreamByteDistributor
     {
-        private readonly IHttp2ConnectionPropertyKey stateKey;
-        private readonly Deque<State> queue = new Deque<State>(4);
+        private readonly IHttp2ConnectionPropertyKey _stateKey;
+        private readonly Deque<State> _queue = new Deque<State>(4);
 
         /// <summary>
         /// The minimum number of bytes that we will attempt to allocate to a stream. This is to
         /// help improve goodput on a per-stream basis.
         /// </summary>
-        private int minAllocationChunk = Http2CodecUtil.DefaultMinAllocationChunk;
-        private long totalStreamableBytes;
+        private int _minAllocationChunk = Http2CodecUtil.DefaultMinAllocationChunk;
+        private long _totalStreamableBytes;
 
         public UniformStreamByteDistributor(IHttp2Connection connection)
         {
             // Add a state for the connection.
-            this.stateKey = connection.NewKey();
+            _stateKey = connection.NewKey();
             var connectionStream = connection.ConnectionStream;
-            connectionStream.SetProperty(stateKey, new State(this, connectionStream));
+            connectionStream.SetProperty(_stateKey, new State(this, connectionStream));
 
             // Register for notification of new streams.
             connection.AddListener(this);
@@ -38,7 +38,7 @@ namespace DotNetty.Codecs.Http2
 
         public override void OnStreamAdded(IHttp2Stream stream)
         {
-            stream.SetProperty(this.stateKey, new State(this, stream));
+            stream.SetProperty(_stateKey, new State(this, stream));
         }
 
         public override void OnStreamRemoved(IHttp2Stream stream)
@@ -57,7 +57,7 @@ namespace DotNetty.Codecs.Http2
             {
                 ThrowHelper.ThrowArgumentException_Positive(minAllocationChunk, ExceptionArgument.minAllocationChunk);
             }
-            this.minAllocationChunk = minAllocationChunk;
+            _minAllocationChunk = minAllocationChunk;
         }
 
         public void UpdateStreamableBytes(IStreamByteDistributorStreamState streamState)
@@ -79,47 +79,47 @@ namespace DotNetty.Codecs.Http2
 
         public bool Distribute(int maxBytes, IStreamByteDistributorWriter writer)
         {
-            var size = queue.Count;
+            var size = _queue.Count;
             if (0u >= (uint)size)
             {
-                return totalStreamableBytes > 0;
+                return _totalStreamableBytes > 0L;
             }
 
-            var chunkSize = Math.Max(minAllocationChunk, maxBytes / size);
+            var chunkSize = Math.Max(_minAllocationChunk, maxBytes / size);
 
-            State state = queue.RemoveFromFront();
+            State state = _queue.RemoveFromFront();
             do
             {
-                state.enqueued = false;
-                if (state.windowNegative)
+                state._enqueued = false;
+                if (state._windowNegative)
                 {
                     continue;
                 }
-                if (0u >= (uint)maxBytes && state.streamableBytes > 0)
+                if (0u >= (uint)maxBytes && state._streamableBytes > 0)
                 {
                     // Stop at the first state that can't send. Add this state back to the head of the queue. Note
                     // that empty frames at the head of the queue will always be written, assuming the stream window
                     // is not negative.
-                    queue.AddToFront(state);
-                    state.enqueued = true;
+                    _queue.AddToFront(state);
+                    state._enqueued = true;
                     break;
                 }
 
                 // Allocate as much data as we can for this stream.
-                int chunk = Math.Min(chunkSize, Math.Min(maxBytes, state.streamableBytes));
+                int chunk = Math.Min(chunkSize, Math.Min(maxBytes, state._streamableBytes));
                 maxBytes -= chunk;
 
                 // Write the allocated bytes and enqueue as necessary.
                 state.Write(chunk, writer);
-            } while (queue.TryRemoveFromFront(out state));
+            } while (_queue.TryRemoveFromFront(out state));
 
-            return totalStreamableBytes > 0;
+            return _totalStreamableBytes > 0L;
         }
 
         private State GetState(IHttp2Stream stream)
         {
             if (stream is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stream); }
-            return stream.GetProperty<State>(stateKey);
+            return stream.GetProperty<State>(_stateKey);
         }
 
         /// <summary>
@@ -127,28 +127,28 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         private sealed class State
         {
-            readonly UniformStreamByteDistributor distributor;
-            readonly IHttp2Stream stream;
-            internal int streamableBytes;
-            internal bool windowNegative;
-            internal bool enqueued;
-            bool writing;
+            readonly UniformStreamByteDistributor _distributor;
+            readonly IHttp2Stream _stream;
+            internal int _streamableBytes;
+            internal bool _windowNegative;
+            internal bool _enqueued;
+            bool _writing;
 
             public State(UniformStreamByteDistributor distributor, IHttp2Stream stream)
             {
-                this.distributor = distributor;
-                this.stream = stream;
+                _distributor = distributor;
+                _stream = stream;
             }
 
             public void UpdateStreamableBytes(int newStreamableBytes, bool hasFrame, int windowSize)
             {
                 Debug.Assert(hasFrame || newStreamableBytes == 0, "hasFrame: " + hasFrame + " newStreamableBytes: " + newStreamableBytes);
 
-                int delta = newStreamableBytes - streamableBytes;
+                int delta = newStreamableBytes - _streamableBytes;
                 if (delta != 0)
                 {
-                    streamableBytes = newStreamableBytes;
-                    this.distributor.totalStreamableBytes += delta;
+                    _streamableBytes = newStreamableBytes;
+                    _distributor._totalStreamableBytes += delta;
                 }
                 // In addition to only enqueuing state when they have frames we enforce the following restrictions:
                 // 1. If the window has gone negative. We never want to queue a state. However we also don't want to
@@ -157,8 +157,8 @@ namespace DotNetty.Codecs.Http2
                 // 2. If the window is zero we only want to queue if we are not writing. If we are writing that means
                 //    we gave the state a chance to write zero length frames. We wait until updateStreamableBytes is
                 //    called again before this state is allowed to write.
-                windowNegative = windowSize < 0;
-                if (hasFrame && (windowSize > 0 || (0u >= (uint)windowSize && !writing)))
+                _windowNegative = windowSize < 0;
+                if (hasFrame && (windowSize > 0 || (0u >= (uint)windowSize && !_writing)))
                 {
                     AddToQueue();
                 }
@@ -172,11 +172,11 @@ namespace DotNetty.Codecs.Http2
             /// <param name="writer"></param>
             public void Write(int numBytes, IStreamByteDistributorWriter writer)
             {
-                writing = true;
+                _writing = true;
                 try
                 {
                     // Write the allocated bytes.
-                    writer.Write(stream, numBytes);
+                    writer.Write(_stream, numBytes);
                 }
                 catch (Exception t)
                 {
@@ -184,25 +184,25 @@ namespace DotNetty.Codecs.Http2
                 }
                 finally
                 {
-                    writing = false;
+                    _writing = false;
                 }
             }
 
             void AddToQueue()
             {
-                if (!enqueued)
+                if (!_enqueued)
                 {
-                    enqueued = true;
-                    this.distributor.queue.AddToBack(this);
+                    _enqueued = true;
+                    _distributor._queue.AddToBack(this);
                 }
             }
 
             void RemoveFromQueue()
             {
-                if (enqueued)
+                if (_enqueued)
                 {
-                    enqueued = false;
-                    this.distributor.queue.Remove(this);
+                    _enqueued = false;
+                    _distributor._queue.Remove(this);
                 }
             }
 

@@ -17,15 +17,16 @@ namespace DotNetty.Handlers.Tls
     public sealed class SniHandler : ByteToMessageDecoder
     {
         // Maximal number of ssl records to inspect before fallback to the default server TLS setting (aligned with netty) 
-        const int MAX_SSL_RECORDS = 4;
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance(typeof(SniHandler));
-        static readonly CultureInfo UnitedStatesCultureInfo = new CultureInfo("en-US");
-        readonly Func<Stream, SslStream> sslStreamFactory;
-        readonly ServerTlsSniSettings serverTlsSniSettings;
+        private const int MAX_SSL_RECORDS = 4;
+        private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance(typeof(SniHandler));
+        private static readonly CultureInfo UnitedStatesCultureInfo = new CultureInfo("en-US");
 
-        bool handshakeFailed;
-        bool suppressRead;
-        bool readPending;
+        private readonly Func<Stream, SslStream> _sslStreamFactory;
+        private readonly ServerTlsSniSettings _serverTlsSniSettings;
+
+        private bool _handshakeFailed;
+        private bool _suppressRead;
+        private bool _readPending;
 
         public SniHandler(ServerTlsSniSettings settings)
             : this(stream => new SslStream(stream, true), settings)
@@ -36,13 +37,13 @@ namespace DotNetty.Handlers.Tls
         {
             if (settings is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.settings); }
             if (sslStreamFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sslStreamFactory); }
-            this.sslStreamFactory = sslStreamFactory;
-            this.serverTlsSniSettings = settings;
+            _sslStreamFactory = sslStreamFactory;
+            _serverTlsSniSettings = settings;
         }
 
         protected override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
-            if (!this.suppressRead && !this.handshakeFailed)
+            if (!_suppressRead && !_handshakeFailed)
             {
                 Exception error = null;
                 try
@@ -67,7 +68,7 @@ namespace DotNetty.Handlers.Tls
                             // Not an SSL/TLS packet
                             if (len == TlsUtils.NOT_ENCRYPTED)
                             {
-                                this.handshakeFailed = true;
+                                _handshakeFailed = true;
                                 var e = new NotSslRecordException(
                                     "not an SSL/TLS record: " + ByteBufferUtil.HexDump(input));
                                 input.SkipBytes(input.ReadableBytes);
@@ -193,7 +194,7 @@ namespace DotNetty.Handlers.Tls
                                                     };
 
                                                     hostname = idn.GetAscii(hostname).ToLower(UnitedStatesCultureInfo);
-                                                    this.Select(context, hostname);
+                                                    Select(context, hostname);
                                                     return;
                                                 }
                                                 else
@@ -226,14 +227,14 @@ namespace DotNetty.Handlers.Tls
                     }
                 }
 
-                if (this.serverTlsSniSettings.DefaultServerHostName is object)
+                if (_serverTlsSniSettings.DefaultServerHostName is object)
                 {
                     // Just select the default server TLS setting
-                    this.Select(context, this.serverTlsSniSettings.DefaultServerHostName);
+                    Select(context, _serverTlsSniSettings.DefaultServerHostName);
                 }
                 else
                 {
-                    this.handshakeFailed = true;
+                    _handshakeFailed = true;
                     var e = new DecoderException($"failed to get the server TLS setting {error}");
                     TlsUtils.NotifyHandshakeFailure(context, e, true);
                     throw e;
@@ -244,22 +245,22 @@ namespace DotNetty.Handlers.Tls
         async void Select(IChannelHandlerContext context, string hostName)
         {
             if (hostName is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.hostName); }
-            this.suppressRead = true;
+            _suppressRead = true;
             try
             {
-                var serverTlsSetting = await this.serverTlsSniSettings.ServerTlsSettingMap(hostName);
-                this.ReplaceHandler(context, serverTlsSetting);
+                var serverTlsSetting = await _serverTlsSniSettings.ServerTlsSettingMap(hostName);
+                ReplaceHandler(context, serverTlsSetting);
             }
             catch (Exception ex)
             {
-                this.ExceptionCaught(context, new DecoderException($"failed to get the server TLS setting for {hostName}, {ex}"));
+                ExceptionCaught(context, new DecoderException($"failed to get the server TLS setting for {hostName}, {ex}"));
             }
             finally
             {
-                this.suppressRead = false;
-                if (this.readPending)
+                _suppressRead = false;
+                if (_readPending)
                 {
-                    this.readPending = false;
+                    _readPending = false;
                     context.Read();
                 }
             }
@@ -268,15 +269,15 @@ namespace DotNetty.Handlers.Tls
         void ReplaceHandler(IChannelHandlerContext context, ServerTlsSettings serverTlsSetting)
         {
             if (serverTlsSetting is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.serverTlsSetting); }
-            var tlsHandler = new TlsHandler(this.sslStreamFactory, serverTlsSetting);
+            var tlsHandler = new TlsHandler(_sslStreamFactory, serverTlsSetting);
             context.Pipeline.Replace(this, nameof(TlsHandler), tlsHandler);
         }
 
         public override void Read(IChannelHandlerContext context)
         {
-            if (this.suppressRead)
+            if (_suppressRead)
             {
-                this.readPending = true;
+                _readPending = true;
             }
             else
             {

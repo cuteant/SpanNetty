@@ -17,8 +17,8 @@ namespace DotNetty.Codecs.Http2
             return name.Count + value.Count + HeaderEntryOverhead;
         }
 
-        internal readonly ICharSequence name;
-        internal readonly ICharSequence value;
+        internal readonly ICharSequence _name;
+        internal readonly ICharSequence _value;
 
         /// <summary>
         /// This constructor can only be used if name and value are ISO-8859-1 encoded.
@@ -30,35 +30,23 @@ namespace DotNetty.Codecs.Http2
             if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
             if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
-            this.name = name;
-            this.value = value;
+            _name = name;
+            _value = value;
         }
 
         internal int Size()
         {
-            return this.name.Count + this.value.Count + HeaderEntryOverhead;
+            return _name.Count + _value.Count + HeaderEntryOverhead;
         }
 
-        public sealed override int GetHashCode()
+        public bool EqualsForTest(HpackHeaderField other)
         {
-            // TODO(nmittler): Netty's build rules require this. Probably need a better implementation.
-            return base.GetHashCode();
-        }
-
-        public sealed override bool Equals(object obj)
-        {
-            if (ReferenceEquals(this, obj)) { return true; }
-
-            var other = obj as HpackHeaderField;
-            if (other is null) { return false; }
-
-            // To avoid short circuit behavior a bitwise operator is used instead of a bool operator.
-            return (HpackUtil.EqualsConstantTime(this.name, other.name) & HpackUtil.EqualsConstantTime(this.value, other.value)) != 0;
+            return HpackUtil.EqualsVariableTime(_name, other._name) && HpackUtil.EqualsVariableTime(_value, other._value);
         }
 
         public override string ToString()
         {
-            return this.name + ": " + this.value;
+            return _name + ": " + _value;
         }
     }
 }

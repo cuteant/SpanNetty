@@ -15,12 +15,12 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class InboundHttp2ToHttpAdapter : Http2EventAdapter
     {
-        private readonly int maxContentLength;
-        private readonly IImmediateSendDetector sendDetector;
-        private readonly IHttp2ConnectionPropertyKey messageKey;
-        private readonly bool propagateSettings;
-        protected readonly IHttp2Connection connection;
-        protected readonly bool validateHttpHeaders;
+        private readonly int _maxContentLength;
+        private readonly IImmediateSendDetector _sendDetector;
+        private readonly IHttp2ConnectionPropertyKey _messageKey;
+        private readonly bool _propagateSettings;
+        protected readonly IHttp2Connection _connection;
+        protected readonly bool _validateHttpHeaders;
 
         public InboundHttp2ToHttpAdapter(IHttp2Connection connection, int maxContentLength,
             bool validateHttpHeaders, bool propagateSettings)
@@ -28,12 +28,12 @@ namespace DotNetty.Codecs.Http2
             if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
             if (maxContentLength <= 0) { ThrowHelper.ThrowArgumentException_Positive(maxContentLength, ExceptionArgument.maxContentLength); }
 
-            this.connection = connection;
-            this.maxContentLength = maxContentLength;
-            this.validateHttpHeaders = validateHttpHeaders;
-            this.propagateSettings = propagateSettings;
-            this.sendDetector = DefaultImmediateSendDetector.Instance;
-            this.messageKey = connection.NewKey();
+            _connection = connection;
+            _maxContentLength = maxContentLength;
+            _validateHttpHeaders = validateHttpHeaders;
+            _propagateSettings = propagateSettings;
+            _sendDetector = DefaultImmediateSendDetector.Instance;
+            _messageKey = connection.NewKey();
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="release"><c>true</c> to call release on the value if it is present. <c>false</c> to not call release.</param>
         protected void RemoveMessage(IHttp2Stream stream, bool release)
         {
-            IFullHttpMessage msg = stream.RemoveProperty<IFullHttpMessage>(this.messageKey);
+            IFullHttpMessage msg = stream.RemoveProperty<IFullHttpMessage>(_messageKey);
             if (release && msg is object)
             {
                 msg.Release();
@@ -57,7 +57,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns>The <see cref="IFullHttpMessage"/> associated with <paramref name="stream"/>.</returns>
         protected IFullHttpMessage GetMessage(IHttp2Stream stream)
         {
-            return stream.GetProperty<IFullHttpMessage>(this.messageKey);
+            return stream.GetProperty<IFullHttpMessage>(_messageKey);
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="message">The message which contains the HTTP semantics.</param>
         protected void PutMessage(IHttp2Stream stream, IFullHttpMessage message)
         {
-            IFullHttpMessage previous = stream.SetProperty<IFullHttpMessage>(this.messageKey, message);
+            IFullHttpMessage previous = stream.SetProperty<IFullHttpMessage>(_messageKey, message);
             if (previous != message && previous is object)
             {
                 previous.Release();
@@ -76,7 +76,7 @@ namespace DotNetty.Codecs.Http2
 
         public override void OnStreamRemoved(IHttp2Stream stream)
         {
-            this.RemoveMessage(stream, true);
+            RemoveMessage(stream, true);
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="stream">the stream of the message which is being fired</param>
         protected virtual void FireChannelRead(IChannelHandlerContext ctx, IFullHttpMessage msg, bool release, IHttp2Stream stream)
         {
-            this.RemoveMessage(stream, release);
+            RemoveMessage(stream, release);
             HttpUtil.SetContentLength(msg, msg.Content.ReadableBytes);
             ctx.FireChannelRead(msg);
         }
@@ -105,7 +105,7 @@ namespace DotNetty.Codecs.Http2
         protected virtual IFullHttpMessage NewMessage(IHttp2Stream stream, IHttp2Headers headers, bool validateHttpHeaders,
             IByteBufferAllocator alloc)
         {
-            if (this.connection.IsServer)
+            if (_connection.IsServer)
             {
                 return HttpConversionUtil.ToFullHttpRequest(stream.Id, headers, alloc, validateHttpHeaders);
             }
@@ -132,11 +132,11 @@ namespace DotNetty.Codecs.Http2
         protected virtual IFullHttpMessage ProcessHeadersBegin(IChannelHandlerContext ctx, IHttp2Stream stream, IHttp2Headers headers,
             bool endOfStream, bool allowAppend, bool appendToTrailer)
         {
-            IFullHttpMessage msg = this.GetMessage(stream);
+            IFullHttpMessage msg = GetMessage(stream);
             var release = true;
             if (msg is null)
             {
-                msg = this.NewMessage(stream, headers, this.validateHttpHeaders, ctx.Allocator);
+                msg = NewMessage(stream, headers, _validateHttpHeaders, ctx.Allocator);
             }
             else if (allowAppend)
             {
@@ -149,12 +149,12 @@ namespace DotNetty.Codecs.Http2
                 msg = null;
             }
 
-            if (this.sendDetector.MustSendImmediately(msg))
+            if (_sendDetector.MustSendImmediately(msg))
             {
                 // Copy the message (if necessary) before sending. The content is not expected to be copied (or used) in
                 // this operation but just in case it is used do the copy before sending and the resource may be released
-                IFullHttpMessage copy = endOfStream ? null : this.sendDetector.CopyIfNeeded(msg);
-                this.FireChannelRead(ctx, msg, release, stream);
+                IFullHttpMessage copy = endOfStream ? null : _sendDetector.CopyIfNeeded(ctx.Allocator, msg);
+                FireChannelRead(ctx, msg, release, stream);
                 return copy;
             }
 
@@ -174,18 +174,18 @@ namespace DotNetty.Codecs.Http2
             if (endOfStream)
             {
                 // Release if the msg from the map is different from the object being forwarded up the pipeline.
-                this.FireChannelRead(ctx, msg, this.GetMessage(stream) != msg, stream);
+                FireChannelRead(ctx, msg, GetMessage(stream) != msg, stream);
             }
             else
             {
-                this.PutMessage(stream, msg);
+                PutMessage(stream, msg);
             }
         }
 
         public override int OnDataRead(IChannelHandlerContext ctx, int streamId, IByteBuffer data, int padding, bool endOfStream)
         {
-            IHttp2Stream stream = this.connection.Stream(streamId);
-            IFullHttpMessage msg = this.GetMessage(stream);
+            IHttp2Stream stream = _connection.Stream(streamId);
+            IFullHttpMessage msg = GetMessage(stream);
             if (msg is null)
             {
                 ThrowHelper.ThrowConnectionError_DataFrameReceivedForUnknownStream(streamId);
@@ -193,16 +193,16 @@ namespace DotNetty.Codecs.Http2
 
             var content = msg.Content;
             int dataReadableBytes = data.ReadableBytes;
-            if (content.ReadableBytes > this.maxContentLength - dataReadableBytes)
+            if (content.ReadableBytes > _maxContentLength - dataReadableBytes)
             {
-                ThrowHelper.ThrowConnectionError_ContentLengthExceededMax(this.maxContentLength, streamId);
+                ThrowHelper.ThrowConnectionError_ContentLengthExceededMax(_maxContentLength, streamId);
             }
 
             content.WriteBytes(data, data.ReaderIndex, dataReadableBytes);
 
             if (endOfStream)
             {
-                this.FireChannelRead(ctx, msg, false, stream);
+                FireChannelRead(ctx, msg, false, stream);
             }
 
             // All bytes have been processed.
@@ -211,18 +211,18 @@ namespace DotNetty.Codecs.Http2
 
         public override void OnHeadersRead(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int padding, bool endOfStream)
         {
-            IHttp2Stream stream = this.connection.Stream(streamId);
-            IFullHttpMessage msg = this.ProcessHeadersBegin(ctx, stream, headers, endOfStream, true, true);
+            IHttp2Stream stream = _connection.Stream(streamId);
+            IFullHttpMessage msg = ProcessHeadersBegin(ctx, stream, headers, endOfStream, true, true);
             if (msg is object)
             {
-                this.ProcessHeadersEnd(ctx, stream, msg, endOfStream);
+                ProcessHeadersEnd(ctx, stream, msg, endOfStream);
             }
         }
 
         public override void OnHeadersRead(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int streamDependency, short weight, bool exclusive, int padding, bool endOfStream)
         {
-            IHttp2Stream stream = this.connection.Stream(streamId);
-            IFullHttpMessage msg = this.ProcessHeadersBegin(ctx, stream, headers, endOfStream, true, true);
+            IHttp2Stream stream = _connection.Stream(streamId);
+            IFullHttpMessage msg = ProcessHeadersBegin(ctx, stream, headers, endOfStream, true, true);
             if (msg is object)
             {
                 // Add headers for dependency and weight.
@@ -233,17 +233,17 @@ namespace DotNetty.Codecs.Http2
                 }
                 msg.Headers.SetShort(HttpConversionUtil.ExtensionHeaderNames.StreamWeight, weight);
 
-                this.ProcessHeadersEnd(ctx, stream, msg, endOfStream);
+                ProcessHeadersEnd(ctx, stream, msg, endOfStream);
             }
         }
 
         public override void OnRstStreamRead(IChannelHandlerContext ctx, int streamId, Http2Error errorCode)
         {
-            IHttp2Stream stream = this.connection.Stream(streamId);
-            IFullHttpMessage msg = this.GetMessage(stream);
+            IHttp2Stream stream = _connection.Stream(streamId);
+            IFullHttpMessage msg = GetMessage(stream);
             if (msg is object)
             {
-                this.OnRstStreamRead(stream, msg);
+                OnRstStreamRead(stream, msg);
             }
             ctx.FireExceptionCaught(ThrowHelper.GetStreamError_Http2ToHttpLayerCaughtStreamReset(streamId, errorCode));
         }
@@ -251,7 +251,7 @@ namespace DotNetty.Codecs.Http2
         public override void OnPushPromiseRead(IChannelHandlerContext ctx, int streamId, int promisedStreamId, IHttp2Headers headers, int padding)
         {
             // A push promise should not be allowed to add headers to an existing stream
-            IHttp2Stream promisedStream = this.connection.Stream(promisedStreamId);
+            IHttp2Stream promisedStream = _connection.Stream(promisedStreamId);
             if (headers.Status is null)
             {
                 // A PUSH_PROMISE frame has no Http response status.
@@ -261,7 +261,7 @@ namespace DotNetty.Codecs.Http2
                 // server, as a PUSH_PROMISE frame.
                 headers.Status = HttpResponseStatus.OK.CodeAsText;
             }
-            IFullHttpMessage msg = this.ProcessHeadersBegin(ctx, promisedStream, headers, false, false, false);
+            IFullHttpMessage msg = ProcessHeadersBegin(ctx, promisedStream, headers, false, false, false);
             if (msg is null)
             {
                 ThrowHelper.ThrowConnectionError_PushPromiseFrameReceivedForPreExistingStreamId(promisedStreamId);
@@ -270,12 +270,12 @@ namespace DotNetty.Codecs.Http2
             msg.Headers.SetInt(HttpConversionUtil.ExtensionHeaderNames.StreamPromiseId, streamId);
             msg.Headers.SetShort(HttpConversionUtil.ExtensionHeaderNames.StreamWeight, Http2CodecUtil.DefaultPriorityWeight);
 
-            this.ProcessHeadersEnd(ctx, promisedStream, msg, false);
+            ProcessHeadersEnd(ctx, promisedStream, msg, false);
         }
 
         public override void OnSettingsRead(IChannelHandlerContext ctx, Http2Settings settings)
         {
-            if (this.propagateSettings)
+            if (_propagateSettings)
             {
                 // Provide an interface for non-listeners to capture settings
                 ctx.FireChannelRead(settings);
@@ -289,18 +289,18 @@ namespace DotNetty.Codecs.Http2
         /// <param name="msg"></param>
         protected virtual void OnRstStreamRead(IHttp2Stream stream, IFullHttpMessage msg)
         {
-            this.RemoveMessage(stream, true);
+            RemoveMessage(stream, true);
         }
 
         private sealed class DefaultImmediateSendDetector : IImmediateSendDetector
         {
             public static readonly DefaultImmediateSendDetector Instance = new DefaultImmediateSendDetector();
 
-            public IFullHttpMessage CopyIfNeeded(IFullHttpMessage msg)
+            public IFullHttpMessage CopyIfNeeded(IByteBufferAllocator allocator, IFullHttpMessage msg)
             {
                 if (msg is IFullHttpRequest request)
                 {
-                    var copy = (IFullHttpRequest)request.Replace(ArrayPooled.Buffer(0));
+                    var copy = (IFullHttpRequest)request.Replace(allocator.Buffer(0));
                     copy.Headers.Remove(HttpHeaderNames.Expect);
                     return copy;
                 }
@@ -341,9 +341,10 @@ namespace DotNetty.Codecs.Http2
             /// with a 'Expect: 100-continue' header. The message will be sent immediately,
             /// and the data will be queued and sent at the end of the stream.</para>
             /// </summary>
+            /// <param name="allocator">The <see cref="IByteBufferAllocator"/> that can be used to allocate</param>
             /// <param name="msg">The message which has just been sent due to <see cref="MustSendImmediately(IFullHttpMessage)"/>.</param>
             /// <returns>A modified copy of the <paramref name="msg"/> or <c>null</c> if a copy is not needed.</returns>
-            IFullHttpMessage CopyIfNeeded(IFullHttpMessage msg);
+            IFullHttpMessage CopyIfNeeded(IByteBufferAllocator allocator, IFullHttpMessage msg);
         }
     }
 }

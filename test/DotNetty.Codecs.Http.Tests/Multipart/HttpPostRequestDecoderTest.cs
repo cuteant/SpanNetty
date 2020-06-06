@@ -693,5 +693,19 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 Assert.True(request.Release());
             }
         }
+
+        [Fact]
+        public void MultipartFormDataContentType()
+        {
+            IHttpRequest request = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/");
+            Assert.False(HttpPostRequestDecoder.IsMultipartRequest(request));
+
+            String multipartDataValue = HttpHeaderValues.MultipartFormData + ";" + "boundary=gc0p4Jq0M2Yt08jU534c0p";
+            request.Headers.Set(HttpHeaderNames.ContentType, ";" + multipartDataValue);
+            Assert.False(HttpPostRequestDecoder.IsMultipartRequest(request));
+
+            request.Headers.Set(HttpHeaderNames.ContentType, multipartDataValue);
+            Assert.True(HttpPostRequestDecoder.IsMultipartRequest(request));
+        }
     }
 }

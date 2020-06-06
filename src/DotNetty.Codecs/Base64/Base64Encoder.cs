@@ -14,7 +14,7 @@ namespace DotNetty.Codecs.Base64
 
         public Base64Encoder() : this(true) { }
 
-        public Base64Encoder(bool breakLines) : this(breakLines, Base64Dialect.STANDARD)
+        public Base64Encoder(bool breakLines) : this(breakLines, Base64Dialect.Standard)
         {
         }
 

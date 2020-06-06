@@ -6,6 +6,7 @@ namespace DotNetty.Codecs.Base64
     using System.Diagnostics;
     using System.Runtime.InteropServices;
     using DotNetty.Buffers;
+    using DotNetty.Buffers.Internal;
 
     public static class Base64
     {
@@ -15,7 +16,7 @@ namespace DotNetty.Codecs.Base64
         const sbyte WHITE_SPACE_ENC = -5; // Indicates white space in encoding
         const sbyte EQUALS_SIGN_ENC = -1; // Indicates equals sign in encoding
 
-        public static IByteBuffer Encode(IByteBuffer src) => Encode(src, Base64Dialect.STANDARD);
+        public static IByteBuffer Encode(IByteBuffer src) => Encode(src, Base64Dialect.Standard);
 
         public static IByteBuffer Encode(IByteBuffer src, IBase64Dialect dialect) => Encode(src, src.ReaderIndex, src.ReadableBytes, dialect.BreakLinesByDefault, dialect);
 
@@ -155,11 +156,11 @@ namespace DotNetty.Codecs.Base64
             //    CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dialect_alphabet);
             //}
             Debug.Assert(dialect.Alphabet.Length == 64, "alphabet.Length must be 64!");
-            if ((offset < src.ReaderIndex) || (offset + length > src.ReaderIndex + src.ReadableBytes))
+            if ((offset < src.ReaderIndex) || (offset + length > src.WriterIndex/*src.ReaderIndex + src.ReadableBytes*/))
             {
                 CThrowHelper.ThrowArgumentOutOfRangeException(CExceptionArgument.offset);
             }
-            if (length <= 0)
+            if ((uint)(length - 1) > SharedConstants.TooBigOrNegative)
             {
                 return Unpooled.Empty;
             }
@@ -185,7 +186,7 @@ namespace DotNetty.Codecs.Base64
             return dest.SetIndex(destIndex, destIndex + destLength);
         }
 
-        public static IByteBuffer Decode(IByteBuffer src) => Decode(src, Base64Dialect.STANDARD);
+        public static IByteBuffer Decode(IByteBuffer src) => Decode(src, Base64Dialect.Standard);
 
         public static IByteBuffer Decode(IByteBuffer src, IBase64Dialect dialect) => Decode(src, src.ReaderIndex, src.ReadableBytes, dialect);
 
@@ -203,14 +204,15 @@ namespace DotNetty.Codecs.Base64
                 int calcLength = src.ArrayOffset + offset + length;
                 for (; i < calcLength; ++i)
                 {
-                    sbyte value = (sbyte)(srcArray[i] & 0x7F);
+                    //sbyte value = (sbyte)(srcArray[i] & 0x7F);
+                    var value = srcArray[i];
                     if (decodabet[value] < WHITE_SPACE_ENC)
                     {
                         CThrowHelper.ThrowArgumentException_BadBase64InputChar(i, value);
                     }
                     if (decodabet[value] >= EQUALS_SIGN_ENC)
                     {
-                        b4[b4Count++] = (byte)value;
+                        b4[b4Count++] = value;
                         if (b4Count <= 3)
                             continue;
 
@@ -260,14 +262,15 @@ namespace DotNetty.Codecs.Base64
 
             for (i = offset; i < offset + length; ++i)
             {
-                sbyte value = (sbyte)(src.GetByte(i) & 0x7F);
+                //sbyte value = (sbyte)(src.GetByte(i) & 0x7F);
+                var value = src.GetByte(i);
                 if (decodabet[value] < WHITE_SPACE_ENC)
                 {
                     CThrowHelper.ThrowArgumentException_BadBase64InputChar(i, value);
                 }
                 if (decodabet[value] >= EQUALS_SIGN_ENC)
                 {
-                    b4[b4Count++] = (byte)value;
+                    b4[b4Count++] = value;
                     if (b4Count <= 3)
                         continue;
 
@@ -316,12 +319,12 @@ namespace DotNetty.Codecs.Base64
             //{
             //    CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dialect_decodabet);
             //}
-            if ((offset < src.ReaderIndex) || (offset + length > src.ReaderIndex + src.ReadableBytes))
+            if ((offset < src.ReaderIndex) || (offset + length > src.WriterIndex/*src.ReaderIndex + src.ReadableBytes*/))
             {
                 CThrowHelper.ThrowArgumentOutOfRangeException(CExceptionArgument.offset);
             }
-            Debug.Assert(dialect.Decodabet.Length == 127, "decodabet.Length must be 127!");
-            if (length <= 0)
+            Debug.Assert(dialect.Decodabet.Length == 128, "decodabet.Length must be 128!");
+            if ((uint)(length - 1) > SharedConstants.TooBigOrNegative)
             {
                 return Unpooled.Empty;
             }

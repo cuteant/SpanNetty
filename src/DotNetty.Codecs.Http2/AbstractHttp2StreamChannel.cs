@@ -33,6 +33,7 @@
         private int v_registered = SharedConstants.False;
         private bool InternalRegistered
         {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => SharedConstants.False < (uint)Volatile.Read(ref v_registered);
             set => Interlocked.Exchange(ref v_registered, value ? SharedConstants.True : SharedConstants.False);
         }
@@ -47,6 +48,7 @@
         private int v_outboundClosed = SharedConstants.False;
         internal bool OutboundClosed
         {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => SharedConstants.False < (uint)Volatile.Read(ref v_outboundClosed);
             set => Interlocked.Exchange(ref v_outboundClosed, value ? SharedConstants.True : SharedConstants.False);
         }
@@ -301,7 +303,7 @@
                 // otherwise we would have drained it from the queue and processed it during the read cycle.
                 Debug.Assert(_inboundBuffer is null || _inboundBuffer.IsEmpty);
                 var allocHandle = _channelUnsafe.RecvBufAllocHandle;
-                _flowControlledBytes += _channelUnsafe.DoRead0(frame, allocHandle);
+                _channelUnsafe.DoRead0(frame, allocHandle);
                 // We currently don't need to check for readEOS because the parent channel and child channel are limited
                 // to the same EventLoop thread. There are a limited number of frame types that may come after EOS is
                 // read (unknown, reset) and the trade off is less conditionals for the hot path (headers/data) at the

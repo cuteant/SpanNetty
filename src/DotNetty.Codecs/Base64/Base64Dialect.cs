@@ -16,9 +16,9 @@ namespace DotNetty.Codecs.Base64
 
     public sealed class Base64Dialect
     {
-        public static readonly IBase64Dialect STANDARD = StandardDialect.Instance;
+        public static readonly IBase64Dialect Standard = StandardDialect.Instance;
 
-        public static readonly IBase64Dialect URL_SAFE = UrlSafeDialect.Instance;
+        public static readonly IBase64Dialect UrlSafe = UrlSafeDialect.Instance;
 
         /// <summary>
         /// http://www.faqs.org/rfcs/rfc3548.html
@@ -76,7 +76,7 @@ namespace DotNetty.Codecs.Base64
                 -9, -9, -9, -9, -9, -9, // Decimal 91 - 96
                 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, // Letters 'a' through 'm'
                 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, // Letters 'n' through 'z'
-                -9, -9, -9, -9, // Decimal 123 - 126
+                -9, -9, -9, -9, -9 // Decimal 123 - 127
             };
         }
 
@@ -140,7 +140,7 @@ namespace DotNetty.Codecs.Base64
                 -9, // Decimal 96
                 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, // Letters 'a' through 'm'
                 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, // Letters 'n' through 'z'
-                -9, -9, -9, -9, // Decimal 123 - 126
+                -9, -9, -9, -9, -9, // Decimal 123 - 127
             };
         }
     }

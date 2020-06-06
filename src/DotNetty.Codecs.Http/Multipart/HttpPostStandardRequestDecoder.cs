@@ -80,10 +80,10 @@ namespace DotNetty.Codecs.Http.Multipart
                     this.ParseBody();
                 }
             }
-            catch (ErrorDataDecoderException e)
+            catch (ErrorDataDecoderException)
             {
                 Destroy();
-                throw e;
+                throw;
             }
         }
 

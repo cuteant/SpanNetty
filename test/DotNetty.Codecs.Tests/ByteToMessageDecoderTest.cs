@@ -270,6 +270,38 @@
             }
             Assert.False(channel.Finish());
         }
+
+        [Fact]
+        public void Disorder()
+        {
+            ByteToMessageDecoder decoder = new DisorderDecoder();
+            EmbeddedChannel channel = new EmbeddedChannel(decoder);
+            Assert.True(channel.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 1, 2, 3, 4, 5 })));
+            Assert.Equal((byte)1, channel.ReadInbound<byte>());
+            Assert.Equal((byte)2, channel.ReadInbound<byte>());
+            Assert.Equal((byte)3, channel.ReadInbound<byte>());
+            Assert.Equal((byte)4, channel.ReadInbound<byte>());
+            var buffer5 = channel.ReadInbound<IByteBuffer>();
+            Assert.Equal((byte)5, buffer5.ReadByte());
+            Assert.False(buffer5.IsReadable());
+            Assert.True(buffer5.Release());
+            Assert.False(channel.Finish());
+        }
+    }
+
+    class DisorderDecoder : ByteToMessageDecoder
+    {
+        private int _count;
+
+        //read 4 byte then remove this decoder
+        protected internal override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
+        {
+            output.Add(input.ReadByte());
+            if (++_count >= 4)
+            {
+                context.Pipeline.Remove(this);
+            }
+        }
     }
 
     class ReadInterceptingHandler : ChannelHandlerAdapter

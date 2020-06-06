@@ -162,7 +162,7 @@ namespace DotNetty.Codecs.Http.Tests
         [Fact]
         public void OversizedRequestWithoutKeepAlive()
         {
-            // send a HTTP/1.0 request with no keep-alive header
+            // send an HTTP/1.0 request with no keep-alive header
             var message = new DefaultHttpRequest(HttpVersion.Http10, HttpMethod.Put, "http://localhost");
             HttpUtil.SetContentLength(message, 5);
             CheckOversizedRequest(message);

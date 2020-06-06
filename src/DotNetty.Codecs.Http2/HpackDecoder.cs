@@ -6,6 +6,7 @@ namespace DotNetty.Codecs.Http2
     using System;
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
+    using System.Runtime.ExceptionServices;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
 
@@ -149,7 +150,7 @@ namespace DotNetty.Codecs.Http2
                                     break;
                                 default:
                                     HpackHeaderField idxHeader = GetIndexedHeader(index);
-                                    sink.AppendToHeaderList(idxHeader.name, idxHeader.value);
+                                    sink.AppendToHeaderList(idxHeader._name, idxHeader._value);
                                     break;
                             }
                         }
@@ -219,7 +220,7 @@ namespace DotNetty.Codecs.Http2
 
                     case ReadIndexedHeader:
                         HpackHeaderField indexedHeader = GetIndexedHeader(DecodeULE128(input, index));
-                        sink.AppendToHeaderList(indexedHeader.name, indexedHeader.value);
+                        sink.AppendToHeaderList(indexedHeader._name, indexedHeader._value);
                         state = ReadHeaderRepresentation;
                         break;
 
@@ -440,13 +441,13 @@ namespace DotNetty.Codecs.Http2
             if ((uint)index <= (uint)HpackStaticTable.Length)
             {
                 HpackHeaderField hpackHeaderField = HpackStaticTable.GetEntry(index);
-                return hpackHeaderField.name;
+                return hpackHeaderField._name;
             }
 
             if ((uint)(index - HpackStaticTable.Length) <= (uint)_hpackDynamicTable.Length())
             {
                 HpackHeaderField hpackHeaderField = _hpackDynamicTable.GetEntry(index - HpackStaticTable.Length);
-                return hpackHeaderField.name;
+                return hpackHeaderField._name;
             }
 
             ThrowHelper.ThrowHttp2Exception_ReadNameIllegalIndexValue(); return null;
@@ -611,7 +612,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(MethodImplOptions.NoInlining)]
         private void ThrowValidationException()
         {
-            throw _validationException;
+            ExceptionDispatchInfo.Capture(_validationException).Throw();
         }
 
         public void AppendToHeaderList(ICharSequence name, ICharSequence value)

@@ -21,7 +21,7 @@ namespace DotNetty.Codecs.Http2
         }
 
         /// <summary>
-        /// Creates a builder for a HTTP/2 client.
+        /// Creates a builder for an HTTP/2 client.
         /// </summary>
         public static Http2FrameCodecBuilder ForClient()
         {
@@ -29,7 +29,7 @@ namespace DotNetty.Codecs.Http2
         }
 
         /// <summary>
-        /// Creates a builder for a HTTP/2 server.
+        /// Creates a builder for an HTTP/2 server.
         /// </summary>
         public static Http2FrameCodecBuilder ForServer()
         {
@@ -57,8 +57,8 @@ namespace DotNetty.Codecs.Http2
                 DefaultHttp2Connection connection = new DefaultHttp2Connection(IsServer, MaxReservedStreams);
                 var maxHeaderListSize = InitialSettings.MaxHeaderListSize();
                 IHttp2FrameReader frameReader = new DefaultHttp2FrameReader(!maxHeaderListSize.HasValue ?
-                        new DefaultHttp2HeadersDecoder(true) :
-                        new DefaultHttp2HeadersDecoder(true, maxHeaderListSize.Value));
+                        new DefaultHttp2HeadersDecoder(IsValidateHeaders) :
+                        new DefaultHttp2HeadersDecoder(IsValidateHeaders, maxHeaderListSize.Value));
 
                 if (FrameLogger is object)
                 {

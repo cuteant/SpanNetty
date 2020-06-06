@@ -9,16 +9,16 @@ namespace DotNetty.Common.Internal
     {
         public bool TryEnqueue(T element)
         {
-            this.Enqueue(element);
+            Enqueue(element);
             return true;
         }
 
         void IQueue<T>.Clear()
         {
             //T item;
-            while (this.TryDequeue(out _)) { }
+            while (TryDequeue(out _)) { }
         }
 
-        public bool NonEmpty => !this.IsEmpty;
+        public bool NonEmpty => !IsEmpty;
     }
 }

@@ -1,6 +1,7 @@
 ﻿namespace DotNetty.Common.Internal
 {
     using System;
+    using System.Runtime.CompilerServices;
     using System.Threading;
 
     static class RefArrayAccessUtil
@@ -14,6 +15,7 @@
         /// <param name="buffer">The source buffer.</param>
         /// <param name="offset">Computed via <see cref="ConcurrentCircularArrayQueue{T}.CalcElementOffset"/></param>
         /// <param name="e">An orderly kitty.</param>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static void SpElement<T>(T[] buffer, long offset, T e) => buffer[offset] = e;
 
         /// <summary>
@@ -23,6 +25,7 @@
         /// <param name="buffer">The source buffer.</param>
         /// <param name="offset">Computed via <see cref="ConcurrentCircularArrayQueue{T}.CalcElementOffset"/></param>
         /// <param name="e"></param>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static void SoElement<T>(T[] buffer, long offset, T e) where T : class => Volatile.Write(ref buffer[offset], e);
 
         /// <summary>
@@ -32,6 +35,7 @@
         /// <param name="buffer">The source buffer.</param>
         /// <param name="offset">Computed via <see cref="ConcurrentCircularArrayQueue{T}.CalcElementOffset"/></param>
         /// <returns>The element at the given <paramref name="offset"/> in the given <paramref name="buffer"/>.</returns>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static T LpElement<T>(T[] buffer, long offset) => buffer[offset];
 
         /// <summary>
@@ -41,6 +45,7 @@
         /// <param name="buffer">The source buffer.</param>
         /// <param name="offset">Computed via <see cref="ConcurrentCircularArrayQueue{T}.CalcElementOffset"/></param>
         /// <returns>The element at the given <paramref name="offset"/> in the given <paramref name="buffer"/>.</returns>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static T LvElement<T>(T[] buffer, long offset) where T : class => Volatile.Read(ref buffer[offset]);
 
         /// <summary>
@@ -49,6 +54,7 @@
         /// <param name="index">The desired element index.</param>
         /// <param name="mask">Mask for the index.</param>
         /// <returns>The offset (in bytes) within the array for a given index.</returns>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static long CalcElementOffset(long index, long mask) => RefBufferPad + (index & mask);
     }
 }

@@ -114,6 +114,14 @@ namespace DotNetty.Codecs.Http.Tests
         }
 
         [Fact]
+        public void Semicolon()
+        {
+            AssertQueryString("/foo?a=1;2", "/foo?a=1;2", false);
+            // ";" should be treated as a normal character, see #8855
+            AssertQueryString("/foo?a=1;2", "/foo?a=1%3B2", true);
+        }
+
+        [Fact]
         public void PathSpecific()
         {
             // decode escaped characters
@@ -186,7 +194,7 @@ namespace DotNetty.Codecs.Http.Tests
                 // "Caffé" but instead of putting the literal E-acute in the
                 // source file, we directly use the UTF-8 encoding so as to
                 // not rely on the platform's default encoding (not portable).
-                new [] { 'C', 'a', 'f', 'f', '\u00E9' /* C3 A9 */ });
+                new[] { 'C', 'a', 'f', 'f', '\u00E9' /* C3 A9 */ });
 
             string[] tests =
             {
@@ -225,8 +233,13 @@ namespace DotNetty.Codecs.Http.Tests
 
         static void AssertQueryString(string expected, string actual)
         {
-            var ed = new QueryStringDecoder(expected);
-            var ad = new QueryStringDecoder(actual);
+            AssertQueryString(expected, actual, false);
+        }
+
+        static void AssertQueryString(string expected, string actual, bool semicolonIsNormalChar)
+        {
+            var ed = new QueryStringDecoder(expected, Encoding.UTF8, true, 1024, semicolonIsNormalChar);
+            var ad = new QueryStringDecoder(actual, Encoding.UTF8, true, 1024, semicolonIsNormalChar);
             Assert.Equal(ed.Path, ad.Path);
 
             IDictionary<string, List<string>> edParams = ed.Parameters;
@@ -258,7 +271,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal("/foo", d.RawPath());
             Assert.Equal("param1=value1&param2=value2&param3=value3", d.RawQuery());
 
-            IDictionary<string, List<string> > parameters = d.Parameters;
+            IDictionary<string, List<string>> parameters = d.Parameters;
             Assert.Equal(3, parameters.Count);
 
             KeyValuePair<string, List<string>> entry = parameters.ElementAt(0);

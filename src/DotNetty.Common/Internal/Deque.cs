@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Largely based from https://github.com/StephenCleary/Deque/blob/master/src/Nito.Collections.Deque/Deque.cs
+// https://github.com/cuteant/CuteAnt.Core/blob/dev/src/CuteAnt.Core.Abstractions/Collections/Deque.cs
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +15,7 @@ namespace DotNetty.Common.Internal
     /// <typeparam name="T">The type of elements contained in the deque.</typeparam>
     [DebuggerDisplay("Count = {Count}, Capacity = {Capacity}")]
     [DebuggerTypeProxy(typeof(Deque<>.DebugView))]
-    public class Deque<T> : IList<T>, IReadOnlyList<T>, System.Collections.IList
+    public class Deque<T> : IList<T>, IReadOnlyList<T>, IList
     {
         #region @@ Fields @@
 
@@ -47,8 +50,8 @@ namespace DotNetty.Common.Internal
         public Deque(bool useReversingEnumerator) : this(DefaultCapacity, useReversingEnumerator, null) { }
 
         /// <summary>Initializes a new instance of the <see cref="Deque&lt;T&gt;"/> class with the specified capacity.</summary>
-        /// <param name="comparer">The <see cref="T:System.Collections.Generic.IEqualityComparer{T}"/> implementation to use when comparing elements, 
-        /// or null to use the default <see cref="T:System.Collections.Generic.EqualityComparer{T}"/> for the type of the element.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing elements, 
+        /// or null to use the default <see cref="EqualityComparer{T}"/> for the type of the element.</param>
         public Deque(IEqualityComparer<T> comparer) : this(DefaultCapacity, false, comparer) { }
 
         /// <summary>Initializes a new instance of the <see cref="Deque&lt;T&gt;"/> class with the specified capacity.</summary>
@@ -58,24 +61,24 @@ namespace DotNetty.Common.Internal
 
         /// <summary>Initializes a new instance of the <see cref="Deque&lt;T&gt;"/> class with the specified capacity.</summary>
         /// <param name="capacity">The initial capacity. Must be greater than <c>0</c>.</param>
-        /// <param name="comparer">The <see cref="T:System.Collections.Generic.IEqualityComparer{T}"/> implementation to use when comparing elements, 
-        /// or null to use the default <see cref="T:System.Collections.Generic.EqualityComparer{T}"/> for the type of the element.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing elements, 
+        /// or null to use the default <see cref="EqualityComparer{T}"/> for the type of the element.</param>
         public Deque(int capacity, IEqualityComparer<T> comparer) : this(capacity, false, comparer) { }
 
         /// <summary>Initializes a new instance of the <see cref="Deque&lt;T&gt;"/> class with the specified capacity.</summary>
         /// <param name="useReversingEnumerator"></param>
-        /// <param name="comparer">The <see cref="T:System.Collections.Generic.IEqualityComparer{T}"/> implementation to use when comparing elements, 
-        /// or null to use the default <see cref="T:System.Collections.Generic.EqualityComparer{T}"/> for the type of the element.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing elements, 
+        /// or null to use the default <see cref="EqualityComparer{T}"/> for the type of the element.</param>
         public Deque(bool useReversingEnumerator, IEqualityComparer<T> comparer) : this(DefaultCapacity, useReversingEnumerator, comparer) { }
 
         /// <summary>Initializes a new instance of the <see cref="Deque&lt;T&gt;"/> class with the specified capacity.</summary>
         /// <param name="capacity">The initial capacity. Must be greater than <c>0</c>.</param>
         /// <param name="useReversingEnumerator"></param>
-        /// <param name="comparer">The <see cref="T:System.Collections.Generic.IEqualityComparer{T}"/> implementation to use when comparing elements, 
-        /// or null to use the default <see cref="T:System.Collections.Generic.EqualityComparer{T}"/> for the type of the element.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing elements, 
+        /// or null to use the default <see cref="EqualityComparer{T}"/> for the type of the element.</param>
         public Deque(int capacity, bool useReversingEnumerator, IEqualityComparer<T> comparer)
         {
-            if (capacity < 0)
+            if ((uint)capacity > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.capacity, ExceptionResource.Capacity_May_Not_Be_Negative);
             }
@@ -90,15 +93,15 @@ namespace DotNetty.Common.Internal
 
         /// <summary>Initializes a new instance of the <see cref="Deque&lt;T&gt;"/> class with the elements from the specified collection.</summary>
         /// <param name="collection">The collection. May not be <c>null</c>.</param>
-        /// <param name="comparer">The <see cref="T:System.Collections.Generic.IEqualityComparer{T}"/> implementation to use when comparing elements, 
-        /// or null to use the default <see cref="T:System.Collections.Generic.EqualityComparer{T}"/> for the type of the element.</param>
+        /// <param name="comparer">The <see cref="IEqualityComparer{T}"/> implementation to use when comparing elements, 
+        /// or null to use the default <see cref="EqualityComparer{T}"/> for the type of the element.</param>
         public Deque(IEnumerable<T> collection, IEqualityComparer<T> comparer)
         {
-            if (collection == null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.collection);
+            if (collection is null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.collection);
 
             var source = CollectionHelpers.ReifyCollection(collection);
             var count = source.Count;
-            if (count > 0)
+            if ((uint)count > 0u)
             {
                 _buffer = new T[count];
                 DoInsertRange(0, source);
@@ -223,14 +226,15 @@ namespace DotNetty.Common.Internal
         /// <exception cref="T:System.ArgumentException">
         /// <paramref name="arrayIndex"/> is equal to or greater than the length of <paramref name="array"/>.
         /// -or-
-        /// The number of elements in the source <see cref="T:System.Collections.Generic.ICollection`1"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.
+        /// The number of elements in the source <see cref="ICollection{T}"/> is greater than the available space from <paramref name="arrayIndex"/> to the end of the destination <paramref name="array"/>.
         /// </exception>
         public void /*ICollection<T>.*/CopyTo(T[] array, int arrayIndex)
         {
-            if (array == null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.array);
-            if (arrayIndex < 0) { CheckRangeArguments_Offset(arrayIndex); }
-            //if (_count < 0) { CheckRangeArguments_Count(_count); }
-            if (array.Length - arrayIndex < _count) { CheckRangeArguments(array.Length, arrayIndex, _count); }
+            if (array is null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.array);
+            if ((uint)arrayIndex > SharedConstants.TooBigOrNegative) { CheckRangeArguments_Offset(arrayIndex); }
+            uint uCount = (uint)_count;
+            if (uCount > SharedConstants.TooBigOrNegative) { CheckRangeArguments_Count(_count); }
+            if (uCount > (uint)(array.Length - arrayIndex)) { CheckRangeArguments(array.Length, arrayIndex, _count); }
 
             CopyToArray(array, arrayIndex);
         }
@@ -240,7 +244,7 @@ namespace DotNetty.Common.Internal
         /// <param name="arrayIndex">The optional index in the destination array at which to begin writing.</param>
         private void CopyToArray(Array array, int arrayIndex = 0)
         {
-            if (array == null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.array);
+            if (array is null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.array);
 
             if (IsSplit)
             {
@@ -265,14 +269,16 @@ namespace DotNetty.Common.Internal
         public bool Remove(T item)
         {
             int index = IndexOf(item);
-            if (index == -1) { return false; }
-
-            DoRemoveAt(index);
-            return true;
+            if ((uint)_count > (uint)index)
+            {
+                DoRemoveAt(index);
+                return true;
+            }
+            return false;
         }
 
         /// <summary>Returns an enumerator that iterates through the collection.</summary>
-        /// <returns>A <see cref="T:System.Collections.Generic.IEnumerator`1"/> that can be used to iterate through the collection.</returns>
+        /// <returns>A <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.</returns>
         public IEnumerator<T> GetEnumerator()
         {
             if (_useReversingEnumerator)
@@ -318,68 +324,69 @@ namespace DotNetty.Common.Internal
         private static bool IsT(object value)
         {
             if (value is T) { return true; }
-            if (value != null) { return false; }
-            return default(T) == null;
+            if (value is object) { return false; }
+            return default(T) is null;
         }
 
-        int System.Collections.IList.Add(object value)
+        int IList.Add(object value)
         {
-            if (value == null && default(T) != null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value, ExceptionResource.Value_Cannot_Be_Null);
+            if (value is null && default(T) != null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value, ExceptionResource.Value_Cannot_Be_Null);
             if (!IsT(value)) ThrowHelper.ThrowArgumentException(ExceptionResource.Value_Is_Of_Incorrect_Type, ExceptionArgument.value);
 
             AddToBack((T)value);
             return _count - 1;
         }
 
-        bool System.Collections.IList.Contains(object value)
+        bool IList.Contains(object value)
         {
-            return IsT(value) ? ((ICollection<T>)this).Contains((T)value) : false;
+            return IsT(value) && ((ICollection<T>)this).Contains((T)value);
         }
 
-        int System.Collections.IList.IndexOf(object value)
+        int IList.IndexOf(object value)
         {
             return IsT(value) ? IndexOf((T)value) : -1;
         }
 
-        void System.Collections.IList.Insert(int index, object value)
+        void IList.Insert(int index, object value)
         {
-            if (value == null && default(T) != null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value, ExceptionResource.Value_Cannot_Be_Null); }
+            if (value is null && default(T) != null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value, ExceptionResource.Value_Cannot_Be_Null); }
             if (!IsT(value)) { ThrowHelper.ThrowArgumentException(ExceptionResource.Value_Is_Of_Incorrect_Type, ExceptionArgument.value); }
             Insert(index, (T)value);
         }
 
-        bool System.Collections.IList.IsFixedSize
+        bool IList.IsFixedSize
         {
             get { return false; }
         }
 
-        bool System.Collections.IList.IsReadOnly
+        bool IList.IsReadOnly
         {
             get { return false; }
         }
 
-        void System.Collections.IList.Remove(object value)
+        void IList.Remove(object value)
         {
             if (IsT(value)) { Remove((T)value); }
         }
 
-        object System.Collections.IList.this[int index]
+        object IList.this[int index]
         {
             get { return this[index]; }
             set
             {
-                if (value == null && default(T) != null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value, ExceptionResource.Value_Cannot_Be_Null);
+                if (value is null && default(T) != null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value, ExceptionResource.Value_Cannot_Be_Null);
                 if (!IsT(value)) ThrowHelper.ThrowArgumentException(ExceptionResource.Value_Is_Of_Incorrect_Type, ExceptionArgument.value);
                 this[index] = (T)value;
             }
         }
 
-        void System.Collections.ICollection.CopyTo(Array array, int index)
+        void ICollection.CopyTo(Array array, int index)
         {
-            if (array == null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.array, ExceptionResource.Dest_Array_Cannot_Be_Null);
-            if (index < 0) { CheckRangeArguments_Offset(index); }
-            //if (_count < 0) { CheckRangeArguments_Count(_count); }
-            if (array.Length - index < _count) { CheckRangeArguments(array.Length, index, _count); }
+            if (array is null) ThrowHelper.ThrowArgumentNullException(ExceptionArgument.array, ExceptionResource.Dest_Array_Cannot_Be_Null);
+            if ((uint)index > SharedConstants.TooBigOrNegative) { CheckRangeArguments_Offset(index); }
+            uint uCount = (uint)_count;
+            if (uCount > SharedConstants.TooBigOrNegative) { CheckRangeArguments_Count(_count); }
+            if (uCount > (uint)(array.Length - index)) { CheckRangeArguments(array.Length, index, _count); }
 
             try
             {
@@ -395,12 +402,12 @@ namespace DotNetty.Common.Internal
             }
         }
 
-        bool System.Collections.ICollection.IsSynchronized
+        bool ICollection.IsSynchronized
         {
             get { return false; }
         }
 
-        object System.Collections.ICollection.SyncRoot
+        object ICollection.SyncRoot
         {
             get { return this; }
         }
@@ -464,24 +471,7 @@ namespace DotNetty.Common.Internal
                 return new ArgumentOutOfRangeException(nameof(offset), "Invalid offset " + offset);
             }
         }
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ThrowArgumentOutOfRange_IndexException()
-        {
-            throw ThrowHelper.GetArgumentOutOfRangeException(ExceptionArgument.index,
-                                                    ExceptionResource.ArgumentOutOfRange_Index);
-        }
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ThrowIndexArgumentOutOfRange_NeedNonNegNumException()
-        {
-            throw ThrowHelper.GetArgumentOutOfRangeException(ExceptionArgument.index,
-                                                    ExceptionResource.ArgumentOutOfRange_NeedNonNegNum);
-        }
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static void ThrowLengthArgumentOutOfRange_ArgumentOutOfRange_NeedNonNegNum()
-        {
-            throw ThrowHelper.GetArgumentOutOfRangeException(ExceptionArgument.length,
-                                                    ExceptionResource.ArgumentOutOfRange_NeedNonNegNum);
-        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void ThrowStartIndexArgumentOutOfRange_ArgumentOutOfRange_Index()
         {
@@ -518,7 +508,7 @@ namespace DotNetty.Common.Internal
         {
             throw GetInvalidOperationException();
 
-            InvalidOperationException GetInvalidOperationException()
+            static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("The deque is empty.");
             }
@@ -529,7 +519,7 @@ namespace DotNetty.Common.Internal
         {
             throw GetArgumentOutOfRangeException();
 
-            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException()
             {
                 return new ArgumentOutOfRangeException("value", "Capacity cannot be set to a value less than Count");
             }
@@ -544,36 +534,36 @@ namespace DotNetty.Common.Internal
         /// <summary>Gets a value indicating whether this instance is empty.</summary>
         public bool IsEmpty
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             get { return 0u >= (uint)_count; }
         }
 
         public bool NonEmpty
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
-            get { return _count > 0; }
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get { return (uint)_count > 0u; }
         }
 
         /// <summary>Gets a value indicating whether this instance is at full capacity.</summary>
         public bool IsFull
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
-            get { return _count == Capacity; }
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get { return (uint)_count >= (uint)Capacity; }
         }
 
         /// <summary>Gets a value indicating whether the buffer is "split" (meaning the beginning of the view is at a later index in <see cref="_buffer"/> than the end).</summary>
         public bool IsSplit
         {
             // Overflow-safe version of "(offset + Count) > Capacity"
-            [MethodImpl(InlineMethod.AggressiveInlining)]
-            get { return _offset > (Capacity - _count); }
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get { return (uint)(_offset + _count) > (uint)Capacity; }
         }
 
         /// <summary>Gets or sets the capacity for this deque. This value must always be greater than zero, and this property cannot be set to a value less than <see cref="Count"/>.</summary>
         /// <exception cref="InvalidOperationException"><c>Capacity</c> cannot be set to a value less than <see cref="Count"/>.</exception>
         public int Capacity
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             get { return _buffer.Length; }
             set
             {
@@ -663,36 +653,38 @@ namespace DotNetty.Common.Internal
         {
             EnsureCapacityForOneElement();
 
-            if (0u >= (uint)index)
+            uint uIndex = (uint)index;
+            if (0u >= uIndex)
             {
                 DoAddToFront(item);
-                return;
             }
-            else if (index == _count)
+            else if (uIndex < (uint)_count)
+            {
+                DoInsertRange(index, new[] { item });
+            }
+            else
             {
                 DoAddToBack(item);
-                return;
             }
-
-            DoInsertRange(index, new[] { item });
         }
 
         /// <summary>Removes an element at the specified view index.</summary>
         /// <param name="index">The zero-based view index of the element to remove. This index is guaranteed to be valid.</param>
         private void DoRemoveAt(int index)
         {
-            if (0u >= (uint)index)
+            uint uIndex = (uint)index;
+            if (0u >= uIndex)
             {
                 DoRemoveFromFront();
-                return;
             }
-            else if (index == _count - 1)
+            else if (uIndex < (uint)(_count - 1))
+            {
+                DoRemoveRange(index, 1);
+            }
+            else
             {
                 DoRemoveFromBack();
-                return;
             }
-
-            DoRemoveRange(index, 1);
         }
 
         /// <summary>Increments <see cref="_offset"/> by <paramref name="value"/> using modulo-<see cref="Capacity"/> arithmetic.</summary>
@@ -725,7 +717,7 @@ namespace DotNetty.Common.Internal
             //if (_offset < 0) { _offset += Capacity; }
             //return _offset;
             var tmp = offset - value;
-            if (tmp < 0) { tmp += Capacity; }
+            if ((uint)tmp > SharedConstants.TooBigOrNegative) { tmp += Capacity; }
             offset = tmp;
         }
 
@@ -756,7 +748,7 @@ namespace DotNetty.Common.Internal
             //_buffer[PreDecrement(1)] = value;
             var buffer = _buffer;
             var offset = _offset - 1;
-            if (offset < 0) { offset += buffer.Length; }
+            if ((uint)offset > SharedConstants.TooBigOrNegative) { offset += buffer.Length; }
             buffer[offset] = value;
             _offset = offset;
             _count++;
@@ -787,7 +779,7 @@ namespace DotNetty.Common.Internal
             }
             else
             {
-                offset = offset % buffer.Length;
+                offset %= buffer.Length;
                 T ret = buffer[offset];
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
                 if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
@@ -893,10 +885,10 @@ namespace DotNetty.Common.Internal
                         buffer[idx % Capacity] = default;
                     }
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
-            }
+                }
 #endif
-            // Removing from the beginning: rotate to the new view
-            PostIncrement(ref _offset, collectionCount);
+                // Removing from the beginning: rotate to the new view
+                PostIncrement(ref _offset, collectionCount);
                 _count = count - collectionCount;
                 return;
             }
@@ -912,10 +904,10 @@ namespace DotNetty.Common.Internal
                         buffer[DequeIndexToBufferIndex(index)] = default;
                     }
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
-            }
+                }
 #endif
-            // Removing from the ending: trim the existing view
-            _count = count - collectionCount;
+                // Removing from the ending: trim the existing view
+                _count = count - collectionCount;
                 return;
             }
 
@@ -1040,10 +1032,11 @@ namespace DotNetty.Common.Internal
         /// <exception cref="ArgumentException">The range [<paramref name="offset"/>, <paramref name="offset"/> + <paramref name="count"/>) is not within the range [0, <see cref="Count"/>).</exception>
         public void RemoveRange(int offset, int count)
         {
-            if (0u >= (uint)count) { return; }
-            if (offset < 0) { CheckRangeArguments_Offset(offset); }
-            if (count < 0) { CheckRangeArguments_Count(count); }
-            if (_count - offset < count) { CheckRangeArguments(_count, offset, count); }
+            uint uCount = (uint)count;
+            if (0u >= uCount) { return; }
+            if ((uint)offset > SharedConstants.TooBigOrNegative) { CheckRangeArguments_Offset(offset); }
+            if (uCount > SharedConstants.TooBigOrNegative) { CheckRangeArguments_Count(count); }
+            if (uCount > (uint)(_count - offset)) { CheckRangeArguments(_count, offset, count); }
 
             DoRemoveRange(offset, count);
         }
@@ -1141,7 +1134,7 @@ namespace DotNetty.Common.Internal
 
         public Deque<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
         {
-            if (converter == null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.converter); }
+            if (converter is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.converter); }
 
             var deque = new Deque<TOutput>(_count);
 
@@ -1161,7 +1154,7 @@ namespace DotNetty.Common.Internal
 
         #region -- Exists --
 
-        public bool Exists(Predicate<T> match) => FindIndex(match) != -1;
+        public bool Exists(Predicate<T> match) => (uint)_count > (uint)FindIndex(match);
 
         #endregion
 
@@ -1169,10 +1162,11 @@ namespace DotNetty.Common.Internal
 
         public T Find(Predicate<T> match)
         {
-            if (match == null) { ThrowArgumentNullException_Match(); }
+            if (match is null) { ThrowArgumentNullException_Match(); }
 
             var idx = 0;
-            while (idx < _count)
+            uint uCount = (uint)_count;
+            while ((uint)idx < uCount)
             {
                 var item = DoGetItem(idx);
                 if (match(item)) { return item; }
@@ -1187,11 +1181,12 @@ namespace DotNetty.Common.Internal
 
         public Deque<T> FindAll(Predicate<T> match)
         {
-            if (match == null) { ThrowArgumentNullException_Match(); }
+            if (match is null) { ThrowArgumentNullException_Match(); }
 
             var list = new Deque<T>();
             var idx = 0;
-            while (idx < _count)
+            uint uCount = (uint)_count;
+            while ((uint)idx < uCount)
             {
                 var item = DoGetItem(idx);
                 if (match(item)) { list.AddToBack(item); }
@@ -1211,12 +1206,12 @@ namespace DotNetty.Common.Internal
         public int FindIndex(int startIndex, int count, Predicate<T> match)
         {
             if ((uint)startIndex > (uint)_count) { ThrowStartIndexArgumentOutOfRange_ArgumentOutOfRange_Index(); }
-            if (count < 0 || startIndex > _count - count) { ThrowCountArgumentOutOfRange_ArgumentOutOfRange_Count(); }
-            if (match == null) { ThrowArgumentNullException_Match(); }
+            uint uEndIndex = (uint)(startIndex + count);
+            if ((uint)count > SharedConstants.TooBigOrNegative || uEndIndex > (uint)_count) { ThrowCountArgumentOutOfRange_ArgumentOutOfRange_Count(); }
+            if (match is null) { ThrowArgumentNullException_Match(); }
 
-            int endIndex = startIndex + count;
             var idx = startIndex;
-            while (idx < endIndex)
+            while ((uint)idx < uEndIndex)
             {
                 var item = DoGetItem(idx);
                 if (match(item)) { return idx; }
@@ -1232,7 +1227,7 @@ namespace DotNetty.Common.Internal
 
         public T FindLast(Predicate<T> match)
         {
-            if (match == null) { ThrowArgumentNullException_Match(); }
+            if (match is null) { ThrowArgumentNullException_Match(); }
 
             var idx = _count - 1;
             while (idx >= 0)
@@ -1255,8 +1250,9 @@ namespace DotNetty.Common.Internal
 
         public int FindLastIndex(int startIndex, int count, Predicate<T> match)
         {
-            if (match == null) { ThrowArgumentNullException_Match(); }
-            if (0u >= (uint)_count)
+            if (match is null) { ThrowArgumentNullException_Match(); }
+            uint uCount = (uint)_count;
+            if (0u >= uCount)
             {
                 // Special case for 0 length List
                 if (startIndex != -1)
@@ -1267,19 +1263,19 @@ namespace DotNetty.Common.Internal
             else
             {
                 // Make sure we're not out of range
-                if ((uint)startIndex >= (uint)_count)
+                if ((uint)startIndex >= uCount)
                 {
                     ThrowStartIndexArgumentOutOfRange_ArgumentOutOfRange_Index();
                 }
             }
 
+            int endIndex = startIndex - count;
             // 2nd have of this also catches when startIndex == MAXINT, so MAXINT - 0 + 1 == -1, which is < 0.
-            if (count < 0 || startIndex - count + 1 < 0)
+            if ((uint)count > SharedConstants.TooBigOrNegative || (uint)(endIndex + 1) > SharedConstants.TooBigOrNegative)
             {
                 ThrowCountArgumentOutOfRange_ArgumentOutOfRange_Count();
             }
 
-            int endIndex = startIndex - count;
             var idx = startIndex;
             while (idx > endIndex)
             {
@@ -1461,7 +1457,7 @@ namespace DotNetty.Common.Internal
 
         public bool TrueForAll(Predicate<T> match)
         {
-            if (match == null) { ThrowArgumentNullException_Match(); }
+            if (match is null) { ThrowArgumentNullException_Match(); }
 
             if (IsEmpty) { return false; }
 
@@ -1541,7 +1537,7 @@ namespace DotNetty.Common.Internal
         public bool TryRemoveFromBack(List<T> results, int count)
         {
             if (results is null) { ThrowArgumentNullException_Results(); }
-            if (count < 0) { CheckRangeArguments_Count(count); }
+            if ((uint)count > SharedConstants.TooBigOrNegative) { CheckRangeArguments_Count(count); }
 
             if (IsEmpty) { return false; }
 
@@ -1569,7 +1565,7 @@ namespace DotNetty.Common.Internal
                 idx--;
             }
 
-            _count = _count - maxCount;
+            _count -= maxCount;
 
             return true;
         }
@@ -1580,7 +1576,7 @@ namespace DotNetty.Common.Internal
         /// <returns>true if an item could be dequeued; otherwise, false.</returns>
         public bool TryRemoveFromBackIf(Predicate<T> match, out T result)
         {
-            if (match == null) { ThrowArgumentNullException_Match(); }
+            if (match is null) { ThrowArgumentNullException_Match(); }
 
             if (IsEmpty) { result = default; return false; }
 
@@ -1609,7 +1605,7 @@ namespace DotNetty.Common.Internal
             }
             else
             {
-                index = index % buffer.Length;
+                index %= buffer.Length;
                 var item = buffer[index];
                 if (match(item))
                 {
@@ -1633,7 +1629,7 @@ namespace DotNetty.Common.Internal
 
         public bool TryRemoveFromBackUntil(Predicate<T> match, out T result)
         {
-            if (match == null) { ThrowArgumentNullException_Match(); }
+            if (match is null) { ThrowArgumentNullException_Match(); }
 
             if (IsEmpty) { result = default; return false; }
 
@@ -1721,7 +1717,7 @@ namespace DotNetty.Common.Internal
         public bool TryRemoveFromFront(List<T> results, int count)
         {
             if (results is null) { ThrowArgumentNullException_Results(); }
-            if (count < 0) { CheckRangeArguments_Count(count); }
+            if ((uint)count > SharedConstants.TooBigOrNegative) { CheckRangeArguments_Count(count); }
 
             if (IsEmpty) { return false; }
 
@@ -1747,7 +1743,7 @@ namespace DotNetty.Common.Internal
                 idx++;
             }
 
-            _count = _count - idx;
+            _count -= idx;
             PostIncrement(ref _offset, idx);
 
             return true;
@@ -1759,7 +1755,7 @@ namespace DotNetty.Common.Internal
         /// <returns>true if an item could be dequeued; otherwise, false.</returns>
         public bool TryRemoveFromFrontIf(Predicate<T> match, out T result)
         {
-            if (match == null) { ThrowArgumentNullException_Match(); }
+            if (match is null) { ThrowArgumentNullException_Match(); }
 
             if (IsEmpty) { result = default; return false; }
 
@@ -1790,7 +1786,7 @@ namespace DotNetty.Common.Internal
 
         public bool TryRemoveFromFrontUntil(Predicate<T> match, out T result)
         {
-            if (match == null) { ThrowArgumentNullException_Match(); }
+            if (match is null) { ThrowArgumentNullException_Match(); }
 
             if (IsEmpty) { result = default; return false; }
 
@@ -1840,9 +1836,9 @@ namespace DotNetty.Common.Internal
                         Array.Clear(_buffer, _offset, _count);
                     }
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
-            }
+                }
 #endif
-        }
+            }
             _offset = 0;
             _count = 0;
         }
@@ -1908,11 +1904,12 @@ namespace DotNetty.Common.Internal
             {
                 get
                 {
-                    if (_index < 0) { ThrowEnumerationNotStartedOrEnded(_index); }
+                    if ((uint)_index > SharedConstants.TooBigOrNegative) { ThrowEnumerationNotStartedOrEnded(_index); }
                     return _currentElement;
                 }
             }
 
+            [MethodImpl(MethodImplOptions.NoInlining)]
             private static void ThrowEnumerationNotStartedOrEnded(int index)
             {
                 Debug.Assert(index == -1 || index == -2);
@@ -1994,11 +1991,12 @@ namespace DotNetty.Common.Internal
             {
                 get
                 {
-                    if (_index < 0) { ThrowEnumerationNotStartedOrEnded(_index); }
+                    if ((uint)_index > SharedConstants.TooBigOrNegative) { ThrowEnumerationNotStartedOrEnded(_index); }
                     return _currentElement;
                 }
             }
 
+            [MethodImpl(MethodImplOptions.NoInlining)]
             private static void ThrowEnumerationNotStartedOrEnded(int index)
             {
                 Debug.Assert(index == -1 || index == -2);

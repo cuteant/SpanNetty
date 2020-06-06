@@ -10,27 +10,27 @@
     /// </summary>
     public class DecoratingHttp2ConnectionDecoder : IHttp2ConnectionDecoder
     {
-        readonly IHttp2ConnectionDecoder innerDecoder;
+        readonly IHttp2ConnectionDecoder _innerDecoder;
 
         public DecoratingHttp2ConnectionDecoder(IHttp2ConnectionDecoder decoder)
         {
             if (decoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoder); }
 
-            this.innerDecoder = decoder;
+            _innerDecoder = decoder;
         }
 
-        public IHttp2Connection Connection => this.innerDecoder.Connection;
+        public IHttp2Connection Connection => _innerDecoder.Connection;
 
-        public IHttp2LocalFlowController FlowController => this.innerDecoder.FlowController;
+        public IHttp2LocalFlowController FlowController => _innerDecoder.FlowController;
 
-        public virtual IHttp2FrameListener FrameListener { get => this.innerDecoder.FrameListener; set => this.innerDecoder.FrameListener = value; }
+        public virtual IHttp2FrameListener FrameListener { get => _innerDecoder.FrameListener; set => _innerDecoder.FrameListener = value; }
 
-        public Http2Settings LocalSettings => this.innerDecoder.LocalSettings;
+        public Http2Settings LocalSettings => _innerDecoder.LocalSettings;
 
 
         public virtual void Close()
         {
-            this.innerDecoder.Close();
+            _innerDecoder.Close();
             Dispose(true);
             GC.SuppressFinalize(this);
         }
@@ -39,18 +39,18 @@
         {
         }
 
-        public void Dispose() => this.Close();
+        public void Dispose() => Close();
 
         public virtual void DecodeFrame(IChannelHandlerContext ctx, IByteBuffer input, List<object> output)
         {
-            this.innerDecoder.DecodeFrame(ctx, input, output);
+            _innerDecoder.DecodeFrame(ctx, input, output);
         }
 
         public virtual void LifecycleManager(IHttp2LifecycleManager lifecycleManager)
         {
-            this.innerDecoder.LifecycleManager(lifecycleManager);
+            _innerDecoder.LifecycleManager(lifecycleManager);
         }
 
-        public virtual bool PrefaceReceived => this.innerDecoder.PrefaceReceived;
+        public virtual bool PrefaceReceived => _innerDecoder.PrefaceReceived;
     }
 }

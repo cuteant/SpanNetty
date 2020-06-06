@@ -21,8 +21,8 @@ namespace DotNetty.Codecs.Http2
     /// <c>This API is very immature.</c> The Http2Connection-based API is currently preferred over this API.
     /// This API is targeted to eventually replace or reduce the need for the <see cref="Http2ConnectionHandler"/> API.
     ///
-    /// <para>A HTTP/2 handler that maps HTTP/2 frames to <see cref="IHttp2Frame"/> objects and vice versa. For every incoming HTTP/2
-    /// frame, a <see cref="IHttp2Frame"/> object is created and propagated via <see cref="IChannelHandler.ChannelRead"/>. Outbound <see cref="IHttp2Frame"/>
+    /// <para>An HTTP/2 handler that maps HTTP/2 frames to <see cref="IHttp2Frame"/> objects and vice versa. For every incoming HTTP/2
+    /// frame, an <see cref="IHttp2Frame"/> object is created and propagated via <see cref="IChannelHandler.ChannelRead"/>. Outbound <see cref="IHttp2Frame"/>
     /// objects received via <see cref="Write"/> are converted to the HTTP/2 wire format. HTTP/2 frames specific to a stream
     /// implement the <see cref="IHttp2StreamFrame"/> interface. The <see cref="Http2FrameCodec"/> is instantiated using the
     /// <see cref="Http2FrameCodecBuilder"/>. It's recommended for channel handlers to inherit from the
@@ -55,7 +55,7 @@ namespace DotNetty.Codecs.Http2
     ///
     /// <para><c>New inbound Streams</c></para>
     ///
-    /// The first frame of a HTTP/2 stream must be a <see cref="IHttp2HeadersFrame"/>, which will have a <see cref="IHttp2FrameStream"/>
+    /// The first frame of an HTTP/2 stream must be a <see cref="IHttp2HeadersFrame"/>, which will have a <see cref="IHttp2FrameStream"/>
     /// object attached.
     ///
     /// <para><c>New outbound Streams</c></para>
@@ -133,7 +133,7 @@ namespace DotNetty.Codecs.Http2
         /// <summary>
         /// Number of buffered streams if the <see cref="StreamBufferingEncoder"/> is used.
         /// </summary>
-        private int _numBufferedStreams;
+        private int v_numBufferedStreams;
         private readonly ConcurrentDictionary<int, DefaultHttp2FrameStream> _frameStreamToInitializeMap;
 
         public Http2FrameCodec(IHttp2ConnectionEncoder encoder, IHttp2ConnectionDecoder decoder, Http2Settings initialSettings, bool decoupleCloseAndGoAway)
@@ -174,6 +174,13 @@ namespace DotNetty.Codecs.Http2
                 connection.ForEachActiveStream(stream => InternalVisit(stream, streamVisitor));
             }
         }
+
+        /// <summary>
+        /// Retrieve the number of streams currently in the process of being initialized.
+        /// </summary>
+        /// <remarks>This is package-private for testing only.</remarks>
+        internal int NumInitializingStreams => _frameStreamToInitializeMap.Count;
+
         private bool InternalVisit(IHttp2Stream stream, IHttp2FrameStreamVisitor streamVisitor)
         {
             try
@@ -470,8 +477,14 @@ namespace DotNetty.Codecs.Http2
                         headersFrame.IsEndStream, promise);
                 if (!promise.IsCompleted)
                 {
-                    Interlocked.Increment(ref _numBufferedStreams);
-                    promise.Task.ContinueWith(ResetNufferedStreamsAction, this, TaskContinuationOptions.ExecuteSynchronously);
+                    Interlocked.Increment(ref v_numBufferedStreams);
+                    // Clean up the stream being initialized if writing the headers fails and also
+                    // decrement the number of buffered streams.
+                    promise.Task.ContinueWith(ResetNufferedStreamsAction, Tuple.Create(this, streamId), TaskContinuationOptions.ExecuteSynchronously);
+                }
+                else
+                {
+                    HandleHeaderFuture(promise.Task, streamId);
                 }
             }
         }
@@ -479,8 +492,18 @@ namespace DotNetty.Codecs.Http2
         private static readonly Action<Task, object> ResetNufferedStreamsAction = ResetNufferedStreams;
         private static void ResetNufferedStreams(Task t, object s)
         {
-            var self = (Http2FrameCodec)s;
-            Interlocked.Decrement(ref self._numBufferedStreams);
+            var wrapped = (Tuple<Http2FrameCodec, int>)s;
+            var self = wrapped.Item1;
+            Interlocked.Decrement(ref self.v_numBufferedStreams);
+            self.HandleHeaderFuture(t, wrapped.Item2);
+        }
+
+        private void HandleHeaderFuture(Task channelFuture, int streamId)
+        {
+            if (!channelFuture.IsSuccess())
+            {
+                _frameStreamToInitializeMap.TryRemove(streamId, out _);
+            }
         }
 
         private void OnStreamActive0(IHttp2Stream stream)
@@ -589,7 +612,7 @@ namespace DotNetty.Codecs.Http2
         }
 
         protected override bool IsGracefulShutdownComplete =>
-            base.IsGracefulShutdownComplete && 0u >= (uint)Volatile.Read(ref _numBufferedStreams);
+            base.IsGracefulShutdownComplete && 0u >= (uint)Volatile.Read(ref v_numBufferedStreams);
 
         sealed class FrameListener : IHttp2FrameListener
         {

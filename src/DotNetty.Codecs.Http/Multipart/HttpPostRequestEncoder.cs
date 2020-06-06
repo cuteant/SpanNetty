@@ -746,6 +746,9 @@ namespace DotNetty.Codecs.Http.Multipart
         // If not multipart, does the currentBuffer stands for the Key or for the Value
         bool isKey = true;
 
+        /// <summary>
+        /// Returns the next ByteBuf to send as an HttpChunk and modifying currentBuffer accordingly
+        /// </summary>
         IByteBuffer FillByteBuffer()
         {
             int length = this.currentBuffer.ReadableBytes;

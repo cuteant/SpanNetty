@@ -20,7 +20,7 @@ namespace DotNetty.Transport.Channels
     /// </summary>
     public sealed class CoalescingBufferQueue : AbstractCoalescingBufferQueue
     {
-        readonly IChannel channel;
+        readonly IChannel _channel;
 
         public CoalescingBufferQueue(IChannel channel)
             : this(channel, 4)
@@ -36,7 +36,7 @@ namespace DotNetty.Transport.Channels
             : base(updateWritability ? channel : null, initSize)
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
-            this.channel = channel;
+            _channel = channel;
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace DotNetty.Transport.Channels
         /// <returns>a <see cref="IByteBuffer"/> composed of the enqueued buffers.</returns>
         public IByteBuffer Remove(int bytes, IPromise aggregatePromise)
         {
-            return Remove(channel.Allocator, bytes, aggregatePromise);
+            return Remove(_channel.Allocator, bytes, aggregatePromise);
         }
 
         protected override IByteBuffer Compose(IByteBufferAllocator alloc, IByteBuffer cumulation, IByteBuffer next)

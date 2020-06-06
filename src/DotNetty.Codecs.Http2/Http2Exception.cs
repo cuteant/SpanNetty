@@ -58,7 +58,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="error">The type of error as defined by the HTTP/2 specification.</param>
         /// <param name="fmt">string with the content and format for the additional debug data.</param>
         /// <param name="args">Objects which fit into the format defined by <paramref name="fmt"/>.</param>
-        /// <returns>An exception which can be translated into a HTTP/2 error.</returns>
+        /// <returns>An exception which can be translated into an HTTP/2 error.</returns>
         public static Http2Exception ConnectionError(Http2Error error, string fmt, params object[] args)
         {
             return new Http2Exception(error, args is object && (uint)args.Length > 0u ? string.Format(fmt, args) : fmt);
@@ -72,7 +72,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="cause">The object which caused the error.</param>
         /// <param name="fmt">string with the content and format for the additional debug data.</param>
         /// <param name="args">Objects which fit into the format defined by <paramref name="fmt"/>.</param>
-        /// <returns>An exception which can be translated into a HTTP/2 error.</returns>
+        /// <returns>An exception which can be translated into an HTTP/2 error.</returns>
         public static Http2Exception ConnectionError(Http2Error error, Exception cause, string fmt, params object[] args)
         {
             return new Http2Exception(error, args is object && (uint)args.Length > 0u ? string.Format(fmt, args) : fmt, cause);
@@ -85,7 +85,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="error">The type of error as defined by the HTTP/2 specification.</param>
         /// <param name="fmt">string with the content and format for the additional debug data.</param>
         /// <param name="args">Objects which fit into the format defined by <paramref name="fmt"/>.</param>
-        /// <returns>An exception which can be translated into a HTTP/2 error.</returns>
+        /// <returns>An exception which can be translated into an HTTP/2 error.</returns>
         public static Http2Exception ClosedStreamError(Http2Error error, string fmt, params object[] args)
         {
             return new ClosedStreamCreationException(error, args is object && (uint)args.Length > 0u ? string.Format(fmt, args) : fmt);

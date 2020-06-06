@@ -14,7 +14,7 @@ namespace DotNetty.Codecs.Http2
     using DotNetty.Transport.Channels.Embedded;
 
     /// <summary>
-    /// A HTTP2 frame listener that will decompress data frames according to the <c>content-encoding</c> header for each
+    /// An HTTP2 frame listener that will decompress data frames according to the <c>content-encoding</c> header for each
     /// stream. The decompression provided by this class will be applied to the data for the entire stream.
     /// </summary>
     public class DelegatingDecompressorFrameListener : Http2FrameListenerDecorator
@@ -113,9 +113,9 @@ namespace DotNetty.Codecs.Http2
                     buf.Release();
                 }
             }
-            catch (Http2Exception e)
+            catch (Http2Exception)
             {
-                throw e;
+                throw;
             }
             catch (Exception t)
             {
@@ -324,9 +324,9 @@ namespace DotNetty.Codecs.Http2
                 {
                     return _flowController.ConsumeBytes(stream, numBytes);
                 }
-                catch (Http2Exception e)
+                catch (Http2Exception)
                 {
-                    throw e;
+                    throw;
                 }
                 catch (Exception t)
                 {

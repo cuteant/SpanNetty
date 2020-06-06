@@ -4,6 +4,7 @@
 namespace DotNetty.Handlers.Tests.Flow
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Net;
     using System.Threading;
@@ -12,8 +13,10 @@ namespace DotNetty.Handlers.Tests.Flow
     using DotNetty.Codecs;
     using DotNetty.Common.Utilities;
     using DotNetty.Handlers.Flow;
+    using DotNetty.Handlers.Timeout;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Channels.Embedded;
     using DotNetty.Transport.Channels.Sockets;
     using Xunit;
 
@@ -399,7 +402,7 @@ namespace DotNetty.Handlers.Tests.Flow
                 Assert.True(flow.IsQueueEmpty);
 
                 var exc = Volatile.Read(ref causeRef);
-                Assert.NotNull(exc);
+                Assert.Null(exc);
             }
             finally
             {
@@ -412,6 +415,75 @@ namespace DotNetty.Handlers.Tests.Flow
                 {
                     evt.Signal();
                 }
+            }
+        }
+
+        [Fact]
+        public void TestSwallowedReadComplete()
+        {
+            int delayMillis = 100;
+            var userEvents = new ConcurrentQueue<IdleStateEvent>();
+            EmbeddedChannel channel = new EmbeddedChannel(false, false,
+                new FlowControlHandler(),
+                new IdleStateHandler(TimeSpan.FromMilliseconds(delayMillis), TimeSpan.Zero, TimeSpan.Zero),
+                new SwallowedReadCompleteHandler(userEvents));
+
+            channel.Configuration.AutoRead = false;
+            Assert.False(channel.Configuration.AutoRead);
+
+            channel.Register();
+
+            // Reset read timeout by some message
+            Assert.True(channel.WriteInbound(Unpooled.Empty));
+            channel.FlushInbound();
+            Assert.Equal(Unpooled.Empty, channel.ReadInbound<IByteBuffer>());
+
+            // Emulate 'no more messages in NIO channel' on the next read attempt.
+            channel.FlushInbound();
+            Assert.Null(channel.ReadInbound<IByteBuffer>());
+
+            Thread.Sleep(delayMillis);
+            channel.RunPendingTasks();
+            var result = userEvents.TryDequeue(out var evt);
+            Assert.True(result);
+            Assert.Equal(IdleStateEvent.FirstReaderIdleStateEvent, evt);
+            Assert.False(channel.Finish());
+        }
+
+        class SwallowedReadCompleteHandler : ChannelHandlerAdapter
+        {
+            private ConcurrentQueue<IdleStateEvent> _userEvents;
+
+            public SwallowedReadCompleteHandler(ConcurrentQueue<IdleStateEvent> userEvents)
+            {
+                _userEvents = userEvents;
+            }
+
+            public override void ChannelActive(IChannelHandlerContext context)
+            {
+                context.FireChannelActive();
+                context.Read();
+            }
+
+            public override void ChannelRead(IChannelHandlerContext context, object message)
+            {
+                context.FireChannelRead(message);
+                context.Read();
+            }
+
+            public override void ChannelReadComplete(IChannelHandlerContext context)
+            {
+                context.FireChannelReadComplete();
+                context.Read();
+            }
+
+            public override void UserEventTriggered(IChannelHandlerContext context, object evt)
+            {
+                if (evt is IdleStateEvent idleStateEvent)
+                {
+                    _userEvents.Enqueue(idleStateEvent);
+                }
+                context.FireUserEventTriggered(evt);
             }
         }
 

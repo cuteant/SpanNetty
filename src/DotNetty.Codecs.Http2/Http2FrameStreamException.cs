@@ -6,7 +6,7 @@ namespace DotNetty.Codecs.Http2
     using System;
 
     /// <summary>
-    /// A HTTP/2 exception for a specific <see cref="IHttp2FrameStream"/>.
+    /// An HTTP/2 exception for a specific <see cref="IHttp2FrameStream"/>.
     /// </summary>
     public sealed class Http2FrameStreamException : Exception
     {
@@ -15,8 +15,8 @@ namespace DotNetty.Codecs.Http2
         {
             if (stream is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.stream); }
 
-            this.Stream = stream;
-            this.Error = error;
+            Stream = stream;
+            Error = error;
         }
 
         public Http2Error Error { get; }

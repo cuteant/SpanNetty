@@ -391,7 +391,7 @@ namespace DotNetty.Codecs.Http2.Tests
         }
 
         /**
-         * A child channel for a HTTP/2 stream in IDLE state (that is no headers sent or received),
+         * A child channel for an HTTP/2 stream in IDLE state (that is no headers sent or received),
          * should not emit a RST_STREAM frame on close, as this is a connection error of type protocol error.
          */
         [Fact]

@@ -290,7 +290,7 @@ namespace DotNetty.Codecs.Http2
                 ForEachActiveStream(AbstractHttp2StreamChannel.WritableVisitor);
             }
 
-            ctx.FireChannelWritabilityChanged();
+            base.ChannelWritabilityChanged(ctx);
         }
 
         private void Flush0(IChannelHandlerContext ctx)

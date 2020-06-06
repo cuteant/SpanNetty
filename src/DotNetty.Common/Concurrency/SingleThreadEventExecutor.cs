@@ -24,7 +24,7 @@ namespace DotNetty.Common.Concurrency
         private const int ST_SHUTDOWN = 4;
         private const int ST_TERMINATED = 5;
         private const string DefaultWorkerThreadName = "SingleThreadEventExecutor worker";
-        
+
         private static readonly IRunnable s_wakeupTask = new NoOpRunnable();
 
         private static readonly IInternalLogger Logger =
@@ -295,10 +295,10 @@ namespace DotNetty.Common.Concurrency
             _gracefulShutdownQuietPeriod = PreciseTimeSpan.FromTimeSpan(quietPeriod);
             _gracefulShutdownTimeout = PreciseTimeSpan.FromTimeSpan(timeout);
 
-            // todo: revisit
-            //if (oldState == ST_NOT_STARTED)
+            // TODO: revisit
+            //if (ensureThreadStarted(oldState))
             //{
-            //    scheduleExecution();
+            //    return terminationFuture;
             //}
 
             if (wakeup)
@@ -333,7 +333,13 @@ namespace DotNetty.Common.Concurrency
                     return true;
                 }
 
-                // There were tasks in the queue. Wait a little bit more until no tasks are queued for the quiet period.
+                // There were tasks in the queue. Wait a little bit more until no tasks are queued for the quiet period or
+                // terminate if the quiet period is 0.
+                // See https://github.com/netty/netty/issues/4241
+                if (_gracefulShutdownQuietPeriod == PreciseTimeSpan.Zero)
+                {
+                    return true;
+                }
                 WakeUp(true);
                 return false;
             }
@@ -420,24 +426,35 @@ namespace DotNetty.Common.Concurrency
 
         protected bool RunAllTasks()
         {
-            FetchFromScheduledTaskQueue();
-            IRunnable task = PollTask();
-            if (task is null)
+            bool fetchedAll;
+            bool ranAtLeastOne;
+            do
             {
-                return false;
-            }
-
-            while (true)
-            {
-                Volatile.Write(ref v_progress, v_progress + 1); // volatile write is enough as this is the only thread ever writing
-                SafeExecute(task);
-                task = PollTask();
+                fetchedAll = FetchFromScheduledTaskQueue();
+                IRunnable task = PollTask();
                 if (task is null)
                 {
-                    _lastExecutionTime = PreciseTimeSpan.FromStart;
-                    return true;
+                    return false;
                 }
+
+                while (true)
+                {
+                    Volatile.Write(ref v_progress, v_progress + 1); // volatile write is enough as this is the only thread ever writing
+                    SafeExecute(task);
+                    task = PollTask();
+                    if (task is null)
+                    {
+                        ranAtLeastOne = true;
+                        break;
+                    }
+                }
+            } while (!fetchedAll);  // keep on processing until we fetched all scheduled tasks.
+
+            if (ranAtLeastOne)
+            {
+                _lastExecutionTime = PreciseTimeSpan.FromStart;
             }
+            return true;
         }
 
         bool RunAllTasks(PreciseTimeSpan timeout)
@@ -446,6 +463,7 @@ namespace DotNetty.Common.Concurrency
             IRunnable task = PollTask();
             if (task is null)
             {
+                AfterRunningAllTasks();
                 return false;
             }
 
@@ -477,12 +495,20 @@ namespace DotNetty.Common.Concurrency
                 }
             }
 
+            AfterRunningAllTasks();
             _lastExecutionTime = executionTime;
             return true;
         }
 
+        /// <summary>
+        /// Invoked before returning from <see cref="RunAllTasks()"/> and <see cref="RunAllTasks(PreciseTimeSpan)"/>.
+        /// </summary>
+        protected virtual void AfterRunningAllTasks() { }
+
         bool FetchFromScheduledTaskQueue()
         {
+            if (ScheduledTaskQueue.IsEmpty) { return true; }
+
             PreciseTimeSpan nanoTime = PreciseTimeSpan.FromStart;
             IScheduledRunnable scheduledTask = PollScheduledTask(nanoTime);
             while (scheduledTask is object)
@@ -510,7 +536,7 @@ namespace DotNetty.Common.Concurrency
                     if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledTask))
                     {
                         PreciseTimeSpan wakeupTimeout = nextScheduledTask.Deadline - PreciseTimeSpan.FromStart;
-                        if (wakeupTimeout.Ticks > 0)
+                        if (wakeupTimeout.Ticks > 0L)
                         {
                             double timeout = wakeupTimeout.ToTimeSpan().TotalMilliseconds;
                             _emptyEvent.Wait((int)Math.Min(timeout, int.MaxValue - 1));

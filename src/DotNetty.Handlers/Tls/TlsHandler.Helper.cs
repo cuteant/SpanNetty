@@ -1,27 +1,23 @@
 ﻿
 namespace DotNetty.Handlers.Tls
 {
-    using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Net;
     using System.Net.Security;
-    using System.Security.Cryptography.X509Certificates;
     using System.Runtime.CompilerServices;
-#if DESKTOPCLR
-    using System.Security.Authentication;
-#endif
+    using System.Security.Cryptography.X509Certificates;
+    using DotNetty.Common.Internal.Logging;
 
     partial class TlsHandler
     {
-        public TlsHandler(TlsSettings settings)
-          : this(stream => CreateSslStream(settings, stream), settings)
-        {
-        }
+        private static readonly IInternalLogger s_logger = InternalLoggerFactory.GetInstance<TlsHandler>();
 
-        public TlsHandler(Func<TlsSettings, Stream, SslStream> sslStreamFactory, TlsSettings settings)
-          : this(stream => sslStreamFactory(settings, stream), settings)
-        {
-        }
+        public static TlsHandler Client(string targetHost) => new TlsHandler(new ClientTlsSettings(targetHost));
+
+        public static TlsHandler Client(string targetHost, X509Certificate clientCertificate) => new TlsHandler(new ClientTlsSettings(targetHost, new List<X509Certificate> { clientCertificate }));
+
+        public static TlsHandler Server(X509Certificate certificate) => new TlsHandler(new ServerTlsSettings(certificate));
 
         private static SslStream CreateSslStream(TlsSettings settings, Stream stream)
         {
@@ -37,7 +33,7 @@ namespace DotNetty.Handlers.Tls
 
 #if DESKTOPCLR
                 // SSL 版本 2 协议不支持客户端证书
-                if (serverSettings.EnabledProtocols == SslProtocols.Ssl2)
+                if (serverSettings.EnabledProtocols == System.Security.Authentication.SslProtocols.Ssl2)
                 {
                     return new SslStream(stream, true);
                 }
@@ -45,7 +41,7 @@ namespace DotNetty.Handlers.Tls
 
                 return new SslStream(stream,
                     leaveInnerStreamOpen: true,
-                    userCertificateValidationCallback: (sender, certificate, chain, sslPolicyErrors) => ClientCertificateValidation(sender, certificate, chain, sslPolicyErrors, serverSettings));
+                    userCertificateValidationCallback: (sender, certificate, chain, sslPolicyErrors) => ClientCertificateValidation(certificate, chain, sslPolicyErrors, serverSettings));
             }
             else
             {
@@ -63,7 +59,7 @@ namespace DotNetty.Handlers.Tls
             }
         }
 
-        private static bool ClientCertificateValidation(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors, ServerTlsSettings serverSettings)
+        private static bool ClientCertificateValidation(X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors, ServerTlsSettings serverSettings)
         {
             if (certificate is null)
             {

@@ -150,7 +150,7 @@ namespace DotNetty.Codecs.Http2
             try
             {
                 // Decode the SETTINGS payload.
-                var payload = Base64.Decode(header, Base64Dialect.URL_SAFE);
+                var payload = Base64.Decode(header, Base64Dialect.UrlSafe);
 
                 // Create an HTTP/2 frame for the settings.
                 var frame = CreateSettingsFrame(ctx, payload);

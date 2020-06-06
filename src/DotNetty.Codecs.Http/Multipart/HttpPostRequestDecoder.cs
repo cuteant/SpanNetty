@@ -42,14 +42,14 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public static bool IsMultipartRequest(IHttpRequest request)
         {
-            if (request.Headers.TryGet(HttpHeaderNames.ContentType, out ICharSequence contentType))
+            if (request.Headers.TryGet(HttpHeaderNames.ContentType, out ICharSequence mimeType))
             {
-                return GetMultipartDataBoundary(contentType) is object;
+                if (mimeType.StartsWith(HttpHeaderValues.MultipartFormData))
+                {
+                    return GetMultipartDataBoundary(mimeType) != null;
+                }
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
         // 
@@ -101,7 +101,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     ICharSequence charset = headerContentType[crank].SubstringAfter(HttpConstants.EqualsSignChar);
                     if (charset is object)
                     {
-                        return new []
+                        return new[]
                         {
                             new StringCharSequence("--" + boundary.ToString()),
                             charset
@@ -152,7 +152,7 @@ namespace DotNetty.Codecs.Http.Multipart
             int aEnd = sb.IndexOf(HttpConstants.SemicolonChar);
             if (aEnd == -1)
             {
-                return new [] { sb,  StringCharSequence.Empty, StringCharSequence.Empty };
+                return new[] { sb, StringCharSequence.Empty, StringCharSequence.Empty };
             }
             int bStart = HttpPostBodyUtil.FindNonWhitespace(sb, aEnd + 1);
             if (sb[aEnd - 1] == HttpConstants.SpaceChar)
@@ -163,7 +163,7 @@ namespace DotNetty.Codecs.Http.Multipart
             if (bEnd == -1)
             {
                 bEnd = HttpPostBodyUtil.FindEndOfString(sb);
-                return new [] { sb.SubSequence(aStart, aEnd), sb.SubSequence(bStart, bEnd), StringCharSequence.Empty };
+                return new[] { sb.SubSequence(aStart, aEnd), sb.SubSequence(bStart, bEnd), StringCharSequence.Empty };
             }
             int cStart = HttpPostBodyUtil.FindNonWhitespace(sb, bEnd + 1);
             if (sb[bEnd - 1] == HttpConstants.SpaceChar)
@@ -171,7 +171,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 bEnd--;
             }
             int cEnd = HttpPostBodyUtil.FindEndOfString(sb);
-            return new [] { sb.SubSequence(aStart, aEnd), sb.SubSequence(bStart, bEnd), sb.SubSequence(cStart, cEnd) };
+            return new[] { sb.SubSequence(aStart, aEnd), sb.SubSequence(bStart, bEnd), sb.SubSequence(cStart, cEnd) };
         }
     }
 }

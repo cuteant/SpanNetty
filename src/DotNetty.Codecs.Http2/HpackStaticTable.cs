@@ -127,21 +127,17 @@ namespace DotNetty.Codecs.Http2
         /// <param name="name"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        internal static int GetIndex(ICharSequence name, ICharSequence value)
+        internal static int GetIndexInsensitive(ICharSequence name, ICharSequence value)
         {
             int index = GetIndex(name);
             if ((uint)index > SharedConstants.TooBigOrNegative/* == -1*/) { return -1; }
 
+            uint uLength = (uint)Length;
             // Note this assumes all entries for a given header field are sequential.
-            while ((uint)index <= (uint)Length)
+            while ((uint)index <= uLength)
             {
                 HpackHeaderField entry = GetEntry(index);
-                if (0u >= (uint)HpackUtil.EqualsConstantTime(name, entry.name))
-                {
-                    break;
-                }
-
-                if (HpackUtil.EqualsConstantTime(value, entry.value) != 0)
+                if (HpackUtil.EqualsVariableTime(name, entry._name) && HpackUtil.EqualsVariableTime(value, entry._value))
                 {
                     return index;
                 }
@@ -164,7 +160,7 @@ namespace DotNetty.Codecs.Http2
             for (int index = length; index > 0; index--)
             {
                 HpackHeaderField entry = GetEntry(index);
-                ICharSequence name = entry.name;
+                ICharSequence name = entry._name;
                 ret.Set(name, index);
             }
 

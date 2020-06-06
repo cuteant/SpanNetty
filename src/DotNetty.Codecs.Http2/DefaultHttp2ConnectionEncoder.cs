@@ -170,7 +170,7 @@ namespace DotNetty.Codecs.Http2
                             promise.TrySetException(ThrowHelper.GetInvalidOperationException_StreamNoLongerExists(streamId, cause));
                             return promise.Task;
                         }
-                        throw cause;
+                        throw;
                     }
                 }
                 else

@@ -613,7 +613,7 @@ namespace DotNetty.Codecs.Http
 
         internal static InvalidOperationException GetInvalidOperationException<T>()
         {
-            return new InvalidOperationException($"ChannelPipeline does not contain a {typeof(T).Name} or HttpClientCodec");
+            return new InvalidOperationException($"ChannelPipeline does not contain an {typeof(T).Name} or HttpClientCodec");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -1179,7 +1179,7 @@ namespace DotNetty.Codecs.Http
             throw GetException();
             CodecException GetException()
             {
-                return new CodecException($"Object of class {StringUtil.SimpleClassName(httpMessage.GetType())} is not a HttpRequest or HttpResponse");
+                return new CodecException($"Object of class {StringUtil.SimpleClassName(httpMessage.GetType())} is not an HttpRequest or HttpResponse");
             }
         }
 

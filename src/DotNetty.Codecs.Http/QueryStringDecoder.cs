@@ -39,14 +39,15 @@ namespace DotNetty.Codecs.Http
     /// </summary>
     public class QueryStringDecoder
     {
-        const int DefaultMaxParams = 1024;
+        private const int DefaultMaxParams = 1024;
 
-        readonly Encoding charset;
-        readonly string uri;
-        readonly int maxParams;
-        int pathEndIdx;
-        string path;
-        IDictionary<string, List<string>> parameters;
+        private readonly Encoding _charset;
+        private readonly string _uri;
+        private readonly int _maxParams;
+        private readonly bool _semicolonIsNormalChar;
+        private int _pathEndIdx;
+        private string _path;
+        private IDictionary<string, List<string>> _parameters;
 
         public QueryStringDecoder(string uri) : this(uri, HttpConstants.DefaultEncoding)
         {
@@ -64,18 +65,23 @@ namespace DotNetty.Codecs.Http
         {
         }
 
-        public QueryStringDecoder(string uri, Encoding charset, bool hasPath, int maxParams)
+        public QueryStringDecoder(string uri, Encoding charset, bool hasPath, int maxParams) : this(uri, charset, hasPath, maxParams, false)
+        {
+        }
+
+        public QueryStringDecoder(string uri, Encoding charset, bool hasPath, int maxParams, bool semicolonIsNormalChar)
         {
             if (uri is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
             if (charset is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
             if ((uint)(maxParams - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(maxParams, ExceptionArgument.maxParams); }
 
-            this.uri = uri;
-            this.charset = charset;
-            this.maxParams = maxParams;
+            _uri = uri;
+            _charset = charset;
+            _maxParams = maxParams;
+            _semicolonIsNormalChar = semicolonIsNormalChar;
 
             // -1 means that path end index will be initialized lazily
-            this.pathEndIdx = hasPath ? -1 : 0;
+            _pathEndIdx = hasPath ? -1 : 0;
         }
 
         public QueryStringDecoder(Uri uri) : this(uri, HttpConstants.DefaultEncoding)
@@ -86,7 +92,11 @@ namespace DotNetty.Codecs.Http
         {
         }
 
-        public QueryStringDecoder(Uri uri, Encoding charset, int maxParams)
+        public QueryStringDecoder(Uri uri, Encoding charset, int maxParams) : this(uri, charset, maxParams, false)
+        {
+        }
+
+        public QueryStringDecoder(Uri uri, Encoding charset, int maxParams, bool semicolonIsNormalChar)
         {
             if (uri is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.uri); }
             if (charset is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
@@ -94,38 +104,37 @@ namespace DotNetty.Codecs.Http
 
             string rawPath = uri.AbsolutePath;
             // Also take care of cut of things like "http://localhost"
-            this.uri = uri.PathAndQuery;
-            this.charset = charset;
-            this.maxParams = maxParams;
-            this.pathEndIdx = rawPath.Length;
+            _uri = uri.PathAndQuery;
+            _charset = charset;
+            _maxParams = maxParams;
+            _semicolonIsNormalChar = semicolonIsNormalChar;
+            _pathEndIdx = rawPath.Length;
         }
 
-        public override string ToString() => this.uri;
+        public override string ToString() => _uri;
 
-        public string Path => this.path ??
-            (this.path = DecodeComponent(this.uri, 0, this.PathEndIdx(), this.charset, true));
+        public string Path => _path ??= DecodeComponent(_uri, 0, PathEndIdx(), _charset, true);
 
-        public IDictionary<string, List<string>> Parameters => this.parameters ??
-            (this.parameters = DecodeParams(this.uri, this.PathEndIdx(), this.charset, this.maxParams));
+        public IDictionary<string, List<string>> Parameters => _parameters ??= DecodeParams(_uri, PathEndIdx(), _charset, _maxParams, _semicolonIsNormalChar);
 
-        public string RawPath() => this.uri.Substring(0, this.PathEndIdx());
+        public string RawPath() => _uri.Substring(0, PathEndIdx());
 
         public string RawQuery()
         {
-            int start = this.pathEndIdx + 1;
-            return start < this.uri.Length ? this.uri.Substring(start) : StringUtil.EmptyString;
+            int start = _pathEndIdx + 1;
+            return start < _uri.Length ? _uri.Substring(start) : StringUtil.EmptyString;
         }
 
         int PathEndIdx()
         {
-            if (this.pathEndIdx == -1)
+            if (_pathEndIdx == -1)
             {
-                this.pathEndIdx = FindPathEndIndex(this.uri);
+                _pathEndIdx = FindPathEndIndex(_uri);
             }
-            return this.pathEndIdx;
+            return _pathEndIdx;
         }
 
-        static IDictionary<string, List<string>> DecodeParams(string s, int from, Encoding charset, int paramsLimit)
+        static IDictionary<string, List<string>> DecodeParams(string s, int from, Encoding charset, int paramsLimit, bool semicolonIsNormalChar)
         {
             int len = s.Length;
             if ((uint)from >= (uint)len)
@@ -155,8 +164,14 @@ namespace DotNetty.Codecs.Http
                             valueStart = i + 1;
                         }
                         break;
-                    case HttpConstants.AmpersandChar:
                     case HttpConstants.SemicolonChar:
+                        if (semicolonIsNormalChar)
+                        {
+                            continue;
+                        }
+                        goto case HttpConstants.AmpersandChar;
+                    // fall-through
+                    case HttpConstants.AmpersandChar:
                         if (AddParam(s, nameStart, valueStart, i, parameters, charset))
                         {
                             paramsLimit--;

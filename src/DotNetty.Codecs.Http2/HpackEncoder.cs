@@ -10,6 +10,13 @@ namespace DotNetty.Codecs.Http2
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
+    /// <summary>
+    /// An HPACK encoder.
+    /// 
+    /// <para>Implementation note:  This class is security sensitive, and depends on users correctly identifying their headers
+    /// as security sensitive or not.  If a header is considered not sensitive, methods names "insensitive" are used which
+    /// are fast, but don't provide any security guarantees.</para>
+    /// </summary>
     sealed class HpackEncoder
     {
         internal const int HuffCodeThreshold = 512;
@@ -130,7 +137,7 @@ namespace DotNetty.Codecs.Http2
             // If the peer will only use the static table
             if (0ul >= (ulong)_maxHeaderTableSize)
             {
-                int staticTableIndex = HpackStaticTable.GetIndex(name, value);
+                int staticTableIndex = HpackStaticTable.GetIndexInsensitive(name, value);
                 if (staticTableIndex == -1)
                 {
                     int nameIndex = HpackStaticTable.GetIndex(name);
@@ -152,7 +159,7 @@ namespace DotNetty.Codecs.Http2
                 return;
             }
 
-            HeaderEntry headerField = GetEntry(name, value);
+            HeaderEntry headerField = GetEntryInsensitive(name, value);
             if (headerField is object)
             {
                 int index = GetIndex(headerField.Index) + HpackStaticTable.Length;
@@ -161,7 +168,7 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-                int staticTableIndex = HpackStaticTable.GetIndex(name, value);
+                int staticTableIndex = HpackStaticTable.GetIndexInsensitive(name, value);
                 if (staticTableIndex != -1)
                 {
                     // Section 6.1. Indexed Header Field Representation
@@ -401,7 +408,7 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
-        HeaderEntry GetEntry(ICharSequence name, ICharSequence value)
+        HeaderEntry GetEntryInsensitive(ICharSequence name, ICharSequence value)
         {
             if (0u >= (uint)Length() || name is null || value is null)
             {
@@ -412,8 +419,9 @@ namespace DotNetty.Codecs.Http2
             int i = Index(h);
             for (HeaderEntry e = _headerFields[i]; e is object; e = e.Next)
             {
-                // To avoid short circuit behavior a bitwise operator is used instead of a bool operator.
-                if (e.Hash == h && (HpackUtil.EqualsConstantTime(name, e.name) & HpackUtil.EqualsConstantTime(value, e.value)) != 0)
+                // Check the value before then name, as it is more likely the value will be different incase there is no
+                // match.
+                if (e.Hash == h && HpackUtil.EqualsVariableTime(value, e._value) && HpackUtil.EqualsVariableTime(name, e._name))
                 {
                     return e;
                 }
@@ -439,7 +447,7 @@ namespace DotNetty.Codecs.Http2
             int i = Index(h);
             for (HeaderEntry e = _headerFields[i]; e is object; e = e.Next)
             {
-                if (e.Hash == h && HpackUtil.EqualsConstantTime(name, e.name) != 0)
+                if (e.Hash == h && HpackUtil.EqualsConstantTime(name, e._name) != 0)
                 {
                     return GetIndex(e.Index);
                 }
