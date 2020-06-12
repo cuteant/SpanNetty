@@ -3,36 +3,39 @@
 
 namespace DotNetty.Transport.Channels.Pool
 {
+    using System;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
+    using DotNetty.Common.Utilities;
 
     public abstract class AbstractChannelPoolMap<TKey, TPool> : IChannelPoolMap<TKey, TPool>
         where TPool : IChannelPool
     {
-        readonly ConcurrentDictionary<TKey, TPool> map;
+        private readonly ConcurrentDictionary<TKey, TPool> _map;
 
         public AbstractChannelPoolMap()
         {
-            this.map = new ConcurrentDictionary<TKey, TPool>();
+            _map = new ConcurrentDictionary<TKey, TPool>();
         }
 
         public AbstractChannelPoolMap(IEqualityComparer<TKey> comparer)
         {
-            this.map = new ConcurrentDictionary<TKey, TPool>(comparer);
+            _map = new ConcurrentDictionary<TKey, TPool>(comparer);
         }
 
         public TPool Get(TKey key)
         {
             if (key is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
 
-            if (!this.map.TryGetValue(key, out TPool pool))
+            if (!_map.TryGetValue(key, out TPool pool))
             {
-                pool = this.NewPool(key);
-                TPool old = this.map.GetOrAdd(key, pool);
+                pool = NewPool(key);
+                TPool old = _map.GetOrAdd(key, pool);
                 if (!ReferenceEquals(old, pool))
                 {
                     // We need to destroy the newly created pool as we not use it.
-                    pool.Dispose();
+                    pool.Close();
                     pool = old;
                 }
             }
@@ -42,38 +45,91 @@ namespace DotNetty.Transport.Channels.Pool
 
         /// <summary>
         /// Removes the <see cref="IChannelPool"/> from this <see cref="AbstractChannelPoolMap{TKey, TPool}"/>.
+        /// 
+        /// <para>If the removed pool extends <see cref="SimpleChannelPool"/> it will be closed asynchronously to avoid blocking in
+        /// this method.</para>
         /// </summary>
         /// <param name="key">The key to remove. Must not be null.</param>
         /// <returns><c>true</c> if removed, otherwise <c>false</c>.</returns>
         public bool Remove(TKey key)
         {
             if (key is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
-            if (this.map.TryRemove(key, out TPool pool))
+            if (_map.TryRemove(key, out TPool pool))
             {
-                pool.Dispose();
+                _ = PoolCloseAsyncIfSupported(pool);
                 return true;
             }
             return false;
         }
 
-        /*public final Iterator<Entry<K, P>> iterator() {
-            return new ReadOnlyIterator<Entry<K, P>>(this.map.entrySet().iterator());
-        }*/
+        private Task<bool> RemoveAsyncIfSupported(TKey key)
+        {
+            if (key is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
+
+            if (_map.TryRemove(key, out TPool pool))
+            {
+                var removePromise = new TaskCompletionSource<bool>();
+                PoolCloseAsyncIfSupported(pool).ContinueWith((t, s) =>
+                    {
+                        if (t.IsSuccess())
+                        {
+                            ((TaskCompletionSource<bool>)s).TrySetResult(true);
+                        }
+                        else
+                        {
+                            ((TaskCompletionSource<bool>)s).TrySetException(TaskUtil.Unwrap(t.Exception));
+                        }
+                    },
+                    removePromise
+#if !NET451
+                    , TaskContinuationOptions.RunContinuationsAsynchronously
+#endif
+                );
+                return removePromise.Task;
+            }
+            return TaskUtil.False;
+        }
+
+        /// <summary>
+        /// If the pool implementation supports asynchronous close, then use it to avoid a blocking close call in case
+        /// the ChannelPoolMap operations are called from an EventLoop.
+        /// </summary>
+        /// <param name="pool">the ChannelPool to be closed</param>
+        /// <returns></returns>
+        private static Task PoolCloseAsyncIfSupported(IChannelPool pool)
+        {
+            if (pool is SimpleChannelPool simpleChannelPool)
+            {
+                return simpleChannelPool.CloseAsync();
+            }
+            else
+            {
+                try
+                {
+                    pool.Close();
+                    return TaskUtil.Completed;
+                }
+                catch (Exception exc)
+                {
+                    return TaskUtil.FromException(exc);
+                }
+            }
+        }
 
         /// <summary>
         /// Returns the number of <see cref="IChannelPool"/>s currently in this <see cref="AbstractChannelPoolMap{TKey, TPool}"/>.
         /// </summary>
-        public int Count => this.map.Count;
+        public int Count => _map.Count;
 
         /// <summary>
         /// Returns <c>true</c> if the <see cref="AbstractChannelPoolMap{TKey, TPool}"/> is empty, otherwise <c>false</c>.
         /// </summary>
-        public bool IsEmpty => 0u >= (uint)this.map.Count;
+        public bool IsEmpty => 0u >= (uint)_map.Count;
 
         public bool Contains(TKey key)
         {
             if (key is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.key); }
-            return this.map.ContainsKey(key);
+            return _map.ContainsKey(key);
         }
 
         /// <summary>
@@ -85,8 +141,15 @@ namespace DotNetty.Transport.Channels.Pool
 
         public void Dispose()
         {
-            foreach (TKey key in this.map.Keys)
-                this.Remove(key);
+            foreach (TKey key in _map.Keys)
+            {
+                // Wait for remove to finish to ensure that resources are released before returning from close
+                try
+                {
+                    RemoveAsyncIfSupported(key).GetAwaiter().GetResult();
+                }
+                catch { }
+            }
         }
     }
 }

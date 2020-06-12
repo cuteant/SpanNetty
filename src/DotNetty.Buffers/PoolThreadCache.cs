@@ -19,29 +19,29 @@ namespace DotNetty.Buffers
     /// </summary>
     sealed class PoolThreadCache<T>
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<PoolThreadCache<T>>();
+        private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<PoolThreadCache<T>>();
 
         internal readonly PoolArena<T> HeapArena;
         internal readonly PoolArena<T> DirectArena;
 
         // Hold the caches for the different size classes, which are tiny, small and normal.
-        readonly MemoryRegionCache[] tinySubPageHeapCaches;
-        readonly MemoryRegionCache[] smallSubPageHeapCaches;
-        readonly MemoryRegionCache[] tinySubPageDirectCaches;
-        readonly MemoryRegionCache[] smallSubPageDirectCaches;
-        readonly MemoryRegionCache[] normalHeapCaches;
-        readonly MemoryRegionCache[] normalDirectCaches;
+        private readonly MemoryRegionCache[] tinySubPageHeapCaches;
+        private readonly MemoryRegionCache[] smallSubPageHeapCaches;
+        private readonly MemoryRegionCache[] tinySubPageDirectCaches;
+        private readonly MemoryRegionCache[] smallSubPageDirectCaches;
+        private readonly MemoryRegionCache[] normalHeapCaches;
+        private readonly MemoryRegionCache[] normalDirectCaches;
 
         // Used for bitshifting when calculate the index of normal caches later
-        readonly int numShiftsNormalDirect;
-        readonly int numShiftsNormalHeap;
-        readonly int freeSweepAllocationThreshold;
+        private readonly int _numShiftsNormalDirect;
+        private readonly int _numShiftsNormalHeap;
+        private readonly int _freeSweepAllocationThreshold;
 
         //int freed = SharedConstants.False; // TODO
-        int allocations;
+        private int _allocations;
 
-        readonly Thread deathWatchThread;
-        readonly Action freeTask;
+        private readonly Thread _deathWatchThread;
+        private readonly Action _freeTask;
 
         // TODO: Test if adding padding helps under contention
         //private long pad0, pad1, pad2, pad3, pad4, pad5, pad6, pad7;
@@ -52,18 +52,18 @@ namespace DotNetty.Buffers
         {
             if (maxCachedBufferCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxCachedBufferCapacity, ExceptionArgument.maxCachedBufferCapacity); }
 
-            this.freeSweepAllocationThreshold = freeSweepAllocationThreshold;
-            this.HeapArena = heapArena;
-            this.DirectArena = directArena;
+            _freeSweepAllocationThreshold = freeSweepAllocationThreshold;
+            HeapArena = heapArena;
+            DirectArena = directArena;
             if (directArena is object)
             {
-                this.tinySubPageDirectCaches = CreateSubPageCaches(
+                tinySubPageDirectCaches = CreateSubPageCaches(
                     tinyCacheSize, PoolArena<T>.NumTinySubpagePools, SizeClass.Tiny);
-                this.smallSubPageDirectCaches = CreateSubPageCaches(
+                smallSubPageDirectCaches = CreateSubPageCaches(
                     smallCacheSize, directArena.NumSmallSubpagePools, SizeClass.Small);
 
-                this.numShiftsNormalDirect = Log2(directArena.PageSize);
-                this.normalDirectCaches = CreateNormalCaches(
+                _numShiftsNormalDirect = Log2(directArena.PageSize);
+                normalDirectCaches = CreateNormalCaches(
                     normalCacheSize, maxCachedBufferCapacity, directArena);
 
                 directArena.IncrementNumThreadCaches();
@@ -71,21 +71,21 @@ namespace DotNetty.Buffers
             else
             {
                 // No directArea is configured so just null out all caches
-                this.tinySubPageDirectCaches = null;
-                this.smallSubPageDirectCaches = null;
-                this.normalDirectCaches = null;
-                this.numShiftsNormalDirect = -1;
+                tinySubPageDirectCaches = null;
+                smallSubPageDirectCaches = null;
+                normalDirectCaches = null;
+                _numShiftsNormalDirect = -1;
             }
             if (heapArena is object)
             {
                 // Create the caches for the heap allocations
-                this.tinySubPageHeapCaches = CreateSubPageCaches(
+                tinySubPageHeapCaches = CreateSubPageCaches(
                     tinyCacheSize, PoolArena<T>.NumTinySubpagePools, SizeClass.Tiny);
-                this.smallSubPageHeapCaches = CreateSubPageCaches(
+                smallSubPageHeapCaches = CreateSubPageCaches(
                     smallCacheSize, heapArena.NumSmallSubpagePools, SizeClass.Small);
 
-                this.numShiftsNormalHeap = Log2(heapArena.PageSize);
-                this.normalHeapCaches = CreateNormalCaches(
+                _numShiftsNormalHeap = Log2(heapArena.PageSize);
+                normalHeapCaches = CreateNormalCaches(
                     normalCacheSize, maxCachedBufferCapacity, heapArena);
 
                 heapArena.IncrementNumThreadCaches();
@@ -93,28 +93,28 @@ namespace DotNetty.Buffers
             else
             {
                 // No heapArea is configured so just null out all caches
-                this.tinySubPageHeapCaches = null;
-                this.smallSubPageHeapCaches = null;
-                this.normalHeapCaches = null;
-                this.numShiftsNormalHeap = -1;
+                tinySubPageHeapCaches = null;
+                smallSubPageHeapCaches = null;
+                normalHeapCaches = null;
+                _numShiftsNormalHeap = -1;
             }
 
             // We only need to watch the thread when any cache is used.
-            if (this.tinySubPageDirectCaches is object || this.smallSubPageDirectCaches is object || this.normalDirectCaches is object
-                || this.tinySubPageHeapCaches is object || this.smallSubPageHeapCaches is object || this.normalHeapCaches is object)
+            if (tinySubPageDirectCaches is object || smallSubPageDirectCaches is object || normalDirectCaches is object
+                || tinySubPageHeapCaches is object || smallSubPageHeapCaches is object || normalHeapCaches is object)
             {
                 if (freeSweepAllocationThreshold < 1) { ThrowHelper.ThrowArgumentException_Positive(freeSweepAllocationThreshold, ExceptionArgument.freeSweepAllocationThreshold); }
-                this.freeTask = this.Free0;
-                this.deathWatchThread = Thread.CurrentThread;
+                _freeTask = Free0;
+                _deathWatchThread = Thread.CurrentThread;
 
                 // The thread-local cache will keep a list of pooled buffers which must be returned to
                 // the pool when the thread is not alive anymore.
-                ThreadDeathWatcher.Watch(this.deathWatchThread, this.freeTask);
+                ThreadDeathWatcher.Watch(_deathWatchThread, _freeTask);
             }
             else
             {
-                this.freeTask = null;
-                this.deathWatchThread = null;
+                _freeTask = null;
+                _deathWatchThread = null;
             }
         }
 
@@ -174,19 +174,19 @@ namespace DotNetty.Buffers
          * Try to allocate a tiny buffer out of the cache. Returns <c>true</c> if successful <c>false</c> otherwise
          */
         internal bool AllocateTiny(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
-            this.Allocate(this.CacheForTiny(area, normCapacity), buf, reqCapacity);
+            Allocate(CacheForTiny(area, normCapacity), buf, reqCapacity);
 
         /**
          * Try to allocate a small buffer out of the cache. Returns <c>true</c> if successful <c>false</c> otherwise
          */
         internal bool AllocateSmall(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
-            this.Allocate(this.CacheForSmall(area, normCapacity), buf, reqCapacity);
+            Allocate(CacheForSmall(area, normCapacity), buf, reqCapacity);
 
         /**
          * Try to allocate a small buffer out of the cache. Returns <c>true</c> if successful <c>false</c> otherwise
          */
         internal bool AllocateNormal(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
-            this.Allocate(this.CacheForNormal(area, normCapacity), buf, reqCapacity);
+            Allocate(CacheForNormal(area, normCapacity), buf, reqCapacity);
 
         bool Allocate(MemoryRegionCache cache, PooledByteBuffer<T> buf, int reqCapacity)
         {
@@ -196,10 +196,10 @@ namespace DotNetty.Buffers
                 return false;
             }
             bool allocated = cache.Allocate(buf, reqCapacity);
-            if (++this.allocations >= this.freeSweepAllocationThreshold)
+            if (++_allocations >= _freeSweepAllocationThreshold)
             {
-                this.allocations = 0;
-                this.Trim();
+                _allocations = 0;
+                Trim();
             }
             return allocated;
         }
@@ -210,7 +210,7 @@ namespace DotNetty.Buffers
          */
         internal bool Add(PoolArena<T> area, PoolChunk<T> chunk, long handle, int normCapacity, SizeClass sizeClass)
         {
-            MemoryRegionCache cache = this.Cache(area, normCapacity, sizeClass);
+            MemoryRegionCache cache = Cache(area, normCapacity, sizeClass);
             if (cache is null)
             {
                 return false;
@@ -223,11 +223,11 @@ namespace DotNetty.Buffers
             switch (sizeClass)
             {
                 case SizeClass.Normal:
-                    return this.CacheForNormal(area, normCapacity);
+                    return CacheForNormal(area, normCapacity);
                 case SizeClass.Small:
-                    return this.CacheForSmall(area, normCapacity);
+                    return CacheForSmall(area, normCapacity);
                 case SizeClass.Tiny:
-                    return this.CacheForTiny(area, normCapacity);
+                    return CacheForTiny(area, normCapacity);
                 default:
                     ThrowHelper.ThrowArgumentOutOfRangeException(); return default;
             }
@@ -238,31 +238,31 @@ namespace DotNetty.Buffers
          */
         internal void Free()
         {
-            if (this.freeTask is object)
+            if (_freeTask is object)
             {
-                Debug.Assert(this.deathWatchThread is object);
-                ThreadDeathWatcher.Unwatch(this.deathWatchThread, this.freeTask);
+                Debug.Assert(_deathWatchThread is object);
+                ThreadDeathWatcher.Unwatch(_deathWatchThread, _freeTask);
             }
 
-            this.Free0();
+            Free0();
         }
 
         void Free0()
         {
-            int numFreed = Free(this.tinySubPageDirectCaches) +
-                Free(this.smallSubPageDirectCaches) +
-                Free(this.normalDirectCaches) +
-                Free(this.tinySubPageHeapCaches) +
-                Free(this.smallSubPageHeapCaches) +
-                Free(this.normalHeapCaches);
+            int numFreed = Free(tinySubPageDirectCaches) +
+                Free(smallSubPageDirectCaches) +
+                Free(normalDirectCaches) +
+                Free(tinySubPageHeapCaches) +
+                Free(smallSubPageHeapCaches) +
+                Free(normalHeapCaches);
 
             if (numFreed > 0 && Logger.DebugEnabled)
             {
-                Logger.FreedThreadLocalBufferFromThread(numFreed, this.deathWatchThread);
+                Logger.FreedThreadLocalBufferFromThread(numFreed, _deathWatchThread);
             }
 
-            this.DirectArena?.DecrementNumThreadCaches();
-            this.HeapArena?.DecrementNumThreadCaches();
+            DirectArena?.DecrementNumThreadCaches();
+            HeapArena?.DecrementNumThreadCaches();
         }
 
         static int Free(MemoryRegionCache[] caches)
@@ -291,12 +291,12 @@ namespace DotNetty.Buffers
 
         internal void Trim()
         {
-            Trim(this.tinySubPageDirectCaches);
-            Trim(this.smallSubPageDirectCaches);
-            Trim(this.normalDirectCaches);
-            Trim(this.tinySubPageHeapCaches);
-            Trim(this.smallSubPageHeapCaches);
-            Trim(this.normalHeapCaches);
+            Trim(tinySubPageDirectCaches);
+            Trim(smallSubPageDirectCaches);
+            Trim(normalDirectCaches);
+            Trim(tinySubPageHeapCaches);
+            Trim(smallSubPageHeapCaches);
+            Trim(normalHeapCaches);
         }
 
         static void Trim(MemoryRegionCache[] caches)
@@ -316,24 +316,24 @@ namespace DotNetty.Buffers
         MemoryRegionCache CacheForTiny(PoolArena<T> area, int normCapacity)
         {
             int idx = PoolArena<T>.TinyIdx(normCapacity);
-            return Cache(area.IsDirect ? this.tinySubPageDirectCaches : this.tinySubPageHeapCaches, idx);
+            return Cache(area.IsDirect ? tinySubPageDirectCaches : tinySubPageHeapCaches, idx);
         }
 
         MemoryRegionCache CacheForSmall(PoolArena<T> area, int normCapacity)
         {
             int idx = PoolArena<T>.SmallIdx(normCapacity);
-            return Cache(area.IsDirect ? this.smallSubPageDirectCaches : this.smallSubPageHeapCaches, idx);
+            return Cache(area.IsDirect ? smallSubPageDirectCaches : smallSubPageHeapCaches, idx);
         }
 
         MemoryRegionCache CacheForNormal(PoolArena<T> area, int normCapacity)
         {
             if (area.IsDirect)
             {
-                int idx = Log2(normCapacity >> this.numShiftsNormalDirect);
-                return Cache(this.normalDirectCaches, idx);
+                int idx = Log2(normCapacity >> _numShiftsNormalDirect);
+                return Cache(normalDirectCaches, idx);
             }
-            int idx1 = Log2(normCapacity >> this.numShiftsNormalHeap);
-            return Cache(this.normalHeapCaches, idx1);
+            int idx1 = Log2(normCapacity >> _numShiftsNormalHeap);
+            return Cache(normalHeapCaches, idx1);
         }
 
         static MemoryRegionCache Cache(MemoryRegionCache[] cache, int idx)
@@ -377,16 +377,16 @@ namespace DotNetty.Buffers
 
         abstract class MemoryRegionCache
         {
-            readonly int size;
-            readonly IQueue<Entry> queue;
-            readonly SizeClass sizeClass;
-            int allocations;
+            readonly int _size;
+            readonly IQueue<Entry> _queue;
+            readonly SizeClass _sizeClass;
+            int _allocations;
 
             protected MemoryRegionCache(int size, SizeClass sizeClass)
             {
-                this.size = MathUtil.SafeFindNextPositivePowerOfTwo(size);
-                this.queue = PlatformDependent.NewFixedMpscQueue<Entry>(this.size);
-                this.sizeClass = sizeClass;
+                _size = MathUtil.SafeFindNextPositivePowerOfTwo(size);
+                _queue = PlatformDependent.NewFixedMpscQueue<Entry>(_size);
+                _sizeClass = sizeClass;
             }
 
             /**
@@ -401,7 +401,7 @@ namespace DotNetty.Buffers
             public bool Add(PoolChunk<T> chunk, long handle)
             {
                 Entry entry = NewEntry(chunk, handle);
-                bool queued = this.queue.TryEnqueue(entry);
+                bool queued = _queue.TryEnqueue(entry);
                 if (!queued)
                 {
                     // If it was not possible to cache the chunk, immediately recycle the entry
@@ -416,31 +416,31 @@ namespace DotNetty.Buffers
              */
             public bool Allocate(PooledByteBuffer<T> buf, int reqCapacity)
             {
-                if (!this.queue.TryDequeue(out Entry entry))
+                if (!_queue.TryDequeue(out Entry entry))
                 {
                     return false;
                 }
-                this.InitBuf(entry.Chunk, entry.Handle, buf, reqCapacity);
+                InitBuf(entry.Chunk, entry.Handle, buf, reqCapacity);
                 entry.Recycle();
 
                 // allocations is not thread-safe which is fine as this is only called from the same thread all time.
-                ++this.allocations;
+                ++_allocations;
                 return true;
             }
 
             /**
              * Clear out this cache and free up all previous cached {@link PoolChunk}s and {@code handle}s.
              */
-            public int Free() => this.Free(int.MaxValue);
+            public int Free() => Free(int.MaxValue);
 
             int Free(int max)
             {
                 int numFreed = 0;
                 for (; numFreed < max; numFreed++)
                 {
-                    if (this.queue.TryDequeue(out Entry entry))
+                    if (_queue.TryDequeue(out Entry entry))
                     {
-                        this.FreeEntry(entry);
+                        FreeEntry(entry);
                     }
                     else
                     {
@@ -456,13 +456,13 @@ namespace DotNetty.Buffers
              */
             public void Trim()
             {
-                int toFree = this.size - this.allocations;
-                this.allocations = 0;
+                int toFree = _size - _allocations;
+                _allocations = 0;
 
                 // We not even allocated all the number that are
                 if (toFree > 0)
                 {
-                    this.Free(toFree);
+                    Free(toFree);
                 }
             }
 
@@ -474,25 +474,25 @@ namespace DotNetty.Buffers
                 // recycle now so PoolChunk can be GC'ed.
                 entry.Recycle();
 
-                chunk.Arena.FreeChunk(chunk, handle, this.sizeClass, false);
+                chunk.Arena.FreeChunk(chunk, handle, _sizeClass, false);
             }
 
             sealed class Entry
             {
-                readonly ThreadLocalPool.Handle recyclerHandle;
+                readonly ThreadLocalPool.Handle _recyclerHandle;
                 public PoolChunk<T> Chunk;
                 public long Handle = -1;
 
                 public Entry(ThreadLocalPool.Handle recyclerHandle)
                 {
-                    this.recyclerHandle = recyclerHandle;
+                    _recyclerHandle = recyclerHandle;
                 }
 
                 internal void Recycle()
                 {
-                    this.Chunk = null;
-                    this.Handle = -1;
-                    this.recyclerHandle.Release(this);
+                    Chunk = null;
+                    Handle = -1;
+                    _recyclerHandle.Release(this);
                 }
             }
 

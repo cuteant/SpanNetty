@@ -8,63 +8,63 @@ namespace DotNetty.Codecs.Http2
 
     public class Http2StreamChannelId : IChannelId, IEquatable<Http2StreamChannelId>, IEquatable<IChannelId>
     {
-        private readonly int id;
-        private readonly IChannelId parentId;
+        private readonly int _id;
+        private readonly IChannelId _parentId;
 
         public Http2StreamChannelId(IChannelId parentId, int id)
         {
-            this.parentId = parentId;
-            this.id = id;
+            _parentId = parentId;
+            _id = id;
         }
 
         public string AsLongText()
         {
-            return parentId.AsLongText() + '/' + id;
+            return _parentId.AsLongText() + '/' + _id;
         }
 
         public string AsShortText()
         {
-            return parentId.AsShortText() + '/' + id;
+            return _parentId.AsShortText() + '/' + _id;
         }
 
         public int CompareTo(IChannelId other)
         {
             if (other is Http2StreamChannelId otherId)
             {
-                int res = parentId.CompareTo(otherId.parentId);
+                int res = _parentId.CompareTo(otherId._parentId);
                 if (0u >= (uint)res)
                 {
-                    return id - otherId.id;
+                    return _id - otherId._id;
                 }
                 else
                 {
                     return res;
                 }
             }
-            return parentId.CompareTo(other);
+            return _parentId.CompareTo(other);
         }
 
         public override bool Equals(object obj)
         {
-            return obj is Http2StreamChannelId streamChannelId && this.Equals(streamChannelId);
+            return obj is Http2StreamChannelId streamChannelId && Equals(streamChannelId);
         }
 
         public bool Equals(Http2StreamChannelId other)
         {
             if (ReferenceEquals(this, other)) { return true; }
             if (other is null) { return false; }
-            return id == other.id && parentId.Equals(other.parentId);
+            return _id == other._id && _parentId.Equals(other._parentId);
         }
 
         bool IEquatable<IChannelId>.Equals(IChannelId other)
         {
             if (ReferenceEquals(this, other)) { return true; }
-            return other is Http2StreamChannelId streamChannelId && this.Equals(streamChannelId);
+            return other is Http2StreamChannelId streamChannelId && Equals(streamChannelId);
         }
 
         public override int GetHashCode()
         {
-            return this.id * 31 + parentId.GetHashCode();
+            return _id * 31 + _parentId.GetHashCode();
         }
     }
 }

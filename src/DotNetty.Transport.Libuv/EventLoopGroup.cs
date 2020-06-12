@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ForCanBeConvertedToForeach
-
 namespace DotNetty.Transport.Libuv
 {
     using System;
@@ -16,9 +14,9 @@ namespace DotNetty.Transport.Libuv
 
     public sealed class EventLoopGroup : AbstractEventExecutorGroup, IEventLoopGroup
     {
-        static readonly int DefaultEventLoopCount = Environment.ProcessorCount;
-        readonly EventLoop[] _eventLoops;
-        int _requestId;
+        private static readonly int DefaultEventLoopCount = Environment.ProcessorCount;
+        private readonly EventLoop[] _eventLoops;
+        private int _requestId;
 
         public override bool IsShutdown => _eventLoops.All(eventLoop => eventLoop.IsShutdown);
 
@@ -78,9 +76,10 @@ namespace DotNetty.Transport.Libuv
             int i;
             for (i = 0; i < _eventLoops.Length; i++)
             {
-                if (_eventLoops[i].LoopThreadId == threadId)
+                var eventLoop = _eventLoops[i];
+                if (eventLoop.LoopThreadId == threadId)
                 {
-                    return _eventLoops[i];
+                    return eventLoop;
                 }
             }
 
@@ -106,9 +105,10 @@ namespace DotNetty.Transport.Libuv
             IntPtr loopHandle = handle.LoopHandle();
             for (int i = 0; i < _eventLoops.Length; i++)
             {
-                if (_eventLoops[i].UnsafeLoop.Handle == loopHandle)
+                var eventLoop = _eventLoops[i];
+                if (eventLoop.UnsafeLoop.Handle == loopHandle)
                 {
-                    return _eventLoops[i].RegisterAsync(nativeChannel);
+                    return eventLoop.RegisterAsync(nativeChannel);
                 }
             }
 

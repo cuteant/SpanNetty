@@ -244,15 +244,6 @@ namespace DotNetty.Codecs
 
         /// <summary>
         /// Extract the sub-region of the specified buffer.
-        /// <para>
-        /// If you are sure that the frame and its content are not accessed after
-        /// the current <see cref="Decode(IChannelHandlerContext, IByteBuffer, List{object})"/>
-        /// call returns, you can even avoid memory copy by returning the sliced
-        /// sub-region (i.e. <tt>return buffer.slice(index, length)</tt>).
-        /// It's often useful when you convert the extracted frame into an object.
-        /// Refer to the source code of <see cref="T:ObjectDecoder"/> to see how this method
-        /// is overridden to avoid memory copy.
-        /// </para>
         /// </summary>
         /// <param name="context"></param>
         /// <param name="buffer"></param>

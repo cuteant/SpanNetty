@@ -19,6 +19,9 @@ namespace DotNetty.Common.Concurrency
         private int v_cancellationState;
         private int _queueIndex = PriorityQueue<IScheduledRunnable>.IndexNotInQueue;
 
+        // set once when added to priority queue
+        private long _id;
+
         protected ScheduledTask(AbstractScheduledEventExecutor executor, in PreciseTimeSpan deadline, IPromise promise)
         {
             Executor = executor;
@@ -26,7 +29,24 @@ namespace DotNetty.Common.Concurrency
             Deadline = deadline;
         }
 
-        public PreciseTimeSpan Deadline { get; }
+        IScheduledRunnable IScheduledRunnable.SetId(long id)
+        {
+            _id = id;
+            return this;
+        }
+
+        public PreciseTimeSpan Deadline { get; private set; }
+
+        void IScheduledRunnable.SetConsumed()
+        {
+            // Optimization to avoid checking system clock again
+            // after deadline has passed and task has been dequeued
+            //if (periodNanos == 0)
+            //{
+            //    assert nanoTime() > deadlineNanos;
+            Deadline = PreciseTimeSpan.Zero;
+            //}
+        }
 
         public bool Cancel()
         {
@@ -56,6 +76,19 @@ namespace DotNetty.Common.Concurrency
 
         public virtual void Run()
         {
+            if (Deadline > PreciseTimeSpan.Zero)
+            {
+                // Not yet expired, need to add or remove from queue
+                if (Promise.IsCanceled)
+                {
+                    Executor.ScheduledTaskQueue.TryRemove(this);
+                }
+                else
+                {
+                    Executor.ScheduleFromEventLoop(this);
+                }
+                return;
+            }
             if (TrySetUncancelable())
             {
                 try

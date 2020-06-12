@@ -134,12 +134,13 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         [Fact]
         public void CreateUTF8Validator()
         {
-            WebSocketDecoderConfig config = WebSocketDecoderConfig.NewBuilder()
+            var config = WebSocketServerProtocolConfig.NewBuilder()
                     .WithUTF8Validator(true)
+                    .WebsocketPath("/test")
                     .Build();
 
             EmbeddedChannel ch = new EmbeddedChannel(
-                    new WebSocketServerProtocolHandler("/test", null, false, false, 1000L, config),
+                    new WebSocketServerProtocolHandler(config),
                     new HttpRequestDecoder(),
                     new HttpResponseEncoder(),
                     new MockOutboundHandler(this));
@@ -155,12 +156,13 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         [Fact]
         public void DoNotCreateUTF8Validator()
         {
-            WebSocketDecoderConfig config = WebSocketDecoderConfig.NewBuilder()
+            var config = WebSocketServerProtocolConfig.NewBuilder()
+                    .WebsocketPath("/test")
                     .WithUTF8Validator(false)
                     .Build();
 
             EmbeddedChannel ch = new EmbeddedChannel(
-                    new WebSocketServerProtocolHandler("/test", null, false, false, 1000L, config),
+                    new WebSocketServerProtocolHandler(config),
                     new HttpRequestDecoder(),
                     new HttpResponseEncoder(),
                     new MockOutboundHandler(this));
@@ -197,15 +199,170 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             Assert.False(ch.Finish());
         }
 
+        [Fact]
+        public void ExplicitCloseFrameSentWhenServerChannelClosed()
+        {
+            WebSocketCloseStatus closeStatus = WebSocketCloseStatus.EndpointUnavailable;
+            EmbeddedChannel client = CreateClient();
+            EmbeddedChannel server = CreateServer();
+
+            Assert.False(server.WriteInbound(client.ReadOutbound<object>()));
+            Assert.False(client.WriteInbound(server.ReadOutbound<object>()));
+
+            // When server channel closed with explicit close-frame
+            Assert.True(server.WriteOutbound(new CloseWebSocketFrame(closeStatus)));
+            server.CloseAsync();
+
+            // Then client receives provided close-frame
+            Assert.True(client.WriteInbound(server.ReadOutbound<object>()));
+            Assert.False(server.Open);
+
+            CloseWebSocketFrame closeMessage = client.ReadInbound<CloseWebSocketFrame>();
+            Assert.Equal(closeMessage.StatusCode(), closeStatus.Code);
+            closeMessage.Release();
+
+            client.CloseAsync();
+            Assert.True(ReferenceCountUtil.Release(client.ReadOutbound<object>()));
+            Assert.False(client.FinishAndReleaseAll());
+            Assert.False(server.FinishAndReleaseAll());
+        }
+
+        [Fact]
+        public void CloseFrameSentWhenServerChannelClosedSilently()
+        {
+            EmbeddedChannel client = CreateClient();
+            EmbeddedChannel server = CreateServer();
+
+            Assert.False(server.WriteInbound(client.ReadOutbound<object>()));
+            Assert.False(client.WriteInbound(server.ReadOutbound<object>()));
+
+            // When server channel closed without explicit close-frame
+            server.CloseAsync();
+
+            // Then client receives NORMAL_CLOSURE close-frame
+            Assert.True(client.WriteInbound(server.ReadOutbound<object>()));
+            Assert.False(server.Open);
+
+            CloseWebSocketFrame closeMessage = client.ReadInbound<CloseWebSocketFrame>();
+            Assert.Equal(closeMessage.StatusCode(), WebSocketCloseStatus.NormalClosure.Code);
+            closeMessage.Release();
+
+            client.CloseAsync();
+            Assert.True(ReferenceCountUtil.Release(client.ReadOutbound<object>()));
+            Assert.False(client.FinishAndReleaseAll());
+            Assert.False(server.FinishAndReleaseAll());
+        }
+
+        [Fact]
+        public void ExplicitCloseFrameSentWhenClientChannelClosed()
+        {
+            WebSocketCloseStatus closeStatus = WebSocketCloseStatus.InvalidPayloadData;
+            EmbeddedChannel client = CreateClient();
+            EmbeddedChannel server = CreateServer();
+
+            Assert.False(server.WriteInbound(client.ReadOutbound<object>()));
+            Assert.False(client.WriteInbound(server.ReadOutbound<object>()));
+
+            // When client channel closed with explicit close-frame
+            Assert.True(client.WriteOutbound(new CloseWebSocketFrame(closeStatus)));
+            client.CloseAsync();
+
+            // Then client receives provided close-frame
+            Assert.False(server.WriteInbound(client.ReadOutbound<object>()));
+            Assert.False(client.Open);
+            Assert.False(server.Open);
+
+            CloseWebSocketFrame closeMessage = Decode<CloseWebSocketFrame>(server.ReadOutbound<IByteBuffer>());
+            Assert.Equal(closeMessage.StatusCode(), closeStatus.Code);
+            closeMessage.Release();
+
+            Assert.False(client.FinishAndReleaseAll());
+            Assert.False(server.FinishAndReleaseAll());
+        }
+
+        [Fact]
+        public void CloseFrameSentWhenClientChannelClosedSilently()
+        {
+            EmbeddedChannel client = CreateClient();
+            EmbeddedChannel server = CreateServer();
+
+            Assert.False(server.WriteInbound(client.ReadOutbound<object>()));
+            Assert.False(client.WriteInbound(server.ReadOutbound<object>()));
+
+            // When client channel closed without explicit close-frame
+            client.CloseAsync();
+
+            // Then server receives NORMAL_CLOSURE close-frame
+            Assert.False(server.WriteInbound(client.ReadOutbound<object>()));
+            Assert.False(client.Open);
+            Assert.False(server.Open);
+
+            CloseWebSocketFrame closeMessage = Decode<CloseWebSocketFrame>(server.ReadOutbound<IByteBuffer>());
+            Assert.Equal(closeMessage, new CloseWebSocketFrame(WebSocketCloseStatus.NormalClosure));
+            closeMessage.Release();
+
+            Assert.False(client.FinishAndReleaseAll());
+            Assert.False(server.FinishAndReleaseAll());
+        }
+
+        private EmbeddedChannel CreateClient(params IChannelHandler[] handlers)
+        {
+            WebSocketClientProtocolConfig clientConfig = WebSocketClientProtocolConfig.NewBuilder()
+                .WebSocketUri("http://test/test")
+                .DropPongFrames(false)
+                .HandleCloseFrames(false)
+                .Build();
+            EmbeddedChannel ch = new EmbeddedChannel(false, false,
+                new HttpClientCodec(),
+                new HttpObjectAggregator(8192),
+                new WebSocketClientProtocolHandler(clientConfig)
+            );
+            ch.Pipeline.AddLast(handlers);
+            ch.Register();
+            return ch;
+        }
+
+        private EmbeddedChannel CreateServer(params IChannelHandler[] handlers)
+        {
+            WebSocketServerProtocolConfig serverConfig = WebSocketServerProtocolConfig.NewBuilder()
+                .WebsocketPath("/test")
+                .DropPongFrames(false)
+                .Build();
+            EmbeddedChannel ch = new EmbeddedChannel(false, false,
+                new HttpServerCodec(),
+                new HttpObjectAggregator(8192),
+                new WebSocketServerProtocolHandler(serverConfig)
+            );
+            ch.Pipeline.AddLast(handlers);
+            ch.Register();
+            return ch;
+        }
+
+        private T Decode<T>(IByteBuffer input) where T : class
+        {
+            EmbeddedChannel ch = new EmbeddedChannel(new WebSocket13FrameDecoder(true, false, 65536, true));
+            Assert.True(ch.WriteInbound(input));
+            var decoded = ch.ReadInbound<object>();
+            Assert.NotNull(decoded);
+            Assert.False(ch.Finish());
+            return decoded as T;
+        }
+
         EmbeddedChannel CreateChannel() => CreateChannel(null);
 
-        EmbeddedChannel CreateChannel(IChannelHandler handler) =>
-            new EmbeddedChannel(
-                new WebSocketServerProtocolHandler("/test", null, false),
+        EmbeddedChannel CreateChannel(IChannelHandler handler)
+        {
+            WebSocketServerProtocolConfig serverConfig = WebSocketServerProtocolConfig.NewBuilder()
+                .WebsocketPath("/test")
+                .SendCloseFrame(null)
+                .Build();
+            return new EmbeddedChannel(
+                new WebSocketServerProtocolHandler(serverConfig),
                 new HttpRequestDecoder(),
                 new HttpResponseEncoder(),
                 new MockOutboundHandler(this),
                 handler);
+        }
 
         static void WriteUpgradeRequest(EmbeddedChannel ch) => ch.WriteInbound(WebSocketRequestBuilder.Successful());
 

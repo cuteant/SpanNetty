@@ -695,6 +695,32 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
         }
 
         [Fact]
+        public void NotLeakDirectBufferWhenWrapIllegalArgumentException()
+        {
+            Assert.Throws<ErrorDataDecoderException>(() => NotLeakWhenWrapIllegalArgumentException(Unpooled.DirectBuffer()));
+        }
+
+        [Fact]
+        public void NotLeakHeapBufferWhenWrapIllegalArgumentException()
+        {
+            Assert.Throws<ErrorDataDecoderException>(() => NotLeakWhenWrapIllegalArgumentException(Unpooled.Buffer()));
+        }
+
+        private static void NotLeakWhenWrapIllegalArgumentException(IByteBuffer buf)
+        {
+            buf.WriteCharSequence((AsciiString)"==", Encoding.ASCII);
+            IFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/", buf);
+            try
+            {
+                new HttpPostStandardRequestDecoder(request);
+            }
+            finally
+            {
+                Assert.True(request.Release());
+            }
+        }
+
+        [Fact]
         public void MultipartFormDataContentType()
         {
             IHttpRequest request = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/");

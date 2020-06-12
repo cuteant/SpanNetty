@@ -25,6 +25,14 @@ namespace DotNetty.Buffers.Tests
         protected virtual IByteBuffer NewSlice(IByteBuffer buffer, int offset, int length) => buffer.Slice(offset, length);
 
         [Fact]
+        public void IsContiguous()
+        {
+            IByteBuffer buf = NewBuffer(4);
+            Assert.Equal(buf.Unwrap().IsContiguous, buf.IsContiguous);
+            buf.Release();
+        }
+
+        [Fact]
         public override void ReadBytes()
         {
             // ignore for SlicedByteBuf

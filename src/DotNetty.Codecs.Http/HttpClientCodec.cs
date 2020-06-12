@@ -181,19 +181,24 @@ namespace DotNetty.Codecs.Http
 
             protected override bool IsContentAlwaysEmpty(IHttpMessage msg)
             {
+                // Get the method of the HTTP request that corresponds to the
+                // current response.
+                //
+                // Even if we do not use the method to compare we still need to poll it to ensure we keep
+                // request / response pairs in sync.
+                _ = _clientCodec._queue.TryRemoveFromFront(out HttpMethod method);
+
                 int statusCode = ((IHttpResponse)msg).Status.Code;
-                if (statusCode == 100 || statusCode == 101)
+                if (statusCode >= 100 && statusCode < 200)
                 {
-                    // 100-continue and 101 switching protocols response should be excluded from paired comparison.
+                    // An informational response should be excluded from paired comparison.
                     // Just delegate to super method which has all the needed handling.
                     return base.IsContentAlwaysEmpty(msg);
                 }
 
-                // Get the getMethod of the HTTP request that corresponds to the
-                // current response.
                 // If the remote peer did for example send multiple responses for one request (which is not allowed per
                 // spec but may still be possible) method will be null so guard against it.
-                if (_clientCodec._queue.TryRemoveFromFront(out var method))
+                if (method is object)
                 {
                     char firstChar = method.AsciiName[0];
                     switch (firstChar)

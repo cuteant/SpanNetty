@@ -9,7 +9,7 @@ namespace DotNetty.Buffers
     class SimpleLeakAwareByteBuffer : WrappedByteBuffer
     {
         protected readonly IResourceLeakTracker Leak;
-        readonly IByteBuffer trackedByteBuf;
+        private readonly IByteBuffer _trackedByteBuf;
 
         internal SimpleLeakAwareByteBuffer(IByteBuffer wrapped, IByteBuffer trackedByteBuf, IResourceLeakTracker leak)
             : base(wrapped)
@@ -17,8 +17,8 @@ namespace DotNetty.Buffers
             if (trackedByteBuf is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.trackedByteBuf); }
             if (leak is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.leak); }
 
-            this.trackedByteBuf = trackedByteBuf;
-            this.Leak = leak;
+            _trackedByteBuf = trackedByteBuf;
+            Leak = leak;
         }
 
         internal SimpleLeakAwareByteBuffer(IByteBuffer wrapped, IResourceLeakTracker leak)
@@ -26,23 +26,23 @@ namespace DotNetty.Buffers
         {
         }
 
-        public override IByteBuffer Slice() => this.NewSharedLeakAwareByteBuffer(base.Slice());
+        public override IByteBuffer Slice() => NewSharedLeakAwareByteBuffer(base.Slice());
 
-        public override IByteBuffer RetainedSlice() => this.UnwrappedDerived(base.RetainedSlice());
+        public override IByteBuffer RetainedSlice() => UnwrappedDerived(base.RetainedSlice());
 
-        public override IByteBuffer RetainedSlice(int index, int length) => this.UnwrappedDerived(base.RetainedSlice(index, length));
+        public override IByteBuffer RetainedSlice(int index, int length) => UnwrappedDerived(base.RetainedSlice(index, length));
 
-        public override IByteBuffer RetainedDuplicate() => this.UnwrappedDerived(base.RetainedDuplicate());
+        public override IByteBuffer RetainedDuplicate() => UnwrappedDerived(base.RetainedDuplicate());
 
-        public override IByteBuffer ReadRetainedSlice(int length) => this.UnwrappedDerived(base.ReadRetainedSlice(length));
-        
-        public override IByteBuffer Slice(int index, int length) => this.NewSharedLeakAwareByteBuffer(base.Slice(index, length));
+        public override IByteBuffer ReadRetainedSlice(int length) => UnwrappedDerived(base.ReadRetainedSlice(length));
 
-        public override IByteBuffer Duplicate() => this.NewSharedLeakAwareByteBuffer(base.Duplicate());
+        public override IByteBuffer Slice(int index, int length) => NewSharedLeakAwareByteBuffer(base.Slice(index, length));
 
-        public override IByteBuffer ReadSlice(int length) => this.NewSharedLeakAwareByteBuffer(base.ReadSlice(length));
+        public override IByteBuffer Duplicate() => NewSharedLeakAwareByteBuffer(base.Duplicate());
 
-        public override IByteBuffer AsReadOnly() => this.NewSharedLeakAwareByteBuffer(base.AsReadOnly());
+        public override IByteBuffer ReadSlice(int length) => NewSharedLeakAwareByteBuffer(base.ReadSlice(length));
+
+        public override IByteBuffer AsReadOnly() => NewSharedLeakAwareByteBuffer(base.AsReadOnly());
 
         public override IReferenceCounted Touch() => this;
 
@@ -52,7 +52,7 @@ namespace DotNetty.Buffers
         {
             if (base.Release())
             {
-                this.CloseLeak();
+                CloseLeak();
                 return true;
             }
 
@@ -63,7 +63,7 @@ namespace DotNetty.Buffers
         {
             if (base.Release(decrement))
             {
-                this.CloseLeak();
+                CloseLeak();
                 return true;
             }
             return false;
@@ -73,13 +73,14 @@ namespace DotNetty.Buffers
         {
             // Close the ResourceLeakTracker with the tracked ByteBuf as argument. This must be the same that was used when
             // calling DefaultResourceLeak.track(...).
-            bool closed = this.Leak.Close(this.trackedByteBuf);
+            bool closed = Leak.Close(_trackedByteBuf);
             Debug.Assert(closed);
         }
 
         IByteBuffer UnwrappedDerived(IByteBuffer derived)
         {
-            if (derived is AbstractPooledDerivedByteBuffer buffer) {
+            if (derived is AbstractPooledDerivedByteBuffer buffer)
+            {
                 // Update the parent to point to this buffer so we correctly close the ResourceLeakTracker.
                 buffer.Parent(this);
 
@@ -90,15 +91,15 @@ namespace DotNetty.Buffers
                     return derived;
                 }
 
-                return this.NewLeakAwareByteBuffer(buffer, newLeak);
+                return NewLeakAwareByteBuffer(buffer, newLeak);
             }
 
-            return this.NewSharedLeakAwareByteBuffer(derived);
+            return NewSharedLeakAwareByteBuffer(derived);
         }
 
-        SimpleLeakAwareByteBuffer NewSharedLeakAwareByteBuffer(IByteBuffer wrapped) => this.NewLeakAwareByteBuffer(wrapped, this.trackedByteBuf, this.Leak);
-        
-        SimpleLeakAwareByteBuffer NewLeakAwareByteBuffer(IByteBuffer wrapped, IResourceLeakTracker leakTracker) => this.NewLeakAwareByteBuffer(wrapped, wrapped, leakTracker);
+        SimpleLeakAwareByteBuffer NewSharedLeakAwareByteBuffer(IByteBuffer wrapped) => NewLeakAwareByteBuffer(wrapped, _trackedByteBuf, Leak);
+
+        SimpleLeakAwareByteBuffer NewLeakAwareByteBuffer(IByteBuffer wrapped, IResourceLeakTracker leakTracker) => NewLeakAwareByteBuffer(wrapped, wrapped, leakTracker);
 
         protected virtual SimpleLeakAwareByteBuffer NewLeakAwareByteBuffer(IByteBuffer buf, IByteBuffer trackedBuf, IResourceLeakTracker leakTracker) =>
             new SimpleLeakAwareByteBuffer(buf, trackedBuf, leakTracker);

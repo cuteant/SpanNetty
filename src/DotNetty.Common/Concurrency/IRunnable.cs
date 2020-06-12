@@ -7,4 +7,6 @@ namespace DotNetty.Common.Concurrency
     {
         void Run();
     }
+
+    public interface ILazyRunnable : IRunnable { }
 }

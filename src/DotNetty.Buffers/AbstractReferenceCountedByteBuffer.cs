@@ -11,34 +11,34 @@ namespace DotNetty.Buffers
 
     public abstract class AbstractReferenceCountedByteBuffer : AbstractByteBuffer
     {
-        const int c_initialValue = 1;
+        private const int c_initialValue = 1;
 
-        int referenceCount = c_initialValue;
+        private int _referenceCount = c_initialValue;
 
         protected AbstractReferenceCountedByteBuffer(int maxCapacity)
             : base(maxCapacity)
         {
         }
 
-        public override bool IsAccessible => (uint)Volatile.Read(ref this.referenceCount) > 0u ? true : false;
+        public override bool IsAccessible => (uint)Volatile.Read(ref _referenceCount) > 0u ? true : false;
 
-        public override int ReferenceCount => Volatile.Read(ref this.referenceCount);
+        public override int ReferenceCount => Volatile.Read(ref _referenceCount);
 
         /// <summary>
         /// An unsafe operation intended for use by a subclass that sets the reference count of the buffer directly
         /// </summary>
         /// <param name="value"></param>
-        protected internal void SetReferenceCount(int value) => Interlocked.Exchange(ref this.referenceCount, value);
+        protected internal void SetReferenceCount(int value) => Interlocked.Exchange(ref _referenceCount, value);
 
         /// <summary>
         /// An unsafe operation intended for use by a subclass that resets the reference count of the buffer to 1
         /// </summary>
         protected internal void ResetReferenceCount()
         {
-            Interlocked.Exchange(ref this.referenceCount, c_initialValue);
+            Interlocked.Exchange(ref _referenceCount, c_initialValue);
         }
 
-        public override IReferenceCounted Retain() => this.Retain0(1);
+        public override IReferenceCounted Retain() => Retain0(1);
 
         public override IReferenceCounted Retain(int increment)
         {
@@ -47,19 +47,19 @@ namespace DotNetty.Buffers
                 ThrowHelper.ThrowArgumentException_Positive(increment, ExceptionArgument.increment);
             }
 
-            return this.Retain0(increment);
+            return Retain0(increment);
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         IReferenceCounted Retain0(int increment)
         {
-            int currRefCnt = Volatile.Read(ref this.referenceCount);
+            int currRefCnt = Volatile.Read(ref _referenceCount);
 
             int nextCnt = currRefCnt + increment;
             // Ensure we not resurrect (which means the refCnt was 0) and also that we encountered an overflow.
             if (nextCnt <= increment) { ThrowHelper.ThrowIllegalReferenceCountException(currRefCnt, increment); }
 
-            var refCnt = Interlocked.CompareExchange(ref this.referenceCount, nextCnt, currRefCnt);
+            var refCnt = Interlocked.CompareExchange(ref _referenceCount, nextCnt, currRefCnt);
             if (currRefCnt != refCnt) { RetainSlow(increment, refCnt); }
 
             return this;
@@ -77,7 +77,7 @@ namespace DotNetty.Buffers
                 // Ensure we not resurrect (which means the refCnt was 0) and also that we encountered an overflow.
                 if (nextCnt <= increment) { ThrowHelper.ThrowIllegalReferenceCountException(refCnt, increment); }
 
-                refCnt = Interlocked.CompareExchange(ref this.referenceCount, nextCnt, refCnt);
+                refCnt = Interlocked.CompareExchange(ref _referenceCount, nextCnt, refCnt);
             } while (refCnt != oldRefCnt);
         }
 
@@ -85,7 +85,7 @@ namespace DotNetty.Buffers
 
         public override IReferenceCounted Touch(object hint) => this;
 
-        public override bool Release() => this.Release0(1);
+        public override bool Release() => Release0(1);
 
         public override bool Release(int decrement)
         {
@@ -94,21 +94,21 @@ namespace DotNetty.Buffers
                 ThrowHelper.ThrowArgumentException_Positive(decrement, ExceptionArgument.decrement);
             }
 
-            return this.Release0(decrement);
+            return Release0(decrement);
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         bool Release0(int decrement)
         {
-            int currRefCnt = Volatile.Read(ref this.referenceCount);
+            int currRefCnt = Volatile.Read(ref _referenceCount);
             if (currRefCnt < decrement) { ThrowHelper.ThrowIllegalReferenceCountException(currRefCnt, -decrement); }
 
-            var refCnt = Interlocked.CompareExchange(ref this.referenceCount, currRefCnt - decrement, currRefCnt);
+            var refCnt = Interlocked.CompareExchange(ref _referenceCount, currRefCnt - decrement, currRefCnt);
             if (currRefCnt != refCnt) { refCnt = ReleaseSlow(decrement, refCnt); }
 
             if (refCnt == decrement)
             {
-                this.Deallocate();
+                Deallocate();
                 return true;
             }
             return false;
@@ -124,7 +124,7 @@ namespace DotNetty.Buffers
 
                 if (refCnt < decrement) { ThrowHelper.ThrowIllegalReferenceCountException(refCnt, -decrement); }
 
-                refCnt = Interlocked.CompareExchange(ref this.referenceCount, refCnt - decrement, refCnt);
+                refCnt = Interlocked.CompareExchange(ref _referenceCount, refCnt - decrement, refCnt);
             } while (refCnt != oldRefCnt);
 
             return refCnt;

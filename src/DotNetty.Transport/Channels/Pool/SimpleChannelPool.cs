@@ -18,9 +18,15 @@ namespace DotNetty.Transport.Channels.Pool
     /// </summary>
     public class SimpleChannelPool : IChannelPool
     {
-        internal static readonly InvalidOperationException FullException = new InvalidOperationException("ChannelPool full");
+        internal static readonly InvalidOperationException FullException;
+        private static readonly AttributeKey<SimpleChannelPool> PoolKey;
 
-        private readonly AttributeKey<SimpleChannelPool> _poolKey;
+        static SimpleChannelPool()
+        {
+            FullException = new InvalidOperationException("ChannelPool full");
+            PoolKey = AttributeKey<SimpleChannelPool>.NewInstance("io.netty.channel.pool.SimpleChannelPool");
+        }
+
         private readonly IQueue<IChannel> _store;
 
         /// <summary>
@@ -93,8 +99,6 @@ namespace DotNetty.Transport.Channels.Pool
             if (healthChecker is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.healthChecker); }
             if (bootstrap is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.bootstrap); }
 
-            _poolKey = AttributeKey<SimpleChannelPool>.NewInstance("channelPool." + this.GetHashCode());
-
             Handler = handler;
             HealthChecker = healthChecker;
             ReleaseHealthCheck = releaseHealthCheck;
@@ -141,7 +145,7 @@ namespace DotNetty.Transport.Channels.Pool
             if (!TryPollChannel(out IChannel channel))
             {
                 Bootstrap bs = Bootstrap.Clone();
-                bs.Attribute(_poolKey, this);
+                bs.Attribute(PoolKey, this);
                 return new ValueTask<IChannel>(ConnectChannel(bs));
             }
 
@@ -181,7 +185,7 @@ namespace DotNetty.Transport.Channels.Pool
                 {
                     try
                     {
-                        channel.GetAttribute(_poolKey).Set(this);
+                        channel.GetAttribute(PoolKey).Set(this);
                         Handler.ChannelAcquired(channel);
                         return channel;
                     }
@@ -216,7 +220,7 @@ namespace DotNetty.Transport.Channels.Pool
         /// <returns>The newly connected <see cref="IChannel"/>.</returns>
         protected virtual Task<IChannel> ConnectChannel(Bootstrap bs) => bs.ConnectAsync();
 
-        public virtual async ValueTask<bool> ReleaseAsync(IChannel channel)
+        public virtual async Task<bool> ReleaseAsync(IChannel channel)
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
             try
@@ -239,7 +243,7 @@ namespace DotNetty.Transport.Channels.Pool
                 throw;
             }
         }
-        
+
         async void DoReleaseChannel(object channel, object state)
         {
             var promise = state as TaskCompletionSource<bool>;
@@ -259,7 +263,7 @@ namespace DotNetty.Transport.Channels.Pool
             Debug.Assert(channel.EventLoop.InEventLoop);
 
             // Remove the POOL_KEY attribute from the Channel and check if it was acquired from this pool, if not fail.
-            if (channel.GetAttribute(_poolKey).GetAndSet(null) != this)
+            if (channel.GetAttribute(PoolKey).GetAndSet(null) != this)
             {
                 CloseChannel(channel);
                 // Better include a stacktrace here as this is an user error.
@@ -310,7 +314,7 @@ namespace DotNetty.Transport.Channels.Pool
                 return false;
             }
         }
-        
+
         void ReleaseAndOffer(IChannel channel)
         {
             if (TryOfferChannel(channel))
@@ -323,10 +327,10 @@ namespace DotNetty.Transport.Channels.Pool
                 ThrowHelper.ThrowInvalidOperationException_ChannelPoolFull();
             }
         }
-       
+
         private void CloseChannel(IChannel channel)
         {
-            channel.GetAttribute(_poolKey).GetAndSet(null);
+            channel.GetAttribute(PoolKey).GetAndSet(null);
             channel.CloseAsync();
         }
 
@@ -356,15 +360,28 @@ namespace DotNetty.Transport.Channels.Pool
         /// <returns><c>true</c> if the <see cref="IChannel"/> could be added, otherwise <c>false</c>.</returns>
         protected virtual bool TryOfferChannel(IChannel channel) => _store.TryEnqueue(channel);
 
-        public virtual void Dispose()
+        public virtual void Close()
         {
             while (TryPollChannel(out IChannel channel))
             {
                 // Just ignore any errors that are reported back from CloseAsync().
-                channel.CloseAsync().Ignore();
+                try
+                {
+                    channel.CloseAsync().GetAwaiter().GetResult();
+                }
+                catch { }
             }
         }
-        
+
+        /// <summary>
+        /// Closes the pool in an async manner.
+        /// </summary>
+        /// <returns><see cref="Task"/> which represents completion of the close task</returns>
+        public virtual Task CloseAsync()
+        {
+            return Task.Run(() => Close());
+        }
+
         sealed class CompatibleConcurrentStack<T> : ConcurrentStack<T>, IQueue<T>
         {
             public bool TryEnqueue(T item)

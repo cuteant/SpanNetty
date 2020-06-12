@@ -100,6 +100,7 @@ namespace DotNetty.Codecs.Http
         fileStream,
         configList,
 
+        closeStatus,
         stringValue,
         queryString,
         inputStream,
@@ -109,6 +110,7 @@ namespace DotNetty.Codecs.Http
         dirEnumArgs,
         destination,
 
+        clientConfig,
         protocolName,
         reasonPhrase,
         majorVersion,
@@ -118,6 +120,7 @@ namespace DotNetty.Codecs.Http
         propertyInfo,
         valueFactory,
         instanceType,
+        serverConfig,
 
         ReadDelimiter,
         decoderConfig,
@@ -256,6 +259,201 @@ namespace DotNetty.Codecs.Http
             ArgumentException GetArgumentException()
             {
                 return new ArgumentException("empty " + GetArgumentName(argument));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_No_colon_found()
+        {
+            throw GetException();
+            static ArgumentException GetException()
+            {
+                return new ArgumentException("No colon found");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Multiple_Content_Length_Headers_Found()
+        {
+            throw GetException();
+            static ArgumentException GetException()
+            {
+                return new ArgumentException("Multiple Content-Length headers found");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Invalid_Content_Length()
+        {
+            throw GetException();
+            static ArgumentException GetException()
+            {
+                return new ArgumentException("Invalid Content-Length");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_NullText()
+        {
+            throw GetArgumentException();
+
+            static ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("text");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_EmptyText()
+        {
+            throw GetArgumentException();
+
+            static ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("text is empty (possibly HTTP/0.9)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_HeaderName()
+        {
+            throw GetArgumentException();
+
+            static ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("empty headers are not allowed", "name");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Both_Content_Length_And_Chunked_Found(long contentLength)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException(
+                    "Both 'Content-Length: " + contentLength + "' and 'Transfer-Encoding: chunked' found");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_TrailingHeaderName(ICharSequence name)
+        {
+            throw GetArgumentException();
+
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException(string.Format("prohibited trailing header: {0}", name));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_HeaderValue(uint value)
+        {
+            throw GetArgumentException();
+
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException(string.Format("a header name cannot contain the following prohibited characters: =,;: \\t\\r\\n\\v\\f: {0}", value));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_HeaderValue(char value)
+        {
+            throw GetArgumentException();
+
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException(string.Format("a header name cannot contain the following prohibited characters: =,;: \\t\\r\\n\\v\\f: {0}", value));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_HeaderValueNonAscii(uint value)
+        {
+            throw GetArgumentException();
+
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException(string.Format("a header name cannot contain non-ASCII character: {0}", value));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_HeaderValueNonAscii(char value)
+        {
+            throw GetArgumentException();
+
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException(string.Format("a header name cannot contain non-ASCII character: {0}", value));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_HeaderValueEnd(ICharSequence seq)
+        {
+            throw GetArgumentException();
+
+            ArgumentException GetArgumentException()
+            {
+                return new ArgumentException(string.Format("a header value must not end with '\\r' or '\\n':{0}", seq));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_HeaderValueNullChar()
+        {
+            throw GetArgumentException();
+
+            static ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("a header value contains a prohibited character '\0'");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_HeaderValueVerticalTabChar()
+        {
+            throw GetArgumentException();
+
+            static ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("a header value contains a prohibited character '\\v'");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_HeaderValueFormFeed()
+        {
+            throw GetArgumentException();
+
+            static ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("a header value contains a prohibited character '\\f'");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_NewLineAfterLineFeed()
+        {
+            throw GetArgumentException();
+
+            static ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("only '\\n' is allowed after '\\r'");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_TabAndSpaceAfterLineFeed()
+        {
+            throw GetArgumentException();
+
+            static ArgumentException GetArgumentException()
+            {
+                return new ArgumentException("only ' ' and '\\t' are allowed after '\\n'");
             }
         }
 
@@ -1260,6 +1458,11 @@ namespace DotNetty.Codecs.Http
 
         #region -- WebSocketHandshakeException --
 
+        internal static WebSocketHandshakeException GetWebSocketHandshakeException_SendCloseFrameTimedOut()
+        {
+            return new WebSocketHandshakeException("send close frame timed out");
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static WebSocketClientHandshaker ThrowWebSocketHandshakeException_InvalidVersion(WebSocketVersion version)
         {
@@ -1403,6 +1606,16 @@ namespace DotNetty.Codecs.Http
             {
                 return new MessageAggregationException("Unknown aggregation state.");
             }
+        }
+
+        #endregion
+
+        #region -- ClosedChannelException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static ClosedChannelException GetClosedChannelException()
+        {
+            return new ClosedChannelException();
         }
 
         #endregion

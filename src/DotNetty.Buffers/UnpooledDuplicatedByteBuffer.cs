@@ -12,7 +12,7 @@ namespace DotNetty.Buffers
 
     partial class UnpooledDuplicatedByteBuffer : AbstractDerivedByteBuffer
     {
-        readonly AbstractByteBuffer buffer;
+        readonly AbstractByteBuffer _buffer;
 
         public UnpooledDuplicatedByteBuffer(AbstractByteBuffer buffer)
             : this(buffer, buffer.ReaderIndex, buffer.WriterIndex)
@@ -25,108 +25,108 @@ namespace DotNetty.Buffers
             switch (buffer)
             {
                 case UnpooledDuplicatedByteBuffer duplicated:
-                    this.buffer = duplicated.buffer;
+                    _buffer = duplicated._buffer;
                     break;
 
                 case AbstractPooledDerivedByteBuffer _:
-                    this.buffer = (AbstractByteBuffer)buffer.Unwrap();
+                    _buffer = (AbstractByteBuffer)buffer.Unwrap();
                     break;
 
                 case AbstractArrayPooledDerivedByteBuffer _:
-                    this.buffer = (AbstractByteBuffer)buffer.Unwrap();
+                    _buffer = (AbstractByteBuffer)buffer.Unwrap();
                     break;
 
                 default:
-                    this.buffer = buffer;
+                    _buffer = buffer;
                     break;
             }
 
-            this.SetIndex0(readerIndex, writerIndex);
-            this.MarkIndex(); // Mark read and writer index
+            SetIndex0(readerIndex, writerIndex);
+            MarkIndex(); // Mark read and writer index
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public sealed override IByteBuffer Unwrap() => this.buffer;//this.UnwrapCore();
+        public sealed override IByteBuffer Unwrap() => _buffer;
 
-        public sealed override IByteBuffer Copy(int index, int length) => this.Unwrap().Copy(index, length);
+        public sealed override IByteBuffer Copy(int index, int length) => Unwrap().Copy(index, length);
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        protected AbstractByteBuffer UnwrapCore() => this.buffer;
+        protected AbstractByteBuffer UnwrapCore() => _buffer;
 
-        public sealed override IByteBufferAllocator Allocator => this.Unwrap().Allocator;
+        public sealed override IByteBufferAllocator Allocator => Unwrap().Allocator;
 
-        public sealed override bool IsDirect => this.Unwrap().IsDirect;
+        public sealed override bool IsDirect => Unwrap().IsDirect;
 
-        public sealed override int Capacity => this.Unwrap().Capacity;
+        public sealed override int Capacity => Unwrap().Capacity;
 
-        public sealed override IByteBuffer AdjustCapacity(int newCapacity) => this.Unwrap().AdjustCapacity(newCapacity);
+        public sealed override IByteBuffer AdjustCapacity(int newCapacity) => Unwrap().AdjustCapacity(newCapacity);
 
-        public sealed override bool IsSingleIoBuffer => this.Unwrap().IsSingleIoBuffer;
+        public sealed override bool IsSingleIoBuffer => Unwrap().IsSingleIoBuffer;
 
-        public sealed override int IoBufferCount => this.Unwrap().IoBufferCount;
+        public sealed override int IoBufferCount => Unwrap().IoBufferCount;
 
-        public sealed override bool HasArray => this.Unwrap().HasArray;
+        public sealed override bool HasArray => Unwrap().HasArray;
 
-        public sealed override byte[] Array => this.Unwrap().Array;
+        public sealed override byte[] Array => Unwrap().Array;
 
-        public sealed override int ArrayOffset => this.Unwrap().ArrayOffset;
+        public sealed override int ArrayOffset => Unwrap().ArrayOffset;
 
-        public sealed override bool HasMemoryAddress => this.Unwrap().HasMemoryAddress;
+        public sealed override bool HasMemoryAddress => Unwrap().HasMemoryAddress;
 
-        public sealed override ref byte GetPinnableMemoryAddress() => ref this.Unwrap().GetPinnableMemoryAddress();
+        public sealed override ref byte GetPinnableMemoryAddress() => ref Unwrap().GetPinnableMemoryAddress();
 
-        public sealed override IntPtr AddressOfPinnedMemory() => this.Unwrap().AddressOfPinnedMemory();
+        public sealed override IntPtr AddressOfPinnedMemory() => Unwrap().AddressOfPinnedMemory();
 
-        protected internal sealed override byte _GetByte(int index) => this.UnwrapCore()._GetByte(index);
+        protected internal sealed override byte _GetByte(int index) => UnwrapCore()._GetByte(index);
 
-        protected internal sealed override short _GetShort(int index) => this.UnwrapCore()._GetShort(index);
+        protected internal sealed override short _GetShort(int index) => UnwrapCore()._GetShort(index);
 
-        protected internal sealed override short _GetShortLE(int index) => this.UnwrapCore()._GetShortLE(index);
+        protected internal sealed override short _GetShortLE(int index) => UnwrapCore()._GetShortLE(index);
 
-        protected internal sealed override int _GetUnsignedMedium(int index) => this.UnwrapCore()._GetUnsignedMedium(index);
+        protected internal sealed override int _GetUnsignedMedium(int index) => UnwrapCore()._GetUnsignedMedium(index);
 
-        protected internal sealed override int _GetUnsignedMediumLE(int index) => this.UnwrapCore()._GetUnsignedMediumLE(index);
+        protected internal sealed override int _GetUnsignedMediumLE(int index) => UnwrapCore()._GetUnsignedMediumLE(index);
 
-        protected internal sealed override int _GetInt(int index) => this.UnwrapCore()._GetInt(index);
+        protected internal sealed override int _GetInt(int index) => UnwrapCore()._GetInt(index);
 
-        protected internal sealed override int _GetIntLE(int index) => this.UnwrapCore()._GetIntLE(index);
+        protected internal sealed override int _GetIntLE(int index) => UnwrapCore()._GetIntLE(index);
 
-        protected internal sealed override long _GetLong(int index) => this.UnwrapCore()._GetLong(index);
+        protected internal sealed override long _GetLong(int index) => UnwrapCore()._GetLong(index);
 
-        protected internal sealed override long _GetLongLE(int index) => this.UnwrapCore()._GetLongLE(index);
+        protected internal sealed override long _GetLongLE(int index) => UnwrapCore()._GetLongLE(index);
 
-        public sealed override IByteBuffer GetBytes(int index, IByteBuffer destination, int dstIndex, int length) { this.Unwrap().GetBytes(index, destination, dstIndex, length); return this; }
+        public sealed override IByteBuffer GetBytes(int index, IByteBuffer destination, int dstIndex, int length) { Unwrap().GetBytes(index, destination, dstIndex, length); return this; }
 
-        public sealed override IByteBuffer GetBytes(int index, byte[] destination, int dstIndex, int length) { this.Unwrap().GetBytes(index, destination, dstIndex, length); return this; }
+        public sealed override IByteBuffer GetBytes(int index, byte[] destination, int dstIndex, int length) { Unwrap().GetBytes(index, destination, dstIndex, length); return this; }
 
-        public sealed override IByteBuffer GetBytes(int index, Stream destination, int length) { this.Unwrap().GetBytes(index, destination, length); return this; }
+        public sealed override IByteBuffer GetBytes(int index, Stream destination, int length) { Unwrap().GetBytes(index, destination, length); return this; }
 
-        protected internal sealed override void _SetByte(int index, int value) => this.UnwrapCore()._SetByte(index, value);
+        protected internal sealed override void _SetByte(int index, int value) => UnwrapCore()._SetByte(index, value);
 
-        protected internal sealed override void _SetShort(int index, int value) => this.UnwrapCore()._SetShort(index, value);
+        protected internal sealed override void _SetShort(int index, int value) => UnwrapCore()._SetShort(index, value);
 
-        protected internal sealed override void _SetShortLE(int index, int value) => this.UnwrapCore()._SetShortLE(index, value);
+        protected internal sealed override void _SetShortLE(int index, int value) => UnwrapCore()._SetShortLE(index, value);
 
-        protected internal sealed override void _SetMedium(int index, int value) => this.UnwrapCore()._SetMedium(index, value);
+        protected internal sealed override void _SetMedium(int index, int value) => UnwrapCore()._SetMedium(index, value);
 
-        protected internal sealed override void _SetMediumLE(int index, int value) => this.UnwrapCore()._SetMediumLE(index, value);
+        protected internal sealed override void _SetMediumLE(int index, int value) => UnwrapCore()._SetMediumLE(index, value);
 
-        public sealed override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length) { this.Unwrap().SetBytes(index, src, srcIndex, length); return this; }
+        public sealed override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length) { Unwrap().SetBytes(index, src, srcIndex, length); return this; }
 
-        public sealed override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken) => this.Unwrap().SetBytesAsync(index, src, length, cancellationToken);
+        public sealed override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken) => Unwrap().SetBytesAsync(index, src, length, cancellationToken);
 
-        public sealed override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length) { this.Unwrap().SetBytes(index, src, srcIndex, length);return this; }
+        public sealed override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length) { Unwrap().SetBytes(index, src, srcIndex, length);return this; }
 
-        protected internal sealed override void _SetInt(int index, int value) => this.UnwrapCore()._SetInt(index, value);
+        protected internal sealed override void _SetInt(int index, int value) => UnwrapCore()._SetInt(index, value);
 
-        protected internal sealed override void _SetIntLE(int index, int value) => this.UnwrapCore()._SetIntLE(index, value);
+        protected internal sealed override void _SetIntLE(int index, int value) => UnwrapCore()._SetIntLE(index, value);
 
-        protected internal sealed override void _SetLong(int index, long value) => this.UnwrapCore()._SetLong(index, value);
+        protected internal sealed override void _SetLong(int index, long value) => UnwrapCore()._SetLong(index, value);
 
-        protected internal sealed override void _SetLongLE(int index, long value) => this.UnwrapCore()._SetLongLE(index, value);
+        protected internal sealed override void _SetLongLE(int index, long value) => UnwrapCore()._SetLongLE(index, value);
 
-        public sealed override int ForEachByte(int index, int length, IByteProcessor processor) => this.Unwrap().ForEachByte(index, length, processor);
+        public sealed override int ForEachByte(int index, int length, IByteProcessor processor) => Unwrap().ForEachByte(index, length, processor);
 
-        public sealed override int ForEachByteDesc(int index, int length, IByteProcessor processor) => this.Unwrap().ForEachByteDesc(index, length, processor);
+        public sealed override int ForEachByteDesc(int index, int length, IByteProcessor processor) => Unwrap().ForEachByteDesc(index, length, processor);
     }
 }

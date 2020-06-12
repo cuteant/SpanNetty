@@ -6,27 +6,28 @@ namespace DotNetty.Common.Utilities
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using DotNetty.Common.Internal;
 
     public class PriorityQueue<T> : IPriorityQueue<T>
         where T : class, IPriorityQueueNode<T>
 
     {
-        static readonly T[] EmptyArray = new T[0];
+        private static readonly T[] EmptyArray = EmptyArray<T>.Instance;
 
         public const int IndexNotInQueue = -1;
 
-        readonly IComparer<T> comparer;
-        int count;
-        int capacity;
-        T[] items;
+        private readonly IComparer<T> _comparer;
+        private int _count;
+        private int _capacity;
+        private T[] _items;
 
         public PriorityQueue(IComparer<T> comparer, int initialCapacity)
         {
             if (comparer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.comparer); }
 
-            this.comparer = comparer;
-            this.capacity = initialCapacity;
-            this.items = this.capacity != 0 ? new T[this.capacity] : EmptyArray;
+            _comparer = comparer;
+            _capacity = initialCapacity;
+            _items = _capacity != 0 ? new T[_capacity] : EmptyArray;
         }
 
         public PriorityQueue(IComparer<T> comparer)
@@ -39,47 +40,44 @@ namespace DotNetty.Common.Utilities
         {
         }
 
-        public int Count => this.count;
+        public int Count => _count;
 
-        public bool IsEmpty => 0u >= (uint)this.count;
+        public bool IsEmpty => 0u >= (uint)_count;
 
-        public bool NonEmpty => this.count > 0;
+        public bool NonEmpty => _count > 0;
 
-        public T Dequeue() => this.TryDequeue(out T item) ? item : null;
+        public T Dequeue() => TryDequeue(out T item) ? item : null;
 
         public bool TryDequeue(out T item)
         {
-            if (!this.TryPeek(out item) || item is null)
+            if (!TryPeek(out item) || item is null)
             {
                 return false;
             }
 
             item.SetPriorityQueueIndex(this, IndexNotInQueue);
-            int newCount = --this.count;
-            T lastItem = this.items[newCount];
-            this.items[newCount] = null;
+            int newCount = --_count;
+            T lastItem = _items[newCount];
+            _items[newCount] = null;
             if (newCount > 0)
             {
-                this.TrickleDown(0, lastItem);
+                TrickleDown(0, lastItem);
             }
 
             return true;
         }
 
-        public T Peek() => this.count > 0 ? this.items[0] : null;
+        public T Peek() => _count > 0 ? _items[0] : null;
 
         public bool TryPeek(out T item)
         {
-            if (0u >= (uint)this.count)
+            if (0u >= (uint)_count)
             {
                 item = null;
                 return false;
             }
-            else
-            {
-                item = this.items[0];
-                return true;
-            }
+            item = _items[0];
+            return true;
         }
 
         public void Enqueue(T item)
@@ -92,7 +90,7 @@ namespace DotNetty.Common.Utilities
                 ThrowHelper.ThrowArgumentException_PriorityQueueIndex(index, item);
             }
 
-            this.Enqueue0(item);
+            Enqueue0(item);
         }
 
         public bool TryEnqueue(T item)
@@ -102,45 +100,45 @@ namespace DotNetty.Common.Utilities
             int index = item.GetPriorityQueueIndex(this);
             if (index != IndexNotInQueue) { return false; }
 
-            this.Enqueue0(item);
+            Enqueue0(item);
 
             return true;
         }
 
         private void Enqueue0(T item)
         {
-            int oldCount = this.count;
-            if (oldCount == this.capacity)
+            int oldCount = _count;
+            if (oldCount == _capacity)
             {
-                this.GrowHeap();
+                GrowHeap();
             }
-            this.count = oldCount + 1;
-            this.BubbleUp(oldCount, item);
+            _count = oldCount + 1;
+            BubbleUp(oldCount, item);
         }
 
         public bool TryRemove(T item)
         {
             int index = item.GetPriorityQueueIndex(this);
-            if (!this.Contains(item, index))
+            if (!Contains(item, index))
             {
                 return false;
             }
 
             item.SetPriorityQueueIndex(this, IndexNotInQueue);
 
-            this.count--;
-            if (index == this.count)
+            _count--;
+            if (index == _count)
             {
-                this.items[index] = default;
+                _items[index] = default;
             }
             else
             {
-                T last = this.items[this.count];
-                this.items[this.count] = default;
-                this.TrickleDown(index, last);
-                if (this.items[index] == last)
+                T last = _items[_count];
+                _items[_count] = default;
+                TrickleDown(index, last);
+                if (_items[index] == last)
                 {
-                    this.BubbleUp(index, last);
+                    BubbleUp(index, last);
                 }
             }
 
@@ -148,12 +146,12 @@ namespace DotNetty.Common.Utilities
         }
 
         public bool Contains(T item)
-            => this.Contains(item, item.GetPriorityQueueIndex(this));
+            => Contains(item, item.GetPriorityQueueIndex(this));
 
         public void PriorityChanged(T node)
         {
             int i = node.GetPriorityQueueIndex(this);
-            if (!this.Contains(node, i))
+            if (!Contains(node, i))
             {
                 return;
             }
@@ -161,20 +159,20 @@ namespace DotNetty.Common.Utilities
             // Preserve the min-heap property by comparing the new priority with parents/children in the heap.
             if (0u >= (uint)i)
             {
-                this.TrickleDown(i, node);
+                TrickleDown(i, node);
             }
             else
             {
                 // Get the parent to see if min-heap properties are violated.
                 int parentIndex = (i - 1).RightUShift(1);
-                T parent = this.items[parentIndex];
-                if (this.comparer.Compare(node, parent) < 0)
+                T parent = _items[parentIndex];
+                if (_comparer.Compare(node, parent) < 0)
                 {
-                    this.BubbleUp(i, node);
+                    BubbleUp(i, node);
                 }
                 else
                 {
-                    this.TrickleDown(i, node);
+                    TrickleDown(i, node);
                 }
             }
         }
@@ -185,82 +183,82 @@ namespace DotNetty.Common.Utilities
             while (index > 0)
             {
                 int parentIndex = (index - 1).RightUShift(1);
-                T parentItem = this.items[parentIndex];
-                if (this.comparer.Compare(item, parentItem) >= 0)
+                T parentItem = _items[parentIndex];
+                if (_comparer.Compare(item, parentItem) >= 0)
                 {
                     break;
                 }
-                this.items[index] = parentItem;
+                _items[index] = parentItem;
                 parentItem.SetPriorityQueueIndex(this, index);
                 index = parentIndex;
             }
 
-            this.items[index] = item;
+            _items[index] = item;
             item.SetPriorityQueueIndex(this, index);
         }
 
         void GrowHeap()
         {
-            int oldCapacity = this.capacity;
-            this.capacity = oldCapacity + (oldCapacity <= 64 ? oldCapacity + 2 : (oldCapacity.RightUShift(1)));
-            var newHeap = new T[this.capacity];
-            Array.Copy(this.items, 0, newHeap, 0, this.count);
-            this.items = newHeap;
+            int oldCapacity = _capacity;
+            _capacity = oldCapacity + (oldCapacity <= 64 ? oldCapacity + 2 : (oldCapacity.RightUShift(1)));
+            var newHeap = new T[_capacity];
+            Array.Copy(_items, 0, newHeap, 0, _count);
+            _items = newHeap;
         }
 
         void TrickleDown(int index, T item)
         {
-            int middleIndex = this.count.RightUShift(1);
+            int middleIndex = _count.RightUShift(1);
             while (index < middleIndex)
             {
                 int childIndex = (index << 1) + 1;
-                T childItem = this.items[childIndex];
+                T childItem = _items[childIndex];
                 int rightChildIndex = childIndex + 1;
-                if (rightChildIndex < this.count
-                    && this.comparer.Compare(childItem, this.items[rightChildIndex]) > 0)
+                if (rightChildIndex < _count
+                    && _comparer.Compare(childItem, _items[rightChildIndex]) > 0)
                 {
                     childIndex = rightChildIndex;
-                    childItem = this.items[rightChildIndex];
+                    childItem = _items[rightChildIndex];
                 }
-                var result = this.comparer.Compare(item, childItem);
+                var result = _comparer.Compare(item, childItem);
                 if ((uint)(result - 1) > SharedConstants.TooBigOrNegative) // <= 0
                 {
                     break;
                 }
 
-                this.items[index] = childItem;
+                _items[index] = childItem;
                 childItem.SetPriorityQueueIndex(this, index);
 
                 index = childIndex;
             }
 
-            this.items[index] = item;
+            _items[index] = item;
             item.SetPriorityQueueIndex(this, index);
         }
 
         bool Contains(T node, int i)
-            => i >= 0 && i < this.count && node.Equals(this.items[i]);
+            => /*i >= 0 && */(uint)i < (uint)_count && node.Equals(_items[i]);
 
 
         public IEnumerator<T> GetEnumerator()
         {
-            for (int i = 0; i < this.count; i++)
+            for (int i = 0; i < _count; i++)
             {
-                yield return this.items[i];
+                yield return _items[i];
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public void Clear()
         {
-            for (int i = 0; i < this.count; i++)
+            for (int i = 0; i < _count; i++)
             {
-                this.items[i]?.SetPriorityQueueIndex(this, IndexNotInQueue);
+                _items[i]?.SetPriorityQueueIndex(this, IndexNotInQueue);
             }
 
-            this.count = 0;
-            Array.Clear(this.items, 0, 0);
+            _count = 0;
+            Array.Clear(_items, 0, 0);
         }
     }
 }

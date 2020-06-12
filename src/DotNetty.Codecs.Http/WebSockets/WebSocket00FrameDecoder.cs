@@ -15,13 +15,8 @@ namespace DotNetty.Codecs.Http.WebSockets
     /// <para>For the detailed instruction on adding add Web Socket support to your HTTP server, take a look into the
     /// <tt>WebSocketServer</tt> example located in the {@code examples.http.websocket} package.</para>
     /// </summary>
-    public class WebSocket00FrameDecoder : ReplayingDecoder<WebSocket00FrameDecoder.Void>, IWebSocketFrameDecoder
+    public class WebSocket00FrameDecoder : ReplayingDecoder, IWebSocketFrameDecoder
     {
-        public enum Void
-        {
-            // Empty state
-        }
-
         const int DefaultMaxFrameSize = 16384;
 
         readonly long maxFrameSize;
@@ -36,12 +31,12 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// sends a frame size larger than <paramref name="maxFrameSize"/>, the channel will be closed.
         /// </summary>
         /// <param name="maxFrameSize">the maximum frame size to decode</param>
-        public WebSocket00FrameDecoder(int maxFrameSize) : base(default)
+        public WebSocket00FrameDecoder(int maxFrameSize) : base()
         {
             this.maxFrameSize = maxFrameSize;
         }
 
-        public WebSocket00FrameDecoder(WebSocketDecoderConfig decoderConfig) : base(default)
+        public WebSocket00FrameDecoder(WebSocketDecoderConfig decoderConfig) : base()
         {
             if (decoderConfig is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoderConfig); }
             this.maxFrameSize = decoderConfig.MaxFramePayloadLength;
@@ -112,7 +107,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             int ridx = buffer.ReaderIndex;
             int rbytes = this.ActualReadableBytes;
             int delimPos = buffer.IndexOf(ridx, ridx + rbytes, 0xFF);
-            if (delimPos == -1)
+            if ((uint)delimPos > SharedConstants.TooBigOrNegative) // == -1
             {
                 // Frame delimiter (0xFF) not found
                 if (rbytes > this.maxFrameSize)
@@ -136,8 +131,9 @@ namespace DotNetty.Codecs.Http.WebSockets
             IByteBuffer binaryData = ReadBytes(ctx.Allocator, buffer, frameSize);
             buffer.SkipBytes(1);
 
-            int ffDelimPos = binaryData.IndexOf(binaryData.ReaderIndex, binaryData.WriterIndex, 0xFF);
-            if (ffDelimPos >= 0)
+            var endIndex = binaryData.WriterIndex;
+            int ffDelimPos = binaryData.IndexOf(binaryData.ReaderIndex, endIndex, 0xFF);
+            if ((uint)endIndex >= (uint)ffDelimPos) // ffDelimPos >= 0
             {
                 binaryData.Release();
                 ThrowHelper.ThrowArgumentException_TextFrame();

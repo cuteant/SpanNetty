@@ -5,6 +5,8 @@ namespace DotNetty.Transport.Channels.Pool
 {
     using System;
     using System.Diagnostics;
+    using System.Runtime.CompilerServices;
+    using System.Runtime.ExceptionServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common;
@@ -48,7 +50,7 @@ namespace DotNetty.Transport.Channels.Pool
 
         // There is no need to worry about synchronization as everything that modified the queue or counts is done
         // by the above EventExecutor.
-        private readonly IQueue<AcquireTask> _pendingAcquireQueue = PlatformDependent.NewMpscQueue<AcquireTask>();
+        private readonly IQueue<AcquireTask> _pendingAcquireQueue;
 
         private readonly int _maxConnections;
         private readonly int _maxPendingAcquires;
@@ -171,11 +173,11 @@ namespace DotNetty.Transport.Channels.Pool
         public FixedChannelPool(Bootstrap bootstrap, IChannelPoolHandler handler, IChannelHealthChecker healthChecker, AcquireTimeoutAction action, TimeSpan acquireTimeout, int maxConnections, int maxPendingAcquires, bool releaseHealthCheck, bool lastRecentUsed)
             : base(bootstrap, handler, healthChecker, releaseHealthCheck, lastRecentUsed)
         {
-            if (maxConnections < 1)
+            if ((uint)(maxConnections - 1) > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_MaxConnections(maxConnections);
             }
-            if (maxPendingAcquires < 1)
+            if ((uint)(maxPendingAcquires - 1) > SharedConstants.TooBigOrNegative)
             {
                 ThrowHelper.ThrowArgumentException_MaxPendingAcquires(maxPendingAcquires);
             }
@@ -211,10 +213,18 @@ namespace DotNetty.Transport.Channels.Pool
             _executor = bootstrap.Group().GetNext();
             _maxConnections = maxConnections;
             _maxPendingAcquires = maxPendingAcquires;
+
+            _pendingAcquireQueue = PlatformDependent.NewMpscQueue<AcquireTask>();
         }
 
         /// <summary>Returns the number of acquired channels that this pool thinks it has.</summary>
         public int AcquiredChannelCount => Volatile.Read(ref v_acquiredChannelCount);
+
+        private bool IsClosed
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => SharedConstants.False < (uint)Volatile.Read(ref v_closed);
+        }
 
         public override ValueTask<IChannel> AcquireAsync()
         {
@@ -246,7 +256,7 @@ namespace DotNetty.Transport.Channels.Pool
         {
             Debug.Assert(_executor.InEventLoop);
 
-            if (SharedConstants.False < (uint)Volatile.Read(ref v_closed))
+            if (IsClosed)
             {
                 ThrowHelper.ThrowInvalidOperationException_PoolClosedOnAcquireException();
             }
@@ -287,7 +297,7 @@ namespace DotNetty.Transport.Channels.Pool
 
         ValueTask<IChannel> DoAcquireAsync() => base.AcquireAsync();
 
-        public override async ValueTask<bool> ReleaseAsync(IChannel channel)
+        public override async Task<bool> ReleaseAsync(IChannel channel)
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
@@ -299,7 +309,7 @@ namespace DotNetty.Transport.Channels.Pool
             {
                 var promise = new TaskCompletionSource<bool>();
 #pragma warning disable CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
-                _executor.Schedule(Release0, channel, promise, TimeSpan.Zero);
+                _ = _executor.Schedule((c, p) => Release0(c, p), channel, promise, TimeSpan.Zero);
 #pragma warning restore CS4014 // 由于此调用不会等待，因此在调用完成前将继续执行当前方法
                 return await promise.Task;
             }
@@ -319,7 +329,7 @@ namespace DotNetty.Transport.Channels.Pool
             }
         }
 
-        async ValueTask<bool> DoReleaseAsync(IChannel channel)
+        async Task<bool> DoReleaseAsync(IChannel channel)
         {
             Debug.Assert(_executor.InEventLoop);
 
@@ -344,7 +354,7 @@ namespace DotNetty.Transport.Channels.Pool
 
             void FailIfClosed(IChannel ch)
             {
-                if (SharedConstants.False < (uint)Volatile.Read(ref v_closed))
+                if (IsClosed)
                 {
                     ch.CloseAsync();
                     ThrowHelper.ThrowInvalidOperationException_PoolClosedOnReleaseException();
@@ -389,23 +399,37 @@ namespace DotNetty.Transport.Channels.Pool
             Debug.Assert(Volatile.Read(ref v_acquiredChannelCount) >= 0);
         }
 
-        public override void Dispose()
+        public override void Close()
         {
-            if (_executor.InEventLoop)
+            try
             {
-                Close();
+                CloseAsync().GetAwaiter().GetResult();
             }
-            else
+            catch(Exception exc)
             {
-                _executor.Execute(Close);
+                ExceptionDispatchInfo.Capture(exc).Throw();
             }
         }
 
-        void Close()
+        public override Task CloseAsync()
+        {
+            if (_executor.InEventLoop)
+            {
+                return InternalCloseAsync();
+            }
+            else
+            {
+                var closeComplete = _executor.NewPromise();
+                _executor.Execute((c, p) => ((FixedChannelPool)c).InternalCloseAsync().LinkOutcome((IPromise)p), this, closeComplete);
+                return closeComplete.Task;
+            }
+        }
+
+        private Task InternalCloseAsync()
         {
             if (SharedConstants.False < (uint)Interlocked.Exchange(ref v_closed, SharedConstants.True))
             {
-                return;
+                return TaskUtil.Completed;
             }
 
             while (_pendingAcquireQueue.TryDequeue(out AcquireTask task))
@@ -419,8 +443,8 @@ namespace DotNetty.Transport.Channels.Pool
 
             // Ensure we dispatch this on another Thread as close0 will be called from the EventExecutor and we need
             // to ensure we will not block in a EventExecutor.
-            // TODO GlobalEventExecutor.INSTANCE.execute
-            base.Dispose();
+            Task.Run(() => base.Close());
+            return TaskUtil.Completed;
         }
 
         void OnTimeoutNew(AcquireTask task) => task.AcquireAsync();
@@ -479,7 +503,7 @@ namespace DotNetty.Transport.Channels.Pool
             {
                 var promise = Promise;
 
-                if (SharedConstants.False < (uint)Volatile.Read(ref _pool.v_closed))
+                if (_pool.IsClosed)
                 {
                     if (promise is object)
                     {
@@ -538,7 +562,7 @@ namespace DotNetty.Transport.Channels.Pool
                     {
                         Debug.Assert(_pool._executor.InEventLoop);
 
-                        if (SharedConstants.False < (uint)Volatile.Read(ref _pool.v_closed))
+                        if (_pool.IsClosed)
                         {
                             if (t.IsSuccess())
                             {

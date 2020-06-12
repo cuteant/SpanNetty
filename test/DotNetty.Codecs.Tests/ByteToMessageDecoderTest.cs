@@ -191,28 +191,132 @@
             Assert.Null(channel.ReadInbound<IByteBuffer>());
         }
 
-        //@Test
-        //    public void testReadOnlyBuffer()
-        //{
-        //    EmbeddedChannel channel = new EmbeddedChannel(new ByteToMessageDecoder() {
-        //            @Override
-        //            protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        //    }
-        //});
-        //        assertFalse(channel.writeInbound(Unpooled.buffer(8).writeByte(1).asReadOnly()));
-        //        assertFalse(channel.writeInbound(Unpooled.wrappedBuffer(new byte[] { (byte) 2 })));
-        //        assertFalse(channel.finish());
-        //    }
+        class ReadOnlyBufferDecoder : ByteToMessageDecoder
+        {
+            protected internal override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
+            {
+            }
+        }
+
+        [Fact]
+        public void ReadOnlyBuffer()
+        {
+            var channel = new EmbeddedChannel(new ReadOnlyBufferDecoder());
+            Assert.False(channel.WriteInbound(Unpooled.Buffer(8).WriteByte(1).AsReadOnly()));
+            Assert.False(channel.WriteInbound(Unpooled.WrappedBuffer(new byte[] { (byte)2 })));
+            Assert.False(channel.Finish());
+        }
+
+        class WriteFailingByteBuf : UnpooledHeapByteBuffer
+        {
+            private readonly Exception _error = new Exception();
+            private int _untilFailure;
+
+            public WriteFailingByteBuf(int untilFailure, int capacity)
+                : base(UnpooledByteBufferAllocator.Default, capacity, capacity)
+            {
+                _untilFailure = untilFailure;
+            }
+
+            public override IByteBuffer WriteBytes(IByteBuffer src, int length)
+            {
+                if (--_untilFailure <= 0)
+                {
+                    throw _error;
+                }
+                return base.WriteBytes(src, length);
+            }
+
+            public Exception WriteError()
+            {
+                return _error;
+            }
+        }
 
         [Fact]
         public void ReleaseWhenMergeCumulateThrows()
         {
-            var error = new Exception();
+            WriteFailingByteBuf oldCumulation = new WriteFailingByteBuf(1, 64);
             var input = Unpooled.Buffer().WriteZero(12);
-            var cumulation = new UnpooledHeapByteBufThrowExceptionWhenWriteBytes(UnpooledByteBufferAllocator.Default, 0, 64, error);
-            var expected = Assert.Throws<Exception>(()=> ByteToMessageDecoder.MergeCumulator(UnpooledByteBufferAllocator.Default, cumulation, input));
-            Assert.Same(error, expected);
+
+            Exception thrown = null;
+            try
+            {
+                ByteToMessageDecoder.MergeCumulator.Cumulate(UnpooledByteBufferAllocator.Default, oldCumulation, input);
+            }
+            catch (Exception t)
+            {
+                thrown = t;
+            }
+
+            Assert.Same(oldCumulation.WriteError(), thrown);
             Assert.Equal(0, input.ReferenceCount);
+            Assert.Equal(1, oldCumulation.ReferenceCount);
+            oldCumulation.Release();
+        }
+
+        [Fact]
+        public void ReleaseWhenMergeCumulateThrowsInExpand()
+        {
+            ReleaseWhenMergeCumulateThrowsInExpand0(1, true);
+            ReleaseWhenMergeCumulateThrowsInExpand0(2, true);
+            ReleaseWhenMergeCumulateThrowsInExpand0(3, false); // sentinel test case
+        }
+
+        class TestAbstractByteBufAllocator : AbstractByteBufferAllocator
+        {
+            private WriteFailingByteBuf _newCumulation;
+
+            public TestAbstractByteBufAllocator(WriteFailingByteBuf newCumulation) => _newCumulation = newCumulation;
+
+            public override bool IsDirectBufferPooled => false;
+
+            protected override IByteBuffer NewHeapBuffer(int initialCapacity, int maxCapacity)
+            {
+                return _newCumulation;
+            }
+
+            protected override IByteBuffer NewDirectBuffer(int initialCapacity, int maxCapacity)
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        private void ReleaseWhenMergeCumulateThrowsInExpand0(int untilFailure, bool shouldFail)
+        {
+            var oldCumulation = UnpooledByteBufferAllocator.Default.HeapBuffer(8, 8);
+            WriteFailingByteBuf newCumulation = new WriteFailingByteBuf(untilFailure, 16);
+
+            IByteBufferAllocator allocator = new TestAbstractByteBufAllocator(newCumulation);
+
+            IByteBuffer input = Unpooled.Buffer().WriteZero(12);
+            Exception thrown = null;
+            try
+            {
+                ByteToMessageDecoder.MergeCumulator.Cumulate(allocator, oldCumulation, input);
+            }
+            catch (Exception t)
+            {
+                thrown = t;
+            }
+
+            Assert.Equal(0, input.ReferenceCount);
+
+            if (shouldFail)
+            {
+                Assert.Same(newCumulation.WriteError(), thrown);
+                Assert.Equal(1, oldCumulation.ReferenceCount);
+                oldCumulation.Release();
+                Assert.Equal(0, newCumulation.ReferenceCount);
+            }
+            else
+            {
+                Assert.Null(thrown);
+                Assert.Equal(0, oldCumulation.ReferenceCount);
+                Assert.Equal(1, newCumulation.ReferenceCount);
+                newCumulation.Release();
+            }
+
         }
 
         [Fact]
@@ -221,7 +325,7 @@
             var error = new Exception();
             var input = Unpooled.Buffer().WriteZero(12);
             var cumulation = new CompositeByteBufferThrowExceptionWhenAddComponent(UnpooledByteBufferAllocator.Default, false, 64, error);
-            var expected = Assert.Throws<Exception>(() => ByteToMessageDecoder.CompositionCumulation(UnpooledByteBufferAllocator.Default, cumulation, input));
+            var expected = Assert.Throws<Exception>(() => ByteToMessageDecoder.CompositionCumulation.Cumulate(UnpooledByteBufferAllocator.Default, cumulation, input));
             Assert.Same(error, expected);
             Assert.Equal(0, input.ReferenceCount);
         }
@@ -232,7 +336,7 @@
             ReadInterceptingHandler interceptor = new ReadInterceptingHandler();
 
             EmbeddedChannel channel = new EmbeddedChannel();
-            channel.Configuration.AutoRead =false;
+            channel.Configuration.AutoRead = false;
             channel.Pipeline.AddLast(interceptor, new FixedLengthFrameDecoder(3));
             Assert.Equal(0, interceptor.readsTriggered);
 
@@ -452,7 +556,7 @@
     {
         readonly Exception exception;
         public UnpooledHeapByteBufThrowExceptionWhenWriteBytes(IByteBufferAllocator alloc, int initialCapacity, int maxCapacity, Exception exception)
-            :base(alloc, initialCapacity, maxCapacity)
+            : base(alloc, initialCapacity, maxCapacity)
         {
             this.exception = exception;
         }
@@ -472,7 +576,7 @@
     {
         readonly Exception exception;
         public CompositeByteBufferThrowExceptionWhenAddComponent(IByteBufferAllocator allocator, bool direct, int maxNumComponents, Exception exception)
-            :base(allocator, direct, maxNumComponents)
+            : base(allocator, direct, maxNumComponents)
         {
             this.exception = exception;
         }

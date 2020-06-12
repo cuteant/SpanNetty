@@ -47,11 +47,11 @@ namespace DotNetty.Common.Concurrency
                 var err = promise.Task.Exception;
                 if (err is null)
                 {
-                    logger.Warn($"Failed to mark a promise as failure because it has succeeded already: {promise}");
+                    logger.Warn($"Failed to mark a promise as failure because it has succeeded already: {promise}", cause);
                 }
                 else
                 {
-                    logger.Warn($"Failed to mark a promise as failure because it has failed already: {promise}, unnotified cause:{cause.ToString()}", err);
+                    logger.Warn($"Failed to mark a promise as failure because it has failed already: {promise}, unnotified cause:{err.ToString()}", cause);
                 }
             }
         }

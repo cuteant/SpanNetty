@@ -8,71 +8,71 @@ namespace DotNetty.Buffers
 
     partial class WrappedCompositeByteBuffer
     {
-        public override void AdvanceReader(int count) => this.wrapped.AdvanceReader(count);
+        public override void AdvanceReader(int count) => _wrapped.AdvanceReader(count);
 
-        public override ReadOnlyMemory<byte> UnreadMemory => this.wrapped.UnreadMemory;
-        public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count) => this.wrapped.GetReadableMemory(index, count);
-        protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count) => this.wrapped._GetReadableMemory(index, count);
+        public override ReadOnlyMemory<byte> UnreadMemory => _wrapped.UnreadMemory;
+        public override ReadOnlyMemory<byte> GetReadableMemory(int index, int count) => _wrapped.GetReadableMemory(index, count);
+        protected internal override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count) => _wrapped._GetReadableMemory(index, count);
 
-        public override ReadOnlySpan<byte> UnreadSpan => this.wrapped.UnreadSpan;
-        public override ReadOnlySpan<byte> GetReadableSpan(int index, int count) => this.wrapped.GetReadableSpan(index, count);
-        protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count) => this.wrapped._GetReadableSpan(index, count);
+        public override ReadOnlySpan<byte> UnreadSpan => _wrapped.UnreadSpan;
+        public override ReadOnlySpan<byte> GetReadableSpan(int index, int count) => _wrapped.GetReadableSpan(index, count);
+        protected internal override ReadOnlySpan<byte> _GetReadableSpan(int index, int count) => _wrapped._GetReadableSpan(index, count);
 
-        public override ReadOnlySequence<byte> UnreadSequence => this.wrapped.UnreadSequence;
-        public override ReadOnlySequence<byte> GetSequence(int index, int count) => this.wrapped.GetSequence(index, count);
-        protected internal override ReadOnlySequence<byte> _GetSequence(int index, int count) => this.wrapped._GetSequence(index, count);
+        public override ReadOnlySequence<byte> UnreadSequence => _wrapped.UnreadSequence;
+        public override ReadOnlySequence<byte> GetSequence(int index, int count) => _wrapped.GetSequence(index, count);
+        protected internal override ReadOnlySequence<byte> _GetSequence(int index, int count) => _wrapped._GetSequence(index, count);
 
-        public sealed override void Advance(int count) => this.wrapped.Advance(count);
+        public sealed override void Advance(int count) => _wrapped.Advance(count);
 
-        public override Memory<byte> FreeMemory => this.wrapped.FreeMemory;
-        public override Memory<byte> GetMemory(int sizeHintt = 0) => this.wrapped.GetMemory(sizeHintt);
-        public override Memory<byte> GetMemory(int index, int count) => this.wrapped.GetMemory(index, count);
-        protected internal override Memory<byte> _GetMemory(int index, int count) => this.wrapped._GetMemory(index, count);
+        public override Memory<byte> FreeMemory => _wrapped.FreeMemory;
+        public override Memory<byte> GetMemory(int sizeHintt = 0) => _wrapped.GetMemory(sizeHintt);
+        public override Memory<byte> GetMemory(int index, int count) => _wrapped.GetMemory(index, count);
+        protected internal override Memory<byte> _GetMemory(int index, int count) => _wrapped._GetMemory(index, count);
 
-        public override Span<byte> FreeSpan => this.wrapped.FreeSpan;
-        public override Span<byte> GetSpan(int sizeHintt = 0) => this.wrapped.GetSpan(sizeHintt);
-        public override Span<byte> GetSpan(int index, int count) => this.wrapped.GetSpan(index, count);
-        protected internal override Span<byte> _GetSpan(int index, int count) => this.wrapped._GetSpan(index, count);
+        public override Span<byte> FreeSpan => _wrapped.FreeSpan;
+        public override Span<byte> GetSpan(int sizeHintt = 0) => _wrapped.GetSpan(sizeHintt);
+        public override Span<byte> GetSpan(int index, int count) => _wrapped.GetSpan(index, count);
+        protected internal override Span<byte> _GetSpan(int index, int count) => _wrapped._GetSpan(index, count);
 
-        public override int GetBytes(int index, Span<byte> destination) => this.wrapped.GetBytes(index, destination);
-        public override int GetBytes(int index, Memory<byte> destination) => this.wrapped.GetBytes(index, destination);
+        public override int GetBytes(int index, Span<byte> destination) => _wrapped.GetBytes(index, destination);
+        public override int GetBytes(int index, Memory<byte> destination) => _wrapped.GetBytes(index, destination);
 
-        public override int ReadBytes(Span<byte> destination) => this.wrapped.ReadBytes(destination);
-        public override int ReadBytes(Memory<byte> destination) => this.wrapped.ReadBytes(destination);
+        public override int ReadBytes(Span<byte> destination) => _wrapped.ReadBytes(destination);
+        public override int ReadBytes(Memory<byte> destination) => _wrapped.ReadBytes(destination);
 
-        public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src) { this.wrapped.SetBytes(index, src); return this; }
-        public override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src) { this.wrapped.SetBytes(index, src); return this; }
+        public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src) { _wrapped.SetBytes(index, src); return this; }
+        public override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src) { _wrapped.SetBytes(index, src); return this; }
 
-        public override IByteBuffer WriteBytes(in ReadOnlySpan<byte> src) { this.wrapped.WriteBytes(src); return this; }
-        public override IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src) { this.wrapped.WriteBytes(src); return this; }
+        public override IByteBuffer WriteBytes(in ReadOnlySpan<byte> src) { _wrapped.WriteBytes(src); return this; }
+        public override IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src) { _wrapped.WriteBytes(src); return this; }
 
         public override int FindIndex(int index, int count, Predicate<byte> match)
         {
-            return this.wrapped.FindIndex(index, count, match);
+            return _wrapped.FindIndex(index, count, match);
         }
 
         public override int FindLastIndex(int index, int count, Predicate<byte> match)
         {
-            return this.wrapped.FindLastIndex(index, count, match);
+            return _wrapped.FindLastIndex(index, count, match);
         }
 
-        public override int IndexOf(int fromIndex, int toIndex, byte value) => this.wrapped.IndexOf(fromIndex, toIndex, value);
+        public override int IndexOf(int fromIndex, int toIndex, byte value) => _wrapped.IndexOf(fromIndex, toIndex, value);
 
-        public override int IndexOf(int fromIndex, int toIndex, in ReadOnlySpan<byte> values) => this.wrapped.IndexOf(fromIndex, toIndex, values);
+        public override int IndexOf(int fromIndex, int toIndex, in ReadOnlySpan<byte> values) => _wrapped.IndexOf(fromIndex, toIndex, values);
 
         public override int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1)
         {
-            return this.wrapped.IndexOfAny(fromIndex, toIndex, value0, value1);
+            return _wrapped.IndexOfAny(fromIndex, toIndex, value0, value1);
         }
 
         public override int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1, byte value2)
         {
-            return this.wrapped.IndexOfAny(fromIndex, toIndex, value0, value1, value2);
+            return _wrapped.IndexOfAny(fromIndex, toIndex, value0, value1, value2);
         }
 
         public override int IndexOfAny(int fromIndex, int toIndex, in ReadOnlySpan<byte> values)
         {
-            return this.wrapped.IndexOfAny(fromIndex, toIndex, values);
+            return _wrapped.IndexOfAny(fromIndex, toIndex, values);
         }
     }
 }

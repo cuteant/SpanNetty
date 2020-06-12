@@ -12,9 +12,9 @@ namespace DotNetty.Transport.Channels.Groups
 
     public class DefaultChannelGroupCompletionSource : TaskCompletionSource<int>, IChannelGroupTaskCompletionSource
     {
-        readonly Dictionary<IChannel, Task> futures;
-        int failureCount;
-        int successCount;
+        private readonly Dictionary<IChannel, Task> _futures;
+        private int _failureCount;
+        private int _successCount;
 
         public DefaultChannelGroupCompletionSource(IChannelGroup group, Dictionary<IChannel, Task> futures /*, IEventExecutor executor*/)
             : this(group, futures /*,executor*/, null)
@@ -27,8 +27,8 @@ namespace DotNetty.Transport.Channels.Groups
             if (group is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.group); }
             if (futures is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.futures); }
 
-            this.Group = group;
-            this.futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
+            Group = group;
+            _futures = new Dictionary<IChannel, Task>(ChannelComparer.Default);
 #pragma warning disable IDE0039 // 使用本地函数
             Action<Task> continueAction = (Task x) =>
 #pragma warning restore IDE0039 // 使用本地函数
@@ -39,23 +39,23 @@ namespace DotNetty.Transport.Channels.Groups
                 {
                     if (success)
                     {
-                        this.successCount++;
+                        _successCount++;
                     }
                     else
                     {
-                        this.failureCount++;
+                        _failureCount++;
                     }
 
-                    callSetDone = this.successCount + this.failureCount == this.futures.Count;
-                    Debug.Assert(this.successCount + this.failureCount <= this.futures.Count);
+                    callSetDone = _successCount + _failureCount == _futures.Count;
+                    Debug.Assert(_successCount + _failureCount <= _futures.Count);
                 }
 
                 if (callSetDone)
                 {
-                    if (this.failureCount > 0)
+                    if (_failureCount > 0)
                     {
                         var failed = new List<KeyValuePair<IChannel, Exception>>();
-                        foreach (KeyValuePair<IChannel, Task> ft in this.futures)
+                        foreach (KeyValuePair<IChannel, Task> ft in _futures)
                         {
                             IChannel c = ft.Key;
                             Task f = ft.Value;
@@ -67,36 +67,36 @@ namespace DotNetty.Transport.Channels.Groups
                                 }
                             }
                         }
-                        this.TrySetException(new ChannelGroupException(failed));
+                        TrySetException(new ChannelGroupException(failed));
                     }
                     else
                     {
-                        this.TrySetResult(0);
+                        TrySetResult(0);
                     }
                 }
             };
             foreach (KeyValuePair<IChannel, Task> pair in futures)
             {
-                this.futures.Add(pair.Key, pair.Value);
+                _futures.Add(pair.Key, pair.Value);
                 pair.Value.ContinueWith(continueAction);
             }
 
             // Done on arrival?
             if (0u >= (uint)futures.Count)
             {
-                this.TrySetResult(0);
+                TrySetResult(0);
             }
         }
 
         public IChannelGroup Group { get; }
 
-        public Task Find(IChannel channel) => this.futures[channel];
+        public Task Find(IChannel channel) => _futures[channel];
 
         public bool IsPartialSucess()
         {
             lock (this)
             {
-                return this.successCount != 0 && this.successCount != this.futures.Count;
+                return _successCount != 0 && _successCount != _futures.Count;
             }
         }
 
@@ -105,7 +105,7 @@ namespace DotNetty.Transport.Channels.Groups
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
             return this.Task.IsCompletedSuccessfully;
 #else
-            var task = this.Task;
+            var task = Task;
             return task.IsCompleted && !task.IsFaulted && !task.IsCanceled;
 #endif
         }
@@ -114,20 +114,20 @@ namespace DotNetty.Transport.Channels.Groups
         {
             lock (this)
             {
-                return this.failureCount != 0 && this.failureCount != this.futures.Count;
+                return _failureCount != 0 && _failureCount != _futures.Count;
             }
         }
 
-        public ChannelGroupException Cause => (ChannelGroupException)this.Task.Exception.InnerException;
+        public ChannelGroupException Cause => (ChannelGroupException)Task.Exception.InnerException;
 
-        public Task Current => this.futures.Values.GetEnumerator().Current;
+        public Task Current => _futures.Values.GetEnumerator().Current;
 
-        public void Dispose() => this.futures.Values.GetEnumerator().Dispose();
+        public void Dispose() => _futures.Values.GetEnumerator().Dispose();
 
-        object IEnumerator.Current => this.futures.Values.GetEnumerator().Current;
+        object IEnumerator.Current => _futures.Values.GetEnumerator().Current;
 
-        public bool MoveNext() => this.futures.Values.GetEnumerator().MoveNext();
+        public bool MoveNext() => _futures.Values.GetEnumerator().MoveNext();
 
-        public void Reset() => ((IEnumerator)this.futures.Values.GetEnumerator()).Reset();
+        public void Reset() => ((IEnumerator)_futures.Values.GetEnumerator()).Reset();
     }
 }

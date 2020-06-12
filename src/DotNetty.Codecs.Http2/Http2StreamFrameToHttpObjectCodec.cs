@@ -24,8 +24,8 @@ namespace DotNetty.Codecs.Http2
         private static readonly AttributeKey<HttpScheme> SchemeAttrKey =
             AttributeKey<HttpScheme>.ValueOf("STREAMFRAMECODEC_SCHEME");
 
-        private readonly bool isServer;
-        private readonly bool validateHeaders;
+        private readonly bool _isServer;
+        private readonly bool _validateHeaders;
 
         public Http2StreamFrameToHttpObjectCodec(bool isServer)
             : this(isServer, true)
@@ -34,8 +34,8 @@ namespace DotNetty.Codecs.Http2
 
         public Http2StreamFrameToHttpObjectCodec(bool isServer, bool validateHeaders)
         {
-            this.isServer = isServer;
-            this.validateHeaders = validateHeaders;
+            _isServer = isServer;
+            _validateHeaders = validateHeaders;
         }
 
         public override bool IsSharable => true;
@@ -62,7 +62,7 @@ namespace DotNetty.Codecs.Http2
                     // but we need to decode it as a FullHttpResponse to play nice with HttpObjectAggregator.
                     if (null != status && HttpResponseStatus.Continue.CodeAsText.ContentEquals(status))
                     {
-                        IFullHttpMessage fullMsg = this.NewFullMessage(id, headers, ctx.Allocator);
+                        IFullHttpMessage fullMsg = NewFullMessage(id, headers, ctx.Allocator);
                         output.Add(fullMsg);
                         return;
                     }
@@ -71,20 +71,20 @@ namespace DotNetty.Codecs.Http2
                     {
                         if (headers.Method is null && status is null)
                         {
-                            ILastHttpContent last = new DefaultLastHttpContent(Unpooled.Empty, validateHeaders);
+                            ILastHttpContent last = new DefaultLastHttpContent(Unpooled.Empty, _validateHeaders);
                             HttpConversionUtil.AddHttp2ToHttpHeaders(id, headers, last.TrailingHeaders,
                                                                      HttpVersion.Http11, true, true);
                             output.Add(last);
                         }
                         else
                         {
-                            IFullHttpMessage full = this.NewFullMessage(id, headers, ctx.Allocator);
+                            IFullHttpMessage full = NewFullMessage(id, headers, ctx.Allocator);
                             output.Add(full);
                         }
                     }
                     else
                     {
-                        IHttpMessage req = this.NewMessage(id, headers);
+                        IHttpMessage req = NewMessage(id, headers);
                         if (!HttpUtil.IsContentLengthSet(req))
                         {
                             req.Headers.Add(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
@@ -96,7 +96,7 @@ namespace DotNetty.Codecs.Http2
                 case IHttp2DataFrame dataFrame:
                     if (dataFrame.IsEndStream)
                     {
-                        output.Add(new DefaultLastHttpContent((IByteBuffer)dataFrame.Content.Retain(), this.validateHeaders));
+                        output.Add(new DefaultLastHttpContent((IByteBuffer)dataFrame.Content.Retain(), _validateHeaders));
                     }
                     else
                     {
@@ -140,7 +140,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     if (res is IFullHttpResponse)
                     {
-                        var headers = this.ToHttp2Headers(ctx, res);
+                        var headers = ToHttp2Headers(ctx, res);
                         output.Add(new DefaultHttp2HeadersFrame(headers, false));
                         return;
                     }
@@ -150,7 +150,7 @@ namespace DotNetty.Codecs.Http2
 
             if (msg is IHttpMessage httpMsg)
             {
-                var headers = this.ToHttp2Headers(ctx, httpMsg);
+                var headers = ToHttp2Headers(ctx, httpMsg);
                 var noMoreFrames = false;
                 if (msg is IFullHttpMessage fullHttpMsg)
                 {
@@ -162,7 +162,7 @@ namespace DotNetty.Codecs.Http2
 
             if (msg is ILastHttpContent last)
             {
-                EncodeLastContent(last, output, this.validateHeaders);
+                EncodeLastContent(last, output, _validateHeaders);
             }
             else if (msg is IHttpContent cont)
             {
@@ -177,30 +177,30 @@ namespace DotNetty.Codecs.Http2
                 msg.Headers.Set(HttpConversionUtil.ExtensionHeaderNames.Scheme, ConnectionScheme(ctx));
             }
 
-            return HttpConversionUtil.ToHttp2Headers(msg, this.validateHeaders);
+            return HttpConversionUtil.ToHttp2Headers(msg, _validateHeaders);
         }
 
         private IHttpMessage NewMessage(int id, IHttp2Headers headers)
         {
-            if (this.isServer)
+            if (_isServer)
             {
-                return HttpConversionUtil.ToHttpRequest(id, headers, this.validateHeaders);
+                return HttpConversionUtil.ToHttpRequest(id, headers, _validateHeaders);
             }
             else
             {
-                return HttpConversionUtil.ToHttpResponse(id, headers, this.validateHeaders);
+                return HttpConversionUtil.ToHttpResponse(id, headers, _validateHeaders);
             }
         }
 
         private IFullHttpMessage NewFullMessage(int id, IHttp2Headers headers, IByteBufferAllocator alloc)
         {
-            if (this.isServer)
+            if (_isServer)
             {
-                return HttpConversionUtil.ToFullHttpRequest(id, headers, alloc, this.validateHeaders);
+                return HttpConversionUtil.ToFullHttpRequest(id, headers, alloc, _validateHeaders);
             }
             else
             {
-                return HttpConversionUtil.ToFullHttpResponse(id, headers, alloc, this.validateHeaders);
+                return HttpConversionUtil.ToFullHttpResponse(id, headers, alloc, _validateHeaders);
             }
         }
 

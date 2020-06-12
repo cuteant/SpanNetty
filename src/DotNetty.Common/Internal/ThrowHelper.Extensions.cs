@@ -61,6 +61,7 @@ namespace DotNetty.Common
         offset,
         method,
 
+        creator,
         invoker,
         feature,
         manager,
@@ -797,6 +798,39 @@ namespace DotNetty.Common
             RejectedExecutionException GetException()
             {
                 return new RejectedExecutionException($"Number of pending timeouts ({pendingTimeoutsCount}) is greater than or equal to maximum allowed pending timeouts ({maxPendingTimeouts})");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowRejectedExecutionException_Terminated()
+        {
+            throw GetSocketException();
+
+            static RejectedExecutionException GetSocketException()
+            {
+                return new RejectedExecutionException($"{nameof(SingleThreadEventExecutor)} terminated");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowRejectedExecutionException_Shutdown()
+        {
+            throw GetSocketException();
+
+            static RejectedExecutionException GetSocketException()
+            {
+                return new RejectedExecutionException($"{nameof(SingleThreadEventExecutor)} already shutdown");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowRejectedExecutionException_Queue()
+        {
+            throw GetSocketException();
+
+            static RejectedExecutionException GetSocketException()
+            {
+                return new RejectedExecutionException($"{nameof(SingleThreadEventExecutor)} queue task failed");
             }
         }
 

@@ -19,31 +19,31 @@ namespace DotNetty.Codecs.Mqtt
             Failed
         }
 
-        readonly bool isServer;
-        readonly int maxMessageSize;
+        private readonly bool _isServer;
+        private readonly int _maxMessageSize;
 
         public MqttDecoder(bool isServer, int maxMessageSize)
             : base(ParseState.Ready)
         {
-            this.isServer = isServer;
-            this.maxMessageSize = maxMessageSize;
+            _isServer = isServer;
+            _maxMessageSize = maxMessageSize;
         }
 
         protected override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
             try
             {
-                switch (this.State)
+                switch (State)
                 {
                     case ParseState.Ready:
-                        if (!this.TryDecodePacket(input, context, out var packet))
+                        if (!TryDecodePacket(input, context, out var packet))
                         {
-                            this.RequestReplay();
+                            RequestReplay();
                             return;
                         }
 
                         output.Add(packet);
-                        this.Checkpoint();
+                        Checkpoint();
                         break;
                     case ParseState.Failed:
                         // read out data until connection is closed
@@ -56,7 +56,7 @@ namespace DotNetty.Codecs.Mqtt
             catch (DecoderException)
             {
                 input.SkipBytes(input.ReadableBytes);
-                this.Checkpoint(ParseState.Failed);
+                Checkpoint(ParseState.Failed);
                 throw;
             }
         }
@@ -71,13 +71,13 @@ namespace DotNetty.Codecs.Mqtt
 
             int signature = buffer.ReadByte();
 
-            if (!this.TryDecodeRemainingLength(buffer, out var remainingLength) || !buffer.IsReadable(remainingLength))
+            if (!TryDecodeRemainingLength(buffer, out var remainingLength) || !buffer.IsReadable(remainingLength))
             {
                 packet = null;
                 return false;
             }
 
-            packet = this.DecodePacketInternal(buffer, signature, ref remainingLength, context);
+            packet = DecodePacketInternal(buffer, signature, ref remainingLength, context);
 
             if (remainingLength > 0)
             {
@@ -123,46 +123,46 @@ namespace DotNetty.Codecs.Mqtt
                     DecodePacketIdVariableHeader(buffer, pubCompPacket, ref remainingLength);
                     return pubCompPacket;
                 case Signatures.PingReq:
-                    if (!this.isServer) ValidateServerPacketExpected(packetSignature);
+                    if (!_isServer) ValidateServerPacketExpected(packetSignature);
                     return PingReqPacket.Instance;
                 case Signatures.Subscribe:
-                    if (!this.isServer) ValidateServerPacketExpected(packetSignature);
+                    if (!_isServer) ValidateServerPacketExpected(packetSignature);
                     var subscribePacket = new SubscribePacket();
                     DecodePacketIdVariableHeader(buffer, subscribePacket, ref remainingLength);
                     DecodeSubscribePayload(buffer, subscribePacket, ref remainingLength);
                     return subscribePacket;
                 case Signatures.Unsubscribe:
-                    if (!this.isServer) ValidateServerPacketExpected(packetSignature);
+                    if (!_isServer) ValidateServerPacketExpected(packetSignature);
                     var unsubscribePacket = new UnsubscribePacket();
                     DecodePacketIdVariableHeader(buffer, unsubscribePacket, ref remainingLength);
                     DecodeUnsubscribePayload(buffer, unsubscribePacket, ref remainingLength);
                     return unsubscribePacket;
                 case Signatures.Connect:
-                    if (!this.isServer) ValidateServerPacketExpected(packetSignature);
+                    if (!_isServer) ValidateServerPacketExpected(packetSignature);
                     var connectPacket = new ConnectPacket();
                     DecodeConnectPacket(buffer, connectPacket, ref remainingLength, context);
                     return connectPacket;
                 case Signatures.Disconnect:
-                    if (!this.isServer) ValidateServerPacketExpected(packetSignature);
+                    if (!_isServer) ValidateServerPacketExpected(packetSignature);
                     return DisconnectPacket.Instance;
                 case Signatures.ConnAck:
-                    if (this.isServer) ValidateClientPacketExpected(packetSignature);
+                    if (_isServer) ValidateClientPacketExpected(packetSignature);
                     var connAckPacket = new ConnAckPacket();
                     DecodeConnAckPacket(buffer, connAckPacket, ref remainingLength);
                     return connAckPacket;
                 case Signatures.SubAck:
-                    if (this.isServer) ValidateClientPacketExpected(packetSignature);
+                    if (_isServer) ValidateClientPacketExpected(packetSignature);
                     var subAckPacket = new SubAckPacket();
                     DecodePacketIdVariableHeader(buffer, subAckPacket, ref remainingLength);
                     DecodeSubAckPayload(buffer, subAckPacket, ref remainingLength);
                     return subAckPacket;
                 case Signatures.UnsubAck:
-                    if (this.isServer) ValidateClientPacketExpected(packetSignature);
+                    if (_isServer) ValidateClientPacketExpected(packetSignature);
                     var unsubAckPacket = new UnsubAckPacket();
                     DecodePacketIdVariableHeader(buffer, unsubAckPacket, ref remainingLength);
                     return unsubAckPacket;
                 case Signatures.PingResp:
-                    if (this.isServer) ValidateClientPacketExpected(packetSignature);
+                    if (_isServer) ValidateClientPacketExpected(packetSignature);
                     return PingRespPacket.Instance;
                 default:
                     return ThrowHelper.ThrowDecoderException_FirstPacketByteValueIsInvalid(packetSignature);
@@ -217,7 +217,7 @@ namespace DotNetty.Codecs.Mqtt
             }
 
             int completeMessageSize = result + 1 + read;
-            if (completeMessageSize > this.maxMessageSize)
+            if (completeMessageSize > _maxMessageSize)
             {
                 ThrowHelper.ThrowDecoderException_MsgIsTooBig(completeMessageSize);
             }
@@ -379,35 +379,6 @@ namespace DotNetty.Codecs.Mqtt
 
             packet.Requests = subscribeTopics;
         }
-
-        //static void ValidateTopicFilter(string topicFilter)
-        //{
-        //    int length = topicFilter.Length;
-        //    if (0u >= (uint)length)
-        //    {
-        //        ThrowHelper.ThrowDecoderException_MQTT_473_1();
-        //    }
-
-        //    for (int i = 0; i < length; i++)
-        //    {
-        //        char c = topicFilter[i];
-        //        switch (c)
-        //        {
-        //            case '+':
-        //                if ((i > 0 && topicFilter[i - 1] != '/') || (i < length - 1 && topicFilter[i + 1] != '/'))
-        //                {
-        //                    ThrowHelper.ThrowDecoderException_MQTT_471_3(topicFilter);
-        //                }
-        //                break;
-        //            case '#':
-        //                if (i < length - 1 || (i > 0 && topicFilter[i - 1] != '/'))
-        //                {
-        //                    ThrowHelper.ThrowDecoderException_MQTT_471_2(topicFilter);
-        //                }
-        //                break;
-        //        }
-        //    }
-        //}
 
         static void DecodeSubAckPayload(IByteBuffer buffer, SubAckPacket packet, ref int remainingLength)
         {

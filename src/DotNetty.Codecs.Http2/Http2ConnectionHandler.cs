@@ -607,27 +607,31 @@ namespace DotNetty.Codecs.Http2
         /// <param name="future">If closing, the future after which to close the channel.</param>
         public virtual void CloseStreamLocal(IHttp2Stream stream, Task future)
         {
-            var streamState = stream.State;
-            if (Http2StreamState.Open == streamState || Http2StreamState.HalfClosedLocal == streamState)
+            switch (stream.State)
             {
-                stream.CloseLocalSide();
-            }
-            else
-            {
-                CloseStream(stream, future);
+                case Http2StreamState.HalfClosedLocal:
+                case Http2StreamState.Open:
+                    stream.CloseLocalSide();
+                    break;
+
+                default:
+                    CloseStream(stream, future);
+                    break;
             }
         }
 
         public virtual void CloseStreamRemote(IHttp2Stream stream, Task future)
         {
-            var streamState = stream.State;
-            if (Http2StreamState.Open == streamState || Http2StreamState.HalfClosedRemote == streamState)
+            switch (stream.State)
             {
-                stream.CloseRemoteSide();
-            }
-            else
-            {
-                CloseStream(stream, future);
+                case Http2StreamState.HalfClosedRemote:
+                case Http2StreamState.Open:
+                    stream.CloseRemoteSide();
+                    break;
+
+                default:
+                    CloseStream(stream, future);
+                    break;
             }
         }
 
@@ -839,10 +843,17 @@ namespace DotNetty.Codecs.Http2
                 promise.Complete();
                 return promise.Task;
             }
+            // Synchronously set the resetSent flag to prevent any subsequent calls
+            // from resulting in multiple reset frames being sent.
+            //
+            // This needs to be done before we notify the promise as the promise may have a listener attached that
+            // call resetStream(...) again.
+            stream.ResetSent();
+
             Task future;
             // If the remote peer is not aware of the steam, then we are not allowed to send a RST_STREAM
             // https://tools.ietf.org/html/rfc7540#section-6.4.
-            if (stream.State == Http2StreamState.Idle ||
+            if (Http2StreamState.Idle == stream.State ||
                 Connection.Local.Created(stream) && !stream.IsHeadersSent && !stream.IsPushPromiseSent)
             {
                 promise.Complete();
@@ -852,10 +863,6 @@ namespace DotNetty.Codecs.Http2
             {
                 future = FrameWriter.WriteRstStreamAsync(ctx, stream.Id, errorCode, promise);
             }
-
-            // Synchronously set the resetSent flag to prevent any subsequent calls
-            // from resulting in multiple reset frames being sent.
-            stream.ResetSent();
 
             if (future.IsCompleted)
             {

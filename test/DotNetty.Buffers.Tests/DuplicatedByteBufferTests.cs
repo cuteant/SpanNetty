@@ -16,6 +16,14 @@ namespace DotNetty.Buffers.Tests
             return buffer;
         }
 
+        [Fact]
+        public void IsContiguous()
+        {
+            IByteBuffer buf = NewBuffer(4);
+            Assert.Equal(buf.Unwrap().IsContiguous, buf.IsContiguous);
+            buf.Release();
+        }
+
         // See https://github.com/netty/netty/issues/1800
         [Fact]
         public void IncreaseCapacityWrapped()

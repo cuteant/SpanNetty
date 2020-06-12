@@ -41,43 +41,43 @@ namespace DotNetty.Codecs
     /// <typeparam name="TOutbound"></typeparam>
     public abstract class MessageToMessageCodec<TInbound, TOutbound> : ChannelDuplexHandler
     {
-        readonly Encoder encoder;
-        readonly Decoder decoder;
+        private readonly Encoder _encoder;
+        private readonly Decoder _decoder;
 
         sealed class Encoder : MessageToMessageEncoder<TOutbound>
         {
-            readonly MessageToMessageCodec<TInbound, TOutbound> codec;
+            readonly MessageToMessageCodec<TInbound, TOutbound> _codec;
 
             public Encoder(MessageToMessageCodec<TInbound, TOutbound> codec)
             {
-                this.codec = codec;
+                _codec = codec;
             }
 
             /// <inheritdoc />
             public override bool AcceptOutboundMessage(object msg)
-                => this.codec.AcceptOutboundMessage(msg);
+                => _codec.AcceptOutboundMessage(msg);
 
             /// <inheritdoc />
             protected internal override void Encode(IChannelHandlerContext context, TOutbound message, List<object> output)
-                => this.codec.Encode(context, message, output);
+                => _codec.Encode(context, message, output);
         }
 
         sealed class Decoder : MessageToMessageDecoder<TInbound>
         {
-            readonly MessageToMessageCodec<TInbound, TOutbound> codec;
+            readonly MessageToMessageCodec<TInbound, TOutbound> _codec;
 
             public Decoder(MessageToMessageCodec<TInbound, TOutbound> codec)
             {
-                this.codec = codec;
+                _codec = codec;
             }
 
             /// <inheritdoc />
             public override bool AcceptInboundMessage(object msg)
-                => this.codec.AcceptInboundMessage(msg);
+                => _codec.AcceptInboundMessage(msg);
 
             /// <inheritdoc />
             protected internal override void Decode(IChannelHandlerContext context, TInbound message, List<object> output)
-                => this.codec.Decode(context, message, output);
+                => _codec.Decode(context, message, output);
         }
 
         /// <summary>
@@ -86,17 +86,17 @@ namespace DotNetty.Codecs
         /// </summary>
         protected MessageToMessageCodec()
         {
-            this.encoder = new Encoder(this);
-            this.decoder = new Decoder(this);
+            _encoder = new Encoder(this);
+            _decoder = new Decoder(this);
         }
 
         /// <inheritdoc />
         public sealed override void ChannelRead(IChannelHandlerContext context, object message)
-            => this.decoder.ChannelRead(context, message);
+            => _decoder.ChannelRead(context, message);
 
         /// <inheritdoc />
         public sealed override void Write(IChannelHandlerContext context, object message, IPromise promise)
-            => this.encoder.Write(context, message, promise);
+            => _encoder.Write(context, message, promise);
 
         /// <summary>
         /// Returns <c>true</c> if and only if the specified message can be decoded by this codec.

@@ -90,7 +90,7 @@ namespace DotNetty.Transport.Libuv.Tests
             long delay = counter.EndTime - startTime;
             Assert.True(delay > 0);
             TimeSpan duration = TimeSpan.FromTicks(delay);
-            Assert.True(duration.TotalMilliseconds >= Delay, $"Expected delay : {Delay} milliseconds, but was : {duration}");
+            Assert.True(duration.TotalMilliseconds >= Delay, $"Expected delay : {Delay} milliseconds, but was : {duration.TotalMilliseconds}");
         }
 
         [Fact]

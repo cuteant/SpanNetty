@@ -286,6 +286,15 @@ namespace DotNetty.Codecs.Redis.Tests
             Assert.Throws<IllegalReferenceCountException>(() => ReferenceCountUtil.Release(childBuf));
         }
 
+        [Fact]
+        public void PredefinedMessagesNotEqual()
+        {
+            // both EMPTY_INSTANCE and NULL_INSTANCE have EMPTY_BUFFER as their 'data',
+            // however we need to check that they are not equal between themselves.
+            Assert.NotEqual(FullBulkStringRedisMessage.Empty, FullBulkStringRedisMessage.Null);
+            Assert.NotEqual(FullBulkStringRedisMessage.Null, FullBulkStringRedisMessage.Empty);
+        }
+
         public void Dispose()
         {
             try

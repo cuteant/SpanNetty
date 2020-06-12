@@ -39,6 +39,23 @@ namespace DotNetty.Codecs.Http.Tests.Cookies
             Assert.Equal("myValue3", list[2].Value);
         }
 
+        [Fact]
+        public void DecodingAllMultipleCookies()
+        {
+            const string C1 = "myCookie=myValue;";
+            const string C2 = "myCookie2=myValue2;";
+            const string C3 = "myCookie3=myValue3;";
+
+            IReadOnlyList<ICookie> cookies = ServerCookieDecoder.StrictDecoder.DecodeAll(C1 + C2 + C3);
+            Assert.NotNull(cookies);
+            Assert.Equal(3, cookies.Count);
+
+            List<ICookie> list = cookies.ToList();
+            Assert.Equal("myValue", list[0].Value);
+            Assert.Equal("myValue2", list[1].Value);
+            Assert.Equal("myValue3", list[2].Value);
+        }
+
 
         [Fact]
         public void DecodingGoogleAnalyticsCookie()

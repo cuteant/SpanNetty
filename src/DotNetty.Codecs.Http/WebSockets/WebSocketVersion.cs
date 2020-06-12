@@ -29,19 +29,19 @@ namespace DotNetty.Codecs.Http.WebSockets
         //draft-ietf-hybi-thewebsocketprotocol- 17>
         public static readonly WebSocketVersion V13 = new WebSocketVersion("13");
 
-        readonly AsciiString value;
+        readonly AsciiString _value;
 
         WebSocketVersion(string value)
         {
-            this.value = AsciiString.Cached(value);
+            _value = AsciiString.Cached(value);
         }
 
-        public override string ToString() => this.value.ToString();
+        public override string ToString() => _value.ToString();
 
         public AsciiString ToHttpHeaderValue()
         {
             if (this == Unknown) ThrowHelper.ThrowInvalidOperationException_UnknownWebSocketVersion();
-            return this.value;
+            return _value;
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

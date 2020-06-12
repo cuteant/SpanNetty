@@ -17,7 +17,7 @@ namespace DotNetty.Buffers
 
     abstract class PooledByteBuffer<T> : AbstractReferenceCountedByteBuffer, IPooledByteBuffer
     {
-        readonly ThreadLocalPool.Handle recyclerHandle;
+        private readonly ThreadLocalPool.Handle _recyclerHandle;
 
         protected internal PoolChunk<T> Chunk;
         protected internal long Handle;
@@ -27,127 +27,129 @@ namespace DotNetty.Buffers
         protected internal IntPtr Origin;
         internal int MaxLength;
         internal PoolThreadCache<T> Cache;
-        PooledByteBufferAllocator allocator;
+        private PooledByteBufferAllocator _allocator;
 
         protected PooledByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
             : base(maxCapacity)
         {
-            this.recyclerHandle = recyclerHandle;
+            _recyclerHandle = recyclerHandle;
         }
 
         internal virtual void Init(PoolChunk<T> chunk, long handle, int offset, int length, int maxLength, PoolThreadCache<T> cache) =>
-            this.Init0(chunk, handle, offset, length, maxLength, cache);
+            Init0(chunk, handle, offset, length, maxLength, cache);
 
-        internal virtual void InitUnpooled(PoolChunk<T> chunk, int length) => this.Init0(chunk, 0, 0, length, length, null);
+        internal virtual void InitUnpooled(PoolChunk<T> chunk, int length) => Init0(chunk, 0, 0, length, length, null);
 
         unsafe void Init0(PoolChunk<T> chunk, long handle, int offset, int length, int maxLength, PoolThreadCache<T> cache)
         {
             Debug.Assert(handle >= 0);
             Debug.Assert(chunk is object);
 
-            this.Chunk = chunk;
-            this.Memory = chunk.Memory;
-            this.allocator = chunk.Arena.Parent;
-            this.Origin = chunk.NativePointer;
-            this.Cache = cache;
-            this.Handle = handle;
-            this.Offset = offset;
-            this.Length = length;
-            this.MaxLength = maxLength;
+            Chunk = chunk;
+            Memory = chunk.Memory;
+            _allocator = chunk.Arena.Parent;
+            Origin = chunk.NativePointer;
+            Cache = cache;
+            Handle = handle;
+            Offset = offset;
+            Length = length;
+            MaxLength = maxLength;
         }
 
-        long IPooledByteBuffer.Handle => this.Handle;
-        int IPooledByteBuffer.MaxLength => this.MaxLength;
+        long IPooledByteBuffer.Handle => Handle;
+        int IPooledByteBuffer.MaxLength => MaxLength;
 
         /**
           * Method must be called before reuse this {@link PooledByteBufAllocator}
           */
         internal void Reuse(int maxCapacity)
         {
-            this.SetMaxCapacity(maxCapacity);
-            this.ResetReferenceCount();
-            this.SetIndex0(0, 0);
-            this.DiscardMarks();
+            SetMaxCapacity(maxCapacity);
+            ResetReferenceCount();
+            SetIndex0(0, 0);
+            DiscardMarks();
         }
 
         public override int Capacity
         {
             [MethodImpl(InlineMethod.AggressiveInlining)]
-            get => this.Length;
+            get => Length;
         }
 
-        public override int MaxFastWritableBytes => Math.Min(this.MaxLength, this.MaxCapacity) - this.WriterIndex;
+        public override int MaxFastWritableBytes => Math.Min(MaxLength, MaxCapacity) - WriterIndex;
 
         public sealed override IByteBuffer AdjustCapacity(int newCapacity)
         {
-            uint uLength = (uint)this.Length;
+            uint uLength = (uint)Length;
             uint unewCapacity = (uint)newCapacity;
             if (unewCapacity == uLength)
             {
-                this.EnsureAccessible();
+                EnsureAccessible();
                 return this;
             }
 
-            this.CheckNewCapacity(newCapacity);
+            CheckNewCapacity(newCapacity);
 
-            if (!this.Chunk.Unpooled)
+            if (!Chunk.Unpooled)
             {
-                uint uMaxLength = (uint)this.MaxLength;
+                uint uMaxLength = (uint)MaxLength;
                 // If the request capacity does not require reallocation, just update the length of the memory.
                 if (unewCapacity > uLength)
                 {
                     if (unewCapacity <= uMaxLength)
                     {
-                        this.Length = newCapacity;
+                        Length = newCapacity;
                         return this;
                     }
                 }
-                else if (unewCapacity > (uint)this.MaxLength.RightUShift(1)
+                else if (unewCapacity > (uint)MaxLength.RightUShift(1)
                     && (uMaxLength > 512u || unewCapacity > uMaxLength - 16u))
                 {
                     // here newCapacity < length
-                    this.Length = newCapacity;
-                    this.TrimIndicesToCapacity(newCapacity);
+                    Length = newCapacity;
+                    TrimIndicesToCapacity(newCapacity);
                     return this;
                 }
             }
 
             // Reallocation required.
-            this.Chunk.Arena.Reallocate(this, newCapacity, true);
+            Chunk.Arena.Reallocate(this, newCapacity, true);
             return this;
         }
 
-        public sealed override IByteBufferAllocator Allocator => this.allocator;
+        public sealed override bool IsContiguous => true;
+
+        public sealed override IByteBufferAllocator Allocator => _allocator;
 
         public sealed override IByteBuffer Unwrap() => null;
 
-        public sealed override IByteBuffer RetainedDuplicate() => PooledDuplicatedByteBuffer.NewInstance(this, this, this.ReaderIndex, this.WriterIndex);
+        public sealed override IByteBuffer RetainedDuplicate() => PooledDuplicatedByteBuffer.NewInstance(this, this, ReaderIndex, WriterIndex);
 
         public sealed override IByteBuffer RetainedSlice()
         {
-            int index = this.ReaderIndex;
-            return this.RetainedSlice(index, this.WriterIndex - index);
+            int index = ReaderIndex;
+            return RetainedSlice(index, WriterIndex - index);
         }
 
         public sealed override IByteBuffer RetainedSlice(int index, int length) => PooledSlicedByteBuffer.NewInstance(this, this, index, length);
 
         protected internal sealed override void Deallocate()
         {
-            if (this.Handle >= 0)
+            if (Handle >= 0)
             {
-                long handle = this.Handle;
-                this.Handle = -1;
-                this.Origin = IntPtr.Zero;
-                this.Memory = default;
-                this.Chunk.Arena.Free(this.Chunk, handle, this.MaxLength, this.Cache);
-                this.Chunk = null;
-                this.Recycle();
+                long handle = Handle;
+                Handle = -1;
+                Origin = IntPtr.Zero;
+                Memory = default;
+                Chunk.Arena.Free(Chunk, handle, MaxLength, Cache);
+                Chunk = null;
+                Recycle();
             }
         }
 
-        void Recycle() => this.recyclerHandle.Release(this);
+        void Recycle() => _recyclerHandle.Release(this);
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        protected int Idx(int index) => this.Offset + index;
+        protected int Idx(int index) => Offset + index;
     }
 }

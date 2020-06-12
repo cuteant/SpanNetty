@@ -16,70 +16,85 @@ namespace DotNetty.Transport.Libuv
     /// <summary>The convention for this enum is using the argument name as the enum name</summary>
     internal enum ExceptionArgument
     {
-        array,
-        assembly,
-        buffer,
-        destination,
-        key,
-        obj,
         s,
-        str,
-        source,
-        type,
-        types,
-        value,
-        values,
-        valueFactory,
-        name,
-        item,
-        options,
-        list,
-        ts,
-        other,
-        pool,
-        inner,
-        policy,
-        offset,
-        count,
-        path,
-        typeInfo,
-        method,
-        qualifiedTypeName,
-        fullName,
-        feature,
-        manager,
-        directories,
-        dirEnumArgs,
-        asm,
-        includedAssemblies,
-        func,
-        defaultFn,
-        returnType,
-        propertyInfo,
-        parameterTypes,
-        fieldInfo,
-        memberInfo,
-        attributeType,
+
         pi,
         fi,
-        invoker,
-        instanceType,
+        ts,
+
+        asm,
+        key,
+        obj,
+        str,
+
+        list,
+        pool,
+        name,
+        path,
+        item,
+        type,
+        func,
+        task,
+
+        match,
+        array,
+        other,
+        inner,
+        types,
+        value,
+        index,
+        count,
+
+        policy,
+        offset,
+        method,
+        buffer,
+        source,
+        values,
+        parent,
+        length,
         target,
         member,
-        typeName,
-        predicate,
-        assemblyPredicate,
-        collection,
-        capacity,
-        match,
-        index,
-        length,
-        startIndex,
+
+        feature,
+        manager,
         newSize,
+        invoker,
+        options,
+
+        assembly,
+        capacity,
+        fullName,
+        typeInfo,
+        typeName,
+
+        defaultFn,
+        fieldInfo,
+        predicate,
+
+        memberInfo,
+        returnType,
+        collection,
         expression,
-        parent,
-        task,
+        startIndex,
+
+        directories,
+        dirEnumArgs,
+        destination,
+
+        valueFactory,
+        propertyInfo,
+        instanceType,
+
+        attributeType,
+
         eventLoopGroup,
+        parameterTypes,
+
+        assemblyPredicate,
+        qualifiedTypeName,
+
+        includedAssemblies,
     }
 
     #endregion
@@ -95,6 +110,8 @@ namespace DotNetty.Transport.Libuv
 
     partial class ThrowHelper
     {
+        #region -- ArgumentException --
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_Positive(int value, ExceptionArgument argument)
         {
@@ -156,6 +173,10 @@ namespace DotNetty.Transport.Libuv
                 return new ArgumentException("Pipe name is required for worker event loop", "parent");
             }
         }
+
+        #endregion
+
+        #region -- InvalidOperationException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static Task ThrowInvalidOperationException(IntPtr loopHandle)
@@ -271,6 +292,10 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
+        #endregion
+
+        #region -- SocketException --
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowSocketException(int errorCode)
         {
@@ -280,6 +305,10 @@ namespace DotNetty.Transport.Libuv
                 return new SocketException(errorCode);
             }
         }
+
+        #endregion
+
+        #region -- RejectedExecutionException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowRejectedExecutionException_Terminated()
@@ -314,6 +343,10 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
+        #endregion
+
+        #region -- ChannelException --
+
         internal static ChannelException GetChannelException(OperationException ex)
         {
             return new ChannelException(ex);
@@ -344,6 +377,10 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
+        #endregion
+
+        #region -- TimeoutException --
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowTimeoutException(string pipeName)
         {
@@ -354,20 +391,28 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
+        #endregion
+
+        #region -- NotSupportedException --
+
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowNotSupportedException(IPEndPoint endPoint, out sockaddr addr)
+        internal static NotSupportedException GetNotSupportedException(IPEndPoint endPoint)
         {
-            throw GetException();
-            NotSupportedException GetException()
-            {
-                return new NotSupportedException($"End point {endPoint} is not supported, expecting InterNetwork/InterNetworkV6.");
-            }
+            return new NotSupportedException($"End point {endPoint} is not supported, expecting InterNetwork/InterNetworkV6.");
         }
+
+        #endregion
+
+        #region -- ConnectTimeoutException --
 
         internal static ConnectTimeoutException GetConnectTimeoutException(OperationException error)
         {
             return new ConnectTimeoutException(error.ToString());
         }
+
+        #endregion
+
+        #region -- ClosedChannelException --
 
         internal static ClosedChannelException GetClosedChannelException()
         {
@@ -378,5 +423,7 @@ namespace DotNetty.Transport.Libuv
         {
             return new ClosedChannelException("Failed to write", ex);
         }
+
+        #endregion
     }
 }

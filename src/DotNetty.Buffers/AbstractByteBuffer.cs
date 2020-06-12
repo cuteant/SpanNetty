@@ -21,24 +21,23 @@ namespace DotNetty.Buffers
     /// </summary>
     public abstract partial class AbstractByteBuffer : IByteBuffer
     {
-        protected const int IndexNotFound = -1;
-        protected const uint NIndexNotFound = unchecked((uint)IndexNotFound);
+        protected const int IndexNotFound = SharedConstants.IndexNotFound;
 
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractByteBuffer>();
-        const string LegacyPropCheckAccessible = "io.netty.buffer.bytebuf.checkAccessible";
-        const string PropCheckAccessible = "io.netty.buffer.checkAccessible";
+        private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractByteBuffer>();
+        private const string LegacyPropCheckAccessible = "io.netty.buffer.bytebuf.checkAccessible";
+        private const string PropCheckAccessible = "io.netty.buffer.checkAccessible";
         protected static readonly bool CheckAccessible; // accessed from CompositeByteBuf
-        const string PropCheckBounds = "io.netty.buffer.checkBounds";
-        static readonly bool CheckBounds;
+        private const string PropCheckBounds = "io.netty.buffer.checkBounds";
+        private static readonly bool CheckBounds;
 
         internal static readonly ResourceLeakDetector LeakDetector = ResourceLeakDetector.Create<IByteBuffer>();
 
-        int readerIndex;
-        int writerIndex;
+        private int _readerIndex;
+        private int _writerIndex;
 
-        int markedReaderIndex;
-        int markedWriterIndex;
-        int maxCapacity;
+        private int _markedReaderIndex;
+        private int _markedWriterIndex;
+        private int _maxCapacity;
 
         static AbstractByteBuffer()
         {
@@ -62,13 +61,13 @@ namespace DotNetty.Buffers
         {
             if ((uint)maxCapacity > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxCapacity, ExceptionArgument.maxCapacity); }
 
-            this.maxCapacity = maxCapacity;
+            _maxCapacity = maxCapacity;
         }
         public virtual bool IsReadOnly => false;
 
         public virtual IByteBuffer AsReadOnly()
         {
-            if (this.IsReadOnly) { return this; }
+            if (IsReadOnly) { return this; }
             return Unpooled.UnmodifiableBuffer(this);
         }
 
@@ -76,136 +75,136 @@ namespace DotNetty.Buffers
 
         public abstract IByteBuffer AdjustCapacity(int newCapacity);
 
-        public virtual int MaxCapacity => this.maxCapacity;
+        public virtual int MaxCapacity => _maxCapacity;
 
         protected void SetMaxCapacity(int newMaxCapacity)
         {
             if (newMaxCapacity < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(newMaxCapacity, ExceptionArgument.newMaxCapacity); }
 
-            this.maxCapacity = newMaxCapacity;
+            _maxCapacity = newMaxCapacity;
         }
 
         public abstract IByteBufferAllocator Allocator { get; }
 
-        public virtual int ReaderIndex => this.readerIndex;
+        public virtual int ReaderIndex => _readerIndex;
 
         public virtual IByteBuffer SetReaderIndex(int index)
         {
-            if (CheckBounds) { CheckIndexBounds(index, this.writerIndex); }
+            if (CheckBounds) { CheckIndexBounds(index, _writerIndex); }
 
-            this.readerIndex = index;
+            _readerIndex = index;
             return this;
         }
 
-        public virtual int WriterIndex => this.writerIndex;
+        public virtual int WriterIndex => _writerIndex;
 
         public virtual IByteBuffer SetWriterIndex(int index)
         {
-            if (CheckBounds) { CheckIndexBounds(this.readerIndex, index, this.Capacity); }
+            if (CheckBounds) { CheckIndexBounds(_readerIndex, index, Capacity); }
 
-            this.SetWriterIndex0(index);
+            SetWriterIndex0(index);
             return this;
         }
 
         internal protected void SetWriterIndex0(int index)
         {
-            this.writerIndex = index;
+            _writerIndex = index;
         }
 
         public virtual IByteBuffer SetIndex(int readerIdx, int writerIdx)
         {
-            if (CheckBounds) { CheckIndexBounds(readerIdx, writerIdx, this.Capacity); }
+            if (CheckBounds) { CheckIndexBounds(readerIdx, writerIdx, Capacity); }
 
-            this.SetIndex0(readerIdx, writerIdx);
+            SetIndex0(readerIdx, writerIdx);
             return this;
         }
 
         public virtual IByteBuffer Clear()
         {
-            this.readerIndex = this.writerIndex = 0;
+            _readerIndex = _writerIndex = 0;
             return this;
         }
 
-        public virtual bool IsReadable() => this.writerIndex > this.readerIndex;
+        public virtual bool IsReadable() => _writerIndex > _readerIndex;
 
-        public virtual bool IsReadable(int size) => this.writerIndex - this.readerIndex >= size;
+        public virtual bool IsReadable(int size) => _writerIndex - _readerIndex >= size;
 
-        public virtual bool IsWritable() => this.Capacity > this.writerIndex;
+        public virtual bool IsWritable() => Capacity > _writerIndex;
 
-        public virtual bool IsWritable(int size) => this.Capacity - this.writerIndex >= size;
+        public virtual bool IsWritable(int size) => Capacity - _writerIndex >= size;
 
         public virtual int ReadableBytes
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
-            get => this.writerIndex - this.readerIndex;
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => _writerIndex - _readerIndex;
         }
 
         public virtual int WritableBytes
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
-            get => this.Capacity - this.writerIndex;
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => Capacity - _writerIndex;
         }
 
         public virtual int MaxWritableBytes
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
-            get => this.MaxCapacity - this.writerIndex;
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => MaxCapacity - _writerIndex;
         }
 
-        public virtual int MaxFastWritableBytes => this.WritableBytes;
+        public virtual int MaxFastWritableBytes => WritableBytes;
 
         public virtual IByteBuffer MarkReaderIndex()
         {
-            this.markedReaderIndex = this.readerIndex;
+            _markedReaderIndex = _readerIndex;
             return this;
         }
 
         public virtual IByteBuffer ResetReaderIndex()
         {
-            this.SetReaderIndex(this.markedReaderIndex);
+            SetReaderIndex(_markedReaderIndex);
             return this;
         }
 
         public virtual IByteBuffer MarkWriterIndex()
         {
-            this.markedWriterIndex = this.writerIndex;
+            _markedWriterIndex = _writerIndex;
             return this;
         }
 
         public virtual IByteBuffer ResetWriterIndex()
         {
-            this.SetWriterIndex(this.markedWriterIndex);
+            SetWriterIndex(_markedWriterIndex);
             return this;
         }
 
         protected void MarkIndex()
         {
-            this.markedReaderIndex = this.readerIndex;
-            this.markedWriterIndex = this.writerIndex;
+            _markedReaderIndex = _readerIndex;
+            _markedWriterIndex = _writerIndex;
         }
 
         public virtual IByteBuffer DiscardReadBytes()
         {
-            this.EnsureAccessible();
-
-            var readerIdx = this.readerIndex;
-            var writerIdx = this.writerIndex;
+            var readerIdx = _readerIndex;
+            var writerIdx = _writerIndex;
             if (0u >= (uint)readerIdx)
             {
+                EnsureAccessible();
                 return this;
             }
 
             if (readerIdx != writerIdx)
             {
-                this.SetBytes(0, this, readerIdx, writerIdx - readerIdx);
-                this.writerIndex = writerIdx - readerIdx;
-                this.AdjustMarkers(readerIdx);
-                this.readerIndex = 0;
+                SetBytes(0, this, readerIdx, writerIdx - readerIdx);
+                _writerIndex = writerIdx - readerIdx;
+                AdjustMarkers(readerIdx);
+                _readerIndex = 0;
             }
             else
             {
-                this.AdjustMarkers(readerIdx);
-                this.writerIndex = this.readerIndex = 0;
+                EnsureAccessible();
+                AdjustMarkers(readerIdx);
+                _writerIndex = _readerIndex = 0;
             }
 
             return this;
@@ -213,28 +212,28 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer DiscardSomeReadBytes()
         {
-            this.EnsureAccessible();
-
-            var readerIdx = this.readerIndex;
-            var writerIdx = this.writerIndex;
+            var readerIdx = _readerIndex;
+            var writerIdx = _writerIndex;
             if (0u >= (uint)readerIdx)
             {
+                EnsureAccessible();
                 return this;
             }
 
-            if (readerIdx == writerIdx)
+            if (0u >= (uint)(readerIdx - writerIdx))
             {
-                this.AdjustMarkers(readerIdx);
-                this.writerIndex = this.readerIndex = 0;
+                EnsureAccessible();
+                AdjustMarkers(readerIdx);
+                _writerIndex = _readerIndex = 0;
                 return this;
             }
 
-            if (readerIdx >= this.Capacity.RightUShift(1))
+            if (readerIdx >= Capacity.RightUShift(1))
             {
-                this.SetBytes(0, this, readerIdx, writerIdx - readerIdx);
-                this.writerIndex = writerIdx - readerIdx;
-                this.AdjustMarkers(readerIdx);
-                this.readerIndex = 0;
+                SetBytes(0, this, readerIdx, writerIdx - readerIdx);
+                _writerIndex = writerIdx - readerIdx;
+                AdjustMarkers(readerIdx);
+                _readerIndex = 0;
             }
 
             return this;
@@ -242,33 +241,33 @@ namespace DotNetty.Buffers
 
         protected void AdjustMarkers(int decrement)
         {
-            int markedReaderIdx = this.markedReaderIndex;
+            int markedReaderIdx = _markedReaderIndex;
             if (markedReaderIdx <= decrement)
             {
-                this.markedReaderIndex = 0;
-                int markedWriterIdx = this.markedWriterIndex;
+                _markedReaderIndex = 0;
+                int markedWriterIdx = _markedWriterIndex;
                 if (markedWriterIdx <= decrement)
                 {
-                    this.markedWriterIndex = 0;
+                    _markedWriterIndex = 0;
                 }
                 else
                 {
-                    this.markedWriterIndex = markedWriterIdx - decrement;
+                    _markedWriterIndex = markedWriterIdx - decrement;
                 }
             }
             else
             {
-                this.markedReaderIndex = markedReaderIdx - decrement;
-                this.markedWriterIndex -= decrement;
+                _markedReaderIndex = markedReaderIdx - decrement;
+                _markedWriterIndex -= decrement;
             }
         }
 
         // Called after a capacity reduction
         protected internal void TrimIndicesToCapacity(int newCapacity)
         {
-            if ((uint)this.writerIndex > (uint)newCapacity)
+            if ((uint)_writerIndex > (uint)newCapacity)
             {
-                SetIndex0(Math.Min(this.readerIndex, newCapacity), newCapacity);
+                SetIndex0(Math.Min(_readerIndex, newCapacity), newCapacity);
             }
         }
 
@@ -279,42 +278,40 @@ namespace DotNetty.Buffers
                 ThrowHelper.ThrowArgumentOutOfRangeException_MinWritableBytes();
             }
 
-            this.EnsureWritable0(minWritableBytes);
+            EnsureWritable0(minWritableBytes);
             return this;
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         protected internal void EnsureWritable0(int minWritableBytes)
         {
-            this.EnsureAccessible();
+            int targetCapacity = _writerIndex + minWritableBytes;
+            if ((uint)targetCapacity <= (uint)Capacity)
+            {
+                EnsureAccessible();
+                return;
+            }
 
-            if (minWritableBytes <= this.WritableBytes) { return; }
-
-            this.EnsureWritableInternal(this.writerIndex, minWritableBytes);
+            EnsureWritableInternal(_writerIndex, minWritableBytes, targetCapacity);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private void EnsureWritableInternal(int writerIdx, int sizeHint)
+        private void EnsureWritableInternal(int writerIdx, int minWritableBytes, int targetCapacity)
         {
-            var maxCapacity = this.MaxCapacity;
-            if (CheckBounds)
+            var maxCapacity = MaxCapacity;
+            if (CheckBounds && (uint)targetCapacity > (uint)maxCapacity)
             {
-                CheckMinWritableBounds(sizeHint, writerIdx, maxCapacity, this);
+                EnsureAccessible();
+                ThrowHelper.ThrowIndexOutOfRangeException_Exceeds_MaxCapacity(this, writerIdx, minWritableBytes);
             }
 
-            // Normalize the current capacity to the power of 2.
-            int minNewCapacity = writerIdx + sizeHint;
-            int newCapacity = this.Allocator.CalculateNewCapacity(minNewCapacity, maxCapacity);
-
-            int fastCapacity = writerIdx + this.MaxFastWritableBytes;
-            // Grow by a smaller amount if it will avoid reallocation
-            if (newCapacity > fastCapacity && minNewCapacity <= fastCapacity)
-            {
-                newCapacity = fastCapacity;
-            }
+            // Normalize the target capacity to the power of 2.
+            int fastWritable = MaxFastWritableBytes;
+            int newCapacity = fastWritable >= minWritableBytes ? writerIdx + fastWritable
+                    : Allocator.CalculateNewCapacity(targetCapacity, maxCapacity);
 
             // Adjust to the new capacity.
-            this.AdjustCapacity(newCapacity);
+            AdjustCapacity(newCapacity);
         }
 
         public virtual int EnsureWritable(int minWritableBytes, bool force)
@@ -322,118 +319,111 @@ namespace DotNetty.Buffers
             uint uminWritableBytes = (uint)minWritableBytes;
             if (uminWritableBytes > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_PositiveOrZero(minWritableBytes, ExceptionArgument.minWritableBytes); }
 
-            this.EnsureAccessible();
-            if (uminWritableBytes <= (uint)this.WritableBytes)
+            EnsureAccessible();
+            if (uminWritableBytes <= (uint)WritableBytes)
             {
                 return 0;
             }
 
-            var writerIdx = this.writerIndex;
-            var maxCapacity = this.MaxCapacity;
+            var writerIdx = _writerIndex;
+            var maxCapacity = MaxCapacity;
             if (uminWritableBytes > (uint)(maxCapacity - writerIdx))
             {
-                if (!force || this.Capacity == maxCapacity)
+                if (!force || Capacity == maxCapacity)
                 {
                     return 1;
                 }
 
-                this.AdjustCapacity(maxCapacity);
+                AdjustCapacity(maxCapacity);
                 return 3;
             }
 
-            // Normalize the current capacity to the power of 2.
-            int minNewCapacity = writerIdx + minWritableBytes;
-            int newCapacity = this.Allocator.CalculateNewCapacity(minNewCapacity, maxCapacity);
-
-            int fastCapacity = writerIdx + this.MaxFastWritableBytes;
-            // Grow by a smaller amount if it will avoid reallocation
-            if (newCapacity > fastCapacity && minNewCapacity <= fastCapacity)
-            {
-                newCapacity = fastCapacity;
-            }
+            int fastWritable = MaxFastWritableBytes;
+            int newCapacity = fastWritable >= minWritableBytes ? writerIdx + fastWritable
+                    : Allocator.CalculateNewCapacity(writerIdx + minWritableBytes, maxCapacity);
 
             // Adjust to the new capacity.
-            this.AdjustCapacity(newCapacity);
+            AdjustCapacity(newCapacity);
             return 2;
         }
 
         public virtual byte GetByte(int index)
         {
-            this.CheckIndex(index);
-            return this._GetByte(index);
+            CheckIndex(index);
+            return _GetByte(index);
         }
 
         protected internal abstract byte _GetByte(int index);
 
-        public bool GetBoolean(int index) => this.GetByte(index) != 0;
+        public bool GetBoolean(int index) => GetByte(index) != 0;
 
         public virtual short GetShort(int index)
         {
-            this.CheckIndex(index, 2);
-            return this._GetShort(index);
+            CheckIndex(index, 2);
+            return _GetShort(index);
         }
 
         protected internal abstract short _GetShort(int index);
 
         public virtual short GetShortLE(int index)
         {
-            this.CheckIndex(index, 2);
-            return this._GetShortLE(index);
+            CheckIndex(index, 2);
+            return _GetShortLE(index);
         }
 
         protected internal abstract short _GetShortLE(int index);
 
         public virtual int GetUnsignedMedium(int index)
         {
-            this.CheckIndex(index, 3);
-            return this._GetUnsignedMedium(index);
+            CheckIndex(index, 3);
+            return _GetUnsignedMedium(index);
         }
 
         protected internal abstract int _GetUnsignedMedium(int index);
 
         public virtual int GetUnsignedMediumLE(int index)
         {
-            this.CheckIndex(index, 3);
-            return this._GetUnsignedMediumLE(index);
+            CheckIndex(index, 3);
+            return _GetUnsignedMediumLE(index);
         }
 
         protected internal abstract int _GetUnsignedMediumLE(int index);
 
         public virtual int GetInt(int index)
         {
-            this.CheckIndex(index, 4);
-            return this._GetInt(index);
+            CheckIndex(index, 4);
+            return _GetInt(index);
         }
 
         protected internal abstract int _GetInt(int index);
 
         public virtual int GetIntLE(int index)
         {
-            this.CheckIndex(index, 4);
-            return this._GetIntLE(index);
+            CheckIndex(index, 4);
+            return _GetIntLE(index);
         }
 
         protected internal abstract int _GetIntLE(int index);
 
         public virtual long GetLong(int index)
         {
-            this.CheckIndex(index, 8);
-            return this._GetLong(index);
+            CheckIndex(index, 8);
+            return _GetLong(index);
         }
 
         protected internal abstract long _GetLong(int index);
 
         public virtual long GetLongLE(int index)
         {
-            this.CheckIndex(index, 8);
-            return this._GetLongLE(index);
+            CheckIndex(index, 8);
+            return _GetLongLE(index);
         }
 
         protected internal abstract long _GetLongLE(int index);
 
         public virtual IByteBuffer GetBytes(int index, byte[] destination)
         {
-            this.GetBytes(index, destination, 0, destination.Length);
+            GetBytes(index, destination, 0, destination.Length);
             return this;
         }
 
@@ -445,28 +435,28 @@ namespace DotNetty.Buffers
 
         public virtual unsafe string GetString(int index, int length, Encoding encoding)
         {
-            this.CheckIndex0(index, length);
+            CheckIndex0(index, length);
             if (0u >= (uint)length)
             {
                 return string.Empty;
             }
 
-            if (this.HasMemoryAddress)
+            if (HasMemoryAddress)
             {
-                IntPtr ptr = this.AddressOfPinnedMemory();
+                IntPtr ptr = AddressOfPinnedMemory();
                 if (ptr != IntPtr.Zero)
                 {
                     return UnsafeByteBufferUtil.GetString((byte*)(ptr + index), length, encoding);
                 }
                 else
                 {
-                    fixed (byte* p = &this.GetPinnableMemoryAddress())
+                    fixed (byte* p = &GetPinnableMemoryAddress())
                         return UnsafeByteBufferUtil.GetString(p + index, length, encoding);
                 }
             }
-            if (this.HasArray)
+            if (HasArray)
             {
-                return encoding.GetString(this.Array, this.ArrayOffset + index, length);
+                return encoding.GetString(Array, ArrayOffset + index, length);
             }
 
             return this.ToString(index, length, encoding);
@@ -474,15 +464,15 @@ namespace DotNetty.Buffers
 
         public virtual string ReadString(int length, Encoding encoding)
         {
-            var readerIdx = this.readerIndex;
-            string value = this.GetString(readerIdx, length, encoding);
-            this.readerIndex = readerIdx + length;
+            var readerIdx = _readerIndex;
+            string value = GetString(readerIdx, length, encoding);
+            _readerIndex = readerIdx + length;
             return value;
         }
 
         public virtual unsafe ICharSequence GetCharSequence(int index, int length, Encoding encoding)
         {
-            this.CheckIndex0(index, length);
+            CheckIndex0(index, length);
             if (0u >= (uint)length)
             {
                 return StringCharSequence.Empty;
@@ -494,22 +484,22 @@ namespace DotNetty.Buffers
                 return new AsciiString(ByteBufferUtil.GetBytes(this, index, length, true), false);
             }
 
-            if (this.HasMemoryAddress)
+            if (HasMemoryAddress)
             {
-                IntPtr ptr = this.AddressOfPinnedMemory();
+                IntPtr ptr = AddressOfPinnedMemory();
                 if (ptr != IntPtr.Zero)
                 {
                     return new StringCharSequence(UnsafeByteBufferUtil.GetString((byte*)(ptr + index), length, encoding));
                 }
                 else
                 {
-                    fixed (byte* p = &this.GetPinnableMemoryAddress())
+                    fixed (byte* p = &GetPinnableMemoryAddress())
                         return new StringCharSequence(UnsafeByteBufferUtil.GetString(p + index, length, encoding));
                 }
             }
-            if (this.HasArray)
+            if (HasArray)
             {
-                return new StringCharSequence(encoding.GetString(this.Array, this.ArrayOffset + index, length));
+                return new StringCharSequence(encoding.GetString(Array, ArrayOffset + index, length));
             }
 
             return new StringCharSequence(this.ToString(index, length, encoding));
@@ -517,16 +507,16 @@ namespace DotNetty.Buffers
 
         public virtual ICharSequence ReadCharSequence(int length, Encoding encoding)
         {
-            var readerIdx = this.readerIndex;
-            ICharSequence sequence = this.GetCharSequence(readerIdx, length, encoding);
-            this.readerIndex = readerIdx + length;
+            var readerIdx = _readerIndex;
+            ICharSequence sequence = GetCharSequence(readerIdx, length, encoding);
+            _readerIndex = readerIdx + length;
             return sequence;
         }
 
         public virtual IByteBuffer SetByte(int index, int value)
         {
-            this.CheckIndex(index);
-            this._SetByte(index, value);
+            CheckIndex(index);
+            _SetByte(index, value);
             return this;
         }
 
@@ -534,14 +524,14 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetBoolean(int index, bool value)
         {
-            this.SetByte(index, value ? 1 : 0);
+            SetByte(index, value ? 1 : 0);
             return this;
         }
 
         public virtual IByteBuffer SetShort(int index, int value)
         {
-            this.CheckIndex(index, 2);
-            this._SetShort(index, value);
+            CheckIndex(index, 2);
+            _SetShort(index, value);
             return this;
         }
 
@@ -549,8 +539,8 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetShortLE(int index, int value)
         {
-            this.CheckIndex(index, 2);
-            this._SetShortLE(index, value);
+            CheckIndex(index, 2);
+            _SetShortLE(index, value);
             return this;
         }
 
@@ -558,8 +548,8 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetMedium(int index, int value)
         {
-            this.CheckIndex(index, 3);
-            this._SetMedium(index, value);
+            CheckIndex(index, 3);
+            _SetMedium(index, value);
             return this;
         }
 
@@ -567,8 +557,8 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetMediumLE(int index, int value)
         {
-            this.CheckIndex(index, 3);
-            this._SetMediumLE(index, value);
+            CheckIndex(index, 3);
+            _SetMediumLE(index, value);
             return this;
         }
 
@@ -576,8 +566,8 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetInt(int index, int value)
         {
-            this.CheckIndex(index, 4);
-            this._SetInt(index, value);
+            CheckIndex(index, 4);
+            _SetInt(index, value);
             return this;
         }
 
@@ -585,8 +575,8 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetIntLE(int index, int value)
         {
-            this.CheckIndex(index, 4);
-            this._SetIntLE(index, value);
+            CheckIndex(index, 4);
+            _SetIntLE(index, value);
             return this;
         }
 
@@ -594,8 +584,8 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetLong(int index, long value)
         {
-            this.CheckIndex(index, 8);
-            this._SetLong(index, value);
+            CheckIndex(index, 8);
+            _SetLong(index, value);
             return this;
         }
 
@@ -603,8 +593,8 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetLongLE(int index, long value)
         {
-            this.CheckIndex(index, 8);
-            this._SetLongLE(index, value);
+            CheckIndex(index, 8);
+            _SetLongLE(index, value);
             return this;
         }
 
@@ -612,7 +602,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetBytes(int index, byte[] src)
         {
-            this.SetBytes(index, src, 0, src.Length);
+            SetBytes(index, src, 0, src.Length);
             return this;
         }
 
@@ -622,10 +612,10 @@ namespace DotNetty.Buffers
         {
             if (src is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
 
-            this.CheckIndex(index, length);
+            CheckIndex(index, length);
             if (CheckBounds) { CheckReadableBounds(src, length); }
 
-            this.SetBytes(index, src, src.ReaderIndex, length);
+            SetBytes(index, src, src.ReaderIndex, length);
             src.SetReaderIndex(src.ReaderIndex + length);
             return this;
         }
@@ -641,35 +631,35 @@ namespace DotNetty.Buffers
                 return this;
             }
 
-            this.CheckIndex(index, length);
+            CheckIndex(index, length);
 
             int nLong = length.RightUShift(3);
             int nBytes = length & 7;
             for (int i = nLong; i > 0; i--)
             {
-                this._SetLong(index, 0);
+                _SetLong(index, 0);
                 index += 8;
             }
             if (nBytes == 4)
             {
-                this._SetInt(index, 0);
+                _SetInt(index, 0);
                 // Not need to update the index as we not will use it after this.
             }
             else if (nBytes < 4)
             {
                 for (int i = nBytes; i > 0; i--)
                 {
-                    this._SetByte(index, 0);
+                    _SetByte(index, 0);
                     index++;
                 }
             }
             else
             {
-                this._SetInt(index, 0);
+                _SetInt(index, 0);
                 index += 4;
                 for (int i = nBytes - 4; i > 0; i--)
                 {
-                    this._SetByte(index, 0);
+                    _SetByte(index, 0);
                     index++;
                 }
             }
@@ -677,7 +667,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public virtual int SetString(int index, string value, Encoding encoding) => this.SetString0(index, value, encoding, false);
+        public virtual int SetString(int index, string value, Encoding encoding) => SetString0(index, value, encoding, false);
 
         int SetString0(int index, string value, Encoding encoding, bool expand)
         {
@@ -687,12 +677,12 @@ namespace DotNetty.Buffers
                     int len = ByteBufferUtil.Utf8MaxBytes(value);
                     if (expand)
                     {
-                        this.EnsureWritable0(len);
-                        this.CheckIndex0(index, len);
+                        EnsureWritable0(len);
+                        CheckIndex0(index, len);
                     }
                     else
                     {
-                        this.CheckIndex(index, len);
+                        CheckIndex(index, len);
                     }
                     return ByteBufferUtil.WriteUtf8(this, index, value);
 
@@ -700,12 +690,12 @@ namespace DotNetty.Buffers
                     int length = value.Length;
                     if (expand)
                     {
-                        this.EnsureWritable0(length);
-                        this.CheckIndex0(index, length);
+                        EnsureWritable0(length);
+                        CheckIndex0(index, length);
                     }
                     else
                     {
-                        this.CheckIndex(index, length);
+                        CheckIndex(index, length);
                     }
                     return ByteBufferUtil.WriteAscii(this, index, value);
 
@@ -713,15 +703,15 @@ namespace DotNetty.Buffers
                     byte[] bytes = encoding.GetBytes(value);
                     if (expand)
                     {
-                        this.EnsureWritable0(bytes.Length);
+                        EnsureWritable0(bytes.Length);
                         // setBytes(...) will take care of checking the indices.
                     }
-                    this.SetBytes(index, bytes);
+                    SetBytes(index, bytes);
                     return bytes.Length;
             }
         }
 
-        public virtual int SetCharSequence(int index, ICharSequence sequence, Encoding encoding) => this.SetCharSequence0(index, sequence, encoding, false);
+        public virtual int SetCharSequence(int index, ICharSequence sequence, Encoding encoding) => SetCharSequence0(index, sequence, encoding, false);
 
         int SetCharSequence0(int index, ICharSequence sequence, Encoding encoding, bool expand)
         {
@@ -731,12 +721,12 @@ namespace DotNetty.Buffers
                     int len = ByteBufferUtil.Utf8MaxBytes(sequence);
                     if (expand)
                     {
-                        this.EnsureWritable0(len);
-                        this.CheckIndex0(index, len);
+                        EnsureWritable0(len);
+                        CheckIndex0(index, len);
                     }
                     else
                     {
-                        this.CheckIndex(index, len);
+                        CheckIndex(index, len);
                     }
                     return ByteBufferUtil.WriteUtf8(this, index, sequence);
 
@@ -744,12 +734,12 @@ namespace DotNetty.Buffers
                     int length = sequence.Count;
                     if (expand)
                     {
-                        this.EnsureWritable0(length);
-                        this.CheckIndex0(index, length);
+                        EnsureWritable0(length);
+                        CheckIndex0(index, length);
                     }
                     else
                     {
-                        this.CheckIndex(index, length);
+                        CheckIndex(index, length);
                     }
                     return ByteBufferUtil.WriteAscii(this, index, sequence);
 
@@ -757,44 +747,44 @@ namespace DotNetty.Buffers
                     byte[] bytes = encoding.GetBytes(sequence.ToString());
                     if (expand)
                     {
-                        this.EnsureWritable0(bytes.Length);
+                        EnsureWritable0(bytes.Length);
                         // setBytes(...) will take care of checking the indices.
                     }
-                    this.SetBytes(index, bytes);
+                    SetBytes(index, bytes);
                     return bytes.Length;
             }
         }
 
         public virtual byte ReadByte()
         {
-            this.CheckReadableBytes0(1);
-            int i = this.readerIndex;
-            byte b = this._GetByte(i);
-            this.readerIndex = i + 1;
+            CheckReadableBytes0(1);
+            int i = _readerIndex;
+            byte b = _GetByte(i);
+            _readerIndex = i + 1;
             return b;
         }
 
-        public bool ReadBoolean() => this.ReadByte() != 0;
+        public bool ReadBoolean() => ReadByte() != 0;
 
         public virtual short ReadShort()
         {
-            this.CheckReadableBytes0(2);
-            short v = this._GetShort(this.readerIndex);
-            this.readerIndex += 2;
+            CheckReadableBytes0(2);
+            short v = _GetShort(_readerIndex);
+            _readerIndex += 2;
             return v;
         }
 
         public virtual short ReadShortLE()
         {
-            this.CheckReadableBytes0(2);
-            short v = this._GetShortLE(this.readerIndex);
-            this.readerIndex += 2;
+            CheckReadableBytes0(2);
+            short v = _GetShortLE(_readerIndex);
+            _readerIndex += 2;
             return v;
         }
 
         public int ReadMedium()
         {
-            uint value = (uint)this.ReadUnsignedMedium();
+            uint value = (uint)ReadUnsignedMedium();
             if ((value & 0x800000) != 0)
             {
                 value |= 0xff000000;
@@ -805,7 +795,7 @@ namespace DotNetty.Buffers
 
         public int ReadMediumLE()
         {
-            uint value = (uint)this.ReadUnsignedMediumLE();
+            uint value = (uint)ReadUnsignedMediumLE();
             if ((value & 0x800000) != 0)
             {
                 value |= 0xff000000;
@@ -816,93 +806,93 @@ namespace DotNetty.Buffers
 
         public virtual int ReadUnsignedMedium()
         {
-            this.CheckReadableBytes0(3);
-            int v = this._GetUnsignedMedium(this.readerIndex);
-            this.readerIndex += 3;
+            CheckReadableBytes0(3);
+            int v = _GetUnsignedMedium(_readerIndex);
+            _readerIndex += 3;
             return v;
         }
 
         public virtual int ReadUnsignedMediumLE()
         {
-            this.CheckReadableBytes0(3);
-            int v = this._GetUnsignedMediumLE(this.readerIndex);
-            this.readerIndex += 3;
+            CheckReadableBytes0(3);
+            int v = _GetUnsignedMediumLE(_readerIndex);
+            _readerIndex += 3;
             return v;
         }
 
         public virtual int ReadInt()
         {
-            this.CheckReadableBytes0(4);
-            int v = this._GetInt(this.readerIndex);
-            this.readerIndex += 4;
+            CheckReadableBytes0(4);
+            int v = _GetInt(_readerIndex);
+            _readerIndex += 4;
             return v;
         }
 
         public virtual int ReadIntLE()
         {
-            this.CheckReadableBytes0(4);
-            int v = this._GetIntLE(this.readerIndex);
-            this.readerIndex += 4;
+            CheckReadableBytes0(4);
+            int v = _GetIntLE(_readerIndex);
+            _readerIndex += 4;
             return v;
         }
 
         public virtual long ReadLong()
         {
-            this.CheckReadableBytes0(8);
-            long v = this._GetLong(this.readerIndex);
-            this.readerIndex += 8;
+            CheckReadableBytes0(8);
+            long v = _GetLong(_readerIndex);
+            _readerIndex += 8;
             return v;
         }
 
         public virtual long ReadLongLE()
         {
-            this.CheckReadableBytes0(8);
-            long v = this._GetLongLE(this.readerIndex);
-            this.readerIndex += 8;
+            CheckReadableBytes0(8);
+            long v = _GetLongLE(_readerIndex);
+            _readerIndex += 8;
             return v;
         }
 
         public virtual IByteBuffer ReadBytes(int length)
         {
-            this.CheckReadableBytes(length);
+            CheckReadableBytes(length);
             if (0u >= (uint)length)
             {
                 return Unpooled.Empty;
             }
 
-            IByteBuffer buf = this.Allocator.Buffer(length, this.MaxCapacity);
-            buf.WriteBytes(this, this.readerIndex, length);
-            this.readerIndex += length;
+            IByteBuffer buf = Allocator.Buffer(length, MaxCapacity);
+            buf.WriteBytes(this, _readerIndex, length);
+            _readerIndex += length;
             return buf;
         }
 
         public virtual IByteBuffer ReadSlice(int length)
         {
-            this.CheckReadableBytes(length);
-            IByteBuffer slice = this.Slice(this.readerIndex, length);
-            this.readerIndex += length;
+            CheckReadableBytes(length);
+            IByteBuffer slice = Slice(_readerIndex, length);
+            _readerIndex += length;
             return slice;
         }
 
         public virtual IByteBuffer ReadRetainedSlice(int length)
         {
-            this.CheckReadableBytes(length);
-            IByteBuffer slice = this.RetainedSlice(this.readerIndex, length);
-            this.readerIndex += length;
+            CheckReadableBytes(length);
+            IByteBuffer slice = RetainedSlice(_readerIndex, length);
+            _readerIndex += length;
             return slice;
         }
 
         public virtual IByteBuffer ReadBytes(byte[] destination, int dstIndex, int length)
         {
-            this.CheckReadableBytes(length);
-            this.GetBytes(this.readerIndex, destination, dstIndex, length);
-            this.readerIndex += length;
+            CheckReadableBytes(length);
+            GetBytes(_readerIndex, destination, dstIndex, length);
+            _readerIndex += length;
             return this;
         }
 
         public virtual IByteBuffer ReadBytes(byte[] dst)
         {
-            this.ReadBytes(dst, 0, dst.Length);
+            ReadBytes(dst, 0, dst.Length);
             return this;
         }
 
@@ -910,131 +900,131 @@ namespace DotNetty.Buffers
         {
             if (CheckBounds) { CheckWritableBounds(dst, length); }
 
-            this.ReadBytes(dst, dst.WriterIndex, length);
+            ReadBytes(dst, dst.WriterIndex, length);
             dst.SetWriterIndex(dst.WriterIndex + length);
             return this;
         }
 
         public virtual IByteBuffer ReadBytes(IByteBuffer dst, int dstIndex, int length)
         {
-            this.CheckReadableBytes(length);
-            this.GetBytes(this.readerIndex, dst, dstIndex, length);
-            this.readerIndex += length;
+            CheckReadableBytes(length);
+            GetBytes(_readerIndex, dst, dstIndex, length);
+            _readerIndex += length;
             return this;
         }
 
         public virtual IByteBuffer ReadBytes(Stream destination, int length)
         {
-            this.CheckReadableBytes(length);
-            this.GetBytes(this.readerIndex, destination, length);
-            this.readerIndex += length;
+            CheckReadableBytes(length);
+            GetBytes(_readerIndex, destination, length);
+            _readerIndex += length;
             return this;
         }
 
         public virtual IByteBuffer SkipBytes(int length)
         {
-            this.CheckReadableBytes(length);
-            this.readerIndex += length;
+            CheckReadableBytes(length);
+            _readerIndex += length;
             return this;
         }
 
         public virtual IByteBuffer WriteBoolean(bool value)
         {
-            this.WriteByte(value ? 1 : 0);
+            WriteByte(value ? 1 : 0);
             return this;
         }
 
         public virtual IByteBuffer WriteByte(int value)
         {
-            this.EnsureWritable0(1);
-            this._SetByte(this.writerIndex++, value);
+            EnsureWritable0(1);
+            _SetByte(_writerIndex++, value);
             return this;
         }
 
         public virtual IByteBuffer WriteShort(int value)
         {
-            this.EnsureWritable0(2);
-            int writerIdx = this.writerIndex;
-            this._SetShort(writerIdx, value);
-            this.writerIndex = writerIdx + 2;
+            EnsureWritable0(2);
+            int writerIdx = _writerIndex;
+            _SetShort(writerIdx, value);
+            _writerIndex = writerIdx + 2;
             return this;
         }
 
         public virtual IByteBuffer WriteShortLE(int value)
         {
-            this.EnsureWritable0(2);
-            int writerIdx = this.writerIndex;
-            this._SetShortLE(writerIdx, value);
-            this.writerIndex = writerIdx + 2;
+            EnsureWritable0(2);
+            int writerIdx = _writerIndex;
+            _SetShortLE(writerIdx, value);
+            _writerIndex = writerIdx + 2;
             return this;
         }
 
         public virtual IByteBuffer WriteMedium(int value)
         {
-            this.EnsureWritable0(3);
-            int writerIdx = this.writerIndex;
-            this._SetMedium(writerIdx, value);
-            this.writerIndex = writerIdx + 3;
+            EnsureWritable0(3);
+            int writerIdx = _writerIndex;
+            _SetMedium(writerIdx, value);
+            _writerIndex = writerIdx + 3;
             return this;
         }
 
         public virtual IByteBuffer WriteMediumLE(int value)
         {
-            this.EnsureWritable0(3);
-            int writerIdx = this.writerIndex;
-            this._SetMediumLE(writerIdx, value);
-            this.writerIndex = writerIdx + 3;
+            EnsureWritable0(3);
+            int writerIdx = _writerIndex;
+            _SetMediumLE(writerIdx, value);
+            _writerIndex = writerIdx + 3;
             return this;
         }
 
         public virtual IByteBuffer WriteInt(int value)
         {
-            this.EnsureWritable0(4);
-            int writerIdx = this.writerIndex;
-            this._SetInt(writerIdx, value);
-            this.writerIndex = writerIdx + 4;
+            EnsureWritable0(4);
+            int writerIdx = _writerIndex;
+            _SetInt(writerIdx, value);
+            _writerIndex = writerIdx + 4;
             return this;
         }
 
         public virtual IByteBuffer WriteIntLE(int value)
         {
-            this.EnsureWritable0(4);
-            int writerIdx = this.writerIndex;
-            this._SetIntLE(writerIdx, value);
-            this.writerIndex = writerIdx + 4;
+            EnsureWritable0(4);
+            int writerIdx = _writerIndex;
+            _SetIntLE(writerIdx, value);
+            _writerIndex = writerIdx + 4;
             return this;
         }
 
         public virtual IByteBuffer WriteLong(long value)
         {
-            this.EnsureWritable0(8);
-            int writerIdx = this.writerIndex;
-            this._SetLong(writerIdx, value);
-            this.writerIndex = writerIdx + 8;
+            EnsureWritable0(8);
+            int writerIdx = _writerIndex;
+            _SetLong(writerIdx, value);
+            _writerIndex = writerIdx + 8;
             return this;
         }
 
         public virtual IByteBuffer WriteLongLE(long value)
         {
-            this.EnsureWritable0(8);
-            int writerIdx = this.writerIndex;
-            this._SetLongLE(writerIdx, value);
-            this.writerIndex = writerIdx + 8;
+            EnsureWritable0(8);
+            int writerIdx = _writerIndex;
+            _SetLongLE(writerIdx, value);
+            _writerIndex = writerIdx + 8;
             return this;
         }
 
         public virtual IByteBuffer WriteBytes(byte[] src, int srcIndex, int length)
         {
-            this.EnsureWritable(length);
-            int writerIdx = this.writerIndex;
-            this.SetBytes(writerIdx, src, srcIndex, length);
-            this.writerIndex = writerIdx + length;
+            EnsureWritable(length);
+            int writerIdx = _writerIndex;
+            SetBytes(writerIdx, src, srcIndex, length);
+            _writerIndex = writerIdx + length;
             return this;
         }
 
         public virtual IByteBuffer WriteBytes(byte[] src)
         {
-            this.WriteBytes(src, 0, src.Length);
+            WriteBytes(src, 0, src.Length);
             return this;
         }
 
@@ -1042,33 +1032,33 @@ namespace DotNetty.Buffers
         {
             if (CheckBounds) { CheckReadableBounds(src, length); }
 
-            this.WriteBytes(src, src.ReaderIndex, length);
+            WriteBytes(src, src.ReaderIndex, length);
             src.SetReaderIndex(src.ReaderIndex + length);
             return this;
         }
 
         public virtual IByteBuffer WriteBytes(IByteBuffer src, int srcIndex, int length)
         {
-            this.EnsureWritable(length);
-            int writerIdx = this.writerIndex;
-            this.SetBytes(writerIdx, src, srcIndex, length);
-            this.writerIndex = writerIdx + length;
+            EnsureWritable(length);
+            int writerIdx = _writerIndex;
+            SetBytes(writerIdx, src, srcIndex, length);
+            _writerIndex = writerIdx + length;
             return this;
         }
 
         public virtual async Task WriteBytesAsync(Stream stream, int length, CancellationToken cancellationToken)
         {
-            this.EnsureWritable(length);
-            if (this.WritableBytes < length)
+            EnsureWritable(length);
+            if (WritableBytes < length)
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.length);
             }
 
-            int writerIdx = this.writerIndex;
-            int wrote = await this.SetBytesAsync(writerIdx, stream, length, cancellationToken);
+            int writerIdx = _writerIndex;
+            int wrote = await SetBytesAsync(writerIdx, stream, length, cancellationToken);
 
-            Debug.Assert(writerIdx == this.writerIndex);
-            this.writerIndex = writerIdx + wrote;
+            Debug.Assert(writerIdx == _writerIndex);
+            _writerIndex = writerIdx + wrote;
         }
 
         public virtual IByteBuffer WriteZero(int length)
@@ -1078,58 +1068,58 @@ namespace DotNetty.Buffers
                 return this;
             }
 
-            this.EnsureWritable(length);
-            int wIndex = this.writerIndex;
-            this.CheckIndex0(wIndex, length);
+            EnsureWritable(length);
+            int wIndex = _writerIndex;
+            CheckIndex0(wIndex, length);
 
             int nLong = length.RightUShift(3);
             int nBytes = length & 7;
             for (int i = nLong; i > 0; i--)
             {
-                this._SetLong(wIndex, 0);
+                _SetLong(wIndex, 0);
                 wIndex += 8;
             }
             if (nBytes == 4)
             {
-                this._SetInt(wIndex, 0);
+                _SetInt(wIndex, 0);
                 wIndex += 4;
             }
             else if (nBytes < 4)
             {
                 for (int i = nBytes; i > 0; i--)
                 {
-                    this._SetByte(wIndex, 0);
+                    _SetByte(wIndex, 0);
                     wIndex++;
                 }
             }
             else
             {
-                this._SetInt(wIndex, 0);
+                _SetInt(wIndex, 0);
                 wIndex += 4;
                 for (int i = nBytes - 4; i > 0; i--)
                 {
-                    this._SetByte(wIndex, 0);
+                    _SetByte(wIndex, 0);
                     wIndex++;
                 }
             }
 
-            this.writerIndex = wIndex;
+            _writerIndex = wIndex;
             return this;
         }
 
         public virtual int WriteCharSequence(ICharSequence sequence, Encoding encoding)
         {
-            int writerIdx = this.writerIndex;
-            int written = this.SetCharSequence0(writerIdx, sequence, encoding, true);
-            this.writerIndex = writerIdx + written;
+            int writerIdx = _writerIndex;
+            int written = SetCharSequence0(writerIdx, sequence, encoding, true);
+            _writerIndex = writerIdx + written;
             return written;
         }
 
         public virtual int WriteString(string value, Encoding encoding)
         {
-            int writerIdx = this.writerIndex;
-            int written = this.SetString0(writerIdx, value, encoding, true);
-            this.writerIndex = writerIdx + written;
+            int writerIdx = _writerIndex;
+            int written = SetString0(writerIdx, value, encoding, true);
+            _writerIndex = writerIdx + written;
             return written;
         }
 
@@ -1137,39 +1127,39 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer Duplicate()
         {
-            this.EnsureAccessible();
+            EnsureAccessible();
             return new UnpooledDuplicatedByteBuffer(this);
         }
 
-        public virtual IByteBuffer RetainedDuplicate() => (IByteBuffer)this.Duplicate().Retain();
+        public virtual IByteBuffer RetainedDuplicate() => (IByteBuffer)Duplicate().Retain();
 
-        public virtual IByteBuffer Slice() => this.Slice(this.readerIndex, this.ReadableBytes);
+        public virtual IByteBuffer Slice() => Slice(_readerIndex, ReadableBytes);
 
-        public virtual IByteBuffer RetainedSlice() => (IByteBuffer)this.Slice().Retain();
+        public virtual IByteBuffer RetainedSlice() => (IByteBuffer)Slice().Retain();
 
         public virtual IByteBuffer Slice(int index, int length)
         {
-            this.EnsureAccessible();
+            EnsureAccessible();
             return new UnpooledSlicedByteBuffer(this, index, length);
         }
 
-        public virtual IByteBuffer RetainedSlice(int index, int length) => (IByteBuffer)this.Slice(index, length).Retain();
+        public virtual IByteBuffer RetainedSlice(int index, int length) => (IByteBuffer)Slice(index, length).Retain();
 
         public virtual int ForEachByte(int index, int length, IByteProcessor processor)
         {
-            this.CheckIndex(index, length);
-            return this.ForEachByteAsc0(index, length, processor);
+            CheckIndex(index, length);
+            return ForEachByteAsc0(index, length, processor);
         }
 
         public virtual int ForEachByteDesc(int index, int length, IByteProcessor processor)
         {
-            this.CheckIndex(index, length);
-            return this.ForEachByteDesc0(index, length, processor);
+            CheckIndex(index, length);
+            return ForEachByteDesc0(index, length, processor);
         }
 
         public override int GetHashCode() => ByteBufferUtil.HashCode(this);
 
-        public sealed override bool Equals(object o) => this.Equals(o as IByteBuffer);
+        public sealed override bool Equals(object o) => Equals(o as IByteBuffer);
 
         public virtual bool Equals(IByteBuffer buffer) =>
             ReferenceEquals(this, buffer) || buffer is object && ByteBufferUtil.Equals(this, buffer);
@@ -1178,22 +1168,22 @@ namespace DotNetty.Buffers
 
         public override string ToString()
         {
-            if (0u >= (uint)this.ReferenceCount)
+            if (0u >= (uint)ReferenceCount)
             {
                 return StringUtil.SimpleClassName(this) + "(freed)";
             }
 
             var buf = StringBuilderManager.Allocate()
                 .Append(StringUtil.SimpleClassName(this))
-                .Append("(ridx: ").Append(this.readerIndex)
-                .Append(", widx: ").Append(this.writerIndex)
-                .Append(", cap: ").Append(this.Capacity);
-            if (this.MaxCapacity != int.MaxValue)
+                .Append("(ridx: ").Append(_readerIndex)
+                .Append(", widx: ").Append(_writerIndex)
+                .Append(", cap: ").Append(Capacity);
+            if (MaxCapacity != int.MaxValue)
             {
-                buf.Append('/').Append(this.MaxCapacity);
+                buf.Append('/').Append(MaxCapacity);
             }
 
-            IByteBuffer unwrapped = this.Unwrap();
+            IByteBuffer unwrapped = Unwrap();
             if (unwrapped is object)
             {
                 buf.Append(", unwrapped: ").Append(unwrapped);
@@ -1202,38 +1192,38 @@ namespace DotNetty.Buffers
             return StringBuilderManager.ReturnAndFree(buf);
         }
 
-        protected void CheckIndex(int index) => this.CheckIndex(index, 1);
+        protected void CheckIndex(int index) => CheckIndex(index, 1);
 
         protected internal void CheckIndex(int index, int fieldLength)
         {
-            this.EnsureAccessible();
-            this.CheckIndex0(index, fieldLength);
+            EnsureAccessible();
+            CheckIndex0(index, fieldLength);
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckIndex0(int index, int fieldLength)
         {
-            if (CheckBounds) { CheckRangeBounds(ExceptionArgument.index, index, fieldLength, this.Capacity); }
+            if (CheckBounds) { CheckRangeBounds(ExceptionArgument.index, index, fieldLength, Capacity); }
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckSrcIndex(int index, int length, int srcIndex, int srcCapacity)
         {
-            this.CheckIndex(index, length);
+            CheckIndex(index, length);
             if (CheckBounds) { CheckRangeBounds(ExceptionArgument.srcIndex, srcIndex, length, srcCapacity); }
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckDstIndex(int index, int length, int dstIndex, int dstCapacity)
         {
-            this.CheckIndex(index, length);
+            CheckIndex(index, length);
             if (CheckBounds) { CheckRangeBounds(ExceptionArgument.dstIndex, dstIndex, length, dstCapacity); }
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckDstIndex(int length, int dstIndex, int dstCapacity)
         {
-            this.CheckReadableBytes(length);
+            CheckReadableBytes(length);
             if (CheckBounds) { CheckRangeBounds(ExceptionArgument.dstIndex, dstIndex, length, dstCapacity); }
         }
 
@@ -1245,33 +1235,33 @@ namespace DotNetty.Buffers
                 ThrowHelper.ThrowArgumentOutOfRangeException_MinimumReadableBytes(minimumReadableBytes);
             }
 
-            this.CheckReadableBytes0(minimumReadableBytes);
+            CheckReadableBytes0(minimumReadableBytes);
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void CheckNewCapacity(int newCapacity)
         {
-            this.EnsureAccessible();
-            if (CheckBounds && (/*newCapacity < 0 || */(uint)newCapacity > (uint)this.MaxCapacity))
+            EnsureAccessible();
+            if (CheckBounds && (/*newCapacity < 0 || */(uint)newCapacity > (uint)MaxCapacity))
             {
-                ThrowHelper.ThrowArgumentOutOfRangeException_Capacity(newCapacity, this.MaxCapacity);
+                ThrowHelper.ThrowArgumentOutOfRangeException_Capacity(newCapacity, MaxCapacity);
             }
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        void CheckReadableBytes0(int minimumReadableBytes)
+        private void CheckReadableBytes0(int minimumReadableBytes)
         {
-            this.EnsureAccessible();
+            EnsureAccessible();
             if (CheckBounds)
             {
-                CheckMinReadableBounds(minimumReadableBytes, this.readerIndex, this.writerIndex, this);
+                CheckMinReadableBounds(minimumReadableBytes, _readerIndex, _writerIndex, this);
             }
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         protected void EnsureAccessible()
         {
-            if (CheckAccessible && !this.IsAccessible)
+            if (CheckAccessible && !IsAccessible)
             {
                 ThrowHelper.ThrowIllegalReferenceCountException(0);
             }
@@ -1279,13 +1269,13 @@ namespace DotNetty.Buffers
 
         protected void SetIndex0(int readerIdx, int writerIdx)
         {
-            this.readerIndex = readerIdx;
-            this.writerIndex = writerIdx;
+            _readerIndex = readerIdx;
+            _writerIndex = writerIdx;
         }
 
         protected void DiscardMarks()
         {
-            this.markedReaderIndex = this.markedWriterIndex = 0;
+            _markedReaderIndex = _markedWriterIndex = 0;
         }
 
         public abstract bool IsSingleIoBuffer { get; }
@@ -1308,11 +1298,13 @@ namespace DotNetty.Buffers
 
         public abstract IntPtr AddressOfPinnedMemory();
 
+        public virtual bool IsContiguous => false;
+
         public abstract IByteBuffer Unwrap();
 
         public abstract bool IsDirect { get; }
 
-        public virtual bool IsAccessible => (uint)this.ReferenceCount > 0u ? true : false;
+        public virtual bool IsAccessible => (uint)ReferenceCount > 0u;
 
         public abstract int ReferenceCount { get; }
 

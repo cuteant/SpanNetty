@@ -8,11 +8,12 @@ namespace DotNetty.Transport.Channels.Embedded
     using System.Threading.Tasks;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using Thread = DotNetty.Common.Concurrency.XThread;
 
     sealed class EmbeddedEventLoop : AbstractScheduledEventExecutor, IEventLoop
     {
-        readonly Queue<IRunnable> _tasks = new Queue<IRunnable>(2);
+        readonly QueueX<IRunnable> _tasks = new QueueX<IRunnable>(2);
 
         public new IEventLoop GetNext() => this;
 
@@ -52,18 +53,8 @@ namespace DotNetty.Transport.Channels.Embedded
 
         internal void RunTasks()
         {
-            while(true)
+            while (_tasks.TryDequeue(out var task))
             {
-                // have to perform an additional check since Queue<T> throws upon empty dequeue in .NET
-                if (0u >= (uint)_tasks.Count)
-                {
-                    break;
-                }
-                IRunnable task = _tasks.Dequeue();
-                if (task is null)
-                {
-                    break;
-                }
                 task.Run();
             }
         }
@@ -71,7 +62,7 @@ namespace DotNetty.Transport.Channels.Embedded
         internal PreciseTimeSpan RunScheduledTasks()
         {
             PreciseTimeSpan time = GetNanos();
-            while(true)
+            while (true)
             {
                 IRunnable task = PollScheduledTask(time);
                 if (task is null)

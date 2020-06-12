@@ -26,7 +26,7 @@
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void CheckReadableBounds(IByteBuffer src, int length)
         {
-            if (length > src.ReadableBytes)
+            if ((uint)length > (uint)src.ReadableBytes)
             {
                 ThrowHelper.ThrowIndexOutOfRangeException_ReadableBytes(length, src);
             }
@@ -44,7 +44,7 @@
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void CheckWritableBounds(IByteBuffer dst, int length)
         {
-            if (length > dst.WritableBytes)
+            if ((uint)length > (uint)dst.WritableBytes)
             {
                 ThrowHelper.ThrowIndexOutOfRangeException_WritableBytes(length, dst);
             }

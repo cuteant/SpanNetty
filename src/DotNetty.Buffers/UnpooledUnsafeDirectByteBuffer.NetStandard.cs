@@ -10,27 +10,27 @@ namespace DotNetty.Buffers
     {
         protected internal sealed override ReadOnlyMemory<byte> _GetReadableMemory(int index, int count)
         {
-            return new ReadOnlyMemory<byte>(this.buffer, index, count);
+            return new ReadOnlyMemory<byte>(_buffer, index, count);
         }
 
         protected internal sealed override ReadOnlySpan<byte> _GetReadableSpan(int index, int count)
         {
-            return new ReadOnlySpan<byte>(this.buffer, index, count);
+            return new ReadOnlySpan<byte>(_buffer, index, count);
         }
 
         protected internal sealed override ReadOnlySequence<byte> _GetSequence(int index, int count)
         {
-            return new ReadOnlySequence<byte>(this.buffer, index, count);
+            return new ReadOnlySequence<byte>(_buffer, index, count);
         }
 
         protected internal sealed override Memory<byte> _GetMemory(int index, int count)
         {
-            return new Memory<byte>(this.buffer, index, count);
+            return new Memory<byte>(_buffer, index, count);
         }
 
         protected internal sealed override Span<byte> _GetSpan(int index, int count)
         {
-            return new Span<byte>(this.buffer, index, count);
+            return new Span<byte>(_buffer, index, count);
         }
     }
 }

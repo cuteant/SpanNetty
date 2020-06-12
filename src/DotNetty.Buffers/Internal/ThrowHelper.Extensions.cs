@@ -140,6 +140,8 @@ namespace DotNetty.Buffers
 
     partial class ThrowHelper
     {
+        #region -- Exception --
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static T ThrowException_ShouldNotReachHere<T>()
         {
@@ -151,35 +153,9 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowInvalidOperationException(int capacity)
-        {
-            throw GetException(capacity);
+        #endregion
 
-            static InvalidOperationException GetException(int capacity)
-            {
-                return new InvalidOperationException($"Cannot advance past the end of the buffer, which has a size of {capacity}.");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowInvalidOperationException_EndPositionNotReached() { throw CreateInvalidOperationException_EndPositionNotReached(); }
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        private static Exception CreateInvalidOperationException_EndPositionNotReached()
-        {
-            return new InvalidOperationException("EndPositionNotReached");
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static T ThrowInvalidOperationException_ShouldNotReachHere<T>()
-        {
-            throw GetException();
-
-            static InvalidOperationException GetException()
-            {
-                return new InvalidOperationException("should not reach here");
-            }
-        }
+        #region -- ArgumentException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_NeedMoreData()
@@ -200,50 +176,6 @@ namespace DotNetty.Buffers
             static ArgumentException GetException()
             {
                 return new ArgumentException("Destination is too short.");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_Positive(int value, ExceptionArgument argument)
-        {
-            throw GetException(value, argument);
-
-            static ArgumentOutOfRangeException GetException(int value, ExceptionArgument argument)
-            {
-                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)}: {value} (expected: > 0)");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_Positive(long value, ExceptionArgument argument)
-        {
-            throw GetException(value, argument);
-
-            static ArgumentOutOfRangeException GetException(long value, ExceptionArgument argument)
-            {
-                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)}: {value} (expected: > 0)");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_PositiveOrZero(int value, ExceptionArgument argument)
-        {
-            throw GetException(value, argument);
-
-            static ArgumentOutOfRangeException GetException(int value, ExceptionArgument argument)
-            {
-                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)}: {value} (expected: >= 0)");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_PositiveOrZero(long value, ExceptionArgument argument)
-        {
-            throw GetException(value, argument);
-
-            static ArgumentOutOfRangeException GetException(long value, ExceptionArgument argument)
-            {
-                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)}: {value} (expected: >= 0)");
             }
         }
 
@@ -401,6 +333,358 @@ namespace DotNetty.Buffers
             }
         }
 
+        #endregion
+
+        #region -- InvalidOperationException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException(int capacity)
+        {
+            throw GetException(capacity);
+
+            static InvalidOperationException GetException(int capacity)
+            {
+                return new InvalidOperationException($"Cannot advance past the end of the buffer, which has a size of {capacity}.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_EndPositionNotReached() { throw CreateInvalidOperationException_EndPositionNotReached(); }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static InvalidOperationException CreateInvalidOperationException_EndPositionNotReached()
+        {
+            return new InvalidOperationException("EndPositionNotReached");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static T ThrowInvalidOperationException_ShouldNotReachHere<T>()
+        {
+            throw GetException();
+
+            static InvalidOperationException GetException()
+            {
+                return new InvalidOperationException("should not reach here");
+            }
+        }
+
+        #endregion
+
+        #region -- ArgumentOutOfRangeException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_MinimumReadableBytes(int minimumReadableBytes)
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException("minimumReadableBytes", string.Format("minimumReadableBytes: {0} (expected: >= 0)", minimumReadableBytes));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_InitialCapacity(int initialCapacity, int maxCapacity)
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException("initialCapacity", string.Format("initialCapacity ({0}) must be greater than maxCapacity ({1})", initialCapacity, maxCapacity));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_MinWritableBytes()
+        {
+            throw GetArgumentOutOfRangeException();
+
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException("minWritableBytes", "expected minWritableBytes to be greater than zero");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_MaxCapacity(int minNewCapacity, int maxCapacity)
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException("maxCapacity", string.Format("minNewCapacity: {0} (expected: not greater than maxCapacity({1})", minNewCapacity, maxCapacity));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_Capacity(int newCapacity, int maxCapacity)
+        {
+            throw GetArgumentOutOfRangeException();
+
+            ArgumentOutOfRangeException GetArgumentOutOfRangeException()
+            {
+                return new ArgumentOutOfRangeException("newCapacity", string.Format($"newCapacity: {0} (expected: 0-{1})", newCapacity, maxCapacity));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(int value, ExceptionArgument argument)
+        {
+            throw GetException(value, argument);
+
+            static ArgumentOutOfRangeException GetException(int value, ExceptionArgument argument)
+            {
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Positive(long value, ExceptionArgument argument)
+        {
+            throw GetException(value, argument);
+
+            static ArgumentOutOfRangeException GetException(long value, ExceptionArgument argument)
+            {
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)}: {value} (expected: > 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(int value, ExceptionArgument argument)
+        {
+            throw GetException(value, argument);
+
+            static ArgumentOutOfRangeException GetException(int value, ExceptionArgument argument)
+            {
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_PositiveOrZero(long value, ExceptionArgument argument)
+        {
+            throw GetException(value, argument);
+
+            static ArgumentOutOfRangeException GetException(long value, ExceptionArgument argument)
+            {
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"{GetArgumentName(argument)}: {value} (expected: >= 0)");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument argument)
+        {
+            throw GetArgumentOutOfRangeException(argument);
+
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException(ExceptionArgument argument)
+            {
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"The {GetArgumentName(argument)} cannot be negative.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_Index(int cIndex, int count)
+        {
+            throw GetArgumentOutOfRangeException(cIndex, count);
+
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException(int cIndex, int count)
+            {
+                return new ArgumentOutOfRangeException(nameof(cIndex), $"cIndex: {cIndex} (expected: >= 0 && <= numComponents({count}))");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_Index(int cIndex, int numComponents, int count)
+        {
+            throw GetArgumentOutOfRangeException(cIndex, numComponents, count);
+
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException(int cIndex, int numComponents, int count)
+            {
+                return new ArgumentOutOfRangeException(nameof(cIndex), $"cIndex: {cIndex}, numComponents: {numComponents} " + $"(expected: cIndex >= 0 && cIndex + numComponents <= totalNumComponents({count}))");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_NeedPosNum(ExceptionArgument argument, int value)
+        {
+            throw GetArgumentOutOfRangeException(argument, value);
+
+            static ArgumentOutOfRangeException GetArgumentOutOfRangeException(ExceptionArgument argument, int value)
+            {
+                return new ArgumentOutOfRangeException(GetArgumentName(argument), value, "Positive number required.");
+            }
+        }
+
+        #endregion
+
+        #region -- IndexOutOfRangeException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_Index(int index, int length, int capacity)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("index: {0}, length: {1} (expected: range(0, {2}))", index, length, capacity));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_Index(ExceptionArgument indexName, int index, int length, int capacity)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("{0}: {1}, length: {2} (expected: range({1}, {3}))", indexName.ToString(), index, length, capacity));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_SrcIndex(int srcIndex)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("srcIndex: {0}", srcIndex));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_SrcIndex(int srcIndex, int length, int srcCapacity)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("srcIndex: {0}, length: {1} (expected: range({0}, {2}))", srcIndex, length, srcCapacity));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_DstIndex(int dstIndex)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("dstIndex: {0}", dstIndex));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_DstIndex(int dstIndex, int length, int dstCapacity)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("dstIndex: {0}, length: {1} (expected: range({0}, {2}))", dstIndex, length, dstCapacity));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_ReaderIndex(int index, int writerIndex)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("ReaderIndex: {0} (expected: 0 <= readerIndex <= writerIndex({1})", index, writerIndex));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_ReaderIndex(int minimumReadableBytes, int readerIndex, int writerIndex, AbstractByteBuffer buf)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("readerIndex({0}) + length({1}) exceeds writerIndex({2}): {3}", readerIndex, minimumReadableBytes, writerIndex, buf));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_WriterIndex(int index, int readerIndex, int capacity)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("WriterIndex: {0} (expected: 0 <= readerIndex({1}) <= writerIndex <= capacity ({2})", index, readerIndex, capacity));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_WriterIndex(int minWritableBytes, int writerIndex, int maxCapacity, AbstractByteBuffer buf)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format($"writerIndex({0}) + minWritableBytes({1}) exceeds maxCapacity({2}): {3}", writerIndex, minWritableBytes, maxCapacity, buf));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_ReaderWriterIndex(int readerIndex, int writerIndex, int capacity)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("ReaderIndex: {0}, WriterIndex: {1} (expected: 0 <= readerIndex <= writerIndex <= capacity ({2})", readerIndex, writerIndex, capacity));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_ReadableBytes(int length, IByteBuffer src)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("length({0}) exceeds src.readableBytes({1}) where src is: {2}", length, src.ReadableBytes, src));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_WritableBytes(int length, IByteBuffer dst)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("length({0}) exceeds destination.WritableBytes({1}) where destination is: {2}", length, dst.WritableBytes, dst));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_Src(int srcIndex, int length, int count)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format("expected: 0 <= srcIdx({0}) <= srcIdx + length({1}) <= srcLen({2})", srcIndex, length, count));
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIndexOutOfRangeException_Exceeds_MaxCapacity(IByteBuffer buffer, int writerIdx, int minWritableBytes)
+        {
+            throw GetIndexOutOfRangeException();
+
+            IndexOutOfRangeException GetIndexOutOfRangeException()
+            {
+                return new IndexOutOfRangeException(string.Format(
+                    "writerIndex({0}) + minWritableBytes({1}) exceeds maxCapacity({2}): {3}",
+                    writerIdx, minWritableBytes, buffer.MaxCapacity, buffer));
+            }
+        }
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowIndexOutOfRangeException_IsText(int index, int length)
         {
@@ -447,39 +731,6 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument argument)
-        {
-            throw GetArgumentOutOfRangeException(argument);
-
-            static ArgumentOutOfRangeException GetArgumentOutOfRangeException(ExceptionArgument argument)
-            {
-                return new ArgumentOutOfRangeException(GetArgumentName(argument), $"The {GetArgumentName(argument)} cannot be negative.");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentOutOfRangeException_Index(int cIndex, int count)
-        {
-            throw GetArgumentOutOfRangeException(cIndex, count);
-
-            static ArgumentOutOfRangeException GetArgumentOutOfRangeException(int cIndex, int count)
-            {
-                return new ArgumentOutOfRangeException(nameof(cIndex), $"cIndex: {cIndex} (expected: >= 0 && <= numComponents({count}))");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentOutOfRangeException_Index(int cIndex, int numComponents, int count)
-        {
-            throw GetArgumentOutOfRangeException(cIndex, numComponents, count);
-
-            static ArgumentOutOfRangeException GetArgumentOutOfRangeException(int cIndex, int numComponents, int count)
-            {
-                return new ArgumentOutOfRangeException(nameof(cIndex), $"cIndex: {cIndex}, numComponents: {numComponents} " + $"(expected: cIndex >= 0 && cIndex + numComponents <= totalNumComponents({count}))");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowIndexOutOfRangeException_CheckIndexBounds(int readerIndex, int writerIndex, int capacity)
         {
             throw GetIndexOutOfRangeException(readerIndex, writerIndex, capacity);
@@ -491,16 +742,9 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowIllegalReferenceCountException(int refCnt, int increment)
-        {
-            throw GetIllegalReferenceCountException(refCnt, increment);
+        #endregion
 
-            static IllegalReferenceCountException GetIllegalReferenceCountException(int refCnt, int increment)
-            {
-                return new IllegalReferenceCountException(refCnt, increment);
-            }
-        }
+        #region -- ObjectDisposedException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowObjectDisposedException_StreamIsClosed()
@@ -524,16 +768,9 @@ namespace DotNetty.Buffers
             }
         }
 
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentOutOfRangeException_NeedPosNum(ExceptionArgument argument, int value)
-        {
-            throw GetArgumentOutOfRangeException(argument, value);
+        #endregion
 
-            static ArgumentOutOfRangeException GetArgumentOutOfRangeException(ExceptionArgument argument, int value)
-            {
-                return new ArgumentOutOfRangeException(GetArgumentName(argument), value, "Positive number required.");
-            }
-        }
+        #region -- NotSupportedException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowNotSupportedException()
@@ -591,6 +828,36 @@ namespace DotNetty.Buffers
             }
         }
 
+        #endregion
+
+        #region -- IllegalReferenceCountException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIllegalReferenceCountException(int refCnt, int increment)
+        {
+            throw GetIllegalReferenceCountException(refCnt, increment);
+
+            static IllegalReferenceCountException GetIllegalReferenceCountException(int refCnt, int increment)
+            {
+                return new IllegalReferenceCountException(refCnt, increment);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowIllegalReferenceCountException(int count)
+        {
+            throw GetIllegalReferenceCountException();
+
+            IllegalReferenceCountException GetIllegalReferenceCountException()
+            {
+                return new IllegalReferenceCountException(count);
+            }
+        }
+
+        #endregion
+
+        #region -- ReadOnlyBufferException --
+
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowReadOnlyBufferException()
         {
@@ -608,5 +875,7 @@ namespace DotNetty.Buffers
         {
             return new ReadOnlyBufferException();
         }
+
+        #endregion
     }
 }

@@ -14,13 +14,13 @@ namespace DotNetty.Codecs.Http2
     // TODO(buchgr): Merge Http2FrameStream and Http2Stream.
     public class DefaultHttp2FrameStream : IHttp2FrameStream
     {
-        private int _id = -1;
+        private int v_id = -1;
         private IHttp2Stream _stream;
 
         internal readonly Http2FrameStreamEvent StateChanged;
         internal readonly Http2FrameStreamEvent WritabilityChanged;
 
-        internal IChannel _attachment;
+        internal IChannel Attachment;
 
         public DefaultHttp2FrameStream()
         {
@@ -30,7 +30,7 @@ namespace DotNetty.Codecs.Http2
 
         public DefaultHttp2FrameStream SetStreamAndProperty(IHttp2ConnectionPropertyKey streamKey, IHttp2Stream stream)
         {
-            Debug.Assert(_id == -1 || stream.Id == _id);
+            Debug.Assert(v_id == -1 || stream.Id == v_id);
             stream.SetProperty(streamKey, this);
             InternalStream = stream;
             return this;
@@ -47,9 +47,9 @@ namespace DotNetty.Codecs.Http2
             get
             {
                 var stream = InternalStream;
-                return stream is null ? Volatile.Read(ref _id) : stream.Id;
+                return stream is null ? Volatile.Read(ref v_id) : stream.Id;
             }
-            set => Interlocked.Exchange(ref _id, value);
+            set => Interlocked.Exchange(ref v_id, value);
         }
 
         public virtual Http2StreamState State

@@ -67,6 +67,7 @@ namespace DotNetty.Common
         {
             internal static readonly WeakOrderQueue Dummy = new WeakOrderQueue();
 
+            // Let Link extend AtomicInteger for intrinsics. The Link itself will be used as writerIndex.
             sealed class Link
             {
                 private int v_writeIndex;
@@ -79,13 +80,12 @@ namespace DotNetty.Common
                 internal int WriteIndex
                 {
                     get => Volatile.Read(ref v_writeIndex);
-                    set => Interlocked.Exchange(ref v_writeIndex, value);
+                    set => Volatile.Write(ref v_writeIndex, value);
                 }
 
                 internal void LazySetWriteIndex(int value) => v_writeIndex = value;
             }
 
-            // This act as a place holder for the head Link but also will reclaim space once finalized.
             // Its important this does not hold any reference to either Stack or WeakOrderQueue.
             sealed class Head
             {
@@ -101,7 +101,10 @@ namespace DotNetty.Common
                     if (weakTableCounter is object) { Interlocked.Increment(ref weakTableCounter.Value); }
                 }
 
-                ~Head()
+                /// <summary>
+                /// Reclaim all used space and also unlink the nodes to prevent GC nepotism.
+                /// </summary>
+                internal void ReclaimAllSpaceAndUnlink()
                 {
                     if (_weakTableCounter is object)
                     {
@@ -114,38 +117,51 @@ namespace DotNetty.Common
 
                     Link head = _link;
                     _link = null;
-                    while (head is object)
+                    int reclaimSpace = 0;
+                    while (head != null)
                     {
-                        ReclaimSpace(LinkCapacity);
+                        reclaimSpace += LinkCapacity;
                         Link next = head._next;
                         // Unlink to help GC and guard against GC nepotism.
                         head._next = null;
                         head = next;
                     }
+                    if (reclaimSpace > 0)
+                    {
+                        ReclaimSpace(reclaimSpace);
+                    }
                 }
 
-                internal void ReclaimSpace(int space)
+                private void ReclaimSpace(int space)
                 {
-                    Debug.Assert(space >= 0);
                     Interlocked.Add(ref _availableSharedCapacity.Value, space);
                 }
 
-                internal bool ReserveSpace(int space)
+                internal void Relink(Link link)
                 {
-                    return ReserveSpace(_availableSharedCapacity, space);
+                    ReclaimSpace(LinkCapacity);
+                    _link = link;
                 }
 
-                internal static bool ReserveSpace(StrongBox<int> availableSharedCapacity, int space)
+                /// <summary>
+                /// Creates a new <see cref="Link"/> and returns it if we can reserve enough space for it, otherwise it
+                /// returns <c>null</c>.
+                /// </summary>
+                internal Link NewLink()
                 {
-                    Debug.Assert(space >= 0);
+                    return ReserveSpaceForLink(_availableSharedCapacity) ? new Link() : null;
+                }
+
+                internal static bool ReserveSpaceForLink(StrongBox<int> availableSharedCapacity)
+                {
                     for (; ; )
                     {
                         int available = Volatile.Read(ref availableSharedCapacity.Value);
-                        if (available < space)
+                        if (available < LinkCapacity)
                         {
                             return false;
                         }
-                        if (Interlocked.CompareExchange(ref availableSharedCapacity.Value, available - space, available) == available)
+                        if (Interlocked.CompareExchange(ref availableSharedCapacity.Value, available - LinkCapacity, available) == available)
                         {
                             return true;
                         }
@@ -154,17 +170,20 @@ namespace DotNetty.Common
             }
 
             // chain of data items
-            readonly Head _head;
-            Link _tail;
+            private readonly Head _head;
+            private Link _tail;
             // pointer to another queue of delayed items for the same stack
             internal WeakOrderQueue _next;
             internal readonly WeakReference<Thread> _owner;
-            readonly int _id = Interlocked.Increment(ref s_idSource);
+            private readonly int _id = Interlocked.Increment(ref s_idSource);
+            private readonly int _interval;
+            private int _handleRecycleCount;
 
             WeakOrderQueue()
             {
                 _owner = null;
                 _head = new Head(null, null);
+                _interval = 0;
             }
 
             WeakOrderQueue(Stack stack, Thread thread, DelayedThreadLocal.CountedWeakTable countedWeakTable)
@@ -177,10 +196,17 @@ namespace DotNetty.Common
                 _head = new Head(stack._availableSharedCapacity, countedWeakTable.Counter);
                 _head._link = _tail;
                 _owner = new WeakReference<Thread>(thread);
+                _interval = stack._interval;
+                _handleRecycleCount = _interval; // Start at interval so the first one will be recycled.
             }
 
-            static WeakOrderQueue NewQueue(Stack stack, Thread thread, DelayedThreadLocal.CountedWeakTable countedWeakTable)
+            internal static WeakOrderQueue NewQueue(Stack stack, Thread thread, DelayedThreadLocal.CountedWeakTable countedWeakTable)
             {
+                // We allocated a Link so reserve the space
+                if (!Head.ReserveSpaceForLink(stack._availableSharedCapacity))
+                {
+                    return null;
+                }
                 WeakOrderQueue queue = new WeakOrderQueue(stack, thread, countedWeakTable);
                 // Done outside of the constructor to ensure WeakOrderQueue.this does not escape the constructor and so
                 // may be accessed while its still constructed.
@@ -191,6 +217,7 @@ namespace DotNetty.Common
 
             internal WeakOrderQueue Next
             {
+                get => _next;
                 set
                 {
                     Debug.Assert(value != this);
@@ -198,30 +225,39 @@ namespace DotNetty.Common
                 }
             }
 
-            /// <summary>
-            /// Allocate a new <see cref="WeakOrderQueue"/> or return <code>null</code> if not possible.
-            /// </summary>
-            internal static WeakOrderQueue Allocate(Stack stack, Thread thread, DelayedThreadLocal.CountedWeakTable countedWeakTable)
+            internal void ReclaimAllSpaceAndUnlink()
             {
-                // We allocated a Link so reserve the space
-                return Head.ReserveSpace(stack._availableSharedCapacity, LinkCapacity) ? NewQueue(stack, thread, countedWeakTable) : null;
+                _head.ReclaimAllSpaceAndUnlink();
+                _next = null;
             }
 
             internal void Add(DefaultHandle handle)
             {
                 handle._lastRecycledId = _id;
 
+                // While we also enforce the recycling ratio one we transfer objects from the WeakOrderQueue to the Stack
+                // we better should enforce it as well early. Missing to do so may let the WeakOrderQueue grow very fast
+                // without control if the Stack
+                if (_handleRecycleCount < _interval)
+                {
+                    _handleRecycleCount++;
+                    // Drop the item to prevent recycling to aggressive.
+                    return;
+                }
+                _handleRecycleCount = 0;
+
                 Link tail = _tail;
                 int writeIndex = tail.WriteIndex;
                 if (writeIndex == LinkCapacity)
                 {
-                    if (!_head.ReserveSpace(LinkCapacity))
+                    Link link = _head.NewLink();
+                    if (link is null)
                     {
                         // Drop it.
                         return;
                     }
                     // We allocate a Link so reserve the space
-                    _tail = tail = tail._next = new Link();
+                    _tail = tail = tail._next = link;
                     writeIndex = tail.WriteIndex;
                 }
                 tail._elements[writeIndex] = handle;
@@ -248,8 +284,8 @@ namespace DotNetty.Common
                     {
                         return false;
                     }
-                    _head._link = head = head._next;
-                    _head.ReclaimSpace(LinkCapacity);
+                    head = head._next;
+                    _head.Relink(head);
                 }
 
                 int srcStart = head.ReadIndex;
@@ -299,8 +335,7 @@ namespace DotNetty.Common
                     if (srcEnd == LinkCapacity && head._next is object)
                     {
                         // Add capacity back as the Link is GCed.
-                        _head.ReclaimSpace(LinkCapacity);
-                        _head._link = head._next;
+                        _head.Relink(head._next);
                     }
 
                     head.ReadIndex = srcEnd;
@@ -348,22 +383,23 @@ namespace DotNetty.Common
             internal readonly int _maxDelayedQueues;
 
             private readonly int _maxCapacity;
-            private readonly int _ratioMask;
+            internal readonly int _interval;
             internal DefaultHandle[] _elements;
             internal int _size;
-            private int _handleRecycleCount = -1; // Start with -1 so the first one will be recycled.
+            private int _handleRecycleCount;
             private WeakOrderQueue _cursorQueue, _prevQueue;
             private volatile WeakOrderQueue _headQueue;
 
             internal Stack(ThreadLocalPool parent, Thread thread, int maxCapacity, int maxSharedCapacityFactor,
-                int ratioMask, int maxDelayedQueues)
+                int interval, int maxDelayedQueues)
             {
                 _parent = parent;
                 _threadRef = new WeakReference<Thread>(thread);
                 _maxCapacity = maxCapacity;
                 _availableSharedCapacity = new StrongBox<int>(Math.Max(maxCapacity / maxSharedCapacityFactor, LinkCapacity));
                 _elements = new DefaultHandle[Math.Min(DefaultInitialCapacity, maxCapacity)];
-                _ratioMask = ratioMask;
+                _interval = interval;
+                _handleRecycleCount = interval; // Start at interval so the first one will be recycled.
                 _maxDelayedQueues = maxDelayedQueues;
             }
 
@@ -440,6 +476,12 @@ namespace DotNetty.Common
 
             void PushLater(DefaultHandle item, Thread thread)
             {
+                if (0u >= (uint)_maxDelayedQueues)
+                {
+                    // We don't support recycling across threads and should just drop the item on the floor.
+                    return;
+                }
+
                 // we don't want to have a ref to the queue as the value in our weak map
                 // so we null it out; to ensure there are no races with restoring it later
                 // we impose a memory ordering here (no-op on x86)
@@ -455,7 +497,7 @@ namespace DotNetty.Common
                         return;
                     }
                     // Check if we already reached the maximum number of delayed queues and if we can allocate at all.
-                    if ((queue = WeakOrderQueue.Allocate(this, thread, countedWeakTable)) is null)
+                    if ((queue = NewWeakOrderQueue(thread, countedWeakTable)) is null)
                     {
                         // drop object
                         return;
@@ -471,15 +513,25 @@ namespace DotNetty.Common
                 queue.Add(item);
             }
 
+            /// <summary>
+            /// Allocate a new <see cref="WeakOrderQueue"/> or return <c>null</c> if not possible.
+            /// </summary>
+            private WeakOrderQueue NewWeakOrderQueue(Thread thread, DelayedThreadLocal.CountedWeakTable countedWeakTable)
+            {
+                return WeakOrderQueue.NewQueue(this, thread, countedWeakTable);
+            }
+
             internal bool DropHandle(DefaultHandle handle)
             {
                 if (!handle._hasBeenRecycled)
                 {
-                    if ((++_handleRecycleCount & _ratioMask) != 0)
+                    if (_handleRecycleCount < _interval)
                     {
+                        _handleRecycleCount++;
                         // Drop the object.
                         return true;
                     }
+                    _handleRecycleCount = 0;
                     handle._hasBeenRecycled = true;
                 }
                 return false;
@@ -506,13 +558,17 @@ namespace DotNetty.Common
                 size--;
                 DefaultHandle ret = _elements[size];
                 _elements[size] = null;
+                // As we already set the element[size] to null we also need to store the updated size before we do
+                // any validation. Otherwise we may see a null value when later try to pop again without a new element
+                // added before.
+                _size = size;
+
                 if (ret._lastRecycledId != ret._recycleId)
                 {
                     ThrowHelper.ThrowInvalidOperationException_RecycledMultiTimes();
                 }
                 ret._recycleId = 0;
                 ret._lastRecycledId = 0;
-                _size = size;
 
                 item = ret;
                 return true;
@@ -521,7 +577,7 @@ namespace DotNetty.Common
                 return false;
             }
 
-            bool Scavenge()
+            private bool Scavenge()
             {
                 // continue an existing scavenge, if any
                 if (ScavengeSome())
@@ -535,7 +591,7 @@ namespace DotNetty.Common
                 return false;
             }
 
-            bool ScavengeSome()
+            private bool ScavengeSome()
             {
                 WeakOrderQueue prev;
                 WeakOrderQueue cursor = _cursorQueue;
@@ -584,6 +640,8 @@ namespace DotNetty.Common
                         }
                         if (prev is object)
                         {
+                            // Ensure we reclaim all space before dropping the WeakOrderQueue to be GC'ed.
+                            cursor.ReclaimAllSpaceAndUnlink();
                             prev.Next = next;
                         }
                     }
@@ -688,7 +746,7 @@ namespace DotNetty.Common
         public ThreadLocalPool(int maxCapacityPerThread, int maxSharedCapacityFactor,
                        int ratio, int maxDelayedQueuesPerThread)
         {
-            _ratioMask = MathUtil.SafeFindNextPositivePowerOfTwo(ratio) - 1;
+            _interval = MathUtil.SafeFindNextPositivePowerOfTwo(ratio);
             if ((uint)(maxCapacityPerThread - 1) > SharedConstants.TooBigOrNegative) // <= 0
             {
                 _maxCapacityPerThread = 0;
@@ -704,7 +762,7 @@ namespace DotNetty.Common
         }
 
         protected readonly int _maxCapacityPerThread;
-        protected readonly int _ratioMask;
+        protected readonly int _interval;
         protected readonly int _maxSharedCapacityFactor;
         protected readonly int _maxDelayedQueuesPerThread;
     }

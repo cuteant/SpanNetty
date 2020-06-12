@@ -134,6 +134,27 @@ namespace DotNetty.Codecs.Http2.Tests
                     p.Complete();
                     return p.Task;
                 });
+            _writer
+                .Setup(x => x.WriteHeadersAsync(
+                    It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
+                    It.IsAny<int>(),
+                    It.IsAny<IHttp2Headers>(),
+                    It.IsAny<int>(),
+                    It.IsAny<bool>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, bool, IPromise>((c, id, headers, streamDependency, endOfStream, p) =>
+                {
+                    if (_streamClosed)
+                    {
+                        Assert.False(true, "Stream already closed");
+                    }
+                    else
+                    {
+                        _streamClosed = endOfStream;
+                    }
+                    p.Complete();
+                    return p.Task;
+                });
             _payloadCaptor = new ArgumentCaptor<IHttp2RemoteFlowControlled>();
             _remoteFlow
                 .Setup(x => x.AddFlowControlled(
@@ -290,12 +311,9 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<int>(v => v == STREAM_ID),
                     It.IsAny<IHttp2Headers>(),
                     It.IsAny<int>(),
-                    It.IsAny<short>(),
-                    It.IsAny<bool>(),
-                    It.IsAny<int>(),
                     It.IsAny<bool>(),
                     It.IsAny<IPromise>()))
-                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, short, bool, int, bool, IPromise>((c, id, headers, streamDependency, weight, exclusive, padding, endOfStream, p) =>
+                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, bool, IPromise>((c, id, headers, streamDependency, endOfStream, p) =>
                 {
                     Assert.False(p.IsVoid);
                     p.SetException(cause);
@@ -309,9 +327,6 @@ namespace DotNetty.Codecs.Http2.Tests
                 It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                 It.Is<int>(v => v == STREAM_ID),
                 It.IsAny<IHttp2Headers>(),
-                It.IsAny<int>(),
-                It.IsAny<short>(),
-                It.IsAny<bool>(),
                 It.IsAny<int>(),
                 It.IsAny<bool>(),
                 It.IsAny<IPromise>()));
@@ -347,9 +362,6 @@ namespace DotNetty.Codecs.Http2.Tests
                 It.Is<int>(v => v == streamId),
                 It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
                 It.Is<int>(v => v == 0),
-                It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                It.Is<bool>(v => v == false),
-                It.Is<int>(v => v == 0),
                 It.Is<bool>(v => v == false),
                 It.Is<IPromise>(v => v == promise)));
             Assert.True(promise.IsSuccess);
@@ -369,9 +381,6 @@ namespace DotNetty.Codecs.Http2.Tests
                 It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                 It.Is<int>(v => v == PUSH_STREAM_ID),
                 It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
-                It.Is<int>(v => v == 0),
-                It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                It.Is<bool>(v => v == false),
                 It.Is<int>(v => v == 0),
                 It.Is<bool>(v => v == false),
                 It.Is<IPromise>(v => v == promise)));
@@ -395,9 +404,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                     It.Is<int>(v => v == streamId),
                     It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
-                    It.Is<int>(v => v == 0),
-                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                    It.Is<bool>(v => v == false),
                     It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == false),
                     It.Is<IPromise>(v => v == promise)),
@@ -425,9 +431,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                     It.Is<int>(v => v == streamId),
                     It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
-                    It.Is<int>(v => v == 0),
-                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                    It.Is<bool>(v => v == false),
                     It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == false),
                     It.Is<IPromise>(v => v == promise)),
@@ -466,9 +469,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<int>(v => v == streamId),
                     It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
                     It.Is<int>(v => v == 0),
-                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                    It.Is<bool>(v => v == false),
-                    It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == false),
                     It.Is<IPromise>(v => v == promise)),
                 Times.Once);
@@ -477,9 +477,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                     It.Is<int>(v => v == streamId),
                     It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
-                    It.Is<int>(v => v == 0),
-                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                    It.Is<bool>(v => v == false),
                     It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == true),
                     It.Is<IPromise>(v => v == promise2)),
@@ -533,9 +530,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<int>(v => v == streamId),
                     It.Is<IHttp2Headers>(v => v.Equals(infoHeaders)),
                     It.Is<int>(v => v == 0),
-                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                    It.Is<bool>(v => v == false),
-                    It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == false),
                     It.IsAny<IPromise>()),
                 Times.Exactly(infoHeaderCount));
@@ -544,9 +538,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                     It.Is<int>(v => v == streamId),
                     It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
-                    It.Is<int>(v => v == 0),
-                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                    It.Is<bool>(v => v == false),
                     It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == false),
                     It.Is<IPromise>(v => v == promise2)),
@@ -558,9 +549,6 @@ namespace DotNetty.Codecs.Http2.Tests
                         It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                         It.Is<int>(v => v == streamId),
                         It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
-                        It.Is<int>(v => v == 0),
-                        It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                        It.Is<bool>(v => v == false),
                         It.Is<int>(v => v == 0),
                         It.Is<bool>(v => v == true),
                         It.Is<IPromise>(v => v == promise3)),
@@ -612,9 +600,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<int>(v => v == streamId),
                     It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
                     It.Is<int>(v => v == 0),
-                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                    It.Is<bool>(v => v == false),
-                    It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == false),
                     It.Is<IPromise>(v => v == promise)),
                 Times.Once);
@@ -623,9 +608,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                     It.Is<int>(v => v == streamId),
                     It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
-                    It.Is<int>(v => v == 0),
-                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                    It.Is<bool>(v => v == false),
                     It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == true),
                     It.Is<IPromise>(v => v == promise2)),
@@ -683,9 +665,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<int>(v => v == streamId),
                     It.Is<IHttp2Headers>(v => v.Equals(infoHeaders)),
                     It.Is<int>(v => v == 0),
-                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                    It.Is<bool>(v => v == false),
-                    It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == false),
                     It.IsAny<IPromise>()),
                 Times.Exactly(infoHeaderCount));
@@ -694,9 +673,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                     It.Is<int>(v => v == streamId),
                     It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
-                    It.Is<int>(v => v == 0),
-                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                    It.Is<bool>(v => v == false),
                     It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == false),
                     It.Is<IPromise>(v => v == promise2)),
@@ -708,9 +684,6 @@ namespace DotNetty.Codecs.Http2.Tests
                         It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                         It.Is<int>(v => v == streamId),
                         It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
-                        It.Is<int>(v => v == 0),
-                        It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                        It.Is<bool>(v => v == false),
                         It.Is<int>(v => v == 0),
                         It.Is<bool>(v => v == true),
                         It.Is<IPromise>(v => v == promise3)),
@@ -976,12 +949,9 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<int>(v => v == STREAM_ID),
                     It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
                     It.Is<int>(v => v == 0),
-                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                    It.Is<bool>(v => v == false),
-                    It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == true),
                     It.Is<IPromise>(v => v == promise)))
-                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, short, bool, int, bool, IPromise>((c, id, headers, streamDependency, weight, exclusive, padding, endOfStream, p) =>
+                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, bool, IPromise>((c, id, headers, streamDependency, endOfStream, p) =>
                 {
                     p.SetException(ex);
                     return p.Task;
@@ -1020,12 +990,9 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<int>(v => v == STREAM_ID),
                     It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
                     It.Is<int>(v => v == 0),
-                    It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                    It.Is<bool>(v => v == false),
-                    It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == true),
                     It.Is<IPromise>(v => v == promise)))
-                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, short, bool, int, bool, IPromise>((c, id, headers, streamDependency, weight, exclusive, padding, endOfStream, p) =>
+                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, bool, IPromise>((c, id, headers, streamDependency, endOfStream, p) =>
                 {
                     p.SetException(ex);
                     return p.Task;
@@ -1118,9 +1085,6 @@ namespace DotNetty.Codecs.Http2.Tests
                 It.Is<int>(v => v == STREAM_ID),
                 It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
                 It.Is<int>(v => v == 0),
-                It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
-                It.Is<bool>(v => v == false),
-                It.Is<int>(v => v == 0),
                 It.Is<bool>(v => v == false),
                 It.Is<IPromise>(v => v == promise)));
         }
@@ -1150,9 +1114,42 @@ namespace DotNetty.Codecs.Http2.Tests
                 It.Is<int>(v => v == STREAM_ID),
                 It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
                 It.Is<int>(v => v == 0),
-                It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
                 It.Is<bool>(v => v == false),
+                It.Is<IPromise>(v => v == promise)));
+        }
+
+        [Fact]
+        public void HeadersWithNoPriority()
+        {
+            WriteAllFlowControlledFrames();
+            int streamId = 6;
+            var promise = NewPromise();
+            _encoder.WriteHeadersAsync(_ctx.Object, streamId, EmptyHttp2Headers.Instance, 0, false, promise);
+            _writer.Verify(x => x.WriteHeadersAsync(
+                It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
+                It.Is<int>(v => v == streamId),
+                It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
                 It.Is<int>(v => v == 0),
+                It.Is<bool>(v => v == false),
+                It.Is<IPromise>(v => v == promise)));
+        }
+
+        [Fact]
+        public void HeadersWithPriority()
+        {
+            WriteAllFlowControlledFrames();
+            int streamId = 6;
+            var promise = NewPromise();
+            _encoder.WriteHeadersAsync(_ctx.Object, streamId, EmptyHttp2Headers.Instance, 10, Http2CodecUtil.DefaultPriorityWeight,
+                    true, 1, false, promise);
+            _writer.Verify(x => x.WriteHeadersAsync(
+                It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
+                It.Is<int>(v => v == streamId),
+                It.Is<IHttp2Headers>(v => ReferenceEquals(v, EmptyHttp2Headers.Instance)),
+                It.Is<int>(v => v == 10),
+                It.Is<short>(v => v == Http2CodecUtil.DefaultPriorityWeight),
+                It.Is<bool>(v => v == true),
+                It.Is<int>(v => v == 1),
                 It.Is<bool>(v => v == false),
                 It.Is<IPromise>(v => v == promise)));
         }

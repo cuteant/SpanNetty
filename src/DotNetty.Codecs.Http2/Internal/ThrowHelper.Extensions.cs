@@ -1073,7 +1073,7 @@ namespace DotNetty.Codecs.Http2
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowConnectionError_StreamIdPositiveOrZero(int streamId)
+        internal static void ThrowConnectionError_StreamIdPositiveOrZero()
         {
             throw Http2Exception.ConnectionError(Http2Error.ProtocolError, "{0} must be >= 0", "Stream ID");
         }
@@ -1336,9 +1336,9 @@ namespace DotNetty.Codecs.Http2
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static Http2StreamState ThrowStreamError_AttemptingToOpenAStreamInAnInvalidState(int streamId, Http2StreamState initialState)
+        internal static Http2Exception GetStreamError_AttemptingToOpenAStreamInAnInvalidState(int streamId, Http2StreamState initialState)
         {
-            throw Http2Exception.StreamError(streamId, Http2Error.ProtocolError, "Attempting to open a stream in an invalid state: " + initialState);
+            return Http2Exception.StreamError(streamId, Http2Error.ProtocolError, "Attempting to open a stream in an invalid state: " + initialState);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -1561,6 +1561,44 @@ namespace DotNetty.Codecs.Http2
 
         #endregion
 
+        #region -- NotSupportedException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static NotSupportedException GetNotSupportedException()
+        {
+            return new NotSupportedException();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotSupportedException()
+        {
+            throw GetNotSupportedException();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ReturningBytesForTheConnectionWindowIsNotSupported()
+        {
+            throw GetException();
+
+            static NotSupportedException GetException()
+            {
+                return new NotSupportedException("Returning bytes for the connection window is not supported");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowNotSupportedException_Re_register_is_not_supported()
+        {
+            throw GetException();
+
+            static NotSupportedException GetException()
+            {
+                return new NotSupportedException("Re-register is not supported");
+            }
+        }
+
+        #endregion
+
         #region -- Others --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -1596,17 +1634,6 @@ namespace DotNetty.Codecs.Http2
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ReturningBytesForTheConnectionWindowIsNotSupported()
-        {
-            throw GetException();
-
-            static NotSupportedException GetException()
-            {
-                return new NotSupportedException("Returning bytes for the connection window is not supported");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowHttp2NoMoreStreamIdsException()
         {
             throw GetException();
@@ -1614,17 +1641,6 @@ namespace DotNetty.Codecs.Http2
             static Http2NoMoreStreamIdsException GetException()
             {
                 return new Http2NoMoreStreamIdsException();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowNotSupportedException_Re_register_is_not_supported()
-        {
-            throw GetException();
-
-            static NotSupportedException GetException()
-            {
-                return new NotSupportedException("Re-register is not supported");
             }
         }
 

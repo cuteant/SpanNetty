@@ -13,17 +13,17 @@ namespace DotNetty.Buffers
         internal SimpleLeakAwareCompositeByteBuffer(CompositeByteBuffer wrapped, IResourceLeakTracker leak) : base(wrapped)
         {
             if (leak is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.leak); }
-            this.Leak = leak;
+            Leak = leak;
         }
 
         public override bool Release()
         {
             // Call unwrap() before just in case that super.release() will change the ByteBuf instance that is returned
             // by unwrap().
-            IByteBuffer unwrapped = this.Unwrap();
+            IByteBuffer unwrapped = Unwrap();
             if (base.Release())
             {
-                this.CloseLeak(unwrapped);
+                CloseLeak(unwrapped);
                 return true;
             }
 
@@ -34,10 +34,10 @@ namespace DotNetty.Buffers
         {
             // Call unwrap() before just in case that super.release() will change the ByteBuf instance that is returned
             // by unwrap().
-            IByteBuffer unwrapped = this.Unwrap();
+            IByteBuffer unwrapped = Unwrap();
             if (base.Release(decrement))
             {
-                this.CloseLeak(unwrapped);
+                CloseLeak(unwrapped);
                 return true;
             }
 
@@ -48,29 +48,29 @@ namespace DotNetty.Buffers
         {
             // Close the ResourceLeakTracker with the tracked ByteBuf as argument. This must be the same that was used when
             // calling DefaultResourceLeak.track(...).
-            bool closed = this.Leak.Close(trackedByteBuf);
+            bool closed = Leak.Close(trackedByteBuf);
             Debug.Assert(closed);
         }
 
-        public override IByteBuffer AsReadOnly() => this.NewLeakAwareByteBuffer(base.AsReadOnly());
+        public override IByteBuffer AsReadOnly() => NewLeakAwareByteBuffer(base.AsReadOnly());
 
-        public override IByteBuffer Slice() => this.NewLeakAwareByteBuffer(base.Slice());
+        public override IByteBuffer Slice() => NewLeakAwareByteBuffer(base.Slice());
 
-        public override IByteBuffer Slice(int index, int length) => this.NewLeakAwareByteBuffer(base.Slice(index, length));
+        public override IByteBuffer Slice(int index, int length) => NewLeakAwareByteBuffer(base.Slice(index, length));
 
-        public override IByteBuffer Duplicate() => this.NewLeakAwareByteBuffer(base.Duplicate());
+        public override IByteBuffer Duplicate() => NewLeakAwareByteBuffer(base.Duplicate());
 
-        public override IByteBuffer ReadSlice(int length) => this.NewLeakAwareByteBuffer(base.ReadSlice(length));
+        public override IByteBuffer ReadSlice(int length) => NewLeakAwareByteBuffer(base.ReadSlice(length));
 
-        public override IByteBuffer RetainedSlice() => this.NewLeakAwareByteBuffer(base.RetainedSlice());
+        public override IByteBuffer RetainedSlice() => NewLeakAwareByteBuffer(base.RetainedSlice());
 
-        public override IByteBuffer RetainedSlice(int index, int length) => this.NewLeakAwareByteBuffer(base.RetainedSlice(index, length));
+        public override IByteBuffer RetainedSlice(int index, int length) => NewLeakAwareByteBuffer(base.RetainedSlice(index, length));
 
-        public override IByteBuffer RetainedDuplicate() => this.NewLeakAwareByteBuffer(base.RetainedDuplicate());
+        public override IByteBuffer RetainedDuplicate() => NewLeakAwareByteBuffer(base.RetainedDuplicate());
 
-        public override IByteBuffer ReadRetainedSlice(int length) => this.NewLeakAwareByteBuffer(base.ReadRetainedSlice(length));
+        public override IByteBuffer ReadRetainedSlice(int length) => NewLeakAwareByteBuffer(base.ReadRetainedSlice(length));
 
-        SimpleLeakAwareByteBuffer NewLeakAwareByteBuffer(IByteBuffer wrapped) => this.NewLeakAwareByteBuffer(wrapped, this.Unwrap(), this.Leak);
+        SimpleLeakAwareByteBuffer NewLeakAwareByteBuffer(IByteBuffer wrapped) => NewLeakAwareByteBuffer(wrapped, Unwrap(), Leak);
 
         protected virtual SimpleLeakAwareByteBuffer NewLeakAwareByteBuffer(IByteBuffer wrapped, IByteBuffer trackedByteBuf, IResourceLeakTracker leakTracker) =>
             new SimpleLeakAwareByteBuffer(wrapped, trackedByteBuf, leakTracker);

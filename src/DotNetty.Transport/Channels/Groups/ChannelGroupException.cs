@@ -10,7 +10,7 @@ namespace DotNetty.Transport.Channels.Groups
 
     public class ChannelGroupException : ChannelException, IEnumerable<KeyValuePair<IChannel, Exception>>
     {
-        readonly IReadOnlyCollection<KeyValuePair<IChannel, Exception>> failed;
+        readonly IReadOnlyCollection<KeyValuePair<IChannel, Exception>> _failed;
 
         public ChannelGroupException(IList<KeyValuePair<IChannel, Exception>> exceptions)
         {
@@ -22,11 +22,11 @@ namespace DotNetty.Transport.Channels.Groups
             {
                 ThrowHelper.ThrowArgumentException_Excs();
             }
-            this.failed = new ReadOnlyCollection<KeyValuePair<IChannel, Exception>>(exceptions);
+            _failed = new ReadOnlyCollection<KeyValuePair<IChannel, Exception>>(exceptions);
         }
 
-        public IEnumerator<KeyValuePair<IChannel, Exception>> GetEnumerator() => this.failed.GetEnumerator();
+        public IEnumerator<KeyValuePair<IChannel, Exception>> GetEnumerator() => _failed.GetEnumerator();
 
-        IEnumerator IEnumerable.GetEnumerator() => this.failed.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => _failed.GetEnumerator();
     }
 }

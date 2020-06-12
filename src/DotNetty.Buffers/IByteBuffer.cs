@@ -114,8 +114,8 @@ namespace DotNetty.Buffers
 
         /// <summary>
         /// Returns the maximum number of bytes which can be written for certain without involving
-        /// an internal reallocation or data-copy. The returned value will be <see cref="WritableBytes"/>
-        /// and <see cref="MaxWritableBytes"/>.
+        /// an internal reallocation or data-copy. The returned value will be &gt; <see cref="WritableBytes"/>
+        /// and &lt; <see cref="MaxWritableBytes"/>.
         /// </summary>
         int MaxFastWritableBytes { get; }
 
@@ -396,7 +396,13 @@ namespace DotNetty.Buffers
         /// </exception>
         IByteBuffer GetBytes(int index, Stream destination, int length);
 
-
+        /// <summary>
+        /// Gets a <see cref="ICharSequence"/> with the given length at the given index.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="length">the length to read</param>
+        /// <param name="encoding">that should be used</param>
+        /// <returns>the sequence</returns>
         ICharSequence GetCharSequence(int index, int length, Encoding encoding);
 
         /// <summary>
@@ -593,6 +599,14 @@ namespace DotNetty.Buffers
         /// </exception>
         IByteBuffer SetZero(int index, int length);
 
+        /// <summary>
+        /// Writes the specified <see cref="ICharSequence"/> at the current <see cref="WriterIndex"/> and increases
+        /// the <see cref="WriterIndex"/> by the written bytes.
+        /// </summary>
+        /// <param name="index">on which the sequence should be written</param>
+        /// <param name="sequence">to write</param>
+        /// <param name="encoding">that should be used.</param>
+        /// <returns>the written number of bytes.</returns>
         int SetCharSequence(int index, ICharSequence sequence, Encoding encoding);
 
         /// <summary>
@@ -700,16 +714,67 @@ namespace DotNetty.Buffers
         /// </exception>
         IByteBuffer ReadBytes(int length);
 
+        /// <summary>
+        /// Transfers this buffer's data to the specified destination starting at
+        /// the current <see cref="ReaderIndex"/> and increases the <see cref="ReaderIndex"/>
+        /// by the number of the transferred bytes (= <paramref name="length"/>).  This method
+        /// is basically same with <see cref="ReadBytes(IByteBuffer, int, int)"/>,
+        /// except that this method increases the <see cref="WriterIndex"/> of the
+        /// destination by the number of the transferred bytes (= <paramref name="length"/>)
+        /// while <see cref="ReadBytes(IByteBuffer, int, int)"/> does not.
+        /// </summary>
+        /// <param name="destination"></param>
+        /// <param name="length">the number of bytes to transfer</param>
+        /// <returns></returns>
         IByteBuffer ReadBytes(IByteBuffer destination, int length);
 
+        /// <summary>
+        /// Transfers this buffer's data to the specified destination starting at
+        /// the current <see cref="ReaderIndex"/> and increases the <see cref="ReaderIndex"/>
+        /// by the number of the transferred bytes (= <paramref name="length"/>).
+        /// </summary>
+        /// <param name="destination"></param>
+        /// <param name="dstIndex">the first index of the destination</param>
+        /// <param name="length">the number of bytes to transfer</param>
+        /// <returns></returns>
         IByteBuffer ReadBytes(IByteBuffer destination, int dstIndex, int length);
 
+        /// <summary>
+        /// Transfers this buffer's data to the specified destination starting at
+        /// the current <see cref="ReaderIndex"/> and increases the <see cref="ReaderIndex"/>
+        /// by the number of the transferred bytes (= <see cref="Array.Length"/> of <paramref name="destination"/>).
+        /// </summary>
+        /// <param name="destination"></param>
+        /// <returns></returns>
         IByteBuffer ReadBytes(byte[] destination);
 
+        /// <summary>
+        /// Transfers this buffer's data to the specified destination starting at
+        /// the current <see cref="ReaderIndex"/> and increases the <see cref="ReaderIndex"/>
+        /// by the number of the transferred bytes (= <paramref name="length"/>).
+        /// </summary>
+        /// <param name="destination"></param>
+        /// <param name="dstIndex">the first index of the destination</param>
+        /// <param name="length">the number of bytes to transfer</param>
+        /// <returns></returns>
         IByteBuffer ReadBytes(byte[] destination, int dstIndex, int length);
 
+        /// <summary>
+        /// Transfers this buffer's data to the specified stream starting at the
+        /// current <see cref="ReaderIndex"/>.
+        /// </summary>
+        /// <param name="destination"></param>
+        /// <param name="length">the number of bytes to transfer</param>
+        /// <returns></returns>
         IByteBuffer ReadBytes(Stream destination, int length);
 
+        /// <summary>
+        /// Gets a <see cref="ICharSequence"/> with the given length at the current <see cref="ReaderIndex"/>
+        /// and increases the <see cref="ReaderIndex"/> by the given length.
+        /// </summary>
+        /// <param name="length">the length to read</param>
+        /// <param name="encoding">that should be used</param>
+        /// <returns>the sequence</returns>
         ICharSequence ReadCharSequence(int length, Encoding encoding);
 
         /// <summary>
@@ -727,6 +792,14 @@ namespace DotNetty.Buffers
         /// <exception cref="IndexOutOfRangeException"> if <paramref name="length" /> is greater than <see cref="ReadableBytes" />.</exception>
         IByteBuffer SkipBytes(int length);
 
+        /// <summary>
+        /// Sets the specified boolean at the current <see cref="WriterIndex"/>
+        /// and increases the <see cref="WriterIndex"/> by <c>1</c> in this buffer.
+        /// If <see cref="WritableBytes"/> is less than <c>1</c>, <see cref="EnsureWritable(int)"/>
+        /// will be called in an attempt to expand capacity to accommodate.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         IByteBuffer WriteBoolean(bool value);
 
         IByteBuffer WriteByte(int value);
@@ -838,6 +911,17 @@ namespace DotNetty.Buffers
         IntPtr AddressOfPinnedMemory();
 
         /// <summary>
+        /// Returns <c>true</c> if this <see cref="IByteBuffer"/> implementation is backed by a single memory region.
+        /// Composite buffer implementations must return false even if they currently hold &lt; 1 components.
+        /// For buffers that return <c>true</c>, it's guaranteed that a successful call to <see cref="DiscardReadBytes"/>
+        /// will increase the value of <see cref="MaxFastWritableBytes"/> by the current <see cref="ReaderIndex"/>.
+        /// 
+        /// <para>This method will return <c>false</c> by default, and a <c>false</c> return value does not necessarily
+        /// mean that the implementation is composite or that it is <i>not</i> backed by a single memory region.</para>
+        /// </summary>
+        bool IsContiguous { get; }
+
+        /// <summary>
         ///     Creates a deep clone of the existing byte array and returns it
         /// </summary>
         IByteBuffer Duplicate();
@@ -850,28 +934,145 @@ namespace DotNetty.Buffers
         /// <remarks>return <code>null</code> if this buffer is not a wrapper</remarks>
         IByteBuffer Unwrap();
 
+        /// <summary>
+        /// Returns a copy of this buffer's sub-region.  Modifying the content of
+        /// the returned buffer or this buffer does not affect each other at all.
+        /// This method does not modify <see cref="ReaderIndex"/> or <see cref="WriterIndex"/> of
+        /// this buffer.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
         IByteBuffer Copy(int index, int length);
 
+        /// <summary>
+        /// Returns a slice of this buffer's readable bytes. Modifying the content
+        /// of the returned buffer or this buffer affects each other's content
+        /// while they maintain separate indexes and marks.  This method is
+        /// identical to <code>buf.Slice(buf.ReaderIndex, buf.ReadableBytes)</code>.
+        /// This method does not modify <see cref="ReaderIndex"/> or <see cref="WriterIndex"/> of
+        /// this buffer.
+        /// </summary>
+        /// <remarks>
+        /// Also be aware that this method will NOT call <see cref="IReferenceCounted.Retain()"/> and so the
+        /// reference count will NOT be increased.
+        /// </remarks>
+        /// <returns></returns>
         IByteBuffer Slice();
 
+        /// <summary>
+        /// Returns a retained slice of this buffer's readable bytes. Modifying the content
+        /// of the returned buffer or this buffer affects each other's content
+        /// while they maintain separate indexes and marks.  This method is
+        /// identical to <code>buf.Slice(buf.ReaderIndex, buf.ReadableBytes)</code>.
+        /// This method does not modify <see cref="ReaderIndex"/> or <see cref="WriterIndex"/> of
+        /// this buffer.
+        /// </summary>
+        /// <remarks>
+        /// Note that this method returns a {@linkplain #retain() retained} buffer unlike <see cref="Slice()"/>.
+        /// This method behaves similarly to {@code slice().retain()} except that this method may return
+        /// a buffer implementation that produces less garbage.
+        /// </remarks>
+        /// <returns></returns>
         IByteBuffer RetainedSlice();
 
+        /// <summary>
+        /// Returns a slice of this buffer's sub-region. Modifying the content of
+        /// the returned buffer or this buffer affects each other's content while
+        /// they maintain separate indexes and marks.
+        /// This method does not modify <see cref="ReaderIndex"/> or <see cref="WriterIndex"/> of
+        /// this buffer.
+        /// </summary>
+        /// <remarks>
+        /// Also be aware that this method will NOT call <see cref="IReferenceCounted.Retain()"/> and so the
+        /// reference count will NOT be increased.
+        /// </remarks>
+        /// <param name="index"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
         IByteBuffer Slice(int index, int length);
 
+        /// <summary>
+        /// Returns a retained slice of this buffer's sub-region. Modifying the content of
+        /// the returned buffer or this buffer affects each other's content while
+        /// they maintain separate indexes and marks.
+        /// This method does not modify <see cref="ReaderIndex"/> or <see cref="WriterIndex"/> of
+        /// this buffer.
+        /// </summary>
+        /// <remarks>
+        /// Note that this method returns a {@linkplain #retain() retained} buffer unlike <see cref="Slice(int, int)"/>.
+        /// This method behaves similarly to {@code slice(...).retain()} except that this method may return
+        /// a buffer implementation that produces less garbage.
+        /// </remarks>
+        /// <param name="index"></param>
+        /// <param name="length"></param>
+        /// <returns></returns>
         IByteBuffer RetainedSlice(int index, int length);
 
         int ArrayOffset { get; }
 
+        /// <summary>
+        /// Returns a new slice of this buffer's sub-region starting at the current
+        /// <see cref="ReaderIndex"/> and increases the <see cref="ReaderIndex"/> by the size
+        /// of the new slice (= <paramref name="length"/>).
+        /// </summary>
+        /// <remarks>
+        /// Also be aware that this method will NOT call <see cref="IReferenceCounted.Retain()"/> and so the
+        /// reference count will NOT be increased.
+        /// </remarks>
+        /// <param name="length">the size of the new slice</param>
+        /// <returns>the newly created slice</returns>
         IByteBuffer ReadSlice(int length);
 
+        /// <summary>
+        /// Returns a new retained slice of this buffer's sub-region starting at the current
+        /// <see cref="ReaderIndex"/> and increases the <see cref="ReaderIndex"/> by the size
+        /// of the new slice (= <paramref name="length"/>).
+        /// </summary>
+        /// <remarks>
+        /// Note that this method returns a {@linkplain #retain() retained} buffer unlike <see cref="ReadSlice(int)"/>.
+        /// This method behaves similarly to {@code readSlice(...).retain()} except that this method may return
+        /// a buffer implementation that produces less garbage.
+        /// </remarks>
+        /// <param name="length">the size of the new slice</param>
+        /// <returns>the newly created slice</returns>
         IByteBuffer ReadRetainedSlice(int length);
 
         Task WriteBytesAsync(Stream stream, int length, CancellationToken cancellationToken);
 
+        /// <summary>
+        /// Fills this buffer with <tt>NUL (0x00)</tt> starting at the current
+        /// <see cref="WriterIndex"/> and increases the <see cref="WriterIndex"/> by the
+        /// specified <paramref name="length"/>}.
+        /// </summary>
+        /// <remarks>If <see cref="WritableBytes"/> is less than <paramref name="length"/>, <see cref="EnsureWritable(int)"/>
+        /// will be called in an attempt to expand capacity to accommodate.</remarks>
+        /// <param name="length"></param>
+        /// <returns></returns>
         IByteBuffer WriteZero(int length);
 
+        /// <summary>
+        /// Writes the specified <see cref="ICharSequence"/> at the current <see cref="WriterIndex"/> and increases
+        /// the <see cref="WriterIndex"/> by the written bytes.
+        /// in this buffer.
+        /// If {<see cref="WritableBytes"/> is not large enough to write the whole sequence,
+        /// <see cref="EnsureWritable(int)"/> will be called in an attempt to expand capacity to accommodate.
+        /// </summary>
+        /// <param name="sequence">to write</param>
+        /// <param name="encoding">that should be used</param>
+        /// <returns>the written number of bytes</returns>
         int WriteCharSequence(ICharSequence sequence, Encoding encoding);
 
+        /// <summary>
+        /// Writes the specified <see cref="String"/> at the current <see cref="WriterIndex"/> and increases
+        /// the <see cref="WriterIndex"/> by the written bytes.
+        /// in this buffer.
+        /// If {<see cref="WritableBytes"/> is not large enough to write the whole sequence,
+        /// <see cref="EnsureWritable(int)"/> will be called in an attempt to expand capacity to accommodate.
+        /// </summary>
+        /// <param name="value">to write</param>
+        /// <param name="encoding">that should be used</param>
+        /// <returns>the written number of bytes</returns>
         int WriteString(string value, Encoding encoding);
 
         string ToString();

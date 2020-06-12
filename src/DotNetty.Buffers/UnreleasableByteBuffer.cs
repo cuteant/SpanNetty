@@ -10,35 +10,35 @@ namespace DotNetty.Buffers
         {
         }
 
-        public override IByteBuffer AsReadOnly() => this.Buf.IsReadOnly ? this : new UnreleasableByteBuffer(this.Buf.AsReadOnly());
+        public override IByteBuffer AsReadOnly() => Buf.IsReadOnly ? this : new UnreleasableByteBuffer(Buf.AsReadOnly());
 
-        public override IByteBuffer ReadSlice(int length) => new UnreleasableByteBuffer(this.Buf.ReadSlice(length));
+        public override IByteBuffer ReadSlice(int length) => new UnreleasableByteBuffer(Buf.ReadSlice(length));
 
         // We could call buf.readSlice(..), and then call buf.release(). However this creates a leak in unit tests
         // because the release method on UnreleasableByteBuf will never allow the leak record to be cleaned up.
         // So we just use readSlice(..) because the end result should be logically equivalent.
-        public override IByteBuffer ReadRetainedSlice(int length) => this.ReadSlice(length);
+        public override IByteBuffer ReadRetainedSlice(int length) => ReadSlice(length);
 
-        public override IByteBuffer Slice() => new UnreleasableByteBuffer(this.Buf.Slice());
+        public override IByteBuffer Slice() => new UnreleasableByteBuffer(Buf.Slice());
 
         // We could call buf.retainedSlice(), and then call buf.release(). However this creates a leak in unit tests
         // because the release method on UnreleasableByteBuf will never allow the leak record to be cleaned up.
         // So we just use slice() because the end result should be logically equivalent.
-        public override IByteBuffer RetainedSlice() => this.Slice();
+        public override IByteBuffer RetainedSlice() => Slice();
 
-        public override IByteBuffer Slice(int index, int length) => new UnreleasableByteBuffer(this.Buf.Slice(index, length));
+        public override IByteBuffer Slice(int index, int length) => new UnreleasableByteBuffer(Buf.Slice(index, length));
 
         // We could call buf.retainedSlice(..), and then call buf.release(). However this creates a leak in unit tests
         // because the release method on UnreleasableByteBuf will never allow the leak record to be cleaned up.
         // So we just use slice(..) because the end result should be logically equivalent.
-        public override IByteBuffer RetainedSlice(int index, int length) => this.Slice(index, length);
+        public override IByteBuffer RetainedSlice(int index, int length) => Slice(index, length);
 
-        public override IByteBuffer Duplicate() => new UnreleasableByteBuffer(this.Buf.Duplicate());
+        public override IByteBuffer Duplicate() => new UnreleasableByteBuffer(Buf.Duplicate());
 
         // We could call buf.retainedDuplicate(), and then call buf.release(). However this creates a leak in unit tests
         // because the release method on UnreleasableByteBuf will never allow the leak record to be cleaned up.
         // So we just use duplicate() because the end result should be logically equivalent.
-        public override IByteBuffer RetainedDuplicate() => this.Duplicate();
+        public override IByteBuffer RetainedDuplicate() => Duplicate();
 
         public override IReferenceCounted Retain() => this;
 

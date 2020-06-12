@@ -119,16 +119,16 @@ namespace DotNetty.Buffers
 
         public static readonly PooledByteBufferAllocator Default;
 
-        readonly PoolArena<byte[]>[] heapArenas;
-        readonly PoolArena<byte[]>[] directArenas;
-        readonly int tinyCacheSize;
-        readonly int smallCacheSize;
-        readonly int normalCacheSize;
-        readonly IReadOnlyList<IPoolArenaMetric> heapArenaMetrics;
-        readonly IReadOnlyList<IPoolArenaMetric> directArenaMetrics;
-        readonly PoolThreadLocalCache threadCache;
-        readonly int chunkSize;
-        readonly PooledByteBufferAllocatorMetric metric;
+        private readonly PoolArena<byte[]>[] _heapArenas;
+        private readonly PoolArena<byte[]>[] _directArenas;
+        private readonly int _tinyCacheSize;
+        private readonly int _smallCacheSize;
+        private readonly int _normalCacheSize;
+        private readonly IReadOnlyList<IPoolArenaMetric> _heapArenaMetrics;
+        private readonly IReadOnlyList<IPoolArenaMetric> _directArenaMetrics;
+        private readonly PoolThreadLocalCache _threadCache;
+        private readonly int _chunkSize;
+        private readonly PooledByteBufferAllocatorMetric _metric;
 
         public PooledByteBufferAllocator() : this(false)
         {
@@ -162,51 +162,51 @@ namespace DotNetty.Buffers
             if (nHeapArena < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(nHeapArena, ExceptionArgument.nHeapArena); }
             if (nDirectArena < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(nHeapArena, ExceptionArgument.nDirectArena); }
 
-            this.threadCache = new PoolThreadLocalCache(this);
-            this.tinyCacheSize = tinyCacheSize;
-            this.smallCacheSize = smallCacheSize;
-            this.normalCacheSize = normalCacheSize;
-            this.chunkSize = ValidateAndCalculateChunkSize(pageSize, maxOrder);
+            _threadCache = new PoolThreadLocalCache(this);
+            _tinyCacheSize = tinyCacheSize;
+            _smallCacheSize = smallCacheSize;
+            _normalCacheSize = normalCacheSize;
+            _chunkSize = ValidateAndCalculateChunkSize(pageSize, maxOrder);
 
             int pageShifts = ValidateAndCalculatePageShifts(pageSize);
 
             if (nHeapArena > 0)
             {
-                this.heapArenas = NewArenaArray<byte[]>(nHeapArena);
-                var metrics = new List<IPoolArenaMetric>(this.heapArenas.Length);
-                for (int i = 0; i < this.heapArenas.Length; i++)
+                _heapArenas = NewArenaArray<byte[]>(nHeapArena);
+                var metrics = new List<IPoolArenaMetric>(_heapArenas.Length);
+                for (int i = 0; i < _heapArenas.Length; i++)
                 {
-                    var arena = new HeapArena(this, pageSize, maxOrder, pageShifts, this.chunkSize);
-                    this.heapArenas[i] = arena;
+                    var arena = new HeapArena(this, pageSize, maxOrder, pageShifts, _chunkSize);
+                    _heapArenas[i] = arena;
                     metrics.Add(arena);
                 }
-                this.heapArenaMetrics = metrics.AsReadOnly();
+                _heapArenaMetrics = metrics.AsReadOnly();
             }
             else
             {
-                this.heapArenas = null;
-                this.heapArenaMetrics = new IPoolArenaMetric[0];
+                _heapArenas = null;
+                _heapArenaMetrics = new IPoolArenaMetric[0];
             }
 
             if (nDirectArena > 0)
             {
-                this.directArenas = NewArenaArray<byte[]>(nDirectArena);
-                var metrics = new List<IPoolArenaMetric>(this.directArenas.Length);
-                for (int i = 0; i < this.directArenas.Length; i++)
+                _directArenas = NewArenaArray<byte[]>(nDirectArena);
+                var metrics = new List<IPoolArenaMetric>(_directArenas.Length);
+                for (int i = 0; i < _directArenas.Length; i++)
                 {
-                    var arena = new DirectArena(this, pageSize, maxOrder, pageShifts, this.chunkSize);
-                    this.directArenas[i] = arena;
+                    var arena = new DirectArena(this, pageSize, maxOrder, pageShifts, _chunkSize);
+                    _directArenas[i] = arena;
                     metrics.Add(arena);
                 }
-                this.directArenaMetrics = metrics.AsReadOnly();
+                _directArenaMetrics = metrics.AsReadOnly();
             }
             else
             {
-                this.directArenas = null;
-                this.directArenaMetrics = new IPoolArenaMetric[0];
+                _directArenas = null;
+                _directArenaMetrics = new IPoolArenaMetric[0];
             }
 
-            this.metric = new PooledByteBufferAllocatorMetric(this);
+            _metric = new PooledByteBufferAllocatorMetric(this);
         }
 
         static PoolArena<T>[] NewArenaArray<T>(int size) => new PoolArena<T>[size];
@@ -239,7 +239,7 @@ namespace DotNetty.Buffers
 
         protected override IByteBuffer NewHeapBuffer(int initialCapacity, int maxCapacity)
         {
-            PoolThreadCache<byte[]> cache = this.threadCache.Value;
+            PoolThreadCache<byte[]> cache = _threadCache.Value;
             PoolArena<byte[]> heapArena = cache.HeapArena;
 
             IByteBuffer buf;
@@ -257,7 +257,7 @@ namespace DotNetty.Buffers
 
         protected unsafe override IByteBuffer NewDirectBuffer(int initialCapacity, int maxCapacity)
         {
-            PoolThreadCache<byte[]> cache = this.threadCache.Value;
+            PoolThreadCache<byte[]> cache = _threadCache.Value;
             PoolArena<byte[]> directArena = cache.DirectArena;
 
             IByteBuffer buf;
@@ -275,27 +275,27 @@ namespace DotNetty.Buffers
 
         public static bool DefaultPreferDirect => PlatformDependent.DirectBufferPreferred;
 
-        public override bool IsDirectBufferPooled => this.directArenas is object;
+        public override bool IsDirectBufferPooled => _directArenas is object;
 
         sealed class PoolThreadLocalCache : FastThreadLocal<PoolThreadCache<byte[]>>
         {
-            readonly PooledByteBufferAllocator owner;
+            readonly PooledByteBufferAllocator _owner;
 
             public PoolThreadLocalCache(PooledByteBufferAllocator owner)
             {
-                this.owner = owner;
+                _owner = owner;
             }
 
             protected override PoolThreadCache<byte[]> GetInitialValue()
             {
                 lock (this)
                 {
-                    PoolArena<byte[]> heapArena = this.LeastUsedArena(this.owner.heapArenas);
-                    PoolArena<byte[]> directArena = this.LeastUsedArena(this.owner.directArenas);
+                    PoolArena<byte[]> heapArena = LeastUsedArena(_owner._heapArenas);
+                    PoolArena<byte[]> directArena = LeastUsedArena(_owner._directArenas);
 
                     return new PoolThreadCache<byte[]>(
                             heapArena, directArena,
-                            this.owner.tinyCacheSize, this.owner.smallCacheSize, this.owner.normalCacheSize,
+                            _owner._tinyCacheSize, _owner._smallCacheSize, _owner._normalCacheSize,
                             DefaultMaxCachedBufferCapacity, DefaultCacheTrimInterval);
                 }
             }
@@ -323,25 +323,25 @@ namespace DotNetty.Buffers
             }
         }
 
-        internal IReadOnlyList<IPoolArenaMetric> HeapArenas() => this.heapArenaMetrics;
+        internal IReadOnlyList<IPoolArenaMetric> HeapArenas() => _heapArenaMetrics;
 
-        internal IReadOnlyList<IPoolArenaMetric> DirectArenas() => this.directArenaMetrics;
+        internal IReadOnlyList<IPoolArenaMetric> DirectArenas() => _directArenaMetrics;
 
-        internal int TinyCacheSize => this.tinyCacheSize;
+        internal int TinyCacheSize => _tinyCacheSize;
 
-        internal int SmallCacheSize => this.smallCacheSize;
+        internal int SmallCacheSize => _smallCacheSize;
 
-        internal int NormalCacheSize => this.normalCacheSize;
+        internal int NormalCacheSize => _normalCacheSize;
 
-        internal int ChunkSize => this.chunkSize;
+        internal int ChunkSize => _chunkSize;
 
-        public PooledByteBufferAllocatorMetric Metric => this.metric;
+        public PooledByteBufferAllocatorMetric Metric => _metric;
 
-        IByteBufferAllocatorMetric IByteBufferAllocatorMetricProvider.Metric => this.Metric;
+        IByteBufferAllocatorMetric IByteBufferAllocatorMetricProvider.Metric => Metric;
 
-        internal long UsedHeapMemory => UsedMemory(this.heapArenas);
+        internal long UsedHeapMemory => UsedMemory(_heapArenas);
 
-        internal long UsedDirectMemory => UsedMemory(this.directArenas);
+        internal long UsedDirectMemory => UsedMemory(_directArenas);
 
         static long UsedMemory(PoolArena<byte[]>[] arenas)
         {
@@ -362,13 +362,13 @@ namespace DotNetty.Buffers
             return used;
         }
 
-        internal PoolThreadCache<T> ThreadCache<T>() => (PoolThreadCache<T>)(object)this.threadCache.Value;
+        internal PoolThreadCache<T> ThreadCache<T>() => (PoolThreadCache<T>)(object)_threadCache.Value;
 
         /// Returns the status of the allocator (which contains all metrics) as string. Be aware this may be expensive
         /// and so should not called too frequently.
         public string DumpStats()
         {
-            int heapArenasLen = this.heapArenas?.Length ?? 0;
+            int heapArenasLen = _heapArenas?.Length ?? 0;
             var buf = StringBuilderManager.Allocate(512)
                     .Append(heapArenasLen)
                     .Append(" heap arena(s):")
@@ -376,20 +376,20 @@ namespace DotNetty.Buffers
             if (heapArenasLen > 0)
             {
                 // ReSharper disable once PossibleNullReferenceException
-                foreach (PoolArena<byte[]> a in this.heapArenas)
+                foreach (PoolArena<byte[]> a in _heapArenas)
                 {
                     buf.Append(a);
                 }
             }
 
-            int directArenasLen = this.directArenas?.Length ?? 0;
+            int directArenasLen = _directArenas?.Length ?? 0;
             buf.Append(directArenasLen)
                 .Append(" direct arena(s):")
                 .Append(StringUtil.Newline);
             if (directArenasLen > 0)
             {
                 // ReSharper disable once PossibleNullReferenceException
-                foreach (PoolArena<byte[]> a in this.directArenas)
+                foreach (PoolArena<byte[]> a in _directArenas)
                 {
                     buf.Append(a);
                 }

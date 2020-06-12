@@ -27,7 +27,7 @@ namespace DotNetty.Buffers
         {
             if (allocator is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.allocator); }
 
-            this.Allocator = allocator;
+            Allocator = allocator;
         }
 
         public int Capacity => 0;
@@ -50,16 +50,16 @@ namespace DotNetty.Buffers
 
         public int ReaderIndex => 0;
 
-        public IByteBuffer SetReaderIndex(int readerIndex) => this.CheckIndex(readerIndex);
+        public IByteBuffer SetReaderIndex(int readerIndex) => CheckIndex(readerIndex);
 
         public int WriterIndex => 0;
 
-        public IByteBuffer SetWriterIndex(int writerIndex) => this.CheckIndex(writerIndex);
+        public IByteBuffer SetWriterIndex(int writerIndex) => CheckIndex(writerIndex);
 
         public IByteBuffer SetIndex(int readerIndex, int writerIndex)
         {
-            this.CheckIndex(readerIndex);
-            this.CheckIndex(writerIndex);
+            CheckIndex(readerIndex);
+            CheckIndex(writerIndex);
             return this;
         }
 
@@ -127,23 +127,23 @@ namespace DotNetty.Buffers
 
         public long GetLongLE(int index) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer GetBytes(int index, IByteBuffer destination, int dstIndex, int length) => this.CheckIndex(index, length);
+        public IByteBuffer GetBytes(int index, IByteBuffer destination, int dstIndex, int length) => CheckIndex(index, length);
 
-        public IByteBuffer GetBytes(int index, byte[] destination) => this.CheckIndex(index, destination.Length);
+        public IByteBuffer GetBytes(int index, byte[] destination) => CheckIndex(index, destination.Length);
 
-        public IByteBuffer GetBytes(int index, byte[] destination, int dstIndex, int length) => this.CheckIndex(index, length);
+        public IByteBuffer GetBytes(int index, byte[] destination, int dstIndex, int length) => CheckIndex(index, length);
 
-        public IByteBuffer GetBytes(int index, Stream destination, int length) => this.CheckIndex(index, length);
+        public IByteBuffer GetBytes(int index, Stream destination, int length) => CheckIndex(index, length);
 
         public ICharSequence GetCharSequence(int index, int length, Encoding encoding)
         {
-            _ = this.CheckIndex(index, length);
+            _ = CheckIndex(index, length);
             return null;
         }
 
         public string GetString(int index, int length, Encoding encoding)
         {
-            _ = this.CheckIndex(index, length);
+            _ = CheckIndex(index, length);
             return null;
         }
 
@@ -167,21 +167,21 @@ namespace DotNetty.Buffers
 
         public IByteBuffer SetLongLE(int index, long value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer SetBytes(int index, IByteBuffer src, int length) => this.CheckIndex(index, length);
+        public IByteBuffer SetBytes(int index, IByteBuffer src, int length) => CheckIndex(index, length);
 
-        public IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length) => this.CheckIndex(index, length);
+        public IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length) => CheckIndex(index, length);
 
-        public IByteBuffer SetBytes(int index, byte[] src) => this.CheckIndex(index, src.Length);
+        public IByteBuffer SetBytes(int index, byte[] src) => CheckIndex(index, src.Length);
 
-        public IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length) => this.CheckIndex(index, length);
+        public IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length) => CheckIndex(index, length);
 
         public Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
-            _ = this.CheckIndex(index, length);
+            _ = CheckIndex(index, length);
             return TaskUtil.Zero;
         }
 
-        public IByteBuffer SetZero(int index, int length) => this.CheckIndex(index, length);
+        public IByteBuffer SetZero(int index, int length) => CheckIndex(index, length);
 
         public int SetCharSequence(int index, ICharSequence sequence, Encoding encoding) => throw ThrowHelper.GetIndexOutOfRangeException();
 
@@ -211,31 +211,31 @@ namespace DotNetty.Buffers
 
         public long ReadLongLE() => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer ReadBytes(int length) => this.CheckLength(length);
+        public IByteBuffer ReadBytes(int length) => CheckLength(length);
 
-        public IByteBuffer ReadBytes(IByteBuffer destination, int length) => this.CheckLength(length);
+        public IByteBuffer ReadBytes(IByteBuffer destination, int length) => CheckLength(length);
 
-        public IByteBuffer ReadBytes(IByteBuffer destination, int dstIndex, int length) => this.CheckLength(length);
+        public IByteBuffer ReadBytes(IByteBuffer destination, int dstIndex, int length) => CheckLength(length);
 
-        public IByteBuffer ReadBytes(byte[] destination) => this.CheckLength(destination.Length);
+        public IByteBuffer ReadBytes(byte[] destination) => CheckLength(destination.Length);
 
-        public IByteBuffer ReadBytes(byte[] destination, int dstIndex, int length) => this.CheckLength(length);
+        public IByteBuffer ReadBytes(byte[] destination, int dstIndex, int length) => CheckLength(length);
 
-        public IByteBuffer ReadBytes(Stream destination, int length) => this.CheckLength(length);
+        public IByteBuffer ReadBytes(Stream destination, int length) => CheckLength(length);
 
         public ICharSequence ReadCharSequence(int length, Encoding encoding)
         {
-            _ = this.CheckLength(length);
+            _ = CheckLength(length);
             return StringCharSequence.Empty;
         }
 
         public string ReadString(int length, Encoding encoding)
         {
-            _ = this.CheckLength(length);
+            _ = CheckLength(length);
             return string.Empty;
         }
 
-        public IByteBuffer SkipBytes(int length) => this.CheckLength(length);
+        public IByteBuffer SkipBytes(int length) => CheckLength(length);
 
         public IByteBuffer WriteBoolean(bool value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
@@ -261,15 +261,15 @@ namespace DotNetty.Buffers
 
         public IByteBuffer WriteLongLE(long value) => throw ThrowHelper.GetIndexOutOfRangeException();
 
-        public IByteBuffer WriteBytes(IByteBuffer src, int length) => this.CheckLength(length);
+        public IByteBuffer WriteBytes(IByteBuffer src, int length) => CheckLength(length);
 
-        public IByteBuffer WriteBytes(IByteBuffer src, int srcIndex, int length) => this.CheckLength(length);
+        public IByteBuffer WriteBytes(IByteBuffer src, int srcIndex, int length) => CheckLength(length);
 
-        public IByteBuffer WriteBytes(byte[] src) => this.CheckLength(src.Length);
+        public IByteBuffer WriteBytes(byte[] src) => CheckLength(src.Length);
 
-        public IByteBuffer WriteBytes(byte[] src, int srcIndex, int length) => this.CheckLength(length);
+        public IByteBuffer WriteBytes(byte[] src, int srcIndex, int length) => CheckLength(length);
 
-        public IByteBuffer WriteZero(int length) => this.CheckLength(length);
+        public IByteBuffer WriteZero(int length) => CheckLength(length);
 
         public int WriteCharSequence(ICharSequence sequence, Encoding encoding) => throw ThrowHelper.GetIndexOutOfRangeException();
 
@@ -277,19 +277,19 @@ namespace DotNetty.Buffers
 
         public int ForEachByte(int index, int length, IByteProcessor processor)
         {
-            _ = this.CheckIndex(index, length);
+            _ = CheckIndex(index, length);
             return IndexNotFound;
         }
 
         public int ForEachByteDesc(int index, int length, IByteProcessor processor)
         {
-            _ = this.CheckIndex(index, length);
+            _ = CheckIndex(index, length);
             return IndexNotFound;
         }
 
         public IByteBuffer Copy(int index, int length)
         {
-            _ = this.CheckIndex(index, length);
+            _ = CheckIndex(index, length);
             return this;
         }
 
@@ -297,9 +297,9 @@ namespace DotNetty.Buffers
 
         public IByteBuffer RetainedSlice() => this;
 
-        public IByteBuffer Slice(int index, int length) => this.CheckIndex(index, length);
+        public IByteBuffer Slice(int index, int length) => CheckIndex(index, length);
 
-        public IByteBuffer RetainedSlice(int index, int length) => this.CheckIndex(index, length);
+        public IByteBuffer RetainedSlice(int index, int length) => CheckIndex(index, length);
 
         public IByteBuffer Duplicate() => this;
 
@@ -309,13 +309,13 @@ namespace DotNetty.Buffers
 
         public ArraySegment<byte> GetIoBuffer(int index, int length)
         {
-            _ = this.CheckIndex(index, length);
+            _ = CheckIndex(index, length);
             return EmptyBuffer;
         }
 
         public ArraySegment<byte>[] GetIoBuffers(int index, int length)
         {
-            _ = this.CheckIndex(index, length);
+            _ = CheckIndex(index, length);
             return EmptyBuffers;
         }
 
@@ -333,6 +333,8 @@ namespace DotNetty.Buffers
 
         public IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
 
+        public bool IsContiguous => true;
+
         public override int GetHashCode() => EmptyByteBufferHashCode;
 
         public bool Equals(IByteBuffer buffer) => buffer is object && !buffer.IsReadable();
@@ -340,7 +342,7 @@ namespace DotNetty.Buffers
         public override bool Equals(object obj)
         {
             var buffer = obj as IByteBuffer;
-            return this.Equals(buffer);
+            return Equals(buffer);
         }
 
         public int CompareTo(IByteBuffer buffer) => buffer.IsReadable() ? -1 : 0;
@@ -367,13 +369,13 @@ namespace DotNetty.Buffers
 
         public bool Release(int decrement) => false;
 
-        public IByteBuffer ReadSlice(int length) => this.CheckLength(length);
+        public IByteBuffer ReadSlice(int length) => CheckLength(length);
 
-        public IByteBuffer ReadRetainedSlice(int length) => this.CheckLength(length);
+        public IByteBuffer ReadRetainedSlice(int length) => CheckLength(length);
 
         public Task WriteBytesAsync(Stream stream, int length, CancellationToken cancellationToken)
         {
-            _ = this.CheckLength(length);
+            _ = CheckLength(length);
             return TaskUtil.Completed;
         }
 

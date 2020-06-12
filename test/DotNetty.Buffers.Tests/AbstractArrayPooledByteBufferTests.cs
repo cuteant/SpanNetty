@@ -3456,6 +3456,14 @@
             }
         }
 
+        [Fact]
+        public void IsContiguous()
+        {
+            var buf = NewBuffer(4);
+            Assert.True(buf.IsContiguous);
+            buf.Release();
+        }
+
         protected IByteBuffer ReleaseLater(IByteBuffer buf)
         {
             this.buffers.Enqueue(buf);

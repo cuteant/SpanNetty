@@ -698,30 +698,73 @@ namespace DotNetty.Codecs.Http
             {
                 headers.Add(_name, _value);
             }
+
             // reset name and value fields
             _name = null;
             _value = null;
 
-            State nextState;
+            var values = headers.GetAll(HttpHeaderNames.ContentLength);
+            uint contentLengthValuesCount = (uint)values.Count;
+
+            if (contentLengthValuesCount > 0u)
+            {
+                // Guard against multiple Content-Length headers as stated in
+                // https://tools.ietf.org/html/rfc7230#section-3.3.2:
+                //
+                // If a message is received that has multiple Content-Length header
+                //   fields with field-values consisting of the same decimal value, or a
+                //   single Content-Length header field with a field value containing a
+                //   list of identical decimal values (e.g., "Content-Length: 42, 42"),
+                //   indicating that duplicate Content-Length header fields have been
+                //   generated or combined by an upstream message processor, then the
+                //   recipient MUST either reject the message as invalid or replace the
+                //   duplicated field-values with a single valid Content-Length field
+                //   containing that decimal value prior to determining the message body
+                //   length or forwarding the message.
+                if (contentLengthValuesCount > 1u && httpMessage.ProtocolVersion == HttpVersion.Http11)
+                {
+                    ThrowHelper.ThrowArgumentException_Multiple_Content_Length_Headers_Found();
+                }
+                if (!long.TryParse(values[0].ToString(), out _contentLength))
+                {
+                    ThrowHelper.ThrowArgumentException_Invalid_Content_Length();
+                }
+            }
 
             if (IsContentAlwaysEmpty(httpMessage))
             {
                 HttpUtil.SetTransferEncodingChunked(httpMessage, false);
-                nextState = State.SkipControlChars;
+                return State.SkipControlChars;
             }
             else if (HttpUtil.IsTransferEncodingChunked(httpMessage))
             {
-                nextState = State.ReadChunkSize;
+                // See https://tools.ietf.org/html/rfc7230#section-3.3.3
+                //
+                //       If a message is received with both a Transfer-Encoding and a
+                //       Content-Length header field, the Transfer-Encoding overrides the
+                //       Content-Length.  Such a message might indicate an attempt to
+                //       perform request smuggling (Section 9.5) or response splitting
+                //       (Section 9.4) and ought to be handled as an error.  A sender MUST
+                //       remove the received Content-Length field prior to forwarding such
+                //       a message downstream.
+                //
+                // This is also what http_parser does:
+                // https://github.com/nodejs/http-parser/blob/v2.9.2/http_parser.c#L1769
+                if (contentLengthValuesCount > 0u && httpMessage.ProtocolVersion == HttpVersion.Http11)
+                {
+                    ThrowHelper.ThrowArgumentException_Both_Content_Length_And_Chunked_Found(_contentLength);
+                }
+
+                return State.ReadChunkSize;
             }
-            else if (ContentLength() >= 0)
+            else if (ContentLength() >= 0L)
             {
-                nextState = State.ReadFixedLengthContent;
+                return State.ReadFixedLengthContent;
             }
             else
             {
-                nextState = State.ReadVariableLengthContent;
+                return State.ReadVariableLengthContent;
             }
-            return nextState;
         }
 
         long ContentLength()
@@ -869,6 +912,12 @@ namespace DotNetty.Codecs.Http
                 {
                     break;
                 }
+            }
+
+            if (0u >= (uint)(nameEnd - length))
+            {
+                // There was no colon present at all.
+                ThrowHelper.ThrowArgumentException_No_colon_found();
             }
 
             for (colonEnd = nameEnd; colonEnd < length; colonEnd++)

@@ -265,17 +265,21 @@ namespace DotNetty.Codecs.Http2
 
                 Http2Exception error = null;
                 var streamState = stream.State;
-                if (Http2StreamState.Open == streamState || Http2StreamState.HalfClosedLocal == streamState)
+                switch (streamState)
                 {
-                    // nothing to do
-                }
-                else if (Http2StreamState.Closed == streamState || Http2StreamState.HalfClosedRemote == streamState)
-                {
-                    error = ThrowHelper.GetStreamError_StreamInUnexpectedState(Http2Error.StreamClosed, stream);
-                }
-                else
-                {
-                    error = ThrowHelper.GetStreamError_StreamInUnexpectedState(Http2Error.ProtocolError, stream);
+                    case Http2StreamState.Open:
+                    case Http2StreamState.HalfClosedLocal:
+                        // nothing to do
+                        break;
+
+                    case Http2StreamState.HalfClosedRemote:
+                    case Http2StreamState.Closed:
+                        error = ThrowHelper.GetStreamError_StreamInUnexpectedState(Http2Error.StreamClosed, stream);
+                        break;
+
+                    default:
+                        error = ThrowHelper.GetStreamError_StreamInUnexpectedState(Http2Error.ProtocolError, stream);
+                        break;
                 }
 
                 int unconsumedBytes = _owner.UnconsumedBytes(stream);
@@ -358,29 +362,32 @@ namespace DotNetty.Codecs.Http2
                 }
 
                 var streamState = stream.State;
-                if (Http2StreamState.ReservedRemote == streamState)
+                switch (streamState)
                 {
-                    stream.Open(endOfStream);
-                }
-                else if (Http2StreamState.Open == streamState || Http2StreamState.HalfClosedLocal == streamState)
-                {
-                    // Allowed to receive headers in these states.
-                }
-                else if (Http2StreamState.HalfClosedRemote == streamState)
-                {
-                    if (!allowHalfClosedRemote)
-                    {
+                    case Http2StreamState.ReservedRemote:
+                        stream.Open(endOfStream);
+                        break;
+
+                    case Http2StreamState.Open:
+                    case Http2StreamState.HalfClosedLocal:
+                        // Allowed to receive headers in these states.
+                        break;
+
+                    case Http2StreamState.HalfClosedRemote:
+                        if (!allowHalfClosedRemote)
+                        {
+                            ThrowHelper.ThrowStreamError_StreamInUnexpectedState(stream);
+                        }
+                        break;
+
+                    case Http2StreamState.Closed:
                         ThrowHelper.ThrowStreamError_StreamInUnexpectedState(stream);
-                    }
-                }
-                else if (Http2StreamState.Closed == streamState)
-                {
-                    ThrowHelper.ThrowStreamError_StreamInUnexpectedState(stream);
-                }
-                else
-                {
-                    // Connection error.
-                    ThrowHelper.ThrowConnectionError_StreamInUnexpectedState(stream);
+                        break;
+
+                    default:
+                        // Connection error.
+                        ThrowHelper.ThrowConnectionError_StreamInUnexpectedState(stream);
+                        break;
                 }
 
                 stream.HeadersReceived(isInformational);
@@ -440,14 +447,17 @@ namespace DotNetty.Codecs.Http2
                 }
 
                 var streamState = parentStream.State;
-                if (Http2StreamState.Open == streamState || Http2StreamState.HalfClosedLocal == streamState)
+                switch (streamState)
                 {
-                    // Allowed to receive push promise in these states.
-                }
-                else
-                {
-                    // Connection error.
-                    ThrowHelper.ThrowConnectionError_StreamInUnexpectedStateForReceivingPushPromise(parentStream);
+                    case Http2StreamState.Open:
+                    case Http2StreamState.HalfClosedLocal:
+                        // Allowed to receive push promise in these states.
+                        break;
+
+                    default:
+                        // Connection error.
+                        ThrowHelper.ThrowConnectionError_StreamInUnexpectedStateForReceivingPushPromise(parentStream);
+                        break;
                 }
 
                 var requestVerifier = _owner._requestVerifier;
@@ -478,13 +488,14 @@ namespace DotNetty.Codecs.Http2
                     VerifyStreamMayHaveExisted(streamId);
                     return;
                 }
-                if (Http2StreamState.Idle == stream.State)
+                switch (stream.State)
                 {
-                    ThrowHelper.ThrowConnectionError_RstStreamReceivedForIdleStream(streamId);
-                }
-                else if (Http2StreamState.Closed == stream.State)
-                {
-                    return; // RST_STREAM frames must be ignored for closed streams.
+                    case Http2StreamState.Idle:
+                        ThrowHelper.ThrowConnectionError_RstStreamReceivedForIdleStream(streamId);
+                        break;
+
+                    case Http2StreamState.Closed:
+                        return; // RST_STREAM frames must be ignored for closed streams.
                 }
 
                 _owner._listener.OnRstStreamRead(ctx, streamId, errorCode);
@@ -616,6 +627,11 @@ namespace DotNetty.Codecs.Http2
                         if (Logger.InfoEnabled) { Logger.IgnoringFrameForStream(ctx, frameName, streamId); }
                         return true;
                     }
+
+                    // Make sure it's not an out-of-order frame, like a rogue DATA frame, for a stream that could
+                    // never have existed.
+                    VerifyStreamMayHaveExisted(streamId);
+
                     // Its possible that this frame would result in stream ID out of order creation (PROTOCOL ERROR) and its
                     // also possible that this frame is received on a CLOSED stream (STREAM_CLOSED after a RST_STREAM is
                     // sent). We don't have enough information to know for sure, so we choose the lesser of the two errors.

@@ -155,7 +155,7 @@ namespace DotNetty.Buffers
             }
             if (dst is null)
             {
-                ThrowHelper.ThrowArgumentNullException_Dst();
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst);
             }
             // ReSharper disable once PossibleNullReferenceException
             dst.SetBytes(dstIdx, src.Array, srcIdx + src.Offset, length);
@@ -170,7 +170,7 @@ namespace DotNetty.Buffers
             }
             if (dst is null)
             {
-                ThrowHelper.ThrowArgumentNullException_Dst();
+                ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst);
             }
             // ReSharper disable once PossibleNullReferenceException
             dst.WriteBytes(src.Array, srcIdx + src.Offset, length);

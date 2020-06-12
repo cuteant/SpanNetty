@@ -302,7 +302,7 @@ namespace DotNetty.Codecs.Http
             return false;
         }
 
-        protected abstract Result BeginEncode(IHttpResponse headers, ICharSequence acceptEncoding);
+        protected abstract Result BeginEncode(IHttpResponse httpResponse, ICharSequence acceptEncoding);
 
         public override void HandlerRemoved(IChannelHandlerContext context)
         {

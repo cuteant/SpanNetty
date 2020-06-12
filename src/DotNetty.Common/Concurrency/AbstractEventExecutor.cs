@@ -127,6 +127,10 @@ namespace DotNetty.Common.Concurrency
         /// <inheritdoc cref="IEventExecutor"/>
         protected void SetCurrentExecutor(IEventExecutor executor) => ExecutionEnvironment.SetCurrentExecutor(executor);
 
+        /// <summary>
+        /// Try to execute the given <see cref="IRunnable"/> and just log if it throws a <see cref="Exception"/>.
+        /// </summary>
+        /// <param name="task"></param>
         protected static void SafeExecute(IRunnable task)
         {
             try
@@ -137,6 +141,20 @@ namespace DotNetty.Common.Concurrency
             {
                 Logger.ATaskRaisedAnException(task, ex);
             }
+        }
+
+        /// <summary>
+        /// Like <see cref="AbstractExecutorService.Execute(IRunnable)"/> but does not guarantee the task will be run until either
+        /// a non-lazy task is executed or the executor is shut down.
+        /// 
+        /// <para>This is equivalent to submitting a <see cref="ILazyRunnable"/> to
+        /// <see cref="AbstractExecutorService.Execute(IRunnable)"/> but for an arbitrary <see cref="IRunnable"/>.</para>
+        /// </summary>
+        /// <remarks>The default implementation just delegates to <see cref="AbstractExecutorService.Execute(IRunnable)"/>.</remarks>
+        /// <param name="task"></param>
+        public virtual void LazyExecute(IRunnable task)
+        {
+            Execute(task);
         }
     }
 }

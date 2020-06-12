@@ -40,7 +40,11 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         {
             private WebSocketHandshakeHandOverTest _owner;
             public CloseNoOpServerProtocolHandler(WebSocketHandshakeHandOverTest owner, string websocketPath)
-                : base(websocketPath, null, false)
+                : base(WebSocketServerProtocolConfig.NewBuilder()
+                    .WebsocketPath(websocketPath)
+                    .AllowExtensions(false)
+                    .SendCloseFrame(null)
+                    .Build())
             {
                 _owner = owner;
             }
@@ -346,17 +350,31 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             }
         }
 
-        static EmbeddedChannel CreateClientChannel(IChannelHandler handler) => new EmbeddedChannel(
-            new HttpClientCodec(),
-            new HttpObjectAggregator(8192),
-            new WebSocketClientProtocolHandler(
-                new Uri("ws://localhost:1234/test"),
-                WebSocketVersion.V13,
-                "test-proto-2",
-                false,
-                null,
-                65536),
-            handler);
+        private static EmbeddedChannel CreateClientChannel(IChannelHandler handler)
+        {
+            return CreateClientChannel(handler, WebSocketClientProtocolConfig.NewBuilder()
+                .WebSocketUri("ws://localhost:1234/test")
+                .Subprotocol("test-proto-2")
+                .Build());
+        }
+
+        private static EmbeddedChannel CreateClientChannel(IChannelHandler handler, long timeoutMillis)
+        {
+            return CreateClientChannel(handler, WebSocketClientProtocolConfig.NewBuilder()
+                .WebSocketUri("ws://localhost:1234/test")
+                .Subprotocol("test-proto-2")
+                .HandshakeTimeoutMillis(timeoutMillis)
+                .Build());
+        }
+
+        private static EmbeddedChannel CreateClientChannel(IChannelHandler handler, WebSocketClientProtocolConfig config)
+        {
+            return new EmbeddedChannel(
+                    new HttpClientCodec(),
+                    new HttpObjectAggregator(8192),
+                    new WebSocketClientProtocolHandler(config),
+                    handler);
+        }
 
         private static EmbeddedChannel CreateClientChannel(WebSocketClientHandshaker handshaker, IChannelHandler handler)
         {
@@ -380,17 +398,6 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
                     new HttpServerCodec(),
                     new HttpObjectAggregator(8192),
                     webSocketHandler,
-                    handler);
-        }
-
-        private static EmbeddedChannel CreateClientChannel(IChannelHandler handler, long timeoutMillis)
-        {
-            return new EmbeddedChannel(
-                    new HttpClientCodec(),
-                    new HttpObjectAggregator(8192),
-                    new WebSocketClientProtocolHandler(new Uri("ws://localhost:1234/test"),
-                                                       WebSocketVersion.V13, "test-proto-2",
-                                                       false, null, 65536, timeoutMillis),
                     handler);
         }
     }

@@ -5,6 +5,7 @@ namespace DotNetty.Common.Concurrency
 {
     using System;
     using System.Diagnostics;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -13,68 +14,68 @@ namespace DotNetty.Common.Concurrency
     [DebuggerDisplay("ID={threadId}, Name={Name}, IsExplicit={isExplicit}")]
     public sealed class XThread
     {
-        static int maxThreadId;
+        private static int s_maxThreadId;
 
         [ThreadStatic]
-        static XThread currentThread;
+        private static XThread s_currentThread;
 
-        readonly int threadId;
+        private readonly int _threadId;
 #pragma warning disable CS0414
-        readonly bool isExplicit; // For debugging only
+        private readonly bool _isExplicit; // For debugging only
 #pragma warning restore CS0414
-        Task task;
-        readonly EventWaitHandle completed = new EventWaitHandle(false, EventResetMode.AutoReset);
-        readonly EventWaitHandle readyToStart = new EventWaitHandle(false, EventResetMode.AutoReset);
-        object startupParameter;
+        private Task _task;
+        private readonly EventWaitHandle _completed = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private readonly EventWaitHandle _readyToStart = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private object _startupParameter;
 
-        static int GetNewThreadId() => Interlocked.Increment(ref maxThreadId);
+        static int GetNewThreadId() => Interlocked.Increment(ref s_maxThreadId);
 
         XThread()
         {
-            this.threadId = GetNewThreadId();
-            this.isExplicit = false;
-            this.IsAlive = false;
+            _threadId = GetNewThreadId();
+            _isExplicit = false;
+            IsAlive = false;
         }
 
         public XThread(Action action)
         {
-            this.threadId = GetNewThreadId();
-            this.isExplicit = true;
-            this.IsAlive = false;
-            this.CreateLongRunningTask(x => action());
+            _threadId = GetNewThreadId();
+            _isExplicit = true;
+            IsAlive = false;
+            CreateLongRunningTask(x => action());
         }
 
         public XThread(XParameterizedThreadStart threadStartFunc)
         {
-            this.threadId = GetNewThreadId();
-            this.isExplicit = true;
-            this.IsAlive = false;
-            this.CreateLongRunningTask(threadStartFunc);
+            _threadId = GetNewThreadId();
+            _isExplicit = true;
+            IsAlive = false;
+            CreateLongRunningTask(threadStartFunc);
         }
 
         public void Start()
         {
-            this.readyToStart.Set();
-            this.IsAlive = true;
+            _readyToStart.Set();
+            IsAlive = true;
         }
 
         void CreateLongRunningTask(XParameterizedThreadStart threadStartFunc)
         {
-            this.task = Task.Factory.StartNew(
+            _task = Task.Factory.StartNew(
                 () =>
                 {
                     // We start the task running, then unleash it by signaling the readyToStart event.
                     // This is needed to avoid thread reuse for tasks (see below)
-                    this.readyToStart.WaitOne();
+                    _readyToStart.WaitOne();
                     // This is the first time we're using this thread, therefore the TLS slot must be empty
-                    if (currentThread is object)
+                    if (s_currentThread is object)
                     {
                         Debug.WriteLine("warning: currentThread already created; OS thread reused");
                         Debug.Assert(false);
                     }
-                    currentThread = this;
-                    threadStartFunc(this.startupParameter);
-                    this.completed.Set();
+                    s_currentThread = this;
+                    threadStartFunc(_startupParameter);
+                    _completed.Set();
                 },
                 CancellationToken.None,
                 // .NET always creates a brand new thread for LongRunning tasks
@@ -86,8 +87,8 @@ namespace DotNetty.Common.Concurrency
 
         public void Start(object parameter)
         {
-            this.startupParameter = parameter;
-            this.Start();
+            _startupParameter = parameter;
+            Start();
         }
 
         public static void Sleep(int millisecondsTimeout)
@@ -95,16 +96,26 @@ namespace DotNetty.Common.Concurrency
             Task.Delay(millisecondsTimeout).Wait();
         }
 
-        public int Id => this.threadId;
+        public int Id => _threadId;
 
         public string Name { get; set; }
 
         public bool IsAlive { get; private set; }
 
-        public static XThread CurrentThread => currentThread ??= new XThread();
+        public static XThread CurrentThread
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => s_currentThread ?? EnsureThreadCreated();
+        }
 
-        public bool Join(TimeSpan timeout) => this.completed.WaitOne(timeout);
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static XThread EnsureThreadCreated()
+        {
+            return s_currentThread = new XThread();
+        }
 
-        public bool Join(int millisecondsTimeout) => this.completed.WaitOne(millisecondsTimeout);
+        public bool Join(TimeSpan timeout) => _completed.WaitOne(timeout);
+
+        public bool Join(int millisecondsTimeout) => _completed.WaitOne(millisecondsTimeout);
     }
 }

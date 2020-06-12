@@ -342,17 +342,6 @@ namespace DotNetty.Transport.Bootstrapping
             // the pipeline in its channelRegistered() implementation.
             var promise = channel.NewPromise();
             channel.EventLoop.Execute(BindlocalAddressAction, Tuple.Create(channel, localAddress, promise));
-            //{
-            //    try
-            //    {
-            //        channel.BindAsync(localAddress).LinkOutcome(promise);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        channel.CloseSafe();
-            //        promise.TrySetException(ex);
-            //    }
-            //});
             return promise.Task;
         }
 
@@ -501,7 +490,7 @@ namespace DotNetty.Transport.Bootstrapping
             else
             {
                 buf[buf.Length - 2] = ')';
-                buf.Length = buf.Length - 1;
+                buf.Length -= 1;
             }
             return StringBuilderManager.ReturnAndFree(buf);
         }

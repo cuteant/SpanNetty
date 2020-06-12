@@ -1,12 +1,13 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable RedundantAssignment
 namespace DotNetty.Codecs.Http.Multipart
 {
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Runtime.CompilerServices;
+    using System.Runtime.ExceptionServices;
     using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
@@ -14,38 +15,38 @@ namespace DotNetty.Codecs.Http.Multipart
     public class HttpPostStandardRequestDecoder : IInterfaceHttpPostRequestDecoder
     {
         // Factory used to create InterfaceHttpData
-        readonly IHttpDataFactory factory;
+        private readonly IHttpDataFactory _factory;
 
         // Request to decode
-        readonly IHttpRequest request;
+        private readonly IHttpRequest _request;
 
         // Default charset to use
-        readonly Encoding charset;
+        private readonly Encoding _charset;
 
         // Does the last chunk already received
-        bool isLastChunk;
+        private bool _isLastChunk;
 
         // HttpDatas from Body
-        readonly List<IInterfaceHttpData> bodyListHttpData = new List<IInterfaceHttpData>();
+        private readonly List<IInterfaceHttpData> _bodyListHttpData;
 
         //  HttpDatas as Map from Body
-        readonly Dictionary<ICharSequence, List<IInterfaceHttpData>> bodyMapHttpData = new Dictionary<ICharSequence, List<IInterfaceHttpData>>(CharSequenceComparer.IgnoreCase);
+        private readonly Dictionary<ICharSequence, List<IInterfaceHttpData>> _bodyMapHttpData;
 
         // The current channelBuffer
-        IByteBuffer undecodedChunk;
+        private IByteBuffer _undecodedChunk;
 
         // Body HttpDatas current position
-        int bodyListHttpDataRank;
+        private int _bodyListHttpDataRank;
 
         // Current getStatus
-        MultiPartStatus currentStatus = MultiPartStatus.Notstarted;
+        private MultiPartStatus _currentStatus;
 
         // The current Attribute that is currently in decode process
-        IAttribute currentAttribute;
+        private IAttribute _currentAttribute;
 
-        bool destroyed;
+        private bool _destroyed;
 
-        int discardThreshold = HttpPostRequestDecoder.DefaultDiscardThreshold;
+        private int _discardThreshold;
 
         public HttpPostStandardRequestDecoder(IHttpRequest request)
             : this(new DefaultHttpDataFactory(DefaultHttpDataFactory.MinSize), request, HttpConstants.DefaultEncoding)
@@ -63,33 +64,39 @@ namespace DotNetty.Codecs.Http.Multipart
             if (charset is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
             if (factory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
 
-            this.factory = factory;
-            this.request = request;
-            this.charset = charset;
+            _bodyListHttpData = new List<IInterfaceHttpData>();
+            _bodyMapHttpData = new Dictionary<ICharSequence, List<IInterfaceHttpData>>(CharSequenceComparer.IgnoreCase);
+            _currentStatus = MultiPartStatus.Notstarted;
+            _discardThreshold = HttpPostRequestDecoder.DefaultDiscardThreshold;
+
+            _factory = factory;
+            _request = request;
+            _charset = charset;
             try
             {
                 if (request is IHttpContent content)
                 {
                     // Offer automatically if the given request is als type of HttpContent
                     // See #1089
-                    this.Offer(content);
+                    Offer(content);
                 }
                 else
                 {
-                    this.undecodedChunk = ArrayPooled.Buffer();
-                    this.ParseBody();
+                    _undecodedChunk = ArrayPooled.Buffer();
+                    ParseBody();
                 }
             }
-            catch (ErrorDataDecoderException)
+            catch (Exception exc)
             {
                 Destroy();
-                throw;
+                ExceptionDispatchInfo.Capture(exc).Throw();
             }
         }
 
-        void CheckDestroyed()
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        private void CheckDestroyed()
         {
-            if (this.destroyed)
+            if (_destroyed)
             {
                 ThrowHelper.ThrowInvalidOperationException_CheckDestroyed<HttpPostStandardRequestDecoder>();
             }
@@ -99,53 +106,53 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             get
             {
-                this.CheckDestroyed();
+                CheckDestroyed();
                 return false;
             }
         }
 
         public int DiscardThreshold
         {
-            get => this.discardThreshold;
+            get => _discardThreshold;
             set
             {
                 if (value < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(value, ExceptionArgument.value); }
-                this.discardThreshold = value;
+                _discardThreshold = value;
             }
         }
 
         public List<IInterfaceHttpData> GetBodyHttpDatas()
         {
-            this.CheckDestroyed();
+            CheckDestroyed();
 
-            if (!this.isLastChunk)
+            if (!_isLastChunk)
             {
                 ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.HttpPostStandardRequestDecoder);
             }
-            return this.bodyListHttpData;
+            return _bodyListHttpData;
         }
 
         public List<IInterfaceHttpData> GetBodyHttpDatas(AsciiString name)
         {
-            this.CheckDestroyed();
+            CheckDestroyed();
 
-            if (!this.isLastChunk)
+            if (!_isLastChunk)
             {
                 ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.HttpPostStandardRequestDecoder);
             }
-            return this.bodyMapHttpData[name];
+            return _bodyMapHttpData[name];
         }
 
         public IInterfaceHttpData GetBodyHttpData(AsciiString name)
         {
-            this.CheckDestroyed();
+            CheckDestroyed();
 
-            if (!this.isLastChunk)
+            if (!_isLastChunk)
             {
                 ThrowHelper.ThrowNotEnoughDataDecoderException(ExceptionArgument.HttpPostStandardRequestDecoder);
             }
 
-            if (this.bodyMapHttpData.TryGetValue(name, out List<IInterfaceHttpData> list))
+            if (_bodyMapHttpData.TryGetValue(name, out List<IInterfaceHttpData> list))
             {
                 return list[0];
             }
@@ -154,30 +161,30 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public IInterfaceHttpPostRequestDecoder Offer(IHttpContent content)
         {
-            this.CheckDestroyed();
+            CheckDestroyed();
 
             // Maybe we should better not copy here for performance reasons but this will need
             // more care by the caller to release the content in a correct manner later
             // So maybe something to optimize on a later stage
             IByteBuffer buf = content.Content;
-            if (this.undecodedChunk is null)
+            if (_undecodedChunk is null)
             {
-                this.undecodedChunk = buf.Copy();
+                _undecodedChunk = buf.Copy();
             }
             else
             {
-                this.undecodedChunk.WriteBytes(buf);
+                _undecodedChunk.WriteBytes(buf);
             }
 
             if (content is ILastHttpContent)
             {
-                this.isLastChunk = true;
+                _isLastChunk = true;
             }
 
-            this.ParseBody();
-            if (this.undecodedChunk is object && this.undecodedChunk.WriterIndex > this.discardThreshold)
+            ParseBody();
+            if (_undecodedChunk is object && _undecodedChunk.WriterIndex > _discardThreshold)
             {
-                this.undecodedChunk.DiscardReadBytes();
+                _undecodedChunk.DiscardReadBytes();
             }
 
             return this;
@@ -187,44 +194,44 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             get
             {
-                this.CheckDestroyed();
+                CheckDestroyed();
 
-                if (this.currentStatus == MultiPartStatus.Epilogue)
+                if (_currentStatus == MultiPartStatus.Epilogue)
                 {
                     // OK except if end of list
-                    if (this.bodyListHttpDataRank >= this.bodyListHttpData.Count)
+                    if (_bodyListHttpDataRank >= _bodyListHttpData.Count)
                     {
                         ThrowHelper.ThrowEndOfDataDecoderException_HttpPostStandardRequestDecoder();
                     }
                 }
 
-                return (uint)this.bodyListHttpData.Count > 0u && this.bodyListHttpDataRank < this.bodyListHttpData.Count;
+                return (uint)_bodyListHttpData.Count > 0u && _bodyListHttpDataRank < _bodyListHttpData.Count;
             }
         }
 
         public IInterfaceHttpData Next()
         {
-            this.CheckDestroyed();
+            CheckDestroyed();
 
-            return this.HasNext
-                ? this.bodyListHttpData[this.bodyListHttpDataRank++]
+            return HasNext
+                ? _bodyListHttpData[_bodyListHttpDataRank++]
                 : null;
         }
 
-        public IInterfaceHttpData CurrentPartialHttpData => this.currentAttribute;
+        public IInterfaceHttpData CurrentPartialHttpData => _currentAttribute;
 
         void ParseBody()
         {
-            if (this.currentStatus == MultiPartStatus.PreEpilogue || this.currentStatus == MultiPartStatus.Epilogue)
+            if (_currentStatus == MultiPartStatus.PreEpilogue || _currentStatus == MultiPartStatus.Epilogue)
             {
-                if (this.isLastChunk)
+                if (_isLastChunk)
                 {
-                    this.currentStatus = MultiPartStatus.Epilogue;
+                    _currentStatus = MultiPartStatus.Epilogue;
                 }
 
                 return;
             }
-            this.ParseBodyAttributes();
+            ParseBodyAttributes();
         }
 
         protected void AddHttpData(IInterfaceHttpData data)
@@ -234,53 +241,53 @@ namespace DotNetty.Codecs.Http.Multipart
                 return;
             }
             ICharSequence name = new StringCharSequence(data.Name);
-            if (!this.bodyMapHttpData.TryGetValue(name, out List<IInterfaceHttpData> datas))
+            if (!_bodyMapHttpData.TryGetValue(name, out List<IInterfaceHttpData> datas))
             {
                 datas = new List<IInterfaceHttpData>(1);
-                this.bodyMapHttpData.Add(name, datas);
+                _bodyMapHttpData.Add(name, datas);
             }
             datas.Add(data);
-            this.bodyListHttpData.Add(data);
+            _bodyListHttpData.Add(data);
         }
 
         void ParseBodyAttributesStandard()
         {
-            int firstpos = this.undecodedChunk.ReaderIndex;
+            int firstpos = _undecodedChunk.ReaderIndex;
             int currentpos = firstpos;
-            if (this.currentStatus == MultiPartStatus.Notstarted)
+            if (_currentStatus == MultiPartStatus.Notstarted)
             {
-                this.currentStatus = MultiPartStatus.Disposition;
+                _currentStatus = MultiPartStatus.Disposition;
             }
             bool contRead = true;
             try
             {
                 int ampersandpos;
-                while (this.undecodedChunk.IsReadable() && contRead)
+                while (_undecodedChunk.IsReadable() && contRead)
                 {
-                    char read = (char)this.undecodedChunk.ReadByte();
+                    char read = (char)_undecodedChunk.ReadByte();
                     currentpos++;
-                    switch (this.currentStatus)
+                    switch (_currentStatus)
                     {
                         case MultiPartStatus.Disposition:// search '='
                             switch (read)
                             {
                                 case HttpConstants.EqualsSignChar:
-                                    this.currentStatus = MultiPartStatus.Field;
+                                    _currentStatus = MultiPartStatus.Field;
                                     int equalpos = currentpos - 1;
-                                    string key = DecodeAttribute(this.undecodedChunk.ToString(firstpos, equalpos - firstpos, this.charset), this.charset);
-                                    this.currentAttribute = this.factory.CreateAttribute(this.request, key);
+                                    string key = DecodeAttribute(_undecodedChunk.ToString(firstpos, equalpos - firstpos, _charset), _charset);
+                                    _currentAttribute = _factory.CreateAttribute(_request, key);
                                     firstpos = currentpos;
                                     break;
 
                                 case HttpConstants.AmpersandChar:
                                     // special empty FIELD
-                                    this.currentStatus = MultiPartStatus.Disposition;
+                                    _currentStatus = MultiPartStatus.Disposition;
                                     ampersandpos = currentpos - 1;
-                                    string key0 = DecodeAttribute(this.undecodedChunk.ToString(firstpos, ampersandpos - firstpos, this.charset), this.charset);
-                                    this.currentAttribute = this.factory.CreateAttribute(this.request, key0);
-                                    this.currentAttribute.Value = ""; // empty
-                                    this.AddHttpData(this.currentAttribute);
-                                    this.currentAttribute = null;
+                                    string key0 = DecodeAttribute(_undecodedChunk.ToString(firstpos, ampersandpos - firstpos, _charset), _charset);
+                                    _currentAttribute = _factory.CreateAttribute(_request, key0);
+                                    _currentAttribute.Value = ""; // empty
+                                    AddHttpData(_currentAttribute);
+                                    _currentAttribute = null;
                                     firstpos = currentpos;
                                     contRead = true;
                                     break;
@@ -290,23 +297,23 @@ namespace DotNetty.Codecs.Http.Multipart
                             switch (read)
                             {
                                 case HttpConstants.AmpersandChar:
-                                    this.currentStatus = MultiPartStatus.Disposition;
+                                    _currentStatus = MultiPartStatus.Disposition;
                                     ampersandpos = currentpos - 1;
-                                    this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                    SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
                                     firstpos = currentpos;
                                     contRead = true;
                                     break;
 
                                 case HttpConstants.CarriageReturnChar:
-                                    if (this.undecodedChunk.IsReadable())
+                                    if (_undecodedChunk.IsReadable())
                                     {
-                                        read = (char)this.undecodedChunk.ReadByte();
+                                        read = (char)_undecodedChunk.ReadByte();
                                         currentpos++;
                                         if (read == HttpConstants.LineFeed)
                                         {
-                                            this.currentStatus = MultiPartStatus.PreEpilogue;
+                                            _currentStatus = MultiPartStatus.PreEpilogue;
                                             ampersandpos = currentpos - 2;
-                                            this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                            SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
                                             firstpos = currentpos;
                                             contRead = false;
                                         }
@@ -323,9 +330,9 @@ namespace DotNetty.Codecs.Http.Multipart
                                     break;
 
                                 case HttpConstants.LineFeedChar:
-                                    this.currentStatus = MultiPartStatus.PreEpilogue;
+                                    _currentStatus = MultiPartStatus.PreEpilogue;
                                     ampersandpos = currentpos - 1;
-                                    this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                    SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
                                     firstpos = currentpos;
                                     contRead = false;
                                     break;
@@ -337,56 +344,62 @@ namespace DotNetty.Codecs.Http.Multipart
                             break;
                     }
                 }
-                if (this.isLastChunk && this.currentAttribute is object)
+                if (_isLastChunk && _currentAttribute is object)
                 {
                     // special case
                     ampersandpos = currentpos;
                     if (ampersandpos > firstpos)
                     {
-                        this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                        SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
                     }
-                    else if (!this.currentAttribute.IsCompleted)
+                    else if (!_currentAttribute.IsCompleted)
                     {
-                        this.SetFinalBuffer(Unpooled.Empty);
+                        SetFinalBuffer(Unpooled.Empty);
                     }
                     firstpos = currentpos;
-                    this.currentStatus = MultiPartStatus.Epilogue;
+                    _currentStatus = MultiPartStatus.Epilogue;
                 }
-                else if (contRead && this.currentAttribute is object && this.currentStatus == MultiPartStatus.Field)
+                else if (contRead && _currentAttribute is object && _currentStatus == MultiPartStatus.Field)
                 {
                     // reset index except if to continue in case of FIELD getStatus
-                    this.currentAttribute.AddContent(this.undecodedChunk.Copy(firstpos, currentpos - firstpos), false);
+                    _currentAttribute.AddContent(_undecodedChunk.Copy(firstpos, currentpos - firstpos), false);
                     firstpos = currentpos;
                 }
-                this.undecodedChunk.SetReaderIndex(firstpos);
+                _undecodedChunk.SetReaderIndex(firstpos);
             }
             catch (ErrorDataDecoderException)
             {
                 // error while decoding
-                this.undecodedChunk.SetReaderIndex(firstpos);
+                _undecodedChunk.SetReaderIndex(firstpos);
                 throw;
             }
             catch (IOException e)
             {
                 // error while decoding
-                this.undecodedChunk.SetReaderIndex(firstpos);
+                _undecodedChunk.SetReaderIndex(firstpos);
                 ThrowHelper.ThrowErrorDataDecoderException(e);
+            }
+            catch (ArgumentException exc)
+            {
+                // error while decoding
+                _undecodedChunk.SetReaderIndex(firstpos);
+                ThrowHelper.ThrowErrorDataDecoderException(exc);
             }
         }
 
         void ParseBodyAttributes()
         {
-            if (!this.undecodedChunk.HasArray)
+            if (!_undecodedChunk.HasArray)
             {
-                this.ParseBodyAttributesStandard();
+                ParseBodyAttributesStandard();
                 return;
             }
-            var sao = new HttpPostBodyUtil.SeekAheadOptimize(this.undecodedChunk);
-            int firstpos = this.undecodedChunk.ReaderIndex;
+            var sao = new HttpPostBodyUtil.SeekAheadOptimize(_undecodedChunk);
+            int firstpos = _undecodedChunk.ReaderIndex;
             int currentpos = firstpos;
-            if (this.currentStatus == MultiPartStatus.Notstarted)
+            if (_currentStatus == MultiPartStatus.Notstarted)
             {
-                this.currentStatus = MultiPartStatus.Disposition;
+                _currentStatus = MultiPartStatus.Disposition;
             }
             bool contRead = true;
             try
@@ -397,28 +410,28 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     char read = (char)(sao.Bytes[sao.Pos++]);
                     currentpos++;
-                    switch (this.currentStatus)
+                    switch (_currentStatus)
                     {
                         case MultiPartStatus.Disposition:// search '='
                             switch (read)
                             {
                                 case HttpConstants.EqualsSignChar:
-                                    this.currentStatus = MultiPartStatus.Field;
+                                    _currentStatus = MultiPartStatus.Field;
                                     int equalpos = currentpos - 1;
-                                    string key = DecodeAttribute(this.undecodedChunk.ToString(firstpos, equalpos - firstpos, this.charset), this.charset);
-                                    this.currentAttribute = this.factory.CreateAttribute(this.request, key);
+                                    string key = DecodeAttribute(_undecodedChunk.ToString(firstpos, equalpos - firstpos, _charset), _charset);
+                                    _currentAttribute = _factory.CreateAttribute(_request, key);
                                     firstpos = currentpos;
                                     break;
 
                                 case HttpConstants.AmpersandChar:
                                     // special empty FIELD
-                                    this.currentStatus = MultiPartStatus.Disposition;
+                                    _currentStatus = MultiPartStatus.Disposition;
                                     ampersandpos = currentpos - 1;
-                                    string key0 = DecodeAttribute(this.undecodedChunk.ToString(firstpos, ampersandpos - firstpos, this.charset), this.charset);
-                                    this.currentAttribute = this.factory.CreateAttribute(this.request, key0);
-                                    this.currentAttribute.Value = ""; // empty
-                                    this.AddHttpData(this.currentAttribute);
-                                    this.currentAttribute = null;
+                                    string key0 = DecodeAttribute(_undecodedChunk.ToString(firstpos, ampersandpos - firstpos, _charset), _charset);
+                                    _currentAttribute = _factory.CreateAttribute(_request, key0);
+                                    _currentAttribute.Value = ""; // empty
+                                    AddHttpData(_currentAttribute);
+                                    _currentAttribute = null;
                                     firstpos = currentpos;
                                     contRead = true;
                                     break;
@@ -428,9 +441,9 @@ namespace DotNetty.Codecs.Http.Multipart
                             switch (read)
                             {
                                 case HttpConstants.AmpersandChar:
-                                    this.currentStatus = MultiPartStatus.Disposition;
+                                    _currentStatus = MultiPartStatus.Disposition;
                                     ampersandpos = currentpos - 1;
-                                    this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                    SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
                                     firstpos = currentpos;
                                     contRead = true;
                                     break;
@@ -442,10 +455,10 @@ namespace DotNetty.Codecs.Http.Multipart
                                         currentpos++;
                                         if (read == HttpConstants.LineFeed)
                                         {
-                                            this.currentStatus = MultiPartStatus.PreEpilogue;
+                                            _currentStatus = MultiPartStatus.PreEpilogue;
                                             ampersandpos = currentpos - 2;
                                             sao.SetReadPosition(0);
-                                            this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                            SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
                                             firstpos = currentpos;
                                             contRead = false;
                                             goto loop;
@@ -467,10 +480,10 @@ namespace DotNetty.Codecs.Http.Multipart
                                     break;
 
                                 case HttpConstants.LineFeedChar:
-                                    this.currentStatus = MultiPartStatus.PreEpilogue;
+                                    _currentStatus = MultiPartStatus.PreEpilogue;
                                     ampersandpos = currentpos - 1;
                                     sao.SetReadPosition(0);
-                                    this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                    SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
                                     firstpos = currentpos;
                                     contRead = false;
                                     goto loop;
@@ -484,56 +497,56 @@ namespace DotNetty.Codecs.Http.Multipart
                     }
                 }
             loop:
-                if (this.isLastChunk && this.currentAttribute is object)
+                if (_isLastChunk && _currentAttribute is object)
                 {
                     // special case
                     ampersandpos = currentpos;
                     if (ampersandpos > firstpos)
                     {
-                        this.SetFinalBuffer(this.undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                        SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
                     }
-                    else if (!this.currentAttribute.IsCompleted)
+                    else if (!_currentAttribute.IsCompleted)
                     {
-                        this.SetFinalBuffer(Unpooled.Empty);
+                        SetFinalBuffer(Unpooled.Empty);
                     }
                     firstpos = currentpos;
-                    this.currentStatus = MultiPartStatus.Epilogue;
+                    _currentStatus = MultiPartStatus.Epilogue;
                 }
-                else if (contRead && this.currentAttribute is object && this.currentStatus == MultiPartStatus.Field)
+                else if (contRead && _currentAttribute is object && _currentStatus == MultiPartStatus.Field)
                 {
                     // reset index except if to continue in case of FIELD getStatus
-                    this.currentAttribute.AddContent(this.undecodedChunk.Copy(firstpos, currentpos - firstpos), false);
+                    _currentAttribute.AddContent(_undecodedChunk.Copy(firstpos, currentpos - firstpos), false);
                     firstpos = currentpos;
                 }
-                this.undecodedChunk.SetReaderIndex(firstpos);
+                _undecodedChunk.SetReaderIndex(firstpos);
             }
             catch (ErrorDataDecoderException)
             {
                 // error while decoding
-                this.undecodedChunk.SetReaderIndex(firstpos);
+                _undecodedChunk.SetReaderIndex(firstpos);
                 throw;
             }
             catch (IOException e)
             {
                 // error while decoding
-                this.undecodedChunk.SetReaderIndex(firstpos);
+                _undecodedChunk.SetReaderIndex(firstpos);
                 ThrowHelper.ThrowErrorDataDecoderException(e);
             }
             catch (ArgumentException e)
             {
                 // error while decoding
-                this.undecodedChunk.SetReaderIndex(firstpos);
+                _undecodedChunk.SetReaderIndex(firstpos);
                 ThrowHelper.ThrowErrorDataDecoderException(e);
             }
         }
 
         void SetFinalBuffer(IByteBuffer buffer)
         {
-            this.currentAttribute.AddContent(buffer, true);
-            string value = DecodeAttribute(this.currentAttribute.GetByteBuffer().ToString(this.charset), this.charset);
-            this.currentAttribute.Value = value;
-            this.AddHttpData(this.currentAttribute);
-            this.currentAttribute = null;
+            _currentAttribute.AddContent(buffer, true);
+            string value = DecodeAttribute(_currentAttribute.GetByteBuffer().ToString(_charset), _charset);
+            _currentAttribute.Value = value;
+            AddHttpData(_currentAttribute);
+            _currentAttribute = null;
         }
 
         static string DecodeAttribute(string s, Encoding charset)
@@ -551,29 +564,29 @@ namespace DotNetty.Codecs.Http.Multipart
         public void Destroy()
         {
             // Release all data items, including those not yet pulled
-            this.CleanFiles();
+            CleanFiles();
 
-            this.destroyed = true;
+            _destroyed = true;
 
-            if (this.undecodedChunk is object && this.undecodedChunk.ReferenceCount > 0)
+            if (_undecodedChunk is object && _undecodedChunk.ReferenceCount > 0)
             {
-                this.undecodedChunk.Release();
-                this.undecodedChunk = null;
+                _undecodedChunk.Release();
+                _undecodedChunk = null;
             }
         }
 
         public void CleanFiles()
         {
-            this.CheckDestroyed();
+            CheckDestroyed();
 
-            this.factory.CleanRequestHttpData(this.request);
+            _factory.CleanRequestHttpData(_request);
         }
 
         public void RemoveHttpDataFromClean(IInterfaceHttpData data)
         {
-            this.CheckDestroyed();
+            CheckDestroyed();
 
-            this.factory.RemoveHttpDataFromClean(this.request, data);
+            _factory.RemoveHttpDataFromClean(_request, data);
         }
     }
 }

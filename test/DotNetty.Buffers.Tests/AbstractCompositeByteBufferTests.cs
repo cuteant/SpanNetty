@@ -56,6 +56,14 @@ namespace DotNetty.Buffers.Tests
         protected override bool DiscardReadBytesDoesNotMoveWritableBytes() => false;
 
         [Fact]
+        public void IsContiguous()
+        {
+            var buf = NewBuffer(4);
+            Assert.False(buf.IsContiguous);
+            buf.Release();
+        }
+
+        [Fact]
         public void ComponentAtOffset()
         {
             var buf = (CompositeByteBuffer)Unpooled.WrappedBuffer(

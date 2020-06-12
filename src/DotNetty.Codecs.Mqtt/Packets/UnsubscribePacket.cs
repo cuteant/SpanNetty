@@ -13,8 +13,8 @@ namespace DotNetty.Codecs.Mqtt.Packets
 
         public UnsubscribePacket(int packetId, params string[] topicFilters)
         {
-            this.PacketId = packetId;
-            this.TopicFilters = topicFilters;
+            PacketId = packetId;
+            TopicFilters = topicFilters;
         }
 
         public override PacketType PacketType => PacketType.UNSUBSCRIBE;

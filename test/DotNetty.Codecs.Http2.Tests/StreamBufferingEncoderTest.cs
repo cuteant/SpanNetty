@@ -13,31 +13,31 @@ namespace DotNetty.Codecs.Http2.Tests
 
     public class StreamBufferingEncoderTest : IDisposable
     {
-        private StreamBufferingEncoder encoder;
-        private IHttp2Connection connection;
+        private StreamBufferingEncoder _encoder;
+        private IHttp2Connection _connection;
 
-        private Mock<IHttp2FrameWriter> writer;
-        private Mock<IChannelHandlerContext> ctx;
-        private Mock<IChannel> channel;
-        private Mock<IChannelUnsafe> channelUnsafe;
-        private Mock<IChannelConfiguration> config;
-        private Mock<IEventExecutor> executor;
+        private Mock<IHttp2FrameWriter> _writer;
+        private Mock<IChannelHandlerContext> _ctx;
+        private Mock<IChannel> _channel;
+        private Mock<IChannelUnsafe> _channelUnsafe;
+        private Mock<IChannelConfiguration> _config;
+        private Mock<IEventExecutor> _executor;
 
         public StreamBufferingEncoderTest()
         {
-            this.writer = new Mock<IHttp2FrameWriter>();
-            this.ctx = new Mock<IChannelHandlerContext>();
-            this.channel = new Mock<IChannel>();
-            this.channelUnsafe = new Mock<IChannelUnsafe>();
-            this.config = new Mock<IChannelConfiguration>();
-            this.executor = new Mock<IEventExecutor>();
+            _writer = new Mock<IHttp2FrameWriter>();
+            _ctx = new Mock<IChannelHandlerContext>();
+            _channel = new Mock<IChannel>();
+            _channelUnsafe = new Mock<IChannelUnsafe>();
+            _config = new Mock<IChannelConfiguration>();
+            _executor = new Mock<IEventExecutor>();
 
             var configuration = new Mock<IHttp2FrameWriterConfiguration>();
             var frameSizePolicy = new Mock<IHttp2FrameSizePolicy>();
-            this.writer.Setup(x => x.Configuration).Returns(configuration.Object);
-            configuration.Setup(x => x.FrameSizePolicy).Returns(frameSizePolicy.Object);
-            frameSizePolicy.Setup(x => x.MaxFrameSize).Returns(Http2CodecUtil.DefaultMaxFrameSize);
-            this.writer
+            _writer.SetupGet(x => x.Configuration).Returns(() => configuration.Object);
+            configuration.SetupGet(x => x.FrameSizePolicy).Returns(() => frameSizePolicy.Object);
+            frameSizePolicy.SetupGet(x => x.MaxFrameSize).Returns(Http2CodecUtil.DefaultMaxFrameSize);
+            _writer
                 .Setup(x => x.WriteDataAsync(
                     It.IsAny<IChannelHandlerContext>(),
                     It.IsAny<int>(),
@@ -46,14 +46,14 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<bool>(),
                     It.IsAny<IPromise>()))
                 .Returns<IChannelHandlerContext, int, IByteBuffer, int, bool, IPromise>((c, i, buf, x, y, p) => SuccessAnswer(buf));
-            this.writer
+            _writer
                 .Setup(x => x.WriteRstStreamAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.ctx.Object),
+                    It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                     It.IsAny<int>(),
                     It.IsAny<Http2Error>(),
                     It.IsAny<IPromise>()))
                 .Returns<IChannelHandlerContext, int, Http2Error, IPromise>((x, y, z, p) => SuccessAnswer());
-            this.writer
+            _writer
                 .Setup(x => x.WriteGoAwayAsync(
                     It.IsAny<IChannelHandlerContext>(),
                     It.IsAny<int>(),
@@ -62,60 +62,60 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<IPromise>()))
                 .Returns<IChannelHandlerContext, int, Http2Error, IByteBuffer, IPromise>((c, i, e, buf, p) => SuccessAnswer(buf));
 
-            this.connection = new DefaultHttp2Connection(false);
-            this.connection.Remote.FlowController = new DefaultHttp2RemoteFlowController(this.connection);
-            this.connection.Local.FlowController = new DefaultHttp2LocalFlowController(this.connection).FrameWriter(this.writer.Object);
+            _connection = new DefaultHttp2Connection(false);
+            _connection.Remote.FlowController = new DefaultHttp2RemoteFlowController(_connection);
+            _connection.Local.FlowController = new DefaultHttp2LocalFlowController(_connection).FrameWriter(_writer.Object);
 
-            var defaultEncoder = new DefaultHttp2ConnectionEncoder(this.connection, this.writer.Object);
-            this.encoder = new StreamBufferingEncoder(defaultEncoder);
-            var decoder = new DefaultHttp2ConnectionDecoder(this.connection, this.encoder, new Mock<IHttp2FrameReader>().Object);
+            var defaultEncoder = new DefaultHttp2ConnectionEncoder(_connection, _writer.Object);
+            _encoder = new StreamBufferingEncoder(defaultEncoder);
+            var decoder = new DefaultHttp2ConnectionDecoder(_connection, _encoder, new Mock<IHttp2FrameReader>().Object);
             var builder = new Http2ConnectionHandlerBuilder() { FrameListener = new Mock<IHttp2FrameListener>().Object };
-            var handler = builder.Codec(decoder, this.encoder).Build();
+            var handler = builder.Codec(decoder, _encoder).Build();
 
             // Set LifeCycleManager on encoder and decoder
-            this.ctx.Setup(x => x.Channel).Returns(this.channel.Object);
-            this.ctx.Setup(x => x.Allocator).Returns(UnpooledByteBufferAllocator.Default);
-            this.channel.Setup(x => x.Allocator).Returns(UnpooledByteBufferAllocator.Default);
-            this.executor.Setup(x => x.InEventLoop).Returns(true);
-            this.ctx.Setup(x => x.NewPromise()).Returns(() => NewPromise());
-            this.ctx.Setup(x => x.Executor).Returns(this.executor.Object);
-            this.channel.Setup(x => x.Active).Returns(false);
-            this.channel.Setup(x => x.Configuration).Returns(this.config.Object);
-            this.channel.Setup(x => x.IsWritable).Returns(true);
-            this.channel.Setup(x => x.BytesBeforeUnwritable).Returns(long.MaxValue);
-            this.config.Setup(x => x.WriteBufferHighWaterMark).Returns(int.MaxValue);
-            this.config.Setup(x => x.MessageSizeEstimator).Returns(DefaultMessageSizeEstimator.Default);
+            _ctx.SetupGet(x => x.Channel).Returns(_channel.Object);
+            _ctx.SetupGet(x => x.Allocator).Returns(UnpooledByteBufferAllocator.Default);
+            _channel.SetupGet(x => x.Allocator).Returns(UnpooledByteBufferAllocator.Default);
+            _executor.SetupGet(x => x.InEventLoop).Returns(true);
+            _ctx.Setup(x => x.NewPromise()).Returns(() => NewPromise());
+            _ctx.SetupGet(x => x.Executor).Returns(() => _executor.Object);
+            _channel.SetupGet(x => x.Active).Returns(false);
+            _channel.SetupGet(x => x.Configuration).Returns(() => _config.Object);
+            _channel.SetupGet(x => x.IsWritable).Returns(true);
+            _channel.SetupGet(x => x.BytesBeforeUnwritable).Returns(long.MaxValue);
+            _config.SetupGet(x => x.WriteBufferHighWaterMark).Returns(int.MaxValue);
+            _config.SetupGet(x => x.MessageSizeEstimator).Returns(DefaultMessageSizeEstimator.Default);
             ChannelMetadata metadata = new ChannelMetadata(false, 16);
-            this.channel.Setup(x => x.Metadata).Returns(metadata);
-            this.channel.Setup(x => x.Unsafe).Returns(this.channelUnsafe.Object);
-            handler.HandlerAdded(this.ctx.Object);
+            _channel.SetupGet(x => x.Metadata).Returns(metadata);
+            _channel.SetupGet(x => x.Unsafe).Returns(() => _channelUnsafe.Object);
+            handler.HandlerAdded(_ctx.Object);
         }
 
         public void Dispose()
         {
             // Close and release any buffered frames.
-            this.encoder.Close();
+            _encoder.Close();
         }
 
-        [Fact(Skip = "not yet supported")]
+        [Fact(Skip = "第二次 EncoderWriteHeaders，引发 DefaultHttp2ConnectionEncoder.ValidateHeadersSentState抛出异常")]
         public void MultipleWritesToActiveStream()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.EncoderWriteHeaders(3, NewPromise());
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            EncoderWriteHeaders(3, NewPromise());
+            Assert.Equal(0, _encoder.NumBufferedStreams());
             var data = Data();
             int expectedBytes = data.ReadableBytes * 3;
-            this.encoder.WriteDataAsync(this.ctx.Object, 3, data, 0, false, NewPromise());
-            this.encoder.WriteDataAsync(this.ctx.Object, 3, Data(), 0, false, NewPromise());
-            this.encoder.WriteDataAsync(this.ctx.Object, 3, Data(), 0, false, NewPromise());
-            this.EncoderWriteHeaders(3, NewPromise());
+            _encoder.WriteDataAsync(_ctx.Object, 3, data, 0, false, NewPromise());
+            _encoder.WriteDataAsync(_ctx.Object, 3, Data(), 0, false, NewPromise());
+            _encoder.WriteDataAsync(_ctx.Object, 3, Data(), 0, false, NewPromise());
+            EncoderWriteHeaders(3, NewPromise());
 
-            this.WriteVerifyWriteHeaders(Times.Exactly(2), 3);
+            WriteVerifyWriteHeaders(Times.Exactly(2), 3);
             // Contiguous data writes are coalesced
             var bufCaptor = new ArgumentCaptor<IByteBuffer>();
-            this.writer.Verify(
+            _writer.Verify(
                 x => x.WriteDataAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.ctx.Object),
+                    It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                     It.Is<int>(v => v == 3),
                     It.Is<IByteBuffer>(v => bufCaptor.Capture(v)),
                     It.Is<int>(v => v == 0),
@@ -127,50 +127,50 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void EnsureCanCreateNextStreamWhenStreamCloses()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.SetMaxConcurrentStreams(1);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            SetMaxConcurrentStreams(1);
 
-            this.EncoderWriteHeaders(3, NewPromise());
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
+            EncoderWriteHeaders(3, NewPromise());
+            Assert.Equal(0, _encoder.NumBufferedStreams());
 
             // This one gets buffered.
-            this.EncoderWriteHeaders(5, NewPromise());
-            Assert.Equal(1, this.connection.NumActiveStreams);
-            Assert.Equal(1, this.encoder.NumBufferedStreams());
+            EncoderWriteHeaders(5, NewPromise());
+            Assert.Equal(1, _connection.NumActiveStreams);
+            Assert.Equal(1, _encoder.NumBufferedStreams());
 
             // Now prevent us from creating another stream.
-            this.SetMaxConcurrentStreams(0);
+            SetMaxConcurrentStreams(0);
 
             // Close the previous stream.
-            this.connection.Stream(3).Close();
+            _connection.Stream(3).Close();
 
             // Ensure that no streams are currently active and that only the HEADERS from the first
             // stream were written.
-            this.WriteVerifyWriteHeaders(Times.Once(), 3);
-            this.WriteVerifyWriteHeaders(Times.Never(), 5);
-            Assert.Equal(0, this.connection.NumActiveStreams);
-            Assert.Equal(1, this.encoder.NumBufferedStreams());
+            WriteVerifyWriteHeaders(Times.Once(), 3);
+            WriteVerifyWriteHeaders(Times.Never(), 5);
+            Assert.Equal(0, _connection.NumActiveStreams);
+            Assert.Equal(1, _encoder.NumBufferedStreams());
         }
 
         [Fact]
         public void AlternatingWritesToActiveAndBufferedStreams()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.SetMaxConcurrentStreams(1);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            SetMaxConcurrentStreams(1);
 
-            this.EncoderWriteHeaders(3, NewPromise());
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
+            EncoderWriteHeaders(3, NewPromise());
+            Assert.Equal(0, _encoder.NumBufferedStreams());
 
-            this.EncoderWriteHeaders(5, NewPromise());
-            Assert.Equal(1, this.connection.NumActiveStreams);
-            Assert.Equal(1, this.encoder.NumBufferedStreams());
+            EncoderWriteHeaders(5, NewPromise());
+            Assert.Equal(1, _connection.NumActiveStreams);
+            Assert.Equal(1, _encoder.NumBufferedStreams());
 
-            this.encoder.WriteDataAsync(this.ctx.Object, 3, Unpooled.Empty, 0, false, NewPromise());
-            this.WriteVerifyWriteHeaders(Times.Once(), 3);
-            this.encoder.WriteDataAsync(this.ctx.Object, 5, Unpooled.Empty, 0, false, NewPromise());
-            this.writer.Verify(
+            _encoder.WriteDataAsync(_ctx.Object, 3, Unpooled.Empty, 0, false, NewPromise());
+            WriteVerifyWriteHeaders(Times.Once(), 3);
+            _encoder.WriteDataAsync(_ctx.Object, 5, Unpooled.Empty, 0, false, NewPromise());
+            _writer.Verify(
                 x => x.WriteDataAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.ctx.Object),
+                    It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                     It.Is<int>(v => v == 5),
                     It.IsAny<IByteBuffer>(),
                     It.Is<int>(v => v == 0),
@@ -181,13 +181,13 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void BufferingNewStreamFailsAfterGoAwayReceived()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.SetMaxConcurrentStreams(0);
-            this.connection.GoAwayReceived(1, (Http2Error)8, Unpooled.Empty);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            SetMaxConcurrentStreams(0);
+            _connection.GoAwayReceived(1, (Http2Error)8, Unpooled.Empty);
 
             var promise = NewPromise();
-            this.EncoderWriteHeaders(3, promise);
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
+            EncoderWriteHeaders(3, promise);
+            Assert.Equal(0, _encoder.NumBufferedStreams());
             Assert.True(promise.IsCompleted);
             Assert.False(promise.IsSuccess);
         }
@@ -195,21 +195,21 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void ReceivingGoAwayFailsBufferedStreams()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.SetMaxConcurrentStreams(5);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            SetMaxConcurrentStreams(5);
 
             int streamId = 3;
             List<Task> futures = new List<Task>();
             for (int i = 0; i < 9; i++)
             {
-                futures.Add(this.EncoderWriteHeaders(streamId, NewPromise()));
+                futures.Add(EncoderWriteHeaders(streamId, NewPromise()));
                 streamId += 2;
             }
-            Assert.Equal(4, this.encoder.NumBufferedStreams());
+            Assert.Equal(4, _encoder.NumBufferedStreams());
 
-            this.connection.GoAwayReceived(11, (Http2Error)8, Unpooled.Empty);
+            _connection.GoAwayReceived(11, (Http2Error)8, Unpooled.Empty);
 
-            Assert.Equal(5, this.connection.NumActiveStreams);
+            Assert.Equal(5, _connection.NumActiveStreams);
             int failCount = 0;
             foreach (Task f in futures)
             {
@@ -219,16 +219,16 @@ namespace DotNetty.Codecs.Http2.Tests
                 }
             }
             Assert.Equal(9, failCount);
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
+            Assert.Equal(0, _encoder.NumBufferedStreams());
         }
 
         [Fact]
         public void SendingGoAwayShouldNotFailStreams()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.SetMaxConcurrentStreams(1);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            SetMaxConcurrentStreams(1);
 
-            this.writer
+            _writer
                 .Setup(x => x.WriteHeadersAsync(
                     It.IsAny<IChannelHandlerContext>(),
                     It.IsAny<int>(),
@@ -238,7 +238,7 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<IPromise>()))
                 .Returns<IChannelHandlerContext, int, IHttp2Headers, int, bool, IPromise>((c, i, h, x, y, p) => SuccessAnswer());
 
-            this.writer
+            _writer
                 .Setup(x => x.WriteHeadersAsync(
                     It.IsAny<IChannelHandlerContext>(),
                     It.IsAny<int>(),
@@ -251,18 +251,18 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<IPromise>()))
                 .Returns<IChannelHandlerContext, int, IHttp2Headers, int, short, bool, int, bool, IPromise>((c, i, h, a, b, e, x, y, p) => SuccessAnswer());
 
-            Task f1 = this.EncoderWriteHeaders(3, NewPromise());
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
-            Task f2 = this.EncoderWriteHeaders(5, NewPromise());
-            Assert.Equal(1, this.encoder.NumBufferedStreams());
-            Task f3 = this.EncoderWriteHeaders(7, NewPromise());
-            Assert.Equal(2, this.encoder.NumBufferedStreams());
+            Task f1 = EncoderWriteHeaders(3, NewPromise());
+            Assert.Equal(0, _encoder.NumBufferedStreams());
+            Task f2 = EncoderWriteHeaders(5, NewPromise());
+            Assert.Equal(1, _encoder.NumBufferedStreams());
+            Task f3 = EncoderWriteHeaders(7, NewPromise());
+            Assert.Equal(2, _encoder.NumBufferedStreams());
 
             var empty = Unpooled.Buffer(0);
-            this.encoder.WriteGoAwayAsync(this.ctx.Object, 3, Http2Error.Cancel, empty, NewPromise());
+            _encoder.WriteGoAwayAsync(_ctx.Object, 3, Http2Error.Cancel, empty, NewPromise());
 
-            Assert.Equal(1, this.connection.NumActiveStreams);
-            Assert.Equal(2, this.encoder.NumBufferedStreams());
+            Assert.Equal(1, _connection.NumActiveStreams);
+            Assert.Equal(2, _encoder.NumBufferedStreams());
             Assert.False(f1.IsCompleted);
             Assert.False(f2.IsCompleted);
             Assert.False(f3.IsCompleted);
@@ -271,108 +271,108 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void EndStreamDoesNotFailBufferedStream()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.SetMaxConcurrentStreams(0);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            SetMaxConcurrentStreams(0);
 
-            this.EncoderWriteHeaders(3, NewPromise());
-            Assert.Equal(1, this.encoder.NumBufferedStreams());
+            EncoderWriteHeaders(3, NewPromise());
+            Assert.Equal(1, _encoder.NumBufferedStreams());
 
-            this.encoder.WriteDataAsync(this.ctx.Object, 3, Unpooled.Empty, 0, true, NewPromise());
+            _encoder.WriteDataAsync(_ctx.Object, 3, Unpooled.Empty, 0, true, NewPromise());
 
-            Assert.Equal(0, this.connection.NumActiveStreams);
-            Assert.Equal(1, this.encoder.NumBufferedStreams());
+            Assert.Equal(0, _connection.NumActiveStreams);
+            Assert.Equal(1, _encoder.NumBufferedStreams());
 
             // Simulate that we received a SETTINGS frame which
             // increased MAX_CONCURRENT_STREAMS to 1.
-            this.SetMaxConcurrentStreams(1);
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
+            SetMaxConcurrentStreams(1);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
 
-            Assert.Equal(1, this.connection.NumActiveStreams);
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
-            Assert.Equal(Http2StreamState.HalfClosedLocal, this.connection.Stream(3).State);
+            Assert.Equal(1, _connection.NumActiveStreams);
+            Assert.Equal(0, _encoder.NumBufferedStreams());
+            Assert.Equal(Http2StreamState.HalfClosedLocal, _connection.Stream(3).State);
         }
 
         [Fact]
         public void RstStreamClosesBufferedStream()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.SetMaxConcurrentStreams(0);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            SetMaxConcurrentStreams(0);
 
-            this.EncoderWriteHeaders(3, NewPromise());
-            Assert.Equal(1, this.encoder.NumBufferedStreams());
+            EncoderWriteHeaders(3, NewPromise());
+            Assert.Equal(1, _encoder.NumBufferedStreams());
 
             var rstStreamPromise = NewPromise();
-            this.encoder.WriteRstStreamAsync(this.ctx.Object, 3, Http2Error.Cancel, rstStreamPromise);
+            _encoder.WriteRstStreamAsync(_ctx.Object, 3, Http2Error.Cancel, rstStreamPromise);
             Assert.True(rstStreamPromise.IsSuccess);
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
+            Assert.Equal(0, _encoder.NumBufferedStreams());
         }
 
         [Fact]
         public void BufferUntilActiveStreamsAreReset()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.SetMaxConcurrentStreams(1);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            SetMaxConcurrentStreams(1);
 
-            this.EncoderWriteHeaders(3, NewPromise());
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
-            this.EncoderWriteHeaders(5, NewPromise());
-            Assert.Equal(1, this.encoder.NumBufferedStreams());
-            this.EncoderWriteHeaders(7, NewPromise());
-            Assert.Equal(2, this.encoder.NumBufferedStreams());
+            EncoderWriteHeaders(3, NewPromise());
+            Assert.Equal(0, _encoder.NumBufferedStreams());
+            EncoderWriteHeaders(5, NewPromise());
+            Assert.Equal(1, _encoder.NumBufferedStreams());
+            EncoderWriteHeaders(7, NewPromise());
+            Assert.Equal(2, _encoder.NumBufferedStreams());
 
-            this.WriteVerifyWriteHeaders(Times.Once(), 3);
-            this.WriteVerifyWriteHeaders(Times.Never(), 5);
-            this.WriteVerifyWriteHeaders(Times.Never(), 7);
+            WriteVerifyWriteHeaders(Times.Once(), 3);
+            WriteVerifyWriteHeaders(Times.Never(), 5);
+            WriteVerifyWriteHeaders(Times.Never(), 7);
 
-            this.encoder.WriteRstStreamAsync(this.ctx.Object, 3, Http2Error.Cancel, NewPromise());
-            this.connection.Remote.FlowController.WritePendingBytes();
-            this.WriteVerifyWriteHeaders(Times.Once(), 5);
-            this.WriteVerifyWriteHeaders(Times.Never(), 7);
-            Assert.Equal(1, this.connection.NumActiveStreams);
-            Assert.Equal(1, this.encoder.NumBufferedStreams());
+            _encoder.WriteRstStreamAsync(_ctx.Object, 3, Http2Error.Cancel, NewPromise());
+            _connection.Remote.FlowController.WritePendingBytes();
+            WriteVerifyWriteHeaders(Times.Once(), 5);
+            WriteVerifyWriteHeaders(Times.Never(), 7);
+            Assert.Equal(1, _connection.NumActiveStreams);
+            Assert.Equal(1, _encoder.NumBufferedStreams());
 
-            this.encoder.WriteRstStreamAsync(this.ctx.Object, 5, Http2Error.Cancel, NewPromise());
-            this.connection.Remote.FlowController.WritePendingBytes();
-            this.WriteVerifyWriteHeaders(Times.Once(), 7);
-            Assert.Equal(1, this.connection.NumActiveStreams);
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
+            _encoder.WriteRstStreamAsync(_ctx.Object, 5, Http2Error.Cancel, NewPromise());
+            _connection.Remote.FlowController.WritePendingBytes();
+            WriteVerifyWriteHeaders(Times.Once(), 7);
+            Assert.Equal(1, _connection.NumActiveStreams);
+            Assert.Equal(0, _encoder.NumBufferedStreams());
 
-            this.encoder.WriteRstStreamAsync(this.ctx.Object, 7, Http2Error.Cancel, NewPromise());
-            Assert.Equal(0, this.connection.NumActiveStreams);
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
+            _encoder.WriteRstStreamAsync(_ctx.Object, 7, Http2Error.Cancel, NewPromise());
+            Assert.Equal(0, _connection.NumActiveStreams);
+            Assert.Equal(0, _encoder.NumBufferedStreams());
         }
 
         [Fact]
         public void BufferUntilMaxStreamsIncreased()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.SetMaxConcurrentStreams(2);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            SetMaxConcurrentStreams(2);
 
-            this.EncoderWriteHeaders(3, NewPromise());
-            this.EncoderWriteHeaders(5, NewPromise());
-            this.EncoderWriteHeaders(7, NewPromise());
-            this.EncoderWriteHeaders(9, NewPromise());
-            Assert.Equal(2, this.encoder.NumBufferedStreams());
+            EncoderWriteHeaders(3, NewPromise());
+            EncoderWriteHeaders(5, NewPromise());
+            EncoderWriteHeaders(7, NewPromise());
+            EncoderWriteHeaders(9, NewPromise());
+            Assert.Equal(2, _encoder.NumBufferedStreams());
 
-            this.WriteVerifyWriteHeaders(Times.Once(), 3);
-            this.WriteVerifyWriteHeaders(Times.Once(), 5);
-            this.WriteVerifyWriteHeaders(Times.Never(), 7);
-            this.WriteVerifyWriteHeaders(Times.Never(), 9);
+            WriteVerifyWriteHeaders(Times.Once(), 3);
+            WriteVerifyWriteHeaders(Times.Once(), 5);
+            WriteVerifyWriteHeaders(Times.Never(), 7);
+            WriteVerifyWriteHeaders(Times.Never(), 9);
 
             // Simulate that we received a SETTINGS frame which
             // increased MAX_CONCURRENT_STREAMS to 5.
-            this.SetMaxConcurrentStreams(5);
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
+            SetMaxConcurrentStreams(5);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
 
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
-            this.WriteVerifyWriteHeaders(Times.Once(), 7);
-            this.WriteVerifyWriteHeaders(Times.Once(), 9);
+            Assert.Equal(0, _encoder.NumBufferedStreams());
+            WriteVerifyWriteHeaders(Times.Once(), 7);
+            WriteVerifyWriteHeaders(Times.Once(), 9);
 
-            this.EncoderWriteHeaders(11, NewPromise());
+            EncoderWriteHeaders(11, NewPromise());
 
-            this.WriteVerifyWriteHeaders(Times.Once(), 11);
+            WriteVerifyWriteHeaders(Times.Once(), 11);
 
-            Assert.Equal(5, this.connection.Local.NumActiveStreams);
+            Assert.Equal(5, _connection.Local.NumActiveStreams);
         }
 
         [Fact]
@@ -382,23 +382,23 @@ namespace DotNetty.Codecs.Http2.Tests
             int numStreams = initialLimit * 2;
             for (int ix = 0, nextStreamId = 3; ix < numStreams; ++ix, nextStreamId += 2)
             {
-                this.EncoderWriteHeaders(nextStreamId, NewPromise());
+                EncoderWriteHeaders(nextStreamId, NewPromise());
                 if (ix < initialLimit)
                 {
-                    this.WriteVerifyWriteHeaders(Times.Once(), nextStreamId);
+                    WriteVerifyWriteHeaders(Times.Once(), nextStreamId);
                 }
                 else
                 {
-                    this.WriteVerifyWriteHeaders(Times.Never(), nextStreamId);
+                    WriteVerifyWriteHeaders(Times.Never(), nextStreamId);
                 }
             }
-            Assert.Equal(numStreams / 2, this.encoder.NumBufferedStreams());
+            Assert.Equal(numStreams / 2, _encoder.NumBufferedStreams());
 
             // Simulate that we received a SETTINGS frame.
-            this.SetMaxConcurrentStreams(initialLimit * 2);
+            SetMaxConcurrentStreams(initialLimit * 2);
 
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
-            Assert.Equal(numStreams, this.connection.Local.NumActiveStreams);
+            Assert.Equal(0, _encoder.NumBufferedStreams());
+            Assert.Equal(numStreams, _connection.Local.NumActiveStreams);
         }
 
         [Fact]
@@ -408,23 +408,23 @@ namespace DotNetty.Codecs.Http2.Tests
             int numStreams = initialLimit * 2;
             for (int ix = 0, nextStreamId = 3; ix < numStreams; ++ix, nextStreamId += 2)
             {
-                this.EncoderWriteHeaders(nextStreamId, NewPromise());
+                EncoderWriteHeaders(nextStreamId, NewPromise());
                 if (ix < initialLimit)
                 {
-                    this.WriteVerifyWriteHeaders(Times.Once(), nextStreamId);
+                    WriteVerifyWriteHeaders(Times.Once(), nextStreamId);
                 }
                 else
                 {
-                    this.WriteVerifyWriteHeaders(Times.Never(), nextStreamId);
+                    WriteVerifyWriteHeaders(Times.Never(), nextStreamId);
                 }
             }
-            Assert.Equal(numStreams / 2, this.encoder.NumBufferedStreams());
+            Assert.Equal(numStreams / 2, _encoder.NumBufferedStreams());
 
             // Simulate that we received an empty SETTINGS frame.
-            this.encoder.RemoteSettings(new Http2Settings());
+            _encoder.RemoteSettings(new Http2Settings());
 
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
-            Assert.Equal(numStreams, this.connection.Local.NumActiveStreams);
+            Assert.Equal(0, _encoder.NumBufferedStreams());
+            Assert.Equal(numStreams, _connection.Local.NumActiveStreams);
         }
 
         [Fact]
@@ -432,13 +432,13 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             // Write the highest possible stream ID for the client.
             // This will cause the next stream ID to be negative.
-            this.EncoderWriteHeaders(int.MaxValue, NewPromise());
+            EncoderWriteHeaders(int.MaxValue, NewPromise());
 
             // Disallow any further streams.
-            this.SetMaxConcurrentStreams(0);
+            SetMaxConcurrentStreams(0);
 
             // Simulate numeric overflow for the next stream ID.
-            Task f = this.EncoderWriteHeaders(-1, NewPromise());
+            Task f = EncoderWriteHeaders(-1, NewPromise());
 
             // Verify that the write fails.
             Assert.NotNull(f.Exception);
@@ -447,17 +447,17 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void ClosedBufferedStreamReleasesByteBuf()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.SetMaxConcurrentStreams(0);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            SetMaxConcurrentStreams(0);
             var data = new Mock<IByteBuffer>();
-            Task f1 = this.EncoderWriteHeaders(3, NewPromise());
-            Assert.Equal(1, this.encoder.NumBufferedStreams());
-            Task f2 = this.encoder.WriteDataAsync(this.ctx.Object, 3, data.Object, 0, false, NewPromise());
+            Task f1 = EncoderWriteHeaders(3, NewPromise());
+            Assert.Equal(1, _encoder.NumBufferedStreams());
+            Task f2 = _encoder.WriteDataAsync(_ctx.Object, 3, data.Object, 0, false, NewPromise());
 
             var rstPromise = new Mock<IPromise>();
-            this.encoder.WriteRstStreamAsync(this.ctx.Object, 3, Http2Error.Cancel, rstPromise.Object);
+            _encoder.WriteRstStreamAsync(_ctx.Object, 3, Http2Error.Cancel, rstPromise.Object);
 
-            Assert.Equal(0, this.encoder.NumBufferedStreams());
+            Assert.Equal(0, _encoder.NumBufferedStreams());
             rstPromise.Verify(x => x.Complete());
             Assert.True(f1.IsSuccess());
             Assert.True(f2.IsSuccess());
@@ -467,14 +467,14 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void CloseShouldCancelAllBufferedStreams()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.connection.Local.SetMaxActiveStreams(0);
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            _connection.Local.SetMaxActiveStreams(0);
 
-            Task f1 = this.EncoderWriteHeaders(3, NewPromise());
-            Task f2 = this.EncoderWriteHeaders(5, NewPromise());
-            Task f3 = this.EncoderWriteHeaders(7, NewPromise());
+            Task f1 = EncoderWriteHeaders(3, NewPromise());
+            Task f2 = EncoderWriteHeaders(5, NewPromise());
+            Task f3 = EncoderWriteHeaders(7, NewPromise());
 
-            this.encoder.Close();
+            _encoder.Close();
             Assert.NotNull(f1.Exception);
             Assert.NotNull(f2.Exception);
             Assert.NotNull(f3.Exception);
@@ -483,10 +483,10 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void HeadersAfterCloseShouldImmediatelyFail()
         {
-            this.encoder.WriteSettingsAckAsync(this.ctx.Object, NewPromise());
-            this.encoder.Close();
+            _encoder.WriteSettingsAckAsync(_ctx.Object, NewPromise());
+            _encoder.Close();
 
-            var f = this.EncoderWriteHeaders(3, NewPromise());
+            var f = EncoderWriteHeaders(3, NewPromise());
             Assert.NotNull(f.Exception);
         }
 
@@ -494,9 +494,9 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             try
             {
-                this.encoder.RemoteSettings(new Http2Settings().MaxConcurrentStreams(newValue));
+                _encoder.RemoteSettings(new Http2Settings().MaxConcurrentStreams(newValue));
                 // Flush the remote flow controller to write data
-                this.encoder.FlowController.WritePendingBytes();
+                _encoder.FlowController.WritePendingBytes();
             }
             catch (Http2Exception e)
             {
@@ -506,11 +506,11 @@ namespace DotNetty.Codecs.Http2.Tests
 
         private Task EncoderWriteHeaders(int streamId, IPromise promise)
         {
-            this.encoder.WriteHeadersAsync(this.ctx.Object, streamId, new DefaultHttp2Headers(), 0, Http2CodecUtil.DefaultPriorityWeight,
+            _encoder.WriteHeadersAsync(_ctx.Object, streamId, new DefaultHttp2Headers(), 0, Http2CodecUtil.DefaultPriorityWeight,
                 false, 0, false, promise);
             try
             {
-                this.encoder.FlowController.WritePendingBytes();
+                _encoder.FlowController.WritePendingBytes();
                 return promise.Task;
             }
             catch (Http2Exception e)
@@ -521,9 +521,9 @@ namespace DotNetty.Codecs.Http2.Tests
 
         private void WriteVerifyWriteHeaders(Times mode, int streamId)
         {
-            this.writer.Verify(
+            _writer.Verify(
                 x => x.WriteHeadersAsync(
-                    It.Is<IChannelHandlerContext>(v => v == this.ctx.Object),
+                    It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
                     It.Is<int>(v => v == streamId),
                     It.IsAny<IHttp2Headers>(),
                     It.Is<int>(v => v == 0),

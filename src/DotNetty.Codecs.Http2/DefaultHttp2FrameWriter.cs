@@ -17,10 +17,6 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class DefaultHttp2FrameWriter : IHttp2FrameWriter, IHttp2FrameSizePolicy, IHttp2FrameWriterConfiguration
     {
-        const string StreamID = "Stream ID";
-
-        const string StreamDependency = "Stream Dependency";
-
         /// <summary>
         /// This buffer is allocated to the maximum size of the padding field, and filled with zeros.
         /// When padding is needed it can be taken as a slice of this buffer. Users should call <see cref="IReferenceCounted.Retain()"/>
@@ -380,7 +376,7 @@ namespace DotNetty.Codecs.Http2
 
                 if (!flags.EndOfHeaders())
                 {
-                    WriteContinuationFramesAsync(ctx, streamId, headerBlock, padding, promiseAggregator);
+                    WriteContinuationFramesAsync(ctx, streamId, headerBlock, promiseAggregator);
                 }
             }
             catch (Http2Exception e)
@@ -577,7 +573,7 @@ namespace DotNetty.Codecs.Http2
 
                 if (!flags.EndOfHeaders())
                 {
-                    WriteContinuationFramesAsync(ctx, streamId, headerBlock, padding, promiseAggregator);
+                    WriteContinuationFramesAsync(ctx, streamId, headerBlock, promiseAggregator);
                 }
             }
             catch (Http2Exception e)
@@ -600,41 +596,30 @@ namespace DotNetty.Codecs.Http2
         }
 
         /// <summary>
-        /// Writes as many continuation frames as needed until <paramref name="padding"/> and <paramref name="headerBlock"/> are consumed.
+        /// Writes as many continuation frames as needed until <paramref name="headerBlock"/> are consumed.
         /// </summary>
         /// <param name="ctx"></param>
         /// <param name="streamId"></param>
         /// <param name="headerBlock"></param>
-        /// <param name="padding"></param>
         /// <param name="promiseAggregator"></param>
         /// <returns></returns>
         Task WriteContinuationFramesAsync(IChannelHandlerContext ctx, int streamId,
-            IByteBuffer headerBlock, int padding, SimplePromiseAggregator promiseAggregator)
+            IByteBuffer headerBlock, SimplePromiseAggregator promiseAggregator)
         {
-            Http2Flags flags = new Http2Flags().PaddingPresent(padding > 0);
-            int maxFragmentLength = _maxFrameSize - padding;
-            // TODO: same padding is applied to all frames, is this desired?
-            if (maxFragmentLength <= 0)
-            {
-                promiseAggregator.SetException(ThrowHelper.GetArgumentException_PaddingIsTooLarge(padding, _maxFrameSize));
-                return promiseAggregator.Task;
-            }
+            Http2Flags flags = new Http2Flags();
 
             if (headerBlock.IsReadable())
             {
                 // The frame header (and padding) only changes on the last frame, so allocate it once and re-use
-                int fragmentReadableBytes = Math.Min(headerBlock.ReadableBytes, maxFragmentLength);
-                int payloadLength = fragmentReadableBytes + padding;
+                int fragmentReadableBytes = Math.Min(headerBlock.ReadableBytes, _maxFrameSize);
                 IByteBuffer buf = ctx.Allocator.Buffer(Http2CodecUtil.ContinuationFrameHeaderLength);
-                Http2CodecUtil.WriteFrameHeaderInternal(buf, payloadLength, Http2FrameTypes.Continuation, flags, streamId);
-                WritePaddingLength(buf, padding);
+                Http2CodecUtil.WriteFrameHeaderInternal(buf, fragmentReadableBytes, Http2FrameTypes.Continuation, flags, streamId);
 
                 do
                 {
-                    fragmentReadableBytes = Math.Min(headerBlock.ReadableBytes, maxFragmentLength);
+                    fragmentReadableBytes = Math.Min(headerBlock.ReadableBytes, _maxFrameSize);
                     IByteBuffer fragment = headerBlock.ReadRetainedSlice(fragmentReadableBytes);
 
-                    payloadLength = fragmentReadableBytes + padding;
                     if (headerBlock.IsReadable())
                     {
                         ctx.WriteAsync(buf.Retain(), promiseAggregator.NewPromise());
@@ -645,18 +630,11 @@ namespace DotNetty.Codecs.Http2
                         flags = flags.EndOfHeaders(true);
                         buf.Release();
                         buf = ctx.Allocator.Buffer(Http2CodecUtil.ContinuationFrameHeaderLength);
-                        Http2CodecUtil.WriteFrameHeaderInternal(buf, payloadLength, Http2FrameTypes.Continuation, flags, streamId);
-                        WritePaddingLength(buf, padding);
+                        Http2CodecUtil.WriteFrameHeaderInternal(buf, fragmentReadableBytes, Http2FrameTypes.Continuation, flags, streamId);
                         ctx.WriteAsync(buf, promiseAggregator.NewPromise());
                     }
 
                     ctx.WriteAsync(fragment, promiseAggregator.NewPromise());
-
-                    // Write out the padding, if any.
-                    if (PaddingBytes(padding) > 0)
-                    {
-                        ctx.WriteAsync(ZeroBuffer.Slice(0, PaddingBytes(padding)), promiseAggregator.NewPromise());
-                    }
                 }
                 while (headerBlock.IsReadable());
             }

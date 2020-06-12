@@ -9,33 +9,33 @@ namespace DotNetty.Buffers
 
     public sealed class PooledByteBufferAllocatorMetric : IByteBufferAllocatorMetric
     {
-        readonly PooledByteBufferAllocator allocator;
+        readonly PooledByteBufferAllocator _allocator;
 
         internal PooledByteBufferAllocatorMetric(PooledByteBufferAllocator allocator)
         {
-            this.allocator = allocator;
+            _allocator = allocator;
         }
 
-        public IReadOnlyList<IPoolArenaMetric> HeapArenas() => this.allocator.HeapArenas();
+        public IReadOnlyList<IPoolArenaMetric> HeapArenas() => _allocator.HeapArenas();
 
-        public IReadOnlyList<IPoolArenaMetric> DirectArenas() => this.allocator.DirectArenas();
+        public IReadOnlyList<IPoolArenaMetric> DirectArenas() => _allocator.DirectArenas();
 
-        public int TinyCacheSize => this.allocator.TinyCacheSize;
+        public int TinyCacheSize => _allocator.TinyCacheSize;
 
-        public int SmallCacheSize => this.allocator.SmallCacheSize;
+        public int SmallCacheSize => _allocator.SmallCacheSize;
 
-        public int NormalCacheSize => this.allocator.NormalCacheSize;
+        public int NormalCacheSize => _allocator.NormalCacheSize;
 
-        public int ChunkSize => this.allocator.ChunkSize;
+        public int ChunkSize => _allocator.ChunkSize;
 
-        public long UsedHeapMemory => this.allocator.UsedHeapMemory;
+        public long UsedHeapMemory => _allocator.UsedHeapMemory;
 
-        public long UsedDirectMemory => this.allocator.UsedDirectMemory;
+        public long UsedDirectMemory => _allocator.UsedDirectMemory;
 
         public int NumThreadLocalCaches()
         {
             int total = 0;
-            var arenas = this.HeapArenas();
+            var arenas = HeapArenas();
             if (arenas is object)
             {
                 foreach (IPoolArenaMetric metric in arenas)
@@ -44,7 +44,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            arenas = this.DirectArenas();
+            arenas = DirectArenas();
             if (arenas is object)
             {
                 foreach (IPoolArenaMetric metric in arenas)
@@ -60,15 +60,15 @@ namespace DotNetty.Buffers
         {
             var sb = StringBuilderManager.Allocate(256);
             sb.Append(StringUtil.SimpleClassName(this))
-                .Append("(usedHeapMemory: ").Append(this.UsedHeapMemory)
-                .Append("; usedDirectMemory: ").Append(this.UsedDirectMemory)
-                .Append("; numHeapArenas: ").Append(this.HeapArenas().Count)
-                .Append("; numDirectArenas: ").Append(this.DirectArenas().Count)
-                .Append("; tinyCacheSize: ").Append(this.TinyCacheSize)
-                .Append("; smallCacheSize: ").Append(this.SmallCacheSize)
-                .Append("; normalCacheSize: ").Append(this.NormalCacheSize)
-                .Append("; numThreadLocalCaches: ").Append(this.NumThreadLocalCaches())
-                .Append("; chunkSize: ").Append(this.ChunkSize).Append(')');
+                .Append("(usedHeapMemory: ").Append(UsedHeapMemory)
+                .Append("; usedDirectMemory: ").Append(UsedDirectMemory)
+                .Append("; numHeapArenas: ").Append(HeapArenas().Count)
+                .Append("; numDirectArenas: ").Append(DirectArenas().Count)
+                .Append("; tinyCacheSize: ").Append(TinyCacheSize)
+                .Append("; smallCacheSize: ").Append(SmallCacheSize)
+                .Append("; normalCacheSize: ").Append(NormalCacheSize)
+                .Append("; numThreadLocalCaches: ").Append(NumThreadLocalCaches())
+                .Append("; chunkSize: ").Append(ChunkSize).Append(')');
             return StringBuilderManager.ReturnAndFree(sb);
         }
     }

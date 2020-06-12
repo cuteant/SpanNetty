@@ -42,18 +42,18 @@ namespace DotNetty.Codecs.Http
 
         public override void HandlerAdded(IChannelHandlerContext context) => this.handlerContext = context;
 
-        protected override Result BeginEncode(IHttpResponse headers, ICharSequence acceptEncoding)
+        protected override Result BeginEncode(IHttpResponse httpResponse, ICharSequence acceptEncoding)
         {
             if (this.contentSizeThreshold > 0)
             {
-                if (headers is IHttpContent httpContent &&
+                if (httpResponse is IHttpContent httpContent &&
                     httpContent.Content.ReadableBytes < this.contentSizeThreshold)
                 {
                     return null;
                 }
             }
 
-            if (headers.Headers.Contains(HttpHeaderNames.ContentEncoding))
+            if (httpResponse.Headers.Contains(HttpHeaderNames.ContentEncoding))
             {
                 // Content-Encoding was set, either as something specific or as the IDENTITY encoding
                 // Therefore, we should NOT encode here

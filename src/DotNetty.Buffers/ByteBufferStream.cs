@@ -95,17 +95,17 @@ namespace DotNetty.Buffers
             switch (origin)
             {
                 case SeekOrigin.Current:
-                    offset += this.Position;
+                    offset += Position;
                     break;
                 case SeekOrigin.End:
-                    offset += this.Length;
+                    offset += Length;
                     break;
                     //case SeekOrigin.Begin:
                     //default:
                     //    break;
             }
-            this.Position = offset;
-            return this.Position;
+            Position = offset;
+            return Position;
         }
 
         #endregion
@@ -272,7 +272,7 @@ namespace DotNetty.Buffers
             }
             try
             {
-                var readNum = this.Read(buffer, offset, count);
+                var readNum = Read(buffer, offset, count);
                 return Task.FromResult(readNum);
             }
             //catch (OperationCanceledException oce)

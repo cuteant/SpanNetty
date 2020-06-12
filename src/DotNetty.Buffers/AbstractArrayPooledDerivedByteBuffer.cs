@@ -10,48 +10,48 @@ namespace DotNetty.Buffers
 
     abstract class AbstractArrayPooledDerivedByteBuffer : AbstractReferenceCountedByteBuffer
     {
-        readonly ThreadLocalPool.Handle recyclerHandle;
-        AbstractByteBuffer rootParent;
+        private readonly ThreadLocalPool.Handle _recyclerHandle;
+        private AbstractByteBuffer _rootParent;
 
         // Deallocations of a pooled derived buffer should always propagate through the entire chain of derived buffers.
         // This is because each pooled derived buffer maintains its own reference count and we should respect each one.
         // If deallocations cause a release of the "root parent" then then we may prematurely release the underlying
         // content before all the derived buffers have been released.
         //
-        IByteBuffer parent;
+        private IByteBuffer _parent;
 
         protected AbstractArrayPooledDerivedByteBuffer(ThreadLocalPool.Handle recyclerHandle)
             : base(0)
         {
-            this.recyclerHandle = recyclerHandle;
+            _recyclerHandle = recyclerHandle;
         }
 
         // Called from within SimpleLeakAwareByteBuf and AdvancedLeakAwareByteBuffer.
         internal void Parent(IByteBuffer newParent)
         {
             Debug.Assert(newParent is SimpleLeakAwareByteBuffer);
-            this.parent = newParent;
+            _parent = newParent;
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public sealed override IByteBuffer Unwrap() => this.rootParent;//this.UnwrapCore();
+        public sealed override IByteBuffer Unwrap() => _rootParent;
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        protected AbstractByteBuffer UnwrapCore() => this.rootParent;
+        protected AbstractByteBuffer UnwrapCore() => _rootParent;
 
         internal T Init<T>(
             AbstractByteBuffer unwrapped, IByteBuffer wrapped, int readerIndex, int writerIndex, int maxCapacity)
             where T : AbstractArrayPooledDerivedByteBuffer
         {
             wrapped.Retain(); // Retain up front to ensure the parent is accessible before doing more work.
-            this.parent = wrapped;
-            this.rootParent = unwrapped;
+            _parent = wrapped;
+            _rootParent = unwrapped;
 
             try
             {
-                this.SetMaxCapacity(maxCapacity);
-                this.SetIndex0(readerIndex, writerIndex); // It is assumed the bounds checking is done by the caller.
-                this.SetReferenceCount(1);
+                SetMaxCapacity(maxCapacity);
+                SetIndex0(readerIndex, writerIndex); // It is assumed the bounds checking is done by the caller.
+                SetReferenceCount(1);
 
                 wrapped = null;
                 return (T)this;
@@ -60,7 +60,7 @@ namespace DotNetty.Buffers
             {
                 if (wrapped is object)
                 {
-                    this.parent = this.rootParent = null;
+                    _parent = _rootParent = null;
                     wrapped.Release();
                 }
             }
@@ -71,154 +71,156 @@ namespace DotNetty.Buffers
             // We need to first store a reference to the parent before recycle this instance. This is needed as
             // otherwise it is possible that the same AbstractPooledDerivedByteBuf is again obtained and init(...) is
             // called before we actually have a chance to call release(). This leads to call release() on the wrong parent.
-            IByteBuffer parentBuf = this.parent;
-            this.recyclerHandle.Release(this);
+            IByteBuffer parentBuf = _parent;
+            _recyclerHandle.Release(this);
             parentBuf.Release();
         }
 
-        public sealed override IByteBufferAllocator Allocator => this.Unwrap().Allocator;
+        public sealed override IByteBufferAllocator Allocator => Unwrap().Allocator;
 
-        public sealed override bool IsDirect => this.Unwrap().IsDirect;
+        public sealed override bool IsDirect => Unwrap().IsDirect;
 
-        public override bool IsReadOnly => this.Unwrap().IsReadOnly;
+        public override bool IsReadOnly => Unwrap().IsReadOnly;
 
-        public override bool HasArray => this.Unwrap().HasArray;
+        public override bool HasArray => Unwrap().HasArray;
 
-        public override byte[] Array => this.Unwrap().Array;
+        public override byte[] Array => Unwrap().Array;
 
-        public override bool HasMemoryAddress => this.Unwrap().HasMemoryAddress;
+        public override bool HasMemoryAddress => Unwrap().HasMemoryAddress;
 
-        public override bool IsSingleIoBuffer => this.Unwrap().IsSingleIoBuffer;
+        public override bool IsSingleIoBuffer => Unwrap().IsSingleIoBuffer;
 
-        public sealed override int IoBufferCount => this.Unwrap().IoBufferCount;
+        public sealed override int IoBufferCount => Unwrap().IoBufferCount;
+
+        public override bool IsContiguous => Unwrap().IsContiguous;
 
         public sealed override IByteBuffer RetainedSlice()
         {
-            int index = this.ReaderIndex;
-            return base.RetainedSlice(index, this.WriterIndex - index);
+            int index = ReaderIndex;
+            return base.RetainedSlice(index, WriterIndex - index);
         }
 
         public override IByteBuffer Slice(int index, int length)
         {
             // All reference count methods should be inherited from this object (this is the "parent").
-            return new ArrayPooledNonRetainedSlicedByteBuffer(this, (AbstractByteBuffer)this.Unwrap(), index, length);
+            return new ArrayPooledNonRetainedSlicedByteBuffer(this, (AbstractByteBuffer)Unwrap(), index, length);
         }
 
         protected IByteBuffer Duplicate0()
         {
             // All reference count methods should be inherited from this object (this is the "parent").
-            return new ArrayPooledNonRetainedDuplicateByteBuffer(this, (AbstractByteBuffer)this.Unwrap());
+            return new ArrayPooledNonRetainedDuplicateByteBuffer(this, (AbstractByteBuffer)Unwrap());
         }
 
         sealed class ArrayPooledNonRetainedDuplicateByteBuffer : UnpooledDuplicatedByteBuffer
         {
-            readonly IReferenceCounted referenceCountDelegate;
+            readonly IReferenceCounted _referenceCountDelegate;
 
             internal ArrayPooledNonRetainedDuplicateByteBuffer(IReferenceCounted referenceCountDelegate, AbstractByteBuffer buffer)
                 : base(buffer)
             {
-                this.referenceCountDelegate = referenceCountDelegate;
+                _referenceCountDelegate = referenceCountDelegate;
             }
 
-            protected override int ReferenceCount0() => this.referenceCountDelegate.ReferenceCount;
+            protected override int ReferenceCount0() => _referenceCountDelegate.ReferenceCount;
 
             protected override IByteBuffer Retain0()
             {
-                this.referenceCountDelegate.Retain();
+                _referenceCountDelegate.Retain();
                 return this;
             }
 
             protected override IByteBuffer Retain0(int increment)
             {
-                this.referenceCountDelegate.Retain(increment);
+                _referenceCountDelegate.Retain(increment);
                 return this;
             }
 
             protected override IByteBuffer Touch0()
             {
-                this.referenceCountDelegate.Touch();
+                _referenceCountDelegate.Touch();
                 return this;
             }
 
             protected override IByteBuffer Touch0(object hint)
             {
-                this.referenceCountDelegate.Touch(hint);
+                _referenceCountDelegate.Touch(hint);
                 return this;
             }
 
-            protected override bool Release0() => this.referenceCountDelegate.Release();
+            protected override bool Release0() => _referenceCountDelegate.Release();
 
-            protected override bool Release0(int decrement) => this.referenceCountDelegate.Release(decrement);
+            protected override bool Release0(int decrement) => _referenceCountDelegate.Release(decrement);
 
-            public override IByteBuffer Duplicate() => new ArrayPooledNonRetainedDuplicateByteBuffer(this.referenceCountDelegate, this);
+            public override IByteBuffer Duplicate() => new ArrayPooledNonRetainedDuplicateByteBuffer(_referenceCountDelegate, this);
 
-            public override IByteBuffer RetainedDuplicate() => ArrayPooledDuplicatedByteBuffer.NewInstance(this.UnwrapCore(), this, this.ReaderIndex, this.WriterIndex);
+            public override IByteBuffer RetainedDuplicate() => ArrayPooledDuplicatedByteBuffer.NewInstance(UnwrapCore(), this, ReaderIndex, WriterIndex);
 
             public override IByteBuffer Slice(int index, int length)
             {
-                this.CheckIndex0(index, length);
-                return new ArrayPooledNonRetainedSlicedByteBuffer(this.referenceCountDelegate, (AbstractByteBuffer)this.Unwrap(), index, length);
+                CheckIndex0(index, length);
+                return new ArrayPooledNonRetainedSlicedByteBuffer(_referenceCountDelegate, (AbstractByteBuffer)Unwrap(), index, length);
             }
 
             // Capacity is not allowed to change for a sliced ByteBuf, so length == capacity()
-            public override IByteBuffer RetainedSlice() => this.RetainedSlice(this.ReaderIndex, this.Capacity);
+            public override IByteBuffer RetainedSlice() => RetainedSlice(ReaderIndex, Capacity);
 
-            public override IByteBuffer RetainedSlice(int index, int length) => ArrayPooledSlicedByteBuffer.NewInstance(this.UnwrapCore(), this, index, length);
+            public override IByteBuffer RetainedSlice(int index, int length) => ArrayPooledSlicedByteBuffer.NewInstance(UnwrapCore(), this, index, length);
         }
 
         sealed class ArrayPooledNonRetainedSlicedByteBuffer : UnpooledSlicedByteBuffer
         {
-            readonly IReferenceCounted referenceCountDelegate;
+            readonly IReferenceCounted _referenceCountDelegate;
 
             public ArrayPooledNonRetainedSlicedByteBuffer(IReferenceCounted referenceCountDelegate, AbstractByteBuffer buffer, int index, int length)
                 : base(buffer, index, length)
             {
-                this.referenceCountDelegate = referenceCountDelegate;
+                _referenceCountDelegate = referenceCountDelegate;
             }
 
-            protected override int ReferenceCount0() => this.referenceCountDelegate.ReferenceCount;
+            protected override int ReferenceCount0() => _referenceCountDelegate.ReferenceCount;
 
             protected override IByteBuffer Retain0()
             {
-                this.referenceCountDelegate.Retain();
+                _referenceCountDelegate.Retain();
                 return this;
             }
 
             protected override IByteBuffer Retain0(int increment)
             {
-                this.referenceCountDelegate.Retain(increment);
+                _referenceCountDelegate.Retain(increment);
                 return this;
             }
 
             protected override IByteBuffer Touch0()
             {
-                this.referenceCountDelegate.Touch();
+                _referenceCountDelegate.Touch();
                 return this;
             }
 
             protected override IByteBuffer Touch0(object hint)
             {
-                this.referenceCountDelegate.Touch(hint);
+                _referenceCountDelegate.Touch(hint);
                 return this;
             }
 
-            protected override bool Release0() => this.referenceCountDelegate.Release();
+            protected override bool Release0() => _referenceCountDelegate.Release();
 
-            protected override bool Release0(int decrement) => this.referenceCountDelegate.Release(decrement);
+            protected override bool Release0(int decrement) => _referenceCountDelegate.Release(decrement);
 
             public override IByteBuffer Duplicate() =>
-                new ArrayPooledNonRetainedDuplicateByteBuffer(this.referenceCountDelegate, this.UnwrapCore())
-                    .SetIndex(this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
+                new ArrayPooledNonRetainedDuplicateByteBuffer(_referenceCountDelegate, UnwrapCore())
+                    .SetIndex(Idx(ReaderIndex), Idx(WriterIndex));
 
-            public override IByteBuffer RetainedDuplicate() => ArrayPooledDuplicatedByteBuffer.NewInstance(this.UnwrapCore(), this, this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
+            public override IByteBuffer RetainedDuplicate() => ArrayPooledDuplicatedByteBuffer.NewInstance(UnwrapCore(), this, Idx(ReaderIndex), Idx(WriterIndex));
 
             public override IByteBuffer Slice(int index, int length)
             {
-                this.CheckIndex0(index, length);
-                return new ArrayPooledNonRetainedSlicedByteBuffer(this.referenceCountDelegate, this.UnwrapCore(), this.Idx(index), length);
+                CheckIndex0(index, length);
+                return new ArrayPooledNonRetainedSlicedByteBuffer(_referenceCountDelegate, UnwrapCore(), Idx(index), length);
             }
 
-            public override IByteBuffer RetainedSlice(int index, int length) => ArrayPooledSlicedByteBuffer.NewInstance(this.UnwrapCore(), this, this.Idx(index), length);
+            public override IByteBuffer RetainedSlice(int index, int length) => ArrayPooledSlicedByteBuffer.NewInstance(UnwrapCore(), this, Idx(index), length);
         }
     }
 }

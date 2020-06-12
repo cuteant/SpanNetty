@@ -18,57 +18,58 @@ namespace DotNetty.Buffers
         {
         }
 
-        public sealed override bool IsAccessible => this.Unwrap().IsAccessible;
+        public sealed override bool IsAccessible => Unwrap().IsAccessible;
 
-        public sealed override int ReferenceCount => this.ReferenceCount0();
+        public sealed override int ReferenceCount => ReferenceCount0();
 
-        protected virtual int ReferenceCount0() => this.Unwrap().ReferenceCount;
+        protected virtual int ReferenceCount0() => Unwrap().ReferenceCount;
 
-        public sealed override IReferenceCounted Retain() => this.Retain0();
+        public sealed override IReferenceCounted Retain() => Retain0();
 
         protected virtual IByteBuffer Retain0()
         {
-            this.Unwrap().Retain();
+            Unwrap().Retain();
             return this;
         }
 
-        public sealed override IReferenceCounted Retain(int increment) => this.Retain0(increment);
+        public sealed override IReferenceCounted Retain(int increment) => Retain0(increment);
 
         protected virtual IByteBuffer Retain0(int increment)
         {
-            this.Unwrap().Retain(increment);
+            Unwrap().Retain(increment);
             return this;
         }
 
-        public sealed override IReferenceCounted Touch() => this.Touch0();
+        public sealed override IReferenceCounted Touch() => Touch0();
 
         protected virtual IByteBuffer Touch0()
         {
-            this.Unwrap().Touch();
+            Unwrap().Touch();
             return this;
         }
 
-        public sealed override IReferenceCounted Touch(object hint) => this.Touch0(hint);
+        public sealed override IReferenceCounted Touch(object hint) => Touch0(hint);
 
         protected virtual IByteBuffer Touch0(object hint)
         {
-            this.Unwrap().Touch(hint);
+            Unwrap().Touch(hint);
             return this;
         }
 
-        public sealed override bool Release() => this.Release0();
+        public sealed override bool Release() => Release0();
 
-        protected virtual bool Release0() => this.Unwrap().Release();
+        protected virtual bool Release0() => Unwrap().Release();
 
-        public sealed override bool Release(int decrement) => this.Release0(decrement);
+        public sealed override bool Release(int decrement) => Release0(decrement);
 
-        protected virtual bool Release0(int decrement) => this.Unwrap().Release(decrement);
+        protected virtual bool Release0(int decrement) => Unwrap().Release(decrement);
 
-        public override bool IsReadOnly => this.Unwrap().IsReadOnly;
+        public override bool IsReadOnly => Unwrap().IsReadOnly;
 
-        public override ArraySegment<byte> GetIoBuffer(int index, int length) => this.Unwrap().GetIoBuffer(index, length);
+        public override ArraySegment<byte> GetIoBuffer(int index, int length) => Unwrap().GetIoBuffer(index, length);
 
-        public override ArraySegment<byte>[] GetIoBuffers(int index, int length) => this.Unwrap().GetIoBuffers(index, length);
+        public override ArraySegment<byte>[] GetIoBuffers(int index, int length) => Unwrap().GetIoBuffers(index, length);
 
+        public override bool IsContiguous => Unwrap().IsContiguous;
     }
 }

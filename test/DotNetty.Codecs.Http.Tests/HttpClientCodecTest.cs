@@ -356,6 +356,70 @@ namespace DotNetty.Codecs.Http.Tests
         }
 
         [Fact]
+        public void WebDavResponse()
+        {
+            byte[] data = Encoding.UTF8.GetBytes("HTTP/1.1 102 Processing\r\n" +
+                           "Status-URI: Status-URI:http://status.com; 404\r\n" +
+                           "\r\n" +
+                           "1234567812345678");
+            EmbeddedChannel ch = new EmbeddedChannel(new HttpClientCodec());
+            Assert.True(ch.WriteInbound(Unpooled.WrappedBuffer(data)));
+
+            var res = ch.ReadInbound<IHttpResponse>();
+            Assert.Same(HttpVersion.Http11, res.ProtocolVersion);
+            Assert.Equal(res.Status, HttpResponseStatus.Processing);
+            var content = ch.ReadInbound<IHttpContent>();
+            // HTTP 102 is not allowed to have content.
+            Assert.Equal(0, content.Content.ReadableBytes);
+            content.Release();
+
+            Assert.False(ch.Finish());
+        }
+
+        [Fact]
+        public void InformationalResponseKeepsPairsInSync()
+        {
+            byte[] data = Encoding.UTF8.GetBytes("HTTP/1.1 102 Processing\r\n" +
+                    "Status-URI: Status-URI:http://status.com; 404\r\n" +
+                    "\r\n");
+            byte[] data2 = Encoding.UTF8.GetBytes("HTTP/1.1 200 OK\r\n" +
+                    "Content-Length: 8\r\n" +
+                    "\r\n" +
+                    "12345678");
+            EmbeddedChannel ch = new EmbeddedChannel(new HttpClientCodec());
+            Assert.True(ch.WriteOutbound(new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Head, "/")));
+            var buffer = ch.ReadOutbound<IByteBuffer>();
+            buffer.Release();
+            Assert.Null(ch.ReadOutbound<object>());
+            Assert.True(ch.WriteInbound(Unpooled.WrappedBuffer(data)));
+            var res = ch.ReadInbound<IHttpResponse>();
+            Assert.Same(HttpVersion.Http11, res.ProtocolVersion);
+            Assert.Equal(HttpResponseStatus.Processing, res.Status);
+            var content = ch.ReadInbound<IHttpContent>();
+            // HTTP 102 is not allowed to have content.
+            Assert.Equal(0, content.Content.ReadableBytes);
+            Assert.True(content is ILastHttpContent);
+            content.Release();
+
+            Assert.True(ch.WriteOutbound(new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, "/")));
+            buffer = ch.ReadOutbound<IByteBuffer>();
+            buffer.Release();
+            Assert.Null(ch.ReadOutbound<object>());
+            Assert.True(ch.WriteInbound(Unpooled.WrappedBuffer(data2)));
+
+            res = ch.ReadInbound<IHttpResponse>();
+            Assert.Same(HttpVersion.Http11, res.ProtocolVersion);
+            Assert.Equal(HttpResponseStatus.OK, res.Status);
+            content = ch.ReadInbound<IHttpContent>();
+            // HTTP 200 has content.
+            Assert.Equal(8, content.Content.ReadableBytes);
+            Assert.True(content is ILastHttpContent);
+            content.Release();
+
+            Assert.False(ch.Finish());
+        }
+
+        [Fact]
         public void MultipleResponses()
         {
             string response = "HTTP/1.1 200 OK\r\n" +

@@ -18,12 +18,20 @@
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int FindIndex(this IByteBuffer buf, Predicate<byte> match)
         {
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.FindIndex(match);
+            }
             return buf.FindIndex(buf.ReaderIndex, buf.ReadableBytes, match);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int FindLastIndex(this IByteBuffer buf, Predicate<byte> match)
         {
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.FindLastIndex(match);
+            }
             return buf.FindLastIndex(buf.ReaderIndex, buf.ReadableBytes, match);
         }
 

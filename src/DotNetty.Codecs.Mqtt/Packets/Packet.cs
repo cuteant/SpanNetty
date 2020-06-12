@@ -15,7 +15,7 @@ namespace DotNetty.Codecs.Mqtt.Packets
 
         public override string ToString()
         {
-            return $"{this.GetType().Name}[Type={this.PacketType}, QualityOfService={this.QualityOfService}, Duplicate={this.Duplicate}, Retain={this.RetainRequested}]";
+            return $"{GetType().Name}[Type={PacketType}, QualityOfService={QualityOfService}, Duplicate={Duplicate}, Retain={RetainRequested}]";
         }
     }
 }

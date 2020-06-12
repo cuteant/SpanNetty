@@ -8,7 +8,9 @@ namespace DotNetty.Common.Concurrency
     using System.Threading.Tasks;
 
     /// <summary>
-    /// Provides an access to a set of <see cref="IEventExecutor"/>s it manages.
+    /// The <see cref="IEventExecutorGroup"/> is responsible for providing the <see cref="IEventExecutor"/>'s to use
+    /// via its <see cref="GetNext()"/> method. Besides this, it is also responsible for handling their
+    /// life-cycle and allows shutting them down in a global fashion.
     /// </summary>
     public interface IEventExecutorGroup : IScheduledExecutorService
     {

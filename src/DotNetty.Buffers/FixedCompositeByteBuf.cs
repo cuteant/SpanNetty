@@ -17,28 +17,28 @@ namespace DotNetty.Buffers
     /// </summary>
     public sealed partial class FixedCompositeByteBuf : AbstractReferenceCountedByteBuffer
     {
-        static readonly IByteBuffer[] Empty = { Unpooled.Empty };
+        private static readonly IByteBuffer[] Empty = { Unpooled.Empty };
 
-        readonly int nioBufferCount;
-        readonly int capacity;
-        readonly IByteBufferAllocator allocator;
-        readonly IByteBuffer[] buffers;
-        readonly bool direct;
+        private readonly int _nioBufferCount;
+        private readonly int _capacity;
+        private readonly IByteBufferAllocator _allocator;
+        private readonly IByteBuffer[] _buffers;
+        private readonly bool _direct;
 
         public FixedCompositeByteBuf(IByteBufferAllocator allocator, params IByteBuffer[] buffers)
             : base(AbstractByteBufferAllocator.DefaultMaxCapacity)
         {
             if (buffers is null || 0u >= (uint)buffers.Length)
             {
-                this.buffers = Empty;
-                this.nioBufferCount = 1;
-                this.capacity = 0;
-                this.direct = false;
+                _buffers = Empty;
+                _nioBufferCount = 1;
+                _capacity = 0;
+                _direct = false;
             }
             else
             {
                 var b = buffers[0];
-                this.buffers = buffers;
+                _buffers = buffers;
                 var direct = true;
                 int nioBufferCount = b.IoBufferCount;
                 int capacity = b.ReadableBytes;
@@ -52,38 +52,38 @@ namespace DotNetty.Buffers
                         direct = false;
                     }
                 }
-                this.nioBufferCount = nioBufferCount;
-                this.capacity = capacity;
-                this.direct = direct;
+                _nioBufferCount = nioBufferCount;
+                _capacity = capacity;
+                _direct = direct;
             }
-            this.SetIndex(0, this.capacity);
-            this.allocator = allocator;
+            SetIndex(0, _capacity);
+            _allocator = allocator;
         }
 
         public override bool IsWritable() => false;
 
         public override bool IsWritable(int size) => false;
 
-        public override int Capacity => this.capacity;
+        public override int Capacity => _capacity;
 
-        public override int MaxCapacity => this.capacity;
+        public override int MaxCapacity => _capacity;
 
-        public override IByteBufferAllocator Allocator => this.allocator;
+        public override IByteBufferAllocator Allocator => _allocator;
 
         public override IByteBuffer Unwrap() => null;
 
-        public override bool IsDirect => this.direct;
+        public override bool IsDirect => _direct;
 
         public override bool HasArray
         {
             get
             {
-                switch (this.buffers.Length)
+                switch (_buffers.Length)
                 {
                     case 0:
                         return true;
                     case 1:
-                        return this.Buffer(0).HasArray;
+                        return Buffer(0).HasArray;
                     default:
                         return false;
                 }
@@ -94,12 +94,12 @@ namespace DotNetty.Buffers
         {
             get
             {
-                switch (this.buffers.Length)
+                switch (_buffers.Length)
                 {
                     case 0:
                         return ArrayExtensions.ZeroBytes;
                     case 1:
-                        return this.Buffer(0).Array;
+                        return Buffer(0).Array;
                     default:
                         throw ThrowHelper.GetNotSupportedException();
                 }
@@ -110,12 +110,12 @@ namespace DotNetty.Buffers
         {
             get
             {
-                switch (this.buffers.Length)
+                switch (_buffers.Length)
                 {
                     case 0:
                         return 0;
                     case 1:
-                        return this.Buffer(0).ArrayOffset;
+                        return Buffer(0).ArrayOffset;
                     default:
                         throw ThrowHelper.GetNotSupportedException();
                 }
@@ -126,10 +126,10 @@ namespace DotNetty.Buffers
         {
             get
             {
-                switch (this.buffers.Length)
+                switch (_buffers.Length)
                 {
                     case 1:
-                        return this.Buffer(0).HasMemoryAddress;
+                        return Buffer(0).HasMemoryAddress;
                     default:
                         return false;
                 }
@@ -138,10 +138,10 @@ namespace DotNetty.Buffers
 
         public override ref byte GetPinnableMemoryAddress()
         {
-            switch (this.buffers.Length)
+            switch (_buffers.Length)
             {
                 case 1:
-                    return ref this.Buffer(0).GetPinnableMemoryAddress();
+                    return ref Buffer(0).GetPinnableMemoryAddress();
                 default:
                     throw ThrowHelper.GetNotSupportedException();
             }
@@ -149,25 +149,25 @@ namespace DotNetty.Buffers
 
         public override IntPtr AddressOfPinnedMemory()
         {
-            switch (this.buffers.Length)
+            switch (_buffers.Length)
             {
                 case 1:
-                    return this.Buffer(0).AddressOfPinnedMemory();
+                    return Buffer(0).AddressOfPinnedMemory();
                 default:
                     throw ThrowHelper.GetNotSupportedException();
             }
         }
 
-        public override bool IsSingleIoBuffer => 1u >= (uint)this.nioBufferCount;
+        public override bool IsSingleIoBuffer => 1u >= (uint)_nioBufferCount;
 
-        public override int IoBufferCount => this.nioBufferCount;
+        public override int IoBufferCount => _nioBufferCount;
 
         ComponentEntry FindComponent(int index)
         {
             int readable = 0;
-            for (int i = 0; i < this.buffers.Length; i++)
+            for (int i = 0; i < _buffers.Length; i++)
             {
-                var b = this.buffers[i];
+                var b = _buffers[i];
                 var comp = b as ComponentEntry;
                 if (comp is object)
                 {
@@ -181,7 +181,7 @@ namespace DotNetty.Buffers
                         // Create a new component and store it in the array so it not create a new object
                         // on the next access.
                         comp = new ComponentEntry(i, readable - b.ReadableBytes, b);
-                        buffers[i] = comp;
+                        _buffers[i] = comp;
                     }
                     return comp;
                 }
@@ -195,115 +195,115 @@ namespace DotNetty.Buffers
         /// </summary>
         IByteBuffer Buffer(int idx)
         {
-            var b = this.buffers[idx];
+            var b = _buffers[idx];
             return b is ComponentEntry comp ? comp.Buf : b;
         }
 
         public override byte GetByte(int index)
         {
-            return this._GetByte(index);
+            return _GetByte(index);
         }
 
         protected internal override byte _GetByte(int index)
         {
-            var c = this.FindComponent(index);
+            var c = FindComponent(index);
             return c.Buf.GetByte(index - c.Offset);
         }
 
         protected internal override short _GetShort(int index)
         {
-            ComponentEntry c = this.FindComponent(index);
+            ComponentEntry c = FindComponent(index);
             if (index + 2 <= c.EndOffset)
             {
                 return c.Buf.GetShort(index - c.Offset);
             }
 
-            return (short)(this._GetByte(index) << 8 | this._GetByte(index + 1));
+            return (short)(_GetByte(index) << 8 | _GetByte(index + 1));
         }
 
         protected internal override short _GetShortLE(int index)
         {
-            ComponentEntry c = this.FindComponent(index);
+            ComponentEntry c = FindComponent(index);
             if (index + 2 <= c.EndOffset)
             {
                 return c.Buf.GetShortLE(index - c.Offset);
             }
 
-            return (short)(this._GetByte(index) << 8 | this._GetByte(index + 1));
+            return (short)(_GetByte(index) << 8 | _GetByte(index + 1));
         }
 
         protected internal override int _GetUnsignedMedium(int index)
         {
-            ComponentEntry c = this.FindComponent(index);
+            ComponentEntry c = FindComponent(index);
             if (index + 3 <= c.EndOffset)
             {
                 return c.Buf.GetUnsignedMedium(index - c.Offset);
             }
 
-            return (this._GetShort(index) & 0xffff) << 8 | this._GetByte(index + 2);
+            return (_GetShort(index) & 0xffff) << 8 | _GetByte(index + 2);
         }
 
         protected internal override int _GetUnsignedMediumLE(int index)
         {
-            ComponentEntry c = this.FindComponent(index);
+            ComponentEntry c = FindComponent(index);
             if (index + 3 <= c.EndOffset)
             {
                 return c.Buf.GetUnsignedMediumLE(index - c.Offset);
             }
 
-            return (this._GetShortLE(index) & 0xffff) << 8 | this._GetByte(index + 2);
+            return (_GetShortLE(index) & 0xffff) << 8 | _GetByte(index + 2);
         }
 
         protected internal override int _GetInt(int index)
         {
-            ComponentEntry c = this.FindComponent(index);
+            ComponentEntry c = FindComponent(index);
             if (index + 4 <= c.EndOffset)
             {
                 return c.Buf.GetInt(index - c.Offset);
             }
 
-            return this._GetShort(index) << 16 | (ushort)this._GetShort(index + 2);
+            return _GetShort(index) << 16 | (ushort)_GetShort(index + 2);
         }
 
         protected internal override int _GetIntLE(int index)
         {
-            ComponentEntry c = this.FindComponent(index);
+            ComponentEntry c = FindComponent(index);
             if (index + 4 <= c.EndOffset)
             {
                 return c.Buf.GetIntLE(index - c.Offset);
             }
 
-            return (this._GetShortLE(index) << 16 | (ushort)this._GetShortLE(index + 2));
+            return (_GetShortLE(index) << 16 | (ushort)_GetShortLE(index + 2));
         }
 
         protected internal override long _GetLong(int index)
         {
-            ComponentEntry c = this.FindComponent(index);
+            ComponentEntry c = FindComponent(index);
             if (index + 8 <= c.EndOffset)
             {
                 return c.Buf.GetLong(index - c.Offset);
             }
 
-            return (long)this._GetInt(index) << 32 | (uint)this._GetInt(index + 4);
+            return (long)_GetInt(index) << 32 | (uint)_GetInt(index + 4);
         }
 
         protected internal override long _GetLongLE(int index)
         {
-            ComponentEntry c = this.FindComponent(index);
+            ComponentEntry c = FindComponent(index);
             if (index + 8 <= c.EndOffset)
             {
                 return c.Buf.GetLongLE(index - c.Offset);
             }
 
-            return (this._GetIntLE(index) << 32 | this._GetIntLE(index + 4));
+            return (_GetIntLE(index) << 32 | _GetIntLE(index + 4));
         }
 
         public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
-            this.CheckDstIndex(index, length, dstIndex, dst.Length);
+            CheckDstIndex(index, length, dstIndex, dst.Length);
             if (0u >= (uint)length) { return this; }
 
-            var c = this.FindComponent(index);
+            var c = FindComponent(index);
             int i = c.Index;
             int adjustment = c.Offset;
             var s = c.Buf;
@@ -319,17 +319,17 @@ namespace DotNetty.Buffers
                 {
                     break;
                 }
-                s = this.Buffer(++i);
+                s = Buffer(++i);
             }
             return this;
         }
 
         public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
-            this.CheckDstIndex(index, length, dstIndex, dst.Capacity);
+            CheckDstIndex(index, length, dstIndex, dst.Capacity);
             if (0u >= (uint)length) { return this; }
 
-            var c = this.FindComponent(index);
+            var c = FindComponent(index);
             int i = c.Index;
             int adjustment = c.Offset;
             var s = c.Buf;
@@ -345,17 +345,17 @@ namespace DotNetty.Buffers
                 {
                     break;
                 }
-                s = this.Buffer(++i);
+                s = Buffer(++i);
             }
             return this;
         }
 
         public override IByteBuffer GetBytes(int index, Stream destination, int length)
         {
-            this.CheckIndex(index, length);
+            CheckIndex(index, length);
             if (0u >= (uint)length) { return this; }
 
-            var c = this.FindComponent(index);
+            var c = FindComponent(index);
             int i = c.Index;
             int adjustment = c.Offset;
             var s = c.Buf;
@@ -370,16 +370,16 @@ namespace DotNetty.Buffers
                 {
                     break;
                 }
-                s = this.Buffer(++i);
+                s = Buffer(++i);
             }
             return this;
         }
 
         public override IByteBuffer Copy(int index, int length)
         {
-            this.CheckIndex(index, length);
+            CheckIndex(index, length);
             var release = true;
-            var buf = this.allocator.Buffer(length);
+            var buf = _allocator.Buffer(length);
             try
             {
                 buf.WriteBytes(this, index, length);
@@ -394,12 +394,12 @@ namespace DotNetty.Buffers
 
         public override ArraySegment<byte> GetIoBuffer(int index, int length)
         {
-            this.CheckIndex(index, length);
+            CheckIndex(index, length);
             if (0u >= (uint)length) { return default; }
 
-            if (this.buffers.Length == 1)
+            if (_buffers.Length == 1)
             {
-                var buf = this.Buffer(0);
+                var buf = Buffer(0);
                 if (buf.IsSingleIoBuffer)
                 {
                     return buf.GetIoBuffer(index, length);
@@ -408,7 +408,7 @@ namespace DotNetty.Buffers
 
             var merged = new byte[length];
             var memory = new Memory<byte>(merged);
-            var bufs = this.GetSequence(index, length);
+            var bufs = GetSequence(index, length);
 
             int offset = 0;
             foreach (var buf in bufs)
@@ -423,13 +423,13 @@ namespace DotNetty.Buffers
 
         public override ArraySegment<byte>[] GetIoBuffers(int index, int length)
         {
-            this.CheckIndex(index, length);
+            CheckIndex(index, length);
             if (0u >= (uint)length) { return EmptyArray<ArraySegment<byte>>.Instance; }
 
-            var array = ThreadLocalList<ArraySegment<byte>>.NewInstance(this.nioBufferCount);
+            var array = ThreadLocalList<ArraySegment<byte>>.NewInstance(_nioBufferCount);
             try
             {
-                var c = this.FindComponent(index);
+                var c = FindComponent(index);
                 int i = c.Index;
                 int adjustment = c.Offset;
                 var s = c.Buf;
@@ -456,7 +456,7 @@ namespace DotNetty.Buffers
                     {
                         break;
                     }
-                    s = this.Buffer(++i);
+                    s = Buffer(++i);
                 }
 
                 return array.ToArray();
@@ -469,9 +469,9 @@ namespace DotNetty.Buffers
 
         protected internal override void Deallocate()
         {
-            for (int i = 0; i < this.buffers.Length; i++)
+            for (int i = 0; i < _buffers.Length; i++)
             {
-                this.Buffer(i).Release();
+                Buffer(i).Release();
             }
         }
 
@@ -629,9 +629,9 @@ namespace DotNetty.Buffers
             public ComponentEntry(int index, int offset, IByteBuffer buf)
                 : base(buf)
             {
-                this.Index = index;
-                this.Offset = offset;
-                this.EndOffset = offset + buf.ReadableBytes;
+                Index = index;
+                Offset = offset;
+                EndOffset = offset + buf.ReadableBytes;
             }
         }
     }

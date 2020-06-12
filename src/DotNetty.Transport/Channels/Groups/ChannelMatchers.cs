@@ -4,13 +4,19 @@
 namespace DotNetty.Transport.Channels.Groups
 {
     using System;
-    using System.Reflection;
 
     public static class ChannelMatchers
     {
-        static readonly IChannelMatcher AllMatcher = new AllChannelMatcher();
-        static readonly IChannelMatcher ServerChannelMatcher = IsInstanceOf(typeof(IServerChannel));
-        static readonly IChannelMatcher NonServerChannelMatcher = IsNotInstanceOf(typeof(IServerChannel));
+        static readonly IChannelMatcher AllMatcher;
+        static readonly IChannelMatcher ServerChannelMatcher;
+        static readonly IChannelMatcher NonServerChannelMatcher;
+
+        static ChannelMatchers()
+        {
+            AllMatcher = new AllChannelMatcher();
+            ServerChannelMatcher = IsInstanceOf(typeof(IServerChannel));
+            NonServerChannelMatcher = IsNotInstanceOf(typeof(IServerChannel));
+        }
 
         public static IChannelMatcher IsServerChannel() => ServerChannelMatcher;
 
@@ -48,18 +54,18 @@ namespace DotNetty.Transport.Channels.Groups
 
         sealed class CompositeMatcher : IChannelMatcher
         {
-            readonly IChannelMatcher[] matchers;
+            readonly IChannelMatcher[] _matchers;
 
             public CompositeMatcher(params IChannelMatcher[] matchers)
             {
-                this.matchers = matchers;
+                _matchers = matchers;
             }
 
             public bool Matches(IChannel channel)
             {
-                foreach (IChannelMatcher m in this.matchers)
+                for (int i = 0; i < _matchers.Length; i++)
                 {
-                    if (!m.Matches(channel))
+                    if (!_matchers[i].Matches(channel))
                     {
                         return false;
                     }
@@ -70,38 +76,38 @@ namespace DotNetty.Transport.Channels.Groups
 
         sealed class InvertMatcher : IChannelMatcher
         {
-            readonly IChannelMatcher matcher;
+            readonly IChannelMatcher _matcher;
 
             public InvertMatcher(IChannelMatcher matcher)
             {
-                this.matcher = matcher;
+                _matcher = matcher;
             }
 
-            public bool Matches(IChannel channel) => !this.matcher.Matches(channel);
+            public bool Matches(IChannel channel) => !_matcher.Matches(channel);
         }
 
         sealed class InstanceMatcher : IChannelMatcher
         {
-            readonly IChannel channel;
+            readonly IChannel _channel;
 
             public InstanceMatcher(IChannel channel)
             {
-                this.channel = channel;
+                _channel = channel;
             }
 
-            public bool Matches(IChannel ch) => this.channel == ch;
+            public bool Matches(IChannel ch) => _channel == ch;
         }
 
         sealed class TypeMatcher : IChannelMatcher
         {
-            readonly Type type;
+            readonly Type _type;
 
             public TypeMatcher(Type clazz)
             {
-                this.type = clazz;
+                _type = clazz;
             }
 
-            public bool Matches(IChannel channel) => this.type.IsInstanceOfType(channel);
+            public bool Matches(IChannel channel) => _type.IsInstanceOfType(channel);
         }
     }
 }

@@ -107,14 +107,16 @@ namespace DotNetty.Codecs.Http2
                 stream = RequireStream(streamId);
 
                 // Verify that the stream is in the appropriate state for sending DATA frames.
-                var steamState = stream.State;
-                if (Http2StreamState.Open == steamState || Http2StreamState.HalfClosedRemote == steamState)
+                switch (stream.State)
                 {
-                    // Allowed sending DATA frames in these states.
-                }
-                else
-                {
-                    ThrowHelper.ThrowInvalidOperationException_StreamInUnexpectedState(stream);
+                    case Http2StreamState.Open:
+                    case Http2StreamState.HalfClosedRemote:
+                        // Allowed sending DATA frames in these states.
+                        break;
+
+                    default:
+                        ThrowHelper.ThrowInvalidOperationException_StreamInUnexpectedState(stream);
+                        break;
                 }
             }
             catch (Exception e)
@@ -133,7 +135,7 @@ namespace DotNetty.Codecs.Http2
         public Task WriteHeadersAsync(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers,
             int padding, bool endOfStream, IPromise promise)
         {
-            return WriteHeadersAsync(ctx, streamId, headers, 0, Http2CodecUtil.DefaultPriorityWeight, false, padding, endOfStream, promise);
+            return InternalWriteHeadersAsync(ctx, streamId, headers, false, 0, 0, false, padding, endOfStream, promise);
         }
 
         private static bool ValidateHeadersSentState(IHttp2Stream stream, IHttp2Headers headers, bool isServer, bool endOfStream)
@@ -148,6 +150,36 @@ namespace DotNetty.Codecs.Http2
 
         public virtual Task WriteHeadersAsync(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers,
             int streamDependency, short weight, bool exclusive, int padding, bool endOfStream, IPromise promise)
+        {
+            return InternalWriteHeadersAsync(ctx, streamId, headers, true, streamDependency,
+                weight, exclusive, padding, endOfStream, promise);
+        }
+
+        /// <summary>
+        /// Write headers via <see cref="IHttp2FrameWriter"/>. If <paramref name="hasPriority"/> is <c>false</c> it will ignore the
+        /// <paramref name="streamDependency"/>, <paramref name="weight"/> and <paramref name="exclusive"/> parameters.
+        /// </summary>
+        private static Task SendHeadersAsync(IHttp2FrameWriter frameWriter,
+            IChannelHandlerContext ctx, int streamId,
+            IHttp2Headers headers, bool hasPriority,
+            int streamDependency, short weight,
+            bool exclusive, int padding,
+            bool endOfStream, IPromise promise)
+        {
+            if (hasPriority)
+            {
+                return frameWriter.WriteHeadersAsync(ctx, streamId, headers, streamDependency,
+                        weight, exclusive, padding, endOfStream, promise);
+            }
+            return frameWriter.WriteHeadersAsync(ctx, streamId, headers, padding, endOfStream, promise);
+        }
+
+        private Task InternalWriteHeadersAsync(
+            IChannelHandlerContext ctx, int streamId,
+            IHttp2Headers headers, bool hasPriority,
+            int streamDependency, short weight,
+            bool exclusive, int padding,
+            bool endOfStream, IPromise promise)
         {
             try
             {
@@ -175,18 +207,20 @@ namespace DotNetty.Codecs.Http2
                 }
                 else
                 {
-                    var streamState = stream.State;
-                    if (Http2StreamState.ReservedLocal == streamState)
+                    switch (stream.State)
                     {
-                        stream.Open(endOfStream);
-                    }
-                    else if (Http2StreamState.Open == streamState || Http2StreamState.HalfClosedRemote == streamState)
-                    {
-                        // Allowed sending headers in these states.
-                    }
-                    else
-                    {
-                        ThrowHelper.ThrowInvalidOperationException_StreamInUnexpectedState(stream);
+                        case Http2StreamState.ReservedLocal:
+                            stream.Open(endOfStream);
+                            break;
+
+                        case Http2StreamState.Open:
+                        case Http2StreamState.HalfClosedRemote:
+                            // Allowed sending headers in these states.
+                            break;
+
+                        default:
+                            ThrowHelper.ThrowInvalidOperationException_StreamInUnexpectedState(stream);
+                            break;
                     }
                 }
 
@@ -196,18 +230,16 @@ namespace DotNetty.Codecs.Http2
                 if (!endOfStream || !flowController.HasFlowControlled(stream))
                 {
                     // The behavior here should mirror that in FlowControlledHeaders
-                    promise = promise.Unvoid();
 
+                    promise = promise.Unvoid();
                     var isInformational = ValidateHeadersSentState(stream, headers, _connection.IsServer, endOfStream);
 
-                    var future = _frameWriter.WriteHeadersAsync(ctx, streamId, headers, streamDependency,
-                                                                weight, exclusive, padding, endOfStream, promise);
+                    var future = SendHeadersAsync(_frameWriter, ctx, streamId, headers, hasPriority, streamDependency,
+                            weight, exclusive, padding, endOfStream, promise);
+
                     // Writing headers may fail during the encode state if they violate HPACK limits.
-                    if (future.IsFaulted || future.IsCanceled)
-                    {
-                        _lifecycleManager.OnError(ctx, true, future.Exception.InnerException);
-                    }
-                    else
+                    var failureCause = future.Exception;
+                    if (failureCause is null)
                     {
                         // Synchronously set the headersSent flag to ensure that we do not subsequently write
                         // other headers containing pseudo-header fields.
@@ -215,11 +247,15 @@ namespace DotNetty.Codecs.Http2
                         // This just sets internal stream state which is used elsewhere in the codec and doesn't
                         // necessarily mean the write will complete successfully.
                         stream.HeadersSent(isInformational);
-                        if (!future.IsCompleted)
+                        if (!future.IsSuccess())
                         {
                             // Either the future is not done or failed in the meantime.
                             NotifyLifecycleManagerOnError(future, _lifecycleManager, ctx);
                         }
+                    }
+                    else
+                    {
+                        _lifecycleManager.OnError(ctx, true, failureCause.InnerException);
                     }
 
                     if (endOfStream)
@@ -236,8 +272,8 @@ namespace DotNetty.Codecs.Http2
                 {
                     // Pass headers to the flow-controller so it can maintain their sequence relative to DATA frames.
                     flowController.AddFlowControlled(stream,
-                            new FlowControlledHeaders(this, stream, headers, streamDependency, weight, exclusive, padding,
-                                                      true, promise));
+                            new FlowControlledHeaders(this, stream, headers, hasPriority, streamDependency,
+                                    weight, exclusive, padding, true, promise));
                     return promise.Task;
                 }
             }
@@ -337,20 +373,22 @@ namespace DotNetty.Codecs.Http2
                 promise = promise.Unvoid();
                 var future = _frameWriter.WritePushPromiseAsync(ctx, streamId, promisedStreamId, headers, padding, promise);
                 // Writing headers may fail during the encode state if they violate HPACK limits.
-                if (future.IsFaulted || future.IsCanceled)
-                {
-                    _lifecycleManager.OnError(ctx, true, future.Exception.InnerException);
-                }
-                else
+                var failureCause = future.Exception;
+                if (failureCause is null)
                 {
                     // This just sets internal stream state which is used elsewhere in the codec and doesn't
                     // necessarily mean the write will complete successfully.
                     stream.PushPromiseSent();
-                    if (!future.IsCompleted)
+
+                    if (!future.IsSuccess())
                     {
                         // Either the future is not done or failed in the meantime.
                         NotifyLifecycleManagerOnError(future, _lifecycleManager, ctx);
                     }
+                }
+                else
+                {
+                    _lifecycleManager.OnError(ctx, true, failureCause.InnerException);
                 }
                 return future;
             }
@@ -527,9 +565,10 @@ namespace DotNetty.Codecs.Http2
         private static void NotifyLifecycleManagerOnError0(Task t, object s)
         {
             var wrapped = (Tuple<IHttp2LifecycleManager, IChannelHandlerContext>)s;
-            if (t.IsFaulted)
+            var cause = t.Exception;
+            if (cause is object)
             {
-                wrapped.Item1.OnError(wrapped.Item2, true, t.Exception.InnerException);
+                wrapped.Item1.OnError(wrapped.Item2, true, cause.InnerException);
             }
         }
 
@@ -541,16 +580,19 @@ namespace DotNetty.Codecs.Http2
         sealed class FlowControlledHeaders : FlowControlledBase
         {
             private readonly IHttp2Headers _headers;
+            private readonly bool _hasPriority;
             private readonly int _streamDependency;
             private readonly short _weight;
             private readonly bool _exclusive;
 
             public FlowControlledHeaders(DefaultHttp2ConnectionEncoder encoder,
-                IHttp2Stream stream, IHttp2Headers headers, int streamDependency, short weight,
-                bool exclusive, int padding, bool endOfStream, IPromise promise)
+                IHttp2Stream stream, IHttp2Headers headers, bool hasPriority,
+                int streamDependency, short weight, bool exclusive,
+                int padding, bool endOfStream, IPromise promise)
                 : base(encoder, stream, padding, endOfStream, promise.Unvoid())
             {
                 _headers = headers;
+                _hasPriority = hasPriority;
                 _streamDependency = streamDependency;
                 _weight = weight;
                 _exclusive = exclusive;
@@ -574,10 +616,11 @@ namespace DotNetty.Codecs.Http2
                 // closeStreamLocal().
                 AddListener(_promise);
 
-                var f = _owner._frameWriter.WriteHeadersAsync(ctx, _stream.Id, _headers, _streamDependency, _weight, _exclusive,
-                                                                   _padding, _endOfStream, _promise);
+                var f = SendHeadersAsync(_owner._frameWriter, ctx, _stream.Id, _headers, _hasPriority, _streamDependency,
+                        _weight, _exclusive, _padding, _endOfStream, _promise);
                 // Writing headers may fail during the encode state if they violate HPACK limits.
-                if (f.IsSuccess())
+                var failureCause = f.Exception;
+                if (failureCause is null)
                 {
                     // This just sets internal stream state which is used elsewhere in the codec and doesn't
                     // necessarily mean the write will complete successfully.
@@ -619,9 +662,9 @@ namespace DotNetty.Codecs.Http2
             private static readonly Action<Task, object> LinkOutcomeContinuationAction = LinkOutcomeContinuation;
             private static void LinkOutcomeContinuation(Task task, object state)
             {
-                var self = (FlowControlledBase)state;
-                if (task.IsFaulted)
+                if (!task.IsSuccess())
                 {
+                    var self = (FlowControlledBase)state;
                     self.Error(self._owner.FlowController.ChannelHandlerContext, task.Exception.InnerException);
                 }
             }

@@ -53,7 +53,7 @@ namespace DotNetty.Buffers
                 case 0:
                     return ReadOnlySpan<byte>.Empty;
                 case 1:
-                    //ComponentEntry c = this.components[0];
+                    //ComponentEntry c = _components[0];
                     //return c.Buffer.GetReadableSpan(index, count);
                     ComponentEntry c = _components[0];
                     IByteBuffer buf = c.Buffer;
@@ -229,7 +229,7 @@ namespace DotNetty.Buffers
                 int result = s is AbstractByteBuffer buf
                     ? buf.ForEachByteAsc0(localStart, localLength, processor)
                     : s.ForEachByte(localStart, localLength, processor);
-                if ((uint)result < NIndexNotFound)
+                if ((uint)result < SharedConstants.uIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
@@ -262,7 +262,7 @@ namespace DotNetty.Buffers
                     ? buf.ForEachByteDesc0(localIndex, localLength, processor)
                     : s.ForEachByteDesc(localIndex, localLength, processor);
 
-                if ((uint)result < NIndexNotFound)
+                if ((uint)result < SharedConstants.uIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
@@ -293,7 +293,7 @@ namespace DotNetty.Buffers
                 int result = s is AbstractByteBuffer buf
                     ? buf.FindIndex0(localStart, localLength, match)
                     : s.FindIndex(localStart, localLength, match);
-                if ((uint)result < NIndexNotFound)
+                if ((uint)result < SharedConstants.uIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
@@ -326,7 +326,7 @@ namespace DotNetty.Buffers
                     ? buf.FindLastIndex0(localIndex, localLength, match)
                     : s.FindLastIndex(localIndex, localLength, match);
 
-                if ((uint)result < NIndexNotFound)
+                if ((uint)result < SharedConstants.uIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
@@ -357,7 +357,7 @@ namespace DotNetty.Buffers
                 int result = s is AbstractByteBuffer buf
                     ? buf.IndexOf0(localStart, localLength, value)
                     : s.IndexOf(localStart, localStart + localLength - 1, value);
-                if ((uint)result < NIndexNotFound)
+                if ((uint)result < SharedConstants.uIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
@@ -390,7 +390,7 @@ namespace DotNetty.Buffers
                     ? buf.LastIndexOf0(localIndex, localLength, value)
                     : s.IndexOf(localRStart - 1, localIndex, value);
 
-                if ((uint)result < NIndexNotFound)
+                if ((uint)result < SharedConstants.uIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
@@ -421,7 +421,7 @@ namespace DotNetty.Buffers
                 int result = s is AbstractByteBuffer buf
                     ? buf.IndexOfAny0(localStart, localLength, value0, value1)
                     : s.IndexOfAny(localStart, localStart + localLength - 1, value0, value1);
-                if ((uint)result < NIndexNotFound)
+                if ((uint)result < SharedConstants.uIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
@@ -454,7 +454,7 @@ namespace DotNetty.Buffers
                     ? buf.LastIndexOfAny0(localIndex, localLength, value0, value1)
                     : s.IndexOfAny(localRStart - 1, localIndex, value0, value1);
 
-                if ((uint)result < NIndexNotFound)
+                if ((uint)result < SharedConstants.uIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
@@ -485,7 +485,7 @@ namespace DotNetty.Buffers
                 int result = s is AbstractByteBuffer buf
                     ? buf.IndexOfAny0(localStart, localLength, value0, value1, value2)
                     : s.IndexOfAny(localStart, localStart + localLength - 1, value0, value1, value2);
-                if ((uint)result < NIndexNotFound)
+                if ((uint)result < SharedConstants.uIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }
@@ -518,7 +518,7 @@ namespace DotNetty.Buffers
                     ? buf.LastIndexOfAny0(localIndex, localLength, value0, value1, value2)
                     : s.IndexOfAny(localRStart - 1, localIndex, value0, value1, value2);
 
-                if ((uint)result < NIndexNotFound)
+                if ((uint)result < SharedConstants.uIndexNotFound)
                 {
                     return result - c.Adjustment;
                 }

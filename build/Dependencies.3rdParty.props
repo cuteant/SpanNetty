@@ -17,7 +17,7 @@
     <AutoMapperPackageVersion>9.0.0</AutoMapperPackageVersion>
     <AutoMapperCollectionPackageVersion>5.0.0</AutoMapperCollectionPackageVersion>
 
-    <ToolGoodWordsPackageVersion>2.3.4.2</ToolGoodWordsPackageVersion>
+    <ToolGoodWordsPackageVersion>3.0.1.2</ToolGoodWordsPackageVersion>
 
     <PollyPackageVersion>7.2.1</PollyPackageVersion>
     <PollyCachingDistributedPackageVersion>3.0.1</PollyCachingDistributedPackageVersion>
@@ -59,7 +59,7 @@
     <MongoDBDriverStrongNamePackageVersion>2.9.3</MongoDBDriverStrongNamePackageVersion>
     <MongoDBDriverGridFSStrongNamePackageVersion>2.9.3</MongoDBDriverGridFSStrongNamePackageVersion>
     <mongocsharpdriverStrongNamePackageVersion>2.9.3</mongocsharpdriverStrongNamePackageVersion>
-    <MySqlConnectorPackageVersion>0.63.1</MySqlConnectorPackageVersion>
+    <MySqlConnectorPackageVersion>0.66.0</MySqlConnectorPackageVersion>
     <NpgsqlPackageVersion>4.1.3.1</NpgsqlPackageVersion>
     <OracleManagedDataAccessPackageVersion>18.6.0</OracleManagedDataAccessPackageVersion>
     <OracleManagedDataAccessCorePackageVersion>2.18.6</OracleManagedDataAccessCorePackageVersion>

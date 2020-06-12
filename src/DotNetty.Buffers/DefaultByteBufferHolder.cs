@@ -8,91 +8,98 @@ namespace DotNetty.Buffers
 
     public class DefaultByteBufferHolder : IByteBufferHolder, IEquatable<IByteBufferHolder>
     {
-        readonly IByteBuffer data;
+        private readonly IByteBuffer _data;
 
         public DefaultByteBufferHolder(IByteBuffer data)
         {
             if (data is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.data); }
 
-            this.data = data;
+            _data = data;
         }
 
         public IByteBuffer Content
         {
             get
             {
-                var refCnt = this.data.ReferenceCount;
+                var refCnt = _data.ReferenceCount;
                 if ((uint)(refCnt - 1) > SharedConstants.TooBigOrNegative) // <= 0
                 {
                     ThrowHelper.ThrowIllegalReferenceCountException(refCnt);
                 }
 
-                return this.data;
+                return _data;
             }
         }
 
-        public virtual IByteBufferHolder Copy() => this.Replace(this.data.Copy());
+        public virtual IByteBufferHolder Copy() => Replace(_data.Copy());
 
-        public virtual IByteBufferHolder Duplicate() => this.Replace(this.data.Duplicate());
+        public virtual IByteBufferHolder Duplicate() => Replace(_data.Duplicate());
 
-        public virtual IByteBufferHolder RetainedDuplicate() => this.Replace(this.data.RetainedDuplicate());
+        public virtual IByteBufferHolder RetainedDuplicate() => Replace(_data.RetainedDuplicate());
 
         public virtual IByteBufferHolder Replace(IByteBuffer content) => new DefaultByteBufferHolder(content);
 
-        public virtual int ReferenceCount => this.data.ReferenceCount;
+        public virtual int ReferenceCount => _data.ReferenceCount;
 
         public IReferenceCounted Retain()
         {
-            this.data.Retain();
+            _data.Retain();
             return this;
         }
 
         public IReferenceCounted Retain(int increment)
         {
-            this.data.Retain(increment);
+            _data.Retain(increment);
             return this;
         }
 
         public IReferenceCounted Touch()
         {
-            this.data.Touch();
+            _data.Touch();
             return this;
         }
 
         public IReferenceCounted Touch(object hint)
         {
-            this.data.Touch(hint);
+            _data.Touch(hint);
             return this;
         }
 
-        public bool Release() => this.data.Release();
+        public bool Release() => _data.Release();
 
-        public bool Release(int decrement) => this.data.Release(decrement);
+        public bool Release(int decrement) => _data.Release(decrement);
 
-        protected string ContentToString() => this.data.ToString();
+        protected string ContentToString() => _data.ToString();
 
+        /// <summary>
+        /// This implementation of the <see cref="Equals(object)"/> operation is restricted to
+        /// work only with instances of the same class. The reason for that is that
+        /// Netty library already has a number of classes that extend <see cref="DefaultByteBufferHolder"/> and
+        /// override <see cref="Equals(object)"/> method with an additional comparison logic and we
+        /// need the symmetric property of the <see cref="Equals(object)"/> operation to be preserved.
+        /// </summary>
+        /// <param name="obj">the reference object with which to compare.</param>
+        /// <returns><c>true</c> if this object is the same as the <paramref name="obj"/>
+        /// argument; <c>false</c> otherwise.</returns>
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
+            if (ReferenceEquals(this, obj)) { return true; }
 
-            if (obj is IByteBufferHolder holder)
-            {
-                return this.data.Equals(holder.Content);
-            }
-
-            return false;
+            return obj is object && GetType() == obj.GetType() && _data.Equals(((DefaultByteBufferHolder)obj)._data);
         }
 
-        public bool Equals(IByteBufferHolder other)
-        {
-            if (ReferenceEquals(this, other)) { return true; }
-            return other is object && this.data.Equals(other.Content);
+        /// <summary>
+        /// This implementation of the <see cref="Equals(IByteBufferHolder)"/> operation is restricted to
+        /// work only with instances of the same class. The reason for that is that
+        /// Netty library already has a number of classes that extend <see cref="DefaultByteBufferHolder"/> and
+        /// override <see cref="Equals(IByteBufferHolder)"/> method with an additional comparison logic and we
+        /// need the symmetric property of the <see cref="Equals(IByteBufferHolder)"/> operation to be preserved.
+        /// </summary>
+        /// <param name="other">the reference object with which to compare.</param>
+        /// <returns><c>true</c> if this object is the same as the <paramref name="other"/>
+        /// argument; <c>false</c> otherwise.</returns>
+        public bool Equals(IByteBufferHolder other) => Equals(obj: other);
 
-        }
-
-        public override int GetHashCode() => this.data.GetHashCode();
+        public override int GetHashCode() => _data.GetHashCode();
     }
 }

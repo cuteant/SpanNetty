@@ -17,25 +17,15 @@ namespace DotNetty.Codecs.Http.WebSockets
 
     sealed class WebSocketServerProtocolHandshakeHandler : ChannelHandlerAdapter
     {
-        private readonly string _websocketPath;
-        private readonly string _subprotocols;
-        private readonly bool _checkStartsWith;
-        private readonly long _handshakeTimeoutMillis;
-        private readonly WebSocketDecoderConfig _decoderConfig;
+        private readonly WebSocketServerProtocolConfig _serverConfig;
         private IChannelHandlerContext _ctx;
         private IPromise _handshakePromise;
 
-        internal WebSocketServerProtocolHandshakeHandler(string websocketPath, string subprotocols,
-                bool checkStartsWith, long handshakeTimeoutMillis, WebSocketDecoderConfig decoderConfig)
+        internal WebSocketServerProtocolHandshakeHandler(WebSocketServerProtocolConfig serverConfig)
         {
-            if (handshakeTimeoutMillis <= 0L) { ThrowHelper.ThrowArgumentException_Positive(handshakeTimeoutMillis, ExceptionArgument.handshakeTimeoutMillis); }
-            if (decoderConfig is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.decoderConfig); }
+            if (serverConfig is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.serverConfig); }
 
-            _websocketPath = websocketPath;
-            _subprotocols = subprotocols;
-            _checkStartsWith = checkStartsWith;
-            _handshakeTimeoutMillis = handshakeTimeoutMillis;
-            _decoderConfig = decoderConfig;
+            _serverConfig = serverConfig;
         }
 
         public override void HandlerAdded(IChannelHandlerContext context)
@@ -62,7 +52,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
 
                 var wsFactory = new WebSocketServerHandshakerFactory(
-                    GetWebSocketLocation(ctx.Pipeline, req, _websocketPath), _subprotocols, _decoderConfig);
+                    GetWebSocketLocation(ctx.Pipeline, req, _serverConfig.WebsocketPath), _serverConfig.Subprotocols, _serverConfig.DecoderConfig);
                 WebSocketServerHandshaker handshaker = wsFactory.NewHandshaker(req);
                 if (handshaker is null)
                 {
@@ -112,14 +102,18 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
-        bool IsNotWebSocketPath(IFullHttpRequest req) => _checkStartsWith
-            ? !req.Uri.StartsWith(_websocketPath, StringComparison.Ordinal)
-            : !string.Equals(req.Uri, _websocketPath
+        private bool IsNotWebSocketPath(IFullHttpRequest req)
+        {
+            string websocketPath = _serverConfig.WebsocketPath;
+            return _serverConfig.CheckStartsWith
+                ? !req.Uri.StartsWith(websocketPath, StringComparison.Ordinal)
+                : !string.Equals(req.Uri, websocketPath
 #if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
-                );
+                    );
 #else
-                , StringComparison.Ordinal);
+                    , StringComparison.Ordinal);
 #endif
+        }
 
         static void SendHttpResponse(IChannelHandlerContext ctx, IHttpRequest req, IHttpResponse res)
         {
@@ -153,9 +147,10 @@ namespace DotNetty.Codecs.Http.WebSockets
         private void ApplyHandshakeTimeout()
         {
             var localHandshakePromise = _handshakePromise;
-            if (_handshakeTimeoutMillis <= 0 || localHandshakePromise.IsCompleted) { return; }
+            var handshakeTimeoutMillis = _serverConfig.HandshakeTimeoutMillis;
+            if (handshakeTimeoutMillis <= 0L || localHandshakePromise.IsCompleted) { return; }
 
-            var timeoutTask = _ctx.Executor.Schedule(FireHandshakeTimeoutAction, _ctx, localHandshakePromise, TimeSpan.FromMilliseconds(_handshakeTimeoutMillis));
+            var timeoutTask = _ctx.Executor.Schedule(FireHandshakeTimeoutAction, _ctx, localHandshakePromise, TimeSpan.FromMilliseconds(handshakeTimeoutMillis));
 
             // Cancel the handshake timeout when handshake is finished.
             localHandshakePromise.Task.ContinueWith(AbortHandshakeTimeoutAfterHandshakeCompletedAction, timeoutTask, TaskContinuationOptions.ExecuteSynchronously);

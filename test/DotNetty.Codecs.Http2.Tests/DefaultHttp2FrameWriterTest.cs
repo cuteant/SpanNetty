@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Http2.Tests
     using System.IO;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
+    using DotNetty.Codecs.Http;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
@@ -14,41 +15,41 @@ namespace DotNetty.Codecs.Http2.Tests
 
     public class DefaultHttp2FrameWriterTest : IDisposable
     {
-        private DefaultHttp2FrameWriter frameWriter;
+        private DefaultHttp2FrameWriter _frameWriter;
 
-        private IByteBuffer outbound;
+        private IByteBuffer _outbound;
 
-        private IByteBuffer expectedOutbound;
+        private IByteBuffer _expectedOutbound;
 
-        private IPromise promise;
+        private IPromise _promise;
 
-        private IHttp2HeadersEncoder http2HeadersEncoder;
+        private IHttp2HeadersEncoder _http2HeadersEncoder;
 
-        private Mock<IChannel> channel;
+        private Mock<IChannel> _channel;
 
-        private Mock<IChannelHandlerContext> ctx;
+        private Mock<IChannelHandlerContext> _ctx;
 
         public DefaultHttp2FrameWriterTest()
         {
-            this.http2HeadersEncoder = new DefaultHttp2HeadersEncoder(
+            _http2HeadersEncoder = new DefaultHttp2HeadersEncoder(
                     NeverSensitiveDetector.Instance, new HpackEncoder(false, 16, 0));
 
-            this.frameWriter = new DefaultHttp2FrameWriter(new DefaultHttp2HeadersEncoder(
+            _frameWriter = new DefaultHttp2FrameWriter(new DefaultHttp2HeadersEncoder(
                     NeverSensitiveDetector.Instance, new HpackEncoder(false, 16, 0)));
 
-            this.outbound = Unpooled.Buffer();
+            _outbound = Unpooled.Buffer();
 
-            this.expectedOutbound = Unpooled.Empty;
+            _expectedOutbound = Unpooled.Empty;
 
-            this.promise = new TaskCompletionSource();
+            _promise = new TaskCompletionSource();
 
-            this.channel = new Mock<IChannel>();
+            _channel = new Mock<IChannel>();
 
             Task localAnswer(object msg)
             {
                 if (msg is IByteBuffer buf)
                 {
-                    this.outbound.WriteBytes(buf);
+                    _outbound.WriteBytes(buf);
                 }
                 ReferenceCountUtil.Release(msg);
                 return TaskUtil.Completed;
@@ -58,23 +59,23 @@ namespace DotNetty.Codecs.Http2.Tests
             {
                 if (msg is IByteBuffer buf)
                 {
-                    this.outbound.WriteBytes(buf);
+                    _outbound.WriteBytes(buf);
                 }
                 ReferenceCountUtil.Release(msg);
                 return TaskUtil.Completed;
             }
-            this.ctx = new Mock<IChannelHandlerContext>();
-            this.ctx.Setup(x => x.WriteAsync(It.IsAny<object>())).Returns<object>(localAnswer);
-            this.ctx.Setup(x => x.WriteAsync(It.IsAny<object>(), It.IsAny<IPromise>())).Returns<object, IPromise>(localAnswer0);
-            this.ctx.Setup(x => x.Allocator).Returns(UnpooledByteBufferAllocator.Default);
-            this.ctx.Setup(x => x.Channel).Returns(this.channel.Object);
+            _ctx = new Mock<IChannelHandlerContext>();
+            _ctx.Setup(x => x.WriteAsync(It.IsAny<object>())).Returns<object>(localAnswer);
+            _ctx.Setup(x => x.WriteAsync(It.IsAny<object>(), It.IsAny<IPromise>())).Returns<object, IPromise>(localAnswer0);
+            _ctx.Setup(x => x.Allocator).Returns(UnpooledByteBufferAllocator.Default);
+            _ctx.Setup(x => x.Channel).Returns(_channel.Object);
         }
 
         public void Dispose()
         {
-            this.outbound.Release();
-            this.expectedOutbound.Release();
-            this.frameWriter.Close();
+            _outbound.Release();
+            _expectedOutbound.Release();
+            _frameWriter.Close();
         }
 
         [Fact]
@@ -87,17 +88,17 @@ namespace DotNetty.Codecs.Http2.Tests
             headers.Authority = (AsciiString)"foo.com";
             headers.Scheme = (AsciiString)"https";
 
-            this.frameWriter.WriteHeadersAsync(this.ctx.Object, streamId, headers, 0, true, this.promise);
+            _frameWriter.WriteHeadersAsync(_ctx.Object, streamId, headers, 0, true, _promise);
 
-            byte[] expectedPayload = this.HeaderPayload(streamId, headers);
+            byte[] expectedPayload = HeaderPayload(streamId, headers);
             byte[] expectedFrameBytes = {
                 (byte) 0x00, (byte) 0x00, (byte) 0x0a, // payload length = 10
                 (byte) 0x01, // payload type = 1
                 (byte) 0x05, // flags = (0x01 | 0x04)
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01 // stream id = 1
             };
-            this.expectedOutbound = Unpooled.CopiedBuffer(expectedFrameBytes, expectedPayload);
-            Assert.Equal(this.expectedOutbound, this.outbound);
+            _expectedOutbound = Unpooled.CopiedBuffer(expectedFrameBytes, expectedPayload);
+            Assert.Equal(_expectedOutbound, _outbound);
         }
 
         [Fact]
@@ -110,17 +111,17 @@ namespace DotNetty.Codecs.Http2.Tests
             headers.Authority = (AsciiString)"foo.com";
             headers.Scheme = (AsciiString)"https";
 
-            this.frameWriter.WriteHeadersAsync(this.ctx.Object, streamId, headers, 5, true, this.promise);
+            _frameWriter.WriteHeadersAsync(_ctx.Object, streamId, headers, 5, true, _promise);
 
-            byte[] expectedPayload = this.HeaderPayload(streamId, headers, (byte)4);
+            byte[] expectedPayload = HeaderPayload(streamId, headers, (byte)4);
             byte[] expectedFrameBytes = {
                 (byte) 0x00, (byte) 0x00, (byte) 0x0f, // payload length = 16
                 (byte) 0x01, // payload type = 1
                 (byte) 0x0d, // flags = (0x01 | 0x04 | 0x08)
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01 // stream id = 1
             };
-            this.expectedOutbound = Unpooled.CopiedBuffer(expectedFrameBytes, expectedPayload);
-            Assert.Equal(this.expectedOutbound, this.outbound);
+            _expectedOutbound = Unpooled.CopiedBuffer(expectedFrameBytes, expectedPayload);
+            Assert.Equal(_expectedOutbound, _outbound);
         }
 
         [Fact]
@@ -133,17 +134,17 @@ namespace DotNetty.Codecs.Http2.Tests
             headers.Authority = (AsciiString)"foo.com";
             headers.Scheme = (AsciiString)"https";
 
-            this.frameWriter.WriteHeadersAsync(this.ctx.Object, streamId, headers, 0, false, this.promise);
+            _frameWriter.WriteHeadersAsync(_ctx.Object, streamId, headers, 0, false, _promise);
 
-            byte[] expectedPayload = this.HeaderPayload(streamId, headers);
+            byte[] expectedPayload = HeaderPayload(streamId, headers);
             byte[] expectedFrameBytes = {
                 (byte) 0x00, (byte) 0x00, (byte) 0x0a, // payload length = 10
                 (byte) 0x01, // payload type = 1
                 (byte) 0x04, // flags = 0x04
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x01 // stream id = 1
             };
-            this.expectedOutbound = Unpooled.CopiedBuffer(expectedFrameBytes, expectedPayload);
-            Assert.Equal(this.expectedOutbound, this.outbound);
+            _expectedOutbound = Unpooled.CopiedBuffer(expectedFrameBytes, expectedPayload);
+            Assert.Equal(_expectedOutbound, _outbound);
         }
 
         /**
@@ -161,40 +162,85 @@ namespace DotNetty.Codecs.Http2.Tests
             headers.Scheme = (AsciiString)"https";
             headers = DummyHeaders(headers, 20);
 
-            this.http2HeadersEncoder.Configuration.SetMaxHeaderListSize(int.MaxValue);
-            this.frameWriter.HeadersConfiguration.SetMaxHeaderListSize(int.MaxValue);
-            this.frameWriter.SetMaxFrameSize(Http2CodecUtil.MaxFrameSizeLowerBound);
-            this.frameWriter.WriteHeadersAsync(this.ctx.Object, streamId, headers, 0, true, this.promise);
+            _http2HeadersEncoder.Configuration.SetMaxHeaderListSize(int.MaxValue);
+            _frameWriter.HeadersConfiguration.SetMaxHeaderListSize(int.MaxValue);
+            _frameWriter.SetMaxFrameSize(Http2CodecUtil.MaxFrameSizeLowerBound);
+            _frameWriter.WriteHeadersAsync(_ctx.Object, streamId, headers, 0, true, _promise);
 
-            byte[] expectedPayload = this.HeaderPayload(streamId, headers);
+            byte[] expectedPayload = HeaderPayload(streamId, headers);
 
             // First frame: HEADER(length=0x4000, flags=0x01)
-            Assert.Equal(Http2CodecUtil.MaxFrameSizeLowerBound, this.outbound.ReadUnsignedMedium());
-            Assert.Equal(0x01, this.outbound.ReadByte());
-            Assert.Equal(0x01, this.outbound.ReadByte());
-            Assert.Equal(streamId, this.outbound.ReadInt());
+            Assert.Equal(Http2CodecUtil.MaxFrameSizeLowerBound, _outbound.ReadUnsignedMedium());
+            Assert.Equal(0x01, _outbound.ReadByte());
+            Assert.Equal(0x01, _outbound.ReadByte());
+            Assert.Equal(streamId, _outbound.ReadInt());
 
             byte[] firstPayload = new byte[Http2CodecUtil.MaxFrameSizeLowerBound];
-            this.outbound.ReadBytes(firstPayload);
+            _outbound.ReadBytes(firstPayload);
 
             int remainPayloadLength = expectedPayload.Length - Http2CodecUtil.MaxFrameSizeLowerBound;
             // Second frame: CONTINUATION(length=remainPayloadLength, flags=0x04)
-            Assert.Equal(remainPayloadLength, this.outbound.ReadUnsignedMedium());
-            Assert.Equal(0x09, this.outbound.ReadByte());
-            Assert.Equal(0x04, this.outbound.ReadByte());
-            Assert.Equal(streamId, this.outbound.ReadInt());
+            Assert.Equal(remainPayloadLength, _outbound.ReadUnsignedMedium());
+            Assert.Equal(0x09, _outbound.ReadByte());
+            Assert.Equal(0x04, _outbound.ReadByte());
+            Assert.Equal(streamId, _outbound.ReadInt());
 
             byte[] secondPayload = new byte[remainPayloadLength];
-            this.outbound.ReadBytes(secondPayload);
+            _outbound.ReadBytes(secondPayload);
 
             Assert.True(PlatformDependent.ByteArrayEquals(expectedPayload, 0, firstPayload, 0, firstPayload.Length));
             Assert.True(PlatformDependent.ByteArrayEquals(expectedPayload, firstPayload.Length, secondPayload, 0, secondPayload.Length));
         }
 
         [Fact]
+        public void WriteLargeHeaderWithPadding()
+        {
+            int streamId = 1;
+            IHttp2Headers headers = new DefaultHttp2Headers()
+            {
+                Method = HttpMethod.Get.AsciiName,
+                Path = (AsciiString)"/",
+                Authority = (AsciiString)"foo.com",
+                Scheme = (AsciiString)"https"
+            };
+            headers = DummyHeaders(headers, 20);
+
+            _http2HeadersEncoder.Configuration.SetMaxHeaderListSize(int.MaxValue);
+            _frameWriter.HeadersConfiguration.SetMaxHeaderListSize(int.MaxValue);
+            _frameWriter.SetMaxFrameSize(Http2CodecUtil.MaxFrameSizeLowerBound);
+            _frameWriter.WriteHeadersAsync(_ctx.Object, streamId, headers, 5, true, _promise);
+
+            byte[] expectedPayload = BuildLargeHeaderPayload(streamId, headers, (byte)4,
+                    Http2CodecUtil.MaxFrameSizeLowerBound);
+
+            // First frame: HEADER(length=0x4000, flags=0x09)
+            Assert.Equal(Http2CodecUtil.MaxFrameSizeLowerBound,
+                    _outbound.ReadUnsignedMedium());
+            Assert.Equal(0x01, _outbound.ReadByte());
+            Assert.Equal(0x09, _outbound.ReadByte()); // 0x01 + 0x08
+            Assert.Equal(streamId, _outbound.ReadInt());
+
+            byte[] firstPayload = new byte[Http2CodecUtil.MaxFrameSizeLowerBound];
+            _outbound.ReadBytes(firstPayload);
+
+            int remainPayloadLength = expectedPayload.Length - Http2CodecUtil.MaxFrameSizeLowerBound;
+            // Second frame: CONTINUATION(length=remainPayloadLength, flags=0x04)
+            Assert.Equal(remainPayloadLength, _outbound.ReadUnsignedMedium());
+            Assert.Equal(0x09, _outbound.ReadByte());
+            Assert.Equal(0x04, _outbound.ReadByte());
+            Assert.Equal(streamId, _outbound.ReadInt());
+
+            byte[] secondPayload = new byte[remainPayloadLength];
+            _outbound.ReadBytes(secondPayload);
+
+            Assert.Equal(expectedPayload.Slice(0, firstPayload.Length), firstPayload);
+            Assert.Equal(expectedPayload.Slice(firstPayload.Length, expectedPayload.Length - firstPayload.Length), secondPayload);
+        }
+
+        [Fact]
         public void WriteFrameZeroPayload()
         {
-            this.frameWriter.WriteFrameAsync(this.ctx.Object, (Http2FrameTypes)0xf, 0, new Http2Flags(), Unpooled.Empty, this.promise);
+            _frameWriter.WriteFrameAsync(_ctx.Object, (Http2FrameTypes)0xf, 0, new Http2Flags(), Unpooled.Empty, _promise);
 
             byte[] expectedFrameBytes = {
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, // payload length
@@ -203,8 +249,8 @@ namespace DotNetty.Codecs.Http2.Tests
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00 // stream id
             };
 
-            this.expectedOutbound = Unpooled.WrappedBuffer(expectedFrameBytes);
-            Assert.Equal(this.expectedOutbound, this.outbound);
+            _expectedOutbound = Unpooled.WrappedBuffer(expectedFrameBytes);
+            Assert.Equal(_expectedOutbound, _outbound);
         }
 
         [Fact]
@@ -214,7 +260,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             // will auto release after frameWriter.writeFrame succeed
             var payloadByteBuf = Unpooled.WrappedBuffer(payload);
-            this.frameWriter.WriteFrameAsync(this.ctx.Object, (Http2FrameTypes)0xf, 0, new Http2Flags(), payloadByteBuf, this.promise);
+            _frameWriter.WriteFrameAsync(_ctx.Object, (Http2FrameTypes)0xf, 0, new Http2Flags(), payloadByteBuf, _promise);
 
             byte[] expectedFrameHeaderBytes = {
                 (byte) 0x00, (byte) 0x00, (byte) 0x05, // payload length
@@ -222,22 +268,22 @@ namespace DotNetty.Codecs.Http2.Tests
                 (byte) 0x00, // flags
                 (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00 // stream id
             };
-            this.expectedOutbound = Unpooled.CopiedBuffer(expectedFrameHeaderBytes, payload);
-            Assert.Equal(this.expectedOutbound, this.outbound);
+            _expectedOutbound = Unpooled.CopiedBuffer(expectedFrameHeaderBytes, payload);
+            Assert.Equal(_expectedOutbound, _outbound);
         }
 
         private byte[] HeaderPayload(int streamId, IHttp2Headers headers, byte padding)
         {
             if (padding == 0)
             {
-                return this.HeaderPayload(streamId, headers);
+                return HeaderPayload(streamId, headers);
             }
 
             var outputStream = new MemoryStream();
             try
             {
                 outputStream.WriteByte(padding);
-                var bts = this.HeaderPayload(streamId, headers);
+                var bts = HeaderPayload(streamId, headers);
                 outputStream.Write(bts, 0, bts.Length);
                 bts = new byte[padding];
                 outputStream.Write(bts, 0, bts.Length);
@@ -254,7 +300,7 @@ namespace DotNetty.Codecs.Http2.Tests
             var byteBuf = Unpooled.Buffer();
             try
             {
-                http2HeadersEncoder.EncodeHeaders(streamId, headers, byteBuf);
+                _http2HeadersEncoder.EncodeHeaders(streamId, headers, byteBuf);
                 byte[] bytes = new byte[byteBuf.ReadableBytes];
                 byteBuf.ReadBytes(bytes);
                 return bytes;
@@ -262,6 +308,31 @@ namespace DotNetty.Codecs.Http2.Tests
             finally
             {
                 byteBuf.Release();
+            }
+        }
+
+        private byte[] BuildLargeHeaderPayload(int streamId, IHttp2Headers headers, byte padding, int maxFrameSize)
+        {
+            var outputStream = new MemoryStream();
+            var bw = new BinaryWriter(outputStream);
+            try
+            {
+                bw.Write(padding);
+                byte[] payload = HeaderPayload(streamId, headers);
+                int firstPayloadSize = maxFrameSize - (padding + 1); //1 for padding length
+                outputStream.Write(payload, 0, firstPayloadSize);
+#if DESKTOPCLR
+                outputStream.Write(new byte[padding], 0, padding);
+#else
+                outputStream.Write(new byte[padding]);
+#endif
+                outputStream.Write(payload, firstPayloadSize, payload.Length - firstPayloadSize);
+                return outputStream.ToArray();
+            }
+            finally
+            {
+                outputStream.Close();
+                bw.Dispose();
             }
         }
 

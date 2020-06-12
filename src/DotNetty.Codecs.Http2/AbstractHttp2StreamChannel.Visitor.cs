@@ -9,7 +9,7 @@
             public bool Visit(IHttp2FrameStream stream)
             {
                 var childChannel = (AbstractHttp2StreamChannel)
-                        ((DefaultHttp2FrameStream)stream)._attachment;
+                        ((DefaultHttp2FrameStream)stream).Attachment;
                 childChannel.TrySetWritable();
                 return true;
             }

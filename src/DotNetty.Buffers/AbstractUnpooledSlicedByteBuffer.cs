@@ -14,8 +14,8 @@ namespace DotNetty.Buffers
 
     abstract partial class AbstractUnpooledSlicedByteBuffer : AbstractDerivedByteBuffer
     {
-        readonly AbstractByteBuffer buffer;
-        readonly int adjustment;
+        private readonly AbstractByteBuffer _buffer;
+        private readonly int _adjustment;
 
         protected AbstractUnpooledSlicedByteBuffer(IByteBuffer buffer, int index, int length)
             : base(length)
@@ -25,295 +25,295 @@ namespace DotNetty.Buffers
             switch (buffer)
             {
                 case AbstractUnpooledSlicedByteBuffer byteBuffer:
-                    this.buffer = byteBuffer.buffer;
-                    this.adjustment = byteBuffer.adjustment + index;
+                    _buffer = byteBuffer._buffer;
+                    _adjustment = byteBuffer._adjustment + index;
                     break;
 
                 case UnpooledDuplicatedByteBuffer _:
-                    this.buffer = (AbstractByteBuffer)buffer.Unwrap();
-                    this.adjustment = index;
+                    _buffer = (AbstractByteBuffer)buffer.Unwrap();
+                    _adjustment = index;
                     break;
 
                 default:
-                    this.buffer = (AbstractByteBuffer)buffer;
-                    this.adjustment = index;
+                    _buffer = (AbstractByteBuffer)buffer;
+                    _adjustment = index;
                     break;
             }
 
-            this.SetWriterIndex0(length);
+            SetWriterIndex0(length);
         }
 
-        internal int Length => this.Capacity;
+        internal int Length => Capacity;
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public override IByteBuffer Unwrap() => this.buffer;
+        public override IByteBuffer Unwrap() => _buffer;
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        protected AbstractByteBuffer UnwrapCore() => this.buffer;
+        protected AbstractByteBuffer UnwrapCore() => _buffer;
 
-        public override IByteBufferAllocator Allocator => this.Unwrap().Allocator;
+        public override IByteBufferAllocator Allocator => Unwrap().Allocator;
 
-        public override bool IsDirect => this.Unwrap().IsDirect;
+        public override bool IsDirect => Unwrap().IsDirect;
 
         public override IByteBuffer AdjustCapacity(int newCapacity) => throw new NotSupportedException("sliced buffer");
 
-        public override bool HasArray => this.Unwrap().HasArray;
+        public override bool HasArray => Unwrap().HasArray;
 
-        public override byte[] Array => this.Unwrap().Array;
+        public override byte[] Array => Unwrap().Array;
 
-        public override int ArrayOffset => this.Idx(this.Unwrap().ArrayOffset);
+        public override int ArrayOffset => Idx(Unwrap().ArrayOffset);
 
-        public override bool HasMemoryAddress => this.Unwrap().HasMemoryAddress;
+        public override bool HasMemoryAddress => Unwrap().HasMemoryAddress;
 
-        public override ref byte GetPinnableMemoryAddress() => ref Unsafe.Add(ref this.Unwrap().GetPinnableMemoryAddress(), this.adjustment);
+        public override ref byte GetPinnableMemoryAddress() => ref Unsafe.Add(ref Unwrap().GetPinnableMemoryAddress(), _adjustment);
 
         public override IntPtr AddressOfPinnedMemory()
         {
-            IntPtr ptr = this.Unwrap().AddressOfPinnedMemory();
+            IntPtr ptr = Unwrap().AddressOfPinnedMemory();
             if (ptr == IntPtr.Zero)
             {
                 return ptr;
             }
-            return ptr + this.adjustment;
+            return ptr + _adjustment;
         }
 
         public override byte GetByte(int index)
         {
-            this.CheckIndex0(index, 1);
-            return this.Unwrap().GetByte(this.Idx(index));
+            CheckIndex0(index, 1);
+            return Unwrap().GetByte(Idx(index));
         }
 
-        protected internal override byte _GetByte(int index) => this.Unwrap().GetByte(this.Idx(index));
+        protected internal override byte _GetByte(int index) => Unwrap().GetByte(Idx(index));
 
         public override short GetShort(int index)
         {
-            this.CheckIndex0(index, 2);
-            return this.Unwrap().GetShort(this.Idx(index));
+            CheckIndex0(index, 2);
+            return Unwrap().GetShort(Idx(index));
         }
 
-        protected internal override short _GetShort(int index) => this.Unwrap().GetShort(this.Idx(index));
+        protected internal override short _GetShort(int index) => Unwrap().GetShort(Idx(index));
 
         public override short GetShortLE(int index)
         {
-            this.CheckIndex0(index, 2);
-            return this.Unwrap().GetShortLE(this.Idx(index));
+            CheckIndex0(index, 2);
+            return Unwrap().GetShortLE(Idx(index));
         }
 
-        protected internal override short _GetShortLE(int index) => this.Unwrap().GetShortLE(this.Idx(index));
+        protected internal override short _GetShortLE(int index) => Unwrap().GetShortLE(Idx(index));
 
         public override int GetUnsignedMedium(int index)
         {
-            this.CheckIndex0(index, 3);
-            return this.Unwrap().GetUnsignedMedium(this.Idx(index));
+            CheckIndex0(index, 3);
+            return Unwrap().GetUnsignedMedium(Idx(index));
         }
 
-        protected internal override int _GetUnsignedMedium(int index) => this.Unwrap().GetUnsignedMedium(this.Idx(index));
+        protected internal override int _GetUnsignedMedium(int index) => Unwrap().GetUnsignedMedium(Idx(index));
 
         public override int GetUnsignedMediumLE(int index)
         {
-            this.CheckIndex0(index, 3);
-            return this.Unwrap().GetUnsignedMediumLE(this.Idx(index));
+            CheckIndex0(index, 3);
+            return Unwrap().GetUnsignedMediumLE(Idx(index));
         }
 
-        protected internal override int _GetUnsignedMediumLE(int index) => this.Unwrap().GetUnsignedMediumLE(this.Idx(index));
+        protected internal override int _GetUnsignedMediumLE(int index) => Unwrap().GetUnsignedMediumLE(Idx(index));
 
         public override int GetInt(int index)
         {
-            this.CheckIndex0(index, 4);
-            return this.Unwrap().GetInt(this.Idx(index));
+            CheckIndex0(index, 4);
+            return Unwrap().GetInt(Idx(index));
         }
 
-        protected internal override int _GetInt(int index) => this.Unwrap().GetInt(this.Idx(index));
+        protected internal override int _GetInt(int index) => Unwrap().GetInt(Idx(index));
 
         public override int GetIntLE(int index)
         {
-            this.CheckIndex0(index, 4);
-            return this.Unwrap().GetIntLE(this.Idx(index));
+            CheckIndex0(index, 4);
+            return Unwrap().GetIntLE(Idx(index));
         }
 
-        protected internal override int _GetIntLE(int index) => this.Unwrap().GetIntLE(this.Idx(index));
+        protected internal override int _GetIntLE(int index) => Unwrap().GetIntLE(Idx(index));
 
         public override long GetLong(int index)
         {
-            this.CheckIndex0(index, 8);
-            return this.Unwrap().GetLong(this.Idx(index));
+            CheckIndex0(index, 8);
+            return Unwrap().GetLong(Idx(index));
         }
 
-        protected internal override long _GetLong(int index) => this.Unwrap().GetLong(this.Idx(index));
+        protected internal override long _GetLong(int index) => Unwrap().GetLong(Idx(index));
 
         public override long GetLongLE(int index)
         {
-            this.CheckIndex0(index, 8);
-            return this.Unwrap().GetLongLE(this.Idx(index));
+            CheckIndex0(index, 8);
+            return Unwrap().GetLongLE(Idx(index));
         }
 
-        protected internal override long _GetLongLE(int index) => this.Unwrap().GetLongLE(this.Idx(index));
+        protected internal override long _GetLongLE(int index) => Unwrap().GetLongLE(Idx(index));
 
-        public override IByteBuffer Duplicate() => this.Unwrap().Duplicate().SetIndex(this.Idx(this.ReaderIndex), this.Idx(this.WriterIndex));
+        public override IByteBuffer Duplicate() => Unwrap().Duplicate().SetIndex(Idx(ReaderIndex), Idx(WriterIndex));
 
         public override IByteBuffer Copy(int index, int length)
         {
-            this.CheckIndex0(index, length);
-            return this.Unwrap().Copy(this.Idx(index), length);
+            CheckIndex0(index, length);
+            return Unwrap().Copy(Idx(index), length);
         }
 
         public override IByteBuffer Slice(int index, int length)
         {
-            this.CheckIndex0(index, length);
-            return this.Unwrap().Slice(this.Idx(index), length);
+            CheckIndex0(index, length);
+            return Unwrap().Slice(Idx(index), length);
         }
 
         public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
-            this.CheckIndex0(index, length);
-            this.Unwrap().GetBytes(this.Idx(index), dst, dstIndex, length);
+            CheckIndex0(index, length);
+            Unwrap().GetBytes(Idx(index), dst, dstIndex, length);
             return this;
         }
 
         public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
-            this.CheckIndex0(index, length);
-            this.Unwrap().GetBytes(this.Idx(index), dst, dstIndex, length);
+            CheckIndex0(index, length);
+            Unwrap().GetBytes(Idx(index), dst, dstIndex, length);
             return this;
         }
 
         public override IByteBuffer GetBytes(int index, Stream destination, int length)
         {
-            this.CheckIndex0(index, length);
-            this.Unwrap().GetBytes(this.Idx(index), destination, length);
+            CheckIndex0(index, length);
+            Unwrap().GetBytes(Idx(index), destination, length);
             return this;
         }
 
         public override IByteBuffer SetByte(int index, int value)
         {
-            this.CheckIndex0(index, 1);
-            this.Unwrap().SetByte(this.Idx(index), value);
+            CheckIndex0(index, 1);
+            Unwrap().SetByte(Idx(index), value);
             return this;
         }
 
         public override ICharSequence GetCharSequence(int index, int length, Encoding encoding)
         {
-            this.CheckIndex0(index, length);
-            return Unwrap().GetCharSequence(this.Idx(index), length, encoding);
+            CheckIndex0(index, length);
+            return Unwrap().GetCharSequence(Idx(index), length, encoding);
         }
 
-        protected internal override void _SetByte(int index, int value) => this.Unwrap().SetByte(this.Idx(index), value);
+        protected internal override void _SetByte(int index, int value) => Unwrap().SetByte(Idx(index), value);
 
         public override IByteBuffer SetShort(int index, int value)
         {
-            this.CheckIndex0(index, 2);
-            this.Unwrap().SetShort(this.Idx(index), value);
+            CheckIndex0(index, 2);
+            Unwrap().SetShort(Idx(index), value);
             return this;
         }
 
-        protected internal override void _SetShort(int index, int value) => this.Unwrap().SetShort(this.Idx(index), value);
+        protected internal override void _SetShort(int index, int value) => Unwrap().SetShort(Idx(index), value);
 
         public override IByteBuffer SetShortLE(int index, int value)
         {
-            this.CheckIndex0(index, 2);
-            this.Unwrap().SetShortLE(this.Idx(index), value);
+            CheckIndex0(index, 2);
+            Unwrap().SetShortLE(Idx(index), value);
             return this;
         }
 
-        protected internal override void _SetShortLE(int index, int value) => this.Unwrap().SetShortLE(this.Idx(index), value);
+        protected internal override void _SetShortLE(int index, int value) => Unwrap().SetShortLE(Idx(index), value);
 
         public override IByteBuffer SetMedium(int index, int value)
         {
-            this.CheckIndex0(index, 3);
-            this.Unwrap().SetMedium(this.Idx(index), value);
+            CheckIndex0(index, 3);
+            Unwrap().SetMedium(Idx(index), value);
             return this;
         }
 
-        protected internal override void _SetMedium(int index, int value) => this.Unwrap().SetMedium(this.Idx(index), value);
+        protected internal override void _SetMedium(int index, int value) => Unwrap().SetMedium(Idx(index), value);
 
         public override IByteBuffer SetMediumLE(int index, int value)
         {
-            this.CheckIndex0(index, 3);
-            this.Unwrap().SetMediumLE(this.Idx(index), value);
+            CheckIndex0(index, 3);
+            Unwrap().SetMediumLE(Idx(index), value);
             return this;
         }
 
-        protected internal override void _SetMediumLE(int index, int value) => this.Unwrap().SetMediumLE(this.Idx(index), value);
+        protected internal override void _SetMediumLE(int index, int value) => Unwrap().SetMediumLE(Idx(index), value);
 
         public override IByteBuffer SetInt(int index, int value)
         {
-            this.CheckIndex0(index, 4);
-            this.Unwrap().SetInt(this.Idx(index), value);
+            CheckIndex0(index, 4);
+            Unwrap().SetInt(Idx(index), value);
             return this;
         }
 
-        protected internal override void _SetInt(int index, int value) => this.Unwrap().SetInt(this.Idx(index), value);
+        protected internal override void _SetInt(int index, int value) => Unwrap().SetInt(Idx(index), value);
 
         public override IByteBuffer SetIntLE(int index, int value)
         {
-            this.CheckIndex0(index, 4);
-            this.Unwrap().SetIntLE(this.Idx(index), value);
+            CheckIndex0(index, 4);
+            Unwrap().SetIntLE(Idx(index), value);
             return this;
         }
 
-        protected internal override void _SetIntLE(int index, int value) => this.Unwrap().SetIntLE(this.Idx(index), value);
+        protected internal override void _SetIntLE(int index, int value) => Unwrap().SetIntLE(Idx(index), value);
 
         public override IByteBuffer SetLong(int index, long value)
         {
-            this.CheckIndex0(index, 8);
-            this.Unwrap().SetLong(this.Idx(index), value);
+            CheckIndex0(index, 8);
+            Unwrap().SetLong(Idx(index), value);
             return this;
         }
 
-        protected internal override void _SetLong(int index, long value) => this.Unwrap().SetLong(this.Idx(index), value);
+        protected internal override void _SetLong(int index, long value) => Unwrap().SetLong(Idx(index), value);
 
         public override IByteBuffer SetLongLE(int index, long value)
         {
-            this.CheckIndex0(index, 8);
-            this.Unwrap().SetLongLE(this.Idx(index), value);
+            CheckIndex0(index, 8);
+            Unwrap().SetLongLE(Idx(index), value);
             return this;
         }
 
-        protected internal override void _SetLongLE(int index, long value) => this.Unwrap().SetLongLE(this.Idx(index), value);
+        protected internal override void _SetLongLE(int index, long value) => Unwrap().SetLongLE(Idx(index), value);
 
         public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
-            this.CheckIndex0(index, length);
-            this.Unwrap().SetBytes(this.Idx(index), src, srcIndex, length);
+            CheckIndex0(index, length);
+            Unwrap().SetBytes(Idx(index), src, srcIndex, length);
             return this;
         }
 
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
-            this.CheckIndex0(index, length);
-            this.Unwrap().SetBytes(this.Idx(index), src, srcIndex, length);
+            CheckIndex0(index, length);
+            Unwrap().SetBytes(Idx(index), src, srcIndex, length);
             return this;
         }
 
         public override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken)
         {
-            this.CheckIndex0(index, length);
-            return this.Unwrap().SetBytesAsync(this.Idx(index), src, length, cancellationToken);
+            CheckIndex0(index, length);
+            return Unwrap().SetBytesAsync(Idx(index), src, length, cancellationToken);
         }
 
-        public sealed override bool IsSingleIoBuffer => this.Unwrap().IsSingleIoBuffer;
+        public sealed override bool IsSingleIoBuffer => Unwrap().IsSingleIoBuffer;
 
-        public sealed override int IoBufferCount => this.Unwrap().IoBufferCount;
+        public sealed override int IoBufferCount => Unwrap().IoBufferCount;
 
         public override ArraySegment<byte> GetIoBuffer(int index, int length)
         {
-            this.CheckIndex0(index, length);
-            return this.Unwrap().GetIoBuffer(this.Idx(index), length);
+            CheckIndex0(index, length);
+            return Unwrap().GetIoBuffer(Idx(index), length);
         }
 
         public override ArraySegment<byte>[] GetIoBuffers(int index, int length)
         {
-            this.CheckIndex0(index, length);
-            return this.Unwrap().GetIoBuffers(this.Idx(index), length);
+            CheckIndex0(index, length);
+            return Unwrap().GetIoBuffers(Idx(index), length);
         }
 
         public override int ForEachByte(int index, int length, IByteProcessor processor)
         {
-            this.CheckIndex0(index, length);
-            int ret = this.Unwrap().ForEachByte(this.Idx(index), length, processor);
-            if (ret >= this.adjustment)
+            CheckIndex0(index, length);
+            int ret = Unwrap().ForEachByte(Idx(index), length, processor);
+            if (ret >= _adjustment)
             {
-                return ret - this.adjustment;
+                return ret - _adjustment;
             }
             else
             {
@@ -323,11 +323,11 @@ namespace DotNetty.Buffers
 
         public override int ForEachByteDesc(int index, int length, IByteProcessor processor)
         {
-            this.CheckIndex0(index, length);
-            int ret = this.Unwrap().ForEachByteDesc(this.Idx(index), length, processor);
-            if (ret >= this.adjustment)
+            CheckIndex0(index, length);
+            int ret = Unwrap().ForEachByteDesc(Idx(index), length, processor);
+            if (ret >= _adjustment)
             {
-                return ret - this.adjustment;
+                return ret - _adjustment;
             }
             else
             {
@@ -337,7 +337,7 @@ namespace DotNetty.Buffers
 
         // Returns the index with the needed adjustment.
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        internal protected int Idx(int index) => index + this.adjustment;
+        internal protected int Idx(int index) => index + _adjustment;
 
         internal static void CheckSliceOutOfBounds(int index, int length, IByteBuffer buffer)
         {

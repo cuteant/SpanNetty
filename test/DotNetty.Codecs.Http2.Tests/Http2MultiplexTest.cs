@@ -445,12 +445,9 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<int>(),
                     It.IsAny<IHttp2Headers>(),
                     It.IsAny<int>(),
-                    It.IsAny<short>(),
-                    It.IsAny<bool>(),
-                    It.IsAny<int>(),
                     It.IsAny<bool>(),
                     It.IsAny<IPromise>()))
-                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, short, bool, int, bool, IPromise>((ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream, p) =>
+                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, bool, IPromise>((ctx, streamId, headers, streamDependency, endOfStream, p) =>
                 {
                     // We want to fail to write the first headers frame. This is what happens if the connection
                     // refuses to allocate a new stream due to having received a GOAWAY.
@@ -531,12 +528,9 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<int>(),
                     It.Is<IHttp2Headers>(v => v.Equals(headers)),
                     It.IsAny<int>(),
-                    It.IsAny<short>(),
-                    It.IsAny<bool>(),
-                    It.IsAny<int>(),
                     It.IsAny<bool>(),
                     It.IsAny<IPromise>()))
-                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, short, bool, int, bool, IPromise>((ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream, p) =>
+                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, bool, IPromise>((ctx, streamId, headers, streamDependency, endOfStream, p) =>
                 {
                     p.SetException(new StreamException(childChannel.Stream.Id, Http2Error.StreamClosed, "Stream Closed"));
                     return p.Task;
@@ -611,12 +605,9 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<int>(),
                     It.Is<IHttp2Headers>(v => v == headers),
                     It.IsAny<int>(),
-                    It.IsAny<short>(),
-                    It.IsAny<bool>(),
-                    It.IsAny<int>(),
                     It.IsAny<bool>(),
                     It.IsAny<IPromise>()))
-                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, short, bool, int, bool, IPromise>((ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream, p) =>
+                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, bool, IPromise>((ctx, streamId, headers, streamDependency, endOfStream, p) =>
                 {
                     p.SetException(new Http2NoMoreStreamIdsException());
                     return p.Task;
@@ -706,12 +697,9 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<int>(),
                     It.Is<IHttp2Headers>(v => v.Equals(headers)),
                     It.IsAny<int>(),
-                    It.IsAny<short>(),
-                    It.IsAny<bool>(),
-                    It.IsAny<int>(),
                     It.IsAny<bool>(),
                     It.IsAny<IPromise>()))
-                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, short, bool, int, bool, IPromise>((ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream, p) =>
+                .Returns<IChannelHandlerContext, int, IHttp2Headers, int, bool, IPromise>((ctx, streamId, headers, streamDependency, endOfStream, p) =>
                 {
                     writePromises.AddToBack(p);
                     return p.Task;

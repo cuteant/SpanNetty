@@ -83,7 +83,7 @@ namespace DotNetty.Common
             protected override Stack GetInitialValue()
             {
                 var stack = new Stack(_owner, Thread.CurrentThread, _owner._maxCapacityPerThread,
-                        _owner._maxSharedCapacityFactor, _owner._ratioMask, _owner._maxDelayedQueuesPerThread);
+                        _owner._maxSharedCapacityFactor, _owner._interval, _owner._maxDelayedQueuesPerThread);
                 if (_owner._preCreate)
                 {
                     for (int i = 0; i < _owner._maxCapacityPerThread; i++)

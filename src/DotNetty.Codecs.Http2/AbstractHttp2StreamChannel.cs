@@ -76,7 +76,7 @@
             if (parentContext is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.parentContext); }
 
             _stream = stream;
-            stream._attachment = this;
+            stream.Attachment = this;
 
             _config = new Http2StreamChannelConfiguration(this);
             _channelUnsafe = new Http2ChannelUnsafe(this);

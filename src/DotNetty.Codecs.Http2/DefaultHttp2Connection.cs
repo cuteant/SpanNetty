@@ -20,14 +20,14 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class DefaultHttp2Connection : IHttp2Connection
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<DefaultHttp2Connection>();
+        private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<DefaultHttp2Connection>();
 
         // Fields accessed by inner classes
-        readonly Dictionary<int, DefaultHttp2Stream> streamMap = new Dictionary<int, DefaultHttp2Stream>();
-        readonly PropertyKeyRegistry propertyKeyRegistry = new PropertyKeyRegistry();
-        readonly Http2ConnectionStream connectionStream;
-        readonly DefaultEndpoint<IHttp2LocalFlowController> localEndpoint;
-        readonly DefaultEndpoint<IHttp2RemoteFlowController> remoteEndpoint;
+        private readonly Dictionary<int, DefaultHttp2Stream> _streamMap;
+        private readonly PropertyKeyRegistry _propertyKeyRegistry;
+        private readonly Http2ConnectionStream _connectionStream;
+        private readonly DefaultEndpoint<IHttp2LocalFlowController> _localEndpoint;
+        private readonly DefaultEndpoint<IHttp2RemoteFlowController> _remoteEndpoint;
 
         /// <summary>
         /// We chose a <see cref="List{T}"/> over a <see cref="ISet{T}"/> to avoid allocating an <see cref="IEnumerator{T}"/>
@@ -36,15 +36,15 @@ namespace DotNetty.Codecs.Http2
         /// (local/remote flow controller and <see cref="IStreamByteDistributor"/> and we leave room for 1 extra.
         /// We could be more aggressive but the ArrayList resize will double the size if we are too small.</para>
         /// </summary>
-        readonly List<IHttp2ConnectionListener> listeners = new List<IHttp2ConnectionListener>(4);
-        readonly ActiveStreams activeStreams;
-        readonly IPromise closeFuture;
+        private readonly List<IHttp2ConnectionListener> _listeners;
+        private readonly ActiveStreams _activeStreams;
+        private readonly IPromise _closeFuture;
 
-        IPromise closePromise;
+        private IPromise v_closePromise;
         private IPromise InternalClosePromise
         {
-            get => Volatile.Read(ref this.closePromise);
-            set => Interlocked.Exchange(ref this.closePromise, value);
+            get => Volatile.Read(ref v_closePromise);
+            set => Interlocked.Exchange(ref v_closePromise, value);
         }
 
         /// <summary>
@@ -63,19 +63,22 @@ namespace DotNetty.Codecs.Http2
         /// <param name="maxReservedStreams">The maximum amount of streams which can exist in the reserved state for each endpoint.</param>
         public DefaultHttp2Connection(bool server, int maxReservedStreams)
         {
-            this.connectionStream = new Http2ConnectionStream(this);
-            this.activeStreams = new ActiveStreams(this, this.listeners);
+            _streamMap = new Dictionary<int, DefaultHttp2Stream>();
+            _propertyKeyRegistry = new PropertyKeyRegistry();
+            _listeners = new List<IHttp2ConnectionListener>(4);
+            _connectionStream = new Http2ConnectionStream(this);
+            _activeStreams = new ActiveStreams(this, _listeners);
             // Reserved streams are excluded from the SETTINGS_MAX_CONCURRENT_STREAMS limit according to [1] and the RFC
             // doesn't define a way to communicate the limit on reserved streams. We rely upon the peer to send RST_STREAM
             // in response to any locally enforced limits being exceeded [2].
             // [1] https://tools.ietf.org/html/rfc7540#section-5.1.2
             // [2] https://tools.ietf.org/html/rfc7540#section-8.2.2
-            this.localEndpoint = new DefaultEndpoint<IHttp2LocalFlowController>(this, server, server ? int.MaxValue : maxReservedStreams);
-            this.remoteEndpoint = new DefaultEndpoint<IHttp2RemoteFlowController>(this, !server, maxReservedStreams);
+            _localEndpoint = new DefaultEndpoint<IHttp2LocalFlowController>(this, server, server ? int.MaxValue : maxReservedStreams);
+            _remoteEndpoint = new DefaultEndpoint<IHttp2RemoteFlowController>(this, !server, maxReservedStreams);
 
             // Add the connection stream to the map.
-            this.streamMap.Add(this.connectionStream.Id, this.connectionStream);
-            this.closeFuture = new TaskCompletionSource();
+            _streamMap.Add(_connectionStream.Id, _connectionStream);
+            _closeFuture = new TaskCompletionSource();
         }
 
         /// <summary>
@@ -84,10 +87,10 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         bool IsClosed()
         {
-            return this.InternalClosePromise is object;
+            return InternalClosePromise is object;
         }
 
-        public Task CloseCompletion => this.closeFuture.Task;
+        public Task CloseCompletion => _closeFuture.Task;
 
         public Task CloseAsync(IPromise promise)
         {
@@ -95,7 +98,7 @@ namespace DotNetty.Codecs.Http2
 
             // Since we allow this method to be called multiple times, we must make sure that all the promises are notified
             // when all streams are removed and the close operation completes.
-            var prevClosePromise = this.InternalClosePromise;
+            var prevClosePromise = InternalClosePromise;
             if (prevClosePromise is object)
             {
                 if (ReferenceEquals(prevClosePromise, promise))
@@ -104,33 +107,33 @@ namespace DotNetty.Codecs.Http2
                 }
                 else if (prevClosePromise.IsVoid)
                 {
-                    this.InternalClosePromise = promise;
+                    InternalClosePromise = promise;
                 }
             }
             else
             {
-                this.InternalClosePromise = promise;
+                InternalClosePromise = promise;
             }
             if (!promise.IsVoid)
             {
-                this.closeFuture.Task.CascadeTo(promise, Logger);
+                _closeFuture.Task.CascadeTo(promise, Logger);
             }
 
             if (IsStreamMapEmpty())
             {
-                this.closeFuture.TryComplete();
-                return this.closeFuture.Task;
+                _closeFuture.TryComplete();
+                return _closeFuture.Task;
             }
 
             //IEnumerator<KeyValuePair<int, IHttp2Stream>> itr = streamMap.GetEnumerator();
             //copying streams to array to be able to modify streamMap
-            DefaultHttp2Stream[] streams = this.streamMap.Values.ToArray();
+            DefaultHttp2Stream[] streams = _streamMap.Values.ToArray();
 
             // We must take care while iterating the streamMap as to not modify while iterating in case there are other code
             // paths iterating over the active streams.
-            if (this.activeStreams.AllowModifications())
+            if (_activeStreams.AllowModifications())
             {
-                this.activeStreams.IncrementPendingIterations();
+                _activeStreams.IncrementPendingIterations();
                 try
                 {
                     for (int i = 0; i < streams.Length; i++)
@@ -147,7 +150,7 @@ namespace DotNetty.Codecs.Http2
                 }
                 finally
                 {
-                    this.activeStreams.DecrementPendingIterations();
+                    _activeStreams.DecrementPendingIterations();
                 }
             }
             else
@@ -164,67 +167,67 @@ namespace DotNetty.Codecs.Http2
                 }
             }
 
-            return this.closeFuture.Task;
+            return _closeFuture.Task;
         }
 
         public void AddListener(IHttp2ConnectionListener listener)
         {
-            this.listeners.Add(listener);
+            _listeners.Add(listener);
         }
 
         public void RemoveListener(IHttp2ConnectionListener listener)
         {
-            this.listeners.Remove(listener);
+            _listeners.Remove(listener);
         }
 
-        public bool IsServer => this.localEndpoint.IsServer;
+        public bool IsServer => _localEndpoint.IsServer;
 
-        public IHttp2Stream ConnectionStream => this.connectionStream;
+        public IHttp2Stream ConnectionStream => _connectionStream;
 
         public IHttp2Stream Stream(int streamId)
         {
-            return this.streamMap.TryGetValue(streamId, out DefaultHttp2Stream result) ? result : null;
+            return _streamMap.TryGetValue(streamId, out DefaultHttp2Stream result) ? result : null;
         }
 
         public bool StreamMayHaveExisted(int streamId)
         {
-            return this.remoteEndpoint.MayHaveCreatedStream(streamId) || this.localEndpoint.MayHaveCreatedStream(streamId);
+            return _remoteEndpoint.MayHaveCreatedStream(streamId) || _localEndpoint.MayHaveCreatedStream(streamId);
         }
 
-        public int NumActiveStreams => this.activeStreams.Size();
+        public int NumActiveStreams => _activeStreams.Size();
 
         public IHttp2Stream ForEachActiveStream(IHttp2StreamVisitor visitor)
         {
-            return this.activeStreams.ForEachActiveStream(visitor);
+            return _activeStreams.ForEachActiveStream(visitor);
         }
 
         public IHttp2Stream ForEachActiveStream(Func<IHttp2Stream, bool> visitor)
         {
-            return this.activeStreams.ForEachActiveStream(visitor);
+            return _activeStreams.ForEachActiveStream(visitor);
         }
 
-        public IHttp2ConnectionEndpoint<IHttp2LocalFlowController> Local => this.localEndpoint;
+        public IHttp2ConnectionEndpoint<IHttp2LocalFlowController> Local => _localEndpoint;
 
-        public IHttp2ConnectionEndpoint<IHttp2RemoteFlowController> Remote => this.remoteEndpoint;
+        public IHttp2ConnectionEndpoint<IHttp2RemoteFlowController> Remote => _remoteEndpoint;
 
         public bool GoAwayReceived()
         {
-            return this.localEndpoint.lastStreamKnownByPeer >= 0;
+            return _localEndpoint._lastStreamKnownByPeer >= 0;
         }
 
         public void GoAwayReceived(int lastKnownStream, Http2Error errorCode, IByteBuffer debugData)
         {
-            var oldLastStreamKnownByPeer = this.localEndpoint.LastStreamKnownByPeer();
+            var oldLastStreamKnownByPeer = _localEndpoint.LastStreamKnownByPeer();
             if (oldLastStreamKnownByPeer >= 0 && oldLastStreamKnownByPeer < lastKnownStream)
             {
                 ThrowHelper.ThrowConnectionError_LastStreamIdMustNotIncrease(oldLastStreamKnownByPeer, lastKnownStream);
             }
-            this.localEndpoint.LastStreamKnownByPeer(lastKnownStream);
-            for (int i = 0; i < this.listeners.Count; ++i)
+            _localEndpoint.LastStreamKnownByPeer(lastKnownStream);
+            for (int i = 0; i < _listeners.Count; ++i)
             {
                 try
                 {
-                    this.listeners[i].OnGoAwayReceived(lastKnownStream, errorCode, debugData);
+                    _listeners[i].OnGoAwayReceived(lastKnownStream, errorCode, debugData);
                 }
                 catch (Exception cause)
                 {
@@ -232,17 +235,17 @@ namespace DotNetty.Codecs.Http2
                 }
             }
 
-            this.CloseStreamsGreaterThanLastKnownStreamId(lastKnownStream, this.localEndpoint);
+            CloseStreamsGreaterThanLastKnownStreamId(lastKnownStream, _localEndpoint);
         }
 
         public bool GoAwaySent()
         {
-            return this.remoteEndpoint.lastStreamKnownByPeer >= 0;
+            return _remoteEndpoint._lastStreamKnownByPeer >= 0;
         }
 
         public bool GoAwaySent(int lastKnownStream, Http2Error errorCode, IByteBuffer debugData)
         {
-            var oldLastStreamKnownByPeer = this.remoteEndpoint.LastStreamKnownByPeer();
+            var oldLastStreamKnownByPeer = _remoteEndpoint.LastStreamKnownByPeer();
             if (oldLastStreamKnownByPeer >= 0)
             {
                 // Protect against re-entrancy. Could happen if writing the frame fails, and error handling
@@ -254,12 +257,12 @@ namespace DotNetty.Codecs.Http2
                 }
             }
 
-            this.remoteEndpoint.LastStreamKnownByPeer(lastKnownStream);
-            for (int i = 0; i < this.listeners.Count; ++i)
+            _remoteEndpoint.LastStreamKnownByPeer(lastKnownStream);
+            for (int i = 0; i < _listeners.Count; ++i)
             {
                 try
                 {
-                    this.listeners[i].OnGoAwaySent(lastKnownStream, errorCode, debugData);
+                    _listeners[i].OnGoAwaySent(lastKnownStream, errorCode, debugData);
                 }
                 catch (Exception cause)
                 {
@@ -267,13 +270,13 @@ namespace DotNetty.Codecs.Http2
                 }
             }
 
-            this.CloseStreamsGreaterThanLastKnownStreamId(lastKnownStream, this.remoteEndpoint);
+            CloseStreamsGreaterThanLastKnownStreamId(lastKnownStream, _remoteEndpoint);
             return true;
         }
 
         private void CloseStreamsGreaterThanLastKnownStreamId(int lastKnownStream, DefaultEndpoint endpoint)
         {
-            this.ForEachActiveStream(localVisit);
+            ForEachActiveStream(localVisit);
             bool localVisit(IHttp2Stream stream)
             {
                 if (stream.Id > lastKnownStream && endpoint.IsValidStreamId(stream.Id))
@@ -285,26 +288,26 @@ namespace DotNetty.Codecs.Http2
         }
 
         /// <summary>
-        /// Determine if <see cref="streamMap"/> only contains the connection stream.
+        /// Determine if <see cref="_streamMap"/> only contains the connection stream.
         /// </summary>
         /// <returns></returns>
-        private bool IsStreamMapEmpty() => this.streamMap.Count == 1;
+        private bool IsStreamMapEmpty() => _streamMap.Count == 1;
 
         /// <summary>
-        /// Remove a stream from the <see cref="streamMap"/>.
+        /// Remove a stream from the <see cref="_streamMap"/>.
         /// </summary>
         /// <param name="stream">the stream to remove.</param>
         void RemoveStream(DefaultHttp2Stream stream)
         {
-            bool removed = this.streamMap.Remove(stream.Id);
+            bool removed = _streamMap.Remove(stream.Id);
 
             if (removed)
             {
-                for (int i = 0; i < this.listeners.Count; i++)
+                for (int i = 0; i < _listeners.Count; i++)
                 {
                     try
                     {
-                        this.listeners[i].OnStreamRemoved(stream);
+                        _listeners[i].OnStreamRemoved(stream);
                     }
                     catch (Exception cause)
                     {
@@ -312,38 +315,28 @@ namespace DotNetty.Codecs.Http2
                     }
                 }
 
-                if (this.InternalClosePromise is object && IsStreamMapEmpty())
+                if (InternalClosePromise is object && IsStreamMapEmpty())
                 {
-                    this.closeFuture.TryComplete();
+                    _closeFuture.TryComplete();
                 }
             }
         }
 
-        static Http2StreamState ActiveState(int streamId, Http2StreamState initialState, bool isLocal, bool halfClosed)
+        static Http2StreamState ActiveState(int streamId, Http2StreamState initialState, bool isLocal, bool halfClosed) => initialState switch
         {
-            if (initialState == Http2StreamState.Idle)
-            {
-                return halfClosed ? isLocal ? Http2StreamState.HalfClosedLocal : Http2StreamState.HalfClosedRemote : Http2StreamState.Open;
-            }
-            else if (initialState == Http2StreamState.ReservedLocal)
-            {
-                return Http2StreamState.HalfClosedRemote;
-            }
-            else if (initialState == Http2StreamState.ReservedRemote)
-            {
-                return Http2StreamState.HalfClosedLocal;
-            }
-
-            return ThrowHelper.ThrowStreamError_AttemptingToOpenAStreamInAnInvalidState(streamId, initialState);
-        }
+            Http2StreamState.Idle => halfClosed ? isLocal ? Http2StreamState.HalfClosedLocal : Http2StreamState.HalfClosedRemote : Http2StreamState.Open,
+            Http2StreamState.ReservedLocal => Http2StreamState.HalfClosedRemote,
+            Http2StreamState.ReservedRemote => Http2StreamState.HalfClosedLocal,
+            _ => throw ThrowHelper.GetStreamError_AttemptingToOpenAStreamInAnInvalidState(streamId, initialState),
+        };
 
         void NotifyHalfClosed(IHttp2Stream stream)
         {
-            for (int i = 0; i < this.listeners.Count; i++)
+            for (int i = 0; i < _listeners.Count; i++)
             {
                 try
                 {
-                    this.listeners[i].OnStreamHalfClosed(stream);
+                    _listeners[i].OnStreamHalfClosed(stream);
                 }
                 catch (Exception cause)
                 {
@@ -354,11 +347,11 @@ namespace DotNetty.Codecs.Http2
 
         void NotifyClosed(IHttp2Stream stream)
         {
-            for (int i = 0; i < this.listeners.Count; i++)
+            for (int i = 0; i < _listeners.Count; i++)
             {
                 try
                 {
-                    this.listeners[i].OnStreamClosed(stream);
+                    _listeners[i].OnStreamClosed(stream);
                 }
                 catch (Exception cause)
                 {
@@ -369,7 +362,7 @@ namespace DotNetty.Codecs.Http2
 
         public IHttp2ConnectionPropertyKey NewKey()
         {
-            return this.propertyKeyRegistry.NewKey(this);
+            return _propertyKeyRegistry.NewKey(this);
         }
 
         /// <summary>
@@ -398,29 +391,29 @@ namespace DotNetty.Codecs.Http2
             const int MetaStateRecvHeaders = 1 << 4;
             const int MetaStateRecvTrailers = 1 << 5;
 
-            readonly DefaultHttp2Connection conn;
-            readonly int id;
-            readonly PropertyMap properties;
-            private Http2StreamState state;
-            private int metaState;
+            readonly DefaultHttp2Connection _conn;
+            readonly int _id;
+            readonly PropertyMap _properties;
+            private Http2StreamState _state;
+            private int _metaState;
 
             internal DefaultHttp2Stream(DefaultHttp2Connection conn, int id, Http2StreamState state)
             {
-                this.conn = conn;
-                this.id = id;
-                this.state = state;
-                this.properties = new PropertyMap(conn.propertyKeyRegistry);
+                _conn = conn;
+                _id = id;
+                _state = state;
+                _properties = new PropertyMap(conn._propertyKeyRegistry);
             }
 
-            public int Id => this.id;
+            public int Id => _id;
 
-            public Http2StreamState State => this.state;
+            public Http2StreamState State => _state;
 
-            public virtual bool IsResetSent => (this.metaState & MetaStateSentRst) != 0;
+            public virtual bool IsResetSent => (_metaState & MetaStateSentRst) != 0;
 
             public virtual IHttp2Stream ResetSent()
             {
-                this.metaState |= MetaStateSentRst;
+                _metaState |= MetaStateSentRst;
                 return this;
             }
 
@@ -428,73 +421,73 @@ namespace DotNetty.Codecs.Http2
             {
                 if (!isInformational)
                 {
-                    this.metaState |= this.IsHeadersSent ? MetaStateSentTrailers : MetaStateSentHeaders;
+                    _metaState |= IsHeadersSent ? MetaStateSentTrailers : MetaStateSentHeaders;
                 }
 
                 return this;
             }
 
-            public virtual bool IsHeadersSent => (this.metaState & MetaStateSentHeaders) != 0;
+            public virtual bool IsHeadersSent => (_metaState & MetaStateSentHeaders) != 0;
 
-            public bool IsTrailersSent => (this.metaState & MetaStateSentTrailers) != 0;
+            public bool IsTrailersSent => (_metaState & MetaStateSentTrailers) != 0;
 
             public IHttp2Stream HeadersReceived(bool isInformational)
             {
                 if (!isInformational)
                 {
-                    this.metaState |= this.IsHeadersReceived ? MetaStateRecvTrailers : MetaStateRecvHeaders;
+                    _metaState |= IsHeadersReceived ? MetaStateRecvTrailers : MetaStateRecvHeaders;
                 }
 
                 return this;
             }
 
-            public bool IsHeadersReceived => (this.metaState & MetaStateRecvHeaders) != 0;
+            public bool IsHeadersReceived => (_metaState & MetaStateRecvHeaders) != 0;
 
-            public bool IsTrailersReceived => (this.metaState & MetaStateRecvTrailers) != 0;
+            public bool IsTrailersReceived => (_metaState & MetaStateRecvTrailers) != 0;
 
             public virtual IHttp2Stream PushPromiseSent()
             {
-                this.metaState |= MetaStateSentPushpromise;
+                _metaState |= MetaStateSentPushpromise;
                 return this;
             }
 
-            public virtual bool IsPushPromiseSent => (this.metaState & MetaStateSentPushpromise) != 0;
+            public virtual bool IsPushPromiseSent => (_metaState & MetaStateSentPushpromise) != 0;
 
             public V SetProperty<V>(IHttp2ConnectionPropertyKey key, object value)
             {
-                var prevValue = this.properties.Add(this.conn.VerifyKey(key), value);
+                var prevValue = _properties.Add(_conn.VerifyKey(key), value);
                 return prevValue is V v ? v : default;
             }
 
             public object SetProperty(IHttp2ConnectionPropertyKey key, object value)
             {
-                return this.properties.Add(this.conn.VerifyKey(key), value);
+                return _properties.Add(_conn.VerifyKey(key), value);
             }
 
             public V GetProperty<V>(IHttp2ConnectionPropertyKey key)
             {
-                return (V)this.properties.Get(this.conn.VerifyKey(key));
+                return (V)_properties.Get(_conn.VerifyKey(key));
             }
 
             public object RemoveProperty(IHttp2ConnectionPropertyKey key)
             {
-                return this.properties.Remove(this.conn.VerifyKey(key));
+                return _properties.Remove(_conn.VerifyKey(key));
             }
 
             public V RemoveProperty<V>(IHttp2ConnectionPropertyKey key)
             {
-                return (V)this.properties.Remove(this.conn.VerifyKey(key));
+                return (V)_properties.Remove(_conn.VerifyKey(key));
             }
 
             public virtual IHttp2Stream Open(bool halfClosed)
             {
-                this.state = ActiveState(this.id, this.state, this.IsLocal(), halfClosed);
-                if (!this.CreatedBy().CanOpenStream)
+                _state = ActiveState(_id, _state, IsLocal(), halfClosed);
+                if (!CreatedBy().CanOpenStream)
                 {
                     ThrowHelper.ThrowConnectionError_MaximumActiveStreamsViolatedForThisEndpoint();
                 }
 
-                this.Activate();
+                Activate();
                 return this;
             }
 
@@ -502,79 +495,81 @@ namespace DotNetty.Codecs.Http2
             {
                 // If the stream is opened in a half-closed state, the headers must have either
                 // been sent if this is a local stream, or received if it is a remote stream.
-                if (this.state == Http2StreamState.HalfClosedLocal)
+                if (Http2StreamState.HalfClosedLocal == _state)
                 {
-                    this.HeadersSent(/*isInformational*/ false);
+                    HeadersSent(/*isInformational*/ false);
                 }
-                else if (this.state == Http2StreamState.HalfClosedRemote)
+                else if (Http2StreamState.HalfClosedRemote == _state)
                 {
-                    this.HeadersReceived(/*isInformational*/ false);
+                    HeadersReceived(/*isInformational*/ false);
                 }
-                this.conn.activeStreams.Activate(this);
+                _conn._activeStreams.Activate(this);
             }
 
-            public virtual IHttp2Stream Close() => this.Close(false);
+            public virtual IHttp2Stream Close() => Close(false);
 
             public virtual IHttp2Stream Close(bool force)
             {
-                if (this.state == Http2StreamState.Closed)
+                if (Http2StreamState.Closed == _state)
                 {
                     return this;
                 }
 
-                this.state = Http2StreamState.Closed;
+                _state = Http2StreamState.Closed;
 
-                --this.CreatedBy().numStreams;
-                this.conn.activeStreams.Deactivate(this, force);
+                --CreatedBy()._numStreams;
+                _conn._activeStreams.Deactivate(this, force);
                 return this;
             }
 
             public virtual IHttp2Stream CloseLocalSide()
             {
-                if (this.state == Http2StreamState.Open)
+                switch (_state)
                 {
-                    this.state = Http2StreamState.HalfClosedLocal;
-                    this.conn.NotifyHalfClosed(this);
-                }
-                else if (this.state == Http2StreamState.HalfClosedLocal)
-                {
-                }
-                else
-                {
-                    this.Close();
-                }
+                    case Http2StreamState.Open:
+                        _state = Http2StreamState.HalfClosedLocal;
+                        _conn.NotifyHalfClosed(this);
+                        break;
 
+                    case Http2StreamState.HalfClosedLocal:
+                        break;
+
+                    default:
+                        Close();
+                        break;
+                }
                 return this;
             }
 
             public virtual IHttp2Stream CloseRemoteSide()
             {
-                if (state == Http2StreamState.Open)
+                switch (_state)
                 {
-                    state = Http2StreamState.HalfClosedRemote;
-                    this.conn.NotifyHalfClosed(this);
-                }
-                else if (this.state == Http2StreamState.HalfClosedRemote)
-                {
-                }
-                else
-                {
-                    this.Close();
-                }
+                    case Http2StreamState.Open:
+                        _state = Http2StreamState.HalfClosedRemote;
+                        _conn.NotifyHalfClosed(this);
+                        break;
 
+                    case Http2StreamState.HalfClosedRemote:
+                        break;
+
+                    default:
+                        Close();
+                        break;
+                }
                 return this;
             }
 
             internal virtual DefaultEndpoint CreatedBy()
             {
-                return this.conn.localEndpoint.IsValidStreamId(this.id)
-                    ? (DefaultEndpoint)this.conn.localEndpoint
-                    : this.conn.remoteEndpoint;
+                return _conn._localEndpoint.IsValidStreamId(_id)
+                    ? (DefaultEndpoint)_conn._localEndpoint
+                    : _conn._remoteEndpoint;
             }
 
             bool IsLocal()
             {
-                return this.conn.localEndpoint.IsValidStreamId(this.id);
+                return _conn._localEndpoint.IsValidStreamId(_id);
             }
 
             /// <summary>
@@ -582,26 +577,26 @@ namespace DotNetty.Codecs.Http2
             /// </summary>
             sealed class PropertyMap
             {
-                readonly PropertyKeyRegistry registry;
-                object[] values = EmptyArrays.EmptyObjects;
+                readonly PropertyKeyRegistry _registry;
+                object[] _values = EmptyArrays.EmptyObjects;
 
                 public PropertyMap(PropertyKeyRegistry registry)
                 {
-                    this.registry = registry;
+                    _registry = registry;
                 }
 
                 internal object Add(DefaultPropertyKey key, object value)
                 {
-                    this.ResizeIfNecessary(key.index);
-                    object prevValue = this.values[key.index];
-                    this.values[key.index] = value;
+                    ResizeIfNecessary(key._index);
+                    object prevValue = _values[key._index];
+                    _values[key._index] = value;
                     return prevValue;
                 }
 
                 internal object Get(DefaultPropertyKey key)
                 {
-                    var keyIndex = key.index;
-                    var thisValues = this.values;
+                    var keyIndex = key._index;
+                    var thisValues = _values;
                     if ((uint)keyIndex < (uint)thisValues.Length) { return thisValues[keyIndex]; }
 
                     return default;
@@ -610,8 +605,8 @@ namespace DotNetty.Codecs.Http2
                 internal object Remove(DefaultPropertyKey key)
                 {
                     object prevValue = null;
-                    var keyIndex = key.index;
-                    var thisValues = this.values;
+                    var keyIndex = key._index;
+                    var thisValues = _values;
                     if ((uint)keyIndex < (uint)thisValues.Length)
                     {
                         prevValue = thisValues[keyIndex];
@@ -623,14 +618,14 @@ namespace DotNetty.Codecs.Http2
 
                 void ResizeIfNecessary(int index)
                 {
-                    if (index >= this.values.Length)
+                    if (index >= _values.Length)
                     {
-                        object[] tmp = new object[this.registry.Size];
-                        if ((uint)this.values.Length > 0u)
+                        object[] tmp = new object[_registry.Size];
+                        if ((uint)_values.Length > 0u)
                         {
-                            Array.Copy(this.values, tmp, Math.Min(this.values.Length, tmp.Length));
+                            Array.Copy(_values, tmp, Math.Min(_values.Length, tmp.Length));
                         }
-                        this.values = tmp;
+                        _values = tmp;
                     }
                 }
             }
@@ -672,7 +667,7 @@ namespace DotNetty.Codecs.Http2
         internal class DefaultEndpoint<F> : DefaultEndpoint, IHttp2ConnectionEndpoint<F>
             where F : class, IHttp2FlowController
         {
-            F flowController;
+            F _flowController;
 
             internal DefaultEndpoint(DefaultHttp2Connection conn, bool server, int maxReservedStreams)
                 : base(conn, server, maxReservedStreams)
@@ -681,11 +676,11 @@ namespace DotNetty.Codecs.Http2
 
             public F FlowController
             {
-                get => this.flowController;
+                get => _flowController;
                 set
                 {
                     if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-                    this.flowController = value;
+                    _flowController = value;
                 }
             }
         }
@@ -695,16 +690,16 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         internal class DefaultEndpoint : IHttp2ConnectionEndpoint
         {
-            readonly DefaultHttp2Connection conn;
+            readonly DefaultHttp2Connection _conn;
 
-            readonly bool server;
+            readonly bool _server;
 
             /// <summary>
             /// The minimum stream ID allowed when creating the next stream. This only applies at the time the stream is
             /// created. If the ID of the stream being created is less than this value, stream creation will fail. Upon
             /// successful creation of a stream, this value is incremented to the next valid stream ID.
             /// </summary>
-            private int nextStreamIdToCreate;
+            private int _nextStreamIdToCreate;
 
             /// <summary>
             /// Used for reservation of stream IDs. Stream IDs can be reserved in advance by applications before the streams
@@ -712,23 +707,23 @@ namespace DotNetty.Codecs.Http2
             /// working around <c>SETTINGS_MAX_CONCURRENT_STREAMS</c>, in which case they will reserve stream IDs for each
             /// buffered stream.
             /// </summary>
-            private int nextReservationStreamId;
-            internal int lastStreamKnownByPeer = -1;
-            private bool pushToAllowed = true;
+            private int _nextReservationStreamId;
+            internal int _lastStreamKnownByPeer = -1;
+            private bool _pushToAllowed = true;
 
-            private int maxStreams;
-            private int maxActiveStreams;
+            private int _maxStreams;
+            private int _maxActiveStreams;
 
-            private readonly int maxReservedStreams;
+            private readonly int _maxReservedStreams;
 
             // Fields accessed by inner classes
-            internal int numActiveStreams;
-            internal int numStreams;
+            internal int _numActiveStreams;
+            internal int _numStreams;
 
             internal DefaultEndpoint(DefaultHttp2Connection conn, bool server, int maxReservedStreams)
             {
-                this.conn = conn;
-                this.server = server;
+                _conn = conn;
+                _server = server;
 
                 // Determine the starting stream ID for this endpoint. Client-initiated streams
                 // are odd and server-initiated streams are even. Zero is reserved for the
@@ -736,62 +731,62 @@ namespace DotNetty.Codecs.Http2
                 // upgrade from HTTP 1.1.
                 if (server)
                 {
-                    this.nextStreamIdToCreate = 2;
-                    this.nextReservationStreamId = 0;
+                    _nextStreamIdToCreate = 2;
+                    _nextReservationStreamId = 0;
                 }
                 else
                 {
-                    this.nextStreamIdToCreate = 1;
+                    _nextStreamIdToCreate = 1;
                     // For manually created client-side streams, 1 is reserved for HTTP upgrade, so start at 3.
-                    this.nextReservationStreamId = 1;
+                    _nextReservationStreamId = 1;
                 }
 
                 // Push is disallowed by default for servers and allowed for clients.
-                this.pushToAllowed = !server;
-                this.maxActiveStreams = int.MaxValue;
+                _pushToAllowed = !server;
+                _maxActiveStreams = int.MaxValue;
                 if (maxReservedStreams < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(maxReservedStreams, ExceptionArgument.maxReservedStreams); }
-                this.maxReservedStreams = maxReservedStreams;
-                this.UpdateMaxStreams();
+                _maxReservedStreams = maxReservedStreams;
+                UpdateMaxStreams();
             }
 
             public int IncrementAndGetNextStreamId =>
-                this.nextReservationStreamId >= 0 ? this.nextReservationStreamId += 2 : this.nextReservationStreamId;
+                _nextReservationStreamId >= 0 ? _nextReservationStreamId += 2 : _nextReservationStreamId;
 
             private void IncrementExpectedStreamId(int streamId)
             {
-                if (streamId > this.nextReservationStreamId && this.nextReservationStreamId >= 0)
+                if (streamId > _nextReservationStreamId && _nextReservationStreamId >= 0)
                 {
-                    this.nextReservationStreamId = streamId;
+                    _nextReservationStreamId = streamId;
                 }
 
-                this.nextStreamIdToCreate = streamId + 2;
-                ++this.numStreams;
+                _nextStreamIdToCreate = streamId + 2;
+                ++_numStreams;
             }
 
             public bool IsValidStreamId(int streamId)
             {
-                return streamId > 0 && this.server == (0u >= (uint)(streamId & 1));
+                return streamId > 0 && _server == (0u >= (uint)(streamId & 1));
             }
 
             public bool MayHaveCreatedStream(int streamId)
             {
-                return this.IsValidStreamId(streamId) && streamId <= this.LastStreamCreated;
+                return IsValidStreamId(streamId) && streamId <= LastStreamCreated;
             }
 
-            public bool CanOpenStream => this.numActiveStreams < this.maxActiveStreams;
+            public bool CanOpenStream => _numActiveStreams < _maxActiveStreams;
 
             public IHttp2Stream CreateStream(int streamId, bool halfClosed)
             {
-                Http2StreamState state = ActiveState(streamId, Http2StreamState.Idle, this.IsLocal(), halfClosed);
+                Http2StreamState state = ActiveState(streamId, Http2StreamState.Idle, IsLocal(), halfClosed);
 
-                this.CheckNewStreamAllowed(streamId, state);
+                CheckNewStreamAllowed(streamId, state);
 
                 // Create and initialize the stream.
-                DefaultHttp2Stream stream = new DefaultHttp2Stream(this.conn, streamId, state);
+                DefaultHttp2Stream stream = new DefaultHttp2Stream(_conn, streamId, state);
 
-                this.IncrementExpectedStreamId(streamId);
+                IncrementExpectedStreamId(streamId);
 
-                this.AddStream(stream);
+                AddStream(stream);
 
                 stream.Activate();
                 return stream;
@@ -802,7 +797,7 @@ namespace DotNetty.Codecs.Http2
                 return stream is DefaultHttp2Stream defaultStream && ReferenceEquals(defaultStream.CreatedBy(), this);
             }
 
-            public bool IsServer => this.server;
+            public bool IsServer => _server;
 
             public IHttp2Stream ReservePushStream(int streamId, IHttp2Stream parent)
             {
@@ -811,36 +806,36 @@ namespace DotNetty.Codecs.Http2
                     ThrowHelper.ThrowConnectionError_ParentStreamMissing();
                 }
 
-                if (this.IsLocal() ? !parent.State.LocalSideOpen : !parent.State.RemoteSideOpen)
+                if (IsLocal() ? !parent.State.LocalSideOpen() : !parent.State.RemoteSideOpen())
                 {
                     ThrowHelper.ThrowConnectionError_StreamIsNotOpenForSendingPushPromise(parent.Id);
                 }
 
-                if (!this.Opposite.AllowPushTo())
+                if (!Opposite.AllowPushTo())
                 {
                     ThrowHelper.ThrowConnectionError_ServerPushNotAllowedToOppositeEndpoint();
                 }
 
-                Http2StreamState state = this.IsLocal() ? Http2StreamState.ReservedLocal : Http2StreamState.ReservedRemote;
-                this.CheckNewStreamAllowed(streamId, state);
+                Http2StreamState state = IsLocal() ? Http2StreamState.ReservedLocal : Http2StreamState.ReservedRemote;
+                CheckNewStreamAllowed(streamId, state);
 
                 // Create and initialize the stream.
-                DefaultHttp2Stream stream = new DefaultHttp2Stream(this.conn, streamId, state);
+                DefaultHttp2Stream stream = new DefaultHttp2Stream(_conn, streamId, state);
 
-                this.IncrementExpectedStreamId(streamId);
+                IncrementExpectedStreamId(streamId);
 
                 // Register the stream.
-                this.AddStream(stream);
+                AddStream(stream);
                 return stream;
             }
 
             private void AddStream(DefaultHttp2Stream stream)
             {
                 // Add the stream to the map and priority tree.
-                this.conn.streamMap.Add(stream.Id, stream);
+                _conn._streamMap.Add(stream.Id, stream);
 
                 // Notify the listeners of the event.
-                var listeners = this.conn.listeners;
+                var listeners = _conn._listeners;
                 for (int i = 0; i < listeners.Count; i++)
                 {
                     try
@@ -856,86 +851,97 @@ namespace DotNetty.Codecs.Http2
 
             public void AllowPushTo(bool allow)
             {
-                if (allow && this.server)
+                if (allow && _server)
                 {
                     ThrowHelper.ThrowArgumentException_ServersDoNotAllowPush();
                 }
 
-                this.pushToAllowed = allow;
+                _pushToAllowed = allow;
             }
 
-            public bool AllowPushTo() => this.pushToAllowed;
+            public bool AllowPushTo() => _pushToAllowed;
 
-            public int NumActiveStreams => this.numActiveStreams;
+            public int NumActiveStreams => _numActiveStreams;
 
-            public int MaxActiveStreams => this.maxActiveStreams;
+            public int MaxActiveStreams => _maxActiveStreams;
 
             public void SetMaxActiveStreams(int maxActiveStreams)
             {
-                this.maxActiveStreams = maxActiveStreams;
-                this.UpdateMaxStreams();
+                _maxActiveStreams = maxActiveStreams;
+                UpdateMaxStreams();
             }
 
-            public int LastStreamCreated => this.nextStreamIdToCreate > 1 ? this.nextStreamIdToCreate - 2 : 0;
+            public int LastStreamCreated => _nextStreamIdToCreate > 1 ? _nextStreamIdToCreate - 2 : 0;
 
-            public int LastStreamKnownByPeer() => this.lastStreamKnownByPeer;
+            public int LastStreamKnownByPeer() => _lastStreamKnownByPeer;
 
             public void LastStreamKnownByPeer(int lastKnownStream)
             {
-                this.lastStreamKnownByPeer = lastKnownStream;
+                _lastStreamKnownByPeer = lastKnownStream;
             }
 
             public IHttp2ConnectionEndpoint Opposite =>
-                this.IsLocal() ? (IHttp2ConnectionEndpoint)this.conn.remoteEndpoint : this.conn.localEndpoint;
+                IsLocal() ? (IHttp2ConnectionEndpoint)_conn._remoteEndpoint : _conn._localEndpoint;
 
             private void UpdateMaxStreams()
             {
-                this.maxStreams = (int)Math.Min(int.MaxValue, (long)this.maxActiveStreams + this.maxReservedStreams);
+                _maxStreams = (int)Math.Min(int.MaxValue, (long)_maxActiveStreams + _maxReservedStreams);
             }
 
             private void CheckNewStreamAllowed(int streamId, Http2StreamState state)
             {
                 Debug.Assert(state != Http2StreamState.Idle);
-                if (this.lastStreamKnownByPeer >= 0 && streamId > this.lastStreamKnownByPeer)
+                if (_lastStreamKnownByPeer >= 0 && streamId > _lastStreamKnownByPeer)
                 {
-                    ThrowHelper.ThrowStreamError_CannotCreateStreamGreaterThanLastStreamIDFromGoAway(streamId, this.lastStreamKnownByPeer);
+                    ThrowHelper.ThrowStreamError_CannotCreateStreamGreaterThanLastStreamIDFromGoAway(streamId, _lastStreamKnownByPeer);
                 }
 
-                if (!this.IsValidStreamId(streamId))
+                if (!IsValidStreamId(streamId))
                 {
                     if (streamId < 0)
                     {
                         ThrowHelper.ThrowHttp2NoMoreStreamIdsException();
                     }
 
-                    ThrowHelper.ThrowConnectionError_RequestStreamIsNotCorrectForConnection(streamId, this.server);
+                    ThrowHelper.ThrowConnectionError_RequestStreamIsNotCorrectForConnection(streamId, _server);
                 }
 
                 // This check must be after all id validated checks, but before the max streams check because it may be
                 // recoverable to some degree for handling frames which can be sent on closed streams.
-                if (streamId < this.nextStreamIdToCreate)
+                if (streamId < _nextStreamIdToCreate)
                 {
-                    ThrowHelper.ThrowClosedStreamError_RequestStreamIsBehindTheNextExpectedStream(streamId, this.nextStreamIdToCreate);
+                    ThrowHelper.ThrowClosedStreamError_RequestStreamIsBehindTheNextExpectedStream(streamId, _nextStreamIdToCreate);
                 }
 
-                if (this.nextStreamIdToCreate <= 0)
+                if (_nextStreamIdToCreate <= 0)
                 {
                     ThrowHelper.ThrowConnectionError_StreamIDsAreExhaustedForThisEndpoint();
                 }
 
-                bool isReserved = state == Http2StreamState.ReservedLocal || state == Http2StreamState.ReservedRemote;
-                if (!isReserved && !this.CanOpenStream || isReserved && this.numStreams >= this.maxStreams)
+                bool isReserved;
+                switch (state)
+                {
+                    case Http2StreamState.ReservedLocal:
+                    case Http2StreamState.ReservedRemote:
+                        isReserved = true;
+                        break;
+
+                    default:
+                        isReserved = false;
+                        break;
+                }
+                if (!isReserved && !CanOpenStream || isReserved && _numStreams >= _maxStreams)
                 {
                     ThrowHelper.ThrowStreamError_MaximumActiveStreamsViolatedForThisEndpoint(streamId);
                 }
 
-                if (this.conn.IsClosed())
+                if (_conn.IsClosed())
                 {
                     ThrowHelper.ThrowConnectionError_AttemptedToCreateStreamAfterConnectionWasClosed(streamId);
                 }
             }
 
-            bool IsLocal() => ReferenceEquals(this, this.conn.localEndpoint);
+            bool IsLocal() => ReferenceEquals(this, _conn._localEndpoint);
         }
 
         /// <summary>
@@ -944,53 +950,53 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         sealed class ActiveStreams
         {
-            readonly DefaultHttp2Connection conn;
-            readonly List<IHttp2ConnectionListener> listeners;
-            readonly Deque<Action> pendingEvents = new Deque<Action>();
-            readonly ISet<IHttp2Stream> streams = new HashSet<IHttp2Stream>();
-            private int pendingIterations;
+            readonly DefaultHttp2Connection _conn;
+            readonly List<IHttp2ConnectionListener> _listeners;
+            readonly Deque<Action> _pendingEvents = new Deque<Action>();
+            readonly ISet<IHttp2Stream> _streams = new HashSet<IHttp2Stream>();
+            private int _pendingIterations;
 
             public ActiveStreams(DefaultHttp2Connection conn, List<IHttp2ConnectionListener> listeners)
             {
-                this.conn = conn;
-                this.listeners = listeners;
+                _conn = conn;
+                _listeners = listeners;
             }
 
             public int Size()
             {
-                return this.streams.Count;
+                return _streams.Count;
             }
 
             public void Activate(DefaultHttp2Stream stream)
             {
-                if (this.AllowModifications())
+                if (AllowModifications())
                 {
-                    this.AddToActiveStreams(stream);
+                    AddToActiveStreams(stream);
                 }
                 else
                 {
-                    this.pendingEvents.AddToBack(() => this.AddToActiveStreams(stream));
+                    _pendingEvents.AddToBack(() => AddToActiveStreams(stream));
                 }
             }
 
             internal void Deactivate(DefaultHttp2Stream stream, bool force)
             {
-                if (this.AllowModifications() || force)
+                if (AllowModifications() || force)
                 {
-                    this.RemoveFromActiveStreams(stream);
+                    RemoveFromActiveStreams(stream);
                 }
                 else
                 {
-                    this.pendingEvents.AddToBack(() => this.RemoveFromActiveStreams(stream));
+                    _pendingEvents.AddToBack(() => RemoveFromActiveStreams(stream));
                 }
             }
 
             public IHttp2Stream ForEachActiveStream(IHttp2StreamVisitor visitor)
             {
-                this.IncrementPendingIterations();
+                IncrementPendingIterations();
                 try
                 {
-                    foreach (IHttp2Stream stream in streams)
+                    foreach (IHttp2Stream stream in _streams)
                     {
                         if (!visitor.Visit(stream))
                         {
@@ -1002,16 +1008,16 @@ namespace DotNetty.Codecs.Http2
                 }
                 finally
                 {
-                    this.DecrementPendingIterations();
+                    DecrementPendingIterations();
                 }
             }
 
             public IHttp2Stream ForEachActiveStream(Func<IHttp2Stream, bool> visitor)
             {
-                this.IncrementPendingIterations();
+                IncrementPendingIterations();
                 try
                 {
-                    foreach (IHttp2Stream stream in streams)
+                    foreach (IHttp2Stream stream in _streams)
                     {
                         if (!visitor(stream))
                         {
@@ -1023,22 +1029,22 @@ namespace DotNetty.Codecs.Http2
                 }
                 finally
                 {
-                    this.DecrementPendingIterations();
+                    DecrementPendingIterations();
                 }
             }
 
             void AddToActiveStreams(DefaultHttp2Stream stream)
             {
-                if (this.streams.Add(stream))
+                if (_streams.Add(stream))
                 {
                     // Update the number of active streams initiated by the endpoint.
-                    stream.CreatedBy().numActiveStreams++;
+                    stream.CreatedBy()._numActiveStreams++;
 
-                    for (int i = 0; i < this.listeners.Count; i++)
+                    for (int i = 0; i < _listeners.Count; i++)
                     {
                         try
                         {
-                            this.listeners[i].OnStreamActive(stream);
+                            _listeners[i].OnStreamActive(stream);
                         }
                         catch (Exception cause)
                         {
@@ -1050,32 +1056,32 @@ namespace DotNetty.Codecs.Http2
 
             void RemoveFromActiveStreams(DefaultHttp2Stream stream)
             {
-                if (this.streams.Remove(stream))
+                if (_streams.Remove(stream))
                 {
                     // Update the number of active streams initiated by the endpoint.
-                    stream.CreatedBy().numActiveStreams--;
-                    this.conn.NotifyClosed(stream);
+                    stream.CreatedBy()._numActiveStreams--;
+                    _conn.NotifyClosed(stream);
                 }
 
-                this.conn.RemoveStream(stream);
+                _conn.RemoveStream(stream);
             }
 
             internal bool AllowModifications()
             {
-                return 0u >= (uint)this.pendingIterations;
+                return 0u >= (uint)_pendingIterations;
             }
 
             internal void IncrementPendingIterations()
             {
-                ++this.pendingIterations;
+                ++_pendingIterations;
             }
 
             internal void DecrementPendingIterations()
             {
-                --this.pendingIterations;
-                if (this.AllowModifications())
+                --_pendingIterations;
+                if (AllowModifications())
                 {
-                    while (this.pendingEvents.TryRemoveFromFront(out Action evt))
+                    while (_pendingEvents.TryRemoveFromFront(out Action evt))
                     {
                         try
                         {
@@ -1095,18 +1101,18 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         sealed class DefaultPropertyKey : IHttp2ConnectionPropertyKey
         {
-            readonly DefaultHttp2Connection conn;
-            internal readonly int index;
+            readonly DefaultHttp2Connection _conn;
+            internal readonly int _index;
 
             internal DefaultPropertyKey(DefaultHttp2Connection conn, int index)
             {
-                this.conn = conn;
-                this.index = index;
+                _conn = conn;
+                _index = index;
             }
 
             internal DefaultPropertyKey VerifyConnection(IHttp2Connection connection)
             {
-                if (connection != this.conn)
+                if (connection != _conn)
                 {
                     ThrowHelper.ThrowArgumentException_UsingAKeyThatWasNotCreatedByThisConnection();
                 }
@@ -1125,7 +1131,7 @@ namespace DotNetty.Codecs.Http2
             /// (local/remote flow controller and <see cref="IStreamByteDistributor"/>) and we leave room for 1 extra.
             /// We could be more aggressive but the ArrayList resize will double the size if we are too small.
             /// </summary>
-            readonly IList<DefaultPropertyKey> keys = new List<DefaultPropertyKey>(4);
+            readonly IList<DefaultPropertyKey> _keys = new List<DefaultPropertyKey>(4);
 
             /// <summary>
             /// Registers a new property key.
@@ -1134,12 +1140,12 @@ namespace DotNetty.Codecs.Http2
             /// <returns></returns>
             internal DefaultPropertyKey NewKey(DefaultHttp2Connection conn)
             {
-                var key = new DefaultPropertyKey(conn, keys.Count);
-                this.keys.Add(key);
+                var key = new DefaultPropertyKey(conn, _keys.Count);
+                _keys.Add(key);
                 return key;
             }
 
-            internal int Size => this.keys.Count;
+            internal int Size => _keys.Count;
         }
     }
 }

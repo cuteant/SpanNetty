@@ -76,69 +76,69 @@ namespace DotNetty.Buffers
             return buf;
         }
 
-        readonly bool directByDefault;
-        readonly IByteBuffer emptyBuffer;
+        private readonly bool _directByDefault;
+        private readonly IByteBuffer _emptyBuffer;
 
         protected AbstractByteBufferAllocator()
         {
-            this.emptyBuffer = new EmptyByteBuffer(this);
+            _emptyBuffer = new EmptyByteBuffer(this);
         }
 
         protected AbstractByteBufferAllocator(bool preferDirect)
         {
-            this.directByDefault = preferDirect;
-            this.emptyBuffer = new EmptyByteBuffer(this);
+            _directByDefault = preferDirect;
+            _emptyBuffer = new EmptyByteBuffer(this);
         }
 
-        public IByteBuffer Buffer() => this.directByDefault ? this.DirectBuffer() : this.HeapBuffer();
+        public IByteBuffer Buffer() => _directByDefault ? DirectBuffer() : HeapBuffer();
 
         public IByteBuffer Buffer(int initialCapacity) => 
-            this.directByDefault ? this.DirectBuffer(initialCapacity) : this.HeapBuffer(initialCapacity);
+            _directByDefault ? DirectBuffer(initialCapacity) : HeapBuffer(initialCapacity);
 
         public IByteBuffer Buffer(int initialCapacity, int maxCapacity) => 
-            this.directByDefault ? this.DirectBuffer(initialCapacity, maxCapacity) : this.HeapBuffer(initialCapacity, maxCapacity);
+            _directByDefault ? DirectBuffer(initialCapacity, maxCapacity) : HeapBuffer(initialCapacity, maxCapacity);
 
-        public IByteBuffer HeapBuffer() => this.HeapBuffer(DefaultInitialCapacity, DefaultMaxCapacity);
+        public IByteBuffer HeapBuffer() => HeapBuffer(DefaultInitialCapacity, DefaultMaxCapacity);
 
-        public IByteBuffer HeapBuffer(int initialCapacity) => this.HeapBuffer(initialCapacity, DefaultMaxCapacity);
+        public IByteBuffer HeapBuffer(int initialCapacity) => HeapBuffer(initialCapacity, DefaultMaxCapacity);
         
         public IByteBuffer HeapBuffer(int initialCapacity, int maxCapacity)
         {
             if (0u >= (uint)initialCapacity && 0u >= (uint)maxCapacity)
             {
-                return this.emptyBuffer;
+                return _emptyBuffer;
             }
 
             Validate(initialCapacity, maxCapacity);
-            return this.NewHeapBuffer(initialCapacity, maxCapacity);
+            return NewHeapBuffer(initialCapacity, maxCapacity);
         }
 
-        public unsafe IByteBuffer DirectBuffer() => this.DirectBuffer(DefaultInitialCapacity, DefaultMaxCapacity);
+        public unsafe IByteBuffer DirectBuffer() => DirectBuffer(DefaultInitialCapacity, DefaultMaxCapacity);
 
-        public unsafe IByteBuffer DirectBuffer(int initialCapacity) => this.DirectBuffer(initialCapacity, DefaultMaxCapacity);
+        public unsafe IByteBuffer DirectBuffer(int initialCapacity) => DirectBuffer(initialCapacity, DefaultMaxCapacity);
 
         public unsafe IByteBuffer DirectBuffer(int initialCapacity, int maxCapacity)
         {
             if (0u >= (uint)initialCapacity && 0u >= (uint)maxCapacity)
             {
-                return this.emptyBuffer;
+                return _emptyBuffer;
             }
             Validate(initialCapacity, maxCapacity);
-            return this.NewDirectBuffer(initialCapacity, maxCapacity);
+            return NewDirectBuffer(initialCapacity, maxCapacity);
         }
 
         public CompositeByteBuffer CompositeBuffer() => 
-            this.directByDefault ? this.CompositeDirectBuffer() : this.CompositeHeapBuffer();
+            _directByDefault ? CompositeDirectBuffer() : CompositeHeapBuffer();
 
         public CompositeByteBuffer CompositeBuffer(int maxComponents) => 
-            this.directByDefault ? this.CompositeDirectBuffer(maxComponents) : this.CompositeHeapBuffer(maxComponents);
+            _directByDefault ? CompositeDirectBuffer(maxComponents) : CompositeHeapBuffer(maxComponents);
 
-        public CompositeByteBuffer CompositeHeapBuffer() => this.CompositeHeapBuffer(DefaultMaxComponents);
+        public CompositeByteBuffer CompositeHeapBuffer() => CompositeHeapBuffer(DefaultMaxComponents);
 
         public virtual CompositeByteBuffer CompositeHeapBuffer(int maxNumComponents) => 
             ToLeakAwareBuffer(new CompositeByteBuffer(this, false, maxNumComponents));
 
-        public unsafe CompositeByteBuffer CompositeDirectBuffer() => this.CompositeDirectBuffer(DefaultMaxComponents);
+        public unsafe CompositeByteBuffer CompositeDirectBuffer() => CompositeDirectBuffer(DefaultMaxComponents);
 
         public unsafe virtual CompositeByteBuffer CompositeDirectBuffer(int maxNumComponents) => 
             ToLeakAwareBuffer(new CompositeByteBuffer(this, true, maxNumComponents));

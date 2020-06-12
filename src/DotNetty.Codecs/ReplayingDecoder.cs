@@ -6,7 +6,19 @@ namespace DotNetty.Codecs
     using System;
     using System.Collections.Generic;
     using DotNetty.Buffers;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
+
+    public abstract class ReplayingDecoder : ReplayingDecoder<ReplayingDecoder.Void>
+    {
+        public enum Void
+        {
+            // Empty state
+        }
+
+        /// <summary>Creates a new instance.</summary>
+        protected ReplayingDecoder() { }
+    }
 
     /// <summary>
     /// A specialized variation of <see cref="ByteToMessageDecoder"/> which enables implementation
@@ -256,9 +268,20 @@ namespace DotNetty.Codecs
     public abstract class ReplayingDecoder<TState> : ByteToMessageDecoder
         where TState : struct
     {
-        TState state;
-        int checkpoint;
-        bool replayRequested;
+        internal static readonly Signal REPLAY = ReplayingDecoderByteBuffer.REPLAY;
+
+        private readonly ReplayingDecoderByteBuffer _replayable;
+        private TState _state;
+        private int _checkpoint;
+        private bool _replayRequested;
+
+        /// <summary>
+        /// Creates a new instance with no initial state (i.e: <c>null</c>).
+        /// </summary>
+        protected ReplayingDecoder()
+            : this(default)
+        {
+        }
 
         /// <summary>
         /// Creates a new instance with the specified initial state.
@@ -266,20 +289,16 @@ namespace DotNetty.Codecs
         /// <param name="initialState"></param>
         protected ReplayingDecoder(TState initialState)
         {
-            this.state = initialState;
+            _replayable = new ReplayingDecoderByteBuffer();
+            _state = initialState;
         }
-
-        /// <summary>
-        /// Returns the current state of this decoder.
-        /// </summary>
-        protected TState State => this.state;
 
         /// <summary>
         /// Stores the internal cumulative buffer's reader position.
         /// </summary>
         protected void Checkpoint()
         {
-            this.checkpoint = this.InternalBuffer.ReaderIndex;
+            _checkpoint = InternalBuffer.ReaderIndex;
         }
 
         /// <summary>
@@ -289,29 +308,70 @@ namespace DotNetty.Codecs
         /// <param name="newState"></param>
         protected void Checkpoint(TState newState)
         {
-            this.Checkpoint();
-            this.state = newState;
+            Checkpoint();
+            _state = newState;
         }
 
-        protected bool ReplayRequested => this.replayRequested;
+        /// <summary>
+        /// Returns the current state of this decoder.
+        /// </summary>
+        protected TState State => _state;
+
+        /// <summary>
+        /// Sets the current state of this decoder.
+        /// </summary>
+        /// <param name="newState"></param>
+        /// <returns>the old state of this decoder</returns>
+        protected TState ExchangeState(TState newState)
+        {
+            TState oldState = _state;
+            _state = newState;
+            return oldState;
+        }
+
+        protected bool ReplayRequested => _replayRequested;
 
         protected void RequestReplay()
         {
-            this.replayRequested = true;
+            _replayRequested = true;
+        }
+
+        /// <inheritdoc />
+        protected override void ChannelInputClosed(IChannelHandlerContext ctx, List<object> output)
+        {
+            try
+            {
+                _replayable.Terminate();
+                if (_cumulation is object)
+                {
+                    CallDecode(ctx, InternalBuffer, output);
+                }
+                else
+                {
+                    _replayable.SetCumulation(Unpooled.Empty);
+                }
+                DecodeLast(ctx, _replayable, output);
+            }
+            catch (Signal replay)
+            {
+                // Ignore
+                replay.Expect(REPLAY);
+            }
         }
 
         /// <inheritdoc />
         protected override void CallDecode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
+            _replayable.SetCumulation(input);
             try
             {
                 while (input.IsReadable())
                 {
-                    this.replayRequested = false;
-                    int oldReaderIndex = this.checkpoint = input.ReaderIndex;
+                    _replayRequested = false;
+                    int oldReaderIndex = _checkpoint = input.ReaderIndex;
                     int outSize = output.Count;
 
-                    if (outSize > 0)
+                    if ((uint)outSize > 0u)
                     {
                         for (int i = 0; i < outSize; i++)
                         {
@@ -324,31 +384,65 @@ namespace DotNetty.Codecs
                         //
                         // See:
                         // - https://github.com/netty/netty/issues/4635
-                        if (context.Removed)
-                        {
-                            break;
-                        }
+                        if (context.Removed) { break; }
                         outSize = 0;
                     }
 
-                    TState oldState = this.state;
+                    TState oldState = _state;
                     int oldInputLength = input.ReadableBytes;
-                    this.DecodeRemovalReentryProtection(context, input, output);
-
-                    if (this.replayRequested)
+                    try
                     {
+                        DecodeRemovalReentryProtection(context, _replayable, output);
+
                         // Check if this handler was removed before continuing the loop.
                         // If it was removed, it is not safe to continue to operate on the buffer.
                         //
                         // See https://github.com/netty/netty/issues/1664
-                        if (context.Removed)
+                        if (context.Removed) { break; }
+
+                        if (_replayRequested)
                         {
+                            // Return to the checkpoint (or oldPosition) and retry.
+                            int restorationPoint = _checkpoint;
+                            if (SharedConstants.TooBigOrNegative >= (uint)restorationPoint) // restorationPoint >= 0
+                            {
+                                input.SetReaderIndex(restorationPoint);
+                            }
+                            else
+                            {
+                                // Called by cleanup() - no need to maintain the readerIndex
+                                // anymore because the buffer has been released already.
+                            }
                             break;
                         }
 
+                        if (0u >= (uint)(outSize - output.Count))
+                        {
+                            if (0u >= (uint)(oldInputLength - input.ReadableBytes) && s_comparer.Equals(oldState, _state))
+                            {
+                                CThrowHelper.ThrowDecoderException_Anything(GetType());
+                            }
+                            else
+                            {
+                                // Previous data has been discarded or caused state transition.
+                                // Probably it is reading on.
+                                continue;
+                            }
+                        }
+                    }
+                    catch (Signal replay)
+                    {
+                        replay.Expect(REPLAY);
+
+                        // Check if this handler was removed before continuing the loop.
+                        // If it was removed, it is not safe to continue to operate on the buffer.
+                        //
+                        // See https://github.com/netty/netty/issues/1664
+                        if (context.Removed) { break; }
+
                         // Return to the checkpoint (or oldPosition) and retry.
-                        int restorationPoint = this.checkpoint;
-                        if (restorationPoint >= 0)
+                        int restorationPoint = _checkpoint;
+                        if (SharedConstants.TooBigOrNegative >= (uint)restorationPoint) // restorationPoint >= 0
                         {
                             input.SetReaderIndex(restorationPoint);
                         }
@@ -360,38 +454,12 @@ namespace DotNetty.Codecs
                         break;
                     }
 
-                    // Check if this handler was removed before continuing the loop.
-                    // If it was removed, it is not safe to continue to operate on the buffer.
-                    //
-                    // See https://github.com/netty/netty/issues/1664
-                    if (context.Removed)
+                    if (0u >= (uint)(oldReaderIndex - input.ReaderIndex) && s_comparer.Equals(oldState, _state))
                     {
-                        break;
+                        CThrowHelper.ThrowDecoderException_Something(GetType());
                     }
 
-                    if (outSize == output.Count)
-                    {
-                        if (oldInputLength == input.ReadableBytes && s_comparer.Equals(oldState, this.state))
-                        {
-                            CThrowHelper.ThrowDecoderException_Anything(this.GetType());
-                        }
-                        else
-                        {
-                            // Previous data has been discarded or caused state transition.
-                            // Probably it is reading on.
-                            continue;
-                        }
-                    }
-
-                    if (oldReaderIndex == input.ReaderIndex && s_comparer.Equals(oldState, this.state))
-                    {
-                        CThrowHelper.ThrowDecoderException_Something(this.GetType());
-                    }
-
-                    if (this.SingleDecode)
-                    {
-                        break;
-                    }
+                    if (SingleDecode) { break; }
                 }
             }
             catch (DecoderException)
@@ -403,12 +471,6 @@ namespace DotNetty.Codecs
                 CThrowHelper.ThrowDecoderException(cause);
             }
         }
-
-        //// ReSharper disable once RedundantOverridenMember decoder needs to be "aware" when read passes through so that it can detect situation where it did not fire reads for the next handler and autoRead is false
-        //public override void Read(IChannelHandlerContext context)
-        //{
-        //    base.Read(context);
-        //}
 
         private static readonly IEqualityComparer<TState> s_comparer = EqualityComparer<TState>.Default;
     }

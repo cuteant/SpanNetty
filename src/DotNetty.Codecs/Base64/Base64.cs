@@ -204,7 +204,6 @@ namespace DotNetty.Codecs.Base64
                 int calcLength = src.ArrayOffset + offset + length;
                 for (; i < calcLength; ++i)
                 {
-                    //sbyte value = (sbyte)(srcArray[i] & 0x7F);
                     var value = srcArray[i];
                     if (decodabet[value] < WHITE_SPACE_ENC)
                     {
@@ -262,7 +261,6 @@ namespace DotNetty.Codecs.Base64
 
             for (i = offset; i < offset + length; ++i)
             {
-                //sbyte value = (sbyte)(src.GetByte(i) & 0x7F);
                 var value = src.GetByte(i);
                 if (decodabet[value] < WHITE_SPACE_ENC)
                 {

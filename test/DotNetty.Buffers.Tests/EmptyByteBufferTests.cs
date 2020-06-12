@@ -9,6 +9,13 @@ namespace DotNetty.Buffers.Tests
     public class EmptyByteBufferTests
     {
         [Fact]
+        public void IsContiguous()
+        {
+            var empty = new EmptyByteBuffer(UnpooledByteBufferAllocator.Default);
+            Assert.True(empty.IsContiguous);
+        }
+
+        [Fact]
         public void IsWritable()
         {
             var empty = new EmptyByteBuffer(UnpooledByteBufferAllocator.Default);

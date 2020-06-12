@@ -7,17 +7,17 @@ namespace DotNetty.Buffers
 {
     abstract partial class ArrayPooledByteBuffer : AbstractReferenceCountedByteBuffer
     {
-        readonly ThreadLocalPool.Handle recyclerHandle;
+        private readonly ThreadLocalPool.Handle _recyclerHandle;
 
         protected internal byte[] Memory;
         protected ArrayPooledByteBufferAllocator _allocator;
-        ArrayPool<byte> _arrayPool;
-        int _capacity;
+        private ArrayPool<byte> _arrayPool;
+        private int _capacity;
 
         protected ArrayPooledByteBuffer(ThreadLocalPool.Handle recyclerHandle, int maxCapacity)
             : base(maxCapacity)
         {
-            this.recyclerHandle = recyclerHandle;
+            _recyclerHandle = recyclerHandle;
         }
 
         /// <summary>Method must be called before reuse this {@link ArrayPooledByteBufAllocator}.</summary>
@@ -31,10 +31,10 @@ namespace DotNetty.Buffers
             _arrayPool = arrayPool;
             SetArray(AllocateArray(initialCapacity));
 
-            this.SetMaxCapacity(maxCapacity);
-            this.SetReferenceCount(1);
-            this.SetIndex0(0, 0);
-            this.DiscardMarks();
+            SetMaxCapacity(maxCapacity);
+            SetReferenceCount(1);
+            SetIndex0(0, 0);
+            DiscardMarks();
         }
 
         internal void Reuse(ArrayPooledByteBufferAllocator allocator, ArrayPool<byte> arrayPool, byte[] buffer, int length, int maxCapacity)
@@ -43,10 +43,10 @@ namespace DotNetty.Buffers
             _arrayPool = arrayPool;
             SetArray(buffer);
 
-            this.SetMaxCapacity(maxCapacity);
-            this.SetReferenceCount(1);
-            this.SetIndex0(0, length);
-            this.DiscardMarks();
+            SetMaxCapacity(maxCapacity);
+            SetReferenceCount(1);
+            SetIndex0(0, length);
+            DiscardMarks();
         }
 
         public override int Capacity => _capacity;
@@ -69,13 +69,13 @@ namespace DotNetty.Buffers
 
         protected void SetArray(byte[] initialArray)
         {
-            this.Memory = initialArray;
+            Memory = initialArray;
             _capacity = initialArray.Length;
         }
 
         public sealed override IByteBuffer AdjustCapacity(int newCapacity)
         {
-            this.CheckNewCapacity(newCapacity);
+            CheckNewCapacity(newCapacity);
 
             uint unewCapacity = (uint)newCapacity;
             uint oldCapacity = (uint)_capacity;
@@ -90,28 +90,28 @@ namespace DotNetty.Buffers
             }
             else
             {
-                this.TrimIndicesToCapacity(newCapacity);
+                TrimIndicesToCapacity(newCapacity);
                 bytesToCopy = newCapacity;
             }
-            byte[] oldArray = this.Memory;
-            byte[] newArray = this.AllocateArray(newCapacity);
+            byte[] oldArray = Memory;
+            byte[] newArray = AllocateArray(newCapacity);
             PlatformDependent.CopyMemory(oldArray, 0, newArray, 0, bytesToCopy);
 
-            this.SetArray(newArray);
-            this.FreeArray(oldArray);
+            SetArray(newArray);
+            FreeArray(oldArray);
             return this;
         }
 
-        public sealed override IByteBufferAllocator Allocator => this._allocator;
+        public sealed override IByteBufferAllocator Allocator => _allocator;
 
         public sealed override IByteBuffer Unwrap() => null;
 
-        public sealed override IByteBuffer RetainedDuplicate() => ArrayPooledDuplicatedByteBuffer.NewInstance(this, this, this.ReaderIndex, this.WriterIndex);
+        public sealed override IByteBuffer RetainedDuplicate() => ArrayPooledDuplicatedByteBuffer.NewInstance(this, this, ReaderIndex, WriterIndex);
 
         public sealed override IByteBuffer RetainedSlice()
         {
-            int index = this.ReaderIndex;
-            return this.RetainedSlice(index, this.WriterIndex - index);
+            int index = ReaderIndex;
+            return RetainedSlice(index, WriterIndex - index);
         }
 
         public sealed override IByteBuffer RetainedSlice(int index, int length) => ArrayPooledSlicedByteBuffer.NewInstance(this, this, index, length);
@@ -126,11 +126,11 @@ namespace DotNetty.Buffers
                 _arrayPool = null;
                 Memory = null;
 
-                this.Recycle();
+                Recycle();
             }
         }
 
-        void Recycle() => this.recyclerHandle.Release(this);
+        void Recycle() => _recyclerHandle.Release(this);
 
         public sealed override bool IsSingleIoBuffer => true;
 
@@ -138,11 +138,11 @@ namespace DotNetty.Buffers
 
         public sealed override ArraySegment<byte> GetIoBuffer(int index, int length)
         {
-            this.CheckIndex(index, length);
-            return new ArraySegment<byte>(this.Memory, index, length);
+            CheckIndex(index, length);
+            return new ArraySegment<byte>(Memory, index, length);
         }
 
-        public sealed override ArraySegment<byte>[] GetIoBuffers(int index, int length) => new[] { this.GetIoBuffer(index, length) };
+        public sealed override ArraySegment<byte>[] GetIoBuffers(int index, int length) => new[] { GetIoBuffer(index, length) };
 
         public sealed override bool HasArray => true;
 
@@ -150,8 +150,8 @@ namespace DotNetty.Buffers
         {
             get
             {
-                this.EnsureAccessible();
-                return this.Memory;
+                EnsureAccessible();
+                return Memory;
             }
         }
 
@@ -161,10 +161,12 @@ namespace DotNetty.Buffers
 
         public sealed override ref byte GetPinnableMemoryAddress()
         {
-            this.EnsureAccessible();
-            return ref this.Memory[0];
+            EnsureAccessible();
+            return ref Memory[0];
         }
 
         public sealed override IntPtr AddressOfPinnedMemory() => IntPtr.Zero;
+
+        public sealed override bool IsContiguous => true;
     }
 }

@@ -607,8 +607,17 @@ namespace DotNetty.Codecs.Http2
 
         protected virtual void OnHttp2UnknownStreamError(IChannelHandlerContext ctx, Exception cause, StreamException streamException)
         {
-            // Just log....
-            if (Logger.WarnEnabled) { Logger.StreamExceptionThrownForUnkownStream(streamException.StreamId, cause); }
+            // It is normal to hit a race condition where we still receive frames for a stream that this
+            // peer has deemed closed, such as if this peer sends a RST(CANCEL) to discard the request.
+            // Since this is likely to be normal we log at DEBUG level.
+            if (streamException.Error == Http2Error.StreamClosed)
+            {
+                if (Logger.DebugEnabled) { Logger.StreamExceptionThrownForUnkownStreamD(streamException.StreamId, cause); }
+            }
+            else
+            {
+                if (Logger.WarnEnabled) { Logger.StreamExceptionThrownForUnkownStream(streamException.StreamId, cause); }
+            }
         }
 
         protected override bool IsGracefulShutdownComplete =>

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable InconsistentNaming
 namespace DotNetty.Transport.Libuv.Native
 {
     using System;
@@ -319,18 +318,12 @@ namespace DotNetty.Transport.Libuv.Native
             Debug.Assert(endPoint is object);
 
             string ip = endPoint.Address.ToString();
-            int result = 0;
-            switch (endPoint.AddressFamily)
+            var result = endPoint.AddressFamily switch
             {
-                case AddressFamily.InterNetwork:
-                    result = uv_ip4_addr(ip, endPoint.Port, out addr);
-                    break;
-                case AddressFamily.InterNetworkV6:
-                    result = uv_ip6_addr(ip, endPoint.Port, out addr);
-                    break;
-                default:
-                    ThrowHelper.ThrowNotSupportedException(endPoint, out addr); break;
-            }
+                AddressFamily.InterNetwork => uv_ip4_addr(ip, endPoint.Port, out addr),
+                AddressFamily.InterNetworkV6 => uv_ip6_addr(ip, endPoint.Port, out addr),
+                _ => throw ThrowHelper.GetNotSupportedException(endPoint),
+            };
             ThrowIfError(result);
         }
 

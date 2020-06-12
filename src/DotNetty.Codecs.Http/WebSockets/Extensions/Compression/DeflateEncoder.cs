@@ -155,19 +155,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             if (_encoder is object)
             {
                 // Clean-up the previous encoder if not cleaned up correctly.
-                if (_encoder.Finish())
-                {
-                    while (true)
-                    {
-                        var buf = _encoder.ReadOutbound<IByteBuffer>();
-                        if (buf is null)
-                        {
-                            break;
-                        }
-                        // Release the buffer
-                        buf.Release();
-                    }
-                }
+                _encoder.FinishAndReleaseAll();
                 _encoder = null;
             }
         }

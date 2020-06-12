@@ -13,7 +13,7 @@ namespace DotNetty.Codecs.Http.WebSockets
     /// It takes care of websocket handshaking as well as processing of Ping, Pong frames. Text and Binary
     /// data frames are passed to the next handler in the pipeline (implemented by you) for processing.
     /// Also the close frame is passed to the next handler as you may want inspect it before close the connection if
-    /// the <see cref="_handleCloseFrames"/> is <c>false</c>, default is <c>true</c>.
+    /// the <see cref="WebSocketClientProtocolConfig.HandleCloseFrames"/> is <c>false</c>, default is <c>true</c>.
     /// </para>
     /// <para>
     /// This implementation will establish the websocket connection once the connection to the remote server was complete.
@@ -26,12 +26,8 @@ namespace DotNetty.Codecs.Http.WebSockets
     /// </summary>
     public class WebSocketClientProtocolHandler : WebSocketProtocolHandler
     {
-        private const long DefaultHandshakeTimeoutMs = 10000L;
-
         private readonly WebSocketClientHandshaker _handshaker;
-        private readonly bool _handleCloseFrames;
-        private readonly bool _enableUtf8Validator;
-        private readonly long _handshakeTimeoutMillis;
+        private readonly WebSocketClientProtocolConfig _clientConfig;
 
         /// <summary>
         /// Returns the used handshaker
@@ -60,6 +56,28 @@ namespace DotNetty.Codecs.Http.WebSockets
         }
 
         /// <summary>Base constructor</summary>
+        /// <param name="clientConfig">Client protocol configuration.</param>
+        public WebSocketClientProtocolHandler(WebSocketClientProtocolConfig clientConfig)
+            : base(clientConfig is null || clientConfig.DropPongFrames)
+        {
+            if (clientConfig is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.clientConfig); }
+
+            _handshaker = WebSocketClientHandshakerFactory.NewHandshaker(
+                clientConfig.WebSocketUri,
+                clientConfig.Version,
+                clientConfig.Subprotocol,
+                clientConfig.AllowExtensions,
+                clientConfig.CustomHeaders,
+                clientConfig.MaxFramePayloadLength,
+                clientConfig.PerformMasking,
+                clientConfig.AllowMaskMismatch,
+                clientConfig.ForceCloseTimeoutMillis,
+                clientConfig.AbsoluteUpgradeUrl
+            );
+            _clientConfig = clientConfig;
+        }
+
+        /// <summary>Base constructor</summary>
         /// <param name="webSocketUrl">URL for web socket communications. e.g "ws://myhost.com/mypath". Subsequent web socket frames will be
         /// sent to this URL.</param>
         /// <param name="version">Version of web socket specification to use to connect to the server</param>
@@ -69,11 +87,11 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// <param name="maxFramePayloadLength">Maximum length of a frame's payload</param>
         /// <param name="enableUtf8Validator"></param>
         public WebSocketClientProtocolHandler(
-            Uri webSocketUrl, WebSocketVersion version, String subprotocol,
+            Uri webSocketUrl, WebSocketVersion version, string subprotocol,
             bool allowExtensions, HttpHeaders customHeaders, int maxFramePayloadLength,
             bool enableUtf8Validator = true)
             : this(webSocketUrl, version, subprotocol,
-                 allowExtensions, customHeaders, maxFramePayloadLength, DefaultHandshakeTimeoutMs, enableUtf8Validator)
+                 allowExtensions, customHeaders, maxFramePayloadLength, WebSocketClientProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -93,7 +111,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             bool allowExtensions, HttpHeaders customHeaders, int maxFramePayloadLength,
             long handshakeTimeoutMillis, bool enableUtf8Validator = true)
             : this(webSocketUrl, version, subprotocol,
-                 allowExtensions, customHeaders, maxFramePayloadLength, true, handshakeTimeoutMillis, enableUtf8Validator)
+                 allowExtensions, customHeaders, maxFramePayloadLength, WebSocketClientProtocolConfig.Default.HandleCloseFrames, handshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -112,7 +130,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             bool allowExtensions, HttpHeaders customHeaders, int maxFramePayloadLength,
             bool handleCloseFrames, bool enableUtf8Validator = true)
             : this(webSocketUrl, version, subprotocol, allowExtensions, customHeaders, maxFramePayloadLength,
-                 handleCloseFrames, DefaultHandshakeTimeoutMs, enableUtf8Validator)
+                 handleCloseFrames, WebSocketClientProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -133,7 +151,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             bool allowExtensions, HttpHeaders customHeaders, int maxFramePayloadLength,
             bool handleCloseFrames, long handshakeTimeoutMillis, bool enableUtf8Validator = true)
             : this(webSocketUrl, version, subprotocol, allowExtensions, customHeaders, maxFramePayloadLength,
-                 handleCloseFrames, true, false, handshakeTimeoutMillis, enableUtf8Validator)
+                 handleCloseFrames, WebSocketClientProtocolConfig.Default.PerformMasking, WebSocketClientProtocolConfig.Default.AllowMaskMismatch, handshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -159,7 +177,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             bool enableUtf8Validator = true)
             : this(webSocketUrl, version, subprotocol, allowExtensions, customHeaders,
                  maxFramePayloadLength, handleCloseFrames, performMasking, allowMaskMismatch,
-                 DefaultHandshakeTimeoutMs, enableUtf8Validator)
+                 WebSocketClientProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -186,8 +204,8 @@ namespace DotNetty.Codecs.Http.WebSockets
             bool handleCloseFrames, bool performMasking, bool allowMaskMismatch,
             long handshakeTimeoutMillis, bool enableUtf8Validator = true)
             : this(WebSocketClientHandshakerFactory.NewHandshaker(webSocketUrl, version, subprotocol,
-                allowExtensions, customHeaders, maxFramePayloadLength,
-                performMasking, allowMaskMismatch), handleCloseFrames, true, handshakeTimeoutMillis, enableUtf8Validator)
+                allowExtensions, customHeaders, maxFramePayloadLength, performMasking, allowMaskMismatch),
+                handleCloseFrames, WebSocketClientProtocolConfig.Default.DropPongFrames, handshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -196,7 +214,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// was established to the remote peer.</param>
         /// <param name="enableUtf8Validator"></param>
         public WebSocketClientProtocolHandler(WebSocketClientHandshaker handshaker, bool enableUtf8Validator = true)
-            : this(handshaker, true, true, DefaultHandshakeTimeoutMs, enableUtf8Validator)
+            : this(handshaker, WebSocketClientProtocolConfig.Default.HandleCloseFrames, WebSocketClientProtocolConfig.Default.DropPongFrames, WebSocketClientProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -208,7 +226,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// <param name="enableUtf8Validator"></param>
         public WebSocketClientProtocolHandler(WebSocketClientHandshaker handshaker,
             long handshakeTimeoutMillis, bool enableUtf8Validator = true)
-            : this(handshaker, true, true, handshakeTimeoutMillis, enableUtf8Validator)
+            : this(handshaker, WebSocketClientProtocolConfig.Default.HandleCloseFrames, WebSocketClientProtocolConfig.Default.DropPongFrames, handshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -219,7 +237,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// <param name="enableUtf8Validator"></param>
         public WebSocketClientProtocolHandler(WebSocketClientHandshaker handshaker,
             bool handleCloseFrames, bool enableUtf8Validator = true)
-            : this(handshaker, handleCloseFrames, true, DefaultHandshakeTimeoutMs, enableUtf8Validator)
+            : this(handshaker, handleCloseFrames, WebSocketClientProtocolConfig.Default.DropPongFrames, WebSocketClientProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -232,7 +250,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// <param name="enableUtf8Validator"></param>
         public WebSocketClientProtocolHandler(WebSocketClientHandshaker handshaker,
             bool handleCloseFrames, long handshakeTimeoutMillis, bool enableUtf8Validator = true)
-            : this(handshaker, handleCloseFrames, true, handshakeTimeoutMillis, enableUtf8Validator)
+            : this(handshaker, handleCloseFrames, WebSocketClientProtocolConfig.Default.DropPongFrames, handshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -244,7 +262,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// <param name="enableUtf8Validator"></param>
         public WebSocketClientProtocolHandler(WebSocketClientHandshaker handshaker,
             bool handleCloseFrames, bool dropPongFrames, bool enableUtf8Validator = true)
-            : this(handshaker, handleCloseFrames, dropPongFrames, DefaultHandshakeTimeoutMs, enableUtf8Validator)
+            : this(handshaker, handleCloseFrames, dropPongFrames, WebSocketClientProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -263,30 +281,34 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (handshakeTimeoutMillis <= 0L) { ThrowHelper.ThrowArgumentException_Positive(handshakeTimeoutMillis, ExceptionArgument.handshakeTimeoutMillis); }
 
             _handshaker = handshaker;
-            _handleCloseFrames = handleCloseFrames;
-            _handshakeTimeoutMillis = handshakeTimeoutMillis;
-            _enableUtf8Validator = enableUtf8Validator;
+            _clientConfig = WebSocketClientProtocolConfig.NewBuilder()
+                .HandleCloseFrames(handleCloseFrames)
+                .HandshakeTimeoutMillis(handshakeTimeoutMillis)
+                .WithUTF8Validator(enableUtf8Validator)
+                .Build();
         }
 
         protected override void Decode(IChannelHandlerContext ctx, WebSocketFrame frame, List<object> output)
         {
             switch (frame.Opcode)
             {
-                case Opcode.Ping:
+                case Opcode.Ping: // 从 WebSocketProtocolHandler.Decode 直接复制
                     var contect = frame.Content;
                     contect.Retain();
                     ctx.Channel.WriteAndFlushAsync(new PongWebSocketFrame(contect));
+                    ReadIfNeeded(ctx);
                     return;
 
-                case Opcode.Pong when DropPongFrames:
+                case Opcode.Pong when DropPongFrames: // 从 WebSocketProtocolHandler.Decode 直接复制
                     // Pong frames need to get ignored
+                    ReadIfNeeded(ctx);
                     return;
 
-                case Opcode.Close when _handleCloseFrames:
+                case Opcode.Close when _clientConfig.HandleCloseFrames:
                     ctx.CloseAsync();
                     return;
 
-                default:
+                default: // 从 WebSocketProtocolHandler.Decode 直接复制
                     output.Add(frame.Retain());
                     break;
             }
@@ -299,13 +321,18 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 // Add the WebSocketClientProtocolHandshakeHandler before this one.
                 cp.AddBefore(ctx.Name, nameof(WebSocketClientProtocolHandshakeHandler),
-                    new WebSocketClientProtocolHandshakeHandler(_handshaker, _handshakeTimeoutMillis));
+                    new WebSocketClientProtocolHandshakeHandler(_handshaker, _clientConfig.HandshakeTimeoutMillis));
             }
-            if (_enableUtf8Validator && cp.Get<Utf8FrameValidator>() is null)
+            if (_clientConfig.WithUTF8Validator && cp.Get<Utf8FrameValidator>() is null)
             {
                 // Add the UFT8 checking before this one.
                 cp.AddBefore(ctx.Name, nameof(Utf8FrameValidator),
                     new Utf8FrameValidator());
+            }
+            if (_clientConfig.SendCloseFrame is object)
+            {
+                cp.AddBefore(ctx.Name, nameof(WebSocketCloseFrameHandler),
+                    new WebSocketCloseFrameHandler(_clientConfig.SendCloseFrame, _clientConfig.ForceCloseTimeoutMillis));
             }
         }
     }

@@ -27,6 +27,7 @@ namespace DotNetty.Handlers.Tls
         private bool _handshakeFailed;
         private bool _suppressRead;
         private bool _readPending;
+        private IByteBuffer _handshakeBuffer;
 
         public SniHandler(ServerTlsSniSettings settings)
             : this(stream => new SslStream(stream, true), settings)
@@ -50,170 +51,127 @@ namespace DotNetty.Handlers.Tls
                 {
                     int readerIndex = input.ReaderIndex;
                     int readableBytes = input.ReadableBytes;
-                    if (readableBytes < TlsUtils.SSL_RECORD_HEADER_LENGTH)
+                    int handshakeLength = -1;
+
+                    // Check if we have enough data to determine the record type and length.
+                    while (readableBytes >= TlsUtils.SSL_RECORD_HEADER_LENGTH)
                     {
-                        // Not enough data to determine the record type and length.
-                        return;
-                    }
+                        int contentType = input.GetByte(readerIndex);
+                        // tls, but not handshake command
+                        switch (contentType)
+                        {
+                            case TlsUtils.SSL_CONTENT_TYPE_CHANGE_CIPHER_SPEC:
+                            // fall-through
+                            case TlsUtils.SSL_CONTENT_TYPE_ALERT:
+                                int len = TlsUtils.GetEncryptedPacketLength(input, readerIndex);
 
-                    int command = input.GetByte(readerIndex);
-                    // tls, but not handshake command
-                    switch (command)
-                    {
-                        case TlsUtils.SSL_CONTENT_TYPE_CHANGE_CIPHER_SPEC:
-                        // fall-through
-                        case TlsUtils.SSL_CONTENT_TYPE_ALERT:
-                            int len = TlsUtils.GetEncryptedPacketLength(input, readerIndex);
-
-                            // Not an SSL/TLS packet
-                            if (len == TlsUtils.NOT_ENCRYPTED)
-                            {
-                                _handshakeFailed = true;
-                                var e = new NotSslRecordException(
-                                    "not an SSL/TLS record: " + ByteBufferUtil.HexDump(input));
-                                input.SkipBytes(input.ReadableBytes);
-                                context.FireUserEventTriggered(new SniCompletionEvent(e));
-                                TlsUtils.NotifyHandshakeFailure(context, e, true);
-                                throw e;
-                            }
-                            if (len == TlsUtils.NOT_ENOUGH_DATA)
-                            {
-                                // Not enough data
-                                return;
-                            }
-                            // SNI can't be present in an ALERT or CHANGE_CIPHER_SPEC record, so we'll fall back and assume
-                            // no SNI is present. Let's let the actual TLS implementation sort this out.
-                            break;
-
-                        case TlsUtils.SSL_CONTENT_TYPE_HANDSHAKE:
-                            int majorVersion = input.GetByte(readerIndex + 1);
-
-                            // SSLv3 or TLS
-                            if (majorVersion == 3)
-                            {
-                                int packetLength = input.GetUnsignedShort(readerIndex + 3) + TlsUtils.SSL_RECORD_HEADER_LENGTH;
-
-                                if (readableBytes < packetLength)
+                                // Not an SSL/TLS packet
+                                if (len == TlsUtils.NOT_ENCRYPTED)
                                 {
-                                    // client hello incomplete; try again to decode once more data is ready.
+                                    _handshakeFailed = true;
+                                    var e = new NotSslRecordException(
+                                        "not an SSL/TLS record: " + ByteBufferUtil.HexDump(input));
+                                    input.SkipBytes(input.ReadableBytes);
+                                    context.FireUserEventTriggered(new SniCompletionEvent(e));
+                                    TlsUtils.NotifyHandshakeFailure(context, e, true);
+                                    throw e;
+                                }
+                                if (len == TlsUtils.NOT_ENOUGH_DATA)
+                                {
+                                    // Not enough data
                                     return;
                                 }
+                                // SNI can't be present in an ALERT or CHANGE_CIPHER_SPEC record, so we'll fall back and
+                                // assume no SNI is present. Let's let the actual TLS implementation sort this out.
+                                // Just select the default SslContext
+                                goto SelectDefault;
 
-                                // See https://tools.ietf.org/html/rfc5246#section-7.4.1.2
-                                //
-                                // Decode the ssl client hello packet.
-                                // We have to skip bytes until SessionID (which sum to 43 bytes).
-                                //
-                                // struct {
-                                //    ProtocolVersion client_version;
-                                //    Random random;
-                                //    SessionID session_id;
-                                //    CipherSuite cipher_suites<2..2^16-2>;
-                                //    CompressionMethod compression_methods<1..2^8-1>;
-                                //    select (extensions_present) {
-                                //        case false:
-                                //            struct {};
-                                //        case true:
-                                //            Extension extensions<0..2^16-1>;
-                                //    };
-                                // } ClientHello;
-                                //
+                            case TlsUtils.SSL_CONTENT_TYPE_HANDSHAKE:
+                                int majorVersion = input.GetByte(readerIndex + 1);
 
-                                int endOffset = readerIndex + packetLength;
-                                int offset = readerIndex + 43;
-
-                                if (endOffset - offset >= 6)
+                                // SSLv3 or TLS
+                                if (majorVersion == 3)
                                 {
-                                    int sessionIdLength = input.GetByte(offset);
-                                    offset += sessionIdLength + 1;
+                                    int packetLength = input.GetUnsignedShort(readerIndex + 3) + TlsUtils.SSL_RECORD_HEADER_LENGTH;
 
-                                    int cipherSuitesLength = input.GetUnsignedShort(offset);
-                                    offset += cipherSuitesLength + 2;
-
-                                    int compressionMethodLength = input.GetByte(offset);
-                                    offset += compressionMethodLength + 1;
-
-                                    int extensionsLength = input.GetUnsignedShort(offset);
-                                    offset += 2;
-                                    int extensionsLimit = offset + extensionsLength;
-
-                                    // Extensions should never exceed the record boundary.
-                                    if (extensionsLimit <= endOffset)
+                                    if (readableBytes < packetLength)
                                     {
-                                        while (extensionsLimit - offset >= 4)
+                                        // client hello incomplete; try again to decode once more data is ready.
+                                        return;
+                                    }
+                                    else if (packetLength == TlsUtils.SSL_RECORD_HEADER_LENGTH)
+                                    {
+                                        goto SelectDefault;
+                                    }
+
+
+                                    int endOffset = readerIndex + packetLength;
+
+                                    // Let's check if we already parsed the handshake length or not.
+                                    if (handshakeLength == -1)
+                                    {
+                                        if (readerIndex + 4 > endOffset)
                                         {
-                                            int extensionType = input.GetUnsignedShort(offset);
-                                            offset += 2;
+                                            // Need more data to read HandshakeType and handshakeLength (4 bytes)
+                                            return;
+                                        }
 
-                                            int extensionLength = input.GetUnsignedShort(offset);
-                                            offset += 2;
+                                        int handshakeType = input.GetByte(readerIndex + TlsUtils.SSL_RECORD_HEADER_LENGTH);
 
-                                            if (extensionsLimit - offset < extensionLength)
+                                        // Check if this is a clientHello(1)
+                                        // See https://tools.ietf.org/html/rfc5246#section-7.4
+                                        if (handshakeType != 1)
+                                        {
+                                            goto SelectDefault;
+                                        }
+
+                                        // Read the length of the handshake as it may arrive in fragments
+                                        // See https://tools.ietf.org/html/rfc5246#section-7.4
+                                        handshakeLength = input.GetUnsignedMedium(readerIndex + TlsUtils.SSL_RECORD_HEADER_LENGTH + 1);
+
+                                        // Consume handshakeType and handshakeLength (this sums up as 4 bytes)
+                                        readerIndex += 4;
+                                        packetLength -= 4;
+
+                                        if (handshakeLength + 4 + TlsUtils.SSL_RECORD_HEADER_LENGTH <= packetLength)
+                                        {
+                                            // We have everything we need in one packet.
+                                            // Skip the record header
+                                            readerIndex += TlsUtils.SSL_RECORD_HEADER_LENGTH;
+                                            Select(context, ExtractSniHostname(input, readerIndex, readerIndex + handshakeLength));
+                                            return;
+                                        }
+                                        else
+                                        {
+                                            if (_handshakeBuffer is null)
                                             {
-                                                break;
+                                                _handshakeBuffer = context.Allocator.Buffer(handshakeLength);
                                             }
-
-                                            // SNI
-                                            // See https://tools.ietf.org/html/rfc6066#page-6
-                                            if (0u >= (uint)extensionType)
+                                            else
                                             {
-                                                offset += 2;
-                                                if (extensionsLimit - offset < 3)
-                                                {
-                                                    break;
-                                                }
-
-                                                int serverNameType = input.GetByte(offset);
-                                                offset++;
-
-                                                if (0u >= (uint)serverNameType)
-                                                {
-                                                    int serverNameLength = input.GetUnsignedShort(offset);
-                                                    offset += 2;
-
-                                                    if ((uint)(serverNameLength - 1) > SharedConstants.TooBigOrNegative/*serverNameLength <= 0*/ ||
-                                                        extensionsLimit - offset < serverNameLength)
-                                                    {
-                                                        break;
-                                                    }
-
-                                                    string hostname = input.ToString(offset, serverNameLength, Encoding.UTF8);
-                                                    //try
-                                                    //{
-                                                    //    select(ctx, IDN.toASCII(hostname,
-                                                    //                            IDN.ALLOW_UNASSIGNED).toLowerCase(Locale.US));
-                                                    //}
-                                                    //catch (Throwable t)
-                                                    //{
-                                                    //    PlatformDependent.throwException(t);
-                                                    //}
-
-                                                    var idn = new IdnMapping()
-                                                    {
-                                                        AllowUnassigned = true
-                                                    };
-
-                                                    hostname = idn.GetAscii(hostname).ToLower(UnitedStatesCultureInfo);
-                                                    Select(context, hostname);
-                                                    return;
-                                                }
-                                                else
-                                                {
-                                                    // invalid enum value
-                                                    break;
-                                                }
+                                                // Clear the buffer so we can aggregate into it again.
+                                                _handshakeBuffer.Clear();
                                             }
-
-                                            offset += extensionLength;
                                         }
                                     }
-                                }
-                            }
-                            break;
 
-                        default:
-                            //not tls, ssl or application data, do not try sni
-                            break;
+                                    // Combine the encapsulated data in one buffer but not include the SSL_RECORD_HEADER
+                                    _handshakeBuffer.WriteBytes(input, readerIndex + TlsUtils.SSL_RECORD_HEADER_LENGTH,
+                                            packetLength - TlsUtils.SSL_RECORD_HEADER_LENGTH);
+                                    readerIndex += packetLength;
+                                    readableBytes -= packetLength;
+                                    if (handshakeLength <= _handshakeBuffer.ReadableBytes)
+                                    {
+                                        Select(context, ExtractSniHostname(_handshakeBuffer, 0, handshakeLength));
+                                        return;
+                                    }
+                                }
+                                break;
+
+                            default:
+                                //not tls, ssl or application data, do not try sni
+                                break;
+                        }
                     }
                 }
                 catch (Exception e)
@@ -227,6 +185,7 @@ namespace DotNetty.Handlers.Tls
                     }
                 }
 
+            SelectDefault:
                 if (_serverTlsSniSettings.DefaultServerHostName is object)
                 {
                     // Just select the default server TLS setting
@@ -234,6 +193,8 @@ namespace DotNetty.Handlers.Tls
                 }
                 else
                 {
+                    ReleaseHandshakeBuffer();
+
                     _handshakeFailed = true;
                     var e = new DecoderException($"failed to get the server TLS setting {error}");
                     TlsUtils.NotifyHandshakeFailure(context, e, true);
@@ -242,9 +203,118 @@ namespace DotNetty.Handlers.Tls
             }
         }
 
-        async void Select(IChannelHandlerContext context, string hostName)
+        private static string ExtractSniHostname(IByteBuffer input, int offset, int endOffset)
+        {
+            // See https://tools.ietf.org/html/rfc5246#section-7.4.1.2
+            //
+            // Decode the ssl client hello packet.
+            //
+            // struct {
+            //    ProtocolVersion client_version;
+            //    Random random;
+            //    SessionID session_id;
+            //    CipherSuite cipher_suites<2..2^16-2>;
+            //    CompressionMethod compression_methods<1..2^8-1>;
+            //    select (extensions_present) {
+            //        case false:
+            //            struct {};
+            //        case true:
+            //            Extension extensions<0..2^16-1>;
+            //    };
+            // } ClientHello;
+            //
+
+            // We have to skip bytes until SessionID (which sum to 34 bytes in this case).
+            offset += 34;
+
+            if (endOffset - offset >= 6)
+            {
+                int sessionIdLength = input.GetByte(offset);
+                offset += sessionIdLength + 1;
+
+                int cipherSuitesLength = input.GetUnsignedShort(offset);
+                offset += cipherSuitesLength + 2;
+
+                int compressionMethodLength = input.GetByte(offset);
+                offset += compressionMethodLength + 1;
+
+                int extensionsLength = input.GetUnsignedShort(offset);
+                offset += 2;
+                int extensionsLimit = offset + extensionsLength;
+
+                // Extensions should never exceed the record boundary.
+                if (extensionsLimit <= endOffset)
+                {
+                    while (extensionsLimit - offset >= 4)
+                    {
+                        int extensionType = input.GetUnsignedShort(offset);
+                        offset += 2;
+
+                        int extensionLength = input.GetUnsignedShort(offset);
+                        offset += 2;
+
+                        if (extensionsLimit - offset < extensionLength)
+                        {
+                            break;
+                        }
+
+                        // SNI
+                        // See https://tools.ietf.org/html/rfc6066#page-6
+                        if (0u >= (uint)extensionType)
+                        {
+                            offset += 2;
+                            if (extensionsLimit - offset < 3)
+                            {
+                                break;
+                            }
+
+                            int serverNameType = input.GetByte(offset);
+                            offset++;
+
+                            if (0u >= (uint)serverNameType)
+                            {
+                                int serverNameLength = input.GetUnsignedShort(offset);
+                                offset += 2;
+
+                                if ((uint)(serverNameLength - 1) > SharedConstants.TooBigOrNegative/*serverNameLength <= 0*/ ||
+                                    extensionsLimit - offset < serverNameLength)
+                                {
+                                    break;
+                                }
+
+                                string hostname = input.ToString(offset, serverNameLength, Encoding.UTF8);
+                                var idn = new IdnMapping() { AllowUnassigned = true };
+                                return idn.GetAscii(hostname).ToLower(UnitedStatesCultureInfo);
+                            }
+                            else
+                            {
+                                // invalid enum value
+                                break;
+                            }
+                        }
+
+                        offset += extensionLength;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private void ReleaseHandshakeBuffer()
+        {
+            if (_handshakeBuffer is object)
+            {
+                _handshakeBuffer.Release();
+                _handshakeBuffer = null;
+            }
+        }
+
+        private async void Select(IChannelHandlerContext context, string hostName)
         {
             if (hostName is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.hostName); }
+
+            ReleaseHandshakeBuffer();
+
             _suppressRead = true;
             try
             {
@@ -266,11 +336,17 @@ namespace DotNetty.Handlers.Tls
             }
         }
 
-        void ReplaceHandler(IChannelHandlerContext context, ServerTlsSettings serverTlsSetting)
+        private void ReplaceHandler(IChannelHandlerContext context, ServerTlsSettings serverTlsSetting)
         {
             if (serverTlsSetting is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.serverTlsSetting); }
             var tlsHandler = new TlsHandler(_sslStreamFactory, serverTlsSetting);
             context.Pipeline.Replace(this, nameof(TlsHandler), tlsHandler);
+        }
+
+        protected override void HandlerRemovedInternal(IChannelHandlerContext context)
+        {
+            ReleaseHandshakeBuffer();
+            base.HandlerRemovedInternal(context);
         }
 
         public override void Read(IChannelHandlerContext context)

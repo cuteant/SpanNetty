@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Http.Cookies
 {
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     // http://tools.ietf.org/html/rfc6265 
@@ -36,18 +37,40 @@ namespace DotNetty.Codecs.Http.Cookies
         {
         }
 
+        /// <summary>
+        /// Decodes the specified Set-Cookie HTTP header value into a <see cref="ICookie"/>.  Unlike <see cref="Decode(string)"/>, this
+        /// includes all cookie values present, even if they have the same name.
+        /// </summary>
+        /// <param name="header"></param>
+        /// <returns></returns>
+        public IReadOnlyList<ICookie> DecodeAll(string header)
+        {
+            if (header is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.header); }
+            if (0u >= (uint)header.Length) { return EmptyArray<ICookie>.Instance; }
+
+            var cookies = new List<ICookie>();
+            Decode(header, cookies);
+            return cookies;
+        }
+
+        /// <summary>
+        /// Decodes the specified Set-Cookie HTTP header value into a <see cref="ICookie"/>.
+        /// </summary>
+        /// <param name="header"></param>
+        /// <returns></returns>
         public ISet<ICookie> Decode(string header)
         {
             if (header is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.header); }
-
-            int headerLen = header.Length;
-            if (0u >= (uint)headerLen)
-            {
-                return ImmutableHashSet<ICookie>.Empty;
-            }
+            if (0u >= (uint)header.Length) { return ImmutableHashSet<ICookie>.Empty; }
 
             var cookies = new SortedSet<ICookie>();
+            Decode(header, cookies);
+            return cookies;
+        }
 
+        private void Decode(string header, ICollection<ICookie> cookies)
+        {
+            int headerLen = header.Length;
             int i = 0;
 
             bool rfc2965Style = false;
@@ -59,10 +82,10 @@ namespace DotNetty.Codecs.Http.Cookies
             }
 
             // loop
-            while(true)
+            while (true)
             {
                 // Skip spaces and separators.
-                while(true)
+                while (true)
                 {
                     if (i == headerLen)
                     {
@@ -82,7 +105,7 @@ namespace DotNetty.Codecs.Http.Cookies
                 int valueBegin;
                 int valueEnd;
 
-                while(true)
+                while (true)
                 {
                     char curChar = header[i];
                     switch (curChar)
@@ -123,24 +146,24 @@ namespace DotNetty.Codecs.Http.Cookies
                         break;
                     }
                 }
-                loop0:
-                if (rfc2965Style && (CharUtil.RegionMatches(header, nameBegin, RFC2965Path, 0, RFC2965Path.Count) 
-                        || CharUtil.RegionMatches(header, nameBegin, RFC2965Domain, 0, RFC2965Domain.Count) 
+            loop0:
+                if (rfc2965Style && (CharUtil.RegionMatches(header, nameBegin, RFC2965Path, 0, RFC2965Path.Count)
+                        || CharUtil.RegionMatches(header, nameBegin, RFC2965Domain, 0, RFC2965Domain.Count)
                         || CharUtil.RegionMatches(header, nameBegin, RFC2965Port, 0, RFC2965Port.Count)))
                 {
                     // skip obsolete RFC2965 fields
                     continue;
                 }
 
-                DefaultCookie cookie = this.InitCookie(header, nameBegin, nameEnd, valueBegin, valueEnd);
+                DefaultCookie cookie = InitCookie(header, nameBegin, nameEnd, valueBegin, valueEnd);
                 if (cookie is object)
                 {
                     cookies.Add(cookie);
                 }
             }
 
-            loop:
-            return cookies;
+        loop:
+            return;
         }
     }
 }

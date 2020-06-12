@@ -296,7 +296,7 @@ namespace DotNetty.Buffers
                     break;
 
                 case PooledSlicedByteBuffer pooledSlicedBuf:
-                    unwrappedIndex += pooledSlicedBuf.adjustment;
+                    unwrappedIndex += pooledSlicedBuf._adjustment;
                     unwrapped = unwrapped.Unwrap();
                     break;
 
@@ -686,7 +686,7 @@ namespace DotNetty.Buffers
                         //int count = 0;
                         //for (int i = 0; i < size; i++)
                         //{
-                        //    count += this.components[i].Buffer.IoBufferCount;
+                        //    count += _components[i].Buffer.IoBufferCount;
                         //}
                         //return 1u >= (uint)count;
                 }

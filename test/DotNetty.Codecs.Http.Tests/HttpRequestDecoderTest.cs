@@ -339,11 +339,80 @@ namespace DotNetty.Codecs.Http.Tests
         [Fact]
         public void Whitespace()
         {
-            EmbeddedChannel channel = new EmbeddedChannel(new HttpRequestDecoder());
             string requestStr = "GET /some/path HTTP/1.1\r\n" +
                     "Transfer-Encoding : chunked\r\n" +
                     "Host: netty.io\n\r\n";
+            InvalidHeaders0(requestStr);
+        }
 
+        [Fact]
+        public void HeaderWithNoValueAndMissingColon()
+        {
+            string requestStr = "GET /some/path HTTP/1.1\r\n" +
+                    "Content-Length: 0\r\n" +
+                    "Host:\r\n" +
+                    "netty.io\r\n\r\n";
+            InvalidHeaders0(requestStr);
+        }
+
+        [Fact]
+        public void MultipleContentLengthHeaders()
+        {
+            string requestStr = "GET /some/path HTTP/1.1\r\n" +
+                    "Content-Length: 1\r\n" +
+                    "Content-Length: 0\r\n\r\n" +
+                    "b";
+            InvalidHeaders0(requestStr);
+        }
+
+        [Fact]
+        public void MultipleContentLengthHeaders2()
+        {
+            string requestStr = "GET /some/path HTTP/1.1\r\n" +
+                    "Content-Length: 1\r\n" +
+                    "Connection: close\r\n" +
+                    "Content-Length: 0\r\n\r\n" +
+                    "b";
+            InvalidHeaders0(requestStr);
+        }
+
+        [Fact]
+        public void ContentLengthHeaderWithCommaValue()
+        {
+            string requestStr = "GET /some/path HTTP/1.1\r\n" +
+                    "Content-Length: 1,1\r\n\r\n" +
+                    "b";
+            InvalidHeaders0(requestStr);
+        }
+
+        [Fact]
+        public void MultipleContentLengthHeadersWithFolding()
+        {
+            string requestStr = "POST / HTTP/1.1\r\n" +
+                    "Host: example.com\r\n" +
+                    "Connection: close\r\n" +
+                    "Content-Length: 5\r\n" +
+                    "Content-Length:\r\n" +
+                    "\t6\r\n\r\n" +
+                    "123456";
+            InvalidHeaders0(requestStr);
+        }
+
+        [Fact]
+        public void ContentLengthHeaderAndChunked()
+        {
+            string requestStr = "POST / HTTP/1.1\r\n" +
+                    "Host: example.com\r\n" +
+                    "Connection: close\r\n" +
+                    "Content-Length: 5\r\n" +
+                    "Transfer-Encoding: chunked\r\n\r\n" +
+                    "0\r\n\r\n";
+            InvalidHeaders0(requestStr);
+        }
+
+        private void InvalidHeaders0(string requestStr)
+        {
+            EmbeddedChannel channel = new EmbeddedChannel(new HttpRequestDecoder());
             Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(requestStr, Encoding.ASCII)));
             var request = channel.ReadInbound<IHttpRequest>();
             Assert.True(request.Result.IsFailure);

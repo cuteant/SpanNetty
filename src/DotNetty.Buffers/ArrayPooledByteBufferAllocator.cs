@@ -10,8 +10,8 @@ namespace DotNetty.Buffers
     /// </summary>
     public sealed class ArrayPooledByteBufferAllocator : AbstractByteBufferAllocator, IByteBufferAllocatorMetricProvider
     {
-        readonly ArrayPooledByteBufferAllocatorMetric metric = new ArrayPooledByteBufferAllocatorMetric();
-        readonly bool disableLeakDetector;
+        private readonly ArrayPooledByteBufferAllocatorMetric _metric = new ArrayPooledByteBufferAllocatorMetric();
+        private readonly bool _disableLeakDetector;
 
         public static readonly ArrayPooledByteBufferAllocator Default =
             new ArrayPooledByteBufferAllocator(PlatformDependent.DirectBufferPreferred);
@@ -29,7 +29,7 @@ namespace DotNetty.Buffers
         public unsafe ArrayPooledByteBufferAllocator(bool preferDirect, bool disableLeakDetector)
             : base(preferDirect)
         {
-            this.disableLeakDetector = disableLeakDetector;
+            _disableLeakDetector = disableLeakDetector;
         }
 
         protected override IByteBuffer NewHeapBuffer(int initialCapacity, int maxCapacity)
@@ -41,26 +41,26 @@ namespace DotNetty.Buffers
         public override CompositeByteBuffer CompositeHeapBuffer(int maxNumComponents)
         {
             var buf = new CompositeByteBuffer(this, false, maxNumComponents);
-            return this.disableLeakDetector ? buf : ToLeakAwareBuffer(buf);
+            return _disableLeakDetector ? buf : ToLeakAwareBuffer(buf);
         }
 
         public unsafe override CompositeByteBuffer CompositeDirectBuffer(int maxNumComponents)
         {
             var buf = new CompositeByteBuffer(this, true, maxNumComponents);
-            return this.disableLeakDetector ? buf : ToLeakAwareBuffer(buf);
+            return _disableLeakDetector ? buf : ToLeakAwareBuffer(buf);
         }
 
         public override bool IsDirectBufferPooled => true;
 
-        public IByteBufferAllocatorMetric Metric => this.metric;
+        public IByteBufferAllocatorMetric Metric => _metric;
 
-        internal void IncrementDirect(int amount) => this.metric.DirectCounter(amount);
+        internal void IncrementDirect(int amount) => _metric.DirectCounter(amount);
 
-        internal void DecrementDirect(int amount) => this.metric.DirectCounter(-amount);
+        internal void DecrementDirect(int amount) => _metric.DirectCounter(-amount);
 
-        internal void IncrementHeap(int amount) => this.metric.HeapCounter(amount);
+        internal void IncrementHeap(int amount) => _metric.HeapCounter(amount);
 
-        internal void DecrementHeap(int amount) => this.metric.HeapCounter(-amount);
+        internal void DecrementHeap(int amount) => _metric.HeapCounter(-amount);
     }
 
     sealed class InstrumentedArrayPooledHeapByteBuffer : ArrayPooledHeapByteBuffer
@@ -130,14 +130,14 @@ namespace DotNetty.Buffers
         long usedHeapMemory;
         long userDirectMemory;
 
-        public long UsedHeapMemory => Volatile.Read(ref this.usedHeapMemory);
+        public long UsedHeapMemory => Volatile.Read(ref usedHeapMemory);
 
-        public long UsedDirectMemory => Volatile.Read(ref this.userDirectMemory);
+        public long UsedDirectMemory => Volatile.Read(ref userDirectMemory);
 
-        public void HeapCounter(int amount) => Interlocked.Add(ref this.usedHeapMemory, amount);
+        public void HeapCounter(int amount) => Interlocked.Add(ref usedHeapMemory, amount);
 
-        public void DirectCounter(int amount) => Interlocked.Add(ref this.userDirectMemory, amount);
+        public void DirectCounter(int amount) => Interlocked.Add(ref userDirectMemory, amount);
 
-        public override string ToString() => $"{StringUtil.SimpleClassName(this)} (usedHeapMemory: {this.UsedHeapMemory}; usedDirectMemory: {this.UsedDirectMemory})";
+        public override string ToString() => $"{StringUtil.SimpleClassName(this)} (usedHeapMemory: {UsedHeapMemory}; usedDirectMemory: {UsedDirectMemory})";
     }
 }

@@ -38,7 +38,7 @@ namespace DotNetty.Common
 
         static long GetTimeChangeSinceStart() => Stopwatch.GetTimestamp() - PreciseTimeSpanHelper.StartTime;
 
-        public bool Equals(PreciseTimeSpan other) => _ticks == other._ticks;
+        public bool Equals(PreciseTimeSpan other) => 0UL >= (ulong)(_ticks - other._ticks); // _ticks == other._ticks;
 
         public override bool Equals(object obj)
         {
@@ -49,9 +49,9 @@ namespace DotNetty.Common
 
         public int CompareTo(PreciseTimeSpan other) => _ticks.CompareTo(other._ticks);
 
-        public static bool operator ==(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1._ticks == t2._ticks;
+        public static bool operator ==(PreciseTimeSpan t1, PreciseTimeSpan t2) => 0UL >= (ulong)(t1._ticks - t2._ticks); // t1._ticks == t2._ticks;
 
-        public static bool operator !=(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1._ticks != t2._ticks;
+        public static bool operator !=(PreciseTimeSpan t1, PreciseTimeSpan t2) => (ulong)(t1._ticks - t2._ticks) > 0UL; // t1._ticks != t2._ticks;
 
         public static bool operator >(PreciseTimeSpan t1, PreciseTimeSpan t2) => t1._ticks > t2._ticks;
 

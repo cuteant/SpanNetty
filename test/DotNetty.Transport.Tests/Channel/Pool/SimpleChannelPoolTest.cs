@@ -6,6 +6,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
     using System;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Local;
@@ -14,13 +15,11 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
     public class SimpleChannelPoolTest
     {
-        static readonly string LOCAL_ADDR_ID = "test.id";
-
         [Fact]
         public async Task TestAcquire()
         {
             var group = new MultithreadEventLoopGroup();
-            var addr = new LocalAddress(LOCAL_ADDR_ID);
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
             var cb = new Bootstrap().RemoteAddress(addr).Group(group).Channel<LocalChannel>();
 
             var sb = new ServerBootstrap()
@@ -64,6 +63,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             Assert.Equal(2, handler.ReleasedCount);
 
             await sc.CloseAsync();
+            pool.Close();
             await group.ShutdownGracefullyAsync();
         }
 
@@ -71,7 +71,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         public async Task TestBoundedChannelPoolSegment()
         {
             var group = new MultithreadEventLoopGroup();
-            var addr = new LocalAddress(LOCAL_ADDR_ID);
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
             Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(group).Channel<LocalChannel>();
 
             ServerBootstrap sb = new ServerBootstrap()
@@ -102,6 +102,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await sc.CloseAsync();
             await channel.CloseAsync();
             await channel2.CloseAsync();
+            pool.Close();
             await group.ShutdownGracefullyAsync();
         }
 
@@ -114,7 +115,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         public async Task TestUnhealthyChannelIsNotOffered()
         {
             var group = new MultithreadEventLoopGroup();
-            var addr = new LocalAddress(LOCAL_ADDR_ID);
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
             Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(group).Channel<LocalChannel>();
 
             ServerBootstrap sb = new ServerBootstrap()
@@ -143,6 +144,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             Assert.NotSame(channel1, channel3);
             await sc.CloseAsync();
             await channel3.CloseAsync();
+            pool.Close();
             await group.ShutdownGracefullyAsync();
         }
 
@@ -156,7 +158,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         public async Task TestUnhealthyChannelIsOfferedWhenNoHealthCheckRequested()
         {
             var group = new MultithreadEventLoopGroup();
-            var addr = new LocalAddress(LOCAL_ADDR_ID);
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
             Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(group).Channel<LocalChannel>();
 
             ServerBootstrap sb = new ServerBootstrap()
@@ -180,15 +182,21 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             Assert.NotSame(channel1, channel2);
             await sc.CloseAsync();
             await channel2.CloseAsync();
+            pool.Close();
             await group.ShutdownGracefullyAsync();
         }
 
         [Fact]
         public void TestBootstrap()
         {
-            using (var pool = new SimpleChannelPool(new Bootstrap(), new CountingChannelPoolHandler()))
+            var pool = new SimpleChannelPool(new Bootstrap(), new CountingChannelPoolHandler());
+            try
             {
                 Assert.NotNull(pool.Bootstrap);
+            }
+            finally
+            {
+                pool.Close();
             }
         }
 
@@ -196,9 +204,14 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         public void TestHandler()
         {
             var handler = new CountingChannelPoolHandler();
-            using (var pool = new SimpleChannelPool(new Bootstrap(), handler))
+            var pool = new SimpleChannelPool(new Bootstrap(), handler);
+            try
             {
                 Assert.Same(handler, pool.Handler);
+            }
+            finally
+            {
+                pool.Close();
             }
         }
 
@@ -206,23 +219,38 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         public void TestHealthChecker()
         {
             IChannelHealthChecker healthChecker = ChannelActiveHealthChecker.Instance;
-            using (var pool = new SimpleChannelPool(new Bootstrap(), new CountingChannelPoolHandler(), healthChecker))
+            var pool = new SimpleChannelPool(new Bootstrap(), new CountingChannelPoolHandler(), healthChecker);
+            try
             {
                 Assert.Same(healthChecker, pool.HealthChecker);
+            }
+            finally
+            {
+                pool.Close();
             }
         }
 
         [Fact]
         public void TestReleaseHealthCheck()
         {
-            using (var healthCheckOnReleasePool = new SimpleChannelPool(new Bootstrap(), new CountingChannelPoolHandler(), ChannelActiveHealthChecker.Instance, true))
+            var healthCheckOnReleasePool = new SimpleChannelPool(new Bootstrap(), new CountingChannelPoolHandler(), ChannelActiveHealthChecker.Instance, true);
+            try
             {
                 Assert.True(healthCheckOnReleasePool.ReleaseHealthCheck);
             }
+            finally
+            {
+                healthCheckOnReleasePool.Close();
+            }
 
-            using (var noHealthCheckOnReleasePool = new SimpleChannelPool(new Bootstrap(), new CountingChannelPoolHandler(), ChannelActiveHealthChecker.Instance, false))
+            var noHealthCheckOnReleasePool = new SimpleChannelPool(new Bootstrap(), new CountingChannelPoolHandler(), ChannelActiveHealthChecker.Instance, false);
+            try
             {
                 Assert.False(noHealthCheckOnReleasePool.ReleaseHealthCheck);
+            }
+            finally
+            {
+                noHealthCheckOnReleasePool.Close();
             }
         }
 
@@ -240,6 +268,46 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
             protected override bool TryOfferChannel(IChannel channel)
                 => Interlocked.CompareExchange(ref this.channel, channel, null) == null;
+        }
+
+        [Fact]
+        public async Task TestCloseAsync()
+        {
+            var group = new MultithreadEventLoopGroup();
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
+            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(group).Channel<LocalChannel>();
+
+            ServerBootstrap sb = new ServerBootstrap()
+                .Group(group)
+                .Channel<LocalServerChannel>()
+                .ChildHandler(
+                    new ActionChannelInitializer<LocalChannel>(
+                        ch => ch.Pipeline.AddLast(new ChannelHandlerAdapter()))
+                );
+
+            // Start server
+            IChannel sc = await sb.BindAsync(addr);
+            var handler = new CountingChannelPoolHandler();
+            var pool = new SimpleChannelPool(cb, handler);
+            var ch1 = await pool.AcquireAsync();
+            var ch2 = await pool.AcquireAsync();
+            await pool.ReleaseAsync(ch1);
+            await pool.ReleaseAsync(ch2);
+
+            // Assert that returned channels are open before close
+            Assert.True(ch1.Open);
+            Assert.True(ch2.Open);
+
+            // Close asynchronously with timeout
+            await TaskUtil.WaitAsync(pool.CloseAsync(), TimeSpan.FromSeconds(1));
+
+            // Assert channels were indeed closed
+            Assert.False(ch1.Open);
+            Assert.False(ch2.Open);
+
+            await sc.CloseAsync();
+            pool.Close();
+            await group.ShutdownGracefullyAsync();
         }
     }
 }

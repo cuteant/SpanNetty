@@ -121,7 +121,7 @@ namespace DotNetty.Codecs.Http2
             if (frame is IHttp2StreamFrame streamFrame)
             {
                 var channel = (AbstractHttp2StreamChannel)
-                        ((DefaultHttp2FrameStream)streamFrame.Stream)._attachment;
+                        ((DefaultHttp2FrameStream)streamFrame.Stream).Attachment;
                 channel.FireChildRead(streamFrame);
                 return;
             }
@@ -136,61 +136,60 @@ namespace DotNetty.Codecs.Http2
         /// <inheritdoc />
         protected sealed override void OnHttp2StreamStateChanged(IChannelHandlerContext ctx, DefaultHttp2FrameStream stream)
         {
-            var streamState = stream.State;
-            if (Http2StreamState.HalfClosedLocal == streamState)
+            switch (stream.State)
             {
-                if (stream.Id != Http2CodecUtil.HttpUpgradeStreamId)
-                {
-                    // Ignore everything which was not caused by an upgrade
-                    return;
-                }
-            }
-            else if (Http2StreamState.HalfClosedRemote == streamState || Http2StreamState.Open == streamState)
-            {
-                if (stream._attachment is object)
-                {
-                    // ignore if child channel was already created.
-                    return;
-                }
-            }
-            else if (Http2StreamState.Closed == streamState)
-            {
-                if (stream._attachment is AbstractHttp2StreamChannel channel)
-                {
-                    channel.StreamClosed();
-                }
-                return;
-            }
-            else
-            {
-                // ignore for now
-                return;
-            }
+                case Http2StreamState.HalfClosedLocal:
+                    if (stream.Id != Http2CodecUtil.HttpUpgradeStreamId)
+                    {
+                        // Ignore everything which was not caused by an upgrade
+                        break;
+                    }
+                    goto case Http2StreamState.Open;
 
-            Http2MultiplexCodecStreamChannel streamChannel;
-            // We need to handle upgrades special when on the client side.
-            if (stream.Id == Http2CodecUtil.HttpUpgradeStreamId && !Connection.IsServer)
-            {
-                // Add our upgrade handler to the channel and then register the channel.
-                // The register call fires the channelActive, etc.
-                Debug.Assert(_upgradeStreamHandler is object);
-                streamChannel = new Http2MultiplexCodecStreamChannel(this, stream, _upgradeStreamHandler)
-                {
-                    OutboundClosed = true
-                };
-            }
-            else
-            {
-                streamChannel = new Http2MultiplexCodecStreamChannel(this, stream, _inboundStreamHandler);
-            }
-            var future = ctx.Channel.EventLoop.RegisterAsync(streamChannel);
-            if (future.IsCompleted)
-            {
-                Http2MultiplexHandler.RegisterDone(future, streamChannel);
-            }
-            else
-            {
-                future.ContinueWith(Http2MultiplexHandler.RegisterDoneAction, streamChannel, TaskContinuationOptions.ExecuteSynchronously);
+                case Http2StreamState.HalfClosedRemote:
+                case Http2StreamState.Open:
+                    if (stream.Attachment is object)
+                    {
+                        // ignore if child channel was already created.
+                        break;
+                    }
+                    Http2MultiplexCodecStreamChannel streamChannel;
+                    // We need to handle upgrades special when on the client side.
+                    if (stream.Id == Http2CodecUtil.HttpUpgradeStreamId && !Connection.IsServer)
+                    {
+                        // Add our upgrade handler to the channel and then register the channel.
+                        // The register call fires the channelActive, etc.
+                        Debug.Assert(_upgradeStreamHandler is object);
+                        streamChannel = new Http2MultiplexCodecStreamChannel(this, stream, _upgradeStreamHandler)
+                        {
+                            OutboundClosed = true
+                        };
+                    }
+                    else
+                    {
+                        streamChannel = new Http2MultiplexCodecStreamChannel(this, stream, _inboundStreamHandler);
+                    }
+                    var future = ctx.Channel.EventLoop.RegisterAsync(streamChannel);
+                    if (future.IsCompleted)
+                    {
+                        Http2MultiplexHandler.RegisterDone(future, streamChannel);
+                    }
+                    else
+                    {
+                        future.ContinueWith(Http2MultiplexHandler.RegisterDoneAction, streamChannel, TaskContinuationOptions.ExecuteSynchronously);
+                    }
+                    break;
+
+                case Http2StreamState.Closed:
+                    if (stream.Attachment is AbstractHttp2StreamChannel channel)
+                    {
+                        channel.StreamClosed();
+                    }
+                    break;
+
+                default:
+                    // ignore for now
+                    break;
             }
         }
 
@@ -204,7 +203,7 @@ namespace DotNetty.Codecs.Http2
         protected sealed override void OnHttp2FrameStreamException(IChannelHandlerContext ctx, Http2FrameStreamException cause)
         {
             IHttp2FrameStream stream = cause.Stream;
-            var channel = (AbstractHttp2StreamChannel)((DefaultHttp2FrameStream)stream)._attachment;
+            var channel = (AbstractHttp2StreamChannel)((DefaultHttp2FrameStream)stream).Attachment;
 
             try
             {
@@ -235,7 +234,7 @@ namespace DotNetty.Codecs.Http2
             if (streamId > goAwayFrame.LastStreamId && connection.Local.IsValidStreamId(streamId))
             {
                 var channel = (AbstractHttp2StreamChannel)
-                        ((DefaultHttp2FrameStream)stream)._attachment;
+                        ((DefaultHttp2FrameStream)stream).Attachment;
                 channel.Pipeline.FireUserEventTriggered(goAwayFrame.RetainedDuplicate());
             }
             return true;

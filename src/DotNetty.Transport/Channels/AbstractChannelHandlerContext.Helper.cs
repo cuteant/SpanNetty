@@ -4,16 +4,12 @@
 namespace DotNetty.Transport.Channels
 {
     using System;
-    using System.Threading.Tasks;
-    using DotNetty.Common.Concurrency;
-    using DotNetty.Common.Utilities;
 
     partial class AbstractChannelHandlerContext
     {
         private static readonly Action<object> InvokeChannelReadCompleteAction = OnInvokeChannelReadComplete;
         private static readonly Action<object> InvokeReadAction = OnInvokeRead;
         private static readonly Action<object> InvokeChannelWritabilityChangedAction = OnInvokeChannelWritabilityChanged;
-        private static readonly Action<object> InvokeFlushAction = OnInvokeFlush;
         private static readonly Action<object> InvokeChannelRegisteredAction = OnInvokeChannelRegistered;
         private static readonly Action<object> InvokeChannelUnregisteredAction = OnInvokeChannelUnregistered;
         private static readonly Action<object> InvokeChannelActiveAction = OnInvokeChannelActive;
@@ -22,10 +18,6 @@ namespace DotNetty.Transport.Channels
         private static readonly Action<object, object> InvokeUserEventTriggeredAction = OnInvokeUserEventTriggered;
         private static readonly Action<object, object> InvokeChannelReadAction = OnInvokeChannelRead;
         private static readonly Action<object, object> InvokeExceptionCaughtAction = OnInvokeExceptionCaught;
-        private static readonly Action<object, object> SafeExecuteOutboundAsyncAction = OnSafeExecuteOutbound;
-        private static readonly Action<object, object> InvokeCloseAction = OnInvokeClose;
-        private static readonly Action<object, object> InvokeDisconnectAction = OnInvokeDisconnect;
-        private static readonly Action<object, object> InvokeDeregisterAction = OnInvokeDeregister;
 
         private static void OnInvokeChannelReadComplete(object ctx)
         {
@@ -40,26 +32,6 @@ namespace DotNetty.Transport.Channels
         private static void OnInvokeChannelWritabilityChanged(object ctx)
         {
             ((AbstractChannelHandlerContext)ctx).InvokeChannelWritabilityChanged();
-        }
-
-        private static void OnInvokeDeregister(object ctx, object promise)
-        {
-            ((AbstractChannelHandlerContext)ctx).InvokeDeregister((IPromise)promise);
-        }
-
-        private static void OnInvokeDisconnect(object ctx, object promise)
-        {
-            ((AbstractChannelHandlerContext)ctx).InvokeDisconnect((IPromise)promise);
-        }
-
-        private static void OnInvokeClose(object ctx, object promise)
-        {
-            ((AbstractChannelHandlerContext)ctx).InvokeClose((IPromise)promise);
-        }
-
-        private static void OnInvokeFlush(object ctx)
-        {
-            ((AbstractChannelHandlerContext)ctx).InvokeFlush();
         }
 
         private static void OnInvokeUserEventTriggered(object ctx, object evt)
@@ -95,11 +67,6 @@ namespace DotNetty.Transport.Channels
         private static void OnInvokeExceptionCaught(object c, object e)
         {
             ((AbstractChannelHandlerContext)c).InvokeExceptionCaught((Exception)e);
-        }
-
-        private static void OnSafeExecuteOutbound(object p, object func)
-        {
-            ((Func<Task>)func)().LinkOutcome((IPromise)p);
         }
     }
 }

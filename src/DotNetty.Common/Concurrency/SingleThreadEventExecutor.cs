@@ -7,6 +7,7 @@ namespace DotNetty.Common.Concurrency
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Internal;
@@ -24,8 +25,6 @@ namespace DotNetty.Common.Concurrency
         private const int ST_SHUTDOWN = 4;
         private const int ST_TERMINATED = 5;
         private const string DefaultWorkerThreadName = "SingleThreadEventExecutor worker";
-
-        private static readonly IRunnable s_wakeupTask = new NoOpRunnable();
 
         private static readonly IInternalLogger Logger =
             InternalLoggerFactory.GetInstance<SingleThreadEventExecutor>();
@@ -116,10 +115,10 @@ namespace DotNetty.Common.Concurrency
         {
             try
             {
-                Interlocked.CompareExchange(ref v_executionState, ST_STARTED, ST_NOT_STARTED);
+                _ = Interlocked.CompareExchange(ref v_executionState, ST_STARTED, ST_NOT_STARTED);
                 while (!ConfirmShutdown())
                 {
-                    RunAllTasks(_preciseBreakoutInterval);
+                    _ = RunAllTasks(_preciseBreakoutInterval);
                 }
                 CleanupAndTerminate(true);
             }
@@ -132,16 +131,16 @@ namespace DotNetty.Common.Concurrency
         }
 
         /// <inheritdoc cref="IEventExecutor"/>
-        public override bool IsShuttingDown => Volatile.Read(ref v_executionState) >= ST_SHUTTING_DOWN;
+        public override bool IsShuttingDown => (uint)Volatile.Read(ref v_executionState) >= ST_SHUTTING_DOWN;
 
         /// <inheritdoc cref="IEventExecutor"/>
         public override Task TerminationCompletion => _terminationCompletionSource.Task;
 
         /// <inheritdoc cref="IEventExecutor"/>
-        public override bool IsShutdown => Volatile.Read(ref v_executionState) >= ST_SHUTDOWN;
+        public override bool IsShutdown => (uint)Volatile.Read(ref v_executionState) >= ST_SHUTDOWN;
 
         /// <inheritdoc cref="IEventExecutor"/>
-        public override bool IsTerminated => Volatile.Read(ref v_executionState) == ST_TERMINATED;
+        public override bool IsTerminated => (uint)Volatile.Read(ref v_executionState) >=/*==*/ ST_TERMINATED;
 
         /// <inheritdoc cref="IEventExecutor"/>
         public override bool IsInEventLoop(Thread t) => _thread == t;
@@ -149,11 +148,37 @@ namespace DotNetty.Common.Concurrency
         /// <inheritdoc cref="IEventExecutor"/>
         public override void Execute(IRunnable task)
         {
-            _taskQueue.TryEnqueue(task);
+            InternalExecute(task, !(task is ILazyRunnable));
+        }
+
+        public override void LazyExecute(IRunnable task)
+        {
+            InternalExecute(task, false);
+        }
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private void InternalExecute(IRunnable task, bool immediate)
+        {
+            AddTask(task);
 
             if (!InEventLoop)
             {
-                _emptyEvent.Set();
+                if (IsShutdown) { ThrowHelper.ThrowRejectedExecutionException_Terminated(); }
+
+                if (immediate) { _emptyEvent.Set(); }
+            }
+        }
+
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        private void AddTask(IRunnable task)
+        {
+            if (IsShutdown)
+            {
+                ThrowHelper.ThrowRejectedExecutionException_Shutdown();
+            }
+            if (!_taskQueue.TryEnqueue(task))
+            {
+                ThrowHelper.ThrowRejectedExecutionException_Queue();
             }
         }
 
@@ -163,7 +188,7 @@ namespace DotNetty.Common.Concurrency
         {
             if (!inEventLoop || (Volatile.Read(ref v_executionState) == ST_SHUTTING_DOWN))
             {
-                Execute(s_wakeupTask);
+                Execute(WakeupTask);
             }
         }
 
@@ -212,7 +237,7 @@ namespace DotNetty.Common.Concurrency
             ((ISet<Action>)s).Remove((Action)a);
         }
 
-        bool RunShutdownHooks()
+        private bool RunShutdownHooks()
         {
             bool ran = false;
 
@@ -246,7 +271,6 @@ namespace DotNetty.Common.Concurrency
 
             return ran;
         }
-
 
         /// <inheritdoc cref="IEventExecutor"/>
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
@@ -311,11 +335,14 @@ namespace DotNetty.Common.Concurrency
 
         protected bool ConfirmShutdown()
         {
-            if (!IsShuttingDown)
-            {
-                return false;
-            }
+            if (!IsShuttingDown) { return false; }
 
+            return ConfirmShutdownSlow();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        protected bool ConfirmShutdownSlow()
+        {
             Debug.Assert(InEventLoop, "must be invoked from an event loop");
 
             CancelScheduledTasks();
@@ -375,7 +402,7 @@ namespace DotNetty.Common.Concurrency
             {
                 oldState = thisState;
 
-                if (oldState >= ST_SHUTTING_DOWN) { break; }
+                if ((uint)oldState >= ST_SHUTTING_DOWN) { break; }
 
                 thisState = Interlocked.CompareExchange(ref v_executionState, ST_SHUTTING_DOWN, oldState);
             } while (thisState != oldState);
@@ -390,7 +417,9 @@ namespace DotNetty.Common.Concurrency
 
             try
             {
-                // Run all remaining tasks and shutdown hooks.
+                // Run all remaining tasks and shutdown hooks. At this point the event loop
+                // is in ST_SHUTTING_DOWN state still accepting tasks which is needed for
+                // graceful shutdown with quietPeriod.
                 while (true)
                 {
                     if (ConfirmShutdown())
@@ -398,6 +427,22 @@ namespace DotNetty.Common.Concurrency
                         break;
                     }
                 }
+
+                // Now we want to make sure no more tasks can be added from this point. This is
+                // achieved by switching the state. Any new tasks beyond this point will be rejected.
+                thisState = Volatile.Read(ref v_executionState);
+                do
+                {
+                    oldState = thisState;
+
+                    if ((uint)oldState >= ST_SHUTDOWN) { break; }
+
+                    thisState = Interlocked.CompareExchange(ref v_executionState, ST_SHUTDOWN, oldState);
+                } while (thisState != oldState);
+
+                // We have the final set of tasks in the queue now, no more can be added, run all remaining.
+                // No need to loop here, this is the final pass.
+                _ = ConfirmShutdown();
             }
             finally
             {
@@ -408,15 +453,31 @@ namespace DotNetty.Common.Concurrency
                 finally
                 {
                     Interlocked.Exchange(ref v_executionState, ST_TERMINATED);
-                    if (!_taskQueue.IsEmpty)
+                    int numUserTasks = DrainTasks();
+                    if ((uint)numUserTasks > 0u && Logger.WarnEnabled)
                     {
-                        Logger.AnEventExecutorTerminatedWithNonEmptyTaskQueue(_taskQueue.Count);
+                        Logger.AnEventExecutorTerminatedWithNonEmptyTaskQueue(numUserTasks);
                     }
 
                     //firstRun = true;
                     _terminationCompletionSource.Complete();
                 }
             }
+        }
+
+        private int DrainTasks()
+        {
+            int numTasks = 0;
+            while (_taskQueue.TryDequeue(out var runnable))
+            {
+                // WAKEUP_TASK should be just discarded as these are added internally.
+                // The important bit is that we not have any user tasks left.
+                if (WakeupTask != runnable)
+                {
+                    numTasks++;
+                }
+            }
+            return numTasks;
         }
 
         protected virtual void Cleanup()
@@ -457,7 +518,7 @@ namespace DotNetty.Common.Concurrency
             return true;
         }
 
-        bool RunAllTasks(PreciseTimeSpan timeout)
+        private bool RunAllTasks(PreciseTimeSpan timeout)
         {
             FetchFromScheduledTaskQueue();
             IRunnable task = PollTask();
@@ -505,7 +566,7 @@ namespace DotNetty.Common.Concurrency
         /// </summary>
         protected virtual void AfterRunningAllTasks() { }
 
-        bool FetchFromScheduledTaskQueue()
+        private bool FetchFromScheduledTaskQueue()
         {
             if (ScheduledTaskQueue.IsEmpty) { return true; }
 
@@ -524,7 +585,7 @@ namespace DotNetty.Common.Concurrency
             return true;
         }
 
-        IRunnable PollTask()
+        private IRunnable PollTask()
         {
             Debug.Assert(InEventLoop);
 
@@ -536,7 +597,7 @@ namespace DotNetty.Common.Concurrency
                     if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledTask))
                     {
                         PreciseTimeSpan wakeupTimeout = nextScheduledTask.Deadline - PreciseTimeSpan.FromStart;
-                        if (wakeupTimeout.Ticks > 0L)
+                        if (wakeupTimeout.Ticks > 0L) // 此处不要 ulong 转换
                         {
                             double timeout = wakeupTimeout.ToTimeSpan().TotalMilliseconds;
                             _emptyEvent.Wait((int)Math.Min(timeout, int.MaxValue - 1));
@@ -545,19 +606,12 @@ namespace DotNetty.Common.Concurrency
                     else
                     {
                         _emptyEvent.Wait();
-                        _taskQueue.TryDequeue(out task);
+                        _ = _taskQueue.TryDequeue(out task);
                     }
                 }
             }
 
             return task;
-        }
-
-        sealed class NoOpRunnable : IRunnable
-        {
-            public void Run()
-            {
-            }
         }
     }
 }

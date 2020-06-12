@@ -242,6 +242,53 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void DataReadForUnknownStreamShouldApplyFlowControlAndFail()
         {
+            this.connection.Setup(x => x.StreamMayHaveExisted(It.Is<int>(v => v == STREAM_ID))).Returns(true);
+            this.connection.Setup(x => x.Stream(It.Is<int>(v => v == STREAM_ID))).Returns(default(IHttp2Stream));
+            var data = DummyData();
+            int padding = 10;
+            int processedBytes = data.ReadableBytes + padding;
+            try
+            {
+                this.Decode().OnDataRead(this.ctx.Object, STREAM_ID, data, padding, true);
+            }
+            catch (Exception exc)
+            {
+                Assert.True(exc is StreamException);
+            }
+            finally
+            {
+                try
+                {
+                    this.localFlow
+                        .Verify(x => x.ReceiveFlowControlledFrame(
+                            It.Is<IHttp2Stream>(v => v == null),
+                            It.Is<IByteBuffer>(v => v.Equals(data)),
+                            It.Is<int>(v => v == padding),
+                            It.Is<bool>(v => v == true)));
+                    this.localFlow
+                        .Verify(x => x.ConsumeBytes(
+                            It.Is<IHttp2Stream>(v => v == null),
+                            It.Is<int>(v => v == processedBytes)));
+                    this.localFlow.Verify(x => x.FrameWriter(It.IsAny<IHttp2FrameWriter>()));
+                    this.localFlow.VerifyNoOtherCalls();
+                    this.listener
+                        .Verify(x => x.OnDataRead(
+                            It.Is<IChannelHandlerContext>(v => v == this.ctx.Object),
+                            It.IsAny<int>(),
+                            It.IsAny<IByteBuffer>(),
+                            It.IsAny<int>(),
+                            It.IsAny<bool>()), Times.Never());
+                }
+                finally
+                {
+                    data.Release();
+                }
+            }
+        }
+
+        [Fact]
+        public void DataReadForUnknownStreamThatCouldntExistFail()
+        {
             this.connection.Setup(x => x.StreamMayHaveExisted(It.Is<int>(v => v == STREAM_ID))).Returns(false);
             this.connection.Setup(x => x.Stream(It.Is<int>(v => v == STREAM_ID))).Returns(default(IHttp2Stream));
             var data = DummyData();
@@ -253,7 +300,8 @@ namespace DotNetty.Codecs.Http2.Tests
             }
             catch (Exception exc)
             {
-                Assert.IsType<StreamException>(exc);
+                Assert.False(exc is StreamException);
+                Assert.True(exc is Http2Exception);
             }
             finally
             {

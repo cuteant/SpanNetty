@@ -147,5 +147,31 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal("no", outHeaders.Get((AsciiString)"yes", null));
             Assert.Equal("foo=bar; bax=baz", outHeaders.Get(HttpHeaderNames.Cookie, null));
         }
+
+        [Fact]
+        public void ConnectionSpecificHeadersShouldBeRemoved()
+        {
+            HttpHeaders inHeaders = new DefaultHttpHeaders();
+            inHeaders.Add(HttpHeaderNames.Connection, "keep-alive");
+            inHeaders.Add(HttpHeaderNames.Host, "example.com");
+            //@SuppressWarnings("deprecation")
+            AsciiString keepAlive = HttpHeaderNames.KeepAlive;
+            inHeaders.Add(keepAlive, "timeout=5, max=1000");
+            //@SuppressWarnings("deprecation")
+            AsciiString proxyConnection = HttpHeaderNames.ProxyConnection;
+            inHeaders.Add(proxyConnection, "timeout=5, max=1000");
+            inHeaders.Add(HttpHeaderNames.TransferEncoding, "chunked");
+            inHeaders.Add(HttpHeaderNames.Upgrade, "h2c");
+
+            IHttp2Headers outHeaders = new DefaultHttp2Headers();
+            HttpConversionUtil.ToHttp2Headers(inHeaders, outHeaders);
+
+            Assert.False(outHeaders.Contains(HttpHeaderNames.Connection));
+            Assert.False(outHeaders.Contains(HttpHeaderNames.Host));
+            Assert.False(outHeaders.Contains(keepAlive));
+            Assert.False(outHeaders.Contains(proxyConnection));
+            Assert.False(outHeaders.Contains(HttpHeaderNames.TransferEncoding));
+            Assert.False(outHeaders.Contains(HttpHeaderNames.Upgrade));
+        }
     }
 }

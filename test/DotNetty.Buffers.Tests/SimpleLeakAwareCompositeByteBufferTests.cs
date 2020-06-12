@@ -6,6 +6,7 @@ namespace DotNetty.Buffers.Tests
     using System;
     using System.Collections.Generic;
     using DotNetty.Common;
+    using DotNetty.Common.Utilities;
     using Xunit;
 
     public class SimpleLeakAwareCompositeByteBufferTests : WrappedCompositeByteBufferTests
@@ -110,6 +111,30 @@ namespace DotNetty.Buffers.Tests
         public void WrapReadOnly()
         {
             this.AssertWrapped(this.NewBuffer(8).AsReadOnly());
+        }
+
+        [Fact]
+        public void ForEachByteUnderLeakDetectionShouldNotThrowException()
+        {
+            CompositeByteBuffer buf = (CompositeByteBuffer)NewBuffer(8);
+            Assert.True(buf is SimpleLeakAwareCompositeByteBuffer);
+            CompositeByteBuffer comp = (CompositeByteBuffer)NewBuffer(8);
+            Assert.True(comp is SimpleLeakAwareCompositeByteBuffer);
+
+            IByteBuffer inner = comp.Allocator.DirectBuffer(1).WriteByte(0);
+            comp.AddComponent(true, inner);
+            buf.AddComponent(true, comp);
+
+            Assert.Equal(-1, buf.ForEachByte(new AlwaysByteProcessor()));
+            Assert.True(buf.Release());
+        }
+
+        sealed class AlwaysByteProcessor : IByteProcessor
+        {
+            public bool Process(byte value)
+            {
+                return true;
+            }
         }
 
         protected void AssertWrapped(IByteBuffer buf)

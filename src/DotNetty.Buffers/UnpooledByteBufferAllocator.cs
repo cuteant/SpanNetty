@@ -12,8 +12,8 @@ namespace DotNetty.Buffers
     /// </summary>
     public sealed class UnpooledByteBufferAllocator : AbstractByteBufferAllocator, IByteBufferAllocatorMetricProvider
     {
-        readonly UnpooledByteBufferAllocatorMetric metric = new UnpooledByteBufferAllocatorMetric();
-        readonly bool disableLeakDetector;
+        readonly UnpooledByteBufferAllocatorMetric _metric = new UnpooledByteBufferAllocatorMetric();
+        readonly bool _disableLeakDetector;
 
         public static readonly UnpooledByteBufferAllocator Default =
             new UnpooledByteBufferAllocator(PlatformDependent.DirectBufferPreferred);
@@ -31,7 +31,7 @@ namespace DotNetty.Buffers
         public unsafe UnpooledByteBufferAllocator(bool preferDirect, bool disableLeakDetector)
             : base(preferDirect)
         {
-            this.disableLeakDetector = disableLeakDetector;
+            _disableLeakDetector = disableLeakDetector;
         }
 
         protected override IByteBuffer NewHeapBuffer(int initialCapacity, int maxCapacity) =>
@@ -40,32 +40,32 @@ namespace DotNetty.Buffers
         protected unsafe override IByteBuffer NewDirectBuffer(int initialCapacity, int maxCapacity)
         {
             IByteBuffer buf = new InstrumentedUnpooledUnsafeDirectByteBuffer(this, initialCapacity, maxCapacity);
-            return this.disableLeakDetector ? buf : ToLeakAwareBuffer(buf);
+            return _disableLeakDetector ? buf : ToLeakAwareBuffer(buf);
         }
 
         public override CompositeByteBuffer CompositeHeapBuffer(int maxNumComponents)
         {
             var buf = new CompositeByteBuffer(this, false, maxNumComponents);
-            return this.disableLeakDetector ? buf : ToLeakAwareBuffer(buf);
+            return _disableLeakDetector ? buf : ToLeakAwareBuffer(buf);
         }
 
         public unsafe override CompositeByteBuffer CompositeDirectBuffer(int maxNumComponents)
         {
             var buf = new CompositeByteBuffer(this, true, maxNumComponents);
-            return this.disableLeakDetector ? buf : ToLeakAwareBuffer(buf);
+            return _disableLeakDetector ? buf : ToLeakAwareBuffer(buf);
         }
 
         public override bool IsDirectBufferPooled => false;
 
-        public IByteBufferAllocatorMetric Metric => this.metric;
+        public IByteBufferAllocatorMetric Metric => _metric;
 
-        internal void IncrementDirect(int amount) => this.metric.DirectCounter(amount);
+        internal void IncrementDirect(int amount) => _metric.DirectCounter(amount);
 
-        internal void DecrementDirect(int amount) => this.metric.DirectCounter(-amount);
+        internal void DecrementDirect(int amount) => _metric.DirectCounter(-amount);
 
-        internal void IncrementHeap(int amount) => this.metric.HeapCounter(amount);
+        internal void IncrementHeap(int amount) => _metric.HeapCounter(amount);
 
-        internal void DecrementHeap(int amount) => this.metric.HeapCounter(-amount);
+        internal void DecrementHeap(int amount) => _metric.HeapCounter(-amount);
 
         sealed class InstrumentedUnpooledHeapByteBuffer : UnpooledHeapByteBuffer
         {
@@ -73,13 +73,13 @@ namespace DotNetty.Buffers
                 UnpooledByteBufferAllocator alloc, int initialCapacity, int maxCapacity)
                 : base(alloc, initialCapacity, maxCapacity)
             {
-                ((UnpooledByteBufferAllocator)this.Allocator).IncrementHeap(initialCapacity);
+                ((UnpooledByteBufferAllocator)Allocator).IncrementHeap(initialCapacity);
             }
 
             protected override byte[] AllocateArray(int initialCapacity)
             {
                 byte[] bytes = base.AllocateArray(initialCapacity);
-                ((UnpooledByteBufferAllocator)this.Allocator).IncrementHeap(bytes.Length);
+                ((UnpooledByteBufferAllocator)Allocator).IncrementHeap(bytes.Length);
                 return bytes;
             }
 
@@ -87,7 +87,7 @@ namespace DotNetty.Buffers
             {
                 int length = bytes.Length;
                 base.FreeArray(bytes);
-                ((UnpooledByteBufferAllocator)this.Allocator).DecrementHeap(length);
+                ((UnpooledByteBufferAllocator)Allocator).DecrementHeap(length);
             }
         }
 
@@ -97,13 +97,13 @@ namespace DotNetty.Buffers
                 UnpooledByteBufferAllocator alloc, int initialCapacity, int maxCapacity)
                 : base(alloc, initialCapacity, maxCapacity)
             {
-                ((UnpooledByteBufferAllocator)this.Allocator).IncrementDirect(initialCapacity);
+                ((UnpooledByteBufferAllocator)Allocator).IncrementDirect(initialCapacity);
             }
 
             protected override byte[] AllocateDirect(int initialCapacity)
             {
                 byte[] bytes = base.AllocateDirect(initialCapacity);
-                ((UnpooledByteBufferAllocator)this.Allocator).IncrementDirect(bytes.Length);
+                ((UnpooledByteBufferAllocator)Allocator).IncrementDirect(bytes.Length);
                 return bytes;
             }
 
@@ -111,24 +111,24 @@ namespace DotNetty.Buffers
             {
                 int capacity = array.Length;
                 base.FreeDirect(array);
-                ((UnpooledByteBufferAllocator)this.Allocator).DecrementDirect(capacity);
+                ((UnpooledByteBufferAllocator)Allocator).DecrementDirect(capacity);
             }
         }
 
         sealed class UnpooledByteBufferAllocatorMetric : IByteBufferAllocatorMetric
         {
-            long usedHeapMemory;
-            long userDirectMemory;
+            private long _usedHeapMemory;
+            private long _userDirectMemory;
 
-            public long UsedHeapMemory => Volatile.Read(ref this.usedHeapMemory);
+            public long UsedHeapMemory => Volatile.Read(ref _usedHeapMemory);
 
-            public long UsedDirectMemory => Volatile.Read(ref this.userDirectMemory);
+            public long UsedDirectMemory => Volatile.Read(ref _userDirectMemory);
 
-            public void HeapCounter(int amount) => Interlocked.Add(ref this.usedHeapMemory, amount);
+            public void HeapCounter(int amount) => Interlocked.Add(ref _usedHeapMemory, amount);
 
-            public void DirectCounter(int amount) => Interlocked.Add(ref this.userDirectMemory, amount);
+            public void DirectCounter(int amount) => Interlocked.Add(ref _userDirectMemory, amount);
 
-            public override string ToString() => $"{StringUtil.SimpleClassName(this)} (usedHeapMemory: {this.UsedHeapMemory}; usedDirectMemory: {this.UsedDirectMemory})";
+            public override string ToString() => $"{StringUtil.SimpleClassName(this)} (usedHeapMemory: {UsedHeapMemory}; usedDirectMemory: {UsedDirectMemory})";
         }
     }
 }

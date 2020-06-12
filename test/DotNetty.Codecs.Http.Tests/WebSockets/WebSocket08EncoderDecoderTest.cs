@@ -65,6 +65,9 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             Assert.Equal(errorMessage, response.ReasonText());
             response.Release();
 
+            Assert.False(inChannel.Finish());
+            Assert.False(outChannel.Finish());
+
             // Without auto-close
             config = WebSocketDecoderConfig.NewBuilder()
                 .MaxFramePayloadLength(maxPayloadLength)
@@ -78,10 +81,11 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             response = inChannel.ReadOutbound<CloseWebSocketFrame>();
             Assert.Null(response);
 
-            // Release test data
-            this.binTestData.Release();
             Assert.False(inChannel.Finish());
             Assert.False(outChannel.Finish());
+
+            // Release test data
+            this.binTestData.Release();
         }
 
         private void ExecuteProtocolViolationTest(EmbeddedChannel outChannel, EmbeddedChannel inChannel,

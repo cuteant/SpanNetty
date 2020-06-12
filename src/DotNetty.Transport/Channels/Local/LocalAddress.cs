@@ -11,8 +11,8 @@ namespace DotNetty.Transport.Channels.Local
     {
         public static readonly LocalAddress Any = new LocalAddress("ANY"); 
 
-        readonly string id;
-        readonly string strVal;
+        private readonly string _id;
+        private readonly string _strVal;
 
         internal LocalAddress(IChannel channel)
         {
@@ -21,8 +21,8 @@ namespace DotNetty.Transport.Channels.Local
             buf.Append((channel.GetHashCode() & 0xFFFFFFFFL | 0x100000000L).ToString("X"));
             buf[7] = ':';
 
-            this.strVal = StringBuilderCache.GetStringAndRelease(buf);
-            this.id = this.strVal.Substring(6);
+            _strVal = StringBuilderCache.GetStringAndRelease(buf);
+            _id = _strVal.Substring(6);
        }
 
         public LocalAddress(string id)
@@ -31,15 +31,15 @@ namespace DotNetty.Transport.Channels.Local
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.id);
             }
-            this.id = id.Trim().ToLowerInvariant();
-            this.strVal = $"local: {this.id}";
+            _id = id.Trim().ToLowerInvariant();
+            _strVal = $"local: {_id}";
         }
 
-        public string Id => this.id;
+        public string Id => _id;
 
-        public override int GetHashCode() => this.id.GetHashCode();
+        public override int GetHashCode() => _id.GetHashCode();
         
-        public override string ToString() => this.strVal;
+        public override string ToString() => _strVal;
 
         public int CompareTo(LocalAddress other)
         {
@@ -49,7 +49,7 @@ namespace DotNetty.Transport.Channels.Local
             if (other is null)
                 return 1;
             
-            return string.Compare(this.id, other.id, StringComparison.Ordinal);
+            return string.Compare(_id, other._id, StringComparison.Ordinal);
         }
     }
 }

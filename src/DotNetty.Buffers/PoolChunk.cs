@@ -86,21 +86,21 @@ namespace DotNetty.Buffers
         internal readonly int Offset;
         internal readonly IntPtr NativePointer;
 
-        readonly sbyte[] memoryMap;
-        readonly sbyte[] depthMap;
-        readonly PoolSubpage<T>[] subpages;
+        private readonly sbyte[] _memoryMap;
+        private readonly sbyte[] _depthMap;
+        private readonly PoolSubpage<T>[] _subpages;
         /** Used to determine if the requested capacity is equal to or greater than pageSize. */
-        readonly int subpageOverflowMask;
-        readonly int pageSize;
-        readonly int pageShifts;
-        readonly int maxOrder;
-        readonly int chunkSize;
-        readonly int log2ChunkSize;
-        readonly int maxSubpageAllocs;
+        private readonly int _subpageOverflowMask;
+        private readonly int _pageSize;
+        private readonly int _pageShifts;
+        private readonly int _maxOrder;
+        private readonly int _chunkSize;
+        private readonly int _log2ChunkSize;
+        private readonly int _maxSubpageAllocs;
         /** Used to mark memory as unusable */
-        readonly sbyte unusable;
+        private readonly sbyte _unusable;
 
-        int freeBytes;
+        private int _freeBytes;
 
         internal PoolChunkList<T> Parent;
         internal PoolChunk<T> Prev;
@@ -113,26 +113,26 @@ namespace DotNetty.Buffers
         {
             if (maxOrder >= 30) { ThrowHelper.ThrowArgumentException_CheckMaxOrder30(maxOrder); }
 
-            this.Unpooled = false;
-            this.Arena = arena;
-            this.Memory = memory;
-            this.pageSize = pageSize;
-            this.pageShifts = pageShifts;
-            this.maxOrder = maxOrder;
-            this.chunkSize = chunkSize;
-            this.Offset = offset;
-            this.NativePointer = pointer;
-            this.unusable = (sbyte)(maxOrder + 1);
-            this.log2ChunkSize = Log2(chunkSize);
-            this.subpageOverflowMask = ~(pageSize - 1);
-            this.freeBytes = chunkSize;
+            Unpooled = false;
+            Arena = arena;
+            Memory = memory;
+            _pageSize = pageSize;
+            _pageShifts = pageShifts;
+            _maxOrder = maxOrder;
+            _chunkSize = chunkSize;
+            Offset = offset;
+            NativePointer = pointer;
+            _unusable = (sbyte)(maxOrder + 1);
+            _log2ChunkSize = Log2(chunkSize);
+            _subpageOverflowMask = ~(pageSize - 1);
+            _freeBytes = chunkSize;
 
             Debug.Assert(maxOrder < 30, "maxOrder should be < 30, but is: " + maxOrder);
-            this.maxSubpageAllocs = 1 << maxOrder;
+            _maxSubpageAllocs = 1 << maxOrder;
 
             // Generate the memory map.
-            this.memoryMap = new sbyte[this.maxSubpageAllocs << 1];
-            this.depthMap = new sbyte[this.memoryMap.Length];
+            _memoryMap = new sbyte[_maxSubpageAllocs << 1];
+            _depthMap = new sbyte[_memoryMap.Length];
             int memoryMapIndex = 1;
             for (int d = 0; d <= maxOrder; ++d)
             {
@@ -141,35 +141,35 @@ namespace DotNetty.Buffers
                 for (int p = 0; p < depth; ++p)
                 {
                     // in each level traverse left to right and set value to the depth of subtree
-                    this.memoryMap[memoryMapIndex] = (sbyte)d;
-                    this.depthMap[memoryMapIndex] = (sbyte)d;
+                    _memoryMap[memoryMapIndex] = (sbyte)d;
+                    _depthMap[memoryMapIndex] = (sbyte)d;
                     memoryMapIndex++;
                 }
             }
 
-            this.subpages = this.NewSubpageArray(this.maxSubpageAllocs);
+            _subpages = NewSubpageArray(_maxSubpageAllocs);
         }
 
         /** Creates a special chunk that is not pooled. */
 
         internal PoolChunk(PoolArena<T> arena, T memory, int size, int offset, IntPtr pointer)
         {
-            this.Unpooled = true;
-            this.Arena = arena;
-            this.Memory = memory;
-            this.Offset = offset;
-            this.NativePointer = pointer;
-            this.memoryMap = null;
-            this.depthMap = null;
-            this.subpages = null;
-            this.subpageOverflowMask = 0;
-            this.pageSize = 0;
-            this.pageShifts = 0;
-            this.maxOrder = 0;
-            this.unusable = (sbyte)(this.maxOrder + 1);
-            this.chunkSize = size;
-            this.log2ChunkSize = IntegerExtensions.Log2(this.chunkSize);
-            this.maxSubpageAllocs = 0;
+            Unpooled = true;
+            Arena = arena;
+            Memory = memory;
+            Offset = offset;
+            NativePointer = pointer;
+            _memoryMap = null;
+            _depthMap = null;
+            _subpages = null;
+            _subpageOverflowMask = 0;
+            _pageSize = 0;
+            _pageShifts = 0;
+            _maxOrder = 0;
+            _unusable = (sbyte)(_maxOrder + 1);
+            _chunkSize = size;
+            _log2ChunkSize = IntegerExtensions.Log2(_chunkSize);
+            _maxSubpageAllocs = 0;
         }
 
         PoolSubpage<T>[] NewSubpageArray(int size) => new PoolSubpage<T>[size];
@@ -179,12 +179,12 @@ namespace DotNetty.Buffers
             get
             {
                 int bytes;
-                lock (this.Arena)
+                lock (Arena)
                 {
-                    bytes = this.freeBytes;
+                    bytes = _freeBytes;
                 }
 
-                return this.GetUsage(bytes);
+                return GetUsage(bytes);
             }
         }
 
@@ -195,7 +195,7 @@ namespace DotNetty.Buffers
                 return 100;
             }
 
-            int freePercentage = (int)(bytes * 100L / this.ChunkSize);
+            int freePercentage = (int)(bytes * 100L / ChunkSize);
             if (0u >= (uint)freePercentage)
             {
                 return 99;
@@ -207,14 +207,14 @@ namespace DotNetty.Buffers
 
         internal long Allocate(int normCapacity)
         {
-            if ((normCapacity & this.subpageOverflowMask) != 0)
+            if ((normCapacity & _subpageOverflowMask) != 0)
             {
                 // >= pageSize
-                return this.AllocateRun(normCapacity);
+                return AllocateRun(normCapacity);
             }
             else
             {
-                return this.AllocateSubpage(normCapacity);
+                return AllocateSubpage(normCapacity);
             }
         }
 
@@ -232,10 +232,10 @@ namespace DotNetty.Buffers
             while (id > 1)
             {
                 int parentId = id.RightUShift(1);
-                sbyte val1 = this.Value(id);
-                sbyte val2 = this.Value(id ^ 1);
+                sbyte val1 = Value(id);
+                sbyte val2 = Value(id ^ 1);
                 sbyte val = val1 < val2 ? val1 : val2;
-                this.SetValue(parentId, val);
+                SetValue(parentId, val);
                 id = parentId;
             }
         }
@@ -250,22 +250,22 @@ namespace DotNetty.Buffers
 
         void UpdateParentsFree(int id)
         {
-            int logChild = this.Depth(id) + 1;
+            int logChild = Depth(id) + 1;
             while (id > 1)
             {
                 int parentId = id.RightUShift(1);
-                sbyte val1 = this.Value(id);
-                sbyte val2 = this.Value(id ^ 1);
+                sbyte val1 = Value(id);
+                sbyte val2 = Value(id ^ 1);
                 logChild -= 1; // in first iteration equals log, subsequently reduce 1 from logChild as we traverse up
 
                 if (val1 == logChild && val2 == logChild)
                 {
-                    this.SetValue(parentId, (sbyte)(logChild - 1));
+                    SetValue(parentId, (sbyte)(logChild - 1));
                 }
                 else
                 {
                     sbyte val = val1 < val2 ? val1 : val2;
-                    this.SetValue(parentId, val);
+                    SetValue(parentId, val);
                 }
 
                 id = parentId;
@@ -284,7 +284,7 @@ namespace DotNetty.Buffers
         {
             int id = 1;
             int initial = -(1 << d); // has last d bits = 0 and rest all = 1
-            sbyte val = this.Value(id);
+            sbyte val = Value(id);
             if (val > d)
             {
                 // unusable
@@ -294,17 +294,17 @@ namespace DotNetty.Buffers
             {
                 // id & initial == 1 << d for all ids at depth d, for < d it is 0
                 id <<= 1;
-                val = this.Value(id);
+                val = Value(id);
                 if (val > d)
                 {
                     id ^= 1;
-                    val = this.Value(id);
+                    val = Value(id);
                 }
             }
-            sbyte value = this.Value(id);
+            sbyte value = Value(id);
             Debug.Assert(value == d && (id & initial) == 1 << d, $"val = {value}, id & initial = {id & initial}, d = {d}");
-            this.SetValue(id, this.unusable); // mark as unusable
-            this.UpdateParentsAlloc(id);
+            SetValue(id, _unusable); // mark as unusable
+            UpdateParentsAlloc(id);
             return id;
         }
 
@@ -317,13 +317,13 @@ namespace DotNetty.Buffers
 
         long AllocateRun(int normCapacity)
         {
-            int d = this.maxOrder - (IntegerExtensions.Log2(normCapacity) - this.pageShifts);
-            int id = this.AllocateNode(d);
+            int d = _maxOrder - (IntegerExtensions.Log2(normCapacity) - _pageShifts);
+            int id = AllocateNode(d);
             if (id < 0)
             {
                 return id;
             }
-            this.freeBytes -= this.RunLength(id);
+            _freeBytes -= RunLength(id);
             return id;
         }
 
@@ -339,26 +339,26 @@ namespace DotNetty.Buffers
         {
             // Obtain the head of the PoolSubPage pool that is owned by the PoolArena and synchronize on it.
             // This is need as we may add it back and so alter the linked-list structure.
-            PoolSubpage<T> head = this.Arena.FindSubpagePoolHead(normCapacity);
+            PoolSubpage<T> head = Arena.FindSubpagePoolHead(normCapacity);
             lock (head)
             {
-                int d = this.maxOrder; // subpages are only be allocated from pages i.e., leaves
-                int id = this.AllocateNode(d);
+                int d = _maxOrder; // subpages are only be allocated from pages i.e., leaves
+                int id = AllocateNode(d);
                 if (id < 0)
                 {
                     return id;
                 }
 
-                PoolSubpage<T>[] subpages = this.subpages;
-                int pageSize = this.pageSize;
+                PoolSubpage<T>[] subpages = _subpages;
+                int pageSize = _pageSize;
 
-                this.freeBytes -= pageSize;
+                _freeBytes -= pageSize;
 
-                int subpageIdx = this.SubpageIdx(id);
+                int subpageIdx = SubpageIdx(id);
                 PoolSubpage<T> subpage = subpages[subpageIdx];
                 if (subpage is null)
                 {
-                    subpage = new PoolSubpage<T>(head, this, id, this.RunOffset(id), pageSize, normCapacity);
+                    subpage = new PoolSubpage<T>(head, this, id, RunOffset(id), pageSize, normCapacity);
                     subpages[subpageIdx] = subpage;
                 }
                 else
@@ -387,12 +387,12 @@ namespace DotNetty.Buffers
             if (bitmapIdx != 0)
             {
                 // free a subpage
-                PoolSubpage<T> subpage = this.subpages[this.SubpageIdx(memoryMapIdx)];
+                PoolSubpage<T> subpage = _subpages[SubpageIdx(memoryMapIdx)];
                 Debug.Assert(subpage is object && subpage.DoNotDestroy);
 
                 // Obtain the head of the PoolSubPage pool that is owned by the PoolArena and synchronize on it.
                 // This is need as we may add it back and so alter the linked-list structure.
-                PoolSubpage<T> head = this.Arena.FindSubpagePoolHead(subpage.ElemSize);
+                PoolSubpage<T> head = Arena.FindSubpagePoolHead(subpage.ElemSize);
                 lock (head)
                 {
                     if (subpage.Free(head, bitmapIdx & 0x3FFFFFFF))
@@ -401,9 +401,9 @@ namespace DotNetty.Buffers
                     }
                 }
             }
-            this.freeBytes += this.RunLength(memoryMapIdx);
-            this.SetValue(memoryMapIdx, this.Depth(memoryMapIdx));
-            this.UpdateParentsFree(memoryMapIdx);
+            _freeBytes += RunLength(memoryMapIdx);
+            SetValue(memoryMapIdx, Depth(memoryMapIdx));
+            UpdateParentsFree(memoryMapIdx);
         }
 
         internal void InitBuf(PooledByteBuffer<T> buf, long handle, int reqCapacity)
@@ -412,19 +412,19 @@ namespace DotNetty.Buffers
             int bitmapIdx = BitmapIdx(handle);
             if (0u >= (uint)bitmapIdx)
             {
-                sbyte val = this.Value(memoryMapIdx);
-                Debug.Assert(val == this.unusable, val.ToString());
-                buf.Init(this, handle, this.RunOffset(memoryMapIdx) + this.Offset, reqCapacity, this.RunLength(memoryMapIdx),
-                    this.Arena.Parent.ThreadCache<T>());
+                sbyte val = Value(memoryMapIdx);
+                Debug.Assert(val == _unusable, val.ToString());
+                buf.Init(this, handle, RunOffset(memoryMapIdx) + Offset, reqCapacity, RunLength(memoryMapIdx),
+                    Arena.Parent.ThreadCache<T>());
             }
             else
             {
-                this.InitBufWithSubpage(buf, handle, bitmapIdx, reqCapacity);
+                InitBufWithSubpage(buf, handle, bitmapIdx, reqCapacity);
             }
         }
 
         internal void InitBufWithSubpage(PooledByteBuffer<T> buf, long handle, int reqCapacity) => 
-            this.InitBufWithSubpage(buf, handle, BitmapIdx(handle), reqCapacity);
+            InitBufWithSubpage(buf, handle, BitmapIdx(handle), reqCapacity);
 
         void InitBufWithSubpage(PooledByteBuffer<T> buf, long handle, int bitmapIdx, int reqCapacity)
         {
@@ -432,44 +432,44 @@ namespace DotNetty.Buffers
 
             int memoryMapIdx = MemoryMapIdx(handle);
 
-            PoolSubpage<T> subpage = this.subpages[this.SubpageIdx(memoryMapIdx)];
+            PoolSubpage<T> subpage = _subpages[SubpageIdx(memoryMapIdx)];
             Debug.Assert(subpage.DoNotDestroy);
             Debug.Assert(reqCapacity <= subpage.ElemSize);
 
             buf.Init(
                 this, handle,
-                this.RunOffset(memoryMapIdx) + (bitmapIdx & 0x3FFFFFFF) * subpage.ElemSize + this.Offset, 
-                reqCapacity, subpage.ElemSize, this.Arena.Parent.ThreadCache<T>());
+                RunOffset(memoryMapIdx) + (bitmapIdx & 0x3FFFFFFF) * subpage.ElemSize + Offset, 
+                reqCapacity, subpage.ElemSize, Arena.Parent.ThreadCache<T>());
         }
 
-        sbyte Value(int id) => this.memoryMap[id];
+        sbyte Value(int id) => _memoryMap[id];
 
-        void SetValue(int id, sbyte val) => this.memoryMap[id] = val;
+        void SetValue(int id, sbyte val) => _memoryMap[id] = val;
 
-        sbyte Depth(int id) => this.depthMap[id];
+        sbyte Depth(int id) => _depthMap[id];
 
         // compute the (0-based, with lsb = 0) position of highest set bit i.e, log2
         static int Log2(int val) => IntegerSizeMinusOne - val.NumberOfLeadingZeros();
 
         /// represents the size in #bytes supported by node 'id' in the tree
-        int RunLength(int id) => 1 << this.log2ChunkSize - this.Depth(id);
+        int RunLength(int id) => 1 << _log2ChunkSize - Depth(id);
 
         int RunOffset(int id)
         {
             // represents the 0-based offset in #bytes from start of the byte-array chunk
-            int shift = id ^ 1 << this.Depth(id);
-            return shift * this.RunLength(id);
+            int shift = id ^ 1 << Depth(id);
+            return shift * RunLength(id);
         }
 
-        int SubpageIdx(int memoryMapIdx) => memoryMapIdx ^ this.maxSubpageAllocs; // remove highest set bit, to get offset
+        int SubpageIdx(int memoryMapIdx) => memoryMapIdx ^ _maxSubpageAllocs; // remove highest set bit, to get offset
 
         static int MemoryMapIdx(long handle) => (int)handle;
 
         static int BitmapIdx(long handle) => (int)handle.RightUShift(IntegerExtensions.SizeInBits);
 
-        public int ChunkSize => this.chunkSize;
+        public int ChunkSize => _chunkSize;
 
-        public int FreeBytes => this.freeBytes;
+        public int FreeBytes => _freeBytes;
 
         public override string ToString()
         {
@@ -477,15 +477,15 @@ namespace DotNetty.Buffers
                 .Append("Chunk(")
                 .Append(RuntimeHelpers.GetHashCode(this).ToString("X"))
                 .Append(": ")
-                .Append(this.Usage)
+                .Append(Usage)
                 .Append("%, ")
-                .Append(this.chunkSize - this.freeBytes)
+                .Append(_chunkSize - _freeBytes)
                 .Append('/')
-                .Append(this.chunkSize)
+                .Append(_chunkSize)
                 .Append(')');
             return StringBuilderManager.ReturnAndFree(sb);
         }
 
-        internal void Destroy() =>this.Arena.DestroyChunk(this);
+        internal void Destroy() =>Arena.DestroyChunk(this);
     }
 }

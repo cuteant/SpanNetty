@@ -1,9 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoPropertyWhenPossible
-// ReSharper disable ConvertToAutoProperty
-#pragma warning disable 420
 namespace DotNetty.Transport.Libuv
 {
     using System;
@@ -23,10 +20,14 @@ namespace DotNetty.Transport.Libuv
     class LoopExecutor : AbstractScheduledEventExecutor, IOrderedEventExecutor
     {
         private const int DefaultBreakoutTime = 100; //ms
+
         private static readonly TimeSpan DefaultBreakoutInterval = TimeSpan.FromMilliseconds(DefaultBreakoutTime);
         private static readonly Func<ThreadLocalPool.Handle, WriteRequest> s_valueFactory = handle => new WriteRequest(handle);
 
         protected static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<LoopExecutor>();
+
+        private static readonly XParameterizedThreadStart RunAction = s => Run(s);
+        private static readonly Action<object> OnCallbackAction = s => OnCallback(s);
 
         private const int NotStartedState = 1;
         private const int StartedState = 2;
@@ -101,8 +102,7 @@ namespace DotNetty.Transport.Libuv
 
         internal int LoopThreadId => _thread.Id;
 
-        static readonly XParameterizedThreadStart RunAction = s => Run(s);
-        static void Run(object state)
+        private static void Run(object state)
         {
             var loopExecutor = (LoopExecutor)state;
             loopExecutor.SetCurrentExecutor(loopExecutor);
@@ -114,11 +114,10 @@ namespace DotNetty.Transport.Libuv
                 loopExecutor._scheduler);
         }
 
-        static readonly Action<object> OnCallbackAction = s => OnCallback(s);
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static void OnCallback(object state) => ((LoopExecutor)state).OnCallback();
 
-        void OnCallback()
+        private void OnCallback()
         {
             if (IsShuttingDown)
             {
@@ -148,7 +147,7 @@ namespace DotNetty.Transport.Libuv
 
         internal void WaitForLoopRun(TimeSpan timeout) => _loopRunStart.Wait(timeout);
 
-        void StartLoop()
+        private void StartLoop()
         {
             IntPtr handle = _loop.Handle;
             try
@@ -176,7 +175,7 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        void StopLoop()
+        private void StopLoop()
         {
             try
             {
@@ -191,7 +190,7 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        void ShuttingDown()
+        private void ShuttingDown()
         {
             Debug.Assert(InEventLoop);
 
@@ -232,7 +231,7 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        void CleanupAndTerminate()
+        private void CleanupAndTerminate()
         {
             try
             {
@@ -249,7 +248,7 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        void Cleanup()
+        private void Cleanup()
         {
             IntPtr handle = _loop.Handle;
 
@@ -268,7 +267,7 @@ namespace DotNetty.Transport.Libuv
             if (Logger.InfoEnabled) Logger.LoopDisposed(_thread, handle);
         }
 
-        static void SafeDispose(IDisposable handle)
+        private static void SafeDispose(IDisposable handle)
         {
             try
             {
@@ -281,15 +280,15 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        void UpdateLastExecutionTime() => _lastExecutionTime = GetLoopTime();
+        private void UpdateLastExecutionTime() => _lastExecutionTime = GetLoopTime();
 
-        long GetLoopTime()
+        private long GetLoopTime()
         {
             _loop.UpdateTime();
             return _loop.Now;
         }
 
-        void RunAllTasks(long timeout)
+        private void RunAllTasks(long timeout)
         {
             FetchFromScheduledTaskQueue();
             IRunnable task = PollTask();
@@ -333,7 +332,7 @@ namespace DotNetty.Transport.Libuv
             _lastExecutionTime = executionTime;
         }
 
-        void AfterRunningAllTasks()
+        private void AfterRunningAllTasks()
         {
             if (IsShuttingDown)
             {
@@ -352,7 +351,7 @@ namespace DotNetty.Transport.Libuv
                 if (ScheduledTaskQueue.TryPeek(out IScheduledRunnable nextScheduledTask))
                 {
                     PreciseTimeSpan wakeUpTimeout = nextScheduledTask.Deadline - PreciseTimeSpan.FromStart;
-                    if (wakeUpTimeout.Ticks > 0)
+                    if ((ulong)wakeUpTimeout.Ticks > 0UL)
                     {
                         nextTimeout = (long)wakeUpTimeout.ToTimeSpan().TotalMilliseconds;
                     }
@@ -361,8 +360,10 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        bool FetchFromScheduledTaskQueue()
+        private bool FetchFromScheduledTaskQueue()
         {
+            if (ScheduledTaskQueue.IsEmpty) { return true; }
+
             PreciseTimeSpan nanoTime = PreciseTimeSpan.FromStart;
             IScheduledRunnable scheduledTask = PollScheduledTask(nanoTime);
             while (scheduledTask is object)
@@ -380,7 +381,7 @@ namespace DotNetty.Transport.Libuv
 
         IRunnable PollTask() => PollTaskFrom(_taskQueue);
 
-        bool RunAllTasks()
+        private bool RunAllTasks()
         {
             bool fetchedAll;
             bool ranAtLeastOne = false;
@@ -400,7 +401,7 @@ namespace DotNetty.Transport.Libuv
             return ranAtLeastOne;
         }
 
-        static bool RunAllTasksFrom(IQueue<IRunnable> taskQueue)
+        private static bool RunAllTasksFrom(IQueue<IRunnable> taskQueue)
         {
             IRunnable task = PollTaskFrom(taskQueue);
             if (task is null)
@@ -418,20 +419,21 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        static IRunnable PollTaskFrom(IQueue<IRunnable> taskQueue) =>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private static IRunnable PollTaskFrom(IQueue<IRunnable> taskQueue) =>
             taskQueue.TryDequeue(out IRunnable task) ? task : null;
 
         public override Task TerminationCompletion => _terminationCompletionSource.Task;
 
-        public override bool IsShuttingDown => Volatile.Read(ref v_executionState) >= ShuttingDownState;
+        public override bool IsShuttingDown => (uint)Volatile.Read(ref v_executionState) >= ShuttingDownState;
 
-        public override bool IsShutdown => Volatile.Read(ref v_executionState) >= ShutdownState;
+        public override bool IsShutdown => (uint)Volatile.Read(ref v_executionState) >= ShutdownState;
 
-        public override bool IsTerminated => Volatile.Read(ref v_executionState) == TerminatedState;
+        public override bool IsTerminated => (uint)Volatile.Read(ref v_executionState) >=/*==*/ TerminatedState;
 
         public override bool IsInEventLoop(XThread t) => _thread == t;
 
-        void WakeUp(bool inEventLoop)
+        private void WakeUp(bool inEventLoop)
         {
             // If the executor is not in the event loop, wake up the loop by async handle immediately.
             //
@@ -443,25 +445,23 @@ namespace DotNetty.Transport.Libuv
             }
         }
 
-        protected override IScheduledRunnable Schedule(IScheduledRunnable task)
+        protected sealed override bool BeforeScheduledTaskSubmitted(in PreciseTimeSpan deadline)
         {
-            if (InEventLoop)
-            {
-                ScheduledTaskQueue.TryEnqueue(task);
-                //this.WakeUp(true);
-                if (SharedConstants.False < (uint)Volatile.Read(ref v_wakeUp))
-                {
-                    _asyncHandle.Send();
-                }
-            }
-            else
-            {
-                Execute(EnqueueRunnableAction, this, task);
-            }
-            return task;
+            return true;
         }
 
         public override void Execute(IRunnable task)
+        {
+            InternalExecute(task, !(task is ILazyRunnable));
+        }
+
+        public override void LazyExecute(IRunnable task)
+        {
+            InternalExecute(task, false);
+        }
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private void InternalExecute(IRunnable task, bool immediate)
         {
             if (task is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.task); }
 
@@ -471,10 +471,14 @@ namespace DotNetty.Transport.Libuv
             {
                 ThrowHelper.ThrowRejectedExecutionException_Terminated();
             }
-            WakeUp(inEventLoop);
+            if (immediate)
+            {
+                WakeUp(inEventLoop);
+            }
         }
 
-        void AddTask(IRunnable task)
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        private void AddTask(IRunnable task)
         {
             if (IsShutdown)
             {

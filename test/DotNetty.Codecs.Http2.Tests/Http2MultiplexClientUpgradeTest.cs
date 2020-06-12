@@ -53,8 +53,8 @@ namespace DotNetty.Codecs.Http2.Tests
 
             codec.OnHttpClientUpgrade();
 
-            Assert.False(upgradeHandler._stateOnActive.LocalSideOpen);
-            Assert.True(upgradeHandler._stateOnActive.RemoteSideOpen);
+            Assert.False(upgradeHandler._stateOnActive.LocalSideOpen());
+            Assert.True(upgradeHandler._stateOnActive.RemoteSideOpen());
             Assert.NotNull(codec.Connection.Stream(Http2CodecUtil.HttpUpgradeStreamId).GetProperty<object>(codec._streamKey));
             Assert.Equal(Http2CodecUtil.HttpUpgradeStreamId, upgradeHandler._streamId);
             Assert.True(ch.FinishAndReleaseAll());

@@ -13,23 +13,23 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class DefaultHttp2FrameReader : IHttp2FrameReader, IHttp2FrameSizePolicy, IHttp2FrameReaderConfiguration
     {
-        readonly IHttp2HeadersDecoder headersDecoder;
+        readonly IHttp2HeadersDecoder _headersDecoder;
 
         /// <summary>
         /// <c>true</c> = reading headers, <c>false</c> = reading payload.
         /// </summary>
-        bool readingHeaders = true;
+        bool _readingHeaders = true;
         /// <summary>
         /// Once set to <c>true</c> the value will never change. This is set to <c>true</c> if an unrecoverable error which
         /// renders the connection unusable.
         /// </summary>
-        bool readError;
-        Http2FrameTypes frameType;
-        int streamId;
-        Http2Flags flags;
-        int payloadLength;
-        HeadersContinuation headersContinuation;
-        int maxFrameSize;
+        bool _readError;
+        Http2FrameTypes _frameType;
+        int _streamId;
+        Http2Flags _flags;
+        int _payloadLength;
+        HeadersContinuation _headersContinuation;
+        int _maxFrameSize;
 
         /// <summary>
         /// Create a new instance. Header names will be validated.
@@ -50,11 +50,11 @@ namespace DotNetty.Codecs.Http2
 
         public DefaultHttp2FrameReader(IHttp2HeadersDecoder headersDecoder)
         {
-            this.headersDecoder = headersDecoder;
-            this.maxFrameSize = Http2CodecUtil.DefaultMaxFrameSize;
+            _headersDecoder = headersDecoder;
+            _maxFrameSize = Http2CodecUtil.DefaultMaxFrameSize;
         }
 
-        public IHttp2HeadersDecoderConfiguration HeadersConfiguration => this.headersDecoder.Configuration;
+        public IHttp2HeadersDecoderConfiguration HeadersConfiguration => _headersDecoder.Configuration;
 
         public IHttp2FrameReaderConfiguration Configuration => this;
 
@@ -64,15 +64,15 @@ namespace DotNetty.Codecs.Http2
         {
             if (!Http2CodecUtil.IsMaxFrameSizeValid(max))
             {
-                ThrowHelper.ThrowStreamError_InvalidMaxFrameSizeSpecifiedInSentSettings(this.streamId, max);
+                ThrowHelper.ThrowStreamError_InvalidMaxFrameSizeSpecifiedInSentSettings(_streamId, max);
             }
 
-            this.maxFrameSize = max;
+            _maxFrameSize = max;
         }
 
-        public int MaxFrameSize => this.maxFrameSize;
+        public int MaxFrameSize => _maxFrameSize;
 
-        public void Dispose() => this.Close();
+        public void Dispose() => Close();
 
         protected virtual void Dispose(bool disposing)
         {
@@ -80,23 +80,23 @@ namespace DotNetty.Codecs.Http2
 
         public virtual void Close()
         {
-            this.CloseHeadersContinuation();
-            this.Dispose(true);
+            CloseHeadersContinuation();
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         void CloseHeadersContinuation()
         {
-            if (this.headersContinuation is object)
+            if (_headersContinuation is object)
             {
-                this.headersContinuation.Close();
-                this.headersContinuation = null;
+                _headersContinuation.Close();
+                _headersContinuation = null;
             }
         }
 
         public void ReadFrame(IChannelHandlerContext ctx, IByteBuffer input, IHttp2FrameListener listener)
         {
-            if (this.readError)
+            if (_readError)
             {
                 input.SkipBytes(input.ReadableBytes);
                 return;
@@ -106,10 +106,10 @@ namespace DotNetty.Codecs.Http2
             {
                 do
                 {
-                    if (this.readingHeaders)
+                    if (_readingHeaders)
                     {
-                        this.ProcessHeaderState(input);
-                        if (this.readingHeaders)
+                        ProcessHeaderState(input);
+                        if (_readingHeaders)
                         {
                             // Wait until the entire header has arrived.
                             return;
@@ -121,8 +121,8 @@ namespace DotNetty.Codecs.Http2
                     // case, we don't want to loop around because there may be no more data
                     // available, causing us to exit the loop. Instead, we just want to perform
                     // the first pass at payload processing now.
-                    this.ProcessPayloadState(ctx, input, listener);
-                    if (!this.readingHeaders)
+                    ProcessPayloadState(ctx, input, listener);
+                    if (!_readingHeaders)
                     {
                         // Wait until the entire payload has arrived.
                         return;
@@ -132,17 +132,17 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Http2Exception e)
             {
-                this.readError = !Http2Exception.IsStreamError(e);
+                _readError = !Http2Exception.IsStreamError(e);
                 throw;
             }
             catch (Http2RuntimeException)
             {
-                this.readError = true;
+                _readError = true;
                 throw;
             }
             catch (Exception)
             {
-                this.readError = true;
+                _readError = true;
                 throw;
             }
         }
@@ -156,107 +156,107 @@ namespace DotNetty.Codecs.Http2
             }
 
             // Read the header and prepare the unmarshaller to read the frame.
-            this.payloadLength = input.ReadUnsignedMedium();
-            if (this.payloadLength > this.maxFrameSize)
+            _payloadLength = input.ReadUnsignedMedium();
+            if (_payloadLength > _maxFrameSize)
             {
-                ThrowHelper.ThrowConnectionError_FrameLengthExceedsMaximum(this.payloadLength, this.maxFrameSize);
+                ThrowHelper.ThrowConnectionError_FrameLengthExceedsMaximum(_payloadLength, _maxFrameSize);
             }
 
-            this.frameType = (Http2FrameTypes)input.ReadByte();
-            this.flags = new Http2Flags(input.ReadByte());
-            this.streamId = Http2CodecUtil.ReadUnsignedInt(input);
+            _frameType = (Http2FrameTypes)input.ReadByte();
+            _flags = new Http2Flags(input.ReadByte());
+            _streamId = Http2CodecUtil.ReadUnsignedInt(input);
 
             // We have consumed the data, next time we read we will be expecting to read the frame payload.
-            this.readingHeaders = false;
+            _readingHeaders = false;
 
-            switch (this.frameType)
+            switch (_frameType)
             {
                 case Http2FrameTypes.Data:
-                    this.VerifyDataFrame();
+                    VerifyDataFrame();
                     break;
                 case Http2FrameTypes.Headers:
-                    this.VerifyHeadersFrame();
+                    VerifyHeadersFrame();
                     break;
                 case Http2FrameTypes.Priority:
-                    this.VerifyPriorityFrame();
+                    VerifyPriorityFrame();
                     break;
                 case Http2FrameTypes.RstStream:
-                    this.VerifyRstStreamFrame();
+                    VerifyRstStreamFrame();
                     break;
                 case Http2FrameTypes.Settings:
-                    this.VerifySettingsFrame();
+                    VerifySettingsFrame();
                     break;
                 case Http2FrameTypes.PushPromise:
-                    this.VerifyPushPromiseFrame();
+                    VerifyPushPromiseFrame();
                     break;
                 case Http2FrameTypes.Ping:
-                    this.VerifyPingFrame();
+                    VerifyPingFrame();
                     break;
                 case Http2FrameTypes.GoAway:
-                    this.VerifyGoAwayFrame();
+                    VerifyGoAwayFrame();
                     break;
                 case Http2FrameTypes.WindowUpdate:
-                    this.VerifyWindowUpdateFrame();
+                    VerifyWindowUpdateFrame();
                     break;
                 case Http2FrameTypes.Continuation:
-                    this.VerifyContinuationFrame();
+                    VerifyContinuationFrame();
                     break;
                 default:
                     // Unknown frame type, could be an extension.
-                    this.VerifyUnknownFrame();
+                    VerifyUnknownFrame();
                     break;
             }
         }
 
         void ProcessPayloadState(IChannelHandlerContext ctx, IByteBuffer input, IHttp2FrameListener listener)
         {
-            if (input.ReadableBytes < this.payloadLength)
+            if (input.ReadableBytes < _payloadLength)
             {
                 // Wait until the entire payload has been read.
                 return;
             }
 
             // Only process up to payloadLength bytes.
-            int payloadEndIndex = input.ReaderIndex + payloadLength;
+            int payloadEndIndex = input.ReaderIndex + _payloadLength;
 
             // We have consumed the data, next time we read we will be expecting to read a frame header.
-            this.readingHeaders = true;
+            _readingHeaders = true;
 
             // Read the payload and fire the frame event to the listener.
-            switch (this.frameType)
+            switch (_frameType)
             {
                 case Http2FrameTypes.Data:
-                    this.ReadDataFrame(ctx, input, payloadEndIndex, listener);
+                    ReadDataFrame(ctx, input, payloadEndIndex, listener);
                     break;
                 case Http2FrameTypes.Headers:
-                    this.ReadHeadersFrame(ctx, input, payloadEndIndex, listener);
+                    ReadHeadersFrame(ctx, input, payloadEndIndex, listener);
                     break;
                 case Http2FrameTypes.Priority:
-                    this.ReadPriorityFrame(ctx, input, listener);
+                    ReadPriorityFrame(ctx, input, listener);
                     break;
                 case Http2FrameTypes.RstStream:
-                    this.ReadRstStreamFrame(ctx, input, listener);
+                    ReadRstStreamFrame(ctx, input, listener);
                     break;
                 case Http2FrameTypes.Settings:
-                    this.ReadSettingsFrame(ctx, input, listener);
+                    ReadSettingsFrame(ctx, input, listener);
                     break;
                 case Http2FrameTypes.PushPromise:
-                    this.ReadPushPromiseFrame(ctx, input, payloadEndIndex, listener);
+                    ReadPushPromiseFrame(ctx, input, payloadEndIndex, listener);
                     break;
                 case Http2FrameTypes.Ping:
-                    this.ReadPingFrame(ctx, input.ReadLong(), listener);
+                    ReadPingFrame(ctx, input.ReadLong(), listener);
                     break;
                 case Http2FrameTypes.GoAway:
                     ReadGoAwayFrame(ctx, input, payloadEndIndex, listener);
                     break;
                 case Http2FrameTypes.WindowUpdate:
-                    this.ReadWindowUpdateFrame(ctx, input, listener);
+                    ReadWindowUpdateFrame(ctx, input, listener);
                     break;
                 case Http2FrameTypes.Continuation:
-                    this.ReadContinuationFrame(input, payloadEndIndex, listener);
+                    ReadContinuationFrame(input, payloadEndIndex, listener);
                     break;
                 default:
-                    this.ReadUnknownFrame(ctx, input, payloadEndIndex, listener);
+                    ReadUnknownFrame(ctx, input, payloadEndIndex, listener);
                     break;
             }
             input.SetReaderIndex(payloadEndIndex);
@@ -264,222 +264,222 @@ namespace DotNetty.Codecs.Http2
 
         void VerifyDataFrame()
         {
-            this.VerifyAssociatedWithAStream();
-            this.VerifyNotProcessingHeaders();
-            this.VerifyPayloadLength(this.payloadLength);
+            VerifyAssociatedWithAStream();
+            VerifyNotProcessingHeaders();
+            VerifyPayloadLength(_payloadLength);
 
-            if (this.payloadLength < this.flags.GetPaddingPresenceFieldLength())
+            if (_payloadLength < _flags.GetPaddingPresenceFieldLength())
             {
-                ThrowHelper.ThrowStreamError_FrameLengthTooSmall(this.streamId, this.payloadLength);
+                ThrowHelper.ThrowStreamError_FrameLengthTooSmall(_streamId, _payloadLength);
             }
         }
 
         void VerifyHeadersFrame()
         {
-            this.VerifyAssociatedWithAStream();
-            this.VerifyNotProcessingHeaders();
-            this.VerifyPayloadLength(this.payloadLength);
+            VerifyAssociatedWithAStream();
+            VerifyNotProcessingHeaders();
+            VerifyPayloadLength(_payloadLength);
 
-            int requiredLength = this.flags.GetPaddingPresenceFieldLength() + this.flags.GetNumPriorityBytes();
-            if (this.payloadLength < requiredLength)
+            int requiredLength = _flags.GetPaddingPresenceFieldLength() + _flags.GetNumPriorityBytes();
+            if (_payloadLength < requiredLength)
             {
-                ThrowHelper.ThrowStreamError_FrameLengthTooSmall(this.streamId, this.payloadLength);
+                ThrowHelper.ThrowStreamError_FrameLengthTooSmall(_streamId, _payloadLength);
             }
         }
 
         void VerifyPriorityFrame()
         {
-            this.VerifyAssociatedWithAStream();
-            this.VerifyNotProcessingHeaders();
+            VerifyAssociatedWithAStream();
+            VerifyNotProcessingHeaders();
 
-            if (this.payloadLength != Http2CodecUtil.PriorityEntryLength)
+            if (_payloadLength != Http2CodecUtil.PriorityEntryLength)
             {
-                ThrowHelper.ThrowStreamError_InvalidFrameLength(this.streamId, this.payloadLength);
+                ThrowHelper.ThrowStreamError_InvalidFrameLength(_streamId, _payloadLength);
             }
         }
 
         void VerifyRstStreamFrame()
         {
-            this.VerifyAssociatedWithAStream();
-            this.VerifyNotProcessingHeaders();
+            VerifyAssociatedWithAStream();
+            VerifyNotProcessingHeaders();
 
-            if (this.payloadLength != Http2CodecUtil.IntFieldLength)
+            if (_payloadLength != Http2CodecUtil.IntFieldLength)
             {
-                ThrowHelper.ThrowConnectionError_InvalidFrameLength(this.payloadLength);
+                ThrowHelper.ThrowConnectionError_InvalidFrameLength(_payloadLength);
             }
         }
 
         void VerifySettingsFrame()
         {
-            this.VerifyNotProcessingHeaders();
-            this.VerifyPayloadLength(this.payloadLength);
-            if (this.streamId != 0)
+            VerifyNotProcessingHeaders();
+            VerifyPayloadLength(_payloadLength);
+            if (_streamId != 0)
             {
                 ThrowHelper.ThrowConnectionError_AStreamIDMustBeZero();
             }
 
-            if (this.flags.Ack() && this.payloadLength > 0)
+            if (_flags.Ack() && _payloadLength > 0)
             {
                 ThrowHelper.ThrowConnectionError_AckSettingsFrameMustHaveAnEmptyPayload();
             }
 
-            if (this.payloadLength % Http2CodecUtil.SettingEntryLength > 0)
+            if (_payloadLength % Http2CodecUtil.SettingEntryLength > 0)
             {
-                ThrowHelper.ThrowConnectionError_InvalidFrameLength(this.payloadLength);
+                ThrowHelper.ThrowConnectionError_InvalidFrameLength(_payloadLength);
             }
         }
 
         void VerifyPushPromiseFrame()
         {
-            this.VerifyNotProcessingHeaders();
-            this.VerifyPayloadLength(this.payloadLength);
+            VerifyNotProcessingHeaders();
+            VerifyPayloadLength(_payloadLength);
 
             // Subtract the length of the promised stream ID field, to determine the length of the
             // rest of the payload (header block fragment + payload).
-            int minLength = this.flags.GetPaddingPresenceFieldLength() + Http2CodecUtil.IntFieldLength;
-            if (this.payloadLength < minLength)
+            int minLength = _flags.GetPaddingPresenceFieldLength() + Http2CodecUtil.IntFieldLength;
+            if (_payloadLength < minLength)
             {
-                ThrowHelper.ThrowStreamError_FrameLengthTooSmall(this.streamId, this.payloadLength);
+                ThrowHelper.ThrowStreamError_FrameLengthTooSmall(_streamId, _payloadLength);
             }
         }
 
         void VerifyPingFrame()
         {
-            this.VerifyNotProcessingHeaders();
-            if (this.streamId != 0)
+            VerifyNotProcessingHeaders();
+            if (_streamId != 0)
             {
                 ThrowHelper.ThrowConnectionError_AStreamIDMustBeZero();
             }
 
-            if (this.payloadLength != Http2CodecUtil.PingFramePayloadLength)
+            if (_payloadLength != Http2CodecUtil.PingFramePayloadLength)
             {
-                ThrowHelper.ThrowConnectionError_FrameLengthIncorrectSizeForPing(this.payloadLength);
+                ThrowHelper.ThrowConnectionError_FrameLengthIncorrectSizeForPing(_payloadLength);
             }
         }
 
         void VerifyGoAwayFrame()
         {
-            this.VerifyNotProcessingHeaders();
-            this.VerifyPayloadLength(this.payloadLength);
+            VerifyNotProcessingHeaders();
+            VerifyPayloadLength(_payloadLength);
 
-            if (this.streamId != 0)
+            if (_streamId != 0)
             {
                 ThrowHelper.ThrowConnectionError_AStreamIDMustBeZero();
             }
 
-            if (this.payloadLength < 8)
+            if (_payloadLength < 8)
             {
-                ThrowHelper.ThrowConnectionError_FrameLengthTooSmall(this.payloadLength);
+                ThrowHelper.ThrowConnectionError_FrameLengthTooSmall(_payloadLength);
             }
         }
 
         void VerifyWindowUpdateFrame()
         {
-            this.VerifyNotProcessingHeaders();
-            if (this.streamId < 0) { ThrowHelper.ThrowConnectionError_StreamIdPositiveOrZero(this.streamId); }
+            VerifyNotProcessingHeaders();
+            if (_streamId < 0) { ThrowHelper.ThrowConnectionError_StreamIdPositiveOrZero(); }
 
-            if (this.payloadLength != Http2CodecUtil.IntFieldLength)
+            if (_payloadLength != Http2CodecUtil.IntFieldLength)
             {
-                ThrowHelper.ThrowConnectionError_InvalidFrameLength(this.payloadLength);
+                ThrowHelper.ThrowConnectionError_InvalidFrameLength(_payloadLength);
             }
         }
 
         void VerifyContinuationFrame()
         {
-            this.VerifyAssociatedWithAStream();
-            this.VerifyPayloadLength(this.payloadLength);
+            VerifyAssociatedWithAStream();
+            VerifyPayloadLength(_payloadLength);
 
-            if (this.headersContinuation is null)
+            if (_headersContinuation is null)
             {
-                ThrowHelper.ThrowConnectionError_ReceivedFrameButNotCurrentlyProcessingHeaders(this.frameType);
+                ThrowHelper.ThrowConnectionError_ReceivedFrameButNotCurrentlyProcessingHeaders(_frameType);
             }
 
-            var expectedStreamId = this.headersContinuation.GetStreamId();
-            if (this.streamId != expectedStreamId)
+            var expectedStreamId = _headersContinuation.GetStreamId();
+            if (_streamId != expectedStreamId)
             {
-                ThrowHelper.ThrowConnectionError_ContinuationStreamIDDoesNotMatchPendingHeaders(expectedStreamId, this.streamId);
+                ThrowHelper.ThrowConnectionError_ContinuationStreamIDDoesNotMatchPendingHeaders(expectedStreamId, _streamId);
             }
 
-            if (this.payloadLength < this.flags.GetPaddingPresenceFieldLength())
+            if (_payloadLength < _flags.GetPaddingPresenceFieldLength())
             {
-                ThrowHelper.ThrowStreamError_FrameLengthTooSmallForPadding(this.streamId, this.payloadLength);
+                ThrowHelper.ThrowStreamError_FrameLengthTooSmallForPadding(_streamId, _payloadLength);
             }
         }
 
         void VerifyUnknownFrame()
         {
-            this.VerifyNotProcessingHeaders();
+            VerifyNotProcessingHeaders();
         }
 
         void ReadDataFrame(IChannelHandlerContext ctx, IByteBuffer payload, int payloadEndIndex, IHttp2FrameListener listener)
         {
-            int padding = this.ReadPadding(payload);
-            this.VerifyPadding(padding);
+            int padding = ReadPadding(payload);
+            VerifyPadding(padding);
 
             // Determine how much data there is to read by removing the trailing
             // padding.
             int dataLength = LengthWithoutTrailingPadding(payloadEndIndex - payload.ReaderIndex, padding);
 
             IByteBuffer data = payload.ReadSlice(dataLength);
-            listener.OnDataRead(ctx, this.streamId, data, padding, this.flags.EndOfStream());
+            listener.OnDataRead(ctx, _streamId, data, padding, _flags.EndOfStream());
         }
 
         sealed class PriorityHeadersFrameHeadersContinuation : HeadersContinuation
         {
-            readonly int streamDependency;
-            readonly short weight;
-            readonly bool exclusive;
-            readonly Http2Flags headersFlags;
+            readonly int _streamDependency;
+            readonly short _weight;
+            readonly bool _exclusive;
+            readonly Http2Flags _headersFlags;
 
             public PriorityHeadersFrameHeadersContinuation(DefaultHttp2FrameReader reader,
                 IChannelHandlerContext ctx, int streamId, int padding, int streamDependency,
                 short weight, bool exclusive, Http2Flags headersFlags)
                 : base(reader, ctx, streamId, padding)
             {
-                this.streamDependency = streamDependency;
-                this.weight = weight;
-                this.exclusive = exclusive;
-                this.headersFlags = headersFlags;
+                _streamDependency = streamDependency;
+                _weight = weight;
+                _exclusive = exclusive;
+                _headersFlags = headersFlags;
             }
 
             public override void ProcessFragment(bool endOfHeaders, IByteBuffer fragment, int len, IHttp2FrameListener listener)
             {
-                this.builder.AddFragment(fragment, len, this.ctx.Allocator, endOfHeaders);
+                _builder.AddFragment(fragment, len, _ctx.Allocator, endOfHeaders);
                 if (endOfHeaders)
                 {
-                    listener.OnHeadersRead(this.ctx, this.streamId, this.builder.Headers(), this.streamDependency,
-                        this.weight, this.exclusive, this.padding, this.headersFlags.EndOfStream());
+                    listener.OnHeadersRead(_ctx, _streamId, _builder.Headers(), _streamDependency,
+                        _weight, _exclusive, _padding, _headersFlags.EndOfStream());
                 }
             }
         }
 
         sealed class HeadersFrameHeadersContinuation : HeadersContinuation
         {
-            readonly Http2Flags headersFlags;
+            readonly Http2Flags _headersFlags;
 
             public HeadersFrameHeadersContinuation(DefaultHttp2FrameReader reader,
                 IChannelHandlerContext ctx, int streamId, int padding, Http2Flags headersFlags)
                 : base(reader, ctx, streamId, padding)
             {
-                this.headersFlags = headersFlags;
+                _headersFlags = headersFlags;
             }
 
             public override void ProcessFragment(bool endOfHeaders, IByteBuffer fragment, int len, IHttp2FrameListener listener)
             {
-                this.builder.AddFragment(fragment, len, this.ctx.Allocator, endOfHeaders);
+                _builder.AddFragment(fragment, len, _ctx.Allocator, endOfHeaders);
                 if (endOfHeaders)
                 {
-                    listener.OnHeadersRead(this.ctx, this.streamId, this.builder.Headers(), this.padding, this.headersFlags.EndOfStream());
+                    listener.OnHeadersRead(_ctx, _streamId, _builder.Headers(), _padding, _headersFlags.EndOfStream());
                 }
             }
         }
 
         void ReadHeadersFrame(IChannelHandlerContext ctx, IByteBuffer payload, int payloadEndIndex, IHttp2FrameListener listener)
         {
-            int headersStreamId = this.streamId;
-            Http2Flags headersFlags = this.flags;
-            int padding = this.ReadPadding(payload);
-            this.VerifyPadding(padding);
+            int headersStreamId = _streamId;
+            Http2Flags headersFlags = _flags;
+            int padding = ReadPadding(payload);
+            VerifyPadding(padding);
 
             // The callback that is invoked is different depending on whether priority information
             // is present in the headers frame.
@@ -497,31 +497,31 @@ namespace DotNetty.Codecs.Http2
                 int lenToRead = LengthWithoutTrailingPadding(payloadEndIndex - payload.ReaderIndex, padding);
 
                 // Create a handler that invokes the listener when the header block is complete.
-                this.headersContinuation = new PriorityHeadersFrameHeadersContinuation(this,
+                _headersContinuation = new PriorityHeadersFrameHeadersContinuation(this,
                     ctx, headersStreamId, padding, streamDependency, weight, exclusive, headersFlags);
 
                 // Process the initial fragment, invoking the listener's callback if end of headers.
-                this.headersContinuation.ProcessFragment(headersFlags.EndOfHeaders(), payload, lenToRead, listener);
-                this.ResetHeadersContinuationIfEnd(headersFlags.EndOfHeaders());
+                _headersContinuation.ProcessFragment(headersFlags.EndOfHeaders(), payload, lenToRead, listener);
+                ResetHeadersContinuationIfEnd(headersFlags.EndOfHeaders());
                 return;
             }
 
             // The priority fields are not present in the frame. Prepare a continuation that invokes
             // the listener callback without priority information.
-            this.headersContinuation = new HeadersFrameHeadersContinuation(this,
+            _headersContinuation = new HeadersFrameHeadersContinuation(this,
                 ctx, headersStreamId, padding, headersFlags);
 
             // Process the initial fragment, invoking the listener's callback if end of headers.
             int dataLength = LengthWithoutTrailingPadding(payloadEndIndex - payload.ReaderIndex, padding);
-            this.headersContinuation.ProcessFragment(headersFlags.EndOfHeaders(), payload, dataLength, listener);
-            this.ResetHeadersContinuationIfEnd(headersFlags.EndOfHeaders());
+            _headersContinuation.ProcessFragment(headersFlags.EndOfHeaders(), payload, dataLength, listener);
+            ResetHeadersContinuationIfEnd(headersFlags.EndOfHeaders());
         }
 
         void ResetHeadersContinuationIfEnd(bool endOfHeaders)
         {
             if (endOfHeaders)
             {
-                this.CloseHeadersContinuation();
+                CloseHeadersContinuation();
             }
         }
 
@@ -530,30 +530,30 @@ namespace DotNetty.Codecs.Http2
             long word1 = payload.ReadUnsignedInt();
             bool exclusive = (word1 & 0x80000000L) != 0;
             int streamDependency = (int)(word1 & 0x7FFFFFFFL);
-            if (streamDependency == this.streamId)
+            if (streamDependency == _streamId)
             {
-                ThrowHelper.ThrowStreamError_AStreamCannotDependOnItself(this.streamId);
+                ThrowHelper.ThrowStreamError_AStreamCannotDependOnItself(_streamId);
             }
 
             short weight = (short)(payload.ReadByte() + 1);
-            listener.OnPriorityRead(ctx, this.streamId, streamDependency, weight, exclusive);
+            listener.OnPriorityRead(ctx, _streamId, streamDependency, weight, exclusive);
         }
 
         void ReadRstStreamFrame(IChannelHandlerContext ctx, IByteBuffer payload, IHttp2FrameListener listener)
         {
             long errorCode = payload.ReadUnsignedInt();
-            listener.OnRstStreamRead(ctx, this.streamId, (Http2Error)errorCode);
+            listener.OnRstStreamRead(ctx, _streamId, (Http2Error)errorCode);
         }
 
         void ReadSettingsFrame(IChannelHandlerContext ctx, IByteBuffer payload, IHttp2FrameListener listener)
         {
-            if (this.flags.Ack())
+            if (_flags.Ack())
             {
                 listener.OnSettingsAckRead(ctx);
             }
             else
             {
-                int numSettings = this.payloadLength / Http2CodecUtil.SettingEntryLength;
+                int numSettings = _payloadLength / Http2CodecUtil.SettingEntryLength;
                 Http2Settings settings = new Http2Settings();
                 for (int index = 0; index < numSettings; ++index)
                 {
@@ -586,46 +586,46 @@ namespace DotNetty.Codecs.Http2
 
         sealed class PushPromiseFrameHeadersContinuation : HeadersContinuation
         {
-            readonly int promisedStreamId;
+            readonly int _promisedStreamId;
 
             public PushPromiseFrameHeadersContinuation(DefaultHttp2FrameReader reader,
                 IChannelHandlerContext ctx, int streamId, int padding, int promisedStreamId)
                 : base(reader, ctx, streamId, padding)
             {
-                this.promisedStreamId = promisedStreamId;
+                _promisedStreamId = promisedStreamId;
             }
 
             public override void ProcessFragment(bool endOfHeaders, IByteBuffer fragment, int len, IHttp2FrameListener listener)
             {
-                this.builder.AddFragment(fragment, len, this.ctx.Allocator, endOfHeaders);
+                _builder.AddFragment(fragment, len, _ctx.Allocator, endOfHeaders);
                 if (endOfHeaders)
                 {
-                    listener.OnPushPromiseRead(this.ctx, this.streamId, this.promisedStreamId, this.builder.Headers(), this.padding);
+                    listener.OnPushPromiseRead(_ctx, _streamId, _promisedStreamId, _builder.Headers(), _padding);
                 }
             }
         }
 
         void ReadPushPromiseFrame(IChannelHandlerContext ctx, IByteBuffer payload, int payloadEndIndex, IHttp2FrameListener listener)
         {
-            int pushPromiseStreamId = this.streamId;
-            int padding = this.ReadPadding(payload);
-            this.VerifyPadding(padding);
+            int pushPromiseStreamId = _streamId;
+            int padding = ReadPadding(payload);
+            VerifyPadding(padding);
             int promisedStreamId = Http2CodecUtil.ReadUnsignedInt(payload);
 
             // Create a handler that invokes the listener when the header block is complete.
-            this.headersContinuation = new PushPromiseFrameHeadersContinuation(this,
+            _headersContinuation = new PushPromiseFrameHeadersContinuation(this,
                 ctx, pushPromiseStreamId, padding, promisedStreamId);
 
             // Process the initial fragment, invoking the listener's callback if end of headers.
             int dataLength = LengthWithoutTrailingPadding(payloadEndIndex - payload.ReaderIndex, padding);
 
-            this.headersContinuation.ProcessFragment(this.flags.EndOfHeaders(), payload, dataLength, listener);
-            this.ResetHeadersContinuationIfEnd(this.flags.EndOfHeaders());
+            _headersContinuation.ProcessFragment(_flags.EndOfHeaders(), payload, dataLength, listener);
+            ResetHeadersContinuationIfEnd(_flags.EndOfHeaders());
         }
 
         void ReadPingFrame(IChannelHandlerContext ctx, long data, IHttp2FrameListener listener)
         {
-            if (this.flags.Ack())
+            if (_flags.Ack())
             {
                 listener.OnPingAckRead(ctx, data);
             }
@@ -648,23 +648,23 @@ namespace DotNetty.Codecs.Http2
             int windowSizeIncrement = Http2CodecUtil.ReadUnsignedInt(payload);
             if (0u >= (uint)windowSizeIncrement)
             {
-                ThrowHelper.ThrowStreamError_ReceivedWindowUpdateWithDelta0ForStream(this.streamId);
+                ThrowHelper.ThrowStreamError_ReceivedWindowUpdateWithDelta0ForStream(_streamId);
             }
 
-            listener.OnWindowUpdateRead(ctx, this.streamId, windowSizeIncrement);
+            listener.OnWindowUpdateRead(ctx, _streamId, windowSizeIncrement);
         }
 
         void ReadContinuationFrame(IByteBuffer payload, int payloadEndIndex, IHttp2FrameListener listener)
         {
             // Process the initial fragment, invoking the listener's callback if end of headers.
-            this.headersContinuation.ProcessFragment(flags.EndOfHeaders(), payload, payloadEndIndex - payload.ReaderIndex, listener);
-            this.ResetHeadersContinuationIfEnd(this.flags.EndOfHeaders());
+            _headersContinuation.ProcessFragment(_flags.EndOfHeaders(), payload, payloadEndIndex - payload.ReaderIndex, listener);
+            ResetHeadersContinuationIfEnd(_flags.EndOfHeaders());
         }
 
         void ReadUnknownFrame(IChannelHandlerContext ctx, IByteBuffer payload, int payloadEndIndex, IHttp2FrameListener listener)
         {
             payload = payload.ReadSlice(payloadEndIndex - payload.ReaderIndex);
-            listener.OnUnknownFrame(ctx, this.frameType, this.streamId, this.flags, payload);
+            listener.OnUnknownFrame(ctx, _frameType, _streamId, _flags, payload);
         }
 
         /// <summary>
@@ -675,7 +675,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         int ReadPadding(IByteBuffer payload)
         {
-            if (!this.flags.PaddingPresent()) { return 0; }
+            if (!_flags.PaddingPresent()) { return 0; }
 
             return payload.ReadByte() + 1;
         }
@@ -683,7 +683,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(InlineMethod.AggressiveInlining)]
         void VerifyPadding(int padding)
         {
-            int len = LengthWithoutTrailingPadding(this.payloadLength, padding);
+            int len = LengthWithoutTrailingPadding(_payloadLength, padding);
             if ((uint)len > SharedConstants.TooBigOrNegative) // < 0
             {
                 ThrowHelper.ThrowConnectionError_FramePayloadTooSmallForPadding();
@@ -709,23 +709,23 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         abstract class HeadersContinuation
         {
-            protected readonly IChannelHandlerContext ctx;
-            protected readonly int streamId;
-            protected readonly HeadersBlockBuilder builder;
-            protected int padding;
+            protected readonly IChannelHandlerContext _ctx;
+            protected readonly int _streamId;
+            protected readonly HeadersBlockBuilder _builder;
+            protected int _padding;
 
             public HeadersContinuation(DefaultHttp2FrameReader reader, IChannelHandlerContext ctx, int streamId, int padding)
             {
-                this.builder = new HeadersBlockBuilder(reader);
-                this.ctx = ctx;
-                this.streamId = streamId;
-                this.padding = padding;
+                _builder = new HeadersBlockBuilder(reader);
+                _ctx = ctx;
+                _streamId = streamId;
+                _padding = padding;
             }
 
             /// <summary>
             /// Returns the stream for which headers are currently being processed.
             /// </summary>
-            internal int GetStreamId() => this.streamId;
+            internal int GetStreamId() => _streamId;
 
             /// <summary>
             /// Processes the next fragment for the current header block.
@@ -741,7 +741,7 @@ namespace DotNetty.Codecs.Http2
             /// </summary>
             internal void Close()
             {
-                this.builder.Close();
+                _builder.Close();
             }
         }
 
@@ -751,12 +751,12 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         sealed class HeadersBlockBuilder
         {
-            readonly DefaultHttp2FrameReader reader;
-            IByteBuffer headerBlock;
+            readonly DefaultHttp2FrameReader _reader;
+            IByteBuffer _headerBlock;
 
             public HeadersBlockBuilder(DefaultHttp2FrameReader reader)
             {
-                this.reader = reader;
+                _reader = reader;
             }
 
             /// <summary>
@@ -765,8 +765,8 @@ namespace DotNetty.Codecs.Http2
             /// <exception cref="Http2Exception">A connection error indicating too much data has been received.</exception>
             void HeaderSizeExceeded()
             {
-                this.Close();
-                Http2CodecUtil.HeaderListSizeExceeded(this.reader.headersDecoder.Configuration.MaxHeaderListSizeGoAway);
+                Close();
+                Http2CodecUtil.HeaderListSizeExceeded(_reader._headersDecoder.Configuration.MaxHeaderListSizeGoAway);
             }
 
             /// <summary>
@@ -780,43 +780,43 @@ namespace DotNetty.Codecs.Http2
             /// block. In that case, the buffer is used directly without copying.</param>
             internal void AddFragment(IByteBuffer fragment, int len, IByteBufferAllocator alloc, bool endOfHeaders)
             {
-                if (this.headerBlock is null)
+                if (_headerBlock is null)
                 {
-                    if (len > this.reader.headersDecoder.Configuration.MaxHeaderListSizeGoAway)
+                    if (len > _reader._headersDecoder.Configuration.MaxHeaderListSizeGoAway)
                     {
-                        this.HeaderSizeExceeded();
+                        HeaderSizeExceeded();
                     }
 
                     if (endOfHeaders)
                     {
                         // Optimization - don't bother copying, just use the buffer as-is. Need
                         // to retain since we release when the header block is built.
-                        this.headerBlock = fragment.ReadRetainedSlice(len);
+                        _headerBlock = fragment.ReadRetainedSlice(len);
                     }
                     else
                     {
-                        this.headerBlock = alloc.Buffer(len).WriteBytes(fragment, len);
+                        _headerBlock = alloc.Buffer(len).WriteBytes(fragment, len);
                     }
                     return;
                 }
 
-                if (this.reader.headersDecoder.Configuration.MaxHeaderListSizeGoAway - len < this.headerBlock.ReadableBytes)
+                if (_reader._headersDecoder.Configuration.MaxHeaderListSizeGoAway - len < _headerBlock.ReadableBytes)
                 {
-                    this.HeaderSizeExceeded();
+                    HeaderSizeExceeded();
                 }
 
-                if (this.headerBlock.IsWritable(len))
+                if (_headerBlock.IsWritable(len))
                 {
                     // The buffer can hold the requested bytes, just write it directly.
-                    this.headerBlock.WriteBytes(fragment, len);
+                    _headerBlock.WriteBytes(fragment, len);
                 }
                 else
                 {
                     // Allocate a new buffer that is big enough to hold the entire header block so far.
-                    IByteBuffer buf = alloc.Buffer(this.headerBlock.ReadableBytes + len);
-                    buf.WriteBytes(this.headerBlock).WriteBytes(fragment, len);
-                    this.headerBlock.Release();
-                    this.headerBlock = buf;
+                    IByteBuffer buf = alloc.Buffer(_headerBlock.ReadableBytes + len);
+                    buf.WriteBytes(_headerBlock).WriteBytes(fragment, len);
+                    _headerBlock.Release();
+                    _headerBlock = buf;
                 }
             }
 
@@ -828,11 +828,11 @@ namespace DotNetty.Codecs.Http2
             {
                 try
                 {
-                    return this.reader.headersDecoder.DecodeHeaders(this.reader.streamId, this.headerBlock);
+                    return _reader._headersDecoder.DecodeHeaders(_reader._streamId, _headerBlock);
                 }
                 finally
                 {
-                    this.Close();
+                    Close();
                 }
             }
 
@@ -841,35 +841,35 @@ namespace DotNetty.Codecs.Http2
             /// </summary>
             internal void Close()
             {
-                if (this.headerBlock is object)
+                if (_headerBlock is object)
                 {
-                    this.headerBlock.Release();
-                    this.headerBlock = null;
+                    _headerBlock.Release();
+                    _headerBlock = null;
                 }
 
                 // Clear the member variable pointing at this instance.
-                this.reader.headersContinuation = null;
+                _reader._headersContinuation = null;
             }
         }
 
         /// <summary>
         /// Verify that current state is not processing on header block
         /// </summary>
-        /// <exception cref="Http2Exception">if <see cref="headersContinuation"/> is not null</exception>
+        /// <exception cref="Http2Exception">if <see cref="_headersContinuation"/> is not null</exception>
         [MethodImpl(InlineMethod.AggressiveInlining)]
         void VerifyNotProcessingHeaders()
         {
-            if (this.headersContinuation is object)
+            if (_headersContinuation is object)
             {
                 ThrowHelper.ThrowConnectionError_ReceivedFrameTypeWhileProcessingHeadersOnStream(
-                    this.frameType, this.headersContinuation.GetStreamId());
+                    _frameType, _headersContinuation.GetStreamId());
             }
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         void VerifyPayloadLength(int payloadLength)
         {
-            if ((uint)payloadLength > (uint)this.maxFrameSize)
+            if ((uint)payloadLength > (uint)_maxFrameSize)
             {
                 ThrowHelper.ThrowConnectionError_TotalPayloadLengthExceedsMaxFrameLength(payloadLength);
             }
@@ -878,9 +878,9 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         void VerifyAssociatedWithAStream()
         {
-            if (0u >= (uint)this.streamId)
+            if (0u >= (uint)_streamId)
             {
-                ThrowHelper.ThrowConnectionError_FrameTypeMustBeAssociatedWithAStream(this.frameType);
+                ThrowHelper.ThrowConnectionError_FrameTypeMustBeAssociatedWithAStream(_frameType);
             }
         }
     }

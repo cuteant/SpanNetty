@@ -11,8 +11,8 @@ namespace DotNetty.Codecs.Mqtt.Packets
         {
             if (string.IsNullOrEmpty(topicFilter)) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.topicFilter); }
 
-            this.TopicFilter = topicFilter;
-            this.QualityOfService = qualityOfService;
+            TopicFilter = topicFilter;
+            QualityOfService = qualityOfService;
         }
 
         public string TopicFilter { get; }
@@ -21,8 +21,8 @@ namespace DotNetty.Codecs.Mqtt.Packets
 
         public bool Equals(SubscriptionRequest other)
         {
-            return this.QualityOfService == other.QualityOfService
-                && string.Equals(this.TopicFilter, other.TopicFilter
+            return QualityOfService == other.QualityOfService
+                && string.Equals(TopicFilter, other.TopicFilter
 #if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
                     );
 #else
@@ -32,7 +32,7 @@ namespace DotNetty.Codecs.Mqtt.Packets
 
         public override string ToString()
         {
-            return $"{this.GetType().Name}[TopicFilter={this.TopicFilter}, QualityOfService={this.QualityOfService}]";
+            return $"{GetType().Name}[TopicFilter={TopicFilter}, QualityOfService={QualityOfService}]";
         }
     }
 }

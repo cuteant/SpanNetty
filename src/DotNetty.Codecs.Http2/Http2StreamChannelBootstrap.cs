@@ -42,7 +42,7 @@ namespace DotNetty.Codecs.Http2
         public Http2StreamChannelBootstrap(IChannel channel)
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
-            this._channel = channel;
+            _channel = channel;
         }
 
         /// <summary>
@@ -59,11 +59,11 @@ namespace DotNetty.Codecs.Http2
 
             if (value is null)
             {
-                this._options.TryRemove(option, out _);
+                _options.TryRemove(option, out _);
             }
             else
             {
-                this._options[option] = new ChannelOptionValue<T>(option, value);
+                _options[option] = new ChannelOptionValue<T>(option, value);
             }
             return this;
         }
@@ -83,11 +83,11 @@ namespace DotNetty.Codecs.Http2
 
             if (value is null)
             {
-                this._attrs.TryRemove(key, out _);
+                _attrs.TryRemove(key, out _);
             }
             else
             {
-                this._attrs[key] = new AttributeValue<T>(key, value);
+                _attrs[key] = new AttributeValue<T>(key, value);
             }
             return this;
         }
@@ -101,7 +101,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (handler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
 
-            this.InternalHandler = handler;
+            InternalHandler = handler;
             return this;
         }
 
@@ -191,7 +191,7 @@ namespace DotNetty.Codecs.Http2
             }
             try
             {
-                this.Init(streamChannel);
+                Init(streamChannel);
             }
             catch (Exception e)
             {
@@ -264,18 +264,18 @@ namespace DotNetty.Codecs.Http2
         void Init(IChannel channel)
         {
             var p = channel.Pipeline;
-            var handler = this.InternalHandler;
+            var handler = InternalHandler;
             if (handler is object)
             {
                 p.AddLast(handler);
             }
 
-            var options = this._options.Values;
+            var options = _options.Values;
             foreach (var item in options)
             {
                 SetChannelOption(channel, item);
             }
-            var attrs = this._attrs.Values;
+            var attrs = _attrs.Values;
             foreach (var item in attrs)
             {
                 item.Set(channel);
@@ -319,17 +319,17 @@ namespace DotNetty.Codecs.Http2
         sealed class ChannelOptionValue<T> : ChannelOptionValue
         {
             public override ChannelOption Option { get; }
-            readonly T value;
+            readonly T _value;
 
             public ChannelOptionValue(ChannelOption<T> option, T value)
             {
-                this.Option = option;
-                this.value = value;
+                Option = option;
+                _value = value;
             }
 
-            public override bool Set(IChannelConfiguration config) => config.SetOption(this.Option, this.value);
+            public override bool Set(IChannelConfiguration config) => config.SetOption(Option, _value);
 
-            public override string ToString() => this.value.ToString();
+            public override string ToString() => _value.ToString();
         }
 
         abstract class AttributeValue
@@ -340,16 +340,16 @@ namespace DotNetty.Codecs.Http2
         sealed class AttributeValue<T> : AttributeValue
            where T : class
         {
-            readonly AttributeKey<T> key;
-            readonly T value;
+            readonly AttributeKey<T> _key;
+            readonly T _value;
 
             public AttributeValue(AttributeKey<T> key, T value)
             {
-                this.key = key;
-                this.value = value;
+                _key = key;
+                _value = value;
             }
 
-            public override void Set(IAttributeMap config) => config.GetAttribute(this.key).Set(this.value);
+            public override void Set(IAttributeMap config) => config.GetAttribute(_key).Set(_value);
         }
 
     }

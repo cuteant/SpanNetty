@@ -9,7 +9,7 @@ namespace DotNetty.Transport.Channels.Pool
     /// <summary>
     /// Allows the acquisition and release of <see cref="IChannel"/> instances, and so act as a pool of these.
     /// </summary>
-    public interface IChannelPool : IDisposable
+    public interface IChannelPool
     {
         /// <summary>
         /// Acquires an <see cref="IChannel"/> from this <see cref="IChannelPool"/>.
@@ -29,6 +29,10 @@ namespace DotNetty.Transport.Channels.Pool
         /// <returns>
         /// <c>true</c> if the <see cref="IChannel"/> was successfully released, otherwise <c>false</c>.
         /// </returns>
-        ValueTask<bool> ReleaseAsync(IChannel channel);
+        Task<bool> ReleaseAsync(IChannel channel);
+
+        void Close();
+
+        Task CloseAsync();
     }
 }

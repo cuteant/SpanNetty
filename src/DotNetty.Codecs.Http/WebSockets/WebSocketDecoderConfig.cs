@@ -5,6 +5,8 @@
     /// </summary>
     public sealed class WebSocketDecoderConfig
     {
+        internal static readonly WebSocketDecoderConfig Default = new WebSocketDecoderConfig(65536, true, false, false, true, true);
+
         private WebSocketDecoderConfig(int maxFramePayloadLength, bool expectMaskedFrames, bool allowMaskMismatch,
                                        bool allowExtensions, bool closeOnProtocolViolation, bool withUTF8Validator)
         {
@@ -20,36 +22,36 @@
         /// Maximum length of a frame's payload. Setting this to an appropriate value for you application
         /// helps check for denial of services attacks.
         /// </summary>
-        public int MaxFramePayloadLength { get; }
+        public readonly int MaxFramePayloadLength;
 
         /// <summary>
         /// Web socket servers must set this to true processed incoming masked payload. Client implementations
         /// must set this to false.
         /// </summary>
-        public bool ExpectMaskedFrames { get; }
+        public readonly bool ExpectMaskedFrames;
 
         /// <summary>
         /// Allows to loosen the masking requirement on received frames. When this is set to false then also
         /// frames which are not masked properly according to the standard will still be accepted.
         /// </summary>
-        public bool AllowMaskMismatch { get; }
+        public readonly bool AllowMaskMismatch;
 
         /// <summary>
         /// Flag to allow reserved extension bits to be used or not
         /// </summary>
-        public bool AllowExtensions { get; }
+        public readonly bool AllowExtensions;
 
         /// <summary>
         /// Flag to send close frame immediately on any protocol violation.ion.
         /// </summary>
-        public bool CloseOnProtocolViolation { get; }
+        public readonly bool CloseOnProtocolViolation;
 
         /// <summary>
         /// Allows you to avoid adding of Utf8FrameValidator to the pipeline on the
-        /// WebSocketServerProtocolHandler creation. This is useful (less overhead)
+        /// <see cref="WebSocketServerProtocolHandler"/> creation. This is useful (less overhead)
         /// when you use only BinaryWebSocketFrame within your web socket connection.
         /// </summary>
-        public bool WithUTF8Validator { get; }
+        public readonly bool WithUTF8Validator;
 
         /// <inheritdoc />
         public override string ToString()
@@ -64,19 +66,17 @@
 
         public static Builder NewBuilder()
         {
-            return new Builder();
+            return new Builder(Default);
         }
 
         public sealed class Builder
         {
-            private int _maxFramePayloadLength = 65536;
-            private bool _expectMaskedFrames = true;
+            private int _maxFramePayloadLength;
+            private bool _expectMaskedFrames;
             private bool _allowMaskMismatch;
             private bool _allowExtensions;
-            private bool _closeOnProtocolViolation = true;
-            private bool _withUTF8Validator = true;
-
-            internal Builder() { }
+            private bool _closeOnProtocolViolation;
+            private bool _withUTF8Validator;
 
             internal Builder(WebSocketDecoderConfig decoderConfig)
             {
@@ -90,42 +90,68 @@
                 _withUTF8Validator = decoderConfig.WithUTF8Validator;
             }
 
+            /// <summary>
+            /// Maximum length of a frame's payload. Setting this to an appropriate value for you application
+            /// helps check for denial of services attacks.
+            /// </summary>
             public Builder MaxFramePayloadLength(int maxFramePayloadLength)
             {
                 _maxFramePayloadLength = maxFramePayloadLength;
                 return this;
             }
 
+            /// <summary>
+            /// Web socket servers must set this to true processed incoming masked payload. Client implementations
+            /// must set this to false.
+            /// </summary>
             public Builder ExpectMaskedFrames(bool expectMaskedFrames)
             {
                 _expectMaskedFrames = expectMaskedFrames;
                 return this;
             }
 
+            /// <summary>
+            /// Allows to loosen the masking requirement on received frames. When this is set to false then also
+            /// frames which are not masked properly according to the standard will still be accepted.
+            /// </summary>
             public Builder AllowMaskMismatch(bool allowMaskMismatch)
             {
                 _allowMaskMismatch = allowMaskMismatch;
                 return this;
             }
 
+            /// <summary>
+            /// Flag to allow reserved extension bits to be used or not
+            /// </summary>
             public Builder AllowExtensions(bool allowExtensions)
             {
                 _allowExtensions = allowExtensions;
                 return this;
             }
 
+            /// <summary>
+            /// Flag to send close frame immediately on any protocol violation.ion.
+            /// </summary>
             public Builder CloseOnProtocolViolation(bool closeOnProtocolViolation)
             {
                 _closeOnProtocolViolation = closeOnProtocolViolation;
                 return this;
             }
 
+            /// <summary>
+            /// Allows you to avoid adding of Utf8FrameValidator to the pipeline on the
+            /// <see cref="WebSocketServerProtocolHandler"/> creation. This is useful (less overhead)
+            /// when you use only BinaryWebSocketFrame within your web socket connection.
+            /// </summary>
             public Builder WithUTF8Validator(bool withUTF8Validator)
             {
                 _withUTF8Validator = withUTF8Validator;
                 return this;
             }
 
+            /// <summary>
+            /// Build unmodifiable decoder configuration.
+            /// </summary>
             public WebSocketDecoderConfig Build()
             {
                 return new WebSocketDecoderConfig(

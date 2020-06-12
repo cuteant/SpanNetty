@@ -14,28 +14,37 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
     public class FixedChannelPoolTest : IDisposable
     {
-        static readonly string LOCAL_ADDR_ID = "test.id";
+        readonly IEventLoopGroup _group;
 
-        readonly IEventLoopGroup group;
+        static FixedChannelPoolTest()
+        {
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        }
+
+        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            var exc = e.ExceptionObject;
+            var err = exc.ToString();
+        }
 
         public FixedChannelPoolTest()
         {
-            this.group = new MultithreadEventLoopGroup();
+            _group = new MultithreadEventLoopGroup();
         }
 
         public void Dispose()
         {
-            this.group?.ShutdownGracefullyAsync();
+            _group?.ShutdownGracefullyAsync();
         }
 
         [Fact]
         public async Task TestAcquire()
         {
-            var addr = new LocalAddress(LOCAL_ADDR_ID);
-            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(this.group).Channel<LocalChannel>();
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
+            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(_group).Channel<LocalChannel>();
 
             ServerBootstrap sb = new ServerBootstrap()
-                .Group(this.group)
+                .Group(_group)
                 .Channel<LocalServerChannel>()
                 .ChildHandler(
                     new ActionChannelInitializer<LocalChannel>(
@@ -64,6 +73,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
             await sc.CloseAsync();
             await channel2.CloseAsync();
+            pool.Close();
         }
 
         [Fact]
@@ -80,11 +90,11 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
         private async Task TestAcquireTimeout0(long timeoutMillis)
         {
-            var addr = new LocalAddress(LOCAL_ADDR_ID);
-            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(this.group).Channel<LocalChannel>();
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
+            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(_group).Channel<LocalChannel>();
 
             ServerBootstrap sb = new ServerBootstrap()
-                .Group(this.group)
+                .Group(_group)
                 .Channel<LocalServerChannel>()
                 .ChildHandler(
                     new ActionChannelInitializer<LocalChannel>(
@@ -105,17 +115,18 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             {
                 await sc.CloseAsync();
                 await channel.CloseAsync();
+                pool.Close();
             }
         }
 
         [Fact]
         public async Task TestAcquireNewConnection()
         {
-            var addr = new LocalAddress(LOCAL_ADDR_ID);
-            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(this.group).Channel<LocalChannel>();
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
+            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(_group).Channel<LocalChannel>();
 
             ServerBootstrap sb = new ServerBootstrap()
-                .Group(this.group)
+                .Group(_group)
                 .Channel<LocalServerChannel>()
                 .ChildHandler(
                     new ActionChannelInitializer<LocalChannel>(
@@ -140,6 +151,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await sc.CloseAsync();
             await channel.CloseAsync();
             await channel2.CloseAsync();
+            pool.Close();
         }
 
         /**
@@ -149,11 +161,11 @@ namespace DotNetty.Transport.Tests.Channel.Pool
         [Fact]
         public async Task TestAcquireNewConnectionWhen()
         {
-            var addr = new LocalAddress(LOCAL_ADDR_ID);
-            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(this.group).Channel<LocalChannel>();
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
+            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(_group).Channel<LocalChannel>();
 
             ServerBootstrap sb = new ServerBootstrap()
-                .Group(this.group)
+                .Group(_group)
                 .Channel<LocalServerChannel>()
                 .ChildHandler(
                     new ActionChannelInitializer<LocalChannel>(
@@ -175,16 +187,17 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             Assert.NotSame(channel1, channel2);
             await sc.CloseAsync();
             await channel2.CloseAsync();
+            pool.Close();
         }
 
         [Fact]
         public async Task TestAcquireBoundQueue()
         {
-            var addr = new LocalAddress(LOCAL_ADDR_ID);
-            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(this.group).Channel<LocalChannel>();
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
+            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(_group).Channel<LocalChannel>();
 
             ServerBootstrap sb = new ServerBootstrap()
-                .Group(this.group)
+                .Group(_group)
                 .Channel<LocalServerChannel>()
                 .ChildHandler(
                     new ActionChannelInitializer<LocalChannel>(
@@ -208,17 +221,18 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             {
                 await sc.CloseAsync();
                 await channel.CloseAsync();
+                pool.Close();
             }
         }
 
         [Fact]
         public async Task TestReleaseDifferentPool()
         {
-            var addr = new LocalAddress(LOCAL_ADDR_ID);
-            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(this.group).Channel<LocalChannel>();
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
+            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(_group).Channel<LocalChannel>();
 
             ServerBootstrap sb = new ServerBootstrap()
-                .Group(this.group)
+                .Group(_group)
                 .Channel<LocalServerChannel>()
                 .ChildHandler(
                     new ActionChannelInitializer<LocalChannel>(
@@ -241,17 +255,19 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             {
                 await sc.CloseAsync();
                 await channel.CloseAsync();
+                pool.Close();
+                pool2.Close();
             }
         }
 
         [Fact]
         public async Task TestReleaseAfterClosePool()
         {
-            var addr = new LocalAddress(LOCAL_ADDR_ID);
-            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(this.group).Channel<LocalChannel>();
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
+            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(_group).Channel<LocalChannel>();
 
             ServerBootstrap sb = new ServerBootstrap()
-                .Group(this.group)
+                .Group(_group)
                 .Channel<LocalServerChannel>()
                 .ChildHandler(
                     new ActionChannelInitializer<LocalChannel>(
@@ -263,9 +279,9 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
             var pool = new FixedChannelPool(cb, new TestChannelPoolHandler(), 2);
             IChannel channel = await pool.AcquireAsync();
-            pool.Dispose();
+            pool.Close();
 
-            await group.GetNext().SubmitAsync(() => TaskUtil.Completed);
+            await _group.GetNext().SubmitAsync(() => TaskUtil.Completed);
             var e = await Assert.ThrowsAsync<InvalidOperationException>(async () => await pool.ReleaseAsync(channel));
             Assert.Same(FixedChannelPool.PoolClosedOnReleaseException, e);
 
@@ -273,16 +289,17 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await channel.CloseCompletion;
             Assert.False(channel.Open, "Unexpected open channel");
             await sc.CloseAsync();
+            pool.Close();
         }
 
         [Fact]
         public async Task TestReleaseClosed()
         {
-            var addr = new LocalAddress(LOCAL_ADDR_ID);
-            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(this.group).Channel<LocalChannel>();
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
+            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(_group).Channel<LocalChannel>();
 
             ServerBootstrap sb = new ServerBootstrap()
-                .Group(this.group)
+                .Group(_group)
                 .Channel<LocalServerChannel>()
                 .ChildHandler(
                     new ActionChannelInitializer<LocalChannel>(
@@ -298,6 +315,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await pool.ReleaseAsync(channel);
 
             await sc.CloseAsync();
+            pool.Close();
         }
 
         sealed class TestChannelPoolHandler : IChannelPoolHandler
@@ -318,29 +336,34 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             }
         }
 
-        //[Fact]
-        // TODO public async Task TestCloseAsync()
-        //{
-        //    LocalAddress addr = new LocalAddress(LOCAL_ADDR_ID);
-        //    Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(this.group).Channel<LocalChannel>();
+        [Fact]
+        public async Task TestCloseAsync()
+        {
+            var addr = new LocalAddress(ChannelPoolTestUtils.GetLocalAddrId());
+            Bootstrap cb = new Bootstrap().RemoteAddress(addr).Group(_group).Channel<LocalChannel>();
 
-        //    ServerBootstrap sb = new ServerBootstrap()
-        //        .Group(this.group)
-        //        .Channel<LocalServerChannel>()
-        //        .ChildHandler(
-        //            new ActionChannelInitializer<LocalChannel>(
-        //                ch => ch.Pipeline.AddLast(new ChannelHandlerAdapter()))
-        //        );
+            ServerBootstrap sb = new ServerBootstrap()
+                .Group(_group)
+                .Channel<LocalServerChannel>()
+                .ChildHandler(
+                    new ActionChannelInitializer<LocalChannel>(
+                        ch => ch.Pipeline.AddLast(new ChannelHandlerAdapter()))
+                );
 
-        //    // Start server
-        //    IChannel sc = await sb.BindAsync(addr);
+            // Start server
+            IChannel sc = await sb.BindAsync(addr);
 
-        //    var pool = new FixedChannelPool(cb, new TestChannelPoolHandler(), 2);
-        //    await pool.AcquireAsync();
-        //    await pool.AcquireAsync();
+            var pool = new FixedChannelPool(cb, new TestChannelPoolHandler(), 2);
+            await pool.AcquireAsync();
+            await pool.AcquireAsync();
 
-        //    var closePromise = sc.NewPromise();
-        //    pool.clo
-        //}
+            var closePromise = sc.NewPromise();
+            await pool.CloseAsync();
+
+            Assert.Equal(0, pool.AcquiredChannelCount);
+            await sc.CloseAsync(closePromise);
+
+            Assert.True(closePromise.IsSuccess);
+        }
     }
 }

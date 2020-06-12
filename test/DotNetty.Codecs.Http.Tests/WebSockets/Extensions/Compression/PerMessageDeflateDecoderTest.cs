@@ -4,13 +4,13 @@
 namespace DotNetty.Codecs.Http.Tests.WebSockets.Extensions.Compression
 {
     using System;
-    using System.Runtime.InteropServices;
     using System.Text;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Compression;
     using DotNetty.Codecs.Http.WebSockets;
     using DotNetty.Codecs.Http.WebSockets.Extensions;
     using DotNetty.Codecs.Http.WebSockets.Extensions.Compression;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels.Embedded;
     using Xunit;
 
@@ -306,6 +306,66 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets.Extensions.Compression
 
             // Composite empty buffer
             Assert.True(emptyBufferFrame.Release());
+            Assert.False(decoderChannel.Finish());
+        }
+
+        [Fact]
+        public void FragmentedFrameWithLeftOverInLastFragment()
+        {
+            string hexDump = "677170647a777a737574656b707a787a6f6a7561756578756f6b7868616371716c657a6d64697479766d726f6" +
+                             "269746c6376777464776f6f72767a726f64667278676764687775786f6762766d776d706b76697773777a7072" +
+                             "6a6a737279707a7078697a6c69616d7461656d646278626d786f66666e686e776a7a7461746d7a776668776b6" +
+                             "f6f736e73746575637a6d727a7175707a6e74627578687871767771697a71766c64626d78726d6d7675756877" +
+                             "62667963626b687a726d676e646263776e67797264706d6c6863626577616967706a78636a72697464756e627" +
+                             "977616f79736475676f76736f7178746a7a7479626c64636b6b6778637768746c62";
+            EmbeddedChannel encoderChannel = new EmbeddedChannel(
+                    ZlibCodecFactory.NewZlibEncoder(ZlibWrapper.None, 9, 15, 8));
+            EmbeddedChannel decoderChannel = new EmbeddedChannel(new PerMessageDeflateDecoder(false));
+
+            IByteBuffer originPayload = Unpooled.WrappedBuffer(StringUtil.DecodeHexDump(hexDump));
+            Assert.True(encoderChannel.WriteOutbound(originPayload.Duplicate().Retain()));
+
+            var compressedPayload = encoderChannel.ReadOutbound<IByteBuffer>();
+            compressedPayload = compressedPayload.Slice(0, compressedPayload.ReadableBytes - 4);
+
+            int oneThird = compressedPayload.ReadableBytes / 3;
+
+            TextWebSocketFrame compressedFrame1 = new TextWebSocketFrame(
+                    false, WebSocketRsv.Rsv1, compressedPayload.Slice(0, oneThird));
+            ContinuationWebSocketFrame compressedFrame2 = new ContinuationWebSocketFrame(
+                    false, WebSocketRsv.Rsv3, compressedPayload.Slice(oneThird, oneThird));
+            ContinuationWebSocketFrame compressedFrame3 = new ContinuationWebSocketFrame(
+                    false, WebSocketRsv.Rsv3, compressedPayload.Slice(oneThird * 2, oneThird));
+            int offset = oneThird * 3;
+            ContinuationWebSocketFrame compressedFrameWithExtraData = new ContinuationWebSocketFrame(
+                    true, WebSocketRsv.Rsv3, compressedPayload.Slice(offset,
+                         compressedPayload.ReadableBytes - offset));
+
+            // check that last fragment contains only one extra byte
+            Assert.Equal(1, compressedFrameWithExtraData.Content.ReadableBytes);
+            Assert.Equal(1, compressedFrameWithExtraData.Content.GetByte(0));
+
+            // write compressed frames
+            Assert.True(decoderChannel.WriteInbound(compressedFrame1.Retain()));
+            Assert.True(decoderChannel.WriteInbound(compressedFrame2.Retain()));
+            Assert.True(decoderChannel.WriteInbound(compressedFrame3.Retain()));
+            Assert.True(decoderChannel.WriteInbound(compressedFrameWithExtraData));
+
+            // read uncompressed frames
+            TextWebSocketFrame uncompressedFrame1 = decoderChannel.ReadInbound<TextWebSocketFrame>();
+            ContinuationWebSocketFrame uncompressedFrame2 = decoderChannel.ReadInbound<ContinuationWebSocketFrame>();
+            ContinuationWebSocketFrame uncompressedFrame3 = decoderChannel.ReadInbound<ContinuationWebSocketFrame>();
+            ContinuationWebSocketFrame uncompressedExtraData = decoderChannel.ReadInbound<ContinuationWebSocketFrame>();
+            Assert.False(uncompressedExtraData.Content.IsReadable());
+
+            var uncompressedPayload = Unpooled.WrappedBuffer(uncompressedFrame1.Content, uncompressedFrame2.Content,
+                                          uncompressedFrame3.Content, uncompressedExtraData.Content);
+            Assert.Equal(originPayload, uncompressedPayload);
+
+            Assert.True(originPayload.Release());
+            Assert.True(uncompressedPayload.Release());
+
+            Assert.True(encoderChannel.FinishAndReleaseAll());
             Assert.False(decoderChannel.Finish());
         }
 

@@ -24,9 +24,9 @@ namespace DotNetty.Common
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void AnEventExecutorTerminatedWithNonEmptyTaskQueue(this IInternalLogger logger, int count)
+        public static void AnEventExecutorTerminatedWithNonEmptyTaskQueue(this IInternalLogger logger, int numUserTasks)
         {
-            logger.Warn($"An event executor terminated with non-empty task queue ({count})");
+            logger.Warn($"An event executor terminated with non-empty task queue ({numUserTasks})");
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

@@ -6,27 +6,35 @@ namespace DotNetty.Common.Concurrency
     using System;
     using System.Diagnostics;
     using System.Linq;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
 
     /// <summary>
-    ///     Abstract base class for <see cref="IEventExecutor" />s that need to support scheduling.
+    /// Abstract base class for <see cref="IEventExecutor" />s that need to support scheduling.
     /// </summary>
     public abstract class AbstractScheduledEventExecutor : AbstractEventExecutor
     {
-        protected static readonly Action<object, object> EnqueueRunnableAction = OnEnqueueRunnable;
-        private static readonly Action<object, object> RemoveRunnableAction = OnRemoveRunnable;
+        protected static readonly IRunnable WakeupTask;
 
-        protected readonly IPriorityQueue<IScheduledRunnable> ScheduledTaskQueue = new PriorityQueue<IScheduledRunnable>();
+        static AbstractScheduledEventExecutor()
+        {
+            WakeupTask = new NoOpRunnable();
+        }
+
+        protected internal readonly IPriorityQueue<IScheduledRunnable> ScheduledTaskQueue;
+        private long _nextTaskId;
 
         protected AbstractScheduledEventExecutor()
+            : this(null)
         {
         }
 
         protected AbstractScheduledEventExecutor(IEventExecutorGroup parent)
             : base(parent)
         {
+            ScheduledTaskQueue = new PriorityQueue<IScheduledRunnable>();
         }
 
         protected static PreciseTimeSpan GetNanos() => PreciseTimeSpan.FromStart;
@@ -38,8 +46,8 @@ namespace DotNetty.Common.Concurrency
         }
 
         /// <summary>
-        ///     Cancel all scheduled tasks
-        ///     This method MUST be called only when <see cref="IEventExecutor.InEventLoop" /> is <c>true</c>.
+        /// Cancel all scheduled tasks
+        /// This method MUST be called only when <see cref="IEventExecutor.InEventLoop" /> is <c>true</c>.
         /// </summary>
         protected virtual void CancelScheduledTasks()
         {
@@ -73,6 +81,7 @@ namespace DotNetty.Common.Concurrency
             if (scheduledTask.Deadline <= nanoTime)
             {
                 ScheduledTaskQueue.TryDequeue(out var _);
+                scheduledTask.SetConsumed();
                 return scheduledTask;
             }
             return null;
@@ -84,10 +93,12 @@ namespace DotNetty.Common.Concurrency
             return nextScheduledRunnable?.Deadline ?? PreciseTimeSpan.MinusOne;
         }
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         protected IScheduledRunnable PeekScheduledTask()
         {
-            IPriorityQueue<IScheduledRunnable> scheduledTaskQueue = ScheduledTaskQueue;
-            return !IsNullOrEmpty(scheduledTaskQueue) && scheduledTaskQueue.TryPeek(out IScheduledRunnable task) ? task : null;
+            //IPriorityQueue<IScheduledRunnable> scheduledTaskQueue = ScheduledTaskQueue;
+            //return !IsNullOrEmpty(scheduledTaskQueue) && scheduledTaskQueue.TryPeek(out IScheduledRunnable task) ? task : null;
+            return ScheduledTaskQueue.TryPeek(out IScheduledRunnable task) ? task : null;
         }
 
         protected bool HasScheduledTasks()
@@ -170,22 +181,38 @@ namespace DotNetty.Common.Concurrency
             return Schedule(new StateActionWithContextScheduledAsyncTask(this, action, context, state, PreciseTimeSpan.Deadline(delay), cancellationToken)).Completion;
         }
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        protected internal void ScheduleFromEventLoop(IScheduledRunnable task)
+        {
+            // nextTaskId a long and so there is no chance it will overflow back to 0
+            ScheduledTaskQueue.TryEnqueue(task.SetId(++_nextTaskId));
+        }
+
         protected virtual IScheduledRunnable Schedule(IScheduledRunnable task)
         {
             if (InEventLoop)
             {
-                ScheduledTaskQueue.TryEnqueue(task);
+                ScheduleFromEventLoop(task);
             }
             else
             {
-                Execute(EnqueueRunnableAction, this, task);
+                var deadline = task.Deadline;
+                // task will add itself to scheduled task queue when run if not expired
+                if (BeforeScheduledTaskSubmitted(deadline))
+                {
+                    Execute(task);
+                }
+                else
+                {
+                    LazyExecute(task);
+                    // Second hook after scheduling to facilitate race-avoidance
+                    if (AfterScheduledTaskSubmitted(deadline))
+                    {
+                        Execute(WakeupTask);
+                    }
+                }
             }
             return task;
-        }
-
-        static void OnEnqueueRunnable(object e, object t)
-        {
-            ((AbstractScheduledEventExecutor)e).ScheduledTaskQueue.TryEnqueue((IScheduledRunnable)t);
         }
 
         internal void RemoveScheduled(IScheduledRunnable task)
@@ -196,13 +223,43 @@ namespace DotNetty.Common.Concurrency
             }
             else
             {
-                Execute(RemoveRunnableAction, this, task);
+                // task will remove itself from scheduled task queue when it runs
+                LazyExecute(task);
             }
         }
 
-        static void OnRemoveRunnable(object e, object t)
+        /// <summary>
+        /// Called from arbitrary non-<see cref="IEventExecutor"/> threads prior to scheduled task submission.
+        /// Returns <c>true</c> if the <see cref="IEventExecutor"/> thread should be woken immediately to
+        /// process the scheduled task (if not already awake).
+        /// 
+        /// <para>If <c>false</c> is returned, <see cref="AfterScheduledTaskSubmitted(in PreciseTimeSpan)"/> will be called with
+        /// the same value <i>after</i> the scheduled task is enqueued, providing another opportunity
+        /// to wake the <see cref="IEventExecutor"/> thread if required.</para>
+        /// </summary>
+        /// <param name="deadline">deadline of the to-be-scheduled task
+        /// relative to <see cref="AbstractScheduledEventExecutor.GetNanos()"/></param>
+        /// <returns><c>true</c> if the <see cref="IEventExecutor"/> thread should be woken, <c>false</c> otherwise</returns>
+        protected virtual bool BeforeScheduledTaskSubmitted(in PreciseTimeSpan deadline)
         {
-            ((AbstractScheduledEventExecutor)e).ScheduledTaskQueue.TryRemove((IScheduledRunnable)t);
+            return true;
+        }
+
+        /// <summary>
+        /// See <see cref="BeforeScheduledTaskSubmitted(in PreciseTimeSpan)"/>. Called only after that method returns false.
+        /// </summary>
+        /// <param name="deadline">relative to <see cref="AbstractScheduledEventExecutor.GetNanos()"/></param>
+        /// <returns><c>true</c> if the <see cref="IEventExecutor"/> thread should be woken, <c>false</c> otherwise</returns>
+        protected virtual bool AfterScheduledTaskSubmitted(in PreciseTimeSpan deadline)
+        {
+            return true;
+        }
+
+        sealed class NoOpRunnable : IRunnable
+        {
+            public void Run()
+            {
+            }
         }
     }
 }

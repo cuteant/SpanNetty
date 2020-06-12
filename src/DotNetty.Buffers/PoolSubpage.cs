@@ -9,20 +9,20 @@ namespace DotNetty.Buffers
     sealed class PoolSubpage<T> : IPoolSubpageMetric
     {
         internal readonly PoolChunk<T> Chunk;
-        readonly int memoryMapIdx;
-        readonly int runOffset;
-        readonly int pageSize;
-        readonly long[] bitmap;
+        private readonly int _memoryMapIdx;
+        private readonly int _runOffset;
+        private readonly int _pageSize;
+        private readonly long[] _bitmap;
 
         internal PoolSubpage<T> Prev;
         internal PoolSubpage<T> Next;
 
         internal bool DoNotDestroy;
         internal int ElemSize;
-        int maxNumElems;
-        int bitmapLength;
-        int nextAvail;
-        int numAvail;
+        private int _maxNumElems;
+        private int _bitmapLength;
+        private int _nextAvail;
+        private int _numAvail;
 
         // TODO: Test if adding padding helps under contention
         //private long pad0, pad1, pad2, pad3, pad4, pad5, pad6, pad7;
@@ -31,45 +31,45 @@ namespace DotNetty.Buffers
 
         public PoolSubpage(int pageSize)
         {
-            this.Chunk = null;
-            this.memoryMapIdx = -1;
-            this.runOffset = -1;
-            this.ElemSize = -1;
-            this.pageSize = pageSize;
-            this.bitmap = null;
+            Chunk = null;
+            _memoryMapIdx = -1;
+            _runOffset = -1;
+            ElemSize = -1;
+            _pageSize = pageSize;
+            _bitmap = null;
         }
 
         public PoolSubpage(PoolSubpage<T> head, PoolChunk<T> chunk, int memoryMapIdx, int runOffset, int pageSize, int elemSize)
         {
-            this.Chunk = chunk;
-            this.memoryMapIdx = memoryMapIdx;
-            this.runOffset = runOffset;
-            this.pageSize = pageSize;
-            this.bitmap = new long[pageSize.RightUShift(10)]; // pageSize / 16 / 64
-            this.Init(head, elemSize);
+            Chunk = chunk;
+            _memoryMapIdx = memoryMapIdx;
+            _runOffset = runOffset;
+            _pageSize = pageSize;
+            _bitmap = new long[pageSize.RightUShift(10)]; // pageSize / 16 / 64
+            Init(head, elemSize);
         }
 
         public void Init(PoolSubpage<T> head, int elemSize)
         {
-            this.DoNotDestroy = true;
-            this.ElemSize = elemSize;
+            DoNotDestroy = true;
+            ElemSize = elemSize;
             if (elemSize != 0)
             {
-                this.maxNumElems = this.numAvail = this.pageSize / elemSize;
-                this.nextAvail = 0;
-                this.bitmapLength = this.maxNumElems.RightUShift(6);
-                if ((this.maxNumElems & 63) != 0)
+                _maxNumElems = _numAvail = _pageSize / elemSize;
+                _nextAvail = 0;
+                _bitmapLength = _maxNumElems.RightUShift(6);
+                if ((_maxNumElems & 63) != 0)
                 {
-                    this.bitmapLength++;
+                    _bitmapLength++;
                 }
 
-                for (int i = 0; i < this.bitmapLength; i++)
+                for (int i = 0; i < _bitmapLength; i++)
                 {
-                    this.bitmap[i] = 0;
+                    _bitmap[i] = 0;
                 }
             }
 
-            this.AddToPool(head);
+            AddToPool(head);
         }
 
         /**
@@ -78,28 +78,28 @@ namespace DotNetty.Buffers
 
         internal long Allocate()
         {
-            if (0u >= (uint)this.ElemSize)
+            if (0u >= (uint)ElemSize)
             {
-                return this.ToHandle(0);
+                return ToHandle(0);
             }
 
-            if (0u >= (uint)this.numAvail || !this.DoNotDestroy)
+            if (0u >= (uint)_numAvail || !DoNotDestroy)
             {
                 return -1;
             }
 
-            int bitmapIdx = this.GetNextAvail();
+            int bitmapIdx = GetNextAvail();
             int q = bitmapIdx.RightUShift(6);
             int r = bitmapIdx & 63;
-            Debug.Assert((this.bitmap[q].RightUShift(r) & 1) == 0);
-            this.bitmap[q] |= 1L << r;
+            Debug.Assert((_bitmap[q].RightUShift(r) & 1) == 0);
+            _bitmap[q] |= 1L << r;
 
-            if (0u >= (uint)(--this.numAvail))
+            if (0u >= (uint)(--_numAvail))
             {
-                this.RemoveFromPool();
+                RemoveFromPool();
             }
 
-            return this.ToHandle(bitmapIdx);
+            return ToHandle(bitmapIdx);
         }
 
         /**
@@ -109,87 +109,87 @@ namespace DotNetty.Buffers
 
         internal bool Free(PoolSubpage<T> head, int bitmapIdx)
         {
-            if (0u >= (uint)this.ElemSize)
+            if (0u >= (uint)ElemSize)
             {
                 return true;
             }
 
             int q = bitmapIdx.RightUShift(6);
             int r = bitmapIdx & 63;
-            Debug.Assert((this.bitmap[q].RightUShift(r) & 1) != 0);
-            this.bitmap[q] ^= 1L << r;
+            Debug.Assert((_bitmap[q].RightUShift(r) & 1) != 0);
+            _bitmap[q] ^= 1L << r;
 
-            this.SetNextAvail(bitmapIdx);
+            SetNextAvail(bitmapIdx);
 
-            if (0u >= (uint)this.numAvail++)
+            if (0u >= (uint)_numAvail++)
             {
-                this.AddToPool(head);
+                AddToPool(head);
                 return true;
             }
 
-            if (this.numAvail != this.maxNumElems)
+            if (_numAvail != _maxNumElems)
             {
                 return true;
             }
             else
             {
                 // Subpage not in use (numAvail == maxNumElems)
-                if (this.Prev == this.Next)
+                if (Prev == Next)
                 {
                     // Do not remove if this subpage is the only one left in the pool.
                     return true;
                 }
 
                 // Remove this subpage from the pool if there are other subpages left in the pool.
-                this.DoNotDestroy = false;
-                this.RemoveFromPool();
+                DoNotDestroy = false;
+                RemoveFromPool();
                 return false;
             }
         }
 
         void AddToPool(PoolSubpage<T> head)
         {
-            Debug.Assert(this.Prev is null && this.Next is null);
+            Debug.Assert(Prev is null && Next is null);
 
-            this.Prev = head;
-            this.Next = head.Next;
-            this.Next.Prev = this;
+            Prev = head;
+            Next = head.Next;
+            Next.Prev = this;
             head.Next = this;
         }
 
         void RemoveFromPool()
         {
-            Debug.Assert(this.Prev is object && this.Next is object);
+            Debug.Assert(Prev is object && Next is object);
 
-            this.Prev.Next = this.Next;
-            this.Next.Prev = this.Prev;
-            this.Next = null;
-            this.Prev = null;
+            Prev.Next = Next;
+            Next.Prev = Prev;
+            Next = null;
+            Prev = null;
         }
 
-        void SetNextAvail(int bitmapIdx) => this.nextAvail = bitmapIdx;
+        void SetNextAvail(int bitmapIdx) => _nextAvail = bitmapIdx;
 
         int GetNextAvail()
         {
-            int nextAvail = this.nextAvail;
+            int nextAvail = _nextAvail;
             if (nextAvail >= 0)
             {
-                this.nextAvail = -1;
+                _nextAvail = -1;
                 return nextAvail;
             }
-            return this.FindNextAvail();
+            return FindNextAvail();
         }
 
         int FindNextAvail()
         {
-            long[] bitmap = this.bitmap;
-            int bitmapLength = this.bitmapLength;
+            long[] bitmap = _bitmap;
+            int bitmapLength = _bitmapLength;
             for (int i = 0; i < bitmapLength; i++)
             {
                 long bits = bitmap[i];
                 if (~bits != 0)
                 {
-                    return this.FindNextAvail0(i, bits);
+                    return FindNextAvail0(i, bits);
                 }
             }
             return -1;
@@ -197,7 +197,7 @@ namespace DotNetty.Buffers
 
         int FindNextAvail0(int i, long bits)
         {
-            int maxNumElems = this.maxNumElems;
+            int maxNumElems = _maxNumElems;
             int baseVal = i << 6;
 
             for (int j = 0; j < 64; j++)
@@ -219,7 +219,7 @@ namespace DotNetty.Buffers
             return -1;
         }
 
-        long ToHandle(int bitmapIdx) => 0x4000000000000000L | (long)bitmapIdx << 32 | (uint)this.memoryMapIdx;
+        long ToHandle(int bitmapIdx) => 0x4000000000000000L | (long)bitmapIdx << 32 | (uint)_memoryMapIdx;
 
         public override string ToString()
         {
@@ -228,7 +228,7 @@ namespace DotNetty.Buffers
             int numAvail;
             int elemSize;
 
-            var thisChunk = this.Chunk;
+            var thisChunk = Chunk;
             if (thisChunk is null)
             {
                 // This is the head so there is no need to synchronize at all as these never change.
@@ -241,7 +241,7 @@ namespace DotNetty.Buffers
             {
                 lock (thisChunk.Arena)
                 {
-                    if (!this.DoNotDestroy)
+                    if (!DoNotDestroy)
                     {
                         doNotDestroy = false;
                         // Not used for creating the String.
@@ -250,27 +250,27 @@ namespace DotNetty.Buffers
                     else
                     {
                         doNotDestroy = true;
-                        maxNumElems = this.maxNumElems;
-                        numAvail = this.numAvail;
-                        elemSize = this.ElemSize;
+                        maxNumElems = _maxNumElems;
+                        numAvail = _numAvail;
+                        elemSize = ElemSize;
                     }
                 }
             }
 
             if (!doNotDestroy)
             {
-                return "(" + this.memoryMapIdx + ": not in use)";
+                return "(" + _memoryMapIdx + ": not in use)";
             }
 
-            return "(" + this.memoryMapIdx + ": " + (maxNumElems - numAvail) + "/" + maxNumElems +
-                ", offset: " + this.runOffset + ", length: " + this.pageSize + ", elemSize: " + elemSize + ")";
+            return "(" + _memoryMapIdx + ": " + (maxNumElems - numAvail) + "/" + maxNumElems +
+                ", offset: " + _runOffset + ", length: " + _pageSize + ", elemSize: " + elemSize + ")";
         }
 
         public int MaxNumElements
         {
             get
             {
-                var thisChunk = this.Chunk;
+                var thisChunk = Chunk;
                 if (thisChunk is null)
                 {
                     // It's the head.
@@ -279,7 +279,7 @@ namespace DotNetty.Buffers
 
                 lock (thisChunk.Arena)
                 {
-                    return this.maxNumElems;
+                    return _maxNumElems;
                 }
             }
         }
@@ -288,7 +288,7 @@ namespace DotNetty.Buffers
         {
             get
             {
-                var thisChunk = this.Chunk;
+                var thisChunk = Chunk;
                 if (thisChunk is null)
                 {
                     // It's the head.
@@ -297,7 +297,7 @@ namespace DotNetty.Buffers
 
                 lock (thisChunk.Arena)
                 {
-                    return this.numAvail;
+                    return _numAvail;
                 }
             }
         }
@@ -306,7 +306,7 @@ namespace DotNetty.Buffers
         {
             get
             {
-                var thisChunk = this.Chunk;
+                var thisChunk = Chunk;
                 if (thisChunk is null)
                 {
                     // It's the head.
@@ -315,13 +315,13 @@ namespace DotNetty.Buffers
 
                 lock (thisChunk.Arena)
                 {
-                    return this.ElemSize;
+                    return ElemSize;
                 }
             }
         }
 
-        public int PageSize => this.pageSize;
+        public int PageSize => _pageSize;
 
-        internal void Destroy() => this.Chunk?.Destroy();
+        internal void Destroy() => Chunk?.Destroy();
     }
 }

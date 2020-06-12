@@ -8,36 +8,36 @@ namespace DotNetty.Transport.Channels.Groups
 
     public sealed class CombinedEnumerator<T> : IEnumerator<T>
     {
-        readonly IEnumerator<T> e1;
-        readonly IEnumerator<T> e2;
-        IEnumerator<T> currentEnumerator;
+        private readonly IEnumerator<T> _e1;
+        private readonly IEnumerator<T> _e2;
+        private IEnumerator<T> _currentEnumerator;
 
         public CombinedEnumerator(IEnumerator<T> e1, IEnumerator<T> e2)
         {
             if (e1 is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e1); }
             if (e2 is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.e2); }
-            this.e1 = e1;
-            this.e2 = e2;
-            this.currentEnumerator = e1;
+            _e1 = e1;
+            _e2 = e2;
+            _currentEnumerator = e1;
         }
 
-        public T Current => this.currentEnumerator.Current;
+        public T Current => _currentEnumerator.Current;
 
-        public void Dispose() => this.currentEnumerator.Dispose();
+        public void Dispose() => _currentEnumerator.Dispose();
 
-        object IEnumerator.Current => this.Current;
+        object IEnumerator.Current => Current;
 
         public bool MoveNext()
         {
-            while(true)
+            while (true)
             {
-                if (this.currentEnumerator.MoveNext())
+                if (_currentEnumerator.MoveNext())
                 {
                     return true;
                 }
-                if (this.currentEnumerator == this.e1)
+                if (_currentEnumerator == _e1)
                 {
-                    this.currentEnumerator = this.e2;
+                    _currentEnumerator = _e2;
                 }
                 else
                 {
@@ -46,6 +46,6 @@ namespace DotNetty.Transport.Channels.Groups
             }
         }
 
-        public void Reset() => this.currentEnumerator.Reset();
+        public void Reset() => _currentEnumerator.Reset();
     }
 }

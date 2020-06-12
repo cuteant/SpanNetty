@@ -15,11 +15,11 @@ namespace DotNetty.Transport.Channels
     /// </summary>
     public sealed class MultithreadEventLoopGroup : AbstractEventExecutorGroup, IEventLoopGroup
     {
-        static readonly int DefaultEventLoopThreadCount = Environment.ProcessorCount * 2;
-        static readonly Func<IEventLoopGroup, IEventLoop> DefaultEventLoopFactory = group => new SingleThreadEventLoop(group);
+        private static readonly int DefaultEventLoopThreadCount = Environment.ProcessorCount * 2;
+        private static readonly Func<IEventLoopGroup, IEventLoop> DefaultEventLoopFactory = group => new SingleThreadEventLoop(group);
 
-        readonly IEventLoop[] _eventLoops;
-        int _requestId;
+        private readonly IEventLoop[] _eventLoops;
+        private int _requestId;
 
         public override bool IsShutdown => _eventLoops.All(eventLoop => eventLoop.IsShutdown);
 

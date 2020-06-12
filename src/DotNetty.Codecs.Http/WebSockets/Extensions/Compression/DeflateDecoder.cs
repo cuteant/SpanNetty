@@ -126,8 +126,13 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             // See https://github.com/netty/netty/issues/4348
             if (!emptyDeflateBlock && readable && compositeDecompressedContent.NumComponents <= 0)
             {
-                compositeDecompressedContent.Release();
-                throw new CodecException("cannot read uncompressed buffer");
+                // Sometimes after fragmentation the last frame
+                // May contain left-over data that doesn't affect decompression
+                if (!(msg is ContinuationWebSocketFrame))
+                {
+                    compositeDecompressedContent.Release();
+                    ThrowHelper.ThrowCodecException_CannotReadUncompressedBuf();
+                }
             }
 
             if (msg.IsFinalFragment && _noContext)
@@ -143,19 +148,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             if (_decoder is object)
             {
                 // Clean-up the previous encoder if not cleaned up correctly.
-                if (_decoder.Finish())
-                {
-                    while (true)
-                    {
-                        var buf = _decoder.ReadOutbound<IByteBuffer>();
-                        if (buf is null)
-                        {
-                            break;
-                        }
-                        // Release the buffer
-                        buf.Release();
-                    }
-                }
+                _decoder.FinishAndReleaseAll();
                 _decoder = null;
             }
         }

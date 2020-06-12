@@ -534,7 +534,14 @@ namespace DotNetty.Buffers
         ///     This method does not modify {@code readerIndex} or {@code writerIndex} of this buffer.
         ///</summary>
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static IByteBuffer Copy(this IByteBuffer buf) => buf.Copy(buf.ReaderIndex, buf.ReadableBytes);
+        public static IByteBuffer Copy(this IByteBuffer buf)
+        {
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.Copy();
+            }
+            return buf.Copy(buf.ReaderIndex, buf.ReadableBytes);
+        }
 
         /// <summary>
         ///     Exposes this buffer's readable bytes as an <see cref="ArraySegment{T}" /> of <see cref="Byte" />. Returned segment
@@ -552,7 +559,14 @@ namespace DotNetty.Buffers
         /// <seealso cref="GetIoBuffers(IByteBuffer)" />
         /// <seealso cref="IByteBuffer.GetIoBuffers(int,int)" />
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static ArraySegment<byte> GetIoBuffer(this IByteBuffer buf) => buf.GetIoBuffer(buf.ReaderIndex, buf.ReadableBytes);
+        public static ArraySegment<byte> GetIoBuffer(this IByteBuffer buf)
+        {
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.GetIoBuffer();
+            }
+            return buf.GetIoBuffer(buf.ReaderIndex, buf.ReadableBytes);
+        }
 
         /// <summary>
         ///     Exposes this buffer's readable bytes as an array of <see cref="ArraySegment{T}" /> of <see cref="Byte" />. Returned
@@ -570,29 +584,55 @@ namespace DotNetty.Buffers
         /// <seealso cref="GetIoBuffer(IByteBuffer)" />
         /// <seealso cref="IByteBuffer.GetIoBuffer(int,int)" />
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static ArraySegment<byte>[] GetIoBuffers(this IByteBuffer buf) => buf.GetIoBuffers(buf.ReaderIndex, buf.ReadableBytes);
+        public static ArraySegment<byte>[] GetIoBuffers(this IByteBuffer buf)
+        {
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.GetIoBuffers();
+            }
+            return buf.GetIoBuffers(buf.ReaderIndex, buf.ReadableBytes);
+        }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static int IndexOf(this IByteBuffer buf, byte value) => buf.IndexOf(buf.ReaderIndex, buf.WriterIndex, value);
+        public static int IndexOf(this IByteBuffer buf, byte value)
+        {
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.IndexOf(value);
+            }
+            return buf.IndexOf(buf.ReaderIndex, buf.WriterIndex, value);
+        }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static int BytesBefore(this IByteBuffer buf, byte value) => buf.BytesBefore(buf.ReaderIndex, buf.ReadableBytes, value);
+        public static int BytesBefore(this IByteBuffer buf, byte value)
+        {
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.BytesBefore(value);
+            }
+            return buf.BytesBefore(buf.ReaderIndex, buf.ReadableBytes, value);
+        }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int BytesBefore(this IByteBuffer buf, int length, byte value)
         {
-            if (length < 0) { ThrowHelper.ThrowArgumentOutOfRangeException(); }
-            //this.CheckReadableBytes(length);
-
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.BytesBefore(length, value);
+            }
+            if ((uint)length > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentOutOfRangeException(); }
             return buf.BytesBefore(buf.ReaderIndex, length, value);
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static int BytesBefore(this IByteBuffer buf, int index, int length, byte value)
         {
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.BytesBefore(index, length, value);
+            }
             int endIndex = buf.IndexOf(index, index + length, value);
-            if (endIndex < 0) { return -1; }
-
+            if ((uint)endIndex > SharedConstants.TooBigOrNegative) { return SharedConstants.IndexNotFound; }
             return endIndex - index;
         }
 
@@ -606,6 +646,10 @@ namespace DotNetty.Buffers
         /// </returns>
         public static int ForEachByte(this IByteBuffer buf, IByteProcessor processor)
         {
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.ForEachByte(processor);
+            }
             return buf.ForEachByte(buf.ReaderIndex, buf.ReadableBytes, processor);
         }
 
@@ -618,13 +662,31 @@ namespace DotNetty.Buffers
         /// </returns>
         public static int ForEachByteDesc(this IByteBuffer buf, IByteProcessor processor)
         {
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.ForEachByteDesc(processor);
+            }
             return buf.ForEachByteDesc(buf.ReaderIndex, buf.ReadableBytes, processor);
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static string ToString(this IByteBuffer buf, Encoding encoding) => buf.ToString(buf.ReaderIndex, buf.ReadableBytes, encoding);
+        public static string ToString(this IByteBuffer buf, Encoding encoding)
+        {
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.ToString(encoding);
+            }
+            return buf.ToString(buf.ReaderIndex, buf.ReadableBytes, encoding);
+        }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public static string ToString(this IByteBuffer buf, int index, int length, Encoding encoding) => ByteBufferUtil.DecodeString(buf, index, length, encoding);
+        public static string ToString(this IByteBuffer buf, int index, int length, Encoding encoding)
+        {
+            if (buf is IByteBuffer2 buffer2)
+            {
+                return buffer2.ToString(index, length, encoding);
+            }
+            return ByteBufferUtil.DecodeString(buf, index, length, encoding);
+        }
     }
 }

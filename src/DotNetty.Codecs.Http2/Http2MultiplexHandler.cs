@@ -149,7 +149,7 @@
                     DefaultHttp2FrameStream s =
                             (DefaultHttp2FrameStream)streamFrame.Stream;
 
-                    AbstractHttp2StreamChannel channel = (AbstractHttp2StreamChannel)s._attachment;
+                    AbstractHttp2StreamChannel channel = (AbstractHttp2StreamChannel)s.Attachment;
                     if (msg is IHttp2ResetFrame)
                     {
                         // Reset frames needs to be propagated via user events as these are not flow-controlled and so
@@ -200,63 +200,63 @@
 
             var stream = (DefaultHttp2FrameStream)streamEvent.Stream;
             if (streamEvent.Type != Http2FrameStreamEvent.EventType.State) { return; }
-            var streamState = stream.State;
-            if (Http2StreamState.HalfClosedLocal.Equals(streamState))
-            {
-                if (stream.Id != Http2CodecUtil.HttpUpgradeStreamId)
-                {
-                    // Ignore everything which was not caused by an upgrade
-                    return;
-                }
-            }
-            else if (Http2StreamState.HalfClosedRemote.Equals(streamState) || Http2StreamState.Open.Equals(streamState))
-            {
-                if (stream._attachment is object)
-                {
-                    // ignore if child channel was already created.
-                    return;
-                }
-            }
-            else if (Http2StreamState.Closed.Equals(streamState))
-            {
-                if (stream._attachment is AbstractHttp2StreamChannel channel)
-                {
-                    channel.StreamClosed();
-                }
-                return;
-            }
-            else
-            {
-                // ignore for now
-                return;
-            }
 
-            AbstractHttp2StreamChannel ch;
-            // We need to handle upgrades special when on the client side.
-            if (stream.Id == Http2CodecUtil.HttpUpgradeStreamId && !IsServer(context))
+            switch (stream.State)
             {
-                // We must have an upgrade handler or else we can't handle the stream
-                if (_upgradeStreamHandler is null)
-                {
-                    ThrowHelper.ThrowConnectionError_ClientIsMisconfiguredForUpgradeRequests();
-                }
-                ch = new Http2MultiplexHandlerStreamChannel(this, stream, _upgradeStreamHandler)
-                {
-                    OutboundClosed = true
-                };
-            }
-            else
-            {
-                ch = new Http2MultiplexHandlerStreamChannel(this, stream, _inboundStreamHandler);
-            }
-            var future = context.Channel.EventLoop.RegisterAsync(ch);
-            if (future.IsCompleted)
-            {
-                RegisterDone(future, ch);
-            }
-            else
-            {
-                future.ContinueWith(RegisterDoneAction, ch, TaskContinuationOptions.ExecuteSynchronously);
+                case Http2StreamState.HalfClosedLocal:
+                    if (stream.Id != Http2CodecUtil.HttpUpgradeStreamId)
+                    {
+                        // Ignore everything which was not caused by an upgrade
+                        break;
+                    }
+                    goto case Http2StreamState.Open;
+
+                case Http2StreamState.HalfClosedRemote:
+                case Http2StreamState.Open:
+                    if (stream.Attachment is object)
+                    {
+                        // ignore if child channel was already created.
+                        break;
+                    }
+                    AbstractHttp2StreamChannel ch;
+                    // We need to handle upgrades special when on the client side.
+                    if (stream.Id == Http2CodecUtil.HttpUpgradeStreamId && !IsServer(context))
+                    {
+                        // We must have an upgrade handler or else we can't handle the stream
+                        if (_upgradeStreamHandler is null)
+                        {
+                            ThrowHelper.ThrowConnectionError_ClientIsMisconfiguredForUpgradeRequests();
+                        }
+                        ch = new Http2MultiplexHandlerStreamChannel(this, stream, _upgradeStreamHandler)
+                        {
+                            OutboundClosed = true
+                        };
+                    }
+                    else
+                    {
+                        ch = new Http2MultiplexHandlerStreamChannel(this, stream, _inboundStreamHandler);
+                    }
+                    var future = context.Channel.EventLoop.RegisterAsync(ch);
+                    if (future.IsCompleted)
+                    {
+                        RegisterDone(future, ch);
+                    }
+                    else
+                    {
+                        future.ContinueWith(RegisterDoneAction, ch, TaskContinuationOptions.ExecuteSynchronously);
+                    }
+                    break;
+
+                case Http2StreamState.Closed:
+                    if (stream.Attachment is AbstractHttp2StreamChannel channel)
+                    {
+                        channel.StreamClosed();
+                    }
+                    break;
+
+                default:
+                    // ignore for now
+                    break;
             }
         }
 
@@ -273,7 +273,7 @@
             {
                 var stream = streamException.Stream;
                 var childChannel = (AbstractHttp2StreamChannel)
-                        ((DefaultHttp2FrameStream)stream)._attachment;
+                        ((DefaultHttp2FrameStream)stream).Attachment;
                 try
                 {
                     childChannel.Pipeline.FireExceptionCaught(exception.InnerException);
@@ -313,7 +313,7 @@
             if (streamId > goAwayFrame.LastStreamId && Http2CodecUtil.IsStreamIdValid(streamId, server))
             {
                 var childChannel = (AbstractHttp2StreamChannel)
-                        ((DefaultHttp2FrameStream)stream)._attachment;
+                        ((DefaultHttp2FrameStream)stream).Attachment;
                 childChannel.Pipeline.FireUserEventTriggered(goAwayFrame.RetainedDuplicate());
             }
             return true;

@@ -14,9 +14,9 @@ namespace DotNetty.Buffers
         {
             if (0u >= (uint)count) { return ReadOnlyMemory<byte>.Empty; }
 
-            if (this.buffers.Length == 1)
+            if (_buffers.Length == 1)
             {
-                var buf = this.Buffer(0);
+                var buf = Buffer(0);
                 if (buf.IsSingleIoBuffer)
                 {
                     return buf.GetReadableMemory(index, count);
@@ -24,7 +24,7 @@ namespace DotNetty.Buffers
             }
 
             var merged = new Memory<byte>(new byte[count]);
-            var bufs = this.GetSequence(index, count);
+            var bufs = GetSequence(index, count);
 
             int offset = 0;
             foreach (var buf in bufs)
@@ -42,9 +42,9 @@ namespace DotNetty.Buffers
         {
             if (0u >= (uint)count) { return ReadOnlySpan<byte>.Empty; }
 
-            if (this.buffers.Length == 1)
+            if (_buffers.Length == 1)
             {
-                var buf = this.Buffer(0);
+                var buf = Buffer(0);
                 if (buf.IsSingleIoBuffer)
                 {
                     return buf.GetReadableSpan(index, count);
@@ -52,7 +52,7 @@ namespace DotNetty.Buffers
             }
 
             var merged = new Memory<byte>(new byte[count]);
-            var bufs = this.GetSequence(index, count);
+            var bufs = GetSequence(index, count);
 
             int offset = 0;
             foreach (var buf in bufs)
@@ -70,10 +70,10 @@ namespace DotNetty.Buffers
         {
             if (0u >= (uint)count) { return ReadOnlySequence<byte>.Empty; }
 
-            var array = ThreadLocalList<ReadOnlyMemory<byte>>.NewInstance(this.nioBufferCount);
+            var array = ThreadLocalList<ReadOnlyMemory<byte>>.NewInstance(_nioBufferCount);
             try
             {
-                var c = this.FindComponent(index);
+                var c = FindComponent(index);
                 int i = c.Index;
                 int adjustment = c.Offset;
                 var s = c.Buf;
@@ -104,7 +104,7 @@ namespace DotNetty.Buffers
                     {
                         break;
                     }
-                    s = this.Buffer(++i);
+                    s = Buffer(++i);
                 }
 
                 return ReadOnlyBufferSegment.Create(array);

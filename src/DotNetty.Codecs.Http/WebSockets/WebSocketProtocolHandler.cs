@@ -30,6 +30,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected override void Decode(IChannelHandlerContext ctx, WebSocketFrame frame, List<object> output)
         {
+            // 须同时修改 WebSocketServerProtocolHandler & WebSocketClientProtocolHandler
             switch (frame.Opcode)
             {
                 case Opcode.Ping:
@@ -50,7 +51,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
-        private static void ReadIfNeeded(IChannelHandlerContext ctx)
+        protected static void ReadIfNeeded(IChannelHandlerContext ctx)
         {
             if (!ctx.Channel.Configuration.AutoRead)
             {

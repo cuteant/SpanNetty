@@ -101,5 +101,13 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(buffer.WritableBytes, buffer.MaxFastWritableBytes);
             buffer.Release();
         }
+
+        [Fact]
+        public void IsContiguous()
+        {
+            var buf = NewBuffer(4);
+            Assert.True(buf.IsContiguous);
+            buf.Release();
+        }
     }
 }

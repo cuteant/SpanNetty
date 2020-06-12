@@ -33,6 +33,9 @@ namespace DotNetty.Codecs
     {
         private const int DefaultMaxCompositebufferComponents = 1024;
 
+        private static readonly Action<Task, object> s_closeAfterWriteAction = CloseAfterWriteAction;
+        private static readonly Action<Task, object> s_continueResponseWriteAction = ContinueResponseWriteAction;
+
         private int _maxCumulationBufferComponents = DefaultMaxCompositebufferComponents;
 
         protected TOutput _currentMessage;
@@ -291,15 +294,13 @@ namespace DotNetty.Codecs
             }
         }
 
-        static readonly Action<Task, object> s_closeAfterWriteAction = CloseAfterWriteAction;
-        static void CloseAfterWriteAction(Task task, object state)
+        private static void CloseAfterWriteAction(Task task, object state)
         {
             var ctx = (IChannelHandlerContext)state;
             ctx.Channel.CloseAsync();
         }
 
-        static readonly Action<Task, object> s_continueResponseWriteAction = ContinueResponseWriteAction;
-        static void ContinueResponseWriteAction(Task task, object state)
+        private static void ContinueResponseWriteAction(Task task, object state)
         {
             if (task.IsFaulted)
             {
@@ -309,7 +310,7 @@ namespace DotNetty.Codecs
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        static T As<T>(object obj) => (T)obj;
+        private static T As<T>(object obj) => (T)obj;
 
         protected static void AppendPartialContent(CompositeByteBuffer content, IByteBuffer partialContent)
         {

@@ -531,9 +531,16 @@ namespace DotNetty.Transport.Channels
 
             AbstractChannelHandlerContext next = FindContextOutbound();
             IEventExecutor nextExecutor = next.Executor;
-            return nextExecutor.InEventLoop
-                ? next.InvokeBindAsync(localAddress)
-                : SafeExecuteOutboundAsync(nextExecutor, () => next.InvokeBindAsync(localAddress));
+            if (nextExecutor.InEventLoop)
+            {
+                return next.InvokeBindAsync(localAddress);
+            }
+            else
+            {
+                var promise = nextExecutor.NewPromise();
+                _ = SafeExecuteOutbound(nextExecutor, new BindTask(next, promise, localAddress), promise, null, false);
+                return promise.Task;
+            }
         }
 
         Task InvokeBindAsync(EndPoint localAddress)
@@ -562,9 +569,17 @@ namespace DotNetty.Transport.Channels
             // todo: check for cancellation
 
             IEventExecutor nextExecutor = next.Executor;
-            return nextExecutor.InEventLoop
-                ? next.InvokeConnectAsync(remoteAddress, localAddress)
-                : SafeExecuteOutboundAsync(nextExecutor, () => next.InvokeConnectAsync(remoteAddress, localAddress));
+            if (nextExecutor.InEventLoop)
+            {
+                return next.InvokeConnectAsync(remoteAddress, localAddress);
+            }
+            else
+            {
+                var promise = nextExecutor.NewPromise();
+                _ = SafeExecuteOutbound(nextExecutor, new ConnectTask(next, promise, remoteAddress, localAddress), promise, null, false);
+                return promise.Task;
+
+            }
         }
 
         Task InvokeConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
@@ -608,14 +623,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                try
-                {
-                    nextExecutor.Execute(InvokeDisconnectAction, next, promise);
-                }
-                catch (Exception exc)
-                {
-                    promise.TrySetException(exc);
-                }
+                _ = SafeExecuteOutbound(nextExecutor, new DisconnectTask(next, promise), promise, null, false);
             }
 
             return promise.Task;
@@ -658,14 +666,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                try
-                {
-                    nextExecutor.Execute(InvokeCloseAction, next, promise);
-                }
-                catch (Exception exc)
-                {
-                    promise.TrySetException(exc);
-                }
+                _ = SafeExecuteOutbound(nextExecutor, new CloseTask(next, promise), promise, null, false);
             }
 
             return promise.Task;
@@ -708,14 +709,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                try
-                {
-                    nextExecutor.Execute(InvokeDeregisterAction, next, promise);
-                }
-                catch (Exception exc)
-                {
-                    promise.TrySetException(exc);
-                }
+                _ = SafeExecuteOutbound(nextExecutor, new DeregisterTask(next, promise), promise, null, false);
             }
 
             return promise.Task;
@@ -818,14 +812,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                try
-                {
-                    nextExecutor.Execute(InvokeFlushAction, next);
-                }
-                catch (Exception exc)
-                {
-                    VoidPromise().TrySetException(exc);
-                }
+                _ = SafeExecuteOutbound(nextExecutor, new FlushTask(next), VoidPromise(), null, false);
             }
             return this;
         }
@@ -910,12 +897,10 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                AbstractWriteTask task = flush
-                    ? WriteAndFlushTask.NewInstance(next, m, promise)
-                    : (AbstractWriteTask)WriteTask.NewInstance(next, m, promise);
-                if (!SafeExecuteOutbound(nextExecutor, task, promise, msg))
+                var task = WriteTask.NewInstance(next, m, promise, flush);
+                if (!SafeExecuteOutbound(nextExecutor, task, promise, msg, !flush))
                 {
-                    // We failed to submit the AbstractWriteTask. We need to cancel it so we decrement the pending bytes
+                    // We failed to submit the WriteTask. We need to cancel it so we decrement the pending bytes
                     // and put it back in the Recycler for re-use later.
                     //
                     // See https://github.com/netty/netty/issues/8343.
@@ -973,25 +958,19 @@ namespace DotNetty.Transport.Channels
             return ctx;
         }
 
-        static Task SafeExecuteOutboundAsync(IEventExecutor executor, Func<Task> function)
-        {
-            var promise = executor.NewPromise();
-            try
-            {
-                executor.Execute(SafeExecuteOutboundAsyncAction, promise, function);
-            }
-            catch (Exception cause)
-            {
-                promise.TrySetException(cause);
-            }
-            return promise.Task;
-        }
-
-        static bool SafeExecuteOutbound(IEventExecutor executor, IRunnable task, IPromise promise, object msg)
+        static bool SafeExecuteOutbound(IEventExecutor executor, IRunnable task,
+            IPromise promise, object msg, bool lazy)
         {
             try
             {
-                executor.Execute(task);
+                if (lazy && executor is AbstractEventExecutor eventExecutor)
+                {
+                    eventExecutor.LazyExecute(task);
+                }
+                else
+                {
+                    executor.Execute(task);
+                }
                 return true;
             }
             catch (Exception cause)

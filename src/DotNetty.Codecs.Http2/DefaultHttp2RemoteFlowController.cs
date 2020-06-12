@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Http2
 {
     using System;
     using System.Diagnostics;
+    using System.Runtime.CompilerServices;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
@@ -197,7 +198,8 @@ namespace DotNetty.Codecs.Http2
             return GetState(stream).HasFrame;
         }
 
-        FlowState GetState(IHttp2Stream stream)
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private FlowState GetState(IHttp2Stream stream)
         {
             return stream.GetProperty<FlowState>(_stateKey);
         }
@@ -356,7 +358,7 @@ namespace DotNetty.Codecs.Http2
                                 // This frame has been fully written, remove this frame and notify it.
                                 // Since we remove this frame first, we're guaranteed that its error
                                 // method will not be called when we call cancel.
-                                _pendingWriteQueue.TryRemoveFromFront(out var _);//.remove();
+                                _pendingWriteQueue.TryRemoveFromFront(out _);
                                 frame.WriteComplete();
                             }
                         }
@@ -464,6 +466,7 @@ namespace DotNetty.Codecs.Http2
             /// <summary>
             /// Returns the head of the pending queue, or <c>null</c> if empty.
             /// </summary>
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             IHttp2RemoteFlowControlled Peek()
             {
                 return _pendingWriteQueue.FirstOrDefault;

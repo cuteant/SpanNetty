@@ -16,7 +16,7 @@ namespace DotNetty.Codecs.Http.Tests
     {
         sealed class TestEncoder : HttpContentEncoder
         {
-            protected override Result BeginEncode(IHttpResponse headers, ICharSequence acceptEncoding) =>
+            protected override Result BeginEncode(IHttpResponse httpResponse, ICharSequence acceptEncoding) =>
                 new Result(new StringCharSequence("test"), new EmbeddedChannel(new EmbeddedMessageEncoder()));
         }
 
@@ -405,7 +405,7 @@ namespace DotNetty.Codecs.Http.Tests
 
         sealed class CleanupEncoder : HttpContentEncoder
         {
-            protected override Result BeginEncode(IHttpResponse headers, ICharSequence acceptEncoding) =>
+            protected override Result BeginEncode(IHttpResponse httpResponse, ICharSequence acceptEncoding) =>
                 new Result(new StringCharSequence("myencoding"), new EmbeddedChannel(new Handler()));
 
             sealed class Handler : ChannelHandlerAdapter

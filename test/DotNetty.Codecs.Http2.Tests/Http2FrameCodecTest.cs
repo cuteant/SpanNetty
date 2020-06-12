@@ -10,7 +10,6 @@ namespace DotNetty.Codecs.Http2.Tests
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
-    using DotNetty.Tests.Common;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Embedded;
     using Moq;
@@ -136,9 +135,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<int>(v => v == 1),
                     It.Is<IHttp2Headers>(v => v.Equals(_response)),
-                    It.IsAny<int>(),
-                    It.IsAny<short>(),
-                    It.IsAny<bool>(),
                     It.Is<int>(v => v == 27),
                     It.Is<bool>(v => v == true),
                     It.IsAny<IPromise>()));
@@ -179,9 +175,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<int>(v => v == 1),
                     It.Is<IHttp2Headers>(v => v.Equals(_response)),
-                    It.IsAny<int>(),
-                    It.IsAny<short>(),
-                    It.IsAny<bool>(),
                     It.Is<int>(v => v == 27),
                     It.Is<bool>(v => v == true),
                     It.IsAny<IPromise>()));
@@ -243,9 +236,6 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<IChannelHandlerContext>(v => v == _frameCodec._ctx),
                     It.Is<int>(v => v == 1),
                     It.Is<IHttp2Headers>(v => v.Equals(_response)),
-                    It.IsAny<int>(),
-                    It.IsAny<short>(),
-                    It.IsAny<bool>(),
                     It.Is<int>(v => v == 0),
                     It.Is<bool>(v => v == false),
                     It.IsAny<IPromise>()));

@@ -89,8 +89,12 @@ namespace DotNetty.Codecs.Http2
                 int unconsumedBytes = state.UnconsumedBytes;
                 if (_ctx is object && unconsumedBytes > 0)
                 {
-                    ConnectionState().ConsumeBytes(unconsumedBytes);
-                    state.ConsumeBytes(unconsumedBytes);
+                    if (ConsumeAllBytes(state, unconsumedBytes))
+                    {
+                        // As the user has no real control on when this callback is used we should better
+                        // call flush() if we produced any window update to ensure we not stale.
+                        _ctx.Flush();
+                    }
                 }
             }
             catch (Http2Exception)
@@ -167,12 +171,15 @@ namespace DotNetty.Codecs.Http2
                     ThrowHelper.ReturningBytesForTheConnectionWindowIsNotSupported();
                 }
 
-                bool windowUpdateSent = ConnectionState().ConsumeBytes(numBytes);
-                windowUpdateSent |= GetState(stream).ConsumeBytes(numBytes);
-                return windowUpdateSent;
+                return ConsumeAllBytes(GetState(stream), numBytes);
             }
 
             return false;
+        }
+
+        private bool ConsumeAllBytes(IFlowState state, int numBytes)
+        {
+            return ConnectionState().ConsumeBytes(numBytes) | state.ConsumeBytes(numBytes);
         }
 
         public int UnconsumedBytes(IHttp2Stream stream) => GetState(stream).UnconsumedBytes;
@@ -416,7 +423,9 @@ namespace DotNetty.Codecs.Http2
 
             public bool WriteWindowUpdateIfNeeded()
             {
-                if (endOfStream || initialStreamWindowSize <= 0)
+                if (endOfStream || initialStreamWindowSize <= 0 ||
+                    // If the stream is already closed there is no need to try to write a window update for it.
+                    IsClosed(_stream))
                 {
                     return false;
                 }

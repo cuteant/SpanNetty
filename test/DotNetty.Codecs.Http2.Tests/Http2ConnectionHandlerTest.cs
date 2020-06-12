@@ -10,7 +10,6 @@ namespace DotNetty.Codecs.Http2.Tests
     using DotNetty.Codecs.Http;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
-    using DotNetty.Tests.Common;
     using DotNetty.Transport.Channels;
     using Moq;
     using Xunit;
@@ -144,6 +143,14 @@ namespace DotNetty.Codecs.Http2.Tests
                     return _ctx.Object;
                 });
 
+        }
+
+        public void Dispose()
+        {
+            if (_handler != null)
+            {
+                _handler.HandlerRemoved(_ctx.Object);
+            }
         }
 
         [Fact]
@@ -966,12 +973,46 @@ namespace DotNetty.Codecs.Http2.Tests
                 Times.Never());
         }
 
-        public void Dispose()
+        [Fact]
+        public void WriteMultipleRstFramesForSameStream()
         {
-            if (_handler != null)
+            _handler = NewHandler();
+            _stream.SetupGet(x => x.Id).Returns(STREAM_ID);
+            AtomicBoolean resetSent = new AtomicBoolean();
+            _stream.Setup(x => x.ResetSent()).Returns(() =>
             {
-                _handler.HandlerRemoved(_ctx.Object);
-            }
+                resetSent.Value = true;
+                return _stream.Object;
+            });
+            _stream.SetupGet(x => x.IsResetSent).Returns(() => resetSent.Value);
+            _frameWriter
+                .Setup(x => x.WriteRstStreamAsync(
+                    It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
+                    It.Is<int>(v => v == STREAM_ID),
+                    It.IsAny<Http2Error>(),
+                    It.IsAny<IPromise>()))
+                .Returns<IChannelHandlerContext, int, Http2Error, IPromise>((ctx, id, err, p) =>
+                {
+                    p.TryComplete();
+                    return p.Task;
+                });
+
+            var promise = new TaskCompletionSource();
+            var promise2 = new TaskCompletionSource();
+            promise.Task.ContinueWith(t =>
+            {
+                _handler.ResetStreamAsync(_ctx.Object, STREAM_ID, Http2Error.StreamClosed, promise2);
+            }, TaskContinuationOptions.ExecuteSynchronously);
+
+            _handler.ResetStreamAsync(_ctx.Object, STREAM_ID, Http2Error.Cancel, promise);
+            _frameWriter.Verify(
+                x => x.WriteRstStreamAsync(
+                    It.Is<IChannelHandlerContext>(v => v == _ctx.Object),
+                    It.Is<int>(v => v == STREAM_ID),
+                    It.IsAny<Http2Error>(),
+                    It.IsAny<IPromise>()));
+            Assert.True(promise.IsSuccess);
+            Assert.True(promise2.IsSuccess);
         }
 
         private Http2ConnectionHandler NewHandler()

@@ -20,10 +20,10 @@ namespace DotNetty.Codecs.Http2
         public const int DefaultWindowBits = 15;
         public const int DefaultMemLevel = 8;
 
-        private readonly int compressionLevel;
-        private readonly int windowBits;
-        private readonly int memLevel;
-        private readonly IHttp2ConnectionPropertyKey propertyKey;
+        private readonly int _compressionLevel;
+        private readonly int _windowBits;
+        private readonly int _memLevel;
+        private readonly IHttp2ConnectionPropertyKey _propertyKey;
 
         public CompressorHttp2ConnectionEncoder(IHttp2ConnectionEncoder encoder)
             : this(encoder, DefaultCompressionLevel, DefaultWindowBits, DefaultMemLevel)
@@ -45,19 +45,19 @@ namespace DotNetty.Codecs.Http2
             {
                 ThrowHelper.ThrowArgumentException_InvalidMemLevel(memLevel);
             }
-            this.compressionLevel = compressionLevel;
-            this.windowBits = windowBits;
-            this.memLevel = memLevel;
+            _compressionLevel = compressionLevel;
+            _windowBits = windowBits;
+            _memLevel = memLevel;
 
-            var connect = this.Connection;
-            this.propertyKey = connect.NewKey();
+            var connect = Connection;
+            _propertyKey = connect.NewKey();
             connect.AddListener(new DelegatingConnectionAdapter(this));
         }
 
         public override Task WriteDataAsync(IChannelHandlerContext ctx, int streamId, IByteBuffer data, int padding, bool endOfStream, IPromise promise)
         {
-            IHttp2Stream stream = this.Connection.Stream(streamId);
-            EmbeddedChannel channel = stream?.GetProperty<EmbeddedChannel>(propertyKey);
+            IHttp2Stream stream = Connection.Stream(streamId);
+            EmbeddedChannel channel = stream?.GetProperty<EmbeddedChannel>(_propertyKey);
             if (channel is null)
             {
                 // The compressor may be null if no compatible encoding type was found in this stream's headers
@@ -214,8 +214,8 @@ namespace DotNetty.Codecs.Http2
         {
             var channel = ctx.Channel;
             return new EmbeddedChannel(channel.Id, channel.Metadata.HasDisconnect,
-                channel.Configuration, ZlibCodecFactory.NewZlibEncoder(wrapper, this.compressionLevel, this.windowBits,
-                this.memLevel));
+                channel.Configuration, ZlibCodecFactory.NewZlibEncoder(wrapper, _compressionLevel, _windowBits,
+                _memLevel));
         }
 
 
@@ -269,10 +269,10 @@ namespace DotNetty.Codecs.Http2
         {
             if (compressor is object)
             {
-                var stream = this.Connection.Stream(streamId);
+                var stream = Connection.Stream(streamId);
                 if (stream is object)
                 {
-                    stream.SetProperty(this.propertyKey, compressor);
+                    stream.SetProperty(_propertyKey, compressor);
                 }
             }
         }
@@ -284,17 +284,8 @@ namespace DotNetty.Codecs.Http2
         /// <param name="compressor">The compressor for <paramref name="stream"/></param>
         void Cleanup(IHttp2Stream stream, EmbeddedChannel compressor)
         {
-            if (compressor.Finish())
-            {
-                while (true)
-                {
-                    var buf = compressor.ReadOutbound<IByteBuffer>();
-                    if (buf is null) { break; }
-
-                    buf.Release();
-                }
-            }
-            stream.RemoveProperty(this.propertyKey);
+            compressor.FinishAndReleaseAll();
+            stream.RemoveProperty(_propertyKey);
         }
 
         /// <summary>
@@ -319,16 +310,16 @@ namespace DotNetty.Codecs.Http2
 
         sealed class DelegatingConnectionAdapter : Http2ConnectionAdapter
         {
-            readonly CompressorHttp2ConnectionEncoder encoder;
+            readonly CompressorHttp2ConnectionEncoder _encoder;
 
-            public DelegatingConnectionAdapter(CompressorHttp2ConnectionEncoder encoder) => this.encoder = encoder;
+            public DelegatingConnectionAdapter(CompressorHttp2ConnectionEncoder encoder) => _encoder = encoder;
 
             public override void OnStreamRemoved(IHttp2Stream stream)
             {
-                var compressor = stream.GetProperty<EmbeddedChannel>(this.encoder.propertyKey);
+                var compressor = stream.GetProperty<EmbeddedChannel>(_encoder._propertyKey);
                 if (compressor is object)
                 {
-                    this.encoder.Cleanup(stream, compressor);
+                    _encoder.Cleanup(stream, compressor);
                 }
             }
         }
