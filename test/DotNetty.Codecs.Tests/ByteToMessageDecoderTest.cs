@@ -218,13 +218,13 @@
                 _untilFailure = untilFailure;
             }
 
-            public override IByteBuffer WriteBytes(IByteBuffer src, int length)
+            public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
             {
                 if (--_untilFailure <= 0)
                 {
                     throw _error;
                 }
-                return base.WriteBytes(src, length);
+                return base.SetBytes(index, src, srcIndex, length);
             }
 
             public Exception WriteError()
@@ -237,6 +237,7 @@
         public void ReleaseWhenMergeCumulateThrows()
         {
             WriteFailingByteBuf oldCumulation = new WriteFailingByteBuf(1, 64);
+            oldCumulation.WriteZero(1);
             var input = Unpooled.Buffer().WriteZero(12);
 
             Exception thrown = null;
@@ -284,7 +285,7 @@
 
         private void ReleaseWhenMergeCumulateThrowsInExpand0(int untilFailure, bool shouldFail)
         {
-            var oldCumulation = UnpooledByteBufferAllocator.Default.HeapBuffer(8, 8);
+            var oldCumulation = UnpooledByteBufferAllocator.Default.HeapBuffer(8, 8).WriteZero(1);
             WriteFailingByteBuf newCumulation = new WriteFailingByteBuf(untilFailure, 16);
 
             IByteBufferAllocator allocator = new TestAbstractByteBufAllocator(newCumulation);
@@ -325,6 +326,7 @@
             var error = new Exception();
             var input = Unpooled.Buffer().WriteZero(12);
             var cumulation = new CompositeByteBufferThrowExceptionWhenAddComponent(UnpooledByteBufferAllocator.Default, false, 64, error);
+            cumulation.WriteZero(1);
             var expected = Assert.Throws<Exception>(() => ByteToMessageDecoder.CompositionCumulation.Cumulate(UnpooledByteBufferAllocator.Default, cumulation, input));
             Assert.Same(error, expected);
             Assert.Equal(0, input.ReferenceCount);
@@ -582,6 +584,11 @@
         }
 
         public override CompositeByteBuffer AddComponent(bool increaseWriterIndex, IByteBuffer buffer)
+        {
+            throw this.exception;
+        }
+
+        public override CompositeByteBuffer AddFlattenedComponents(bool increaseWriterIndex, IByteBuffer buffer)
         {
             throw this.exception;
         }

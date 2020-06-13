@@ -65,6 +65,12 @@ namespace DotNetty.Codecs
         {
             public IByteBuffer Cumulate(IByteBufferAllocator alloc, IByteBuffer cumulation, IByteBuffer input)
             {
+                if (!cumulation.IsReadable() && input.IsContiguous)
+                {
+                    // If cumulation is empty and input buffer is contiguous, use it directly
+                    cumulation.Release();
+                    return input;
+                }
                 try
                 {
                     int required = input.ReadableBytes;
@@ -78,7 +84,9 @@ namespace DotNetty.Codecs
                         //   assumed to be shared (e.g. refCnt() > 1) and the reallocation may not be safe.
                         return ExpandCumulation(alloc, cumulation, input);
                     }
-                    return cumulation.WriteBytes(input);
+                    cumulation.WriteBytes(input, input.ReaderIndex, required);
+                    input.SetReaderIndex(input.WriterIndex);
+                    return cumulation;
                 }
                 finally
                 {
@@ -103,32 +111,44 @@ namespace DotNetty.Codecs
         {
             public IByteBuffer Cumulate(IByteBufferAllocator alloc, IByteBuffer cumulation, IByteBuffer input)
             {
+                if (!cumulation.IsReadable())
+                {
+                    cumulation.Release();
+                    return input;
+                }
+                CompositeByteBuffer composite = null;
                 try
                 {
-                    if (cumulation.ReferenceCount > 1)
+                    composite = cumulation as CompositeByteBuffer;
+                    if (composite is object && 0u >= (uint)(cumulation.ReferenceCount - 1))
                     {
-                        // Expand cumulation (by replace it) when the refCnt is greater then 1 which may happen when the
-                        // user use slice().retain() or duplicate().retain().
-                        //
-                        // See:
-                        // - https://github.com/netty/netty/issues/2327
-                        // - https://github.com/netty/netty/issues/1764
-                        return ExpandCumulation(alloc, cumulation, input);
+                        // Writer index must equal capacity if we are going to "write"
+                        // new components to the end
+                        if (composite.WriterIndex != composite.Capacity)
+                        {
+                            composite.AdjustCapacity(composite.WriterIndex);
+                        }
                     }
-                    if (!(cumulation is CompositeByteBuffer composite))
+                    else
                     {
-                        composite = alloc.CompositeBuffer(int.MaxValue);
-                        composite.AddComponent(true, cumulation);
+                        composite = alloc.CompositeBuffer(int.MaxValue).AddFlattenedComponents(true, cumulation);
                     }
-                    composite.AddComponent(true, input);
+                    composite.AddFlattenedComponents(true, input);
                     input = null;
                     return composite;
                 }
                 finally
                 {
-                    // We must release if the ownership was not transferred as otherwise it may produce a leak if
-                    // writeBytes(...) throw for whatever release (for example because of OutOfMemoryError).
-                    input?.Release();
+                    if (input is object)
+                    {
+                        // We must release if the ownership was not transferred as otherwise it may produce a leak
+                        input.Release();
+                        // Also release any new buffer allocated if we're not returning it
+                        if (composite is object && composite != cumulation)
+                        {
+                            composite.Release();
+                        }
+                    }
                 }
             }
         }
@@ -273,14 +293,7 @@ namespace DotNetty.Codecs
                 try
                 {
                     _first = _cumulation is null;
-                    if (_first)
-                    {
-                        _cumulation = data;
-                    }
-                    else
-                    {
-                        _cumulation = _cumulator.Cumulate(context.Allocator, _cumulation, data);
-                    }
+                    _cumulation = _cumulator.Cumulate(context.Allocator, _first ? Unpooled.Empty : _cumulation, data);
                     CallDecode(context, _cumulation, output);
                 }
                 catch (DecoderException)
@@ -595,13 +608,18 @@ namespace DotNetty.Codecs
 
         private static IByteBuffer ExpandCumulation(IByteBufferAllocator alloc, IByteBuffer oldCumulation, IByteBuffer input)
         {
-            IByteBuffer newCumulation = alloc.Buffer(alloc.CalculateNewCapacity(
-                    oldCumulation.ReadableBytes + input.ReadableBytes, int.MaxValue));
+            int oldBytes = oldCumulation.ReadableBytes;
+            int newBytes = input.ReadableBytes;
+            int totalBytes = oldBytes + newBytes;
+            IByteBuffer newCumulation = alloc.Buffer(alloc.CalculateNewCapacity(totalBytes, int.MaxValue));
             IByteBuffer toRelease = newCumulation;
             try
             {
-                newCumulation.WriteBytes(oldCumulation);
-                newCumulation.WriteBytes(input);
+                // This avoids redundant checks and stack depth compared to calling writeBytes(...)
+                newCumulation.SetBytes(0, oldCumulation, oldCumulation.ReaderIndex, oldBytes)
+                    .SetBytes(oldBytes, input, input.ReaderIndex, newBytes)
+                    .SetWriterIndex(totalBytes);
+                input.SetReaderIndex(input.WriterIndex);
                 toRelease = oldCumulation;
                 return newCumulation;
             }

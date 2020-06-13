@@ -156,7 +156,7 @@ namespace DotNetty.Buffers
             return this;
         }
 
-        public sealed override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
+        public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
             if (src is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             CheckSrcIndex(index, length, srcIndex, src.Capacity);

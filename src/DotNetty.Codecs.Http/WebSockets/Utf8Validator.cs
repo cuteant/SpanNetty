@@ -10,10 +10,12 @@ namespace DotNetty.Codecs.Http.WebSockets
 
     sealed class Utf8Validator : IByteProcessor
     {
-        const int Utf8Accept = 0;
-        const int Utf8Reject = 12;
+        private const int Utf8Accept = 0;
+        private const int Utf8Reject = 12;
 
-        static ReadOnlySpan<byte> Types => new byte[]{  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        private static ReadOnlySpan<byte> Types => new byte[]
+        {
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -22,32 +24,36 @@ namespace DotNetty.Codecs.Http.WebSockets
             7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8,
             8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
             2, 2, 10, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3, 3, 11, 6, 6, 6, 5, 8, 8, 8, 8, 8,
-            8, 8, 8, 8, 8, 8 };
+            8, 8, 8, 8, 8, 8
+        };
 
-        static ReadOnlySpan<byte> States => new byte[]{ 0, 12, 24, 36, 60, 96, 84, 12, 12, 12, 48, 72, 12, 12,
+        private static ReadOnlySpan<byte> States => new byte[]
+        {
+            0, 12, 24, 36, 60, 96, 84, 12, 12, 12, 48, 72, 12, 12,
             12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 0, 12, 12, 12, 12, 12, 0, 12, 0, 12, 12,
             12, 24, 12, 12, 12, 12, 12, 24, 12, 24, 12, 12, 12, 12, 12, 12, 12, 12, 12, 24, 12, 12,
             12, 12, 12, 24, 12, 12, 12, 12, 12, 12, 12, 24, 12, 12, 12, 12, 12, 12, 12, 12, 12, 36,
             12, 36, 12, 12, 12, 36, 12, 12, 12, 12, 12, 36, 12, 36, 12, 12, 12, 36, 12, 12, 12, 12,
-            12, 12, 12, 12, 12, 12 };
+            12, 12, 12, 12, 12, 12
+        };
 
-        int state = Utf8Accept;
-        int codep;
-        bool checking;
+        private int _state = Utf8Accept;
+        private int _codep;
+        private bool _checking;
 
         public void Check(IByteBuffer buffer)
         {
-            this.checking = true;
+            _checking = true;
             buffer.ForEachByte(this);
         }
 
         public void Finish()
         {
-            this.checking = false;
-            this.codep = 0;
-            if (this.state != Utf8Accept)
+            _checking = false;
+            _codep = 0;
+            if (_state != Utf8Accept)
             {
-                this.state = Utf8Accept;
+                _state = Utf8Accept;
                 ThrowCorruptedFrameException();
             }
         }
@@ -57,13 +63,13 @@ namespace DotNetty.Codecs.Http.WebSockets
             var b = (int)value;
             byte type = Types[b & 0xFF];
 
-            this.codep = this.state != Utf8Accept ? b & 0x3f | this.codep << 6 : 0xff >> type & b;
+            _codep = _state != Utf8Accept ? b & 0x3f | _codep << 6 : 0xff >> type & b;
 
-            this.state = States[this.state + type];
+            _state = States[_state + type];
 
-            if (this.state == Utf8Reject)
+            if (_state == Utf8Reject)
             {
-                this.checking = false;
+                _checking = false;
                 ThrowCorruptedFrameException();
             }
             return true;
@@ -80,6 +86,6 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
         }
 
-        public bool IsChecking => this.checking;
+        public bool IsChecking => _checking;
     }
 }

@@ -46,5 +46,18 @@ namespace DotNetty.Codecs.Http.Tests.Cookies
         [Fact]
         public void RejectCookieValueWithSemicolon() => 
             Assert.Throws<ArgumentException>(() => ClientCookieEncoder.StrictEncoder.Encode(new DefaultCookie("myCookie", "foo;bar")));
+
+        [Fact]
+        public void ComparatorForSamePathLength()
+        {
+            ICookie cookie = new DefaultCookie("test", "value");
+            cookie.Path ="1";
+
+            ICookie cookie2 = new DefaultCookie("test", "value");
+            cookie2.Path ="2";
+
+            Assert.Equal(0, ClientCookieEncoder.Comparer.Compare(cookie, cookie2));
+            Assert.Equal(0, ClientCookieEncoder.Comparer.Compare(cookie2, cookie));
+        }
     }
 }

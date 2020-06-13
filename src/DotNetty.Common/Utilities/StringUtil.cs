@@ -15,8 +15,8 @@ namespace DotNetty.Common.Utilities
     /// </summary>
     public static class StringUtil
     {
-        public static readonly string EmptyString = "";
-        public static readonly string Newline = SystemPropertyUtil.Get("line.separator", Environment.NewLine);
+        public static readonly string EmptyString;
+        public static readonly string Newline;
 
         public const char DoubleQuote = '\"';
         public const char Comma = ',';
@@ -25,10 +25,21 @@ namespace DotNetty.Common.Utilities
         public const char Tab = '\t';
         public const char Space = '\x20';
         public const byte UpperCaseToLowerCaseAsciiOffset = 'a' - 'A';
-        const uint uTab = Tab;
-        const uint uSpace = Space;
-        static readonly string[] Byte2HexPad = new string[256];
-        static readonly string[] Byte2HexNopad = new string[256];
+        private const uint uTab = Tab;
+        private const uint uSpace = Space;
+        private static readonly string[] Byte2HexPad;
+        private static readonly string[] Byte2HexNopad;
+        private static ReadOnlySpan<sbyte> Hex2B => new sbyte[128]
+        {
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1,
+            -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+        };
 
         /**
          * 2 - Quote character at beginning and end.
@@ -38,6 +49,11 @@ namespace DotNetty.Common.Utilities
 
         static StringUtil()
         {
+            EmptyString = string.Empty;
+            Newline = SystemPropertyUtil.Get("line.separator", Environment.NewLine);
+
+            Byte2HexPad = new string[256];
+            Byte2HexNopad = new string[256];
             // Generate the lookup table that converts a byte into a 2-digit hexadecimal integer.
             int i;
             for (i = 0; i < 10; i++)
@@ -188,20 +204,11 @@ namespace DotNetty.Common.Utilities
 
         public static int DecodeHexNibble(char c)
         {
+            const uint uHex2BLen = 128u;
             // Character.digit() is not used here, as it addresses a larger
             // set of characters (both ASCII and full-width latin letters).
-            if (c >= '0' && c <= '9')
-            {
-                return c - '0';
-            }
-            if (c >= 'A' && c <= 'F')
-            {
-                return c - 'A' + 0xA;
-            }
-            if (c >= 'a' && c <= 'f')
-            {
-                return c - 'a' + 0xA;
-            }
+            int index = c;
+            if (uHex2BLen > (uint)index) { return Hex2B[index]; }
             return -1;
         }
 
@@ -520,6 +527,7 @@ namespace DotNetty.Common.Utilities
             }
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         static ArgumentException NewInvalidEscapedCsvFieldException(ICharSequence value, int index) => new ArgumentException($"invalid escaped CSV field: {value} index: {index}");
 
         public static int Length(string s) => s?.Length ?? 0;
@@ -529,9 +537,60 @@ namespace DotNetty.Common.Utilities
 
         public static int IndexOfNonWhiteSpace(IReadOnlyList<char> seq, int offset)
         {
+            if (seq is IHasUtf16Span hasUtf16Span)
+            {
+                var utf16Span = hasUtf16Span.Utf16Span;
+                for (; offset < utf16Span.Length; ++offset)
+                {
+                    if (!char.IsWhiteSpace(utf16Span[offset]))
+                    {
+                        return offset;
+                    }
+                }
+
+                return AsciiString.IndexNotFound;
+            }
+            return IndexOfNonWhiteSpaceSlow(seq, offset);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static int IndexOfNonWhiteSpaceSlow(IReadOnlyList<char> seq, int offset)
+        {
             for (; offset < seq.Count; ++offset)
             {
                 if (!char.IsWhiteSpace(seq[offset]))
+                {
+                    return offset;
+                }
+            }
+
+            return AsciiString.IndexNotFound;
+        }
+
+        public static int IndexOfWhiteSpace(IReadOnlyList<char> seq, int offset)
+        {
+            if (seq is IHasUtf16Span hasUtf16Span)
+            {
+                var utf16Span = hasUtf16Span.Utf16Span;
+                for (; offset < utf16Span.Length; ++offset)
+                {
+                    if (char.IsWhiteSpace(utf16Span[offset]))
+                    {
+                        return offset;
+                    }
+                }
+
+                return AsciiString.IndexNotFound;
+            }
+            return IndexOfWhiteSpaceSlow(seq, offset);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static int IndexOfWhiteSpaceSlow(IReadOnlyList<char> seq, int offset)
+        {
+            for (; offset < seq.Count; ++offset)
+            {
+                if (char.IsWhiteSpace(seq[offset]))
                 {
                     return offset;
                 }

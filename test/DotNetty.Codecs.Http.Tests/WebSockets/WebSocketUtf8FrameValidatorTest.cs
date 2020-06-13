@@ -26,9 +26,10 @@
         private void AssertCorruptedFrameExceptionHandling(byte[] data)
         {
             EmbeddedChannel channel = new EmbeddedChannel(new Utf8FrameValidator());
+            TextWebSocketFrame frame = new TextWebSocketFrame(Unpooled.CopiedBuffer(data));
             try
             {
-                channel.WriteInbound(new TextWebSocketFrame(Unpooled.CopiedBuffer(data)));
+                channel.WriteInbound(frame);
                 Assert.False(true);
             }
             catch(Exception exc)
@@ -48,6 +49,7 @@
                 buf.Release();
             }
             Assert.Null(channel.ReadOutbound<object>());
+            Assert.Equal(0, frame.ReferenceCount);
         }
     }
 }

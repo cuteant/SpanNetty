@@ -21,7 +21,7 @@ namespace DotNetty.Codecs.Http.Cookies
         // cookies in the order in which they were given.
         public static readonly ClientCookieEncoder LaxEncoder = new ClientCookieEncoder(false);
 
-        static readonly CookieComparer Comparer = new CookieComparer();
+        internal static readonly IComparer<ICookie> Comparer = new CookieComparer();
 
         ClientCookieEncoder(bool strict) : base(strict)
         {
@@ -53,14 +53,10 @@ namespace DotNetty.Codecs.Http.Cookies
                 // limited use.
                 int len1 = path1?.Length ?? int.MaxValue;
                 int len2 = path2?.Length ?? int.MaxValue;
-                int diff = len2 - len1;
-                if (diff != 0)
-                {
-                    return diff;
-                }
-                // Rely on Java's sort stability to retain creation order in cases where
+
+                // Rely on Arrays.sort's stability to retain creation order in cases where
                 // cookies have same path length.
-                return -1;
+                return len2 - len1;
             }
         }
 

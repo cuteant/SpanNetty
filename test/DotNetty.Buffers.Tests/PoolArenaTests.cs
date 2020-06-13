@@ -74,5 +74,28 @@ namespace DotNetty.Buffers.Tests
             Assert.Equal(1, metric.NumNormalDeallocations);
             Assert.Equal(1, metric.NumNormalAllocations);
         }
+
+        //[Fact]
+        //public void DirectArenaMemoryCopy()
+        //{
+        //    IByteBuffer src = PooledByteBufferAllocator.Default.DirectBuffer(512);
+        //    IByteBuffer dst = PooledByteBufferAllocator.Default.DirectBuffer(512);
+
+        //    var pooledSrc = UnwrapIfNeeded(src);
+        //    var pooledDst = UnwrapIfNeeded(dst);
+
+        //    // This causes the internal reused ByteBuffer duplicate limit to be set to 128
+        //    pooledDst.WriteBytes(ByteBuffer.allocate(128));
+        //    // Ensure internal ByteBuffer duplicate limit is properly reset (used in memoryCopy non-Unsafe case)
+        //    pooledDst.Chunk.Arena.memo.MemoryCopy(pooledSrc.memory, 0, pooledDst, 512);
+
+        //    src.release();
+        //    dst.release();
+        //}
+
+        private PooledByteBuffer<byte> UnwrapIfNeeded(IByteBuffer buf)
+        {
+            return (PooledByteBuffer<byte>)(buf is PooledByteBuffer<byte> ? buf: buf.Unwrap());
+        }
     }
 }

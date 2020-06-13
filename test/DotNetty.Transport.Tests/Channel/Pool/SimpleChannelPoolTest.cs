@@ -291,8 +291,8 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             var pool = new SimpleChannelPool(cb, handler);
             var ch1 = await pool.AcquireAsync();
             var ch2 = await pool.AcquireAsync();
-            await pool.ReleaseAsync(ch1);
-            await pool.ReleaseAsync(ch2);
+            pool.ReleaseAsync(ch1).Wait(TimeSpan.FromSeconds(1));
+            pool.ReleaseAsync(ch2).Wait(TimeSpan.FromSeconds(1));
 
             // Assert that returned channels are open before close
             Assert.True(ch1.Open);
