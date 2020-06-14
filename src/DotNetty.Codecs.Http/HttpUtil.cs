@@ -59,22 +59,22 @@ namespace DotNetty.Codecs.Http
             {
                 if (keepAlive)
                 {
-                    headers.Remove(HttpHeaderNames.Connection);
+                    _ = headers.Remove(HttpHeaderNames.Connection);
                 }
                 else
                 {
-                    headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.Close);
+                    _ = headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.Close);
                 }
             }
             else
             {
                 if (keepAlive)
                 {
-                    headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
+                    _ = headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
                 }
                 else
                 {
-                    headers.Remove(HttpHeaderNames.Connection);
+                    _ = headers.Remove(HttpHeaderNames.Connection);
                 }
             }
         }
@@ -181,11 +181,11 @@ namespace DotNetty.Codecs.Http
         {
             if (expected)
             {
-                message.Headers.Set(HttpHeaderNames.Expect, HttpHeaderValues.Continue);
+                _ = message.Headers.Set(HttpHeaderNames.Expect, HttpHeaderValues.Continue);
             }
             else
             {
-                message.Headers.Remove(HttpHeaderNames.Expect);
+                _ = message.Headers.Remove(HttpHeaderNames.Expect);
             }
         }
 
@@ -195,8 +195,8 @@ namespace DotNetty.Codecs.Http
         {
             if (chunked)
             {
-                m.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
-                m.Headers.Remove(HttpHeaderNames.ContentLength);
+                _ = m.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
+                _ = m.Headers.Remove(HttpHeaderNames.ContentLength);
             }
             else
             {
@@ -210,16 +210,16 @@ namespace DotNetty.Codecs.Http
                 {
                     if (HttpHeaderValues.Chunked.ContentEqualsIgnoreCase(value))
                     {
-                        values.Remove(value);
+                        _ = values.Remove(value);
                     }
                 }
                 if (0u >= (uint)values.Count)
                 {
-                    m.Headers.Remove(HttpHeaderNames.TransferEncoding);
+                    _ = m.Headers.Remove(HttpHeaderNames.TransferEncoding);
                 }
                 else
                 {
-                    m.Headers.Set(HttpHeaderNames.TransferEncoding, values);
+                    _ = m.Headers.Set(HttpHeaderNames.TransferEncoding, values);
                 }
             }
         }

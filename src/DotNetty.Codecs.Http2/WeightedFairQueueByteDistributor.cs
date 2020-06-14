@@ -89,7 +89,7 @@ namespace DotNetty.Codecs.Http2
             _connection = connection;
             _stateKey = connection.NewKey();
             IHttp2Stream connectionStream = connection.ConnectionStream;
-            connectionStream.SetProperty(_stateKey, _connectionState = new State(this, connectionStream, 16));
+            _ = connectionStream.SetProperty(_stateKey, _connectionState = new State(this, connectionStream, 16));
 
             // Register for notification of new streams.
             connection.AddListener(this);
@@ -108,8 +108,8 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-                _stateOnlyMap.Remove(streamId);
-                _stateOnlyRemovalQueue.TryRemove(state);
+                _ = _stateOnlyMap.Remove(streamId);
+                _ = _stateOnlyRemovalQueue.TryRemove(state);
                 state._stream = stream;
             }
 
@@ -121,7 +121,7 @@ namespace DotNetty.Codecs.Http2
                 // need to reprioritize here because it will not be in stateOnlyRemovalQueue.
             }
 
-            stream.SetProperty(_stateKey, state);
+            _ = stream.SetProperty(_stateKey, state);
         }
 
         public override void OnStreamActive(IHttp2Stream stream)
@@ -156,7 +156,7 @@ namespace DotNetty.Codecs.Http2
 
             if (_stateOnlyRemovalQueue.Count == _maxStateOnlySize)
             {
-                _stateOnlyRemovalQueue.TryPeek(out State stateToRemove);
+                _ = _stateOnlyRemovalQueue.TryPeek(out State stateToRemove);
                 if (StateOnlyComparator.Instance.Compare(stateToRemove, state) >= 0)
                 {
                     // The "lowest priority" stream is a "higher priority" than the stream being removed, so we
@@ -165,12 +165,12 @@ namespace DotNetty.Codecs.Http2
                     return;
                 }
 
-                _stateOnlyRemovalQueue.TryDequeue(out State _);
+                _ = _stateOnlyRemovalQueue.TryDequeue(out _);
                 stateToRemove._parent.RemoveChild(stateToRemove);
-                _stateOnlyMap.Remove(stateToRemove._streamId);
+                _ = _stateOnlyMap.Remove(stateToRemove._streamId);
             }
 
-            _stateOnlyRemovalQueue.TryEnqueue(state);
+            _ = _stateOnlyRemovalQueue.TryEnqueue(state);
             _stateOnlyMap.Add(state._streamId, state);
         }
 
@@ -192,7 +192,7 @@ namespace DotNetty.Codecs.Http2
                 if (0u >= (uint)_maxStateOnlySize) { return; }
 
                 state = new State(this, childStreamId);
-                _stateOnlyRemovalQueue.TryEnqueue(state);
+                _ = _stateOnlyRemovalQueue.TryEnqueue(state);
                 _stateOnlyMap.Add(childStreamId, state);
             }
 
@@ -205,7 +205,7 @@ namespace DotNetty.Codecs.Http2
                 if (0u >= (uint)_maxStateOnlySize) { return; }
 
                 newParent = new State(this, parentStreamId);
-                _stateOnlyRemovalQueue.TryEnqueue(newParent);
+                _ = _stateOnlyRemovalQueue.TryEnqueue(newParent);
                 _stateOnlyMap.Add(parentStreamId, newParent);
                 // Only the stream which was just added will change parents. So we only need an array of size 1.
                 List<ParentChangedEvent> events = new List<ParentChangedEvent>(1);
@@ -244,9 +244,9 @@ namespace DotNetty.Codecs.Http2
             // stateOnlyRemovalQueue has been updated.
             while ((uint)_stateOnlyRemovalQueue.Count > (uint)_maxStateOnlySize)
             {
-                _stateOnlyRemovalQueue.TryDequeue(out State stateToRemove);
+                _ = _stateOnlyRemovalQueue.TryDequeue(out State stateToRemove);
                 stateToRemove._parent.RemoveChild(stateToRemove);
-                _stateOnlyMap.Remove(stateToRemove._streamId);
+                _ = _stateOnlyMap.Remove(stateToRemove._streamId);
             }
         }
 
@@ -585,7 +585,7 @@ namespace DotNetty.Codecs.Http2
                     }
                     else if (oldParent is object)
                     {
-                        oldParent._children.Remove(child._streamId);
+                        _ = oldParent._children.Remove(child._streamId);
                     }
 
                     // Lazily initialize the children to save object allocations.
@@ -785,7 +785,7 @@ namespace DotNetty.Codecs.Http2
 
             internal void OfferPseudoTimeQueue(State state)
             {
-                _pseudoTimeQueue.TryEnqueue(state);
+                _ = _pseudoTimeQueue.TryEnqueue(state);
                 _totalQueuedWeights += state._weight;
             }
 
@@ -795,7 +795,7 @@ namespace DotNetty.Codecs.Http2
             /// <returns></returns>
             internal State PollPseudoTimeQueue()
             {
-                _pseudoTimeQueue.TryDequeue(out State state);
+                _ = _pseudoTimeQueue.TryDequeue(out State state);
                 // This method is only ever called if the pseudoTimeQueue is non-empty.
                 _totalQueuedWeights -= state._weight;
                 return state;
@@ -887,7 +887,7 @@ namespace DotNetty.Codecs.Http2
 
             void ToString(StringBuilder sb)
             {
-                sb.Append("{streamId ").Append(_streamId)
+                _ = sb.Append("{streamId ").Append(_streamId)
                   .Append(" streamableBytes ").Append(_streamableBytes)
                   .Append(" activeCountForTree ").Append(_activeCountForTree)
                   .Append(" pseudoTimeQueueIndex ").Append(_pseudoTimeQueueIndex)
@@ -903,14 +903,14 @@ namespace DotNetty.Codecs.Http2
                     foreach (var s in _pseudoTimeQueue)
                     {
                         s.ToString(sb);
-                        sb.Append(", ");
+                        _ = sb.Append(", ");
                     }
 
                     // Remove the last ", "
                     sb.Length -= 2;
                 }
 
-                sb.Append(']');
+                _ = sb.Append(']');
             }
         }
 

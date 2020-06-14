@@ -102,6 +102,7 @@ namespace DotNetty.Buffers
 
         attributeType,
         initialBuffer,
+        maxAllocation,
 
         parameterTypes,
         maxFrameLength,

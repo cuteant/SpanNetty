@@ -57,7 +57,7 @@ namespace DotNetty.Codecs.Http2
     ///
     /// @deprecated use <see cref="Http2FrameCodecBuilder"/> together with <see cref="Http2MultiplexHandler"/>.
     /// </summary>
-    public partial class Http2MultiplexCodec : Http2FrameCodec, IHasParentContext
+    public class Http2MultiplexCodec : Http2FrameCodec, IHasParentContext
     {
         private readonly IChannelHandler _inboundStreamHandler;
         private readonly IChannelHandler _upgradeStreamHandler;
@@ -130,7 +130,7 @@ namespace DotNetty.Codecs.Http2
                 OnHttp2GoAwayFrame(ctx, goAwayFrame);
             }
             // Send frames down the pipeline
-            ctx.FireChannelRead(frame);
+            _ = ctx.FireChannelRead(frame);
         }
 
         /// <inheritdoc />
@@ -176,7 +176,7 @@ namespace DotNetty.Codecs.Http2
                     }
                     else
                     {
-                        future.ContinueWith(Http2MultiplexHandler.RegisterDoneAction, streamChannel, TaskContinuationOptions.ExecuteSynchronously);
+                        _ = future.ContinueWith(Http2MultiplexHandler.RegisterDoneAction, streamChannel, TaskContinuationOptions.ExecuteSynchronously);
                     }
                     break;
 
@@ -207,7 +207,7 @@ namespace DotNetty.Codecs.Http2
 
             try
             {
-                channel.Pipeline.FireExceptionCaught(cause.InnerException);
+                _ = channel.Pipeline.FireExceptionCaught(cause.InnerException);
             }
             finally
             {
@@ -223,8 +223,8 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Http2Exception exc)
             {
-                ctx.FireExceptionCaught(exc);
-                ctx.CloseAsync();
+                _ = ctx.FireExceptionCaught(exc);
+                _ = ctx.CloseAsync();
             }
         }
 
@@ -235,7 +235,7 @@ namespace DotNetty.Codecs.Http2
             {
                 var channel = (AbstractHttp2StreamChannel)
                         ((DefaultHttp2FrameStream)stream).Attachment;
-                channel.Pipeline.FireUserEventTriggered(goAwayFrame.RetainedDuplicate());
+                _ = channel.Pipeline.FireUserEventTriggered(goAwayFrame.RetainedDuplicate());
             }
             return true;
         }
@@ -322,7 +322,7 @@ namespace DotNetty.Codecs.Http2
 
             protected override IChannelHandlerContext ParentContext => _owner.InternalContext;
 
-            protected override Task Write0Async(IChannelHandlerContext ctx, object msg)
+            protected override Task InternalWriteAsync(IChannelHandlerContext ctx, object msg)
             {
                 var promise = ctx.NewPromise();
                 _owner.Write(ctx, msg, promise);

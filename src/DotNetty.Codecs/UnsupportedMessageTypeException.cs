@@ -41,7 +41,7 @@ namespace DotNetty.Codecs
 
             if (expectedTypes is object && (uint)expectedTypes.Length > 0u)
             {
-                buf.Append(" (expected: ").Append(expectedTypes[0].Name);
+                _ = buf.Append(" (expected: ").Append(expectedTypes[0].Name);
                 for (int i = 1; i < expectedTypes.Length; i++)
                 {
                     Type t = expectedTypes[i];
@@ -49,9 +49,9 @@ namespace DotNetty.Codecs
                     {
                         break;
                     }
-                    buf.Append(", ").Append(t.Name);
+                    _ = buf.Append(", ").Append(t.Name);
                 }
-                buf.Append(')');
+                _ = buf.Append(')');
             }
 
             return StringBuilderManager.ReturnAndFree(buf);

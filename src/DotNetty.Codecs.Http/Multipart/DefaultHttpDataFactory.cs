@@ -237,7 +237,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             if (0u >= (uint)list.Count)
             {
-                this.requestFileDeleteMap.TryRemove(request, out _);
+                _ = this.requestFileDeleteMap.TryRemove(request, out _);
             }
         }
 
@@ -247,7 +247,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 foreach (IHttpData data in list)
                 {
-                    data.Release();
+                    _ = data.Release();
                 }
             }
         }
@@ -263,7 +263,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     {
                         foreach (IHttpData data in list)
                         {
-                            data.Release();
+                            _ = data.Release();
                         }
                     }
                 }

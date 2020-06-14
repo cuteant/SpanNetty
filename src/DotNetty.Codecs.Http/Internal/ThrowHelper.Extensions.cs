@@ -326,17 +326,6 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_Both_Content_Length_And_Chunked_Found(long contentLength)
-        {
-            throw GetException();
-            ArgumentException GetException()
-            {
-                return new ArgumentException(
-                    "Both 'Content-Length: " + contentLength + "' and 'Transfer-Encoding: chunked' found");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException_TrailingHeaderName(ICharSequence name)
         {
             throw GetArgumentException();
@@ -745,6 +734,28 @@ namespace DotNetty.Codecs.Http
             ArgumentException GetException()
             {
                 return new ArgumentException("WebSocket close status code does NOT comply with RFC-6455: " + statusCode);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Invalid_separator()
+        {
+            throw GetException();
+
+            static ArgumentException GetException()
+            {
+                return new ArgumentException("Invalid separator.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentException_Invalid_separator_only_a_single_space_or_horizontal_tab_allowed(int c)
+        {
+            throw GetException();
+            ArgumentException GetException()
+            {
+                return new ArgumentException("Invalid separator, only a single space or horizontal tab allowed," +
+                            " but received a '" + c + "'");
             }
         }
 

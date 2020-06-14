@@ -38,7 +38,7 @@ namespace DotNetty.Codecs
                     }
                     finally
                     {
-                        ReferenceCountUtil.Release(cast);
+                        _ = ReferenceCountUtil.Release(cast);
                     }
 
                     if (0u >= (uint)output.Count)
@@ -51,7 +51,7 @@ namespace DotNetty.Codecs
                 }
                 else
                 {
-                    ctx.WriteAsync(msg, promise);
+                    _ = ctx.WriteAsync(msg, promise);
                 }
             }
             catch (EncoderException)
@@ -69,7 +69,7 @@ namespace DotNetty.Codecs
                     int lastItemIndex = output.Count - 1;
                     if (0u >= (uint)lastItemIndex)
                     {
-                        ctx.WriteAsync(output[0], promise);
+                        _ = ctx.WriteAsync(output[0], promise);
                     }
                     else if (lastItemIndex > 0)
                     {
@@ -94,7 +94,7 @@ namespace DotNetty.Codecs
             IPromise voidPromise = ctx.VoidPromise();
             for (int i = 0; i < output.Count; i++)
             {
-                ctx.WriteAsync(output[i], voidPromise);
+                _ = ctx.WriteAsync(output[i], voidPromise);
             }
         }
 

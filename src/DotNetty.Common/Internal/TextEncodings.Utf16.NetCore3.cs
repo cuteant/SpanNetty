@@ -67,11 +67,11 @@ namespace DotNetty.Common.Internal
 
                 if (PlatformDependent.Is64BitProcess)
                 {
-                    Utf8Utility64.TranscodeToUtf8(pChars, charsLength, pBytes, bytesLength, out pInputBufferRemaining, out pOutputBufferRemaining);
+                    _ = Utf8Utility64.TranscodeToUtf8(pChars, charsLength, pBytes, bytesLength, out pInputBufferRemaining, out pOutputBufferRemaining);
                 }
                 else
                 {
-                    Utf8Utility32.TranscodeToUtf8(pChars, charsLength, pBytes, bytesLength, out pInputBufferRemaining, out pOutputBufferRemaining);
+                    _ = Utf8Utility32.TranscodeToUtf8(pChars, charsLength, pBytes, bytesLength, out pInputBufferRemaining, out pOutputBufferRemaining);
                 }
 
                 charsConsumed = (int)(pInputBufferRemaining - pChars);

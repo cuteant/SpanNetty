@@ -17,16 +17,16 @@ namespace DotNetty.Common.Utilities
                 if (first)
                 {
                     first = false;
-                    sb.Append('{');
+                    _ = sb.Append('{');
                 }
                 else
                 {
-                    sb.Append(", ");
+                    _ = sb.Append(", ");
                 }
 
-                sb.Append("{`").Append(pair.Key).Append("`: ").Append(pair.Value).Append('}');
+                _ = sb.Append("{`").Append(pair.Key).Append("`: ").Append(pair.Value).Append('}');
             }
-            sb.Append('}');
+            _ = sb.Append('}');
             return StringBuilderManager.ReturnAndFree(sb);
         }
     }

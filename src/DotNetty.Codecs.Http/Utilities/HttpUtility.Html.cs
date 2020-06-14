@@ -235,15 +235,15 @@ namespace DotNetty.Codecs.Http.Utilities
                                 if (parsedValue <= UNICODE_PLANE00_END)
                                 {
                                     // single character
-                                    output.Append((char)parsedValue);
+                                    _ = output.Append((char)parsedValue);
                                 }
                                 else
                                 {
                                     // multi-character
                                     char leadingSurrogate, trailingSurrogate;
                                     ConvertSmpToUtf16(parsedValue, out leadingSurrogate, out trailingSurrogate);
-                                    output.Append(leadingSurrogate);
-                                    output.Append(trailingSurrogate);
+                                    _ = output.Append(leadingSurrogate);
+                                    _ = output.Append(trailingSurrogate);
                                 }
 
                                 i = index; // already looked at everything until semicolon
@@ -262,16 +262,16 @@ namespace DotNetty.Codecs.Http.Utilities
                             }
                             else
                             {
-                                output.Append('&');
-                                output.Append(entity);
-                                output.Append(';');
+                                _ = output.Append('&');
+                                _ = output.Append(entity);
+                                _ = output.Append(';');
                                 continue;
                             }
                         }
                     }
                 }
 
-                output.Append(ch);
+                _ = output.Append(ch);
             }
         }
 
@@ -590,7 +590,7 @@ namespace DotNetty.Codecs.Http.Utilities
             public static char Lookup(string entity)
             {
                 char theChar;
-                s_lookupTable.TryGetValue(entity, out theChar);
+                _ = s_lookupTable.TryGetValue(entity, out theChar);
                 return theChar;
             }
         }

@@ -329,8 +329,7 @@ namespace DotNetty.Transport.Channels
 
             for (int i = handlers.Length - 1; i >= 0; i--)
             {
-                IChannelHandler h = handlers[i];
-                AddFirst(group: group, name: null, handler: h);
+                _ = AddFirst(group: group, name: null, handler: handlers[i]);
             }
 
             return this;
@@ -342,9 +341,9 @@ namespace DotNetty.Transport.Channels
 
         public IChannelPipeline AddLast(IEventExecutorGroup group, params IChannelHandler[] handlers)
         {
-            foreach (IChannelHandler h in handlers)
+            for (int i = 0; i < handlers.Length; i++)
             {
-                AddLast(group: group, name: null, handler: h);
+                _ = AddLast(group: group, name: null, handler: handlers[i]);
             }
             return this;
         }
@@ -377,7 +376,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelPipeline Remove(IChannelHandler handler)
         {
-            Remove(GetContextOrThrow(handler));
+            _ = Remove(GetContextOrThrow(handler));
             return this;
         }
 
@@ -472,7 +471,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelPipeline Replace(IChannelHandler oldHandler, string newName, IChannelHandler newHandler)
         {
-            Replace(GetContextOrThrow(oldHandler), newName, newHandler);
+            _ = Replace(GetContextOrThrow(oldHandler), newName, newHandler);
             return this;
         }
 
@@ -602,11 +601,11 @@ namespace DotNetty.Transport.Channels
 
                 if (removed)
                 {
-                    FireExceptionCaught(ThrowHelper.GetChannelPipelineException_HandlerAddedThrowRemovedExc(ctx, ex));
+                    _ = FireExceptionCaught(ThrowHelper.GetChannelPipelineException_HandlerAddedThrowRemovedExc(ctx, ex));
                 }
                 else
                 {
-                    FireExceptionCaught(ThrowHelper.GetChannelPipelineException_HandlerAddedThrowAlsoFailedToRemovedExc(ctx, ex));
+                    _ = FireExceptionCaught(ThrowHelper.GetChannelPipelineException_HandlerAddedThrowAlsoFailedToRemovedExc(ctx, ex));
                 }
             }
         }
@@ -620,7 +619,7 @@ namespace DotNetty.Transport.Channels
             }
             catch (Exception ex)
             {
-                FireExceptionCaught(ThrowHelper.GetChannelPipelineException_HandlerRemovedThrowExc(ctx, ex));
+                _ = FireExceptionCaught(ThrowHelper.GetChannelPipelineException_HandlerRemovedThrowExc(ctx, ex));
             }
         }
 
@@ -717,7 +716,7 @@ namespace DotNetty.Transport.Channels
                     break;
                 }
 
-                buf.Append('(')
+                _ = buf.Append('(')
                     .Append(ctx.Name)
                     .Append(" = ")
                     .Append(ctx.Handler.GetType().Name)
@@ -729,9 +728,9 @@ namespace DotNetty.Transport.Channels
                     break;
                 }
 
-                buf.Append(", ");
+                _ = buf.Append(", ");
             }
-            buf.Append('}');
+            _ = buf.Append('}');
             return StringBuilderManager.ReturnAndFree(buf);
         }
 
@@ -816,11 +815,11 @@ namespace DotNetty.Transport.Channels
 
         public IChannelPipeline FireChannelActive()
         {
-            _head.FireChannelActive();
+            _ = _head.FireChannelActive();
 
             if (_channel.Configuration.AutoRead)
             {
-                _channel.Read();
+                _ = _channel.Read();
             }
 
             return this;
@@ -828,41 +827,41 @@ namespace DotNetty.Transport.Channels
 
         public IChannelPipeline FireChannelInactive()
         {
-            _head.FireChannelInactive();
+            _ = _head.FireChannelInactive();
             return this;
         }
 
         public IChannelPipeline FireExceptionCaught(Exception cause)
         {
-            _head.FireExceptionCaught(cause);
+            _ = _head.FireExceptionCaught(cause);
             return this;
         }
 
         public IChannelPipeline FireUserEventTriggered(object evt)
         {
-            _head.FireUserEventTriggered(evt);
+            _ = _head.FireUserEventTriggered(evt);
             return this;
         }
 
         public IChannelPipeline FireChannelRead(object msg)
         {
-            _head.FireChannelRead(msg);
+            _ = _head.FireChannelRead(msg);
             return this;
         }
 
         public IChannelPipeline FireChannelReadComplete()
         {
-            _head.FireChannelReadComplete();
+            _ = _head.FireChannelReadComplete();
             if (_channel.Configuration.AutoRead)
             {
-                Read();
+                _ = Read();
             }
             return this;
         }
 
         public IChannelPipeline FireChannelWritabilityChanged()
         {
-            _head.FireChannelWritabilityChanged();
+            _ = _head.FireChannelWritabilityChanged();
             return this;
         }
 
@@ -886,7 +885,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelPipeline Read()
         {
-            _tail.Read();
+            _ = _tail.Read();
             return this;
         }
 
@@ -896,7 +895,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelPipeline Flush()
         {
-            _tail.Flush();
+            _ = _tail.Flush();
             return this;
         }
 
@@ -1039,7 +1038,7 @@ namespace DotNetty.Transport.Channels
             }
             finally
             {
-                ReferenceCountUtil.Release(cause);
+                _ = ReferenceCountUtil.Release(cause);
             }
         }
 
@@ -1079,7 +1078,7 @@ namespace DotNetty.Transport.Channels
             }
             finally
             {
-                ReferenceCountUtil.Release(msg);
+                _ = ReferenceCountUtil.Release(msg);
             }
         }
 
@@ -1107,7 +1106,7 @@ namespace DotNetty.Transport.Channels
         {
             // This may not be a configuration error and so don't log anything.
             // The event may be superfluous for the current pipeline configuration.
-            ReferenceCountUtil.Release(evt);
+            _ = ReferenceCountUtil.Release(evt);
         }
 
         /// <summary>
@@ -1164,7 +1163,7 @@ namespace DotNetty.Transport.Channels
             public TailContext(DefaultChannelPipeline pipeline)
                 : base(pipeline, null, TailName, s_skipFlags)
             {
-                SetAddComplete();
+                _ = SetAddComplete();
             }
 
             public override IChannelHandler Handler => this;
@@ -1229,7 +1228,7 @@ namespace DotNetty.Transport.Channels
                 : base(pipeline, null, HeadName, s_skipFlags)
             {
                 _channelUnsafe = pipeline.Channel.Unsafe;
-                SetAddComplete();
+                _ = SetAddComplete();
             }
 
             public override IChannelHandler Handler => this;
@@ -1262,12 +1261,12 @@ namespace DotNetty.Transport.Channels
             public void ChannelRegistered(IChannelHandlerContext context)
             {
                 _pipeline.InvokeHandlerAddedIfNeeded();
-                context.FireChannelRegistered();
+                _ = context.FireChannelRegistered();
             }
 
             public void ChannelUnregistered(IChannelHandlerContext context)
             {
-                context.FireChannelUnregistered();
+                _ = context.FireChannelUnregistered();
 
                 // Remove all handlers sequentially if channel is closed and unregistered.
                 if (!_pipeline._channel.Open)
@@ -1278,7 +1277,7 @@ namespace DotNetty.Transport.Channels
 
             public void ChannelActive(IChannelHandlerContext context)
             {
-                context.FireChannelActive();
+                _ = context.FireChannelActive();
 
                 ReadIfIsAutoRead();
             }
@@ -1291,7 +1290,7 @@ namespace DotNetty.Transport.Channels
 
             public void ChannelReadComplete(IChannelHandlerContext ctx)
             {
-                ctx.FireChannelReadComplete();
+                _ = ctx.FireChannelReadComplete();
 
                 ReadIfIsAutoRead();
             }
@@ -1300,7 +1299,7 @@ namespace DotNetty.Transport.Channels
             {
                 if (_pipeline._channel.Configuration.AutoRead)
                 {
-                    _pipeline._channel.Read();
+                    _ = _pipeline._channel.Read();
                 }
             }
 

@@ -27,7 +27,7 @@ namespace DotNetty.Common.Concurrency
                 // hack: enables this executor to be seen as default on Executor's worker thread.
                 // This is a special case for SingleThreadEventExecutor.Loop initiated task.
                 _started = true;
-                TryExecuteTask(task);
+                _ = TryExecuteTask(task);
             }
         }
 

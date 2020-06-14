@@ -24,18 +24,18 @@ namespace DotNetty.Codecs.Http.Utilities
 
             for (var ch = '0'; ch <= '9'; ch++)
             {
-                UrlSafeChars.Add(ch);
-                s_digitalHexChars.Add(ch);
+                _ = UrlSafeChars.Add(ch);
+                _ = s_digitalHexChars.Add(ch);
             }
             for (var ch = 'a'; ch <= 'z'; ch++)
             {
-                UrlSafeChars.Add(ch);
-                if (ch <= 'f') { s_lowercaseHexChars.Add(ch); }
+                _ = UrlSafeChars.Add(ch);
+                if (ch <= 'f') { _ = s_lowercaseHexChars.Add(ch); }
             }
             for (var ch = 'A'; ch <= 'Z'; ch++)
             {
-                UrlSafeChars.Add(ch);
-                if (ch <= 'F') { s_uppercaseHexChars.Add(ch); }
+                _ = UrlSafeChars.Add(ch);
+                if (ch <= 'F') { _ = s_uppercaseHexChars.Add(ch); }
             }
         }
 

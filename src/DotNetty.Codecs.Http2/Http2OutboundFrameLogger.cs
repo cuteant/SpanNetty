@@ -13,52 +13,52 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class Http2OutboundFrameLogger : IHttp2FrameWriter
     {
-        private readonly IHttp2FrameWriter writer;
-        private readonly IHttp2FrameLogger logger;
+        private readonly IHttp2FrameWriter _writer;
+        private readonly IHttp2FrameLogger _logger;
 
         public Http2OutboundFrameLogger(IHttp2FrameWriter writer, IHttp2FrameLogger logger)
         {
             if (writer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.writer); }
             if (logger is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.logger); }
-            this.writer = writer;
-            this.logger = logger;
+            _writer = writer;
+            _logger = logger;
         }
 
-        public void Close() => this.writer.Close();
+        public void Close() => _writer.Close();
 
-        public IHttp2FrameWriterConfiguration Configuration => this.writer.Configuration;
+        public IHttp2FrameWriterConfiguration Configuration => _writer.Configuration;
 
-        public void Dispose() => this.writer.Dispose();
+        public void Dispose() => _writer.Dispose();
 
         public Task WriteDataAsync(IChannelHandlerContext ctx, int streamId, IByteBuffer data, int padding, bool endOfStream, IPromise promise)
         {
-            this.logger.LogData(Direction.Outbound, ctx, streamId, data, padding, endOfStream);
-            return writer.WriteDataAsync(ctx, streamId, data, padding, endOfStream, promise);
+            _logger.LogData(Direction.Outbound, ctx, streamId, data, padding, endOfStream);
+            return _writer.WriteDataAsync(ctx, streamId, data, padding, endOfStream, promise);
         }
 
         public Task WriteFrameAsync(IChannelHandlerContext ctx, Http2FrameTypes frameType, int streamId, Http2Flags flags, IByteBuffer payload, IPromise promise)
         {
-            this.logger.LogUnknownFrame(Direction.Outbound, ctx, frameType, streamId, flags, payload);
-            return writer.WriteFrameAsync(ctx, frameType, streamId, flags, payload, promise);
+            _logger.LogUnknownFrame(Direction.Outbound, ctx, frameType, streamId, flags, payload);
+            return _writer.WriteFrameAsync(ctx, frameType, streamId, flags, payload, promise);
         }
 
         public Task WriteGoAwayAsync(IChannelHandlerContext ctx, int lastStreamId, Http2Error errorCode, IByteBuffer debugData, IPromise promise)
         {
-            this.logger.LogGoAway(Direction.Outbound, ctx, lastStreamId, errorCode, debugData);
-            return writer.WriteGoAwayAsync(ctx, lastStreamId, errorCode, debugData, promise);
+            _logger.LogGoAway(Direction.Outbound, ctx, lastStreamId, errorCode, debugData);
+            return _writer.WriteGoAwayAsync(ctx, lastStreamId, errorCode, debugData, promise);
         }
 
         public Task WriteHeadersAsync(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int padding, bool endOfStream, IPromise promise)
         {
-            this.logger.LogHeaders(Direction.Outbound, ctx, streamId, headers, padding, endOfStream);
-            return writer.WriteHeadersAsync(ctx, streamId, headers, padding, endOfStream, promise);
+            _logger.LogHeaders(Direction.Outbound, ctx, streamId, headers, padding, endOfStream);
+            return _writer.WriteHeadersAsync(ctx, streamId, headers, padding, endOfStream, promise);
         }
 
         public Task WriteHeadersAsync(IChannelHandlerContext ctx, int streamId, IHttp2Headers headers, int streamDependency, short weight, bool exclusive, int padding, bool endOfStream, IPromise promise)
         {
-            this.logger.LogHeaders(Direction.Outbound, ctx, streamId, headers, streamDependency, weight, exclusive,
+            _logger.LogHeaders(Direction.Outbound, ctx, streamId, headers, streamDependency, weight, exclusive,
                     padding, endOfStream);
-            return writer.WriteHeadersAsync(ctx, streamId, headers, streamDependency, weight,
+            return _writer.WriteHeadersAsync(ctx, streamId, headers, streamDependency, weight,
                     exclusive, padding, endOfStream, promise);
         }
 
@@ -66,49 +66,49 @@ namespace DotNetty.Codecs.Http2
         {
             if (ack)
             {
-                this.logger.LogPingAck(Direction.Outbound, ctx, data);
+                _logger.LogPingAck(Direction.Outbound, ctx, data);
             }
             else
             {
-                this.logger.LogPing(Direction.Outbound, ctx, data);
+                _logger.LogPing(Direction.Outbound, ctx, data);
             }
-            return writer.WritePingAsync(ctx, ack, data, promise);
+            return _writer.WritePingAsync(ctx, ack, data, promise);
         }
 
         public Task WritePriorityAsync(IChannelHandlerContext ctx, int streamId, int streamDependency, short weight, bool exclusive, IPromise promise)
         {
-            this.logger.LogPriority(Direction.Outbound, ctx, streamId, streamDependency, weight, exclusive);
-            return writer.WritePriorityAsync(ctx, streamId, streamDependency, weight, exclusive, promise);
+            _logger.LogPriority(Direction.Outbound, ctx, streamId, streamDependency, weight, exclusive);
+            return _writer.WritePriorityAsync(ctx, streamId, streamDependency, weight, exclusive, promise);
         }
 
         public Task WritePushPromiseAsync(IChannelHandlerContext ctx, int streamId, int promisedStreamId, IHttp2Headers headers, int padding, IPromise promise)
         {
-            this.logger.LogPushPromise(Direction.Outbound, ctx, streamId, promisedStreamId, headers, padding);
-            return writer.WritePushPromiseAsync(ctx, streamId, promisedStreamId, headers, padding, promise);
+            _logger.LogPushPromise(Direction.Outbound, ctx, streamId, promisedStreamId, headers, padding);
+            return _writer.WritePushPromiseAsync(ctx, streamId, promisedStreamId, headers, padding, promise);
         }
 
         public Task WriteRstStreamAsync(IChannelHandlerContext ctx, int streamId, Http2Error errorCode, IPromise promise)
         {
-            this.logger.LogRstStream(Direction.Outbound, ctx, streamId, errorCode);
-            return writer.WriteRstStreamAsync(ctx, streamId, errorCode, promise);
+            _logger.LogRstStream(Direction.Outbound, ctx, streamId, errorCode);
+            return _writer.WriteRstStreamAsync(ctx, streamId, errorCode, promise);
         }
 
         public Task WriteSettingsAckAsync(IChannelHandlerContext ctx, IPromise promise)
         {
-            this.logger.LogSettingsAck(Direction.Outbound, ctx);
-            return writer.WriteSettingsAckAsync(ctx, promise);
+            _logger.LogSettingsAck(Direction.Outbound, ctx);
+            return _writer.WriteSettingsAckAsync(ctx, promise);
         }
 
         public Task WriteSettingsAsync(IChannelHandlerContext ctx, Http2Settings settings, IPromise promise)
         {
-            this.logger.LogSettings(Direction.Outbound, ctx, settings);
-            return writer.WriteSettingsAsync(ctx, settings, promise);
+            _logger.LogSettings(Direction.Outbound, ctx, settings);
+            return _writer.WriteSettingsAsync(ctx, settings, promise);
         }
 
         public Task WriteWindowUpdateAsync(IChannelHandlerContext ctx, int streamId, int windowSizeIncrement, IPromise promise)
         {
-            this.logger.LogWindowsUpdate(Direction.Outbound, ctx, streamId, windowSizeIncrement);
-            return writer.WriteWindowUpdateAsync(ctx, streamId, windowSizeIncrement, promise);
+            _logger.LogWindowsUpdate(Direction.Outbound, ctx, streamId, windowSizeIncrement);
+            return _writer.WriteWindowUpdateAsync(ctx, streamId, windowSizeIncrement, promise);
         }
     }
 }

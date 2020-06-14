@@ -32,7 +32,7 @@ namespace DotNetty.Codecs
                     }
                     finally
                     {
-                        ReferenceCountUtil.Release(cast);
+                        _ = ReferenceCountUtil.Release(cast);
                     }
                 }
                 else
@@ -53,7 +53,7 @@ namespace DotNetty.Codecs
                 int size = output.Count;
                 for (int i = 0; i < size; i++)
                 {
-                    context.FireChannelRead(output[i]);
+                    _ = context.FireChannelRead(output[i]);
                 }
                 output.Return();
             }

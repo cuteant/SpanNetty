@@ -171,28 +171,28 @@ namespace DotNetty.Codecs.Http2
         public override string ToString()
         {
             var builder = StringBuilderManager.Allocate();
-            builder.Append("value = ").Append(_value).Append(" (");
+            _ = builder.Append("value = ").Append(_value).Append(" (");
             if (Ack())
             {
-                builder.Append("ACK,");
+                _ = builder.Append("ACK,");
             }
             if (EndOfHeaders())
             {
-                builder.Append("END_OF_HEADERS,");
+                _ = builder.Append("END_OF_HEADERS,");
             }
             if (EndOfStream())
             {
-                builder.Append("END_OF_STREAM,");
+                _ = builder.Append("END_OF_STREAM,");
             }
             if (PriorityPresent())
             {
-                builder.Append("PRIORITY_PRESENT,");
+                _ = builder.Append("PRIORITY_PRESENT,");
             }
             if (PaddingPresent())
             {
-                builder.Append("PADDING_PRESENT,");
+                _ = builder.Append("PADDING_PRESENT,");
             }
-            builder.Append(')');
+            _ = builder.Append(')');
             return StringBuilderManager.ReturnAndFree(builder);
         }
     }

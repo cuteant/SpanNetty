@@ -42,10 +42,10 @@ namespace DotNetty.Codecs.Http2
         private const char PseudoHeaderPrefix = ':';
         private const byte PseudoHeaderPrefixByte = (byte)PseudoHeaderPrefix;
 
-        readonly AsciiString value;
-        public readonly bool requestOnly;
+        private readonly AsciiString _value;
+        public readonly bool _requestOnly;
 
-        static readonly CharSequenceMap<PseudoHeaderName> PseudoHeaders;
+        private static readonly CharSequenceMap<PseudoHeaderName> PseudoHeaders;
 
         static PseudoHeaderName()
         {
@@ -59,27 +59,27 @@ namespace DotNetty.Codecs.Http2
             PseudoHeaders = new CharSequenceMap<PseudoHeaderName>();
             foreach (PseudoHeaderName pseudoHeader in All)
             {
-                PseudoHeaders.Add(pseudoHeader.value, pseudoHeader);
+                _ = PseudoHeaders.Add(pseudoHeader._value, pseudoHeader);
             }
         }
 
         PseudoHeaderName(string value, bool requestOnly)
         {
-            this.value = AsciiString.Cached(value);
-            this.requestOnly = requestOnly;
+            _value = AsciiString.Cached(value);
+            _requestOnly = requestOnly;
         }
 
         /// <summary>
         /// Return a slice so that the buffer gets its own reader index.
         /// </summary>
         /// <returns></returns>
-        public AsciiString Value => this.value;
+        public AsciiString Value => _value;
 
         /// <summary>
         /// Indicates whether the pseudo-header is to be used in a request context.
         /// @return <c>true</c> if the pseudo-header is to be used in a request context
         /// </summary>
-        public bool IsRequestOnly => this.requestOnly;
+        public bool IsRequestOnly => _requestOnly;
 
         public static bool HasPseudoHeaderFormat(ICharSequence headerName)
         {

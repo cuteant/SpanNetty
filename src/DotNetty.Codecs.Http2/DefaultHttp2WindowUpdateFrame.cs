@@ -8,15 +8,15 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class DefaultHttp2WindowUpdateFrame : AbstractHttp2StreamFrame, IHttp2WindowUpdateFrame
     {
-        private readonly int windowUpdateIncrement;
+        private readonly int _windowUpdateIncrement;
 
         public DefaultHttp2WindowUpdateFrame(int windowUpdateIncrement)
         {
-            this.windowUpdateIncrement = windowUpdateIncrement;
+            _windowUpdateIncrement = windowUpdateIncrement;
         }
 
         public override string Name => "WINDOW_UPDATE";
 
-        public int WindowSizeIncrement => this.windowUpdateIncrement;
+        public int WindowSizeIncrement => _windowUpdateIncrement;
     }
 }

@@ -163,7 +163,7 @@ namespace DotNetty.Common.Internal
             }
             else
             {
-                _dictionary.TryGetValue(key, out value);
+                _ = _dictionary.TryGetValue(key, out value);
             }
 
             return value;
@@ -189,7 +189,7 @@ namespace DotNetty.Common.Internal
             }
             else
             {
-                _dictionary.TryGetValue(key, out value);
+                _ = _dictionary.TryGetValue(key, out value);
             }
 
             return value;
@@ -217,7 +217,7 @@ namespace DotNetty.Common.Internal
             }
             else
             {
-                _dictionary.TryGetValue(key, out value);
+                _ = _dictionary.TryGetValue(key, out value);
             }
 
             return value;
@@ -246,7 +246,7 @@ namespace DotNetty.Common.Internal
             }
             else
             {
-                _dictionary.TryGetValue(key, out value);
+                _ = _dictionary.TryGetValue(key, out value);
             }
 
             return value;
@@ -276,7 +276,7 @@ namespace DotNetty.Common.Internal
             }
             else
             {
-                _dictionary.TryGetValue(key, out value);
+                _ = _dictionary.TryGetValue(key, out value);
             }
 
             return value;
@@ -307,7 +307,7 @@ namespace DotNetty.Common.Internal
             }
             else
             {
-                _dictionary.TryGetValue(key, out value);
+                _ = _dictionary.TryGetValue(key, out value);
             }
 
             return value;
@@ -339,7 +339,7 @@ namespace DotNetty.Common.Internal
             }
             else
             {
-                _dictionary.TryGetValue(key, out value);
+                _ = _dictionary.TryGetValue(key, out value);
             }
 
             return value;

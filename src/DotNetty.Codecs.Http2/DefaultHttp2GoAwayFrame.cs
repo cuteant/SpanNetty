@@ -11,9 +11,9 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public sealed class DefaultHttp2GoAwayFrame : DefaultByteBufferHolder, IHttp2GoAwayFrame
     {
-        private readonly Http2Error errorCode;
-        private readonly int lastStreamId;
-        private int extraStreamIds;
+        private readonly Http2Error _errorCode;
+        private readonly int _lastStreamId;
+        private int _extraStreamIds;
 
         /// <summary>
         /// Equivalent to {@code new DefaultHttp2GoAwayFrame(error.code())}.
@@ -45,34 +45,34 @@ namespace DotNetty.Codecs.Http2
         internal DefaultHttp2GoAwayFrame(int lastStreamId, Http2Error errorCode, IByteBuffer content)
             : base(content)
         {
-            this.errorCode = errorCode;
-            this.lastStreamId = lastStreamId;
+            _errorCode = errorCode;
+            _lastStreamId = lastStreamId;
         }
 
         public string Name => "GOAWAY";
 
-        public Http2Error ErrorCode => this.errorCode;
+        public Http2Error ErrorCode => _errorCode;
 
         public int ExtraStreamIds
         {
-            get => this.extraStreamIds;
+            get => _extraStreamIds;
             set
             {
                 if ((uint)value > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_ExtraStreamIdsNonNegative(); }
-                this.extraStreamIds = value;
+                _extraStreamIds = value;
             }
         }
 
-        public int LastStreamId => this.lastStreamId;
+        public int LastStreamId => _lastStreamId;
 
         public override IByteBufferHolder Copy()
         {
-            return new DefaultHttp2GoAwayFrame(lastStreamId, errorCode, this.Content.Copy());
+            return new DefaultHttp2GoAwayFrame(_lastStreamId, _errorCode, Content.Copy());
         }
 
         public override IByteBufferHolder Replace(IByteBuffer content)
         {
-            return new DefaultHttp2GoAwayFrame(errorCode, content) { ExtraStreamIds = extraStreamIds };
+            return new DefaultHttp2GoAwayFrame(_errorCode, content) { ExtraStreamIds = _extraStreamIds };
         }
 
         public override bool Equals(object obj)
@@ -80,24 +80,24 @@ namespace DotNetty.Codecs.Http2
             if (ReferenceEquals(this, obj)) { return true; }
 
             return obj is DefaultHttp2GoAwayFrame goAwayFrame
-                && this.errorCode == goAwayFrame.errorCode
-                && this.extraStreamIds == goAwayFrame.extraStreamIds
+                && _errorCode == goAwayFrame._errorCode
+                && _extraStreamIds == goAwayFrame._extraStreamIds
                 && base.Equals(obj);
         }
 
         public override int GetHashCode()
         {
-            var errCode = (long)this.errorCode;
+            var errCode = (long)_errorCode;
             int hash = base.GetHashCode();
             hash = hash * 31 + (int)(errCode ^ (errCode.RightUShift(32)));
-            hash = hash * 31 + extraStreamIds;
+            hash = hash * 31 + _extraStreamIds;
             return hash;
         }
 
         public override string ToString()
         {
-            return StringUtil.SimpleClassName(this) + "(errorCode=" + this.errorCode + ", content=" + this.Content
-                   + ", extraStreamIds=" + this.extraStreamIds + ", lastStreamId=" + this.lastStreamId + ')';
+            return StringUtil.SimpleClassName(this) + "(errorCode=" + _errorCode + ", content=" + Content
+                   + ", extraStreamIds=" + _extraStreamIds + ", lastStreamId=" + _lastStreamId + ')';
         }
     }
 }

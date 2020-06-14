@@ -78,7 +78,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     // Offer automatically if the given request is als type of HttpContent
                     // See #1089
-                    Offer(content);
+                    _ = Offer(content);
                 }
                 else
                 {
@@ -173,7 +173,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             else
             {
-                _undecodedChunk.WriteBytes(buf);
+                _ = _undecodedChunk.WriteBytes(buf);
             }
 
             if (content is ILastHttpContent)
@@ -184,7 +184,7 @@ namespace DotNetty.Codecs.Http.Multipart
             ParseBody();
             if (_undecodedChunk is object && _undecodedChunk.WriterIndex > _discardThreshold)
             {
-                _undecodedChunk.DiscardReadBytes();
+                _ = _undecodedChunk.DiscardReadBytes();
             }
 
             return this;
@@ -365,24 +365,24 @@ namespace DotNetty.Codecs.Http.Multipart
                     _currentAttribute.AddContent(_undecodedChunk.Copy(firstpos, currentpos - firstpos), false);
                     firstpos = currentpos;
                 }
-                _undecodedChunk.SetReaderIndex(firstpos);
+                _ = _undecodedChunk.SetReaderIndex(firstpos);
             }
             catch (ErrorDataDecoderException)
             {
                 // error while decoding
-                _undecodedChunk.SetReaderIndex(firstpos);
+                _ = _undecodedChunk.SetReaderIndex(firstpos);
                 throw;
             }
             catch (IOException e)
             {
                 // error while decoding
-                _undecodedChunk.SetReaderIndex(firstpos);
+                _ = _undecodedChunk.SetReaderIndex(firstpos);
                 ThrowHelper.ThrowErrorDataDecoderException(e);
             }
             catch (ArgumentException exc)
             {
                 // error while decoding
-                _undecodedChunk.SetReaderIndex(firstpos);
+                _ = _undecodedChunk.SetReaderIndex(firstpos);
                 ThrowHelper.ThrowErrorDataDecoderException(exc);
             }
         }
@@ -518,24 +518,24 @@ namespace DotNetty.Codecs.Http.Multipart
                     _currentAttribute.AddContent(_undecodedChunk.Copy(firstpos, currentpos - firstpos), false);
                     firstpos = currentpos;
                 }
-                _undecodedChunk.SetReaderIndex(firstpos);
+                _ = _undecodedChunk.SetReaderIndex(firstpos);
             }
             catch (ErrorDataDecoderException)
             {
                 // error while decoding
-                _undecodedChunk.SetReaderIndex(firstpos);
+                _ = _undecodedChunk.SetReaderIndex(firstpos);
                 throw;
             }
             catch (IOException e)
             {
                 // error while decoding
-                _undecodedChunk.SetReaderIndex(firstpos);
+                _ = _undecodedChunk.SetReaderIndex(firstpos);
                 ThrowHelper.ThrowErrorDataDecoderException(e);
             }
             catch (ArgumentException e)
             {
                 // error while decoding
-                _undecodedChunk.SetReaderIndex(firstpos);
+                _ = _undecodedChunk.SetReaderIndex(firstpos);
                 ThrowHelper.ThrowErrorDataDecoderException(e);
             }
         }
@@ -570,7 +570,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
             if (_undecodedChunk is object && _undecodedChunk.ReferenceCount > 0)
             {
-                _undecodedChunk.Release();
+                _ = _undecodedChunk.Release();
                 _undecodedChunk = null;
             }
         }

@@ -46,7 +46,7 @@ namespace DotNetty.Common
             int index = Interlocked.Increment(ref s_nextIndex);
             if (index < 0)
             {
-                Interlocked.Decrement(ref s_nextIndex);
+                _ = Interlocked.Decrement(ref s_nextIndex);
                 ThrowHelper.ThrowInvalidOperationException_TooMany();
             }
             return index;

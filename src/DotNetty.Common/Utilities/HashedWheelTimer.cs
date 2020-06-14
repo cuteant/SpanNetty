@@ -106,7 +106,7 @@ namespace DotNetty.Common.Utilities
             // we have not yet shutdown then we want to make sure we decrement the active instance count.
             if (Interlocked.Exchange(ref v_workerState, WorkerStateShutdown) != WorkerStateShutdown)
             {
-                Interlocked.Decrement(ref v_instanceCounter);
+                _ = Interlocked.Decrement(ref v_instanceCounter);
             }
         }
 
@@ -189,7 +189,7 @@ namespace DotNetty.Common.Utilities
                 if (Interlocked.Exchange(ref v_workerState, WorkerStateShutdown) != WorkerStateShutdown)
                 {
                     _cancellationTokenSource.Cancel();
-                    Interlocked.Decrement(ref v_instanceCounter);
+                    _ = Interlocked.Decrement(ref v_instanceCounter);
                 }
 
                 return new HashSet<ITimeout>();
@@ -201,7 +201,7 @@ namespace DotNetty.Common.Utilities
             }
             finally
             {
-                Interlocked.Decrement(ref v_instanceCounter);
+                _ = Interlocked.Decrement(ref v_instanceCounter);
             }
             await _worker.ClosedFuture;
             return _worker.UnprocessedTimeouts;
@@ -215,14 +215,14 @@ namespace DotNetty.Common.Utilities
             }
             if (WorkerState == WorkerStateShutdown)
             {
-                ThrowHelper.ThrowRejectedExecutionException_TimerStopped();
+                _ = ThrowHelper.ThrowRejectedExecutionException_TimerStopped();
             }
             long pendingTimeoutsCount = Interlocked.Increment(ref v_pendingTimeouts);
             long maxPendingTimeouts = _maxPendingTimeouts;
             if (maxPendingTimeouts > 0L && pendingTimeoutsCount > maxPendingTimeouts)
             {
-                Interlocked.Decrement(ref v_pendingTimeouts);
-                ThrowHelper.ThrowRejectedExecutionException_NumOfPendingTimeouts(pendingTimeoutsCount, maxPendingTimeouts);
+                _ = Interlocked.Decrement(ref v_pendingTimeouts);
+                _ = ThrowHelper.ThrowRejectedExecutionException_NumOfPendingTimeouts(pendingTimeoutsCount, maxPendingTimeouts);
             }
 
             Start();
@@ -231,7 +231,7 @@ namespace DotNetty.Common.Utilities
             // During processing all the queued HashedWheelTimeouts will be added to the correct HashedWheelBucket.
             TimeSpan deadline = CeilTimeSpanToMilliseconds((PreciseTimeSpan.Deadline(delay) - StartTime).ToTimeSpan());
             var timeout = new HashedWheelTimeout(this, task, deadline);
-            _timeouts.TryEnqueue(timeout);
+            _ = _timeouts.TryEnqueue(timeout);
             return timeout;
         }
 
@@ -239,7 +239,7 @@ namespace DotNetty.Common.Utilities
         {
             if (WorkerState != WorkerStateShutdown)
             {
-                _cancelledTimeouts.TryEnqueue(timeout);
+                _ = _cancelledTimeouts.TryEnqueue(timeout);
             }
         }
 
@@ -280,7 +280,7 @@ namespace DotNetty.Common.Utilities
                     }
 
                     // Notify the other threads waiting for the initialization at start().
-                    _owner._startTimeInitialized.Signal();
+                    _ = _owner._startTimeInitialized.Signal();
 
                     while (true)
                     {
@@ -309,7 +309,7 @@ namespace DotNetty.Common.Utilities
                     {
                         if (!timeout.Canceled)
                         {
-                            UnprocessedTimeouts.Add(timeout);
+                            _ = UnprocessedTimeouts.Add(timeout);
                         }
                     }
                     ProcessCancelledTasks();
@@ -320,7 +320,7 @@ namespace DotNetty.Common.Utilities
                 }
                 finally
                 {
-                    _closedPromise.TryComplete();
+                    _ = _closedPromise.TryComplete();
                 }
             }
 
@@ -474,11 +474,11 @@ namespace DotNetty.Common.Utilities
                 if (bucket is object)
                 {
                     // timeout got canceled before it was added to the bucket
-                    bucket.Remove(this);
+                    _ = bucket.Remove(this);
                 }
                 else
                 {
-                    Interlocked.Decrement(ref _timer.v_pendingTimeouts);
+                    _ = Interlocked.Decrement(ref _timer.v_pendingTimeouts);
                 }
             }
 
@@ -524,22 +524,22 @@ namespace DotNetty.Common.Utilities
                     .Append("deadline: ");
                 if (remaining > TimeSpan.Zero)
                 {
-                    buf.Append(remaining)
+                    _ = buf.Append(remaining)
                         .Append(" later");
                 }
                 else if (remaining < TimeSpan.Zero)
                 {
-                    buf.Append(-remaining)
+                    _ = buf.Append(-remaining)
                         .Append(" ago");
                 }
                 else
                 {
-                    buf.Append("now");
+                    _ = buf.Append("now");
                 }
 
                 if (Canceled)
                 {
-                    buf.Append(", cancelled");
+                    _ = buf.Append(", cancelled");
                 }
 
                 var result = buf.Append(", task: ")
@@ -648,7 +648,7 @@ namespace DotNetty.Common.Utilities
                 timeout.Prev = null;
                 timeout.Next = null;
                 timeout.Bucket = null;
-                Interlocked.Decrement(ref timeout._timer.v_pendingTimeouts);
+                _ = Interlocked.Decrement(ref timeout._timer.v_pendingTimeouts);
                 return next;
             }
 
@@ -668,7 +668,7 @@ namespace DotNetty.Common.Utilities
                     {
                         continue;
                     }
-                    set.Add(timeout);
+                    _ = set.Add(timeout);
                 }
             }
 

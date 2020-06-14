@@ -68,7 +68,7 @@ namespace DotNetty.Buffers
             IByteBuffer dst = alloc.Buffer(length);
             try
             {
-                buffer.ReadBytes(dst);
+                _ = buffer.ReadBytes(dst);
                 release = false;
                 return dst;
             }
@@ -76,7 +76,7 @@ namespace DotNetty.Buffers
             {
                 if (release)
                 {
-                    dst.Release();
+                    _ = dst.Release();
                 }
             }
         }
@@ -140,7 +140,7 @@ namespace DotNetty.Buffers
             }
 
             byte[] v = new byte[length];
-            buf.GetBytes(start, v);
+            _ = buf.GetBytes(start, v);
             return v;
         }
 
@@ -158,7 +158,7 @@ namespace DotNetty.Buffers
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst);
             }
             // ReSharper disable once PossibleNullReferenceException
-            dst.SetBytes(dstIdx, src.Array, srcIdx + src.Offset, length);
+            _ = dst.SetBytes(dstIdx, src.Array, srcIdx + src.Offset, length);
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
@@ -173,7 +173,7 @@ namespace DotNetty.Buffers
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.dst);
             }
             // ReSharper disable once PossibleNullReferenceException
-            dst.WriteBytes(src.Array, srcIdx + src.Offset, length);
+            _ = dst.WriteBytes(src.Array, srcIdx + src.Offset, length);
         }
 
         public static unsafe int SingleToInt32Bits(float value)

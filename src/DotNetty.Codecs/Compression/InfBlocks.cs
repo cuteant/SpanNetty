@@ -199,7 +199,7 @@ namespace DotNetty.Codecs.Compression
                             mode = LENS;                // get length of stored block
                             break;
                         case 1:                         // fixed
-                            InfTree.Inflate_trees_fixed(bl, bd, tl, td, z);
+                            _ = InfTree.Inflate_trees_fixed(bl, bd, tl, td, z);
                             codes.Init(bl[0], bd[0], tl[0], 0, td[0], 0);
 
                             { b = b.RightUShift(3); k -= (3); }

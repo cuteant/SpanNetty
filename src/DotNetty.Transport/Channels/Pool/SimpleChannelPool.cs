@@ -105,7 +105,7 @@ namespace DotNetty.Transport.Channels.Pool
 
             // Clone the original Bootstrap as we want to set our own handler
             Bootstrap = bootstrap.Clone();
-            Bootstrap.Handler(new ActionChannelInitializer<IChannel>(OnChannelInitializing));
+            _ = Bootstrap.Handler(new ActionChannelInitializer<IChannel>(OnChannelInitializing));
             _store =
                 lastRecentUsed
                     ? (IQueue<IChannel>)new CompatibleConcurrentStack<IChannel>()
@@ -145,7 +145,7 @@ namespace DotNetty.Transport.Channels.Pool
             if (!TryPollChannel(out IChannel channel))
             {
                 Bootstrap bs = Bootstrap.Clone();
-                bs.Attribute(PoolKey, this);
+                _ = bs.Attribute(PoolKey, this);
                 return new ValueTask<IChannel>(ConnectChannel(bs));
             }
 
@@ -168,11 +168,11 @@ namespace DotNetty.Transport.Channels.Pool
             try
             {
                 var result = await DoHealthCheck((IChannel)channel);
-                promise.TrySetResult(result);
+                _ = promise.TrySetResult(result);
             }
             catch (Exception ex)
             {
-                promise.TrySetException(ex);
+                _ = promise.TrySetException(ex);
             }
         }
 
@@ -250,11 +250,11 @@ namespace DotNetty.Transport.Channels.Pool
             try
             {
                 var result = await DoReleaseChannel((IChannel)channel);
-                promise.TrySetResult(result);
+                _ = promise.TrySetResult(result);
             }
             catch (Exception ex)
             {
-                promise.TrySetException(ex);
+                _ = promise.TrySetException(ex);
             }
         }
 
@@ -330,8 +330,8 @@ namespace DotNetty.Transport.Channels.Pool
 
         private void CloseChannel(IChannel channel)
         {
-            channel.GetAttribute(PoolKey).GetAndSet(null);
-            channel.CloseAsync();
+            _ = channel.GetAttribute(PoolKey).GetAndSet(null);
+            _ = channel.CloseAsync();
         }
 
         /// <summary>

@@ -255,18 +255,18 @@ namespace DotNetty.Codecs.Http2
             int nbits = 0xFF.RightUShift(8 - n);
             if (idx < nbits)
             {
-                output.WriteByte((int)((uint)mask | (uint)idx));
+                _ = output.WriteByte((int)((uint)mask | (uint)idx));
             }
             else
             {
-                output.WriteByte(mask | nbits);
+                _ = output.WriteByte(mask | nbits);
                 long length = idx - nbits;
                 for (; (length & ~0x7F) != 0; length = length.RightUShift(7))
                 {
-                    output.WriteByte((int)((length & 0x7F) | 0x80));
+                    _ = output.WriteByte((int)((length & 0x7F) | 0x80));
                 }
 
-                output.WriteByte((int)length);
+                _ = output.WriteByte((int)length);
             }
         }
 
@@ -291,13 +291,13 @@ namespace DotNetty.Codecs.Http2
                 if (str is AsciiString asciiString)
                 {
                     // Fast-path
-                    output.WriteBytes(asciiString.Array, asciiString.Offset, asciiString.Count);
+                    _ = output.WriteBytes(asciiString.Array, asciiString.Offset, asciiString.Count);
                 }
                 else
                 {
                     // Only ASCII is allowed in http2 headers, so its fine to use this.
                     // https://tools.ietf.org/html/rfc7540#section-8.1.2
-                    output.WriteCharSequence(str, Enc);
+                    _ = output.WriteCharSequence(str, Enc);
                 }
             }
         }
@@ -367,7 +367,7 @@ namespace DotNetty.Codecs.Http2
                     break;
                 }
 
-                Remove();
+                _ = Remove();
             }
         }
 
@@ -485,7 +485,7 @@ namespace DotNetty.Codecs.Http2
             // Evict oldest entries until we have enough maxHeaderTableSize.
             while (_maxHeaderTableSize - _size < headerSize)
             {
-                Remove();
+                _ = Remove();
             }
 
             int h = AsciiString.GetHashCode(name);

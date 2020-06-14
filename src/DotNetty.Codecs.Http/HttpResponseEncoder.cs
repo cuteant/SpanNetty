@@ -18,9 +18,9 @@ namespace DotNetty.Codecs.Http
         protected internal override void EncodeInitialLine(IByteBuffer buf, IHttpResponse response)
         {
             response.ProtocolVersion.Encode(buf);
-            buf.WriteByte(HttpConstants.HorizontalSpace);
+            _ = buf.WriteByte(HttpConstants.HorizontalSpace);
             response.Status.Encode(buf);
-            buf.WriteShort(HttpConstants.CrlfShort);
+            _ = buf.WriteShort(HttpConstants.CrlfShort);
         }
 
         /// <inheritdoc />
@@ -35,20 +35,20 @@ namespace DotNetty.Codecs.Http
 
                     // Stripping Content-Length:
                     // See https://tools.ietf.org/html/rfc7230#section-3.3.2
-                    msg.Headers.Remove(HttpHeaderNames.ContentLength);
+                    _ = msg.Headers.Remove(HttpHeaderNames.ContentLength);
 
                     // Stripping Transfer-Encoding:
                     // See https://tools.ietf.org/html/rfc7230#section-3.3.1
-                    msg.Headers.Remove(HttpHeaderNames.TransferEncoding);
+                    _ = msg.Headers.Remove(HttpHeaderNames.TransferEncoding);
                 }
                 else if (status.Code == StatusCodes.Status205ResetContent)
                 {
                     // Stripping Transfer-Encoding:
-                    msg.Headers.Remove(HttpHeaderNames.TransferEncoding);
+                    _ = msg.Headers.Remove(HttpHeaderNames.TransferEncoding);
 
                     // Set Content-Length: 0
                     // https://httpstatuses.com/205
-                    msg.Headers.SetInt(HttpHeaderNames.ContentLength, 0);
+                    _ = msg.Headers.SetInt(HttpHeaderNames.ContentLength, 0);
                 }
             }
         }

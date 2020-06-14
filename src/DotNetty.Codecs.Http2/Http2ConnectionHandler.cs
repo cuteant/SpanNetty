@@ -105,7 +105,7 @@ namespace DotNetty.Codecs.Http2
             }
 
             // Create a local stream used for the HTTP cleartext upgrade.
-            Connection.Local.CreateStream(Http2CodecUtil.HttpUpgradeStreamId, true);
+            _ = Connection.Local.CreateStream(Http2CodecUtil.HttpUpgradeStreamId, true);
         }
 
         /// <summary>
@@ -133,7 +133,7 @@ namespace DotNetty.Codecs.Http2
             _encoder.RemoteSettings(settings);
 
             // Create a stream in the half-closed state.
-            Connection.Remote.CreateStream(Http2CodecUtil.HttpUpgradeStreamId, true);
+            _ = Connection.Remote.CreateStream(Http2CodecUtil.HttpUpgradeStreamId, true);
         }
 
         public override void Flush(IChannelHandlerContext ctx)
@@ -142,7 +142,7 @@ namespace DotNetty.Codecs.Http2
             {
                 // Trigger pending writes in the remote flow controller.
                 _encoder.FlowController.WritePendingBytes();
-                ctx.Flush();
+                _ = ctx.Flush();
             }
             catch (Http2Exception e)
             {
@@ -174,7 +174,7 @@ namespace DotNetty.Codecs.Http2
 
                 // We need to remove all streams (not just the active ones).
                 // See https://github.com/netty/netty/issues/4838.
-                _connHandler.Connection.CloseAsync(ctx.VoidPromise());
+                _ = _connHandler.Connection.CloseAsync(ctx.VoidPromise());
             }
 
             /// <summary>
@@ -243,7 +243,7 @@ namespace DotNetty.Codecs.Http2
                 var clientPrefaceString = _clientPrefaceString;
                 if (clientPrefaceString is object)
                 {
-                    clientPrefaceString.Release();
+                    _ = clientPrefaceString.Release();
                     _clientPrefaceString = null;
                 }
             }
@@ -278,13 +278,13 @@ namespace DotNetty.Codecs.Http2
                     }
                     ThrowHelper.ThrowConnectionError_Http2ClientPrefaceStringMissingOrCorrupt(input, _clientPrefaceString.ReadableBytes);
                 }
-                input.SkipBytes(bytesRead);
-                _clientPrefaceString.SkipBytes(bytesRead);
+                _ = input.SkipBytes(bytesRead);
+                _ = _clientPrefaceString.SkipBytes(bytesRead);
 
                 if (!_clientPrefaceString.IsReadable())
                 {
                     // Entire preface has been read.
-                    _clientPrefaceString.Release();
+                    _ = _clientPrefaceString.Release();
                     _clientPrefaceString = null;
                     return true;
                 }
@@ -329,14 +329,14 @@ namespace DotNetty.Codecs.Http2
                 if (isClient)
                 {
                     // Clients must send the preface string as the first bytes on the connection.
-                    ctx.WriteAsync(Http2CodecUtil.ConnectionPrefaceBuf())
-                       .ContinueWith(CloseOnFailureAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                    _ = ctx.WriteAsync(Http2CodecUtil.ConnectionPrefaceBuf())
+                       .CloseOnFailure(ctx.Channel);
                 }
 
                 // Both client and server must send their initial settings.
-                _connHandler._encoder
+                _ = _connHandler._encoder
                         .WriteSettingsAsync(ctx, _connHandler._initialSettings, ctx.NewPromise())
-                        .ContinueWith(CloseOnFailureAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                        .CloseOnFailure(ctx.Channel);
 
                 if (isClient)
                 {
@@ -440,21 +440,21 @@ namespace DotNetty.Codecs.Http2
 
         public override void Disconnect(IChannelHandlerContext context, IPromise promise)
         {
-            context.DisconnectAsync(promise);
+            _ = context.DisconnectAsync(promise);
         }
 
         public override void Close(IChannelHandlerContext ctx, IPromise promise)
         {
             if (_decoupleCloseAndGoAway)
             {
-                ctx.CloseAsync(promise);
+                _ = ctx.CloseAsync(promise);
                 return;
             }
             promise = promise.Unvoid();
             // Avoid NotYetConnectedException
             if (!ctx.Channel.Active)
             {
-                ctx.CloseAsync(promise);
+                _ = ctx.CloseAsync(promise);
                 return;
             }
 
@@ -464,7 +464,7 @@ namespace DotNetty.Codecs.Http2
             // flushed to the OS.
             // https://github.com/netty/netty/issues/5307
             var future = Connection.GoAwaySent() ? ctx.WriteAsync(Unpooled.Empty) : GoAwayAsync(ctx, null, ctx.NewPromise());
-            ctx.Flush();
+            _ = ctx.Flush();
             DoGracefulShutdown(ctx, future, promise);
         }
 
@@ -492,7 +492,7 @@ namespace DotNetty.Codecs.Http2
             {
                 timeoutTask = ctx.Executor.Schedule(ScheduledCloseChannelAction, ctx, promise, _gracefulShutdownTimeout);
             }
-            future.ContinueWith(CloseChannelOnCompleteAction,
+            _ = future.ContinueWith(CloseChannelOnCompleteAction,
                 Tuple.Create(ctx, promise, timeoutTask),
                 TaskContinuationOptions.ExecuteSynchronously);
         }
@@ -537,17 +537,17 @@ namespace DotNetty.Codecs.Http2
 
         public override void Deregister(IChannelHandlerContext context, IPromise promise)
         {
-            context.DeregisterAsync(promise);
+            _ = context.DeregisterAsync(promise);
         }
 
         public override void Read(IChannelHandlerContext context)
         {
-            context.Read();
+            _ = context.Read();
         }
 
         public override void Write(IChannelHandlerContext context, object message, IPromise promise)
         {
-            context.WriteAsync(message, promise);
+            _ = context.WriteAsync(message, promise);
         }
 
         public override void ChannelReadComplete(IChannelHandlerContext ctx)
@@ -575,10 +575,10 @@ namespace DotNetty.Codecs.Http2
             // See https://tools.ietf.org/html/rfc7540#section-5.2.2
             if (!ctx.Channel.Configuration.AutoRead)
             {
-                ctx.Read();
+                _ = ctx.Read();
             }
 
-            ctx.FireChannelReadComplete();
+            _ = ctx.FireChannelReadComplete();
         }
 
         /// <summary>
@@ -611,7 +611,7 @@ namespace DotNetty.Codecs.Http2
             {
                 case Http2StreamState.HalfClosedLocal:
                 case Http2StreamState.Open:
-                    stream.CloseLocalSide();
+                    _ = stream.CloseLocalSide();
                     break;
 
                 default:
@@ -626,7 +626,7 @@ namespace DotNetty.Codecs.Http2
             {
                 case Http2StreamState.HalfClosedRemote:
                 case Http2StreamState.Open:
-                    stream.CloseRemoteSide();
+                    _ = stream.CloseRemoteSide();
                     break;
 
                 default:
@@ -637,7 +637,7 @@ namespace DotNetty.Codecs.Http2
 
         public virtual void CloseStream(IHttp2Stream stream, Task future)
         {
-            stream.Close();
+            _ = stream.Close();
 
             if (future.IsCompleted)
             {
@@ -645,7 +645,7 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-                future.ContinueWith(CheckCloseConnOnCompleteAction, this, TaskContinuationOptions.ExecuteSynchronously);
+                _ = future.ContinueWith(CheckCloseConnOnCompleteAction, this, TaskContinuationOptions.ExecuteSynchronously);
             }
         }
 
@@ -673,7 +673,7 @@ namespace DotNetty.Codecs.Http2
             {
                 OnConnectionError(ctx, outbound, cause, embedded);
             }
-            ctx.Flush();
+            _ = ctx.Flush();
         }
 
         /// <summary>
@@ -754,7 +754,7 @@ namespace DotNetty.Codecs.Http2
                     }
                     catch (Http2Exception)
                     {
-                        ResetUnknownStreamAsync(ctx, streamId, http2Ex.Error, ctx.NewPromise());
+                        _ = ResetUnknownStreamAsync(ctx, streamId, http2Ex.Error, ctx.NewPromise());
                         return;
                     }
                 }
@@ -777,12 +777,12 @@ namespace DotNetty.Codecs.Http2
             {
                 if (!outbound || Connection.Local.MayHaveCreatedStream(streamId))
                 {
-                    ResetUnknownStreamAsync(ctx, streamId, http2Ex.Error, ctx.NewPromise());
+                    _ = ResetUnknownStreamAsync(ctx, streamId, http2Ex.Error, ctx.NewPromise());
                 }
             }
             else
             {
-                ResetStreamAsync(ctx, stream, http2Ex.Error, ctx.NewPromise());
+                _ = ResetStreamAsync(ctx, stream, http2Ex.Error, ctx.NewPromise());
             }
         }
 
@@ -794,7 +794,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="stream">the Http2Stream on which the header was received</param>
         protected virtual void HandleServerHeaderDecodeSizeError(IChannelHandlerContext ctx, IHttp2Stream stream)
         {
-            _encoder.WriteHeadersAsync(ctx, stream.Id, HEADERS_TOO_LARGE_HEADERS, 0, true, ctx.NewPromise());
+            _ = _encoder.WriteHeadersAsync(ctx, stream.Id, HEADERS_TOO_LARGE_HEADERS, 0, true, ctx.NewPromise());
         }
 
         protected IHttp2FrameWriter FrameWriter => _encoder.FrameWriter;
@@ -818,7 +818,7 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-                future.ContinueWith(CloseConnectionOnErrorOnCompleteAction, Tuple.Create(this, ctx), TaskContinuationOptions.ExecuteSynchronously);
+                _ = future.ContinueWith(CloseConnectionOnErrorOnCompleteAction, Tuple.Create(this, ctx), TaskContinuationOptions.ExecuteSynchronously);
             }
             return future;
         }
@@ -848,7 +848,7 @@ namespace DotNetty.Codecs.Http2
             //
             // This needs to be done before we notify the promise as the promise may have a listener attached that
             // call resetStream(...) again.
-            stream.ResetSent();
+            _ = stream.ResetSent();
 
             Task future;
             // If the remote peer is not aware of the steam, then we are not allowed to send a RST_STREAM
@@ -870,7 +870,7 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-                future.ContinueWith(ProcessRstStreamWriteResultOnCompleteAction,
+                _ = future.ContinueWith(ProcessRstStreamWriteResultOnCompleteAction,
                     Tuple.Create(this, ctx, stream), TaskContinuationOptions.ExecuteSynchronously);
             }
 
@@ -885,21 +885,21 @@ namespace DotNetty.Codecs.Http2
             {
                 if (!connection.GoAwaySent(lastStreamId, errorCode, debugData))
                 {
-                    debugData.Release();
-                    promise.TryComplete();
+                    _ = debugData.Release();
+                    _ = promise.TryComplete();
                     return promise.Task;
                 }
             }
             catch (Exception cause)
             {
-                debugData.Release();
-                promise.TrySetException(cause);
+                _ = debugData.Release();
+                _ = promise.TrySetException(cause);
                 return promise.Task;
             }
 
             // Need to retain before we write the buffer because if we do it after the refCnt could already be 0 and
             // result in an IllegalRefCountException.
-            debugData.Retain();
+            _ = debugData.Retain();
             var future = FrameWriter.WriteGoAwayAsync(ctx, lastStreamId, errorCode, debugData, promise);
 
             if (future.IsCompleted)
@@ -908,7 +908,7 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-                future.ContinueWith(ProcessGoAwayWriteResultOnCompleteAction,
+                _ = future.ContinueWith(ProcessGoAwayWriteResultOnCompleteAction,
                     Tuple.Create(ctx, lastStreamId, errorCode, debugData), TaskContinuationOptions.ExecuteSynchronously);
             }
 
@@ -972,21 +972,21 @@ namespace DotNetty.Codecs.Http2
         private static void CloseChannelOnComplete(Task t, object s)
         {
             var wrapped = (Tuple<IChannelHandlerContext, IPromise, IScheduledTask>)s;
-            wrapped.Item3?.Cancel();
+            _ = (wrapped.Item3?.Cancel());
             var promise = wrapped.Item2;
             if (promise is object)
             {
-                wrapped.Item1.CloseAsync(promise);
+                _ = wrapped.Item1.CloseAsync(promise);
             }
             else
             {
-                wrapped.Item1.CloseAsync();
+                _ = wrapped.Item1.CloseAsync();
             }
         }
         private static readonly Action<object, object> ScheduledCloseChannelAction = ScheduledCloseChannel;
         private static void ScheduledCloseChannel(object c, object p)
         {
-            ((IChannelHandlerContext)c).CloseAsync((IPromise)p);
+            _ = ((IChannelHandlerContext)c).CloseAsync((IPromise)p);
         }
 
         private static readonly Action<Task, object> CloseConnectionOnErrorOnCompleteAction = CloseConnectionOnErrorOnComplete;
@@ -1017,15 +1017,6 @@ namespace DotNetty.Codecs.Http2
             self.CheckCloseConnection(t);
         }
 
-        private static readonly Action<Task, object> CloseOnFailureAction = CloseOnFailure;
-        private static void CloseOnFailure(Task t, object s)
-        {
-            if (!t.IsSuccess())
-            {
-                ((IChannelHandlerContext)s).Channel.CloseAsync();
-            }
-        }
-
         /// <summary>
         /// Returns the client preface string if this is a client connection, otherwise returns <c>null</c>.
         /// </summary>
@@ -1048,7 +1039,7 @@ namespace DotNetty.Codecs.Http2
                         {
                             Logger.SendGoAwaySuccess(ctx, lastStreamId, errorCode, debugData, future);
                         }
-                        ctx.CloseAsync();
+                        _ = ctx.CloseAsync();
                     }
                 }
                 else
@@ -1057,13 +1048,13 @@ namespace DotNetty.Codecs.Http2
                     {
                         Logger.SendingGoAwayFailed(ctx, lastStreamId, errorCode, debugData, future);
                     }
-                    ctx.CloseAsync();
+                    _ = ctx.CloseAsync();
                 }
             }
             finally
             {
                 // We're done with the debug data now.
-                debugData.Release();
+                _ = debugData.Release();
             }
         }
 
@@ -1123,7 +1114,7 @@ namespace DotNetty.Codecs.Http2
 
             public virtual void OperationComplete(Task sentGoAwayFuture)
             {
-                _timeoutTask?.Cancel();
+                _ = (_timeoutTask?.Cancel());
                 DoClose();
             }
 
@@ -1131,11 +1122,11 @@ namespace DotNetty.Codecs.Http2
             {
                 if (_promise is null)
                 {
-                    _ctx.CloseAsync();
+                    _ = _ctx.CloseAsync();
                 }
                 else
                 {
-                    _ctx.CloseAsync(_promise);
+                    _ = _ctx.CloseAsync(_promise);
                 }
             }
         }

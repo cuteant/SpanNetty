@@ -100,7 +100,7 @@ namespace DotNetty.Transport.Channels
 
             // The inboundCtx and outboundCtx were created and set now it's safe to call removeInboundHandler() and
             // removeOutboundHandler().
-            Interlocked.Exchange(ref _handlerAdded, SharedConstants.True);
+            _ = Interlocked.Exchange(ref _handlerAdded, SharedConstants.True);
 
             try
             {
@@ -153,7 +153,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _inboundCtx.FireChannelRegistered();
+                _ = _inboundCtx.FireChannelRegistered();
             }
         }
 
@@ -167,7 +167,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _inboundCtx.FireChannelUnregistered();
+                _ = _inboundCtx.FireChannelUnregistered();
             }
         }
 
@@ -181,7 +181,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _inboundCtx.FireChannelActive();
+                _ = _inboundCtx.FireChannelActive();
             }
         }
 
@@ -195,7 +195,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _inboundCtx.FireChannelInactive();
+                _ = _inboundCtx.FireChannelInactive();
             }
         }
 
@@ -209,7 +209,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _inboundCtx.FireExceptionCaught(exception);
+                _ = _inboundCtx.FireExceptionCaught(exception);
             }
         }
 
@@ -223,7 +223,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _inboundCtx.FireUserEventTriggered(evt);
+                _ = _inboundCtx.FireUserEventTriggered(evt);
             }
         }
 
@@ -237,7 +237,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _inboundCtx.FireChannelRead(message);
+                _ = _inboundCtx.FireChannelRead(message);
             }
         }
 
@@ -251,7 +251,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _inboundCtx.FireChannelReadComplete();
+                _ = _inboundCtx.FireChannelReadComplete();
             }
         }
 
@@ -265,7 +265,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _inboundCtx.FireChannelWritabilityChanged();
+                _ = _inboundCtx.FireChannelWritabilityChanged();
             }
         }
 
@@ -307,7 +307,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _outboundCtx.DisconnectAsync(promise);
+                _ = _outboundCtx.DisconnectAsync(promise);
             }
         }
 
@@ -321,7 +321,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _outboundCtx.CloseAsync(promise);
+                _ = _outboundCtx.CloseAsync(promise);
             }
         }
 
@@ -335,7 +335,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _outboundCtx.DeregisterAsync(promise);
+                _ = _outboundCtx.DeregisterAsync(promise);
             }
         }
 
@@ -349,7 +349,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _outboundCtx.Read();
+                _ = _outboundCtx.Read();
             }
         }
 
@@ -363,7 +363,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _outboundCtx.WriteAsync(message, promise);
+                _ = _outboundCtx.WriteAsync(message, promise);
             }
         }
 
@@ -377,7 +377,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _outboundCtx.Flush();
+                _ = _outboundCtx.Flush();
             }
         }
 

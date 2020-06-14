@@ -107,7 +107,7 @@ namespace DotNetty.Transport.Libuv
             var loopExecutor = (LoopExecutor)state;
             loopExecutor.SetCurrentExecutor(loopExecutor);
 
-            Task.Factory.StartNew(
+            _ = Task.Factory.StartNew(
                 executor => ((LoopExecutor)executor).StartLoop(), state,
                 CancellationToken.None,
                 TaskCreationOptions.AttachedToParent,
@@ -160,13 +160,13 @@ namespace DotNetty.Transport.Libuv
                     ThrowHelper.ThrowInvalidOperationException_ExecutionState0(oldState);
                 }
                 _loopRunStart.Set();
-                _loop.Run(uv_run_mode.UV_RUN_DEFAULT);
+                _ = _loop.Run(uv_run_mode.UV_RUN_DEFAULT);
             }
             catch (Exception ex)
             {
                 _loopRunStart.Set();
                 Logger.LoopRunDefaultError(_thread, handle, ex);
-                _terminationCompletionSource.TrySetException(ex);
+                _ = _terminationCompletionSource.TrySetException(ex);
             }
             finally
             {
@@ -222,7 +222,7 @@ namespace DotNetty.Transport.Libuv
                 && nanoTime - _lastExecutionTime <= _gracefulShutdownQuietPeriod)
             {
                 // Wait for quiet period passed
-                _timerHandle.Start(DefaultBreakoutTime, 0); // 100ms
+                _ = _timerHandle.Start(DefaultBreakoutTime, 0); // 100ms
             }
             else
             {
@@ -239,12 +239,12 @@ namespace DotNetty.Transport.Libuv
             }
             finally
             {
-                Interlocked.Exchange(ref v_executionState, TerminatedState);
+                _ = Interlocked.Exchange(ref v_executionState, TerminatedState);
                 if (_taskQueue.NonEmpty && Logger.WarnEnabled)
                 {
                     Logger.TerminatedWithNonEmptyTaskQueue(_taskQueue.Count);
                 }
-                _terminationCompletionSource.TryComplete();
+                _ = _terminationCompletionSource.TryComplete();
             }
         }
 
@@ -290,7 +290,7 @@ namespace DotNetty.Transport.Libuv
 
         private void RunAllTasks(long timeout)
         {
-            FetchFromScheduledTaskQueue();
+            _ = FetchFromScheduledTaskQueue();
             IRunnable task = PollTask();
             if (task is null)
             {
@@ -301,7 +301,7 @@ namespace DotNetty.Transport.Libuv
             long start = GetLoopTime();
             long runTasks = 0;
             long executionTime;
-            Interlocked.Exchange(ref v_wakeUp, SharedConstants.False);
+            _ = Interlocked.Exchange(ref v_wakeUp, SharedConstants.False);
             while (true)
             {
                 SafeExecute(task);
@@ -326,7 +326,7 @@ namespace DotNetty.Transport.Libuv
                     break;
                 }
             }
-            Interlocked.Exchange(ref v_wakeUp, SharedConstants.True);
+            _ = Interlocked.Exchange(ref v_wakeUp, SharedConstants.True);
 
             AfterRunningAllTasks();
             _lastExecutionTime = executionTime;
@@ -344,7 +344,7 @@ namespace DotNetty.Transport.Libuv
             long nextTimeout = DefaultBreakoutTime;
             if (_taskQueue.NonEmpty)
             {
-                _timerHandle.Start(nextTimeout, 0);
+                _ = _timerHandle.Start(nextTimeout, 0);
             }
             else
             {
@@ -355,7 +355,7 @@ namespace DotNetty.Transport.Libuv
                     {
                         nextTimeout = (long)wakeUpTimeout.ToTimeSpan().TotalMilliseconds;
                     }
-                    _timerHandle.Start(nextTimeout, 0);
+                    _ = _timerHandle.Start(nextTimeout, 0);
                 }
             }
         }
@@ -371,7 +371,7 @@ namespace DotNetty.Transport.Libuv
                 if (!_taskQueue.TryEnqueue(scheduledTask))
                 {
                     // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
-                    ScheduledTaskQueue.TryEnqueue(scheduledTask);
+                    _ = ScheduledTaskQueue.TryEnqueue(scheduledTask);
                     return false;
                 }
                 scheduledTask = PollScheduledTask(nanoTime);

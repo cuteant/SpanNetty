@@ -177,7 +177,7 @@ namespace DotNetty.Buffers
             {
                 ComponentEntry c = _components[i];
                 int localLength = Math.Min(length, c.EndOffset - index);
-                c.Buffer.SetBytes(c.Idx(index), src.Slice(srcIndex, localLength));
+                _ = c.Buffer.SetBytes(c.Idx(index), src.Slice(srcIndex, localLength));
                 index += localLength;
                 srcIndex += localLength;
                 length -= localLength;
@@ -198,7 +198,7 @@ namespace DotNetty.Buffers
             {
                 ComponentEntry c = _components[i];
                 int localLength = Math.Min(length, c.EndOffset - index);
-                c.Buffer.SetBytes(c.Idx(index), src.Slice(srcIndex, localLength));
+                _ = c.Buffer.SetBytes(c.Idx(index), src.Slice(srcIndex, localLength));
                 index += localLength;
                 srcIndex += localLength;
                 length -= localLength;

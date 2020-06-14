@@ -162,12 +162,12 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Http2Exception)
             {
-                msg.Release();
+                _ = msg.Release();
                 throw;
             }
             catch (Exception t)
             {
-                msg.Release();
+                _ = msg.Release();
                 ThrowHelper.ThrowStreamError_Http2ToHttp1HeadersConversionError(streamId, t);
             }
             return msg;
@@ -199,12 +199,12 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Http2Exception)
             {
-                msg.Release();
+                _ = msg.Release();
                 throw;
             }
             catch (Exception t)
             {
-                msg.Release();
+                _ = msg.Release();
                 ThrowHelper.ThrowStreamError_Http2ToHttp1HeadersConversionError(streamId, t);
             }
             return msg;
@@ -319,11 +319,11 @@ namespace DotNetty.Codecs.Http2
                 ThrowHelper.ThrowStreamError_Http2ToHttp1HeadersConversionError(streamId, t);
             }
 
-            outputHeaders.Remove(HttpHeaderNames.TransferEncoding);
-            outputHeaders.Remove(HttpHeaderNames.Trailer);
+            _ = outputHeaders.Remove(HttpHeaderNames.TransferEncoding);
+            _ = outputHeaders.Remove(HttpHeaderNames.Trailer);
             if (!isTrailer)
             {
-                outputHeaders.SetInt(ExtensionHeaderNames.StreamId, streamId);
+                _ = outputHeaders.SetInt(ExtensionHeaderNames.StreamId, streamId);
                 HttpUtil.SetKeepAlive(outputHeaders, httpVersion, true);
             }
         }
@@ -406,15 +406,15 @@ namespace DotNetty.Codecs.Http2
                         int start = 0;
                         do
                         {
-                            result.Add(lowerCased.SubSequence(start, index, false).Trim(), AsciiString.Empty);
+                            _ = result.Add(lowerCased.SubSequence(start, index, false).Trim(), AsciiString.Empty);
                             start = index + 1;
                         } while (start < lowerCased.Count &&
                                 (index = lowerCased.ForEachByte(start, lowerCased.Count - start, ByteProcessor.FindComma)) != -1);
-                        result.Add(lowerCased.SubSequence(start, lowerCased.Count, false).Trim(), AsciiString.Empty);
+                        _ = result.Add(lowerCased.SubSequence(start, lowerCased.Count, false).Trim(), AsciiString.Empty);
                     }
                     else
                     {
-                        result.Add(lowerCased.Trim(), AsciiString.Empty);
+                        _ = result.Add(lowerCased.Trim(), AsciiString.Empty);
                     }
                 }
                 catch (Exception)
@@ -440,7 +440,7 @@ namespace DotNetty.Codecs.Http2
             {
                 if (AsciiString.ContentEqualsIgnoreCase(AsciiString.Trim(entry.Value), HttpHeaderValues.Trailers))
                 {
-                    output.Add(HttpHeaderNames.Te, HttpHeaderValues.Trailers);
+                    _ = output.Add(HttpHeaderNames.Te, HttpHeaderValues.Trailers);
                 }
             }
             else
@@ -450,7 +450,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     if (AsciiString.ContentEqualsIgnoreCase(AsciiString.Trim(teValue), HttpHeaderValues.Trailers))
                     {
-                        output.Add(HttpHeaderNames.Te, HttpHeaderValues.Trailers);
+                        _ = output.Add(HttpHeaderNames.Te, HttpHeaderValues.Trailers);
                         break;
                     }
                 }
@@ -487,7 +487,7 @@ namespace DotNetty.Codecs.Http2
                                 int start = 0;
                                 do
                                 {
-                                    output.Add(HttpHeaderNames.Cookie, value.SubSequence(start, index, false));
+                                    _ = output.Add(HttpHeaderNames.Cookie, value.SubSequence(start, index, false));
                                     // skip 2 characters "; " (see https://tools.ietf.org/html/rfc6265#section-4.2.1)
                                     start = index + 2;
                                 } while ((uint)start < uValueCount &&
@@ -496,11 +496,11 @@ namespace DotNetty.Codecs.Http2
                                 {
                                     ThrowHelper.ThrowArgumentException_CookieValueIsOfUnexpectedFormat(value);
                                 }
-                                output.Add(HttpHeaderNames.Cookie, value.SubSequence(start, value.Count, false));
+                                _ = output.Add(HttpHeaderNames.Cookie, value.SubSequence(start, value.Count, false));
                             }
                             else
                             {
-                                output.Add(HttpHeaderNames.Cookie, value);
+                                _ = output.Add(HttpHeaderNames.Cookie, value);
                             }
                         }
                         catch (Exception)
@@ -512,7 +512,7 @@ namespace DotNetty.Codecs.Http2
                     }
                     else
                     {
-                        output.Add(aName, entry.Value);
+                        _ = output.Add(aName, entry.Value);
                     }
                 }
             }
@@ -530,12 +530,12 @@ namespace DotNetty.Codecs.Http2
             var pathAndQuery = uri.PathAndQuery;
             if (!string.IsNullOrEmpty(pathAndQuery))
             {
-                pathBuilder.Append(pathAndQuery);
+                _ = pathBuilder.Append(pathAndQuery);
             }
             var fragment = uri.Fragment;
             if (!string.IsNullOrEmpty(fragment))
             {
-                pathBuilder.Append(fragment);
+                _ = pathBuilder.Append(fragment);
             }
             var path = StringBuilderManager.ReturnAndFree(pathBuilder);
             return string.IsNullOrEmpty(path) ? EmptyRequestPath : new AsciiString(path);
@@ -605,10 +605,10 @@ namespace DotNetty.Codecs.Http2
                 RequestHeaderTranslations = new CharSequenceMap<AsciiString>();
                 ResponseHeaderTranslations = new CharSequenceMap<AsciiString>();
 
-                ResponseHeaderTranslations.Add(PseudoHeaderName.Authority.Value, HttpHeaderNames.Host);
-                ResponseHeaderTranslations.Add(PseudoHeaderName.Scheme.Value, ExtensionHeaderNames.Scheme);
-                RequestHeaderTranslations.Add(ResponseHeaderTranslations);
-                ResponseHeaderTranslations.Add(PseudoHeaderName.Path.Value, ExtensionHeaderNames.Path);
+                _ = ResponseHeaderTranslations.Add(PseudoHeaderName.Authority.Value, HttpHeaderNames.Host);
+                _ = ResponseHeaderTranslations.Add(PseudoHeaderName.Scheme.Value, ExtensionHeaderNames.Scheme);
+                _ = RequestHeaderTranslations.Add(ResponseHeaderTranslations);
+                _ = ResponseHeaderTranslations.Add(PseudoHeaderName.Path.Value, ExtensionHeaderNames.Path);
             }
 
             private readonly int _streamId;
@@ -634,7 +634,7 @@ namespace DotNetty.Codecs.Http2
 
                     if (_translations.TryGet(name, out var translatedName))
                     {
-                        _output.Add(translatedName, AsciiString.Of(value));
+                        _ = _output.Add(translatedName, AsciiString.Of(value));
                     }
                     else if (!PseudoHeaderName.IsPseudoHeader(name))
                     {
@@ -656,19 +656,19 @@ namespace DotNetty.Codecs.Http2
                             }
                             else if ((uint)cookies.Length > 0u)
                             {
-                                cookies.Append("; ");
+                                _ = cookies.Append("; ");
                             }
-                            cookies.Append(value.ToString());
+                            _ = cookies.Append(value.ToString());
                         }
                         else
                         {
-                            _output.Add(AsciiString.Of(name), value);
+                            _ = _output.Add(AsciiString.Of(name), value);
                         }
                     }
                 }
                 if (cookies is object)
                 {
-                    _output.Add(HttpHeaderNames.Cookie, StringBuilderManager.ReturnAndFree(cookies));
+                    _ = _output.Add(HttpHeaderNames.Cookie, StringBuilderManager.ReturnAndFree(cookies));
                 }
             }
         }

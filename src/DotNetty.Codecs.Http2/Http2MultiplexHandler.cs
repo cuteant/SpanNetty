@@ -61,9 +61,7 @@
 
         private readonly IChannelHandler _inboundStreamHandler;
         private readonly IChannelHandler _upgradeStreamHandler;
-        private readonly MaxCapacityQueue<AbstractHttp2StreamChannel> _readCompletePendingQueue =
-            // Choose 100 which is what is used most of the times as default.
-            new MaxCapacityQueue<AbstractHttp2StreamChannel>(Http2CodecUtil.SmallestMaxConcurrentStreams);
+        private readonly MaxCapacityQueue<AbstractHttp2StreamChannel> _readCompletePendingQueue;
 
         private bool _parentReadInProgress;
 
@@ -96,6 +94,10 @@
         {
             if (inboundStreamHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.inboundStreamHandler); }
 
+            _readCompletePendingQueue =
+                // Choose 100 which is what is used most of the times as default.
+                new MaxCapacityQueue<AbstractHttp2StreamChannel>(Http2CodecUtil.SmallestMaxConcurrentStreams);
+
             _inboundStreamHandler = inboundStreamHandler;
             _upgradeStreamHandler = upgradeStreamHandler;
         }
@@ -110,7 +112,7 @@
                 var childChannel = (IChannel)s;
                 if (childChannel.Registered)
                 {
-                    childChannel.CloseAsync();
+                    _ = childChannel.CloseAsync();
                 }
                 else
                 {
@@ -154,7 +156,7 @@
                     {
                         // Reset frames needs to be propagated via user events as these are not flow-controlled and so
                         // must not be controlled by suppressing channel.read() on the child channel.
-                        channel.Pipeline.FireUserEventTriggered(msg);
+                        _ = channel.Pipeline.FireUserEventTriggered(msg);
 
                         // RST frames will also trigger closing of the streams which then will call
                         // AbstractHttp2StreamChannel.streamClosed()
@@ -173,7 +175,7 @@
             }
 
             // Send everything down the pipeline
-            context.FireChannelRead(msg);
+            _ = context.FireChannelRead(msg);
         }
 
         /// <inheritdoc />
@@ -186,7 +188,7 @@
                 ForEachActiveStream(AbstractHttp2StreamChannel.WritableVisitor);
             }
 
-            context.FireChannelWritabilityChanged();
+            _ = context.FireChannelWritabilityChanged();
         }
 
         /// <inheritdoc />
@@ -194,7 +196,7 @@
         {
             if (!(evt is Http2FrameStreamEvent streamEvent))
             {
-                context.FireUserEventTriggered(evt);
+                _ = context.FireUserEventTriggered(evt);
                 return;
             }
 
@@ -209,9 +211,9 @@
                         // Ignore everything which was not caused by an upgrade
                         break;
                     }
-                    goto case Http2StreamState.Open;
+                    goto case Http2StreamState.Open; // fall-through
 
-                case Http2StreamState.HalfClosedRemote:
+                case Http2StreamState.HalfClosedRemote: // fall-through
                 case Http2StreamState.Open:
                     if (stream.Attachment is object)
                     {
@@ -243,7 +245,7 @@
                     }
                     else
                     {
-                        future.ContinueWith(RegisterDoneAction, ch, TaskContinuationOptions.ExecuteSynchronously);
+                        _ = future.ContinueWith(RegisterDoneAction, ch, TaskContinuationOptions.ExecuteSynchronously);
                     }
                     break;
 
@@ -276,7 +278,7 @@
                         ((DefaultHttp2FrameStream)stream).Attachment;
                 try
                 {
-                    childChannel.Pipeline.FireExceptionCaught(exception.InnerException);
+                    _ = childChannel.Pipeline.FireExceptionCaught(exception.InnerException);
                 }
                 finally
                 {
@@ -284,7 +286,7 @@
                 }
                 return;
             }
-            ctx.FireExceptionCaught(exception);
+            _ = ctx.FireExceptionCaught(exception);
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
@@ -302,8 +304,8 @@
             }
             catch (Http2Exception exc)
             {
-                ctx.FireExceptionCaught(exc);
-                ctx.CloseAsync();
+                _ = ctx.FireExceptionCaught(exc);
+                _ = ctx.CloseAsync();
             }
         }
 
@@ -314,7 +316,7 @@
             {
                 var childChannel = (AbstractHttp2StreamChannel)
                         ((DefaultHttp2FrameStream)stream).Attachment;
-                childChannel.Pipeline.FireUserEventTriggered(goAwayFrame.RetainedDuplicate());
+                _ = childChannel.Pipeline.FireUserEventTriggered(goAwayFrame.RetainedDuplicate());
             }
             return true;
         }
@@ -326,7 +328,7 @@
         public override void ChannelReadComplete(IChannelHandlerContext context)
         {
             ProcessPendingReadCompleteQueue();
-            context.FireChannelReadComplete();
+            _ = context.FireChannelReadComplete();
         }
 
         private void ProcessPendingReadCompleteQueue()
@@ -348,7 +350,7 @@
                 {
                     _parentReadInProgress = false;
                     _readCompletePendingQueue.Clear();
-                    InternalContext.Flush();
+                    _ = InternalContext.Flush();
                 }
             }
             else

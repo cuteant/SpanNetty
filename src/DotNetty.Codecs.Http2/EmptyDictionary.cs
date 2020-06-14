@@ -22,7 +22,7 @@ namespace DotNetty.Codecs.Http2
             return Enumerable.Empty<KeyValuePair<TKey, TValue>>().GetEnumerator();
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public void Add(KeyValuePair<TKey, TValue> item) { }
 

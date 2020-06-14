@@ -55,7 +55,7 @@ namespace DotNetty.Transport.Channels
             {
                 // we called InitChannel(...) so we need to call now pipeline.fireChannelRegistered() to ensure we not
                 // miss an event.
-                ctx.Pipeline.FireChannelRegistered();
+                _ = ctx.Pipeline.FireChannelRegistered();
 
                 // We are done with init the Channel, removing all the state for the Channel now.
                 this.RemoveState(ctx);
@@ -63,14 +63,14 @@ namespace DotNetty.Transport.Channels
             else
             {
                 // Called InitChannel(...) before which is the expected behavior, so just forward the event.
-                ctx.FireChannelRegistered();
+                _ = ctx.FireChannelRegistered();
             }
         }
 
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
         {
             if (Logger.WarnEnabled) Logger.FailedToInitializeAChannel(ctx, cause);
-            ctx.CloseAsync();
+            _ = ctx.CloseAsync();
         }
 
         public override void HandlerAdded(IChannelHandlerContext ctx)
@@ -92,7 +92,7 @@ namespace DotNetty.Transport.Channels
 
         public override void HandlerRemoved(IChannelHandlerContext ctx)
         {
-            this.initMap.TryRemove(ctx, out _);
+            _ = this.initMap.TryRemove(ctx, out _);
         }
 
         bool InitChannel(IChannelHandlerContext ctx)
@@ -114,7 +114,7 @@ namespace DotNetty.Transport.Channels
                     var pipeline = ctx.Pipeline;
                     if (pipeline.Context(this) is object)
                     {
-                        pipeline.Remove(this);
+                        _ = pipeline.Remove(this);
                     }
                 }
                 return true;
@@ -127,7 +127,7 @@ namespace DotNetty.Transport.Channels
             // The removal may happen in an async fashion if the EventExecutor we use does something funky.
             if (ctx.Removed)
             {
-                this.initMap.TryRemove(ctx, out _);
+                _ = this.initMap.TryRemove(ctx, out _);
             }
             else
             {

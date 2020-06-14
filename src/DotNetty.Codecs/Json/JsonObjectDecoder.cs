@@ -67,7 +67,7 @@ namespace DotNetty.Codecs.Json
         {
             if (this.state == StCorrupted)
             {
-                input.SkipBytes(input.ReadableBytes);
+                _ = input.SkipBytes(input.ReadableBytes);
                 return;
             }
 
@@ -78,7 +78,7 @@ namespace DotNetty.Codecs.Json
             if (wrtIdx > this.maxObjectLength)
             {
                 // buffer size exceeded maxObjectLength; discarding the complete buffer.
-                input.SkipBytes(input.ReadableBytes);
+                _ = input.SkipBytes(input.ReadableBytes);
                 this.Reset();
                 throw new TooLongFrameException($"Object length exceeds {this.maxObjectLength}: {wrtIdx} bytes discarded");
             }
@@ -103,7 +103,7 @@ namespace DotNetty.Codecs.Json
 
                         // The JSON object/array was extracted => discard the bytes from
                         // the input buffer.
-                        input.SetReaderIndex(idx + 1);
+                        _ = input.SetReaderIndex(idx + 1);
 
                         // Reset the object state to get ready for the next JSON object/text
                         // coming along the byte stream.
@@ -120,7 +120,7 @@ namespace DotNetty.Codecs.Json
                         // because the byte at position idx is not a whitespace.
                         for (int i = input.ReaderIndex; char.IsWhiteSpace(Convert.ToChar(input.GetByte(i))); i++)
                         {
-                            input.SkipBytes(1);
+                            _ = input.SkipBytes(1);
                         }
 
                         // skip trailing spaces.
@@ -136,7 +136,7 @@ namespace DotNetty.Codecs.Json
                             output.Add(json);
                         }
 
-                        input.SetReaderIndex(idx + 1);
+                        _ = input.SetReaderIndex(idx + 1);
 
                         if (c == ']')
                         {
@@ -151,12 +151,12 @@ namespace DotNetty.Codecs.Json
                     if (this.state == StDecodingArrayStream)
                     {
                         //Discard the array bracket
-                        input.SkipBytes(1);
+                        _ = input.SkipBytes(1);
                     }
                 }
                 else if (char.IsWhiteSpace(Convert.ToChar(c))) //Discard leading spaces in from of a JSON object/array
                 {
-                    input.SkipBytes(1);
+                    _ = input.SkipBytes(1);
                 }
                 else
                 {
@@ -177,7 +177,7 @@ namespace DotNetty.Codecs.Json
         protected virtual IByteBuffer ExtractObject(IChannelHandlerContext context, IByteBuffer buffer, int index, int length)
         {
             IByteBuffer buff = buffer.Slice(index, length);
-            buff.Retain();
+            _ = buff.Retain();
             return buff;
         }
 

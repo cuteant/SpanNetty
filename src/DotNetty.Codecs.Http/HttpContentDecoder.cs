@@ -85,7 +85,7 @@ namespace DotNetty.Codecs.Http
                     {
                         if (httpContent is object)
                         {
-                            httpContent.Retain();
+                            _ = httpContent.Retain();
                         }
                         output.Add(httpMessage);
                         return;
@@ -97,8 +97,8 @@ namespace DotNetty.Codecs.Http
                     // Otherwise, rely on LastHttpContent message.
                     if (headers.Contains(HttpHeaderNames.ContentLength))
                     {
-                        headers.Remove(HttpHeaderNames.ContentLength);
-                        headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
+                        _ = headers.Remove(HttpHeaderNames.ContentLength);
+                        _ = headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
                     }
                     // Either it is already chunked or EOF terminated.
                     // See https://github.com/netty/netty/issues/5892
@@ -109,11 +109,11 @@ namespace DotNetty.Codecs.Http
                     {
                         // Do NOT set the 'Content-Encoding' header if the target encoding is 'identity'
                         // as per: http://tools.ietf.org/html/rfc2616#section-14.11
-                        headers.Remove(HttpHeaderNames.ContentEncoding);
+                        _ = headers.Remove(HttpHeaderNames.ContentEncoding);
                     }
                     else
                     {
-                        headers.Set(HttpHeaderNames.ContentEncoding, targetContentEncoding);
+                        _ = headers.Set(HttpHeaderNames.ContentEncoding, targetContentEncoding);
                     }
 
                     if (httpContent is object)
@@ -137,7 +137,7 @@ namespace DotNetty.Codecs.Http
                                 ThrowHelper.ThrowCodecException_InvalidHttpMsg(httpMessage);
                                 break;
                         }
-                        copy.Headers.Set(httpMessage.Headers);
+                        _ = copy.Headers.Set(httpMessage.Headers);
                         copy.Result = httpMessage.Result;
                         output.Add(copy);
                     }
@@ -196,13 +196,13 @@ namespace DotNetty.Codecs.Http
 
             try
             {
-                context.FireChannelReadComplete();
+                _ = context.FireChannelReadComplete();
             }
             finally
             {
                 if (needRead && !context.Channel.Configuration.AutoRead)
                 {
-                    context.Read();
+                    _ = context.Read();
                 }
             }
         }
@@ -233,7 +233,7 @@ namespace DotNetty.Codecs.Http
         {
             if (this.decoder is object)
             {
-                this.decoder.FinishAndReleaseAll();
+                _ = this.decoder.FinishAndReleaseAll();
                 this.decoder = null;
             }
         }
@@ -248,14 +248,14 @@ namespace DotNetty.Codecs.Http
             {
                 // If cleanup throws any error we need to propagate it through the pipeline
                 // so we don't fail to propagate pipeline events.
-                context.FireExceptionCaught(cause);
+                _ = context.FireExceptionCaught(cause);
             }
         }
 
         void Decode(IByteBuffer buf, IList<object> output)
         {
             // call retain here as it will call release after its written to the channel
-            this.decoder.WriteInbound(buf.Retain());
+            _ = this.decoder.WriteInbound(buf.Retain());
             this.FetchDecoderOutput(output);
         }
 
@@ -279,7 +279,7 @@ namespace DotNetty.Codecs.Http
                 }
                 if (!buf.IsReadable())
                 {
-                    buf.Release();
+                    _ = buf.Release();
                     continue;
                 }
                 output.Add(new DefaultHttpContent(buf));

@@ -19,8 +19,8 @@ namespace DotNetty.Codecs.Http2
 
         public Http2Exception(Http2Error error, ShutdownHint shutdownHint)
         {
-            this.Error = error;
-            this.ShutdownHint = shutdownHint;
+            Error = error;
+            ShutdownHint = shutdownHint;
         }
 
         public Http2Exception(Http2Error error, string message)
@@ -31,8 +31,8 @@ namespace DotNetty.Codecs.Http2
         public Http2Exception(Http2Error error, string message, ShutdownHint shutdownHint)
             : base(message)
         {
-            this.Error = error;
-            this.ShutdownHint = shutdownHint;
+            Error = error;
+            ShutdownHint = shutdownHint;
         }
 
         public Http2Exception(Http2Error error, string message, Exception cause)
@@ -43,8 +43,8 @@ namespace DotNetty.Codecs.Http2
         public Http2Exception(Http2Error error, string message, Exception cause, ShutdownHint shutdownHint)
             : base(message, cause)
         {
-            this.Error = error;
-            this.ShutdownHint = shutdownHint;
+            Error = error;
+            ShutdownHint = shutdownHint;
         }
 
         public Http2Error Error { get; }
@@ -204,14 +204,14 @@ namespace DotNetty.Codecs.Http2
         public StreamException(int streamId, Http2Error error, string message)
             : base(error, message, ShutdownHint.NoShutdown)
         {
-            this.StreamId = streamId;
+            StreamId = streamId;
         }
 
         public StreamException(int streamId, Http2Error error, string message, Exception cause)
             : base(error, message, cause, ShutdownHint.NoShutdown)
 
         {
-            this.StreamId = streamId;
+            StreamId = streamId;
         }
 
         public int StreamId { get; }
@@ -222,7 +222,7 @@ namespace DotNetty.Codecs.Http2
         public HeaderListSizeException(int streamId, Http2Error error, string message, bool decode)
             : base(streamId, error, message)
         {
-            this.DuringDecode = decode;
+            DuringDecode = decode;
         }
 
         public bool DuringDecode { get; }
@@ -233,30 +233,30 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public class CompositeStreamException : Http2Exception, IEnumerable<StreamException>
     {
-        private readonly List<StreamException> exceptions;
+        private readonly List<StreamException> _exceptions;
 
         public CompositeStreamException(Http2Error error, int initialCapacity)
             : base(error, ShutdownHint.NoShutdown)
         {
 
-            this.exceptions = new List<StreamException>(initialCapacity);
+            _exceptions = new List<StreamException>(initialCapacity);
         }
 
         public void Add(StreamException e)
         {
-            this.exceptions.Add(e);
+            _exceptions.Add(e);
         }
 
-        public IList<StreamException> Exceptions => this.exceptions;
+        public IList<StreamException> Exceptions => _exceptions;
 
         public IEnumerator<StreamException> GetEnumerator()
         {
-            return this.exceptions.GetEnumerator();
+            return _exceptions.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return this.GetEnumerator();
+            return GetEnumerator();
         }
     }
 }

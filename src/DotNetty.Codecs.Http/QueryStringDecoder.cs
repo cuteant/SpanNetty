@@ -187,7 +187,7 @@ namespace DotNetty.Codecs.Http
                 }
             }
         loop:
-            AddParam(s, nameStart, valueStart, i, parameters, charset);
+            _ = AddParam(s, nameStart, valueStart, i, parameters, charset);
             return parameters;
         }
 
@@ -245,14 +245,14 @@ namespace DotNetty.Codecs.Http
             var byteBuf = new byte[decodedCapacity];
             int idx;
             var strBuf = StringBuilderManager.Allocate(len);
-            strBuf.Append(s, from, firstEscaped - from);
+            _ = strBuf.Append(s, from, firstEscaped - from);
 
             for (int i = firstEscaped; i < toExcluded; i++)
             {
                 char c = s[i];
                 if (c != HttpConstants.PercentChar)
                 {
-                    strBuf.Append(c != HttpConstants.PlusSignChar || isPath ? c : StringUtil.Space);
+                    _ = strBuf.Append(c != HttpConstants.PlusSignChar || isPath ? c : StringUtil.Space);
                     continue;
                 }
 
@@ -269,7 +269,7 @@ namespace DotNetty.Codecs.Http
                 while (i < toExcluded && s[i] == HttpConstants.PercentChar);
                 i--;
 
-                strBuf.Append(charset.GetString(byteBuf, 0, idx));
+                _ = strBuf.Append(charset.GetString(byteBuf, 0, idx));
             }
 
             return StringBuilderManager.ReturnAndFree(strBuf);

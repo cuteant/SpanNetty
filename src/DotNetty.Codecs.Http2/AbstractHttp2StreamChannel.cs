@@ -88,7 +88,7 @@
             if (inboundHandler is object)
             {
                 // Add the handler to the pipeline now that we are registered.
-                _pipeline.AddLast(inboundHandler);
+                _ = _pipeline.AddLast(inboundHandler);
             }
         }
 
@@ -170,13 +170,13 @@
 
         public IChannel Read()
         {
-            _pipeline.Read();
+            _ = _pipeline.Read();
             return this;
         }
 
         public IChannel Flush()
         {
-            _pipeline.Flush();
+            _ = _pipeline.Flush();
             return this;
         }
 
@@ -295,7 +295,7 @@
             Debug.Assert(EventLoop.InEventLoop);
             if (!Active)
             {
-                ReferenceCountUtil.Release(frame);
+                _ = ReferenceCountUtil.Release(frame);
             }
             else if (_readStatus != ReadStatus.Idle)
             {
@@ -340,13 +340,13 @@
 
         protected virtual void Flush0(IChannelHandlerContext ctx)
         {
-            ctx.Flush();
+            _ = ctx.Flush();
         }
 
-        protected virtual Task Write0Async(IChannelHandlerContext ctx, object msg)
+        protected virtual Task InternalWriteAsync(IChannelHandlerContext ctx, object msg)
         {
             var promise = ctx.NewPromise();
-            ctx.WriteAsync(msg, promise);
+            _ = ctx.WriteAsync(msg, promise);
             return promise.Task;
         }
 

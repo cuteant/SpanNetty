@@ -63,7 +63,7 @@ namespace DotNetty.Codecs.Compression
 
         public Inflater()
         {
-            Init();
+            _ = Init();
         }
 
         public Inflater(JZlib.WrapperType wrapperType) : this(DEF_WBITS, wrapperType)

@@ -55,7 +55,7 @@ namespace DotNetty.Codecs.Http2
 
             if (httpMsg is null && contentMsg is null)
             {
-                ctx.WriteAsync(msg, promise);
+                _ = ctx.WriteAsync(msg, promise);
                 return;
             }
 
@@ -93,7 +93,7 @@ namespace DotNetty.Codecs.Http2
                     // Write the data
                     var content = contentMsg.Content;
                     endStream = isLastContent && trailers.IsEmpty;
-                    encoder.WriteDataAsync(ctx, _currentStreamId, content, 0, endStream, promiseAggregator.NewPromise());
+                    _ = encoder.WriteDataAsync(ctx, _currentStreamId, content, 0, endStream, promiseAggregator.NewPromise());
                     release = false;
 
                     if (!trailers.IsEmpty)
@@ -112,9 +112,9 @@ namespace DotNetty.Codecs.Http2
             {
                 if (release)
                 {
-                    ReferenceCountUtil.Release(msg);
+                    _ = ReferenceCountUtil.Release(msg);
                 }
-                promiseAggregator.DoneAllocatingPromises();
+                _ = promiseAggregator.DoneAllocatingPromises();
             }
         }
 
@@ -126,7 +126,7 @@ namespace DotNetty.Codecs.Http2
                     HttpConversionUtil.ExtensionHeaderNames.StreamDependencyId, 0);
             short weight = headers.GetShort(
                     HttpConversionUtil.ExtensionHeaderNames.StreamWeight, Http2CodecUtil.DefaultPriorityWeight);
-            encoder.WriteHeadersAsync(ctx, streamId, http2Headers, dependencyId, weight, false,
+            _ = encoder.WriteHeadersAsync(ctx, streamId, http2Headers, dependencyId, weight, false,
                     0, endStream, promiseAggregator.NewPromise());
         }
     }

@@ -114,18 +114,18 @@ namespace DotNetty.Codecs.Http.WebSockets
                     req.Content.Allocator.Buffer(0));
             if (headers is object)
             {
-                res.Headers.Add(headers);
+                _ = res.Headers.Add(headers);
             }
 
-            res.Headers.Add(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket);
-            res.Headers.Add(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade);
+            _ = res.Headers.Add(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket);
+            _ = res.Headers.Add(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade);
 
             // Fill in the headers and contents depending on handshake getMethod.
             if (isHixie76)
             {
                 // New handshake getMethod with a challenge:
-                res.Headers.Add(HttpHeaderNames.SecWebsocketOrigin, origin);
-                res.Headers.Add(HttpHeaderNames.SecWebsocketLocation, this.Uri);
+                _ = res.Headers.Add(HttpHeaderNames.SecWebsocketOrigin, origin);
+                _ = res.Headers.Add(HttpHeaderNames.SecWebsocketLocation, this.Uri);
 
                 if (req.Headers.TryGet(HttpHeaderNames.SecWebsocketProtocol, out ICharSequence subprotocols))
                 {
@@ -139,7 +139,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     }
                     else
                     {
-                        res.Headers.Add(HttpHeaderNames.SecWebsocketProtocol, selectedSubprotocol);
+                        _ = res.Headers.Add(HttpHeaderNames.SecWebsocketProtocol, selectedSubprotocol);
                     }
                 }
 
@@ -156,20 +156,20 @@ namespace DotNetty.Codecs.Http.WebSockets
                     BeginningSpace.Replace(key2, "").Length);
                 long c = req.Content.ReadLong();
                 IByteBuffer input = Unpooled.WrappedBuffer(new byte[16]).SetIndex(0, 0);
-                input.WriteInt(a);
-                input.WriteInt(b);
-                input.WriteLong(c);
-                res.Content.WriteBytes(WebSocketUtil.Md5(input.Array));
+                _ = input.WriteInt(a);
+                _ = input.WriteInt(b);
+                _ = input.WriteLong(c);
+                _ = res.Content.WriteBytes(WebSocketUtil.Md5(input.Array));
             }
             else
             {
                 // Old Hixie 75 handshake getMethod with no challenge:
-                res.Headers.Add(HttpHeaderNames.WebsocketOrigin, origin);
-                res.Headers.Add(HttpHeaderNames.WebsocketLocation, this.Uri);
+                _ = res.Headers.Add(HttpHeaderNames.WebsocketOrigin, origin);
+                _ = res.Headers.Add(HttpHeaderNames.WebsocketLocation, this.Uri);
 
                 if (req.Headers.TryGet(HttpHeaderNames.WebsocketProtocol, out ICharSequence protocol))
                 {
-                    res.Headers.Add(HttpHeaderNames.WebsocketProtocol, this.SelectSubprotocol(protocol.ToString()));
+                    _ = res.Headers.Add(HttpHeaderNames.WebsocketProtocol, this.SelectSubprotocol(protocol.ToString()));
                 }
             }
 

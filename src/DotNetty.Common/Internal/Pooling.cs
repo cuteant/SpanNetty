@@ -30,7 +30,7 @@ namespace DotNetty.Common.Internal
         public bool Return(StringBuilder sb)
         {
             if (null == sb) { return false; }
-            sb.Clear();
+            _ = sb.Clear();
             if (sb.Capacity > MaximumRetainedCapacity)
             {
                 sb.Capacity = MaximumRetainedCapacity;
@@ -92,7 +92,7 @@ namespace DotNetty.Common.Internal
 
         public override void Return(TPoolItem item)
         {
-            if (_policy.Return(item)) { _innerPool.Return(item); }
+            if (_policy.Return(item)) { _ = _innerPool.Return(item); }
         }
 
         public override void Clear() => _innerPool.Clear();

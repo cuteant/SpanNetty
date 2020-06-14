@@ -158,7 +158,7 @@ namespace DotNetty.Transport.Channels
             try
             {
                 var localAddr = LocalAddressInternal;
-                Interlocked.Exchange(ref v_localAddress, localAddr);
+                _ = Interlocked.Exchange(ref v_localAddress, localAddr);
                 return localAddr;
             }
             catch (Exception)
@@ -180,7 +180,7 @@ namespace DotNetty.Transport.Channels
             try
             {
                 var remoteAddr = RemoteAddressInternal;
-                Interlocked.Exchange(ref v_remoteAddress, remoteAddr);
+                _ = Interlocked.Exchange(ref v_remoteAddress, remoteAddr);
                 return remoteAddr;
             }
             catch (Exception)
@@ -222,13 +222,13 @@ namespace DotNetty.Transport.Channels
 
         public IChannel Flush()
         {
-            _pipeline.Flush();
+            _ = _pipeline.Flush();
             return this;
         }
 
         public IChannel Read()
         {
-            _pipeline.Read();
+            _ = _pipeline.Read();
             return this;
         }
 

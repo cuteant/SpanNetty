@@ -52,7 +52,7 @@ namespace DotNetty.Transport.Libuv
             {
                 if (Logger.WarnEnabled) Logger.FailedToCreateConnectRequestToDispatcher(exception);
                 request?.Dispose();
-                _connectCompletion.TrySetException(exception);
+                _ = _connectCompletion.TrySetException(exception);
             }
         }
 
@@ -65,7 +65,7 @@ namespace DotNetty.Transport.Libuv
                 if (request.Error is object)
                 {
                     if (Logger.WarnEnabled) Logger.FailedToConnectToDispatcher(request);
-                    _connectCompletion.TrySetException(request.Error);
+                    _ = _connectCompletion.TrySetException(request.Error);
                 }
                 else
                 {
@@ -75,7 +75,7 @@ namespace DotNetty.Transport.Libuv
                     }
 
                     _pipe.ReadStart(OnRead);
-                    _connectCompletion.TryComplete();
+                    _ = _connectCompletion.TryComplete();
                 }
             }
             finally

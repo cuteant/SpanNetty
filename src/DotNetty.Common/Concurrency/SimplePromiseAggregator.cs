@@ -209,17 +209,17 @@ namespace DotNetty.Common.Concurrency
         {
             if (!this.hasFailure)
             {
-                this.promise.TryComplete();
+                _ = this.promise.TryComplete();
                 return base.TryComplete();
             }
 
             if (this.lastFailure is object)
             {
-                this.promise.TrySetException(this.lastFailure);
+                _ = this.promise.TrySetException(this.lastFailure);
                 return base.TrySetException(this.lastFailure);
             }
 
-            this.promise.TrySetException(this.lastFailures);
+            _ = this.promise.TrySetException(this.lastFailures);
             return base.TrySetException(this.lastFailures);
         }
     }

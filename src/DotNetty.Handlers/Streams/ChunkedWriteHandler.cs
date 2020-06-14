@@ -4,6 +4,7 @@
 namespace DotNetty.Handlers.Streams
 {
     using System;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
@@ -16,10 +17,12 @@ namespace DotNetty.Handlers.Streams
     public class ChunkedWriteHandler<T> : ChannelDuplexHandler
     {
         private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChunkedWriteHandler<T>>();
+        private static readonly Action<Task, object> LinkOutcomeWhenIsEndOfChunkedInputAction = LinkOutcomeWhenIsEndOfChunkedInput;
+        private static readonly Action<Task, object> LinkOutcomeAction = LinkOutcome;
+        private static readonly Action<object> InvokeDoFlushAction = OnInvokeDoFlush;
 
         private readonly Deque<PendingWrite> _queue = new Deque<PendingWrite>();
         private IChannelHandlerContext _ctx;
-        private PendingWrite _currentWrite;
 
         public override void HandlerAdded(IChannelHandlerContext context) => Interlocked.Exchange(ref _ctx, context);
 
@@ -48,7 +51,7 @@ namespace DotNetty.Handlers.Streams
         public override void ChannelInactive(IChannelHandlerContext context)
         {
             DoFlush(context);
-            context.FireChannelInactive();
+            _ = context.FireChannelInactive();
         }
 
         public override void ChannelWritabilityChanged(IChannelHandlerContext context)
@@ -59,29 +62,19 @@ namespace DotNetty.Handlers.Streams
                 DoFlush(context);
             }
 
-            context.FireChannelWritabilityChanged();
+            _ = context.FireChannelWritabilityChanged();
         }
 
         void Discard(Exception cause = null)
         {
             while (true)
             {
-                PendingWrite current = _currentWrite;
-                if (current is null)
-                {
-                    _queue.TryRemoveFromFront(out current);
-                }
-                else
-                {
-                    _currentWrite = null;
-                }
-
-                if (current is null)
+                if (!_queue.TryRemoveFromFront(out PendingWrite currentWrite))
                 {
                     break;
                 }
 
-                object message = current.Message;
+                object message = currentWrite.Message;
                 if (message is IChunkedInput<T> chunks)
                 {
                     bool endOfInput;
@@ -95,7 +88,7 @@ namespace DotNetty.Handlers.Streams
                     catch (Exception exc)
                     {
                         CloseInput(chunks);
-                        _currentWrite.Fail(exc);
+                        currentWrite.Fail(exc);
                         if (Logger.WarnEnabled) { Logger.IsEndOfInputFailed<T>(exc); }
                         continue;
                     }
@@ -103,11 +96,11 @@ namespace DotNetty.Handlers.Streams
                     if (!endOfInput)
                     {
                         if (cause is null) { cause = ThrowHelper.GetClosedChannelException(); }
-                        _currentWrite.Fail(cause);
+                        currentWrite.Fail(cause);
                     }
                     else
                     {
-                        _currentWrite.Success(inputLength);
+                        currentWrite.Success(inputLength);
                     }
                 }
                 else
@@ -117,7 +110,7 @@ namespace DotNetty.Handlers.Streams
                         cause = new ClosedChannelException();
                     }
 
-                    current.Fail(cause);
+                    currentWrite.Fail(cause);
                 }
             }
         }
@@ -150,17 +143,10 @@ namespace DotNetty.Handlers.Streams
             IByteBufferAllocator allocator = context.Allocator;
             while (channel.IsWritable)
             {
-                if (_currentWrite is null)
-                {
-                    _queue.TryRemoveFromFront(out _currentWrite);
-                }
+                PendingWrite currentWrite = _queue.FirstOrDefault;
+                if (currentWrite is null) { break; }
 
-                if (_currentWrite is null)
-                {
-                    break;
-                }
-
-                if (_currentWrite.Promise.IsCompleted)
+                if (currentWrite.Promise.IsCompleted)
                 {
                     // This might happen e.g. in the case when a write operation
                     // failed, but there're still unconsumed chunks left.
@@ -171,12 +157,11 @@ namespace DotNetty.Handlers.Streams
                     // as this had to be done already by someone who resolved the
                     // promise (using ChunkedInput.close method).
                     // See https://github.com/netty/netty/issues/8700.
-                    _currentWrite = null;
+                    _ = _queue.RemoveFromFront();
                     continue;
                 }
 
-                PendingWrite current = _currentWrite;
-                object pendingMessage = current.Message;
+                object pendingMessage = currentWrite.Message;
 
                 if (pendingMessage is IChunkedInput<T> chunks)
                 {
@@ -200,15 +185,15 @@ namespace DotNetty.Handlers.Streams
                     }
                     catch (Exception exception)
                     {
-                        _currentWrite = null;
+                        _ = _queue.RemoveFromFront();
 
                         if (message is object)
                         {
-                            ReferenceCountUtil.Release(message);
+                            _ = ReferenceCountUtil.Release(message);
                         }
 
                         CloseInput(chunks);
-                        current.Fail(exception);
+                        currentWrite.Fail(exception);
 
                         break;
                     }
@@ -228,37 +213,46 @@ namespace DotNetty.Handlers.Streams
                         message = Unpooled.Empty;
                     }
 
-                    Task future = context.WriteAsync(message);
+                    // Flush each chunk to conserve memory
+                    Task future = context.WriteAndFlushAsync(message);
                     if (endOfInput)
                     {
-                        _currentWrite = null;
+                        _ = _queue.RemoveFromFront();
 
-                        // Register a listener which will close the input once the write is complete.
-                        // This is needed because the Chunk may have some resource bound that can not
-                        // be closed before its not written.
-                        //
-                        // See https://github.com/netty/netty/issues/303
-                        future.ContinueWith(LinkOutcomeWhenIsEndOfChunkedInputAction, current, TaskContinuationOptions.ExecuteSynchronously);
-                    }
-                    else if (channel.IsWritable)
-                    {
-                        future.ContinueWith(LinkOutcomeWhenChanelIsWritableAction,
-                            Tuple.Create(current, chunks), TaskContinuationOptions.ExecuteSynchronously);
+                        if (future.IsCompleted)
+                        {
+                            HandleEndOfInputFuture(future, currentWrite);
+                        }
+                        else
+                        {
+                            // Register a listener which will close the input once the write is complete.
+                            // This is needed because the Chunk may have some resource bound that can not
+                            // be closed before its not written.
+                            //
+                            // See https://github.com/netty/netty/issues/303
+                            _ = future.ContinueWith(LinkOutcomeWhenIsEndOfChunkedInputAction, currentWrite, TaskContinuationOptions.ExecuteSynchronously);
+                        }
                     }
                     else
                     {
-                        future.ContinueWith(LinkOutcomeAction,
-                            Tuple.Create(this, chunks, channel), TaskContinuationOptions.ExecuteSynchronously);
+                        var resume = !channel.IsWritable;
+                        if (future.IsCompleted)
+                        {
+                            HandleFuture(future, this, channel, currentWrite, resume);
+                        }
+                        else
+                        {
+                            _ = future.ContinueWith(LinkOutcomeAction,
+                                Tuple.Create(this, channel, currentWrite, resume), TaskContinuationOptions.ExecuteSynchronously);
+                        }
                     }
 
-                    // Flush each chunk to conserve memory
-                    context.Flush();
                     requiresFlush = false;
                 }
                 else
                 {
-                    _currentWrite = null;
-                    context.WriteAsync(pendingMessage, current.Promise);
+                    _ = _queue.RemoveFromFront();
+                    _ = context.WriteAsync(pendingMessage, currentWrite.Promise);
                     requiresFlush = true;
                 }
 
@@ -271,77 +265,67 @@ namespace DotNetty.Handlers.Streams
 
             if (requiresFlush)
             {
-                context.Flush();
+                _ = context.Flush();
             }
         }
 
-        static readonly Action<Task, object> LinkOutcomeAction = LinkOutcome;
-        static void LinkOutcome(Task task, object state)
+        private static void LinkOutcome(Task task, object state)
         {
-            var wrapped = (Tuple<ChunkedWriteHandler<T>, IChunkedInput<T>, IChannel>)state;
-            var handler = wrapped.Item1;
+            var wrapped = (Tuple<ChunkedWriteHandler<T>, IChannel, PendingWrite, bool>)state;
+            HandleFuture(task, wrapped.Item1, wrapped.Item2, wrapped.Item3, wrapped.Item4);
+        }
+
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        private static void HandleFuture(Task task, ChunkedWriteHandler<T> owner, IChannel channel, PendingWrite currentWrite, bool resume)
+        {
             if (task.IsSuccess())
             {
-                var chunks = wrapped.Item2;
-                handler._currentWrite.Progress(chunks.Progress, chunks.Length);
-                if (wrapped.Item3.IsWritable)
+                var chunks = (IChunkedInput<T>)currentWrite.Message;
+                currentWrite.Progress(chunks.Progress, chunks.Length);
+                if (resume && channel.IsWritable)
                 {
-                    handler.ResumeTransfer();
+                    owner.ResumeTransfer();
                 }
             }
             else
             {
-                CloseInput((IChunkedInput<T>)handler._currentWrite.Message);
-                handler._currentWrite.Fail(task.Exception);
+                CloseInput((IChunkedInput<T>)currentWrite.Message);
+                currentWrite.Fail(task.Exception);
             }
         }
 
-        static readonly Action<Task, object> LinkOutcomeWhenIsEndOfChunkedInputAction = LinkOutcomeWhenIsEndOfChunkedInput;
-        static void LinkOutcomeWhenIsEndOfChunkedInput(Task task, object state)
+        private static void LinkOutcomeWhenIsEndOfChunkedInput(Task task, object state)
         {
-            var pendingTask = (PendingWrite)state;
+            HandleEndOfInputFuture(task, (PendingWrite)state);
+        }
+
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        private static void HandleEndOfInputFuture(Task task, PendingWrite currentWrite)
+        {
             if (task.IsSuccess())
             {
-                var chunks = (IChunkedInput<T>)pendingTask.Message;
+                var chunks = (IChunkedInput<T>)currentWrite.Message;
                 // read state of the input in local variables before closing it
                 long inputProgress = chunks.Progress;
                 long inputLength = chunks.Length;
                 CloseInput(chunks);
-                pendingTask.Progress(inputProgress, inputLength);
-                pendingTask.Success(inputLength);
+                currentWrite.Progress(inputProgress, inputLength);
+                currentWrite.Success(inputLength);
             }
             else
             {
-                CloseInput((IChunkedInput<T>)pendingTask.Message);
-                pendingTask.Fail(task.Exception);
+                CloseInput((IChunkedInput<T>)currentWrite.Message);
+                currentWrite.Fail(task.Exception);
             }
         }
 
-        static readonly Action<Task, object> LinkOutcomeWhenChanelIsWritableAction = LinkOutcomeWhenChanelIsWritable;
-        static void LinkOutcomeWhenChanelIsWritable(Task task, object state)
-        {
-            var wrapped = (Tuple<PendingWrite, IChunkedInput<T>>)state;
-            var pendingTask = wrapped.Item1;
-            if (task.IsFaulted)
-            {
-                CloseInput((IChunkedInput<T>)pendingTask.Message);
-                pendingTask.Fail(task.Exception);
-            }
-            else
-            {
-                var chunks = wrapped.Item2;
-                pendingTask.Progress(chunks.Progress, chunks.Length);
-            }
-        }
-
-        static readonly Action<object> InvokeDoFlushAction = OnInvokeDoFlush;
-        static void OnInvokeDoFlush(object state)
+        private static void OnInvokeDoFlush(object state)
         {
             var wrapped = (Tuple<ChunkedWriteHandler<T>, IChannelHandlerContext>)state;
             wrapped.Item1.InvokeDoFlush(wrapped.Item2);
         }
 
-        static void CloseInput(IChunkedInput<T> chunks)
+        private static void CloseInput(IChunkedInput<T> chunks)
         {
             try
             {
@@ -376,13 +360,13 @@ namespace DotNetty.Handlers.Streams
                     return;
                 }
                 Progress(total, total);
-                Promise.TryComplete();
+                _ = Promise.TryComplete();
             }
 
             public void Fail(Exception error)
             {
-                ReferenceCountUtil.Release(Message);
-                Promise.TrySetException(error);
+                _ = ReferenceCountUtil.Release(Message);
+                _ = Promise.TrySetException(error);
             }
 
             public void Progress(long progress, long total)

@@ -257,7 +257,7 @@ namespace DotNetty.Common
                     while (thisHead != oldHead);
                     if (dropped)
                     {
-                        Interlocked.Increment(ref this.droppedRecords);
+                        _ = Interlocked.Increment(ref this.droppedRecords);
                     }
                 }
             }
@@ -300,8 +300,8 @@ namespace DotNetty.Common
                 int present = oldHead.Pos + 1;
                 // Guess about 2 kilobytes per stack trace
                 var buf = new StringBuilder(present * 2048);
-                buf.Append(StringUtil.Newline);
-                buf.Append("Recent access records: ").Append(StringUtil.Newline);
+                _ = buf.Append(StringUtil.Newline);
+                _ = buf.Append("Recent access records: ").Append(StringUtil.Newline);
 
                 int i = 1;
                 var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -312,11 +312,11 @@ namespace DotNetty.Common
                     {
                         if (oldHead.Next == RecordEntry.Bottom)
                         {
-                            buf.Append("Created at:").Append(StringUtil.Newline).Append(s);
+                            _ = buf.Append("Created at:").Append(StringUtil.Newline).Append(s);
                         }
                         else
                         {
-                            buf.Append('#').Append(i++).Append(':').Append(StringUtil.Newline).Append(s);
+                            _ = buf.Append('#').Append(i++).Append(':').Append(StringUtil.Newline).Append(s);
                         }
                     }
                     else
@@ -327,7 +327,7 @@ namespace DotNetty.Common
 
                 if (duped > 0)
                 {
-                    buf.Append(": ")
+                    _ = buf.Append(": ")
                         .Append(duped)
                         .Append(" leak records were discarded because they were duplicates")
                         .Append(StringUtil.Newline);
@@ -335,7 +335,7 @@ namespace DotNetty.Common
 
                 if (dropped > 0)
                 {
-                    buf.Append(": ")
+                    _ = buf.Append(": ")
                         .Append(dropped)
                         .Append(" leak records were discarded because the leak record count is targeted to ")
                         .Append(TargetRecords)
@@ -351,7 +351,7 @@ namespace DotNetty.Common
 
             internal void Dispose()
             {
-                Interlocked.Exchange(ref this.head, null);
+                _ = Interlocked.Exchange(ref this.head, null);
             }
         }
 
@@ -396,12 +396,12 @@ namespace DotNetty.Common
                 var buf = new StringBuilder(2048);
                 if (this.hintString is object)
                 {
-                    buf.Append("\tHint: ").Append(this.hintString).Append(StringUtil.Newline);
+                    _ = buf.Append("\tHint: ").Append(this.hintString).Append(StringUtil.Newline);
                 }
 
                 // TODO: Use StackTrace class and support excludedMethods NETStandard2.0
                 // Append the stack trace.
-                buf.Append(this.stackTrace).Append(StringUtil.Newline);
+                _ = buf.Append(this.stackTrace).Append(StringUtil.Newline);
                 return buf.ToString();
             }
         }
@@ -460,7 +460,7 @@ namespace DotNetty.Common
                     Debug.Assert(owner == this.owner);
                     Debug.Assert(referent == this.referent);
 
-                    this.leakList.AddLast(leak);
+                    _ = this.leakList.AddLast(leak);
                     return true;
                 }
             }

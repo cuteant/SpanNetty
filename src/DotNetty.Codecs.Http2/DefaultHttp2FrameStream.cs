@@ -15,7 +15,7 @@ namespace DotNetty.Codecs.Http2
     public class DefaultHttp2FrameStream : IHttp2FrameStream
     {
         private int v_id = -1;
-        private IHttp2Stream _stream;
+        private IHttp2Stream v_stream;
 
         internal readonly Http2FrameStreamEvent StateChanged;
         internal readonly Http2FrameStreamEvent WritabilityChanged;
@@ -31,15 +31,15 @@ namespace DotNetty.Codecs.Http2
         public DefaultHttp2FrameStream SetStreamAndProperty(IHttp2ConnectionPropertyKey streamKey, IHttp2Stream stream)
         {
             Debug.Assert(v_id == -1 || stream.Id == v_id);
-            stream.SetProperty(streamKey, this);
+            _ = stream.SetProperty(streamKey, this);
             InternalStream = stream;
             return this;
         }
 
         internal IHttp2Stream InternalStream
         {
-            get => Volatile.Read(ref _stream);
-            set => Interlocked.Exchange(ref _stream, value);
+            get => Volatile.Read(ref v_stream);
+            set => Interlocked.Exchange(ref v_stream, value);
         }
 
         public virtual int Id

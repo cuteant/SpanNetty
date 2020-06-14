@@ -64,7 +64,7 @@ namespace DotNetty.Codecs.Http.Cors
         {
             foreach (ICharSequence header in headers)
             {
-                this.exposeHeaders.Add(header);
+                _ = this.exposeHeaders.Add(header);
             }
             return this;
         }
@@ -73,7 +73,7 @@ namespace DotNetty.Codecs.Http.Cors
         {
             foreach (string header in headers)
             {
-                this.exposeHeaders.Add(new StringCharSequence(header));
+                _ = this.exposeHeaders.Add(new StringCharSequence(header));
             }
             return this;
         }
@@ -106,7 +106,7 @@ namespace DotNetty.Codecs.Http.Cors
         {
             foreach (ICharSequence header in headers)
             {
-                this.requestHeaders.Add(new AsciiString(header));
+                _ = this.requestHeaders.Add(new AsciiString(header));
             }
             return this;
         }
@@ -121,7 +121,7 @@ namespace DotNetty.Codecs.Http.Cors
             }
             else
             {
-                this.PreflightResponseHeader(name, new List<object>(values));
+                _ = this.PreflightResponseHeader(name, new List<object>(values));
             }
             return this;
         }

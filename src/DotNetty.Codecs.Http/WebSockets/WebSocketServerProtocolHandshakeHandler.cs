@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             var req = (IFullHttpRequest)msg;
             if (IsNotWebSocketPath(req))
             {
-                ctx.FireChannelRead(msg);
+                _ = ctx.FireChannelRead(msg);
                 return;
             }
 
@@ -56,7 +56,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 WebSocketServerHandshaker handshaker = wsFactory.NewHandshaker(req);
                 if (handshaker is null)
                 {
-                    WebSocketServerHandshakerFactory.SendUnsupportedVersionResponse(ctx.Channel);
+                    _ = WebSocketServerHandshakerFactory.SendUnsupportedVersionResponse(ctx.Channel);
                 }
                 else
                 {
@@ -66,17 +66,16 @@ namespace DotNetty.Codecs.Http.WebSockets
                     //
                     // See https://github.com/netty/netty/issues/9471.
                     WebSocketServerProtocolHandler.SetHandshaker(ctx.Channel, handshaker);
-                    ctx.Pipeline.Replace(this, "WS403Responder",
-                            WebSocketServerProtocolHandler.ForbiddenHttpRequestResponder());
+                    _ = ctx.Pipeline.Remove(this);
 
                     Task task = handshaker.HandshakeAsync(ctx.Channel, req);
-                    task.ContinueWith(FireUserEventTriggeredAction, Tuple.Create(ctx, req, handshaker, _handshakePromise), TaskContinuationOptions.ExecuteSynchronously);
+                    _ = task.ContinueWith(FireUserEventTriggeredAction, Tuple.Create(ctx, req, handshaker, _handshakePromise), TaskContinuationOptions.ExecuteSynchronously);
                     ApplyHandshakeTimeout();
                 }
             }
             finally
             {
-                req.Release();
+                _ = req.Release();
             }
         }
 
@@ -86,19 +85,19 @@ namespace DotNetty.Codecs.Http.WebSockets
             var wrapped = (Tuple<IChannelHandlerContext, IFullHttpRequest, WebSocketServerHandshaker, IPromise>)state;
             if (t.IsSuccess())
             {
-                wrapped.Item4.TryComplete();
+                _ = wrapped.Item4.TryComplete();
                 var ctx = wrapped.Item1;
                 var req = wrapped.Item2;
                 // Kept for compatibility
-                ctx.FireUserEventTriggered(
+                _ = ctx.FireUserEventTriggered(
                         WebSocketServerProtocolHandler.ServerHandshakeStateEvent.HandshakeComplete);
-                ctx.FireUserEventTriggered(new WebSocketServerProtocolHandler.HandshakeComplete(
+                _ = ctx.FireUserEventTriggered(new WebSocketServerProtocolHandler.HandshakeComplete(
                     req.Uri, req.Headers, wrapped.Item3.SelectedSubprotocol));
             }
             else
             {
-                wrapped.Item4.TrySetException(t.Exception);
-                wrapped.Item1.FireExceptionCaught(t.Exception);
+                _ = wrapped.Item4.TrySetException(t.Exception);
+                _ = wrapped.Item1.FireExceptionCaught(t.Exception);
             }
         }
 
@@ -120,12 +119,9 @@ namespace DotNetty.Codecs.Http.WebSockets
             Task task = ctx.Channel.WriteAndFlushAsync(res);
             if (!IsKeepAlive(req) || res.Status.Code != StatusCodes.Status200OK)
             {
-                task.ContinueWith(CloseOnCompleteAction, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
+                _ = task.CloseOnComplete(ctx.Channel);
             }
         }
-
-        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
-        static void CloseOnComplete(Task t, object c) => ((IChannel)c).CloseAsync();
 
         static string GetWebSocketLocation(IChannelPipeline cp, IHttpRequest req, string path)
         {
@@ -153,7 +149,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             var timeoutTask = _ctx.Executor.Schedule(FireHandshakeTimeoutAction, _ctx, localHandshakePromise, TimeSpan.FromMilliseconds(handshakeTimeoutMillis));
 
             // Cancel the handshake timeout when handshake is finished.
-            localHandshakePromise.Task.ContinueWith(AbortHandshakeTimeoutAfterHandshakeCompletedAction, timeoutTask, TaskContinuationOptions.ExecuteSynchronously);
+            _ = localHandshakePromise.Task.ContinueWith(AbortHandshakeTimeoutAfterHandshakeCompletedAction, timeoutTask, TaskContinuationOptions.ExecuteSynchronously);
         }
 
         private static readonly Action<object, object> FireHandshakeTimeoutAction = FireHandshakeTimeout;
@@ -163,7 +159,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (handshakePromise.IsCompleted) { return; }
             if (handshakePromise.TrySetException(new WebSocketHandshakeException("handshake timed out")))
             {
-                ((IChannelHandlerContext)c)
+                _ = ((IChannelHandlerContext)c)
                     .Flush()
                     .FireUserEventTriggered(WebSocketServerProtocolHandler.ServerHandshakeStateEvent.HandshakeTimeout)
                     .CloseAsync();
@@ -173,7 +169,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         private static readonly Action<Task, object> AbortHandshakeTimeoutAfterHandshakeCompletedAction = AbortHandshakeTimeoutAfterHandshakeCompleted;
         private static void AbortHandshakeTimeoutAfterHandshakeCompleted(Task t, object s)
         {
-            ((IScheduledTask)s).Cancel();
+            _ = ((IScheduledTask)s).Cancel();
         }
     }
 }

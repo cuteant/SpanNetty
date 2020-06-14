@@ -10,9 +10,9 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public sealed class DefaultHttp2HeadersFrame : AbstractHttp2StreamFrame, IHttp2HeadersFrame
     {
-        private readonly IHttp2Headers headers;
-        private readonly bool endStream;
-        private readonly int padding;
+        private readonly IHttp2Headers _headers;
+        private readonly bool _endStream;
+        private readonly int _padding;
 
         public DefaultHttp2HeadersFrame(IHttp2Headers headers)
             : this(headers, false)
@@ -40,41 +40,41 @@ namespace DotNetty.Codecs.Http2
         {
             if (headers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
 
-            this.headers = headers;
-            this.endStream = endStream;
+            _headers = headers;
+            _endStream = endStream;
             Http2CodecUtil.VerifyPadding(padding);
-            this.padding = padding;
+            _padding = padding;
         }
 
         public override string Name => "HEADERS";
 
-        public IHttp2Headers Headers => this.headers;
+        public IHttp2Headers Headers => _headers;
 
-        public int Padding => this.padding;
+        public int Padding => _padding;
 
-        public bool IsEndStream => this.endStream;
+        public bool IsEndStream => _endStream;
 
         public override string ToString()
         {
-            return StringUtil.SimpleClassName(this) + "(stream=" + this.Stream + ", headers=" + this.headers
-                   + ", endStream=" + this.endStream + ", padding=" + this.padding + ')';
+            return StringUtil.SimpleClassName(this) + "(stream=" + Stream + ", headers=" + _headers
+                   + ", endStream=" + _endStream + ", padding=" + _padding + ')';
         }
 
         protected override bool Equals0(IHttp2StreamFrame other)
         {
             return other is DefaultHttp2HeadersFrame headersFrame
                 && base.Equals0(other)
-                && this.headers.Equals(headersFrame.headers)
-                && this.endStream == headersFrame.endStream
-                && this.padding == headersFrame.padding;
+                && _headers.Equals(headersFrame._headers)
+                && _endStream == headersFrame._endStream
+                && _padding == headersFrame._padding;
         }
 
         public override int GetHashCode()
         {
             int hash = base.GetHashCode();
-            hash = hash * 31 + this.headers.GetHashCode();
-            hash = hash * 31 + (this.endStream ? 0 : 1);
-            hash = hash * 31 + this.padding;
+            hash = hash * 31 + _headers.GetHashCode();
+            hash = hash * 31 + (_endStream ? 0 : 1);
+            hash = hash * 31 + _padding;
             return hash;
         }
     }

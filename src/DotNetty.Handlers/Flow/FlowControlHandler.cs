@@ -106,7 +106,7 @@ namespace DotNetty.Handlers.Flow
         public override void ChannelInactive(IChannelHandlerContext ctx)
         {
             Destroy();
-            ctx.FireChannelInactive();
+            _ = ctx.FireChannelInactive();
         }
 
         public override void Read(IChannelHandlerContext ctx)
@@ -117,7 +117,7 @@ namespace DotNetty.Handlers.Flow
                 // messages from upstream and once one arrives it need to be
                 // relayed to downstream to keep the flow going.
                 _shouldConsume = true;
-                ctx.Read();
+                _ = ctx.Read();
             }
         }
 
@@ -128,7 +128,7 @@ namespace DotNetty.Handlers.Flow
                 _queue = Recycler.Take();
             }
 
-            _queue.TryEnqueue(msg);
+            _ = _queue.TryEnqueue(msg);
 
             // We just received one message. Do we need to relay it regardless
             // of the auto reading configuration? The answer is yes if this
@@ -136,14 +136,14 @@ namespace DotNetty.Handlers.Flow
             int minConsume = _shouldConsume ? 1 : 0;
             _shouldConsume = false;
 
-            Dequeue(ctx, minConsume);
+            _ = Dequeue(ctx, minConsume);
         }
 
         public override void ChannelReadComplete(IChannelHandlerContext ctx)
         {
             if (IsQueueEmpty)
             {
-                ctx.FireChannelReadComplete();
+                _ = ctx.FireChannelReadComplete();
             }
             else
             {
@@ -176,7 +176,7 @@ namespace DotNetty.Handlers.Flow
                 if (!_queue.TryDequeue(out object msg) || msg is null) { break; }
 
                 ++consumed;
-                ctx.FireChannelRead(msg);
+                _ = ctx.FireChannelRead(msg);
             }
 
             // We're firing a completion event every time one (or more)
@@ -187,7 +187,7 @@ namespace DotNetty.Handlers.Flow
                 _queue.Recycle();
                 _queue = null;
 
-                if (consumed > 0) { ctx.FireChannelReadComplete(); }
+                if (consumed > 0) { _ = ctx.FireChannelReadComplete(); }
             }
 
             return consumed;

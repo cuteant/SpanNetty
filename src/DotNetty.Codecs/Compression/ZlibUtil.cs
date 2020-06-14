@@ -4,14 +4,17 @@
 namespace DotNetty.Codecs.Compression
 {
     using System;
+    using System.Runtime.CompilerServices;
 
     static class ZlibUtil
     {
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void Fail(Inflater z, string message, int resultCode)
         {
             throw new DecompressionException($"{message} ({resultCode})" + (z.msg is object ? " : " + z.msg : ""));
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void Fail(Deflater z, string message, int resultCode)
         {
             throw new CompressionException($"{message} ({resultCode})" + (z.msg is object ? " : " + z.msg : ""));

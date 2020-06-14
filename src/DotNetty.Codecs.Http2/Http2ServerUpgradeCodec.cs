@@ -22,12 +22,12 @@ namespace DotNetty.Codecs.Http2
         private static readonly AsciiString[] REQUIRED_UPGRADE_HEADERS = new[] { Http2CodecUtil.HttpUpgradeSettingsHeader };
         private static readonly IChannelHandler[] EMPTY_HANDLERS = new IChannelHandler[0];
 
-        private readonly string handlerName;
-        private readonly Http2ConnectionHandler connectionHandler;
-        private readonly IChannelHandler[] handlers;
-        private readonly IHttp2FrameReader frameReader;
+        private readonly string _handlerName;
+        private readonly Http2ConnectionHandler _connectionHandler;
+        private readonly IChannelHandler[] _handlers;
+        private readonly IHttp2FrameReader _frameReader;
 
-        private Http2Settings settings;
+        private Http2Settings _settings;
 
         /// <summary>
         /// Creates the codec using a default name for the connection handler when adding to the pipeline.
@@ -80,10 +80,10 @@ namespace DotNetty.Codecs.Http2
 
         private Http2ServerUpgradeCodec(string handlerName, Http2ConnectionHandler connectionHandler, params IChannelHandler[] handlers)
         {
-            this.handlerName = handlerName;
-            this.connectionHandler = connectionHandler;
-            this.handlers = handlers;
-            this.frameReader = new DefaultHttp2FrameReader();
+            _handlerName = handlerName;
+            _connectionHandler = connectionHandler;
+            _handlers = handlers;
+            _frameReader = new DefaultHttp2FrameReader();
         }
 
         public virtual IReadOnlyList<AsciiString> RequiredUpgradeHeaders => REQUIRED_UPGRADE_HEADERS;
@@ -100,7 +100,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     ThrowHelper.ThrowArgumentException_MustOnlyOne();
                 }
-                settings = this.DecodeSettingsHeader(ctx, upgradeHeaders[0]);
+                _settings = DecodeSettingsHeader(ctx, upgradeHeaders[0]);
                 // Everything looks good.
                 return true;
             }
@@ -117,24 +117,24 @@ namespace DotNetty.Codecs.Http2
             {
                 var pipeline = ctx.Pipeline;
                 // Add the HTTP/2 connection handler to the pipeline immediately following the current handler.
-                pipeline.AddAfter(ctx.Name, handlerName, connectionHandler);
+                _ = pipeline.AddAfter(ctx.Name, _handlerName, _connectionHandler);
 
                 // Add also all extra handlers as these may handle events / messages produced by the connectionHandler.
                 // See https://github.com/netty/netty/issues/9314
-                if (handlers != null)
+                if (_handlers != null)
                 {
-                    var name = pipeline.Context(connectionHandler).Name;
-                    for (int i = handlers.Length - 1; i >= 0; i--)
+                    var name = pipeline.Context(_connectionHandler).Name;
+                    for (int i = _handlers.Length - 1; i >= 0; i--)
                     {
-                        pipeline.AddAfter(name, null, handlers[i]);
+                        _ = pipeline.AddAfter(name, null, _handlers[i]);
                     }
                 }
-                connectionHandler.OnHttpServerUpgrade(settings);
+                _connectionHandler.OnHttpServerUpgrade(_settings);
             }
             catch (Http2Exception e)
             {
-                ctx.FireExceptionCaught(e);
-                ctx.CloseAsync();
+                _ = ctx.FireExceptionCaught(e);
+                _ = ctx.CloseAsync();
             }
         }
 
@@ -156,11 +156,11 @@ namespace DotNetty.Codecs.Http2
                 var frame = CreateSettingsFrame(ctx, payload);
 
                 // Decode the SETTINGS frame and return the settings object.
-                return this.DecodeSettings(ctx, frame);
+                return DecodeSettings(ctx, frame);
             }
             finally
             {
-                header.Release();
+                _ = header.Release();
             }
         }
 
@@ -175,12 +175,12 @@ namespace DotNetty.Codecs.Http2
             try
             {
                 var decodedSettings = new Http2Settings();
-                this.frameReader.ReadFrame(ctx, frame, new DelegatingFrameAdapter(decodedSettings));
+                _frameReader.ReadFrame(ctx, frame, new DelegatingFrameAdapter(decodedSettings));
                 return decodedSettings;
             }
             finally
             {
-                frame.Release();
+                _ = frame.Release();
             }
         }
 
@@ -194,20 +194,20 @@ namespace DotNetty.Codecs.Http2
         {
             var frame = ctx.Allocator.Buffer(Http2CodecUtil.FrameHeaderLength + payload.ReadableBytes);
             Http2CodecUtil.WriteFrameHeader(frame, payload.ReadableBytes, Http2FrameTypes.Settings, new Http2Flags(), 0);
-            frame.WriteBytes(payload);
-            payload.Release();
+            _ = frame.WriteBytes(payload);
+            _ = payload.Release();
             return frame;
         }
 
         sealed class DelegatingFrameAdapter : Http2FrameAdapter
         {
-            readonly Http2Settings decodedSettings;
+            readonly Http2Settings _decodedSettings;
 
-            public DelegatingFrameAdapter(Http2Settings decodedSettings) => this.decodedSettings = decodedSettings;
+            public DelegatingFrameAdapter(Http2Settings decodedSettings) => _decodedSettings = decodedSettings;
 
             public override void OnSettingsRead(IChannelHandlerContext ctx, Http2Settings settings)
             {
-                this.decodedSettings.CopyFrom(settings);
+                _ = _decodedSettings.CopyFrom(settings);
             }
         }
     }

@@ -10,6 +10,7 @@ namespace DotNetty.Handlers.Logging
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
     /// <summary>
@@ -22,13 +23,14 @@ namespace DotNetty.Handlers.Logging
 
         protected readonly InternalLogLevel InternalLevel;
         protected readonly IInternalLogger Logger;
+        protected readonly ByteBufferFormat BufferFormat;
 
         /// <summary>
         ///     Creates a new instance whose logger name is the fully qualified class
         ///     name of the instance with hex dump enabled.
         /// </summary>
         public LoggingHandler()
-            : this(DefaultLevel)
+            : this(typeof(LoggingHandler), DefaultLevel, ByteBufferFormat.HexDump)
         {
         }
 
@@ -38,7 +40,18 @@ namespace DotNetty.Handlers.Logging
         /// </summary>
         /// <param name="level">the log level</param>
         public LoggingHandler(LogLevel level)
-            : this(typeof(LoggingHandler), level)
+            : this(typeof(LoggingHandler), level, ByteBufferFormat.HexDump)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a new instance whose logger name is the fully qualified class
+        ///     name of the instance
+        /// </summary>
+        /// <param name="level">the log level</param>
+        /// <param name="bufferFormat">the ByteBuf format</param>
+        public LoggingHandler(LogLevel level, ByteBufferFormat bufferFormat)
+            : this(typeof(LoggingHandler), level, bufferFormat)
         {
         }
 
@@ -48,7 +61,7 @@ namespace DotNetty.Handlers.Logging
         /// </summary>
         /// <param name="type">the class type to generate the logger for</param>
         public LoggingHandler(Type type)
-            : this(type, DefaultLevel)
+            : this(type, DefaultLevel, ByteBufferFormat.HexDump)
         {
         }
 
@@ -58,15 +71,27 @@ namespace DotNetty.Handlers.Logging
         /// <param name="type">the class type to generate the logger for</param>
         /// <param name="level">the log level</param>
         public LoggingHandler(Type type, LogLevel level)
+            : this(type, level, ByteBufferFormat.HexDump)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a new instance with the specified logger name.
+        /// </summary>
+        /// <param name="type">the class type to generate the logger for</param>
+        /// <param name="level">the log level</param>
+        /// <param name="bufferFormat">the ByteBuf format</param>
+        public LoggingHandler(Type type, LogLevel level, ByteBufferFormat bufferFormat)
         {
             if (type is null)
             {
                 ThrowHelper.ThrowNullReferenceException(ExceptionArgument.type);
             }
 
-            this.Logger = InternalLoggerFactory.GetInstance(type);
-            this.Level = level;
-            this.InternalLevel = level.ToInternalLevel();
+            Logger = InternalLoggerFactory.GetInstance(type);
+            Level = level;
+            InternalLevel = level.ToInternalLevel();
+            BufferFormat = bufferFormat;
         }
 
         /// <summary>
@@ -74,7 +99,7 @@ namespace DotNetty.Handlers.Logging
         /// </summary>
         /// <param name="name">the name of the class to use for the logger</param>
         public LoggingHandler(string name)
-            : this(name, DefaultLevel)
+            : this(name, DefaultLevel, ByteBufferFormat.HexDump)
         {
         }
 
@@ -84,15 +109,27 @@ namespace DotNetty.Handlers.Logging
         /// <param name="name">the name of the class to use for the logger</param>
         /// <param name="level">the log level</param>
         public LoggingHandler(string name, LogLevel level)
+            : this(name, level, ByteBufferFormat.HexDump)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a new instance with the specified logger name.
+        /// </summary>
+        /// <param name="name">the name of the class to use for the logger</param>
+        /// <param name="level">the log level</param>
+        /// <param name="bufferFormat">the ByteBuf format</param>
+        public LoggingHandler(string name, LogLevel level, ByteBufferFormat bufferFormat)
         {
             if (name is null)
             {
                 ThrowHelper.ThrowNullReferenceException(ExceptionArgument.name);
             }
 
-            this.Logger = InternalLoggerFactory.GetInstance(name);
-            this.Level = level;
-            this.InternalLevel = level.ToInternalLevel();
+            Logger = InternalLoggerFactory.GetInstance(name);
+            Level = level;
+            InternalLevel = level.ToInternalLevel();
+            BufferFormat = bufferFormat;
         }
 
         public override bool IsSharable => true;
@@ -104,168 +141,168 @@ namespace DotNetty.Handlers.Logging
 
         public override void ChannelRegistered(IChannelHandlerContext ctx)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "REGISTERED"));
+                Logger.Log(InternalLevel, Format(ctx, "REGISTERED"));
             }
             ctx.FireChannelRegistered();
         }
 
         public override void ChannelUnregistered(IChannelHandlerContext ctx)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "UNREGISTERED"));
+                Logger.Log(InternalLevel, Format(ctx, "UNREGISTERED"));
             }
             ctx.FireChannelUnregistered();
         }
 
         public override void ChannelActive(IChannelHandlerContext ctx)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "ACTIVE"));
+                Logger.Log(InternalLevel, Format(ctx, "ACTIVE"));
             }
             ctx.FireChannelActive();
         }
 
         public override void ChannelInactive(IChannelHandlerContext ctx)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "INACTIVE"));
+                Logger.Log(InternalLevel, Format(ctx, "INACTIVE"));
             }
             ctx.FireChannelInactive();
         }
 
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "EXCEPTION", cause), cause);
+                Logger.Log(InternalLevel, Format(ctx, "EXCEPTION", cause), cause);
             }
             ctx.FireExceptionCaught(cause);
         }
 
         public override void UserEventTriggered(IChannelHandlerContext ctx, object evt)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "USER_EVENT", evt));
+                Logger.Log(InternalLevel, Format(ctx, "USER_EVENT", evt));
             }
             ctx.FireUserEventTriggered(evt);
         }
 
         public override Task BindAsync(IChannelHandlerContext ctx, EndPoint localAddress)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "BIND", localAddress));
+                Logger.Log(InternalLevel, Format(ctx, "BIND", localAddress));
             }
             return ctx.BindAsync(localAddress);
         }
 
         public override Task ConnectAsync(IChannelHandlerContext ctx, EndPoint remoteAddress, EndPoint localAddress)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "CONNECT", remoteAddress, localAddress));
+                Logger.Log(InternalLevel, Format(ctx, "CONNECT", remoteAddress, localAddress));
             }
             return ctx.ConnectAsync(remoteAddress, localAddress);
         }
 
         public override void Disconnect(IChannelHandlerContext ctx, IPromise promise)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "DISCONNECT"));
+                Logger.Log(InternalLevel, Format(ctx, "DISCONNECT"));
             }
             ctx.DisconnectAsync(promise);
         }
 
         public override void Close(IChannelHandlerContext ctx, IPromise promise)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "CLOSE"));
+                Logger.Log(InternalLevel, Format(ctx, "CLOSE"));
             }
             ctx.CloseAsync(promise);
         }
 
         public override void Deregister(IChannelHandlerContext ctx, IPromise promise)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "DEREGISTER"));
+                Logger.Log(InternalLevel, Format(ctx, "DEREGISTER"));
             }
             ctx.DeregisterAsync(promise);
         }
 
         public override void ChannelRead(IChannelHandlerContext ctx, object message)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "RECEIVED", message));
+                Logger.Log(InternalLevel, Format(ctx, "RECEIVED", message));
             }
             ctx.FireChannelRead(message);
         }
 
         public override void ChannelReadComplete(IChannelHandlerContext ctx)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "RECEIVED_COMPLETE"));
+                Logger.Log(InternalLevel, Format(ctx, "RECEIVED_COMPLETE"));
             }
             ctx.FireChannelReadComplete();
         }
 
         public override void ChannelWritabilityChanged(IChannelHandlerContext ctx)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "WRITABILITY", ctx.Channel.IsWritable));
+                Logger.Log(InternalLevel, Format(ctx, "WRITABILITY", ctx.Channel.IsWritable));
             }
             ctx.FireChannelWritabilityChanged();
         }
 
         public override void HandlerAdded(IChannelHandlerContext ctx)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "HANDLER_ADDED"));
+                Logger.Log(InternalLevel, Format(ctx, "HANDLER_ADDED"));
             }
         }
         public override void HandlerRemoved(IChannelHandlerContext ctx)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "HANDLER_REMOVED"));
+                Logger.Log(InternalLevel, Format(ctx, "HANDLER_REMOVED"));
             }
         }
 
         public override void Read(IChannelHandlerContext ctx)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "READ"));
+                Logger.Log(InternalLevel, Format(ctx, "READ"));
             }
             ctx.Read();
         }
 
         public override void Write(IChannelHandlerContext ctx, object msg, IPromise promise)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "WRITE", msg));
+                Logger.Log(InternalLevel, Format(ctx, "WRITE", msg));
             }
             ctx.WriteAsync(msg, promise);
         }
 
         public override void Flush(IChannelHandlerContext ctx)
         {
-            if (this.Logger.IsEnabled(this.InternalLevel))
+            if (Logger.IsEnabled(InternalLevel))
             {
-                this.Logger.Log(this.InternalLevel, this.Format(ctx, "FLUSH"));
+                Logger.Log(InternalLevel, Format(ctx, "FLUSH"));
             }
             ctx.Flush();
         }
@@ -291,20 +328,12 @@ namespace DotNetty.Handlers.Logging
         /// <param name="ctx"></param>
         /// <param name="eventName">the name of the event</param>
         /// <param name="arg">the argument of the event</param>
-        protected virtual string Format(IChannelHandlerContext ctx, string eventName, object arg)
+        protected virtual string Format(IChannelHandlerContext ctx, string eventName, object arg) => arg switch
         {
-            switch (arg)
-            {
-                case IByteBuffer byteBuffer:
-                    return this.FormatByteBuffer(ctx, eventName, byteBuffer);
-
-                case IByteBufferHolder byteBufferHolder:
-                    return this.FormatByteBufferHolder(ctx, eventName, byteBufferHolder);
-
-                default:
-                    return this.FormatSimple(ctx, eventName, arg);
-            }
-        }
+            IByteBuffer byteBuffer => FormatByteBuffer(ctx, eventName, byteBuffer),
+            IByteBufferHolder byteBufferHolder => FormatByteBufferHolder(ctx, eventName, byteBufferHolder),
+            _ => FormatSimple(ctx, eventName, arg),
+        };
 
         /// <summary>
         ///     Formats an event and returns the formatted message.  This method is currently only used for formatting
@@ -318,7 +347,7 @@ namespace DotNetty.Handlers.Logging
         {
             if (secondArg is null)
             {
-                return this.FormatSimple(ctx, eventName, firstArg);
+                return FormatSimple(ctx, eventName, firstArg);
             }
             string chStr = ctx.Channel.ToString();
             string arg1Str = firstArg.ToString();
@@ -346,11 +375,20 @@ namespace DotNetty.Handlers.Logging
             }
             else
             {
-                int rows = length / 16 + (length % 15 == 0 ? 0 : 1) + 4;
-                var buf = StringBuilderManager.Allocate(chStr.Length + 1 + eventName.Length + 2 + 10 + 1 + 2 + rows * 80);
-
-                buf.Append(chStr).Append(' ').Append(eventName).Append(": ").Append(length).Append('B').Append('\n');
-                ByteBufferUtil.AppendPrettyHexDump(buf, msg);
+                int outputLength = chStr.Length + 1 + eventName.Length + 2 + 10 + 1;
+                if (BufferFormat == ByteBufferFormat.HexDump)
+                {
+                    int rows = length / 16 + (length % 15 == 0 ? 0 : 1) + 4;
+                    int hexDumpLength = 2 + rows * 80;
+                    outputLength += hexDumpLength;
+                }
+                var buf = StringBuilderManager.Allocate(outputLength);
+                buf.Append(chStr).Append(' ').Append(eventName).Append(": ").Append(length).Append('B');
+                if (BufferFormat == ByteBufferFormat.HexDump)
+                {
+                    buf.Append(StringUtil.Newline);
+                    ByteBufferUtil.AppendPrettyHexDump(buf, msg);
+                }
 
                 return StringBuilderManager.ReturnAndFree(buf);
             }
@@ -373,13 +411,21 @@ namespace DotNetty.Handlers.Logging
             }
             else
             {
-                int rows = length / 16 + (length % 15 == 0 ? 0 : 1) + 4;
-                var buf = StringBuilderManager.Allocate(
-                    chStr.Length + 1 + eventName.Length + 2 + msgStr.Length + 2 + 10 + 1 + 2 + rows * 80);
-
+                int outputLength = chStr.Length + 1 + eventName.Length + 2 + msgStr.Length + 2 + 10 + 1;
+                if (BufferFormat == ByteBufferFormat.HexDump)
+                {
+                    int rows = length / 16 + (length % 15 == 0 ? 0 : 1) + 4;
+                    int hexDumpLength = 2 + rows * 80;
+                    outputLength += hexDumpLength;
+                }
+                var buf = StringBuilderManager.Allocate(outputLength);
                 buf.Append(chStr).Append(' ').Append(eventName).Append(": ")
-                    .Append(msgStr).Append(", ").Append(length).Append('B').Append('\n');
-                ByteBufferUtil.AppendPrettyHexDump(buf, content);
+                   .Append(msgStr).Append(", ").Append(length).Append('B');
+                if (BufferFormat == ByteBufferFormat.HexDump)
+                {
+                    buf.Append(StringUtil.Newline);
+                    ByteBufferUtil.AppendPrettyHexDump(buf, content);
+                }
 
                 return StringBuilderManager.ReturnAndFree(buf);
             }

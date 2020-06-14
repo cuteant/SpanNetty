@@ -101,10 +101,10 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             var readable = msg.Content.IsReadable();
             var emptyDeflateBlock = EmptyDeflateBlock.Equals(msg.Content);
 
-            _decoder.WriteInbound(msg.Content.Retain());
+            _ = _decoder.WriteInbound(msg.Content.Retain());
             if (AppendFrameTail(msg))
             {
-                _decoder.WriteInbound(FrameTail.Duplicate());
+                _ = _decoder.WriteInbound(FrameTail.Duplicate());
             }
 
             var compositeDecompressedContent = ctx.Allocator.CompositeBuffer();
@@ -117,10 +117,10 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                 }
                 if (!partUncompressedContent.IsReadable())
                 {
-                    partUncompressedContent.Release();
+                    _ = partUncompressedContent.Release();
                     continue;
                 }
-                compositeDecompressedContent.AddComponent(true, partUncompressedContent);
+                _ = compositeDecompressedContent.AddComponent(true, partUncompressedContent);
             }
             // Correctly handle empty frames
             // See https://github.com/netty/netty/issues/4348
@@ -130,7 +130,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                 // May contain left-over data that doesn't affect decompression
                 if (!(msg is ContinuationWebSocketFrame))
                 {
-                    compositeDecompressedContent.Release();
+                    _ = compositeDecompressedContent.Release();
                     ThrowHelper.ThrowCodecException_CannotReadUncompressedBuf();
                 }
             }
@@ -148,7 +148,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             if (_decoder is object)
             {
                 // Clean-up the previous encoder if not cleaned up correctly.
-                _decoder.FinishAndReleaseAll();
+                _ = _decoder.FinishAndReleaseAll();
                 _decoder = null;
             }
         }

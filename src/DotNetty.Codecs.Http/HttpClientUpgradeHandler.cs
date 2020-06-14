@@ -116,7 +116,7 @@ namespace DotNetty.Codecs.Http
         {
             if (!(message is IHttpRequest request))
             {
-                context.WriteAsync(message, promise);
+                _ = context.WriteAsync(message, promise);
                 return;
             }
 
@@ -130,10 +130,10 @@ namespace DotNetty.Codecs.Http
             this.SetUpgradeRequestHeaders(context, request);
 
             // Continue writing the request.
-            context.WriteAsync(message, promise);
+            _ = context.WriteAsync(message, promise);
 
             // Notify that the upgrade request was issued.
-            context.FireUserEventTriggered(UpgradeEvent.UpgradeIssued);
+            _ = context.FireUserEventTriggered(UpgradeEvent.UpgradeIssued);
             // Now we wait for the next HTTP response to see if we switch protocols.
         }
 
@@ -156,9 +156,9 @@ namespace DotNetty.Codecs.Http
                         // and continue processing HTTP.
                         // NOTE: not releasing the response since we're letting it propagate to the
                         // next handler.
-                        context.FireUserEventTriggered(UpgradeEvent.UpgradeRejected);
+                        _ = context.FireUserEventTriggered(UpgradeEvent.UpgradeRejected);
                         RemoveThisHandler(context);
-                        context.FireChannelRead(rep);
+                        _ = context.FireChannelRead(rep);
                         return;
                     }
                 }
@@ -167,7 +167,7 @@ namespace DotNetty.Codecs.Http
                 {
                     response = fullRep;
                     // Need to retain since the base class will release after returning from this method.
-                    response.Retain();
+                    _ = response.Retain();
                     output.Add(response);
                 }
                 else
@@ -194,7 +194,7 @@ namespace DotNetty.Codecs.Http
                 this.upgradeCodec.UpgradeTo(context, response);
 
                 // Notify that the upgrade to the new protocol completed successfully.
-                context.FireUserEventTriggered(UpgradeEvent.UpgradeSuccessful);
+                _ = context.FireUserEventTriggered(UpgradeEvent.UpgradeSuccessful);
 
                 // We guarantee UPGRADE_SUCCESSFUL event will be arrived at the next handler
                 // before http2 setting frame and http response.
@@ -202,14 +202,14 @@ namespace DotNetty.Codecs.Http
 
                 // We switched protocols, so we're done with the upgrade response.
                 // Release it and clear it from the output.
-                response.Release();
+                _ = response.Release();
                 output.Clear();
                 RemoveThisHandler(context);
             }
             catch (Exception exception)
             {
-                ReferenceCountUtil.Release(response);
-                context.FireExceptionCaught(exception);
+                _ = ReferenceCountUtil.Release(response);
+                _ = context.FireExceptionCaught(exception);
                 RemoveThisHandler(context);
             }
         }
@@ -224,7 +224,7 @@ namespace DotNetty.Codecs.Http
         void SetUpgradeRequestHeaders(IChannelHandlerContext ctx, IHttpRequest request)
         {
             // Set the UPGRADE header on the request.
-            request.Headers.Set(HttpHeaderNames.Upgrade, this.upgradeCodec.Protocol);
+            _ = request.Headers.Set(HttpHeaderNames.Upgrade, this.upgradeCodec.Protocol);
 
             // Add all protocol-specific headers to the request.
             var connectionParts = new List<ICharSequence>(2);
@@ -234,11 +234,11 @@ namespace DotNetty.Codecs.Http
             var builder = StringBuilderManager.Allocate();
             foreach (ICharSequence part in connectionParts)
             {
-                builder.Append(part);
-                builder.Append(',');
+                _ = builder.Append(part);
+                _ = builder.Append(',');
             }
-            builder.Append(HttpHeaderValues.Upgrade);
-            request.Headers.Add(HttpHeaderNames.Connection, new StringCharSequence(StringBuilderManager.ReturnAndFree(builder)));
+            _ = builder.Append(HttpHeaderValues.Upgrade);
+            _ = request.Headers.Add(HttpHeaderNames.Connection, new StringCharSequence(StringBuilderManager.ReturnAndFree(builder)));
         }
     }
 }

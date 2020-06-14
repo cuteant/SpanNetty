@@ -48,7 +48,7 @@ namespace DotNetty.Codecs.Http
         {
             foreach (object value in values)
             {
-                this.Add(name, value);
+                _ = this.Add(name, value);
             }
             return this;
         }
@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http
 
             foreach (HeaderEntry<AsciiString, ICharSequence> pair in headers)
             {
-                this.Add(pair.Key, pair.Value);
+                _ = this.Add(pair.Key, pair.Value);
             }
             return this;
         }
@@ -76,7 +76,7 @@ namespace DotNetty.Codecs.Http
         {
             if (headers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.headers); }
 
-            this.Clear();
+            _ = this.Clear();
 
             if (headers.IsEmpty)
             {
@@ -85,7 +85,7 @@ namespace DotNetty.Codecs.Http
 
             foreach (HeaderEntry<AsciiString, ICharSequence> pair in headers)
             {
-                this.Add(pair.Key, pair.Value);
+                _ = this.Add(pair.Key, pair.Value);
             }
             return this;
         }
@@ -101,7 +101,7 @@ namespace DotNetty.Codecs.Http
 
             foreach (HeaderEntry<AsciiString, ICharSequence> pair in headers)
             {
-                this.Add(pair.Key, pair.Value);
+                _ = this.Add(pair.Key, pair.Value);
             }
 
             return this;
@@ -260,7 +260,7 @@ namespace DotNetty.Codecs.Http
         public virtual HttpHeaders Copy()
         {
             var copy = new DefaultHttpHeaders();
-            copy.Set(this);
+            _ = copy.Set(this);
             return copy;
         }
     }

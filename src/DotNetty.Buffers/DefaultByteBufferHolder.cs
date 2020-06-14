@@ -43,25 +43,25 @@ namespace DotNetty.Buffers
 
         public IReferenceCounted Retain()
         {
-            _data.Retain();
+            _ = _data.Retain();
             return this;
         }
 
         public IReferenceCounted Retain(int increment)
         {
-            _data.Retain(increment);
+            _ = _data.Retain(increment);
             return this;
         }
 
         public IReferenceCounted Touch()
         {
-            _data.Touch();
+            _ = _data.Touch();
             return this;
         }
 
         public IReferenceCounted Touch(object hint)
         {
-            _data.Touch(hint);
+            _ = _data.Touch(hint);
             return this;
         }
 

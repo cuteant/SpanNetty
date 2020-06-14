@@ -41,7 +41,7 @@ namespace DotNetty.Transport.Channels
             public virtual void Initialize(IChannel channel)
             {
                 _channel = (TChannel)channel;
-                Interlocked.Exchange(ref _outboundBuffer, new ChannelOutboundBuffer(channel));
+                _ = Interlocked.Exchange(ref _outboundBuffer, new ChannelOutboundBuffer(channel));
             }
 
             public TChannel Channel => _channel;
@@ -66,7 +66,7 @@ namespace DotNetty.Transport.Channels
                     return ThrowHelper.ThrowInvalidOperationException_IncompatibleEventLoopType(eventLoop);
                 }
 
-                Interlocked.Exchange(ref ch.eventLoop, eventLoop);
+                _ = Interlocked.Exchange(ref ch.eventLoop, eventLoop);
 
                 var promise = ch.NewPromise();
 
@@ -112,21 +112,21 @@ namespace DotNetty.Transport.Channels
                     bool firstRegistration = _neverRegistered;
                     ch.DoRegister();
                     _neverRegistered = false;
-                    Interlocked.Exchange(ref ch.v_registered, SharedConstants.True);
+                    _ = Interlocked.Exchange(ref ch.v_registered, SharedConstants.True);
 
                     // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                     // user may already fire events through the pipeline in the ChannelFutureListener.
                     ch._pipeline.InvokeHandlerAddedIfNeeded();
 
                     Util.SafeSetSuccess(promise, Logger);
-                    ch._pipeline.FireChannelRegistered();
+                    _ = ch._pipeline.FireChannelRegistered();
                     // Only fire a channelActive if the channel has never been registered. This prevents firing
                     // multiple channel actives if the channel is deregistered and re-registered.
                     if (ch.Active)
                     {
                         if (firstRegistration)
                         {
-                            ch._pipeline.FireChannelActive();
+                            _ = ch._pipeline.FireChannelActive();
                         }
                         else if (ch.Configuration.AutoRead)
                         {
@@ -205,8 +205,8 @@ namespace DotNetty.Transport.Channels
                 {
                     ch.DoDisconnect();
                     // Reset remoteAddress and localAddress
-                    Interlocked.Exchange(ref ch.v_remoteAddress, null);
-                    Interlocked.Exchange(ref ch.v_localAddress, null);
+                    _ = Interlocked.Exchange(ref ch.v_remoteAddress, null);
+                    _ = Interlocked.Exchange(ref ch.v_localAddress, null);
                 }
                 catch (Exception t)
                 {
@@ -256,7 +256,7 @@ namespace DotNetty.Transport.Channels
                 var outboundBuffer = Interlocked.Exchange(ref _outboundBuffer, null); // Disallow adding any messages and flushes to outboundBuffer.
                 if (outboundBuffer is null)
                 {
-                    promise.TrySetException(CloseClosedChannelException);
+                    _ = promise.TrySetException(CloseClosedChannelException);
                     return;
                 }
 
@@ -270,11 +270,11 @@ namespace DotNetty.Transport.Channels
                         {
                             // Execute the shutdown.
                             _channel.DoShutdownOutput();
-                            promise.TryComplete();
+                            _ = promise.TryComplete();
                         }
                         catch (Exception err)
                         {
-                            promise.TrySetException(err);
+                            _ = promise.TrySetException(err);
                         }
                         finally
                         {
@@ -289,11 +289,11 @@ namespace DotNetty.Transport.Channels
                     {
                         // Execute the shutdown.
                         _channel.DoShutdownOutput();
-                        promise.TryComplete();
+                        _ = promise.TryComplete();
                     }
                     catch (Exception err)
                     {
-                        promise.TrySetException(err);
+                        _ = promise.TrySetException(err);
                     }
                     finally
                     {
@@ -306,7 +306,7 @@ namespace DotNetty.Transport.Channels
             {
                 buffer.FailFlushed(cause, false);
                 buffer.Close(cause, true);
-                pipeline.FireUserEventTriggered(ChannelOutputShutdownEvent.Instance);
+                _ = pipeline.FireUserEventTriggered(ChannelOutputShutdownEvent.Instance);
             }
 
             protected void Close(IPromise promise, Exception cause, ClosedChannelException closeCause, bool notify)
@@ -466,7 +466,7 @@ namespace DotNetty.Transport.Channels
                     {
                         if (fireChannelInactive)
                         {
-                            ch._pipeline.FireChannelInactive();
+                            _ = ch._pipeline.FireChannelInactive();
                         }
                         // Some transports like local and AIO does not allow the deregistration of
                         // an open channel.  Their doDeregister() calls close(). Consequently,
@@ -474,8 +474,8 @@ namespace DotNetty.Transport.Channels
                         // if it was registered.
                         if (SharedConstants.False < (uint)Volatile.Read(ref ch.v_registered))
                         {
-                            Interlocked.Exchange(ref ch.v_registered, SharedConstants.False);
-                            ch._pipeline.FireChannelUnregistered();
+                            _ = Interlocked.Exchange(ref ch.v_registered, SharedConstants.False);
+                            _ = ch._pipeline.FireChannelUnregistered();
                         }
                         Util.SafeSetSuccess(promise, Logger);
                     }
@@ -516,7 +516,7 @@ namespace DotNetty.Transport.Channels
                     // See https://github.com/netty/netty/issues/2362
                     Util.SafeSetFailure(promise, WriteClosedChannelException, Logger);
                     // release message now to prevent resource-leak
-                    ReferenceCountUtil.Release(msg);
+                    _ = ReferenceCountUtil.Release(msg);
                     return;
                 }
 
@@ -534,7 +534,7 @@ namespace DotNetty.Transport.Channels
                 catch (Exception t)
                 {
                     Util.SafeSetFailure(promise, t, Logger);
-                    ReferenceCountUtil.Release(msg);
+                    _ = ReferenceCountUtil.Release(msg);
                     return;
                 }
 

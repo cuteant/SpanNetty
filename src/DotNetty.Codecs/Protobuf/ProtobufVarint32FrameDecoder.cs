@@ -26,7 +26,7 @@ namespace DotNetty.Codecs.Protobuf
 
         protected internal override void Decode(IChannelHandlerContext context, IByteBuffer input, List<object> output)
         {
-            input.MarkReaderIndex();
+            _ = input.MarkReaderIndex();
 
             int preIndex = input.ReaderIndex;
             int length = ReadRawVarint32(input);
@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Protobuf
 
             if (input.ReadableBytes < length)
             {
-                input.ResetReaderIndex();
+                _ = input.ResetReaderIndex();
             }
             else
             {
@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Protobuf
                 return 0;
             }
 
-            buffer.MarkReaderIndex();
+            _ = buffer.MarkReaderIndex();
             byte rawByte = buffer.ReadByte();
             if (rawByte < 128)
             {
@@ -71,7 +71,7 @@ namespace DotNetty.Codecs.Protobuf
             int result = rawByte & 127;
             if (!buffer.IsReadable())
             {
-                buffer.ResetReaderIndex();
+                _ = buffer.ResetReaderIndex();
                 return 0;
             }
 
@@ -85,7 +85,7 @@ namespace DotNetty.Codecs.Protobuf
                 result |= (rawByte & 127) << 7;
                 if (!buffer.IsReadable())
                 {
-                    buffer.ResetReaderIndex();
+                    _ = buffer.ResetReaderIndex();
                     return 0;
                 }
 
@@ -99,7 +99,7 @@ namespace DotNetty.Codecs.Protobuf
                     result |= (rawByte & 127) << 14;
                     if (!buffer.IsReadable())
                     {
-                        buffer.ResetReaderIndex();
+                        _ = buffer.ResetReaderIndex();
                         return 0;
                     }
 
@@ -113,7 +113,7 @@ namespace DotNetty.Codecs.Protobuf
                         result |= (rawByte & 127) << 21;
                         if (!buffer.IsReadable())
                         {
-                            buffer.ResetReaderIndex();
+                            _ = buffer.ResetReaderIndex();
                             return 0;
                         }
 

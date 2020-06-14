@@ -40,7 +40,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer AdjustCapacity(int newCapacity)
         {
-            Buf.AdjustCapacity(newCapacity);
+            _ = Buf.AdjustCapacity(newCapacity);
             return this;
         }
 
@@ -61,7 +61,7 @@ namespace DotNetty.Buffers
 
         public IByteBuffer SetReaderIndex(int readerIndex)
         {
-            Buf.SetReaderIndex(readerIndex);
+            _ = Buf.SetReaderIndex(readerIndex);
             return this;
         }
 
@@ -69,13 +69,13 @@ namespace DotNetty.Buffers
 
         public IByteBuffer SetWriterIndex(int writerIndex)
         {
-            Buf.SetWriterIndex(writerIndex);
+            _ = Buf.SetWriterIndex(writerIndex);
             return this;
         }
 
         public virtual IByteBuffer SetIndex(int readerIndex, int writerIndex)
         {
-            Buf.SetIndex(readerIndex, writerIndex);
+            _ = Buf.SetIndex(readerIndex, writerIndex);
             return this;
         }
 
@@ -93,49 +93,49 @@ namespace DotNetty.Buffers
 
         public IByteBuffer Clear()
         {
-            Buf.Clear();
+            _ = Buf.Clear();
             return this;
         }
 
         public IByteBuffer MarkReaderIndex()
         {
-            Buf.MarkReaderIndex();
+            _ = Buf.MarkReaderIndex();
             return this;
         }
 
         public IByteBuffer ResetReaderIndex()
         {
-            Buf.ResetReaderIndex();
+            _ = Buf.ResetReaderIndex();
             return this;
         }
 
         public IByteBuffer MarkWriterIndex()
         {
-            Buf.MarkWriterIndex();
+            _ = Buf.MarkWriterIndex();
             return this;
         }
 
         public IByteBuffer ResetWriterIndex()
         {
-            Buf.ResetWriterIndex();
+            _ = Buf.ResetWriterIndex();
             return this;
         }
 
         public virtual IByteBuffer DiscardReadBytes()
         {
-            Buf.DiscardReadBytes();
+            _ = Buf.DiscardReadBytes();
             return this;
         }
 
         public virtual IByteBuffer DiscardSomeReadBytes()
         {
-            Buf.DiscardSomeReadBytes();
+            _ = Buf.DiscardSomeReadBytes();
             return this;
         }
 
         public virtual IByteBuffer EnsureWritable(int minWritableBytes)
         {
-            Buf.EnsureWritable(minWritableBytes);
+            _ = Buf.EnsureWritable(minWritableBytes);
             return this;
         }
 
@@ -163,25 +163,25 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
-            Buf.GetBytes(index, dst, dstIndex, length);
+            _ = Buf.GetBytes(index, dst, dstIndex, length);
             return this;
         }
 
         public virtual IByteBuffer GetBytes(int index, byte[] dst)
         {
-            Buf.GetBytes(index, dst);
+            _ = Buf.GetBytes(index, dst);
             return this;
         }
 
         public virtual IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
-            Buf.GetBytes(index, dst, dstIndex, length);
+            _ = Buf.GetBytes(index, dst, dstIndex, length);
             return this;
         }
 
         public virtual IByteBuffer GetBytes(int index, Stream output, int length)
         {
-            Buf.GetBytes(index, output, length);
+            _ = Buf.GetBytes(index, output, length);
             return this;
         }
 
@@ -191,85 +191,85 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetBoolean(int index, bool value)
         {
-            Buf.SetBoolean(index, value);
+            _ = Buf.SetBoolean(index, value);
             return this;
         }
 
         public virtual IByteBuffer SetByte(int index, int value)
         {
-            Buf.SetByte(index, value);
+            _ = Buf.SetByte(index, value);
             return this;
         }
 
         public virtual IByteBuffer SetShort(int index, int value)
         {
-            Buf.SetShort(index, value);
+            _ = Buf.SetShort(index, value);
             return this;
         }
 
         public virtual IByteBuffer SetShortLE(int index, int value)
         {
-            Buf.SetShortLE(index, value);
+            _ = Buf.SetShortLE(index, value);
             return this;
         }
 
         public virtual IByteBuffer SetMedium(int index, int value)
         {
-            Buf.SetMedium(index, value);
+            _ = Buf.SetMedium(index, value);
             return this;
         }
 
         public virtual IByteBuffer SetMediumLE(int index, int value)
         {
-            Buf.SetMediumLE(index, value);
+            _ = Buf.SetMediumLE(index, value);
             return this;
         }
 
         public virtual IByteBuffer SetInt(int index, int value)
         {
-            Buf.SetInt(index, value);
+            _ = Buf.SetInt(index, value);
             return this;
         }
 
         public virtual IByteBuffer SetIntLE(int index, int value)
         {
-            Buf.SetIntLE(index, value);
+            _ = Buf.SetIntLE(index, value);
             return this;
         }
 
         public virtual IByteBuffer SetLong(int index, long value)
         {
-            Buf.SetLong(index, value);
+            _ = Buf.SetLong(index, value);
             return this;
         }
 
         public virtual IByteBuffer SetLongLE(int index, long value)
         {
-            Buf.SetLongLE(index, value);
+            _ = Buf.SetLongLE(index, value);
             return this;
         }
 
         public virtual IByteBuffer SetBytes(int index, IByteBuffer src, int length)
         {
-            Buf.SetBytes(index, src, length);
+            _ = Buf.SetBytes(index, src, length);
             return this;
         }
 
         public virtual IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
-            Buf.SetBytes(index, src, srcIndex, length);
+            _ = Buf.SetBytes(index, src, srcIndex, length);
             return this;
         }
 
         public virtual IByteBuffer SetBytes(int index, byte[] src)
         {
-            Buf.SetBytes(index, src);
+            _ = Buf.SetBytes(index, src);
             return this;
         }
 
         public virtual IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
-            Buf.SetBytes(index, src, srcIndex, length);
+            _ = Buf.SetBytes(index, src, srcIndex, length);
             return this;
         }
 
@@ -279,7 +279,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetZero(int index, int length)
         {
-            Buf.SetZero(index, length);
+            _ = Buf.SetZero(index, length);
             return this;
         }
 
@@ -317,31 +317,31 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer ReadBytes(IByteBuffer dst, int length)
         {
-            Buf.ReadBytes(dst, length);
+            _ = Buf.ReadBytes(dst, length);
             return this;
         }
 
         public virtual IByteBuffer ReadBytes(IByteBuffer dst, int dstIndex, int length)
         {
-            Buf.ReadBytes(dst, dstIndex, length);
+            _ = Buf.ReadBytes(dst, dstIndex, length);
             return this;
         }
 
         public virtual IByteBuffer ReadBytes(byte[] dst)
         {
-            Buf.ReadBytes(dst);
+            _ = Buf.ReadBytes(dst);
             return this;
         }
 
         public virtual IByteBuffer ReadBytes(byte[] dst, int dstIndex, int length)
         {
-            Buf.ReadBytes(dst, dstIndex, length);
+            _ = Buf.ReadBytes(dst, dstIndex, length);
             return this;
         }
 
         public virtual IByteBuffer ReadBytes(Stream output, int length)
         {
-            Buf.ReadBytes(output, length);
+            _ = Buf.ReadBytes(output, length);
             return this;
         }
 
@@ -351,91 +351,91 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SkipBytes(int length)
         {
-            Buf.SkipBytes(length);
+            _ = Buf.SkipBytes(length);
             return this;
         }
 
         public virtual IByteBuffer WriteBoolean(bool value)
         {
-            Buf.WriteBoolean(value);
+            _ = Buf.WriteBoolean(value);
             return this;
         }
 
         public virtual IByteBuffer WriteByte(int value)
         {
-            Buf.WriteByte(value);
+            _ = Buf.WriteByte(value);
             return this;
         }
 
         public virtual IByteBuffer WriteShort(int value)
         {
-            Buf.WriteShort(value);
+            _ = Buf.WriteShort(value);
             return this;
         }
 
         public virtual IByteBuffer WriteShortLE(int value)
         {
-            Buf.WriteShortLE(value);
+            _ = Buf.WriteShortLE(value);
             return this;
         }
 
         public virtual IByteBuffer WriteMedium(int value)
         {
-            Buf.WriteMedium(value);
+            _ = Buf.WriteMedium(value);
             return this;
         }
 
         public virtual IByteBuffer WriteMediumLE(int value)
         {
-            Buf.WriteMediumLE(value);
+            _ = Buf.WriteMediumLE(value);
             return this;
         }
 
         public virtual IByteBuffer WriteInt(int value)
         {
-            Buf.WriteInt(value);
+            _ = Buf.WriteInt(value);
             return this;
         }
 
         public virtual IByteBuffer WriteIntLE(int value)
         {
-            Buf.WriteIntLE(value);
+            _ = Buf.WriteIntLE(value);
             return this;
         }
 
         public virtual IByteBuffer WriteLong(long value)
         {
-            Buf.WriteLong(value);
+            _ = Buf.WriteLong(value);
             return this;
         }
 
         public virtual IByteBuffer WriteLongLE(long value)
         {
-            Buf.WriteLongLE(value);
+            _ = Buf.WriteLongLE(value);
             return this;
         }
 
         public virtual IByteBuffer WriteBytes(IByteBuffer src, int length)
         {
-            Buf.WriteBytes(src, length);
+            _ = Buf.WriteBytes(src, length);
             return this;
         }
 
         public virtual IByteBuffer WriteBytes(IByteBuffer src, int srcIndex, int length)
         {
-            Buf.WriteBytes(src, srcIndex, length);
+            _ = Buf.WriteBytes(src, srcIndex, length);
             return this;
         }
 
         public virtual IByteBuffer WriteBytes(byte[] src)
         {
-            Buf.WriteBytes(src);
+            _ = Buf.WriteBytes(src);
             return this;
         }
 
         public virtual IByteBuffer WriteBytes(byte[] src, int srcIndex, int length)
         {
-            Buf.WriteBytes(src, srcIndex, length);
+            _ = Buf.WriteBytes(src, srcIndex, length);
             return this;
         }
 
@@ -443,7 +443,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer WriteZero(int length)
         {
-            Buf.WriteZero(length);
+            _ = Buf.WriteZero(length);
             return this;
         }
 
@@ -495,25 +495,25 @@ namespace DotNetty.Buffers
 
         public virtual IReferenceCounted Retain(int increment)
         {
-            Buf.Retain(increment);
+            _ = Buf.Retain(increment);
             return this;
         }
 
         public virtual IReferenceCounted Retain()
         {
-            Buf.Retain();
+            _ = Buf.Retain();
             return this;
         }
 
         public virtual IReferenceCounted Touch()
         {
-            Buf.Touch();
+            _ = Buf.Touch();
             return this;
         }
 
         public virtual IReferenceCounted Touch(object hint)
         {
-            Buf.Touch(hint);
+            _ = Buf.Touch(hint);
             return this;
         }
 

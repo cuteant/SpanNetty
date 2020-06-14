@@ -53,7 +53,7 @@ namespace DotNetty.Codecs.Http2
             // Add a flow state for the connection.
             _stateKey = connection.NewKey();
             _connectionState = new FlowState(this, _connection.ConnectionStream);
-            connection.ConnectionStream.SetProperty(_stateKey, _connectionState);
+            _ = connection.ConnectionStream.SetProperty(_stateKey, _connectionState);
 
             // Monitor may depend upon connectionState, and so initialize after connectionState
             Listener(listener);
@@ -67,7 +67,7 @@ namespace DotNetty.Codecs.Http2
         {
             // If the stream state is not open then the stream is not yet eligible for flow controlled frames and
             // only requires the ReducedFlowState. Otherwise the full amount of memory is required.
-            stream.SetProperty(_stateKey, new FlowState(this, stream));
+            _ = stream.SetProperty(_stateKey, new FlowState(this, stream));
         }
 
         public override void OnStreamActive(IHttp2Stream stream)
@@ -358,7 +358,7 @@ namespace DotNetty.Codecs.Http2
                                 // This frame has been fully written, remove this frame and notify it.
                                 // Since we remove this frame first, we're guaranteed that its error
                                 // method will not be called when we call cancel.
-                                _pendingWriteQueue.TryRemoveFromFront(out _);
+                                _ = _pendingWriteQueue.TryRemoveFromFront(out _);
                                 frame.WriteComplete();
                             }
                         }
@@ -533,8 +533,8 @@ namespace DotNetty.Codecs.Http2
                 try
                 {
                     int negativeBytes = -bytes;
-                    _controller._connectionState.IncrementStreamWindow(negativeBytes);
-                    IncrementStreamWindow(negativeBytes);
+                    _ = _controller._connectionState.IncrementStreamWindow(negativeBytes);
+                    _ = IncrementStreamWindow(negativeBytes);
                 }
                 catch (Http2Exception e)
                 {
@@ -605,7 +605,7 @@ namespace DotNetty.Codecs.Http2
             /// <remarks>If this operation overflows the window for <paramref name="state"/>.</remarks>
             protected internal virtual void IncrementWindowSize(FlowState state, int delta)
             {
-                state.IncrementStreamWindow(delta);
+                _ = state.IncrementStreamWindow(delta);
             }
 
             /// <summary>
@@ -685,7 +685,7 @@ namespace DotNetty.Codecs.Http2
 
                 int delta = newWindowSize - _controller._initialWindowSize;
                 _controller._initialWindowSize = newWindowSize;
-                _controller._connection.ForEachActiveStream(Visit);
+                _ = _controller._connection.ForEachActiveStream(Visit);
 
                 if (delta > 0 && _controller.IsChannelWritable())
                 {
@@ -695,7 +695,7 @@ namespace DotNetty.Codecs.Http2
 
                 bool Visit(IHttp2Stream stream)
                 {
-                    _controller.GetState(stream).IncrementStreamWindow(delta);
+                    _ = _controller.GetState(stream).IncrementStreamWindow(delta);
                     return true;
                 }
             }
@@ -836,7 +836,7 @@ namespace DotNetty.Codecs.Http2
             {
                 // Make sure we mark that we have notified as a result of this change.
                 _controller._connectionState.MarkedWritability(IsWritableConnection());
-                _controller._connection.ForEachActiveStream(this);
+                _ = _controller._connection.ForEachActiveStream(this);
             }
         }
     }

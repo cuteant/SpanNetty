@@ -46,13 +46,13 @@ namespace DotNetty.Buffers
                             IByteBuffer heapBuffer = buf.Allocator.HeapBuffer(length);
                             try
                             {
-                                heapBuffer.WriteBytes(buf, index, length);
+                                _ = heapBuffer.WriteBytes(buf, index, length);
                                 ArraySegment<byte> segment = heapBuffer.GetIoBuffer();
                                 _ = encoding.GetChars(segment.Array, segment.Offset, segment.Count);
                             }
                             finally
                             {
-                                heapBuffer.Release();
+                                _ = heapBuffer.Release();
                             }
                         }
                         return true;

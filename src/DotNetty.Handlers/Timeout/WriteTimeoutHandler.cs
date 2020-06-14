@@ -55,8 +55,8 @@ namespace DotNetty.Handlers.Timeout
     public class WriteTimeoutHandler : ChannelHandlerAdapter
     {
         static readonly TimeSpan MinTimeout = TimeSpan.FromMilliseconds(1);
-        readonly TimeSpan timeout;
-        bool closed;
+        readonly TimeSpan _timeout;
+        bool _closed;
 
         /// <summary>
         /// A doubly-linked list to track all WriteTimeoutTasks.
@@ -78,30 +78,30 @@ namespace DotNetty.Handlers.Timeout
         /// <param name="timeout">Timeout.</param>
         public WriteTimeoutHandler(TimeSpan timeout)
         {
-            this.timeout = (timeout > TimeSpan.Zero)
+            _timeout = (timeout > TimeSpan.Zero)
                  ? TimeUtil.Max(timeout, MinTimeout)
                  : TimeSpan.Zero;
         }
 
         public override void Write(IChannelHandlerContext context, object message, IPromise promise)
         {
-            if (this.timeout.Ticks > 0)
+            if (_timeout.Ticks > 0)
             {
                 promise = promise.Unvoid();
-                this.ScheduleTimeout(context, promise.Task);
+                ScheduleTimeout(context, promise.Task);
             }
 
-            context.WriteAsync(message, promise);
+            _ = context.WriteAsync(message, promise);
         }
 
         public override void HandlerRemoved(IChannelHandlerContext context)
         {
-            LinkedListNode<WriteTimeoutTask> task = this.tasks.Last;
+            LinkedListNode<WriteTimeoutTask> task = tasks.Last;
             while (task is object)
             {
-                task.Value.ScheduledTask.Cancel();
-                this.tasks.RemoveLast();
-                task = this.tasks.Last;
+                _ = task.Value.ScheduledTask.Cancel();
+                tasks.RemoveLast();
+                task = tasks.Last;
             }
         }
 
@@ -110,25 +110,25 @@ namespace DotNetty.Handlers.Timeout
             // Schedule a timeout.
             var task = new WriteTimeoutTask(context, future, this);
 
-            task.ScheduledTask = context.Executor.Schedule(task, timeout);
+            task.ScheduledTask = context.Executor.Schedule(task, _timeout);
 
             if (!task.ScheduledTask.Completion.IsCompleted)
             {
-                this.AddWriteTimeoutTask(task);
+                AddWriteTimeoutTask(task);
 
                 // Cancel the scheduled timeout if the flush promise is complete.
-                future.ContinueWith(WriteTimeoutTask.OperationCompleteAction, task, TaskContinuationOptions.ExecuteSynchronously);
+                _ = future.ContinueWith(WriteTimeoutTask.OperationCompleteAction, task, TaskContinuationOptions.ExecuteSynchronously);
             }
         }
 
         void AddWriteTimeoutTask(WriteTimeoutTask task)
         {
-            this.tasks.AddLast(task);
+            _ = tasks.AddLast(task);
         }
 
         void RemoveWriteTimeoutTask(WriteTimeoutTask task)
         {
-            this.tasks.Remove(task);
+            _ = tasks.Remove(task);
         }
 
         /// <summary>
@@ -137,27 +137,27 @@ namespace DotNetty.Handlers.Timeout
         /// <param name="context">Context.</param>
         protected virtual void WriteTimedOut(IChannelHandlerContext context)
         {
-            if (!this.closed)
+            if (!_closed)
             {
-                context.FireExceptionCaught(WriteTimeoutException.Instance);
-                context.CloseAsync();
-                this.closed = true;
+                _ = context.FireExceptionCaught(WriteTimeoutException.Instance);
+                _ = context.CloseAsync();
+                _closed = true;
             }
         }
 
         sealed class WriteTimeoutTask : IRunnable
         {
-            readonly WriteTimeoutHandler handler;
-            readonly IChannelHandlerContext context;
-            readonly Task future;
+            readonly WriteTimeoutHandler _handler;
+            readonly IChannelHandlerContext _context;
+            readonly Task _future;
 
             public static readonly Action<Task, object> OperationCompleteAction = HandleOperationComplete;
 
             public WriteTimeoutTask(IChannelHandlerContext context, Task future, WriteTimeoutHandler handler)
             {
-                this.context = context;
-                this.future = future;
-                this.handler = handler;
+                _context = context;
+                _future = future;
+                _handler = handler;
             }
 
             internal static void HandleOperationComplete(Task future, object state)
@@ -165,8 +165,8 @@ namespace DotNetty.Handlers.Timeout
                 var writeTimeoutTask = (WriteTimeoutTask) state;
 
                 // ScheduledTask has already be set when reaching here
-                writeTimeoutTask.ScheduledTask.Cancel();
-                writeTimeoutTask.handler.RemoveWriteTimeoutTask(writeTimeoutTask);
+                _ = writeTimeoutTask.ScheduledTask.Cancel();
+                writeTimeoutTask._handler.RemoveWriteTimeoutTask(writeTimeoutTask);
             }
 
             public IScheduledTask ScheduledTask { get; set; }
@@ -176,19 +176,19 @@ namespace DotNetty.Handlers.Timeout
                 // Was not written yet so issue a write timeout
                 // The future itself will be failed with a ClosedChannelException once the close() was issued
                 // See https://github.com/netty/netty/issues/2159
-                if (!this.future.IsCompleted)
+                if (!_future.IsCompleted)
                 {
                     try
                     {
-                        this.handler.WriteTimedOut(context);
+                        _handler.WriteTimedOut(_context);
                     }
                     catch (Exception ex)
                     {
-                        this.context.FireExceptionCaught(ex);
+                        _ = _context.FireExceptionCaught(ex);
                     }
                 }
 
-                this.handler.RemoveWriteTimeoutTask(this);
+                _handler.RemoveWriteTimeoutTask(this);
             }
         }
     }

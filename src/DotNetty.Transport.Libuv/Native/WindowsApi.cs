@@ -41,7 +41,7 @@ namespace DotNetty.Transport.Libuv.Native
             var statusBlock = new IO_STATUS_BLOCK();
 #pragma warning restore IDE0059 // 不需要赋值
             IntPtr socket = IntPtr.Zero;
-            NativeMethods.uv_fileno(handle.Handle, ref socket);
+            _ = NativeMethods.uv_fileno(handle.Handle, ref socket);
 
             uint len = (uint)Marshal.SizeOf<FILE_COMPLETION_INFORMATION>();
             if (NtSetInformationFile(socket,

@@ -68,7 +68,7 @@ namespace DotNetty.Transport.Libuv
 
                 _tcpListener.Listen(Unsafe, _config.Backlog);
 
-                CacheLocalAddress();
+                _ = CacheLocalAddress();
                 SetState(StateFlags.Active);
             }
         }

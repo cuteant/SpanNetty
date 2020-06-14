@@ -13,10 +13,10 @@ namespace DotNetty.Codecs.Http2
         where TAdapter : InboundHttp2ToHttpAdapter
         where TBuilder : AbstractInboundHttp2ToHttpAdapterBuilder<TAdapter, TBuilder>
     {
-        private readonly IHttp2Connection connection;
-        private int maxContentLength;
-        private bool validateHttpHeaders;
-        private bool propagateSettings;
+        private readonly IHttp2Connection _connection;
+        private int _maxContentLength;
+        private bool _validateHttpHeaders;
+        private bool _propagateSettings;
 
         /// <summary>
         /// Creates a new <see cref="InboundHttp2ToHttpAdapter"/> builder for the specified <see cref="IHttp2Connection"/>.
@@ -26,7 +26,7 @@ namespace DotNetty.Codecs.Http2
         protected AbstractInboundHttp2ToHttpAdapterBuilder(IHttp2Connection connection)
         {
             if (connection is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.connection); }
-            this.connection = connection;
+            _connection = connection;
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
@@ -35,7 +35,7 @@ namespace DotNetty.Codecs.Http2
         /// <summary>
         /// Gets the <see cref="IHttp2Connection"/>.
         /// </summary>
-        public IHttp2Connection Connection => this.connection;
+        public IHttp2Connection Connection => _connection;
 
         /// <summary>
         /// Gets or sets the maximum length of the message content.
@@ -45,8 +45,8 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public int MaxContentLength
         {
-            get => this.maxContentLength;
-            set => this.maxContentLength = value;
+            get => _maxContentLength;
+            set => _maxContentLength = value;
         }
 
         /// <summary>
@@ -54,8 +54,8 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public bool IsValidateHttpHeaders
         {
-            get => this.validateHttpHeaders;
-            set => this.validateHttpHeaders = value;
+            get => _validateHttpHeaders;
+            set => _validateHttpHeaders = value;
         }
 
         /// <summary>
@@ -65,8 +65,8 @@ namespace DotNetty.Codecs.Http2
         /// to clients that need hold off sending data until they have received the settings.</remarks>
         public bool IsPropagateSettings
         {
-            get => this.propagateSettings;
-            set => this.propagateSettings = value;
+            get => _propagateSettings;
+            set => _propagateSettings = value;
         }
 
         /// <summary>
@@ -78,14 +78,14 @@ namespace DotNetty.Codecs.Http2
             TAdapter instance = null;
             try
             {
-                instance = Build(this.connection, this.maxContentLength,
-                    this.validateHttpHeaders, this.propagateSettings);
+                instance = Build(_connection, _maxContentLength,
+                    _validateHttpHeaders, _propagateSettings);
             }
             catch (Exception t)
             {
                 ThrowHelper.ThrowInvalidOperationException_FailedToCreateInboundHttp2ToHttpAdapter(t);
             }
-            this.connection.AddListener(instance);
+            _connection.AddListener(instance);
             return instance;
         }
 

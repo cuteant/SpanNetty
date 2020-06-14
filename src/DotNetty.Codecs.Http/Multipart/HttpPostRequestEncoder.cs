@@ -637,7 +637,7 @@ namespace DotNetty.Codecs.Http.Multipart
             IList<ICharSequence> transferEncoding = headers.GetAll(HttpHeaderNames.TransferEncoding);
             if (contentTypes is object)
             {
-                headers.Remove(HttpHeaderNames.ContentType);
+                _ = headers.Remove(HttpHeaderNames.ContentType);
                 foreach (ICharSequence contentType in contentTypes)
                 {
                     // "multipart/form-data; boundary=--89421926422648"
@@ -649,19 +649,19 @@ namespace DotNetty.Codecs.Http.Multipart
                     }
                     else
                     {
-                        headers.Add(HttpHeaderNames.ContentType, contentType);
+                        _ = headers.Add(HttpHeaderNames.ContentType, contentType);
                     }
                 }
             }
             if (this.isMultipart)
             {
                 string value = $"{HttpHeaderValues.MultipartFormData}; {HttpHeaderValues.Boundary}={this.MultipartDataBoundary}";
-                headers.Add(HttpHeaderNames.ContentType, value);
+                _ = headers.Add(HttpHeaderNames.ContentType, value);
             }
             else
             {
                 // Not multipart
-                headers.Add(HttpHeaderNames.ContentType, HttpHeaderValues.ApplicationXWwwFormUrlencoded);
+                _ = headers.Add(HttpHeaderNames.ContentType, HttpHeaderValues.ApplicationXWwwFormUrlencoded);
             }
             // Now consider size for chunk or not
             long realSize = this.globalBodySize;
@@ -670,13 +670,13 @@ namespace DotNetty.Codecs.Http.Multipart
                 realSize -= 1; // last '&' removed
             }
             this.iterator = new ListIterator(this.MultipartHttpDatas);
-            headers.Set(HttpHeaderNames.ContentLength, Convert.ToString(realSize));
+            _ = headers.Set(HttpHeaderNames.ContentLength, Convert.ToString(realSize));
             if (realSize > HttpPostBodyUtil.ChunkSize || this.isMultipart)
             {
                 this.isChunked = true;
                 if (transferEncoding is object)
                 {
-                    headers.Remove(HttpHeaderNames.TransferEncoding);
+                    _ = headers.Remove(HttpHeaderNames.TransferEncoding);
                     foreach (ICharSequence v in transferEncoding)
                     {
                         if (HttpHeaderValues.Chunked.ContentEqualsIgnoreCase(v))
@@ -685,7 +685,7 @@ namespace DotNetty.Codecs.Http.Multipart
                         }
                         else
                         {
-                            headers.Add(HttpHeaderNames.TransferEncoding, v);
+                            _ = headers.Add(HttpHeaderNames.TransferEncoding, v);
                         }
                     }
                 }
@@ -703,9 +703,9 @@ namespace DotNetty.Codecs.Http.Multipart
                     IByteBuffer chunkContent = chunk.Content;
                     if (!ReferenceEquals(fullRequest.Content, chunkContent))
                     {
-                        fullRequest.Content.Clear();
-                        fullRequest.Content.WriteBytes(chunkContent);
-                        chunkContent.Release();
+                        _ = fullRequest.Content.Clear();
+                        _ = fullRequest.Content.WriteBytes(chunkContent);
+                        _ = chunkContent.Release();
                     }
                     return fullRequest;
                 }
@@ -1045,19 +1045,19 @@ namespace DotNetty.Codecs.Http.Multipart
 
             public IHttpMessage SetProtocolVersion(HttpVersion version)
             {
-                this.request.SetProtocolVersion(version);
+                _ = this.request.SetProtocolVersion(version);
                 return this;
             }
 
             public IHttpRequest SetMethod(HttpMethod method)
             {
-                this.request.SetMethod(method);
+                _ = this.request.SetMethod(method);
                 return this;
             }
 
             public IHttpRequest SetUri(string uri)
             {
-                this.request.SetUri(uri);
+                _ = this.request.SetUri(uri);
                 return this;
             }
 
@@ -1095,32 +1095,32 @@ namespace DotNetty.Codecs.Http.Multipart
             public IByteBufferHolder Replace(IByteBuffer newContent)
             {
                 var duplicate = new DefaultFullHttpRequest(this.ProtocolVersion, this.Method, this.Uri, newContent);
-                duplicate.Headers.Set(this.Headers);
-                duplicate.TrailingHeaders.Set(this.TrailingHeaders);
+                _ = duplicate.Headers.Set(this.Headers);
+                _ = duplicate.TrailingHeaders.Set(this.TrailingHeaders);
                 return duplicate;
             }
 
             public IReferenceCounted Retain(int increment)
             {
-                this.content.Retain(increment);
+                _ = this.content.Retain(increment);
                 return this;
             }
 
             public IReferenceCounted Retain()
             {
-                this.content.Retain();
+                _ = this.content.Retain();
                 return this;
             }
 
             public IReferenceCounted Touch()
             {
-                this.content.Touch();
+                _ = this.content.Touch();
                 return this;
             }
 
             public IReferenceCounted Touch(object hint)
             {
-                this.content.Touch(hint);
+                _ = this.content.Touch(hint);
                 return this;
             }
 

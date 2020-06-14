@@ -366,6 +366,16 @@ namespace DotNetty.Common
         #region -- ArgumentOutOfRangeException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowArgumentOutOfRangeException_AppendableCharSequence_Count(int count, int pos)
+        {
+            throw GetException();
+            ArgumentOutOfRangeException GetException()
+            {
+                return new ArgumentOutOfRangeException(nameof(count), "length: " + count + " (length: >= 0, <= " + pos + ')');
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentOutOfRangeException_MustBeGreaterThan(int ticksPerWheel)
         {
             throw GetException();

@@ -69,24 +69,6 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         }
 
         [Fact]
-        public void SubsequentHttpRequestsAfterUpgradeShouldReturn403()
-        {
-            EmbeddedChannel ch = CreateChannel();
-
-            WriteUpgradeRequest(ch);
-
-            IFullHttpResponse response = _responses.Dequeue();
-            Assert.Equal(SwitchingProtocols, response.Status);
-            response.Release();
-
-            ch.WriteInbound(new DefaultFullHttpRequest(Http11, HttpMethod.Get, "/test"));
-            response = _responses.Dequeue();
-            Assert.Equal(Forbidden, response.Status);
-            response.Release();
-            Assert.False(ch.Finish());
-        }
-
-        [Fact]
         public void HttpUpgradeRequestInvalidUpgradeHeader()
         {
             EmbeddedChannel ch = CreateChannel();

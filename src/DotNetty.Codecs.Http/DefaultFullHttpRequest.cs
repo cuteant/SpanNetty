@@ -61,25 +61,25 @@ namespace DotNetty.Codecs.Http
 
         public IReferenceCounted Retain()
         {
-            this.content.Retain();
+            _ = this.content.Retain();
             return this;
         }
 
         public IReferenceCounted Retain(int increment)
         {
-            this.content.Retain(increment);
+            _ = this.content.Retain(increment);
             return this;
         }
 
         public IReferenceCounted Touch()
         {
-            this.content.Touch();
+            _ = this.content.Touch();
             return this;
         }
 
         public IReferenceCounted Touch(object hint)
         {
-            this.content.Touch(hint);
+            _ = this.content.Touch(hint);
             return this;
         }
 

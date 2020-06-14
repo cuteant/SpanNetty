@@ -36,7 +36,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                         extensionData.Name, extensionData.Parameters);
                 }
 
-                request.Headers.Set(HttpHeaderNames.SecWebsocketExtensions, headerValue);
+                _ = request.Headers.Set(HttpHeaderNames.SecWebsocketExtensions, headerValue);
             }
 
             base.Write(ctx, msg, promise);
@@ -88,12 +88,12 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
                     {
                         WebSocketExtensionDecoder decoder = validExtension.NewExtensionDecoder();
                         WebSocketExtensionEncoder encoder = validExtension.NewExtensionEncoder();
-                        pipeline.AddAfter(ctx.Name, decoder.GetType().Name, decoder);
-                        pipeline.AddAfter(ctx.Name, encoder.GetType().Name, encoder);
+                        _ = pipeline.AddAfter(ctx.Name, decoder.GetType().Name, decoder);
+                        _ = pipeline.AddAfter(ctx.Name, encoder.GetType().Name, encoder);
                     }
                 }
 
-                pipeline.Remove(ctx.Name);
+                _ = pipeline.Remove(ctx.Name);
             }
 
             base.ChannelRead(ctx, msg);

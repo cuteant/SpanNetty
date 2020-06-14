@@ -159,14 +159,14 @@ namespace DotNetty.Codecs.Http
 
                         // Encode the content and remove or replace the existing headers
                         // so that the message looks like a decoded message.
-                        res.Headers.Set(HttpHeaderNames.ContentEncoding, result.TargetContentEncoding);
+                        _ = res.Headers.Set(HttpHeaderNames.ContentEncoding, result.TargetContentEncoding);
 
                         // Output the rewritten response.
                         if (isFull)
                         {
                             // Convert full message into unfull one.
                             var newRes = new DefaultHttpResponse(res.ProtocolVersion, res.Status);
-                            newRes.Headers.Set(res.Headers);
+                            _ = newRes.Headers.Set(res.Headers);
                             output.Add(newRes);
 
                             EnsureContent(res);
@@ -176,8 +176,8 @@ namespace DotNetty.Codecs.Http
                         else
                         {
                             // Make the response chunked to simplify content transformation.
-                            res.Headers.Remove(HttpHeaderNames.ContentLength);
-                            res.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
+                            _ = res.Headers.Remove(HttpHeaderNames.ContentLength);
+                            _ = res.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
 
                             output.Add(res);
                             _state = State.AwaitContent;
@@ -218,7 +218,7 @@ namespace DotNetty.Codecs.Http
         void EncodeFullResponse(IHttpResponse newRes, IHttpContent content, IList<object> output)
         {
             int existingMessages = output.Count;
-            EncodeContent(content, output);
+            _ = EncodeContent(content, output);
 
             if (HttpUtil.IsContentLengthSet(newRes))
             {
@@ -235,7 +235,7 @@ namespace DotNetty.Codecs.Http
             }
             else
             {
-                newRes.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
+                _ = newRes.Headers.Set(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
             }
         }
 
@@ -321,7 +321,7 @@ namespace DotNetty.Codecs.Http
             if (_encoder is object)
             {
                 // Clean-up the previous encoder if not cleaned up correctly.
-                _encoder.FinishAndReleaseAll();
+                _ = _encoder.FinishAndReleaseAll();
                 _encoder = null;
             }
         }
@@ -336,14 +336,14 @@ namespace DotNetty.Codecs.Http
             {
                 // If cleanup throws any error we need to propagate it through the pipeline
                 // so we don't fail to propagate pipeline events.
-                ctx.FireExceptionCaught(cause);
+                _ = ctx.FireExceptionCaught(cause);
             }
         }
 
         void Encode(IByteBuffer buf, IList<object> output)
         {
             // call retain here as it will call release after its written to the channel
-            _encoder.WriteOutbound(buf.Retain());
+            _ = _encoder.WriteOutbound(buf.Retain());
             FetchEncoderOutput(output);
         }
 
@@ -367,7 +367,7 @@ namespace DotNetty.Codecs.Http
                 }
                 if (!buf.IsReadable())
                 {
-                    buf.Release();
+                    _ = buf.Release();
                     continue;
                 }
                 output.Add(new DefaultHttpContent(buf));

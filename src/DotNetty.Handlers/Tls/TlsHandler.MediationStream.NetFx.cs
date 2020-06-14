@@ -53,7 +53,7 @@ namespace DotNetty.Handlers.Tls
 
                 TaskCompletionSource<int> promise = _readCompletionSource;
                 _readCompletionSource = null;
-                promise.TrySetResult(read);
+                _ = promise.TrySetResult(read);
 
                 AsyncCallback callback = _readCallback;
                 _readCallback = null;
@@ -150,7 +150,7 @@ namespace DotNetty.Handlers.Tls
                         _writeCallback = callback;
                         var tcs = _owner.CapturedContext.NewPromise(state);
                         _writeCompletion = tcs;
-                        task.ContinueWith(s_writeCompleteCallback, this, TaskContinuationOptions.ExecuteSynchronously);
+                        _ = task.ContinueWith(s_writeCompleteCallback, this, TaskContinuationOptions.ExecuteSynchronously);
                         return tcs.Task;
                     }
                     else
@@ -172,15 +172,15 @@ namespace DotNetty.Handlers.Tls
 
                 if (writeTask.IsCanceled)
                 {
-                    promise.TrySetCanceled();
+                    _ = promise.TrySetCanceled();
                 }
                 else if (writeTask.IsFaulted)
                 {
-                    promise.TrySetException(writeTask.Exception.InnerExceptions);
+                    _ = promise.TrySetException(writeTask.Exception.InnerExceptions);
                 }
                 else if (writeTask.IsCompleted)
                 {
-                    promise.TryComplete();
+                    _ = promise.TryComplete();
                 }
 
                 callback?.Invoke(promise.Task);

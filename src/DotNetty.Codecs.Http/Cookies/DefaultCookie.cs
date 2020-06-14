@@ -208,26 +208,26 @@ namespace DotNetty.Codecs.Http.Cookies
         public override string ToString()
         {
             StringBuilder buf = StringBuilder();
-            buf.Append($"{this.name}={this.Value}");
+            _ = buf.Append($"{this.name}={this.Value}");
             if (this.domain is object)
             {
-                buf.Append($", domain={this.domain}");
+                _ = buf.Append($", domain={this.domain}");
             }
             if (this.path is object)
             {
-                buf.Append($", path={this.path}");
+                _ = buf.Append($", path={this.path}");
             }
             if (this.maxAge >= 0)
             {
-                buf.Append($", maxAge={this.maxAge}s");
+                _ = buf.Append($", maxAge={this.maxAge}s");
             }
             if (this.secure)
             {
-                buf.Append(", secure");
+                _ = buf.Append(", secure");
             }
             if (this.httpOnly)
             {
-                buf.Append(", HTTPOnly");
+                _ = buf.Append(", HTTPOnly");
             }
 
             return buf.ToString();

@@ -366,7 +366,7 @@ namespace DotNetty.Common.Internal
 
         void IList.Remove(object value)
         {
-            if (IsT(value)) { Remove((T)value); }
+            if (IsT(value)) { _ = Remove((T)value); }
         }
 
         object IList.this[int index]
@@ -675,7 +675,7 @@ namespace DotNetty.Common.Internal
             uint uIndex = (uint)index;
             if (0u >= uIndex)
             {
-                DoRemoveFromFront();
+                _ = DoRemoveFromFront();
             }
             else if (uIndex < (uint)(_count - 1))
             {
@@ -683,7 +683,7 @@ namespace DotNetty.Common.Internal
             }
             else
             {
-                DoRemoveFromBack();
+                _ = DoRemoveFromBack();
             }
         }
 

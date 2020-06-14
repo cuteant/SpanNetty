@@ -15,13 +15,13 @@ namespace DotNetty.Codecs.Http2
     /// And will update pipeline once it detect the connection is starting HTTP/2 by
     /// prior knowledge or not.
     /// </summary>
-    public sealed class CleartextHttp2ServerUpgradeHandler : ChannelHandlerAdapter
+    public sealed class CleartextHttp2ServerUpgradeHandler : ByteToMessageDecoder
     {
         private static readonly IByteBuffer CONNECTION_PREFACE = Unpooled.UnreleasableBuffer(Http2CodecUtil.ConnectionPrefaceBuf());
 
-        private readonly HttpServerCodec httpServerCodec;
-        private readonly HttpServerUpgradeHandler httpServerUpgradeHandler;
-        private readonly IChannelHandler http2ServerHandler;
+        private readonly HttpServerCodec _httpServerCodec;
+        private readonly HttpServerUpgradeHandler _httpServerUpgradeHandler;
+        private readonly IChannelHandler _http2ServerHandler;
 
         /// <summary>
         /// Creates the channel handler provide cleartext HTTP/2 upgrade from HTTP
@@ -38,53 +38,41 @@ namespace DotNetty.Codecs.Http2
             if (httpServerUpgradeHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.httpServerUpgradeHandler); }
             if (http2ServerHandler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.http2ServerHandler); }
 
-            this.httpServerCodec = httpServerCodec;
-            this.httpServerUpgradeHandler = httpServerUpgradeHandler;
-            this.http2ServerHandler = http2ServerHandler;
+            _httpServerCodec = httpServerCodec;
+            _httpServerUpgradeHandler = httpServerUpgradeHandler;
+            _http2ServerHandler = http2ServerHandler;
         }
 
         public override void HandlerAdded(IChannelHandlerContext ctx)
         {
-            ctx.Pipeline
-               .AddBefore(ctx.Name, null, new PriorKnowledgeHandler(this))
-               .AddBefore(ctx.Name, null, httpServerCodec)
-               .Replace(this, null, httpServerUpgradeHandler);
+            _ = ctx.Pipeline
+                .AddAfter(ctx.Name, null, _httpServerUpgradeHandler)
+                .AddAfter(ctx.Name, null, _httpServerCodec);
         }
 
-        /// <summary>
-        /// Peek inbound message to determine current connection wants to start HTTP/2
-        /// by HTTP upgrade or prior knowledge.
-        /// </summary>
-        private sealed class PriorKnowledgeHandler : ByteToMessageDecoder
+        protected override void Decode(IChannelHandlerContext ctx, IByteBuffer input, List<object> output)
         {
-            readonly CleartextHttp2ServerUpgradeHandler upgradeHandler;
+            int prefaceLength = CONNECTION_PREFACE.ReadableBytes;
+            int bytesRead = Math.Min(input.ReadableBytes, prefaceLength);
 
-            public PriorKnowledgeHandler(CleartextHttp2ServerUpgradeHandler upgradeHandler) => this.upgradeHandler = upgradeHandler;
-
-            protected override void Decode(IChannelHandlerContext ctx, IByteBuffer input, List<object> output)
+            var pipeline = ctx.Pipeline;
+            if (!ByteBufferUtil.Equals(CONNECTION_PREFACE, CONNECTION_PREFACE.ReaderIndex,
+                input, input.ReaderIndex, bytesRead))
             {
-                int prefaceLength = CONNECTION_PREFACE.ReadableBytes;
-                int bytesRead = Math.Min(input.ReadableBytes, prefaceLength);
+                _ = pipeline.Remove(this);
+            }
+            else if (0u >= (uint)(bytesRead - prefaceLength))
+            {
+                // Full h2 preface match, removed source codec, using http2 codec to handle
+                // following network traffic
+                _ = pipeline
+                   .Remove(_httpServerCodec)
+                   .Remove(_httpServerUpgradeHandler);
 
-                var pipeline = ctx.Pipeline;
-                if (!ByteBufferUtil.Equals(CONNECTION_PREFACE, CONNECTION_PREFACE.ReaderIndex,
-                    input, input.ReaderIndex, bytesRead))
-                {
-                    pipeline.Remove(this);
-                }
-                else if (bytesRead == prefaceLength)
-                {
-                    // Full h2 preface match, removed source codec, using http2 codec to handle
-                    // following network traffic
-                    pipeline
-                       .Remove(this.upgradeHandler.httpServerCodec)
-                       .Remove(this.upgradeHandler.httpServerUpgradeHandler);
+                _ = pipeline.AddAfter(ctx.Name, null, _http2ServerHandler);
+                _ = pipeline.Remove(this);
 
-                    pipeline.AddAfter(ctx.Name, null, this.upgradeHandler.http2ServerHandler);
-                    pipeline.Remove(this);
-
-                    ctx.FireUserEventTriggered(PriorKnowledgeUpgradeEvent.Instance);
-                }
+                _ = ctx.FireUserEventTriggered(PriorKnowledgeUpgradeEvent.Instance);
             }
         }
     }

@@ -244,11 +244,11 @@ namespace DotNetty.Transport.Channels.Pool
             try
             {
                 var result = await DoAcquireAsync(promise);
-                promise.TrySetResult(result);
+                _ = promise.TrySetResult(result);
             }
             catch (Exception ex)
             {
-                promise.TrySetException(ex);
+                _ = promise.TrySetException(ex);
             }
         }
 
@@ -321,11 +321,11 @@ namespace DotNetty.Transport.Channels.Pool
             try
             {
                 var result = await DoReleaseAsync((IChannel)channel);
-                tsc.TrySetResult(result);
+                _ = tsc.TrySetResult(result);
             }
             catch (Exception ex)
             {
-                tsc.TrySetException(ex);
+                _ = tsc.TrySetException(ex);
             }
         }
 
@@ -356,7 +356,7 @@ namespace DotNetty.Transport.Channels.Pool
             {
                 if (IsClosed)
                 {
-                    ch.CloseAsync();
+                    _ = ch.CloseAsync();
                     ThrowHelper.ThrowInvalidOperationException_PoolClosedOnReleaseException();
                 }
             }
@@ -435,7 +435,7 @@ namespace DotNetty.Transport.Channels.Pool
             while (_pendingAcquireQueue.TryDequeue(out AcquireTask task))
             {
                 task.TimeoutTask?.Cancel();
-                task.Promise.TrySetException(ThrowHelper.GetClosedChannelException());
+                _ = task.Promise.TrySetException(ThrowHelper.GetClosedChannelException());
             }
 
             Interlocked.Exchange(ref v_acquiredChannelCount, 0);
@@ -472,9 +472,9 @@ namespace DotNetty.Transport.Channels.Pool
                         break;
                     }
 
-                    _pool._pendingAcquireQueue.TryDequeue(out _);
+                    _ = _pool._pendingAcquireQueue.TryDequeue(out _);
 
-                    Interlocked.Decrement(ref _pool.v_pendingAcquireCount);
+                    _ = Interlocked.Decrement(ref _pool.v_pendingAcquireCount);
                     _onTimeout(task);
                 }
             }
@@ -507,7 +507,7 @@ namespace DotNetty.Transport.Channels.Pool
                 {
                     if (promise is object)
                     {
-                        promise.TrySetException(PoolClosedOnAcquireException);
+                        _ = promise.TrySetException(PoolClosedOnAcquireException);
                         return new ValueTask<IChannel>(promise.Task);
                     }
                     else
@@ -528,7 +528,7 @@ namespace DotNetty.Transport.Channels.Pool
                         var channel = future.Result;
                         if (promise is object)
                         {
-                            promise.TrySetResult(channel);
+                            _ = promise.TrySetResult(channel);
                             return new ValueTask<IChannel>(promise.Task);
                         }
                         else
@@ -544,7 +544,7 @@ namespace DotNetty.Transport.Channels.Pool
 
                     if (promise is object)
                     {
-                        promise.TrySetException(ex);
+                        _ = promise.TrySetException(ex);
                         return new ValueTask<IChannel>(promise.Task);
                     }
                     else
@@ -567,18 +567,18 @@ namespace DotNetty.Transport.Channels.Pool
                             if (t.IsSuccess())
                             {
                                 // Since the pool is closed, we have no choice but to close the channel
-                                t.Result.CloseAsync();
+                                _ = t.Result.CloseAsync();
                             }
-                            promise.TrySetException(PoolClosedOnAcquireException);
+                            _ = promise.TrySetException(PoolClosedOnAcquireException);
                         }
                         else if (t.IsSuccess())
                         {
-                            promise.TrySetResult(future.Result);
+                            _ = promise.TrySetResult(future.Result);
                         }
                         else
                         {
                             ResumeQueue();
-                            promise.TrySetException(t.Exception);
+                            _ = promise.TrySetException(t.Exception);
                         }
                     });
 
@@ -604,7 +604,7 @@ namespace DotNetty.Transport.Channels.Pool
                     return;
                 }
 
-                Interlocked.Increment(ref _pool.v_acquiredChannelCount);
+                _ = Interlocked.Increment(ref _pool.v_acquiredChannelCount);
                 _acquired = true;
             }
         }

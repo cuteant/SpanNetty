@@ -126,7 +126,7 @@ namespace DotNetty.Codecs.Http
                 {
                     // Stripping Transfer-Encoding:
                     // See https://tools.ietf.org/html/rfc7230#section-3.3.1
-                    msg.Headers.Remove(HttpHeaderNames.TransferEncoding);
+                    _ = msg.Headers.Remove(HttpHeaderNames.TransferEncoding);
                     return;
                 }
 
@@ -135,7 +135,7 @@ namespace DotNetty.Codecs.Http
 
             protected override bool IsContentAlwaysEmpty(IHttpResponse msg)
             {
-                this.serverCodec.queue.TryRemoveFromFront(out this.method);
+                _ = this.serverCodec.queue.TryRemoveFromFront(out this.method);
                 return HttpMethod.Head.Equals(this.method) || base.IsContentAlwaysEmpty(msg);
             }
         }

@@ -74,7 +74,7 @@ namespace DotNetty.Codecs.Http.Multipart
                         diskFileUpload.AddContent((IByteBuffer)data.Retain(), false);
                     }
                     // release old upload
-                    this.fileUpload.Release();
+                    _ = this.fileUpload.Release();
 
                     this.fileUpload = diskFileUpload;
                 }
@@ -144,7 +144,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     this.fileUpload.MaxSize = this.maxSize;
 
                     // release old upload
-                    memoryUpload.Release();
+                    _ = memoryUpload.Release();
                 }
             }
             this.fileUpload.SetContent(buffer);
@@ -166,7 +166,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 this.fileUpload.MaxSize = this.maxSize;
 
                 // release old upload
-                memoryUpload.Release();
+                _ = memoryUpload.Release();
             }
             this.fileUpload.SetContent(inputStream);
         }
@@ -202,25 +202,25 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public IReferenceCounted Retain()
         {
-            this.fileUpload.Retain();
+            _ = this.fileUpload.Retain();
             return this;
         }
 
         public IReferenceCounted Retain(int increment)
         {
-            this.fileUpload.Retain(increment);
+            _ = this.fileUpload.Retain(increment);
             return this;
         }
 
         public IReferenceCounted Touch()
         {
-            this.fileUpload.Touch();
+            _ = this.fileUpload.Touch();
             return this;
         }
 
         public IReferenceCounted Touch(object hint)
         {
-            this.fileUpload.Touch(hint);
+            _ = this.fileUpload.Touch(hint);
             return this;
         }
 

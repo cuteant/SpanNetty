@@ -39,7 +39,7 @@ namespace DotNetty.Transport.Libuv
                     if (connError is object)
                     {
                         if (Logger.InfoEnabled) Logger.AcceptClientConnectionFailed(connError);
-                        _channel.Pipeline.FireExceptionCaught(connError);
+                        _ = _channel.Pipeline.FireExceptionCaught(connError);
                     }
                     try
                     {
@@ -95,7 +95,7 @@ namespace DotNetty.Transport.Libuv
                 try
                 {
                     var tcpChannel = ch._channelFactory.CreateChannel(ch, tcp); // ## 苦竹 修改 ## new TcpChannel(ch, tcp);
-                    ch.Pipeline.FireChannelRead(tcpChannel);
+                    _ = ch.Pipeline.FireChannelRead(tcpChannel);
                     allocHandle.IncMessagesRead(1);
                 }
                 catch (ObjectDisposedException)
@@ -108,11 +108,11 @@ namespace DotNetty.Transport.Libuv
                 }
 
                 allocHandle.ReadComplete();
-                pipeline.FireChannelReadComplete();
+                _ = pipeline.FireChannelReadComplete();
 
                 if (exception is object)
                 {
-                    pipeline.FireExceptionCaught(exception);
+                    _ = pipeline.FireExceptionCaught(exception);
                 }
 
                 if (closed && ch.Open)

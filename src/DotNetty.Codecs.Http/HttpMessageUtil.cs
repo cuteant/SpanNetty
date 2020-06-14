@@ -28,12 +28,12 @@ namespace DotNetty.Codecs.Http
 
         static void AppendCommon(StringBuilder buf, IHttpMessage msg)
         {
-            buf.Append($"{StringUtil.SimpleClassName(msg)}");
-            buf.Append("(decodeResult: ");
-            buf.Append(msg.Result);
-            buf.Append(", version: ");
-            buf.Append(msg.ProtocolVersion);
-            buf.Append($"){StringUtil.Newline}");
+            _ = buf.Append($"{StringUtil.SimpleClassName(msg)}");
+            _ = buf.Append("(decodeResult: ");
+            _ = buf.Append(msg.Result);
+            _ = buf.Append(", version: ");
+            _ = buf.Append(msg.ProtocolVersion);
+            _ = buf.Append($"){StringUtil.Newline}");
         }
 
         internal static StringBuilder AppendFullRequest(StringBuilder buf, IFullHttpRequest req)
@@ -58,15 +58,15 @@ namespace DotNetty.Codecs.Http
 
         static void AppendFullCommon(StringBuilder buf, IFullHttpMessage msg)
         {
-            buf.Append(StringUtil.SimpleClassName(msg));
-            buf.Append("(decodeResult: ");
-            buf.Append(msg.Result);
-            buf.Append(", version: ");
-            buf.Append(msg.ProtocolVersion);
-            buf.Append(", content: ");
-            buf.Append(msg.Content);
-            buf.Append(')');
-            buf.Append(StringUtil.Newline);
+            _ = buf.Append(StringUtil.SimpleClassName(msg));
+            _ = buf.Append("(decodeResult: ");
+            _ = buf.Append(msg.Result);
+            _ = buf.Append(", version: ");
+            _ = buf.Append(msg.ProtocolVersion);
+            _ = buf.Append(", content: ");
+            _ = buf.Append(msg.Content);
+            _ = buf.Append(')');
+            _ = buf.Append(StringUtil.Newline);
         }
 
         static void AppendInitialLine(StringBuilder buf, IHttpRequest req) => 
@@ -79,7 +79,7 @@ namespace DotNetty.Codecs.Http
         {
             foreach(HeaderEntry<AsciiString, ICharSequence> e in headers)
             {
-                buf.Append($"{e.Key}:{e.Value}{StringUtil.Newline}");
+                _ = buf.Append($"{e.Key}:{e.Value}{StringUtil.Newline}");
             }
         }
 

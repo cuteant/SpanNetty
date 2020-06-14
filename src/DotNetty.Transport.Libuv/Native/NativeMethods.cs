@@ -332,7 +332,7 @@ namespace DotNetty.Transport.Libuv.Native
             Debug.Assert(handle != IntPtr.Zero);
 
             int namelen = Marshal.SizeOf<sockaddr>();
-            uv_tcp_getsockname(handle, out sockaddr sockaddr, ref namelen);
+            _ = uv_tcp_getsockname(handle, out sockaddr sockaddr, ref namelen);
             return sockaddr.GetIPEndPoint();
         }
 

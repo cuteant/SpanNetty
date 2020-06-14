@@ -29,7 +29,7 @@ namespace DotNetty.Handlers.Tls
                 State = oldState | TlsHandlerState.ReadRequestedBeforeAuthenticated;
             }
 
-            context.Read();
+            _ = context.Read();
         }
 
         public override void ChannelReadComplete(IChannelHandlerContext ctx)
@@ -40,7 +40,7 @@ namespace DotNetty.Handlers.Tls
             ReadIfNeeded(ctx);
 
             _firedChannelRead = false;
-            ctx.FireChannelReadComplete();
+            _ = ctx.FireChannelReadComplete();
         }
 
         private void ReadIfNeeded(IChannelHandlerContext ctx)
@@ -50,7 +50,7 @@ namespace DotNetty.Handlers.Tls
             {
                 // No auto-read used and no message was passed through the ChannelPipeline or the handshake was not completed
                 // yet, which means we need to trigger the read to ensure we will not stall
-                ctx.Read();
+                _ = ctx.Read();
             }
         }
 
@@ -139,7 +139,7 @@ namespace DotNetty.Handlers.Tls
                 //
                 // See https://github.com/netty/netty/issues/1534
 
-                input.SkipBytes(totalLength);
+                _ = input.SkipBytes(totalLength);
                 try
                 {
                     Unwrap(context, input, startOffset, totalLength, packetLengths, output);
@@ -180,13 +180,13 @@ namespace DotNetty.Handlers.Tls
             {
                 // Not an SSL/TLS packet
                 var ex = GetNotSslRecordException(input);
-                input.SkipBytes(input.ReadableBytes);
+                _ = input.SkipBytes(input.ReadableBytes);
 
                 // First fail the handshake promise as we may need to have access to the SSLEngine which may
                 // be released because the user will remove the SslHandler in an exceptionCaught(...) implementation.
                 HandleFailure(ex);
 
-                context.FireExceptionCaught(ex);
+                _ = context.FireExceptionCaught(ex);
             }
         }
 

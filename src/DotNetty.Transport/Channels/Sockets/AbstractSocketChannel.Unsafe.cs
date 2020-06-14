@@ -72,7 +72,7 @@ namespace DotNetty.Transport.Channels.Sockets
                                 remoteAddress, connectTimeout);
                         }
 
-                        ch._connectPromise.Task.ContinueWith(CloseSafeOnCompleteAction, ch,
+                        _ = ch._connectPromise.Task.ContinueWith(CloseSafeOnCompleteAction, ch,
                             TaskContinuationOptions.OnlyOnCanceled | TaskContinuationOptions.ExecuteSynchronously);
 
                         return ch._connectPromise.Task;
@@ -106,7 +106,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 // because what happened is what happened.
                 if (!wasActive && active)
                 {
-                    ch.Pipeline.FireChannelActive();
+                    _ = ch.Pipeline.FireChannelActive();
                 }
 
                 // If a user cancelled the connection attempt, close the channel, which is followed by channelInactive().
@@ -125,7 +125,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
 
                 // Use tryFailure() instead of setFailure() to avoid the race against cancel().
-                promise.TrySetException(cause);
+                _ = promise.TrySetException(cause);
                 CloseIfClosed();
             }
 
@@ -150,7 +150,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     // Check for null as the connectTimeoutFuture is only created if a connectTimeoutMillis > 0 is used
                     // See https://github.com/netty/netty/issues/1770
-                    ch._connectCancellationTask?.Cancel();
+                    _ = (ch._connectCancellationTask?.Cancel());
                     ch._connectPromise = null;
                 }
             }
@@ -185,7 +185,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
                 catch (Exception ex)
                 {
-                    ch.Pipeline.FireExceptionCaught(ex);
+                    _ = ch.Pipeline.FireExceptionCaught(ex);
                     Close(VoidPromise(), ThrowHelper.GetClosedChannelException_FailedToWrite(ex), WriteClosedChannelException, false);
                 }
 

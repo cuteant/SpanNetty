@@ -132,17 +132,17 @@ namespace DotNetty.Handlers.Tls
                 self.State = (oldState | TlsHandlerState.Authenticated) & ~(TlsHandlerState.Authenticating | TlsHandlerState.FlushedBeforeHandshake);
 
                 var capturedContext = self.CapturedContext;
-                capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
+                _ = capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
 
                 if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !capturedContext.Channel.Configuration.AutoRead)
                 {
-                    capturedContext.Read();
+                    _ = capturedContext.Read();
                 }
 
                 if (oldState.Has(TlsHandlerState.FlushedBeforeHandshake))
                 {
                     self.Wrap(capturedContext);
-                    capturedContext.Flush();
+                    _ = capturedContext.Flush();
                 }
             }
             else if (task.IsCanceled || task.IsFaulted)
@@ -162,7 +162,7 @@ namespace DotNetty.Handlers.Tls
             var capturedContext = CapturedContext;
             if (notify)
             {
-                capturedContext.FireUserEventTriggered(new TlsHandshakeCompletionEvent(cause));
+                _ = capturedContext.FireUserEventTriggered(new TlsHandshakeCompletionEvent(cause));
             }
             this.Close(capturedContext, capturedContext.NewPromise());
         }

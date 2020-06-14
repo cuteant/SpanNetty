@@ -81,20 +81,20 @@ namespace DotNetty.Transport.Channels
 
         sealed class HandleImpl : MaxMessageHandle<AdaptiveRecvByteBufAllocator>
         {
-            readonly int minIndex;
-            readonly int maxIndex;
-            int index;
-            int nextReceiveBufferSize;
-            bool decreaseNow;
+            readonly int _minIndex;
+            readonly int _maxIndex;
+            int _index;
+            int _nextReceiveBufferSize;
+            bool _decreaseNow;
 
             public HandleImpl(AdaptiveRecvByteBufAllocator owner, int minIndex, int maxIndex, int initial)
                 : base(owner)
             {
-                this.minIndex = minIndex;
-                this.maxIndex = maxIndex;
+                _minIndex = minIndex;
+                _maxIndex = maxIndex;
 
-                this.index = GetSizeTableIndex(initial);
-                this.nextReceiveBufferSize = SizeTable[this.index];
+                _index = GetSizeTableIndex(initial);
+                _nextReceiveBufferSize = SizeTable[_index];
             }
 
             public override int LastBytesRead
@@ -106,45 +106,45 @@ namespace DotNetty.Transport.Channels
                     // This helps adjust more quickly when large amounts of data is pending and can avoid going back to
                     // the selector to check for more data. Going back to the selector can add significant latency for large
                     // data transfers.
-                    if (value == this.AttemptedBytesRead)
+                    if (value == AttemptedBytesRead)
                     {
-                        this.Record(value);
+                        Record(value);
                     }
                     base.LastBytesRead = value;
                 }
             }
 
-            public override int Guess() => this.nextReceiveBufferSize;
+            public override int Guess() => _nextReceiveBufferSize;
 
             void Record(int actualReadBytes)
             {
-                if (actualReadBytes <= SizeTable[Math.Max(0, this.index - IndexDecrement)])
+                if (actualReadBytes <= SizeTable[Math.Max(0, _index - IndexDecrement)])
                 {
-                    if (this.decreaseNow)
+                    if (_decreaseNow)
                     {
-                        this.index = Math.Max(this.index - IndexDecrement, this.minIndex);
-                        this.nextReceiveBufferSize = SizeTable[this.index];
-                        this.decreaseNow = false;
+                        _index = Math.Max(_index - IndexDecrement, _minIndex);
+                        _nextReceiveBufferSize = SizeTable[_index];
+                        _decreaseNow = false;
                     }
                     else
                     {
-                        this.decreaseNow = true;
+                        _decreaseNow = true;
                     }
                 }
-                else if (actualReadBytes >= this.nextReceiveBufferSize)
+                else if (actualReadBytes >= _nextReceiveBufferSize)
                 {
-                    this.index = Math.Min(this.index + IndexIncrement, this.maxIndex);
-                    this.nextReceiveBufferSize = SizeTable[this.index];
-                    this.decreaseNow = false;
+                    _index = Math.Min(_index + IndexIncrement, _maxIndex);
+                    _nextReceiveBufferSize = SizeTable[_index];
+                    _decreaseNow = false;
                 }
             }
 
-            public override void ReadComplete() => this.Record(this.TotalBytesRead());
+            public override void ReadComplete() => Record(TotalBytesRead());
         }
 
-        readonly int minIndex;
-        readonly int maxIndex;
-        readonly int initial;
+        readonly int _minIndex;
+        readonly int _maxIndex;
+        readonly int _initial;
 
         /// <summary>
         ///     Creates a new predictor with the default parameters.  With the default
@@ -169,26 +169,26 @@ namespace DotNetty.Transport.Channels
             int min = GetSizeTableIndex(minimum);
             if (SizeTable[min] < minimum)
             {
-                this.minIndex = min + 1;
+                _minIndex = min + 1;
             }
             else
             {
-                this.minIndex = min;
+                _minIndex = min;
             }
 
             int max = GetSizeTableIndex(maximum);
             if (SizeTable[max] > maximum)
             {
-                this.maxIndex = max - 1;
+                _maxIndex = max - 1;
             }
             else
             {
-                this.maxIndex = max;
+                _maxIndex = max;
             }
 
-            this.initial = initial;
+            _initial = initial;
         }
 
-        public override IRecvByteBufAllocatorHandle NewHandle() => new HandleImpl(this, this.minIndex, this.maxIndex, this.initial);
+        public override IRecvByteBufAllocatorHandle NewHandle() => new HandleImpl(this, _minIndex, _maxIndex, _initial);
     }
 }

@@ -109,10 +109,10 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             if (CustomHeaders is object)
             {
-                headers.Add(CustomHeaders);
+                _ = headers.Add(CustomHeaders);
             }
 
-            headers.Set(HttpHeaderNames.Upgrade, Websocket)
+            _ = headers.Set(HttpHeaderNames.Upgrade, Websocket)
                 .Set(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade)
                 .Set(HttpHeaderNames.Host, WebsocketHostValue(wsUrl))
                 .Set(HttpHeaderNames.SecWebsocketKey1, key1)
@@ -120,18 +120,18 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             if (!headers.Contains(HttpHeaderNames.Origin))
             {
-                headers.Set(HttpHeaderNames.Origin, WebsocketOriginValue(wsUrl));
+                _ = headers.Set(HttpHeaderNames.Origin, WebsocketOriginValue(wsUrl));
             }
 
             string expectedSubprotocol = ExpectedSubprotocol;
             if (!string.IsNullOrEmpty(expectedSubprotocol))
             {
-                headers.Set(HttpHeaderNames.SecWebsocketProtocol, expectedSubprotocol);
+                _ = headers.Set(HttpHeaderNames.SecWebsocketProtocol, expectedSubprotocol);
             }
 
             // Set Content-Length to workaround some known defect.
             // See also: http://www.ietf.org/mail-archive/web/hybi/current/msg02149.html
-            headers.Set(HttpHeaderNames.ContentLength, key3.Length);
+            _ = headers.Set(HttpHeaderNames.ContentLength, key3.Length);
             return request;
         }
 
@@ -152,7 +152,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             if (!headers.ContainsValue(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade, true))
             {
-                headers.TryGet(HttpHeaderNames.Connection, out upgrade);
+                _ = headers.TryGet(HttpHeaderNames.Connection, out upgrade);
                 ThrowHelper.ThrowWebSocketHandshakeException_InvalidHandshakeResponseConn(upgrade);
             }
 

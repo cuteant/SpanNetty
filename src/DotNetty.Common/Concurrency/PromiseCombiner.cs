@@ -39,7 +39,7 @@ namespace DotNetty.Common.Concurrency
                 ThrowHelper.ThrowInvalidOperationException_AddingPromisesIsNotAllowedAfterFinishedAdding();
             }
 
-            Interlocked.Increment(ref this.expectedCount);
+            _ = Interlocked.Increment(ref this.expectedCount);
 
             if (future.IsCompleted)
             {
@@ -47,7 +47,7 @@ namespace DotNetty.Common.Concurrency
             }
             else
             {
-                future.ContinueWith(OperationCompleteAction, this, TaskContinuationOptions.ExecuteSynchronously);
+                _ = future.ContinueWith(OperationCompleteAction, this, TaskContinuationOptions.ExecuteSynchronously);
             }
         }
 
@@ -81,11 +81,11 @@ namespace DotNetty.Common.Concurrency
             {
                 ThrowHelper.ThrowInvalidOperationException_AlreadyFinished();
             }
-            Interlocked.Exchange(ref this.doneAdding, SharedConstants.True);
+            _ = Interlocked.Exchange(ref this.doneAdding, SharedConstants.True);
             this.aggregatePromise = aggregatePromise;
             if (Volatile.Read(ref this.doneCount) == Volatile.Read(ref this.expectedCount))
             {
-                this.TryPromise();
+                _ = this.TryPromise();
             }
         }
 
@@ -99,14 +99,14 @@ namespace DotNetty.Common.Concurrency
         static void OperationComplete(Task future, object state)
         {
             var self = (PromiseCombiner)state;
-            Interlocked.Increment(ref self.doneCount);
+            _ = Interlocked.Increment(ref self.doneCount);
             if (!future.IsSuccess() && Volatile.Read(ref self.causes) is null)
             {
-                Interlocked.Exchange(ref self.causes, future.Exception.InnerExceptions);
+                _ = Interlocked.Exchange(ref self.causes, future.Exception.InnerExceptions);
             }
             if (Volatile.Read(ref self.doneCount) == Volatile.Read(ref self.expectedCount) && SharedConstants.False < (uint)Volatile.Read(ref self.doneAdding))
             {
-                self.TryPromise();
+                _ = self.TryPromise();
             }
         }
     }

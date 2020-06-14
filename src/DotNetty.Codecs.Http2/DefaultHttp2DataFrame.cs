@@ -12,10 +12,10 @@ namespace DotNetty.Codecs.Http2
     /// </summary>
     public sealed class DefaultHttp2DataFrame : AbstractHttp2StreamFrame, IHttp2DataFrame
     {
-        private readonly IByteBuffer content;
-        private readonly bool endStream;
-        private readonly int padding;
-        private readonly int initialFlowControlledBytes;
+        private readonly IByteBuffer _content;
+        private readonly bool _endStream;
+        private readonly int _padding;
+        private readonly int _initialFlowControlledBytes;
 
         /// <summary>
         /// Equivalent to <see cref="DefaultHttp2DataFrame(IByteBuffer, bool)"/>.
@@ -56,110 +56,110 @@ namespace DotNetty.Codecs.Http2
         {
             if (content is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
 
-            this.content = content;
-            this.endStream = endStream;
+            _content = content;
+            _endStream = endStream;
             Http2CodecUtil.VerifyPadding(padding);
-            this.padding = padding;
+            _padding = padding;
             if (Content.ReadableBytes + (long)padding > int.MaxValue)
             {
                 ThrowHelper.ThrowArgumentException_InvalidContendAndPadding();
             }
-            initialFlowControlledBytes = content.ReadableBytes + padding;
+            _initialFlowControlledBytes = content.ReadableBytes + padding;
         }
 
         public override string Name => "DATA";
 
-        public bool IsEndStream => this.endStream;
+        public bool IsEndStream => _endStream;
 
-        public int Padding => this.padding;
+        public int Padding => _padding;
 
         public IByteBuffer Content
         {
             get
             {
-                var refCnt = this.content.ReferenceCount;
+                var refCnt = _content.ReferenceCount;
                 if (refCnt <= 0)
                 {
                     ThrowHelper.ThrowIllegalReferenceCountException(refCnt);
                 }
-                return this.content;
+                return _content;
             }
         }
 
-        public int InitialFlowControlledBytes => this.initialFlowControlledBytes;
+        public int InitialFlowControlledBytes => _initialFlowControlledBytes;
 
         public IByteBufferHolder Copy()
         {
-            return this.Replace(this.Content.Copy());
+            return Replace(Content.Copy());
         }
 
         public IByteBufferHolder Duplicate()
         {
-            return this.Replace(this.Content.Duplicate());
+            return Replace(Content.Duplicate());
         }
 
         public IByteBufferHolder RetainedDuplicate()
         {
-            return this.Replace(this.Content.RetainedDuplicate());
+            return Replace(Content.RetainedDuplicate());
         }
 
         public IByteBufferHolder Replace(IByteBuffer content)
         {
-            return new DefaultHttp2DataFrame(content, this.endStream, this.padding);
+            return new DefaultHttp2DataFrame(content, _endStream, _padding);
         }
 
-        public int ReferenceCount => this.content.ReferenceCount;
+        public int ReferenceCount => _content.ReferenceCount;
 
-        public bool Release() => this.content.Release();
+        public bool Release() => _content.Release();
 
-        public bool Release(int decrement) => this.content.Release(decrement);
+        public bool Release(int decrement) => _content.Release(decrement);
 
         public IReferenceCounted Retain()
         {
-            this.content.Retain();
+            _ = _content.Retain();
             return this;
         }
 
         public IReferenceCounted Retain(int increment)
         {
-            this.content.Retain(increment);
+            _ = _content.Retain(increment);
             return this;
         }
 
         public IReferenceCounted Touch()
         {
-            this.content.Touch();
+            _ = _content.Touch();
             return this;
         }
 
         public IReferenceCounted Touch(object hint)
         {
-            this.content.Touch(hint);
+            _ = _content.Touch(hint);
             return this;
         }
 
         /// <inheritdoc />
         public override string ToString()
         {
-            return StringUtil.SimpleClassName(this) + "(stream=" + this.Stream + ", content=" + this.content
-                   + ", endStream=" + this.endStream + ", padding=" + this.padding + ')';
+            return StringUtil.SimpleClassName(this) + "(stream=" + Stream + ", content=" + _content
+                   + ", endStream=" + _endStream + ", padding=" + _padding + ')';
         }
 
         protected override bool Equals0(IHttp2StreamFrame other)
         {
             return other is DefaultHttp2DataFrame otherFrame
                 && base.Equals0(other)
-                && this.content.Equals(otherFrame.Content)
-                && this.endStream == otherFrame.endStream
-                && this.padding == otherFrame.padding;
+                && _content.Equals(otherFrame.Content)
+                && _endStream == otherFrame._endStream
+                && _padding == otherFrame._padding;
         }
 
         public override int GetHashCode()
         {
             int hash = base.GetHashCode();
-            hash = hash * 31 + this.content.GetHashCode();
-            hash = hash * 31 + (this.endStream ? 0 : 1);
-            hash = hash * 31 + this.padding;
+            hash = hash * 31 + _content.GetHashCode();
+            hash = hash * 31 + (_endStream ? 0 : 1);
+            hash = hash * 31 + _padding;
             return hash;
         }
     }

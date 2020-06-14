@@ -123,7 +123,7 @@ namespace DotNetty.Common.Internal
             var buf = StringBuilderCache.Acquire(); // new StringBuilder(24);
             foreach (byte b in addr)
             {
-                buf.Append((b & 0xFF).ToString("X2")).Append(":");
+                _ = buf.Append((b & 0xFF).ToString("X2")).Append(":");
             }
             var result = buf.ToString(0, buf.Length - 1);
             StringBuilderCache.Release(buf);

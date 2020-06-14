@@ -131,11 +131,11 @@ namespace DotNetty.Handlers.Tls
 
         public override void ChannelActive(IChannelHandlerContext context)
         {
-            context.FireChannelActive();
+            _ = context.FireChannelActive();
 
             if (!_isServer)
             {
-                EnsureAuthenticated(context);
+                _ = EnsureAuthenticated(context);
             }
         }
 
@@ -159,7 +159,7 @@ namespace DotNetty.Handlers.Tls
                 // did not close the connection automatically.
                 if (context.Channel.Active)
                 {
-                    context.CloseAsync();
+                    _ = context.CloseAsync();
                 }
             }
             else
@@ -181,7 +181,7 @@ namespace DotNetty.Handlers.Tls
             if (context.Channel.Active && !_isServer)
             {
                 // todo: support delayed initialization on an existing/active channel if in client mode
-                EnsureAuthenticated(context);
+                _ = EnsureAuthenticated(context);
             }
         }
 
@@ -209,7 +209,7 @@ namespace DotNetty.Handlers.Tls
         public override void Close(IChannelHandlerContext context, IPromise promise)
         {
             //CloseOutboundAndChannel(context, promise, false);
-            _closeFuture.TryComplete();
+            _ = _closeFuture.TryComplete();
             _sslStream.Dispose();
             base.Close(context, promise);
         }
@@ -220,14 +220,14 @@ namespace DotNetty.Handlers.Tls
             {
                 if (_closeFuture.TryComplete())
                 {
-                    CapturedContext.FireUserEventTriggered(TlsCloseCompletionEvent.Success);
+                    _ = CapturedContext.FireUserEventTriggered(TlsCloseCompletionEvent.Success);
                 }
             }
             else
             {
                 if (_closeFuture.TrySetException(cause))
                 {
-                    CapturedContext.FireUserEventTriggered(new TlsCloseCompletionEvent(cause));
+                    _ = CapturedContext.FireUserEventTriggered(new TlsCloseCompletionEvent(cause));
                 }
             }
         }

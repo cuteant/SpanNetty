@@ -67,7 +67,7 @@ namespace DotNetty.Codecs.Http2
             try
             {
                 // The channel will release the buffer after being written
-                channel.WriteOutbound(data);
+                _ = channel.WriteOutbound(data);
                 var buf = NextReadableBuf(channel);
                 if (buf is null)
                 {
@@ -98,7 +98,7 @@ namespace DotNetty.Codecs.Http2
 
                     var bufPromise = ctx.NewPromise();
                     tasks.Add(bufPromise.Task);
-                    base.WriteDataAsync(ctx, streamId, buf, padding, compressedEndOfStream, bufPromise);
+                    _ = base.WriteDataAsync(ctx, streamId, buf, padding, compressedEndOfStream, bufPromise);
 
                     if (nextBuf is null) { break; }
 
@@ -109,7 +109,7 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Exception cause)
             {
-                promise.TrySetException(cause);
+                _ = promise.TrySetException(cause);
             }
             finally
             {
@@ -139,7 +139,7 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Exception e)
             {
-                promise.TrySetException(e);
+                _ = promise.TrySetException(e);
             }
             return promise.Task;
         }
@@ -162,7 +162,7 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Exception e)
             {
-                promise.TrySetException(e);
+                _ = promise.TrySetException(e);
             }
             return promise.Task;
         }
@@ -243,17 +243,17 @@ namespace DotNetty.Codecs.Http2
                 var targetContentEncoding = GetTargetContentEncoding(encoding);
                 if (HttpHeaderValues.Identity.ContentEqualsIgnoreCase(targetContentEncoding))
                 {
-                    headers.Remove(HttpHeaderNames.ContentEncoding);
+                    _ = headers.Remove(HttpHeaderNames.ContentEncoding);
                 }
                 else
                 {
-                    headers.Set(HttpHeaderNames.ContentEncoding, targetContentEncoding);
+                    _ = headers.Set(HttpHeaderNames.ContentEncoding, targetContentEncoding);
                 }
 
                 // The content length will be for the decompressed data. Since we will compress the data
                 // this content-length will not be correct. Instead of queuing messages or delaying sending
                 // header frames...just remove the content-length header
-                headers.Remove(HttpHeaderNames.ContentLength);
+                _ = headers.Remove(HttpHeaderNames.ContentLength);
             }
 
             return compressor;
@@ -272,7 +272,7 @@ namespace DotNetty.Codecs.Http2
                 var stream = Connection.Stream(streamId);
                 if (stream is object)
                 {
-                    stream.SetProperty(_propertyKey, compressor);
+                    _ = stream.SetProperty(_propertyKey, compressor);
                 }
             }
         }
@@ -284,8 +284,8 @@ namespace DotNetty.Codecs.Http2
         /// <param name="compressor">The compressor for <paramref name="stream"/></param>
         void Cleanup(IHttp2Stream stream, EmbeddedChannel compressor)
         {
-            compressor.FinishAndReleaseAll();
-            stream.RemoveProperty(_propertyKey);
+            _ = compressor.FinishAndReleaseAll();
+            _ = stream.RemoveProperty(_propertyKey);
         }
 
         /// <summary>
@@ -301,7 +301,7 @@ namespace DotNetty.Codecs.Http2
                 if (buf is null) { return null; }
                 if (!buf.IsReadable())
                 {
-                    buf.Release();
+                    _ = buf.Release();
                     continue;
                 }
                 return buf;

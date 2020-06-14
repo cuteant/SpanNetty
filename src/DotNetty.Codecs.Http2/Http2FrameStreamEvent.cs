@@ -16,8 +16,8 @@ namespace DotNetty.Codecs.Http2
 
         private Http2FrameStreamEvent(IHttp2FrameStream stream, EventType type)
         {
-            this.Stream = stream;
-            this.Type = type;
+            Stream = stream;
+            Type = type;
         }
 
         public static Http2FrameStreamEvent StateChanged(IHttp2FrameStream stream)

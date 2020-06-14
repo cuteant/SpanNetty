@@ -7,7 +7,7 @@ namespace DotNetty.Transport.Channels
 
     public abstract class SimpleChannelInboundHandler<I> : ChannelHandlerAdapter
     {
-        readonly bool autoRelease;
+        readonly bool _autoRelease;
 
         protected SimpleChannelInboundHandler() : this(true)
         {
@@ -15,7 +15,7 @@ namespace DotNetty.Transport.Channels
 
         protected SimpleChannelInboundHandler(bool autoRelease)
         {
-            this.autoRelease = autoRelease;
+            _autoRelease = autoRelease;
         }
 
         public bool AcceptInboundMessage(object msg) => msg is I;
@@ -25,22 +25,22 @@ namespace DotNetty.Transport.Channels
             bool release = true;
             try
             {
-                if (this.AcceptInboundMessage(msg))
+                if (AcceptInboundMessage(msg))
                 {
                     I imsg = (I)msg;
-                    this.ChannelRead0(ctx, imsg);
+                    ChannelRead0(ctx, imsg);
                 }
                 else
                 {
                     release = false;
-                    ctx.FireChannelRead(msg);
+                    _ = ctx.FireChannelRead(msg);
                 }
             }
             finally
             {
-                if (autoRelease && release)
+                if (_autoRelease && release)
                 {
-                    ReferenceCountUtil.Release(msg);
+                    _ = ReferenceCountUtil.Release(msg);
                 }
             }
         }

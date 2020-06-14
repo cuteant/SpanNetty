@@ -35,14 +35,14 @@ namespace DotNetty.Codecs.Http
         public override IByteBufferHolder Replace(IByteBuffer buffer)
         {
             var dup = new DefaultLastHttpContent(this.Content, this.validateHeaders);
-            dup.TrailingHeaders.Set(this.trailingHeaders);
+            _ = dup.TrailingHeaders.Set(this.trailingHeaders);
             return dup;
         }
 
         public override string ToString()
         {
             var buf = StringBuilderManager.Allocate().Append(base.ToString());
-            buf.Append(StringUtil.Newline);
+            _ = buf.Append(StringUtil.Newline);
             this.AppendHeaders(buf);
 
             // Remove the last newline.
@@ -54,7 +54,7 @@ namespace DotNetty.Codecs.Http
         {
             foreach (HeaderEntry<AsciiString, ICharSequence> e in this.trailingHeaders)
             {
-                buf.Append($"{e.Key}: {e.Value}{StringUtil.Newline}");
+                _ = buf.Append($"{e.Key}: {e.Value}{StringUtil.Newline}");
             }
         }
 

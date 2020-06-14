@@ -163,7 +163,7 @@ namespace DotNetty.Codecs
                 _handlingOversizedMessage = false;
                 if (_currentMessage is object)
                 {
-                    _currentMessage.Release();
+                    _ = _currentMessage.Release();
                     _currentMessage = default;
 
                     CThrowHelper.ThrowMessageAggregationException_StartMessage();
@@ -186,7 +186,7 @@ namespace DotNetty.Codecs
 
                     if (closeAfterWrite)
                     {
-                        task.ContinueWith(s_closeAfterWriteAction, context, TaskContinuationOptions.ExecuteSynchronously);
+                        _ = task.ContinueWith(s_closeAfterWriteAction, context, TaskContinuationOptions.ExecuteSynchronously);
                         return;
                     }
 
@@ -297,7 +297,7 @@ namespace DotNetty.Codecs
         private static void CloseAfterWriteAction(Task task, object state)
         {
             var ctx = (IChannelHandlerContext)state;
-            ctx.Channel.CloseAsync();
+            _ = ctx.Channel.CloseAsync();
         }
 
         private static void ContinueResponseWriteAction(Task task, object state)
@@ -305,7 +305,7 @@ namespace DotNetty.Codecs
             if (task.IsFaulted)
             {
                 var ctx = (IChannelHandlerContext)state;
-                ctx.FireExceptionCaught(task.Exception);
+                _ = ctx.FireExceptionCaught(task.Exception);
             }
         }
 
@@ -316,7 +316,7 @@ namespace DotNetty.Codecs
         {
             if (partialContent.IsReadable())
             {
-                content.AddComponent(true, (IByteBuffer)partialContent.Retain());
+                _ = content.AddComponent(true, (IByteBuffer)partialContent.Retain());
             }
         }
 
@@ -405,7 +405,7 @@ namespace DotNetty.Codecs
             finally
             {
                 // Release the message in case it is a full one.
-                ReferenceCountUtil.Release(oversized);
+                _ = ReferenceCountUtil.Release(oversized);
             }
         }
 
@@ -427,10 +427,10 @@ namespace DotNetty.Codecs
             // See https://github.com/netty/netty/issues/6583
             if (_currentMessage is object && !_handlerContext.Channel.Configuration.AutoRead)
             {
-                context.Read();
+                _ = context.Read();
             }
 
-            context.FireChannelReadComplete();
+            _ = context.FireChannelReadComplete();
         }
 
         /// <inheritdoc />
@@ -472,7 +472,7 @@ namespace DotNetty.Codecs
                 return;
             }
 
-            _currentMessage.Release();
+            _ = _currentMessage.Release();
             _currentMessage = default;
             _handlingOversizedMessage = false;
             _aggregating = false;

@@ -149,7 +149,7 @@ namespace DotNetty.Common.Internal.Logging
                     {
                         // add the tail string which contains no variables and return
                         // the result.
-                        sbuf.Append(messagePattern.Substring(i, messagePattern.Length - i));
+                        _ = sbuf.Append(messagePattern.Substring(i, messagePattern.Length - i));
                         return new FormattingTuple(StringBuilderManager.ReturnAndFree(sbuf), argArray,
                             throwableCandidate);
                     }
@@ -161,8 +161,8 @@ namespace DotNetty.Common.Internal.Logging
                         if (!IsDoubleEscaped(messagePattern, j))
                         {
                             l--; // DELIM_START was escaped, thus should not be incremented
-                            sbuf.Append(messagePattern.Substring(i, j - 1 - i));
-                            sbuf.Append(DELIM_START);
+                            _ = sbuf.Append(messagePattern.Substring(i, j - 1 - i));
+                            _ = sbuf.Append(DELIM_START);
                             i = j + 1;
                         }
                         else
@@ -170,7 +170,7 @@ namespace DotNetty.Common.Internal.Logging
                             // The escape character preceding the delimiter start is
                             // itself escaped: "abc x:\\{}"
                             // we have to consume one backward slash
-                            sbuf.Append(messagePattern.Substring(i, j - 1 - i));
+                            _ = sbuf.Append(messagePattern.Substring(i, j - 1 - i));
                             DeeplyAppendParameter(sbuf, argArray[l], new HashSet<object[]>());
                             i = j + 2;
                         }
@@ -178,14 +178,14 @@ namespace DotNetty.Common.Internal.Logging
                     else
                     {
                         // normal case
-                        sbuf.Append(messagePattern.Substring(i, j - i));
+                        _ = sbuf.Append(messagePattern.Substring(i, j - i));
                         DeeplyAppendParameter(sbuf, argArray[l], new HashSet<object[]>());
                         i = j + 2;
                     }
                 }
             }
             // append the characters following the last {} pair.
-            sbuf.Append(messagePattern.Substring(i, messagePattern.Length - i));
+            _ = sbuf.Append(messagePattern.Substring(i, messagePattern.Length - i));
             if (l < argArray.Length - 1)
             {
                 return new FormattingTuple(StringBuilderManager.ReturnAndFree(sbuf), argArray, throwableCandidate);
@@ -215,7 +215,7 @@ namespace DotNetty.Common.Internal.Logging
             switch (o)
             {
                 case null:
-                    sbuf.Append("null");
+                    _ = sbuf.Append("null");
                     return;
 
                 // check for primitive array types because they
@@ -263,11 +263,11 @@ namespace DotNetty.Common.Internal.Logging
             try
             {
                 string oAsString = o.ToString();
-                sbuf.Append(oAsString);
+                _ = sbuf.Append(oAsString);
             }
             catch (Exception t)
             {
-                sbuf.Append("Failed ToString() invocation on an object of type ["
+                _ = sbuf.Append("Failed ToString() invocation on an object of type ["
                     + o.GetType().Name + "]:" + Environment.NewLine + t);
                 //sbuf.Append("[FAILED toString()]");
             }
@@ -276,147 +276,147 @@ namespace DotNetty.Common.Internal.Logging
         static void ObjectArrayAppend(StringBuilder sbuf, object[] a,
             ISet<object[]> seenMap)
         {
-            sbuf.Append('[');
+            _ = sbuf.Append('[');
             if (!seenMap.Contains(a))
             {
-                seenMap.Add(a);
+                _ = seenMap.Add(a);
                 int len = a.Length;
                 for (int i = 0; i < len; i++)
                 {
                     DeeplyAppendParameter(sbuf, a[i], seenMap);
                     if (i != len - 1)
                     {
-                        sbuf.Append(", ");
+                        _ = sbuf.Append(", ");
                     }
                 }
                 // allow repeats in siblings
-                seenMap.Remove(a);
+                _ = seenMap.Remove(a);
             }
             else
             {
-                sbuf.Append("...");
+                _ = sbuf.Append("...");
             }
-            sbuf.Append(']');
+            _ = sbuf.Append(']');
         }
 
         static void BooleanArrayAppend(StringBuilder sbuf, bool[] a)
         {
-            sbuf.Append('[');
+            _ = sbuf.Append('[');
             int len = a.Length;
             for (int i = 0; i < len; i++)
             {
-                sbuf.Append(a[i]);
+                _ = sbuf.Append(a[i]);
                 if (i != len - 1)
                 {
-                    sbuf.Append(", ");
+                    _ = sbuf.Append(", ");
                 }
             }
-            sbuf.Append(']');
+            _ = sbuf.Append(']');
         }
 
         static void ByteArrayAppend(StringBuilder sbuf, byte[] a)
         {
-            sbuf.Append('[');
+            _ = sbuf.Append('[');
             int len = a.Length;
             for (int i = 0; i < len; i++)
             {
-                sbuf.Append(a[i]);
+                _ = sbuf.Append(a[i]);
                 if (i != len - 1)
                 {
-                    sbuf.Append(", ");
+                    _ = sbuf.Append(", ");
                 }
             }
-            sbuf.Append(']');
+            _ = sbuf.Append(']');
         }
 
         static void CharArrayAppend(StringBuilder sbuf, char[] a)
         {
-            sbuf.Append('[');
+            _ = sbuf.Append('[');
             int len = a.Length;
             for (int i = 0; i < len; i++)
             {
-                sbuf.Append(a[i]);
+                _ = sbuf.Append(a[i]);
                 if (i != len - 1)
                 {
-                    sbuf.Append(", ");
+                    _ = sbuf.Append(", ");
                 }
             }
-            sbuf.Append(']');
+            _ = sbuf.Append(']');
         }
 
         static void ShortArrayAppend(StringBuilder sbuf, short[] a)
         {
-            sbuf.Append('[');
+            _ = sbuf.Append('[');
             int len = a.Length;
             for (int i = 0; i < len; i++)
             {
-                sbuf.Append(a[i]);
+                _ = sbuf.Append(a[i]);
                 if (i != len - 1)
                 {
-                    sbuf.Append(", ");
+                    _ = sbuf.Append(", ");
                 }
             }
-            sbuf.Append(']');
+            _ = sbuf.Append(']');
         }
 
         static void IntArrayAppend(StringBuilder sbuf, int[] a)
         {
-            sbuf.Append('[');
+            _ = sbuf.Append('[');
             int len = a.Length;
             for (int i = 0; i < len; i++)
             {
-                sbuf.Append(a[i]);
+                _ = sbuf.Append(a[i]);
                 if (i != len - 1)
                 {
-                    sbuf.Append(", ");
+                    _ = sbuf.Append(", ");
                 }
             }
-            sbuf.Append(']');
+            _ = sbuf.Append(']');
         }
 
         static void LongArrayAppend(StringBuilder sbuf, long[] a)
         {
-            sbuf.Append('[');
+            _ = sbuf.Append('[');
             int len = a.Length;
             for (int i = 0; i < len; i++)
             {
-                sbuf.Append(a[i]);
+                _ = sbuf.Append(a[i]);
                 if (i != len - 1)
                 {
-                    sbuf.Append(", ");
+                    _ = sbuf.Append(", ");
                 }
             }
-            sbuf.Append(']');
+            _ = sbuf.Append(']');
         }
 
         static void FloatArrayAppend(StringBuilder sbuf, float[] a)
         {
-            sbuf.Append('[');
+            _ = sbuf.Append('[');
             int len = a.Length;
             for (int i = 0; i < len; i++)
             {
-                sbuf.Append(a[i]);
+                _ = sbuf.Append(a[i]);
                 if (i != len - 1)
                 {
-                    sbuf.Append(", ");
+                    _ = sbuf.Append(", ");
                 }
             }
-            sbuf.Append(']');
+            _ = sbuf.Append(']');
         }
 
         static void DoubleArrayAppend(StringBuilder sbuf, double[] a)
         {
-            sbuf.Append('[');
+            _ = sbuf.Append('[');
             int len = a.Length;
             for (int i = 0; i < len; i++)
             {
-                sbuf.Append(a[i]);
+                _ = sbuf.Append(a[i]);
                 if (i != len - 1)
                 {
-                    sbuf.Append(", ");
+                    _ = sbuf.Append(", ");
                 }
             }
-            sbuf.Append(']');
+            _ = sbuf.Append(']');
         }
     }
 }

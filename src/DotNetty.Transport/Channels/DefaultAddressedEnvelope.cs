@@ -19,9 +19,9 @@ namespace DotNetty.Transport.Channels
             if (content is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.content); }
             if (recipient is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.recipient); }
 
-            this.Content = content;
-            this.Sender = sender;
-            this.Recipient = recipient;
+            Content = content;
+            Sender = sender;
+            Recipient = recipient;
         }
 
         public T Content { get; }
@@ -34,42 +34,42 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                var counted = this.Content as IReferenceCounted;
+                var counted = Content as IReferenceCounted;
                 return counted?.ReferenceCount ?? 1;
             }
         }
 
         public virtual IReferenceCounted Retain()
         {
-            ReferenceCountUtil.Retain(this.Content);
+            _ = ReferenceCountUtil.Retain(Content);
             return this;
         }
 
         public virtual IReferenceCounted Retain(int increment)
         {
-            ReferenceCountUtil.Retain(this.Content, increment);
+            _ = ReferenceCountUtil.Retain(Content, increment);
             return this;
         }
 
         public virtual IReferenceCounted Touch()
         {
-            ReferenceCountUtil.Touch(this.Content);
+            _ = ReferenceCountUtil.Touch(Content);
             return this;
         }
 
         public virtual IReferenceCounted Touch(object hint)
         {
-            ReferenceCountUtil.Touch(this.Content, hint);
+            _ = ReferenceCountUtil.Touch(Content, hint);
             return this;
         }
 
-        public bool Release() => ReferenceCountUtil.Release(this.Content);
+        public bool Release() => ReferenceCountUtil.Release(Content);
 
-        public bool Release(int decrement) => ReferenceCountUtil.Release(this.Content, decrement);
+        public bool Release(int decrement) => ReferenceCountUtil.Release(Content, decrement);
 
         public override string ToString() => $"DefaultAddressedEnvelope<{typeof(T)}>"
-            + (this.Sender is object
-                ? $"({this.Sender} => {this.Recipient}, {this.Content})"
-                : $"(=> {this.Recipient}, {this.Content})");
+            + (Sender is object
+                ? $"({Sender} => {Recipient}, {Content})"
+                : $"(=> {Recipient}, {Content})");
     }
 }

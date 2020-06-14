@@ -46,25 +46,25 @@ namespace DotNetty.Transport.Channels
 
             public IChannelHandlerContext FireChannelRegistered()
             {
-                _ctx.FireChannelRegistered();
+                _ = _ctx.FireChannelRegistered();
                 return this;
             }
 
             public IChannelHandlerContext FireChannelUnregistered()
             {
-                _ctx.FireChannelUnregistered();
+                _ = _ctx.FireChannelUnregistered();
                 return this;
             }
 
             public IChannelHandlerContext FireChannelActive()
             {
-                _ctx.FireChannelActive();
+                _ = _ctx.FireChannelActive();
                 return this;
             }
 
             public IChannelHandlerContext FireChannelInactive()
             {
-                _ctx.FireChannelInactive();
+                _ = _ctx.FireChannelInactive();
                 return this;
             }
 
@@ -76,7 +76,7 @@ namespace DotNetty.Transport.Channels
                 }
                 else
                 {
-                    _ctx.FireExceptionCaught(ex);
+                    _ = _ctx.FireExceptionCaught(ex);
                 }
 
                 return this;
@@ -84,25 +84,25 @@ namespace DotNetty.Transport.Channels
 
             public IChannelHandlerContext FireUserEventTriggered(object evt)
             {
-                _ctx.FireUserEventTriggered(evt);
+                _ = _ctx.FireUserEventTriggered(evt);
                 return this;
             }
 
             public IChannelHandlerContext FireChannelRead(object message)
             {
-                _ctx.FireChannelRead(message);
+                _ = _ctx.FireChannelRead(message);
                 return this;
             }
 
             public IChannelHandlerContext FireChannelReadComplete()
             {
-                _ctx.FireChannelReadComplete();
+                _ = _ctx.FireChannelReadComplete();
                 return this;
             }
 
             public IChannelHandlerContext FireChannelWritabilityChanged()
             {
-                _ctx.FireChannelWritabilityChanged();
+                _ = _ctx.FireChannelWritabilityChanged();
                 return this;
             }
 
@@ -126,7 +126,7 @@ namespace DotNetty.Transport.Channels
 
             public IChannelHandlerContext Read()
             {
-                _ctx.Read();
+                _ = _ctx.Read();
                 return this;
             }
 
@@ -136,7 +136,7 @@ namespace DotNetty.Transport.Channels
 
             public IChannelHandlerContext Flush()
             {
-                _ctx.Flush();
+                _ = _ctx.Flush();
                 return this;
             }
 
@@ -186,7 +186,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception cause)
                 {
-                    FireExceptionCaught(
+                    _ = FireExceptionCaught(
                         new ChannelPipelineException($"{StringUtil.SimpleClassName(_handler)}.handlerRemoved() has thrown an exception.", cause));
                 }
             }

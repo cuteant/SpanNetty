@@ -119,7 +119,7 @@ namespace DotNetty.Codecs.Http2
             {
                 connLocal.FlowController = new DefaultHttp2LocalFlowController(connection);
             }
-            connLocal.FlowController.FrameWriter(encoder.FrameWriter);
+            _ = connLocal.FlowController.FrameWriter(encoder.FrameWriter);
 
             _internalFrameListener = new PrefaceFrameListener(this);
         }
@@ -162,15 +162,15 @@ namespace DotNetty.Codecs.Http2
                 var config = _frameReader.Configuration;
                 var headersConfig = config.HeadersConfiguration;
                 var frameSizePolicy = config.FrameSizePolicy;
-                settings.InitialWindowSize(FlowController.InitialWindowSize);
-                settings.MaxConcurrentStreams(_connection.Remote.MaxActiveStreams);
-                settings.HeaderTableSize(headersConfig.MaxHeaderTableSize);
-                settings.MaxFrameSize(frameSizePolicy.MaxFrameSize);
-                settings.MaxHeaderListSize(headersConfig.MaxHeaderListSize);
+                _ = settings.InitialWindowSize(FlowController.InitialWindowSize);
+                _ = settings.MaxConcurrentStreams(_connection.Remote.MaxActiveStreams);
+                _ = settings.HeaderTableSize(headersConfig.MaxHeaderTableSize);
+                _ = settings.MaxFrameSize(frameSizePolicy.MaxFrameSize);
+                _ = settings.MaxHeaderListSize(headersConfig.MaxHeaderListSize);
                 if (!_connection.IsServer)
                 {
                     // Only set the pushEnabled flag if this is a client endpoint.
-                    settings.PushEnabled(_connection.Local.AllowPushTo());
+                    _ = settings.PushEnabled(_connection.Local.AllowPushTo());
                 }
                 return settings;
             }
@@ -207,8 +207,8 @@ namespace DotNetty.Codecs.Http2
 
         internal void OnGoAwayRead0(IChannelHandlerContext ctx, int lastStreamId, Http2Error errorCode, IByteBuffer debugData)
         {
-            _connection.GoAwayReceived(lastStreamId, errorCode, debugData);
             _listener.OnGoAwayRead(ctx, lastStreamId, errorCode, debugData);
+            _connection.GoAwayReceived(lastStreamId, errorCode, debugData);
         }
 
         internal void OnUnknownFrame0(IChannelHandlerContext ctx, Http2FrameTypes frameType, int streamId, Http2Flags flags, IByteBuffer payload)
@@ -241,7 +241,7 @@ namespace DotNetty.Codecs.Http2
                     // Ignoring this frame. We still need to count the frame towards the connection flow control
                     // window, but we immediately mark all bytes as consumed.
                     flowController.ReceiveFlowControlledFrame(stream, data, padding, endOfStream);
-                    flowController.ConsumeBytes(stream, bytesToReturn);
+                    _ = flowController.ConsumeBytes(stream, bytesToReturn);
                     throw;
                 }
                 catch (Exception t)
@@ -254,7 +254,7 @@ namespace DotNetty.Codecs.Http2
                     // Ignoring this frame. We still need to count the frame towards the connection flow control
                     // window, but we immediately mark all bytes as consumed.
                     flowController.ReceiveFlowControlledFrame(stream, data, padding, endOfStream);
-                    flowController.ConsumeBytes(stream, bytesToReturn);
+                    _ = flowController.ConsumeBytes(stream, bytesToReturn);
 
                     // Verify that the stream may have existed after we apply flow control.
                     VerifyStreamMayHaveExisted(streamId);
@@ -318,7 +318,7 @@ namespace DotNetty.Codecs.Http2
                 finally
                 {
                     // If appropriate, return the processed bytes to the flow controller.
-                    flowController.ConsumeBytes(stream, bytesToReturn);
+                    _ = flowController.ConsumeBytes(stream, bytesToReturn);
 
                     if (endOfStream)
                     {
@@ -365,7 +365,7 @@ namespace DotNetty.Codecs.Http2
                 switch (streamState)
                 {
                     case Http2StreamState.ReservedRemote:
-                        stream.Open(endOfStream);
+                        _ = stream.Open(endOfStream);
                         break;
 
                     case Http2StreamState.Open:
@@ -390,7 +390,7 @@ namespace DotNetty.Codecs.Http2
                         break;
                 }
 
-                stream.HeadersReceived(isInformational);
+                _ = stream.HeadersReceived(isInformational);
                 _owner._encoder.FlowController.UpdateDependencyTree(streamId, streamDependency, weight, exclusive);
 
                 _owner._listener.OnHeadersRead(ctx, streamId, headers, streamDependency, weight, exclusive, padding, endOfStream);
@@ -412,7 +412,7 @@ namespace DotNetty.Codecs.Http2
                 if (_owner._autoAckPing)
                 {
                     // Send an ack back to the remote client.
-                    _owner._encoder.WritePingAsync(ctx, true, data, ctx.NewPromise());
+                    _ = _owner._encoder.WritePingAsync(ctx, true, data, ctx.NewPromise());
                 }
 
                 _owner._listener.OnPingRead(ctx, data);
@@ -475,7 +475,7 @@ namespace DotNetty.Codecs.Http2
                 }
 
                 // Reserve the push stream based with a priority based on the current stream's priority.
-                connection.Remote.ReservePushStream(promisedStreamId, parentStream);
+                _ = connection.Remote.ReservePushStream(promisedStreamId, parentStream);
 
                 _owner._listener.OnPushPromiseRead(ctx, streamId, promisedStreamId, headers, padding);
             }
@@ -577,7 +577,7 @@ namespace DotNetty.Codecs.Http2
                     // remote peer applies these settings before any subsequent frames that we may send which depend upon
                     // these new settings. See https://github.com/netty/netty/issues/6520.
                     var encoder = _owner._encoder;
-                    encoder.WriteSettingsAckAsync(ctx, ctx.NewPromise());
+                    _ = encoder.WriteSettingsAckAsync(ctx, ctx.NewPromise());
 
                     encoder.RemoteSettings(settings);
                 }

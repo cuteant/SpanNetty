@@ -58,8 +58,8 @@ namespace DotNetty.Buffers
 
         public IByteBuffer SetIndex(int readerIndex, int writerIndex)
         {
-            CheckIndex(readerIndex);
-            CheckIndex(writerIndex);
+            _ = CheckIndex(readerIndex);
+            _ = CheckIndex(writerIndex);
             return this;
         }
 

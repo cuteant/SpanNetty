@@ -120,7 +120,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 HttpVersion.Http11,
                 HttpResponseStatus.UpgradeRequired,
                 channel.Allocator.Buffer(0));
-            res.Headers.Set(HttpHeaderNames.SecWebsocketVersion, WebSocketVersion.V13.ToHttpHeaderValue());
+            _ = res.Headers.Set(HttpHeaderNames.SecWebsocketVersion, WebSocketVersion.V13.ToHttpHeaderValue());
             HttpUtil.SetContentLength(res, 0);
             return channel.WriteAndFlushAsync(res);
         }

@@ -11,15 +11,15 @@ namespace DotNetty.Codecs.Http2
         private const float HeadersCountWeightNew = 1 / 5f;
         private const float HeadersCountWeightHistorical = 1 - HeadersCountWeightNew;
 
-        private readonly HpackDecoder hpackDecoder;
-        private readonly bool validateHeaders;
-        private long maxHeaderListSizeGoAway;
+        private readonly HpackDecoder _hpackDecoder;
+        private readonly bool _validateHeaders;
+        private long _maxHeaderListSizeGoAway;
 
         /// <summary>
         /// Used to calculate an exponential moving average of header sizes to get an estimate of how large the data
         /// structure for storing headers should be.
         /// </summary>
-        float headerArraySizeAccumulator = 8;
+        private float _headerArraySizeAccumulator = 8;
 
         public DefaultHttp2HeadersDecoder()
             : this(true)
@@ -69,20 +69,20 @@ namespace DotNetty.Codecs.Http2
         {
             if (hpackDecoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.hpackDecoder); }
 
-            this.hpackDecoder = hpackDecoder;
-            this.validateHeaders = validateHeaders;
-            this.maxHeaderListSizeGoAway = Http2CodecUtil.CalculateMaxHeaderListSizeGoAway(hpackDecoder.GetMaxHeaderListSize());
+            _hpackDecoder = hpackDecoder;
+            _validateHeaders = validateHeaders;
+            _maxHeaderListSizeGoAway = Http2CodecUtil.CalculateMaxHeaderListSizeGoAway(hpackDecoder.GetMaxHeaderListSize());
         }
 
 
         public void SetMaxHeaderTableSize(long max)
         {
-            this.hpackDecoder.SetMaxHeaderTableSize(max);
+            _hpackDecoder.SetMaxHeaderTableSize(max);
         }
 
 
 
-        public long MaxHeaderTableSize => this.hpackDecoder.GetMaxHeaderTableSize();
+        public long MaxHeaderTableSize => _hpackDecoder.GetMaxHeaderTableSize();
 
 
         public void SetMaxHeaderListSize(long max, long goAwayMax)
@@ -91,15 +91,15 @@ namespace DotNetty.Codecs.Http2
             {
                 ThrowHelper.ThrowConnectionError_HeaderListSizeGoAwayNonNegative(goAwayMax, max);
             }
-            this.hpackDecoder.SetMaxHeaderListSize(max);
-            this.maxHeaderListSizeGoAway = goAwayMax;
+            _hpackDecoder.SetMaxHeaderListSize(max);
+            _maxHeaderListSizeGoAway = goAwayMax;
         }
 
 
-        public long MaxHeaderListSize => this.hpackDecoder.GetMaxHeaderListSize();
+        public long MaxHeaderListSize => _hpackDecoder.GetMaxHeaderListSize();
 
 
-        public long MaxHeaderListSizeGoAway => this.maxHeaderListSizeGoAway;
+        public long MaxHeaderListSizeGoAway => _maxHeaderListSizeGoAway;
 
 
         public IHttp2HeadersDecoderConfiguration Configuration => this;
@@ -110,9 +110,9 @@ namespace DotNetty.Codecs.Http2
             try
             {
                 IHttp2Headers headers = NewHeaders();
-                this.hpackDecoder.Decode(streamId, headerBlock, headers, this.validateHeaders);
-                headerArraySizeAccumulator = HeadersCountWeightNew * headers.Size +
-                    HeadersCountWeightHistorical * headerArraySizeAccumulator;
+                _hpackDecoder.Decode(streamId, headerBlock, headers, _validateHeaders);
+                _headerArraySizeAccumulator = HeadersCountWeightNew * headers.Size +
+                    HeadersCountWeightHistorical * _headerArraySizeAccumulator;
                 return headers;
             }
             catch (Http2Exception)
@@ -134,7 +134,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns>an estimate of how many headers are expected during the decode process.</returns>
         protected int NumberOfHeadersGuess()
         {
-            return (int)headerArraySizeAccumulator;
+            return (int)_headerArraySizeAccumulator;
         }
 
         /// <summary>
@@ -143,7 +143,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns><c>true</c> if the headers should be validated as a result of the decode operation.</returns>
         protected bool ValidateHeaders()
         {
-            return this.validateHeaders;
+            return _validateHeaders;
         }
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns>a new <see cref="IHttp2Headers"/> object which will store the results of the decode operation.</returns>
         protected IHttp2Headers NewHeaders()
         {
-            return new DefaultHttp2Headers(this.validateHeaders, (int)headerArraySizeAccumulator);
+            return new DefaultHttp2Headers(_validateHeaders, (int)_headerArraySizeAccumulator);
         }
     }
 }

@@ -20,16 +20,16 @@ namespace DotNetty.Codecs.Http2
         void Write(IHttp2Stream stream, int numBytes);
     }
 
-    public readonly struct ActionStreamByteDistributorWriter : IStreamByteDistributorWriter
+    public sealed class ActionStreamByteDistributorWriter : IStreamByteDistributorWriter
     {
-        private readonly Action<IHttp2Stream, int> writeAction;
+        private readonly Action<IHttp2Stream, int> _writeAction;
 
         public ActionStreamByteDistributorWriter(Action<IHttp2Stream, int> writeAction)
         {
             if (writeAction is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.writeAction); }
-            this.writeAction = writeAction;
+            _writeAction = writeAction;
         }
 
-        public void Write(IHttp2Stream stream, int numBytes) => this.writeAction(stream, numBytes);
+        public void Write(IHttp2Stream stream, int numBytes) => _writeAction(stream, numBytes);
     }
 }

@@ -103,7 +103,7 @@ namespace DotNetty.Codecs
 
                     if (length > this.maxLength)
                     {
-                        buffer.SetReaderIndex(eol + delimLength);
+                        _ = buffer.SetReaderIndex(eol + delimLength);
                         this.Fail(ctx, length);
                         return null;
                     }
@@ -111,7 +111,7 @@ namespace DotNetty.Codecs
                     if (this.stripDelimiter)
                     {
                         frame = buffer.ReadRetainedSlice(length);
-                        buffer.SkipBytes(delimLength);
+                        _ = buffer.SkipBytes(delimLength);
                     }
                     else
                     {
@@ -126,7 +126,7 @@ namespace DotNetty.Codecs
                     if (length > this.maxLength)
                     {
                         this.discardedBytes = length;
-                        buffer.SetReaderIndex(buffer.WriterIndex);
+                        _ = buffer.SetReaderIndex(buffer.WriterIndex);
                         this.discarding = true;
                         this.offset = 0;
                         if (this.failFast)
@@ -143,7 +143,7 @@ namespace DotNetty.Codecs
                 {
                     int length = this.discardedBytes + eol - buffer.ReaderIndex;
                     int delimLength = buffer.GetByte(eol) == '\r' ? 2 : 1;
-                    buffer.SetReaderIndex(eol + delimLength);
+                    _ = buffer.SetReaderIndex(eol + delimLength);
                     this.discardedBytes = 0;
                     this.discarding = false;
                     if (!this.failFast)
@@ -154,7 +154,7 @@ namespace DotNetty.Codecs
                 else
                 {
                     this.discardedBytes += buffer.ReadableBytes;
-                    buffer.SetReaderIndex(buffer.WriterIndex);
+                    _ = buffer.SetReaderIndex(buffer.WriterIndex);
                     // We skip everything in the buffer, we need to set the offset to 0 again.
                     this.offset = 0;
                 }
@@ -166,7 +166,7 @@ namespace DotNetty.Codecs
 
         void Fail(IChannelHandlerContext ctx, string length)
         {
-            ctx.FireExceptionCaught(
+            _ = ctx.FireExceptionCaught(
                 new TooLongFrameException(
                     $"frame length ({length}) exceeds the allowed maximum ({this.maxLength})"));
         }

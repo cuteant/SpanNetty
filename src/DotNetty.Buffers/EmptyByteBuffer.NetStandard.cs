@@ -43,43 +43,43 @@ namespace DotNetty.Buffers
 
         public int FindIndex(int index, int count, Predicate<byte> match)
         {
-            CheckIndex(index, count);
+            _ = CheckIndex(index, count);
             return IndexNotFound;
         }
 
         public int FindLastIndex(int index, int count, Predicate<byte> match)
         {
-            CheckIndex(index, count);
+            _ = CheckIndex(index, count);
             return IndexNotFound;
         }
 
         public int IndexOf(int fromIndex, int toIndex, byte value)
         {
-            CheckIndex(fromIndex, toIndex - fromIndex);
+            _ = CheckIndex(fromIndex, toIndex - fromIndex);
             return IndexNotFound;
         }
 
         public int IndexOf(int fromIndex, int toIndex, in ReadOnlySpan<byte> values)
         {
-            CheckIndex(fromIndex, toIndex - fromIndex);
+            _ = CheckIndex(fromIndex, toIndex - fromIndex);
             return IndexNotFound;
         }
 
         public int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1)
         {
-            CheckIndex(fromIndex, toIndex - fromIndex);
+            _ = CheckIndex(fromIndex, toIndex - fromIndex);
             return IndexNotFound;
         }
 
         public int IndexOfAny(int fromIndex, int toIndex, byte value0, byte value1, byte value2)
         {
-            CheckIndex(fromIndex, toIndex - fromIndex);
+            _ = CheckIndex(fromIndex, toIndex - fromIndex);
             return IndexNotFound;
         }
 
         public int IndexOfAny(int fromIndex, int toIndex, in ReadOnlySpan<byte> values)
         {
-            CheckIndex(fromIndex, toIndex - fromIndex);
+            _ = CheckIndex(fromIndex, toIndex - fromIndex);
             return IndexNotFound;
         }
     }

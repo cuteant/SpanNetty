@@ -145,7 +145,7 @@ namespace DotNetty.Transport.Libuv.Native
                 NativeMethods.uv_walk(handle, WalkCallback, handle);
 
                 if (debugEnabled) Logger.LoopRunningDefaultToCallCloseCallbacks(handle, count);
-                NativeMethods.uv_run(handle, uv_run_mode.UV_RUN_DEFAULT);
+                _ = NativeMethods.uv_run(handle, uv_run_mode.UV_RUN_DEFAULT);
 
                 int result = NativeMethods.uv_loop_close(handle);
                 if (debugEnabled) Logger.LoopCloseResult(handle, result, count);

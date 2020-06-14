@@ -97,6 +97,8 @@ namespace DotNetty.Codecs.Http2
 
         public const int MaxFrameSizeUpperBound = 0xffffff;
 
+        private const ulong MaxFrameSizeBoundDiff = MaxFrameSizeUpperBound - MaxFrameSizeLowerBound;
+
         public const long MaxHeaderListSize = MaxUnsignedInt;
 
         public const long MinHeaderTableSize = 0;
@@ -168,9 +170,10 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool IsStreamIdValid(int streamId)
         {
-            return streamId >= 0;
+            return SharedConstants.TooBigOrNegative >= (uint)streamId; // >= 0
         }
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         internal static bool IsStreamIdValid(int streamId, bool server)
         {
             return IsStreamIdValid(streamId) && server == (0u >= (uint)(streamId & 1));
@@ -181,9 +184,11 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         /// <param name="maxFrameSize"></param>
         /// <returns></returns>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static bool IsMaxFrameSizeValid(long maxFrameSize)
         {
-            return maxFrameSize >= MaxFrameSizeLowerBound && maxFrameSize <= MaxFrameSizeUpperBound;
+            //return maxFrameSize >= MaxFrameSizeLowerBound && maxFrameSize <= MaxFrameSizeUpperBound;
+            return (ulong)(maxFrameSize - MaxFrameSizeLowerBound) <= MaxFrameSizeBoundDiff;
         }
 
         /// <summary>
@@ -237,6 +242,7 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         /// <param name="buf"></param>
         /// <returns></returns>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         public static int ReadUnsignedInt(IByteBuffer buf)
         {
             return buf.ReadInt() & 0x7fffffff;
@@ -253,7 +259,7 @@ namespace DotNetty.Codecs.Http2
         public static void WriteFrameHeader(IByteBuffer output, int payloadLength, Http2FrameTypes type,
             Http2Flags flags, int streamId)
         {
-            output.EnsureWritable(FrameHeaderLength + payloadLength);
+            _ = output.EnsureWritable(FrameHeaderLength + payloadLength);
             WriteFrameHeaderInternal(output, payloadLength, type, flags, streamId);
         }
 
@@ -292,7 +298,7 @@ namespace DotNetty.Codecs.Http2
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public static void VerifyPadding(int padding)
         {
-            if (/*padding < 0 || */(uint)padding > (uint)MaxPadding)
+            if (/*padding < 0 || */(uint)padding > MaxPadding)
             {
                 ThrowHelper.ThrowArgumentException_InvalidPadding(padding);
             }
@@ -330,10 +336,10 @@ namespace DotNetty.Codecs.Http2
         internal static void WriteFrameHeaderInternal(IByteBuffer output, int payloadLength, Http2FrameTypes type,
             Http2Flags flags, int streamId)
         {
-            output.WriteMedium(payloadLength);
-            output.WriteByte((int)type);
-            output.WriteByte(flags.Value);
-            output.WriteInt(streamId);
+            _ = output.WriteMedium(payloadLength);
+            _ = output.WriteByte((int)type);
+            _ = output.WriteByte(flags.Value);
+            _ = output.WriteInt(streamId);
         }
     }
 }

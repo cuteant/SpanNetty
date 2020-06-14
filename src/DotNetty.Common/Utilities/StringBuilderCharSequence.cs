@@ -78,13 +78,13 @@ namespace DotNetty.Common.Utilities
 
         public void Append(string value)
         {
-            this.builder.Append(value);
+            _ = this.builder.Append(value);
             this.size += value.Length;
         }
 
         public void Append(string value, int index, int count)
         {
-            this.builder.Append(value, index, count);
+            _ = this.builder.Append(value, index, count);
             this.size += count;
         }
 
@@ -95,7 +95,7 @@ namespace DotNetty.Common.Utilities
                 return;
             }
 
-            this.builder.Append(value);
+            _ = this.builder.Append(value);
             this.size += value.Count;
         }
 
@@ -112,20 +112,20 @@ namespace DotNetty.Common.Utilities
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
         public void Append(in ReadOnlySpan<char> value)
         {
-            this.builder.Append(value);
+            _ = this.builder.Append(value);
             this.size += value.Length;
         }
 
         public void Append(in ReadOnlyMemory<char> value)
         {
-            this.builder.Append(value);
+            _ = this.builder.Append(value);
             this.size += value.Length;
         }
 #endif
 
         public void Append(char value)
         {
-            this.builder.Append(value);
+            _ = this.builder.Append(value);
             this.size++;
         }
 
@@ -134,7 +134,7 @@ namespace DotNetty.Common.Utilities
             if (start < 0) { ThrowHelper.ThrowArgumentException_PositiveOrZero(start, ExceptionArgument.start); }
             if (start >= this.size) { ThrowHelper.ThrowArgumentOutOfRangeException_IndexLargerThanLength(ExceptionArgument.start); }
 
-            this.builder.Insert(this.offset + start, value);
+            _ = this.builder.Insert(this.offset + start, value);
             this.size++;
         }
 

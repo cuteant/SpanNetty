@@ -161,7 +161,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer ResetReaderIndex()
         {
-            SetReaderIndex(_markedReaderIndex);
+            _ = SetReaderIndex(_markedReaderIndex);
             return this;
         }
 
@@ -173,7 +173,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer ResetWriterIndex()
         {
-            SetWriterIndex(_markedWriterIndex);
+            _ = SetWriterIndex(_markedWriterIndex);
             return this;
         }
 
@@ -195,7 +195,7 @@ namespace DotNetty.Buffers
 
             if (readerIdx != writerIdx)
             {
-                SetBytes(0, this, readerIdx, writerIdx - readerIdx);
+                _ = SetBytes(0, this, readerIdx, writerIdx - readerIdx);
                 _writerIndex = writerIdx - readerIdx;
                 AdjustMarkers(readerIdx);
                 _readerIndex = 0;
@@ -230,7 +230,7 @@ namespace DotNetty.Buffers
 
             if (readerIdx >= Capacity.RightUShift(1))
             {
-                SetBytes(0, this, readerIdx, writerIdx - readerIdx);
+                _ = SetBytes(0, this, readerIdx, writerIdx - readerIdx);
                 _writerIndex = writerIdx - readerIdx;
                 AdjustMarkers(readerIdx);
                 _readerIndex = 0;
@@ -311,7 +311,7 @@ namespace DotNetty.Buffers
                     : Allocator.CalculateNewCapacity(targetCapacity, maxCapacity);
 
             // Adjust to the new capacity.
-            AdjustCapacity(newCapacity);
+            _ = AdjustCapacity(newCapacity);
         }
 
         public virtual int EnsureWritable(int minWritableBytes, bool force)
@@ -334,7 +334,7 @@ namespace DotNetty.Buffers
                     return 1;
                 }
 
-                AdjustCapacity(maxCapacity);
+                _ = AdjustCapacity(maxCapacity);
                 return 3;
             }
 
@@ -343,7 +343,7 @@ namespace DotNetty.Buffers
                     : Allocator.CalculateNewCapacity(writerIdx + minWritableBytes, maxCapacity);
 
             // Adjust to the new capacity.
-            AdjustCapacity(newCapacity);
+            _ = AdjustCapacity(newCapacity);
             return 2;
         }
 
@@ -423,7 +423,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer GetBytes(int index, byte[] destination)
         {
-            GetBytes(index, destination, 0, destination.Length);
+            _ = GetBytes(index, destination, 0, destination.Length);
             return this;
         }
 
@@ -524,7 +524,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetBoolean(int index, bool value)
         {
-            SetByte(index, value ? 1 : 0);
+            _ = SetByte(index, value ? 1 : 0);
             return this;
         }
 
@@ -602,7 +602,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer SetBytes(int index, byte[] src)
         {
-            SetBytes(index, src, 0, src.Length);
+            _ = SetBytes(index, src, 0, src.Length);
             return this;
         }
 
@@ -615,8 +615,8 @@ namespace DotNetty.Buffers
             CheckIndex(index, length);
             if (CheckBounds) { CheckReadableBounds(src, length); }
 
-            SetBytes(index, src, src.ReaderIndex, length);
-            src.SetReaderIndex(src.ReaderIndex + length);
+            _ = SetBytes(index, src, src.ReaderIndex, length);
+            _ = src.SetReaderIndex(src.ReaderIndex + length);
             return this;
         }
 
@@ -706,7 +706,7 @@ namespace DotNetty.Buffers
                         EnsureWritable0(bytes.Length);
                         // setBytes(...) will take care of checking the indices.
                     }
-                    SetBytes(index, bytes);
+                    _ = SetBytes(index, bytes);
                     return bytes.Length;
             }
         }
@@ -750,7 +750,7 @@ namespace DotNetty.Buffers
                         EnsureWritable0(bytes.Length);
                         // setBytes(...) will take care of checking the indices.
                     }
-                    SetBytes(index, bytes);
+                    _ = SetBytes(index, bytes);
                     return bytes.Length;
             }
         }
@@ -861,7 +861,7 @@ namespace DotNetty.Buffers
             }
 
             IByteBuffer buf = Allocator.Buffer(length, MaxCapacity);
-            buf.WriteBytes(this, _readerIndex, length);
+            _ = buf.WriteBytes(this, _readerIndex, length);
             _readerIndex += length;
             return buf;
         }
@@ -885,14 +885,14 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer ReadBytes(byte[] destination, int dstIndex, int length)
         {
             CheckReadableBytes(length);
-            GetBytes(_readerIndex, destination, dstIndex, length);
+            _ = GetBytes(_readerIndex, destination, dstIndex, length);
             _readerIndex += length;
             return this;
         }
 
         public virtual IByteBuffer ReadBytes(byte[] dst)
         {
-            ReadBytes(dst, 0, dst.Length);
+            _ = ReadBytes(dst, 0, dst.Length);
             return this;
         }
 
@@ -900,15 +900,15 @@ namespace DotNetty.Buffers
         {
             if (CheckBounds) { CheckWritableBounds(dst, length); }
 
-            ReadBytes(dst, dst.WriterIndex, length);
-            dst.SetWriterIndex(dst.WriterIndex + length);
+            _ = ReadBytes(dst, dst.WriterIndex, length);
+            _ = dst.SetWriterIndex(dst.WriterIndex + length);
             return this;
         }
 
         public virtual IByteBuffer ReadBytes(IByteBuffer dst, int dstIndex, int length)
         {
             CheckReadableBytes(length);
-            GetBytes(_readerIndex, dst, dstIndex, length);
+            _ = GetBytes(_readerIndex, dst, dstIndex, length);
             _readerIndex += length;
             return this;
         }
@@ -916,7 +916,7 @@ namespace DotNetty.Buffers
         public virtual IByteBuffer ReadBytes(Stream destination, int length)
         {
             CheckReadableBytes(length);
-            GetBytes(_readerIndex, destination, length);
+            _ = GetBytes(_readerIndex, destination, length);
             _readerIndex += length;
             return this;
         }
@@ -930,7 +930,7 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer WriteBoolean(bool value)
         {
-            WriteByte(value ? 1 : 0);
+            _ = WriteByte(value ? 1 : 0);
             return this;
         }
 
@@ -1015,16 +1015,16 @@ namespace DotNetty.Buffers
 
         public virtual IByteBuffer WriteBytes(byte[] src, int srcIndex, int length)
         {
-            EnsureWritable(length);
+            _ = EnsureWritable(length);
             int writerIdx = _writerIndex;
-            SetBytes(writerIdx, src, srcIndex, length);
+            _ = SetBytes(writerIdx, src, srcIndex, length);
             _writerIndex = writerIdx + length;
             return this;
         }
 
         public virtual IByteBuffer WriteBytes(byte[] src)
         {
-            WriteBytes(src, 0, src.Length);
+            _ = WriteBytes(src, 0, src.Length);
             return this;
         }
 
@@ -1032,23 +1032,23 @@ namespace DotNetty.Buffers
         {
             if (CheckBounds) { CheckReadableBounds(src, length); }
 
-            WriteBytes(src, src.ReaderIndex, length);
-            src.SetReaderIndex(src.ReaderIndex + length);
+            _ = WriteBytes(src, src.ReaderIndex, length);
+            _ = src.SetReaderIndex(src.ReaderIndex + length);
             return this;
         }
 
         public virtual IByteBuffer WriteBytes(IByteBuffer src, int srcIndex, int length)
         {
-            EnsureWritable(length);
+            _ = EnsureWritable(length);
             int writerIdx = _writerIndex;
-            SetBytes(writerIdx, src, srcIndex, length);
+            _ = SetBytes(writerIdx, src, srcIndex, length);
             _writerIndex = writerIdx + length;
             return this;
         }
 
         public virtual async Task WriteBytesAsync(Stream stream, int length, CancellationToken cancellationToken)
         {
-            EnsureWritable(length);
+            _ = EnsureWritable(length);
             if (WritableBytes < length)
             {
                 ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.length);
@@ -1068,7 +1068,7 @@ namespace DotNetty.Buffers
                 return this;
             }
 
-            EnsureWritable(length);
+            _ = EnsureWritable(length);
             int wIndex = _writerIndex;
             CheckIndex0(wIndex, length);
 
@@ -1180,15 +1180,15 @@ namespace DotNetty.Buffers
                 .Append(", cap: ").Append(Capacity);
             if (MaxCapacity != int.MaxValue)
             {
-                buf.Append('/').Append(MaxCapacity);
+                _ = buf.Append('/').Append(MaxCapacity);
             }
 
             IByteBuffer unwrapped = Unwrap();
             if (unwrapped is object)
             {
-                buf.Append(", unwrapped: ").Append(unwrapped);
+                _ = buf.Append(", unwrapped: ").Append(unwrapped);
             }
-            buf.Append(')');
+            _ = buf.Append(')');
             return StringBuilderManager.ReturnAndFree(buf);
         }
 

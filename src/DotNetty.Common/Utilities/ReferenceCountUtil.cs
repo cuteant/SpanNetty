@@ -92,7 +92,7 @@ namespace DotNetty.Common.Utilities
         {
             try
             {
-                Release(msg);
+                _ = Release(msg);
             }
             catch (Exception ex)
             {
@@ -113,7 +113,7 @@ namespace DotNetty.Common.Utilities
         {
             try
             {
-                Release(msg, decrement);
+                _ = Release(msg, decrement);
             }
             catch (Exception ex)
             {
@@ -129,7 +129,7 @@ namespace DotNetty.Common.Utilities
         {
             try
             {
-                msg?.Release();
+                _ = (msg?.Release());
             }
             catch (Exception ex)
             {
@@ -142,7 +142,7 @@ namespace DotNetty.Common.Utilities
         {
             try
             {
-                msg?.Release(decrement);
+                _ = (msg?.Release(decrement));
             }
             catch (Exception ex)
             {

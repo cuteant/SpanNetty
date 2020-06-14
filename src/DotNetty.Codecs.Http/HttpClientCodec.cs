@@ -75,7 +75,7 @@ namespace DotNetty.Codecs.Http
         public void UpgradeFrom(IChannelHandlerContext ctx)
         {
             IChannelPipeline p = ctx.Pipeline;
-            p.Remove(this);
+            _ = p.Remove(this);
         }
 
         public bool SingleDecode
@@ -115,7 +115,7 @@ namespace DotNetty.Codecs.Http
                     if (message is ILastHttpContent)
                     {
                         // increment as its the last chunk
-                        Interlocked.Increment(ref _clientCodec._requestResponseCounter);
+                        _ = Interlocked.Increment(ref _clientCodec._requestResponseCounter);
                     }
                 }
             }
@@ -175,7 +175,7 @@ namespace DotNetty.Codecs.Http
                 // check if it's an Header and its transfer encoding is not chunked.
                 if (msg is ILastHttpContent)
                 {
-                    Interlocked.Decrement(ref _clientCodec._requestResponseCounter);
+                    _ = Interlocked.Decrement(ref _clientCodec._requestResponseCounter);
                 }
             }
 
@@ -257,7 +257,7 @@ namespace DotNetty.Codecs.Http
                     long missingResponses = Volatile.Read(ref _clientCodec._requestResponseCounter);
                     if (missingResponses > 0)
                     {
-                        ctx.FireExceptionCaught(new PrematureChannelClosureException(
+                        _ = ctx.FireExceptionCaught(new PrematureChannelClosureException(
                             $"channel gone inactive with {missingResponses} missing response(s)"));
                     }
                 }

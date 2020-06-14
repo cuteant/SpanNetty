@@ -50,8 +50,8 @@ namespace DotNetty.Handlers.Timeout
         private static void WrappingWriteListener(Task antecedent, object state)
         {
             var self = (IdleStateHandler)state;
-            self.lastWriteTime = self.Ticks();
-            self.firstWriterIdleEvent = self.firstAllIdleEvent = true;
+            self._lastWriteTime = self.Ticks();
+            self._firstWriterIdleEvent = self._firstAllIdleEvent = true;
         }
     }
 }

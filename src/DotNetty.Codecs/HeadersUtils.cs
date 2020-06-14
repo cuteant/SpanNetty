@@ -85,7 +85,7 @@ namespace DotNetty.Codecs
                     .Append('[');
                 foreach (HeaderEntry<TKey, TValue> header in headers)
                 {
-                    sb.Append(header.Key).Append(": ").Append(header.Value).Append(", ");
+                    _ = sb.Append(header.Key).Append(": ").Append(header.Value).Append(", ");
                 }
                 sb.Length -= 2;
                 return StringBuilderManager.ReturnAndFree(sb.Append(']'));

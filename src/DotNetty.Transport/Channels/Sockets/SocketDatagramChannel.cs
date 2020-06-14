@@ -66,7 +66,7 @@ namespace DotNetty.Transport.Channels.Sockets
         protected override void DoBind(EndPoint localAddress)
         {
             Socket.Bind(localAddress);
-            CacheLocalAddress();
+            _ = CacheLocalAddress();
 
             SetState(StateFlags.Active);
         }
@@ -169,7 +169,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
 
                 handle.LastBytesRead = received;
-                data.SetWriterIndex(data.WriterIndex + received);
+                _ = data.SetWriterIndex(data.WriterIndex + received);
                 EndPoint remoteAddress = operation.RemoteEndPoint;
                 buf.Add(new DatagramPacket(data, remoteAddress, LocalAddress));
                 free = false;
@@ -180,7 +180,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 if (free)
                 {
-                    data.Release();
+                    _ = data.Release();
                 }
 
                 operation.UserToken = null;
@@ -298,7 +298,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
             // Composite
             IByteBuffer data = Allocator.Buffer(readableBytes);
-            data.WriteBytes(buffer, buffer.ReaderIndex, readableBytes);
+            _ = data.WriteBytes(buffer, buffer.ReaderIndex, readableBytes);
             buffer.SafeRelease();
 
             return data;
@@ -318,7 +318,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
             // Composite
             IByteBuffer data = Allocator.Buffer(readableBytes);
-            data.WriteBytes(buffer, buffer.ReaderIndex, readableBytes);
+            _ = data.WriteBytes(buffer, buffer.ReaderIndex, readableBytes);
             holder.SafeRelease();
 
             return data;

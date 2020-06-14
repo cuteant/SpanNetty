@@ -33,7 +33,7 @@ namespace DotNetty.Buffers
                 _buffers = Empty;
                 _nioBufferCount = 1;
                 _capacity = 0;
-                _direct = false;
+                _direct = Unpooled.Empty.IsDirect;
             }
             else
             {
@@ -56,7 +56,7 @@ namespace DotNetty.Buffers
                 _capacity = capacity;
                 _direct = direct;
             }
-            SetIndex(0, _capacity);
+            _ = SetIndex(0, _capacity);
             _allocator = allocator;
         }
 
@@ -310,7 +310,7 @@ namespace DotNetty.Buffers
             while (true)
             {
                 int localLength = Math.Min(length, s.ReadableBytes - (index - adjustment));
-                s.GetBytes(index - adjustment, dst, dstIndex, localLength);
+                _ = s.GetBytes(index - adjustment, dst, dstIndex, localLength);
                 index += localLength;
                 dstIndex += localLength;
                 length -= localLength;
@@ -336,7 +336,7 @@ namespace DotNetty.Buffers
             while (true)
             {
                 int localLength = Math.Min(length, s.ReadableBytes - (index - adjustment));
-                s.GetBytes(index - adjustment, dst, dstIndex, localLength);
+                _ = s.GetBytes(index - adjustment, dst, dstIndex, localLength);
                 index += localLength;
                 dstIndex += localLength;
                 length -= localLength;
@@ -362,7 +362,7 @@ namespace DotNetty.Buffers
             while (true)
             {
                 int localLength = Math.Min(length, s.ReadableBytes - (index - adjustment));
-                s.GetBytes(index - adjustment, destination, localLength);
+                _ = s.GetBytes(index - adjustment, destination, localLength);
                 index += localLength;
                 length -= localLength;
                 adjustment += s.ReadableBytes;
@@ -382,13 +382,13 @@ namespace DotNetty.Buffers
             var buf = _allocator.Buffer(length);
             try
             {
-                buf.WriteBytes(this, index, length);
+                _ = buf.WriteBytes(this, index, length);
                 release = false;
                 return buf;
             }
             finally
             {
-                if (release) { buf.Release(); }
+                if (release) { _ = buf.Release(); }
             }
         }
 
@@ -471,7 +471,7 @@ namespace DotNetty.Buffers
         {
             for (int i = 0; i < _buffers.Length; i++)
             {
-                Buffer(i).Release();
+                _ = Buffer(i).Release();
             }
         }
 

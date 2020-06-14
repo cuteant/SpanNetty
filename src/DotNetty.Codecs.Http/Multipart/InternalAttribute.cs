@@ -54,7 +54,7 @@ namespace DotNetty.Codecs.Http.Multipart
             if (old is object)
             {
                 this.size -= old.ReadableBytes;
-                old.Release();
+                _ = old.Release();
             }
             this.size += buf.ReadableBytes;
         }
@@ -87,7 +87,7 @@ namespace DotNetty.Codecs.Http.Multipart
             var result = StringBuilderManager.Allocate();
             foreach (IByteBuffer buf in this.value)
             {
-                result.Append(buf.ToString(this.charset));
+                _ = result.Append(buf.ToString(this.charset));
             }
 
             return StringBuilderManager.ReturnAndFree(result);
@@ -98,9 +98,9 @@ namespace DotNetty.Codecs.Http.Multipart
         public IByteBuffer ToByteBuffer()
         {
             CompositeByteBuffer compositeBuffer = ArrayPooled.CompositeBuffer();
-            compositeBuffer.AddComponents(this.value);
-            compositeBuffer.SetWriterIndex(this.size);
-            compositeBuffer.SetReaderIndex(0);
+            _ = compositeBuffer.AddComponents(this.value);
+            _ = compositeBuffer.SetWriterIndex(this.size);
+            _ = compositeBuffer.SetReaderIndex(0);
 
             return compositeBuffer;
         }
@@ -116,7 +116,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             foreach (IByteBuffer buf in this.value)
             {
-                buf.Retain(increment);
+                _ = buf.Retain(increment);
             }
             return this;
         }
@@ -125,7 +125,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             foreach (IByteBuffer buf in this.value)
             {
-                buf.Touch(hint);
+                _ = buf.Touch(hint);
             }
             return this;
         }

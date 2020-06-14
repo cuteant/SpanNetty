@@ -87,7 +87,7 @@ namespace DotNetty.Transport.Channels
             if (entry is IPromise promise)
             {
                 aggregatePromise.Task.CascadeTo(promise, Logger);
-                _bufAndListenerPairs.RemoveFromFront();
+                _ = _bufAndListenerPairs.RemoveFromFront();
             }
             return result;
         }
@@ -210,7 +210,7 @@ namespace DotNetty.Transport.Channels
             IByteBuffer previousBuf = null;
             while (true)
             {
-                _bufAndListenerPairs.TryRemoveFromFront(out var entry);
+                _ = _bufAndListenerPairs.TryRemoveFromFront(out var entry);
                 try
                 {
                     switch (entry)
@@ -218,20 +218,20 @@ namespace DotNetty.Transport.Channels
                         case null:
                             if (previousBuf is object)
                             {
-                                ctx.WriteAsync(previousBuf, ctx.VoidPromise());
+                                _ = ctx.WriteAsync(previousBuf, ctx.VoidPromise());
                             }
                             goto LoopEnd;
 
                         case IByteBuffer byteBuffer:
                             if (previousBuf is object)
                             {
-                                ctx.WriteAsync(previousBuf, ctx.VoidPromise());
+                                _ = ctx.WriteAsync(previousBuf, ctx.VoidPromise());
                             }
                             previousBuf = byteBuffer;
                             break;
 
                         case IPromise promise:
-                            ctx.WriteAsync(previousBuf, promise);
+                            _ = ctx.WriteAsync(previousBuf, promise);
                             previousBuf = null;
                             break;
 
@@ -257,7 +257,7 @@ namespace DotNetty.Transport.Channels
         LoopEnd:
             if (pending is object)
             {
-                ThrowHelper.ThrowInvalidOperationException_CoalescingBufferQueuePending(pending);
+                _ = ThrowHelper.ThrowInvalidOperationException_CoalescingBufferQueuePending(pending);
             }
         }
 
@@ -284,12 +284,12 @@ namespace DotNetty.Transport.Channels
             var composite = alloc.CompositeBuffer(Size() + 2);
             try
             {
-                composite.AddComponent(true, cumulation);
-                composite.AddComponent(true, next);
+                _ = composite.AddComponent(true, cumulation);
+                _ = composite.AddComponent(true, next);
             }
             catch (Exception)
             {
-                composite.Release();
+                _ = composite.Release();
                 ReferenceCountUtil.SafeRelease(next);
                 throw;
             }
@@ -308,16 +308,16 @@ namespace DotNetty.Transport.Channels
             var newCumulation = alloc.Buffer(cumulation.ReadableBytes + next.ReadableBytes);
             try
             {
-                newCumulation.WriteBytes(cumulation).WriteBytes(next);
+                _ = newCumulation.WriteBytes(cumulation).WriteBytes(next);
             }
             catch (Exception)
             {
-                newCumulation.Release();
+                _ = newCumulation.Release();
                 ReferenceCountUtil.SafeRelease(next);
                 throw;
             }
-            cumulation.Release();
-            next.Release();
+            _ = cumulation.Release();
+            _ = next.Release();
             return newCumulation;
         }
 
@@ -379,7 +379,7 @@ namespace DotNetty.Transport.Channels
             }
             if (pending is object)
             {
-                ThrowHelper.ThrowInvalidOperationException_CoalescingBufferQueuePending(pending);
+                _ = ThrowHelper.ThrowInvalidOperationException_CoalescingBufferQueuePending(pending);
             }
         }
 
@@ -388,7 +388,7 @@ namespace DotNetty.Transport.Channels
             int nextReadableBytes = _readableBytes + increment;
             if (nextReadableBytes < _readableBytes)
             {
-                ThrowHelper.ThrowInvalidOperationException_BufferQueueLengthOverflow(_readableBytes, increment);
+                _ = ThrowHelper.ThrowInvalidOperationException_BufferQueueLengthOverflow(_readableBytes, increment);
             }
             _readableBytes = nextReadableBytes;
             if (_tracker is object)

@@ -22,7 +22,7 @@ namespace DotNetty.Common.Concurrency
             _cancellationTokenRegistration.Dispose();
             if (_cancellationToken.IsCancellationRequested)
             {
-                Promise.TrySetCanceled();
+                _ = Promise.TrySetCanceled();
             }
             else
             {

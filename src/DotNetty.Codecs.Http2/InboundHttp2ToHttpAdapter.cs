@@ -46,7 +46,7 @@ namespace DotNetty.Codecs.Http2
             IFullHttpMessage msg = stream.RemoveProperty<IFullHttpMessage>(_messageKey);
             if (release && msg is object)
             {
-                msg.Release();
+                _ = msg.Release();
             }
         }
 
@@ -70,7 +70,7 @@ namespace DotNetty.Codecs.Http2
             IFullHttpMessage previous = stream.SetProperty<IFullHttpMessage>(_messageKey, message);
             if (previous != message && previous is object)
             {
-                previous.Release();
+                _ = previous.Release();
             }
         }
 
@@ -90,7 +90,7 @@ namespace DotNetty.Codecs.Http2
         {
             RemoveMessage(stream, release);
             HttpUtil.SetContentLength(msg, msg.Content.ReadableBytes);
-            ctx.FireChannelRead(msg);
+            _ = ctx.FireChannelRead(msg);
         }
 
         /// <summary>
@@ -198,7 +198,7 @@ namespace DotNetty.Codecs.Http2
                 ThrowHelper.ThrowConnectionError_ContentLengthExceededMax(_maxContentLength, streamId);
             }
 
-            content.WriteBytes(data, data.ReaderIndex, dataReadableBytes);
+            _ = content.WriteBytes(data, data.ReaderIndex, dataReadableBytes);
 
             if (endOfStream)
             {
@@ -229,9 +229,9 @@ namespace DotNetty.Codecs.Http2
                 // See https://github.com/netty/netty/issues/5866
                 if (streamDependency != Http2CodecUtil.ConnectionStreamId)
                 {
-                    msg.Headers.SetInt(HttpConversionUtil.ExtensionHeaderNames.StreamDependencyId, streamDependency);
+                    _ = msg.Headers.SetInt(HttpConversionUtil.ExtensionHeaderNames.StreamDependencyId, streamDependency);
                 }
-                msg.Headers.SetShort(HttpConversionUtil.ExtensionHeaderNames.StreamWeight, weight);
+                _ = msg.Headers.SetShort(HttpConversionUtil.ExtensionHeaderNames.StreamWeight, weight);
 
                 ProcessHeadersEnd(ctx, stream, msg, endOfStream);
             }
@@ -245,7 +245,7 @@ namespace DotNetty.Codecs.Http2
             {
                 OnRstStreamRead(stream, msg);
             }
-            ctx.FireExceptionCaught(ThrowHelper.GetStreamError_Http2ToHttpLayerCaughtStreamReset(streamId, errorCode));
+            _ = ctx.FireExceptionCaught(ThrowHelper.GetStreamError_Http2ToHttpLayerCaughtStreamReset(streamId, errorCode));
         }
 
         public override void OnPushPromiseRead(IChannelHandlerContext ctx, int streamId, int promisedStreamId, IHttp2Headers headers, int padding)
@@ -267,8 +267,8 @@ namespace DotNetty.Codecs.Http2
                 ThrowHelper.ThrowConnectionError_PushPromiseFrameReceivedForPreExistingStreamId(promisedStreamId);
             }
 
-            msg.Headers.SetInt(HttpConversionUtil.ExtensionHeaderNames.StreamPromiseId, streamId);
-            msg.Headers.SetShort(HttpConversionUtil.ExtensionHeaderNames.StreamWeight, Http2CodecUtil.DefaultPriorityWeight);
+            _ = msg.Headers.SetInt(HttpConversionUtil.ExtensionHeaderNames.StreamPromiseId, streamId);
+            _ = msg.Headers.SetShort(HttpConversionUtil.ExtensionHeaderNames.StreamWeight, Http2CodecUtil.DefaultPriorityWeight);
 
             ProcessHeadersEnd(ctx, promisedStream, msg, false);
         }
@@ -278,7 +278,7 @@ namespace DotNetty.Codecs.Http2
             if (_propagateSettings)
             {
                 // Provide an interface for non-listeners to capture settings
-                ctx.FireChannelRead(settings);
+                _ = ctx.FireChannelRead(settings);
             }
         }
 
@@ -301,7 +301,7 @@ namespace DotNetty.Codecs.Http2
                 if (msg is IFullHttpRequest request)
                 {
                     var copy = (IFullHttpRequest)request.Replace(allocator.Buffer(0));
-                    copy.Headers.Remove(HttpHeaderNames.Expect);
+                    _ = copy.Headers.Remove(HttpHeaderNames.Expect);
                     return copy;
                 }
                 return null;

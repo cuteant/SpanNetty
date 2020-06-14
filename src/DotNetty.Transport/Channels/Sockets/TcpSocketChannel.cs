@@ -192,8 +192,8 @@ namespace DotNetty.Transport.Channels.Sockets
             SetState(StateFlags.Active);
 
             // preserve local and remote addresses for later availability even if Socket fails
-            CacheLocalAddress();
-            CacheRemoteAddress();
+            _ = CacheLocalAddress();
+            _ = CacheRemoteAddress();
         }
 
         protected override void DoDisconnect() => DoClose();
@@ -274,7 +274,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
             if (sent > 0)
             {
-                buf.SetReaderIndex(buf.ReaderIndex + sent);
+                _ = buf.SetReaderIndex(buf.ReaderIndex + sent);
             }
 
             return sent;

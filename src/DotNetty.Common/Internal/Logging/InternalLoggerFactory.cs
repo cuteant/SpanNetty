@@ -67,7 +67,7 @@ namespace DotNetty.Common.Internal.Logging
             {
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
-                Interlocked.Exchange(ref defaultFactory, value);
+                _ = Interlocked.Exchange(ref defaultFactory, value);
             }
         }
 

@@ -59,7 +59,7 @@ namespace DotNetty.Handlers.IPFilter
                 Task rejectedTask = this.ChannelRejected(ctx, remoteAddress);
                 if (rejectedTask is object)
                 {
-                    rejectedTask.ContinueWith(CloseOnCompleteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                    rejectedTask.CloseOnComplete(ctx);
                 }
                 else
                 {
@@ -67,12 +67,6 @@ namespace DotNetty.Handlers.IPFilter
                 }
             }
             return true;
-        }
-
-        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
-        static void CloseOnComplete(Task t, object s)
-        {
-            ((IChannelHandlerContext)s).CloseAsync();
         }
         
         /// <summary>

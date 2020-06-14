@@ -79,7 +79,7 @@
                 if (_outstandingControlFrames == _maxOutstandingControlFrames)
                 {
                     // Let's try to flush once as we may be able to flush some of the control frames.
-                    ctx.Flush();
+                    _ = ctx.Flush();
                 }
                 if (_outstandingControlFrames == _maxOutstandingControlFrames)
                 {
@@ -92,14 +92,14 @@
 
                     // First notify the Http2LifecycleManager and then close the connection.
                     _lifecycleManager.OnError(ctx, true, exception);
-                    ctx.CloseAsync();
+                    _ = ctx.CloseAsync();
                 }
                 _outstandingControlFrames++;
 
                 // We did not reach the limit yet, add the listener to decrement the number of outstanding control frames
                 // once the promise was completed
                 var newPromise = promise is object ? promise.Unvoid() : ctx.NewPromise();
-                newPromise.Task.ContinueWith(OutstandingControlFramesListenerAction, this, TaskContinuationOptions.ExecuteSynchronously);
+                _ = newPromise.Task.ContinueWith(OutstandingControlFramesListenerAction, this, TaskContinuationOptions.ExecuteSynchronously);
                 return newPromise;
             }
             return promise;

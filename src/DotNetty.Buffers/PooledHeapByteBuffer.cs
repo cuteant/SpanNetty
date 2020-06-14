@@ -52,11 +52,11 @@ namespace DotNetty.Buffers
             CheckDstIndex(index, length, dstIndex, dst.Capacity);
             if (dst.HasArray)
             {
-                GetBytes(index, dst.Array, dst.ArrayOffset + dstIndex, length);
+                _ = GetBytes(index, dst.Array, dst.ArrayOffset + dstIndex, length);
             }
             else
             {
-                dst.SetBytes(dstIndex, Memory, Idx(index), length);
+                _ = dst.SetBytes(dstIndex, Memory, Idx(index), length);
             }
             return this;
         }
@@ -105,11 +105,11 @@ namespace DotNetty.Buffers
             CheckSrcIndex(index, length, srcIndex, src.Capacity);
             if (src.HasArray)
             {
-                SetBytes(index, src.Array, src.ArrayOffset + srcIndex, length);
+                _ = SetBytes(index, src.Array, src.ArrayOffset + srcIndex, length);
             }
             else
             {
-                src.GetBytes(srcIndex, Memory, Idx(index), length);
+                _ = src.GetBytes(srcIndex, Memory, Idx(index), length);
             }
             return this;
         }
@@ -199,11 +199,11 @@ namespace DotNetty.Buffers
         {
             if (0u >= (uint)length) { return this; }
 
-            EnsureWritable(length);
+            _ = EnsureWritable(length);
             int wIndex = WriterIndex;
             CheckIndex0(wIndex, length);
             PlatformDependent.Clear(Memory, Idx(wIndex), length);
-            SetWriterIndex(wIndex + length);
+            _ = SetWriterIndex(wIndex + length);
 
             return this;
         }

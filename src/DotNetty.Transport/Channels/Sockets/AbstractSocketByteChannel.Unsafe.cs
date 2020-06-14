@@ -42,16 +42,16 @@ namespace DotNetty.Transport.Channels.Sockets
                     if (byteBuf.IsReadable())
                     {
                         _channel.ReadPending = false;
-                        pipeline.FireChannelRead(byteBuf);
+                        _ = pipeline.FireChannelRead(byteBuf);
                     }
                     else
                     {
-                        byteBuf.Release();
+                        _ = byteBuf.Release();
                     }
                 }
                 allocHandle.ReadComplete();
-                pipeline.FireChannelReadComplete();
-                pipeline.FireExceptionCaught(cause);
+                _ = pipeline.FireChannelReadComplete();
+                _ = pipeline.FireExceptionCaught(cause);
                 if (close || cause is SocketException)
                 {
                     CloseOnRead();
@@ -85,7 +85,7 @@ namespace DotNetty.Transport.Channels.Sockets
                         if (allocHandle.LastBytesRead <= 0)
                         {
                             // nothing was read -> release the buffer.
-                            byteBuf.Release();
+                            _ = byteBuf.Release();
                             byteBuf = null;
                             close = allocHandle.LastBytesRead < 0;
                             if (close)
@@ -99,13 +99,13 @@ namespace DotNetty.Transport.Channels.Sockets
                         allocHandle.IncMessagesRead(1);
                         ch.ReadPending = false;
 
-                        pipeline.FireChannelRead(byteBuf);
+                        _ = pipeline.FireChannelRead(byteBuf);
                         byteBuf = null;
                     }
                     while (allocHandle.ContinueReading());
 
                     allocHandle.ReadComplete();
-                    pipeline.FireChannelReadComplete();
+                    _ = pipeline.FireChannelReadComplete();
 
                     if (close)
                     {

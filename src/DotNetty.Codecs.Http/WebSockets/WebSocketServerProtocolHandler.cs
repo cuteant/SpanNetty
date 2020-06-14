@@ -1,13 +1,11 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
     using System.Collections.Generic;
     using System.Text;
-    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
@@ -69,23 +67,25 @@ namespace DotNetty.Codecs.Http.WebSockets
             public string SelectedSubprotocol => _selectedSubprotocol;
         }
 
-        private static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
-
         private static readonly AttributeKey<WebSocketServerHandshaker> HandshakerAttrKey =
             AttributeKey<WebSocketServerHandshaker>.ValueOf("HANDSHAKER");
 
         private readonly WebSocketServerProtocolConfig _serverConfig;
 
         public WebSocketServerProtocolHandler(WebSocketServerProtocolConfig serverConfig)
-            : base(serverConfig is null || serverConfig.DropPongFrames)
+            : base(CheckNotNull(serverConfig).DropPongFrames, serverConfig.SendCloseFrame, serverConfig.ForceCloseTimeoutMillis)
         {
-            if (serverConfig is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.serverConfig); }
-
             _serverConfig = serverConfig;
         }
 
+        private static WebSocketServerProtocolConfig CheckNotNull(WebSocketServerProtocolConfig serverConfig)
+        {
+            if (serverConfig is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.serverConfig); }
+            return serverConfig;
+        }
+
         public WebSocketServerProtocolHandler(string websocketPath, bool enableUtf8Validator = true)
-            : this(websocketPath, WebSocketServerProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
+            : this(websocketPath, WebSocketServerProtocolConfig.DefaultHandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -95,7 +95,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         }
 
         public WebSocketServerProtocolHandler(string websocketPath, bool checkStartsWith, bool enableUtf8Validator = true)
-            : this(websocketPath, checkStartsWith, WebSocketServerProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
+            : this(websocketPath, checkStartsWith, WebSocketServerProtocolConfig.DefaultHandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -105,7 +105,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         }
 
         public WebSocketServerProtocolHandler(string websocketPath, string subprotocols, bool enableUtf8Validator = true)
-            : this(websocketPath, subprotocols, WebSocketServerProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
+            : this(websocketPath, subprotocols, WebSocketServerProtocolConfig.DefaultHandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -115,7 +115,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         }
 
         public WebSocketServerProtocolHandler(string websocketPath, string subprotocols, bool allowExtensions, bool enableUtf8Validator = true)
-            : this(websocketPath, subprotocols, allowExtensions, WebSocketServerProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
+            : this(websocketPath, subprotocols, allowExtensions, WebSocketServerProtocolConfig.DefaultHandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -127,7 +127,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public WebSocketServerProtocolHandler(string websocketPath, string subprotocols,
             bool allowExtensions, int maxFrameSize, bool enableUtf8Validator = true)
-            : this(websocketPath, subprotocols, allowExtensions, maxFrameSize, WebSocketServerProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
+            : this(websocketPath, subprotocols, allowExtensions, maxFrameSize, WebSocketServerProtocolConfig.DefaultHandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -140,7 +140,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public WebSocketServerProtocolHandler(string websocketPath, string subprotocols,
                 bool allowExtensions, int maxFrameSize, bool allowMaskMismatch, bool enableUtf8Validator = true)
             : this(websocketPath, subprotocols, allowExtensions, maxFrameSize, allowMaskMismatch,
-                 WebSocketServerProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
+                 WebSocketServerProtocolConfig.DefaultHandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -156,7 +156,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                                               bool allowExtensions, int maxFrameSize, bool allowMaskMismatch,
                                               bool checkStartsWith, bool enableUtf8Validator = true)
             : this(websocketPath, subprotocols, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith,
-                 WebSocketServerProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
+                 WebSocketServerProtocolConfig.DefaultHandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -172,7 +172,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                                               bool allowExtensions, int maxFrameSize, bool allowMaskMismatch,
                                               bool checkStartsWith, bool dropPongFrames, bool enableUtf8Validator = true)
             : this(websocketPath, subprotocols, allowExtensions, maxFrameSize, allowMaskMismatch, checkStartsWith,
-                 dropPongFrames, WebSocketServerProtocolConfig.Default.HandshakeTimeoutMillis, enableUtf8Validator)
+                 dropPongFrames, WebSocketServerProtocolConfig.DefaultHandshakeTimeoutMillis, enableUtf8Validator)
         {
         }
 
@@ -210,19 +210,14 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (cp.Get<WebSocketServerProtocolHandshakeHandler>() is null)
             {
                 // Add the WebSocketHandshakeHandler before this one.
-                cp.AddBefore(ctx.Name, nameof(WebSocketServerProtocolHandshakeHandler),
+                _ = cp.AddBefore(ctx.Name, nameof(WebSocketServerProtocolHandshakeHandler),
                     new WebSocketServerProtocolHandshakeHandler(_serverConfig));
             }
 
             if (_serverConfig.DecoderConfig.WithUTF8Validator && cp.Get<Utf8FrameValidator>() is null)
             {
                 // Add the UFT8 checking before this one.
-                cp.AddBefore(ctx.Name, nameof(Utf8FrameValidator), new Utf8FrameValidator());
-            }
-            if (_serverConfig.SendCloseFrame is object)
-            {
-                cp.AddBefore(ctx.Name, nameof(WebSocketCloseFrameHandler),
-                    new WebSocketCloseFrameHandler(_serverConfig.SendCloseFrame, _serverConfig.ForceCloseTimeoutMillis));
+                _ = cp.AddBefore(ctx.Name, nameof(Utf8FrameValidator), new Utf8FrameValidator());
             }
         }
 
@@ -232,8 +227,8 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 case Opcode.Ping: // 从 WebSocketProtocolHandler.Decode 直接复制
                     var contect = frame.Content;
-                    contect.Retain();
-                    ctx.Channel.WriteAndFlushAsync(new PongWebSocketFrame(contect));
+                    _ = contect.Retain();
+                    _ = ctx.Channel.WriteAndFlushAsync(new PongWebSocketFrame(contect));
                     ReadIfNeeded(ctx);
                     return;
 
@@ -246,13 +241,12 @@ namespace DotNetty.Codecs.Http.WebSockets
                     WebSocketServerHandshaker handshaker = GetHandshaker(ctx.Channel);
                     if (handshaker is object)
                     {
-                        frame.Retain();
-                        handshaker.CloseAsync(ctx.Channel, (CloseWebSocketFrame)frame);
+                        _ = frame.Retain();
+                        _ = handshaker.CloseAsync(ctx.Channel, (CloseWebSocketFrame)frame);
                     }
                     else
                     {
-                        ctx.WriteAndFlushAsync(Unpooled.Empty)
-                            .ContinueWith(CloseOnCompleteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                        _ = ctx.WriteAndFlushAsync(Unpooled.Empty).CloseOnComplete(ctx);
                     }
 
                     return;
@@ -269,42 +263,17 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 var response = new DefaultFullHttpResponse(Http11, HttpResponseStatus.BadRequest,
                     Unpooled.WrappedBuffer(Encoding.ASCII.GetBytes(cause.Message)));
-                ctx.Channel.WriteAndFlushAsync(response)
-                    .ContinueWith(CloseOnCompleteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                _ = ctx.Channel.WriteAndFlushAsync(response).CloseOnComplete(ctx);
             }
             else
             {
-                ctx.FireExceptionCaught(cause);
-                ctx.CloseAsync();
+                _ = ctx.FireExceptionCaught(cause);
+                _ = ctx.CloseAsync();
             }
-        }
-
-        static void CloseOnComplete(Task t, object c)
-        {
-            ((IChannelHandlerContext)c).CloseAsync();
         }
 
         internal static WebSocketServerHandshaker GetHandshaker(IChannel channel) => channel.GetAttribute(HandshakerAttrKey).Get();
 
         internal static void SetHandshaker(IChannel channel, WebSocketServerHandshaker handshaker) => channel.GetAttribute(HandshakerAttrKey).Set(handshaker);
-
-        internal static IChannelHandler ForbiddenHttpRequestResponder() => new ForbiddenResponseHandler();
-
-        sealed class ForbiddenResponseHandler : ChannelHandlerAdapter
-        {
-            public override void ChannelRead(IChannelHandlerContext ctx, object msg)
-            {
-                if (msg is IFullHttpRequest request)
-                {
-                    request.Release();
-                    var response = new DefaultFullHttpResponse(Http11, HttpResponseStatus.Forbidden, ctx.Allocator.Buffer(0));
-                    ctx.Channel.WriteAndFlushAsync(response);
-                }
-                else
-                {
-                    ctx.FireChannelRead(msg);
-                }
-            }
-        }
     }
 }

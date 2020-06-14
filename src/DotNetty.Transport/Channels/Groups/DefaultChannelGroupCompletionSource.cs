@@ -67,24 +67,24 @@ namespace DotNetty.Transport.Channels.Groups
                                 }
                             }
                         }
-                        TrySetException(new ChannelGroupException(failed));
+                        _ = TrySetException(new ChannelGroupException(failed));
                     }
                     else
                     {
-                        TrySetResult(0);
+                        _ = TrySetResult(0);
                     }
                 }
             };
             foreach (KeyValuePair<IChannel, Task> pair in futures)
             {
                 _futures.Add(pair.Key, pair.Value);
-                pair.Value.ContinueWith(continueAction);
+                _ = pair.Value.ContinueWith(continueAction);
             }
 
             // Done on arrival?
             if (0u >= (uint)futures.Count)
             {
-                TrySetResult(0);
+                _ = TrySetResult(0);
             }
         }
 

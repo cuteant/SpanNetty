@@ -7,8 +7,7 @@
     /// </summary>
     public class WebSocketServerProtocolConfig
     {
-        internal static readonly WebSocketServerProtocolConfig Default = new WebSocketServerProtocolConfig(
-            "/", null, false, 10000L, 0, true, WebSocketCloseStatus.NormalClosure, true, WebSocketDecoderConfig.Default);
+        internal const long DefaultHandshakeTimeoutMillis = 10000L;
 
         private WebSocketServerProtocolConfig(
             string websocketPath,
@@ -26,13 +25,13 @@
 
             WebsocketPath = websocketPath;
             Subprotocols = subprotocols;
-            this.CheckStartsWith = checkStartsWith;
-            this.HandshakeTimeoutMillis = handshakeTimeoutMillis;
-            this.ForceCloseTimeoutMillis = forceCloseTimeoutMillis;
-            this.HandleCloseFrames = handleCloseFrames;
-            this.SendCloseFrame = sendCloseFrame;
-            this.DropPongFrames = dropPongFrames;
-            this.DecoderConfig = decoderConfig ?? WebSocketDecoderConfig.Default;
+            CheckStartsWith = checkStartsWith;
+            HandshakeTimeoutMillis = handshakeTimeoutMillis;
+            ForceCloseTimeoutMillis = forceCloseTimeoutMillis;
+            HandleCloseFrames = handleCloseFrames;
+            SendCloseFrame = sendCloseFrame;
+            DropPongFrames = dropPongFrames;
+            DecoderConfig = decoderConfig ?? WebSocketDecoderConfig.Default;
         }
 
         /// <summary>
@@ -104,7 +103,8 @@
 
         public static Builder NewBuilder()
         {
-            return new Builder(Default);
+            return new Builder("/", null, false, DefaultHandshakeTimeoutMillis, 0L,
+                               true, WebSocketCloseStatus.NormalClosure, true, WebSocketDecoderConfig.Default);
         }
 
         public sealed class Builder
@@ -135,12 +135,34 @@
                 _decoderConfig = serverConfig.DecoderConfig;
             }
 
+            public Builder(
+                string websocketPath,
+                string subprotocols,
+                bool checkStartsWith,
+                long handshakeTimeoutMillis,
+                long forceCloseTimeoutMillis,
+                bool handleCloseFrames,
+                WebSocketCloseStatus sendCloseFrame,
+                bool dropPongFrames,
+                WebSocketDecoderConfig decoderConfig)
+            {
+                _websocketPath = websocketPath;
+                _subprotocols = subprotocols;
+                _checkStartsWith = checkStartsWith;
+                _handshakeTimeoutMillis = handshakeTimeoutMillis;
+                _forceCloseTimeoutMillis = forceCloseTimeoutMillis;
+                _handleCloseFrames = handleCloseFrames;
+                _sendCloseFrame = sendCloseFrame;
+                _dropPongFrames = dropPongFrames;
+                _decoderConfig = decoderConfig;
+            }
+
             /// <summary>
             /// URI path component to handle websocket upgrade requests on.
             /// </summary>
             public Builder WebsocketPath(String websocketPath)
             {
-                this._websocketPath = websocketPath;
+                _websocketPath = websocketPath;
                 return this;
             }
 
@@ -149,7 +171,7 @@
             /// </summary>
             public Builder Subprotocols(String subprotocols)
             {
-                this._subprotocols = subprotocols;
+                _subprotocols = subprotocols;
                 return this;
             }
 
@@ -159,7 +181,7 @@
             /// </summary>
             public Builder CheckStartsWith(bool checkStartsWith)
             {
-                this._checkStartsWith = checkStartsWith;
+                _checkStartsWith = checkStartsWith;
                 return this;
             }
 
@@ -169,7 +191,7 @@
             /// </summary>
             public Builder HandshakeTimeoutMillis(long handshakeTimeoutMillis)
             {
-                this._handshakeTimeoutMillis = handshakeTimeoutMillis;
+                _handshakeTimeoutMillis = handshakeTimeoutMillis;
                 return this;
             }
 
@@ -178,7 +200,7 @@
             /// </summary>
             public Builder ForceCloseTimeoutMillis(long forceCloseTimeoutMillis)
             {
-                this._forceCloseTimeoutMillis = forceCloseTimeoutMillis;
+                _forceCloseTimeoutMillis = forceCloseTimeoutMillis;
                 return this;
             }
 
@@ -187,7 +209,7 @@
             /// </summary>
             public Builder HandleCloseFrames(bool handleCloseFrames)
             {
-                this._handleCloseFrames = handleCloseFrames;
+                _handleCloseFrames = handleCloseFrames;
                 return this;
             }
 
@@ -196,7 +218,7 @@
             /// </summary>
             public Builder SendCloseFrame(WebSocketCloseStatus sendCloseFrame)
             {
-                this._sendCloseFrame = sendCloseFrame;
+                _sendCloseFrame = sendCloseFrame;
                 return this;
             }
 
@@ -205,7 +227,7 @@
             /// </summary>
             public Builder DropPongFrames(bool dropPongFrames)
             {
-                this._dropPongFrames = dropPongFrames;
+                _dropPongFrames = dropPongFrames;
                 return this;
             }
 
@@ -214,8 +236,8 @@
             /// </summary>
             public Builder DecoderConfig(WebSocketDecoderConfig decoderConfig)
             {
-                this._decoderConfig = decoderConfig ?? WebSocketDecoderConfig.Default;
-                this._decoderConfigBuilder = null;
+                _decoderConfig = decoderConfig ?? WebSocketDecoderConfig.Default;
+                _decoderConfigBuilder = null;
                 return this;
             }
 
@@ -234,7 +256,7 @@
             /// </summary>
             public Builder MaxFramePayloadLength(int maxFramePayloadLength)
             {
-                DecoderConfigBuilder().MaxFramePayloadLength(maxFramePayloadLength);
+                _ = DecoderConfigBuilder().MaxFramePayloadLength(maxFramePayloadLength);
                 return this;
             }
 
@@ -244,7 +266,7 @@
             /// </summary>
             public Builder ExpectMaskedFrames(bool expectMaskedFrames)
             {
-                DecoderConfigBuilder().ExpectMaskedFrames(expectMaskedFrames);
+                _ = DecoderConfigBuilder().ExpectMaskedFrames(expectMaskedFrames);
                 return this;
             }
 
@@ -254,7 +276,7 @@
             /// </summary>
             public Builder AllowMaskMismatch(bool allowMaskMismatch)
             {
-                DecoderConfigBuilder().AllowMaskMismatch(allowMaskMismatch);
+                _ = DecoderConfigBuilder().AllowMaskMismatch(allowMaskMismatch);
                 return this;
             }
 
@@ -263,7 +285,7 @@
             /// </summary>
             public Builder AllowExtensions(bool allowExtensions)
             {
-                DecoderConfigBuilder().AllowExtensions(allowExtensions);
+                _ = DecoderConfigBuilder().AllowExtensions(allowExtensions);
                 return this;
             }
 
@@ -272,7 +294,7 @@
             /// </summary>
             public Builder CloseOnProtocolViolation(bool closeOnProtocolViolation)
             {
-                DecoderConfigBuilder().CloseOnProtocolViolation(closeOnProtocolViolation);
+                _ = DecoderConfigBuilder().CloseOnProtocolViolation(closeOnProtocolViolation);
                 return this;
             }
 
@@ -283,7 +305,7 @@
             /// </summary>
             public Builder WithUTF8Validator(bool withUTF8Validator)
             {
-                DecoderConfigBuilder().WithUTF8Validator(withUTF8Validator);
+                _ = DecoderConfigBuilder().WithUTF8Validator(withUTF8Validator);
                 return this;
             }
 

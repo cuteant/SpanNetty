@@ -96,7 +96,7 @@ namespace DotNetty.Codecs.Http2
             // of the promises and releasing of the ByteBufs here.
             if (_pendingStreams.TryGetValue(streamId, out var stream))
             {
-                _pendingStreams.Remove(streamId);
+                _ = _pendingStreams.Remove(streamId);
                 // Sending a RST_STREAM to a buffered stream will succeed the promise of all frames
                 // associated with the stream, as sending a RST_STREAM means that someone "doesn't care"
                 // about the stream anymore and thus there is not point in failing the promises and invoking
@@ -191,7 +191,7 @@ namespace DotNetty.Codecs.Http2
             }
             foreach (var item in keyList)
             {
-                _pendingStreams.Remove(item);
+                _ = _pendingStreams.Remove(item);
             }
         }
 
@@ -212,7 +212,7 @@ namespace DotNetty.Codecs.Http2
             }
             foreach (var item in keyList)
             {
-                _pendingStreams.Remove(item);
+                _ = _pendingStreams.Remove(item);
             }
         }
 
@@ -325,7 +325,7 @@ namespace DotNetty.Codecs.Http2
 
             public override void Send(IChannelHandlerContext ctx, int streamId)
             {
-                _encoder.WriteHeadersAsync(ctx, streamId, _headers, _streamDependency,
+                _ = _encoder.WriteHeadersAsync(ctx, streamId, _headers, _streamDependency,
                     _weight, _exclusive, _padding, _endOfStream, _promise);
             }
         }
@@ -354,7 +354,7 @@ namespace DotNetty.Codecs.Http2
 
             public override void Send(IChannelHandlerContext ctx, int streamId)
             {
-                _encoder.WriteDataAsync(ctx, streamId, _data, _padding, _endOfStream, _promise);
+                _ = _encoder.WriteDataAsync(ctx, streamId, _data, _padding, _endOfStream, _promise);
             }
         }
     }

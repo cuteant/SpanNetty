@@ -16,8 +16,8 @@ namespace DotNetty.Codecs.Http2
     public class Http2FrameMsLogger : ChannelHandlerAdapter, IHttp2FrameLogger
     {
         private const int BufferLengthThreshold = 64;
-        readonly ILogger logger;
-        readonly LogLevel level;
+        private readonly ILogger _logger;
+        private readonly LogLevel _level;
 
         public Http2FrameMsLogger(LogLevel level)
             : this(level, DotNettyLoggerFactory.DefaultFactory.CreateLogger<Http2FrameMsLogger>())
@@ -37,19 +37,19 @@ namespace DotNetty.Codecs.Http2
         private Http2FrameMsLogger(LogLevel level, ILogger logger)
         {
             if (logger is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.logger); }
-            this.level = level;
-            this.logger = logger;
+            _level = level;
+            _logger = logger;
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        public bool IsEnabled() => logger.IsEnabled(level);
+        public bool IsEnabled() => _logger.IsEnabled(_level);
 
         public void LogData(Direction direction, IChannelHandlerContext ctx, int streamId, IByteBuffer data,
             int padding, bool endStream)
         {
             if (IsEnabled())
             {
-                logger.Log(level, "{0} {1} DATA: streamId={2} padding={3} endStream={4} length={5} bytes={6}",
+                _logger.Log(_level, "{0} {1} DATA: streamId={2} padding={3} endStream={4} length={5} bytes={6}",
                     ctx.Channel, direction, streamId, padding, endStream, data.ReadableBytes, ToString(data));
             }
         }
@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (IsEnabled())
             {
-                logger.Log(level, "{0} {1} HEADERS: streamId={2} headers={3} padding={4} endStream={5}",
+                _logger.Log(_level, "{0} {1} HEADERS: streamId={2} headers={3} padding={4} endStream={5}",
                     ctx.Channel, direction, streamId, headers, padding, endStream);
             }
         }
@@ -69,7 +69,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (IsEnabled())
             {
-                logger.Log(level,
+                _logger.Log(_level,
                     "{0} {1} HEADERS: streamId={2} headers={3} streamDependency={4} weight={5} exclusive={6} padding={7} endStream={8}",
                     ctx.Channel, direction, streamId, headers, streamDependency, weight, exclusive, padding, endStream);
             }
@@ -80,7 +80,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (IsEnabled())
             {
-                logger.Log(level, "{0} {1} PRIORITY: streamId={2} streamDependency={3} weight={4} exclusive={5}",
+                _logger.Log(_level, "{0} {1} PRIORITY: streamId={2} streamDependency={3} weight={4} exclusive={5}",
                     ctx.Channel, direction, streamId, streamDependency, weight, exclusive);
             }
         }
@@ -89,21 +89,21 @@ namespace DotNetty.Codecs.Http2
         {
             if (IsEnabled())
             {
-                logger.Log(level, "{0} {1} RST_STREAM: streamId={2} errorCode={3}",
+                _logger.Log(_level, "{0} {1} RST_STREAM: streamId={2} errorCode={3}",
                     ctx.Channel, direction, streamId, errorCode);
             }
         }
 
         public void LogSettingsAck(Direction direction, IChannelHandlerContext ctx)
         {
-            logger.Log(level, "{0} {1} SETTINGS: ack=true", ctx.Channel, direction);
+            _logger.Log(_level, "{0} {1} SETTINGS: ack=true", ctx.Channel, direction);
         }
 
         public void LogSettings(Direction direction, IChannelHandlerContext ctx, Http2Settings settings)
         {
             if (IsEnabled())
             {
-                logger.Log(level, "{0} {1} SETTINGS: ack=false settings={2}", ctx.Channel, direction, settings);
+                _logger.Log(_level, "{0} {1} SETTINGS: ack=false settings={2}", ctx.Channel, direction, settings);
             }
         }
 
@@ -111,7 +111,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (IsEnabled())
             {
-                logger.Log(level, "{0} {1} PING: ack=false bytes={2}", ctx.Channel, direction, data);
+                _logger.Log(_level, "{0} {1} PING: ack=false bytes={2}", ctx.Channel, direction, data);
             }
         }
 
@@ -119,7 +119,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (IsEnabled())
             {
-                logger.Log(level, "{0} {1} PING: ack=true bytes={2}", ctx.Channel, direction, data);
+                _logger.Log(_level, "{0} {1} PING: ack=true bytes={2}", ctx.Channel, direction, data);
             }
         }
 
@@ -128,7 +128,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (IsEnabled())
             {
-                logger.Log(level, "{0} {1} PUSH_PROMISE: streamId={2} promisedStreamId={3} headers={4} padding={5}",
+                _logger.Log(_level, "{0} {1} PUSH_PROMISE: streamId={2} promisedStreamId={3} headers={4} padding={5}",
                     ctx.Channel, direction, streamId, promisedStreamId, headers, padding);
             }
         }
@@ -137,7 +137,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (IsEnabled())
             {
-                logger.Log(level, "{0} {1} GO_AWAY: lastStreamId={2} errorCode={3} length={4} bytes={5}",
+                _logger.Log(_level, "{0} {1} GO_AWAY: lastStreamId={2} errorCode={3} length={4} bytes={5}",
                     ctx.Channel, direction, lastStreamId, errorCode, debugData.ReadableBytes, ToString(debugData));
             }
         }
@@ -146,7 +146,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (IsEnabled())
             {
-                logger.Log(level, "{0} {1} WINDOW_UPDATE: streamId={2} windowSizeIncrement={3}",
+                _logger.Log(_level, "{0} {1} WINDOW_UPDATE: streamId={2} windowSizeIncrement={3}",
                     ctx.Channel, direction, streamId, windowSizeIncrement);
             }
         }
@@ -156,14 +156,14 @@ namespace DotNetty.Codecs.Http2
         {
             if (IsEnabled())
             {
-                logger.Log(level, "{0} {1} UNKNOWN: frameType={2} streamId={3} flags={4} length={5} bytes={6}",
+                _logger.Log(_level, "{0} {1} UNKNOWN: frameType={2} streamId={3} flags={4} length={5} bytes={6}",
                     ctx.Channel, direction, (byte)frameType & 0xFF, streamId, flags.Value, data.ReadableBytes, ToString(data));
             }
         }
 
         private string ToString(IByteBuffer buf)
         {
-            if (level == LogLevel.Trace || buf.ReadableBytes <= BufferLengthThreshold)
+            if (_level == LogLevel.Trace || buf.ReadableBytes <= BufferLengthThreshold)
             {
                 // Log the entire buffer.
                 return ByteBufferUtil.HexDump(buf);

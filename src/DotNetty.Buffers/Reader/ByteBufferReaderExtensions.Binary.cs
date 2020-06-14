@@ -498,10 +498,10 @@ namespace DotNetty.Buffers
         {
             if (reader.Remaining < DecimalValueLength) { value = default; return false; }
 
-            reader.TryReadInt(out int lo);
-            reader.TryReadInt(out int mid);
-            reader.TryReadInt(out int high);
-            reader.TryReadInt(out int flags);
+            _ = reader.TryReadInt(out int lo);
+            _ = reader.TryReadInt(out int mid);
+            _ = reader.TryReadInt(out int high);
+            _ = reader.TryReadInt(out int flags);
             value = new decimal(new int[] { lo, mid, high, flags });
             return true;
         }
@@ -510,10 +510,10 @@ namespace DotNetty.Buffers
         {
             if (reader.Remaining < DecimalValueLength) { value = default; return false; }
 
-            reader.TryReadIntLE(out int lo);
-            reader.TryReadIntLE(out int mid);
-            reader.TryReadIntLE(out int high);
-            reader.TryReadIntLE(out int flags);
+            _ = reader.TryReadIntLE(out int lo);
+            _ = reader.TryReadIntLE(out int mid);
+            _ = reader.TryReadIntLE(out int high);
+            _ = reader.TryReadIntLE(out int flags);
             value = new decimal(new int[] { lo, mid, high, flags });
             return true;
         }

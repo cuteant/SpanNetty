@@ -7,9 +7,11 @@
     /// </summary>
     public class WebSocketClientProtocolConfig
     {
-        internal static readonly WebSocketClientProtocolConfig Default = new WebSocketClientProtocolConfig(
-            new Uri("https://localhost/"), null, WebSocketVersion.V13, false, EmptyHttpHeaders.Default,
-            65536, true, false, true, WebSocketCloseStatus.NormalClosure, true, 10000L, -1, false, true);
+        internal const long DefaultHandshakeTimeoutMillis = WebSocketServerProtocolConfig.DefaultHandshakeTimeoutMillis;
+        internal const bool DefaultPerformMasking = true;
+        internal const bool DefaultAllowMaskMismatch = false;
+        internal const bool DefaultHandleCloseFrames = true;
+        internal const bool DefaultDropPongFrames = true;
 
         private WebSocketClientProtocolConfig(
             Uri webSocketUri,
@@ -156,7 +158,22 @@
 
         public static Builder NewBuilder()
         {
-            return new Builder(Default);
+            return new Builder(
+                    new Uri("https://localhost/"),
+                    null,
+                    WebSocketVersion.V13,
+                    false,
+                    EmptyHttpHeaders.Default,
+                    65536,
+                    DefaultPerformMasking,
+                    DefaultAllowMaskMismatch,
+                    DefaultHandleCloseFrames,
+                    WebSocketCloseStatus.NormalClosure,
+                    DefaultDropPongFrames,
+                    DefaultHandshakeTimeoutMillis,
+                    -1,
+                    false,
+                    true);
         }
 
         public sealed class Builder
@@ -196,6 +213,40 @@
                 _forceCloseTimeoutMillis = clientConfig.ForceCloseTimeoutMillis;
                 _absoluteUpgradeUrl = clientConfig.AbsoluteUpgradeUrl;
                 _withUTF8Validator = clientConfig.WithUTF8Validator;
+            }
+
+            internal Builder(
+                Uri webSocketUri,
+                string subprotocol,
+                WebSocketVersion version,
+                bool allowExtensions,
+                HttpHeaders customHeaders,
+                int maxFramePayloadLength,
+                bool performMasking,
+                bool allowMaskMismatch,
+                bool handleCloseFrames,
+                WebSocketCloseStatus sendCloseFrame,
+                bool dropPongFrames,
+                long handshakeTimeoutMillis,
+                long forceCloseTimeoutMillis,
+                bool absoluteUpgradeUrl,
+                bool withUTF8Validator)
+            {
+                _webSocketUri = webSocketUri;
+                _subprotocol = subprotocol;
+                _version = version;
+                _allowExtensions = allowExtensions;
+                _customHeaders = customHeaders;
+                _maxFramePayloadLength = maxFramePayloadLength;
+                _performMasking = performMasking;
+                _allowMaskMismatch = allowMaskMismatch;
+                _handleCloseFrames = handleCloseFrames;
+                _sendCloseFrame = sendCloseFrame;
+                _dropPongFrames = dropPongFrames;
+                _handshakeTimeoutMillis = handshakeTimeoutMillis;
+                _forceCloseTimeoutMillis = forceCloseTimeoutMillis;
+                _absoluteUpgradeUrl = absoluteUpgradeUrl;
+                _withUTF8Validator = withUTF8Validator;
             }
 
             /// <summary>

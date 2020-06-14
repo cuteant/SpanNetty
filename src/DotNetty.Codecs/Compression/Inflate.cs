@@ -185,7 +185,7 @@ namespace DotNetty.Codecs.Compression
 
             if (w < 8 || w > 15)
             {
-                InflateEnd();
+                _ = InflateEnd();
                 return Z_STREAM_ERROR;
             }
             if (blocks is object && wbits != w)
@@ -200,7 +200,7 @@ namespace DotNetty.Codecs.Compression
             this.blocks = new InfBlocks(z, 1 << w);
 
             // reset state
-            InflateReset();
+            _ = InflateReset();
 
             return Z_OK;
         }
@@ -813,7 +813,7 @@ namespace DotNetty.Codecs.Compression
             }
             r = z.total_in;
             w = z.total_out;
-            InflateReset();
+            _ = InflateReset();
             z.total_in = r;
             z.total_out = w;
             this.mode = BLOCKS;

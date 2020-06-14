@@ -70,7 +70,7 @@ namespace DotNetty.Buffers
             set
             {
                 EnsureNotClosed();
-                _buffer.SetReaderIndex((int)value);
+                _ = _buffer.SetReaderIndex((int)value);
             }
         }
 
@@ -78,14 +78,14 @@ namespace DotNetty.Buffers
         public void MarkPosition()
         {
             EnsureNotClosed();
-            _buffer.MarkReaderIndex();
+            _ = _buffer.MarkReaderIndex();
         }
 
         /// <summary>Only for reader position</summary>
         public void ResetPosition()
         {
             EnsureNotClosed();
-            _buffer.ResetReaderIndex();
+            _ = _buffer.ResetReaderIndex();
         }
 
         /// <summary>Only for reader position</summary>
@@ -122,20 +122,20 @@ namespace DotNetty.Buffers
             set
             {
                 EnsureNotClosed();
-                _buffer.SetWriterIndex(value);
+                _ = _buffer.SetWriterIndex(value);
             }
         }
 
         public void MarkWriterPosition()
         {
             EnsureNotClosed();
-            _buffer.MarkWriterIndex();
+            _ = _buffer.MarkWriterIndex();
         }
 
         public void ResetWriterPosition()
         {
             EnsureNotClosed();
-            _buffer.ResetWriterIndex();
+            _ = _buffer.ResetWriterIndex();
         }
 
         #endregion
@@ -145,7 +145,7 @@ namespace DotNetty.Buffers
         public override void SetLength(long value)
         {
             EnsureNotClosed();
-            _buffer.EnsureWritable((int)value);
+            _ = _buffer.EnsureWritable((int)value);
         }
 
         #endregion
@@ -260,7 +260,7 @@ namespace DotNetty.Buffers
 
             int read = Math.Min(count, _buffer.ReadableBytes);
             if (0u >= (uint)read) { return 0; }
-            _buffer.ReadBytes(buffer, offset, read);
+            _ = _buffer.ReadBytes(buffer, offset, read);
             return read;
         }
 
@@ -294,7 +294,7 @@ namespace DotNetty.Buffers
             EnsureNotClosed();
             EnsureWriteable();
 
-            _buffer.WriteByte(value);
+            _ = _buffer.WriteByte(value);
         }
 
         public override void Write(byte[] buffer, int offset, int count)
@@ -307,7 +307,7 @@ namespace DotNetty.Buffers
             EnsureNotClosed();
             EnsureWriteable();
 
-            _buffer.WriteBytes(buffer, offset, count);
+            _ = _buffer.WriteBytes(buffer, offset, count);
         }
 
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
@@ -325,7 +325,7 @@ namespace DotNetty.Buffers
 
             try
             {
-                _buffer.WriteBytes(buffer, offset, count);
+                _ = _buffer.WriteBytes(buffer, offset, count);
                 return TaskUtil.Completed;
             }
             //catch (OperationCanceledException oce)
@@ -391,7 +391,7 @@ namespace DotNetty.Buffers
                 _releaseReferenceOnClosure = false;
                 if (disposing)
                 {
-                    _buffer.Release();
+                    _ = _buffer.Release();
                 }
                 else
                 {

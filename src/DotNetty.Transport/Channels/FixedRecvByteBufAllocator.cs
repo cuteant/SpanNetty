@@ -13,18 +13,18 @@ namespace DotNetty.Transport.Channels
 
         sealed class HandleImpl : MaxMessageHandle<FixedRecvByteBufAllocator>
         {
-            readonly int bufferSize;
+            readonly int _bufferSize;
 
             public HandleImpl(FixedRecvByteBufAllocator owner, int bufferSize)
                 : base(owner)
             {
-                this.bufferSize = bufferSize;
+                _bufferSize = bufferSize;
             }
 
-            public override int Guess() => this.bufferSize;
+            public override int Guess() => _bufferSize;
         }
 
-        readonly int bufferSize;
+        readonly int _bufferSize;
 
         /// <summary>
         ///     Creates a new predictor that always returns the same prediction of
@@ -37,9 +37,9 @@ namespace DotNetty.Transport.Channels
                 ThrowHelper.ThrowArgumentException_Positive(bufferSize, ExceptionArgument.bufferSize);
             }
 
-            this.bufferSize = bufferSize;
+            _bufferSize = bufferSize;
         }
 
-        public override IRecvByteBufAllocatorHandle NewHandle() => new HandleImpl(this, this.bufferSize);
+        public override IRecvByteBufAllocatorHandle NewHandle() => new HandleImpl(this, _bufferSize);
     }
 }

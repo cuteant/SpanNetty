@@ -55,7 +55,7 @@ namespace DotNetty.Codecs.Http2
             try
             {
                 // call retain here as it will call release after its written to the channel
-                channel.WriteInbound(data.Retain());
+                _ = channel.WriteInbound(data.Retain());
                 var buf = NextReadableBuf(channel);
                 if (buf is null && endOfStream && channel.Finish())
                 {
@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     if (endOfStream)
                     {
-                        _listener.OnDataRead(ctx, streamId, Unpooled.Empty, padding, true);
+                        _ = _listener.OnDataRead(ctx, streamId, Unpooled.Empty, padding, true);
                     }
                     // No new decompressed data was extracted from the compressed data. This means the application could
                     // not be provided with data and thus could not return how many bytes were processed. We will assume
@@ -92,7 +92,7 @@ namespace DotNetty.Codecs.Http2
                         // Immediately return the bytes back to the flow controller. ConsumedBytesConverter will convert
                         // from the decompressed amount which the user knows about to the compressed amount which flow
                         // control knows about.
-                        flowController.ConsumeBytes(stream,
+                        _ = flowController.ConsumeBytes(stream,
                                 _listener.OnDataRead(ctx, streamId, buf, padding, decompressedEndOfStream));
                         if (nextBuf is null)
                         {
@@ -100,7 +100,7 @@ namespace DotNetty.Codecs.Http2
                         }
 
                         padding = 0; // Padding is only communicated once on the first iteration.
-                        buf.Release();
+                        _ = buf.Release();
                         buf = nextBuf;
                     }
                     // We consume bytes each time we call the listener to ensure if multiple frames are decompressed
@@ -110,7 +110,7 @@ namespace DotNetty.Codecs.Http2
                 }
                 finally
                 {
-                    buf.Release();
+                    _ = buf.Release();
                 }
             }
             catch (Http2Exception)
@@ -205,17 +205,17 @@ namespace DotNetty.Codecs.Http2
                 if (channel is object)
                 {
                     decompressor = new Http2Decompressor(channel);
-                    stream.SetProperty(_propertyKey, decompressor);
+                    _ = stream.SetProperty(_propertyKey, decompressor);
                     // Decode the content and remove or replace the existing headers
                     // so that the message looks like a decoded message.
                     var targetContentEncoding = GetTargetContentEncoding(contentEncoding);
                     if (HttpHeaderValues.Identity.ContentEqualsIgnoreCase(targetContentEncoding))
                     {
-                        headers.Remove(HttpHeaderNames.ContentEncoding);
+                        _ = headers.Remove(HttpHeaderNames.ContentEncoding);
                     }
                     else
                     {
-                        headers.Set(HttpHeaderNames.ContentEncoding, targetContentEncoding);
+                        _ = headers.Set(HttpHeaderNames.ContentEncoding, targetContentEncoding);
                     }
                 }
             }
@@ -225,7 +225,7 @@ namespace DotNetty.Codecs.Http2
                 // The content length will be for the compressed data. Since we will decompress the data
                 // this content-length will not be correct. Instead of queuing messages or delaying sending
                 // header frames...just remove the content-length header
-                headers.Remove(HttpHeaderNames.ContentLength);
+                _ = headers.Remove(HttpHeaderNames.ContentLength);
 
                 // The first time that we initialize a decompressor, decorate the local flow controller to
                 // properly convert consumed bytes.
@@ -249,7 +249,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="decompressor">The decompressor for <c>stream</c></param>
         private static void Cleanup(Http2Decompressor decompressor)
         {
-            decompressor.Decompressor.FinishAndReleaseAll();
+            _ = decompressor.Decompressor.FinishAndReleaseAll();
         }
 
         /// <summary>
@@ -266,7 +266,7 @@ namespace DotNetty.Codecs.Http2
                 if (buf is null) { return null; }
                 if (!buf.IsReadable())
                 {
-                    buf.Release();
+                    _ = buf.Release();
                     continue;
                 }
                 return buf;

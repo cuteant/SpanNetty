@@ -3,8 +3,6 @@
 
 namespace DotNetty.Codecs.Http
 {
-    using System;
-    using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
@@ -30,7 +28,7 @@ namespace DotNetty.Codecs.Http
                     this.persistentConnection = IsKeepAlive(request);
                 }
             }
-            context.FireChannelRead(message);
+            _ = context.FireChannelRead(message);
         }
 
         public override void Write(IChannelHandlerContext context, object message, IPromise promise)
@@ -56,16 +54,9 @@ namespace DotNetty.Codecs.Http
             if (message is ILastHttpContent && !this.ShouldKeepAlive())
             {
                 promise = promise.Unvoid();
-                promise.Task.ContinueWith(CloseOnCompleteAction, context, TaskContinuationOptions.ExecuteSynchronously);
+                _ = promise.Task.CloseOnComplete(context);
             }
             base.Write(context, message, promise);
-        }
-
-        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
-        static void CloseOnComplete(Task task, object state)
-        {
-            var context = (IChannelHandlerContext)state;
-            context.CloseAsync();
         }
 
         void TrackResponse(IHttpResponse response)

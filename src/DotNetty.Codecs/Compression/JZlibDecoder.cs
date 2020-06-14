@@ -14,11 +14,42 @@ namespace DotNetty.Codecs.Compression
         readonly byte[] dictionary;
         int finished;
 
-        public JZlibDecoder() : this(ZlibWrapper.ZlibOrNone)
+        /// <summary>
+        /// Creates a new instance with the default wrapper (<see cref="ZlibWrapper.ZlibOrNone"/>).
+        /// </summary>
+        public JZlibDecoder()
+            : this(ZlibWrapper.ZlibOrNone, 0)
         {
         }
 
+        /// <summary>
+        /// Creates a new instance with the default wrapper (<see cref="ZlibWrapper.ZlibOrNone"/>)
+        /// and specified maximum buffer allocation.
+        /// </summary>
+        /// <param name="maxAllocation">Maximum size of the decompression buffer. Must be &gt;= 0.
+        /// If zero, maximum size is decided by the <see cref="IByteBufferAllocator"/>.</param>
+        public JZlibDecoder(int maxAllocation)
+            : this(ZlibWrapper.ZlibOrNone, maxAllocation)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new instance with the specified wrapper.
+        /// </summary>
+        /// <param name="wrapper"></param>
         public JZlibDecoder(ZlibWrapper wrapper)
+            : this(wrapper, 0)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new instance with the specified wrapper and maximum buffer allocation.
+        /// </summary>
+        /// <param name="wrapper"></param>
+        /// <param name="maxAllocation">Maximum size of the decompression buffer. Must be &gt;= 0.
+        /// If zero, maximum size is decided by the <see cref="IByteBufferAllocator"/>.</param>
+        public JZlibDecoder(ZlibWrapper wrapper, int maxAllocation)
+            : base(maxAllocation)
         {
             int resultCode = this.z.Init(ZlibUtil.ConvertWrapperType(wrapper));
             if (resultCode != JZlib.Z_OK)
@@ -27,7 +58,27 @@ namespace DotNetty.Codecs.Compression
             }
         }
 
+        /// <summary>
+        /// Creates a new instance with the specified preset dictionary. The wrapper
+        /// is always <see cref="ZlibWrapper.Zlib"/> because it is the only format that
+        /// supports the preset dictionary.
+        /// </summary>
+        /// <param name="dictionary"></param>
         public JZlibDecoder(byte[] dictionary)
+            : this(dictionary, 0)
+        {
+        }
+
+        /// <summary>
+        /// Creates a new instance with the specified preset dictionary and maximum buffer allocation.
+        /// The wrapper is always <see cref="ZlibWrapper.Zlib"/> because it is the only format that
+        /// supports the preset dictionary.
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <param name="maxAllocation">Maximum size of the decompression buffer. Must be &gt;= 0.
+        /// If zero, maximum size is decided by the <see cref="IByteBufferAllocator"/>.</param>
+        public JZlibDecoder(byte[] dictionary, int maxAllocation)
+            : base(maxAllocation)
         {
             if (dictionary is null) { CThrowHelper.ThrowArgumentNullException(CExceptionArgument.dictionary); }
             this.dictionary = dictionary;
@@ -47,12 +98,12 @@ namespace DotNetty.Codecs.Compression
             if (SharedConstants.False < (uint)Volatile.Read(ref this.finished))
             {
                 // Skip data received after finished.
-                input.SkipBytes(input.ReadableBytes);
+                _ = input.SkipBytes(input.ReadableBytes);
                 return;
             }
 
             int inputLength = input.ReadableBytes;
-            if (inputLength == 0)
+            if (0u >= (uint)inputLength)
             {
                 return;
             }
@@ -69,22 +120,21 @@ namespace DotNetty.Codecs.Compression
                 else
                 {
                     var array = new byte[inputLength];
-                    input.GetBytes(input.ReaderIndex, array);
+                    _ = input.GetBytes(input.ReaderIndex, array);
                     this.z.next_in = array;
                     this.z.next_in_index = 0;
                 }
                 int oldNextInIndex = this.z.next_in_index;
 
                 // Configure output.
-                int maxOutputLength = inputLength << 1;
-                IByteBuffer decompressed = context.Allocator.Buffer(maxOutputLength);
+                IByteBuffer decompressed = PrepareDecompressBuffer(context, null, inputLength << 1);
 
                 try
                 {
                     while (true)
                     {
-                        this.z.avail_out = maxOutputLength;
-                        decompressed.EnsureWritable(maxOutputLength);
+                        decompressed = PrepareDecompressBuffer(context, decompressed, z.avail_in << 1);
+                        this.z.avail_out = decompressed.WritableBytes;
                         this.z.next_out = decompressed.Array;
                         this.z.next_out_index = decompressed.ArrayOffset + decompressed.WriterIndex;
                         int oldNextOutIndex = this.z.next_out_index;
@@ -94,7 +144,7 @@ namespace DotNetty.Codecs.Compression
                         int outputLength = this.z.next_out_index - oldNextOutIndex;
                         if (outputLength > 0)
                         {
-                            decompressed.SetWriterIndex(decompressed.WriterIndex + outputLength);
+                            _ = decompressed.SetWriterIndex(decompressed.WriterIndex + outputLength);
                         }
 
                         if (resultCode == JZlib.Z_NEED_DICT)
@@ -115,13 +165,13 @@ namespace DotNetty.Codecs.Compression
                         }
                         if (resultCode == JZlib.Z_STREAM_END)
                         {
-                            Interlocked.Exchange(ref this.finished, SharedConstants.True); // Do not decode anymore.
-                            this.z.InflateEnd();
+                            _ = Interlocked.Exchange(ref this.finished, SharedConstants.True); // Do not decode anymore.
+                            _ = this.z.InflateEnd();
                             break;
                         }
                         if (resultCode == JZlib.Z_OK)
                         {
-                           continue;
+                            continue;
                         }
                         if (resultCode == JZlib.Z_BUF_ERROR)
                         {
@@ -138,14 +188,14 @@ namespace DotNetty.Codecs.Compression
                 }
                 finally
                 {
-                     input.SkipBytes(this.z.next_in_index - oldNextInIndex);
+                    _ = input.SkipBytes(this.z.next_in_index - oldNextInIndex);
                     if (decompressed.IsReadable())
                     {
                         output.Add(decompressed);
                     }
                     else
                     {
-                        decompressed.Release();
+                        _ = decompressed.Release();
                     }
                 }
             }
@@ -155,6 +205,11 @@ namespace DotNetty.Codecs.Compression
                 this.z.next_out = null;
             }
 
+        }
+
+        protected override void DecompressionBufferExhausted(IByteBuffer buffer)
+        {
+            _ = Interlocked.Exchange(ref this.finished, SharedConstants.True);
         }
     }
 }

@@ -161,7 +161,7 @@ namespace DotNetty.Codecs.Http2
             {
                 HpackHeaderField entry = GetEntry(index);
                 ICharSequence name = entry._name;
-                ret.Set(name, index);
+                _ = ret.Set(name, index);
             }
 
             return ret;

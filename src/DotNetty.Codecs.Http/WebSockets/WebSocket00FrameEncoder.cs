@@ -49,7 +49,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     try
                     {
                         // Encode type.
-                        buf.WriteByte(0x80);
+                        _ = buf.WriteByte(0x80);
 
                         // Encode length.
                         int b1 = dataLen.RightUShift(28) & 0x7F;
@@ -62,27 +62,27 @@ namespace DotNetty.Codecs.Http.WebSockets
                             {
                                 if (0u >= (uint)b3)
                                 {
-                                    buf.WriteByte(b4);
+                                    _ = buf.WriteByte(b4);
                                 }
                                 else
                                 {
-                                    buf.WriteByte(b3 | 0x80);
-                                    buf.WriteByte(b4);
+                                    _ = buf.WriteByte(b3 | 0x80);
+                                    _ = buf.WriteByte(b4);
                                 }
                             }
                             else
                             {
-                                buf.WriteByte(b2 | 0x80);
-                                buf.WriteByte(b3 | 0x80);
-                                buf.WriteByte(b4);
+                                _ = buf.WriteByte(b2 | 0x80);
+                                _ = buf.WriteByte(b3 | 0x80);
+                                _ = buf.WriteByte(b4);
                             }
                         }
                         else
                         {
-                            buf.WriteByte(b1 | 0x80);
-                            buf.WriteByte(b2 | 0x80);
-                            buf.WriteByte(b3 | 0x80);
-                            buf.WriteByte(b4);
+                            _ = buf.WriteByte(b1 | 0x80);
+                            _ = buf.WriteByte(b2 | 0x80);
+                            _ = buf.WriteByte(b3 | 0x80);
+                            _ = buf.WriteByte(b4);
                         }
 
                         // Encode binary data.
@@ -92,7 +92,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     }
                     finally
                     {
-                        if (release) { buf.Release(); }
+                        if (release) { _ = buf.Release(); }
                     }
                     break;
             }

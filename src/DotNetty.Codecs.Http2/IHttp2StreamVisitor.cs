@@ -19,16 +19,16 @@ namespace DotNetty.Codecs.Http2
         bool Visit(IHttp2Stream stream);
     }
 
-    public readonly struct FuncHttp2StreamVisitor : IHttp2StreamVisitor
+    public sealed class FuncHttp2StreamVisitor : IHttp2StreamVisitor
     {
-        private readonly Func<IHttp2Stream, bool> visitFunc;
+        private readonly Func<IHttp2Stream, bool> _visitFunc;
 
         public FuncHttp2StreamVisitor(Func<IHttp2Stream, bool> visitFunc)
         {
             if (visitFunc is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.visitFunc); }
-            this.visitFunc = visitFunc;
+            _visitFunc = visitFunc;
         }
 
-        public bool Visit(IHttp2Stream stream) => this.visitFunc(stream);
+        public bool Visit(IHttp2Stream stream) => _visitFunc(stream);
     }
 }

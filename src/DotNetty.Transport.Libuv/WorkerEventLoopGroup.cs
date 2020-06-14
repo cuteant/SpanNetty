@@ -124,7 +124,7 @@ namespace DotNetty.Transport.Libuv
         {
             foreach (WorkerEventLoop eventLoop in _eventLoops)
             {
-                eventLoop.ShutdownGracefullyAsync(quietPeriod, timeout);
+                _ = eventLoop.ShutdownGracefullyAsync(quietPeriod, timeout);
             }
             return TerminationCompletion;
         }

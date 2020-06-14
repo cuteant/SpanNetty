@@ -78,8 +78,8 @@ namespace DotNetty.Codecs.Http2
 
                 int remainingData = data.ReadableBytes;
                 Http2Flags flags = new Http2Flags();
-                flags.EndOfStream(false);
-                flags.PaddingPresent(false);
+                _ = flags.EndOfStream(false);
+                _ = flags.PaddingPresent(false);
                 // Fast path to write frames of payload size maxFrameSize first.
                 if (remainingData > _maxFrameSize)
                 {
@@ -88,10 +88,10 @@ namespace DotNetty.Codecs.Http2
                     do
                     {
                         // Write the header.
-                        ctx.WriteAsync(frameHeader.RetainedSlice(), promiseAggregator.NewPromise());
+                        _ = ctx.WriteAsync(frameHeader.RetainedSlice(), promiseAggregator.NewPromise());
 
                         // Write the payload.
-                        ctx.WriteAsync(data.ReadRetainedSlice(_maxFrameSize), promiseAggregator.NewPromise());
+                        _ = ctx.WriteAsync(data.ReadRetainedSlice(_maxFrameSize), promiseAggregator.NewPromise());
 
                         remainingData -= _maxFrameSize;
                         // Stop iterating if remainingData ==  _maxFrameSize so we can take care of reference counts below.
@@ -104,19 +104,19 @@ namespace DotNetty.Codecs.Http2
                     // Write the header.
                     if (frameHeader is object)
                     {
-                        frameHeader.Release();
+                        _ = frameHeader.Release();
                         frameHeader = null;
                     }
 
                     IByteBuffer frameHeader2 = ctx.Allocator.Buffer(Http2CodecUtil.FrameHeaderLength);
-                    flags.EndOfStream(endOfStream);
+                    _ = flags.EndOfStream(endOfStream);
                     Http2CodecUtil.WriteFrameHeaderInternal(frameHeader2, remainingData, Http2FrameTypes.Data, flags, streamId);
-                    ctx.WriteAsync(frameHeader2, promiseAggregator.NewPromise());
+                    _ = ctx.WriteAsync(frameHeader2, promiseAggregator.NewPromise());
 
                     // Write the payload.
                     IByteBuffer lastFrame = data.ReadSlice(remainingData);
                     data = null;
-                    ctx.WriteAsync(lastFrame, promiseAggregator.NewPromise());
+                    _ = ctx.WriteAsync(lastFrame, promiseAggregator.NewPromise());
                 }
                 else
                 {
@@ -124,7 +124,7 @@ namespace DotNetty.Codecs.Http2
                     {
                         if (frameHeader is object)
                         {
-                            frameHeader.Release();
+                            _ = frameHeader.Release();
                             frameHeader = null;
                         }
                     }
@@ -144,12 +144,12 @@ namespace DotNetty.Codecs.Http2
                             frameHeader = null;
                         }
 
-                        ctx.WriteAsync(lastFrame, promiseAggregator.NewPromise());
+                        _ = ctx.WriteAsync(lastFrame, promiseAggregator.NewPromise());
 
                         // Write the payload.
                         lastFrame = data.ReadableBytes != _maxFrameSize ? data.ReadSlice(_maxFrameSize) : data;
                         data = null;
-                        ctx.WriteAsync(lastFrame, promiseAggregator.NewPromise());
+                        _ = ctx.WriteAsync(lastFrame, promiseAggregator.NewPromise());
                     }
 
                     do
@@ -163,11 +163,11 @@ namespace DotNetty.Codecs.Http2
 
                         // Write the header.
                         IByteBuffer frameHeader2 = ctx.Allocator.Buffer(Http2CodecUtil.DataFrameHeaderLength);
-                        flags.EndOfStream(endOfStream && 0u >= (uint)remainingData && 0u >= (uint)padding);
-                        flags.PaddingPresent(framePaddingBytes > 0);
+                        _ = flags.EndOfStream(endOfStream && 0u >= (uint)remainingData && 0u >= (uint)padding);
+                        _ = flags.PaddingPresent(framePaddingBytes > 0);
                         Http2CodecUtil.WriteFrameHeaderInternal(frameHeader2, framePaddingBytes + frameDataBytes, Http2FrameTypes.Data, flags, streamId);
                         WritePaddingLength(frameHeader2, framePaddingBytes);
-                        ctx.WriteAsync(frameHeader2, promiseAggregator.NewPromise());
+                        _ = ctx.WriteAsync(frameHeader2, promiseAggregator.NewPromise());
 
                         // Write the payload.
                         if (frameDataBytes != 0)
@@ -176,18 +176,18 @@ namespace DotNetty.Codecs.Http2
                             {
                                 IByteBuffer lastFrame = data.ReadSlice(frameDataBytes);
                                 data = null;
-                                ctx.WriteAsync(lastFrame, promiseAggregator.NewPromise());
+                                _ = ctx.WriteAsync(lastFrame, promiseAggregator.NewPromise());
                             }
                             else
                             {
-                                ctx.WriteAsync(data.ReadRetainedSlice(frameDataBytes), promiseAggregator.NewPromise());
+                                _ = ctx.WriteAsync(data.ReadRetainedSlice(frameDataBytes), promiseAggregator.NewPromise());
                             }
                         }
 
                         // Write the frame padding.
                         if (PaddingBytes(framePaddingBytes) > 0)
                         {
-                            ctx.WriteAsync(
+                            _ = ctx.WriteAsync(
                                 ZeroBuffer.Slice(0, PaddingBytes(framePaddingBytes)),
                                 promiseAggregator.NewPromise());
                         }
@@ -197,24 +197,24 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Exception cause)
             {
-                if (frameHeader is object) { frameHeader.Release(); }
+                if (frameHeader is object) { _ = frameHeader.Release(); }
 
                 // Use a try/finally here in case the data has been released before calling this method. This is not
                 // necessary above because we internally allocate frameHeader.
                 try
                 {
-                    if (data is object) { data.Release(); }
+                    if (data is object) { _ = data.Release(); }
                 }
                 finally
                 {
                     promiseAggregator.SetException(cause);
-                    promiseAggregator.DoneAllocatingPromises();
+                    _ = promiseAggregator.DoneAllocatingPromises();
                 }
 
                 return promiseAggregator.Task;
             }
 
-            promiseAggregator.DoneAllocatingPromises();
+            _ = promiseAggregator.DoneAllocatingPromises();
             return promiseAggregator.Task;
         }
 
@@ -251,9 +251,9 @@ namespace DotNetty.Codecs.Http2
 
                 IByteBuffer buf = ctx.Allocator.Buffer(Http2CodecUtil.PriorityFrameLength);
                 Http2CodecUtil.WriteFrameHeaderInternal(buf, Http2CodecUtil.PriorityEntryLength, Http2FrameTypes.Priority, new Http2Flags(), streamId);
-                buf.WriteInt(exclusive ? (int)(0x80000000L | streamDependency) : streamDependency);
+                _ = buf.WriteInt(exclusive ? (int)(0x80000000L | streamDependency) : streamDependency);
                 // Adjust the weight so that it fits into a single byte on the wire.
-                buf.WriteByte(weight - 1);
+                _ = buf.WriteByte(weight - 1);
                 return ctx.WriteAsync(buf, promise);
             }
             catch (Exception t)
@@ -272,7 +272,7 @@ namespace DotNetty.Codecs.Http2
 
                 IByteBuffer buf = ctx.Allocator.Buffer(Http2CodecUtil.RstStreamFrameLength);
                 Http2CodecUtil.WriteFrameHeaderInternal(buf, Http2CodecUtil.IntFieldLength, Http2FrameTypes.RstStream, new Http2Flags(), streamId);
-                buf.WriteInt((int)errorCode);
+                _ = buf.WriteInt((int)errorCode);
                 return ctx.WriteAsync(buf, promise);
             }
             catch (Exception t)
@@ -293,8 +293,8 @@ namespace DotNetty.Codecs.Http2
                 Http2CodecUtil.WriteFrameHeaderInternal(buf, payloadLength, Http2FrameTypes.Settings, new Http2Flags(), 0);
                 foreach (KeyValuePair<char, long> entry in settings)
                 {
-                    buf.WriteChar(entry.Key);
-                    buf.WriteInt((int)entry.Value);
+                    _ = buf.WriteChar(entry.Key);
+                    _ = buf.WriteInt((int)entry.Value);
                 }
 
                 return ctx.WriteAsync(buf, promise);
@@ -328,7 +328,7 @@ namespace DotNetty.Codecs.Http2
             // Assume nothing below will throw until buf is written. That way we don't have to take care of ownership
             // in the catch block.
             Http2CodecUtil.WriteFrameHeaderInternal(buf, Http2CodecUtil.PingFramePayloadLength, Http2FrameTypes.Ping, flags, 0);
-            buf.WriteLong(data);
+            _ = buf.WriteLong(data);
             return ctx.WriteAsync(buf, promise);
         }
 
@@ -354,7 +354,7 @@ namespace DotNetty.Codecs.Http2
                 int maxFragmentLength = _maxFrameSize - nonFragmentLength;
                 IByteBuffer fragment = headerBlock.ReadRetainedSlice(Math.Min(headerBlock.ReadableBytes, maxFragmentLength));
 
-                flags.EndOfHeaders(!headerBlock.IsReadable());
+                _ = flags.EndOfHeaders(!headerBlock.IsReadable());
 
                 int payloadLength = fragment.ReadableBytes + nonFragmentLength;
                 IByteBuffer buf = ctx.Allocator.Buffer(Http2CodecUtil.PushPromiseFrameHeaderLength);
@@ -362,21 +362,21 @@ namespace DotNetty.Codecs.Http2
                 WritePaddingLength(buf, padding);
 
                 // Write out the promised stream ID.
-                buf.WriteInt(promisedStreamId);
-                ctx.WriteAsync(buf, promiseAggregator.NewPromise());
+                _ = buf.WriteInt(promisedStreamId);
+                _ = ctx.WriteAsync(buf, promiseAggregator.NewPromise());
 
                 // Write the first fragment.
-                ctx.WriteAsync(fragment, promiseAggregator.NewPromise());
+                _ = ctx.WriteAsync(fragment, promiseAggregator.NewPromise());
 
                 // Write out the padding, if any.
                 if (PaddingBytes(padding) > 0)
                 {
-                    ctx.WriteAsync(ZeroBuffer.Slice(0, PaddingBytes(padding)), promiseAggregator.NewPromise());
+                    _ = ctx.WriteAsync(ZeroBuffer.Slice(0, PaddingBytes(padding)), promiseAggregator.NewPromise());
                 }
 
                 if (!flags.EndOfHeaders())
                 {
-                    WriteContinuationFramesAsync(ctx, streamId, headerBlock, promiseAggregator);
+                    _ = WriteContinuationFramesAsync(ctx, streamId, headerBlock, promiseAggregator);
                 }
             }
             catch (Http2Exception e)
@@ -386,15 +386,15 @@ namespace DotNetty.Codecs.Http2
             catch (Exception t)
             {
                 promiseAggregator.SetException(t);
-                promiseAggregator.DoneAllocatingPromises();
+                _ = promiseAggregator.DoneAllocatingPromises();
                 throw;
             }
             finally
             {
-                if (headerBlock is object) { headerBlock.Release(); }
+                if (headerBlock is object) { _ = headerBlock.Release(); }
             }
 
-            promiseAggregator.DoneAllocatingPromises();
+            _ = promiseAggregator.DoneAllocatingPromises();
             return promiseAggregator.Task;
         }
 
@@ -412,20 +412,20 @@ namespace DotNetty.Codecs.Http2
                 // Assume nothing below will throw until buf is written. That way we don't have to take care of ownership
                 // in the catch block.
                 Http2CodecUtil.WriteFrameHeaderInternal(buf, payloadLength, Http2FrameTypes.GoAway, new Http2Flags(), 0);
-                buf.WriteInt(lastStreamId);
-                buf.WriteInt((int)errorCode);
-                ctx.WriteAsync(buf, promiseAggregator.NewPromise());
+                _ = buf.WriteInt(lastStreamId);
+                _ = buf.WriteInt((int)errorCode);
+                _ = ctx.WriteAsync(buf, promiseAggregator.NewPromise());
             }
             catch (Exception t)
             {
                 try
                 {
-                    debugData.Release();
+                    _ = debugData.Release();
                 }
                 finally
                 {
                     promiseAggregator.SetException(t);
-                    promiseAggregator.DoneAllocatingPromises();
+                    _ = promiseAggregator.DoneAllocatingPromises();
                 }
 
                 return promiseAggregator.Task;
@@ -433,14 +433,14 @@ namespace DotNetty.Codecs.Http2
 
             try
             {
-                ctx.WriteAsync(debugData, promiseAggregator.NewPromise());
+                _ = ctx.WriteAsync(debugData, promiseAggregator.NewPromise());
             }
             catch (Exception t)
             {
                 promiseAggregator.SetException(t);
             }
 
-            promiseAggregator.DoneAllocatingPromises();
+            _ = promiseAggregator.DoneAllocatingPromises();
             return promiseAggregator.Task;
         }
 
@@ -453,7 +453,7 @@ namespace DotNetty.Codecs.Http2
 
                 IByteBuffer buf = ctx.Allocator.Buffer(Http2CodecUtil.WindowUpdateFrameLength);
                 Http2CodecUtil.WriteFrameHeaderInternal(buf, Http2CodecUtil.IntFieldLength, Http2FrameTypes.WindowUpdate, new Http2Flags(), streamId);
-                buf.WriteInt(windowSizeIncrement);
+                _ = buf.WriteInt(windowSizeIncrement);
                 return ctx.WriteAsync(buf, promise);
             }
             catch (Exception t)
@@ -474,18 +474,18 @@ namespace DotNetty.Codecs.Http2
                 // Assume nothing below will throw until buf is written. That way we don't have to take care of ownership
                 // in the catch block.
                 Http2CodecUtil.WriteFrameHeaderInternal(buf, payload.ReadableBytes, frameType, flags, streamId);
-                ctx.WriteAsync(buf, promiseAggregator.NewPromise());
+                _ = ctx.WriteAsync(buf, promiseAggregator.NewPromise());
             }
             catch (Exception t)
             {
                 try
                 {
-                    payload.Release();
+                    _ = payload.Release();
                 }
                 finally
                 {
                     promiseAggregator.SetException(t);
-                    promiseAggregator.DoneAllocatingPromises();
+                    _ = promiseAggregator.DoneAllocatingPromises();
                 }
 
                 return promiseAggregator.Task;
@@ -493,14 +493,14 @@ namespace DotNetty.Codecs.Http2
 
             try
             {
-                ctx.WriteAsync(payload, promiseAggregator.NewPromise());
+                _ = ctx.WriteAsync(payload, promiseAggregator.NewPromise());
             }
             catch (Exception t)
             {
                 promiseAggregator.SetException(t);
             }
 
-            promiseAggregator.DoneAllocatingPromises();
+            _ = promiseAggregator.DoneAllocatingPromises();
             return promiseAggregator.Task;
         }
 
@@ -545,7 +545,7 @@ namespace DotNetty.Codecs.Http2
                 IByteBuffer fragment = headerBlock.ReadRetainedSlice(Math.Min(headerBlock.ReadableBytes, maxFragmentLength));
 
                 // Set the end of headers flag for the first frame.
-                flags.EndOfHeaders(!headerBlock.IsReadable());
+                _ = flags.EndOfHeaders(!headerBlock.IsReadable());
 
                 int payloadLength = fragment.ReadableBytes + nonFragmentBytes;
                 IByteBuffer buf = ctx.Allocator.Buffer(Http2CodecUtil.HeadersFrameHeaderLength);
@@ -554,26 +554,26 @@ namespace DotNetty.Codecs.Http2
 
                 if (hasPriority)
                 {
-                    buf.WriteInt(exclusive ? (int)(0x80000000L | streamDependency) : streamDependency);
+                    _ = buf.WriteInt(exclusive ? (int)(0x80000000L | streamDependency) : streamDependency);
 
                     // Adjust the weight so that it fits into a single byte on the wire.
-                    buf.WriteByte(weight - 1);
+                    _ = buf.WriteByte(weight - 1);
                 }
 
-                ctx.WriteAsync(buf, promiseAggregator.NewPromise());
+                _ = ctx.WriteAsync(buf, promiseAggregator.NewPromise());
 
                 // Write the first fragment.
-                ctx.WriteAsync(fragment, promiseAggregator.NewPromise());
+                _ = ctx.WriteAsync(fragment, promiseAggregator.NewPromise());
 
                 // Write out the padding, if any.
                 if (PaddingBytes(padding) > 0)
                 {
-                    ctx.WriteAsync(ZeroBuffer.Slice(0, PaddingBytes(padding)), promiseAggregator.NewPromise());
+                    _ = ctx.WriteAsync(ZeroBuffer.Slice(0, PaddingBytes(padding)), promiseAggregator.NewPromise());
                 }
 
                 if (!flags.EndOfHeaders())
                 {
-                    WriteContinuationFramesAsync(ctx, streamId, headerBlock, promiseAggregator);
+                    _ = WriteContinuationFramesAsync(ctx, streamId, headerBlock, promiseAggregator);
                 }
             }
             catch (Http2Exception e)
@@ -583,15 +583,15 @@ namespace DotNetty.Codecs.Http2
             catch (Exception t)
             {
                 promiseAggregator.SetException(t);
-                promiseAggregator.DoneAllocatingPromises();
+                _ = promiseAggregator.DoneAllocatingPromises();
                 throw;
             }
             finally
             {
-                headerBlock?.Release();
+                _ = (headerBlock?.Release());
             }
 
-            promiseAggregator.DoneAllocatingPromises();
+            _ = promiseAggregator.DoneAllocatingPromises();
             return promiseAggregator.Task;
         }
 
@@ -622,19 +622,19 @@ namespace DotNetty.Codecs.Http2
 
                     if (headerBlock.IsReadable())
                     {
-                        ctx.WriteAsync(buf.Retain(), promiseAggregator.NewPromise());
+                        _ = ctx.WriteAsync(buf.Retain(), promiseAggregator.NewPromise());
                     }
                     else
                     {
                         // The frame header is different for the last frame, so re-allocate and release the old buffer
                         flags = flags.EndOfHeaders(true);
-                        buf.Release();
+                        _ = buf.Release();
                         buf = ctx.Allocator.Buffer(Http2CodecUtil.ContinuationFrameHeaderLength);
                         Http2CodecUtil.WriteFrameHeaderInternal(buf, fragmentReadableBytes, Http2FrameTypes.Continuation, flags, streamId);
-                        ctx.WriteAsync(buf, promiseAggregator.NewPromise());
+                        _ = ctx.WriteAsync(buf, promiseAggregator.NewPromise());
                     }
 
-                    ctx.WriteAsync(fragment, promiseAggregator.NewPromise());
+                    _ = ctx.WriteAsync(fragment, promiseAggregator.NewPromise());
                 }
                 while (headerBlock.IsReadable());
             }
@@ -661,7 +661,7 @@ namespace DotNetty.Codecs.Http2
             {
                 // It is assumed that the padding length has been bounds checked before this
                 // Minus 1, as the pad length field is included in the padding parameter and is 1 byte wide.
-                buf.WriteByte(padding - 1);
+                _ = buf.WriteByte(padding - 1);
             }
         }
 

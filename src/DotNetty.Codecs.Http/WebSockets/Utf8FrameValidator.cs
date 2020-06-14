@@ -4,7 +4,6 @@
 namespace DotNetty.Codecs.Http.WebSockets
 {
     using System;
-    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
@@ -86,7 +85,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
                 catch (CorruptedWebSocketFrameException)
                 {
-                    frame.Release();
+                    _ = frame.Release();
                     throw;
                 }
             }
@@ -98,12 +97,9 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             if (exception is CorruptedFrameException && ctx.Channel.Open)
             {
-                ctx.WriteAndFlushAsync(Unpooled.Empty).ContinueWith(CloseOnCompleteAction, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
+                _ = ctx.WriteAndFlushAsync(Unpooled.Empty).CloseOnComplete(ctx.Channel);
             }
             base.ExceptionCaught(ctx, exception);
         }
-
-        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
-        static void CloseOnComplete(Task t, object c) => ((IChannel)c).CloseAsync();
     }
 }

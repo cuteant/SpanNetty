@@ -94,13 +94,13 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 
             IByteBuffer binaryData = ArrayPooled.Buffer(2 + reasonText.Count);
-            binaryData.WriteShort(statusCode);
+            _ = binaryData.WriteShort(statusCode);
             if ((uint)reasonText.Count > 0u)
             {
-                binaryData.WriteCharSequence(reasonText, Encoding.UTF8);
+                _ = binaryData.WriteCharSequence(reasonText, Encoding.UTF8);
             }
 
-            binaryData.SetReaderIndex(0);
+            _ = binaryData.SetReaderIndex(0);
             return binaryData;
         }
 
@@ -116,7 +116,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 return -1;
             }
 
-            binaryData.SetReaderIndex(0);
+            _ = binaryData.SetReaderIndex(0);
             return binaryData.GetShort(0);
         }
 
@@ -132,9 +132,9 @@ namespace DotNetty.Codecs.Http.WebSockets
                 return StringCharSequence.Empty;
             }
 
-            binaryData.SetReaderIndex(2);
+            _ = binaryData.SetReaderIndex(2);
             string reasonText = binaryData.ToString(Encoding.UTF8);
-            binaryData.SetReaderIndex(0);
+            _ = binaryData.SetReaderIndex(0);
 
             return new StringCharSequence(reasonText);
         }

@@ -61,17 +61,17 @@ namespace DotNetty.Codecs.Http.Utilities
             var hasQuery = queryIndex != -1;
 
             var sb = StringBuilderManager.Allocate();
-            sb.Append(uriToBeAppended);
+            _ = sb.Append(uriToBeAppended);
             foreach (var parameter in queryParams)
             {
-                sb.Append(hasQuery ? '&' : '?');
-                sb.Append(s_urlEncoder.Encode(parameter.Key));
-                sb.Append('=');
-                sb.Append(s_urlEncoder.Encode(parameter.Value));
+                _ = sb.Append(hasQuery ? '&' : '?');
+                _ = sb.Append(s_urlEncoder.Encode(parameter.Key));
+                _ = sb.Append('=');
+                _ = sb.Append(s_urlEncoder.Encode(parameter.Value));
                 hasQuery = true;
             }
 
-            sb.Append(anchorText);
+            _ = sb.Append(anchorText);
             return StringBuilderManager.ReturnAndFree(sb);
         }
 

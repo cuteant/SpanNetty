@@ -37,7 +37,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 ThrowHelper.ThrowIOException_OutOfSize(localsize, this.DefinedSize);
             }
-            this.byteBuf?.Release();
+            _ = (this.byteBuf?.Release());
 
             this.byteBuf = buffer;
             this.Size = localsize;
@@ -66,7 +66,7 @@ namespace DotNetty.Codecs.Http.Multipart
                         break;
                     }
 
-                    buffer.WriteBytes(bytes, 0, read);
+                    _ = buffer.WriteBytes(bytes, 0, read);
                     written += read;
                     CheckSize(written, this.MaxSize);
                 }
@@ -81,7 +81,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
             }
 
-            this.byteBuf?.Release();
+            _ = (this.byteBuf?.Release());
             this.byteBuf = buffer;
             this.SetCompleted();
         }
@@ -104,14 +104,14 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 else if (this.byteBuf is CompositeByteBuffer buf)
                 {
-                    buf.AddComponent(true, buffer);
-                    buf.SetWriterIndex((int)this.Size);
+                    _ = buf.AddComponent(true, buffer);
+                    _ = buf.SetWriterIndex((int)this.Size);
                 }
                 else
                 {
                     CompositeByteBuffer compositeBuffer = ArrayPooled.CompositeBuffer(int.MaxValue);
-                    compositeBuffer.AddComponents(true, this.byteBuf, buffer);
-                    compositeBuffer.SetWriterIndex((int)this.Size);
+                    _ = compositeBuffer.AddComponents(true, this.byteBuf, buffer);
+                    _ = compositeBuffer.SetWriterIndex((int)this.Size);
                     this.byteBuf = compositeBuffer;
                 }
             }
@@ -132,7 +132,7 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             if (this.byteBuf is object)
             {
-                this.byteBuf.Release();
+                _ = this.byteBuf.Release();
                 this.byteBuf = null;
             }
         }
@@ -145,7 +145,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
 
             var array = new byte[this.byteBuf.ReadableBytes];
-            this.byteBuf.GetBytes(this.byteBuf.ReaderIndex, array);
+            _ = this.byteBuf.GetBytes(this.byteBuf.ReaderIndex, array);
             return array;
         }
 
@@ -211,7 +211,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 return true;
             }
 
-            this.byteBuf.GetBytes(this.byteBuf.ReaderIndex, destination, this.byteBuf.ReadableBytes);
+            _ = this.byteBuf.GetBytes(this.byteBuf.ReaderIndex, destination, this.byteBuf.ReadableBytes);
             destination.Flush();
             return true;
         }
@@ -220,7 +220,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override IReferenceCounted Touch(object hint)
         {
-            this.byteBuf?.Touch(hint);
+            _ = (this.byteBuf?.Touch(hint));
             return this;
         }
     }

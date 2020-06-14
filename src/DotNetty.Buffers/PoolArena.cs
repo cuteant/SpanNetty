@@ -258,20 +258,20 @@ namespace DotNetty.Buffers
         {
             if (tiny)
             {
-                Interlocked.Increment(ref _allocationsTiny);
+                _ = Interlocked.Increment(ref _allocationsTiny);
             }
             else
             {
-                Interlocked.Increment(ref _allocationsSmall);
+                _ = Interlocked.Increment(ref _allocationsSmall);
             }
         }
 
         void AllocateHuge(PooledByteBuffer<T> buf, int reqCapacity)
         {
             PoolChunk<T> chunk = NewUnpooledChunk(reqCapacity);
-            Interlocked.Add(ref _activeBytesHuge, chunk.ChunkSize);
+            _ = Interlocked.Add(ref _activeBytesHuge, chunk.ChunkSize);
             buf.InitUnpooled(chunk, reqCapacity);
-            Interlocked.Increment(ref _allocationsHuge);
+            _ = Interlocked.Increment(ref _allocationsHuge);
         }
 
         internal void Free(PoolChunk<T> chunk, long handle, int normCapacity, PoolThreadCache<T> cache)
@@ -280,8 +280,8 @@ namespace DotNetty.Buffers
             {
                 int size = chunk.ChunkSize;
                 DestroyChunk(chunk);
-                Interlocked.Add(ref _activeBytesHuge, -size);
-                Interlocked.Increment(ref _deallocationsHuge);
+                _ = Interlocked.Add(ref _activeBytesHuge, -size);
+                _ = Interlocked.Increment(ref _deallocationsHuge);
             }
             else
             {
@@ -615,10 +615,10 @@ namespace DotNetty.Buffers
                 .Append(StringUtil.Newline)
                 .Append("tiny subpages:");
             AppendPoolSubPages(buf, _tinySubpagePools);
-            buf.Append(StringUtil.Newline)
+            _ = buf.Append(StringUtil.Newline)
                 .Append("small subpages:");
             AppendPoolSubPages(buf, _smallSubpagePools);
-            buf.Append(StringUtil.Newline);
+            _ = buf.Append(StringUtil.Newline);
 
             return StringBuilderManager.ReturnAndFree(buf);
         }
@@ -633,13 +633,13 @@ namespace DotNetty.Buffers
                     continue;
                 }
 
-                buf.Append(StringUtil.Newline)
+                _ = buf.Append(StringUtil.Newline)
                     .Append(i)
                     .Append(": ");
                 PoolSubpage<T> s = head.Next;
                 while (true)
                 {
-                    buf.Append(s);
+                    _ = buf.Append(s);
                     s = s.Next;
                     if (s == head)
                     {
@@ -752,7 +752,7 @@ namespace DotNetty.Buffers
                 MemoryChunk memoryChunk = _memoryChunks[i];
                 if (ReferenceEquals(chunk.Memory, memoryChunk.Bytes))
                 {
-                    _memoryChunks.Remove(memoryChunk);
+                    _ = _memoryChunks.Remove(memoryChunk);
                     memoryChunk.Dispose();
                     break;
                 }

@@ -126,19 +126,19 @@ namespace DotNetty.Common.Concurrency
             {
                 if (_cancellationToken.IsCancellationRequested)
                 {
-                    _promise.TrySetCanceled();
+                    _ = _promise.TrySetCanceled();
                     return;
                 }
 
                 try
                 {
                     T result = Call();
-                    _promise.TrySetResult(result);
+                    _ = _promise.TrySetResult(result);
                 }
                 catch (Exception ex)
                 {
                     // todo: handle fatal
-                    _promise.TrySetException(ex);
+                    _ = _promise.TrySetException(ex);
                 }
             }
 

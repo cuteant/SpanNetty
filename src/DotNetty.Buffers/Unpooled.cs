@@ -73,7 +73,7 @@ namespace DotNetty.Buffers
             }
             else
             {
-                buffer.Release();
+                _ = buffer.Release();
                 return Empty;
             }
         }
@@ -159,7 +159,7 @@ namespace DotNetty.Buffers
                     if (buffer.IsReadable())
                         return WrappedBuffer(buffer);
                     else
-                        buffer.Release();
+                        _ = buffer.Release();
                     break;
                 default:
                     for (int i = 0; i < buffers.Length; i++)
@@ -168,7 +168,7 @@ namespace DotNetty.Buffers
                         if (buf.IsReadable())
                             return new CompositeByteBuffer(Allocator, false, maxNumComponents, buffers, i);
                         else
-                            buf.Release();
+                            _ = buf.Release();
                     }
                     break;
             }
@@ -236,7 +236,7 @@ namespace DotNetty.Buffers
             if (readable > 0)
             {
                 IByteBuffer copy = Buffer(readable);
-                copy.WriteBytes(buffer, buffer.ReaderIndex, readable);
+                _ = copy.WriteBytes(buffer, buffer.ReaderIndex, readable);
                 return copy;
             }
             else
@@ -333,7 +333,7 @@ namespace DotNetty.Buffers
             {
                 IByteBuffer b = buffers[i];
                 int bLen = b.ReadableBytes;
-                b.GetBytes(b.ReaderIndex, mergedArray, j, bLen);
+                _ = b.GetBytes(b.ReaderIndex, mergedArray, j, bLen);
                 j += bLen;
             }
 
@@ -356,7 +356,7 @@ namespace DotNetty.Buffers
         public static IByteBuffer CopyInt(int value)
         {
             IByteBuffer buf = Buffer(4);
-            buf.WriteInt(value);
+            _ = buf.WriteInt(value);
             return buf;
         }
 
@@ -373,7 +373,7 @@ namespace DotNetty.Buffers
             IByteBuffer buffer = Buffer(values.Length * 4);
             foreach (int v in values)
             {
-                buffer.WriteInt(v);
+                _ = buffer.WriteInt(v);
             }
 
             return buffer;
@@ -385,7 +385,7 @@ namespace DotNetty.Buffers
         public static IByteBuffer CopyShort(int value)
         {
             IByteBuffer buf = Buffer(2);
-            buf.WriteShort(value);
+            _ = buf.WriteShort(value);
             return buf;
         }
 
@@ -402,7 +402,7 @@ namespace DotNetty.Buffers
             IByteBuffer buffer = Buffer(values.Length * 2);
             foreach (short v in values)
             {
-                buffer.WriteShort(v);
+                _ = buffer.WriteShort(v);
             }
 
             return buffer;
@@ -421,7 +421,7 @@ namespace DotNetty.Buffers
             IByteBuffer buffer = Buffer(values.Length * 2);
             foreach (int v in values)
             {
-                buffer.WriteShort(v);
+                _ = buffer.WriteShort(v);
             }
             return buffer;
         }
@@ -432,7 +432,7 @@ namespace DotNetty.Buffers
         public static IByteBuffer CopyMedium(int value)
         {
             IByteBuffer buf = Buffer(3);
-            buf.WriteMedium(value);
+            _ = buf.WriteMedium(value);
             return buf;
         }
 
@@ -449,7 +449,7 @@ namespace DotNetty.Buffers
             IByteBuffer buffer = Buffer(values.Length * 3);
             foreach (int v in values)
             {
-                buffer.WriteMedium(v);
+                _ = buffer.WriteMedium(v);
             }
 
             return buffer;
@@ -461,7 +461,7 @@ namespace DotNetty.Buffers
         public static IByteBuffer CopyLong(long value)
         {
             IByteBuffer buf = Buffer(8);
-            buf.WriteLong(value);
+            _ = buf.WriteLong(value);
             return buf;
         }
 
@@ -478,7 +478,7 @@ namespace DotNetty.Buffers
             IByteBuffer buffer = Buffer(values.Length * 8);
             foreach (long v in values)
             {
-                buffer.WriteLong(v);
+                _ = buffer.WriteLong(v);
             }
 
             return buffer;
@@ -490,7 +490,7 @@ namespace DotNetty.Buffers
         public static IByteBuffer CopyBoolean(bool value)
         {
             IByteBuffer buf = Buffer(1);
-            buf.WriteBoolean(value);
+            _ = buf.WriteBoolean(value);
             return buf;
         }
 
@@ -507,7 +507,7 @@ namespace DotNetty.Buffers
             IByteBuffer buffer = Buffer(values.Length);
             foreach (bool v in values)
             {
-                buffer.WriteBoolean(v);
+                _ = buffer.WriteBoolean(v);
             }
 
             return buffer;
@@ -519,7 +519,7 @@ namespace DotNetty.Buffers
         public static IByteBuffer CopyFloat(float value)
         {
             IByteBuffer buf = Buffer(4);
-            buf.WriteFloat(value);
+            _ = buf.WriteFloat(value);
             return buf;
         }
 
@@ -536,7 +536,7 @@ namespace DotNetty.Buffers
             IByteBuffer buffer = Buffer(values.Length * 4);
             foreach (float v in values)
             {
-                buffer.WriteFloat(v);
+                _ = buffer.WriteFloat(v);
             }
 
             return buffer;
@@ -548,7 +548,7 @@ namespace DotNetty.Buffers
         public static IByteBuffer CopyDouble(double value)
         {
             IByteBuffer buf = Buffer(8);
-            buf.WriteDouble(value);
+            _ = buf.WriteDouble(value);
             return buf;
         }
 
@@ -565,7 +565,7 @@ namespace DotNetty.Buffers
             IByteBuffer buffer = Buffer(values.Length * 8);
             foreach (double v in values)
             {
-                buffer.WriteDouble(v);
+                _ = buffer.WriteDouble(v);
             }
 
             return buffer;
@@ -615,7 +615,7 @@ namespace DotNetty.Buffers
             IByteBuffer dst = Allocator.Buffer(length);
             try
             {
-                buffer.ReadBytes(dst);
+                _ = buffer.ReadBytes(dst);
                 release = false;
                 return dst;
             }
@@ -623,7 +623,7 @@ namespace DotNetty.Buffers
             {
                 if (release)
                 {
-                    dst.Release();
+                    _ = dst.Release();
                 }
             }
         }

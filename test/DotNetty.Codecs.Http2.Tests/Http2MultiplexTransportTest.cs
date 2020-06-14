@@ -3,8 +3,11 @@ namespace DotNetty.Codecs.Http2.Tests
 {
     using System;
     using System.Net;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Buffers;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
@@ -14,6 +17,23 @@ namespace DotNetty.Codecs.Http2.Tests
     [Collection("BootstrapEnv")]
     public class Http2MultiplexTransportTest : IDisposable
     {
+        sealed class DISCARD_HANDLER : ChannelHandlerAdapter
+        {
+            public static readonly DISCARD_HANDLER Instance = new DISCARD_HANDLER();
+
+            public override bool IsSharable => true;
+
+            public override void ChannelRead(IChannelHandlerContext context, object message)
+            {
+                ReferenceCountUtil.Release(message);
+            }
+
+            public override void UserEventTriggered(IChannelHandlerContext context, object evt)
+            {
+                ReferenceCountUtil.Release(evt);
+            }
+        }
+
         private ServerBootstrap _sb;
         private Bootstrap _bs;
         private IChannel _clientChannel;
@@ -51,14 +71,14 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void AsyncSettingsAckWithMultiplexCodec()
         {
-            AsyncSettingsAck0(new Http2MultiplexCodecBuilder(true, new HttpInboundHandler()).Build(), null);
+            AsyncSettingsAck0(new Http2MultiplexCodecBuilder(true, DISCARD_HANDLER.Instance).Build(), null);
         }
 
         [Fact]
         public void AsyncSettingsAckWithMultiplexHandler()
         {
             AsyncSettingsAck0(new Http2FrameCodecBuilder(true).Build(),
-                    new Http2MultiplexHandler(new HttpInboundHandler()));
+                    new Http2MultiplexHandler(DISCARD_HANDLER.Instance));
         }
 
         private void AsyncSettingsAck0(Http2FrameCodec codec, IChannelHandler multiplexer)
@@ -89,7 +109,7 @@ namespace DotNetty.Codecs.Http2.Tests
             _bs.Channel<TcpSocketChannel>();
             _bs.Handler(new ActionChannelInitializer<IChannel>(ch =>
             {
-                var builder = Http2MultiplexCodecBuilder.ForClient(new HttpInboundHandler());
+                var builder = Http2MultiplexCodecBuilder.ForClient(DISCARD_HANDLER.Instance);
                 builder.AutoAckSettingsFrame = false;
                 ch.Pipeline.AddLast(builder.Build());
                 ch.Pipeline.AddLast(new TestClientInboundHandler(clientSettingsLatch));
@@ -168,9 +188,100 @@ namespace DotNetty.Codecs.Http2.Tests
             }
         }
 
-        sealed class HttpInboundHandler : ChannelHandlerAdapter
+        [Fact]
+        public void FlushNotDiscarded()
         {
-            public override bool IsSharable => true;
+            var executorService = new SingleThreadEventExecutor("Discarded", TimeSpan.FromMilliseconds(100));
+
+            try
+            {
+                _sb = new ServerBootstrap();
+                _sb.Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup());
+                _sb.Channel<TcpServerSocketChannel>();
+                _sb.ChildHandler(new ActionChannelInitializer<IChannel>(ch =>
+                {
+                    ch.Pipeline.AddLast(new Http2FrameCodecBuilder(true).Build());
+                    ch.Pipeline.AddLast(new Http2MultiplexHandler(new TestChannelInboundHandlerAdapter(executorService)));
+                }));
+                var loopback = IPAddress.IPv6Loopback;
+                _serverChannel = _sb.BindAsync(loopback, 0).GetAwaiter().GetResult();
+
+                CountdownEvent latch = new CountdownEvent(1);
+
+                _bs = new Bootstrap();
+                _bs.Group(new MultithreadEventLoopGroup());
+                _bs.Channel<TcpSocketChannel>();
+                _bs.Handler(new ActionChannelInitializer<IChannel>(ch =>
+                {
+                    ch.Pipeline.AddLast(new Http2FrameCodecBuilder(false).Build());
+                    ch.Pipeline.AddLast(new Http2MultiplexHandler(DISCARD_HANDLER.Instance));
+                }));
+                var port = ((IPEndPoint)_serverChannel.LocalAddress).Port;
+                var ccf = _bs.ConnectAsync(loopback, port);
+                _clientChannel = ccf.GetAwaiter().GetResult();
+                Http2StreamChannelBootstrap h2Bootstrap = new Http2StreamChannelBootstrap(_clientChannel);
+                h2Bootstrap.Handler(new TestFlushNotDiscardedHandler(latch));
+                IHttp2StreamChannel streamChannel = h2Bootstrap.OpenAsync().GetAwaiter().GetResult();
+                streamChannel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers(), true)).GetAwaiter().GetResult();
+                latch.Wait();
+            }
+            finally
+            {
+                executorService.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
+            }
+        }
+
+        class TestChannelInboundHandlerAdapter: ChannelHandlerAdapter
+        {
+            private readonly SingleThreadEventExecutor _executorService;
+
+            public TestChannelInboundHandlerAdapter(SingleThreadEventExecutor executorService)
+            {
+                _executorService = executorService;
+            }
+
+            public override void ChannelRead(IChannelHandlerContext ctx, object msg)
+            {
+                if (msg is IHttp2HeadersFrame headersFrame && headersFrame.IsEndStream)
+                {
+                    _executorService.Schedule(() =>
+                    {
+                        ctx.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers(), false))
+                            .ContinueWith(t =>
+                            {
+                                ctx.WriteAsync(new DefaultHttp2DataFrame(
+                                        Unpooled.CopiedBuffer("Hello World", Encoding.ASCII),
+                                        true));
+                                ctx.Channel.EventLoop.Execute(() => ctx.Flush());
+                            }, TaskContinuationOptions.ExecuteSynchronously);
+                    }, TimeSpan.FromMilliseconds(500));
+                }
+                ReferenceCountUtil.Release(msg);
+            }
+        }
+
+        class TestFlushNotDiscardedHandler : ChannelHandlerAdapter
+        {
+            private readonly CountdownEvent _latch;
+
+            public TestFlushNotDiscardedHandler(CountdownEvent latch)
+            {
+                _latch = latch;
+            }
+
+            public override void ChannelRead(IChannelHandlerContext ctx, object msg)
+            {
+                if (msg is IHttp2DataFrame http2DataFrame && http2DataFrame.IsEndStream)
+                {
+                    _latch.SafeSignal();
+                }
+                ReferenceCountUtil.Release(msg);
+            }
+
+            public override void Write(IChannelHandlerContext context, object message, IPromise promise)
+            {
+                context.WriteAsync(message, promise);
+            }
         }
     }
 }

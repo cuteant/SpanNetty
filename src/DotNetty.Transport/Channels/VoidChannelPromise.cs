@@ -13,9 +13,9 @@ namespace DotNetty.Transport.Channels
     {
         static readonly Exception Error;
 
-        private readonly IChannel channel;
+        private readonly IChannel _channel;
         // Will be null if we should not propagate exceptions through the pipeline on failure case.
-        private readonly bool fireException;
+        private readonly bool _fireException;
 
         static VoidChannelPromise()
         {
@@ -30,9 +30,9 @@ namespace DotNetty.Transport.Channels
         public VoidChannelPromise(IChannel channel, bool fireException)
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
-            this.channel = channel;
-            this.fireException = fireException;
-            this.Task = TaskUtil.FromException(Error);
+            _channel = channel;
+            _fireException = fireException;
+            Task = TaskUtil.FromException(Error);
         }
 
         public Task Task { get; }
@@ -53,42 +53,42 @@ namespace DotNetty.Transport.Channels
 
         public bool TrySetException(Exception exception)
         {
-            if (!this.fireException) { return false; }
+            if (!_fireException) { return false; }
             if (exception is AggregateException aggregateException)
             {
-                return this.TrySetException(aggregateException.InnerExceptions);
+                return TrySetException(aggregateException.InnerExceptions);
             }
-            this.FireException0(exception);
+            FireException0(exception);
             return false;
         }
 
         public bool TrySetException(IEnumerable<Exception> exceptions)
         {
-            if (!this.fireException) { return false; }
+            if (!_fireException) { return false; }
             foreach (var item in exceptions)
             {
-                this.FireException0(item);
+                FireException0(item);
             }
             return false;
         }
 
         public void SetException(Exception exception)
         {
-            if (!this.fireException) { return; }
+            if (!_fireException) { return; }
             if (exception is AggregateException aggregateException)
             {
-                this.SetException(aggregateException.InnerExceptions);
+                SetException(aggregateException.InnerExceptions);
                 return;
             }
-            this.FireException0(exception);
+            FireException0(exception);
         }
 
         public void SetException(IEnumerable<Exception> exceptions)
         {
-            if (!this.fireException) { return; }
+            if (!_fireException) { return; }
             foreach (var item in exceptions)
             {
-                this.FireException0(item);
+                FireException0(item);
             }
         }
 
@@ -101,9 +101,9 @@ namespace DotNetty.Transport.Channels
         public IPromise Unvoid()
         {
             var promise = new TaskCompletionSource();
-            if (this.fireException)
+            if (_fireException)
             {
-                promise.Task.ContinueWith(FireExceptionOnFailureAction, this.channel, TaskContinuationOptions.ExecuteSynchronously);
+                _ = promise.Task.ContinueWith(FireExceptionOnFailureAction, _channel, TaskContinuationOptions.ExecuteSynchronously);
             }
             return promise;
         }
@@ -114,7 +114,7 @@ namespace DotNetty.Transport.Channels
             var ch = (IChannel)s;
             if (t.IsFaulted)// && ch.Registered)
             {
-                ch.Pipeline.FireExceptionCaught(t.Exception.InnerException);
+                _ = ch.Pipeline.FireExceptionCaught(t.Exception.InnerException);
             }
         }
 
@@ -124,9 +124,9 @@ namespace DotNetty.Transport.Channels
             // if not the pipeline is not setup and so it would hit the tail
             // of the pipeline.
             // See https://github.com/netty/netty/issues/1517
-            if (channel.Registered)
+            if (_channel.Registered)
             {
-                channel.Pipeline.FireExceptionCaught(cause);
+                _ = _channel.Pipeline.FireExceptionCaught(cause);
             }
         }
 

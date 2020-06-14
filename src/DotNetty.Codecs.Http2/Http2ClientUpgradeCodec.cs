@@ -88,7 +88,7 @@ namespace DotNetty.Codecs.Http2
         public ICollection<ICharSequence> SetUpgradeHeaders(IChannelHandlerContext ctx, IHttpRequest upgradeRequest)
         {
             var settingsValue = GetSettingsHeaderValue(ctx);
-            upgradeRequest.Headers.Set(Http2CodecUtil.HttpUpgradeSettingsHeader, settingsValue);
+            _ = upgradeRequest.Headers.Set(Http2CodecUtil.HttpUpgradeSettingsHeader, settingsValue);
             return s_upgradeHeaders;
         }
 
@@ -97,14 +97,14 @@ namespace DotNetty.Codecs.Http2
             try
             {
                 // Add the handler to the pipeline.
-                ctx.Pipeline.AddAfter(ctx.Name, _handlerName, _upgradeToHandler);
+                _ = ctx.Pipeline.AddAfter(ctx.Name, _handlerName, _upgradeToHandler);
 
                 // Add the Http2 Multiplex handler as this handler handle events produced by the connectionHandler.
                 // See https://github.com/netty/netty/issues/9495
                 if (_http2MultiplexHandler is object)
                 {
                     var name = ctx.Pipeline.Context(_connectionHandler).Name;
-                    ctx.Pipeline.AddAfter(name, null, _http2MultiplexHandler);
+                    _ = ctx.Pipeline.AddAfter(name, null, _http2MultiplexHandler);
                 }
 
                 // Reserve local stream 1 for the response.
@@ -112,8 +112,8 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Http2Exception e)
             {
-                ctx.FireExceptionCaught(e);
-                ctx.CloseAsync();
+                _ = ctx.FireExceptionCaught(e);
+                _ = ctx.CloseAsync();
             }
         }
 
@@ -137,8 +137,8 @@ namespace DotNetty.Codecs.Http2
                 buf = ctx.Allocator.Buffer(payloadLength);
                 foreach (var entry in settings)
                 {
-                    buf.WriteChar(entry.Key);
-                    buf.WriteInt((int)entry.Value);
+                    _ = buf.WriteChar(entry.Key);
+                    _ = buf.WriteInt((int)entry.Value);
                 }
 
                 // Base64 encode the payload and then convert to a string for the header.
@@ -147,8 +147,8 @@ namespace DotNetty.Codecs.Http2
             }
             finally
             {
-                ReferenceCountUtil.Release(buf);
-                ReferenceCountUtil.Release(encodedBuf);
+                _ = ReferenceCountUtil.Release(buf);
+                _ = ReferenceCountUtil.Release(encodedBuf);
             }
         }
     }

@@ -462,7 +462,7 @@ namespace DotNetty.Buffers
                 // We not even allocated all the number that are
                 if (toFree > 0)
                 {
-                    Free(toFree);
+                    _ = Free(toFree);
                 }
             }
 

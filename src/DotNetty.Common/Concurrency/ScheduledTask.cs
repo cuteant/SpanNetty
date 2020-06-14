@@ -81,7 +81,7 @@ namespace DotNetty.Common.Concurrency
                 // Not yet expired, need to add or remove from queue
                 if (Promise.IsCanceled)
                 {
-                    Executor.ScheduledTaskQueue.TryRemove(this);
+                    _ = Executor.ScheduledTaskQueue.TryRemove(this);
                 }
                 else
                 {
@@ -94,12 +94,12 @@ namespace DotNetty.Common.Concurrency
                 try
                 {
                     Execute();
-                    Promise.TryComplete();
+                    _ = Promise.TryComplete();
                 }
                 catch (Exception ex)
                 {
                     // todo: check for fatal
-                    Promise.TrySetException(ex);
+                    _ = Promise.TrySetException(ex);
                 }
             }
         }

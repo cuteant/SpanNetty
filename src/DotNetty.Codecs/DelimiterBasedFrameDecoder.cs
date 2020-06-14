@@ -224,7 +224,7 @@ namespace DotNetty.Codecs
                     // We've just finished discarding a very large frame.
                     // Go back to the initial state.
                     _discardingTooLongFrame = false;
-                    buffer.SkipBytes(minFrameLength + minDelimLength);
+                    _ = buffer.SkipBytes(minFrameLength + minDelimLength);
 
                     int tooLongFrameLength = _tooLongFrameLength;
                     _tooLongFrameLength = 0;
@@ -238,7 +238,7 @@ namespace DotNetty.Codecs
                 if ((uint)minFrameLength > (uint)_maxFrameLength)
                 {
                     // Discard read frame.
-                    buffer.SkipBytes(minFrameLength + minDelimLength);
+                    _ = buffer.SkipBytes(minFrameLength + minDelimLength);
                     Fail(minFrameLength);
                     return null;
                 }
@@ -246,7 +246,7 @@ namespace DotNetty.Codecs
                 if (_stripDelimiter)
                 {
                     frame = buffer.ReadRetainedSlice(minFrameLength);
-                    buffer.SkipBytes(minDelimLength);
+                    _ = buffer.SkipBytes(minDelimLength);
                 }
                 else
                 {
@@ -263,7 +263,7 @@ namespace DotNetty.Codecs
                     {
                         // Discard the content of the buffer until a delimiter is found.
                         _tooLongFrameLength = buffer.ReadableBytes;
-                        buffer.SkipBytes(buffer.ReadableBytes);
+                        _ = buffer.SkipBytes(buffer.ReadableBytes);
                         _discardingTooLongFrame = true;
                         if (_failFast)
                         {
@@ -275,7 +275,7 @@ namespace DotNetty.Codecs
                 {
                     // Still discarding the buffer since a delimiter is not found.
                     _tooLongFrameLength += buffer.ReadableBytes;
-                    buffer.SkipBytes(buffer.ReadableBytes);
+                    _ = buffer.SkipBytes(buffer.ReadableBytes);
                 }
                 return null;
             }

@@ -59,7 +59,7 @@ namespace DotNetty.Buffers
         public override string ToString()
         {
             var sb = StringBuilderManager.Allocate(256);
-            sb.Append(StringUtil.SimpleClassName(this))
+            _ = sb.Append(StringUtil.SimpleClassName(this))
                 .Append("(usedHeapMemory: ").Append(UsedHeapMemory)
                 .Append("; usedDirectMemory: ").Append(UsedDirectMemory)
                 .Append("; numHeapArenas: ").Append(HeapArenas().Count)

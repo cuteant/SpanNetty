@@ -98,7 +98,7 @@ namespace DotNetty.Common
                 {
                     _availableSharedCapacity = availableSharedCapacity;
                     _weakTableCounter = weakTableCounter;
-                    if (weakTableCounter is object) { Interlocked.Increment(ref weakTableCounter.Value); }
+                    if (weakTableCounter is object) { _ = Interlocked.Increment(ref weakTableCounter.Value); }
                 }
 
                 /// <summary>
@@ -108,7 +108,7 @@ namespace DotNetty.Common
                 {
                     if (_weakTableCounter is object)
                     {
-                        Interlocked.Decrement(ref _weakTableCounter.Value);
+                        _ = Interlocked.Decrement(ref _weakTableCounter.Value);
                     }
                     if (_availableSharedCapacity is null)
                     {
@@ -134,7 +134,7 @@ namespace DotNetty.Common
 
                 private void ReclaimSpace(int space)
                 {
-                    Interlocked.Add(ref _availableSharedCapacity.Value, space);
+                    _ = Interlocked.Add(ref _availableSharedCapacity.Value, space);
                 }
 
                 internal void Relink(Link link)
@@ -487,7 +487,7 @@ namespace DotNetty.Common
                 // we impose a memory ordering here (no-op on x86)
                 DelayedThreadLocal.CountedWeakTable countedWeakTable = DelayedPool.Value;
                 ConditionalWeakTable<Stack, WeakOrderQueue> delayedRecycled = countedWeakTable.WeakTable;
-                delayedRecycled.TryGetValue(this, out WeakOrderQueue queue);
+                _ = delayedRecycled.TryGetValue(this, out WeakOrderQueue queue);
                 if (queue is null)
                 {
                     if (Volatile.Read(ref countedWeakTable.Counter.Value) >= _maxDelayedQueues)

@@ -453,12 +453,12 @@ namespace DotNetty.Codecs.Http
             if (this.bytes is null)
             {
                 ByteBufferUtil.Copy(this.codeAsText, buf);
-                buf.WriteByte(HttpConstants.HorizontalSpace);
-                buf.WriteCharSequence(this.reasonPhrase, Encoding.ASCII);
+                _ = buf.WriteByte(HttpConstants.HorizontalSpace);
+                _ = buf.WriteCharSequence(this.reasonPhrase, Encoding.ASCII);
             }
             else
             {
-                buf.WriteBytes(this.bytes);
+                _ = buf.WriteBytes(this.bytes);
             }
         }
     }

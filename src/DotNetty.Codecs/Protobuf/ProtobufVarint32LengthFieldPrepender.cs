@@ -27,10 +27,10 @@ namespace DotNetty.Codecs.Protobuf
 
             int bodyLength = message.ReadableBytes;
             int headerLength = ComputeRawVarint32Size(bodyLength);
-            output.EnsureWritable(headerLength + bodyLength);
+            _ = output.EnsureWritable(headerLength + bodyLength);
 
             WriteRawVarint32(output, bodyLength);
-            output.WriteBytes(message, message.ReaderIndex, bodyLength);
+            _ = output.WriteBytes(message, message.ReaderIndex, bodyLength);
         }
 
         internal static void WriteRawVarint32(IByteBuffer output, int value)
@@ -41,11 +41,11 @@ namespace DotNetty.Codecs.Protobuf
             {
                 if (0u >= (uint)(value & ~0x7F))
                 {
-                    output.WriteByte(value);
+                    _ = output.WriteByte(value);
                     return;
                 }
 
-                output.WriteByte((value & 0x7F) | 0x80);
+                _ = output.WriteByte((value & 0x7F) | 0x80);
                 value >>= 7;
             }
         }

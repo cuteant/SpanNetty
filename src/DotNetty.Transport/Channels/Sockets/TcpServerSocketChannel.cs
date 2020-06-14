@@ -88,7 +88,7 @@ namespace DotNetty.Transport.Channels.Sockets
             Socket.Listen(_config.Backlog);
             SetState(StateFlags.Active);
 
-            CacheLocalAddress();
+            _ = CacheLocalAddress();
         }
 
         protected override void DoClose()
@@ -118,7 +118,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 catch (SocketException ex) when (ex.SocketErrorCode.IsSocketAbortError())
                 {
                     Socket.SafeClose(); // Unbind......
-                    Pipeline.FireExceptionCaught(ex);
+                    _ = Pipeline.FireExceptionCaught(ex);
                     aborted = true;
                 }
                 catch (SocketException ex)
@@ -133,7 +133,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 }
                 catch (Exception ex)
                 {
-                    Pipeline.FireExceptionCaught(ex);
+                    _ = Pipeline.FireExceptionCaught(ex);
                     closed = true;
                 }
             }

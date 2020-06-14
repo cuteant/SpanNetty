@@ -35,7 +35,7 @@ namespace DotNetty.Buffers
         /// </summary>
         protected internal void ResetReferenceCount()
         {
-            Interlocked.Exchange(ref _referenceCount, c_initialValue);
+            _ = Interlocked.Exchange(ref _referenceCount, c_initialValue);
         }
 
         public override IReferenceCounted Retain() => Retain0(1);

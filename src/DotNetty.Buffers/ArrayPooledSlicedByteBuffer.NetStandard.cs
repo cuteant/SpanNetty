@@ -74,14 +74,14 @@ namespace DotNetty.Buffers
         public sealed override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src)
         {
             CheckIndex0(index, src.Length);
-            Unwrap().SetBytes(Idx(index), src);
+            _ = Unwrap().SetBytes(Idx(index), src);
             return this;
         }
 
         public sealed override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src)
         {
             CheckIndex0(index, src.Length);
-            Unwrap().SetBytes(Idx(index), src);
+            _ = Unwrap().SetBytes(Idx(index), src);
             return this;
         }
     }

@@ -202,11 +202,11 @@ namespace DotNetty.Buffers
                         PlatformDependent.CopyMemory(addr, dst, length);
                     }
                 }
-                copy.SetIndex(0, length);
+                _ = copy.SetIndex(0, length);
             }
             else
             {
-                copy.WriteBytes(buf, index, length);
+                _ = copy.WriteBytes(buf, index, length);
             }
             return copy;
         }
@@ -279,7 +279,7 @@ namespace DotNetty.Buffers
             }
             else
             {
-                dst.SetBytes(dstIndex, buf, index, length);
+                _ = dst.SetBytes(dstIndex, buf, index, length);
             }
         }
 
@@ -337,7 +337,7 @@ namespace DotNetty.Buffers
             }
             else
             {
-                src.GetBytes(srcIndex, buf, index, length);
+                _ = src.GetBytes(srcIndex, buf, index, length);
             }
         }
 
@@ -360,7 +360,7 @@ namespace DotNetty.Buffers
                 }
                 finally
                 {
-                    tmpBuf.Release();
+                    _ = tmpBuf.Release();
                 }
             }
         }

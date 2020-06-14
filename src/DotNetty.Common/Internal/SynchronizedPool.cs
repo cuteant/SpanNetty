@@ -100,7 +100,7 @@ namespace DotNetty.Common.Internal
                     _globalPool.MaxCount = _maxCount;
                 }
 
-                PromoteThread(thisThreadID);
+                _ = PromoteThread(thisThreadID);
             }
             else
             {
@@ -343,7 +343,7 @@ namespace DotNetty.Common.Internal
                     {
                         while (_items.Count > value)
                         {
-                            _items.Pop();
+                            _ = _items.Pop();
                         }
                         _maxCount = value;
                     }
@@ -358,7 +358,7 @@ namespace DotNetty.Common.Internal
                 {
                     if (_items.Count == _maxCount)
                     {
-                        _items.Pop();
+                        _ = _items.Pop();
                     }
                     _maxCount--;
                 }

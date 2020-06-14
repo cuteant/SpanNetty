@@ -13,7 +13,7 @@ namespace DotNetty.Transport.Channels
         {
             if (handler is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.handler); }
 
-            this.Handler = handler;
+            Handler = handler;
         }
 
         public override IChannelHandler Handler { get; }

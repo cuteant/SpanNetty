@@ -3,7 +3,6 @@
 
 namespace DotNetty.Codecs.Http.Cors
 {
-    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
@@ -56,7 +55,7 @@ namespace DotNetty.Codecs.Http.Cors
                     return;
                 }
             }
-            context.FireChannelRead(message);
+            _ = context.FireChannelRead(message);
         }
 
         void HandlePreflight(IChannelHandlerContext ctx, IHttpRequest req)
@@ -72,10 +71,10 @@ namespace DotNetty.Codecs.Http.Cors
             }
             if (!response.Headers.Contains(HttpHeaderNames.ContentLength))
             {
-                response.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
+                _ = response.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
             }
 
-            Release(req);
+            _ = Release(req);
             Respond(ctx, req, response);
         }
 
@@ -151,7 +150,7 @@ namespace DotNetty.Codecs.Http.Cors
             if (this.config.IsCredentialsAllowed
                 && !AsciiString.ContentEquals(response.Headers.Get(HttpHeaderNames.AccessControlAllowOrigin, null), AnyOrigin))
             {
-                response.Headers.Set(HttpHeaderNames.AccessControlAllowCredentials, new AsciiString("true"));
+                _ = response.Headers.Set(HttpHeaderNames.AccessControlAllowCredentials, new AsciiString("true"));
             }
         }
 
@@ -168,7 +167,7 @@ namespace DotNetty.Codecs.Http.Cors
             ISet<ICharSequence> headers = this.config.ExposedHeaders();
             if ((uint)headers.Count > 0u)
             {
-                response.Headers.Set(HttpHeaderNames.AccessControlExposeHeaders, headers);
+                _ = response.Headers.Set(HttpHeaderNames.AccessControlExposeHeaders, headers);
             }
         }
 
@@ -188,14 +187,14 @@ namespace DotNetty.Codecs.Http.Cors
                     this.SetExposeHeaders(response);
                 }
             }
-            context.WriteAsync(message, promise);
+            _ = context.WriteAsync(message, promise);
         }
 
         static void Forbidden(IChannelHandlerContext ctx, IHttpRequest request)
         {
             var response = new DefaultFullHttpResponse(request.ProtocolVersion, HttpResponseStatus.Forbidden);
-            response.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
-            Release(request);
+            _ = response.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
+            _ = Release(request);
             Respond(ctx, request, response);
         }
 
@@ -208,15 +207,8 @@ namespace DotNetty.Codecs.Http.Cors
             Task task = ctx.WriteAndFlushAsync(response);
             if (!keepAlive)
             {
-                task.ContinueWith(CloseOnCompleteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                _ = task.CloseOnComplete(ctx);
             }
-        }
-
-        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
-        static void CloseOnComplete(Task task, object state)
-        {
-            var ctx = (IChannelHandlerContext)state;
-            ctx.CloseAsync();
         }
     }
 }

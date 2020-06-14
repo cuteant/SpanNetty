@@ -29,8 +29,8 @@ namespace DotNetty.Common.Internal
     // 
     public sealed partial class AppendableCharSequence : ICharSequence, IAppendable, IEquatable<AppendableCharSequence>
     {
-        byte[] chars;
-        int pos;
+        private byte[] _chars;
+        private int _pos;
 
         public AppendableCharSequence(int length)
         {
@@ -39,35 +39,44 @@ namespace DotNetty.Common.Internal
                 ThrowHelper.ThrowArgumentException_Positive(length, ExceptionArgument.length);
             }
 
-            this.chars = new byte[length];
+            _chars = new byte[length];
         }
 
         public AppendableCharSequence(byte[] chars)
         {
             if (chars is null || 0u >= (uint)chars.Length) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.chars); }
 
-            this.chars = chars;
-            this.pos = chars.Length;
+            _chars = chars;
+            _pos = chars.Length;
         }
 
         public IEnumerator<char> GetEnumerator() => new CharSequenceEnumerator(this);
 
-        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public int Count => this.pos;
+        public void SetCount(int count)
+        {
+            if (/*count < 0 || */(uint)count > (uint)_pos)
+            {
+                ThrowHelper.ThrowArgumentOutOfRangeException_AppendableCharSequence_Count(count, _pos);
+            }
+            _pos = count;
+        }
+
+        public int Count => _pos;
 
         public char this[int index]
         {
             get
             {
-                if (index > this.pos) { ThrowHelper.ThrowIndexOutOfRangeException(); }
-                return AsciiString.ByteToChar(this.chars[index]);
+                if (index > _pos) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+                return AsciiString.ByteToChar(_chars[index]);
             }
         }
 
-        public ref byte[] Bytes => ref this.chars;
+        public ref byte[] Bytes => ref _chars;
 
-        public ICharSequence SubSequence(int start) => this.SubSequence(start, this.pos);
+        public ICharSequence SubSequence(int start) => SubSequence(start, _pos);
 
         public ICharSequence SubSequence(int start, int end)
         {
@@ -77,10 +86,10 @@ namespace DotNetty.Common.Internal
                 // If start and end index is the same we need to return an empty sequence to conform to the interface.
                 // As our expanding logic depends on the fact that we have a char[] with length > 0 we need to construct
                 // an instance for which this is true.
-                return new AppendableCharSequence(Math.Min(16, this.chars.Length));
+                return new AppendableCharSequence(Math.Min(16, _chars.Length));
             }
             var data = new byte[length];
-            PlatformDependent.CopyMemory(this.chars, start, data, 0, length);
+            PlatformDependent.CopyMemory(_chars, start, data, 0, length);
             return new AppendableCharSequence(data);
         }
 
@@ -97,27 +106,27 @@ namespace DotNetty.Common.Internal
         public bool ContentEqualsIgnoreCase(ICharSequence other) => CharUtil.ContentEqualsIgnoreCase(this, other);
 
         public int HashCode(bool ignoreCase) => ignoreCase
-            ? StringComparer.OrdinalIgnoreCase.GetHashCode(this.ToString())
-            : StringComparer.Ordinal.GetHashCode(this.ToString());
+            ? StringComparer.OrdinalIgnoreCase.GetHashCode(ToString())
+            : StringComparer.Ordinal.GetHashCode(ToString());
 
-        public override int GetHashCode() => this.HashCode(true);
+        public override int GetHashCode() => HashCode(true);
 
-        public IAppendable Append(char c) => this.Append((byte)c);
+        public IAppendable Append(char c) => Append((byte)c);
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public IAppendable Append(byte c)
         {
-            if ((uint)this.pos >= (uint)this.chars.Length)
+            if ((uint)_pos >= (uint)_chars.Length)
             {
-                byte[] old = this.chars;
-                this.chars = new byte[old.Length << 1];
-                PlatformDependent.CopyMemory(old, 0, this.chars, 0, old.Length);
+                byte[] old = _chars;
+                _chars = new byte[old.Length << 1];
+                PlatformDependent.CopyMemory(old, 0, _chars, 0, old.Length);
             }
-            this.chars[this.pos++] = c;
+            _chars[_pos++] = c;
             return this;
         }
 
-        public IAppendable Append(ICharSequence sequence) => this.Append(sequence, 0, sequence.Count);
+        public IAppendable Append(ICharSequence sequence) => Append(sequence, 0, sequence.Count);
 
         public IAppendable Append(ICharSequence sequence, int start, int end)
         {
@@ -125,29 +134,29 @@ namespace DotNetty.Common.Internal
             if ((uint)start > (uint)end) { ThrowHelper.ThrowIndexOutOfRangeException(); }
 
             int length = end - start;
-            if ((uint)length > (uint)(this.chars.Length - this.pos))
+            if ((uint)length > (uint)(_chars.Length - _pos))
             {
-                this.chars = Expand(this.chars, this.pos + length, this.pos);
+                _chars = Expand(_chars, _pos + length, _pos);
             }
 
             switch (sequence)
             {
                 case AppendableCharSequence seq:
                     // Optimize append operations via array copy
-                    byte[] src = seq.chars;
-                    PlatformDependent.CopyMemory(src, start, this.chars, this.pos, length);
-                    this.pos += length;
+                    byte[] src = seq._chars;
+                    PlatformDependent.CopyMemory(src, start, _chars, _pos, length);
+                    _pos += length;
                     break;
 
                 case IHasAsciiSpan hasAscii:
-                    hasAscii.AsciiSpan.Slice(start, length).CopyTo(this.chars.AsSpan(this.pos, length));
-                    this.pos += length;
+                    hasAscii.AsciiSpan.Slice(start, length).CopyTo(_chars.AsSpan(_pos, length));
+                    _pos += length;
                     break;
 
                 default:
                     for (int idx = start; idx < end; idx++)
                     {
-                        this.chars[this.pos++] = (byte)sequence[idx];
+                        _chars[_pos++] = (byte)sequence[idx];
                     }
                     break;
             }
@@ -159,17 +168,17 @@ namespace DotNetty.Common.Internal
         /// Resets the <see cref="AppendableCharSequence"/>. Be aware this will only reset the current internal
         /// position and not shrink the internal char array.
         /// </summary>
-        public void Reset() => this.pos = 0;
+        public void Reset() => _pos = 0;
 
         public string ToString(int start)
         {
-            if ((uint)start >= (uint)this.pos) { ThrowHelper.ThrowIndexOutOfRangeException(); }
-            return Encoding.ASCII.GetString(this.chars, start, this.pos - start);
+            if ((uint)start >= (uint)_pos) { ThrowHelper.ThrowIndexOutOfRangeException(); }
+            return Encoding.ASCII.GetString(_chars, start, _pos - start);
         }
 
-        public override string ToString() => 0u >= (uint)this.pos ? string.Empty : this.ToString(0);
+        public override string ToString() => 0u >= (uint)_pos ? string.Empty : ToString(0);
 
-        public AsciiString ToAsciiString() => 0u >= (uint)this.pos ? AsciiString.Empty : new AsciiString(this.chars, 0, this.pos, true);
+        public AsciiString ToAsciiString() => 0u >= (uint)_pos ? AsciiString.Empty : new AsciiString(_chars, 0, _pos, true);
 
         /// <summary>
         /// Create a new ascii string, this method assumes all chars has been sanitized to ascii chars when appending
@@ -179,7 +188,7 @@ namespace DotNetty.Common.Internal
         public unsafe AsciiString SubStringUnsafe(int start, int end)
         {
             var bytes = new byte[end - start];
-            fixed (byte* src = &this.chars[start])
+            fixed (byte* src = &_chars[start])
             fixed (byte* dst = bytes)
             {
                 PlatformDependent.CopyMemory(src, dst, bytes.Length);

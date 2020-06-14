@@ -289,11 +289,11 @@ namespace DotNetty.Common.Utilities
         {
             if (exception is AggregateException aggregateException)
             {
-                completionSource.TrySetException(aggregateException.InnerExceptions);
+                _ = completionSource.TrySetException(aggregateException.InnerExceptions);
             }
             else
             {
-                completionSource.TrySetException(exception);
+                _ = completionSource.TrySetException(exception);
             }
         }
 
@@ -344,7 +344,7 @@ namespace DotNetty.Common.Utilities
             }
             else
             {
-                task.ContinueWith(
+                _ = task.ContinueWith(
                     IgnoreTaskContinuation,
                     CancellationToken.None,
                     TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,

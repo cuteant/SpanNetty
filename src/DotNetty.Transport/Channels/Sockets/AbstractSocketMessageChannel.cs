@@ -48,7 +48,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
                     if (done)
                     {
-                        input.Remove();
+                        _ = input.Remove();
                     }
                     else
                     {
@@ -61,7 +61,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     if (ContinueOnWriteError)
                     {
-                        input.Remove(e);
+                        _ = input.Remove(e);
                     }
                     else
                     {

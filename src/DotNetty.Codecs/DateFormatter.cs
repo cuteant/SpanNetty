@@ -441,13 +441,13 @@ namespace DotNetty.Codecs
 
         static StringBuilder Append0(DateTime dateTime, StringBuilder buffer)
         {
-            buffer.Append(DayOfWeekToShortName[(int)dateTime.DayOfWeek]).Append(", ");
-            buffer.Append(dateTime.Day).Append(' ');
-            buffer.Append(CalendarMonthToShortName[dateTime.Month - 1]).Append(' ');
-            buffer.Append(dateTime.Year).Append(' ');
+            _ = buffer.Append(DayOfWeekToShortName[(int)dateTime.DayOfWeek]).Append(", ");
+            _ = buffer.Append(dateTime.Day).Append(' ');
+            _ = buffer.Append(CalendarMonthToShortName[dateTime.Month - 1]).Append(' ');
+            _ = buffer.Append(dateTime.Year).Append(' ');
 
-            AppendZeroLeftPadded(dateTime.Hour, buffer).Append(':');
-            AppendZeroLeftPadded(dateTime.Minute, buffer).Append(':');
+            _ = AppendZeroLeftPadded(dateTime.Hour, buffer).Append(':');
+            _ = AppendZeroLeftPadded(dateTime.Minute, buffer).Append(':');
             return AppendZeroLeftPadded(dateTime.Second, buffer).Append(" GMT");
         }
 
@@ -455,7 +455,7 @@ namespace DotNetty.Codecs
         {
             if (value < 10)
             {
-                sb.Append('0');
+                _ = sb.Append('0');
             }
             return sb.Append(value);
         }

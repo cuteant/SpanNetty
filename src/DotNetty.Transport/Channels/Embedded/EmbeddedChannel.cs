@@ -193,11 +193,11 @@ namespace DotNetty.Transport.Channels.Embedded
             var message = (T)Poll(_inboundMessages);
             if (message is object)
             {
-                ReferenceCountUtil.Touch(message, "Caller of readInbound() will handle the message from this point");
+                _ = ReferenceCountUtil.Touch(message, "Caller of readInbound() will handle the message from this point");
             }
             return message;
 #else
-            return (T)Poll(this.inboundMessages);
+            return (T)Poll(_inboundMessages);
 #endif
         }
 
@@ -210,11 +210,11 @@ namespace DotNetty.Transport.Channels.Embedded
             var message = (T)Poll(_outboundMessages);
             if (message is object)
             {
-                ReferenceCountUtil.Touch(message, "Caller of readOutbound() will handle the message from this point.");
+                _ = ReferenceCountUtil.Touch(message, "Caller of readOutbound() will handle the message from this point.");
             }
             return message;
 #else
-            return (T)Poll(this.outboundMessages);
+            return (T)Poll(_outboundMessages);
 #endif
         }
 
@@ -282,7 +282,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
             try
             {
-                _loop.RunScheduledTasks();
+                _ = _loop.RunScheduledTasks();
             }
             catch (Exception ex)
             {
@@ -324,9 +324,9 @@ namespace DotNetty.Transport.Channels.Embedded
             }
 
             IChannelPipeline p = Pipeline;
-            foreach (object m in msgs)
+            for (int i = 0; i < msgs.Length; i++)
             {
-                p.FireChannelRead(m);
+                _ = p.FireChannelRead(msgs[i]);
             }
 
             FlushInbound(false, VoidPromise());
@@ -339,7 +339,7 @@ namespace DotNetty.Transport.Channels.Embedded
         {
             if (CheckOpen(true))
             {
-                Pipeline.FireChannelRead(msg);
+                _ = Pipeline.FireChannelRead(msg);
             }
             CheckException(promise);
             return promise.Task;
@@ -507,8 +507,8 @@ namespace DotNetty.Transport.Channels.Embedded
             {
                 if (releaseAll)
                 {
-                    ReleaseAll(_inboundMessages);
-                    ReleaseAll(_outboundMessages);
+                    _ = ReleaseAll(_inboundMessages);
+                    _ = ReleaseAll(_outboundMessages);
                 }
             }
         }
@@ -531,7 +531,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
             while (queue.TryDequeue(out var msg))
             {
-                ReferenceCountUtil.Release(msg);
+                _ = ReferenceCountUtil.Release(msg);
             }
             return true;
         }
@@ -633,7 +633,7 @@ namespace DotNetty.Transport.Channels.Embedded
         [MethodImpl(InlineMethod.AggressiveInlining)]
         static object Poll(QueueX<object> queue)
         {
-            queue.TryDequeue(out var result);
+            _ = queue.TryDequeue(out var result);
             return result;
         }
 

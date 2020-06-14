@@ -87,7 +87,7 @@ namespace DotNetty.Codecs.Http2
                         IHttpMessage req = NewMessage(id, headers);
                         if (!HttpUtil.IsContentLengthSet(req))
                         {
-                            req.Headers.Add(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
+                            _ = req.Headers.Add(HttpHeaderNames.TransferEncoding, HttpHeaderValues.Chunked);
                         }
                         output.Add(req);
                     }
@@ -174,7 +174,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (msg is IHttpRequest)
             {
-                msg.Headers.Set(HttpConversionUtil.ExtensionHeaderNames.Scheme, ConnectionScheme(ctx));
+                _ = msg.Headers.Set(HttpConversionUtil.ExtensionHeaderNames.Scheme, ConnectionScheme(ctx));
             }
 
             return HttpConversionUtil.ToHttp2Headers(msg, _validateHeaders);

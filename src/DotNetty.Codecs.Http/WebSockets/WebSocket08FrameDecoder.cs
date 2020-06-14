@@ -7,7 +7,6 @@ namespace DotNetty.Codecs.Http.WebSockets
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
     using System.Runtime.ExceptionServices;
-    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
@@ -79,7 +78,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             // Discard all data received if closing handshake was received before.
             if (this.receivedClosingHandshake)
             {
-                input.SkipBytes(this.ActualReadableBytes);
+                _ = input.SkipBytes(this.ActualReadableBytes);
                 return;
             }
 
@@ -264,7 +263,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                         {
                             this.maskingKey = new byte[4];
                         }
-                        input.ReadBytes(this.maskingKey);
+                        _ = input.ReadBytes(this.maskingKey);
                     }
                     this.state = State.Payload;
                     goto case State.Payload;
@@ -352,14 +351,14 @@ namespace DotNetty.Codecs.Http.WebSockets
                     }
                     finally
                     {
-                        payloadBuffer?.Release();
+                        _ = (payloadBuffer?.Release());
                     }
                 case State.Corrupt:
                     if (input.IsReadable())
                     {
                         // If we don't keep reading Netty will throw an exception saying
                         // we can't return null if no bytes read and state not changed.
-                        input.ReadByte();
+                        _ = input.ReadByte();
                     }
                     return;
                 default:
@@ -391,11 +390,11 @@ namespace DotNetty.Codecs.Http.WebSockets
             for (; i + 3 < end; i += 4)
             {
                 int unmasked = frame.GetInt(i) ^ intMask;
-                frame.SetInt(i, unmasked);
+                _ = frame.SetInt(i, unmasked);
             }
             for (; i < end; i++)
             {
-                frame.SetByte(i, frame.GetByte(i) ^ this.maskingKey[i % 4]);
+                _ = frame.SetByte(i, frame.GetByte(i) ^ this.maskingKey[i % 4]);
             }
         }
 
@@ -415,7 +414,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 // Fix for memory leak, caused by ByteToMessageDecoder#channelRead:
                 // buffer 'cumulation' is released ONLY when no more readable bytes available.
-                input.SkipBytes(readableBytes);
+                _ = input.SkipBytes(readableBytes);
             }
             if (ctx.Channel.Active && _config.CloseOnProtocolViolation)
             {
@@ -431,13 +430,10 @@ namespace DotNetty.Codecs.Http.WebSockets
                     ICharSequence reasonText = !string.IsNullOrWhiteSpace(errMsg) ? new StringCharSequence(errMsg) : closeStatus.ReasonText;
                     closeMessage = new CloseWebSocketFrame(closeStatus, reasonText);
                 }
-                ctx.WriteAndFlushAsync(closeMessage).ContinueWith(CloseOnCompleteAction, ctx.Channel, TaskContinuationOptions.ExecuteSynchronously);
+                _ = ctx.WriteAndFlushAsync(closeMessage).CloseOnComplete(ctx.Channel);
             }
             ExceptionDispatchInfo.Capture(ex).Throw();
         }
-
-        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
-        static void CloseOnComplete(Task t, object c) => ((IChannel)c).CloseAsync();
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         static int ToFrameLength(long l)
@@ -473,7 +469,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             // Save reader index
             int idx = buffer.ReaderIndex;
-            buffer.SetReaderIndex(0);
+            _ = buffer.SetReaderIndex(0);
 
             // Must have 2 byte integer within the valid range
             int statusCode = buffer.ReadShort();
@@ -496,7 +492,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 
             // Restore reader index
-            buffer.SetReaderIndex(idx);
+            _ = buffer.SetReaderIndex(idx);
         }
     }
 }

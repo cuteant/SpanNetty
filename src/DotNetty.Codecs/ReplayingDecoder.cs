@@ -375,7 +375,7 @@ namespace DotNetty.Codecs
                     {
                         for (int i = 0; i < outSize; i++)
                         {
-                            context.FireChannelRead(output[i]);
+                            _ = context.FireChannelRead(output[i]);
                         }
                         output.Clear();
 
@@ -406,7 +406,7 @@ namespace DotNetty.Codecs
                             int restorationPoint = _checkpoint;
                             if (SharedConstants.TooBigOrNegative >= (uint)restorationPoint) // restorationPoint >= 0
                             {
-                                input.SetReaderIndex(restorationPoint);
+                                _ = input.SetReaderIndex(restorationPoint);
                             }
                             else
                             {
@@ -444,7 +444,7 @@ namespace DotNetty.Codecs
                         int restorationPoint = _checkpoint;
                         if (SharedConstants.TooBigOrNegative >= (uint)restorationPoint) // restorationPoint >= 0
                         {
-                            input.SetReaderIndex(restorationPoint);
+                            _ = input.SetReaderIndex(restorationPoint);
                         }
                         else
                         {

@@ -25,7 +25,7 @@ namespace DotNetty.Buffers
         static PooledSlicedByteBuffer NewInstance0(AbstractByteBuffer unwrapped, IByteBuffer wrapped, int adjustment, int length)
         {
             PooledSlicedByteBuffer slice = Recycler.Take();
-            slice.Init<PooledSlicedByteBuffer>(unwrapped, wrapped, 0, length, length);
+            _ = slice.Init<PooledSlicedByteBuffer>(unwrapped, wrapped, 0, length, length);
             slice.DiscardMarks();
             slice._adjustment = adjustment;
 
@@ -166,21 +166,21 @@ namespace DotNetty.Buffers
         public sealed override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
             CheckIndex0(index, length);
-            Unwrap().GetBytes(Idx(index), dst, dstIndex, length);
+            _ = Unwrap().GetBytes(Idx(index), dst, dstIndex, length);
             return this;
         }
 
         public sealed override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
             CheckIndex0(index, length);
-            Unwrap().GetBytes(Idx(index), dst, dstIndex, length);
+            _ = Unwrap().GetBytes(Idx(index), dst, dstIndex, length);
             return this;
         }
 
         public sealed override IByteBuffer SetByte(int index, int value)
         {
             CheckIndex0(index, 1);
-            Unwrap().SetByte(Idx(index), value);
+            _ = Unwrap().SetByte(Idx(index), value);
             return this;
         }
 
@@ -189,7 +189,7 @@ namespace DotNetty.Buffers
         public sealed override IByteBuffer SetShort(int index, int value)
         {
             CheckIndex0(index, 2);
-            Unwrap().SetShort(Idx(index), value);
+            _ = Unwrap().SetShort(Idx(index), value);
             return this;
         }
 
@@ -198,7 +198,7 @@ namespace DotNetty.Buffers
         public sealed override IByteBuffer SetShortLE(int index, int value)
         {
             CheckIndex0(index, 2);
-            Unwrap().SetShortLE(Idx(index), value);
+            _ = Unwrap().SetShortLE(Idx(index), value);
             return this;
         }
 
@@ -207,7 +207,7 @@ namespace DotNetty.Buffers
         public sealed override IByteBuffer SetMedium(int index, int value)
         {
             CheckIndex0(index, 3);
-            Unwrap().SetMedium(Idx(index), value);
+            _ = Unwrap().SetMedium(Idx(index), value);
             return this;
         }
 
@@ -216,7 +216,7 @@ namespace DotNetty.Buffers
         public sealed override IByteBuffer SetMediumLE(int index, int value)
         {
             CheckIndex0(index, 3);
-            Unwrap().SetMediumLE(Idx(index), value);
+            _ = Unwrap().SetMediumLE(Idx(index), value);
             return this;
         }
 
@@ -225,7 +225,7 @@ namespace DotNetty.Buffers
         public sealed override IByteBuffer SetInt(int index, int value)
         {
             CheckIndex0(index, 4);
-            Unwrap().SetInt(Idx(index), value);
+            _ = Unwrap().SetInt(Idx(index), value);
             return this;
         }
 
@@ -234,7 +234,7 @@ namespace DotNetty.Buffers
         public sealed override IByteBuffer SetIntLE(int index, int value)
         {
             CheckIndex0(index, 4);
-            Unwrap().SetIntLE(Idx(index), value);
+            _ = Unwrap().SetIntLE(Idx(index), value);
             return this;
         }
 
@@ -243,7 +243,7 @@ namespace DotNetty.Buffers
         public sealed override IByteBuffer SetLong(int index, long value)
         {
             CheckIndex0(index, 8);
-            Unwrap().SetLong(Idx(index), value);
+            _ = Unwrap().SetLong(Idx(index), value);
             return this;
         }
 
@@ -252,7 +252,7 @@ namespace DotNetty.Buffers
         public sealed override IByteBuffer SetLongLE(int index, long value)
         {
             CheckIndex0(index, 8);
-            Unwrap().SetLongLE(Idx(index), value);
+            _ = Unwrap().SetLongLE(Idx(index), value);
             return this;
         }
 
@@ -261,14 +261,14 @@ namespace DotNetty.Buffers
         public sealed override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
             CheckIndex0(index, length);
-            Unwrap().SetBytes(Idx(index), src, srcIndex, length);
+            _ = Unwrap().SetBytes(Idx(index), src, srcIndex, length);
             return this;
         }
 
         public sealed override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
             CheckIndex0(index, length);
-            Unwrap().SetBytes(Idx(index), src, srcIndex, length);
+            _ = Unwrap().SetBytes(Idx(index), src, srcIndex, length);
             return this;
         }
 

@@ -55,7 +55,7 @@ namespace DotNetty.Common.Concurrency
 
         public void Start()
         {
-            _readyToStart.Set();
+            _ = _readyToStart.Set();
             IsAlive = true;
         }
 
@@ -66,7 +66,7 @@ namespace DotNetty.Common.Concurrency
                 {
                     // We start the task running, then unleash it by signaling the readyToStart event.
                     // This is needed to avoid thread reuse for tasks (see below)
-                    _readyToStart.WaitOne();
+                    _ = _readyToStart.WaitOne();
                     // This is the first time we're using this thread, therefore the TLS slot must be empty
                     if (s_currentThread is object)
                     {
@@ -75,7 +75,7 @@ namespace DotNetty.Common.Concurrency
                     }
                     s_currentThread = this;
                     threadStartFunc(_startupParameter);
-                    _completed.Set();
+                    _ = _completed.Set();
                 },
                 CancellationToken.None,
                 // .NET always creates a brand new thread for LongRunning tasks

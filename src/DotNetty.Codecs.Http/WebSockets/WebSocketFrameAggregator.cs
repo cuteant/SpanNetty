@@ -91,7 +91,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                     _handlingOversizedMessage = false;
                     if (_currentMessage is object)
                     {
-                        _currentMessage.Release();
+                        _ = _currentMessage.Release();
                         _currentMessage = default;
 
                         ThrowHelper.ThrowMessageAggregationException_StartMessage();

@@ -68,12 +68,12 @@ namespace DotNetty.Transport.Channels.Sockets
                     for (int i = 0; i < size; i++)
                     {
                         ch.ReadPending = false;
-                        pipeline.FireChannelRead(_readBuf[i]);
+                        _ = pipeline.FireChannelRead(_readBuf[i]);
                     }
 
                     _readBuf.Clear();
                     allocHandle.ReadComplete();
-                    pipeline.FireChannelReadComplete();
+                    _ = pipeline.FireChannelReadComplete();
 
                     if (exception is object)
                     {
@@ -84,7 +84,7 @@ namespace DotNetty.Transport.Channels.Sockets
                             closed = !(ch is IServerChannel);
                         }
 
-                        pipeline.FireExceptionCaught(exception);
+                        _ = pipeline.FireExceptionCaught(exception);
                     }
 
                     if (closed)

@@ -130,7 +130,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     if (!success)
                     {
-                        content.Release();
+                        _ = content.Release();
                     }
                 }
             }

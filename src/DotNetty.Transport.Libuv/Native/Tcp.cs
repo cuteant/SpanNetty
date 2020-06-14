@@ -38,7 +38,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
 
             // This function is idempotent and may be safely called on a stopped stream.
-            NativeMethods.uv_read_stop(Handle);
+            _ = NativeMethods.uv_read_stop(Handle);
         }
 
         void OnReadCallback(int statusCode, OperationException error)

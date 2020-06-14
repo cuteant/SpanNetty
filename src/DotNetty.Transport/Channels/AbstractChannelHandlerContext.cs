@@ -187,7 +187,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                FireChannelRegistered();
+                _ = FireChannelRegistered();
             }
         }
 
@@ -225,7 +225,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                FireChannelUnregistered();
+                _ = FireChannelUnregistered();
             }
         }
 
@@ -263,7 +263,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                FireChannelActive();
+                _ = FireChannelActive();
             }
         }
 
@@ -301,7 +301,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                FireChannelInactive();
+                _ = FireChannelInactive();
             }
         }
 
@@ -358,7 +358,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                FireExceptionCaught(cause);
+                _ = FireExceptionCaught(cause);
             }
         }
 
@@ -397,7 +397,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                FireUserEventTriggered(evt);
+                _ = FireUserEventTriggered(evt);
             }
         }
 
@@ -438,7 +438,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                FireChannelRead(msg);
+                _ = FireChannelRead(msg);
             }
         }
 
@@ -477,7 +477,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                FireChannelReadComplete();
+                _ = FireChannelReadComplete();
             }
         }
 
@@ -516,7 +516,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                FireChannelWritabilityChanged();
+                _ = FireChannelWritabilityChanged();
             }
         }
 
@@ -644,7 +644,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                DisconnectAsync(promise);
+                _ = DisconnectAsync(promise);
             }
         }
 
@@ -687,7 +687,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                CloseAsync(promise);
+                _ = CloseAsync(promise);
             }
         }
 
@@ -730,7 +730,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                DeregisterAsync(promise);
+                _ = DeregisterAsync(promise);
             }
         }
 
@@ -765,7 +765,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                Read();
+                _ = Read();
             }
         }
 
@@ -785,7 +785,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                WriteAsync(msg, promise);
+                _ = WriteAsync(msg, promise);
             }
 
         }
@@ -825,7 +825,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                Flush();
+                _ = Flush();
             }
         }
 
@@ -858,7 +858,7 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                WriteAndFlushAsync(msg, promise);
+                _ = WriteAndFlushAsync(msg, promise);
             }
         }
 
@@ -870,14 +870,14 @@ namespace DotNetty.Transport.Channels
             {
                 if (IsNotValidPromise(promise, true))
                 {
-                    ReferenceCountUtil.Release(msg);
+                    _ = ReferenceCountUtil.Release(msg);
                     // cancelled
                     return;
                 }
             }
             catch (Exception)
             {
-                ReferenceCountUtil.Release(msg);
+                _ = ReferenceCountUtil.Release(msg);
                 throw;
             }
 
@@ -977,11 +977,11 @@ namespace DotNetty.Transport.Channels
             {
                 try
                 {
-                    promise.TrySetException(cause);
+                    _ = promise.TrySetException(cause);
                 }
                 finally
                 {
-                    ReferenceCountUtil.Release(msg);
+                    _ = ReferenceCountUtil.Release(msg);
                 }
                 return false;
             }

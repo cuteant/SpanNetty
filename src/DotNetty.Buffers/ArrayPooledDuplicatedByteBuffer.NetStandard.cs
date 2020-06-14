@@ -22,8 +22,8 @@ namespace DotNetty.Buffers
 
         public sealed override int GetBytes(int index, Span<byte> destination) => Unwrap().GetBytes(index, destination);
 
-        public sealed override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src) { Unwrap().SetBytes(index, src); return this; }
+        public sealed override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src) { _ = Unwrap().SetBytes(index, src); return this; }
 
-        public sealed override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src) { Unwrap().SetBytes(index, src); return this; }
+        public sealed override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src) { _ = Unwrap().SetBytes(index, src); return this; }
     }
 }

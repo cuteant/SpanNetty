@@ -12,9 +12,9 @@ namespace DotNetty.Codecs.Http2
         public Http2GoAwayException(int lastStreamId, Http2Error errorCode, byte[] debugData)
             : base(Http2Error.StreamClosed)
         {
-            this.LastStreamId = lastStreamId;
-            this.ErrorCode = errorCode;
-            this.DebugData = debugData;
+            LastStreamId = lastStreamId;
+            ErrorCode = errorCode;
+            DebugData = debugData;
         }
 
         public int LastStreamId { get; }

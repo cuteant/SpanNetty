@@ -71,8 +71,8 @@ namespace DotNetty.Handlers.Tls
                                     _handshakeFailed = true;
                                     var e = new NotSslRecordException(
                                         "not an SSL/TLS record: " + ByteBufferUtil.HexDump(input));
-                                    input.SkipBytes(input.ReadableBytes);
-                                    context.FireUserEventTriggered(new SniCompletionEvent(e));
+                                    _ = input.SkipBytes(input.ReadableBytes);
+                                    _ = context.FireUserEventTriggered(new SniCompletionEvent(e));
                                     TlsUtils.NotifyHandshakeFailure(context, e, true);
                                     throw e;
                                 }
@@ -150,13 +150,13 @@ namespace DotNetty.Handlers.Tls
                                             else
                                             {
                                                 // Clear the buffer so we can aggregate into it again.
-                                                _handshakeBuffer.Clear();
+                                                _ = _handshakeBuffer.Clear();
                                             }
                                         }
                                     }
 
                                     // Combine the encapsulated data in one buffer but not include the SSL_RECORD_HEADER
-                                    _handshakeBuffer.WriteBytes(input, readerIndex + TlsUtils.SSL_RECORD_HEADER_LENGTH,
+                                    _ = _handshakeBuffer.WriteBytes(input, readerIndex + TlsUtils.SSL_RECORD_HEADER_LENGTH,
                                             packetLength - TlsUtils.SSL_RECORD_HEADER_LENGTH);
                                     readerIndex += packetLength;
                                     readableBytes -= packetLength;
@@ -302,9 +302,10 @@ namespace DotNetty.Handlers.Tls
 
         private void ReleaseHandshakeBuffer()
         {
-            if (_handshakeBuffer is object)
+            var handshakeBuffer = _handshakeBuffer;
+            if (handshakeBuffer is object)
             {
-                _handshakeBuffer.Release();
+                _ = handshakeBuffer.Release();
                 _handshakeBuffer = null;
             }
         }
@@ -331,7 +332,7 @@ namespace DotNetty.Handlers.Tls
                 if (_readPending)
                 {
                     _readPending = false;
-                    context.Read();
+                    _ = context.Read();
                 }
             }
         }
@@ -340,7 +341,7 @@ namespace DotNetty.Handlers.Tls
         {
             if (serverTlsSetting is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.serverTlsSetting); }
             var tlsHandler = new TlsHandler(_sslStreamFactory, serverTlsSetting);
-            context.Pipeline.Replace(this, nameof(TlsHandler), tlsHandler);
+            _ = context.Pipeline.Replace(this, nameof(TlsHandler), tlsHandler);
         }
 
         protected override void HandlerRemovedInternal(IChannelHandlerContext context)

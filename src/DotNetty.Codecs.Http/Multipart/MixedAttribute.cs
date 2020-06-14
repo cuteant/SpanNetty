@@ -222,25 +222,25 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public IReferenceCounted Retain()
         {
-            this.attribute.Retain();
+            _ = this.attribute.Retain();
             return this;
         }
 
         public IReferenceCounted Retain(int increment)
         {
-            this.attribute.Retain(increment);
+            _ = this.attribute.Retain(increment);
             return this;
         }
 
         public IReferenceCounted Touch()
         {
-            this.attribute.Touch();
+            _ = this.attribute.Touch();
             return this;
         }
 
         public IReferenceCounted Touch(object hint)
         {
-            this.attribute.Touch(hint);
+            _ = this.attribute.Touch(hint);
             return this;
         }
 

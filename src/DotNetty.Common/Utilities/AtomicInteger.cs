@@ -24,7 +24,7 @@ namespace DotNetty.Common.Utilities
         public int GetAndIncrement()
         {
             var v = Volatile.Read(ref this.value);
-            Interlocked.Increment(ref this.value);
+            _ = Interlocked.Increment(ref this.value);
             return v;
         }
 

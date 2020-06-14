@@ -222,13 +222,13 @@ namespace DotNetty.Buffers
 
                 for (PoolChunk<T> cur = _head; ;)
                 {
-                    buf.Append(cur);
+                    _ = buf.Append(cur);
                     cur = cur.Next;
                     if (cur is null)
                     {
                         break;
                     }
-                    buf.Append(StringUtil.Newline);
+                    _ = buf.Append(StringUtil.Newline);
                 }
             }
 

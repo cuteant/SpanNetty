@@ -95,11 +95,11 @@ namespace DotNetty.Buffers
 
         protected internal sealed override long _GetLongLE(int index) => UnwrapCore()._GetLongLE(index);
 
-        public sealed override IByteBuffer GetBytes(int index, IByteBuffer destination, int dstIndex, int length) { Unwrap().GetBytes(index, destination, dstIndex, length); return this; }
+        public sealed override IByteBuffer GetBytes(int index, IByteBuffer destination, int dstIndex, int length) { _ = Unwrap().GetBytes(index, destination, dstIndex, length); return this; }
 
-        public sealed override IByteBuffer GetBytes(int index, byte[] destination, int dstIndex, int length) { Unwrap().GetBytes(index, destination, dstIndex, length); return this; }
+        public sealed override IByteBuffer GetBytes(int index, byte[] destination, int dstIndex, int length) { _ = Unwrap().GetBytes(index, destination, dstIndex, length); return this; }
 
-        public sealed override IByteBuffer GetBytes(int index, Stream destination, int length) { Unwrap().GetBytes(index, destination, length); return this; }
+        public sealed override IByteBuffer GetBytes(int index, Stream destination, int length) { _ = Unwrap().GetBytes(index, destination, length); return this; }
 
         protected internal sealed override void _SetByte(int index, int value) => UnwrapCore()._SetByte(index, value);
 
@@ -111,11 +111,11 @@ namespace DotNetty.Buffers
 
         protected internal sealed override void _SetMediumLE(int index, int value) => UnwrapCore()._SetMediumLE(index, value);
 
-        public sealed override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length) { Unwrap().SetBytes(index, src, srcIndex, length); return this; }
+        public sealed override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length) { _ = Unwrap().SetBytes(index, src, srcIndex, length); return this; }
 
         public sealed override Task<int> SetBytesAsync(int index, Stream src, int length, CancellationToken cancellationToken) => Unwrap().SetBytesAsync(index, src, length, cancellationToken);
 
-        public sealed override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length) { Unwrap().SetBytes(index, src, srcIndex, length);return this; }
+        public sealed override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length) { _ = Unwrap().SetBytes(index, src, srcIndex, length); return this; }
 
         protected internal sealed override void _SetInt(int index, int value) => UnwrapCore()._SetInt(index, value);
 

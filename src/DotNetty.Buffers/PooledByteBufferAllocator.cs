@@ -37,7 +37,7 @@ namespace DotNetty.Buffers
             Exception pageSizeFallbackCause = null;
             try
             {
-                ValidateAndCalculatePageShifts(defaultPageSize);
+                _ = ValidateAndCalculatePageShifts(defaultPageSize);
             }
             catch (Exception t)
             {
@@ -50,7 +50,7 @@ namespace DotNetty.Buffers
             Exception maxOrderFallbackCause = null;
             try
             {
-                ValidateAndCalculateChunkSize(DefaultPageSize, defaultMaxOrder);
+                _ = ValidateAndCalculateChunkSize(DefaultPageSize, defaultMaxOrder);
             }
             catch (Exception t)
             {
@@ -378,12 +378,12 @@ namespace DotNetty.Buffers
                 // ReSharper disable once PossibleNullReferenceException
                 foreach (PoolArena<byte[]> a in _heapArenas)
                 {
-                    buf.Append(a);
+                    _ = buf.Append(a);
                 }
             }
 
             int directArenasLen = _directArenas?.Length ?? 0;
-            buf.Append(directArenasLen)
+            _ = buf.Append(directArenasLen)
                 .Append(" direct arena(s):")
                 .Append(StringUtil.Newline);
             if (directArenasLen > 0)
@@ -391,7 +391,7 @@ namespace DotNetty.Buffers
                 // ReSharper disable once PossibleNullReferenceException
                 foreach (PoolArena<byte[]> a in _directArenas)
                 {
-                    buf.Append(a);
+                    _ = buf.Append(a);
                 }
             }
 

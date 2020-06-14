@@ -64,18 +64,18 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions
             var newHeaderValue = StringBuilderManager.Allocate(currentHeaderValue?.Length ?? extensionName.Length + 1);
             if (currentHeaderValue is object && currentHeaderValue.Trim() != string.Empty)
             {
-                newHeaderValue.Append(currentHeaderValue);
-                newHeaderValue.Append(ExtensionSeparator);
+                _ = newHeaderValue.Append(currentHeaderValue);
+                _ = newHeaderValue.Append(ExtensionSeparator);
             }
-            newHeaderValue.Append(extensionName);
+            _ = newHeaderValue.Append(extensionName);
             foreach (KeyValuePair<string, string> extensionParameter in extensionParameters)
             {
-                newHeaderValue.Append(ParameterSeparator);
-                newHeaderValue.Append(extensionParameter.Key);
+                _ = newHeaderValue.Append(ParameterSeparator);
+                _ = newHeaderValue.Append(extensionParameter.Key);
                 if (extensionParameter.Value is object)
                 {
-                    newHeaderValue.Append(ParameterEqual);
-                    newHeaderValue.Append(extensionParameter.Value);
+                    _ = newHeaderValue.Append(ParameterEqual);
+                    _ = newHeaderValue.Append(extensionParameter.Value);
                 }
             }
             return StringBuilderManager.ReturnAndFree(newHeaderValue);

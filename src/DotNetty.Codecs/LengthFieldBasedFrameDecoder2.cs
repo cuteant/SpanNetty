@@ -107,7 +107,7 @@ namespace DotNetty.Codecs
         {
             long bytesToDiscard = this.bytesToDiscard;
             int localBytesToDiscard = (int)Math.Min(bytesToDiscard, input.ReadableBytes);
-            input.SkipBytes(localBytesToDiscard);
+            _ = input.SkipBytes(localBytesToDiscard);
             bytesToDiscard -= localBytesToDiscard;
             this.bytesToDiscard = bytesToDiscard;
 
@@ -117,7 +117,7 @@ namespace DotNetty.Codecs
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void FailOnNegativeLengthField(IByteBuffer input, long frameLength, int lengthFieldEndOffset)
         {
-            input.SkipBytes(lengthFieldEndOffset);
+            _ = input.SkipBytes(lengthFieldEndOffset);
             CThrowHelper.ThrowCorruptedFrameException_FrameLength(frameLength);
         }
 
@@ -126,7 +126,7 @@ namespace DotNetty.Codecs
                                                                           long frameLength,
                                                                           int lengthFieldEndOffset)
         {
-            input.SkipBytes(lengthFieldEndOffset);
+            _ = input.SkipBytes(lengthFieldEndOffset);
             CThrowHelper.ThrowCorruptedFrameException_LengthFieldEndOffset(frameLength, lengthFieldEndOffset);
         }
 
@@ -139,14 +139,14 @@ namespace DotNetty.Codecs
             if (discard < 0)
             {
                 // buffer contains more bytes then the frameLength so we can discard all now
-                input.SkipBytes((int)frameLength);
+                _ = input.SkipBytes((int)frameLength);
             }
             else
             {
                 // Enter the discard mode and discard everything received so far.
                 this.discardingTooLongFrame = true;
                 this.bytesToDiscard = discard;
-                input.SkipBytes(input.ReadableBytes);
+                _ = input.SkipBytes(input.ReadableBytes);
             }
             this.FailIfNecessary(true);
         }
@@ -156,7 +156,7 @@ namespace DotNetty.Codecs
                                                                          int frameLength,
                                                                          int initialBytesToStrip)
         {
-            input.SkipBytes(frameLength);
+            _ = input.SkipBytes(frameLength);
             CThrowHelper.ThrowCorruptedFrameException_InitialBytesToStrip(frameLength, initialBytesToStrip);
         }
 
@@ -207,13 +207,13 @@ namespace DotNetty.Codecs
             {
                 FailOnFrameLengthLessThanInitialBytesToStrip(input, frameLengthInt, thisInitialBytesToStrip);
             }
-            input.SkipBytes(thisInitialBytesToStrip);
+            _ = input.SkipBytes(thisInitialBytesToStrip);
 
             // extract frame
             int readerIndex = input.ReaderIndex;
             int actualFrameLength = frameLengthInt - thisInitialBytesToStrip;
             IByteBuffer frame = this.ExtractFrame(context, input, readerIndex, actualFrameLength);
-            input.SetReaderIndex(readerIndex + actualFrameLength);
+            _ = input.SetReaderIndex(readerIndex + actualFrameLength);
             output.Add(frame);
         }
 

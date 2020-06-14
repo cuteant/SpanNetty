@@ -184,7 +184,7 @@ namespace DotNetty.Common.Utilities
 
             public T GetAndRemove()
             {
-                Interlocked.Exchange(ref this.removed, SharedConstants.True);
+                _ = Interlocked.Exchange(ref this.removed, SharedConstants.True);
                 T oldValue = this.GetAndSet(null);
                 this.Remove0();
                 return oldValue;
@@ -194,7 +194,7 @@ namespace DotNetty.Common.Utilities
 
             public void Remove()
             {
-                Interlocked.Exchange(ref this.removed, SharedConstants.True);
+                _ = Interlocked.Exchange(ref this.removed, SharedConstants.True);
                 this.Set(null);
                 this.Remove0();
             }

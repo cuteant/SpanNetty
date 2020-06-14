@@ -50,9 +50,9 @@ namespace DotNetty.Common.Internal
                         // for the head to end up > than the tail, since you can't set any more bits than all of 
                         // them.
                         //
-                        Interlocked.Exchange(ref v_headIndex , v_headIndex & v_mask);
+                        _ = Interlocked.Exchange(ref v_headIndex, v_headIndex & v_mask);
                         tail = v_tailIndex & v_mask;
-                        Interlocked.Exchange(ref v_tailIndex , tail);
+                        _ = Interlocked.Exchange(ref v_tailIndex, tail);
                         Debug.Assert(v_headIndex <= v_tailIndex);
                     }
                 }
@@ -68,8 +68,8 @@ namespace DotNetty.Common.Internal
             // When there are at least 2 elements' worth of space, we can take the fast path.
             if (tail < v_headIndex + v_mask)
             {
-                Interlocked.Exchange(ref _array[tail & v_mask], item);
-                Interlocked.Exchange(ref v_tailIndex, tail + 1);
+                _ = Interlocked.Exchange(ref _array[tail & v_mask], item);
+                _ = Interlocked.Exchange(ref v_tailIndex, tail + 1);
             }
             else
             {
@@ -93,14 +93,14 @@ namespace DotNetty.Common.Internal
                         }
 
                         // Reset the field values, incl. the mask.
-                        Interlocked.Exchange(ref _array, newArray);
-                        Interlocked.Exchange(ref v_headIndex, 0);
-                        Interlocked.Exchange(ref v_tailIndex, tail = count);
-                        Interlocked.Exchange(ref v_mask, (v_mask << 1) | 1);
+                        _ = Interlocked.Exchange(ref _array, newArray);
+                        _ = Interlocked.Exchange(ref v_headIndex, 0);
+                        _ = Interlocked.Exchange(ref v_tailIndex, tail = count);
+                        _ = Interlocked.Exchange(ref v_mask, (v_mask << 1) | 1);
                     }
 
-                    Interlocked.Exchange(ref _array[tail & v_mask], item);
-                    Interlocked.Exchange(ref v_tailIndex, tail + 1);
+                    _ = Interlocked.Exchange(ref _array[tail & v_mask], item);
+                    _ = Interlocked.Exchange(ref v_tailIndex, tail + 1);
                 }
                 finally
                 {
@@ -153,7 +153,7 @@ namespace DotNetty.Common.Internal
                 }
 
                 tail -= 1;
-                Interlocked.Exchange(ref v_tailIndex, tail);
+                _ = Interlocked.Exchange(ref v_tailIndex, tail);
 
                 // If there is no interaction with a take, we can head down the fast path.
                 if (v_headIndex <= tail)
@@ -167,7 +167,7 @@ namespace DotNetty.Common.Internal
                         continue;
                     }
 
-                    Interlocked.Exchange(ref _array[idx], null);
+                    _ = Interlocked.Exchange(ref _array[idx], null);
                     return true;
                 }
                 else
@@ -190,13 +190,13 @@ namespace DotNetty.Common.Internal
                                 continue;
                             }
 
-                            Interlocked.Exchange(ref _array[idx], null);
+                            _ = Interlocked.Exchange(ref _array[idx], null);
                             return true;
                         }
                         else
                         {
                             // We lost the ----, element was stolen, restore the tail.
-                            Interlocked.Exchange(ref v_tailIndex, tail + 1);
+                            _ = Interlocked.Exchange(ref v_tailIndex, tail + 1);
                             item = null;
                             return false;
                         }
@@ -231,7 +231,7 @@ namespace DotNetty.Common.Internal
                     {
                         // Increment head, and ensure read of tail doesn't move before it (fence).
                         int head = v_headIndex;
-                        Interlocked.Exchange(ref v_headIndex, head + 1);
+                        _ = Interlocked.Exchange(ref v_headIndex, head + 1);
 
                         if (head < v_tailIndex)
                         {
@@ -244,13 +244,13 @@ namespace DotNetty.Common.Internal
                                 continue;
                             }
 
-                            Interlocked.Exchange(ref _array[idx], null);
+                            _ = Interlocked.Exchange(ref _array[idx], null);
                             return true;
                         }
                         else
                         {
                             // Failed, restore head.
-                            Interlocked.Exchange(ref v_headIndex, head);
+                            _ = Interlocked.Exchange(ref v_headIndex, head);
                             item = null;
                         }
                     }
@@ -269,8 +269,8 @@ namespace DotNetty.Common.Internal
 
         public void Clear()
         {
-            Interlocked.Exchange(ref v_headIndex, c_startIndex);
-            Interlocked.Exchange(ref v_tailIndex, c_startIndex);
+            _ = Interlocked.Exchange(ref v_headIndex, c_startIndex);
+            _ = Interlocked.Exchange(ref v_tailIndex, c_startIndex);
         }
     }
 }

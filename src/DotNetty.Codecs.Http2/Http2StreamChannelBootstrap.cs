@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http2
 
             if (value is null)
             {
-                _options.TryRemove(option, out _);
+                _ = _options.TryRemove(option, out _);
             }
             else
             {
@@ -83,7 +83,7 @@ namespace DotNetty.Codecs.Http2
 
             if (value is null)
             {
-                _attrs.TryRemove(key, out _);
+                _ = _attrs.TryRemove(key, out _);
             }
             else
             {
@@ -136,7 +136,7 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Exception exc)
             {
-                promise.TrySetException(exc);
+                _ = promise.TrySetException(exc);
             }
             return promise.Task;
         }
@@ -211,23 +211,23 @@ namespace DotNetty.Codecs.Http2
             var streamChannel = wrapped.Item2;
             if (future.IsSuccess())
             {
-                wrapped.Item1.TrySetResult(streamChannel);
+                _ = wrapped.Item1.TrySetResult(streamChannel);
             }
             else if (future.IsCanceled)
             {
-                wrapped.Item1.TrySetCanceled();
+                _ = wrapped.Item1.TrySetCanceled();
             }
             else
             {
                 if (streamChannel.Registered)
                 {
-                    streamChannel.CloseAsync();
+                    _ = streamChannel.CloseAsync();
                 }
                 else
                 {
                     streamChannel.Unsafe.CloseForcibly();
                 }
-                wrapped.Item1.TrySetException(future.Exception.InnerExceptions);
+                _ = wrapped.Item1.TrySetException(future.Exception.InnerExceptions);
             }
         }
 
@@ -235,29 +235,29 @@ namespace DotNetty.Codecs.Http2
         {
             if (!future.IsCompleted)
             {
-                future.ContinueWith(LinkOutcomeContinuationAction,
+                _ = future.ContinueWith(LinkOutcomeContinuationAction,
                     Tuple.Create(promise, streamChannel), TaskContinuationOptions.ExecuteSynchronously);
                 return;
             }
             if (future.IsSuccess())
             {
-                promise.TrySetResult(streamChannel);
+                _ = promise.TrySetResult(streamChannel);
             }
             else if (future.IsCanceled)
             {
-                promise.TrySetCanceled();
+                _ = promise.TrySetCanceled();
             }
             else
             {
                 if (streamChannel.Registered)
                 {
-                    streamChannel.CloseAsync();
+                    _ = streamChannel.CloseAsync();
                 }
                 else
                 {
                     streamChannel.Unsafe.CloseForcibly();
                 }
-                promise.TrySetException(future.Exception.InnerExceptions);
+                _ = promise.TrySetException(future.Exception.InnerExceptions);
             }
         }
 
@@ -267,7 +267,7 @@ namespace DotNetty.Codecs.Http2
             var handler = InternalHandler;
             if (handler is object)
             {
-                p.AddLast(handler);
+                _ = p.AddLast(handler);
             }
 
             var options = _options.Values;

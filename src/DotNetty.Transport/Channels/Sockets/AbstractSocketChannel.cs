@@ -277,14 +277,14 @@ namespace DotNetty.Transport.Channels.Sockets
             if (promise is object)
             {
                 // Use TrySetException() instead of SetException() to avoid the race against cancellation due to timeout.
-                promise.TrySetException(ThrowHelper.GetClosedChannelException());
+                _ = promise.TrySetException(ThrowHelper.GetClosedChannelException());
                 _connectPromise = null;
             }
 
             IScheduledTask cancellationTask = _connectCancellationTask;
             if (cancellationTask is object)
             {
-                cancellationTask.Cancel();
+                _ = cancellationTask.Cancel();
                 _connectCancellationTask = null;
             }
 

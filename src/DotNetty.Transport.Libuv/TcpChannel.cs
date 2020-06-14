@@ -72,7 +72,7 @@ namespace DotNetty.Transport.Libuv
             _tcp.Bind((IPEndPoint)localAddress);
             _config.Apply();
             _isBound = true;
-            CacheLocalAddress();
+            _ = CacheLocalAddress();
         }
 
         internal override bool IsBound => _isBound;
@@ -136,7 +136,7 @@ namespace DotNetty.Transport.Libuv
 
             if (IsInState(StateFlags.ReadScheduled))
             {
-                ResetState(StateFlags.ReadScheduled);
+                _ = ResetState(StateFlags.ReadScheduled);
                 _tcp.ReadStop();
             }
         }

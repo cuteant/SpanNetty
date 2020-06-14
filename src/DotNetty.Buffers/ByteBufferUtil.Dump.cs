@@ -98,7 +98,7 @@ namespace DotNetty.Buffers
                     var buf = StringBuilderManager.Allocate(padding * 3);
                     for (int j = 0; j < padding; j++)
                     {
-                        buf.Append("   ");
+                        _ = buf.Append("   ");
                     }
                     HexPadding[i] = StringBuilderManager.ReturnAndFree(buf);
                 }
@@ -110,7 +110,7 @@ namespace DotNetty.Buffers
                     var buf = StringBuilderManager.Allocate(padding);
                     for (int j = 0; j < padding; j++)
                     {
-                        buf.Append(' ');
+                        _ = buf.Append(' ');
                     }
                     BytePadding[i] = StringBuilderManager.ReturnAndFree(buf);
                 }
@@ -132,10 +132,10 @@ namespace DotNetty.Buffers
                 for (int i = 0; i < HexDumpRowPrefixes.Length; i++)
                 {
                     var buf = StringBuilderManager.Allocate(); // new StringBuilder(12);
-                    buf.Append(Environment.NewLine);
-                    buf.Append((i << 4 & 0xFFFFFFFFL | 0x100000000L).ToString("X2"));
-                    buf.Insert(buf.Length - 9, '|');
-                    buf.Append('|');
+                    _ = buf.Append(Environment.NewLine);
+                    _ = buf.Append((i << 4 & 0xFFFFFFFFL | 0x100000000L).ToString("X2"));
+                    _ = buf.Insert(buf.Length - 9, '|');
+                    _ = buf.Append('|');
                     HexDumpRowPrefixes[i] = StringBuilderManager.ReturnAndFree(buf);
                 }
             }
@@ -206,7 +206,7 @@ namespace DotNetty.Buffers
                 {
                     return;
                 }
-                dump.Append(
+                _ = dump.Append(
                     "         +-------------------------------------------------+" +
                     Newline + "         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |" +
                     Newline + "+--------+-------------------------------------------------+----------------+");
@@ -227,16 +227,16 @@ namespace DotNetty.Buffers
                     int rowEndIndex = rowStartIndex + 16;
                     for (int j = rowStartIndex; j < rowEndIndex; j++)
                     {
-                        dump.Append(Byte2Hex[buf.GetByte(j)]);
+                        _ = dump.Append(Byte2Hex[buf.GetByte(j)]);
                     }
-                    dump.Append(" |");
+                    _ = dump.Append(" |");
 
                     // ASCII dump
                     for (int j = rowStartIndex; j < rowEndIndex; j++)
                     {
-                        dump.Append(Byte2Char[buf.GetByte(j)]);
+                        _ = dump.Append(Byte2Char[buf.GetByte(j)]);
                     }
-                    dump.Append('|');
+                    _ = dump.Append('|');
                 }
 
                 // Dump the last row which has less than 16 bytes.
@@ -249,35 +249,35 @@ namespace DotNetty.Buffers
                     int rowEndIndex = rowStartIndex + remainder;
                     for (int j = rowStartIndex; j < rowEndIndex; j++)
                     {
-                        dump.Append(Byte2Hex[buf.GetByte(j)]);
+                        _ = dump.Append(Byte2Hex[buf.GetByte(j)]);
                     }
-                    dump.Append(HexPadding[remainder]);
-                    dump.Append(" |");
+                    _ = dump.Append(HexPadding[remainder]);
+                    _ = dump.Append(" |");
 
                     // Ascii dump
                     for (int j = rowStartIndex; j < rowEndIndex; j++)
                     {
-                        dump.Append(Byte2Char[buf.GetByte(j)]);
+                        _ = dump.Append(Byte2Char[buf.GetByte(j)]);
                     }
-                    dump.Append(BytePadding[remainder]);
-                    dump.Append('|');
+                    _ = dump.Append(BytePadding[remainder]);
+                    _ = dump.Append('|');
                 }
 
-                dump.Append(Newline + "+--------+-------------------------------------------------+----------------+");
+                _ = dump.Append(Newline + "+--------+-------------------------------------------------+----------------+");
             }
 
             static void AppendHexDumpRowPrefix(StringBuilder dump, int row, int rowStartIndex)
             {
                 if (row < HexDumpRowPrefixes.Length)
                 {
-                    dump.Append(HexDumpRowPrefixes[row]);
+                    _ = dump.Append(HexDumpRowPrefixes[row]);
                 }
                 else
                 {
-                    dump.Append(Environment.NewLine);
-                    dump.Append((rowStartIndex & 0xFFFFFFFFL | 0x100000000L).ToString("X2"));
-                    dump.Insert(dump.Length - 9, '|');
-                    dump.Append('|');
+                    _ = dump.Append(Environment.NewLine);
+                    _ = dump.Append((rowStartIndex & 0xFFFFFFFFL | 0x100000000L).ToString("X2"));
+                    _ = dump.Insert(dump.Length - 9, '|');
+                    _ = dump.Append('|');
                 }
             }
         }

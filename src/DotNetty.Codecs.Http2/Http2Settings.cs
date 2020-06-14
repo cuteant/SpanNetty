@@ -50,7 +50,7 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public long? HeaderTableSize()
         {
-            return this.TryGetValue(Http2CodecUtil.SettingsHeaderTableSize, out var val) ? val : default(long?);
+            return TryGetValue(Http2CodecUtil.SettingsHeaderTableSize, out var val) ? val : default(long?);
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http2
         /// <exception cref="ArgumentException">if verification of the setting fails.</exception>
         public Http2Settings HeaderTableSize(long value)
         {
-            this.Put(Http2CodecUtil.SettingsHeaderTableSize, value);
+            _ = Put(Http2CodecUtil.SettingsHeaderTableSize, value);
             return this;
         }
 
@@ -71,7 +71,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public bool? PushEnabled()
         {
-            return this.TryGetValue(Http2CodecUtil.SettingsEnablePush, out var val) ? val == True : default(bool?);
+            return TryGetValue(Http2CodecUtil.SettingsEnablePush, out var val) ? val == True : default(bool?);
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public Http2Settings PushEnabled(bool enabled)
         {
-            this.Put(Http2CodecUtil.SettingsEnablePush, enabled ? True : FALSE);
+            _ = Put(Http2CodecUtil.SettingsEnablePush, enabled ? True : FALSE);
             return this;
         }
 
@@ -91,7 +91,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public long? MaxConcurrentStreams()
         {
-            return this.TryGetValue(Http2CodecUtil.SettingsMaxConcurrentStreams, out var val) ? val : default(long?);
+            return TryGetValue(Http2CodecUtil.SettingsMaxConcurrentStreams, out var val) ? val : default(long?);
         }
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace DotNetty.Codecs.Http2
         /// <exception cref="ArgumentException">if verification of the setting fails.</exception>
         public Http2Settings MaxConcurrentStreams(long value)
         {
-            this.Put(Http2CodecUtil.SettingsMaxConcurrentStreams, value);
+            _ = Put(Http2CodecUtil.SettingsMaxConcurrentStreams, value);
             return this;
         }
 
@@ -123,7 +123,7 @@ namespace DotNetty.Codecs.Http2
         /// <exception cref="ArgumentException">if verification of the setting fails.</exception>
         public Http2Settings InitialWindowSize(int value)
         {
-            this.Put(Http2CodecUtil.SettingsInitialWindowSize, value);
+            _ = Put(Http2CodecUtil.SettingsInitialWindowSize, value);
             return this;
         }
 
@@ -144,7 +144,7 @@ namespace DotNetty.Codecs.Http2
         /// <exception cref="ArgumentException">if verification of the setting fails.</exception>
         public Http2Settings MaxFrameSize(int value)
         {
-            this.Put(Http2CodecUtil.SettingsMaxFrameSize, value);
+            _ = Put(Http2CodecUtil.SettingsMaxFrameSize, value);
             return this;
         }
 
@@ -154,7 +154,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public long? MaxHeaderListSize()
         {
-            return this.TryGetValue(Http2CodecUtil.SettingsMaxHeaderListSize, out var val) ? val : default(long?);
+            return TryGetValue(Http2CodecUtil.SettingsMaxHeaderListSize, out var val) ? val : default(long?);
         }
 
         /// <summary>
@@ -165,7 +165,7 @@ namespace DotNetty.Codecs.Http2
         /// <exception cref="ArgumentException">if verification of the setting fails.</exception>
         public Http2Settings MaxHeaderListSize(long value)
         {
-            this.Put(Http2CodecUtil.SettingsMaxHeaderListSize, value);
+            _ = Put(Http2CodecUtil.SettingsMaxHeaderListSize, value);
             return this;
         }
 
@@ -176,7 +176,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public Http2Settings CopyFrom(Http2Settings settings)
         {
-            this.Clear();
+            Clear();
             foreach (KeyValuePair<char, long> pair in settings)
             {
                 this[pair.Key] = pair.Value;
@@ -193,7 +193,7 @@ namespace DotNetty.Codecs.Http2
         /// <returns></returns>
         public int? GetIntValue(char key)
         {
-            return this.TryGetValue(key, out var val) ? (int)val : default(int?);
+            return TryGetValue(key, out var val) ? (int)val : default(int?);
         }
 
         static void VerifyStandardSetting(int key, long value)
@@ -243,27 +243,16 @@ namespace DotNetty.Codecs.Http2
         }
 
 
-        protected string KeyToString(char key)
+        protected string KeyToString(char key) => key switch
         {
-            switch (key)
-            {
-                case Http2CodecUtil.SettingsHeaderTableSize:
-                    return "HEADER_TABLE_SIZE";
-                case Http2CodecUtil.SettingsEnablePush:
-                    return "ENABLE_PUSH";
-                case Http2CodecUtil.SettingsMaxConcurrentStreams:
-                    return "Http2CodecUtil.MAX_CONCURRENT_STREAMS";
-                case Http2CodecUtil.SettingsInitialWindowSize:
-                    return "INITIAL_WINDOW_SIZE";
-                case Http2CodecUtil.SettingsMaxFrameSize:
-                    return "Http2CodecUtil.MAX_FRAME_SIZE";
-                case Http2CodecUtil.SettingsMaxHeaderListSize:
-                    return "Http2CodecUtil.MAX_HEADER_LIST_SIZE";
-                default:
-                    // Unknown keys.
-                    return key.ToString();
-            }
-        }
+            Http2CodecUtil.SettingsHeaderTableSize => "HEADER_TABLE_SIZE",
+            Http2CodecUtil.SettingsEnablePush => "ENABLE_PUSH",
+            Http2CodecUtil.SettingsMaxConcurrentStreams => "Http2CodecUtil.MAX_CONCURRENT_STREAMS",
+            Http2CodecUtil.SettingsInitialWindowSize => "INITIAL_WINDOW_SIZE",
+            Http2CodecUtil.SettingsMaxFrameSize => "Http2CodecUtil.MAX_FRAME_SIZE",
+            Http2CodecUtil.SettingsMaxHeaderListSize => "Http2CodecUtil.MAX_HEADER_LIST_SIZE",
+            _ => key.ToString(),// Unknown keys.
+        };
 
         public static Http2Settings DefaultSettings()
         {

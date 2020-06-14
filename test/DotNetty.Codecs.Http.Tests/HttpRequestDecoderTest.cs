@@ -341,7 +341,32 @@ namespace DotNetty.Codecs.Http.Tests
         {
             string requestStr = "GET /some/path HTTP/1.1\r\n" +
                     "Transfer-Encoding : chunked\r\n" +
-                    "Host: netty.io\n\r\n";
+                    "Host: netty.io\r\n\r\n";
+            InvalidHeaders0(requestStr);
+        }
+
+        [Fact]
+        public void WhitespaceBeforeTransferEncoding01()
+        {
+            string requestStr = "GET /some/path HTTP/1.1\r\n" +
+                    " Transfer-Encoding : chunked\r\n" +
+                    "Content-Length: 1\r\n" +
+                    "Host: netty.io\r\n\r\n" +
+                    "a";
+            InvalidHeaders0(requestStr);
+        }
+
+        [Fact]
+        public void WhitespaceBeforeTransferEncoding02()
+        {
+            string requestStr = "POST / HTTP/1.1" +
+                    " Transfer-Encoding : chunked\r\n" +
+                    "Host: target.com" +
+                    "Content-Length: 65\r\n\r\n" +
+                    "0\r\n\r\n" +
+                    "GET /maliciousRequest HTTP/1.1\r\n" +
+                    "Host: evilServer.com\r\n" +
+                    "Foo: x";
             InvalidHeaders0(requestStr);
         }
 
@@ -399,6 +424,32 @@ namespace DotNetty.Codecs.Http.Tests
         }
 
         [Fact]
+        public void ContentLengthAndTransferEncodingHeadersWithVerticalTab()
+        {
+            ContentLengthAndTransferEncodingHeadersWithInvalidSeparator((char)0x0b, false);
+            ContentLengthAndTransferEncodingHeadersWithInvalidSeparator((char)0x0b, true);
+        }
+
+        [Fact]
+        public void ContentLengthAndTransferEncodingHeadersWithCR()
+        {
+            ContentLengthAndTransferEncodingHeadersWithInvalidSeparator((char)0x0d, false);
+            ContentLengthAndTransferEncodingHeadersWithInvalidSeparator((char)0x0d, true);
+        }
+
+        private static void ContentLengthAndTransferEncodingHeadersWithInvalidSeparator(char separator, bool extraLine)
+        {
+            string requestStr = "POST / HTTP/1.1\r\n" +
+                    "Host: example.com\r\n" +
+                    "Connection: close\r\n" +
+                    "Content-Length: 9\r\n" +
+                    "Transfer-Encoding:" + separator + "chunked\r\n\r\n" +
+                    (extraLine ? "0\r\n\r\n" : "") +
+                    "something\r\n\r\n";
+            InvalidHeaders0(requestStr);
+        }
+
+        [Fact]
         public void ContentLengthHeaderAndChunked()
         {
             string requestStr = "POST / HTTP/1.1\r\n" +
@@ -407,10 +458,17 @@ namespace DotNetty.Codecs.Http.Tests
                     "Content-Length: 5\r\n" +
                     "Transfer-Encoding: chunked\r\n\r\n" +
                     "0\r\n\r\n";
-            InvalidHeaders0(requestStr);
+            EmbeddedChannel channel = new EmbeddedChannel(new HttpRequestDecoder());
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(requestStr, Encoding.ASCII)));
+            IHttpRequest request = channel.ReadInbound<IHttpRequest>();
+            Assert.False(request.Result.IsFailure);
+            Assert.True(request.Headers.Contains((AsciiString)"Transfer-Encoding", (AsciiString)"chunked", false));
+            Assert.False(request.Headers.Contains((AsciiString)"Content-Length"));
+            ILastHttpContent c = channel.ReadInbound<ILastHttpContent>();
+            Assert.False(channel.Finish());
         }
 
-        private void InvalidHeaders0(string requestStr)
+        private static void InvalidHeaders0(string requestStr)
         {
             EmbeddedChannel channel = new EmbeddedChannel(new HttpRequestDecoder());
             Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(requestStr, Encoding.ASCII)));

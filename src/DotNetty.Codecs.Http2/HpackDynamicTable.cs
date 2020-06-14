@@ -6,11 +6,11 @@ namespace DotNetty.Codecs.Http2
     sealed class HpackDynamicTable
     {
         // a circular queue of header fields
-        HpackHeaderField[] hpackHeaderFields;
-        int head;
-        int tail;
-        long size;
-        long capacity = -1L; // ensure setCapacity creates the array
+        private HpackHeaderField[] _hpackHeaderFields;
+        private int _head;
+        private int _tail;
+        private long _size;
+        private long _capacity = -1L; // ensure setCapacity creates the array
 
         /// <summary>
         /// Creates a new dynamic table with the specified initial capacity.
@@ -18,7 +18,7 @@ namespace DotNetty.Codecs.Http2
         /// <param name="initialCapacity"></param>
         internal HpackDynamicTable(long initialCapacity)
         {
-            this.SetCapacity(initialCapacity);
+            SetCapacity(initialCapacity);
         }
 
         /// <summary>
@@ -27,13 +27,13 @@ namespace DotNetty.Codecs.Http2
         public int Length()
         {
             int length;
-            if (this.head < this.tail)
+            if (_head < _tail)
             {
-                length = this.hpackHeaderFields.Length - this.tail + this.head;
+                length = _hpackHeaderFields.Length - _tail + _head;
             }
             else
             {
-                length = this.head - this.tail;
+                length = _head - _tail;
             }
 
             return length;
@@ -43,12 +43,12 @@ namespace DotNetty.Codecs.Http2
         /// Return the current size of the dynamic table. This is the sum of the size of the entries.
         /// </summary>
         /// <returns></returns>
-        public long Size() => this.size;
+        public long Size() => _size;
 
         /// <summary>
         /// Return the maximum allowable size of the dynamic table.
         /// </summary>
-        public long Capacity() => this.capacity;
+        public long Capacity() => _capacity;
 
         /// <summary>
         /// Return the header field at the given index. The first and newest entry is always at index 1,
@@ -58,19 +58,19 @@ namespace DotNetty.Codecs.Http2
         public HpackHeaderField GetEntry(int index)
         {
             uint uIndex = (uint)index;
-            if (0u >= uIndex || uIndex > (uint)this.Length())
+            if (0u >= uIndex || uIndex > (uint)Length())
             {
                 ThrowHelper.ThrowIndexOutOfRangeException();
             }
 
-            int i = this.head - index;
+            int i = _head - index;
             if (i < 0)
             {
-                return this.hpackHeaderFields[i + this.hpackHeaderFields.Length];
+                return _hpackHeaderFields[i + _hpackHeaderFields.Length];
             }
             else
             {
-                return this.hpackHeaderFields[i];
+                return _hpackHeaderFields[i];
             }
         }
 
@@ -84,22 +84,22 @@ namespace DotNetty.Codecs.Http2
         public void Add(HpackHeaderField header)
         {
             int headerSize = header.Size();
-            if (headerSize > this.capacity)
+            if (headerSize > _capacity)
             {
-                this.Clear();
+                Clear();
                 return;
             }
 
-            while (this.capacity - this.size < headerSize)
+            while (_capacity - _size < headerSize)
             {
-                this.Remove();
+                _ = Remove();
             }
 
-            this.hpackHeaderFields[this.head++] = header;
-            this.size += header.Size();
-            if (this.head == this.hpackHeaderFields.Length)
+            _hpackHeaderFields[_head++] = header;
+            _size += header.Size();
+            if (_head == _hpackHeaderFields.Length)
             {
-                this.head = 0;
+                _head = 0;
             }
         }
 
@@ -108,17 +108,17 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public HpackHeaderField Remove()
         {
-            HpackHeaderField removed = this.hpackHeaderFields[this.tail];
+            HpackHeaderField removed = _hpackHeaderFields[_tail];
             if (removed is null)
             {
                 return null;
             }
 
-            this.size -= removed.Size();
-            this.hpackHeaderFields[this.tail++] = null;
-            if (this.tail == this.hpackHeaderFields.Length)
+            _size -= removed.Size();
+            _hpackHeaderFields[_tail++] = null;
+            if (_tail == _hpackHeaderFields.Length)
             {
-                this.tail = 0;
+                _tail = 0;
             }
 
             return removed;
@@ -129,18 +129,18 @@ namespace DotNetty.Codecs.Http2
         /// </summary>
         public void Clear()
         {
-            while (this.tail != this.head)
+            while (_tail != _head)
             {
-                this.hpackHeaderFields[this.tail++] = null;
-                if (this.tail == this.hpackHeaderFields.Length)
+                _hpackHeaderFields[_tail++] = null;
+                if (_tail == _hpackHeaderFields.Length)
                 {
-                    this.tail = 0;
+                    _tail = 0;
                 }
             }
 
-            this.head = 0;
-            this.tail = 0;
-            this.size = 0;
+            _head = 0;
+            _tail = 0;
+            _size = 0;
         }
 
         /// <summary>
@@ -156,20 +156,20 @@ namespace DotNetty.Codecs.Http2
             }
 
             // initially capacity will be -1 so init won't return here
-            if (this.capacity == capacity) { return; }
+            if (_capacity == capacity) { return; }
 
-            this.capacity = capacity;
+            _capacity = capacity;
 
             if (0ul >= (ulong)capacity)
             {
-                this.Clear();
+                Clear();
             }
             else
             {
                 // initially _size will be 0 so remove won't be called
-                while (this.size > capacity)
+                while (_size > capacity)
                 {
-                    this.Remove();
+                    _ = Remove();
                 }
             }
 
@@ -180,7 +180,7 @@ namespace DotNetty.Codecs.Http2
             }
 
             // check if capacity change requires us to reallocate the array
-            if (this.hpackHeaderFields is object && this.hpackHeaderFields.Length == maxEntries)
+            if (_hpackHeaderFields is object && _hpackHeaderFields.Length == maxEntries)
             {
                 return;
             }
@@ -188,21 +188,21 @@ namespace DotNetty.Codecs.Http2
             HpackHeaderField[] tmp = new HpackHeaderField[maxEntries];
 
             // initially length will be 0 so there will be no copy
-            int len = this.Length();
-            int cursor = this.tail;
+            int len = Length();
+            int cursor = _tail;
             for (int i = 0; i < len; i++)
             {
-                HpackHeaderField entry = this.hpackHeaderFields[cursor++];
+                HpackHeaderField entry = _hpackHeaderFields[cursor++];
                 tmp[i] = entry;
-                if (cursor == this.hpackHeaderFields.Length)
+                if (cursor == _hpackHeaderFields.Length)
                 {
                     cursor = 0;
                 }
             }
 
-            this.tail = 0;
-            this.head = this.tail + len;
-            this.hpackHeaderFields = tmp;
+            _tail = 0;
+            _head = _tail + len;
+            _hpackHeaderFields = tmp;
         }
     }
 }

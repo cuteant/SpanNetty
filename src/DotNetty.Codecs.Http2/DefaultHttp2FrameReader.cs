@@ -98,7 +98,7 @@ namespace DotNetty.Codecs.Http2
         {
             if (_readError)
             {
-                input.SkipBytes(input.ReadableBytes);
+                _ = input.SkipBytes(input.ReadableBytes);
                 return;
             }
 
@@ -259,7 +259,7 @@ namespace DotNetty.Codecs.Http2
                     ReadUnknownFrame(ctx, input, payloadEndIndex, listener);
                     break;
             }
-            input.SetReaderIndex(payloadEndIndex);
+            _ = input.SetReaderIndex(payloadEndIndex);
         }
 
         void VerifyDataFrame()
@@ -421,7 +421,7 @@ namespace DotNetty.Codecs.Http2
             int dataLength = LengthWithoutTrailingPadding(payloadEndIndex - payload.ReaderIndex, padding);
 
             IByteBuffer data = payload.ReadSlice(dataLength);
-            listener.OnDataRead(ctx, _streamId, data, padding, _flags.EndOfStream());
+            _ = listener.OnDataRead(ctx, _streamId, data, padding, _flags.EndOfStream());
         }
 
         sealed class PriorityHeadersFrameHeadersContinuation : HeadersContinuation
@@ -561,7 +561,7 @@ namespace DotNetty.Codecs.Http2
                     long value = payload.ReadUnsignedInt();
                     try
                     {
-                        settings.Put(id, value);
+                        _ = settings.Put(id, value);
                     }
                     catch (ArgumentException e)
                     {
@@ -808,14 +808,14 @@ namespace DotNetty.Codecs.Http2
                 if (_headerBlock.IsWritable(len))
                 {
                     // The buffer can hold the requested bytes, just write it directly.
-                    _headerBlock.WriteBytes(fragment, len);
+                    _ = _headerBlock.WriteBytes(fragment, len);
                 }
                 else
                 {
                     // Allocate a new buffer that is big enough to hold the entire header block so far.
                     IByteBuffer buf = alloc.Buffer(_headerBlock.ReadableBytes + len);
-                    buf.WriteBytes(_headerBlock).WriteBytes(fragment, len);
-                    _headerBlock.Release();
+                    _ = buf.WriteBytes(_headerBlock).WriteBytes(fragment, len);
+                    _ = _headerBlock.Release();
                     _headerBlock = buf;
                 }
             }
@@ -843,7 +843,7 @@ namespace DotNetty.Codecs.Http2
             {
                 if (_headerBlock is object)
                 {
-                    _headerBlock.Release();
+                    _ = _headerBlock.Release();
                     _headerBlock = null;
                 }
 

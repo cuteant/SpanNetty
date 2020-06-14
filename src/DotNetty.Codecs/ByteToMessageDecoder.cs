@@ -68,7 +68,7 @@ namespace DotNetty.Codecs
                 if (!cumulation.IsReadable() && input.IsContiguous)
                 {
                     // If cumulation is empty and input buffer is contiguous, use it directly
-                    cumulation.Release();
+                    _ = cumulation.Release();
                     return input;
                 }
                 try
@@ -84,15 +84,15 @@ namespace DotNetty.Codecs
                         //   assumed to be shared (e.g. refCnt() > 1) and the reallocation may not be safe.
                         return ExpandCumulation(alloc, cumulation, input);
                     }
-                    cumulation.WriteBytes(input, input.ReaderIndex, required);
-                    input.SetReaderIndex(input.WriterIndex);
+                    _ = cumulation.WriteBytes(input, input.ReaderIndex, required);
+                    _ = input.SetReaderIndex(input.WriterIndex);
                     return cumulation;
                 }
                 finally
                 {
                     // We must release in in all cases as otherwise it may produce a leak if writeBytes(...) throw
                     // for whatever release (for example because of OutOfMemoryError)
-                    input.Release();
+                    _ = input.Release();
                 }
             }
         }
@@ -113,7 +113,7 @@ namespace DotNetty.Codecs
             {
                 if (!cumulation.IsReadable())
                 {
-                    cumulation.Release();
+                    _ = cumulation.Release();
                     return input;
                 }
                 CompositeByteBuffer composite = null;
@@ -126,14 +126,14 @@ namespace DotNetty.Codecs
                         // new components to the end
                         if (composite.WriterIndex != composite.Capacity)
                         {
-                            composite.AdjustCapacity(composite.WriterIndex);
+                            _ = composite.AdjustCapacity(composite.WriterIndex);
                         }
                     }
                     else
                     {
                         composite = alloc.CompositeBuffer(int.MaxValue).AddFlattenedComponents(true, cumulation);
                     }
-                    composite.AddFlattenedComponents(true, input);
+                    _ = composite.AddFlattenedComponents(true, input);
                     input = null;
                     return composite;
                 }
@@ -142,11 +142,11 @@ namespace DotNetty.Codecs
                     if (input is object)
                     {
                         // We must release if the ownership was not transferred as otherwise it may produce a leak
-                        input.Release();
+                        _ = input.Release();
                         // Also release any new buffer allocated if we're not returning it
                         if (composite is object && composite != cumulation)
                         {
-                            composite.Release();
+                            _ = composite.Release();
                         }
                     }
                 }
@@ -264,12 +264,12 @@ namespace DotNetty.Codecs
                 int readable = buf.ReadableBytes;
                 if (readable > 0)
                 {
-                    context.FireChannelRead(buf);
-                    context.FireChannelReadComplete();
+                    _ = context.FireChannelRead(buf);
+                    _ = context.FireChannelReadComplete();
                 }
                 else
                 {
-                    buf.Release();
+                    _ = buf.Release();
                 }
             }
             HandlerRemovedInternal(context);
@@ -309,7 +309,7 @@ namespace DotNetty.Codecs
                     if (_cumulation is object && !_cumulation.IsReadable())
                     {
                         _numReads = 0;
-                        _cumulation.Release();
+                        _ = _cumulation.Release();
                         _cumulation = null;
                     }
                     else if (++_numReads >= _discardAfterReads)
@@ -325,14 +325,14 @@ namespace DotNetty.Codecs
 
                     for (int i = 0; i < size; i++)
                     {
-                        context.FireChannelRead(output[i]);
+                        _ = context.FireChannelRead(output[i]);
                     }
                     output.Return();
                 }
             }
             else
             {
-                context.FireChannelRead(message);
+                _ = context.FireChannelRead(message);
             }
         }
 
@@ -346,7 +346,7 @@ namespace DotNetty.Codecs
         {
             for (int i = 0; i < numElements; i++)
             {
-                ctx.FireChannelRead(output[i]);
+                _ = ctx.FireChannelRead(output[i]);
             }
         }
 
@@ -357,10 +357,10 @@ namespace DotNetty.Codecs
             DiscardSomeReadBytes();
             if (!_firedChannelRead && !context.Channel.Configuration.AutoRead)
             {
-                context.Read();
+                _ = context.Read();
             }
             _firedChannelRead = false;
-            context.FireChannelReadComplete();
+            _ = context.FireChannelReadComplete();
         }
 
         protected void DiscardSomeReadBytes()
@@ -374,7 +374,7 @@ namespace DotNetty.Codecs
                 // See:
                 // - https://github.com/netty/netty/issues/2327
                 // - https://github.com/netty/netty/issues/1764
-                _cumulation.DiscardSomeReadBytes();
+                _ = _cumulation.DiscardSomeReadBytes();
             }
         }
 
@@ -394,7 +394,7 @@ namespace DotNetty.Codecs
                 // when the input has been shutdown.
                 ChannelInputClosed(ctx, false);
             }
-            ctx.FireUserEventTriggered(evt);
+            _ = ctx.FireUserEventTriggered(evt);
         }
 
         private void ChannelInputClosed(IChannelHandlerContext ctx, bool callChannelInactive)
@@ -418,22 +418,22 @@ namespace DotNetty.Codecs
                 {
                     if (_cumulation is object)
                     {
-                        _cumulation.Release();
+                        _ = _cumulation.Release();
                         _cumulation = null;
                     }
                     int size = output.Count;
                     for (int i = 0; i < size; i++)
                     {
-                        ctx.FireChannelRead(output[i]);
+                        _ = ctx.FireChannelRead(output[i]);
                     }
                     if (size > 0)
                     {
                         // Something was read, call fireChannelReadComplete()
-                        ctx.FireChannelReadComplete();
+                        _ = ctx.FireChannelReadComplete();
                     }
                     if (callChannelInactive)
                     {
-                        ctx.FireChannelInactive();
+                        _ = ctx.FireChannelInactive();
                     }
                 }
                 finally
@@ -485,7 +485,7 @@ namespace DotNetty.Codecs
                     {
                         for (int i = 0; i < initialOutputCount; i++)
                         {
-                            context.FireChannelRead(output[i]);
+                            _ = context.FireChannelRead(output[i]);
                         }
                         output.Clear();
 
@@ -616,16 +616,16 @@ namespace DotNetty.Codecs
             try
             {
                 // This avoids redundant checks and stack depth compared to calling writeBytes(...)
-                newCumulation.SetBytes(0, oldCumulation, oldCumulation.ReaderIndex, oldBytes)
+                _ = newCumulation.SetBytes(0, oldCumulation, oldCumulation.ReaderIndex, oldBytes)
                     .SetBytes(oldBytes, input, input.ReaderIndex, newBytes)
                     .SetWriterIndex(totalBytes);
-                input.SetReaderIndex(input.WriterIndex);
+                _ = input.SetReaderIndex(input.WriterIndex);
                 toRelease = oldCumulation;
                 return newCumulation;
             }
             finally
             {
-                toRelease.Release();
+                _ = toRelease.Release();
             }
         }
 

@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 this.Pos -= minus;
                 this.ReaderIndex = this.GetReadPosition(this.Pos);
-                this.Buffer.SetReaderIndex(this.ReaderIndex);
+                _ = this.Buffer.SetReaderIndex(this.ReaderIndex);
             }
 
             internal int GetReadPosition(int index) => index - this.OrigPos + this.ReaderIndex;

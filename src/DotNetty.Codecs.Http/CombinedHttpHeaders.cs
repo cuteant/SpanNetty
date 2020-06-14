@@ -88,7 +88,7 @@ namespace DotNetty.Codecs.Http
                         // Values are already escaped so don't escape again
                         foreach (HeaderEntry<AsciiString, ICharSequence> header in headers)
                         {
-                            this.AddEscapedValue(header.Key, header.Value);
+                            _ = this.AddEscapedValue(header.Key, header.Value);
                         }
                     }
                 }
@@ -96,7 +96,7 @@ namespace DotNetty.Codecs.Http
                 {
                     foreach (HeaderEntry<AsciiString, ICharSequence> header in headers)
                     {
-                        this.Add(header.Key, header.Value);
+                        _ = this.Add(header.Key, header.Value);
                     }
                 }
 
@@ -109,7 +109,7 @@ namespace DotNetty.Codecs.Http
                 {
                     return this;
                 }
-                this.Clear();
+                _ = this.Clear();
                 return this.Add(headers);
             }
 
@@ -121,7 +121,7 @@ namespace DotNetty.Codecs.Http
                 }
                 foreach (AsciiString key in headers.Names())
                 {
-                    this.Remove(key);
+                    _ = this.Remove(key);
                 }
                 return this.Add(headers);
             }
@@ -143,20 +143,20 @@ namespace DotNetty.Codecs.Http
 
             public override IHeaders<AsciiString, ICharSequence> Set(AsciiString name, IEnumerable<ICharSequence> values)
             {
-                base.Set(name, CommaSeparate(values));
+                _ = base.Set(name, CommaSeparate(values));
                 return this;
             }
 
             public override IHeaders<AsciiString, ICharSequence> SetObject(AsciiString name, object value)
             {
                 ICharSequence charSequence = EscapeCsv(this.ValueConverter.ConvertObject(value));
-                base.Set(name, charSequence);
+                _ = base.Set(name, charSequence);
                 return this;
             }
 
             public override IHeaders<AsciiString, ICharSequence> SetObject(AsciiString name, IEnumerable<object> values)
             {
-                base.Set(name, this.CommaSeparate(values));
+                _ = base.Set(name, this.CommaSeparate(values));
                 return this;
             }
 
@@ -170,11 +170,11 @@ namespace DotNetty.Codecs.Http
             {
                 if (!this.TryGet(name, out ICharSequence currentValue) || CannotBeCombined(name))
                 {
-                    base.Add(name, escapedValue);
+                    _ = base.Add(name, escapedValue);
                 }
                 else
                 {
-                    base.Set(name, CommaSeparateEscapedValues(currentValue, escapedValue));
+                    _ = base.Set(name, CommaSeparateEscapedValues(currentValue, escapedValue));
                 }
 
                 return this;

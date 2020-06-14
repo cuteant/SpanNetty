@@ -121,7 +121,7 @@ namespace DotNetty.Codecs.Http2
             }
             catch (Exception e)
             {
-                data.Release();
+                _ = data.Release();
                 promise.SetException(e);
                 return promise.Task;
             }
@@ -199,7 +199,7 @@ namespace DotNetty.Codecs.Http2
                     {
                         if (_connection.Remote.MayHaveCreatedStream(streamId))
                         {
-                            promise.TrySetException(ThrowHelper.GetInvalidOperationException_StreamNoLongerExists(streamId, cause));
+                            _ = promise.TrySetException(ThrowHelper.GetInvalidOperationException_StreamNoLongerExists(streamId, cause));
                             return promise.Task;
                         }
                         throw;
@@ -210,7 +210,7 @@ namespace DotNetty.Codecs.Http2
                     switch (stream.State)
                     {
                         case Http2StreamState.ReservedLocal:
-                            stream.Open(endOfStream);
+                            _ = stream.Open(endOfStream);
                             break;
 
                         case Http2StreamState.Open:
@@ -246,7 +246,7 @@ namespace DotNetty.Codecs.Http2
                         //
                         // This just sets internal stream state which is used elsewhere in the codec and doesn't
                         // necessarily mean the write will complete successfully.
-                        stream.HeadersSent(isInformational);
+                        _ = stream.HeadersSent(isInformational);
                         if (!future.IsSuccess())
                         {
                             // Either the future is not done or failed in the meantime.
@@ -280,7 +280,7 @@ namespace DotNetty.Codecs.Http2
             catch (Exception t)
             {
                 _lifecycleManager.OnError(ctx, true, t);
-                promise.TrySetException(t);
+                _ = promise.TrySetException(t);
                 return promise.Task;
             }
         }
@@ -326,14 +326,14 @@ namespace DotNetty.Codecs.Http2
             Http2Settings settings = _outstandingRemoteSettingsQueue.RemoveFromFront();
             if (settings is null)
             {
-                promise.TrySetException(ThrowHelper.GetConnectionError_attempted_to_write_a_SETTINGS_ACK_with_no_pending_SETTINGS());
+                _ = promise.TrySetException(ThrowHelper.GetConnectionError_attempted_to_write_a_SETTINGS_ACK_with_no_pending_SETTINGS());
                 return promise.Task;
             }
             SimplePromiseAggregator aggregator = new SimplePromiseAggregator(promise); // , ctx.channel(), ctx.executor()
             // Acknowledge receipt of the settings. We should do this before we process the settings to ensure our
             // remote peer applies these settings before any subsequent frames that we may send which depend upon
             // these new settings. See https://github.com/netty/netty/issues/6520.
-            _frameWriter.WriteSettingsAckAsync(ctx, aggregator.NewPromise());
+            _ = _frameWriter.WriteSettingsAckAsync(ctx, aggregator.NewPromise());
 
             // We create a "new promise" to make sure that status from both the write and the application are taken into
             // account independently.
@@ -368,7 +368,7 @@ namespace DotNetty.Codecs.Http2
 
                 var stream = RequireStream(streamId);
                 // Reserve the promised stream.
-                _connection.Local.ReservePushStream(promisedStreamId, stream);
+                _ = _connection.Local.ReservePushStream(promisedStreamId, stream);
 
                 promise = promise.Unvoid();
                 var future = _frameWriter.WritePushPromiseAsync(ctx, streamId, promisedStreamId, headers, padding, promise);
@@ -378,7 +378,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     // This just sets internal stream state which is used elsewhere in the codec and doesn't
                     // necessarily mean the write will complete successfully.
-                    stream.PushPromiseSent();
+                    _ = stream.PushPromiseSent();
 
                     if (!future.IsSuccess())
                     {
@@ -395,7 +395,7 @@ namespace DotNetty.Codecs.Http2
             catch (Exception t)
             {
                 _lifecycleManager.OnError(ctx, true, t);
-                promise.TrySetException(t);
+                _ = promise.TrySetException(t);
                 return promise.Task;
             }
         }
@@ -514,7 +514,7 @@ namespace DotNetty.Codecs.Http2
                             // corresponding to 0 bytes and writing it to the channel (to preserve notification order).
                             var writePromise0 = ctx.NewPromise();
                             AddListener(writePromise0);
-                            ctx.WriteAsync(_queue.Remove(0, writePromise0), writePromise0);
+                            _ = ctx.WriteAsync(_queue.Remove(0, writePromise0), writePromise0);
                         }
                         return;
                     }
@@ -537,7 +537,7 @@ namespace DotNetty.Codecs.Http2
                 _padding -= writablePadding;
 
                 // Write the frame(s).
-                _owner._frameWriter.WriteDataAsync(ctx, _stream.Id, toWrite, writablePadding,
+                _ = _owner._frameWriter.WriteDataAsync(ctx, _stream.Id, toWrite, writablePadding,
                         _endOfStream && 0u >= (uint)Size, writePromise);
             }
 
@@ -558,7 +558,7 @@ namespace DotNetty.Codecs.Http2
 
         private static void NotifyLifecycleManagerOnError(Task future, IHttp2LifecycleManager lm, IChannelHandlerContext ctx)
         {
-            future.ContinueWith(NotifyLifecycleManagerOnErrorAction, Tuple.Create(lm, ctx), TaskContinuationOptions.ExecuteSynchronously);
+            _ = future.ContinueWith(NotifyLifecycleManagerOnErrorAction, Tuple.Create(lm, ctx), TaskContinuationOptions.ExecuteSynchronously);
         }
 
         private static readonly Action<Task, object> NotifyLifecycleManagerOnErrorAction = NotifyLifecycleManagerOnError0;
@@ -606,7 +606,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     _owner._lifecycleManager.OnError(ctx, true, cause);
                 }
-                _promise.TrySetException(cause);
+                _ = _promise.TrySetException(cause);
             }
 
             public override void Write(IChannelHandlerContext ctx, int allowedBytes)
@@ -624,7 +624,7 @@ namespace DotNetty.Codecs.Http2
                 {
                     // This just sets internal stream state which is used elsewhere in the codec and doesn't
                     // necessarily mean the write will complete successfully.
-                    _stream.HeadersSent(isInformational);
+                    _ = _stream.HeadersSent(isInformational);
                 }
             }
 
@@ -671,7 +671,7 @@ namespace DotNetty.Codecs.Http2
 
             protected void AddListener(IPromise p)
             {
-                p.Task.ContinueWith(LinkOutcomeContinuationAction, this, TaskContinuationOptions.ExecuteSynchronously);
+                _ = p.Task.ContinueWith(LinkOutcomeContinuationAction, this, TaskContinuationOptions.ExecuteSynchronously);
             }
 
             public abstract void Error(IChannelHandlerContext ctx, Exception cause);

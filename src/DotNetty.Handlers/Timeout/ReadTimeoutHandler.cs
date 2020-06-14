@@ -52,7 +52,7 @@ namespace DotNetty.Handlers.Timeout
     /// </summary>
     public class ReadTimeoutHandler : IdleStateHandler
     {
-        bool closed;
+        bool _closed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DotNetty.Handlers.Timeout.ReadTimeoutHandler"/> class.
@@ -75,7 +75,7 @@ namespace DotNetty.Handlers.Timeout
         protected override void ChannelIdle(IChannelHandlerContext context, IdleStateEvent stateEvent)
         {
             Debug.Assert(stateEvent.State == IdleState.ReaderIdle);
-            this.ReadTimedOut(context);
+            ReadTimedOut(context);
         }
 
         /// <summary>
@@ -84,11 +84,11 @@ namespace DotNetty.Handlers.Timeout
         /// <param name="context">Context.</param>
         protected virtual void ReadTimedOut(IChannelHandlerContext context)
         {
-            if(!this.closed)
+            if(!_closed)
             {
                 context.FireExceptionCaught(ReadTimeoutException.Instance);
                 context.CloseAsync();
-                this.closed = true;
+                _closed = true;
             }
         }
     }

@@ -121,7 +121,7 @@ namespace DotNetty.Codecs.Http2
 
             if (IsStreamMapEmpty())
             {
-                _closeFuture.TryComplete();
+                _ = _closeFuture.TryComplete();
                 return _closeFuture.Task;
             }
 
@@ -144,7 +144,7 @@ namespace DotNetty.Codecs.Http2
                             // If modifications of the activeStream map is allowed, then a stream close operation will also
                             // modify the streamMap. Pass the iterator in so that remove will be called to prevent
                             // concurrent modification exceptions.
-                            stream.Close(true);
+                            _ = stream.Close(true);
                         }
                     }
                 }
@@ -162,7 +162,7 @@ namespace DotNetty.Codecs.Http2
                     {
                         // We are not allowed to make modifications, so the close calls will be executed after this
                         // iteration completes.
-                        stream.Close();
+                        _ = stream.Close();
                     }
                 }
             }
@@ -177,7 +177,7 @@ namespace DotNetty.Codecs.Http2
 
         public void RemoveListener(IHttp2ConnectionListener listener)
         {
-            _listeners.Remove(listener);
+            _ = _listeners.Remove(listener);
         }
 
         public bool IsServer => _localEndpoint.IsServer;
@@ -276,12 +276,12 @@ namespace DotNetty.Codecs.Http2
 
         private void CloseStreamsGreaterThanLastKnownStreamId(int lastKnownStream, DefaultEndpoint endpoint)
         {
-            ForEachActiveStream(localVisit);
+            _ = ForEachActiveStream(localVisit);
             bool localVisit(IHttp2Stream stream)
             {
                 if (stream.Id > lastKnownStream && endpoint.IsValidStreamId(stream.Id))
                 {
-                    stream.Close();
+                    _ = stream.Close();
                 }
                 return true;
             }
@@ -317,7 +317,7 @@ namespace DotNetty.Codecs.Http2
 
                 if (InternalClosePromise is object && IsStreamMapEmpty())
                 {
-                    _closeFuture.TryComplete();
+                    _ = _closeFuture.TryComplete();
                 }
             }
         }
@@ -497,11 +497,11 @@ namespace DotNetty.Codecs.Http2
                 // been sent if this is a local stream, or received if it is a remote stream.
                 if (Http2StreamState.HalfClosedLocal == _state)
                 {
-                    HeadersSent(/*isInformational*/ false);
+                    _ = HeadersSent(/*isInformational*/ false);
                 }
                 else if (Http2StreamState.HalfClosedRemote == _state)
                 {
-                    HeadersReceived(/*isInformational*/ false);
+                    _ = HeadersReceived(/*isInformational*/ false);
                 }
                 _conn._activeStreams.Activate(this);
             }
@@ -535,7 +535,7 @@ namespace DotNetty.Codecs.Http2
                         break;
 
                     default:
-                        Close();
+                        _ = Close();
                         break;
                 }
                 return this;
@@ -554,7 +554,7 @@ namespace DotNetty.Codecs.Http2
                         break;
 
                     default:
-                        Close();
+                        _ = Close();
                         break;
                 }
                 return this;

@@ -249,11 +249,11 @@ namespace DotNetty.Codecs.Http
         {
             if (this.bytes is null)
             {
-                buf.WriteCharSequence(this.text, Encoding.ASCII);
+                _ = buf.WriteCharSequence(this.text, Encoding.ASCII);
             }
             else
             {
-                buf.WriteBytes(this.bytes);
+                _ = buf.WriteBytes(this.bytes);
             }
         }
     }

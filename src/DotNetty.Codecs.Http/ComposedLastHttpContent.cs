@@ -29,7 +29,7 @@ namespace DotNetty.Codecs.Http
         public IByteBufferHolder Copy()
         {
             var content = new DefaultLastHttpContent(Unpooled.Empty);
-            content.TrailingHeaders.Set(this.trailingHeaders);
+            _ = content.TrailingHeaders.Set(this.trailingHeaders);
             return content;
         }
 
@@ -40,7 +40,7 @@ namespace DotNetty.Codecs.Http
         public IByteBufferHolder Replace(IByteBuffer content)
         {
             var dup = new DefaultLastHttpContent(content);
-            dup.TrailingHeaders.SetAll(this.trailingHeaders);
+            _ = dup.TrailingHeaders.SetAll(this.trailingHeaders);
             return dup;
         }
 

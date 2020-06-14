@@ -36,7 +36,7 @@ namespace DotNetty.Handlers.Tls
                     if (p is object)
                     {
                         _readCompletionSource = null;
-                        p.TrySetResult(0);
+                        _ = p.TrySetResult(0);
                     }
                 }
             }

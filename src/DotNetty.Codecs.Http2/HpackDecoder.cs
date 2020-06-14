@@ -494,7 +494,7 @@ namespace DotNetty.Codecs.Http2
             }
 
             byte[] buf = new byte[length];
-            input.ReadBytes(buf);
+            _ = input.ReadBytes(buf);
             return new AsciiString(buf, false);
         }
 
@@ -516,7 +516,7 @@ namespace DotNetty.Codecs.Http2
                 // OR
                 // 0x0 + 0x7f + (0x7f << 7) + (0x7f << 14) + (0x7f << 21) + (0x7 << 28)
                 // we should reset the readerIndex if we overflowed the int type.
-                input.SetReaderIndex(readerIndex);
+                _ = input.SetReaderIndex(readerIndex);
                 ThrowHelper.ThrowHttp2Exception_DecodeULE128ToIntDecompression();
             }
 
@@ -552,7 +552,7 @@ namespace DotNetty.Codecs.Http2
 
                 if (0u >= (uint)(b & 0x80))
                 {
-                    input.SetReaderIndex(readerIndex + 1);
+                    _ = input.SetReaderIndex(readerIndex + 1);
                     return result + ((b & 0x7FL) << shift);
                 }
 
@@ -639,7 +639,7 @@ namespace DotNetty.Codecs.Http2
                 }
             }
 
-            _headers.Add(name, value);
+            _ = _headers.Add(name, value);
         }
     }
 }

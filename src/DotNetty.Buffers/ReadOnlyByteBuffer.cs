@@ -34,7 +34,7 @@ namespace DotNetty.Buffers
                     _buffer = buffer;
                     break;
             }
-            SetIndex(buffer.ReaderIndex, buffer.WriterIndex);
+            _ = SetIndex(buffer.ReaderIndex, buffer.WriterIndex);
         }
 
         public override bool IsReadOnly => true;

@@ -356,7 +356,7 @@ namespace DotNetty.Buffers
         {
             unchecked
             {
-                buf.SetShortLE(index, (short)value);
+                _ = buf.SetShortLE(index, (short)value);
             }
             return buf;
         }

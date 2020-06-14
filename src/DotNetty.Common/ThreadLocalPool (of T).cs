@@ -101,7 +101,7 @@ namespace DotNetty.Common
                 {
                     if (DelayedPool.IsSet())
                     {
-                        DelayedPool.Value.WeakTable.Remove(value);
+                        _ = DelayedPool.Value.WeakTable.Remove(value);
                     }
                 }
             }

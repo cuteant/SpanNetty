@@ -62,7 +62,7 @@ namespace DotNetty.Common.Internal
                     if (capacity <= sb.Capacity)
                     {
                         CachedInstance = null;
-                        sb.Clear();
+                        _ = sb.Clear();
                         return sb;
                     }
                 }

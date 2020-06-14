@@ -19,8 +19,8 @@ namespace DotNetty.Codecs.Http
 
         static HttpServerExpectContinueHandler()
         {
-            ExpectationFailed.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
-            Accept.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
+            _ = ExpectationFailed.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
+            _ = Accept.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
         }
 
         protected virtual IHttpResponse AcceptMessage(IHttpRequest request) => (IHttpResponse)Accept.RetainedDuplicate();
@@ -37,15 +37,15 @@ namespace DotNetty.Codecs.Http
                 {
                     // the expectation failed so we refuse the request.
                     IHttpResponse rejection = this.RejectResponse(req);
-                    ReferenceCountUtil.Release(message);
-                    context.WriteAndFlushAsync(rejection).ContinueWith(CloseOnFailureAction, context, TaskContinuationOptions.ExecuteSynchronously);
+                    _ = ReferenceCountUtil.Release(message);
+                    _ = context.WriteAndFlushAsync(rejection).ContinueWith(CloseOnFailureAction, context, TaskContinuationOptions.ExecuteSynchronously);
                     return;
                 }
 
-                context.WriteAndFlushAsync(accept).ContinueWith(CloseOnFailureAction, context, TaskContinuationOptions.ExecuteSynchronously);
-                req.Headers.Remove(HttpHeaderNames.Expect);
+                _ = context.WriteAndFlushAsync(accept).ContinueWith(CloseOnFailureAction, context, TaskContinuationOptions.ExecuteSynchronously);
+                _ = req.Headers.Remove(HttpHeaderNames.Expect);
             }
-            context.FireChannelRead(message);
+            _ = context.FireChannelRead(message);
         }
 
         static readonly Action<Task, object> CloseOnFailureAction = CloseOnFailure;
@@ -54,7 +54,7 @@ namespace DotNetty.Codecs.Http
             if (task.IsFaulted)
             {
                 var context = (IChannelHandlerContext)state;
-                context.CloseAsync();
+                _ = context.CloseAsync();
             }
             //return TaskUtil.Completed;
         }

@@ -30,11 +30,11 @@ namespace DotNetty.Handlers.Tls
                 else
                 {
                     ReferenceCountUtil.SafeRelease(buf);
-                    promise.TrySetException(NewPendingWritesNullException());
+                    _ = promise.TrySetException(NewPendingWritesNullException());
                 }
                 return;
             }
-            promise.TrySetException(ThrowHelper.GetUnsupportedMessageTypeException(message));
+            _ = promise.TrySetException(ThrowHelper.GetUnsupportedMessageTypeException(message));
         }
 
         public override void Flush(IChannelHandlerContext context)
@@ -59,7 +59,7 @@ namespace DotNetty.Handlers.Tls
             }
             else
             {
-                promise.TrySetException(NewPendingWritesNullException());
+                _ = promise.TrySetException(NewPendingWritesNullException());
             }
             Flush(ctx);
         }
@@ -88,7 +88,7 @@ namespace DotNetty.Handlers.Tls
             finally
             {
                 // We may have written some parts of data before an exception was thrown so ensure we always flush.
-                context.Flush();
+                _ = context.Flush();
             }
         }
 
@@ -119,12 +119,12 @@ namespace DotNetty.Handlers.Tls
                         for (int idx = 0; idx < messages.Count; idx++)
                         {
                             var buffer = (IByteBuffer)messages[idx];
-                            buffer.ReadBytes(buf, buffer.ReadableBytes);
-                            buffer.Release();
+                            _ = buffer.ReadBytes(buf, buffer.ReadableBytes);
+                            _ = buffer.Release();
                         }
                     }
-                    buf.ReadBytes(_sslStream, buf.ReadableBytes); // this leads to FinishWrap being called 0+ times
-                    buf.Release();
+                    _ = buf.ReadBytes(_sslStream, buf.ReadableBytes); // this leads to FinishWrap being called 0+ times
+                    _ = buf.Release();
 
                     var promise = _pendingUnencryptedWrites.Remove();
                     Task task = _lastContextWriteTask;
@@ -135,7 +135,7 @@ namespace DotNetty.Handlers.Tls
                     }
                     else
                     {
-                        promise.TryComplete();
+                        _ = promise.TryComplete();
                     }
                 }
             }
@@ -178,7 +178,7 @@ namespace DotNetty.Handlers.Tls
             else
             {
                 output = capturedContext.Allocator.Buffer(count);
-                output.WriteBytes(buffer, offset, count);
+                _ = output.WriteBytes(buffer, offset, count);
             }
 
             _lastContextWriteTask = capturedContext.WriteAsync(output, promise);

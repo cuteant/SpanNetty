@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             base.ChannelActive(context);
 
-            _handshaker.HandshakeAsync(context.Channel)
+            _ = _handshaker.HandshakeAsync(context.Channel)
                 .ContinueWith(FireUserEventTriggeredAction, Tuple.Create(context, _handshakePromise), TaskContinuationOptions.ExecuteSynchronously);
 
             ApplyHandshakeTimeout();
@@ -55,12 +55,12 @@ namespace DotNetty.Codecs.Http.WebSockets
             var wrapped = (Tuple<IChannelHandlerContext, IPromise>)state;
             if (t.IsSuccess())
             {
-                wrapped.Item2.TrySetException(t.Exception);
-                wrapped.Item1.FireUserEventTriggered(WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeIssued);
+                _ = wrapped.Item2.TrySetException(t.Exception);
+                _ = wrapped.Item1.FireUserEventTriggered(WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeIssued);
             }
             else
             {
-                wrapped.Item1.FireExceptionCaught(t.Exception);
+                _ = wrapped.Item1.FireExceptionCaught(t.Exception);
             }
         }
 
@@ -69,7 +69,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             if (!(msg is IFullHttpResponse response))
             {
-                ctx.FireChannelRead(msg);
+                _ = ctx.FireChannelRead(msg);
                 return;
             }
 
@@ -78,9 +78,9 @@ namespace DotNetty.Codecs.Http.WebSockets
                 if (!_handshaker.IsHandshakeComplete)
                 {
                     _handshaker.FinishHandshake(ctx.Channel, response);
-                    _handshakePromise.TryComplete();
-                    ctx.FireUserEventTriggered(WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeComplete);
-                    ctx.Pipeline.Remove(this);
+                    _ = _handshakePromise.TryComplete();
+                    _ = ctx.FireUserEventTriggered(WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeComplete);
+                    _ = ctx.Pipeline.Remove(this);
                     return;
                 }
 
@@ -88,7 +88,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
             finally
             {
-                response.Release();
+                _ = response.Release();
             }
         }
 
@@ -100,7 +100,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             var timeoutTask = _ctx.Executor.Schedule(FireHandshakeTimeoutAction, _ctx, localHandshakePromise, TimeSpan.FromMilliseconds(_handshakeTimeoutMillis));
 
             // Cancel the handshake timeout when handshake is finished.
-            localHandshakePromise.Task.ContinueWith(AbortHandshakeTimeoutAfterHandshakeCompletedAction, timeoutTask, TaskContinuationOptions.ExecuteSynchronously);
+            _ = localHandshakePromise.Task.ContinueWith(AbortHandshakeTimeoutAfterHandshakeCompletedAction, timeoutTask, TaskContinuationOptions.ExecuteSynchronously);
         }
 
         private static readonly Action<object, object> FireHandshakeTimeoutAction = FireHandshakeTimeout;
@@ -110,7 +110,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (handshakePromise.IsCompleted) { return; }
             if (handshakePromise.TrySetException(new WebSocketHandshakeException("handshake timed out")))
             {
-                ((IChannelHandlerContext)c)
+                _ = ((IChannelHandlerContext)c)
                     .Flush()
                     .FireUserEventTriggered(WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeTimeout)
                     .CloseAsync();
@@ -120,7 +120,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         private static readonly Action<Task, object> AbortHandshakeTimeoutAfterHandshakeCompletedAction = AbortHandshakeTimeoutAfterHandshakeCompleted;
         private static void AbortHandshakeTimeoutAfterHandshakeCompleted(Task t, object s)
         {
-            ((IScheduledTask)s).Cancel();
+            _ = ((IScheduledTask)s).Cancel();
         }
 
         /// <summary>

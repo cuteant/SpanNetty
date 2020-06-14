@@ -161,11 +161,11 @@ namespace DotNetty.Codecs.Http.Cors
                 object value = GetValue(entry.Value);
                 if (value is IEnumerable<object> values)
                 {
-                    headers.Add(entry.Key, values);
+                    _ = headers.Add(entry.Key, values);
                 }
                 else
                 {
-                    headers.Add(entry.Key, value);
+                    _ = headers.Add(entry.Key, value);
                 }
             }
             return headers;
@@ -199,88 +199,88 @@ namespace DotNetty.Codecs.Http.Cors
         public override string ToString()
         {
             var builder = StringBuilderManager.Allocate();
-            builder.Append($"{StringUtil.SimpleClassName(this)}")
+            _ = builder.Append($"{StringUtil.SimpleClassName(this)}")
                 .Append($"[enabled = {_enabled}");
 
-            builder.Append(", origins=");
+            _ = builder.Append(", origins=");
             if (0u >= (uint)Origins.Count)
             {
-                builder.Append("*");
+                _ = builder.Append("*");
             }
             else
             {
-                builder.Append("(");
+                _ = builder.Append("(");
                 foreach (ICharSequence value in Origins)
                 {
-                    builder.Append($"'{value}'");
+                    _ = builder.Append($"'{value}'");
                 }
-                builder.Append(")");
+                _ = builder.Append(")");
             }
 
-            builder.Append(", exposedHeaders=");
+            _ = builder.Append(", exposedHeaders=");
             if (0u >= (uint)_exposeHeaders.Count)
             {
-                builder.Append("*");
+                _ = builder.Append("*");
             }
             else
             {
-                builder.Append("(");
+                _ = builder.Append("(");
                 foreach (ICharSequence value in _exposeHeaders)
                 {
-                    builder.Append($"'{value}'");
+                    _ = builder.Append($"'{value}'");
                 }
-                builder.Append(")");
+                _ = builder.Append(")");
             }
 
-            builder.Append($", isCredentialsAllowed={_allowCredentials}");
-            builder.Append($", maxAge={_maxAge}");
+            _ = builder.Append($", isCredentialsAllowed={_allowCredentials}");
+            _ = builder.Append($", maxAge={_maxAge}");
 
-            builder.Append(", allowedRequestMethods=");
+            _ = builder.Append(", allowedRequestMethods=");
             if (0u >= (uint)_allowedRequestMethods.Count)
             {
-                builder.Append("*");
+                _ = builder.Append("*");
             }
             else
             {
-                builder.Append("(");
+                _ = builder.Append("(");
                 foreach (HttpMethod value in _allowedRequestMethods)
                 {
-                    builder.Append($"'{value}'");
+                    _ = builder.Append($"'{value}'");
                 }
-                builder.Append(")");
+                _ = builder.Append(")");
             }
 
-            builder.Append(", allowedRequestHeaders=");
+            _ = builder.Append(", allowedRequestHeaders=");
             if (0u >= (uint)_allowedRequestHeaders.Count)
             {
-                builder.Append("*");
+                _ = builder.Append("*");
             }
             else
             {
-                builder.Append("(");
+                _ = builder.Append("(");
                 foreach (AsciiString value in _allowedRequestHeaders)
                 {
-                    builder.Append($"'{value}'");
+                    _ = builder.Append($"'{value}'");
                 }
-                builder.Append(")");
+                _ = builder.Append(")");
             }
 
-            builder.Append(", preflightHeaders=");
+            _ = builder.Append(", preflightHeaders=");
             if (0u >= (uint)_preflightHeaders.Count)
             {
-                builder.Append("*");
+                _ = builder.Append("*");
             }
             else
             {
-                builder.Append("(");
+                _ = builder.Append("(");
                 foreach (AsciiString value in _preflightHeaders.Keys)
                 {
-                    builder.Append($"'{value}'");
+                    _ = builder.Append($"'{value}'");
                 }
-                builder.Append(")");
+                _ = builder.Append(")");
             }
 
-            builder.Append("]");
+            _ = builder.Append("]");
             return StringBuilderManager.ReturnAndFree(builder);
         }
     }

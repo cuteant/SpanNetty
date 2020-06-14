@@ -9,10 +9,10 @@ namespace DotNetty.Codecs.Http2
 
     sealed class HpackHuffmanEncoder
     {
-        readonly int[] codes;
-        readonly byte[] lengths;
-        readonly EncodedLengthProcessor encodedLengthProcessor;
-        readonly EncodeProcessor encodeProcessor;
+        private readonly int[] _codes;
+        private readonly byte[] _lengths;
+        private readonly EncodedLengthProcessor _encodedLengthProcessor;
+        private readonly EncodeProcessor _encodeProcessor;
 
         internal HpackHuffmanEncoder()
             : this(HpackUtil.HuffmanCodes, HpackUtil.HuffmanCodeLengths)
@@ -26,10 +26,10 @@ namespace DotNetty.Codecs.Http2
         /// <param name="lengths">the length of each Huffman code</param>
         internal HpackHuffmanEncoder(int[] codes, byte[] lengths)
         {
-            this.encodedLengthProcessor = new EncodedLengthProcessor(lengths);
-            this.encodeProcessor = new EncodeProcessor(codes, lengths);
-            this.codes = codes;
-            this.lengths = lengths;
+            _encodedLengthProcessor = new EncodedLengthProcessor(lengths);
+            _encodeProcessor = new EncodeProcessor(codes, lengths);
+            _codes = codes;
+            _lengths = lengths;
         }
 
         /// <summary>
@@ -45,8 +45,8 @@ namespace DotNetty.Codecs.Http2
             {
                 try
                 {
-                    this.encodeProcessor.ouput = ouput;
-                    str.ForEachByte(this.encodeProcessor);
+                    _encodeProcessor._ouput = ouput;
+                    _ = str.ForEachByte(_encodeProcessor);
                 }
                 catch (Exception)
                 {
@@ -54,12 +54,12 @@ namespace DotNetty.Codecs.Http2
                 }
                 finally
                 {
-                    this.encodeProcessor.End();
+                    _encodeProcessor.End();
                 }
             }
             else
             {
-                this.EncodeSlowPath(ouput, data);
+                EncodeSlowPath(ouput, data);
             }
         }
 
@@ -71,8 +71,8 @@ namespace DotNetty.Codecs.Http2
             for (int i = 0; i < data.Count; i++)
             {
                 int b = data[i] & 0xFF;
-                int code = this.codes[b];
-                int nbits = this.lengths[b];
+                int code = _codes[b];
+                int nbits = _lengths[b];
 
                 current <<= nbits;
                 current |= (uint)code;
@@ -81,7 +81,7 @@ namespace DotNetty.Codecs.Http2
                 while (n >= 8)
                 {
                     n -= 8;
-                    ouput.WriteByte((int)(current >> n));
+                    _ = ouput.WriteByte((int)(current >> n));
                 }
             }
 
@@ -89,7 +89,7 @@ namespace DotNetty.Codecs.Http2
             {
                 current <<= 8 - n;
                 current |= (uint)0xFF >> n; // this should be EOS symbol
-                ouput.WriteByte((int)current);
+                _ = ouput.WriteByte((int)current);
             }
         }
 
@@ -104,9 +104,9 @@ namespace DotNetty.Codecs.Http2
             {
                 try
                 {
-                    this.encodedLengthProcessor.Reset();
-                    str.ForEachByte(this.encodedLengthProcessor);
-                    return this.encodedLengthProcessor.Count;
+                    _encodedLengthProcessor.Reset();
+                    _ = str.ForEachByte(_encodedLengthProcessor);
+                    return _encodedLengthProcessor.Count;
                 }
                 catch (Exception)
                 {
@@ -116,7 +116,7 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-                return this.GetEncodedLengthSlowPath(data);
+                return GetEncodedLengthSlowPath(data);
             }
         }
 
@@ -125,7 +125,7 @@ namespace DotNetty.Codecs.Http2
             long len = 0;
             for (int i = 0; i < data.Count; i++)
             {
-                len += this.lengths[data[i] & 0xFF];
+                len += _lengths[data[i] & 0xFF];
             }
 
             return (int)((len + 7) >> 3);
@@ -133,31 +133,31 @@ namespace DotNetty.Codecs.Http2
 
         sealed class EncodeProcessor : IByteProcessor
         {
-            readonly int[] codes;
-            readonly byte[] lengths;
-            internal IByteBuffer ouput;
-            long current;
-            int n;
+            private readonly int[] _codes;
+            private readonly byte[] _lengths;
+            internal IByteBuffer _ouput;
+            private long _current;
+            private int _n;
 
             public EncodeProcessor(int[] codes, byte[] lengths)
             {
-                this.codes = codes;
-                this.lengths = lengths;
+                _codes = codes;
+                _lengths = lengths;
             }
 
             public bool Process(byte value)
             {
                 int b = value & 0xFF;
-                int nbits = this.lengths[b];
+                int nbits = _lengths[b];
 
-                this.current <<= nbits;
-                this.current |= (uint)this.codes[b];
-                this.n += nbits;
+                _current <<= nbits;
+                _current |= (uint)_codes[b];
+                _n += nbits;
 
-                while (this.n >= 8)
+                while (_n >= 8)
                 {
-                    this.n -= 8;
-                    this.ouput.WriteByte((int)(this.current >> this.n));
+                    _n -= 8;
+                    _ = _ouput.WriteByte((int)(_current >> _n));
                 }
 
                 return true;
@@ -167,44 +167,44 @@ namespace DotNetty.Codecs.Http2
             {
                 try
                 {
-                    if (this.n > 0)
+                    if (_n > 0)
                     {
-                        this.current <<= 8 - this.n;
-                        this.current |= (uint)0xFF >> this.n; // this should be EOS symbol
-                        this.ouput.WriteByte((int)this.current);
+                        _current <<= 8 - _n;
+                        _current |= (uint)0xFF >> _n; // this should be EOS symbol
+                        _ = _ouput.WriteByte((int)_current);
                     }
                 }
                 finally
                 {
-                    this.ouput = null;
-                    this.current = 0;
-                    this.n = 0;
+                    _ouput = null;
+                    _current = 0;
+                    _n = 0;
                 }
             }
         }
 
         sealed class EncodedLengthProcessor : IByteProcessor
         {
-            readonly byte[] lengths;
-            long len;
+            private readonly byte[] _lengths;
+            private long _len;
 
             public EncodedLengthProcessor(byte[] lengths)
             {
-                this.lengths = lengths;
+                _lengths = lengths;
             }
 
             public bool Process(byte value)
             {
-                this.len += this.lengths[value & 0xFF];
+                _len += _lengths[value & 0xFF];
                 return true;
             }
 
             internal void Reset()
             {
-                this.len = 0;
+                _len = 0;
             }
 
-            internal int Count => (int)((this.len + 7) >> 3);
+            internal int Count => (int)((_len + 7) >> 3);
         }
     }
 }

@@ -18,17 +18,17 @@ namespace DotNetty.Codecs.Http
             int nameLen = name.Count;
             int valueLen = value.Count;
             int entryLen = nameLen + valueLen + 4;
-            buf.EnsureWritable(entryLen);
+            _ = buf.EnsureWritable(entryLen);
             int offset = buf.WriterIndex;
             WriteAscii(buf, offset, name);
             offset += nameLen;
-            buf.SetShort(offset, ColonAndSpaceShort);
+            _ = buf.SetShort(offset, ColonAndSpaceShort);
             offset += 2;
             WriteAscii(buf, offset, value);
             offset += valueLen;
-            buf.SetShort(offset, CrlfShort);
+            _ = buf.SetShort(offset, CrlfShort);
             offset += 2;
-            buf.SetWriterIndex(offset);
+            _ = buf.SetWriterIndex(offset);
         }
 
         static void WriteAscii(IByteBuffer buf, int offset, ICharSequence value)
@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Http
             }
             else
             {
-                buf.SetCharSequence(offset, value, Encoding.ASCII);
+                _ = buf.SetCharSequence(offset, value, Encoding.ASCII);
             }
         }
     }

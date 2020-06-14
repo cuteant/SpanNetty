@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
+using DotNetty.Codecs.Compression;
 using DotNetty.Common.Utilities;
 
 namespace DotNetty.Codecs
@@ -566,6 +566,16 @@ namespace DotNetty.Codecs
             static NotSupportedException GetException()
             {
                 return new NotSupportedException("read only");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowDecompressionException_Decompression_buffer_has_reached_maximum_size(int maxCapacity)
+        {
+            throw GetException();
+            DecompressionException GetException()
+            {
+                return new DecompressionException("Decompression buffer has reached maximum size: " + maxCapacity);
             }
         }
     }

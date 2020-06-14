@@ -1087,29 +1087,16 @@ namespace DotNetty.Codecs.Http2.Tests
         }
 
         [Fact]
-        public void CreateStreamSynchronouslyAfterGoAwayReceivedShouldFailLocally()
+        public void ListenerIsNotifiedOfGoawayBeforeStreamsAreRemovedFromTheConnection()
         {
             BootstrapEnv(1, 1, 2, 1, 1);
-
-            var clientGoAwayLatch = new CountdownEvent(1);
-            _clientListener
-                .Setup(x => x.OnGoAwayRead(
-                    It.IsAny<IChannelHandlerContext>(),
-                    It.IsAny<int>(),
-                    It.IsAny<Http2Error>(),
-                    It.IsAny<IByteBuffer>()))
-                .Callback<IChannelHandlerContext, int, Http2Error, IByteBuffer>((ctx, id, err, buf) =>
-                {
-                    clientGoAwayLatch.SafeSignal();
-                });
 
             // We want both sides to do graceful shutdown during the test.
             SetClientGracefulShutdownTime(10000);
             SetServerGracefulShutdownTime(10000);
 
-            IHttp2Headers headers = DummyHeaders();
-            var clientWriteAfterGoAwayFutureRef = new AtomicReference<Task>();
-            var clientWriteAfterGoAwayLatch = new CountdownEvent(1);
+            AtomicInteger clientStream3State = new AtomicInteger();
+            CountdownEvent clientGoAwayLatch = new CountdownEvent(1);
             _clientListener
                 .Setup(x => x.OnGoAwayRead(
                     It.IsAny<IChannelHandlerContext>(),
@@ -1118,17 +1105,18 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<IByteBuffer>()))
                 .Callback<IChannelHandlerContext, int, Http2Error, IByteBuffer>((ctx, id, err, buf) =>
                 {
-                    var f = _http2Client.Encoder.WriteHeadersAsync(Ctx(), 5, headers, 0, (short)16, false, 0,
-                            true, NewPromise());
-                    clientWriteAfterGoAwayFutureRef.Value = f;
-                    f.ContinueWith(t => clientWriteAfterGoAwayLatch.SafeSignal(), TaskContinuationOptions.ExecuteSynchronously);
-                    _http2Client.Flush(Ctx());
+                    clientStream3State.Value = (int)_http2Client.Connection.Stream(3).State;
+                    clientGoAwayLatch.SafeSignal();
                 });
 
+            // Create a single stream by sending a HEADERS frame to the server.
+            IHttp2Headers headers = DummyHeaders();
             Http2TestUtil.RunInChannel(_clientChannel, () =>
             {
+                _http2Client.Encoder.WriteHeadersAsync(Ctx(), 1, headers, 0, (short)16, false, 0,
+                    false, NewPromise());
                 _http2Client.Encoder.WriteHeadersAsync(Ctx(), 3, headers, 0, (short)16, false, 0,
-                        true, NewPromise());
+                    false, NewPromise());
                 _http2Client.Flush(Ctx());
             });
 
@@ -1139,18 +1127,34 @@ namespace DotNetty.Codecs.Http2.Tests
 
             Http2TestUtil.RunInChannel(_serverChannel, () =>
             {
-                _http2Server.Encoder.WriteGoAwayAsync(ServerCtx(), 3, Http2Error.NoError, Unpooled.Empty, ServerNewPromise());
+                _http2Server.Encoder.WriteGoAwayAsync(ServerCtx(), 1, Http2Error.NoError, Unpooled.Empty, ServerNewPromise());
                 _http2Server.Flush(ServerCtx());
             });
 
-            // Wait for the client's write operation to complete.
-            Assert.True(clientWriteAfterGoAwayLatch.Wait(TimeSpan.FromSeconds(DEFAULT_AWAIT_TIMEOUT_SECONDS)));
+            // wait for the client to receive the GO_AWAY.
+            Assert.True(clientGoAwayLatch.Wait(TimeSpan.FromSeconds(DEFAULT_AWAIT_TIMEOUT_SECONDS)));
+            _clientListener.Verify(
+                x => x.OnGoAwayRead(
+                    It.IsAny<IChannelHandlerContext>(),
+                    It.Is<int>(v => v == 1),
+                    It.Is<Http2Error>(v => v == Http2Error.NoError),
+                    It.IsAny<IByteBuffer>()));
+            Assert.Equal(Http2StreamState.Open, (Http2StreamState)clientStream3State.Value);
 
-            var clientWriteAfterGoAwayFuture = clientWriteAfterGoAwayFutureRef.Value;
-            Assert.NotNull(clientWriteAfterGoAwayFuture);
-            var clientCause = clientWriteAfterGoAwayFuture.Exception.InnerException;
-            Assert.IsType<StreamException>(clientCause);
-            Assert.Equal(Http2Error.RefusedStream, ((StreamException)clientCause).Error);
+            // Make sure that stream 3 has been closed which is true if it's gone.
+            CountdownEvent probeStreamCount = new CountdownEvent(1);
+            AtomicBoolean stream3Exists = new AtomicBoolean();
+            AtomicInteger streamCount = new AtomicInteger();
+            Http2TestUtil.RunInChannel(_clientChannel, () =>
+            {
+                stream3Exists.Value = (_http2Client.Connection.Stream(3) != null);
+                streamCount.Value = (_http2Client.Connection.NumActiveStreams);
+                probeStreamCount.SafeSignal();
+            });
+            // The stream should be closed right after
+            Assert.True(probeStreamCount.Wait(TimeSpan.FromSeconds(DEFAULT_AWAIT_TIMEOUT_SECONDS)));
+            Assert.Equal(1, streamCount.Value);
+            Assert.False(stream3Exists.Value);
 
             // Wait for the server to receive a GO_AWAY, but this is expected to timeout!
             Assert.False(_goAwayLatch.Wait(TimeSpan.FromSeconds(1)));

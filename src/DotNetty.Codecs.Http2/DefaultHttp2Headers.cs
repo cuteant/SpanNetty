@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http2
             }
         }
 
-        HeaderEntry<ICharSequence, ICharSequence> firstNonPseudo;
+        private HeaderEntry<ICharSequence, ICharSequence> _firstNonPseudo;
 
         /// <summary>
         /// Create a new instance.
@@ -86,7 +86,7 @@ namespace DotNetty.Codecs.Http2
         {
             // Case sensitive compare is used because it is cheaper, and header validation can be used to catch invalid
             // headers.
-            this.firstNonPseudo = this.head;
+            _firstNonPseudo = _head;
         }
 
         /// <summary>
@@ -99,58 +99,58 @@ namespace DotNetty.Codecs.Http2
         {
             // Case sensitive compare is used because it is cheaper, and header validation can be used to catch invalid
             // headers.
-            this.firstNonPseudo = this.head;
+            _firstNonPseudo = _head;
         }
 
         public override IHeaders<ICharSequence, ICharSequence> Clear()
         {
-            this.firstNonPseudo = this.head;
+            _firstNonPseudo = _head;
             return base.Clear();
         }
 
         public override bool Equals(object obj)
         {
-            return obj is IHttp2Headers headers && this.Equals(headers, AsciiString.CaseSensitiveHasher);
+            return obj is IHttp2Headers headers && Equals(headers, AsciiString.CaseSensitiveHasher);
         }
 
         public override int GetHashCode()
         {
-            return this.HashCode(AsciiString.CaseSensitiveHasher);
+            return HashCode(AsciiString.CaseSensitiveHasher);
         }
 
         public ICharSequence Method
         {
-            get => this.Get(PseudoHeaderName.Method.Value, null);
-            set => this.Set(PseudoHeaderName.Method.Value, value);
+            get => Get(PseudoHeaderName.Method.Value, null);
+            set => Set(PseudoHeaderName.Method.Value, value);
         }
 
         public ICharSequence Scheme
         {
-            get => this.Get(PseudoHeaderName.Scheme.Value, null);
-            set => this.Set(PseudoHeaderName.Scheme.Value, value);
+            get => Get(PseudoHeaderName.Scheme.Value, null);
+            set => Set(PseudoHeaderName.Scheme.Value, value);
         }
 
         public ICharSequence Authority
         {
-            get => this.Get(PseudoHeaderName.Authority.Value, null);
-            set => this.Set(PseudoHeaderName.Authority.Value, value);
+            get => Get(PseudoHeaderName.Authority.Value, null);
+            set => Set(PseudoHeaderName.Authority.Value, value);
         }
 
         public ICharSequence Path
         {
-            get => this.Get(PseudoHeaderName.Path.Value, null);
-            set => this.Set(PseudoHeaderName.Path.Value, value);
+            get => Get(PseudoHeaderName.Path.Value, null);
+            set => Set(PseudoHeaderName.Path.Value, value);
         }
 
         public ICharSequence Status
         {
-            get => this.Get(PseudoHeaderName.Status.Value, null);
-            set => this.Set(PseudoHeaderName.Status.Value, value);
+            get => Get(PseudoHeaderName.Status.Value, null);
+            set => Set(PseudoHeaderName.Status.Value, value);
         }
 
         public bool Contains(ICharSequence name, ICharSequence value, bool caseInsensitive)
         {
-            return this.Contains(name, value, caseInsensitive ? AsciiString.CaseInsensitiveHasher : AsciiString.CaseSensitiveHasher);
+            return Contains(name, value, caseInsensitive ? AsciiString.CaseInsensitiveHasher : AsciiString.CaseSensitiveHasher);
         }
 
         protected sealed override HeaderEntry<ICharSequence, ICharSequence> NewHeaderEntry(
@@ -164,39 +164,39 @@ namespace DotNetty.Codecs.Http2
 
         sealed class Http2HeaderEntry : HeaderEntry<ICharSequence, ICharSequence>
         {
-            readonly DefaultHttp2Headers headers;
+            readonly DefaultHttp2Headers _headers;
 
             internal Http2HeaderEntry(DefaultHttp2Headers headers, int hash, ICharSequence key, ICharSequence value, HeaderEntry<ICharSequence, ICharSequence> next)
                 : base(hash, key)
             {
-                this.headers = headers;
-                this.value = value;
-                this.Next = next;
+                _headers = headers;
+                _value = value;
+                Next = next;
 
                 // Make sure the pseudo headers fields are first in iteration order
                 if (PseudoHeaderName.HasPseudoHeaderFormat(key))
                 {
-                    this.After = this.headers.firstNonPseudo;
-                    this.Before = this.headers.firstNonPseudo.Before;
+                    After = _headers._firstNonPseudo;
+                    Before = _headers._firstNonPseudo.Before;
                 }
                 else
                 {
-                    this.After = this.headers.head;
-                    this.Before = this.headers.head.Before;
-                    if (this.headers.firstNonPseudo == this.headers.head)
+                    After = _headers._head;
+                    Before = _headers._head.Before;
+                    if (_headers._firstNonPseudo == _headers._head)
                     {
-                        this.headers.firstNonPseudo = this;
+                        _headers._firstNonPseudo = this;
                     }
                 }
 
-                this.PointNeighborsToThis();
+                PointNeighborsToThis();
             }
 
             public override void Remove()
             {
-                if (this == this.headers.firstNonPseudo)
+                if (this == _headers._firstNonPseudo)
                 {
-                    this.headers.firstNonPseudo = this.headers.firstNonPseudo.After;
+                    _headers._firstNonPseudo = _headers._firstNonPseudo.After;
                 }
 
                 base.Remove();

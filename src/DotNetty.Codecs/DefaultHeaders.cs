@@ -23,18 +23,18 @@ namespace DotNetty.Codecs
     {
         internal const int HashCodeSeed = unchecked((int)0xc2b2ae35);
 
-        static readonly DefaultHashingStrategy<TValue> DefaultValueHashingStrategy = new DefaultHashingStrategy<TValue>();
-        static readonly DefaultHashingStrategy<TKey> DefaultKeyHashingStragety = new DefaultHashingStrategy<TKey>();
-        static readonly NullNameValidator<TKey> DefaultKeyNameValidator = NullNameValidator<TKey>.Instance;
+        private static readonly DefaultHashingStrategy<TValue> DefaultValueHashingStrategy = new DefaultHashingStrategy<TValue>();
+        private static readonly DefaultHashingStrategy<TKey> DefaultKeyHashingStragety = new DefaultHashingStrategy<TKey>();
+        private static readonly NullNameValidator<TKey> DefaultKeyNameValidator = NullNameValidator<TKey>.Instance;
 
-        readonly HeaderEntry<TKey, TValue>[] entries;
-        protected readonly HeaderEntry<TKey, TValue> head;
+        private readonly HeaderEntry<TKey, TValue>[] _entries;
+        protected readonly HeaderEntry<TKey, TValue> _head;
 
-        readonly byte hashMask;
+        private readonly byte _hashMask;
         protected readonly IValueConverter<TValue> ValueConverter;
-        readonly INameValidator<TKey> nameValidator;
-        readonly IHashingStrategy<TKey> hashingStrategy;
-        int size;
+        private readonly INameValidator<TKey> _nameValidator;
+        private readonly IHashingStrategy<TKey> _hashingStrategy;
+        private int _size;
 
         public DefaultHeaders(IValueConverter<TValue> valueConverter)
             : this(DefaultKeyHashingStragety, valueConverter, DefaultKeyNameValidator, 16)
@@ -46,7 +46,7 @@ namespace DotNetty.Codecs
         {
         }
 
-        public DefaultHeaders(IHashingStrategy<TKey> nameHashingStrategy, IValueConverter<TValue> valueConverter, INameValidator<TKey> nameValidator) 
+        public DefaultHeaders(IHashingStrategy<TKey> nameHashingStrategy, IValueConverter<TValue> valueConverter, INameValidator<TKey> nameValidator)
             : this(nameHashingStrategy, valueConverter, nameValidator, 16)
         {
         }
@@ -58,15 +58,15 @@ namespace DotNetty.Codecs
             if (valueConverter is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.valueConverter);
             if (nameValidator is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.nameValidator);
 
-            this.hashingStrategy = nameHashingStrategy;
-            this.ValueConverter = valueConverter;
-            this.nameValidator = nameValidator;
+            _hashingStrategy = nameHashingStrategy;
+            ValueConverter = valueConverter;
+            _nameValidator = nameValidator;
 
             // Enforce a bound of [2, 128] because hashMask is a byte. The max possible value of hashMask is one less
             // than the length of this array, and we want the mask to be > 0.
-            this.entries = new HeaderEntry<TKey, TValue>[FindNextPositivePowerOfTwo(Math.Max(2, Math.Min(arraySizeHint, 128)))];
-            this.hashMask = (byte)(this.entries.Length - 1);
-            this.head = new HeaderEntry<TKey, TValue>();
+            _entries = new HeaderEntry<TKey, TValue>[FindNextPositivePowerOfTwo(Math.Max(2, Math.Min(arraySizeHint, 128)))];
+            _hashMask = (byte)(_entries.Length - 1);
+            _head = new HeaderEntry<TKey, TValue>();
         }
 
         public bool TryGet(TKey name, out TValue value)
@@ -74,16 +74,16 @@ namespace DotNetty.Codecs
             if (name is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
 
             bool found = false;
-            int h = this.hashingStrategy.HashCode(name);
-            int i = this.Index(h);
-            HeaderEntry<TKey, TValue> e = this.entries[i];
+            int h = _hashingStrategy.HashCode(name);
+            int i = Index(h);
+            HeaderEntry<TKey, TValue> e = _entries[i];
             value = default;
             // loop until the first header was found
             while (e is object)
             {
-                if (e.Hash == h && this.hashingStrategy.Equals(name, e.key))
+                if (e.Hash == h && _hashingStrategy.Equals(name, e._key))
                 {
-                    value = e.value;
+                    value = e._value;
                     found = true;
                 }
 
@@ -92,31 +92,31 @@ namespace DotNetty.Codecs
             return found;
         }
 
-        public TValue Get(TKey name, TValue defaultValue) => this.TryGet(name, out TValue value) ? value : defaultValue;
+        public TValue Get(TKey name, TValue defaultValue) => TryGet(name, out TValue value) ? value : defaultValue;
 
         public bool TryGetAndRemove(TKey name, out TValue value)
         {
             if (name is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
 
-            int h = this.hashingStrategy.HashCode(name);
-            return this.TryRemove0(h, this.Index(h), name, out value);
+            int h = _hashingStrategy.HashCode(name);
+            return TryRemove0(h, Index(h), name, out value);
         }
 
-        public TValue GetAndRemove(TKey name, TValue defaultValue) => this.TryGetAndRemove(name, out TValue value) ? value : defaultValue;
+        public TValue GetAndRemove(TKey name, TValue defaultValue) => TryGetAndRemove(name, out TValue value) ? value : defaultValue;
 
         public virtual IList<TValue> GetAll(TKey name)
         {
             if (name is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
 
             var values = new List<TValue>();
-            int h = this.hashingStrategy.HashCode(name);
-            int i = this.Index(h);
-            HeaderEntry<TKey, TValue> e = this.entries[i];
+            int h = _hashingStrategy.HashCode(name);
+            int i = Index(h);
+            HeaderEntry<TKey, TValue> e = _entries[i];
             while (e is object)
             {
-                if (e.Hash == h && this.hashingStrategy.Equals(name, e.key))
+                if (e.Hash == h && _hashingStrategy.Equals(name, e._key))
                 {
-                    values.Insert(0, e.value);
+                    values.Insert(0, e._value);
                 }
 
                 e = e.Next;
@@ -128,51 +128,51 @@ namespace DotNetty.Codecs
 
         public IList<TValue> GetAllAndRemove(TKey name)
         {
-            IList<TValue> all = this.GetAll(name);
-            this.Remove(name);
+            IList<TValue> all = GetAll(name);
+            _ = Remove(name);
             return all;
         }
 
-        public bool Contains(TKey name) => this.TryGet(name, out _);
+        public bool Contains(TKey name) => TryGet(name, out _);
 
         public bool ContainsObject(TKey name, object value)
         {
             if (value is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
 
-            return this.Contains(name, this.ValueConverter.ConvertObject(value));
+            return Contains(name, ValueConverter.ConvertObject(value));
         }
 
-        public bool ContainsBoolean(TKey name, bool value) => this.Contains(name, this.ValueConverter.ConvertBoolean(value));
+        public bool ContainsBoolean(TKey name, bool value) => Contains(name, ValueConverter.ConvertBoolean(value));
 
-        public bool ContainsByte(TKey name, byte value) => this.Contains(name, this.ValueConverter.ConvertByte(value));
+        public bool ContainsByte(TKey name, byte value) => Contains(name, ValueConverter.ConvertByte(value));
 
-        public bool ContainsChar(TKey name, char value) => this.Contains(name, this.ValueConverter.ConvertChar(value));
+        public bool ContainsChar(TKey name, char value) => Contains(name, ValueConverter.ConvertChar(value));
 
-        public bool ContainsShort(TKey name, short value) => this.Contains(name, this.ValueConverter.ConvertShort(value));
+        public bool ContainsShort(TKey name, short value) => Contains(name, ValueConverter.ConvertShort(value));
 
-        public bool ContainsInt(TKey name, int value) => this.Contains(name, this.ValueConverter.ConvertInt(value));
+        public bool ContainsInt(TKey name, int value) => Contains(name, ValueConverter.ConvertInt(value));
 
-        public bool ContainsLong(TKey name, long value) => this.Contains(name, this.ValueConverter.ConvertLong(value));
+        public bool ContainsLong(TKey name, long value) => Contains(name, ValueConverter.ConvertLong(value));
 
-        public bool ContainsFloat(TKey name, float value) => this.Contains(name, this.ValueConverter.ConvertFloat(value));
+        public bool ContainsFloat(TKey name, float value) => Contains(name, ValueConverter.ConvertFloat(value));
 
-        public bool ContainsDouble(TKey name, double value) => this.Contains(name, this.ValueConverter.ConvertDouble(value));
+        public bool ContainsDouble(TKey name, double value) => Contains(name, ValueConverter.ConvertDouble(value));
 
-        public bool ContainsTimeMillis(TKey name, long value) => this.Contains(name, this.ValueConverter.ConvertTimeMillis(value));
+        public bool ContainsTimeMillis(TKey name, long value) => Contains(name, ValueConverter.ConvertTimeMillis(value));
 
-        public bool Contains(TKey name, TValue value) => this.Contains(name, value, DefaultValueHashingStrategy);
+        public bool Contains(TKey name, TValue value) => Contains(name, value, DefaultValueHashingStrategy);
 
         public bool Contains(TKey name, TValue value, IHashingStrategy<TValue> valueHashingStrategy)
         {
             if (name is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
 
-            int h = this.hashingStrategy.HashCode(name);
-            int i = this.Index(h);
-            HeaderEntry<TKey, TValue> e = this.entries[i];
+            int h = _hashingStrategy.HashCode(name);
+            int i = Index(h);
+            HeaderEntry<TKey, TValue> e = _entries[i];
             while (e is object)
             {
-                if (e.Hash == h && this.hashingStrategy.Equals(name, e.key) 
-                    && valueHashingStrategy.Equals(value, e.value))
+                if (e.Hash == h && _hashingStrategy.Equals(name, e._key)
+                    && valueHashingStrategy.Equals(value, e._value))
                 {
                     return true;
                 }
@@ -181,22 +181,22 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public int Size => this.size;
+        public int Size => _size;
 
-        public bool IsEmpty => this.head == this.head.After;
+        public bool IsEmpty => _head == _head.After;
 
         public ISet<TKey> Names()
         {
-            if (this.IsEmpty)
+            if (IsEmpty)
             {
                 return ImmutableHashSet<TKey>.Empty;
             }
 
-            var names = new HashSet<TKey>(this.hashingStrategy);
-            HeaderEntry<TKey, TValue> e = this.head.After;
-            while (e != this.head)
+            var names = new HashSet<TKey>(_hashingStrategy);
+            HeaderEntry<TKey, TValue> e = _head.After;
+            while (e != _head)
             {
-                names.Add(e.key);
+                _ = names.Add(e._key);
                 e = e.After;
             }
             return names;
@@ -206,21 +206,21 @@ namespace DotNetty.Codecs
         {
             if (value == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
 
-            this.nameValidator.ValidateName(name);
-            int h = this.hashingStrategy.HashCode(name);
-            int i = this.Index(h);
-            this.Add0(h, i, name, value);
+            _nameValidator.ValidateName(name);
+            int h = _hashingStrategy.HashCode(name);
+            int i = Index(h);
+            Add0(h, i, name, value);
             return this;
         }
 
         public virtual IHeaders<TKey, TValue> Add(TKey name, IEnumerable<TValue> values)
         {
-            this.nameValidator.ValidateName(name);
-            int h = this.hashingStrategy.HashCode(name);
-            int i = this.Index(h);
+            _nameValidator.ValidateName(name);
+            int h = _hashingStrategy.HashCode(name);
+            int i = Index(h);
             foreach (TValue v in values)
             {
-                this.Add0(h, i, name, v);
+                Add0(h, i, name, v);
             }
             return this;
         }
@@ -229,14 +229,14 @@ namespace DotNetty.Codecs
         {
             if (value is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
 
-            return this.Add(name, this.ValueConverter.ConvertObject(value));
+            return Add(name, ValueConverter.ConvertObject(value));
         }
 
         public virtual IHeaders<TKey, TValue> AddObject(TKey name, IEnumerable<object> values)
         {
             foreach (object value in values)
             {
-                this.AddObject(name, value);
+                _ = AddObject(name, value);
             }
             return this;
         }
@@ -247,29 +247,29 @@ namespace DotNetty.Codecs
             // Avoid enumerator allocations
             for (int i = 0; i < values.Length; i++)
             {
-                this.AddObject(name, values[i]);
+                _ = AddObject(name, values[i]);
             }
 
             return this;
         }
 
-        public IHeaders<TKey, TValue> AddInt(TKey name, int value) => this.Add(name, this.ValueConverter.ConvertInt(value));
+        public IHeaders<TKey, TValue> AddInt(TKey name, int value) => Add(name, ValueConverter.ConvertInt(value));
 
-        public IHeaders<TKey, TValue> AddLong(TKey name, long value) => this.Add(name, this.ValueConverter.ConvertLong(value));
+        public IHeaders<TKey, TValue> AddLong(TKey name, long value) => Add(name, ValueConverter.ConvertLong(value));
 
-        public IHeaders<TKey, TValue> AddDouble(TKey name, double value) => this.Add(name, this.ValueConverter.ConvertDouble(value));
+        public IHeaders<TKey, TValue> AddDouble(TKey name, double value) => Add(name, ValueConverter.ConvertDouble(value));
 
-        public IHeaders<TKey, TValue> AddTimeMillis(TKey name, long value) => this.Add(name, this.ValueConverter.ConvertTimeMillis(value));
+        public IHeaders<TKey, TValue> AddTimeMillis(TKey name, long value) => Add(name, ValueConverter.ConvertTimeMillis(value));
 
-        public IHeaders<TKey, TValue> AddChar(TKey name, char value) => this.Add(name, this.ValueConverter.ConvertChar(value));
+        public IHeaders<TKey, TValue> AddChar(TKey name, char value) => Add(name, ValueConverter.ConvertChar(value));
 
-        public IHeaders<TKey, TValue> AddBoolean(TKey name, bool value) => this.Add(name, this.ValueConverter.ConvertBoolean(value));
+        public IHeaders<TKey, TValue> AddBoolean(TKey name, bool value) => Add(name, ValueConverter.ConvertBoolean(value));
 
-        public IHeaders<TKey, TValue> AddFloat(TKey name, float value) =>  this.Add(name, this.ValueConverter.ConvertFloat(value));
+        public IHeaders<TKey, TValue> AddFloat(TKey name, float value) => Add(name, ValueConverter.ConvertFloat(value));
 
-        public IHeaders<TKey, TValue> AddByte(TKey name, byte value) => this.Add(name, this.ValueConverter.ConvertByte(value));
+        public IHeaders<TKey, TValue> AddByte(TKey name, byte value) => Add(name, ValueConverter.ConvertByte(value));
 
-        public IHeaders<TKey, TValue> AddShort(TKey name, short value) => this.Add(name, this.ValueConverter.ConvertShort(value));
+        public IHeaders<TKey, TValue> AddShort(TKey name, short value) => Add(name, ValueConverter.ConvertShort(value));
 
         public virtual IHeaders<TKey, TValue> Add(IHeaders<TKey, TValue> headers)
         {
@@ -277,7 +277,7 @@ namespace DotNetty.Codecs
             {
                 CThrowHelper.ThrowArgumentException_CannotAddToItSelf();
             }
-            this.AddImpl(headers);
+            AddImpl(headers);
             return this;
         }
 
@@ -285,24 +285,24 @@ namespace DotNetty.Codecs
         {
             if (headers is DefaultHeaders<TKey, TValue> defaultHeaders)
             {
-                HeaderEntry<TKey, TValue> e = defaultHeaders.head.After;
+                HeaderEntry<TKey, TValue> e = defaultHeaders._head.After;
 
-                if (defaultHeaders.hashingStrategy == this.hashingStrategy
-                    && defaultHeaders.nameValidator == this.nameValidator)
+                if (defaultHeaders._hashingStrategy == _hashingStrategy
+                    && defaultHeaders._nameValidator == _nameValidator)
                 {
                     // Fastest copy
-                    while (e != defaultHeaders.head)
+                    while (e != defaultHeaders._head)
                     {
-                        this.Add0(e.Hash, this.Index(e.Hash), e.key, e.value);
+                        Add0(e.Hash, Index(e.Hash), e._key, e._value);
                         e = e.After;
                     }
                 }
                 else
                 {
                     // Fast copy
-                    while (e != defaultHeaders.head)
+                    while (e != defaultHeaders._head)
                     {
-                        this.Add(e.key, e.value);
+                        _ = Add(e._key, e._value);
                         e = e.After;
                     }
                 }
@@ -312,7 +312,7 @@ namespace DotNetty.Codecs
                 // Slow copy
                 foreach (HeaderEntry<TKey, TValue> header in headers)
                 {
-                    this.Add(header.key, header.value);
+                    _ = Add(header._key, header._value);
                 }
             }
         }
@@ -321,11 +321,11 @@ namespace DotNetty.Codecs
         {
             if (value == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
 
-            this.nameValidator.ValidateName(name);
-            int h = this.hashingStrategy.HashCode(name);
-            int i = this.Index(h);
-            this.TryRemove0(h, i, name, out _);
-            this.Add0(h, i, name, value);
+            _nameValidator.ValidateName(name);
+            int h = _hashingStrategy.HashCode(name);
+            int i = Index(h);
+            _ = TryRemove0(h, i, name, out _);
+            Add0(h, i, name, value);
             return this;
         }
 
@@ -333,19 +333,19 @@ namespace DotNetty.Codecs
         {
             if (values is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.values);
 
-            this.nameValidator.ValidateName(name);
-            int h = this.hashingStrategy.HashCode(name);
-            int i = this.Index(h);
+            _nameValidator.ValidateName(name);
+            int h = _hashingStrategy.HashCode(name);
+            int i = Index(h);
 
-            this.TryRemove0(h, i, name, out _);
+            _ = TryRemove0(h, i, name, out _);
             // ReSharper disable once PossibleNullReferenceException
             foreach (TValue v in values)
             {
-                if (v ==  null)
+                if (v == null)
                 {
                     break;
                 }
-                this.Add0(h, i, name, v);
+                Add0(h, i, name, v);
             }
 
             return this;
@@ -355,19 +355,19 @@ namespace DotNetty.Codecs
         {
             if (value is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.value);
 
-            TValue convertedValue = this.ValueConverter.ConvertObject(value);
-            return this.Set(name, convertedValue);
+            TValue convertedValue = ValueConverter.ConvertObject(value);
+            return Set(name, convertedValue);
         }
 
         public virtual IHeaders<TKey, TValue> SetObject(TKey name, IEnumerable<object> values)
         {
             if (values is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.values);
 
-            this.nameValidator.ValidateName(name);
-            int h = this.hashingStrategy.HashCode(name);
-            int i = this.Index(h);
+            _nameValidator.ValidateName(name);
+            int h = _hashingStrategy.HashCode(name);
+            int i = Index(h);
 
-            this.TryRemove0(h, i, name, out _);
+            _ = TryRemove0(h, i, name, out _);
             // ReSharper disable once PossibleNullReferenceException
             foreach (object v in values)
             {
@@ -375,36 +375,36 @@ namespace DotNetty.Codecs
                 {
                     break;
                 }
-                this.Add0(h, i, name, this.ValueConverter.ConvertObject(v));
+                Add0(h, i, name, ValueConverter.ConvertObject(v));
             }
 
             return this;
         }
 
-        public IHeaders<TKey, TValue> SetInt(TKey name, int value) => this.Set(name, this.ValueConverter.ConvertInt(value));
+        public IHeaders<TKey, TValue> SetInt(TKey name, int value) => Set(name, ValueConverter.ConvertInt(value));
 
-        public IHeaders<TKey, TValue> SetLong(TKey name, long value) => this.Set(name, this.ValueConverter.ConvertLong(value));
+        public IHeaders<TKey, TValue> SetLong(TKey name, long value) => Set(name, ValueConverter.ConvertLong(value));
 
-        public IHeaders<TKey, TValue> SetDouble(TKey name, double value) => this.Set(name, this.ValueConverter.ConvertDouble(value));
+        public IHeaders<TKey, TValue> SetDouble(TKey name, double value) => Set(name, ValueConverter.ConvertDouble(value));
 
-        public IHeaders<TKey, TValue> SetTimeMillis(TKey name, long value) => this.Set(name, this.ValueConverter.ConvertTimeMillis(value));
+        public IHeaders<TKey, TValue> SetTimeMillis(TKey name, long value) => Set(name, ValueConverter.ConvertTimeMillis(value));
 
-        public IHeaders<TKey, TValue> SetFloat(TKey name, float value) => this.Set(name, this.ValueConverter.ConvertFloat(value));
+        public IHeaders<TKey, TValue> SetFloat(TKey name, float value) => Set(name, ValueConverter.ConvertFloat(value));
 
-        public IHeaders<TKey, TValue> SetChar(TKey name, char value) => this.Set(name, this.ValueConverter.ConvertChar(value));
+        public IHeaders<TKey, TValue> SetChar(TKey name, char value) => Set(name, ValueConverter.ConvertChar(value));
 
-        public IHeaders<TKey, TValue> SetBoolean(TKey name, bool value) => this.Set(name, this.ValueConverter.ConvertBoolean(value));
+        public IHeaders<TKey, TValue> SetBoolean(TKey name, bool value) => Set(name, ValueConverter.ConvertBoolean(value));
 
-        public IHeaders<TKey, TValue> SetByte(TKey name, byte value) => this.Set(name, this.ValueConverter.ConvertByte(value));
+        public IHeaders<TKey, TValue> SetByte(TKey name, byte value) => Set(name, ValueConverter.ConvertByte(value));
 
-        public IHeaders<TKey, TValue> SetShort(TKey name, short value) => this.Set(name, this.ValueConverter.ConvertShort(value));
+        public IHeaders<TKey, TValue> SetShort(TKey name, short value) => Set(name, ValueConverter.ConvertShort(value));
 
         public virtual IHeaders<TKey, TValue> Set(IHeaders<TKey, TValue> headers)
         {
             if (!ReferenceEquals(headers, this))
             {
-                this.Clear();
-                this.AddImpl(headers);
+                _ = Clear();
+                AddImpl(headers);
             }
             return this;
         }
@@ -415,34 +415,34 @@ namespace DotNetty.Codecs
             {
                 foreach (TKey key in headers.Names())
                 {
-                    this.Remove(key);
+                    _ = Remove(key);
                 }
-                this.AddImpl(headers);
+                AddImpl(headers);
             }
             return this;
         }
 
-        public bool Remove(TKey name) => this.TryGetAndRemove(name, out _);
+        public bool Remove(TKey name) => TryGetAndRemove(name, out _);
 
         public virtual IHeaders<TKey, TValue> Clear()
         {
-            Array.Clear(this.entries, 0, this.entries.Length);
-            this.head.Before = this.head.After = this.head;
-            this.size = 0;
+            Array.Clear(_entries, 0, _entries.Length);
+            _head.Before = _head.After = _head;
+            _size = 0;
             return this;
         }
 
         public IEnumerator<HeaderEntry<TKey, TValue>> GetEnumerator() => new HeaderEnumerator(this);
 
-        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public bool TryGetBoolean(TKey name, out bool value)
         {
-            if (this.TryGet(name, out TValue v))
+            if (TryGet(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToBoolean(v);
+                    value = ValueConverter.ConvertToBoolean(v);
                     return true;
                 }
                 catch (Exception)
@@ -455,15 +455,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public bool GetBoolean(TKey name, bool defaultValue) => this.TryGetBoolean(name, out bool value) ? value : defaultValue;
+        public bool GetBoolean(TKey name, bool defaultValue) => TryGetBoolean(name, out bool value) ? value : defaultValue;
 
         public bool TryGetByte(TKey name, out byte value)
         {
-            if (this.TryGet(name, out TValue v))
+            if (TryGet(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToByte(v);
+                    value = ValueConverter.ConvertToByte(v);
                     return true;
                 }
                 catch (Exception)
@@ -476,15 +476,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public byte GetByte(TKey name, byte defaultValue) => this.TryGetByte(name, out byte value) ? value : defaultValue;
+        public byte GetByte(TKey name, byte defaultValue) => TryGetByte(name, out byte value) ? value : defaultValue;
 
         public bool TryGetChar(TKey name, out char value)
         {
-            if (this.TryGet(name, out TValue v))
+            if (TryGet(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToChar(v);
+                    value = ValueConverter.ConvertToChar(v);
                     return true;
                 }
                 catch (Exception)
@@ -497,15 +497,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public char GetChar(TKey name, char defaultValue) => this.TryGetChar(name, out char value) ? value : defaultValue;
+        public char GetChar(TKey name, char defaultValue) => TryGetChar(name, out char value) ? value : defaultValue;
 
         public bool TryGetShort(TKey name, out short value)
         {
-            if (this.TryGet(name, out TValue v))
+            if (TryGet(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToShort(v);
+                    value = ValueConverter.ConvertToShort(v);
                     return true;
                 }
                 catch (Exception)
@@ -518,18 +518,18 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public short GetShort(TKey name, short defaultValue) => this.TryGetShort(name, out short value) ? value : defaultValue;
+        public short GetShort(TKey name, short defaultValue) => TryGetShort(name, out short value) ? value : defaultValue;
 
         public bool TryGetInt(TKey name, out int value)
         {
-            if (this.TryGet(name, out TValue v))
+            if (TryGet(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToInt(v);
+                    value = ValueConverter.ConvertToInt(v);
                     return true;
                 }
-                catch(Exception)
+                catch (Exception)
                 {
                     // Ignore
                 }
@@ -539,15 +539,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public int GetInt(TKey name, int defaultValue) => this.TryGetInt(name, out int value) ? value : defaultValue;
+        public int GetInt(TKey name, int defaultValue) => TryGetInt(name, out int value) ? value : defaultValue;
 
         public bool TryGetLong(TKey name, out long value)
         {
-            if (this.TryGet(name, out TValue v))
+            if (TryGet(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToLong(v);
+                    value = ValueConverter.ConvertToLong(v);
                     return true;
                 }
                 catch (Exception)
@@ -560,15 +560,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public long GetLong(TKey name, long defaultValue) => this.TryGetLong(name, out long value) ? value : defaultValue;
+        public long GetLong(TKey name, long defaultValue) => TryGetLong(name, out long value) ? value : defaultValue;
 
         public bool TryGetFloat(TKey name, out float value)
         {
-            if (this.TryGet(name, out TValue v))
+            if (TryGet(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToFloat(v);
+                    value = ValueConverter.ConvertToFloat(v);
                     return true;
                 }
                 catch (Exception)
@@ -581,15 +581,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public float GetFloat(TKey name, float defaultValue) => this.TryGetFloat(name, out float value) ? value : defaultValue;
+        public float GetFloat(TKey name, float defaultValue) => TryGetFloat(name, out float value) ? value : defaultValue;
 
         public bool TryGetDouble(TKey name, out double value)
         {
-            if (this.TryGet(name, out TValue v))
+            if (TryGet(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToDouble(v);
+                    value = ValueConverter.ConvertToDouble(v);
                     return true;
                 }
                 catch (Exception)
@@ -602,15 +602,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public double GetDouble(TKey name, double defaultValue) => this.TryGetDouble(name, out double value) ? value : defaultValue;
+        public double GetDouble(TKey name, double defaultValue) => TryGetDouble(name, out double value) ? value : defaultValue;
 
         public bool TryGetTimeMillis(TKey name, out long value)
         {
-            if (this.TryGet(name, out TValue v))
+            if (TryGet(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToTimeMillis(v);
+                    value = ValueConverter.ConvertToTimeMillis(v);
                     return true;
                 }
                 catch (Exception)
@@ -623,15 +623,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public long GetTimeMillis(TKey name, long defaultValue) => this.TryGetTimeMillis(name, out long value) ? value : defaultValue;
+        public long GetTimeMillis(TKey name, long defaultValue) => TryGetTimeMillis(name, out long value) ? value : defaultValue;
 
         public bool TryGetBooleanAndRemove(TKey name, out bool value)
         {
-            if (this.TryGetAndRemove(name, out TValue v))
+            if (TryGetAndRemove(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToBoolean(v);
+                    value = ValueConverter.ConvertToBoolean(v);
                     return true;
                 }
                 catch (Exception)
@@ -644,15 +644,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public bool GetBooleanAndRemove(TKey name, bool defaultValue) => this.TryGetBooleanAndRemove(name, out bool value) ? value : defaultValue;
+        public bool GetBooleanAndRemove(TKey name, bool defaultValue) => TryGetBooleanAndRemove(name, out bool value) ? value : defaultValue;
 
         public bool TryGetByteAndRemove(TKey name, out byte value)
         {
-            if (this.TryGetAndRemove(name, out TValue v))
+            if (TryGetAndRemove(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToByte(v);
+                    value = ValueConverter.ConvertToByte(v);
                     return true;
                 }
                 catch (Exception)
@@ -664,15 +664,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public byte GetByteAndRemove(TKey name, byte defaultValue) => this.TryGetByteAndRemove(name, out byte value) ? value : defaultValue;
+        public byte GetByteAndRemove(TKey name, byte defaultValue) => TryGetByteAndRemove(name, out byte value) ? value : defaultValue;
 
         public bool TryGetCharAndRemove(TKey name, out char value)
         {
-            if (this.TryGetAndRemove(name, out TValue v))
+            if (TryGetAndRemove(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToChar(v);
+                    value = ValueConverter.ConvertToChar(v);
                     return true;
                 }
                 catch (Exception)
@@ -685,15 +685,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public char GetCharAndRemove(TKey name, char defaultValue) => this.TryGetCharAndRemove(name, out char value) ? value : defaultValue;
+        public char GetCharAndRemove(TKey name, char defaultValue) => TryGetCharAndRemove(name, out char value) ? value : defaultValue;
 
         public bool TryGetShortAndRemove(TKey name, out short value)
         {
-            if (this.TryGetAndRemove(name, out TValue v))
+            if (TryGetAndRemove(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToShort(v);
+                    value = ValueConverter.ConvertToShort(v);
                     return true;
                 }
                 catch (Exception)
@@ -706,15 +706,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public short GetShortAndRemove(TKey name, short defaultValue) => this.TryGetShortAndRemove(name, out short value) ? value : defaultValue;
+        public short GetShortAndRemove(TKey name, short defaultValue) => TryGetShortAndRemove(name, out short value) ? value : defaultValue;
 
         public bool TryGetIntAndRemove(TKey name, out int value)
         {
-            if (this.TryGetAndRemove(name, out TValue v))
+            if (TryGetAndRemove(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToInt(v);
+                    value = ValueConverter.ConvertToInt(v);
                     return true;
                 }
                 catch (Exception)
@@ -727,15 +727,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public int GetIntAndRemove(TKey name, int defaultValue) => this.TryGetIntAndRemove(name, out int value) ? value : defaultValue;
+        public int GetIntAndRemove(TKey name, int defaultValue) => TryGetIntAndRemove(name, out int value) ? value : defaultValue;
 
         public bool TryGetLongAndRemove(TKey name, out long value)
         {
-            if (this.TryGetAndRemove(name, out TValue v))
+            if (TryGetAndRemove(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToLong(v);
+                    value = ValueConverter.ConvertToLong(v);
                     return true;
                 }
                 catch (Exception)
@@ -748,15 +748,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public long GetLongAndRemove(TKey name, long defaultValue) => this.TryGetLongAndRemove(name, out long value) ? value : defaultValue;
+        public long GetLongAndRemove(TKey name, long defaultValue) => TryGetLongAndRemove(name, out long value) ? value : defaultValue;
 
         public bool TryGetFloatAndRemove(TKey name, out float value)
         {
-            if (this.TryGetAndRemove(name, out TValue v))
+            if (TryGetAndRemove(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToFloat(v);
+                    value = ValueConverter.ConvertToFloat(v);
                     return true;
                 }
                 catch (Exception)
@@ -769,15 +769,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public float GetFloatAndRemove(TKey name, float defaultValue) => this.TryGetFloatAndRemove(name, out float value) ? value : defaultValue;
+        public float GetFloatAndRemove(TKey name, float defaultValue) => TryGetFloatAndRemove(name, out float value) ? value : defaultValue;
 
         public bool TryGetDoubleAndRemove(TKey name, out double value)
         {
-            if (this.TryGetAndRemove(name, out TValue v))
+            if (TryGetAndRemove(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToDouble(v);
+                    value = ValueConverter.ConvertToDouble(v);
                     return true;
                 }
                 catch (Exception)
@@ -790,15 +790,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public double GetDoubleAndRemove(TKey name, double defaultValue) => this.TryGetDoubleAndRemove(name, out double value) ? value : defaultValue;
+        public double GetDoubleAndRemove(TKey name, double defaultValue) => TryGetDoubleAndRemove(name, out double value) ? value : defaultValue;
 
         public bool TryGetTimeMillisAndRemove(TKey name, out long value)
         {
-            if (this.TryGetAndRemove(name, out TValue v))
+            if (TryGetAndRemove(name, out TValue v))
             {
                 try
                 {
-                    value = this.ValueConverter.ConvertToTimeMillis(v);
+                    value = ValueConverter.ConvertToTimeMillis(v);
                     return true;
                 }
                 catch (Exception)
@@ -811,15 +811,15 @@ namespace DotNetty.Codecs
             return false;
         }
 
-        public long GetTimeMillisAndRemove(TKey name, long defaultValue) => this.TryGetTimeMillisAndRemove(name, out long value) ? value : defaultValue;
+        public long GetTimeMillisAndRemove(TKey name, long defaultValue) => TryGetTimeMillisAndRemove(name, out long value) ? value : defaultValue;
 
-        public override bool Equals(object obj) => obj is IHeaders<TKey, TValue> headers && this.Equals(headers, DefaultValueHashingStrategy);
+        public override bool Equals(object obj) => obj is IHeaders<TKey, TValue> headers && Equals(headers, DefaultValueHashingStrategy);
 
-        public override int GetHashCode() => this.HashCode(DefaultValueHashingStrategy);
+        public override int GetHashCode() => HashCode(DefaultValueHashingStrategy);
 
         public bool Equals(IHeaders<TKey, TValue> h2, IHashingStrategy<TValue> valueHashingStrategy)
         {
-            if (h2.Size != this.size)
+            if (h2.Size != _size)
             {
                 return false;
             }
@@ -829,10 +829,10 @@ namespace DotNetty.Codecs
                 return true;
             }
 
-            foreach (TKey name in this.Names())
+            foreach (TKey name in Names())
             {
                 IList<TValue> otherValues = h2.GetAll(name);
-                IList<TValue> values = this.GetAll(name);
+                IList<TValue> values = GetAll(name);
                 if (otherValues.Count != values.Count)
                 {
                     return false;
@@ -851,10 +851,10 @@ namespace DotNetty.Codecs
         public int HashCode(IHashingStrategy<TValue> valueHashingStrategy)
         {
             int result = HashCodeSeed;
-            foreach (TKey name in this.Names())
+            foreach (TKey name in Names())
             {
-                result = 31 * result + this.hashingStrategy.HashCode(name);
-                IList<TValue> values = this.GetAll(name);
+                result = 31 * result + _hashingStrategy.HashCode(name);
+                IList<TValue> values = GetAll(name);
                 for (int i = 0; i < values.Count; ++i)
                 {
                     result = 31 * result + valueHashingStrategy.HashCode(values[i]);
@@ -863,26 +863,26 @@ namespace DotNetty.Codecs
             return result;
         }
 
-        public override string ToString() => HeadersUtils.ToString(this, this.size);
+        public override string ToString() => HeadersUtils.ToString(this, _size);
 
         protected virtual HeaderEntry<TKey, TValue> NewHeaderEntry(int h, TKey name, TValue value, HeaderEntry<TKey, TValue> next) =>
-            new HeaderEntry<TKey, TValue>(h, name, value, next, this.head);
+            new HeaderEntry<TKey, TValue>(h, name, value, next, _head);
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        int Index(int hash) => hash & this.hashMask;
+        int Index(int hash) => hash & _hashMask;
 
         void Add0(int h, int i, TKey name, TValue value)
         {
             // Update the hash table.
-            this.entries[i] = this.NewHeaderEntry(h, name, value, this.entries[i]);
-            ++this.size;
+            _entries[i] = NewHeaderEntry(h, name, value, _entries[i]);
+            ++_size;
         }
 
         bool TryRemove0(int h, int i, TKey name, out TValue value)
         {
             value = default;
 
-            HeaderEntry<TKey, TValue> e = this.entries[i];
+            HeaderEntry<TKey, TValue> e = _entries[i];
             if (e is null)
             {
                 return false;
@@ -893,12 +893,12 @@ namespace DotNetty.Codecs
             HeaderEntry<TKey, TValue> next = e.Next;
             while (next is object)
             {
-                if (next.Hash == h && this.hashingStrategy.Equals(name, next.key))
+                if (next.Hash == h && _hashingStrategy.Equals(name, next._key))
                 {
-                    value = next.value;
+                    value = next._value;
                     e.Next = next.Next;
                     next.Remove();
-                    --this.size;
+                    --_size;
                     result = true;
                 }
                 else
@@ -909,17 +909,17 @@ namespace DotNetty.Codecs
                 next = e.Next;
             }
 
-            e = this.entries[i];
-            if (e.Hash == h && this.hashingStrategy.Equals(name, e.key))
+            e = _entries[i];
+            if (e.Hash == h && _hashingStrategy.Equals(name, e._key))
             {
                 if (!result)
                 {
-                    value = e.value;
+                    value = e._value;
                     result = true;
                 }
-                this.entries[i] = e.Next;
+                _entries[i] = e.Next;
                 e.Remove();
-                --this.size;
+                --_size;
             }
 
             return result;
@@ -927,40 +927,40 @@ namespace DotNetty.Codecs
 
         public DefaultHeaders<TKey, TValue> Copy()
         {
-            var copy = new DefaultHeaders<TKey, TValue>(this.hashingStrategy,  this.ValueConverter, this.nameValidator, this.entries.Length);
+            var copy = new DefaultHeaders<TKey, TValue>(_hashingStrategy, ValueConverter, _nameValidator, _entries.Length);
             copy.AddImpl(this);
             return copy;
         }
 
         struct ValueEnumerator : IEnumerator<TValue>, IEnumerable<TValue>
         {
-            readonly IHashingStrategy<TKey> hashingStrategy;
-            readonly int hash;
-            readonly TKey name;
-            readonly HeaderEntry<TKey, TValue> head;
-            HeaderEntry<TKey, TValue> node;
-            TValue current;
+            private readonly IHashingStrategy<TKey> _hashingStrategy;
+            private readonly int _hash;
+            private readonly TKey _name;
+            private readonly HeaderEntry<TKey, TValue> _head;
+            private HeaderEntry<TKey, TValue> _node;
+            private TValue _current;
 
             public ValueEnumerator(DefaultHeaders<TKey, TValue> headers, TKey name)
             {
                 if (name is null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.name);
 
-                this.hashingStrategy = headers.hashingStrategy;
-                this.hash = this.hashingStrategy.HashCode(name);
-                this.name = name;
-                this.node = this.head = headers.entries[headers.Index(this.hash)];
-                this.current = default;
+                _hashingStrategy = headers._hashingStrategy;
+                _hash = _hashingStrategy.HashCode(name);
+                _name = name;
+                _node = _head = headers._entries[headers.Index(_hash)];
+                _current = default;
             }
 
             bool IEnumerator.MoveNext()
             {
-                if (this.node is null)
+                if (_node is null)
                 {
                     return false;
                 }
 
-                this.current = this.node.value;
-                this.CalculateNext(this.node.Next);
+                _current = _node._value;
+                CalculateNext(_node.Next);
                 return true;
             }
 
@@ -968,30 +968,30 @@ namespace DotNetty.Codecs
             {
                 while (entry is object)
                 {
-                    if (entry.Hash == this.hash && this.hashingStrategy.Equals(this.name, entry.key))
+                    if (entry.Hash == _hash && _hashingStrategy.Equals(_name, entry._key))
                     {
-                        this.node = entry;
+                        _node = entry;
                         return;
                     }
                     entry = entry.Next;
                 }
-                this.node = null;
+                _node = null;
             }
 
-            TValue IEnumerator<TValue>.Current => this.current;
+            TValue IEnumerator<TValue>.Current => _current;
 
-            object IEnumerator.Current => this.current;
+            object IEnumerator.Current => _current;
 
             void IEnumerator.Reset()
             {
-                this.node = this.head;
-                this.current = default;
+                _node = _head;
+                _current = default;
             }
 
             void IDisposable.Dispose()
             {
-                this.node = null;
-                this.current = default;
+                _node = null;
+                _current = default;
             }
 
             public IEnumerator<TValue> GetEnumerator() => this;
@@ -1001,48 +1001,48 @@ namespace DotNetty.Codecs
 
         struct HeaderEnumerator : IEnumerator<HeaderEntry<TKey, TValue>>
         {
-            readonly HeaderEntry<TKey, TValue> head;
-            readonly int size;
+            private readonly HeaderEntry<TKey, TValue> _head;
+            private readonly int _size;
 
-            HeaderEntry<TKey, TValue> node;
-            int index;
+            private HeaderEntry<TKey, TValue> _node;
+            private int _index;
 
             public HeaderEnumerator(DefaultHeaders<TKey, TValue> headers)
             {
-                this.head = headers.head;
-                this.size = headers.size;
-                this.node = this.head;
-                this.index = 0;
+                _head = headers._head;
+                _size = headers._size;
+                _node = _head;
+                _index = 0;
             }
 
-            public HeaderEntry<TKey, TValue> Current => this.node;
+            public HeaderEntry<TKey, TValue> Current => _node;
 
             object IEnumerator.Current
             {
                 [MethodImpl(InlineMethod.AggressiveInlining)]
                 get
                 {
-                    if (0u >= (uint)this.index || this.index == this.size + 1)
+                    if (0u >= (uint)_index || _index == _size + 1)
                     {
                         CThrowHelper.ThrowInvalidOperationException_EnumeratorNotInitOrCompleted();
                     }
-                    return this.node;
+                    return _node;
                 }
             }
 
             public bool MoveNext()
             {
-                if (this.node is null)
+                if (_node is null)
                 {
-                    this.index = this.size + 1;
+                    _index = _size + 1;
                     return false;
                 }
 
-                this.index++;
-                this.node = this.node.After;
-                if (this.node == this.head)
+                _index++;
+                _node = _node.After;
+                if (_node == _head)
                 {
-                    this.node = null;
+                    _node = null;
                     return false;
                 }
                 return true;
@@ -1050,14 +1050,14 @@ namespace DotNetty.Codecs
 
             public void Reset()
             {
-                this.node = this.head.After;
-                this.index = 0;
+                _node = _head.After;
+                _index = 0;
             }
 
             public void Dispose()
             {
-                this.node = null;
-                this.index = 0;
+                _node = null;
+                _index = 0;
             }
         }
     }
@@ -1067,88 +1067,88 @@ namespace DotNetty.Codecs
     {
         internal readonly int Hash;
         // ReSharper disable InconsistentNaming
-        internal readonly TKey key;
-        internal protected TValue value;
+        internal readonly TKey _key;
+        internal protected TValue _value;
         // ReSharper restore InconsistentNaming
-        readonly bool isReadonly;
+        private readonly bool _isReadonly;
 
         public HeaderEntry(int hash, TKey key)
         {
-            this.Hash = hash;
-            this.key = key;
+            Hash = hash;
+            _key = key;
         }
 
         public HeaderEntry(TKey key, TValue value, bool isReadonly)
         {
-            this.key = key;
-            this.value = value;
-            this.isReadonly = isReadonly;
+            _key = key;
+            _value = value;
+            _isReadonly = isReadonly;
         }
 
         internal HeaderEntry()
         {
-            this.Hash = -1;
-            this.key = default;
-            this.Before = this;
-            this.After = this;
+            Hash = -1;
+            _key = default;
+            Before = this;
+            After = this;
         }
 
         internal HeaderEntry(int hash, TKey key, TValue value,
             HeaderEntry<TKey, TValue> next, HeaderEntry<TKey, TValue> head)
         {
-            this.Hash = hash;
-            this.key = key;
-            this.value = value;
-            this.Next = next;
+            Hash = hash;
+            _key = key;
+            _value = value;
+            Next = next;
 
-            this.After = head;
-            this.Before = head.Before;
+            After = head;
+            Before = head.Before;
             // PointNeighborsToThis
-            this.Before.After = this;
-            this.After.Before = this;
+            Before.After = this;
+            After.Before = this;
         }
 
         public virtual void Remove()
         {
-            if (this.isReadonly) { CThrowHelper.ThrowNotSupportedException_Readonly(); }
-            this.Before.After = this.After;
-            this.After.Before = this.Before;
+            if (_isReadonly) { CThrowHelper.ThrowNotSupportedException_Readonly(); }
+            Before.After = After;
+            After.Before = Before;
         }
 
         public HeaderEntry<TKey, TValue> After { get; protected internal set; }
         public HeaderEntry<TKey, TValue> Before { get; protected internal set; }
         public HeaderEntry<TKey, TValue> Next { get; protected internal set; }
 
-        public TKey Key => this.key;
+        public TKey Key => _key;
 
-        public TValue Value => this.value;
+        public TValue Value => _value;
 
         public TValue SetValue(TValue newValue)
         {
-            if (this.isReadonly) { CThrowHelper.ThrowNotSupportedException_Readonly(); }
+            if (_isReadonly) { CThrowHelper.ThrowNotSupportedException_Readonly(); }
             if (newValue == null) CThrowHelper.ThrowArgumentNullException(CExceptionArgument.newValue);
 
-            TValue oldValue = this.value;
-            this.value = newValue;
+            TValue oldValue = _value;
+            _value = newValue;
             return oldValue;
         }
 
         protected void PointNeighborsToThis()
         {
-            this.Before.After = this;
-            this.After.Before = this;
+            Before.After = this;
+            After.Before = this;
         }
 
-        public override string ToString() => $"{this.key}={this.value}";
+        public override string ToString() => $"{_key}={_value}";
 
         // ReSharper disable once MergeConditionalExpression
-        public override bool Equals(object obj) => obj is HeaderEntry<TKey, TValue> other 
-            && (this.key is null ? other.key is null : this.key.Equals(other.key))
-            && (this.value == null ? other.value == null : this.value.Equals(other.value));
+        public override bool Equals(object obj) => obj is HeaderEntry<TKey, TValue> other
+            && (_key is null ? other._key is null : _key.Equals(other._key))
+            && (_value == null ? other._value == null : _value.Equals(other._value));
 
         // ReSharper disable NonReadonlyMemberInGetHashCode
-        public override int GetHashCode() => (this.key is null ? 0 : this.key.GetHashCode()) 
-                ^ (this.value == null ? 0 : this.value.GetHashCode());
+        public override int GetHashCode() => (_key is null ? 0 : _key.GetHashCode())
+                ^ (_value == null ? 0 : _value.GetHashCode());
         // ReSharper restore NonReadonlyMemberInGetHashCode
     }
 }

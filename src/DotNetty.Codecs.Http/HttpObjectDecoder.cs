@@ -406,7 +406,7 @@ namespace DotNetty.Codecs.Http
                                 break;
                             }
                         }
-                        buffer.SetReaderIndex(rIdx);
+                        _ = buffer.SetReaderIndex(rIdx);
                         return;
                     }
                 case State.ReadChunkFooter:
@@ -431,7 +431,7 @@ namespace DotNetty.Codecs.Http
                 case State.BadMessage:
                     {
                         // Keep discarding until disconnection.
-                        buffer.SkipBytes(buffer.ReadableBytes);
+                        _ = buffer.SkipBytes(buffer.ReadableBytes);
                         break;
                     }
                 case State.Upgraded:
@@ -593,7 +593,7 @@ namespace DotNetty.Codecs.Http
                 }
             }
 
-            Interlocked.Exchange(ref _resetRequested, SharedConstants.False);
+            _ = Interlocked.Exchange(ref _resetRequested, SharedConstants.False);
             _currentState = State.SkipControlChars;
         }
 
@@ -603,7 +603,7 @@ namespace DotNetty.Codecs.Http
 
             // Advance the readerIndex so that ByteToMessageDecoder does not complain
             // when we produced an invalid message without consuming anything.
-            buf.SkipBytes(buf.ReadableBytes);
+            _ = buf.SkipBytes(buf.ReadableBytes);
 
             if (_message is null)
             {
@@ -622,7 +622,7 @@ namespace DotNetty.Codecs.Http
 
             // Advance the readerIndex so that ByteToMessageDecoder does not complain
             // when we produced an invalid message without consuming anything.
-            buf.SkipBytes(buf.ReadableBytes);
+            _ = buf.SkipBytes(buf.ReadableBytes);
 
             IHttpContent chunk = new DefaultLastHttpContent(Unpooled.Empty)
             {
@@ -649,7 +649,7 @@ namespace DotNetty.Codecs.Http
                     break;
                 }
             }
-            buffer.SetReaderIndex(rIdx);
+            _ = buffer.SetReaderIndex(rIdx);
             return skiped;
         }
 
@@ -680,7 +680,7 @@ namespace DotNetty.Codecs.Http
                     {
                         if (_name is object)
                         {
-                            headers.Add(_name, _value);
+                            _ = headers.Add(_name, _value);
                         }
                         SplitHeader(line);
                     }
@@ -696,7 +696,7 @@ namespace DotNetty.Codecs.Http
             // Add the last header.
             if (_name is object)
             {
-                headers.Add(_name, _value);
+                _ = headers.Add(_name, _value);
             }
 
             // reset name and value fields
@@ -738,21 +738,9 @@ namespace DotNetty.Codecs.Http
             }
             else if (HttpUtil.IsTransferEncodingChunked(httpMessage))
             {
-                // See https://tools.ietf.org/html/rfc7230#section-3.3.3
-                //
-                //       If a message is received with both a Transfer-Encoding and a
-                //       Content-Length header field, the Transfer-Encoding overrides the
-                //       Content-Length.  Such a message might indicate an attempt to
-                //       perform request smuggling (Section 9.5) or response splitting
-                //       (Section 9.4) and ought to be handled as an error.  A sender MUST
-                //       remove the received Content-Length field prior to forwarding such
-                //       a message downstream.
-                //
-                // This is also what http_parser does:
-                // https://github.com/nodejs/http-parser/blob/v2.9.2/http_parser.c#L1769
                 if (contentLengthValuesCount > 0u && httpMessage.ProtocolVersion == HttpVersion.Http11)
                 {
-                    ThrowHelper.ThrowArgumentException_Both_Content_Length_And_Chunked_Found(_contentLength);
+                    HandleTransferEncodingChunkedWithContentLength(httpMessage);
                 }
 
                 return State.ReadChunkSize;
@@ -767,7 +755,35 @@ namespace DotNetty.Codecs.Http
             }
         }
 
-        long ContentLength()
+        /// <summary>
+        /// Invoked when a message with both a "Transfer-Encoding: chunked" and a "Content-Length" header field is detected.
+        /// The default behavior is to <i>remove</i> the Content-Length field, but this method could be overridden
+        /// to change the behavior (to, e.g., throw an exception and produce an invalid message).
+        /// 
+        /// <para>See: https://tools.ietf.org/html/rfc7230#section-3.3.3 </para>
+        /// <para>
+        ///     If a message is received with both a Transfer-Encoding and a
+        ///     Content-Length header field, the Transfer-Encoding overrides the
+        ///     Content-Length.  Such a message might indicate an attempt to
+        ///     perform request smuggling (Section 9.5) or response splitting
+        ///     (Section 9.4) and ought to be handled as an error.  A sender MUST
+        ///     remove the received Content-Length field prior to forwarding such
+        ///     a message downstream.
+        /// </para>
+        /// Also see:
+        /// https://github.com/apache/tomcat/blob/b693d7c1981fa7f51e58bc8c8e72e3fe80b7b773/
+        /// java/org/apache/coyote/http11/Http11Processor.java#L747-L755
+        /// https://github.com/nginx/nginx/blob/0ad4393e30c119d250415cb769e3d8bc8dce5186/
+        /// src/http/ngx_http_request.c#L1946-L1953
+        /// </summary>
+        /// <param name="message"></param>
+        protected void HandleTransferEncodingChunkedWithContentLength(IHttpMessage message)
+        {
+            _ = message.Headers.Remove(HttpHeaderNames.ContentLength);
+            _contentLength = long.MinValue;
+        }
+
+        private long ContentLength()
         {
             if (_contentLength == long.MinValue)
             {
@@ -776,7 +792,7 @@ namespace DotNetty.Codecs.Http
             return _contentLength;
         }
 
-        ILastHttpContent ReadTrailingHeaders(IByteBuffer buffer)
+        private ILastHttpContent ReadTrailingHeaders(IByteBuffer buffer)
         {
             AppendableCharSequence line = _headerParser.Parse(buffer);
             if (line is null)
@@ -820,7 +836,7 @@ namespace DotNetty.Codecs.Http
                         && !HttpHeaderNames.TransferEncoding.ContentEqualsIgnoreCase(headerName)
                         && !HttpHeaderNames.Trailer.ContentEqualsIgnoreCase(headerName))
                     {
-                        trailingHeaders.TrailingHeaders.Add(headerName, _value);
+                        _ = trailingHeaders.TrailingHeaders.Add(headerName, _value);
                     }
                     lastHeader = _name;
                     // reset name and value fields
@@ -845,7 +861,7 @@ namespace DotNetty.Codecs.Http
 
         protected abstract IHttpMessage CreateInvalidMessage();
 
-        static int GetChunkSize(AsciiString hex)
+        private static int GetChunkSize(AsciiString hex)
         {
             hex = hex.Trim();
             for (int i = hex.Offset; i < hex.Count; i++)
@@ -861,18 +877,18 @@ namespace DotNetty.Codecs.Http
             return hex.ParseInt(16);
         }
 
-        static AsciiString[] SplitInitialLine(AppendableCharSequence sb)
+        private static AsciiString[] SplitInitialLine(AppendableCharSequence sb)
         {
             byte[] chars = sb.Bytes;
             int length = sb.Count;
 
-            int aStart = FindNonWhitespace(chars, 0, length);
-            int aEnd = FindWhitespace(chars, aStart, length);
+            int aStart = FindNonSPLenient(chars, 0, length);
+            int aEnd = FindSPLenient(chars, aStart, length);
 
-            int bStart = FindNonWhitespace(chars, aEnd, length);
-            int bEnd = FindWhitespace(chars, bStart, length);
+            int bStart = FindNonSPLenient(chars, aEnd, length);
+            int bEnd = FindSPLenient(chars, bStart, length);
 
-            int cStart = FindNonWhitespace(chars, bEnd, length);
+            int cStart = FindNonSPLenient(chars, bEnd, length);
             int cEnd = FindEndOfString(chars, length);
 
             return new[]
@@ -883,14 +899,14 @@ namespace DotNetty.Codecs.Http
             };
         }
 
-        void SplitHeader(AppendableCharSequence sb)
+        private void SplitHeader(AppendableCharSequence sb)
         {
             byte[] chars = sb.Bytes;
             int length = sb.Count;
             int nameEnd;
             int colonEnd;
 
-            int nameStart = FindNonWhitespace(chars, 0, length);
+            int nameStart = FindNonWhitespace(chars, 0, length, false);
             for (nameEnd = nameStart; nameEnd < length; nameEnd++)
             {
                 byte ch = chars[nameEnd];
@@ -908,7 +924,7 @@ namespace DotNetty.Codecs.Http
                         // is done in the DefaultHttpHeaders implementation.
                         //
                         // In the case of decoding a response we will "skip" the whitespace.
-                        (!IsDecodingRequest() && IsWhiteSpace(ch)))
+                        (!IsDecodingRequest() && IsOWS(ch)))
                 {
                     break;
                 }
@@ -930,7 +946,7 @@ namespace DotNetty.Codecs.Http
             }
 
             _name = sb.SubStringUnsafe(nameStart, nameEnd);
-            int valueStart = FindNonWhitespace(chars, colonEnd, length);
+            int valueStart = FindNonWhitespace(chars, colonEnd, length, true);
             if (valueStart == length)
             {
                 _value = AsciiString.Empty;
@@ -942,11 +958,30 @@ namespace DotNetty.Codecs.Http
             }
         }
 
-        static int FindNonWhitespace(byte[] sb, int offset, int length)
+        private static int FindNonSPLenient(byte[] sb, int offset, int length)
         {
             for (int result = offset; result < length; ++result)
             {
-                if (!IsWhiteSpace(sb[result]))
+                var c = sb[result];
+
+                // See https://tools.ietf.org/html/rfc7230#section-3.5
+                if (IsSPLenient(c)) { continue; }
+
+                if (IsWhiteSpace(c))
+                {
+                    // Any other whitespace delimiter is invalid
+                    ThrowHelper.ThrowArgumentException_Invalid_separator();
+                }
+                return result;
+            }
+            return length;
+        }
+
+        private static int FindSPLenient(byte[] sb, int offset, int length)
+        {
+            for (int result = offset; result < length; ++result)
+            {
+                if (IsSPLenient(sb[result]))
                 {
                     return result;
                 }
@@ -954,19 +989,43 @@ namespace DotNetty.Codecs.Http
             return length;
         }
 
-        static int FindWhitespace(byte[] sb, int offset, int length)
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        private static bool IsSPLenient(byte c)
+        {
+            // See https://tools.ietf.org/html/rfc7230#section-3.5
+            switch (c)
+            {
+                case HttpConstants.Space:
+                case 0x09:
+                case 0x0B:
+                case 0x0C:
+                case 0x0D:
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        private static int FindNonWhitespace(byte[] sb, int offset, int length, bool validateOWS)
         {
             for (int result = offset; result < length; ++result)
             {
-                if (IsWhiteSpace(sb[result]))
+                var c = sb[result];
+                if (!IsWhiteSpace(c))
                 {
                     return result;
+                }
+                else if (validateOWS && !IsOWS(c))
+                {
+                    // Only OWS is supported for whitespace
+                    ThrowHelper.ThrowArgumentException_Invalid_separator_only_a_single_space_or_horizontal_tab_allowed(c);
                 }
             }
             return length;
         }
 
-        static int FindEndOfString(byte[] sb, int length)
+        private static int FindEndOfString(byte[] sb, int length)
         {
             for (int result = length - 1; result > 0; --result)
             {
@@ -976,6 +1035,19 @@ namespace DotNetty.Codecs.Http
                 }
             }
             return 0;
+        }
+
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        private static bool IsOWS(byte ch)
+        {
+            switch (ch)
+            {
+                case HttpConstants.Space:
+                case 0x09:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         class HeaderParser : IByteProcessor
@@ -1000,7 +1072,7 @@ namespace DotNetty.Codecs.Http
                     _size = oldSize;
                     return null;
                 }
-                buffer.SetReaderIndex(i + 1);
+                _ = buffer.SetReaderIndex(i + 1);
                 return _seq;
             }
 
@@ -1009,12 +1081,15 @@ namespace DotNetty.Codecs.Http
             [MethodImpl(InlineMethod.AggressiveInlining)]
             public bool Process(byte value)
             {
-                if (value == HttpConstants.NCarriageReturn)
+                if (0u >= (uint)(HttpConstants.LineFeed - value))
                 {
-                    return true;
-                }
-                if (value == HttpConstants.NLineFeed)
-                {
+                    int len = _seq.Count;
+                    // Drop CR if we had a CRLF pair
+                    if ((uint)len >= 1u && 0u >= (uint)(_seq[len - 1] - HttpConstants.CarriageReturn))
+                    {
+                        --_size;
+                        _seq.SetCount(len - 1);
+                    }
                     return false;
                 }
 
@@ -1027,7 +1102,7 @@ namespace DotNetty.Codecs.Http
                     ThrowTooLongFrameException(this, _maxLength);
                 }
 
-                _seq.Append(value);
+                _ = _seq.Append(value);
                 return true;
             }
 
@@ -1062,7 +1137,7 @@ namespace DotNetty.Codecs.Http
 
         // Similar to char.IsWhiteSpace for ascii
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        static bool IsWhiteSpace(byte c)
+        private static bool IsWhiteSpace(byte c)
         {
             switch (c)
             {
@@ -1076,7 +1151,7 @@ namespace DotNetty.Codecs.Http
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
-        static bool IsWhiteSpaceOrSemicolonOrISOControl(byte c)
+        private static bool IsWhiteSpaceOrSemicolonOrISOControl(byte c)
         {
             switch (c)
             {

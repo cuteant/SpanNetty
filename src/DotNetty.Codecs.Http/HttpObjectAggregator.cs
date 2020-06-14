@@ -70,11 +70,11 @@ namespace DotNetty.Codecs.Http
 
         static HttpObjectAggregator()
         {
-            ExpectationFailed.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
-            TooLarge.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
+            _ = ExpectationFailed.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
+            _ = TooLarge.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
 
-            TooLargeClose.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
-            TooLargeClose.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.Close);
+            _ = TooLargeClose.Headers.Set(HttpHeaderNames.ContentLength, HttpHeaderValues.Zero);
+            _ = TooLargeClose.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.Close);
         }
 
         private readonly bool _closeOnExpectationFailed;
@@ -131,7 +131,7 @@ namespace DotNetty.Codecs.Http
             if (HttpUtil.IsUnsupportedExpectation(start))
             {
                 // if the request contains an unsupported expectation, we return 417
-                pipeline.FireUserEventTriggered(HttpExpectationFailedEvent.Default);
+                _ = pipeline.FireUserEventTriggered(HttpExpectationFailedEvent.Default);
                 return ExpectationFailed.RetainedDuplicate();
             }
             else if (HttpUtil.Is100ContinueExpected(start))
@@ -141,7 +141,7 @@ namespace DotNetty.Codecs.Http
                 {
                     return Continue.RetainedDuplicate();
                 }
-                pipeline.FireUserEventTriggered(HttpExpectationFailedEvent.Default);
+                _ = pipeline.FireUserEventTriggered(HttpExpectationFailedEvent.Default);
                 return TooLarge.RetainedDuplicate();
             }
 
@@ -156,7 +156,7 @@ namespace DotNetty.Codecs.Http
             // need to propagate the expectation further.
             if (response is object)
             {
-                start.Headers.Remove(HttpHeaderNames.Expect);
+                _ = start.Headers.Remove(HttpHeaderNames.Expect);
             }
             return response;
         }
@@ -208,7 +208,7 @@ namespace DotNetty.Codecs.Http
             // See rfc2616 14.13 Content-Length
             if (!HttpUtil.IsContentLengthSet(aggregated))
             {
-                aggregated.Headers.Set(
+                _ = aggregated.Headers.Set(
                     HttpHeaderNames.ContentLength,
                     new AsciiString(aggregated.Content.ReadableBytes.ToString(CultureInfo.InvariantCulture)));
             }
@@ -226,16 +226,16 @@ namespace DotNetty.Codecs.Http
                 if (oversized is IFullHttpMessage ||
                     !HttpUtil.Is100ContinueExpected(oversized) && !HttpUtil.IsKeepAlive(oversized))
                 {
-                    ctx.WriteAndFlushAsync(TooLargeClose.RetainedDuplicate()).ContinueWith(CloseOnCompleteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                    _ = ctx.WriteAndFlushAsync(TooLargeClose.RetainedDuplicate()).ContinueWith(CloseOnCompleteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
                 }
                 else
                 {
-                    ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith(CloseOnFaultAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                    _ = ctx.WriteAndFlushAsync(TooLarge.RetainedDuplicate()).ContinueWith(CloseOnFaultAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
                 }
             }
             else if (oversized is IHttpResponse)
             {
-                ctx.CloseAsync();
+                _ = ctx.CloseAsync();
                 ThrowHelper.ThrowTooLongFrameException_ResponseTooLarge(oversized);
             }
             else
@@ -251,7 +251,7 @@ namespace DotNetty.Codecs.Http
             {
                 if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
             }
-            ((IChannelHandlerContext)s).CloseAsync();
+            _ = ((IChannelHandlerContext)s).CloseAsync();
         }
 
         static readonly Action<Task, object> CloseOnFaultAction = CloseOnFault;
@@ -260,7 +260,7 @@ namespace DotNetty.Codecs.Http
             if (t.IsFaulted)
             {
                 if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
-                ((IChannelHandlerContext)s).CloseAsync();
+                _ = ((IChannelHandlerContext)s).CloseAsync();
             }
         }
 
@@ -291,7 +291,7 @@ namespace DotNetty.Codecs.Http
 
             public IHttpMessage SetProtocolVersion(HttpVersion version)
             {
-                Message.SetProtocolVersion(version);
+                _ = Message.SetProtocolVersion(version);
                 return this;
             }
 
@@ -309,25 +309,25 @@ namespace DotNetty.Codecs.Http
 
             public IReferenceCounted Retain()
             {
-                _content.Retain();
+                _ = _content.Retain();
                 return this;
             }
 
             public IReferenceCounted Retain(int increment)
             {
-                _content.Retain(increment);
+                _ = _content.Retain(increment);
                 return this;
             }
 
             public IReferenceCounted Touch()
             {
-                _content.Touch();
+                _ = _content.Touch();
                 return this;
             }
 
             public IReferenceCounted Touch(object hint)
             {
-                _content.Touch(hint);
+                _ = _content.Touch(hint);
                 return this;
             }
 
@@ -369,7 +369,7 @@ namespace DotNetty.Codecs.Http
 
             public IHttpRequest SetMethod(HttpMethod method)
             {
-                ((IHttpRequest)Message).SetMethod(method);
+                _ = ((IHttpRequest)Message).SetMethod(method);
                 return this;
             }
 
@@ -377,7 +377,7 @@ namespace DotNetty.Codecs.Http
 
             public IHttpRequest SetUri(string uri)
             {
-                ((IHttpRequest)Message).SetUri(uri);
+                _ = ((IHttpRequest)Message).SetUri(uri);
                 return this;
             }
 
@@ -409,7 +409,7 @@ namespace DotNetty.Codecs.Http
 
             public IHttpResponse SetStatus(HttpResponseStatus status)
             {
-                ((IHttpResponse)Message).SetStatus(status);
+                _ = ((IHttpResponse)Message).SetStatus(status);
                 return this;
             }
 

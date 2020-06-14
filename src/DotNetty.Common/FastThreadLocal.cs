@@ -56,14 +56,14 @@ namespace DotNetty.Common
             if (v == InternalThreadLocalMap.Unset || v is null)
             {
                 variablesToRemove = new HashSet<FastThreadLocal>(); // Collections.newSetFromMap(new IdentityHashMap<FastThreadLocal<?>, Boolean>());
-                threadLocalMap.SetIndexedVariable(VariablesToRemoveIndex, variablesToRemove);
+                _ = threadLocalMap.SetIndexedVariable(VariablesToRemoveIndex, variablesToRemove);
             }
             else
             {
                 variablesToRemove = (HashSet<FastThreadLocal>)v;
             }
 
-            variablesToRemove.Add(variable);
+            _ = variablesToRemove.Add(variable);
         }
 
         protected static void RemoveFromVariablesToRemove(InternalThreadLocalMap threadLocalMap, FastThreadLocal variable)
@@ -76,7 +76,7 @@ namespace DotNetty.Common
             }
 
             var variablesToRemove = (HashSet<FastThreadLocal>)v;
-            variablesToRemove.Remove(variable);
+            _ = variablesToRemove.Remove(variable);
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace DotNetty.Common
         {
             T v = GetInitialValue();
 
-            threadLocalMap.SetIndexedVariable(_index, v);
+            _ = threadLocalMap.SetIndexedVariable(_index, v);
             AddToVariablesToRemove(threadLocalMap, this);
             return v;
         }

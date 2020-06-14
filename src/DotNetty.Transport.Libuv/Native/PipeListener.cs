@@ -109,7 +109,7 @@ namespace DotNetty.Transport.Libuv.Native
             }
 
             _windowsApi.Dispose();
-            _pipes.Remove(pipe);
+            _ = _pipes.Remove(pipe);
             pipe.CloseHandle();
 
             if (status != NativeMethods.EOF)

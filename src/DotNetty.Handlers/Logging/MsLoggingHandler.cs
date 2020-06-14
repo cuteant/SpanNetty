@@ -235,20 +235,12 @@ namespace DotNetty.Handlers.Logging
 
         /// <summary>Formats an event and returns the formatted message.</summary>
         /// <param name="arg">the argument of the event</param>
-        public static object FormatMessage(object arg)
+        public static object FormatMessage(object arg) => arg switch
         {
-            switch (arg)
-            {
-                case IByteBuffer byteBuffer:
-                    return FormatByteBuffer(byteBuffer);
-
-                case IByteBufferHolder byteBufferHolder:
-                    return FormatByteBufferHolder(byteBufferHolder);
-
-                default:
-                    return arg;
-            }
-        }
+            IByteBuffer byteBuffer => FormatByteBuffer(byteBuffer),
+            IByteBufferHolder byteBufferHolder => FormatByteBufferHolder(byteBufferHolder),
+            _ => arg,
+        };
 
         /// <summary>Generates the default log message of the specified event whose argument is a  <see cref="IByteBuffer" />.</summary>
         public static string FormatByteBuffer(IByteBuffer msg)

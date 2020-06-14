@@ -108,7 +108,7 @@ namespace DotNetty.Common.Concurrency
         {
             SetCurrentExecutor(this);
 
-            Task.Factory.StartNew(_loopCoreAciton, CancellationToken.None, TaskCreationOptions.None, _scheduler);
+            _ = Task.Factory.StartNew(_loopCoreAciton, CancellationToken.None, TaskCreationOptions.None, _scheduler);
         }
 
         void LoopCore()
@@ -125,8 +125,8 @@ namespace DotNetty.Common.Concurrency
             catch (Exception ex)
             {
                 Logger.ExecutionLoopFailed(_thread, ex);
-                Interlocked.Exchange(ref v_executionState, ST_TERMINATED);
-                _terminationCompletionSource.TrySetException(ex);
+                _ = Interlocked.Exchange(ref v_executionState, ST_TERMINATED);
+                _ = _terminationCompletionSource.TrySetException(ex);
             }
         }
 
@@ -200,7 +200,7 @@ namespace DotNetty.Common.Concurrency
         {
             if (InEventLoop)
             {
-                _shutdownHooks.Add(action);
+                _ = _shutdownHooks.Add(action);
             }
             else
             {
@@ -211,7 +211,7 @@ namespace DotNetty.Common.Concurrency
         static readonly Action<object, object> AddShutdownHookAction = OnAddShutdownHook;
         static void OnAddShutdownHook(object s, object a)
         {
-            ((ISet<Action>)s).Add((Action)a);
+            _ = ((ISet<Action>)s).Add((Action)a);
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace DotNetty.Common.Concurrency
         {
             if (InEventLoop)
             {
-                _shutdownHooks.Remove(action);
+                _ = _shutdownHooks.Remove(action);
             }
             else
             {
@@ -234,7 +234,7 @@ namespace DotNetty.Common.Concurrency
         static readonly Action<object, object> RemoveShutdownHookAction = OnRemoveShutdownHook;
         static void OnRemoveShutdownHook(object s, object a)
         {
-            ((ISet<Action>)s).Remove((Action)a);
+            _ = ((ISet<Action>)s).Remove((Action)a);
         }
 
         private bool RunShutdownHooks()
@@ -452,7 +452,7 @@ namespace DotNetty.Common.Concurrency
                 }
                 finally
                 {
-                    Interlocked.Exchange(ref v_executionState, ST_TERMINATED);
+                    _ = Interlocked.Exchange(ref v_executionState, ST_TERMINATED);
                     int numUserTasks = DrainTasks();
                     if ((uint)numUserTasks > 0u && Logger.WarnEnabled)
                     {
@@ -520,7 +520,7 @@ namespace DotNetty.Common.Concurrency
 
         private bool RunAllTasks(PreciseTimeSpan timeout)
         {
-            FetchFromScheduledTaskQueue();
+            _ = FetchFromScheduledTaskQueue();
             IRunnable task = PollTask();
             if (task is null)
             {
@@ -577,7 +577,7 @@ namespace DotNetty.Common.Concurrency
                 if (!_taskQueue.TryEnqueue(scheduledTask))
                 {
                     // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
-                    ScheduledTaskQueue.TryEnqueue(scheduledTask);
+                    _ = ScheduledTaskQueue.TryEnqueue(scheduledTask);
                     return false;
                 }
                 scheduledTask = PollScheduledTask(nanoTime);
@@ -600,7 +600,7 @@ namespace DotNetty.Common.Concurrency
                         if (wakeupTimeout.Ticks > 0L) // 此处不要 ulong 转换
                         {
                             double timeout = wakeupTimeout.ToTimeSpan().TotalMilliseconds;
-                            _emptyEvent.Wait((int)Math.Min(timeout, int.MaxValue - 1));
+                            _ = _emptyEvent.Wait((int)Math.Min(timeout, int.MaxValue - 1));
                         }
                     }
                     else

@@ -49,7 +49,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
                         connectedSocket = null;
                         ch.ReadPending = false;
-                        pipeline.FireChannelRead(message);
+                        _ = pipeline.FireChannelRead(message);
                         allocHandle.IncMessagesRead(1);
 
                         if (!config.AutoRead && !ch.ReadPending)
@@ -66,7 +66,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
                             connectedSocket = null;
                             ch.ReadPending = false;
-                            pipeline.FireChannelRead(message);
+                            _ = pipeline.FireChannelRead(message);
                             allocHandle.IncMessagesRead(1);
                         }
                     }
@@ -95,14 +95,14 @@ namespace DotNetty.Transport.Channels.Sockets
                     }
 
                     allocHandle.ReadComplete();
-                    pipeline.FireChannelReadComplete();
+                    _ = pipeline.FireChannelReadComplete();
 
                     if (exception is object)
                     {
                         // ServerChannel should not be closed even on SocketException because it can often continue
                         // accepting incoming connections. (e.g. too many open files)
 
-                        pipeline.FireExceptionCaught(exception);
+                        _ = pipeline.FireExceptionCaught(exception);
                     }
 
                     if (ch.Open)

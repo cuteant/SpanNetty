@@ -195,7 +195,7 @@ namespace DotNetty.Transport.Channels
                     IPromise promise = write.Promise;
                     Recycle(write, false);
                     if (!promise.IsVoid) { tasks.Add(promise.Task); }
-                    _ctx.WriteAsync(msg, promise);
+                    _ = _ctx.WriteAsync(msg, promise);
                     write = next;
                 }
             }

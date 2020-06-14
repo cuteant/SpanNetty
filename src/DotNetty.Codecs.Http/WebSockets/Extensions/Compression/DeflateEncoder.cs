@@ -106,7 +106,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
                         8));
             }
 
-            _encoder.WriteOutbound(msg.Content.Retain());
+            _ = _encoder.WriteOutbound(msg.Content.Retain());
 
             CompositeByteBuffer fullCompressedContent = ctx.Allocator.CompositeBuffer();
             while (true)
@@ -119,16 +119,16 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
 
                 if (!partCompressedContent.IsReadable())
                 {
-                    partCompressedContent.Release();
+                    _ = partCompressedContent.Release();
                     continue;
                 }
 
-                fullCompressedContent.AddComponent(true, partCompressedContent);
+                _ = fullCompressedContent.AddComponent(true, partCompressedContent);
             }
 
             if (fullCompressedContent.NumComponents <= 0)
             {
-                fullCompressedContent.Release();
+                _ = fullCompressedContent.Release();
                 ThrowHelper.ThrowCodecException_CannotReadCompressedBuf();
             }
 
@@ -155,7 +155,7 @@ namespace DotNetty.Codecs.Http.WebSockets.Extensions.Compression
             if (_encoder is object)
             {
                 // Clean-up the previous encoder if not cleaned up correctly.
-                _encoder.FinishAndReleaseAll();
+                _ = _encoder.FinishAndReleaseAll();
                 _encoder = null;
             }
         }

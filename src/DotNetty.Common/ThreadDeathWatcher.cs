@@ -56,13 +56,13 @@ namespace DotNetty.Common
 
         static void Schedule(Thread thread, Action task, bool isWatch)
         {
-            PendingEntries.TryEnqueue(new Entry(thread, task, isWatch));
+            _ = PendingEntries.TryEnqueue(new Entry(thread, task, isWatch));
 
             if (SharedConstants.False >= (uint)Interlocked.CompareExchange(ref started, SharedConstants.True, SharedConstants.False))
             {
                 var watcherThread = new Thread(s => ((IRunnable)s).Run());
                 watcherThread.Start(watcher);
-                Interlocked.Exchange(ref ThreadDeathWatcher.watcherThread, watcherThread);
+                _ = Interlocked.Exchange(ref ThreadDeathWatcher.watcherThread, watcherThread);
             }
         }
 
@@ -80,7 +80,7 @@ namespace DotNetty.Common
             Thread watcherThread = Volatile.Read(ref ThreadDeathWatcher.watcherThread);
             if (watcherThread is object)
             {
-                watcherThread.Join(timeout);
+                _ = watcherThread.Join(timeout);
                 return !watcherThread.IsAlive;
             }
             else
@@ -155,7 +155,7 @@ namespace DotNetty.Common
                     }
                     else
                     {
-                        this.watchees.Remove(e);
+                        _ = this.watchees.Remove(e);
                     }
                 }
             }

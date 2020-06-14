@@ -27,7 +27,7 @@
                 }
 
                 // Notify the child-channel and close it.
-                streamChannel.Pipeline.FireExceptionCaught(cause);
+                _ = streamChannel.Pipeline.FireExceptionCaught(cause);
                 streamChannel.Unsafe.Close(streamChannel.Unsafe.VoidPromise());
             }
         }
@@ -125,14 +125,14 @@
             }
             else
             {
-                pipeline.FireChannelWritabilityChanged();
+                _ = pipeline.FireChannelWritabilityChanged();
             }
         }
 
         private static readonly Action<object> InvokeFireChannelWritabilityChangedAction = InvokeFireChannelWritabilityChanged;
         private static void InvokeFireChannelWritabilityChanged(object s)
         {
-            ((IChannelPipeline)s).FireChannelWritabilityChanged();
+            _ = ((IChannelPipeline)s).FireChannelWritabilityChanged();
         }
     }
 }

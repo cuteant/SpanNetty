@@ -136,26 +136,26 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             if (CustomHeaders is object)
             {
-                headers.Add(CustomHeaders);
+                _ = headers.Add(CustomHeaders);
             }
 
-            headers.Set(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket)
+            _ = headers.Set(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket)
                 .Set(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade)
                 .Set(HttpHeaderNames.SecWebsocketKey, key)
                 .Set(HttpHeaderNames.Host, WebsocketHostValue(wsUrl));
 
             if (!headers.Contains(HttpHeaderNames.SecWebsocketOrigin))
             {
-                headers.Set(HttpHeaderNames.SecWebsocketOrigin, WebsocketOriginValue(wsUrl));
+                _ = headers.Set(HttpHeaderNames.SecWebsocketOrigin, WebsocketOriginValue(wsUrl));
             }
 
             string expectedSubprotocol = ExpectedSubprotocol;
             if (!string.IsNullOrEmpty(expectedSubprotocol))
             {
-                headers.Set(HttpHeaderNames.SecWebsocketProtocol, expectedSubprotocol);
+                _ = headers.Set(HttpHeaderNames.SecWebsocketProtocol, expectedSubprotocol);
             }
 
-            headers.Set(HttpHeaderNames.SecWebsocketVersion, "7");
+            _ = headers.Set(HttpHeaderNames.SecWebsocketVersion, "7");
 
             return request;
         }
@@ -178,7 +178,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             if (!headers.ContainsValue(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade, true))
             {
-                headers.TryGet(HttpHeaderNames.Connection, out upgrade);
+                _ = headers.TryGet(HttpHeaderNames.Connection, out upgrade);
                 ThrowHelper.ThrowWebSocketHandshakeException_InvalidHandshakeResponseConn(upgrade);
             }
 

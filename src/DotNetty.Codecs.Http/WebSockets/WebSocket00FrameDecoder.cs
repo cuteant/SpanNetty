@@ -47,7 +47,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             // Discard all data received if closing handshake was received before.
             if (this.receivedClosingHandshake)
             {
-                input.SkipBytes(this.ActualReadableBytes);
+                _ = input.SkipBytes(this.ActualReadableBytes);
                 return;
             }
 
@@ -129,13 +129,13 @@ namespace DotNetty.Codecs.Http.WebSockets
             }
 
             IByteBuffer binaryData = ReadBytes(ctx.Allocator, buffer, frameSize);
-            buffer.SkipBytes(1);
+            _ = buffer.SkipBytes(1);
 
             var endIndex = binaryData.WriterIndex;
             int ffDelimPos = binaryData.IndexOf(binaryData.ReaderIndex, endIndex, 0xFF);
             if ((uint)endIndex >= (uint)ffDelimPos) // ffDelimPos >= 0
             {
-                binaryData.Release();
+                _ = binaryData.Release();
                 ThrowHelper.ThrowArgumentException_TextFrame();
             }
 

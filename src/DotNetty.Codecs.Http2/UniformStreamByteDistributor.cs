@@ -30,7 +30,7 @@ namespace DotNetty.Codecs.Http2
             // Add a state for the connection.
             _stateKey = connection.NewKey();
             var connectionStream = connection.ConnectionStream;
-            connectionStream.SetProperty(_stateKey, new State(this, connectionStream));
+            _ = connectionStream.SetProperty(_stateKey, new State(this, connectionStream));
 
             // Register for notification of new streams.
             connection.AddListener(this);
@@ -38,7 +38,7 @@ namespace DotNetty.Codecs.Http2
 
         public override void OnStreamAdded(IHttp2Stream stream)
         {
-            stream.SetProperty(_stateKey, new State(this, stream));
+            _ = stream.SetProperty(_stateKey, new State(this, stream));
         }
 
         public override void OnStreamRemoved(IHttp2Stream stream)
@@ -202,7 +202,7 @@ namespace DotNetty.Codecs.Http2
                 if (_enqueued)
                 {
                     _enqueued = false;
-                    _distributor._queue.Remove(this);
+                    _ = _distributor._queue.Remove(this);
                 }
             }
 

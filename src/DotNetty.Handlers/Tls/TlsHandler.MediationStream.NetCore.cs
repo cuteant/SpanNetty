@@ -53,7 +53,7 @@ namespace DotNetty.Handlers.Tls
                 var self = (MediationStream)ms;
                 TaskCompletionSource<int> p = self._readCompletionSource;
                 self._readCompletionSource = null;
-                p.TrySetResult(self._readByteCount);
+                _ = p.TrySetResult(self._readByteCount);
             }
 
             public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)

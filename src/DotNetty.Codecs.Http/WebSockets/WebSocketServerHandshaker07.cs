@@ -97,7 +97,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
             if (headers is object)
             {
-                res.Headers.Add(headers);
+                _ = res.Headers.Add(headers);
             }
 
             string acceptSeed = key + Websocket07AcceptGuid;
@@ -109,9 +109,9 @@ namespace DotNetty.Codecs.Http.WebSockets
                 Logger.WebSocketVersion07ServerHandshakeKey(key, accept);
             }
 
-            res.Headers.Add(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket);
-            res.Headers.Add(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade);
-            res.Headers.Add(HttpHeaderNames.SecWebsocketAccept, accept);
+            _ = res.Headers.Add(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket);
+            _ = res.Headers.Add(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade);
+            _ = res.Headers.Add(HttpHeaderNames.SecWebsocketAccept, accept);
 
 
             if (req.Headers.TryGet(HttpHeaderNames.SecWebsocketProtocol, out ICharSequence subprotocols)
@@ -127,7 +127,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 }
                 else
                 {
-                    res.Headers.Add(HttpHeaderNames.SecWebsocketProtocol, selectedSubprotocol);
+                    _ = res.Headers.Add(HttpHeaderNames.SecWebsocketProtocol, selectedSubprotocol);
                 }
             }
             return res;

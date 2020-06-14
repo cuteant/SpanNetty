@@ -211,11 +211,11 @@ namespace DotNetty.Buffers
         {
             if (0u >= (uint)length) { return this; }
 
-            EnsureWritable(length);
+            _ = EnsureWritable(length);
             int wIndex = WriterIndex;
             CheckIndex0(wIndex, length);
             UnsafeByteBufferUtil.SetZero(Addr(wIndex), length);
-            SetWriterIndex(wIndex + length);
+            _ = SetWriterIndex(wIndex + length);
 
             return this;
         }

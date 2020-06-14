@@ -124,79 +124,79 @@ namespace DotNetty.Buffers
 
         public override CompositeByteBuffer AddComponent(IByteBuffer buffer)
         {
-            _wrapped.AddComponent(buffer);
+            _ = _wrapped.AddComponent(buffer);
             return this;
         }
 
         public override CompositeByteBuffer AddComponents(params IByteBuffer[] buffers)
         {
-            _wrapped.AddComponents(buffers);
+            _ = _wrapped.AddComponents(buffers);
             return this;
         }
 
         public override CompositeByteBuffer AddComponents(IEnumerable<IByteBuffer> buffers)
         {
-            _wrapped.AddComponents(buffers);
+            _ = _wrapped.AddComponents(buffers);
             return this;
         }
 
         public override CompositeByteBuffer AddComponent(int cIndex, IByteBuffer buffer)
         {
-            _wrapped.AddComponent(cIndex, buffer);
+            _ = _wrapped.AddComponent(cIndex, buffer);
             return this;
         }
 
         public override CompositeByteBuffer AddComponents(int cIndex, params IByteBuffer[] buffers)
         {
-            _wrapped.AddComponents(cIndex, buffers);
+            _ = _wrapped.AddComponents(cIndex, buffers);
             return this;
         }
 
         public override CompositeByteBuffer AddComponents(int cIndex, IEnumerable<IByteBuffer> buffers)
         {
-            _wrapped.AddComponents(cIndex, buffers);
+            _ = _wrapped.AddComponents(cIndex, buffers);
             return this;
         }
 
         public override CompositeByteBuffer AddComponent(bool increaseWriterIndex, IByteBuffer buffer)
         {
-            _wrapped.AddComponent(increaseWriterIndex, buffer);
+            _ = _wrapped.AddComponent(increaseWriterIndex, buffer);
             return this;
         }
 
         public override CompositeByteBuffer AddComponents(bool increaseWriterIndex, params IByteBuffer[] buffers)
         {
-            _wrapped.AddComponents(increaseWriterIndex, buffers);
+            _ = _wrapped.AddComponents(increaseWriterIndex, buffers);
             return this;
         }
 
         public override CompositeByteBuffer AddComponents(bool increaseWriterIndex, IEnumerable<IByteBuffer> buffers)
         {
-            _wrapped.AddComponents(increaseWriterIndex, buffers);
+            _ = _wrapped.AddComponents(increaseWriterIndex, buffers);
             return this;
         }
 
         public override CompositeByteBuffer AddComponent(bool increaseWriterIndex, int cIndex, IByteBuffer buffer)
         {
-            _wrapped.AddComponent(increaseWriterIndex, cIndex, buffer);
+            _ = _wrapped.AddComponent(increaseWriterIndex, cIndex, buffer);
             return this;
         }
 
         public override CompositeByteBuffer AddFlattenedComponents(bool increaseWriterIndex, IByteBuffer buffer)
         {
-            _wrapped.AddFlattenedComponents(increaseWriterIndex, buffer);
+            _ = _wrapped.AddFlattenedComponents(increaseWriterIndex, buffer);
             return this;
         }
 
         public override CompositeByteBuffer RemoveComponent(int cIndex)
         {
-            _wrapped.RemoveComponent(cIndex);
+            _ = _wrapped.RemoveComponent(cIndex);
             return this;
         }
 
         public override CompositeByteBuffer RemoveComponents(int cIndex, int numComponents)
         {
-            _wrapped.RemoveComponents(cIndex, numComponents);
+            _ = _wrapped.RemoveComponents(cIndex, numComponents);
             return this;
         }
 
@@ -214,7 +214,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer AdjustCapacity(int newCapacity)
         {
-            _wrapped.AdjustCapacity(newCapacity);
+            _ = _wrapped.AdjustCapacity(newCapacity);
             return this;
         }
 
@@ -250,13 +250,13 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer GetBytes(int index, byte[] dst, int dstIndex, int length)
         {
-            _wrapped.GetBytes(index, dst, dstIndex, length);
+            _ = _wrapped.GetBytes(index, dst, dstIndex, length);
             return this;
         }
 
         public override IByteBuffer GetBytes(int index, IByteBuffer dst, int dstIndex, int length)
         {
-            _wrapped.GetBytes(index, dst, dstIndex, length);
+            _ = _wrapped.GetBytes(index, dst, dstIndex, length);
             return this;
         }
 
@@ -264,7 +264,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer SetByte(int index, int value)
         {
-            _wrapped.SetByte(index, value);
+            _ = _wrapped.SetByte(index, value);
             return this;
         }
 
@@ -272,7 +272,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer SetShort(int index, int value)
         {
-            _wrapped.SetShort(index, value);
+            _ = _wrapped.SetShort(index, value);
             return this;
         }
 
@@ -282,7 +282,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer SetMedium(int index, int value)
         {
-            _wrapped.SetMedium(index, value);
+            _ = _wrapped.SetMedium(index, value);
             return this;
         }
 
@@ -292,7 +292,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer SetInt(int index, int value)
         {
-            _wrapped.SetInt(index, value);
+            _ = _wrapped.SetInt(index, value);
             return this;
         }
 
@@ -302,7 +302,7 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer SetLong(int index, long value)
         {
-            _wrapped.SetLong(index, value);
+            _ = _wrapped.SetLong(index, value);
             return this;
         }
 
@@ -312,13 +312,13 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer SetBytes(int index, byte[] src, int srcIndex, int length)
         {
-            _wrapped.SetBytes(index, src, srcIndex, length);
+            _ = _wrapped.SetBytes(index, src, srcIndex, length);
             return this;
         }
 
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int srcIndex, int length)
         {
-            _wrapped.SetBytes(index, src, srcIndex, length);
+            _ = _wrapped.SetBytes(index, src, srcIndex, length);
             return this;
         }
 
@@ -344,25 +344,25 @@ namespace DotNetty.Buffers
 
         public override CompositeByteBuffer Consolidate()
         {
-            _wrapped.Consolidate();
+            _ = _wrapped.Consolidate();
             return this;
         }
 
         public override CompositeByteBuffer Consolidate(int cIndex, int numComponents)
         {
-            _wrapped.Consolidate(cIndex, numComponents);
+            _ = _wrapped.Consolidate(cIndex, numComponents);
             return this;
         }
 
         public override CompositeByteBuffer DiscardReadComponents()
         {
-            _wrapped.DiscardReadComponents();
+            _ = _wrapped.DiscardReadComponents();
             return this;
         }
 
         public override IByteBuffer DiscardReadBytes()
         {
-            _wrapped.DiscardReadBytes();
+            _ = _wrapped.DiscardReadBytes();
             return this;
         }
 
@@ -370,109 +370,109 @@ namespace DotNetty.Buffers
 
         public sealed override IByteBuffer SetReaderIndex(int readerIndex)
         {
-            _wrapped.SetReaderIndex(readerIndex);
+            _ = _wrapped.SetReaderIndex(readerIndex);
             return this;
         }
 
         public sealed override IByteBuffer SetWriterIndex(int writerIndex)
         {
-            _wrapped.SetWriterIndex(writerIndex);
+            _ = _wrapped.SetWriterIndex(writerIndex);
             return this;
         }
 
         public sealed override IByteBuffer SetIndex(int readerIndex, int writerIndex)
         {
-            _wrapped.SetIndex(readerIndex, writerIndex);
+            _ = _wrapped.SetIndex(readerIndex, writerIndex);
             return this;
         }
 
         public sealed override IByteBuffer Clear()
         {
-            _wrapped.Clear();
+            _ = _wrapped.Clear();
             return this;
         }
 
         public sealed override IByteBuffer MarkReaderIndex()
         {
-            _wrapped.MarkReaderIndex();
+            _ = _wrapped.MarkReaderIndex();
             return this;
         }
 
         public sealed override IByteBuffer ResetReaderIndex()
         {
-            _wrapped.ResetReaderIndex();
+            _ = _wrapped.ResetReaderIndex();
             return this;
         }
 
         public sealed override IByteBuffer MarkWriterIndex()
         {
-            _wrapped.MarkWriterIndex();
+            _ = _wrapped.MarkWriterIndex();
             return this;
         }
 
         public sealed override IByteBuffer ResetWriterIndex()
         {
-            _wrapped.ResetWriterIndex();
+            _ = _wrapped.ResetWriterIndex();
             return this;
         }
 
         public override IByteBuffer EnsureWritable(int minWritableBytes)
         {
-            _wrapped.EnsureWritable(minWritableBytes);
+            _ = _wrapped.EnsureWritable(minWritableBytes);
             return this;
         }
 
         public override IByteBuffer GetBytes(int index, byte[] dst)
         {
-            _wrapped.GetBytes(index, dst);
+            _ = _wrapped.GetBytes(index, dst);
             return this;
         }
 
         public override IByteBuffer SetBoolean(int index, bool value)
         {
-            _wrapped.SetBoolean(index, value);
+            _ = _wrapped.SetBoolean(index, value);
             return this;
         }
 
         public override IByteBuffer SetBytes(int index, IByteBuffer src, int length)
         {
-            _wrapped.SetBytes(index, src, length);
+            _ = _wrapped.SetBytes(index, src, length);
             return this;
         }
 
         public override IByteBuffer SetBytes(int index, byte[] src)
         {
-            _wrapped.SetBytes(index, src);
+            _ = _wrapped.SetBytes(index, src);
             return this;
         }
 
         public override IByteBuffer SetZero(int index, int length)
         {
-            _wrapped.SetZero(index, length);
+            _ = _wrapped.SetZero(index, length);
             return this;
         }
 
         public override IByteBuffer ReadBytes(IByteBuffer dst, int length)
         {
-            _wrapped.ReadBytes(dst, length);
+            _ = _wrapped.ReadBytes(dst, length);
             return this;
         }
 
         public override IByteBuffer ReadBytes(IByteBuffer dst, int dstIndex, int length)
         {
-            _wrapped.ReadBytes(dst, dstIndex, length);
+            _ = _wrapped.ReadBytes(dst, dstIndex, length);
             return this;
         }
 
         public override IByteBuffer ReadBytes(byte[] dst)
         {
-            _wrapped.ReadBytes(dst);
+            _ = _wrapped.ReadBytes(dst);
             return this;
         }
 
         public override IByteBuffer ReadBytes(byte[] dst, int dstIndex, int length)
         {
-            _wrapped.ReadBytes(dst, dstIndex, length);
+            _ = _wrapped.ReadBytes(dst, dstIndex, length);
             return this;
         }
 
@@ -500,103 +500,103 @@ namespace DotNetty.Buffers
 
         public override IByteBuffer SkipBytes(int length)
         {
-            _wrapped.SkipBytes(length);
+            _ = _wrapped.SkipBytes(length);
             return this;
         }
 
         public override IByteBuffer WriteBoolean(bool value)
         {
-            _wrapped.WriteBoolean(value);
+            _ = _wrapped.WriteBoolean(value);
             return this;
         }
 
         public override IByteBuffer WriteByte(int value)
         {
-            _wrapped.WriteByte(value);
+            _ = _wrapped.WriteByte(value);
             return this;
         }
 
         public override IByteBuffer WriteShort(int value)
         {
-            _wrapped.WriteShort(value);
+            _ = _wrapped.WriteShort(value);
             return this;
         }
 
         public override IByteBuffer WriteMedium(int value)
         {
-            _wrapped.WriteMedium(value);
+            _ = _wrapped.WriteMedium(value);
             return this;
         }
 
         public override IByteBuffer WriteInt(int value)
         {
-            _wrapped.WriteInt(value);
+            _ = _wrapped.WriteInt(value);
             return this;
         }
 
         public override IByteBuffer WriteLong(long value)
         {
-            _wrapped.WriteLong(value);
+            _ = _wrapped.WriteLong(value);
             return this;
         }
 
         public override IByteBuffer WriteBytes(IByteBuffer src, int length)
         {
-            _wrapped.WriteBytes(src, length);
+            _ = _wrapped.WriteBytes(src, length);
             return this;
         }
 
         public override IByteBuffer WriteBytes(IByteBuffer src, int srcIndex, int length)
         {
-            _wrapped.WriteBytes(src, srcIndex, length);
+            _ = _wrapped.WriteBytes(src, srcIndex, length);
             return this;
         }
 
         public override IByteBuffer WriteBytes(byte[] src)
         {
-            _wrapped.WriteBytes(src);
+            _ = _wrapped.WriteBytes(src);
             return this;
         }
 
         public override IByteBuffer WriteBytes(byte[] src, int srcIndex, int length)
         {
-            _wrapped.WriteBytes(src, srcIndex, length);
+            _ = _wrapped.WriteBytes(src, srcIndex, length);
             return this;
         }
 
         public override IByteBuffer WriteZero(int length)
         {
-            _wrapped.WriteZero(length);
+            _ = _wrapped.WriteZero(length);
             return this;
         }
 
         public override IReferenceCounted Retain(int increment)
         {
-            _wrapped.Retain(increment);
+            _ = _wrapped.Retain(increment);
             return this;
         }
 
         public override IReferenceCounted Retain()
         {
-            _wrapped.Retain();
+            _ = _wrapped.Retain();
             return this;
         }
 
         public override IReferenceCounted Touch()
         {
-            _wrapped.Touch();
+            _ = _wrapped.Touch();
             return this;
         }
 
         public override IReferenceCounted Touch(object hint)
         {
-            _wrapped.Touch(hint);
+            _ = _wrapped.Touch(hint);
             return this;
         }
 
         public override IByteBuffer DiscardSomeReadBytes()
         {
-            _wrapped.DiscardSomeReadBytes();
+            _ = _wrapped.DiscardSomeReadBytes();
             return this;
         }
 

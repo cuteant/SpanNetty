@@ -83,7 +83,7 @@ namespace DotNetty.Transport.Libuv.Native
         static IntPtr GetSocketHandle(TcpHandle handle)
         {
             IntPtr socket = IntPtr.Zero;
-            NativeMethods.uv_fileno(handle.Handle, ref socket);
+            _ = NativeMethods.uv_fileno(handle.Handle, ref socket);
             return socket;
         }
     }

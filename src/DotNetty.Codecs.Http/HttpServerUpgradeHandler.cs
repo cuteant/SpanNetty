@@ -100,25 +100,25 @@ namespace DotNetty.Codecs.Http
 
             public IReferenceCounted Retain()
             {
-                this.upgradeRequest.Retain();
+                _ = this.upgradeRequest.Retain();
                 return this;
             }
 
             public IReferenceCounted Retain(int increment)
             {
-                this.upgradeRequest.Retain(increment);
+                _ = this.upgradeRequest.Retain(increment);
                 return this;
             }
 
             public IReferenceCounted Touch()
             {
-                this.upgradeRequest.Touch();
+                _ = this.upgradeRequest.Touch();
                 return this;
             }
 
             public IReferenceCounted Touch(object hint)
             {
-                this.upgradeRequest.Touch(hint);
+                _ = this.upgradeRequest.Touch(hint);
                 return this;
             }
 
@@ -175,14 +175,14 @@ namespace DotNetty.Codecs.Http
             if (!this.handlingUpgrade)
             {
                 // Not handling an upgrade request, just pass it to the next handler.
-                ReferenceCountUtil.Retain(message);
+                _ = ReferenceCountUtil.Retain(message);
                 output.Add(message);
                 return;
             }
 
             if (message is IFullHttpRequest fullRequest)
             {
-                ReferenceCountUtil.Retain(fullRequest);
+                _ = ReferenceCountUtil.Retain(fullRequest);
                 output.Add(fullRequest);
             }
             else
@@ -263,7 +263,7 @@ namespace DotNetty.Codecs.Http
             for (var idx = 0; idx < connectionHeaderValues.Count; idx++)
             {
                 var connectionHeaderValue = connectionHeaderValues[idx];
-                concatenatedConnectionValue
+                _ = concatenatedConnectionValue
                     .Append(connectionHeaderValue.ToString())
                     .Append(StringUtil.Comma);
             }
@@ -311,21 +311,21 @@ namespace DotNetty.Codecs.Http
                 upgradeCodec.UpgradeTo(ctx, request);
 
                 // Remove this handler from the pipeline.
-                ctx.Pipeline.Remove(this);
+                _ = ctx.Pipeline.Remove(this);
 
                 // Notify that the upgrade has occurred. Retain the event to offset
                 // the release() in the finally block.
-                ctx.FireUserEventTriggered(upgradeEvent.Retain());
+                _ = ctx.FireUserEventTriggered(upgradeEvent.Retain());
 
                 // Add the listener last to avoid firing upgrade logic after
                 // the channel is already closed since the listener may fire
                 // immediately if the write failed eagerly.
-                writeComplete.ContinueWith(CloseOnFailureAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                _ = writeComplete.ContinueWith(CloseOnFailureAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
             }
             finally
             {
                 // Release the event if the upgrade event wasn't fired.
-                upgradeEvent.Release();
+                _ = upgradeEvent.Release();
             }
             return true;
         }
@@ -335,7 +335,7 @@ namespace DotNetty.Codecs.Http
         {
             if (!t.IsSuccess())
             {
-                ((IChannelHandlerContext)s).Channel.CloseAsync();
+                _ = ((IChannelHandlerContext)s).Channel.CloseAsync();
             }
         }
 
@@ -348,8 +348,8 @@ namespace DotNetty.Codecs.Http
         {
             var res = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.SwitchingProtocols,
                 Unpooled.Empty, false);
-            res.Headers.Add(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade);
-            res.Headers.Add(HttpHeaderNames.Upgrade, upgradeProtocol);
+            _ = res.Headers.Add(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade);
+            _ = res.Headers.Add(HttpHeaderNames.Upgrade, upgradeProtocol);
             return res;
         }
 
@@ -382,7 +382,7 @@ namespace DotNetty.Codecs.Http
                 }
                 else
                 {
-                    builder.Append(c);
+                    _ = builder.Append(c);
                 }
             }
 
@@ -423,7 +423,7 @@ namespace DotNetty.Codecs.Http
                 }
                 else
                 {
-                    builder.Append(c);
+                    _ = builder.Append(c);
                 }
             }
 

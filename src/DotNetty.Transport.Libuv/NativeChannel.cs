@@ -89,7 +89,7 @@ namespace DotNetty.Transport.Libuv
             var promise = _connectPromise;
             if (promise is object)
             {
-                promise.TrySetException(ThrowHelper.GetClosedChannelException());
+                _ = promise.TrySetException(ThrowHelper.GetClosedChannelException());
                 _connectPromise = null;
             }
         }
@@ -97,8 +97,8 @@ namespace DotNetty.Transport.Libuv
         protected virtual void OnConnected()
         {
             SetState(StateFlags.Active);
-            CacheLocalAddress();
-            CacheRemoteAddress();
+            _ = CacheLocalAddress();
+            _ = CacheRemoteAddress();
         }
 
         protected abstract void DoStopRead();

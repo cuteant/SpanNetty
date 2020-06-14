@@ -13,8 +13,8 @@ namespace DotNetty.Transport.Channels
     /// </summary>
     public abstract class DefaultMaxMessagesRecvByteBufAllocator : IMaxMessagesRecvByteBufAllocator
     {
-        int maxMessagesPerRead;
-        int respectMaybeMoreData = SharedConstants.True;
+        private int _maxMessagesPerRead;
+        private int _respectMaybeMoreData = SharedConstants.True;
 
         protected DefaultMaxMessagesRecvByteBufAllocator()
             : this(1)
@@ -23,26 +23,26 @@ namespace DotNetty.Transport.Channels
 
         protected DefaultMaxMessagesRecvByteBufAllocator(int maxMessagesPerRead)
         {
-            this.MaxMessagesPerRead = maxMessagesPerRead;
+            MaxMessagesPerRead = maxMessagesPerRead;
         }
 
         public int MaxMessagesPerRead
         {
-            get { return Volatile.Read(ref this.maxMessagesPerRead); }
+            get { return Volatile.Read(ref _maxMessagesPerRead); }
             set
             {
                 if ((uint)(value - 1) > SharedConstants.TooBigOrNegative) // <= 0
                 {
                     ThrowHelper.ThrowArgumentException_Positive(value, ExceptionArgument.value);
                 }
-                Interlocked.Exchange(ref this.maxMessagesPerRead, value);
+                Interlocked.Exchange(ref _maxMessagesPerRead, value);
             }
         }
 
         public bool RespectMaybeMoreData
         {
-            get => SharedConstants.False < (uint)Volatile.Read(ref this.respectMaybeMoreData);
-            set => Interlocked.Exchange(ref this.respectMaybeMoreData, value ? SharedConstants.True : SharedConstants.False);
+            get => SharedConstants.False < (uint)Volatile.Read(ref _respectMaybeMoreData);
+            set => Interlocked.Exchange(ref _respectMaybeMoreData, value ? SharedConstants.True : SharedConstants.False);
         }
 
         public abstract IRecvByteBufAllocatorHandle NewHandle();
@@ -52,16 +52,16 @@ namespace DotNetty.Transport.Channels
             where T : IMaxMessagesRecvByteBufAllocator
         {
             protected readonly T Owner;
-            IChannelConfiguration config;
-            int maxMessagePerRead;
-            bool respectMaybeMoreData;
-            int totalMessages;
-            int totalBytesRead;
-            int lastBytesRead;
+            private IChannelConfiguration _config;
+            private int _maxMessagePerRead;
+            private bool _respectMaybeMoreData;
+            private int _totalMessages;
+            private int _totalBytesRead;
+            private int _lastBytesRead;
 
             protected MaxMessageHandle(T owner)
             {
-                this.Owner = owner;
+                Owner = owner;
             }
 
             public abstract int Guess();
@@ -69,35 +69,35 @@ namespace DotNetty.Transport.Channels
             /// <summary>Only <see cref="M:IChannelConfiguration.MaxMessagesPerRead" /> is used.</summary>
             public void Reset(IChannelConfiguration config)
             {
-                this.config = config;
-                this.maxMessagePerRead = this.Owner.MaxMessagesPerRead;
-                this.respectMaybeMoreData = this.Owner.RespectMaybeMoreData;
-                this.totalMessages = this.totalBytesRead = 0;
+                _config = config;
+                _maxMessagePerRead = Owner.MaxMessagesPerRead;
+                _respectMaybeMoreData = Owner.RespectMaybeMoreData;
+                _totalMessages = _totalBytesRead = 0;
             }
 
-            public IByteBuffer Allocate(IByteBufferAllocator alloc) => alloc.Buffer(this.Guess());
+            public IByteBuffer Allocate(IByteBufferAllocator alloc) => alloc.Buffer(Guess());
 
-            public void IncMessagesRead(int amt) => this.totalMessages += amt;
+            public void IncMessagesRead(int amt) => _totalMessages += amt;
 
             public virtual int LastBytesRead
             {
-                get { return this.lastBytesRead; }
+                get { return _lastBytesRead; }
                 set
                 {
-                    this.lastBytesRead = value;
+                    _lastBytesRead = value;
                     if (value > 0)
                     {
-                        this.totalBytesRead += value;
+                        _totalBytesRead += value;
                     }
                 }
             }
 
             public virtual bool ContinueReading()
             {
-                return this.config.AutoRead
-                    && (!this.respectMaybeMoreData || this.AttemptedBytesRead == this.lastBytesRead)
-                    && this.totalMessages < this.maxMessagePerRead
-                    && this.totalBytesRead > 0;
+                return _config.AutoRead
+                    && (!_respectMaybeMoreData || AttemptedBytesRead == _lastBytesRead)
+                    && _totalMessages < _maxMessagePerRead
+                    && _totalBytesRead > 0;
             }
 
             public virtual void ReadComplete()
@@ -106,7 +106,7 @@ namespace DotNetty.Transport.Channels
 
             public virtual int AttemptedBytesRead { get; set; }
 
-            protected int TotalBytesRead() => this.totalBytesRead >= 0 ? this.totalBytesRead : int.MaxValue;
+            protected int TotalBytesRead() => _totalBytesRead >= 0 ? _totalBytesRead : int.MaxValue;
         }
     }
 }

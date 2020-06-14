@@ -9,11 +9,11 @@ namespace DotNetty.Transport.Channels
     {
         sealed class HandleImpl : IMessageSizeEstimatorHandle
         {
-            readonly int unknownSize;
+            readonly int _unknownSize;
 
             public HandleImpl(int unknownSize)
             {
-                this.unknownSize = unknownSize;
+                _unknownSize = unknownSize;
             }
 
             public int Size(object msg)
@@ -23,7 +23,7 @@ namespace DotNetty.Transport.Channels
                     IByteBuffer byteBuffer => byteBuffer.ReadableBytes,
                     IByteBufferHolder byteBufferHolder => byteBufferHolder.Content.ReadableBytes,
                     IFileRegion fileRegion => 0,
-                    _ => this.unknownSize,
+                    _ => _unknownSize,
                 };
             }
         }
@@ -33,7 +33,7 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         public static readonly IMessageSizeEstimator Default = new DefaultMessageSizeEstimator(8);
 
-        readonly IMessageSizeEstimatorHandle handle;
+        readonly IMessageSizeEstimatorHandle _handle;
 
         /// <summary>
         /// Creates a new instance.
@@ -45,9 +45,9 @@ namespace DotNetty.Transport.Channels
             {
                 ThrowHelper.ThrowArgumentException_PositiveOrZero(unknownSize, ExceptionArgument.unknownSize);
             }
-            this.handle = new HandleImpl(unknownSize);
+            _handle = new HandleImpl(unknownSize);
         }
 
-        public IMessageSizeEstimatorHandle NewHandle() => this.handle;
+        public IMessageSizeEstimatorHandle NewHandle() => _handle;
     }
 }

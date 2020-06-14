@@ -82,7 +82,7 @@ namespace DotNetty.Common.Internal
                         TKey keyRemove = _mruList.Last.Value;
                         _mruList.RemoveLast();
                         TValue item = _items[keyRemove].value;
-                        _items.Remove(keyRemove);
+                        _ = _items.Remove(keyRemove);
                         OnSingleItemRemoved(item);
                         OnItemAgedOutOfCache(item);
                     }
@@ -146,7 +146,7 @@ namespace DotNetty.Common.Internal
 
             if (_items.TryGetValue(key, out CacheEntry entry))
             {
-                _items.Remove(key);
+                _ = _items.Remove(key);
                 OnSingleItemRemoved(entry.value);
                 _mruList.Remove(entry.node);
                 if (object.ReferenceEquals(_mruEntry.node, entry.node))

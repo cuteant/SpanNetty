@@ -61,11 +61,11 @@ namespace DotNetty.Codecs.Http.Cookies
             {
                 Add(buf, (string)CookieHeaderNames.MaxAge, cookie.MaxAge);
                 DateTime expires = DateTime.UtcNow.AddMilliseconds(cookie.MaxAge * 1000);
-                buf.Append(CookieHeaderNames.Expires);
-                buf.Append(HttpConstants.EqualsSignChar);
-                DateFormatter.Append(expires, buf);
-                buf.Append(HttpConstants.SemicolonChar);
-                buf.Append(HttpConstants.HorizontalSpaceChar);
+                _ = buf.Append(CookieHeaderNames.Expires);
+                _ = buf.Append(HttpConstants.EqualsSignChar);
+                _ = DateFormatter.Append(expires, buf);
+                _ = buf.Append(HttpConstants.SemicolonChar);
+                _ = buf.Append(HttpConstants.HorizontalSpaceChar);
             }
 
             if (cookie.Path is object)

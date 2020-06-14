@@ -40,11 +40,11 @@ namespace DotNetty.Buffers
         public override int ReadBytes(Span<byte> destination) => _wrapped.ReadBytes(destination);
         public override int ReadBytes(Memory<byte> destination) => _wrapped.ReadBytes(destination);
 
-        public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src) { _wrapped.SetBytes(index, src); return this; }
-        public override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src) { _wrapped.SetBytes(index, src); return this; }
+        public override IByteBuffer SetBytes(int index, in ReadOnlySpan<byte> src) { _ = _wrapped.SetBytes(index, src); return this; }
+        public override IByteBuffer SetBytes(int index, in ReadOnlyMemory<byte> src) { _ = _wrapped.SetBytes(index, src); return this; }
 
-        public override IByteBuffer WriteBytes(in ReadOnlySpan<byte> src) { _wrapped.WriteBytes(src); return this; }
-        public override IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src) { _wrapped.WriteBytes(src); return this; }
+        public override IByteBuffer WriteBytes(in ReadOnlySpan<byte> src) { _ = _wrapped.WriteBytes(src); return this; }
+        public override IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src) { _ = _wrapped.WriteBytes(src); return this; }
 
         public override int FindIndex(int index, int count, Predicate<byte> match)
         {

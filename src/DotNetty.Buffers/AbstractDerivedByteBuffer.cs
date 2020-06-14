@@ -28,7 +28,7 @@ namespace DotNetty.Buffers
 
         protected virtual IByteBuffer Retain0()
         {
-            Unwrap().Retain();
+            _ = Unwrap().Retain();
             return this;
         }
 
@@ -36,7 +36,7 @@ namespace DotNetty.Buffers
 
         protected virtual IByteBuffer Retain0(int increment)
         {
-            Unwrap().Retain(increment);
+            _ = Unwrap().Retain(increment);
             return this;
         }
 
@@ -44,7 +44,7 @@ namespace DotNetty.Buffers
 
         protected virtual IByteBuffer Touch0()
         {
-            Unwrap().Touch();
+            _ = Unwrap().Touch();
             return this;
         }
 
@@ -52,7 +52,7 @@ namespace DotNetty.Buffers
 
         protected virtual IByteBuffer Touch0(object hint)
         {
-            Unwrap().Touch(hint);
+            _ = Unwrap().Touch(hint);
             return this;
         }
 

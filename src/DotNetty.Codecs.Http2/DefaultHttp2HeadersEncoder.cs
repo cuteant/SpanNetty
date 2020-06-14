@@ -8,9 +8,9 @@ namespace DotNetty.Codecs.Http2
 
     public class DefaultHttp2HeadersEncoder : IHttp2HeadersEncoder, IHttp2HeadersEncoderConfiguration
     {
-        readonly HpackEncoder hpackEncoder;
-        readonly ISensitivityDetector sensitivityDetector;
-        readonly IByteBuffer tableSizeChangeOutput = Unpooled.Buffer();
+        private readonly HpackEncoder _hpackEncoder;
+        private readonly ISensitivityDetector _sensitivityDetector;
+        private readonly IByteBuffer _tableSizeChangeOutput = Unpooled.Buffer();
 
         public DefaultHttp2HeadersEncoder()
             : this(NeverSensitiveDetector.Instance)
@@ -49,8 +49,8 @@ namespace DotNetty.Codecs.Http2
             if (sensitivityDetector is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.sensitivityDetector); }
             if (hpackEncoder is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.hpackEncoder); }
 
-            this.sensitivityDetector = sensitivityDetector;
-            this.hpackEncoder = hpackEncoder;
+            _sensitivityDetector = sensitivityDetector;
+            _hpackEncoder = hpackEncoder;
         }
 
         public void EncodeHeaders(int streamId, IHttp2Headers headers, IByteBuffer buffer)
@@ -59,13 +59,13 @@ namespace DotNetty.Codecs.Http2
             {
                 // If there was a change in the table size, serialize the output from the hpackEncoder
                 // resulting from that change.
-                if (this.tableSizeChangeOutput.IsReadable())
+                if (_tableSizeChangeOutput.IsReadable())
                 {
-                    buffer.WriteBytes(this.tableSizeChangeOutput);
-                    this.tableSizeChangeOutput.Clear();
+                    _ = buffer.WriteBytes(_tableSizeChangeOutput);
+                    _ = _tableSizeChangeOutput.Clear();
                 }
 
-                this.hpackEncoder.EncodeHeaders(streamId, buffer, headers, this.sensitivityDetector);
+                _hpackEncoder.EncodeHeaders(streamId, buffer, headers, _sensitivityDetector);
             }
             catch (Http2Exception)
             {
@@ -79,17 +79,17 @@ namespace DotNetty.Codecs.Http2
 
         public void SetMaxHeaderTableSize(long max)
         {
-            this.hpackEncoder.SetMaxHeaderTableSize(this.tableSizeChangeOutput, max);
+            _hpackEncoder.SetMaxHeaderTableSize(_tableSizeChangeOutput, max);
         }
 
-        public long MaxHeaderTableSize => this.hpackEncoder.GetMaxHeaderTableSize();
+        public long MaxHeaderTableSize => _hpackEncoder.GetMaxHeaderTableSize();
 
         public void SetMaxHeaderListSize(long max)
         {
-            this.hpackEncoder.SetMaxHeaderListSize(max);
+            _hpackEncoder.SetMaxHeaderListSize(max);
         }
 
-        public long MaxHeaderListSize => this.hpackEncoder.GetMaxHeaderListSize();
+        public long MaxHeaderListSize => _hpackEncoder.GetMaxHeaderListSize();
 
         public IHttp2HeadersEncoderConfiguration Configuration => this;
     }

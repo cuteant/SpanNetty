@@ -47,7 +47,7 @@ namespace DotNetty.Codecs.Mqtt
                         break;
                     case ParseState.Failed:
                         // read out data until connection is closed
-                        input.SkipBytes(input.ReadableBytes);
+                        _ = input.SkipBytes(input.ReadableBytes);
                         return;
                     default:
                         ThrowHelper.ThrowArgumentOutOfRangeException(); break;
@@ -55,7 +55,7 @@ namespace DotNetty.Codecs.Mqtt
             }
             catch (DecoderException)
             {
-                input.SkipBytes(input.ReadableBytes);
+                _ = input.SkipBytes(input.ReadableBytes);
                 Checkpoint(ParseState.Failed);
                 throw;
             }
@@ -334,7 +334,7 @@ namespace DotNetty.Codecs.Mqtt
             if (remainingLength > 0)
             {
                 payload = buffer.ReadSlice(remainingLength);
-                payload.Retain();
+                _ = payload.Retain();
                 remainingLength = 0;
             }
             else
@@ -449,7 +449,7 @@ namespace DotNetty.Codecs.Mqtt
 
             string value = buffer.ToString(buffer.ReaderIndex, size, Encoding.UTF8);
             // todo: enforce string definition by MQTT spec
-            buffer.SetReaderIndex(buffer.ReaderIndex + size);
+            _ = buffer.SetReaderIndex(buffer.ReaderIndex + size);
             return value;
         }
 

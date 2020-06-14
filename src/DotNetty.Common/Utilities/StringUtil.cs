@@ -59,8 +59,8 @@ namespace DotNetty.Common.Utilities
             for (i = 0; i < 10; i++)
             {
                 var buf = new StringBuilder(2);
-                buf.Append('0');
-                buf.Append(i);
+                _ = buf.Append('0');
+                _ = buf.Append(i);
                 Byte2HexPad[i] = buf.ToString();
                 Byte2HexNopad[i] = (i).ToString();
             }
@@ -68,15 +68,15 @@ namespace DotNetty.Common.Utilities
             {
                 var buf = new StringBuilder(2);
                 char c = (char)('A' + i - 10);
-                buf.Append('0');
-                buf.Append(c);
+                _ = buf.Append('0');
+                _ = buf.Append(c);
                 Byte2HexPad[i] = buf.ToString();
                 Byte2HexNopad[i] = c.ToString(); /* String.valueOf(c);*/
             }
             for (; i < Byte2HexPad.Length; i++)
             {
                 var buf = new StringBuilder(2);
-                buf.Append(i.ToString("X") /*Integer.toHexString(i)*/);
+                _ = buf.Append(i.ToString("X") /*Integer.toHexString(i)*/);
                 string str = buf.ToString();
                 Byte2HexPad[i] = str;
                 Byte2HexNopad[i] = str;
@@ -121,7 +121,7 @@ namespace DotNetty.Common.Utilities
         // 
         public static T ByteToHexStringPadded<T>(T buf, int value) where T : IAppendable
         {
-            buf.Append(new StringCharSequence(ByteToHexStringPadded(value)));
+            _ = buf.Append(new StringCharSequence(ByteToHexStringPadded(value)));
             return buf;
         }
 
@@ -139,7 +139,7 @@ namespace DotNetty.Common.Utilities
             var sb = new StringBuilder(length << 1);
             for (int i = offset; i < end; i++)
             {
-                sb.Append(ByteToHexStringPadded(src[i]));
+                _ = sb.Append(ByteToHexStringPadded(src[i]));
             }
             return sb.ToString();
         }
@@ -151,7 +151,7 @@ namespace DotNetty.Common.Utilities
             int end = offset + length;
             for (int i = offset; i < end; i++)
             {
-                ByteToHexStringPadded(dst, src[i]);
+                _ = ByteToHexStringPadded(dst, src[i]);
             }
             return dst;
         }
@@ -163,7 +163,7 @@ namespace DotNetty.Common.Utilities
 
         public static T ByteToHexString<T>(T buf, byte value) where T : IAppendable
         {
-            buf.Append(new StringCharSequence(ByteToHexString(value)));
+            _ = buf.Append(new StringCharSequence(ByteToHexString(value)));
             return buf;
         }
 
@@ -195,9 +195,9 @@ namespace DotNetty.Common.Utilities
                 }
             }
 
-            ByteToHexString(dst, src[i++]);
+            _ = ByteToHexString(dst, src[i++]);
             int remaining = end - i;
-            ToHexStringPadded(dst, src, i, remaining);
+            _ = ToHexStringPadded(dst, src, i, remaining);
 
             return dst;
         }
@@ -418,10 +418,10 @@ namespace DotNetty.Common.Utilities
                     else
                     {
                         // Not followed by a double-quote or the following double-quote is the last character
-                        ThrowInvalidEscapedCsvFieldException(value, i);
+                        _ = ThrowInvalidEscapedCsvFieldException(value, i);
                     }
                 }
-                unescaped.Append(current);
+                _ = unescaped.Append(current);
             }
 
             return new StringCharSequence(unescaped.ToString());
@@ -451,7 +451,7 @@ namespace DotNetty.Common.Utilities
                             if (next == DoubleQuote)
                             {
                                 // 2 double-quotes should be unescaped to one
-                                current.Append(DoubleQuote);
+                                _ = current.Append(DoubleQuote);
                             }
                             else if (next == Comma)
                             {
@@ -463,11 +463,11 @@ namespace DotNetty.Common.Utilities
                             else
                             {
                                 // double-quote followed by other character is invalid
-                                ThrowInvalidEscapedCsvFieldException(value, i - 1);
+                                _ = ThrowInvalidEscapedCsvFieldException(value, i - 1);
                             }
                             break;
                         default:
-                            current.Append(c);
+                            _ = current.Append(c);
                             break;
                     }
                 }
@@ -488,22 +488,22 @@ namespace DotNetty.Common.Utilities
                             else
                             {
                                 // double-quote appears without being enclosed with double-quotes
-                                current.Append(c);
+                                _ = current.Append(c);
                             }
                             break;
                         case LineFeed:
                         case CarriageReturn:
                             // special characters appears without being enclosed with double-quotes
-                            ThrowInvalidEscapedCsvFieldException(value, i); break;
+                            _ = ThrowInvalidEscapedCsvFieldException(value, i); break;
                         default:
-                            current.Append(c);
+                            _ = current.Append(c);
                             break;
                     }
                 }
             }
             if (quoted)
             {
-                ThrowInvalidEscapedCsvFieldException(value, last);
+                _ = ThrowInvalidEscapedCsvFieldException(value, last);
             }
 
             unescaped.Add((StringCharSequence)current.ToString());
@@ -522,7 +522,7 @@ namespace DotNetty.Common.Utilities
                     case CarriageReturn:
                     case Comma:
                         // If value contains any special character, it should be enclosed with double-quotes
-                        ThrowInvalidEscapedCsvFieldException(value, i); break;
+                        _ = ThrowInvalidEscapedCsvFieldException(value, i); break;
                 }
             }
         }
@@ -645,7 +645,7 @@ namespace DotNetty.Common.Utilities
             var builder = StringBuilderManager.Allocate().Append(firstElement.ToString());
             for (var idx = 1; idx < count; idx++)
             {
-                builder.Append(separator).Append(elements[idx].ToString());
+                _ = builder.Append(separator).Append(elements[idx].ToString());
             }
             return new StringCharSequence(StringBuilderManager.ReturnAndFree(builder));
         }

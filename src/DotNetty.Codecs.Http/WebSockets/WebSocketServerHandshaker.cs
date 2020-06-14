@@ -149,11 +149,11 @@ namespace DotNetty.Codecs.Http.WebSockets
             IFullHttpResponse response = NewHandshakeResponse(req, responseHeaders);
             IChannelPipeline p = channel.Pipeline;
 
-            if (p.Get<HttpObjectAggregator>() is object) { p.Remove<HttpObjectAggregator>(); }
-            if (p.Get<HttpContentCompressor>() is object) { p.Remove<HttpContentCompressor>(); }
-            if (p.Get<CorsHandler>() is object) { p.Remove<CorsHandler>(); }
-            if (p.Get<HttpServerExpectContinueHandler>() is object) { p.Remove<HttpServerExpectContinueHandler>(); }
-            if (p.Get<HttpServerKeepAliveHandler>() is object) { p.Remove<HttpServerKeepAliveHandler>(); }
+            if (p.Get<HttpObjectAggregator>() is object) { _ = p.Remove<HttpObjectAggregator>(); }
+            if (p.Get<HttpContentCompressor>() is object) { _ = p.Remove<HttpContentCompressor>(); }
+            if (p.Get<CorsHandler>() is object) { _ = p.Remove<CorsHandler>(); }
+            if (p.Get<HttpServerExpectContinueHandler>() is object) { _ = p.Remove<HttpServerExpectContinueHandler>(); }
+            if (p.Get<HttpServerKeepAliveHandler>() is object) { _ = p.Remove<HttpServerKeepAliveHandler>(); }
 
             IChannelHandlerContext ctx = p.Context<HttpRequestDecoder>();
             string encoderName;
@@ -163,23 +163,23 @@ namespace DotNetty.Codecs.Http.WebSockets
                 ctx = p.Context<HttpServerCodec>();
                 if (ctx is null)
                 {
-                    completion.TrySetException(ThrowHelper.GetInvalidOperationException_NoHttpDecoderAndServerCodec());
+                    _ = completion.TrySetException(ThrowHelper.GetInvalidOperationException_NoHttpDecoderAndServerCodec());
                     return;
                 }
 
                 encoderName = ctx.Name;
-                p.AddBefore(encoderName, "wsencoder", NewWebSocketEncoder());
-                p.AddBefore(encoderName, "wsdecoder", NewWebsocketDecoder());
+                _ = p.AddBefore(encoderName, "wsencoder", NewWebSocketEncoder());
+                _ = p.AddBefore(encoderName, "wsdecoder", NewWebsocketDecoder());
             }
             else
             {
-                p.Replace(ctx.Name, "wsdecoder", NewWebsocketDecoder());
+                _ = p.Replace(ctx.Name, "wsdecoder", NewWebsocketDecoder());
 
                 encoderName = p.Context<HttpResponseEncoder>().Name;
-                p.AddBefore(encoderName, "wsencoder", NewWebSocketEncoder());
+                _ = p.AddBefore(encoderName, "wsencoder", NewWebSocketEncoder());
             }
 
-            channel.WriteAndFlushAsync(response).ContinueWith(RemoveHandlerAfterWriteAction, Tuple.Create(completion, p, encoderName), TaskContinuationOptions.ExecuteSynchronously);
+            _ = channel.WriteAndFlushAsync(response).ContinueWith(RemoveHandlerAfterWriteAction, Tuple.Create(completion, p, encoderName), TaskContinuationOptions.ExecuteSynchronously);
         }
 
         static readonly Action<Task, object> RemoveHandlerAfterWriteAction = RemoveHandlerAfterWrite;
@@ -188,12 +188,12 @@ namespace DotNetty.Codecs.Http.WebSockets
             var wrapped = (Tuple<IPromise, IChannelPipeline, string>)state;
             if (t.IsSuccess())
             {
-                wrapped.Item2.Remove(wrapped.Item3);
-                wrapped.Item1.TryComplete();
+                _ = wrapped.Item2.Remove(wrapped.Item3);
+                _ = wrapped.Item1.TryComplete();
             }
             else
             {
-                wrapped.Item1.TrySetException(t.Exception.InnerExceptions);
+                _ = wrapped.Item1.TrySetException(t.Exception.InnerExceptions);
             }
         }
 
@@ -232,16 +232,16 @@ namespace DotNetty.Codecs.Http.WebSockets
             //
             // TODO: Make handshake work without HttpObjectAggregator at all.
             string aggregatorName = "httpAggregator";
-            p.AddAfter(ctx.Name, aggregatorName, new HttpObjectAggregator(8192));
+            _ = p.AddAfter(ctx.Name, aggregatorName, new HttpObjectAggregator(8192));
             var completion = channel.NewPromise();
-            p.AddAfter(aggregatorName, "handshaker", new Handshaker(this, channel, responseHeaders, completion));
+            _ = p.AddAfter(aggregatorName, "handshaker", new Handshaker(this, channel, responseHeaders, completion));
             try
             {
-                ctx.FireChannelRead(ReferenceCountUtil.Retain(req));
+                _ = ctx.FireChannelRead(ReferenceCountUtil.Retain(req));
             }
             catch (Exception cause)
             {
-                completion.TrySetException(cause);
+                _ = completion.TrySetException(cause);
             }
             return completion.Task;
         }
@@ -264,16 +264,16 @@ namespace DotNetty.Codecs.Http.WebSockets
             protected override void ChannelRead0(IChannelHandlerContext ctx, IFullHttpRequest msg)
             {
                 // Remove ourself and do the actual handshake
-                ctx.Pipeline.Remove(this);
+                _ = ctx.Pipeline.Remove(this);
                 _serverHandshaker.Handshake(_channel, msg, _responseHeaders, _completion);
             }
 
             public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
             {
                 // Remove ourself and fail the handshake promise.
-                ctx.Pipeline.Remove(this);
-                _completion.TrySetException(cause);
-                ctx.FireExceptionCaught(cause);
+                _ = ctx.Pipeline.Remove(this);
+                _ = _completion.TrySetException(cause);
+                _ = ctx.FireExceptionCaught(cause);
             }
 
             public override void ChannelInactive(IChannelHandlerContext ctx)
@@ -281,9 +281,9 @@ namespace DotNetty.Codecs.Http.WebSockets
                 // Fail promise if Channel was closed
                 if (!_completion.IsCompleted)
                 {
-                    _completion.TrySetException(ClosedChannelException);
+                    _ = _completion.TrySetException(ClosedChannelException);
                 }
-                ctx.FireChannelInactive();
+                _ = ctx.FireChannelInactive();
             }
         }
 
@@ -304,11 +304,8 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
-            return channel.WriteAndFlushAsync(frame).ContinueWith(CloseOnCompleteAction, channel, TaskContinuationOptions.ExecuteSynchronously);
+            return channel.WriteAndFlushAsync(frame).CloseOnComplete(channel);
         }
-
-        static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
-        static void CloseOnComplete(Task t, object s) => ((IChannel)s).CloseAsync();
 
         /// <summary>
         /// Selects the first matching supported sub protocol

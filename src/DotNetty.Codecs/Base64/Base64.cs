@@ -98,7 +98,7 @@ namespace DotNetty.Codecs.Base64
                 {
                     if (charCount == MAX_LINE_LENGTH)
                     {
-                        dest.SetByte(j++, NEW_LINE);
+                        _ = dest.SetByte(j++, NEW_LINE);
                         charCount = 0;
                     }
                     charCount += 4;
@@ -107,10 +107,10 @@ namespace DotNetty.Codecs.Base64
                 b1 = src.GetByte(i + 1);
                 b2 = src.GetByte(i + 2);
 
-                dest.SetByte(j + 0, alphabet[(b0 & 0xfc) >> 2]);
-                dest.SetByte(j + 1, alphabet[((b0 & 0x03) << 4) | ((b1 & 0xf0) >> 4)]);
-                dest.SetByte(j + 2, alphabet[((b1 & 0x0f) << 2) | ((b2 & 0xc0) >> 6)]);
-                dest.SetByte(j + 3, alphabet[(b2 & 0x3f)]);
+                _ = dest.SetByte(j + 0, alphabet[(b0 & 0xfc) >> 2]);
+                _ = dest.SetByte(j + 1, alphabet[((b0 & 0x03) << 4) | ((b1 & 0xf0) >> 4)]);
+                _ = dest.SetByte(j + 2, alphabet[((b1 & 0x0f) << 2) | ((b2 & 0xc0) >> 6)]);
+                _ = dest.SetByte(j + 3, alphabet[(b2 & 0x3f)]);
                 j += 4;
             }
 
@@ -118,25 +118,25 @@ namespace DotNetty.Codecs.Base64
 
             if (breakLines && (remainderLength != 0) && (charCount == MAX_LINE_LENGTH))
             {
-                dest.SetByte(j++, NEW_LINE);
+                _ = dest.SetByte(j++, NEW_LINE);
             }
             switch (remainderLength)
             {
                 case 2:
                     b0 = src.GetByte(i);
                     b1 = src.GetByte(i + 1);
-                    dest.SetByte(j + 0, alphabet[(b0 & 0xfc) >> 2]);
-                    dest.SetByte(j + 1, alphabet[((b0 & 0x03) << 4) | ((b1 & 0xf0) >> 4)]);
-                    dest.SetByte(j + 2, alphabet[(b1 & 0x0f) << 2]);
-                    dest.SetByte(j + 3, EQUALS_SIGN);
+                    _ = dest.SetByte(j + 0, alphabet[(b0 & 0xfc) >> 2]);
+                    _ = dest.SetByte(j + 1, alphabet[((b0 & 0x03) << 4) | ((b1 & 0xf0) >> 4)]);
+                    _ = dest.SetByte(j + 2, alphabet[(b1 & 0x0f) << 2]);
+                    _ = dest.SetByte(j + 3, EQUALS_SIGN);
                     j += 4;
                     break;
                 case 1:
                     b0 = src.GetByte(i);
-                    dest.SetByte(j + 0, alphabet[(b0 & 0xfc) >> 2]);
-                    dest.SetByte(j + 1, alphabet[(b0 & 0x03) << 4]);
-                    dest.SetByte(j + 2, EQUALS_SIGN);
-                    dest.SetByte(j + 3, EQUALS_SIGN);
+                    _ = dest.SetByte(j + 0, alphabet[(b0 & 0xfc) >> 2]);
+                    _ = dest.SetByte(j + 1, alphabet[(b0 & 0x03) << 4]);
+                    _ = dest.SetByte(j + 2, EQUALS_SIGN);
+                    _ = dest.SetByte(j + 3, EQUALS_SIGN);
                     j += 4;
                     break;
             }
@@ -276,15 +276,15 @@ namespace DotNetty.Codecs.Base64
                     {
                         int output = ((decodabet[b4[0]] & 0xFF) << 18) |
                             ((decodabet[b4[1]] & 0xFF) << 12);
-                        dest.SetByte(charCount++, (int)((uint)output >> 16));
+                        _ = dest.SetByte(charCount++, (int)((uint)output >> 16));
                     }
                     else if (b4[3] == EQUALS_SIGN)
                     {
                         int output = ((decodabet[b4[0]] & 0xFF) << 18) |
                             ((decodabet[b4[1]] & 0xFF) << 12) |
                             ((decodabet[b4[2]] & 0xFF) << 6);
-                        dest.SetByte(charCount++, (int)((uint)output >> 16));
-                        dest.SetByte(charCount++, (int)((uint)output >> 8));
+                        _ = dest.SetByte(charCount++, (int)((uint)output >> 16));
+                        _ = dest.SetByte(charCount++, (int)((uint)output >> 8));
                     }
                     else
                     {
@@ -292,9 +292,9 @@ namespace DotNetty.Codecs.Base64
                             ((decodabet[b4[1]] & 0xFF) << 12) |
                             ((decodabet[b4[2]] & 0xFF) << 6) |
                             ((decodabet[b4[3]] & 0xFF) << 0);
-                        dest.SetByte(charCount++, (int)((uint)output >> 16));
-                        dest.SetByte(charCount++, (int)((uint)output >> 8));
-                        dest.SetByte(charCount++, (int)((uint)output >> 0));
+                        _ = dest.SetByte(charCount++, (int)((uint)output >> 16));
+                        _ = dest.SetByte(charCount++, (int)((uint)output >> 8));
+                        _ = dest.SetByte(charCount++, (int)((uint)output >> 0));
                     }
 
                     b4Count = 0;

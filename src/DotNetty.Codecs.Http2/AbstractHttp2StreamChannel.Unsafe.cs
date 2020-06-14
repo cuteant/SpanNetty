@@ -74,10 +74,10 @@
 
                 var pipeline = ch.Pipeline;
 
-                pipeline.FireChannelRegistered();
+                _ = pipeline.FireChannelRegistered();
                 if (ch.Active)
                 {
-                    pipeline.FireChannelActive();
+                    _ = pipeline.FireChannelActive();
                 }
 
                 return TaskUtil.Completed;
@@ -135,7 +135,7 @@
                 {
                     while (inboundBuffer.TryRemoveFromFront(out var msg))
                     {
-                        ReferenceCountUtil.Release(msg);
+                        _ = ReferenceCountUtil.Release(msg);
                     }
                 }
 
@@ -174,14 +174,14 @@
                 {
                     if (fireChannelInactive)
                     {
-                        ch._pipeline.FireChannelInactive();
+                        _ = ch._pipeline.FireChannelInactive();
                     }
                     // The user can fire `deregister` events multiple times but we only want to fire the pipeline
                     // event if the channel was actually registered.
                     if (ch.InternalRegistered)
                     {
                         ch.InternalRegistered = false;
-                        ch._pipeline.FireChannelUnregistered();
+                        _ = ch._pipeline.FireChannelUnregistered();
                     }
                     Util.SafeSetSuccess(promise, Logger);
                 });
@@ -282,7 +282,7 @@
                 if (bytes != 0)
                 {
                     ch._flowControlledBytes = 0;
-                    var future = ch.Write0Async(ch.ParentContext, new DefaultHttp2WindowUpdateFrame(bytes) { Stream = ch._stream });
+                    var future = ch.InternalWriteAsync(ch.ParentContext, new DefaultHttp2WindowUpdateFrame(bytes) { Stream = ch._stream });
                     // Add a listener which will notify and teardown the stream
                     // when a window update fails if needed or check the result of the future directly if it was completed
                     // already.
@@ -293,7 +293,7 @@
                     }
                     else
                     {
-                        future.ContinueWith(WindowUpdateFrameWriteListenerAction, ch, TaskContinuationOptions.ExecuteSynchronously);
+                        _ = future.ContinueWith(WindowUpdateFrameWriteListenerAction, ch, TaskContinuationOptions.ExecuteSynchronously);
                         _writeDoneAndNoFlush = true;
                     }
                 }
@@ -319,7 +319,7 @@
                 }
 
                 allocHandle.ReadComplete();
-                ch._pipeline.FireChannelReadComplete();
+                _ = ch._pipeline.FireChannelReadComplete();
                 // Reading data may result in frames being written (e.g. WINDOW_UPDATE, RST, etc..). If the parent
                 // channel is not currently reading we need to force a flush at the child channel, because we cannot
                 // rely upon flush occurring in channelReadComplete on the parent channel.
@@ -354,7 +354,7 @@
                 allocHandle.LastBytesRead = bytes;
                 allocHandle.IncMessagesRead(1);
 
-                ch._pipeline.FireChannelRead(frame);
+                _ = ch._pipeline.FireChannelRead(frame);
             }
 
             public void Write(object msg, IPromise promise)
@@ -362,7 +362,7 @@
                 // After this point its not possible to cancel a write anymore.
                 if (!promise.SetUncancellable())
                 {
-                    ReferenceCountUtil.Release(msg);
+                    _ = ReferenceCountUtil.Release(msg);
                     return;
                 }
 
@@ -371,7 +371,7 @@
                     // Once the outbound side was closed we should not allow header / data frames
                     ch.OutboundClosed && (msg is IHttp2HeadersFrame || msg is IHttp2DataFrame))
                 {
-                    ReferenceCountUtil.Release(msg);
+                    _ = ReferenceCountUtil.Release(msg);
                     promise.SetException(ThrowHelper.GetClosedChannelException());
                     return;
                 }
@@ -381,17 +381,18 @@
                     if (msg is IHttp2StreamFrame streamFrame)
                     {
                         var frame = ValidateStreamFrame(streamFrame);
-                        frame.Stream = ch._stream;
-                        if (!ch._firstFrameWritten && !Http2CodecUtil.IsStreamIdValid(ch._stream.Id))
+                        var frameStream = ch._stream;
+                        frame.Stream = frameStream;
+                        if (!ch._firstFrameWritten && !Http2CodecUtil.IsStreamIdValid(frameStream.Id))
                         {
                             if (!(frame is IHttp2HeadersFrame))
                             {
-                                ReferenceCountUtil.Release(frame);
+                                _ = ReferenceCountUtil.Release(frame);
                                 promise.SetException(ThrowHelper.GetArgumentException_FirstFrameMustBeHeadersFrame(frame));
                                 return;
                             }
                             ch._firstFrameWritten = true;
-                            var future = ch.Write0Async(ch.ParentContext, frame);
+                            var future = ch.InternalWriteAsync(ch.ParentContext, frame);
                             if (future.IsCompleted)
                             {
                                 FirstWriteComplete(future, promise);
@@ -400,7 +401,7 @@
                             {
                                 long bytes = FlowControlledFrameSizeEstimatorHandle.Instance.Size(msg);
                                 ch.IncrementPendingOutboundBytes(bytes, false);
-                                future.ContinueWith(FirstWriteCompleteAfterWriteAction,
+                                _ = future.ContinueWith(FirstWriteCompleteAfterWriteAction,
                                     Tuple.Create(this, promise, bytes), TaskContinuationOptions.ExecuteSynchronously);
                                 _writeDoneAndNoFlush = true;
                             }
@@ -409,12 +410,12 @@
                     }
                     else
                     {
-                        ReferenceCountUtil.Release(msg);
+                        _ = ReferenceCountUtil.Release(msg);
                         promise.SetException(ThrowHelper.GetArgumentException_MsgMustBeStreamFrame(msg));
                         return;
                     }
 
-                    var writeTask = ch.Write0Async(ch.ParentContext, msg);
+                    var writeTask = ch.InternalWriteAsync(ch.ParentContext, msg);
                     if (writeTask.IsCompleted)
                     {
                         WriteComplete(writeTask, promise);
@@ -423,7 +424,7 @@
                     {
                         long bytes = FlowControlledFrameSizeEstimatorHandle.Instance.Size(msg);
                         ch.IncrementPendingOutboundBytes(bytes, false);
-                        writeTask.ContinueWith(WriteCompleteContinuteAction,
+                        _ = writeTask.ContinueWith(WriteCompleteContinuteAction,
                             Tuple.Create(this, promise, bytes), TaskContinuationOptions.ExecuteSynchronously);
                         _writeDoneAndNoFlush = true;
                     }
@@ -509,7 +510,7 @@
                 var frameStream = frame.Stream;
                 if (frameStream is object && frameStream != _channel._stream)
                 {
-                    ReferenceCountUtil.Release(frame);
+                    _ = ReferenceCountUtil.Release(frame);
                     ThrowHelper.ThrowArgumentException_StreamMustNotBeSetOnTheFrame(frame);
                 }
                 return frame;
@@ -527,14 +528,10 @@
                     // There is nothing to flush so this is a NOOP.
                     return;
                 }
-                try
-                {
-                    ch.Flush0(ch.ParentContext);
-                }
-                finally
-                {
-                    _writeDoneAndNoFlush = false;
-                }
+                // We need to set this to false before we call flush0(...) as ChannelFutureListener may produce more data
+                // that are explicit flushed.
+                _writeDoneAndNoFlush = false;
+                ch.Flush0(ch.ParentContext);
             }
 
             public IPromise VoidPromise() => _unsafeVoidPromise;

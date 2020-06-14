@@ -66,7 +66,7 @@ namespace DotNetty.Common.Internal
                 {
                     if (now.Subtract(cacheEntry.TimeStamp) > s_cacheTimeout)
                     {
-                        s_resolveCache.Remove(hostName);
+                        _ = s_resolveCache.Remove(hostName);
                         cacheEntry = null;
                     }
                     else
@@ -95,7 +95,7 @@ namespace DotNetty.Common.Internal
                 lock (ThisLock)
                 {
                     // MruCache doesn't have a this[] operator, so we first remove (just in case it exists already)
-                    s_resolveCache.Remove(hostName);
+                    _ = s_resolveCache.Remove(hostName);
                     s_resolveCache.Add(hostName, new DnsCacheEntry(hostAddresses, now));
                 }
 

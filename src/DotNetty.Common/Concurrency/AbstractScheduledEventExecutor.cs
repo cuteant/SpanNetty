@@ -61,7 +61,7 @@ namespace DotNetty.Common.Concurrency
             IScheduledRunnable[] tasks = scheduledTaskQueue.ToArray();
             for (int i = 0; i < tasks.Length; i++)
             {
-                tasks[i].Cancel();
+                _ = tasks[i].Cancel();
             }
 
             ScheduledTaskQueue.Clear();
@@ -80,7 +80,7 @@ namespace DotNetty.Common.Concurrency
 
             if (scheduledTask.Deadline <= nanoTime)
             {
-                ScheduledTaskQueue.TryDequeue(out var _);
+                _ = ScheduledTaskQueue.TryDequeue(out _);
                 scheduledTask.SetConsumed();
                 return scheduledTask;
             }
@@ -185,7 +185,7 @@ namespace DotNetty.Common.Concurrency
         protected internal void ScheduleFromEventLoop(IScheduledRunnable task)
         {
             // nextTaskId a long and so there is no chance it will overflow back to 0
-            ScheduledTaskQueue.TryEnqueue(task.SetId(++_nextTaskId));
+            _ = ScheduledTaskQueue.TryEnqueue(task.SetId(++_nextTaskId));
         }
 
         protected virtual IScheduledRunnable Schedule(IScheduledRunnable task)
@@ -219,7 +219,7 @@ namespace DotNetty.Common.Concurrency
         {
             if (InEventLoop)
             {
-                ScheduledTaskQueue.TryRemove(task);
+                _ = ScheduledTaskQueue.TryRemove(task);
             }
             else
             {

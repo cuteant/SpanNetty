@@ -210,14 +210,14 @@
         public virtual IByteBuffer WriteBytes(in ReadOnlySpan<byte> src)
         {
             var writerIdx = _writerIndex;
-            SetBytes(writerIdx, src);
+            _ = SetBytes(writerIdx, src);
             _writerIndex = writerIdx + src.Length;
             return this;
         }
         public virtual IByteBuffer WriteBytes(in ReadOnlyMemory<byte> src)
         {
             var writerIdx = _writerIndex;
-            SetBytes(writerIdx, src);
+            _ = SetBytes(writerIdx, src);
             _writerIndex = writerIdx + src.Length;
             return this;
         }

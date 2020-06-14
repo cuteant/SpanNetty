@@ -104,9 +104,9 @@ namespace DotNetty.Transport.Channels
         /// <inheritdoc cref="IEventExecutorGroup.ShutdownGracefullyAsync()" />
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
         {
-            foreach (IEventLoop eventLoop in _eventLoops)
+            for (int i = 0; i < _eventLoops.Length; i++)
             {
-                eventLoop.ShutdownGracefullyAsync(quietPeriod, timeout);
+                _ = _eventLoops[i].ShutdownGracefullyAsync(quietPeriod, timeout);
             }
             return TerminationCompletion;
         }

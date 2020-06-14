@@ -43,7 +43,7 @@ namespace DotNetty.Buffers
             AbstractByteBuffer unwrapped, IByteBuffer wrapped, int readerIndex, int writerIndex, int maxCapacity)
             where T : AbstractPooledDerivedByteBuffer
         {
-            wrapped.Retain(); // Retain up front to ensure the parent is accessible before doing more work.
+            _ = wrapped.Retain(); // Retain up front to ensure the parent is accessible before doing more work.
             _parent = wrapped;
             _rootParent = unwrapped;
 
@@ -61,7 +61,7 @@ namespace DotNetty.Buffers
                 if (wrapped is object)
                 {
                     _parent = _rootParent = null;
-                    wrapped.Release();
+                    _ = wrapped.Release();
                 }
             }
         }
@@ -73,7 +73,7 @@ namespace DotNetty.Buffers
             // called before we actually have a chance to call release(). This leads to call release() on the wrong parent.
             IByteBuffer parentBuf = _parent;
             _recyclerHandle.Release(this);
-            parentBuf.Release();
+            _ = parentBuf.Release();
         }
 
         public sealed override IByteBufferAllocator Allocator => Unwrap().Allocator;
@@ -128,25 +128,25 @@ namespace DotNetty.Buffers
 
             protected override IByteBuffer Retain0()
             {
-                _referenceCountDelegate.Retain();
+                _ = _referenceCountDelegate.Retain();
                 return this;
             }
 
             protected override IByteBuffer Retain0(int increment)
             {
-                _referenceCountDelegate.Retain(increment);
+                _ = _referenceCountDelegate.Retain(increment);
                 return this;
             }
 
             protected override IByteBuffer Touch0()
             {
-                _referenceCountDelegate.Touch();
+                _ = _referenceCountDelegate.Touch();
                 return this;
             }
 
             protected override IByteBuffer Touch0(object hint)
             {
-                _referenceCountDelegate.Touch(hint);
+                _ = _referenceCountDelegate.Touch(hint);
                 return this;
             }
 
@@ -188,25 +188,25 @@ namespace DotNetty.Buffers
 
             protected override IByteBuffer Retain0()
             {
-                _referenceCountDelegate.Retain();
+                _ = _referenceCountDelegate.Retain();
                 return this;
             }
 
             protected override IByteBuffer Retain0(int increment)
             {
-                _referenceCountDelegate.Retain(increment);
+                _ = _referenceCountDelegate.Retain(increment);
                 return this;
             }
 
             protected override IByteBuffer Touch0()
             {
-                _referenceCountDelegate.Touch();
+                _ = _referenceCountDelegate.Touch();
                 return this;
             }
 
             protected override IByteBuffer Touch0(object hint)
             {
-                _referenceCountDelegate.Touch(hint);
+                _ = _referenceCountDelegate.Touch(hint);
                 return this;
             }
 

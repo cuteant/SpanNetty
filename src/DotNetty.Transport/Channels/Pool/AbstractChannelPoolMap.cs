@@ -146,7 +146,7 @@ namespace DotNetty.Transport.Channels.Pool
                 // Wait for remove to finish to ensure that resources are released before returning from close
                 try
                 {
-                    RemoveAsyncIfSupported(key).GetAwaiter().GetResult();
+                    _ = RemoveAsyncIfSupported(key).GetAwaiter().GetResult();
                 }
                 catch { }
             }

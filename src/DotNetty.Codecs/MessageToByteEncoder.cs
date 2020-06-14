@@ -42,24 +42,24 @@ namespace DotNetty.Codecs
                     }
                     finally
                     {
-                        ReferenceCountUtil.Release(input);
+                        _ = ReferenceCountUtil.Release(input);
                     }
 
                     if (buffer.IsReadable())
                     {
-                        context.WriteAsync(buffer, promise);
+                        _ = context.WriteAsync(buffer, promise);
                     }
                     else
                     {
-                        buffer.Release();
-                        context.WriteAsync(Unpooled.Empty, promise);
+                        _ = buffer.Release();
+                        _ = context.WriteAsync(Unpooled.Empty, promise);
                     }
 
                     buffer = null;
                 }
                 else
                 {
-                    context.WriteAsync(message, promise);
+                    _ = context.WriteAsync(message, promise);
                 }
             }
             catch (EncoderException)
@@ -72,7 +72,7 @@ namespace DotNetty.Codecs
             }
             finally
             {
-                buffer?.Release();
+                _ = (buffer?.Release());
             }
         }
 

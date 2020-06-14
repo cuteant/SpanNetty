@@ -53,7 +53,7 @@ namespace DotNetty.Codecs.Http
                 this.SanitizeHeadersBeforeEncode(m, this.state == StContentAlwaysEmpty);
 
                 this.EncodeHeaders(m.Headers, buf);
-                buf.WriteShort(HttpConstants.CrlfShort);
+                _ = buf.WriteShort(HttpConstants.CrlfShort);
 
                 this.headersEncodedSizeAccumulator = HeadersWeightNew * PadSizeForAccumulation(buf.ReadableBytes) 
                     + HeadersWeightHistorical * this.headersEncodedSizeAccumulator;
@@ -89,7 +89,7 @@ namespace DotNetty.Codecs.Http
                                 if (buf is object && buf.WritableBytes >= contentLength && message is IHttpContent)
                                 {
                                     // merge into other buffer for performance reasons
-                                    buf.WriteBytes(((IHttpContent)message).Content);
+                                    _ = buf.WriteBytes(((IHttpContent)message).Content);
                                     output.Add(buf);
                                 }
                                 else
@@ -168,8 +168,8 @@ namespace DotNetty.Codecs.Http
             {
                 var lengthHex = new AsciiString(Convert.ToString(contentLength, 16), Encoding.ASCII);
                 IByteBuffer buf = context.Allocator.Buffer(lengthHex.Count + 2);
-                buf.WriteCharSequence(lengthHex, Encoding.ASCII);
-                buf.WriteShort(HttpConstants.CrlfShort);
+                _ = buf.WriteCharSequence(lengthHex, Encoding.ASCII);
+                _ = buf.WriteShort(HttpConstants.CrlfShort);
                 output.Add(buf);
                 output.Add(EncodeAndRetain(message));
                 output.Add(HttpConstants.CrlfBuf.Duplicate());
@@ -185,9 +185,9 @@ namespace DotNetty.Codecs.Http
                 else
                 {
                     IByteBuffer buf = context.Allocator.Buffer((int)this.trailersEncodedSizeAccumulator);
-                    buf.WriteMedium(HttpConstants.ZeroCrlfMedium);
+                    _ = buf.WriteMedium(HttpConstants.ZeroCrlfMedium);
                     this.EncodeHeaders(headers, buf);
-                    buf.WriteShort(HttpConstants.CrlfShort);
+                    _ = buf.WriteShort(HttpConstants.CrlfShort);
                     this.trailersEncodedSizeAccumulator = TrailersWeightNew * PadSizeForAccumulation(buf.ReadableBytes) 
                         + TrailersWeightHistorical * this.trailersEncodedSizeAccumulator;
                     output.Add(buf);

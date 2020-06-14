@@ -15,9 +15,9 @@ namespace DotNetty.Common.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                var count = this.pos;
+                var count = _pos;
                 if (0u >= (uint)count) { return ReadOnlySpan<byte>.Empty; }
-                return new ReadOnlySpan<byte>(this.chars, 0, count);
+                return new ReadOnlySpan<byte>(_chars, 0, count);
             }
         }
 
@@ -28,8 +28,8 @@ namespace DotNetty.Common.Internal
                 return true;
             }
 
-            return other is object && this.pos == other.pos
-                && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(this.AsciiSpan), ref MemoryMarshal.GetReference(other.AsciiSpan), this.pos);
+            return other is object && _pos == other._pos
+                && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(AsciiSpan), ref MemoryMarshal.GetReference(other.AsciiSpan), _pos);
         }
 
         public override bool Equals(object obj)
@@ -39,14 +39,14 @@ namespace DotNetty.Common.Internal
             switch (obj)
             {
                 case AppendableCharSequence other:
-                    return this.pos == other.pos
-                        && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(this.AsciiSpan), ref MemoryMarshal.GetReference(other.AsciiSpan), this.pos);
+                    return _pos == other._pos
+                        && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(AsciiSpan), ref MemoryMarshal.GetReference(other.AsciiSpan), _pos);
 
                 case IHasAsciiSpan hasAscii:
-                    return this.AsciiSpan.SequenceEqual(hasAscii.AsciiSpan);
+                    return AsciiSpan.SequenceEqual(hasAscii.AsciiSpan);
 
                 case ICharSequence seq:
-                    return this.ContentEquals(seq);
+                    return ContentEquals(seq);
 
                 default:
                     return false;
@@ -63,11 +63,11 @@ namespace DotNetty.Common.Internal
                     return false;
 
                 case AppendableCharSequence comparand:
-                    return this.pos == comparand.pos
-                        && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(this.AsciiSpan), ref MemoryMarshal.GetReference(comparand.AsciiSpan), this.pos);
+                    return _pos == comparand._pos
+                        && SpanHelpers.SequenceEqual(ref MemoryMarshal.GetReference(AsciiSpan), ref MemoryMarshal.GetReference(comparand.AsciiSpan), _pos);
 
                 case IHasAsciiSpan hasAscii:
-                    return this.AsciiSpan.SequenceEqual(hasAscii.AsciiSpan);
+                    return AsciiSpan.SequenceEqual(hasAscii.AsciiSpan);
 
                 default:
                     return false;

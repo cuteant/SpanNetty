@@ -151,7 +151,7 @@ namespace DotNetty.Codecs.Compression
         {
             if (SharedConstants.False < (uint)Volatile.Read(ref this.finished))
             {
-                output.WriteBytes(message);
+                _ = output.WriteBytes(message);
                 return;
             }
 
@@ -174,7 +174,7 @@ namespace DotNetty.Codecs.Compression
                 else
                 {
                     var array = new byte[inputLength];
-                    message.GetBytes(message.ReaderIndex, array);
+                    _ = message.GetBytes(message.ReaderIndex, array);
                     this.z.next_in = array;
                     this.z.next_in_index = 0;
                 }
@@ -182,7 +182,7 @@ namespace DotNetty.Codecs.Compression
 
                 // Configure output.
                 int maxOutputLength = (int)Math.Ceiling(inputLength * 1.001) + 12 + this.wrapperOverhead;
-                output.EnsureWritable(maxOutputLength);
+                _ = output.EnsureWritable(maxOutputLength);
                 this.z.avail_out = maxOutputLength;
                 this.z.next_out = output.Array;
                 this.z.next_out_index = output.ArrayOffset + output.WriterIndex;
@@ -195,7 +195,7 @@ namespace DotNetty.Codecs.Compression
                 }
                 finally
                 {
-                    message.SkipBytes(this.z.next_in_index - oldNextInIndex);
+                    _ = message.SkipBytes(this.z.next_in_index - oldNextInIndex);
                 }
 
                 if (resultCode != JZlib.Z_OK)
@@ -206,7 +206,7 @@ namespace DotNetty.Codecs.Compression
                 int outputLength = this.z.next_out_index - oldNextOutIndex;
                 if (outputLength > 0)
                 {
-                    output.SetWriterIndex(output.WriterIndex + outputLength);
+                    _ = output.SetWriterIndex(output.WriterIndex + outputLength);
                 }
             }
             finally
@@ -219,10 +219,10 @@ namespace DotNetty.Codecs.Compression
         public override void Close(IChannelHandlerContext context, IPromise promise)
         {
             var completion = this.FinishEncode(context, context.NewPromise());
-            completion.ContinueWith(CloseOnCompleteAction, Tuple.Create(context, promise), TaskContinuationOptions.ExecuteSynchronously);
+            _ = completion.ContinueWith(CloseOnCompleteAction, Tuple.Create(context, promise), TaskContinuationOptions.ExecuteSynchronously);
             if (!completion.IsCompleted)
             {
-                ctx.Executor.Schedule(CloseHandlerContextAction, context, promise, TimeSpan.FromSeconds(10));
+                _ = ctx.Executor.Schedule(CloseHandlerContextAction, context, promise, TimeSpan.FromSeconds(10));
             }
         }
 
@@ -230,7 +230,7 @@ namespace DotNetty.Codecs.Compression
         {
             if (SharedConstants.False < (uint)Interlocked.Exchange(ref this.finished, SharedConstants.True))
             {
-                promise.TryComplete();
+                _ = promise.TryComplete();
                 return promise.Task;
             }
 
@@ -253,7 +253,7 @@ namespace DotNetty.Codecs.Compression
                 if (resultCode != JZlib.Z_OK && resultCode != JZlib.Z_STREAM_END)
                 {
                     var err = new CompressionException($"Compression failure ({resultCode}) {this.z.msg}");
-                    promise.TrySetException(err);
+                    _ = promise.TrySetException(err);
                     return promise.Task;
                 }
                 else if (this.z.next_out_index != 0)
@@ -267,7 +267,7 @@ namespace DotNetty.Codecs.Compression
             }
             finally
             {
-                this.z.DeflateEnd();
+                _ = this.z.DeflateEnd();
 
                 this.z.next_in = null;
                 this.z.next_out = null;
@@ -282,9 +282,9 @@ namespace DotNetty.Codecs.Compression
             var wrapped = (Tuple<IChannelHandlerContext, IPromise>)s;
             if (t.IsFaulted)
             {
-                wrapped.Item1.FireExceptionCaught(t.Exception.InnerException);
+                _ = wrapped.Item1.FireExceptionCaught(t.Exception.InnerException);
             }
-            wrapped.Item1.CloseAsync(wrapped.Item2);
+            _ = wrapped.Item1.CloseAsync(wrapped.Item2);
         }
 
         static readonly Action<object, object> CloseHandlerContextAction = CloseHandlerContext;

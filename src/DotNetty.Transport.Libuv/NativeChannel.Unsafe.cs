@@ -73,7 +73,7 @@ namespace DotNetty.Transport.Libuv
             void INativeUnsafe.FinishConnect(ConnectRequest request)
             {
                 var ch = _channel;
-                ch._connectCancellationTask?.Cancel();
+                _ = (ch._connectCancellationTask?.Cancel());
 
                 var promise = ch._connectPromise;
                 bool success = false;
@@ -87,11 +87,11 @@ namespace DotNetty.Transport.Libuv
                             if (error.ErrorCode == ErrorCode.ETIMEDOUT)
                             {
                                 // Connection timed out should use the standard ConnectTimeoutException
-                                promise.TrySetException(ThrowHelper.GetConnectTimeoutException(error));
+                                _ = promise.TrySetException(ThrowHelper.GetConnectTimeoutException(error));
                             }
                             else
                             {
-                                promise.TrySetException(ThrowHelper.GetChannelException(error));
+                                _ = promise.TrySetException(ThrowHelper.GetChannelException(error));
                             }
                         }
                         else
@@ -104,7 +104,7 @@ namespace DotNetty.Transport.Libuv
                             // event should be triggered, because what happened is what happened.
                             if (!wasActive && ch.Active)
                             {
-                                ch.Pipeline.FireChannelActive();
+                                _ = ch.Pipeline.FireChannelActive();
                             }
                         }
                     }
@@ -157,7 +157,7 @@ namespace DotNetty.Transport.Libuv
                 if (allocHandle.LastBytesRead <= 0)
                 {
                     // nothing was read -> release the buffer.
-                    buffer.Release();
+                    _ = buffer.Release();
                     close = allocHandle.LastBytesRead < 0;
                     if (close)
                     {
@@ -167,21 +167,21 @@ namespace DotNetty.Transport.Libuv
                 }
                 else
                 {
-                    buffer.SetWriterIndex(buffer.WriterIndex + operation.Status);
+                    _ = buffer.SetWriterIndex(buffer.WriterIndex + operation.Status);
                     allocHandle.IncMessagesRead(1);
 
                     ch.ReadPending = false;
-                    pipeline.FireChannelRead(buffer);
+                    _ = pipeline.FireChannelRead(buffer);
                 }
 
                 allocHandle.ReadComplete();
-                pipeline.FireChannelReadComplete();
+                _ = pipeline.FireChannelReadComplete();
 
                 if (close)
                 {
                     if (error is object)
                     {
-                        pipeline.FireExceptionCaught(ThrowHelper.GetChannelException(error));
+                        _ = pipeline.FireExceptionCaught(ThrowHelper.GetChannelException(error));
                     }
                     if (ch.Open) { Close(VoidPromise()); } // ## 苦竹 修改 this.CloseSafe(); ##
                 }
@@ -238,7 +238,7 @@ namespace DotNetty.Transport.Libuv
                     if (error is object)
                     {
                         input.FailFlushed(error, true);
-                        ch.Pipeline.FireExceptionCaught(error);
+                        _ = ch.Pipeline.FireExceptionCaught(error);
                         Close(VoidPromise(), ThrowHelper.GetChannelException_FailedToWrite(error), WriteClosedChannelException, false);
                     }
                     else

@@ -50,8 +50,8 @@ namespace DotNetty.Transport.Channels.Local
 
         protected override void DoBind(EndPoint localAddress)
         {
-            Interlocked.Exchange(ref v_localAddress, LocalChannelRegistry.Register(this, Volatile.Read(ref v_localAddress), localAddress));
-            Interlocked.Exchange(ref v_state, 1);
+            _ = Interlocked.Exchange(ref v_localAddress, LocalChannelRegistry.Register(this, Volatile.Read(ref v_localAddress), localAddress));
+            _ = Interlocked.Exchange(ref v_state, 1);
         }
 
         protected override void DoClose()
@@ -63,9 +63,9 @@ namespace DotNetty.Transport.Channels.Local
                 if (thisLocalAddr is object)
                 {
                     LocalChannelRegistry.Unregister(thisLocalAddr);
-                    Interlocked.Exchange(ref v_localAddress, null);
+                    _ = Interlocked.Exchange(ref v_localAddress, null);
                 }
-                Interlocked.Exchange(ref v_state, 2);
+                _ = Interlocked.Exchange(ref v_state, 2);
             }
         }
 
@@ -81,7 +81,7 @@ namespace DotNetty.Transport.Channels.Local
 
             if (_inboundBuffer.IsEmpty)
             {
-                Interlocked.Exchange(ref v_acceptInProgress, SharedConstants.True);
+                _ = Interlocked.Exchange(ref v_acceptInProgress, SharedConstants.True);
                 return;
             }
 
@@ -112,10 +112,10 @@ namespace DotNetty.Transport.Channels.Local
 
             while (inboundBuffer.TryDequeue(out object m))
             {
-                pipeline.FireChannelRead(m);
+                _ = pipeline.FireChannelRead(m);
             }
 
-            pipeline.FireChannelReadComplete();
+            _ = pipeline.FireChannelReadComplete();
         }
 
         /// <summary>
@@ -127,11 +127,11 @@ namespace DotNetty.Transport.Channels.Local
 
         void Serve0(LocalChannel child)
         {
-            _inboundBuffer.TryEnqueue(child);
+            _ = _inboundBuffer.TryEnqueue(child);
 
             if (SharedConstants.False < (uint)Volatile.Read(ref v_acceptInProgress))
             {
-                Interlocked.Exchange(ref v_acceptInProgress, SharedConstants.False);
+                _ = Interlocked.Exchange(ref v_acceptInProgress, SharedConstants.False);
                 ReadInbound();
             }
         }

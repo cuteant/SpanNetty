@@ -18,7 +18,7 @@ namespace DotNetty.Buffers
         {
             // ASCII uses 1 byte per char
             IByteBuffer buf = alloc.Buffer(seq.Count);
-            WriteAscii(buf, seq);
+            _ = WriteAscii(buf, seq);
             return buf;
         }
 
@@ -28,7 +28,7 @@ namespace DotNetty.Buffers
             int len = seq.Count;
             if (seq is AsciiString asciiString)
             {
-                buf.WriteBytes(asciiString.Array, asciiString.Offset, len);
+                _ = buf.WriteBytes(asciiString.Array, asciiString.Offset, len);
             }
             else
             {
@@ -44,7 +44,7 @@ namespace DotNetty.Buffers
                         case AbstractByteBuffer byteBuf:
                             byteBuf.EnsureWritable0(len);
                             int written = WriteAscii(byteBuf, byteBuf.WriterIndex, seq);
-                            byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
+                            _ = byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
                             return written;
 
                         case WrappedByteBuffer _:
@@ -54,7 +54,7 @@ namespace DotNetty.Buffers
 
                         default:
                             byte[] bytes = Encoding.ASCII.GetBytes(seq.ToString());
-                            buf.WriteBytes(bytes);
+                            _ = buf.WriteBytes(bytes);
                             return bytes.Length;
                     }
                 }
@@ -66,7 +66,7 @@ namespace DotNetty.Buffers
         {
             // ASCII uses 1 byte per char
             IByteBuffer buf = alloc.Buffer(value.Length);
-            WriteAscii(buf, value);
+            _ = WriteAscii(buf, value);
             return buf;
         }
 
@@ -86,7 +86,7 @@ namespace DotNetty.Buffers
                     case AbstractByteBuffer byteBuf:
                         byteBuf.EnsureWritable0(len);
                         int written = WriteAscii(byteBuf, byteBuf.WriterIndex, value);
-                        byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
+                        _ = byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
                         return written;
 
                     case WrappedByteBuffer _:
@@ -96,7 +96,7 @@ namespace DotNetty.Buffers
 
                     default:
                         byte[] bytes = Encoding.ASCII.GetBytes(value);
-                        buf.WriteBytes(bytes);
+                        _ = buf.WriteBytes(bytes);
                         return bytes.Length;
                 }
             }
@@ -107,7 +107,7 @@ namespace DotNetty.Buffers
         {
             if (seq is IHasAsciiSpan hasAscii)
             {
-                buffer.SetBytes(writerIndex, hasAscii.AsciiSpan);
+                _ = buffer.SetBytes(writerIndex, hasAscii.AsciiSpan);
                 return seq.Count;
             }
             if (seq is IHasUtf16Span hasUtf16)
@@ -159,7 +159,7 @@ namespace DotNetty.Buffers
             try
             {
                 WriteAscii0(utf16Source, memory.AsSpan(), length);
-                buffer.SetBytes(writerIndex, memory, 0, length);
+                _ = buffer.SetBytes(writerIndex, memory, 0, length);
             }
             finally
             {

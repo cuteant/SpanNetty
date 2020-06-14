@@ -18,7 +18,7 @@ namespace DotNetty.Common.Internal
             set
             {
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-                Interlocked.Exchange(ref defaultPlatform, value);
+                _ = Interlocked.Exchange(ref defaultPlatform, value);
             }
         }
 

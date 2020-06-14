@@ -39,7 +39,7 @@ namespace DotNetty.Codecs.Http
                 }
                 if (name is AsciiString asciiString)
                 {
-                    asciiString.ForEachByte(ByteProcessor);
+                    _ = asciiString.ForEachByte(ByteProcessor);
                 }
                 else
                 {
@@ -91,7 +91,7 @@ namespace DotNetty.Codecs.Http
         {
             if (httpHeaders is DefaultHttpHeaders defaultHttpHeaders)
             {
-                this.headers.Add(defaultHttpHeaders.headers);
+                _ = this.headers.Add(defaultHttpHeaders.headers);
                 return this;
             }
             return base.Add(httpHeaders);
@@ -101,7 +101,7 @@ namespace DotNetty.Codecs.Http
         {
             if (httpHeaders is DefaultHttpHeaders defaultHttpHeaders)
             {
-                this.headers.Set(defaultHttpHeaders.headers);
+                _ = this.headers.Set(defaultHttpHeaders.headers);
                 return this;
             }
             return base.Set(httpHeaders);
@@ -109,55 +109,55 @@ namespace DotNetty.Codecs.Http
 
         public override HttpHeaders Add(AsciiString name, object value)
         {
-            this.headers.AddObject(name, value);
+            _ = this.headers.AddObject(name, value);
             return this;
         }
 
         public override HttpHeaders AddInt(AsciiString name, int value)
         {
-            this.headers.AddInt(name, value);
+            _ = this.headers.AddInt(name, value);
             return this;
         }
 
         public override HttpHeaders AddShort(AsciiString name, short value)
         {
-            this.headers.AddShort(name, value);
+            _ = this.headers.AddShort(name, value);
             return this;
         }
 
         public override HttpHeaders Remove(AsciiString name)
         {
-            this.headers.Remove(name);
+            _ = this.headers.Remove(name);
             return this;
         }
 
         public override HttpHeaders Set(AsciiString name, object value)
         {
-            this.headers.SetObject(name, value);
+            _ = this.headers.SetObject(name, value);
             return this;
         }
 
         public override HttpHeaders Set(AsciiString name, IEnumerable<object> values)
         {
-            this.headers.SetObject(name, values);
+            _ = this.headers.SetObject(name, values);
             return this;
         }
 
         public override HttpHeaders SetInt(AsciiString name, int value)
         {
-            this.headers.SetInt(name, value);
+            _ = this.headers.SetInt(name, value);
             return this;
         }
 
         public override HttpHeaders SetShort(AsciiString name, short value)
         {
-            this.headers.SetShort(name, value);
+            _ = this.headers.SetShort(name, value);
             return this;
         }
 
         public override HttpHeaders Clear()
         {
-            this.headers.Clear();
+            _ = this.headers.Clear();
             return this;
         }
 

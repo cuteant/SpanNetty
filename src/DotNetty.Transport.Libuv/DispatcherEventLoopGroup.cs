@@ -42,7 +42,7 @@ namespace DotNetty.Transport.Libuv
 
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
         {
-            _dispatcherEventLoop.ShutdownGracefullyAsync(quietPeriod, timeout);
+            _ = _dispatcherEventLoop.ShutdownGracefullyAsync(quietPeriod, timeout);
             return TerminationCompletion;
         }
     }

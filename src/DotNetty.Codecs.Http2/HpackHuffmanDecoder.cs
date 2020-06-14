@@ -37,7 +37,7 @@ namespace DotNetty.Codecs.Http2
                 if ((uint)endIndex > SharedConstants.TooBigOrNegative) // == -1
                 {
                     // We did consume the requested length
-                    buf.SetReaderIndex(readerIndex + length);
+                    _ = buf.SetReaderIndex(readerIndex + length);
                     if ((_state & HUFFMAN_COMPLETE_SHIFT) != HUFFMAN_COMPLETE_SHIFT)
                     {
                         ThrowBadEncoding();
@@ -47,7 +47,7 @@ namespace DotNetty.Codecs.Http2
 
                 // The process(...) method returned before the requested length was requested. This means there
                 // was a bad encoding detected.
-                buf.SetReaderIndex(endIndex);
+                _ = buf.SetReaderIndex(endIndex);
                 throw s_badEncoding;
             }
             finally

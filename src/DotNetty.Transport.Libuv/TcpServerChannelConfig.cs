@@ -133,7 +133,7 @@ namespace DotNetty.Transport.Libuv
         {
             try
             {
-                tcpHandle.ReceiveBufferSize(value);
+                _ = tcpHandle.ReceiveBufferSize(value);
             }
             catch (ObjectDisposedException ex)
             {

@@ -73,7 +73,7 @@ namespace DotNetty.Buffers
             // copy then release
             public void TransferTo(IByteBuffer dst)
             {
-                dst.WriteBytes(Buffer, Idx(Offset), Length());
+                _ = dst.WriteBytes(Buffer, Idx(Offset), Length());
                 Free();
             }
 
@@ -97,7 +97,7 @@ namespace DotNetty.Buffers
                 _slice = null;
                 // Release the original buffer since it may have a different
                 // refcount to the unwrapped buf (e.g. if PooledSlicedByteBuf)
-                SrcBuffer.Release();
+                _ = SrcBuffer.Release();
             }
         }
 
@@ -141,7 +141,7 @@ namespace DotNetty.Buffers
         internal CompositeByteBuffer(IByteBufferAllocator alloc, bool direct, int maxNumComponents, IByteBuffer[] buffers, int offset)
             : this(alloc, direct, maxNumComponents, buffers.Length - offset)
         {
-            AddComponents0(false, 0, buffers, offset);
+            _ = AddComponents0(false, 0, buffers, offset);
             ConsolidateIfNeeded();
             SetIndex0(0, Capacity);
         }
@@ -149,8 +149,8 @@ namespace DotNetty.Buffers
         public CompositeByteBuffer(IByteBufferAllocator allocator, bool direct, int maxNumComponents, IEnumerable<IByteBuffer> buffers)
             : this(allocator, direct, maxNumComponents, buffers is ICollection<IByteBuffer> bufCol ? bufCol.Count : 0)
         {
-            AddComponents(false, 0, buffers);
-            SetIndex(0, Capacity);
+            _ = AddComponents(false, 0, buffers);
+            _ = SetIndex(0, Capacity);
         }
 
         static ComponentEntry[] NewCompArray(int initComponents, int maxNumComponents)
@@ -209,7 +209,7 @@ namespace DotNetty.Buffers
         public virtual CompositeByteBuffer AddComponents(bool increaseWriterIndex, params IByteBuffer[] buffers)
         {
             if (buffers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffers); }
-            AddComponents0(increaseWriterIndex, _componentCount, buffers, 0);
+            _ = AddComponents0(increaseWriterIndex, _componentCount, buffers, 0);
             ConsolidateIfNeeded();
             return this;
         }
@@ -222,7 +222,7 @@ namespace DotNetty.Buffers
         public virtual CompositeByteBuffer AddComponent(bool increaseWriterIndex, int cIndex, IByteBuffer buffer)
         {
             if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
-            AddComponent0(increaseWriterIndex, cIndex, buffer);
+            _ = AddComponent0(increaseWriterIndex, cIndex, buffer);
             ConsolidateIfNeeded();
             return this;
         }
@@ -258,7 +258,7 @@ namespace DotNetty.Buffers
             {
                 if (!wasAdded)
                 {
-                    buffer.Release();
+                    _ = buffer.Release();
                 }
             }
         }
@@ -330,7 +330,7 @@ namespace DotNetty.Buffers
         public virtual CompositeByteBuffer AddComponents(int cIndex, params IByteBuffer[] buffers)
         {
             if (buffers is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffers); }
-            AddComponents0(false, cIndex, buffers, 0);
+            _ = AddComponents0(false, cIndex, buffers, 0);
             ConsolidateIfNeeded();
             return this;
         }
@@ -408,12 +408,12 @@ namespace DotNetty.Buffers
             int widx = buffer.WriterIndex;
             if (ridx == widx)
             {
-                buffer.Release();
+                _ = buffer.Release();
                 return this;
             }
             if (!(buffer is CompositeByteBuffer from))
             {
-                AddComponent0(increaseWriterIndex, _componentCount, buffer);
+                _ = AddComponent0(increaseWriterIndex, _componentCount, buffer);
                 ConsolidateIfNeeded();
                 return this;
             }
@@ -444,10 +444,10 @@ namespace DotNetty.Buffers
                 }
                 if (increaseWriterIndex)
                 {
-                    SetWriterIndex(writerIndexBefore + (widx - ridx));
+                    _ = SetWriterIndex(writerIndexBefore + (widx - ridx));
                 }
                 ConsolidateIfNeeded();
-                buffer.Release();
+                _ = buffer.Release();
                 buffer = null;
                 return this;
             }
@@ -458,7 +458,7 @@ namespace DotNetty.Buffers
                     // if we did not succeed, attempt to rollback any components that were added
                     if (increaseWriterIndex)
                     {
-                        SetWriterIndex(writerIndexBefore);
+                        _ = SetWriterIndex(writerIndexBefore);
                     }
                     for (int cidx = _componentCount - 1; cidx >= compCountBefore; cidx--)
                     {
@@ -916,7 +916,7 @@ namespace DotNetty.Buffers
             {
                 int paddingLength = newCapacity - oldCapacity;
                 IByteBuffer padding = AllocateBuffer(paddingLength).SetIndex(0, paddingLength);
-                AddComponent0(false, size, padding);
+                _ = AddComponent0(false, size, padding);
                 if (_componentCount >= _maxNumComponents)
                 {
                     // FIXME: No need to create a padding buffer and consolidate.
@@ -1141,7 +1141,7 @@ namespace DotNetty.Buffers
             {
                 ComponentEntry c = _components[i];
                 int localLength = Math.Min(length, c.EndOffset - index);
-                c.Buffer.GetBytes(c.Idx(index), dst, dstIndex, localLength);
+                _ = c.Buffer.GetBytes(c.Idx(index), dst, dstIndex, localLength);
                 index += localLength;
                 dstIndex += localLength;
                 length -= localLength;
@@ -1163,7 +1163,7 @@ namespace DotNetty.Buffers
             {
                 ComponentEntry c = _components[i];
                 int localLength = Math.Min(length, c.EndOffset - index);
-                c.Buffer.GetBytes(c.Idx(index), destination, localLength);
+                _ = c.Buffer.GetBytes(c.Idx(index), destination, localLength);
                 index += localLength;
                 length -= localLength;
                 i++;
@@ -1184,7 +1184,7 @@ namespace DotNetty.Buffers
             {
                 ComponentEntry c = _components[i];
                 int localLength = Math.Min(length, c.EndOffset - index);
-                c.Buffer.GetBytes(c.Idx(index), dst, dstIndex, localLength);
+                _ = c.Buffer.GetBytes(c.Idx(index), dst, dstIndex, localLength);
                 index += localLength;
                 dstIndex += localLength;
                 length -= localLength;
@@ -1196,14 +1196,14 @@ namespace DotNetty.Buffers
         public override IByteBuffer SetByte(int index, int value)
         {
             ComponentEntry c = FindComponent(index);
-            c.Buffer.SetByte(c.Idx(index), value);
+            _ = c.Buffer.SetByte(c.Idx(index), value);
             return this;
         }
 
         protected internal override void _SetByte(int index, int value)
         {
             ComponentEntry c = FindComponent0(index);
-            c.Buffer.SetByte(c.Idx(index), value);
+            _ = c.Buffer.SetByte(c.Idx(index), value);
         }
 
         protected internal override void _SetShort(int index, int value)
@@ -1211,7 +1211,7 @@ namespace DotNetty.Buffers
             ComponentEntry c = FindComponent0(index);
             if (index + 2 <= c.EndOffset)
             {
-                c.Buffer.SetShort(c.Idx(index), value);
+                _ = c.Buffer.SetShort(c.Idx(index), value);
             }
             else
             {
@@ -1225,7 +1225,7 @@ namespace DotNetty.Buffers
             ComponentEntry c = FindComponent0(index);
             if (index + 2 <= c.EndOffset)
             {
-                c.Buffer.SetShortLE(c.Idx(index), value);
+                _ = c.Buffer.SetShortLE(c.Idx(index), value);
             }
             else
             {
@@ -1239,7 +1239,7 @@ namespace DotNetty.Buffers
             ComponentEntry c = FindComponent0(index);
             if (index + 3 <= c.EndOffset)
             {
-                c.Buffer.SetMedium(c.Idx(index), value);
+                _ = c.Buffer.SetMedium(c.Idx(index), value);
             }
             else
             {
@@ -1253,7 +1253,7 @@ namespace DotNetty.Buffers
             ComponentEntry c = FindComponent0(index);
             if (index + 3 <= c.EndOffset)
             {
-                c.Buffer.SetMediumLE(c.Idx(index), value);
+                _ = c.Buffer.SetMediumLE(c.Idx(index), value);
             }
             else
             {
@@ -1267,7 +1267,7 @@ namespace DotNetty.Buffers
             ComponentEntry c = FindComponent0(index);
             if (index + 4 <= c.EndOffset)
             {
-                c.Buffer.SetInt(c.Idx(index), value);
+                _ = c.Buffer.SetInt(c.Idx(index), value);
             }
             else
             {
@@ -1281,7 +1281,7 @@ namespace DotNetty.Buffers
             ComponentEntry c = FindComponent0(index);
             if (index + 4 <= c.EndOffset)
             {
-                c.Buffer.SetIntLE(c.Idx(index), value);
+                _ = c.Buffer.SetIntLE(c.Idx(index), value);
             }
             else
             {
@@ -1295,7 +1295,7 @@ namespace DotNetty.Buffers
             ComponentEntry c = FindComponent0(index);
             if (index + 8 <= c.EndOffset)
             {
-                c.Buffer.SetLong(c.Idx(index), value);
+                _ = c.Buffer.SetLong(c.Idx(index), value);
             }
             else
             {
@@ -1309,7 +1309,7 @@ namespace DotNetty.Buffers
             ComponentEntry c = FindComponent0(index);
             if (index + 8 <= c.EndOffset)
             {
-                c.Buffer.SetLongLE(c.Idx(index), value);
+                _ = c.Buffer.SetLongLE(c.Idx(index), value);
             }
             else
             {
@@ -1331,7 +1331,7 @@ namespace DotNetty.Buffers
             {
                 ComponentEntry c = _components[i];
                 int localLength = Math.Min(length, c.EndOffset - index);
-                c.Buffer.SetBytes(c.Idx(index), src, srcIndex, localLength);
+                _ = c.Buffer.SetBytes(c.Idx(index), src, srcIndex, localLength);
                 index += localLength;
                 srcIndex += localLength;
                 length -= localLength;
@@ -1400,7 +1400,7 @@ namespace DotNetty.Buffers
             {
                 ComponentEntry c = _components[i];
                 int localLength = Math.Min(length, c.EndOffset - index);
-                c.Buffer.SetBytes(c.Idx(index), src, srcIndex, localLength);
+                _ = c.Buffer.SetBytes(c.Idx(index), src, srcIndex, localLength);
                 index += localLength;
                 srcIndex += localLength;
                 length -= localLength;
@@ -1424,7 +1424,7 @@ namespace DotNetty.Buffers
                 IByteBuffer s = c.Buffer;
                 int adjustment = c.Offset;
                 int localLength = Math.Min(length, s.Capacity - (index - adjustment));
-                s.SetZero(index - adjustment, localLength);
+                _ = s.SetZero(index - adjustment, localLength);
                 index += localLength;
                 length -= localLength;
                 i++;
@@ -1452,14 +1452,14 @@ namespace DotNetty.Buffers
             {
                 ComponentEntry c = _components[i];
                 int localLength = Math.Min(length, c.EndOffset - index);
-                c.Buffer.GetBytes(c.Idx(index), dst, dstIndex, localLength);
+                _ = c.Buffer.GetBytes(c.Idx(index), dst, dstIndex, localLength);
                 index += localLength;
                 dstIndex += localLength;
                 length -= localLength;
                 i++;
             }
 
-            dst.SetWriterIndex(dst.Capacity);
+            _ = dst.SetWriterIndex(dst.Capacity);
         }
 
         /// <summary>
@@ -1615,7 +1615,7 @@ namespace DotNetty.Buffers
                 }
                 _lastAccessed = null;
                 ClearComps();
-                SetIndex(0, 0);
+                _ = SetIndex(0, 0);
                 AdjustMarkers(readerIndex);
                 return this;
             }
@@ -1646,7 +1646,7 @@ namespace DotNetty.Buffers
             // Update indexes and markers.
             int offset = c.Offset;
             UpdateComponentOffsets(0);
-            SetIndex(readerIndex - offset, writerIndex - offset);
+            _ = SetIndex(readerIndex - offset, writerIndex - offset);
             AdjustMarkers(offset);
             return this;
         }
@@ -1671,7 +1671,7 @@ namespace DotNetty.Buffers
                 }
                 _lastAccessed = null;
                 ClearComps();
-                SetIndex(0, 0);
+                _ = SetIndex(0, 0);
                 AdjustMarkers(readerIndex);
                 return this;
             }
@@ -1711,7 +1711,7 @@ namespace DotNetty.Buffers
 
             // Update indexes and markers.
             UpdateComponentOffsets(0);
-            SetIndex(0, writerIndex - readerIndex);
+            _ = SetIndex(0, writerIndex - readerIndex);
             AdjustMarkers(readerIndex);
             return this;
         }

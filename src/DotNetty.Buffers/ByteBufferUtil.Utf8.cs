@@ -36,7 +36,7 @@ namespace DotNetty.Buffers
             // UTF-8 uses max. 3 bytes per char, so calculate the worst case.
             var maxByteCount = Utf8MaxBytes(seq);
             IByteBuffer buf = alloc.Buffer(maxByteCount);
-            ReserveAndWriteUtf8(buf, seq, maxByteCount);
+            _ = ReserveAndWriteUtf8(buf, seq, maxByteCount);
             return buf;
         }
 
@@ -176,7 +176,7 @@ namespace DotNetty.Buffers
                 var status = TextEncodings.Utf16.ToUtf8(utf16Span, tempArray.AsSpan(), out _, out written);
                 if (status == OperationStatus.Done)
                 {
-                    buffer.SetBytes(writerIndex, tempArray, 0, written);
+                    _ = buffer.SetBytes(writerIndex, tempArray, 0, written);
                     return true;
                 }
                 return false;
@@ -239,7 +239,7 @@ namespace DotNetty.Buffers
             // UTF-8 uses max. 3 bytes per char, so calculate the worst case.
             var maxByteCount = Utf8MaxBytes(value);
             IByteBuffer buf = alloc.Buffer(maxByteCount);
-            ReserveAndWriteUtf8(buf, value.AsSpan(), maxByteCount);
+            _ = ReserveAndWriteUtf8(buf, value.AsSpan(), maxByteCount);
             return buf;
         }
 
@@ -274,7 +274,7 @@ namespace DotNetty.Buffers
                     case AbstractByteBuffer byteBuf:
                         byteBuf.EnsureWritable0(reserveBytes);
                         int written = WriteUtf8(byteBuf, byteBuf.WriterIndex, chars);
-                        byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
+                        _ = byteBuf.SetWriterIndex(byteBuf.WriterIndex + written);
                         return written;
 
                     case WrappedByteBuffer _:
@@ -291,7 +291,7 @@ namespace DotNetty.Buffers
                                 (tempArray = ArrayPool<byte>.Shared.Rent(reserveBytes));
                             var result = TextEncodings.Utf16.ToUtf8(chars, utf8Bytes, out _, out int bytesWritten);
                             Debug.Assert(result == OperationStatus.Done);
-                            buf.WriteBytes(utf8Bytes.Slice(0, bytesWritten));
+                            _ = buf.WriteBytes(utf8Bytes.Slice(0, bytesWritten));
                             return bytesWritten;
                         }
                         finally

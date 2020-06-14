@@ -23,8 +23,8 @@ namespace DotNetty.Codecs.Http2
     public sealed class ReadOnlyHttp2Headers : IHttp2Headers
     {
         private const byte PseudoHeaderToken = (byte)':';
-        private readonly AsciiString[] pseudoHeaders;
-        private readonly AsciiString[] otherHeaders;
+        private readonly AsciiString[] _pseudoHeaders;
+        private readonly AsciiString[] _otherHeaders;
 
         /// <summary>
         /// Used to create read only object designed to represent trailers.
@@ -103,8 +103,8 @@ namespace DotNetty.Codecs.Http2
             {
                 ValidateHeaders(pseudoHeaders, otherHeaders);
             }
-            this.pseudoHeaders = pseudoHeaders;
-            this.otherHeaders = otherHeaders;
+            _pseudoHeaders = pseudoHeaders;
+            _otherHeaders = otherHeaders;
         }
 
         private static void ValidateHeaders(AsciiString[] pseudoHeaders, params AsciiString[] otherHeaders)
@@ -146,23 +146,23 @@ namespace DotNetty.Codecs.Http2
         {
             var nameHash = AsciiString.GetHashCode(name);
 
-            var pseudoHeadersEnd = pseudoHeaders.Length - 1;
+            var pseudoHeadersEnd = _pseudoHeaders.Length - 1;
             for (int i = 0; i < pseudoHeadersEnd; i += 2)
             {
-                AsciiString roName = pseudoHeaders[i];
+                AsciiString roName = _pseudoHeaders[i];
                 if (roName.GetHashCode() == nameHash && roName.ContentEqualsIgnoreCase(name))
                 {
-                    return pseudoHeaders[i + 1];
+                    return _pseudoHeaders[i + 1];
                 }
             }
 
-            var otherHeadersEnd = otherHeaders.Length - 1;
+            var otherHeadersEnd = _otherHeaders.Length - 1;
             for (int i = 0; i < otherHeadersEnd; i += 2)
             {
-                AsciiString roName = otherHeaders[i];
+                AsciiString roName = _otherHeaders[i];
                 if (roName.GetHashCode() == nameHash && roName.ContentEqualsIgnoreCase(name))
                 {
-                    return otherHeaders[i + 1];
+                    return _otherHeaders[i + 1];
                 }
             }
             return null;
@@ -174,9 +174,9 @@ namespace DotNetty.Codecs.Http2
         public ICharSequence Path { get => Get(PseudoHeaderName.Path.Value, null); set => throw new NotSupportedException("read only"); }
         public ICharSequence Status { get => Get(PseudoHeaderName.Status.Value, null); set => throw new NotSupportedException("read only"); }
 
-        public int Size => (this.pseudoHeaders.Length + this.otherHeaders.Length).RightUShift(1);
+        public int Size => (_pseudoHeaders.Length + _otherHeaders.Length).RightUShift(1);
 
-        public bool IsEmpty => 0u >= (uint)this.pseudoHeaders.Length && 0u >= (uint)this.otherHeaders.Length;
+        public bool IsEmpty => 0u >= (uint)_pseudoHeaders.Length && 0u >= (uint)_otherHeaders.Length;
 
         public bool Contains(ICharSequence name, ICharSequence value, bool caseInsensitive)
         {
@@ -184,8 +184,8 @@ namespace DotNetty.Codecs.Http2
             var strategy = caseInsensitive ? AsciiString.CaseInsensitiveHasher : AsciiString.CaseSensitiveHasher;
             var valueHash = strategy.HashCode(value);
 
-            return Contains(name, nameHash, value, valueHash, strategy, otherHeaders)
-                || Contains(name, nameHash, value, valueHash, strategy, pseudoHeaders);
+            return Contains(name, nameHash, value, valueHash, strategy, _otherHeaders)
+                || Contains(name, nameHash, value, valueHash, strategy, _pseudoHeaders);
         }
 
         private static bool Contains(ICharSequence name, int nameHash, ICharSequence value, int valueHash,
@@ -207,13 +207,13 @@ namespace DotNetty.Codecs.Http2
 
         public bool TryGet(ICharSequence name, out ICharSequence value)
         {
-            value = this.Get0(name);
+            value = Get0(name);
             return value is object;
         }
 
         public ICharSequence Get(ICharSequence name, ICharSequence defaultValue)
         {
-            var value = this.Get0(name);
+            var value = Get0(name);
             return value ?? defaultValue;
         }
 
@@ -232,23 +232,23 @@ namespace DotNetty.Codecs.Http2
             var nameHash = AsciiString.GetHashCode(name);
             var values = new List<ICharSequence>();
 
-            var pseudoHeadersEnd = pseudoHeaders.Length - 1;
+            var pseudoHeadersEnd = _pseudoHeaders.Length - 1;
             for (int i = 0; i < pseudoHeadersEnd; i += 2)
             {
-                AsciiString roName = pseudoHeaders[i];
+                AsciiString roName = _pseudoHeaders[i];
                 if (roName.GetHashCode() == nameHash && roName.ContentEqualsIgnoreCase(name))
                 {
-                    values.Add(pseudoHeaders[i + 1]);
+                    values.Add(_pseudoHeaders[i + 1]);
                 }
             }
 
-            var otherHeadersEnd = otherHeaders.Length - 1;
+            var otherHeadersEnd = _otherHeaders.Length - 1;
             for (int i = 0; i < otherHeadersEnd; i += 2)
             {
-                AsciiString roName = otherHeaders[i];
+                AsciiString roName = _otherHeaders[i];
                 if (roName.GetHashCode() == nameHash && roName.ContentEqualsIgnoreCase(name))
                 {
-                    values.Add(otherHeaders[i + 1]);
+                    values.Add(_otherHeaders[i + 1]);
                 }
             }
 
@@ -262,7 +262,7 @@ namespace DotNetty.Codecs.Http2
 
         public bool TryGetBoolean(ICharSequence name, out bool value)
         {
-            AsciiString rawValue = this.Get0(name);
+            AsciiString rawValue = Get0(name);
 
             if (rawValue is object)
             {
@@ -273,11 +273,11 @@ namespace DotNetty.Codecs.Http2
             return false;
         }
 
-        public bool GetBoolean(ICharSequence name, bool defaultValue) => this.TryGetBoolean(name, out var v) ? v : defaultValue;
+        public bool GetBoolean(ICharSequence name, bool defaultValue) => TryGetBoolean(name, out var v) ? v : defaultValue;
 
         public bool TryGetByte(ICharSequence name, out byte value)
         {
-            AsciiString rawValue = this.Get0(name);
+            AsciiString rawValue = Get0(name);
 
             if (rawValue is object)
             {
@@ -288,11 +288,11 @@ namespace DotNetty.Codecs.Http2
             return false;
         }
 
-        public byte GetByte(ICharSequence name, byte defaultValue) => this.TryGetByte(name, out var v) ? v : defaultValue;
+        public byte GetByte(ICharSequence name, byte defaultValue) => TryGetByte(name, out var v) ? v : defaultValue;
 
         public bool TryGetChar(ICharSequence name, out char value)
         {
-            AsciiString rawValue = this.Get0(name);
+            AsciiString rawValue = Get0(name);
 
             if (rawValue is object)
             {
@@ -303,11 +303,11 @@ namespace DotNetty.Codecs.Http2
             return false;
         }
 
-        public char GetChar(ICharSequence name, char defaultValue) => this.TryGetChar(name, out var v) ? v : defaultValue;
+        public char GetChar(ICharSequence name, char defaultValue) => TryGetChar(name, out var v) ? v : defaultValue;
 
         public bool TryGetShort(ICharSequence name, out short value)
         {
-            AsciiString rawValue = this.Get0(name);
+            AsciiString rawValue = Get0(name);
 
             if (rawValue is object)
             {
@@ -318,11 +318,11 @@ namespace DotNetty.Codecs.Http2
             return false;
         }
 
-        public short GetShort(ICharSequence name, short defaultValue) => this.TryGetShort(name, out var v) ? v : defaultValue;
+        public short GetShort(ICharSequence name, short defaultValue) => TryGetShort(name, out var v) ? v : defaultValue;
 
         public bool TryGetInt(ICharSequence name, out int value)
         {
-            AsciiString rawValue = this.Get0(name);
+            AsciiString rawValue = Get0(name);
 
             if (rawValue is object)
             {
@@ -333,11 +333,11 @@ namespace DotNetty.Codecs.Http2
             return false;
         }
 
-        public int GetInt(ICharSequence name, int defaultValue) => this.TryGetInt(name, out var v) ? v : defaultValue;
+        public int GetInt(ICharSequence name, int defaultValue) => TryGetInt(name, out var v) ? v : defaultValue;
 
         public bool TryGetLong(ICharSequence name, out long value)
         {
-            AsciiString rawValue = this.Get0(name);
+            AsciiString rawValue = Get0(name);
 
             if (rawValue is object)
             {
@@ -348,11 +348,11 @@ namespace DotNetty.Codecs.Http2
             return false;
         }
 
-        public long GetLong(ICharSequence name, long defaultValue) => this.TryGetLong(name, out var v) ? v : defaultValue;
+        public long GetLong(ICharSequence name, long defaultValue) => TryGetLong(name, out var v) ? v : defaultValue;
 
         public bool TryGetFloat(ICharSequence name, out float value)
         {
-            AsciiString rawValue = this.Get0(name);
+            AsciiString rawValue = Get0(name);
 
             if (rawValue is object)
             {
@@ -363,11 +363,11 @@ namespace DotNetty.Codecs.Http2
             return false;
         }
 
-        public float GetFloat(ICharSequence name, float defaultValue) => this.TryGetFloat(name, out var v) ? v : defaultValue;
+        public float GetFloat(ICharSequence name, float defaultValue) => TryGetFloat(name, out var v) ? v : defaultValue;
 
         public bool TryGetDouble(ICharSequence name, out double value)
         {
-            AsciiString rawValue = this.Get0(name);
+            AsciiString rawValue = Get0(name);
 
             if (rawValue is object)
             {
@@ -378,11 +378,11 @@ namespace DotNetty.Codecs.Http2
             return false;
         }
 
-        public double GetDouble(ICharSequence name, double defaultValue) => this.TryGetDouble(name, out var v) ? v : defaultValue;
+        public double GetDouble(ICharSequence name, double defaultValue) => TryGetDouble(name, out var v) ? v : defaultValue;
 
         public bool TryGetTimeMillis(ICharSequence name, out long value)
         {
-            AsciiString rawValue = this.Get0(name);
+            AsciiString rawValue = Get0(name);
 
             if (rawValue is object)
             {
@@ -393,7 +393,7 @@ namespace DotNetty.Codecs.Http2
             return false;
         }
 
-        public long GetTimeMillis(ICharSequence name, long defaultValue) => this.TryGetTimeMillis(name, out var v) ? v : defaultValue;
+        public long GetTimeMillis(ICharSequence name, long defaultValue) => TryGetTimeMillis(name, out var v) ? v : defaultValue;
 
         public bool TryGetBooleanAndRemove(ICharSequence name, out bool value)
         {
@@ -485,45 +485,45 @@ namespace DotNetty.Codecs.Http2
             throw new NotSupportedException("read only");
         }
 
-        public bool Contains(ICharSequence name) => this.Get0(name) is object;
+        public bool Contains(ICharSequence name) => Get0(name) is object;
 
-        public bool Contains(ICharSequence name, ICharSequence value) => this.Contains(name, value, false);
+        public bool Contains(ICharSequence name, ICharSequence value) => Contains(name, value, false);
 
-        public bool ContainsObject(ICharSequence name, object value) => this.Contains(name, CharSequenceValueConverter.Default.ConvertObject(value));
+        public bool ContainsObject(ICharSequence name, object value) => Contains(name, CharSequenceValueConverter.Default.ConvertObject(value));
 
-        public bool ContainsBoolean(ICharSequence name, bool value) => this.Contains(name, CharSequenceValueConverter.Default.ConvertBoolean(value));
+        public bool ContainsBoolean(ICharSequence name, bool value) => Contains(name, CharSequenceValueConverter.Default.ConvertBoolean(value));
 
-        public bool ContainsByte(ICharSequence name, byte value) => this.Contains(name, CharSequenceValueConverter.Default.ConvertByte(value));
+        public bool ContainsByte(ICharSequence name, byte value) => Contains(name, CharSequenceValueConverter.Default.ConvertByte(value));
 
-        public bool ContainsChar(ICharSequence name, char value) => this.Contains(name, CharSequenceValueConverter.Default.ConvertChar(value));
+        public bool ContainsChar(ICharSequence name, char value) => Contains(name, CharSequenceValueConverter.Default.ConvertChar(value));
 
-        public bool ContainsShort(ICharSequence name, short value) => this.Contains(name, CharSequenceValueConverter.Default.ConvertShort(value));
+        public bool ContainsShort(ICharSequence name, short value) => Contains(name, CharSequenceValueConverter.Default.ConvertShort(value));
 
-        public bool ContainsInt(ICharSequence name, int value) => this.Contains(name, CharSequenceValueConverter.Default.ConvertInt(value));
+        public bool ContainsInt(ICharSequence name, int value) => Contains(name, CharSequenceValueConverter.Default.ConvertInt(value));
 
-        public bool ContainsLong(ICharSequence name, long value) => this.Contains(name, CharSequenceValueConverter.Default.ConvertLong(value));
+        public bool ContainsLong(ICharSequence name, long value) => Contains(name, CharSequenceValueConverter.Default.ConvertLong(value));
 
-        public bool ContainsFloat(ICharSequence name, float value) => this.Contains(name, CharSequenceValueConverter.Default.ConvertFloat(value));
+        public bool ContainsFloat(ICharSequence name, float value) => Contains(name, CharSequenceValueConverter.Default.ConvertFloat(value));
 
-        public bool ContainsDouble(ICharSequence name, double value) => this.Contains(name, CharSequenceValueConverter.Default.ConvertDouble(value));
+        public bool ContainsDouble(ICharSequence name, double value) => Contains(name, CharSequenceValueConverter.Default.ConvertDouble(value));
 
-        public bool ContainsTimeMillis(ICharSequence name, long value) => this.Contains(name, CharSequenceValueConverter.Default.ConvertTimeMillis(value));
+        public bool ContainsTimeMillis(ICharSequence name, long value) => Contains(name, CharSequenceValueConverter.Default.ConvertTimeMillis(value));
 
         public ISet<ICharSequence> Names()
         {
-            if (this.IsEmpty) { return new HashSet<ICharSequence>(); }
+            if (IsEmpty) { return new HashSet<ICharSequence>(); }
 
             var names = new HashSet<ICharSequence>();
-            var pseudoHeadersEnd = pseudoHeaders.Length - 1;
+            var pseudoHeadersEnd = _pseudoHeaders.Length - 1;
             for (int i = 0; i < pseudoHeadersEnd; i += 2)
             {
-                names.Add(pseudoHeaders[i]);
+                _ = names.Add(_pseudoHeaders[i]);
             }
 
-            var otherHeadersEnd = otherHeaders.Length - 1;
+            var otherHeadersEnd = _otherHeaders.Length - 1;
             for (int i = 0; i < otherHeadersEnd; i += 2)
             {
-                names.Add(otherHeaders[i]);
+                _ = names.Add(_otherHeaders[i]);
             }
             return names;
         }
@@ -685,20 +685,20 @@ namespace DotNetty.Codecs.Http2
 
         public IEnumerator<HeaderEntry<ICharSequence, ICharSequence>> GetEnumerator()
         {
-            var pseudoHeadersEnd = pseudoHeaders.Length - 1;
+            var pseudoHeadersEnd = _pseudoHeaders.Length - 1;
             for (int i = 0; i < pseudoHeadersEnd; i += 2)
             {
-                yield return new HeaderEntry<ICharSequence, ICharSequence>(pseudoHeaders[i], pseudoHeaders[i + 1], true);
+                yield return new HeaderEntry<ICharSequence, ICharSequence>(_pseudoHeaders[i], _pseudoHeaders[i + 1], true);
             }
 
-            var otherHeadersEnd = otherHeaders.Length - 1;
+            var otherHeadersEnd = _otherHeaders.Length - 1;
             for (int i = 0; i < otherHeadersEnd; i += 2)
             {
-                yield return new HeaderEntry<ICharSequence, ICharSequence>(otherHeaders[i], otherHeaders[i + 1], true);
+                yield return new HeaderEntry<ICharSequence, ICharSequence>(_otherHeaders[i], _otherHeaders[i + 1], true);
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public override string ToString()
         {
@@ -706,8 +706,8 @@ namespace DotNetty.Codecs.Http2
             string separator = "";
             foreach (var entry in this)
             {
-                builder.Append(separator);
-                builder.Append(entry.Key).Append(": ").Append(entry.Value);
+                _ = builder.Append(separator);
+                _ = builder.Append(entry.Key).Append(": ").Append(entry.Value);
                 separator = ", ";
             }
             return builder.Append(']').ToString();

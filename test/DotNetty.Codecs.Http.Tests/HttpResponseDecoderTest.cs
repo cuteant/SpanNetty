@@ -22,7 +22,7 @@ namespace DotNetty.Codecs.Http.Tests
             const int MaxHeaderSize = 8192;
 
             var ch = new EmbeddedChannel(new HttpResponseDecoder(4096, MaxHeaderSize, 8192));
-            var bytes = new byte[MaxHeaderSize / 2 - 2];
+            var bytes = new byte[MaxHeaderSize / 2 - 4];
             bytes.Fill((byte)'a');
 
             ch.WriteInbound(Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\n")));

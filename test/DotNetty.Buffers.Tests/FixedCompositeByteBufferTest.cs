@@ -331,11 +331,13 @@ namespace DotNetty.Buffers.Tests
         }
 
         [Fact]
-        public void TestHasArrayWhenEmpty()
+        public void TestHasArrayWhenEmptyAndIsDirect()
         {
             IByteBuffer buf = NewBuffer(new IByteBuffer[0]);
             Assert.True(buf.HasArray);
             Assert.Equal(Unpooled.Empty.Array, buf.Array);
+            Assert.Equal(Unpooled.Empty.IsDirect, buf.IsDirect);
+            Assert.Equal(Unpooled.Empty.AddressOfPinnedMemory(), buf.AddressOfPinnedMemory());
             buf.Release();
         }
 
