@@ -1,16 +1,13 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
 namespace DotNetty.Codecs.Http.WebSockets
 {
-    using System;
-    using System.Runtime.CompilerServices;
     using DotNetty.Common.Utilities;
 
     public sealed class WebSocketVersion
     {
-        public static readonly WebSocketVersion Unknown = new WebSocketVersion("");
+        public static readonly WebSocketVersion Unknown = new WebSocketVersion(string.Empty);
 
         // http://tools.ietf.org/html/draft-ietf-hybi-thewebsocketprotocol-00
         // draft-ietf-hybi-thewebsocketprotocol- 00.
@@ -29,7 +26,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         //draft-ietf-hybi-thewebsocketprotocol- 17>
         public static readonly WebSocketVersion V13 = new WebSocketVersion("13");
 
-        readonly AsciiString _value;
+        private readonly AsciiString _value;
 
         WebSocketVersion(string value)
         {
@@ -42,15 +39,6 @@ namespace DotNetty.Codecs.Http.WebSockets
         {
             if (this == Unknown) ThrowHelper.ThrowInvalidOperationException_UnknownWebSocketVersion();
             return _value;
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static void ThrowIfUnknown(WebSocketVersion webSocketVersion)
-        {
-            if (webSocketVersion == Unknown)
-            {
-                throw new InvalidOperationException("Unknown web socket version");
-            }
         }
     }
 }

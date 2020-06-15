@@ -323,6 +323,46 @@ namespace DotNetty.Codecs.Http.Tests
         }
 
         [Fact]
+        public void TooLargeInitialLineWithWSOnly()
+        {
+            TooLargeInitialLineWithControlCharsOnly("                    ");
+        }
+
+        [Fact]
+        public void TooLargeInitialLineWithCRLFOnly()
+        {
+            TooLargeInitialLineWithControlCharsOnly("\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n");
+        }
+
+        private static void TooLargeInitialLineWithControlCharsOnly(string controlChars)
+        {
+            EmbeddedChannel channel = new EmbeddedChannel(new HttpRequestDecoder(15, 1024, 1024));
+            string requestStr = controlChars + "GET / HTTP/1.1\r\n" +
+                    "Host: localhost1\r\n\r\n";
+
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(requestStr, Encoding.ASCII)));
+            var request = channel.ReadInbound<IHttpRequest>();
+            Assert.True(request.Result.IsFailure);
+            Assert.True(request.Result.Cause is TooLongFrameException);
+            Assert.False(channel.Finish());
+        }
+
+        [Fact]
+        public void InitialLineWithLeadingControlChars()
+        {
+            EmbeddedChannel channel = new EmbeddedChannel(new HttpRequestDecoder());
+            string crlf = "\r\n";
+            string request = crlf + "GET /some/path HTTP/1.1" + crlf +
+                    "Host: localhost" + crlf + crlf;
+            Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer(request, Encoding.ASCII)));
+            var req = channel.ReadInbound<IHttpRequest>();
+            Assert.Equal(HttpMethod.Get, req.Method);
+            Assert.Equal("/some/path", req.Uri);
+            Assert.Equal(HttpVersion.Http11, req.ProtocolVersion);
+            Assert.True(channel.FinishAndReleaseAll());
+        }
+
+        [Fact]
         public void TooLargeHeaders()
         {
             var channel = new EmbeddedChannel(new HttpRequestDecoder(1024, 10, 1024));

@@ -15,14 +15,15 @@ namespace DotNetty.Codecs.Http.Tests.Cookies
         public void EncodingSingleCookieV0()
         {
             const int MaxAge = 50;
-            const string Result = "myCookie=myValue; Max-Age=50; Expires=(.+?); Path=/apathsomewhere; Domain=.adomainsomewhere; Secure";
-
+            const string Result = "myCookie=myValue; Max-Age=50; Expires=(.+?); Path=/apathsomewhere;" +
+                    " Domain=.adomainsomewhere; Secure; SameSite=Lax";
             var cookie = new DefaultCookie("myCookie", "myValue")
             {
                 Domain = ".adomainsomewhere",
                 MaxAge = MaxAge,
                 Path = "/apathsomewhere",
-                IsSecure = true
+                IsSecure = true,
+                SameSite = SameSite.Lax
             };
             string encodedCookie = ServerCookieEncoder.StrictEncoder.Encode(cookie);
 

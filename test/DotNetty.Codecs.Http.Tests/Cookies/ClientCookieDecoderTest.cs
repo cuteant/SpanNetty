@@ -15,7 +15,7 @@ namespace DotNetty.Codecs.Http.Tests.Cookies
         {
             string cookieString = "myCookie=myValue;expires="
                     + DateFormatter.Format(DateTime.UtcNow.AddMilliseconds(50000))
-                    + ";path=/apathsomewhere;domain=.adomainsomewhere;secure;";
+                    + ";path=/apathsomewhere;domain=.adomainsomewhere;secure;SameSite=None";
             ICookie cookie = ClientCookieDecoder.StrictDecoder.Decode(cookieString);
             Assert.NotNull(cookie);
 
@@ -24,6 +24,8 @@ namespace DotNetty.Codecs.Http.Tests.Cookies
             Assert.True(cookie.MaxAge >= 40 && cookie.MaxAge <= 60, "maxAge should be about 50ms when parsing cookie " + cookieString);
             Assert.Equal("/apathsomewhere", cookie.Path);
             Assert.True(cookie.IsSecure);
+            Assert.True(cookie is DefaultCookie);
+            Assert.Equal(SameSite.None, ((DefaultCookie)cookie).SameSite.Value);
         }
 
         [Fact]

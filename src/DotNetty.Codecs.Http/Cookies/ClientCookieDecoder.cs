@@ -4,14 +4,10 @@
 namespace DotNetty.Codecs.Http.Cookies
 {
     using System;
-    using System.Collections.Generic;
     using DotNetty.Common.Utilities;
 
     public sealed class ClientCookieDecoder : CookieDecoder
     {
-        static readonly HashSet<char> _headerChars = new HashSet<char>(
-            new char[] { '\t', '\n', (char)0x0b, '\f', '\r', ' ', ';' });
-
         // Strict encoder that validates that name and value chars are in the valid scope
         // defined in RFC6265
         public static readonly ClientCookieDecoder StrictDecoder = new ClientCookieDecoder(true);
@@ -35,11 +31,11 @@ namespace DotNetty.Codecs.Http.Cookies
 
             CookieBuilder cookieBuilder = null;
             //loop:
-            for (int i = 0;;)
+            for (int i = 0; ;)
             {
 
                 // Skip spaces and separators.
-                while(true)
+                while (true)
                 {
                     if (i == headerLen)
                     {
@@ -53,7 +49,7 @@ namespace DotNetty.Codecs.Http.Cookies
                         goto loop;
 
                     }
-                    else if (_headerChars.Contains(c))
+                    else if (IsSpace(c))
                     {
                         i++;
                         continue;
@@ -108,7 +104,7 @@ namespace DotNetty.Codecs.Http.Cookies
                     }
                 }
 
-                loop0:
+            loop0:
                 if (valueEnd > 0 && header[valueEnd - 1] == HttpConstants.CommaChar)
                 {
                     // old multiple cookies separator, skipping it
@@ -118,7 +114,7 @@ namespace DotNetty.Codecs.Http.Cookies
                 if (cookieBuilder is null)
                 {
                     // cookie name-value pair
-                    DefaultCookie cookie = this.InitCookie(header, nameBegin, nameEnd, valueBegin, valueEnd);
+                    DefaultCookie cookie = InitCookie(header, nameBegin, nameEnd, valueBegin, valueEnd);
 
                     if (cookie is null)
                     {
@@ -134,38 +130,56 @@ namespace DotNetty.Codecs.Http.Cookies
                 }
             }
 
-            loop:
+        loop:
             return cookieBuilder?.Cookie();
+        }
+
+        static bool IsSpace(char c)
+        {
+            switch (c)
+            {
+                case '\t':
+                case '\n':
+                case (char)0x0b:
+                case '\f':
+                case '\r':
+                case ' ':
+                case ';':
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         sealed class CookieBuilder
         {
-            readonly string header;
-            readonly DefaultCookie cookie;
-            string domain;
-            string path;
-            long maxAge = long.MinValue;
-            int expiresStart;
-            int expiresEnd;
-            bool secure;
-            bool httpOnly;
+            private readonly string _header;
+            private readonly DefaultCookie _cookie;
+            private string _domain;
+            private string _path;
+            private long _maxAge = long.MinValue;
+            private int _expiresStart;
+            private int _expiresEnd;
+            private bool _secure;
+            private bool _httpOnly;
+            private SameSite? _sameSite;
 
             internal CookieBuilder(DefaultCookie cookie, string header)
             {
-                this.cookie = cookie;
-                this.header = header;
+                _cookie = cookie;
+                _header = header;
             }
 
             long MergeMaxAgeAndExpires()
             {
                 // max age has precedence over expires
-                if (this.maxAge != long.MinValue)
+                if (_maxAge != long.MinValue)
                 {
-                    return this.maxAge;
+                    return _maxAge;
                 }
-                else if (IsValueDefined(this.expiresStart, this.expiresEnd))
+                else if (IsValueDefined(_expiresStart, _expiresEnd))
                 {
-                    DateTime? expiresDate = DateFormatter.ParseHttpDate(this.header, this.expiresStart, this.expiresEnd);
+                    DateTime? expiresDate = DateFormatter.ParseHttpDate(_header, _expiresStart, _expiresEnd);
                     if (expiresDate is object)
                     {
                         return (expiresDate.Value.Ticks - DateTime.UtcNow.Ticks) / TimeSpan.TicksPerSecond;
@@ -176,13 +190,13 @@ namespace DotNetty.Codecs.Http.Cookies
 
             internal ICookie Cookie()
             {
-                this.cookie.Domain = this.domain;
-                this.cookie.Path = this.path;
-                this.cookie.MaxAge = this.MergeMaxAgeAndExpires();
-                this.cookie.IsSecure = this.secure;
-                this.cookie.IsHttpOnly = this.httpOnly;
-
-                return this.cookie;
+                _cookie.Domain = _domain;
+                _cookie.Path = _path;
+                _cookie.MaxAge = MergeMaxAgeAndExpires();
+                _cookie.IsSecure = _secure;
+                _cookie.IsHttpOnly = _httpOnly;
+                _cookie.SameSite = _sameSite;
+                return _cookie;
             }
 
             public void AppendAttribute(int keyStart, int keyEnd, int valueStart, int valueEnd)
@@ -192,40 +206,40 @@ namespace DotNetty.Codecs.Http.Cookies
                 switch (length)
                 {
                     case 4:
-                        this.Parse4(keyStart, valueStart, valueEnd);
+                        Parse4(keyStart, valueStart, valueEnd);
                         break;
 
                     case 6:
-                        this.Parse6(keyStart, valueStart, valueEnd);
+                        Parse6(keyStart, valueStart, valueEnd);
                         break;
 
                     case 7:
-                        this.Parse7(keyStart, valueStart, valueEnd);
+                        Parse7(keyStart, valueStart, valueEnd);
                         break;
 
                     case 8:
-                        this.Parse8(keyStart);
+                        Parse8(keyStart, valueStart, valueEnd);
                         break;
                 }
             }
 
             void Parse4(int nameStart, int valueStart, int valueEnd)
             {
-                if (CharUtil.RegionMatchesIgnoreCase(this.header, nameStart, CookieHeaderNames.Path, 0, 4))
+                if (CharUtil.RegionMatchesIgnoreCase(_header, nameStart, CookieHeaderNames.Path, 0, 4))
                 {
-                    this.path = this.ComputeValue(valueStart, valueEnd);
+                    _path = ComputeValue(valueStart, valueEnd);
                 }
             }
 
             void Parse6(int nameStart, int valueStart, int valueEnd)
             {
-                if (CharUtil.RegionMatchesIgnoreCase(this.header, nameStart, CookieHeaderNames.Domain, 0, 5))
+                if (CharUtil.RegionMatchesIgnoreCase(_header, nameStart, CookieHeaderNames.Domain, 0, 5))
                 {
-                    this.domain = this.ComputeValue(valueStart, valueEnd);
+                    _domain = ComputeValue(valueStart, valueEnd);
                 }
-                else if (CharUtil.RegionMatchesIgnoreCase(this.header, nameStart, CookieHeaderNames.Secure, 0, 5))
+                else if (CharUtil.RegionMatchesIgnoreCase(_header, nameStart, CookieHeaderNames.Secure, 0, 5))
                 {
-                    this.secure = true;
+                    _secure = true;
                 }
             }
 
@@ -233,35 +247,39 @@ namespace DotNetty.Codecs.Http.Cookies
             {
                 if (long.TryParse(value, out long v))
                 {
-                    this.maxAge = Math.Max(v, 0);
+                    _maxAge = Math.Max(v, 0);
                 }
             }
 
             void Parse7(int nameStart, int valueStart, int valueEnd)
             {
-                if (CharUtil.RegionMatchesIgnoreCase(this.header, nameStart, CookieHeaderNames.Expires, 0, 7))
+                if (CharUtil.RegionMatchesIgnoreCase(_header, nameStart, CookieHeaderNames.Expires, 0, 7))
                 {
-                    this.expiresStart = valueStart;
-                    this.expiresEnd = valueEnd;
+                    _expiresStart = valueStart;
+                    _expiresEnd = valueEnd;
                 }
-                else if (CharUtil.RegionMatchesIgnoreCase(this.header, nameStart, CookieHeaderNames.MaxAge, 0, 7))
+                else if (CharUtil.RegionMatchesIgnoreCase(_header, nameStart, CookieHeaderNames.MaxAge, 0, 7))
                 {
-                    this.SetMaxAge(this.ComputeValue(valueStart, valueEnd));
+                    SetMaxAge(ComputeValue(valueStart, valueEnd));
                 }
             }
 
-            void Parse8(int nameStart)
+            void Parse8(int nameStart, int valueStart, int valueEnd)
             {
-                if (CharUtil.RegionMatchesIgnoreCase(this.header, nameStart, CookieHeaderNames.HttpOnly, 0, 8))
+                if (CharUtil.RegionMatchesIgnoreCase(_header, nameStart, CookieHeaderNames.HttpOnly, 0, 8))
                 {
-                    this.httpOnly = true;
+                    _httpOnly = true;
+                }
+                else if (CharUtil.RegionMatchesIgnoreCase(_header, nameStart, CookieHeaderNames.SameSite, 0, 8))
+                {
+                    _sameSite = (SameSite)Enum.Parse(typeof(SameSite), ComputeValue(valueStart, valueEnd), true);
                 }
             }
 
             static bool IsValueDefined(int valueStart, int valueEnd) => valueStart != -1 && valueStart != valueEnd;
 
-            string ComputeValue(int valueStart, int valueEnd) =>  IsValueDefined(valueStart, valueEnd) 
-                ? this.header.Substring(valueStart, valueEnd - valueStart) 
+            string ComputeValue(int valueStart, int valueEnd) => IsValueDefined(valueStart, valueEnd)
+                ? _header.Substring(valueStart, valueEnd - valueStart)
                 : null;
         }
     }

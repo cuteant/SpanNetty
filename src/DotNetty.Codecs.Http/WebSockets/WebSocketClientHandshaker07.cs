@@ -137,12 +137,22 @@ namespace DotNetty.Codecs.Http.WebSockets
             if (CustomHeaders is object)
             {
                 _ = headers.Add(CustomHeaders);
+                if (!headers.Contains(HttpHeaderNames.Host))
+                {
+                    // Only add HOST header if customHeaders did not contain it.
+                    //
+                    // See https://github.com/netty/netty/issues/10101
+                    _ = headers.Set(HttpHeaderNames.Host, WebsocketHostValue(wsUrl));
+                }
+            }
+            else
+            {
+                _ = headers.Set(HttpHeaderNames.Host, WebsocketHostValue(wsUrl));
             }
 
             _ = headers.Set(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket)
                 .Set(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade)
-                .Set(HttpHeaderNames.SecWebsocketKey, key)
-                .Set(HttpHeaderNames.Host, WebsocketHostValue(wsUrl));
+                .Set(HttpHeaderNames.SecWebsocketKey, key);
 
             if (!headers.Contains(HttpHeaderNames.SecWebsocketOrigin))
             {
@@ -155,7 +165,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 _ = headers.Set(HttpHeaderNames.SecWebsocketProtocol, expectedSubprotocol);
             }
 
-            _ = headers.Set(HttpHeaderNames.SecWebsocketVersion, "7");
+            _ = headers.Set(HttpHeaderNames.SecWebsocketVersion, Version.ToString());
 
             return request;
         }

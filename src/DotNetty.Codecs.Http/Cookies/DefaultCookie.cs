@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoProperty
-// ReSharper disable ConvertToAutoPropertyWhenPossible
 namespace DotNetty.Codecs.Http.Cookies
 {
     using System;
@@ -15,75 +13,87 @@ namespace DotNetty.Codecs.Http.Cookies
         // Constant for undefined MaxAge attribute value.
         const long UndefinedMaxAge = long.MinValue;
 
-        readonly string name;
-        string value;
-        bool wrap;
-        string domain;
-        string path;
-        long maxAge = UndefinedMaxAge;
-        bool secure;
-        bool httpOnly;
+        private readonly string _name;
+        private string _value;
+        private bool _wrap;
+        private string _domain;
+        private string _path;
+        private long _maxAge = UndefinedMaxAge;
+        private bool _secure;
+        private bool _httpOnly;
+        private SameSite? _sameSite;
 
         public DefaultCookie(string name, string value)
         {
             if (string.IsNullOrEmpty(name?.Trim())) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
             if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
-            this.name = name;
-            this.value = value;
+            _name = name;
+            _value = value;
         }
 
-        public string Name => this.name;
+        public string Name => _name;
 
         public string Value
         {
-            get => this.value;
+            get => _value;
             set
             {
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-                this.value = value;
+                _value = value;
             }
         }
 
         public bool Wrap
         {
-            get => this.wrap;
-            set => this.wrap = value;
+            get => _wrap;
+            set => _wrap = value;
         }
 
         public string Domain
         {
-            get => this.domain;
-            set => this.domain = ValidateAttributeValue(nameof(this.domain), value);
+            get => _domain;
+            set => _domain = ValidateAttributeValue(nameof(_domain), value);
         }
 
         public string Path
         {
-            get => this.path;
-            set => this.path = ValidateAttributeValue(nameof(this.path), value);
+            get => _path;
+            set => _path = ValidateAttributeValue(nameof(_path), value);
         }
 
         public long MaxAge
         {
-            get => this.maxAge;
-            set => this.maxAge = value;
+            get => _maxAge;
+            set => _maxAge = value;
         }
 
         public bool IsSecure
         {
-            get => this.secure;
-            set => this.secure = value;
+            get => _secure;
+            set => _secure = value;
         }
 
         public bool IsHttpOnly
         {
-            get => this.httpOnly;
-            set => this.httpOnly = value;
+            get => _httpOnly;
+            set => _httpOnly = value;
         }
 
-        public override int GetHashCode() => this.name.GetHashCode();
+        /// <summary>
+        /// Checks to see if this <see cref="ICookie"/> can be sent along cross-site requests.
+        /// For more information, please look
+        /// <a href="https://tools.ietf.org/html/draft-ietf-httpbis-rfc6265bis-05">here</a>
+        /// </summary>
+        public SameSite? SameSite
+        {
+            get => _sameSite;
+            set => _sameSite = value;
+        }
 
-        public override bool Equals(object obj) => obj is DefaultCookie cookie && this.Equals(cookie);
+        public override int GetHashCode() => _name.GetHashCode();
+
+        public override bool Equals(object obj) => obj is DefaultCookie cookie && Equals(cookie);
 
         public bool Equals(ICookie other)
         {
@@ -96,7 +106,7 @@ namespace DotNetty.Codecs.Http.Cookies
                 return true;
             }
 
-            if (!string.Equals(this.name, other.Name
+            if (!string.Equals(_name, other.Name
 #if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
                     ))
 #else
@@ -106,7 +116,7 @@ namespace DotNetty.Codecs.Http.Cookies
                 return false;
             }
 
-            if (this.path is null)
+            if (_path is null)
             {
                 if (other.Path is object)
                 {
@@ -117,7 +127,7 @@ namespace DotNetty.Codecs.Http.Cookies
             {
                 return false;
             }
-            else if (!string.Equals(this.path, other.Path
+            else if (!string.Equals(_path, other.Path
 #if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
                     ))
 #else
@@ -127,7 +137,7 @@ namespace DotNetty.Codecs.Http.Cookies
                 return false;
             }
 
-            if (this.domain is null)
+            if (_domain is null)
             {
                 if (other.Domain is object)
                 {
@@ -136,7 +146,7 @@ namespace DotNetty.Codecs.Http.Cookies
             }
             else
             {
-                return string.Equals(this.domain, other.Domain, StringComparison.OrdinalIgnoreCase);
+                return string.Equals(_domain, other.Domain, StringComparison.OrdinalIgnoreCase);
             }
 
             return true;
@@ -144,13 +154,13 @@ namespace DotNetty.Codecs.Http.Cookies
 
         public int CompareTo(ICookie other)
         {
-            int v = string.Compare(this.name, other.Name, StringComparison.Ordinal);
+            int v = string.Compare(_name, other.Name, StringComparison.Ordinal);
             if (v != 0)
             {
                 return v;
             }
 
-            if (this.path is null)
+            if (_path is null)
             {
                 if (other.Path is object)
                 {
@@ -163,14 +173,14 @@ namespace DotNetty.Codecs.Http.Cookies
             }
             else
             {
-                v = string.Compare(this.path, other.Path, StringComparison.Ordinal);
+                v = string.Compare(_path, other.Path, StringComparison.Ordinal);
                 if (v != 0)
                 {
                     return v;
                 }
             }
 
-            if (this.domain is null)
+            if (_domain is null)
             {
                 if (other.Domain is object)
                 {
@@ -183,7 +193,7 @@ namespace DotNetty.Codecs.Http.Cookies
             }
             else
             {
-                v = string.Compare(this.domain, other.Domain, StringComparison.OrdinalIgnoreCase);
+                v = string.Compare(_domain, other.Domain, StringComparison.OrdinalIgnoreCase);
                 return v;
             }
 
@@ -198,7 +208,7 @@ namespace DotNetty.Codecs.Http.Cookies
                     return 1;
 
                 case ICookie cookie:
-                    return this.CompareTo(cookie);
+                    return CompareTo(cookie);
 
                 default:
                     return ThrowHelper.ThrowArgumentException_CompareToCookie();
@@ -208,28 +218,31 @@ namespace DotNetty.Codecs.Http.Cookies
         public override string ToString()
         {
             StringBuilder buf = StringBuilder();
-            _ = buf.Append($"{this.name}={this.Value}");
-            if (this.domain is object)
+            _ = buf.Append($"{_name}={Value}");
+            if (_domain is object)
             {
-                _ = buf.Append($", domain={this.domain}");
+                _ = buf.Append($", domain={_domain}");
             }
-            if (this.path is object)
+            if (_path is object)
             {
-                _ = buf.Append($", path={this.path}");
+                _ = buf.Append($", path={_path}");
             }
-            if (this.maxAge >= 0)
+            if (_maxAge >= 0)
             {
-                _ = buf.Append($", maxAge={this.maxAge}s");
+                _ = buf.Append($", maxAge={_maxAge}s");
             }
-            if (this.secure)
+            if (_secure)
             {
                 _ = buf.Append(", secure");
             }
-            if (this.httpOnly)
+            if (_httpOnly)
             {
                 _ = buf.Append(", HTTPOnly");
             }
-
+            if (_sameSite.HasValue)
+            {
+                _ = buf.Append(", SameSite=").Append(_sameSite.Value);
+            }
             return buf.ToString();
         }
     }

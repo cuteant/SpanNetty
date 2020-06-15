@@ -18,5 +18,18 @@ namespace DotNetty.Codecs.Http.Cookies
         public static readonly AsciiString Secure = AsciiString.Cached("Secure");
 
         public static readonly AsciiString HttpOnly = AsciiString.Cached("HTTPOnly");
+
+        public static readonly AsciiString SameSite = AsciiString.Cached("SameSite");
+    }
+
+    /// <summary>
+    /// Possible values for the SameSite attribute.
+    /// See <a href="https://tools.ietf.org/html/draft-ietf-httpbis-rfc6265bis-05">changes to RFC6265bis</a>
+    /// </summary>
+    public enum SameSite
+    {
+        None,
+        Lax,
+        Strict,
     }
 }

@@ -19,8 +19,6 @@ namespace DotNetty.Codecs.Http.Cookies
         static readonly AsciiString RFC2965Path = new AsciiString($"${CookieHeaderNames.Path}");
         static readonly AsciiString RFC2965Domain = new AsciiString($"${CookieHeaderNames.Domain}");
         static readonly AsciiString RFC2965Port = new AsciiString("$Port");
-        static readonly HashSet<char> _headerChars = new HashSet<char>(
-            new char[] { '\t', '\n', (char)0x0b, '\f', '\r', ' ', ',', ';' });
 
         //
         // Strict encoder that validates that name and value chars are in the valid scope
@@ -92,7 +90,7 @@ namespace DotNetty.Codecs.Http.Cookies
                         goto loop;
                     }
                     char c = header[i];
-                    if (_headerChars.Contains(c))
+                    if (IsSpace(c))
                     {
                         i++;
                         continue;
@@ -164,6 +162,24 @@ namespace DotNetty.Codecs.Http.Cookies
 
         loop:
             return;
+        }
+
+        static bool IsSpace(char c)
+        {
+            switch (c)
+            {
+                case '\t':
+                case '\n':
+                case (char)0x0b:
+                case '\f':
+                case '\r':
+                case ' ':
+                case ',':
+                case ';':
+                    return true;
+                default:
+                    return false;
+            }
         }
     }
 }

@@ -177,7 +177,7 @@ namespace DotNetty.Codecs.Http
             if ((uint)(maxChunkSize - 1) > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentException_Positive(maxChunkSize, ExceptionArgument.maxChunkSize); }
 
             var seq = new AppendableCharSequence(initialBufferSize);
-            _lineParser = new LineParser(seq, maxInitialLineLength);
+            _lineParser = new LineParser(this, seq, maxInitialLineLength);
             _headerParser = new HeaderParser(seq, maxHeaderSize);
             _maxChunkSize = maxChunkSize;
             _chunkedSupported = chunkedSupported;
@@ -194,14 +194,7 @@ namespace DotNetty.Codecs.Http
             switch (_currentState)
             {
                 case State.SkipControlChars:
-                    {
-                        if (!SkipControlCharacters(buffer))
-                        {
-                            return;
-                        }
-                        _currentState = State.ReadInitial;
-                        goto case State.ReadInitial; // Fall through
-                    }
+                // Fall through 
                 case State.ReadInitial:
                     {
                         try
@@ -633,26 +626,6 @@ namespace DotNetty.Codecs.Http
             return chunk;
         }
 
-        static bool SkipControlCharacters(IByteBuffer buffer)
-        {
-            bool skiped = false;
-            int wIdx = buffer.WriterIndex;
-            int rIdx = buffer.ReaderIndex;
-            // TODO ForEachByte
-            while (wIdx > rIdx)
-            {
-                byte c = buffer.GetByte(rIdx++);
-                if (!CharUtil.IsISOControl(c) && !IsWhiteSpace(c))
-                {
-                    rIdx--;
-                    skiped = true;
-                    break;
-                }
-            }
-            _ = buffer.SetReaderIndex(rIdx);
-            return skiped;
-        }
-
         State? ReadHeaders(IByteBuffer buffer)
         {
             IHttpMessage httpMessage = _message;
@@ -1079,7 +1052,7 @@ namespace DotNetty.Codecs.Http
             public void Reset() => _size = 0;
 
             [MethodImpl(InlineMethod.AggressiveInlining)]
-            public bool Process(byte value)
+            public virtual bool Process(byte value)
             {
                 if (0u >= (uint)(HttpConstants.LineFeed - value))
                 {
@@ -1093,6 +1066,15 @@ namespace DotNetty.Codecs.Http
                     return false;
                 }
 
+                IncreaseCount();
+
+                _ = _seq.Append(value);
+                return true;
+            }
+
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            protected void IncreaseCount()
+            {
                 if (++_size > _maxLength)
                 {
                     // TODO: Respond with Bad Request and discard the traffic
@@ -1101,11 +1083,9 @@ namespace DotNetty.Codecs.Http
                     //       If decoding a response, just throw an exception.
                     ThrowTooLongFrameException(this, _maxLength);
                 }
-
-                _ = _seq.Append(value);
-                return true;
             }
 
+            [MethodImpl(MethodImplOptions.NoInlining)]
             static void ThrowTooLongFrameException(HeaderParser parser, int length)
             {
                 throw GetTooLongFrameException();
@@ -1121,15 +1101,33 @@ namespace DotNetty.Codecs.Http
 
         sealed class LineParser : HeaderParser
         {
-            internal LineParser(AppendableCharSequence seq, int maxLength)
+            private readonly HttpObjectDecoder _owner;
+
+            internal LineParser(HttpObjectDecoder owner, AppendableCharSequence seq, int maxLength)
                 : base(seq, maxLength)
             {
+                _owner = owner;
             }
 
             public override AppendableCharSequence Parse(IByteBuffer buffer)
             {
                 Reset();
                 return base.Parse(buffer);
+            }
+
+            public override bool Process(byte value)
+            {
+                if (_owner._currentState == State.SkipControlChars)
+                {
+                    //char c = (char)(value & 0xFF); // Java byte = .net sbyte
+                    if (IsWhiteSpaceOrISOControl(value)) // Character.isISOControl(c) || Character.isWhitespace(c)
+                    {
+                        IncreaseCount();
+                        return true;
+                    }
+                    _owner._currentState = State.ReadInitial;
+                }
+                return base.Process(value);
             }
 
             protected override string NewExceptionMessage(int maxLength) => $"An HTTP line is larger than {maxLength} bytes.";
@@ -1147,6 +1145,20 @@ namespace DotNetty.Codecs.Http
                     return true;
                 default:
                     return false;
+            }
+        }
+
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        private static bool IsWhiteSpaceOrISOControl(byte c)
+        {
+            switch (c)
+            {
+                case HttpConstants.HorizontalSpace:
+                case HttpConstants.HorizontalTab:
+                case HttpConstants.CarriageReturn:
+                    return true;
+                default:
+                    return CharUtil.IsISOControl(c);
             }
         }
 

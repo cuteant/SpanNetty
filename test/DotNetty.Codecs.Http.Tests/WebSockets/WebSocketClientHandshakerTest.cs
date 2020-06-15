@@ -219,6 +219,38 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         }
 
         [Fact]
+        public void UpgradeUrlWithoutPath()
+        {
+            Uri uri = new Uri("ws://localhost:9999");
+            WebSocketClientHandshaker handshaker = NewHandshaker(uri);
+            IFullHttpRequest request = handshaker.NewHandshakeRequest();
+            try
+            {
+                Assert.Equal("/", request.Uri);
+            }
+            finally
+            {
+                request.Release();
+            }
+        }
+
+        [Fact]
+        public void UpgradeUrlWithoutPathWithQuery()
+        {
+            Uri uri = new Uri("ws://localhost:9999?a=b%20c");
+            WebSocketClientHandshaker handshaker = NewHandshaker(uri);
+            IFullHttpRequest request = handshaker.NewHandshakeRequest();
+            try
+            {
+                Assert.Equal("/?a=b%20c", request.Uri);
+            }
+            finally
+            {
+                request.Release();
+            }
+        }
+
+        [Fact]
         public void AbsoluteUpgradeUrlWithQuery()
         {
             var uri = new Uri("ws://localhost:9999/path%20with%20ws?a=b%20c");
@@ -326,7 +358,10 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             // add values for the headers that are reserved for use in the websockets handshake
             foreach (var header in GetHandshakeRequiredHeaderNames())
             {
-                inputHeaders.Add(header, bogusHeaderValue);
+                if (!HttpHeaderNames.Host.Equals(header))
+                {
+                    inputHeaders.Add(header, bogusHeaderValue);
+                }
             }
             inputHeaders.Add(GetProtocolHeaderName(), bogusSubProtocol);
 
