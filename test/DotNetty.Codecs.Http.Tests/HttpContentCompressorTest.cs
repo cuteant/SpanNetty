@@ -4,13 +4,23 @@
 namespace DotNetty.Codecs.Http.Tests
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Runtime.InteropServices;
     using System.Text;
+    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Compression;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels.Embedded;
+    using DotNetty.Buffers;
+    using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Utilities;
+    using DotNetty.Transport.Bootstrapping;
+    using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Channels.Local;
+    using DotNetty.Transport.Channels.Sockets;
     using Xunit;
+    using System.Linq;
 
     public sealed class HttpContentCompressorTest
     {
@@ -271,6 +281,126 @@ namespace DotNetty.Codecs.Http.Tests
 
             var last = ch.ReadOutbound<object>();
             Assert.Null(last);
+        }
+
+        [Fact]
+        public async Task ExecutorPreserveOrdering()
+        {
+            var sb = new ServerBootstrap();
+            sb.Group(new MultithreadEventLoopGroup(1), new MultithreadEventLoopGroup());
+            sb.Channel<LocalServerChannel>();
+            sb.ChildHandler(new ActionChannelInitializer<IChannel>(ch =>
+            {
+                ch.Pipeline
+                    .AddLast(new HttpServerCodec())
+                    .AddLast(new HttpObjectAggregator(1024))
+                    .AddLast(/*compressorGroup,*/ new HttpContentCompressor())
+                    .AddLast(new ChannelOutboundHandlerAdapter0())
+                    .AddLast(new ChannelOutboundHandlerAdapter1());
+            }));
+
+            var responses = new BlockingCollection<IHttpObject>();
+            var bs = new Bootstrap();
+            bs.Group(new MultithreadEventLoopGroup());
+            bs.Channel<LocalChannel>();
+            bs.Handler(new ActionChannelInitializer<IChannel>(ch =>
+            {
+                ch.Pipeline
+                    .AddLast(new HttpClientCodec())
+                    .AddLast(new ChannelInboundHandlerAdapter0(responses));
+            }));
+            IChannel serverChannel = null;
+            IChannel clientChannel = null;
+            try
+            {
+                serverChannel = await sb.BindAsync(new LocalAddress(Guid.NewGuid().ToString("N")));
+                clientChannel = await bs.ConnectAsync(serverChannel.LocalAddress);
+
+                await clientChannel.WriteAndFlushAsync(NewRequest());
+
+                var result = responses.TryTake(out var item, TimeSpan.FromSeconds(1));
+                Assert.True(result);
+                AssertEncodedResponse((IHttpResponse)item);
+                result = responses.TryTake(out item, TimeSpan.FromSeconds(1));
+                Assert.True(result);
+                IHttpContent c = (IHttpContent)item;
+                Assert.NotNull(c);
+                Assert.Equal($"1f8b08000000000000{Platform}f248cdc9c9d75108cf2fca4901000000ffff", ByteBufferUtil.HexDump(c.Content));
+                c.Release();
+
+                result = responses.TryTake(out item, TimeSpan.FromSeconds(1));
+                Assert.True(result);
+                c = (IHttpContent)item;
+                Assert.NotNull(c);
+                Assert.Equal("0300c6865b260c000000", ByteBufferUtil.HexDump(c.Content));
+                c.Release();
+
+                result = responses.TryTake(out item, TimeSpan.FromSeconds(1));
+                Assert.True(result);
+                ILastHttpContent last = (ILastHttpContent)item;
+                Assert.NotNull(last);
+                Assert.Equal(0, last.Content.ReadableBytes);
+                last.Release();
+
+                Assert.False(responses.TryTake(out _, TimeSpan.FromSeconds(1)));
+            }
+            finally
+            {
+                if (clientChannel != null)
+                {
+                    await clientChannel.CloseAsync();
+                }
+                if (serverChannel != null)
+                {
+                    await serverChannel.CloseAsync();
+                }
+                await Task.WhenAll(
+                    sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                    sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                    bs.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)));
+            }
+        }
+
+        sealed class ChannelOutboundHandlerAdapter0 : ChannelHandlerAdapter
+        {
+            public override void Write(IChannelHandlerContext context, object message, IPromise promise)
+            {
+                base.Write(context, message, promise);
+            }
+        }
+
+        sealed class ChannelOutboundHandlerAdapter1 : ChannelHandlerAdapter
+        {
+            public override void ChannelRead(IChannelHandlerContext context, object message)
+            {
+                if (message is IFullHttpRequest)
+                {
+                    IFullHttpResponse res =
+                        new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK,
+                            Unpooled.CopiedBuffer("Hello, World", Encoding.ASCII));
+                    context.WriteAndFlushAsync(res);
+                    ReferenceCountUtil.Release(message);
+                    return;
+                }
+                base.ChannelRead(context, message);
+            }
+        }
+
+        sealed class ChannelInboundHandlerAdapter0 : ChannelHandlerAdapter
+        {
+            private readonly BlockingCollection<IHttpObject> _responses;
+
+            public ChannelInboundHandlerAdapter0(BlockingCollection<IHttpObject> responses) => _responses = responses;
+
+            public override void ChannelRead(IChannelHandlerContext context, object message)
+            {
+                if (message is IHttpObject httpObject)
+                {
+                    _responses.Add(httpObject);
+                    return;
+                }
+                base.ChannelRead(context, message);
+            }
         }
 
         [Fact]
@@ -560,7 +690,11 @@ namespace DotNetty.Codecs.Http.Tests
         {
             var res = ch.ReadOutbound<IHttpResponse>();
             Assert.NotNull(res);
+            AssertEncodedResponse(res);
+        }
 
+        static void AssertEncodedResponse(IHttpResponse res)
+        {
             var content = res as IHttpContent;
             Assert.Null(content);
 

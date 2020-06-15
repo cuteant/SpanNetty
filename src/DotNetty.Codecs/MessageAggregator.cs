@@ -33,9 +33,6 @@ namespace DotNetty.Codecs
     {
         private const int DefaultMaxCompositebufferComponents = 1024;
 
-        private static readonly Action<Task, object> s_closeAfterWriteAction = CloseAfterWriteAction;
-        private static readonly Action<Task, object> s_continueResponseWriteAction = ContinueResponseWriteAction;
-
         private int _maxCumulationBufferComponents = DefaultMaxCompositebufferComponents;
 
         protected TOutput _currentMessage;
@@ -182,11 +179,11 @@ namespace DotNetty.Codecs
 
                     Task task = context
                         .WriteAndFlushAsync(continueResponse)
-                        .ContinueWith(s_continueResponseWriteAction, context, TaskContinuationOptions.ExecuteSynchronously);
+                        .FireExceptionOnFailure(context);
 
                     if (closeAfterWrite)
                     {
-                        _ = task.ContinueWith(s_closeAfterWriteAction, context, TaskContinuationOptions.ExecuteSynchronously);
+                        _ = task.CloseOnComplete(context.Channel);
                         return;
                     }
 
@@ -291,21 +288,6 @@ namespace DotNetty.Codecs
             else
             {
                 CThrowHelper.ThrowMessageAggregationException_UnknownAggregationState();
-            }
-        }
-
-        private static void CloseAfterWriteAction(Task task, object state)
-        {
-            var ctx = (IChannelHandlerContext)state;
-            _ = ctx.Channel.CloseAsync();
-        }
-
-        private static void ContinueResponseWriteAction(Task task, object state)
-        {
-            if (task.IsFaulted)
-            {
-                var ctx = (IChannelHandlerContext)state;
-                _ = ctx.FireExceptionCaught(task.Exception);
             }
         }
 

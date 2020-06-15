@@ -3,6 +3,7 @@
     using System;
     using System.IO;
     using System.Net;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
@@ -244,6 +245,9 @@
                         {
                             ch.Unsafe.CloseForcibly();
                         }
+                        // We need to double check that there is nothing left to flush such as a
+                        // window update frame.
+                        Flush();
                         break;
                     }
 
@@ -262,11 +266,7 @@
                         // currently reading it is possible that more frames will be delivered to this child channel. In
                         // the case that this child channel still wants to read we delay the channelReadComplete on this
                         // child channel until the parent is done reading.
-                        if (!ch._readCompletePending)
-                        {
-                            ch._readCompletePending = true;
-                            ch.AddChannelToReadCompletePendingQueue();
-                        }
+                        ch.MaybeAddChannelToReadCompletePendingQueue();
                     }
                     else
                     {
@@ -283,6 +283,10 @@
                 {
                     ch._flowControlledBytes = 0;
                     var future = ch.InternalWriteAsync(ch.ParentContext, new DefaultHttp2WindowUpdateFrame(bytes) { Stream = ch._stream });
+                    // window update frames are commonly swallowed by the Http2FrameCodec and the promise is synchronously
+                    // completed but the flow controller _may_ have generated a wire level WINDOW_UPDATE. Therefore we need,
+                    // to assume there was a write done that needs to be flushed or we risk flow control starvation.
+                    _writeDoneAndNoFlush = true;
                     // Add a listener which will notify and teardown the stream
                     // when a window update fails if needed or check the result of the future directly if it was completed
                     // already.
@@ -294,7 +298,6 @@
                     else
                     {
                         _ = future.ContinueWith(WindowUpdateFrameWriteListenerAction, ch, TaskContinuationOptions.ExecuteSynchronously);
-                        _writeDoneAndNoFlush = true;
                     }
                 }
             }
@@ -381,52 +384,12 @@
                     if (msg is IHttp2StreamFrame streamFrame)
                     {
                         var frame = ValidateStreamFrame(streamFrame);
-                        var frameStream = ch._stream;
-                        frame.Stream = frameStream;
-                        if (!ch._firstFrameWritten && !Http2CodecUtil.IsStreamIdValid(frameStream.Id))
-                        {
-                            if (!(frame is IHttp2HeadersFrame))
-                            {
-                                _ = ReferenceCountUtil.Release(frame);
-                                promise.SetException(ThrowHelper.GetArgumentException_FirstFrameMustBeHeadersFrame(frame));
-                                return;
-                            }
-                            ch._firstFrameWritten = true;
-                            var future = ch.InternalWriteAsync(ch.ParentContext, frame);
-                            if (future.IsCompleted)
-                            {
-                                FirstWriteComplete(future, promise);
-                            }
-                            else
-                            {
-                                long bytes = FlowControlledFrameSizeEstimatorHandle.Instance.Size(msg);
-                                ch.IncrementPendingOutboundBytes(bytes, false);
-                                _ = future.ContinueWith(FirstWriteCompleteAfterWriteAction,
-                                    Tuple.Create(this, promise, bytes), TaskContinuationOptions.ExecuteSynchronously);
-                                _writeDoneAndNoFlush = true;
-                            }
-                            return;
-                        }
+                        WriteHttp2StreamFrame(frame, promise);
                     }
                     else
                     {
                         _ = ReferenceCountUtil.Release(msg);
                         promise.SetException(ThrowHelper.GetArgumentException_MsgMustBeStreamFrame(msg));
-                        return;
-                    }
-
-                    var writeTask = ch.InternalWriteAsync(ch.ParentContext, msg);
-                    if (writeTask.IsCompleted)
-                    {
-                        WriteComplete(writeTask, promise);
-                    }
-                    else
-                    {
-                        long bytes = FlowControlledFrameSizeEstimatorHandle.Instance.Size(msg);
-                        ch.IncrementPendingOutboundBytes(bytes, false);
-                        _ = writeTask.ContinueWith(WriteCompleteContinuteAction,
-                            Tuple.Create(this, promise, bytes), TaskContinuationOptions.ExecuteSynchronously);
-                        _writeDoneAndNoFlush = true;
                     }
                 }
                 catch (Exception t)
@@ -435,22 +398,63 @@
                 }
             }
 
-            private static readonly Action<Task, object> FirstWriteCompleteAfterWriteAction = FirstWriteCompleteAfterWrite;
-            private static void FirstWriteCompleteAfterWrite(Task t, object s)
+            private void WriteHttp2StreamFrame(IHttp2StreamFrame frame, IPromise promise)
             {
-                var wrapped = (Tuple<Http2ChannelUnsafe, IPromise, long>)s;
+                var ch = _channel;
+                var frameStream = ch._stream;
+                frame.Stream = frameStream;
+                if (!ch._firstFrameWritten && !Http2CodecUtil.IsStreamIdValid(frameStream.Id) && !(frame is IHttp2HeadersFrame))
+                {
+                    _ = ReferenceCountUtil.Release(frame);
+                    promise.SetException(ThrowHelper.GetArgumentException_FirstFrameMustBeHeadersFrame(frame));
+                    return;
+                }
+
+                bool firstWrite;
+                if (ch._firstFrameWritten)
+                {
+                    firstWrite = false;
+                }
+                else
+                {
+                    firstWrite = ch._firstFrameWritten = true;
+                }
+
+                var future = ch.InternalWriteAsync(ch.ParentContext, frame);
+                if (future.IsCompleted)
+                {
+                    InvokeWriteComplete(future, promise, firstWrite);
+                }
+                else
+                {
+                    long bytes = FlowControlledFrameSizeEstimatorHandle.Instance.Size(frame);
+                    ch.IncrementPendingOutboundBytes(bytes, false);
+                    _ = future.ContinueWith(InvokeWriteCompleteAfterWriteAction,
+                        Tuple.Create(this, promise, bytes, firstWrite), TaskContinuationOptions.ExecuteSynchronously);
+                    _writeDoneAndNoFlush = true;
+                }
+            }
+
+            private static readonly Action<Task, object> InvokeWriteCompleteAfterWriteAction = InvokeWriteCompleteAfterWrite;
+            private static void InvokeWriteCompleteAfterWrite(Task t, object s)
+            {
+                var wrapped = (Tuple<Http2ChannelUnsafe, IPromise, long, bool>)s;
                 var self = wrapped.Item1;
-                self.FirstWriteComplete(t, wrapped.Item2);
+                self.InvokeWriteComplete(t, wrapped.Item2, wrapped.Item4);
                 self._channel.DecrementPendingOutboundBytes(wrapped.Item3, false);
             }
 
-            private static readonly Action<Task, object> WriteCompleteContinuteAction = WriteCompleteContinute;
-            private static void WriteCompleteContinute(Task t, object s)
+            [MethodImpl(InlineMethod.AggressiveInlining)]
+            private void InvokeWriteComplete(Task future, IPromise promise, bool firstWrite)
             {
-                var wrapped = (Tuple<Http2ChannelUnsafe, IPromise, long>)s;
-                var self = wrapped.Item1;
-                self.WriteComplete(t, wrapped.Item2);
-                self._channel.DecrementPendingOutboundBytes(wrapped.Item3, false);
+                if (firstWrite)
+                {
+                    FirstWriteComplete(future, promise);
+                }
+                else
+                {
+                    WriteComplete(future, promise);
+                }
             }
 
             private void FirstWriteComplete(Task future, IPromise promise)

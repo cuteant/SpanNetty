@@ -310,11 +310,7 @@
                 // cost of additional readComplete notifications on the rare path.
                 if (allocHandle.ContinueReading())
                 {
-                    if (!_readCompletePending)
-                    {
-                        _readCompletePending = true;
-                        AddChannelToReadCompletePendingQueue();
-                    }
+                    MaybeAddChannelToReadCompletePendingQueue();
                 }
                 else
                 {
@@ -336,6 +332,16 @@
             Debug.Assert(EventLoop.InEventLoop);
             Debug.Assert(_readStatus != ReadStatus.Idle || !_readCompletePending);
             _channelUnsafe.NotifyReadComplete(_channelUnsafe.RecvBufAllocHandle, false);
+        }
+
+        [MethodImpl(InlineMethod.AggressiveInlining)]
+        private void MaybeAddChannelToReadCompletePendingQueue()
+        {
+            if (!_readCompletePending)
+            {
+                _readCompletePending = true;
+                AddChannelToReadCompletePendingQueue();
+            }
         }
 
         protected virtual void Flush0(IChannelHandlerContext ctx)

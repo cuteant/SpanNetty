@@ -707,6 +707,11 @@ namespace DotNetty.Codecs.Http2.Tests
             return ByteBufferUtil.WriteUtf8(UnpooledByteBufferAllocator.Default, s);
         }
 
+        public static IByteBuffer BB(int size)
+        {
+            return UnpooledByteBufferAllocator.Default.Buffer().WriteZero(size);
+        }
+
         public static void AssertEqualsAndRelease(IHttp2Frame expected, IHttp2Frame actual)
         {
             try

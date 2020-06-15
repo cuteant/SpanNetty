@@ -67,6 +67,7 @@ namespace DotNetty.Buffers
         encoding,
         fullName,
         srcIndex,
+        protocol,
         typeInfo,
         typeName,
 

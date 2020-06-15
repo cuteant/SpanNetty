@@ -117,6 +117,7 @@ namespace DotNetty.Transport
         newHandler,
         bufferSize,
         returnType,
+        paramTypes,
 
         childOption,
         directories,

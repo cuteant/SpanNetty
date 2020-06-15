@@ -6,6 +6,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using System.Text.Encodings.Web;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http.Multipart;
     using DotNetty.Codecs.Http.Utilities;
@@ -732,6 +733,41 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
 
             request.Headers.Set(HttpHeaderNames.ContentType, multipartDataValue);
             Assert.True(HttpPostRequestDecoder.IsMultipartRequest(request));
+        }
+
+        // see https://github.com/netty/netty/issues/10087
+        [Fact]
+        public void DecodeWithLanguageContentDispositionFieldParametersForFix()
+        {
+            string boundary = "952178786863262625034234";
+
+            string encoding = "UTF-8";
+            string filename = "测试test.txt";
+            string filenameEncoded = UrlEncoder.Default.Encode(filename/*, encoding*/);
+
+            string body = "--" + boundary + "\r\n" +
+                    "Content-Disposition: form-data; name=\"file\"; filename*=\"" +
+                    encoding + "''" + filenameEncoded + "\"\r\n" +
+                    "\r\n" +
+                    "foo\r\n" +
+                    "\r\n" +
+                    "--" + boundary + "--";
+
+            DefaultFullHttpRequest req = new DefaultFullHttpRequest(HttpVersion.Http11,
+                    HttpMethod.Post,
+                    "http://localhost",
+                    Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes(body)));
+
+            req.Headers.Add(HttpHeaderNames.ContentType, "multipart/form-data; boundary=" + boundary);
+            DefaultHttpDataFactory inMemoryFactory = new DefaultHttpDataFactory(false);
+            HttpPostRequestDecoder decoder = new HttpPostRequestDecoder(inMemoryFactory, req);
+            Assert.NotEmpty(decoder.GetBodyHttpDatas());
+            IInterfaceHttpData part1 = decoder.GetBodyHttpDatas()[0];
+            Assert.True(part1 is IFileUpload); // "the item should be a FileUpload"
+            IFileUpload fileUpload = (IFileUpload)part1;
+            Assert.Equal(filename, fileUpload.FileName); // "the filename should be decoded"
+            decoder.Destroy();
+            req.Release();
         }
     }
 }

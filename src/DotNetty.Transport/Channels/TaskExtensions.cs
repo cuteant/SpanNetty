@@ -89,7 +89,7 @@
         {
             if (task.IsCompleted)
             {
-                if (task.IsFaulted || task.IsCanceled)
+                if (task.IsFault())
                 {
                     _ = channel.CloseAsync();
                 }
@@ -103,7 +103,7 @@
         private static readonly Action<Task, object> CloseChannelOnFailureAction = CloseChannelOnFailure;
         private static void CloseChannelOnFailure(Task t, object c)
         {
-            if (!t.IsSuccess())
+            if (t.IsFault())
             {
                 _ = ((IChannel)c).CloseAsync();
             }
@@ -115,7 +115,7 @@
         {
             if (task.IsCompleted)
             {
-                if (task.IsFaulted || task.IsCanceled)
+                if (task.IsFault())
                 {
                     _ = channel.CloseAsync(promise);
                 }
@@ -129,7 +129,7 @@
         private static readonly Action<Task, object> CloseWrappedChannelOnFailureAction = CloseWrappedChannelOnFailure;
         private static void CloseWrappedChannelOnFailure(Task t, object s)
         {
-            if (!t.IsSuccess())
+            if (t.IsFault())
             {
                 var wrapped = (Tuple<IChannel, IPromise>)s;
                 _ = wrapped.Item1.CloseAsync(wrapped.Item2);
@@ -142,7 +142,7 @@
         {
             if (task.IsCompleted)
             {
-                if (task.IsFaulted || task.IsCanceled)
+                if (task.IsFault())
                 {
                     _ = ctx.CloseAsync();
                 }
@@ -156,7 +156,7 @@
         private static readonly Action<Task, object> CloseContextOnFailureAction = CloseContextOnFailure;
         private static void CloseContextOnFailure(Task t, object c)
         {
-            if (!t.IsSuccess())
+            if (t.IsFault())
             {
                 _ = ((IChannelHandlerContext)c).CloseAsync();
             }
@@ -168,7 +168,7 @@
         {
             if (task.IsCompleted)
             {
-                if (task.IsFaulted || task.IsCanceled)
+                if (task.IsFault())
                 {
                     _ = ctx.CloseAsync(promise);
                 }
@@ -182,7 +182,7 @@
         private static readonly Action<Task, object> CloseWrappedContextOnFailureAction = CloseWrappedContextOnFailure;
         private static void CloseWrappedContextOnFailure(Task t, object s)
         {
-            if (!t.IsSuccess())
+            if (t.IsFault())
             {
                 var wrapped = (Tuple<IChannelHandlerContext, IPromise>)s;
                 _ = wrapped.Item1.CloseAsync(wrapped.Item2);
@@ -194,7 +194,7 @@
         {
             if (task.IsCompleted)
             {
-                if (task.IsFaulted || task.IsCanceled)
+                if (task.IsFault())
                 {
                     _ = pipeline.FireExceptionCaught(TaskUtil.Unwrap(task.Exception));
                 }
@@ -202,16 +202,52 @@
             }
             else
             {
-                return task.ContinueWith(FireExceptionOnFailureAction, pipeline, TaskContinuationOptions.ExecuteSynchronously);
+                return task.ContinueWith(FirePipelineExceptionOnFailureAction, pipeline, TaskContinuationOptions.ExecuteSynchronously);
             }
         }
-        private static readonly Action<Task, object> FireExceptionOnFailureAction = FireExceptionOnFailure0;
-        private static void FireExceptionOnFailure0(Task t, object s)
+        private static readonly Action<Task, object> FirePipelineExceptionOnFailureAction = FirePipelineExceptionOnFailure;
+        private static void FirePipelineExceptionOnFailure(Task t, object s)
         {
-            if (!t.IsSuccess())
+            if (t.IsFault())
             {
                 _ = ((IChannelPipeline)s).FireExceptionCaught(TaskUtil.Unwrap(t.Exception));
             }
+        }
+
+
+        public static Task FireExceptionOnFailure(this Task task, IChannelHandlerContext ctx)
+        {
+            if (task.IsCompleted)
+            {
+                if (task.IsFault())
+                {
+                    _ = ctx.FireExceptionCaught(TaskUtil.Unwrap(task.Exception));
+                }
+                return TaskUtil.Completed;
+            }
+            else
+            {
+                return task.ContinueWith(FireContextExceptionOnFailureAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+            }
+        }
+        private static readonly Action<Task, object> FireContextExceptionOnFailureAction = FireContextExceptionOnFailure;
+        private static void FireContextExceptionOnFailure(Task t, object s)
+        {
+            if (t.IsFault())
+            {
+                _ = ((IChannelHandlerContext)s).FireExceptionCaught(TaskUtil.Unwrap(t.Exception));
+            }
+        }
+
+        /// <summary>TBD</summary>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private static bool IsFault(this Task task)
+        {
+#if NETCOREAPP || NETSTANDARD_2_0_GREATER
+            return !task.IsCompletedSuccessfully;
+#else
+            return task.IsFaulted || task.IsCanceled;
+#endif
         }
     }
 }

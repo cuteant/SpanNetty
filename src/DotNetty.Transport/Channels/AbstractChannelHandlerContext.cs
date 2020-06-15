@@ -307,7 +307,7 @@ namespace DotNetty.Transport.Channels
 
         public virtual IChannelHandlerContext FireExceptionCaught(Exception cause)
         {
-            InvokeExceptionCaught(Next, cause); //InvokeExceptionCaught(this.FindContextInbound(), cause);
+            InvokeExceptionCaught(FindContextInbound(), cause);
             return this;
         }
 

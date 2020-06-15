@@ -153,9 +153,15 @@ namespace DotNetty.Transport.Channels
 
         protected static bool IsSkippable(Type handlerType, string methodName, params Type[] paramTypes)
         {
-            var newParamTypes = new Type[paramTypes.Length + 1];
+            if (paramTypes is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.paramTypes); }
+
+            var paramTypeLength = paramTypes.Length;
+            var newParamTypes = new Type[paramTypeLength + 1];
             newParamTypes[0] = typeof(IChannelHandlerContext);
-            Array.Copy(paramTypes, 0, newParamTypes, 1, paramTypes.Length);
+            if ((uint)paramTypeLength > 0U)
+            {
+                Array.Copy(paramTypes, 0, newParamTypes, 1, paramTypeLength);
+            }
             return handlerType.GetMethod(methodName, newParamTypes).GetCustomAttribute<SkipAttribute>(false) is object;
         }
     }

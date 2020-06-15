@@ -1218,6 +1218,89 @@ namespace DotNetty.Codecs.Http2.Tests
             }
         }
 
+        sealed class FlushSniffer : ChannelHandlerAdapter
+        {
+            private bool _didFlush;
+
+            public bool CheckFlush()
+            {
+                bool r = _didFlush;
+                _didFlush = false;
+                return r;
+            }
+
+            public override void Flush(IChannelHandlerContext context)
+            {
+                _didFlush = true;
+                base.Flush(context);
+            }
+        }
+
+        [Fact]
+        public void WindowUpdatesAreFlushed()
+        {
+            LastInboundHandler inboundHandler = new LastInboundHandler();
+            FlushSniffer flushSniffer = new FlushSniffer();
+            _parentChannel.Pipeline.AddFirst(flushSniffer);
+
+            IHttp2StreamChannel childChannel = NewInboundStream(3, false, inboundHandler);
+            Assert.True(childChannel.Configuration.AutoRead);
+            childChannel.Configuration.AutoRead = false;
+            Assert.False(childChannel.Configuration.AutoRead);
+
+            IHttp2HeadersFrame headersFrame = inboundHandler.ReadInbound<IHttp2HeadersFrame>();
+            Assert.NotNull(headersFrame);
+
+            Assert.True(flushSniffer.CheckFlush());
+
+            // Write some bytes to get the channel into the idle state with buffered data and also verify we
+            // do not dispatch it until we receive a read() call.
+            _frameInboundWriter.WriteInboundData(childChannel.Stream.Id, Http2TestUtil.BB(16 * 1024), 0, false);
+            _frameInboundWriter.WriteInboundData(childChannel.Stream.Id, Http2TestUtil.BB(16 * 1024), 0, false);
+            Assert.True(flushSniffer.CheckFlush());
+
+            _frameWriter.Verify(
+                x => x.WriteWindowUpdateAsync(
+                    It.Is<IChannelHandlerContext>(v => v == _codec._ctx),
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<IPromise>()),
+                Times.Never());
+            // only the first one was read because it was legacy auto-read behavior.
+            VerifyFramesMultiplexedToCorrectChannel(childChannel, inboundHandler, 1);
+            Assert.False(flushSniffer.CheckFlush());
+
+            // Trigger a read of the second frame.
+            childChannel.Read();
+            VerifyFramesMultiplexedToCorrectChannel(childChannel, inboundHandler, 1);
+            // We expect a flush here because the StreamChannel will flush the smaller increment but the
+            // connection will collect the bytes and decide not to send a wire level frame until more are consumed.
+            Assert.True(flushSniffer.CheckFlush());
+            _frameWriter.Verify(
+                x => x.WriteWindowUpdateAsync(
+                    It.Is<IChannelHandlerContext>(v => v == _codec._ctx),
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<IPromise>()),
+                Times.Never());
+
+            // Call read one more time which should trigger the writing of the flow control update.
+            childChannel.Read();
+            _frameWriter.Verify(
+                x => x.WriteWindowUpdateAsync(
+                    It.Is<IChannelHandlerContext>(v => v == _codec._ctx),
+                    It.Is<int>(v => v == 0),
+                    It.Is<int>(v => v == 32 * 1024),
+                    It.IsAny<IPromise>()));
+            _frameWriter.Verify(
+                x => x.WriteWindowUpdateAsync(
+                    It.Is<IChannelHandlerContext>(v => v == _codec._ctx),
+                    It.Is<int>(v => v == childChannel.Stream.Id),
+                    It.Is<int>(v => v == 32 * 1024),
+                    It.IsAny<IPromise>()));
+            Assert.True(flushSniffer.CheckFlush());
+        }
+
         private static void VerifyFramesMultiplexedToCorrectChannel(IHttp2StreamChannel streamChannel,
                                                                     LastInboundHandler inboundHandler,
                                                                     int numFrames)
