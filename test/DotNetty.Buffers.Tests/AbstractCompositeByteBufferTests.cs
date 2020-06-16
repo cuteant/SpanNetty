@@ -1554,5 +1554,86 @@ namespace DotNetty.Buffers.Tests
             }
             Assert.True(cbuf.Release());
         }
+
+        [Fact]
+        public void OverflowWhileAddingComponent()
+        {
+            int capacity = 1024 * 1024; // 1MB
+            IByteBuffer buffer = Unpooled.Buffer(capacity).WriteZero(capacity);
+            CompositeByteBuffer compositeByteBuf = Unpooled.CompositeBuffer(int.MaxValue);
+
+            try
+            {
+                for (int i = 0; i >= 0; i += buffer.ReadableBytes)
+                {
+                    IByteBuffer duplicate = buffer.Duplicate();
+                    compositeByteBuf.AddComponent(duplicate);
+                    duplicate.Retain();
+                }
+                Assert.False(true);
+            }
+            catch (Exception exc)
+            {
+                Assert.IsType<InvalidOperationException>(exc);
+            }
+            finally
+            {
+                compositeByteBuf.Release();
+            }
+        }
+
+        [Fact]
+        public void OverflowWhileAddingComponentsViaVarargs()
+        {
+            int capacity = 1024 * 1024; // 1MB
+            IByteBuffer buffer = Unpooled.Buffer(capacity).WriteZero(capacity);
+            CompositeByteBuffer compositeByteBuf = Unpooled.CompositeBuffer(int.MaxValue);
+
+            try
+            {
+                for (int i = 0; i >= 0; i += buffer.ReadableBytes)
+                {
+                    IByteBuffer duplicate = buffer.Duplicate();
+                    compositeByteBuf.AddComponents(duplicate);
+                    duplicate.Retain();
+                }
+                Assert.False(true);
+            }
+            catch (Exception exc)
+            {
+                Assert.IsType<InvalidOperationException>(exc);
+            }
+            finally
+            {
+                compositeByteBuf.Release();
+            }
+        }
+
+        [Fact]
+        public void OverflowWhileAddingComponentsViaIterable()
+        {
+            int capacity = 1024 * 1024; // 1MB
+            IByteBuffer buffer = Unpooled.Buffer(capacity).WriteZero(capacity);
+            CompositeByteBuffer compositeByteBuf = Unpooled.CompositeBuffer(int.MaxValue);
+
+            try
+            {
+                for (int i = 0; i >= 0; i += buffer.ReadableBytes)
+                {
+                    IByteBuffer duplicate = buffer.Duplicate();
+                    compositeByteBuf.AddComponents(new List<IByteBuffer>() { duplicate });
+                    duplicate.Retain();
+                }
+                Assert.False(true);
+            }
+            catch(Exception exc)
+            {
+                Assert.IsType<InvalidOperationException>(exc);
+            }
+            finally
+            {
+                compositeByteBuf.Release();
+            }
+        }
     }
 }

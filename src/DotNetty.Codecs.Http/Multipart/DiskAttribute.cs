@@ -15,24 +15,51 @@ namespace DotNetty.Codecs.Http.Multipart
         public const string FilePrefix = "Attr_";
         public const string FilePostfix = ".att";
 
+        private readonly string _baseDir;
+        private readonly bool _deleteOnExit;
+
         public DiskAttribute(string name)
             : this(name, HttpConstants.DefaultEncoding)
         {
         }
 
+        public DiskAttribute(string name, string baseDir, bool deleteOnExit)
+            : this(name, HttpConstants.DefaultEncoding, baseDir, deleteOnExit)
+        {
+        }
+
         public DiskAttribute(string name, long definedSize)
-            : this(name, definedSize, HttpConstants.DefaultEncoding)
+            : this(name, definedSize, HttpConstants.DefaultEncoding, DiskBaseDirectory, DeleteOnExitTemporaryFile)
+        {
+        }
+
+        public DiskAttribute(string name, long definedSize, string baseDir, bool deleteOnExit)
+            : this(name, definedSize, HttpConstants.DefaultEncoding, baseDir, deleteOnExit)
         {
         }
 
         public DiskAttribute(string name, Encoding charset)
-            : base(name, charset, 0)
+            : this(name, charset, DiskBaseDirectory, DeleteOnExitTemporaryFile)
         {
         }
 
+        public DiskAttribute(string name, Encoding charset, string baseDir, bool deleteOnExit)
+            : base(name, charset, 0)
+        {
+            _baseDir = baseDir ?? DiskBaseDirectory;
+            _deleteOnExit = deleteOnExit;
+        }
+
         public DiskAttribute(string name, long definedSize, Encoding charset)
+            : this(name, definedSize, charset, DiskBaseDirectory, DeleteOnExitTemporaryFile)
+        {
+        }
+
+        public DiskAttribute(string name, long definedSize, Encoding charset, string baseDir, bool deleteOnExit)
             : base(name, charset, definedSize)
         {
+            _baseDir = baseDir ?? DiskBaseDirectory;
+            _deleteOnExit = deleteOnExit;
         }
 
         public DiskAttribute(string name, string value)
@@ -41,9 +68,16 @@ namespace DotNetty.Codecs.Http.Multipart
         }
 
         public DiskAttribute(string name, string value, Encoding charset)
+            : this(name, value, charset, DiskBaseDirectory, DeleteOnExitTemporaryFile)
+        {
+        }
+
+        public DiskAttribute(string name, string value, Encoding charset, string baseDir, bool deleteOnExit)
             : base(name, charset, 0) // Attribute have no default size
         {
-            this.Value = value;
+            Value = value;
+            _baseDir = baseDir ?? DiskBaseDirectory;
+            _deleteOnExit = deleteOnExit;
         }
 
         public override HttpDataType DataType => HttpDataType.Attribute;
@@ -52,42 +86,42 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             get
             {
-                byte[] bytes = this.GetBytes();
-                return this.Charset.GetString(bytes);
+                byte[] bytes = GetBytes();
+                return Charset.GetString(bytes);
             }
             set
             {
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
 
-                byte[] bytes = this.Charset.GetBytes(value);
-                CheckSize(bytes.Length, this.MaxSize);
+                byte[] bytes = Charset.GetBytes(value);
+                CheckSize(bytes.Length, MaxSize);
                 IByteBuffer buffer = Unpooled.WrappedBuffer(bytes);
-                if (this.DefinedSize > 0)
+                if (DefinedSize > 0)
                 {
-                    this.DefinedSize = buffer.ReadableBytes;
+                    DefinedSize = buffer.ReadableBytes;
                 }
-                this.SetContent(buffer);
+                SetContent(buffer);
             }
         }
 
         public override void AddContent(IByteBuffer buffer, bool last)
         {
-            long newDefinedSize = this.Size + buffer.ReadableBytes;
-            CheckSize(newDefinedSize, this.MaxSize);
-            if (this.DefinedSize > 0 && this.DefinedSize < newDefinedSize)
+            long newDefinedSize = Size + buffer.ReadableBytes;
+            CheckSize(newDefinedSize, MaxSize);
+            if (DefinedSize > 0 && DefinedSize < newDefinedSize)
             {
-                this.DefinedSize = newDefinedSize;
+                DefinedSize = newDefinedSize;
             }
             base.AddContent(buffer, last);
         }
 
-        public override int GetHashCode() => this.Name.GetHashCode();
+        public override int GetHashCode() => Name.GetHashCode();
 
         public override bool Equals(object obj)
         {
             if (obj is IAttribute attribute)
             {
-                return string.Equals(this.Name, attribute.Name, StringComparison.OrdinalIgnoreCase);
+                return string.Equals(Name, attribute.Name, StringComparison.OrdinalIgnoreCase);
             }
             return false;
         }
@@ -96,50 +130,50 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             if (other is IAttribute attr)
             {
-                return this.CompareTo(attr);
+                return CompareTo(attr);
             }
 
-            return ThrowHelper.ThrowArgumentException_CompareToHttpData(this.DataType, other.DataType);
+            return ThrowHelper.ThrowArgumentException_CompareToHttpData(DataType, other.DataType);
         }
 
-        public int CompareTo(IAttribute attribute) => string.Compare(this.Name, attribute.Name, StringComparison.OrdinalIgnoreCase);
+        public int CompareTo(IAttribute attribute) => string.Compare(Name, attribute.Name, StringComparison.OrdinalIgnoreCase);
 
         public override string ToString()
         {
             try
             {
-                return $"{this.Name}={this.Value}";
+                return $"{Name}={Value}";
             }
             catch (IOException e)
             {
-                return $"{this.Name}={e}";
+                return $"{Name}={e}";
             }
         }
 
-        protected override bool DeleteOnExit => DeleteOnExitTemporaryFile;
+        protected internal override bool DeleteOnExit => _deleteOnExit;
 
-        protected override string BaseDirectory => DiskBaseDirectory;
+        protected internal override string BaseDirectory => _baseDir;
 
-        protected override string DiskFilename => $"{this.Name}{this.Postfix}";
+        protected override string DiskFilename => $"{Name}{Postfix}";
 
         protected override string Postfix => FilePostfix;
 
         protected override string Prefix => FilePrefix;
 
-        public override IByteBufferHolder Copy() => this.Replace(this.Content?.Copy());
+        public override IByteBufferHolder Copy() => Replace(Content?.Copy());
 
-        public override IByteBufferHolder Duplicate() => this.Replace(this.Content?.Duplicate());
+        public override IByteBufferHolder Duplicate() => Replace(Content?.Duplicate());
 
         public override IByteBufferHolder RetainedDuplicate()
         {
-            IByteBuffer content = this.Content;
+            IByteBuffer content = Content;
             if (content is object)
             {
                 content = content.RetainedDuplicate();
                 bool success = false;
                 try
                 {
-                    var duplicate = (IAttribute)this.Replace(content);
+                    var duplicate = (IAttribute)Replace(content);
                     success = true;
                     return duplicate;
                 }
@@ -153,14 +187,14 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             else
             {
-                return this.Replace(null);
+                return Replace(null);
             }
         }
 
         public override IByteBufferHolder Replace(IByteBuffer content)
         {
-            var attr = new DiskAttribute(this.Name);
-            attr.Charset = this.Charset;
+            var attr = new DiskAttribute(Name, _baseDir, _deleteOnExit);
+            attr.Charset = Charset;
             if (content is object)
             {
                 try

@@ -12,10 +12,12 @@ namespace DotNetty.Codecs.Http.Multipart
 
     public class MixedAttribute : IAttribute
     {
-        IAttribute attribute;
+        private readonly string _baseDir;
+        private readonly bool _deleteOnExit;
+        private IAttribute _attribute;
 
-        readonly long limitSize;
-        long maxSize = DefaultHttpDataFactory.MaxSize;
+        private readonly long _limitSize;
+        private long _maxSize = DefaultHttpDataFactory.MaxSize;
 
         public MixedAttribute(string name, long limitSize)
             : this(name, limitSize, HttpConstants.DefaultEncoding)
@@ -28,37 +30,59 @@ namespace DotNetty.Codecs.Http.Multipart
         }
 
         public MixedAttribute(string name, long limitSize, Encoding contentEncoding)
+            : this(name, limitSize, contentEncoding, DiskAttribute.DiskBaseDirectory, DiskAttribute.DeleteOnExitTemporaryFile)
         {
-            this.limitSize = limitSize;
-            this.attribute = new MemoryAttribute(name, contentEncoding);
+        }
+
+        public MixedAttribute(string name, long limitSize, Encoding contentEncoding, string baseDir, bool deleteOnExit)
+        {
+            _limitSize = limitSize;
+            _attribute = new MemoryAttribute(name, contentEncoding);
+            _baseDir = baseDir;
+            _deleteOnExit = deleteOnExit;
         }
 
         public MixedAttribute(string name, long definedSize, long limitSize, Encoding contentEncoding)
+            : this(name, definedSize, limitSize, contentEncoding,
+                DiskAttribute.DiskBaseDirectory, DiskAttribute.DeleteOnExitTemporaryFile)
         {
-            this.limitSize = limitSize;
-            this.attribute = new MemoryAttribute(name, definedSize, contentEncoding);
+        }
+
+        public MixedAttribute(string name, long definedSize, long limitSize, Encoding contentEncoding, string baseDir, bool deleteOnExit)
+        {
+            _limitSize = limitSize;
+            _attribute = new MemoryAttribute(name, definedSize, contentEncoding);
+            _baseDir = baseDir;
+            _deleteOnExit = deleteOnExit;
         }
 
         public MixedAttribute(string name, string value, long limitSize)
-            : this(name, value, limitSize, HttpConstants.DefaultEncoding)
+            : this(name, value, limitSize, HttpConstants.DefaultEncoding,
+                  DiskAttribute.DiskBaseDirectory, DiskFileUpload.DeleteOnExitTemporaryFile)
         {
         }
 
         public MixedAttribute(string name, string value, long limitSize, Encoding charset)
+            : this(name, value, limitSize, charset,
+                DiskAttribute.DiskBaseDirectory, DiskFileUpload.DeleteOnExitTemporaryFile)
         {
-            this.limitSize = limitSize;
-            if (value.Length > this.limitSize)
+        }
+
+        public MixedAttribute(string name, string value, long limitSize, Encoding charset, string baseDir, bool deleteOnExit)
+        {
+            _limitSize = limitSize;
+            if (value.Length > _limitSize)
             {
                 try
                 {
-                    this.attribute = new DiskAttribute(name, value, charset);
+                    _attribute = new DiskAttribute(name, value, charset, baseDir, deleteOnExit);
                 }
                 catch (IOException e)
                 {
                     // revert to Memory mode
                     try
                     {
-                        this.attribute = new MemoryAttribute(name, value, charset);
+                        _attribute = new MemoryAttribute(name, value, charset);
                     }
                     catch (IOException)
                     {
@@ -70,182 +94,191 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 try
                 {
-                    this.attribute = new MemoryAttribute(name, value, charset);
+                    _attribute = new MemoryAttribute(name, value, charset);
                 }
                 catch (IOException e)
                 {
                     throw new ArgumentException($"{name}", e);
                 }
             }
+            _baseDir = baseDir;
+            _deleteOnExit = deleteOnExit;
         }
 
 
         public long MaxSize
         {
-            get => this.maxSize;
+            get => _maxSize;
             set
             {
-                this.maxSize = value;
-                this.attribute.MaxSize = this.maxSize;
+                _maxSize = value;
+                _attribute.MaxSize = _maxSize;
             }
         }
 
         [MethodImpl(InlineMethod.AggressiveInlining)]
         public void CheckSize(long newSize)
         {
-            if (this.maxSize >= 0 && newSize > this.maxSize)
+            if (_maxSize >= 0 && newSize > _maxSize)
             {
-                ThrowHelper.ThrowIOException_CheckSize(this.maxSize);
+                ThrowHelper.ThrowIOException_CheckSize(_maxSize);
             }
         }
 
         public void AddContent(IByteBuffer buffer, bool last)
         {
-            if (this.attribute is MemoryAttribute memoryAttribute)
+            if (_attribute is MemoryAttribute memoryAttribute)
             {
-                this.CheckSize(this.attribute.Length + buffer.ReadableBytes);
-                if (this.attribute.Length + buffer.ReadableBytes > this.limitSize)
+                CheckSize(_attribute.Length + buffer.ReadableBytes);
+                if (_attribute.Length + buffer.ReadableBytes > _limitSize)
                 {
-                    var diskAttribute = new DiskAttribute(this.attribute.Name, this.attribute.DefinedLength);
-                    diskAttribute.MaxSize = this.maxSize;
-                    if (memoryAttribute.GetByteBuffer() is object)
+                    var diskAttribute = new DiskAttribute(_attribute.Name, _attribute.DefinedLength, _baseDir, _deleteOnExit)
                     {
-                        diskAttribute.AddContent(memoryAttribute.GetByteBuffer(), false);
+                        MaxSize = _maxSize
+                    };
+                    var byteBuf = memoryAttribute.GetByteBuffer();
+                    if (byteBuf is object)
+                    {
+                        diskAttribute.AddContent(byteBuf, false);
                     }
-                    this.attribute = diskAttribute;
+                    _attribute = diskAttribute;
                 }
             }
-            this.attribute.AddContent(buffer, last);
+            _attribute.AddContent(buffer, last);
         }
 
-        public void Delete() => this.attribute.Delete();
+        public void Delete() => _attribute.Delete();
 
-        public byte[] GetBytes() => this.attribute.GetBytes();
+        public byte[] GetBytes() => _attribute.GetBytes();
 
-        public IByteBuffer GetByteBuffer() => this.attribute.GetByteBuffer();
+        public IByteBuffer GetByteBuffer() => _attribute.GetByteBuffer();
 
         public Encoding Charset
         {
-            get => this.attribute.Charset;
-            set => this.attribute.Charset = value;
+            get => _attribute.Charset;
+            set => _attribute.Charset = value;
         }
 
-        public string GetString() => this.attribute.GetString();
+        public string GetString() => _attribute.GetString();
 
-        public string GetString(Encoding charset) => this.attribute.GetString(charset);
+        public string GetString(Encoding charset) => _attribute.GetString(charset);
 
-        public bool IsCompleted => this.attribute.IsCompleted;
+        public bool IsCompleted => _attribute.IsCompleted;
 
-        public bool IsInMemory => this.attribute.IsInMemory;
+        public bool IsInMemory => _attribute.IsInMemory;
 
-        public long Length => this.attribute.Length;
+        public long Length => _attribute.Length;
 
-        public long DefinedLength => this.attribute.DefinedLength;
+        public long DefinedLength => _attribute.DefinedLength;
 
-        public bool RenameTo(FileStream destination) => this.attribute.RenameTo(destination);
+        public bool RenameTo(FileStream destination) => _attribute.RenameTo(destination);
 
         public void SetContent(IByteBuffer buffer)
         {
-            this.CheckSize(buffer.ReadableBytes);
-            if (buffer.ReadableBytes > this.limitSize)
+            CheckSize(buffer.ReadableBytes);
+            if (buffer.ReadableBytes > _limitSize)
             {
-                if (this.attribute is MemoryAttribute)
+                if (_attribute is MemoryAttribute)
                 {
                     // change to Disk
-                    this.attribute = new DiskAttribute(this.attribute.Name, this.attribute.DefinedLength);
-                    this.attribute.MaxSize = this.maxSize;
+                    _attribute = new DiskAttribute(_attribute.Name, _attribute.DefinedLength, _baseDir, _deleteOnExit)
+                    {
+                        MaxSize = _maxSize
+                    };
                 }
             }
-            this.attribute.SetContent(buffer);
+            _attribute.SetContent(buffer);
         }
 
         public void SetContent(Stream source)
         {
-            this.CheckSize(source.Length);
-            if (source.Length > this.limitSize)
+            CheckSize(source.Length);
+            if (source.Length > _limitSize)
             {
-                if (this.attribute is MemoryAttribute)
+                if (_attribute is MemoryAttribute)
                 {
                     // change to Disk
-                    this.attribute = new DiskAttribute(this.attribute.Name, this.attribute.DefinedLength);
-                    this.attribute.MaxSize = this.maxSize;
+                    _attribute = new DiskAttribute(_attribute.Name, _attribute.DefinedLength, _baseDir, _deleteOnExit)
+                    {
+                        MaxSize = _maxSize
+                    };
                 }
             }
-            this.attribute.SetContent(source);
+            _attribute.SetContent(source);
         }
 
-        public HttpDataType DataType => this.attribute.DataType;
+        public HttpDataType DataType => _attribute.DataType;
 
-        public string Name => this.attribute.Name;
+        public string Name => _attribute.Name;
 
         // ReSharper disable once NonReadonlyMemberInGetHashCode
-        public override int GetHashCode() => this.attribute.GetHashCode();
+        public override int GetHashCode() => _attribute.GetHashCode();
 
-        public override bool Equals(object obj) => this.attribute.Equals(obj);
+        public override bool Equals(object obj) => _attribute.Equals(obj);
 
-        public int CompareTo(IInterfaceHttpData other) => this.attribute.CompareTo(other);
+        public int CompareTo(IInterfaceHttpData other) => _attribute.CompareTo(other);
 
-        public override string ToString() => $"Mixed: {this.attribute}";
+        public override string ToString() => $"Mixed: {_attribute}";
 
         public string Value
         {
-            get => this.attribute.Value;
+            get => _attribute.Value;
             set
             {
                 if (value is object)
                 {
-                    byte[] bytes = this.Charset is object
-                        ? this.Charset.GetBytes(value)
+                    byte[] bytes = Charset is object
+                        ? Charset.GetBytes(value)
                         : HttpConstants.DefaultEncoding.GetBytes(value);
-                    this.CheckSize(bytes.Length);
+                    CheckSize(bytes.Length);
                 }
 
-                this.attribute.Value = value;
+                _attribute.Value = value;
             }
         }
 
-        public IByteBuffer GetChunk(int length) => this.attribute.GetChunk(length);
+        public IByteBuffer GetChunk(int length) => _attribute.GetChunk(length);
 
-        public FileStream GetFile() => this.attribute.GetFile();
+        public FileStream GetFile() => _attribute.GetFile();
 
-        public IByteBufferHolder Copy() => this.attribute.Copy();
+        public IByteBufferHolder Copy() => _attribute.Copy();
 
-        public IByteBufferHolder Duplicate() => this.attribute.Duplicate();
+        public IByteBufferHolder Duplicate() => _attribute.Duplicate();
 
-        public IByteBufferHolder RetainedDuplicate() => this.attribute.RetainedDuplicate();
+        public IByteBufferHolder RetainedDuplicate() => _attribute.RetainedDuplicate();
 
-        public IByteBufferHolder Replace(IByteBuffer content) => this.attribute.Replace(content);
+        public IByteBufferHolder Replace(IByteBuffer content) => _attribute.Replace(content);
 
-        public IByteBuffer Content => this.attribute.Content;
+        public IByteBuffer Content => _attribute.Content;
 
-        public int ReferenceCount => this.attribute.ReferenceCount;
+        public int ReferenceCount => _attribute.ReferenceCount;
 
         public IReferenceCounted Retain()
         {
-            _ = this.attribute.Retain();
+            _ = _attribute.Retain();
             return this;
         }
 
         public IReferenceCounted Retain(int increment)
         {
-            _ = this.attribute.Retain(increment);
+            _ = _attribute.Retain(increment);
             return this;
         }
 
         public IReferenceCounted Touch()
         {
-            _ = this.attribute.Touch();
+            _ = _attribute.Touch();
             return this;
         }
 
         public IReferenceCounted Touch(object hint)
         {
-            _ = this.attribute.Touch(hint);
+            _ = _attribute.Touch(hint);
             return this;
         }
 
-        public bool Release() => this.attribute.Release();
+        public bool Release() => _attribute.Release();
 
-        public bool Release(int decrement) => this.attribute.Release(decrement);
+        public bool Release(int decrement) => _attribute.Release(decrement);
     }
 }

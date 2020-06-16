@@ -187,7 +187,7 @@ namespace DotNetty.Buffers
                 }
             }
 
-            return ThrowHelper.ThrowInvalidOperationException_ShouldNotReachHere<ComponentEntry>();
+            throw ThrowHelper.GetInvalidOperationException_ShouldNotReachHere();
         }
 
         /// <summary>

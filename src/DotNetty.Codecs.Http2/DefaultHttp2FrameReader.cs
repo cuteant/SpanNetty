@@ -487,7 +487,7 @@ namespace DotNetty.Codecs.Http2
             {
                 long word1 = payload.ReadUnsignedInt();
                 bool exclusive = (word1 & 0x80000000L) != 0;
-                int streamDependency = (int)(word1 & 0x7FFFFFFFL);
+                int streamDependency = (int)(uint)(word1 & 0x7FFFFFFFL);
                 if (streamDependency == headersStreamId)
                 {
                     ThrowHelper.ThrowStreamError_AStreamCannotDependOnItself(headersStreamId);
@@ -529,7 +529,7 @@ namespace DotNetty.Codecs.Http2
         {
             long word1 = payload.ReadUnsignedInt();
             bool exclusive = (word1 & 0x80000000L) != 0;
-            int streamDependency = (int)(word1 & 0x7FFFFFFFL);
+            int streamDependency = (int)(uint)(word1 & 0x7FFFFFFFL);
             if (streamDependency == _streamId)
             {
                 ThrowHelper.ThrowStreamError_AStreamCannotDependOnItself(_streamId);

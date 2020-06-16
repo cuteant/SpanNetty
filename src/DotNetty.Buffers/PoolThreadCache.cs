@@ -195,7 +195,7 @@ namespace DotNetty.Buffers
                 // no cache found so just return false here
                 return false;
             }
-            bool allocated = cache.Allocate(buf, reqCapacity);
+            bool allocated = cache.Allocate(buf, reqCapacity, this);
             if (++_allocations >= _freeSweepAllocationThreshold)
             {
                 _allocations = 0;
@@ -356,8 +356,8 @@ namespace DotNetty.Buffers
             }
 
             protected override void InitBuf(
-                PoolChunk<T> chunk, long handle, PooledByteBuffer<T> buf, int reqCapacity) =>
-                chunk.InitBufWithSubpage(buf, handle, reqCapacity);
+                PoolChunk<T> chunk, long handle, PooledByteBuffer<T> buf, int reqCapacity, PoolThreadCache<T> threadCache) =>
+                chunk.InitBufWithSubpage(buf, handle, reqCapacity, threadCache);
         }
 
         /**
@@ -371,8 +371,8 @@ namespace DotNetty.Buffers
             }
 
             protected override void InitBuf(
-                PoolChunk<T> chunk, long handle, PooledByteBuffer<T> buf, int reqCapacity) =>
-                chunk.InitBuf(buf, handle, reqCapacity);
+                PoolChunk<T> chunk, long handle, PooledByteBuffer<T> buf, int reqCapacity, PoolThreadCache<T> threadCache) =>
+                chunk.InitBuf(buf, handle, reqCapacity, threadCache);
         }
 
         abstract class MemoryRegionCache
@@ -393,7 +393,7 @@ namespace DotNetty.Buffers
              * Init the {@link PooledByteBuffer} using the provided chunk and handle with the capacity restrictions.
              */
             protected abstract void InitBuf(PoolChunk<T> chunk, long handle,
-                PooledByteBuffer<T> buf, int reqCapacity);
+                PooledByteBuffer<T> buf, int reqCapacity, PoolThreadCache<T> threadCache);
 
             /**
              * Add to cache if not already full.
@@ -414,13 +414,13 @@ namespace DotNetty.Buffers
             /**
              * Allocate something out of the cache if possible and remove the entry from the cache.
              */
-            public bool Allocate(PooledByteBuffer<T> buf, int reqCapacity)
+            public bool Allocate(PooledByteBuffer<T> buf, int reqCapacity, PoolThreadCache<T> threadCache)
             {
                 if (!_queue.TryDequeue(out Entry entry))
                 {
                     return false;
                 }
-                InitBuf(entry.Chunk, entry.Handle, buf, reqCapacity);
+                InitBuf(entry.Chunk, entry.Handle, buf, reqCapacity, threadCache);
                 entry.Recycle();
 
                 // allocations is not thread-safe which is fine as this is only called from the same thread all time.

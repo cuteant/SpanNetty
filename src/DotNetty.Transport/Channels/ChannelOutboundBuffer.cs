@@ -1,11 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoProperty
-// ReSharper disable ConvertToAutoPropertyWithPrivateSetter
-// ReSharper disable ConvertToAutoPropertyWhenPossible
-
-#pragma warning disable 420 // all volatile fields are used with referenced in Interlocked methods only
 namespace DotNetty.Transport.Channels
 {
     using System;
@@ -165,23 +160,13 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         public object Current => _flushedEntry?.Message;
 
-        private static long Total(object msg)
+        private static long Total(object msg) => msg switch
         {
-            switch (msg)
-            {
-                case IByteBuffer buf:
-                    return buf.ReadableBytes;
-
-                case IFileRegion fileRegion:
-                    return fileRegion.Count;
-
-                case IByteBufferHolder byteBufferHolder:
-                    return byteBufferHolder.Content.ReadableBytes;
-
-                default:
-                    return -1L;
-            }
-        }
+            IByteBuffer buf => buf.ReadableBytes,
+            IFileRegion fileRegion => fileRegion.Count,
+            IByteBufferHolder byteBufferHolder => byteBufferHolder.Content.ReadableBytes,
+            _ => -1L,
+        };
 
         /// <summary>
         /// Return the current message flush progress.
@@ -438,7 +423,7 @@ namespace DotNetty.Transport.Channels
                             // branch is not very likely to get hit very frequently.
                             nioBufferCount = GetSharedBufferList(entry, buf, nioBuffers, nioBufferCount, maxCount);
                         }
-                        if (nioBufferCount == maxCount)
+                        if ((uint)nioBufferCount >= (uint)maxCount)
                         {
                             break;
                         }

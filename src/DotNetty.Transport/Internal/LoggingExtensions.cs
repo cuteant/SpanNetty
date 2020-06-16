@@ -133,12 +133,6 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void ThrowByAUserHandlerWhileHandlingAnExceptionCaughtEvent(this IInternalLogger logger, Exception cause)
-        {
-            logger.Warn("An exception was thrown by a user handler while handling an exceptionCaught event", cause);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void FailedToInitializeAChannel(this IInternalLogger logger, IChannelHandlerContext ctx, Exception cause)
         {
             logger.Warn("Failed to initialize a channel. Closing: " + ctx.Channel, cause);

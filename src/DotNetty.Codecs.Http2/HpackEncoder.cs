@@ -26,7 +26,7 @@ namespace DotNetty.Codecs.Http2
         private readonly HeaderEntry[] _headerFields;
         private readonly HeaderEntry _head = new HeaderEntry(-1, AsciiString.Empty, AsciiString.Empty, int.MaxValue, null);
         private readonly HpackHuffmanEncoder _hpackHuffmanEncoder = new HpackHuffmanEncoder();
-        private readonly byte _hashMask;
+        private readonly sbyte _hashMask;
         private readonly bool _ignoreMaxHeaderListSize;
         private readonly int _huffCodeThreshold;
         private long _size;
@@ -60,7 +60,7 @@ namespace DotNetty.Codecs.Http2
             // Enforce a bound of [2, 128] because hashMask is a byte. The max possible value of hashMask is one less
             // than the length of this array, and we want the mask to be > 0.
             _headerFields = new HeaderEntry[MathUtil.FindNextPositivePowerOfTwo(Math.Max(2, Math.Min(arraySizeHint, 128)))];
-            _hashMask = (byte)(_headerFields.Length - 1);
+            _hashMask = (sbyte)(_headerFields.Length - 1);
             _head.Before = _head.After = _head;
             _huffCodeThreshold = huffCodeThreshold;
         }

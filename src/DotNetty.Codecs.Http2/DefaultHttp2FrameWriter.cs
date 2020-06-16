@@ -251,7 +251,7 @@ namespace DotNetty.Codecs.Http2
 
                 IByteBuffer buf = ctx.Allocator.Buffer(Http2CodecUtil.PriorityFrameLength);
                 Http2CodecUtil.WriteFrameHeaderInternal(buf, Http2CodecUtil.PriorityEntryLength, Http2FrameTypes.Priority, new Http2Flags(), streamId);
-                _ = buf.WriteInt(exclusive ? (int)(0x80000000L | streamDependency) : streamDependency);
+                _ = buf.WriteInt(exclusive ? (int)(uint)(0x80000000L | streamDependency) : streamDependency);
                 // Adjust the weight so that it fits into a single byte on the wire.
                 _ = buf.WriteByte(weight - 1);
                 return ctx.WriteAsync(buf, promise);
@@ -554,7 +554,7 @@ namespace DotNetty.Codecs.Http2
 
                 if (hasPriority)
                 {
-                    _ = buf.WriteInt(exclusive ? (int)(0x80000000L | streamDependency) : streamDependency);
+                    _ = buf.WriteInt(exclusive ? (int)(uint)(0x80000000L | streamDependency) : streamDependency);
 
                     // Adjust the weight so that it fits into a single byte on the wire.
                     _ = buf.WriteByte(weight - 1);

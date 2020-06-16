@@ -18,105 +18,139 @@ namespace DotNetty.Codecs.Http.Multipart
         // Proposed default MAXSIZE = -1 as UNLIMITED
         public static readonly long MaxSize = -1;
 
-        readonly bool useDisk;
-        readonly bool checkSize;
-        readonly long minSize;
-        long maxSize = MaxSize;
-        readonly Encoding charset = HttpConstants.DefaultEncoding;
+        private readonly bool _useDisk;
+        private readonly bool _checkSize;
+        private readonly long _minSize;
+        private long _maxSize = MaxSize;
+        private readonly Encoding _charset = HttpConstants.DefaultEncoding;
+
+        private string _baseDir;
+        private bool _deleteOnExit; // false is a good default cause true leaks
 
         // Keep all HttpDatas until cleanAllHttpData() is called.
-        readonly ConcurrentDictionary<IHttpRequest, List<IHttpData>> requestFileDeleteMap = 
+        private readonly ConcurrentDictionary<IHttpRequest, List<IHttpData>> _requestFileDeleteMap =
             new ConcurrentDictionary<IHttpRequest, List<IHttpData>>(IdentityComparer.Default);
 
         // HttpData will be in memory if less than default size (16KB).
         // The type will be Mixed.
         public DefaultHttpDataFactory()
         {
-            this.useDisk = false;
-            this.checkSize = true;
-            this.minSize = MinSize;
+            _useDisk = false;
+            _checkSize = true;
+            _minSize = MinSize;
         }
 
         internal DefaultHttpDataFactory(Encoding charset) : this()
         {
-            this.charset = charset;
+            _charset = charset;
         }
 
         // HttpData will be always on Disk if useDisk is True, else always in Memory if False
         public DefaultHttpDataFactory(bool useDisk)
         {
-            this.useDisk = useDisk;
-            this.checkSize = false;
+            _useDisk = useDisk;
+            _checkSize = false;
         }
 
         internal DefaultHttpDataFactory(bool useDisk, Encoding charset) : this(useDisk)
         {
-            this.charset = charset;
+            _charset = charset;
         }
 
         public DefaultHttpDataFactory(long minSize)
         {
-            this.useDisk = false;
-            this.checkSize = true;
-            this.minSize = minSize;
+            _useDisk = false;
+            _checkSize = true;
+            _minSize = minSize;
         }
 
         internal DefaultHttpDataFactory(long minSize, Encoding charset) : this(minSize)
         {
-            this.charset = charset;
+            _charset = charset;
         }
 
-        public void SetMaxLimit(long max) => this.maxSize = max;
+        /// <summary>
+        /// Override global <see cref="DiskAttribute.BaseDirectory"/> and <see cref="DiskFileUpload.BaseDirectory"/> values.
+        /// </summary>
+        /// <param name="baseDir">directory path where to store disk attributes and file uploads.</param>
+        public void SetBaseDir(string baseDir)
+        {
+            _baseDir = baseDir;
+        }
+
+        /// <summary>
+        /// Override global <see cref="DiskAttribute.DeleteOnExitTemporaryFile"/> and
+        /// <see cref="DiskFileUpload.DeleteOnExitTemporaryFile"/> values.
+        /// </summary>
+        /// <param name="deleteOnExit"><c>true</c> if temporary files should be deleted with the JVM, false otherwise.</param>
+        public void SetDeleteOnExit(bool deleteOnExit)
+        {
+            _deleteOnExit = deleteOnExit;
+        }
+
+        public void SetMaxLimit(long max) => _maxSize = max;
 
         List<IHttpData> GetList(IHttpRequest request)
         {
-            List<IHttpData> list = this.requestFileDeleteMap.GetOrAdd(request, _ => new List<IHttpData>());
+            List<IHttpData> list = _requestFileDeleteMap.GetOrAdd(request, _ => new List<IHttpData>());
             return list;
         }
 
         public IAttribute CreateAttribute(IHttpRequest request, string name)
         {
-            if (this.useDisk)
+            if (_useDisk)
             {
-                var diskAttribute = new DiskAttribute(name, this.charset);
-                diskAttribute.MaxSize = this.maxSize;
-                List<IHttpData> list = this.GetList(request);
+                var diskAttribute = new DiskAttribute(name, _charset, _baseDir, _deleteOnExit)
+                {
+                    MaxSize = _maxSize
+                };
+                List<IHttpData> list = GetList(request);
                 list.Add(diskAttribute);
                 return diskAttribute;
             }
-            if (this.checkSize)
+            if (_checkSize)
             {
-                var mixedAttribute = new MixedAttribute(name, this.minSize, this.charset);
-                mixedAttribute.MaxSize = this.maxSize;
-                List<IHttpData> list = this.GetList(request);
+                var mixedAttribute = new MixedAttribute(name, _minSize, _charset, _baseDir, _deleteOnExit)
+                {
+                    MaxSize = _maxSize
+                };
+                List<IHttpData> list = GetList(request);
                 list.Add(mixedAttribute);
                 return mixedAttribute;
             }
-            var attribute = new MemoryAttribute(name);
-            attribute.MaxSize = this.maxSize;
+            var attribute = new MemoryAttribute(name)
+            {
+                MaxSize = _maxSize
+            };
             return attribute;
         }
 
         public IAttribute CreateAttribute(IHttpRequest request, string name, long definedSize)
         {
-            if (this.useDisk)
+            if (_useDisk)
             {
-                var diskAttribute = new DiskAttribute(name, definedSize, this.charset);
-                diskAttribute.MaxSize = this.maxSize;
-                List<IHttpData> list = this.GetList(request);
+                var diskAttribute = new DiskAttribute(name, definedSize, _charset, _baseDir, _deleteOnExit)
+                {
+                    MaxSize = _maxSize
+                };
+                List<IHttpData> list = GetList(request);
                 list.Add(diskAttribute);
                 return diskAttribute;
             }
-            if (this.checkSize)
+            if (_checkSize)
             {
-                var mixedAttribute = new MixedAttribute(name, definedSize, this.minSize, this.charset);
-                mixedAttribute.MaxSize = this.maxSize;
-                List<IHttpData> list = this.GetList(request);
+                var mixedAttribute = new MixedAttribute(name, definedSize, _minSize, _charset, _baseDir, _deleteOnExit)
+                {
+                    MaxSize = _maxSize
+                };
+                List<IHttpData> list = GetList(request);
                 list.Add(mixedAttribute);
                 return mixedAttribute;
             }
-            var attribute = new MemoryAttribute(name, definedSize);
-            attribute.MaxSize = this.maxSize;
+            var attribute = new MemoryAttribute(name, definedSize)
+            {
+                MaxSize = _maxSize
+            };
             return attribute;
         }
 
@@ -134,38 +168,46 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public IAttribute CreateAttribute(IHttpRequest request, string name, string value)
         {
-            if (this.useDisk)
+            if (_useDisk)
             {
                 IAttribute attribute;
                 try
                 {
-                    attribute = new DiskAttribute(name, value, this.charset);
-                    attribute.MaxSize = this.maxSize;
+                    attribute = new DiskAttribute(name, value, _charset, _baseDir, _deleteOnExit)
+                    {
+                        MaxSize = _maxSize
+                    };
                 }
                 catch (IOException)
                 {
                     // revert to Mixed mode
-                    attribute = new MixedAttribute(name, value, this.minSize, this.charset);
-                    attribute.MaxSize = this.maxSize;
+                    attribute = new MixedAttribute(name, value, _minSize, _charset, _baseDir, _deleteOnExit)
+                    {
+                        MaxSize = _maxSize
+                    };
                 }
                 CheckHttpDataSize(attribute);
-                List<IHttpData> list = this.GetList(request);
+                List<IHttpData> list = GetList(request);
                 list.Add(attribute);
                 return attribute;
             }
-            if (this.checkSize)
+            if (_checkSize)
             {
-                var mixedAttribute = new MixedAttribute(name, value, this.minSize, this.charset);
-                mixedAttribute.MaxSize = this.maxSize;
+                var mixedAttribute = new MixedAttribute(name, value, _minSize, _charset, _baseDir, _deleteOnExit)
+                {
+                    MaxSize = _maxSize
+                };
                 CheckHttpDataSize(mixedAttribute);
-                List<IHttpData> list = this.GetList(request);
+                List<IHttpData> list = GetList(request);
                 list.Add(mixedAttribute);
                 return mixedAttribute;
             }
             try
             {
-                var attribute = new MemoryAttribute(name, value, this.charset);
-                attribute.MaxSize = this.maxSize;
+                var attribute = new MemoryAttribute(name, value, _charset)
+                {
+                    MaxSize = _maxSize
+                };
                 CheckHttpDataSize(attribute);
                 return attribute;
             }
@@ -175,33 +217,39 @@ namespace DotNetty.Codecs.Http.Multipart
             }
         }
 
-        public IFileUpload CreateFileUpload(IHttpRequest request, string name, string fileName, 
-            string contentType, string contentTransferEncoding, Encoding encoding, 
+        public IFileUpload CreateFileUpload(IHttpRequest request, string name, string fileName,
+            string contentType, string contentTransferEncoding, Encoding encoding,
             long size)
         {
-            if (this.useDisk)
+            if (_useDisk)
             {
-                var fileUpload = new DiskFileUpload(name, fileName, contentType, 
-                    contentTransferEncoding, encoding, size);
-                fileUpload.MaxSize = this.maxSize;
+                var fileUpload = new DiskFileUpload(name, fileName, contentType,
+                    contentTransferEncoding, encoding, size, _baseDir, _deleteOnExit)
+                {
+                    MaxSize = _maxSize
+                };
                 CheckHttpDataSize(fileUpload);
-                List<IHttpData> list = this.GetList(request);
+                List<IHttpData> list = GetList(request);
                 list.Add(fileUpload);
                 return fileUpload;
             }
-            if (this.checkSize)
+            if (_checkSize)
             {
-                var fileUpload = new MixedFileUpload(name, fileName, contentType, 
-                    contentTransferEncoding, encoding, size, this.minSize);
-                fileUpload.MaxSize = this.maxSize;
+                var fileUpload = new MixedFileUpload(name, fileName, contentType,
+                    contentTransferEncoding, encoding, size, _minSize, _baseDir, _deleteOnExit)
+                {
+                    MaxSize = _maxSize
+                };
                 CheckHttpDataSize(fileUpload);
-                List<IHttpData> list = this.GetList(request);
+                List<IHttpData> list = GetList(request);
                 list.Add(fileUpload);
                 return fileUpload;
             }
-            var memoryFileUpload = new MemoryFileUpload(name, fileName, contentType, 
-                contentTransferEncoding, encoding, size);
-            memoryFileUpload.MaxSize = this.maxSize;
+            var memoryFileUpload = new MemoryFileUpload(name, fileName, contentType,
+                contentTransferEncoding, encoding, size)
+            {
+                MaxSize = _maxSize
+            };
             CheckHttpDataSize(memoryFileUpload);
             return memoryFileUpload;
         }
@@ -215,7 +263,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
             // Do not use getList because it adds empty list to requestFileDeleteMap
             // if request is not found
-            if (!this.requestFileDeleteMap.TryGetValue(request, out List<IHttpData> list))
+            if (!_requestFileDeleteMap.TryGetValue(request, out List<IHttpData> list))
             {
                 return;
             }
@@ -237,13 +285,13 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             if (0u >= (uint)list.Count)
             {
-                _ = this.requestFileDeleteMap.TryRemove(request, out _);
+                _ = _requestFileDeleteMap.TryRemove(request, out _);
             }
         }
 
         public void CleanRequestHttpData(IHttpRequest request)
         {
-            if (this.requestFileDeleteMap.TryRemove(request, out List<IHttpData> list))
+            if (_requestFileDeleteMap.TryRemove(request, out List<IHttpData> list))
             {
                 foreach (IHttpData data in list)
                 {
@@ -254,12 +302,12 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public void CleanAllHttpData()
         {
-            while (!this.requestFileDeleteMap.IsEmpty)
+            while (!_requestFileDeleteMap.IsEmpty)
             {
-                IHttpRequest[] keys = this.requestFileDeleteMap.Keys.ToArray();
+                IHttpRequest[] keys = _requestFileDeleteMap.Keys.ToArray();
                 foreach (IHttpRequest key in keys)
                 {
-                    if (this.requestFileDeleteMap.TryRemove(key, out List<IHttpData> list))
+                    if (_requestFileDeleteMap.TryRemove(key, out List<IHttpData> list))
                     {
                         foreach (IHttpData data in list)
                         {

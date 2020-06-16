@@ -60,7 +60,7 @@ namespace DotNetty.Codecs
     ///      extends <see cref="ReplayingDecoder{TState}"/>&lt;{@link Void}&gt; {
     ///
     ///   protected void decode(<see cref="IChannelHandlerContext"/> ctx,
-    ///                           <see cref="IByteBuffer"/> buf) throws Exception {
+    ///                           <see cref="IByteBuffer"/> buf, List&lt;Object&gt; output) throws Exception {
     ///
     ///     out.add(buf.readBytes(buf.readInt()));
     ///   }
@@ -373,10 +373,7 @@ namespace DotNetty.Codecs
 
                     if ((uint)outSize > 0u)
                     {
-                        for (int i = 0; i < outSize; i++)
-                        {
-                            _ = context.FireChannelRead(output[i]);
-                        }
+                        FireChannelRead(context, output, outSize);
                         output.Clear();
 
                         // Check if this handler was removed before continuing with decoding.

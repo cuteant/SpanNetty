@@ -10,17 +10,13 @@ namespace DotNetty.Codecs.Http.Tests
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Compression;
-    using DotNetty.Common.Utilities;
-    using DotNetty.Transport.Channels.Embedded;
-    using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Channels.Embedded;
     using DotNetty.Transport.Channels.Local;
-    using DotNetty.Transport.Channels.Sockets;
     using Xunit;
-    using System.Linq;
 
     public sealed class HttpContentCompressorTest
     {

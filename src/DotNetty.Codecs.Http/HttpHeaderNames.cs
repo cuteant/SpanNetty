@@ -24,7 +24,7 @@ namespace DotNetty.Codecs.Http
         public static readonly AsciiString AcceptRanges = AsciiString.Cached("accept-ranges");
 
         public static readonly AsciiString AcceptPatch = AsciiString.Cached("accept-patch");
-        
+
         public static readonly AsciiString AccessControlAllowCredentials = AsciiString.Cached("access-control-allow-credentials");
 
         public static readonly AsciiString AccessControlAllowHeaders = AsciiString.Cached("access-control-allow-headers");
@@ -76,6 +76,8 @@ namespace DotNetty.Codecs.Http
         public static readonly AsciiString Cookie = AsciiString.Cached("cookie");
 
         public static readonly AsciiString Date = AsciiString.Cached("date");
+
+        public static readonly AsciiString Dnt = AsciiString.Cached("dnt");
 
         public static readonly AsciiString Etag = AsciiString.Cached("etag");
 
@@ -153,6 +155,8 @@ namespace DotNetty.Codecs.Http
 
         public static readonly AsciiString Upgrade = AsciiString.Cached("upgrade");
 
+        public static readonly AsciiString UpgradeInsecureRequests = AsciiString.Cached("upgrade-insecure-requests");
+
         public static readonly AsciiString UserAgent = AsciiString.Cached("user-agent");
 
         public static readonly AsciiString Vary = AsciiString.Cached("vary");
@@ -170,5 +174,7 @@ namespace DotNetty.Codecs.Http
         public static readonly AsciiString WwwAuthenticate = AsciiString.Cached("www-authenticate");
 
         public static readonly AsciiString XFrameOptions = AsciiString.Cached("x-frame-options");
+
+        public static readonly AsciiString XRequestedWith = AsciiString.Cached("x-requested-with");
     }
 }

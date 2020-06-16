@@ -340,6 +340,12 @@ namespace DotNetty.Buffers
         #region -- InvalidOperationException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static InvalidOperationException GetInvalidOperationException_ShouldNotReachHere()
+        {
+            return new InvalidOperationException("should not reach here");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowInvalidOperationException(int capacity)
         {
             throw GetException(capacity);
@@ -351,22 +357,22 @@ namespace DotNetty.Buffers
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_Can_not_increase_by(int readableBytes)
+        {
+            throw GetException(readableBytes);
+
+            static InvalidOperationException GetException(int readableBytes)
+            {
+                return new InvalidOperationException("Can't increase by " + readableBytes);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowInvalidOperationException_EndPositionNotReached() { throw CreateInvalidOperationException_EndPositionNotReached(); }
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static InvalidOperationException CreateInvalidOperationException_EndPositionNotReached()
         {
             return new InvalidOperationException("EndPositionNotReached");
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static T ThrowInvalidOperationException_ShouldNotReachHere<T>()
-        {
-            throw GetException();
-
-            static InvalidOperationException GetException()
-            {
-                return new InvalidOperationException("should not reach here");
-            }
         }
 
         #endregion

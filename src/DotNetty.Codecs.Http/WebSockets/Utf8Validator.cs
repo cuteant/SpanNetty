@@ -61,7 +61,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         public bool Process(byte value)
         {
             var b = (int)value;
-            byte type = Types[b & 0xFF];
+            byte type = Types[b]; // b & 0xFF
 
             _codep = _state != Utf8Accept ? b & 0x3f | _codep << 6 : 0xff >> type & b;
 

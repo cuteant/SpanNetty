@@ -182,7 +182,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    NotifyHandlerException(ex);
+                    InvokeExceptionCaught(ex);
                 }
             }
             else
@@ -220,7 +220,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception t)
                 {
-                    NotifyHandlerException(t);
+                    InvokeExceptionCaught(t);
                 }
             }
             else
@@ -258,7 +258,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    NotifyHandlerException(ex);
+                    InvokeExceptionCaught(ex);
                 }
             }
             else
@@ -296,7 +296,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    NotifyHandlerException(ex);
+                    InvokeExceptionCaught(ex);
                 }
             }
             else
@@ -392,7 +392,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    NotifyHandlerException(ex);
+                    InvokeExceptionCaught(ex);
                 }
             }
             else
@@ -433,7 +433,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    NotifyHandlerException(ex);
+                    InvokeExceptionCaught(ex);
                 }
             }
             else
@@ -472,7 +472,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    NotifyHandlerException(ex);
+                    InvokeExceptionCaught(ex);
                 }
             }
             else
@@ -511,7 +511,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    NotifyHandlerException(ex);
+                    InvokeExceptionCaught(ex);
                 }
             }
             else
@@ -760,7 +760,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    NotifyHandlerException(ex);
+                    InvokeExceptionCaught(ex);
                 }
             }
             else
@@ -837,7 +837,7 @@ namespace DotNetty.Transport.Channels
             }
             catch (Exception ex)
             {
-                NotifyHandlerException(ex);
+                InvokeExceptionCaught(ex);
             }
         }
 
@@ -915,26 +915,7 @@ namespace DotNetty.Transport.Channels
 
         public IPromise VoidPromise() => Channel.VoidPromise();
 
-        void NotifyHandlerException(Exception cause)
-        {
-            if (InExceptionCaught(cause))
-            {
-                var logger = DefaultChannelPipeline.Logger;
-                if (logger.WarnEnabled)
-                {
-                    logger.ThrowByAUserHandlerWhileHandlingAnExceptionCaughtEvent(cause);
-                }
-                return;
-            }
-
-            InvokeExceptionCaught(cause);
-        }
-
         static Task ComposeExceptionTask(Exception cause) => TaskUtil.FromException(cause);
-
-        const string ExceptionCaughtMethodName = nameof(IChannelHandler.ExceptionCaught);
-
-        static bool InExceptionCaught(Exception cause) => cause.StackTrace.IndexOf("." + ExceptionCaughtMethodName + "(", StringComparison.Ordinal) >= 0;
 
         AbstractChannelHandlerContext FindContextInbound()
         {

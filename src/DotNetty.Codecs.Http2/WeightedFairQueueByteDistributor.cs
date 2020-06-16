@@ -477,9 +477,9 @@ namespace DotNetty.Codecs.Http2
         {
             private const int IndexNotInQueue = -1;
 
-            private const byte StateIsActive = 0x1;
-            private const byte StateIsDistributing = 0x2;
-            private const byte StateStreamActivated = 0x4;
+            private const int StateIsActive = 0x1;
+            private const int StateIsDistributing = 0x2;
+            private const int StateStreamActivated = 0x4;
 
             /// <summary>
             /// Maybe <c>null</c> if the stream if the stream is not active.

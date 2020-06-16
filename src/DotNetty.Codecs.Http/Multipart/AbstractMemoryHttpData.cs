@@ -3,6 +3,7 @@
 
 namespace DotNetty.Codecs.Http.Multipart
 {
+    using System;
     using System.Buffers;
     using System.IO;
     using System.Text;
@@ -19,10 +20,10 @@ namespace DotNetty.Codecs.Http.Multipart
         // improvement in Copy performance.
         const int c_defaultCopyBufferSize = 81920;
 
-        IByteBuffer byteBuf;
-        int chunkPosition;
+        private IByteBuffer _byteBuf;
+        private int _chunkPosition;
 
-        protected AbstractMemoryHttpData(string name, Encoding charset, long size) 
+        protected AbstractMemoryHttpData(string name, Encoding charset, long size)
             : base(name, charset, size)
         {
         }
@@ -32,16 +33,16 @@ namespace DotNetty.Codecs.Http.Multipart
             if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
 
             long localsize = buffer.ReadableBytes;
-            CheckSize(localsize, this.MaxSize);
-            if (this.DefinedSize > 0 && this.DefinedSize < localsize)
+            CheckSize(localsize, MaxSize);
+            if (DefinedSize > 0 && DefinedSize < localsize)
             {
-                ThrowHelper.ThrowIOException_OutOfSize(localsize, this.DefinedSize);
+                ThrowHelper.ThrowIOException_OutOfSize(localsize, DefinedSize);
             }
-            _ = (this.byteBuf?.Release());
+            _ = (_byteBuf?.Release());
 
-            this.byteBuf = buffer;
-            this.Size = localsize;
-            this.SetCompleted();
+            _byteBuf = buffer;
+            Size = localsize;
+            SetCompleted();
         }
 
         public override void SetContent(Stream inputStream)
@@ -53,8 +54,8 @@ namespace DotNetty.Codecs.Http.Multipart
                 ThrowHelper.ThrowArgumentException_Stream_NotReadable();
             }
 
-            IByteBuffer buffer = ArrayPooled.Buffer();
             var bytes = ArrayPool<byte>.Shared.Rent(c_defaultCopyBufferSize);
+            IByteBuffer buffer = ArrayPooled.Buffer();
             int written = 0;
             try
             {
@@ -68,22 +69,28 @@ namespace DotNetty.Codecs.Http.Multipart
 
                     _ = buffer.WriteBytes(bytes, 0, read);
                     written += read;
-                    CheckSize(written, this.MaxSize);
+                    CheckSize(written, MaxSize);
                 }
+            }
+            catch (IOException)
+            {
+                buffer.Release();
+                throw;
             }
             finally
             {
                 ArrayPool<byte>.Shared.Return(bytes);
             }
-            this.Size = written;
-            if (this.DefinedSize > 0 && this.DefinedSize < this.Size)
+            Size = written;
+            if (DefinedSize > 0 && DefinedSize < Size)
             {
-                ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
+                buffer.Release();
+                ThrowHelper.ThrowIOException_OutOfSize(Size, DefinedSize);
             }
 
-            _ = (this.byteBuf?.Release());
-            this.byteBuf = buffer;
-            this.SetCompleted();
+            _ = (_byteBuf?.Release());
+            _byteBuf = buffer;
+            SetCompleted();
         }
 
         public override void AddContent(IByteBuffer buffer, bool last)
@@ -91,33 +98,33 @@ namespace DotNetty.Codecs.Http.Multipart
             if (buffer is object)
             {
                 long localsize = buffer.ReadableBytes;
-                CheckSize(this.Size + localsize, this.MaxSize);
-                if (this.DefinedSize > 0 && this.DefinedSize < this.Size + localsize)
+                CheckSize(Size + localsize, MaxSize);
+                if (DefinedSize > 0 && DefinedSize < Size + localsize)
                 {
-                    ThrowHelper.ThrowIOException_OutOfSize(this.Size + localsize, this.DefinedSize);
+                    ThrowHelper.ThrowIOException_OutOfSize(Size + localsize, DefinedSize);
                 }
 
-                this.Size += localsize;
-                if (this.byteBuf is null)
+                Size += localsize;
+                if (_byteBuf is null)
                 {
-                    this.byteBuf = buffer;
+                    _byteBuf = buffer;
                 }
-                else if (this.byteBuf is CompositeByteBuffer buf)
+                else if (_byteBuf is CompositeByteBuffer buf)
                 {
                     _ = buf.AddComponent(true, buffer);
-                    _ = buf.SetWriterIndex((int)this.Size);
+                    _ = buf.SetWriterIndex((int)Size);
                 }
                 else
                 {
                     CompositeByteBuffer compositeBuffer = ArrayPooled.CompositeBuffer(int.MaxValue);
-                    _ = compositeBuffer.AddComponents(true, this.byteBuf, buffer);
-                    _ = compositeBuffer.SetWriterIndex((int)this.Size);
-                    this.byteBuf = compositeBuffer;
+                    _ = compositeBuffer.AddComponents(true, _byteBuf, buffer);
+                    _ = compositeBuffer.SetWriterIndex((int)Size);
+                    _byteBuf = compositeBuffer;
                 }
             }
             if (last)
             {
-                this.SetCompleted();
+                SetCompleted();
             }
             else
             {
@@ -130,30 +137,30 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override void Delete()
         {
-            if (this.byteBuf is object)
+            if (_byteBuf is object)
             {
-                _ = this.byteBuf.Release();
-                this.byteBuf = null;
+                _ = _byteBuf.Release();
+                _byteBuf = null;
             }
         }
 
         public override byte[] GetBytes()
         {
-            if (this.byteBuf is null)
+            if (_byteBuf is null)
             {
                 return Unpooled.Empty.Array;
             }
 
-            var array = new byte[this.byteBuf.ReadableBytes];
-            _ = this.byteBuf.GetBytes(this.byteBuf.ReaderIndex, array);
+            var array = new byte[_byteBuf.ReadableBytes];
+            _ = _byteBuf.GetBytes(_byteBuf.ReaderIndex, array);
             return array;
         }
 
-        public override string GetString() => this.GetString(HttpConstants.DefaultEncoding);
+        public override string GetString() => GetString(HttpConstants.DefaultEncoding);
 
         public override string GetString(Encoding encoding)
         {
-            if (this.byteBuf is null)
+            if (_byteBuf is null)
             {
                 return string.Empty;
             }
@@ -161,7 +168,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 encoding = HttpConstants.DefaultEncoding;
             }
-            return this.byteBuf.ToString(encoding);
+            return _byteBuf.ToString(encoding);
         }
 
         /// <summary>
@@ -169,19 +176,19 @@ namespace DotNetty.Codecs.Http.Multipart
         /// to a Disk (or another implementation) FileUpload
         /// </summary>
         /// <returns>the attached ByteBuf containing the actual bytes</returns>
-        public override IByteBuffer GetByteBuffer() => this.byteBuf;
+        public override IByteBuffer GetByteBuffer() => _byteBuf;
 
         public override IByteBuffer GetChunk(int length)
         {
-            if (this.byteBuf is null || 0u >= (uint)length || 0u >= (uint)this.byteBuf.ReadableBytes)
+            if (_byteBuf is null || 0u >= (uint)length || 0u >= (uint)_byteBuf.ReadableBytes)
             {
-                this.chunkPosition = 0;
+                _chunkPosition = 0;
                 return Unpooled.Empty;
             }
-            int sizeLeft = this.byteBuf.ReadableBytes - this.chunkPosition;
+            int sizeLeft = _byteBuf.ReadableBytes - _chunkPosition;
             if (0u >= (uint)sizeLeft)
             {
-                this.chunkPosition = 0;
+                _chunkPosition = 0;
                 return Unpooled.Empty;
             }
             int sliceLength = length;
@@ -190,8 +197,8 @@ namespace DotNetty.Codecs.Http.Multipart
                 sliceLength = sizeLeft;
             }
 
-            IByteBuffer chunk = this.byteBuf.RetainedSlice(this.chunkPosition, sliceLength);
-            this.chunkPosition += sliceLength;
+            IByteBuffer chunk = _byteBuf.RetainedSlice(_chunkPosition, sliceLength);
+            _chunkPosition += sliceLength;
             return chunk;
         }
 
@@ -205,13 +212,13 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 ThrowHelper.ThrowArgumentException_Stream_NotWritable();
             }
-            if (this.byteBuf is null)
+            if (_byteBuf is null)
             {
                 // empty file
                 return true;
             }
 
-            _ = this.byteBuf.GetBytes(this.byteBuf.ReaderIndex, destination, this.byteBuf.ReadableBytes);
+            _ = _byteBuf.GetBytes(_byteBuf.ReaderIndex, destination, _byteBuf.ReadableBytes);
             destination.Flush();
             return true;
         }
@@ -220,7 +227,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         public override IReferenceCounted Touch(object hint)
         {
-            _ = (this.byteBuf?.Touch(hint));
+            _ = (_byteBuf?.Touch(hint));
             return this;
         }
     }

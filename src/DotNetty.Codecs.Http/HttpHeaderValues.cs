@@ -13,6 +13,10 @@ namespace DotNetty.Codecs.Http
 
         public static readonly AsciiString ApplicationOctetStream = AsciiString.Cached("application/octet-stream");
 
+        public static readonly AsciiString ApplicationXHtml = AsciiString.Cached("application/xhtml+xml");
+
+        public static readonly AsciiString ApplicationXml = AsciiString.Cached("application/xml");
+
         public static readonly AsciiString Attachment = AsciiString.Cached("attachment");
 
         public static readonly AsciiString Base64 = AsciiString.Cached("base64");
@@ -89,6 +93,12 @@ namespace DotNetty.Codecs.Http
 
         public static readonly AsciiString SMaxage = AsciiString.Cached("s-maxage");
 
+        public static readonly AsciiString TextCss = AsciiString.Cached("text/css");
+
+        public static readonly AsciiString TextHtml = AsciiString.Cached("text/html");
+
+        public static readonly AsciiString TextEventStream = AsciiString.Cached("text/event-stream");
+
         public static readonly AsciiString TextPlain = AsciiString.Cached("text/plain");
 
         public static readonly AsciiString Trailers = AsciiString.Cached("trailers");
@@ -96,5 +106,7 @@ namespace DotNetty.Codecs.Http
         public static readonly AsciiString Upgrade = AsciiString.Cached("upgrade");
 
         public static readonly AsciiString Websocket = AsciiString.Cached("websocket");
+
+        public static readonly AsciiString XmlHttpRequest = AsciiString.Cached("XmlHttpRequest");
     }
 }

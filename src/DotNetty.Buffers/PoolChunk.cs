@@ -78,7 +78,7 @@ namespace DotNetty.Buffers
     /// </summary>
     sealed class PoolChunk<T> : IPoolChunkMetric
     {
-        const int IntegerSizeMinusOne = sizeof(int) * 8 - 1;
+        const int IntegerSizeMinusOne = IntegerExtensions.SizeInBits - 1;
 
         internal readonly PoolArena<T> Arena;
         internal readonly T Memory;
@@ -100,7 +100,7 @@ namespace DotNetty.Buffers
         /** Used to mark memory as unusable */
         private readonly sbyte _unusable;
 
-        private int _freeBytes;
+        internal int _freeBytes;
 
         internal PoolChunkList<T> Parent;
         internal PoolChunk<T> Prev;
@@ -168,7 +168,7 @@ namespace DotNetty.Buffers
             _maxOrder = 0;
             _unusable = (sbyte)(_maxOrder + 1);
             _chunkSize = size;
-            _log2ChunkSize = IntegerExtensions.Log2(_chunkSize);
+            _log2ChunkSize = Log2(_chunkSize);
             _maxSubpageAllocs = 0;
         }
 
@@ -178,24 +178,24 @@ namespace DotNetty.Buffers
         {
             get
             {
-                int bytes;
+                int freeBytes;
                 lock (Arena)
                 {
-                    bytes = _freeBytes;
+                    freeBytes = _freeBytes;
                 }
 
-                return GetUsage(bytes);
+                return GetUsage(freeBytes);
             }
         }
 
-        int GetUsage(int bytes)
+        int GetUsage(int freeBytes)
         {
-            if (0u >= (uint)bytes)
+            if (0u >= (uint)freeBytes)
             {
                 return 100;
             }
 
-            int freePercentage = (int)(bytes * 100L / ChunkSize);
+            int freePercentage = (int)(freeBytes * 100L / ChunkSize);
             if (0u >= (uint)freePercentage)
             {
                 return 99;
@@ -205,17 +205,23 @@ namespace DotNetty.Buffers
         }
 
 
-        internal long Allocate(int normCapacity)
+        internal bool Allocate(PooledByteBuffer<T> buf, int reqCapacity, int normCapacity, PoolThreadCache<T> threadCache)
         {
+            long handle;
             if ((normCapacity & _subpageOverflowMask) != 0)
             {
                 // >= pageSize
-                return AllocateRun(normCapacity);
+                handle = AllocateRun(normCapacity);
             }
             else
             {
-                return AllocateSubpage(normCapacity);
+                handle = AllocateSubpage(normCapacity);
             }
+            if (handle < 0) { return false; }
+
+            InitBuf(buf, handle, reqCapacity, threadCache);
+
+            return true;
         }
 
         /**
@@ -317,7 +323,7 @@ namespace DotNetty.Buffers
 
         long AllocateRun(int normCapacity)
         {
-            int d = _maxOrder - (IntegerExtensions.Log2(normCapacity) - _pageShifts);
+            int d = _maxOrder - (Log2(normCapacity) - _pageShifts);
             int id = AllocateNode(d);
             if (id < 0)
             {
@@ -406,7 +412,7 @@ namespace DotNetty.Buffers
             UpdateParentsFree(memoryMapIdx);
         }
 
-        internal void InitBuf(PooledByteBuffer<T> buf, long handle, int reqCapacity)
+        internal void InitBuf(PooledByteBuffer<T> buf, long handle, int reqCapacity, PoolThreadCache<T> threadCache)
         {
             int memoryMapIdx = MemoryMapIdx(handle);
             int bitmapIdx = BitmapIdx(handle);
@@ -414,19 +420,18 @@ namespace DotNetty.Buffers
             {
                 sbyte val = Value(memoryMapIdx);
                 Debug.Assert(val == _unusable, val.ToString());
-                buf.Init(this, handle, RunOffset(memoryMapIdx) + Offset, reqCapacity, RunLength(memoryMapIdx),
-                    Arena.Parent.ThreadCache<T>());
+                buf.Init(this, handle, RunOffset(memoryMapIdx) + Offset, reqCapacity, RunLength(memoryMapIdx), threadCache);
             }
             else
             {
-                InitBufWithSubpage(buf, handle, bitmapIdx, reqCapacity);
+                InitBufWithSubpage(buf, handle, bitmapIdx, reqCapacity, threadCache);
             }
         }
 
-        internal void InitBufWithSubpage(PooledByteBuffer<T> buf, long handle, int reqCapacity) => 
-            InitBufWithSubpage(buf, handle, BitmapIdx(handle), reqCapacity);
+        internal void InitBufWithSubpage(PooledByteBuffer<T> buf, long handle, int reqCapacity, PoolThreadCache<T> threadCache) =>
+            InitBufWithSubpage(buf, handle, BitmapIdx(handle), reqCapacity, threadCache);
 
-        void InitBufWithSubpage(PooledByteBuffer<T> buf, long handle, int bitmapIdx, int reqCapacity)
+        void InitBufWithSubpage(PooledByteBuffer<T> buf, long handle, int bitmapIdx, int reqCapacity, PoolThreadCache<T> threadCache)
         {
             Debug.Assert(bitmapIdx != 0);
 
@@ -438,8 +443,8 @@ namespace DotNetty.Buffers
 
             buf.Init(
                 this, handle,
-                RunOffset(memoryMapIdx) + (bitmapIdx & 0x3FFFFFFF) * subpage.ElemSize + Offset, 
-                reqCapacity, subpage.ElemSize, Arena.Parent.ThreadCache<T>());
+                RunOffset(memoryMapIdx) + (bitmapIdx & 0x3FFFFFFF) * subpage.ElemSize + Offset,
+                reqCapacity, subpage.ElemSize, threadCache);
         }
 
         sbyte Value(int id) => _memoryMap[id];
@@ -469,23 +474,33 @@ namespace DotNetty.Buffers
 
         public int ChunkSize => _chunkSize;
 
-        public int FreeBytes => _freeBytes;
+        public int FreeBytes
+        {
+            get
+            {
+                lock (Arena)
+                {
+                    return _freeBytes;
+                }
+            }
+        }
 
         public override string ToString()
         {
+            var freeBytes = FreeBytes;
             var sb = StringBuilderManager.Allocate()
                 .Append("Chunk(")
                 .Append(RuntimeHelpers.GetHashCode(this).ToString("X"))
                 .Append(": ")
                 .Append(Usage)
                 .Append("%, ")
-                .Append(_chunkSize - _freeBytes)
+                .Append(_chunkSize - freeBytes)
                 .Append('/')
                 .Append(_chunkSize)
                 .Append(')');
             return StringBuilderManager.ReturnAndFree(sb);
         }
 
-        internal void Destroy() =>Arena.DestroyChunk(this);
+        internal void Destroy() => Arena.DestroyChunk(this);
     }
 }

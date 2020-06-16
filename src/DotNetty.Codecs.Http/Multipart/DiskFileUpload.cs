@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-// ReSharper disable ConvertToAutoProperty
 namespace DotNetty.Codecs.Http.Multipart
 {
     using System.IO;
@@ -15,31 +14,43 @@ namespace DotNetty.Codecs.Http.Multipart
         public const string FilePrefix = "FUp_";
         public const string FilePostfix = ".tmp";
 
-        string filename;
-        string contentType;
-        string contentTransferEncoding;
+        private readonly string _baseDir;
+        private readonly bool _deleteOnExit;
 
-        public DiskFileUpload(string name, string filename, string contentType, 
+        private string _filename;
+        private string _contentType;
+        private string _contentTransferEncoding;
+
+        public DiskFileUpload(string name, string filename, string contentType,
             string contentTransferEncoding, Encoding charset, long size)
+            : this(name, filename, contentType, contentTransferEncoding,
+                charset, size, FileBaseDirectory, DeleteOnExitTemporaryFile)
+        {
+        }
+
+        public DiskFileUpload(string name, string filename, string contentType,
+            string contentTransferEncoding, Encoding charset, long size, string baseDir, bool deleteOnExit)
             : base(name, charset, size)
         {
             if (filename is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.filename); }
             if (contentType is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.contentType); }
 
-            this.filename = filename;
-            this.contentType = contentType;
-            this.contentTransferEncoding = contentTransferEncoding;
+            _filename = filename;
+            _contentType = contentType;
+            _contentTransferEncoding = contentTransferEncoding;
+            _baseDir = baseDir ?? FileBaseDirectory;
+            _deleteOnExit = deleteOnExit;
         }
 
         public override HttpDataType DataType => HttpDataType.FileUpload;
 
         public string FileName
         {
-            get => this.filename;
+            get => _filename;
             set
             {
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-                this.filename = value;
+                _filename = value;
             }
         }
 
@@ -51,28 +62,28 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             if (other is IFileUpload fu)
             {
-                return this.CompareTo(fu);
+                return CompareTo(fu);
             }
 
-            return ThrowHelper.ThrowArgumentException_CompareToHttpData(this.DataType, other.DataType);
+            return ThrowHelper.ThrowArgumentException_CompareToHttpData(DataType, other.DataType);
         }
 
         public int CompareTo(IFileUpload other) => FileUploadUtil.CompareTo(this, other);
 
         public string ContentType
         {
-            get => this.contentType;
+            get => _contentType;
             set
             {
                 if (value is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.value); }
-                this.contentType = value;
+                _contentType = value;
             }
         }
 
         public string ContentTransferEncoding
         {
-            get => this.contentTransferEncoding;
-            set => this.contentTransferEncoding = value;
+            get => _contentTransferEncoding;
+            set => _contentTransferEncoding = value;
         }
 
         public override string ToString()
@@ -80,28 +91,28 @@ namespace DotNetty.Codecs.Http.Multipart
             FileStream fileStream = null;
             try
             {
-                fileStream = this.GetFile();
+                fileStream = GetFile();
             }
             catch (IOException)
             {
                 // Should not occur.
             }
 
-            return HttpHeaderNames.ContentDisposition  + ": " +
-               HttpHeaderValues.FormData + "; " + HttpHeaderValues.Name + "=\"" + this.Name +
-                "\"; " + HttpHeaderValues.FileName + "=\"" + this.filename + "\"\r\n" +
-                HttpHeaderNames.ContentType + ": " + this.contentType +
-                (this.Charset is object ? "; " + HttpHeaderValues.Charset + '=' + this.Charset.WebName + "\r\n" : "\r\n") +
-                HttpHeaderNames.ContentLength + ": " + this.Length + "\r\n" +
-                "Completed: " + this.IsCompleted +
-                "\r\nIsInMemory: " + this.IsInMemory + "\r\nRealFile: " +
+            return HttpHeaderNames.ContentDisposition + ": " +
+               HttpHeaderValues.FormData + "; " + HttpHeaderValues.Name + "=\"" + Name +
+                "\"; " + HttpHeaderValues.FileName + "=\"" + _filename + "\"\r\n" +
+                HttpHeaderNames.ContentType + ": " + _contentType +
+                (Charset is object ? "; " + HttpHeaderValues.Charset + '=' + Charset.WebName + "\r\n" : "\r\n") +
+                HttpHeaderNames.ContentLength + ": " + Length + "\r\n" +
+                "Completed: " + IsCompleted +
+                "\r\nIsInMemory: " + IsInMemory + "\r\nRealFile: " +
                 (fileStream is object ? fileStream.Name : "null") + " DefaultDeleteAfter: " +
                 DeleteOnExitTemporaryFile;
         }
 
-        protected override bool DeleteOnExit => DeleteOnExitTemporaryFile;
+        protected internal override bool DeleteOnExit => _deleteOnExit;
 
-        protected override string BaseDirectory => FileBaseDirectory;
+        protected internal override string BaseDirectory => _baseDir;
 
         protected override string DiskFilename => "upload";
 
@@ -109,20 +120,20 @@ namespace DotNetty.Codecs.Http.Multipart
 
         protected override string Prefix => FilePrefix;
 
-        public override IByteBufferHolder Copy() => this.Replace(this.Content?.Copy());
+        public override IByteBufferHolder Copy() => Replace(Content?.Copy());
 
-        public override IByteBufferHolder Duplicate() => this.Replace(this.Content?.Duplicate());
+        public override IByteBufferHolder Duplicate() => Replace(Content?.Duplicate());
 
         public override IByteBufferHolder RetainedDuplicate()
         {
-            IByteBuffer content = this.Content;
+            IByteBuffer content = Content;
             if (content is object)
             {
                 content = content.RetainedDuplicate();
                 bool success = false;
                 try
                 {
-                    var duplicate = (IFileUpload)this.Replace(content);
+                    var duplicate = (IFileUpload)Replace(content);
                     success = true;
                     return duplicate;
                 }
@@ -136,14 +147,14 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             else
             {
-                return this.Replace(null);
+                return Replace(null);
             }
         }
 
         public override IByteBufferHolder Replace(IByteBuffer content)
         {
             var upload = new DiskFileUpload(
-                this.Name, this.FileName, this.ContentType, this.ContentTransferEncoding, this.Charset, this.Size);
+                Name, FileName, ContentType, ContentTransferEncoding, Charset, Size, _baseDir, _deleteOnExit);
             if (content is object)
             {
                 try

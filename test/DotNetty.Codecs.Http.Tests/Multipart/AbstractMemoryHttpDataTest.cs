@@ -14,8 +14,83 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
     public sealed class AbstractMemoryHttpDataTest
     {
         [Fact]
+        public void SetContentFromFile()
+        {
+            TestHttpData test = new TestHttpData("test", Encoding.UTF8, 0);
+            try
+            {
+                byte[] bytes = new byte[4096];
+                (new Random()).NextBytes(bytes);
+                using (var fs = File.Create(Path.GetTempFileName(), 4096, FileOptions.DeleteOnClose))
+                {
+                    fs.Write(bytes, 0, bytes.Length);
+                    fs.Flush();
+                    fs.Position = 0;
+                    test.SetContent(fs);
+                }
+                var buf = test.GetByteBuffer();
+                Assert.Equal(0, buf.ReaderIndex);
+                Assert.Equal(buf.WriterIndex, bytes.Length);
+                Assert.True(bytes.AsSpan().SequenceEqual(test.GetBytes()));
+                Assert.True(bytes.AsSpan().SequenceEqual(ByteBufferUtil.GetBytes(buf)));
+            }
+            finally
+            {
+                //release the ByteBuf
+                test.Delete();
+            }
+        }
+
+        [Fact]
+        public void RenameTo()
+        {
+            TestHttpData test = new TestHttpData("test", Encoding.UTF8, 0);
+            try
+            {
+                int totalByteCount = 4096;
+                byte[] bytes = new byte[totalByteCount];
+                (new Random()).NextBytes(bytes);
+                var content = Unpooled.WrappedBuffer(bytes);
+                test.SetContent(content);
+                using (var fs = File.Create(Path.GetTempFileName(), 4096, FileOptions.DeleteOnClose))
+                {
+                    var succ = test.RenameTo(fs);
+                    Assert.True(succ);
+                    fs.Position = 0;
+                    var buf = new byte[totalByteCount];
+                    fs.Read(buf, 0, buf.Length);
+                    Assert.True(bytes.AsSpan().SequenceEqual(buf));
+                }
+            }
+            finally
+            {
+                //release the ByteBuf in AbstractMemoryHttpData
+                test.Delete();
+            }
+        }
+
+        [Fact]
         public void SetContentFromStream()
         {
+            // definedSize=0
+            TestHttpData test = new TestHttpData("test", Encoding.UTF8, 0);
+            string contentStr = "foo_test";
+            var buf = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes(contentStr));
+            buf.MarkReaderIndex();
+            var bs = new ByteBufferStream(buf);
+            try
+            {
+                test.SetContent(bs);
+                Assert.False(buf.IsReadable());
+                Assert.Equal(test.GetString(Encoding.UTF8), contentStr);
+                buf.ResetReaderIndex();
+                Assert.True(ByteBufferUtil.Equals(buf, test.GetByteBuffer()));
+            }
+            finally
+            {
+                bs.Close();
+            }
+
             var random = new Random();
 
             for (int i = 0; i < 20; i++)
@@ -40,7 +115,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 var data = new byte[bytes.Length];
                 buffer.GetBytes(buffer.ReaderIndex, data);
 
-                Assert.True(data.SequenceEqual(bytes));
+                Assert.True(data.AsSpan().SequenceEqual(bytes));
             }
         }
 

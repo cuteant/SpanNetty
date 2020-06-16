@@ -21,8 +21,8 @@ namespace DotNetty.Codecs.Http.Multipart
 
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<AbstractDiskHttpData>();
 
-        FileStream fileStream;
-        long chunkPosition;
+        private FileStream _fileStream;
+        private long _chunkPosition;
 
         protected AbstractDiskHttpData(string name, Encoding charset, long size) : base(name, charset, size)
         {
@@ -32,31 +32,31 @@ namespace DotNetty.Codecs.Http.Multipart
 
         protected abstract string Prefix { get; }
 
-        protected abstract string BaseDirectory { get; }
+        protected internal abstract string BaseDirectory { get; }
 
         protected abstract string Postfix { get; }
 
-        protected abstract bool DeleteOnExit { get; }
+        protected internal abstract bool DeleteOnExit { get; }
 
         FileStream TempFile()
         {
             string newpostfix;
-            string diskFilename = this.DiskFilename;
+            string diskFilename = DiskFilename;
             if (diskFilename is object)
             {
                 newpostfix = '_' + diskFilename;
             }
             else
             {
-                newpostfix = this.Postfix;
+                newpostfix = Postfix;
             }
-            string directory = string.IsNullOrWhiteSpace(this.BaseDirectory)
+            string directory = string.IsNullOrWhiteSpace(BaseDirectory)
                 ? Path.GetTempPath()
-                : Path.IsPathRooted(this.BaseDirectory) ? this.BaseDirectory : Path.Combine(Path.GetTempPath(), this.BaseDirectory);
+                : Path.IsPathRooted(BaseDirectory) ? BaseDirectory : Path.Combine(Path.GetTempPath(), BaseDirectory);
             // File.createTempFile
-            string fileName = Path.Combine(directory, $"{this.Prefix}{Path.GetRandomFileName()}{newpostfix}");
+            string fileName = Path.Combine(directory, $"{Prefix}{Path.GetRandomFileName()}{newpostfix}");
             FileStream tmpFile = File.Create(fileName, 4096, // DefaultBufferSize
-                this.DeleteOnExit ? FileOptions.DeleteOnClose : FileOptions.None);
+                DeleteOnExit ? FileOptions.DeleteOnClose : FileOptions.None);
             return tmpFile;
         }
 
@@ -65,18 +65,18 @@ namespace DotNetty.Codecs.Http.Multipart
             if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
             try
             {
-                if (this.fileStream is object)
+                if (_fileStream is object)
                 {
-                    this.Delete();
+                    Delete();
                 }
 
-                this.fileStream = this.TempFile();
+                _fileStream = TempFile();
 
-                this.Size = buffer.ReadableBytes;
-                CheckSize(this.Size, this.MaxSize);
-                if (this.DefinedSize > 0 && this.DefinedSize < this.Size)
+                Size = buffer.ReadableBytes;
+                CheckSize(Size, MaxSize);
+                if (DefinedSize > 0 && DefinedSize < Size)
                 {
-                    ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
+                    ThrowHelper.ThrowIOException_OutOfSize(Size, DefinedSize);
                 }
                 if (0u >= (uint)buffer.ReadableBytes)
                 {
@@ -84,10 +84,10 @@ namespace DotNetty.Codecs.Http.Multipart
                     return;
                 }
 
-                _ = buffer.GetBytes(buffer.ReaderIndex, this.fileStream, buffer.ReadableBytes);
+                _ = buffer.GetBytes(buffer.ReaderIndex, _fileStream, buffer.ReadableBytes);
                 _ = buffer.SetReaderIndex(buffer.ReaderIndex + buffer.ReadableBytes);
-                this.fileStream.Flush();
-                this.SetCompleted();
+                _fileStream.Flush();
+                SetCompleted();
             }
             finally
             {
@@ -104,20 +104,20 @@ namespace DotNetty.Codecs.Http.Multipart
                 try
                 {
                     int localsize = buffer.ReadableBytes;
-                    CheckSize(this.Size + localsize, this.MaxSize);
-                    if (this.DefinedSize > 0 && this.DefinedSize < this.Size + localsize)
+                    CheckSize(Size + localsize, MaxSize);
+                    if (DefinedSize > 0 && DefinedSize < Size + localsize)
                     {
-                        ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
+                        ThrowHelper.ThrowIOException_OutOfSize(Size, DefinedSize);
                     }
-                    if (this.fileStream is null)
+                    if (_fileStream is null)
                     {
-                        this.fileStream = this.TempFile();
+                        _fileStream = TempFile();
                     }
-                    _ = buffer.GetBytes(buffer.ReaderIndex, this.fileStream, buffer.ReadableBytes);
+                    _ = buffer.GetBytes(buffer.ReaderIndex, _fileStream, buffer.ReadableBytes);
                     _ = buffer.SetReaderIndex(buffer.ReaderIndex + localsize);
-                    this.fileStream.Flush();
+                    _fileStream.Flush();
 
-                    this.Size += buffer.ReadableBytes;
+                    Size += buffer.ReadableBytes;
                 }
                 finally
                 {
@@ -128,11 +128,11 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             if (last)
             {
-                if (this.fileStream is null)
+                if (_fileStream is null)
                 {
-                    this.fileStream = this.TempFile();
+                    _fileStream = TempFile();
                 }
-                this.SetCompleted();
+                SetCompleted();
             }
             else
             {
@@ -147,12 +147,12 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             if (source is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.source); }
 
-            if (this.fileStream is object)
+            if (_fileStream is object)
             {
-                this.Delete();
+                Delete();
             }
 
-            this.fileStream = this.TempFile();
+            _fileStream = TempFile();
             int written = 0;
             var bytes = ArrayPool<byte>.Shared.Rent(c_defaultCopyBufferSize);
             try
@@ -166,78 +166,78 @@ namespace DotNetty.Codecs.Http.Multipart
                     }
 
                     written += read;
-                    CheckSize(written, this.MaxSize);
-                    this.fileStream.Write(bytes, 0, read);
+                    CheckSize(written, MaxSize);
+                    _fileStream.Write(bytes, 0, read);
                 }
             }
             finally
             {
                 ArrayPool<byte>.Shared.Return(bytes);
             }
-            this.fileStream.Flush();
+            _fileStream.Flush();
             // Reset the position to start for reads
-            this.fileStream.Position -= written;
+            _fileStream.Position -= written;
 
-            this.Size = written;
-            if (this.DefinedSize > 0 && this.DefinedSize < this.Size)
+            Size = written;
+            if (DefinedSize > 0 && DefinedSize < Size)
             {
                 try
                 {
-                    Delete(this.fileStream);
+                    Delete(_fileStream);
                 }
                 catch (Exception error)
                 {
-                    if (Logger.WarnEnabled) Logger.FailedToDelete(this.fileStream, error);
+                    if (Logger.WarnEnabled) Logger.FailedToDelete(_fileStream, error);
                 }
-                this.fileStream = null;
-                ThrowHelper.ThrowIOException_OutOfSize(this.Size, this.DefinedSize);
+                _fileStream = null;
+                ThrowHelper.ThrowIOException_OutOfSize(Size, DefinedSize);
             }
             //isRenamed = true;
-            this.SetCompleted();
+            SetCompleted();
         }
 
         public override void Delete()
         {
-            if (this.fileStream is object)
+            if (_fileStream is object)
             {
                 try
                 {
-                    Delete(this.fileStream);
+                    Delete(_fileStream);
                 }
                 catch (IOException error)
                 {
                     if (Logger.WarnEnabled) Logger.FailedToDeleteFile(error);
                 }
 
-                this.fileStream = null;
+                _fileStream = null;
             }
         }
 
-        public override byte[] GetBytes() => this.fileStream is null
-            ? ArrayExtensions.ZeroBytes : ReadFrom(this.fileStream);
+        public override byte[] GetBytes() => _fileStream is null
+            ? ArrayExtensions.ZeroBytes : ReadFrom(_fileStream);
 
         public override IByteBuffer GetByteBuffer()
         {
-            if (this.fileStream is null)
+            if (_fileStream is null)
             {
                 return Unpooled.Empty;
             }
 
-            var array = ReadFrom(this.fileStream);
+            var array = ReadFrom(_fileStream);
             return Unpooled.WrappedBuffer(array);
         }
 
         public override IByteBuffer GetChunk(int length)
         {
-            if (this.fileStream is null || 0u >= (uint)length)
+            if (_fileStream is null || 0u >= (uint)length)
             {
-                this.chunkPosition = 0L;
+                _chunkPosition = 0L;
                 return Unpooled.Empty;
             }
-            var sizeLeft = this.fileStream.Length - this.chunkPosition;
+            var sizeLeft = _fileStream.Length - _chunkPosition;
             if (0ul >= (ulong)sizeLeft)
             {
-                this.chunkPosition = 0L;
+                _chunkPosition = 0L;
                 return Unpooled.Empty;
             }
             int sliceLength = length;
@@ -246,13 +246,13 @@ namespace DotNetty.Codecs.Http.Multipart
                 sliceLength = (int)sizeLeft;
             }
 
-            var lastPosition = this.fileStream.Position;
-            _ = this.fileStream.Seek(this.chunkPosition, SeekOrigin.Begin);
+            var lastPosition = _fileStream.Position;
+            _ = _fileStream.Seek(_chunkPosition, SeekOrigin.Begin);
             int read = 0;
             var bytes = new byte[sliceLength];
             while (read < sliceLength)
             {
-                int readnow = this.fileStream.Read(bytes, read, sliceLength - read);
+                int readnow = _fileStream.Read(bytes, read, sliceLength - read);
                 if (readnow <= 0)
                 {
                     break;
@@ -260,14 +260,14 @@ namespace DotNetty.Codecs.Http.Multipart
 
                 read += readnow;
             }
-            _ = this.fileStream.Seek(lastPosition, SeekOrigin.Begin);
+            _ = _fileStream.Seek(lastPosition, SeekOrigin.Begin);
             if (0u >= (uint)read)
             {
                 return Unpooled.Empty;
             }
             else
             {
-                this.chunkPosition += read;
+                _chunkPosition += read;
             }
             var buffer = Unpooled.WrappedBuffer(bytes);
             _ = buffer.SetReaderIndex(0);
@@ -275,15 +275,15 @@ namespace DotNetty.Codecs.Http.Multipart
             return buffer;
         }
 
-        public override string GetString() => this.GetString(HttpConstants.DefaultEncoding);
+        public override string GetString() => GetString(HttpConstants.DefaultEncoding);
 
         public override string GetString(Encoding encoding)
         {
-            if (this.fileStream is null)
+            if (_fileStream is null)
             {
                 return string.Empty;
             }
-            byte[] array = ReadFrom(this.fileStream);
+            byte[] array = ReadFrom(_fileStream);
             if (encoding is null)
             {
                 encoding = HttpConstants.DefaultEncoding;
@@ -297,7 +297,7 @@ namespace DotNetty.Codecs.Http.Multipart
         public override bool RenameTo(FileStream destination)
         {
             if (destination is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.destination); }
-            if (this.fileStream is null)
+            if (_fileStream is null)
             {
                 ThrowHelper.ThrowInvalidOperationException_NoFileDefined();
             }
@@ -305,14 +305,14 @@ namespace DotNetty.Codecs.Http.Multipart
             // must copy
             var buffer = ArrayPool<byte>.Shared.Rent(c_defaultCopyBufferSize);
             int position = 0;
-            var lastPosition = this.fileStream.Position;
-            _ = this.fileStream.Seek(0, SeekOrigin.Begin);
+            var lastPosition = _fileStream.Position;
+            _ = _fileStream.Seek(0, SeekOrigin.Begin);
 
             try
             {
-                while (position < this.Size)
+                while (position < Size)
                 {
-                    int read = this.fileStream.Read(buffer, 0, buffer.Length);
+                    int read = _fileStream.Read(buffer, 0, buffer.Length);
                     if (read <= 0)
                     {
                         break;
@@ -327,18 +327,18 @@ namespace DotNetty.Codecs.Http.Multipart
                 ArrayPool<byte>.Shared.Return(buffer);
             }
 
-            if (position == this.Size)
+            if (position == Size)
             {
                 try
                 {
-                    Delete(this.fileStream);
+                    Delete(_fileStream);
                 }
                 catch (IOException exception)
                 {
                     if (Logger.WarnEnabled) Logger.FailedToDeleteFile(exception);
                 }
-                this.fileStream = destination;
-                _ = this.fileStream.Seek(lastPosition, SeekOrigin.Begin);
+                _fileStream = destination;
+                _ = _fileStream.Seek(lastPosition, SeekOrigin.Begin);
                 return true;
             }
             else
@@ -351,7 +351,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 {
                     if (Logger.WarnEnabled) Logger.FailedToDeleteFile(exception);
                 }
-                _ = this.fileStream.Seek(lastPosition, SeekOrigin.Begin);
+                _ = _fileStream.Seek(lastPosition, SeekOrigin.Begin);
                 return false;
             }
         }
@@ -379,7 +379,7 @@ namespace DotNetty.Codecs.Http.Multipart
             return array;
         }
 
-        public override FileStream GetFile() => this.fileStream;
+        public override FileStream GetFile() => _fileStream;
 
         public override IReferenceCounted Touch(object hint) => this;
     }

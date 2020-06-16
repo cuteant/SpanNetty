@@ -28,13 +28,13 @@ namespace DotNetty.Codecs
             ThreadLocalObjectList output = null;
             try
             {
-                if (this.AcceptOutboundMessage(msg))
+                if (AcceptOutboundMessage(msg))
                 {
                     output = ThreadLocalObjectList.NewInstance();
                     var cast = (T)msg;
                     try
                     {
-                        this.Encode(ctx, cast, output);
+                        Encode(ctx, cast, output);
                     }
                     finally
                     {
@@ -43,10 +43,7 @@ namespace DotNetty.Codecs
 
                     if (0u >= (uint)output.Count)
                     {
-                        output.Return();
-                        output = null;
-
-                        CThrowHelper.ThrowEncoderException_MustProduceAtLeastOneMsg(this.GetType());
+                        CThrowHelper.ThrowEncoderException_MustProduceAtLeastOneMsg(GetType());
                     }
                 }
                 else
@@ -66,25 +63,31 @@ namespace DotNetty.Codecs
             {
                 if (output is object)
                 {
-                    int lastItemIndex = output.Count - 1;
-                    if (0u >= (uint)lastItemIndex)
+                    try
                     {
-                        _ = ctx.WriteAsync(output[0], promise);
+                        int lastItemIndex = output.Count - 1;
+                        if (0u >= (uint)lastItemIndex)
+                        {
+                            _ = ctx.WriteAsync(output[0], promise);
+                        }
+                        else if (lastItemIndex > 0)
+                        {
+                            // Check if we can use a voidPromise for our extra writes to reduce GC-Pressure
+                            // See https://github.com/netty/netty/issues/2525
+                            if (promise == ctx.VoidPromise())
+                            {
+                                WriteVoidPromise(ctx, output);
+                            }
+                            else
+                            {
+                                WritePromiseCombiner(ctx, output, promise);
+                            }
+                        }
                     }
-                    else if (lastItemIndex > 0)
+                    finally
                     {
-                        // Check if we can use a voidPromise for our extra writes to reduce GC-Pressure
-                        // See https://github.com/netty/netty/issues/2525
-                        if (promise == ctx.VoidPromise())
-                        {
-                            WriteVoidPromise(ctx, output);
-                        }
-                        else
-                        {
-                            WritePromiseCombiner(ctx, output, promise);
-                        }
+                        output.Return();
                     }
-                    output.Return();
                 }
             }
         }

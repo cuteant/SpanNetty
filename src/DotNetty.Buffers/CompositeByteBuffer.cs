@@ -238,6 +238,13 @@ namespace DotNetty.Buffers
                 ComponentEntry c = NewComponent(EnsureAccessible(buffer), 0);
                 int readableBytes = c.Length();
 
+                // Check if we would overflow.
+                // See https://github.com/netty/netty/issues/10194
+                if (((uint)Capacity + (uint)readableBytes) > SharedConstants.TooBigOrNegative)
+                {
+                    ThrowHelper.ThrowInvalidOperationException_Can_not_increase_by(readableBytes);
+                }
+
                 AddComp(cIndex, c);
                 wasAdded = true;
                 if (readableBytes > 0 && cIndex < _componentCount - 1)
@@ -338,6 +345,20 @@ namespace DotNetty.Buffers
         private CompositeByteBuffer AddComponents0(bool increaseWriterIndex, int cIndex, IByteBuffer[] buffers, int arrOffset)
         {
             int len = buffers.Length, count = len - arrOffset;
+
+            int readableBytes = 0;
+            int capacity = Capacity;
+            for (int i = 0; i < buffers.Length; i++)
+            {
+                readableBytes += buffers[i].ReadableBytes;
+
+                // Check if we would overflow.
+                // See https://github.com/netty/netty/issues/10194
+                if (((uint)capacity + (uint)readableBytes) > SharedConstants.TooBigOrNegative)
+                {
+                    ThrowHelper.ThrowInvalidOperationException_Can_not_increase_by(readableBytes);
+                }
+            }
             // only set ci after we've shifted so that finally block logic is always correct
             int ci = int.MaxValue;
             try

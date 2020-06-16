@@ -152,10 +152,10 @@ namespace DotNetty.Buffers
         }
 
         // capacity < pageSize
-        internal bool IsTinyOrSmall(int normCapacity) => 0u >= (uint)(normCapacity & SubpageOverflowMask) ? true : false;
+        internal bool IsTinyOrSmall(int normCapacity) => 0u >= (uint)(normCapacity & SubpageOverflowMask);
 
         // normCapacity < 512
-        internal static bool IsTiny(int normCapacity) => 0u >= (uint)(normCapacity & 0xFFFFFE00) ? true : false;
+        internal static bool IsTiny(int normCapacity) => 0u >= (uint)(normCapacity & 0xFFFFFE00);
 
         void Allocate(PoolThreadCache<T> cache, PooledByteBuffer<T> buf, int reqCapacity)
         {
@@ -202,7 +202,7 @@ namespace DotNetty.Buffers
                         Debug.Assert(s.DoNotDestroy && s.ElemSize == normCapacity);
                         long handle = s.Allocate();
                         Debug.Assert(handle >= 0);
-                        s.Chunk.InitBufWithSubpage(buf, handle, reqCapacity);
+                        s.Chunk.InitBufWithSubpage(buf, handle, reqCapacity, cache);
                         IncTinySmallAllocation(tiny);
                         return;
                     }
@@ -210,7 +210,7 @@ namespace DotNetty.Buffers
 
                 lock (this)
                 {
-                    AllocateNormal(buf, reqCapacity, normCapacity);
+                    AllocateNormal(buf, reqCapacity, normCapacity, cache);
                 }
 
                 IncTinySmallAllocation(tiny);
@@ -226,7 +226,7 @@ namespace DotNetty.Buffers
 
                 lock (this)
                 {
-                    AllocateNormal(buf, reqCapacity, normCapacity);
+                    AllocateNormal(buf, reqCapacity, normCapacity, cache);
                     _allocationsNormal++;
                 }
             }
@@ -237,20 +237,21 @@ namespace DotNetty.Buffers
             }
         }
 
-        void AllocateNormal(PooledByteBuffer<T> buf, int reqCapacity, int normCapacity)
+        void AllocateNormal(PooledByteBuffer<T> buf, int reqCapacity, int normCapacity, PoolThreadCache<T> threadCache)
         {
-            if (_q050.Allocate(buf, reqCapacity, normCapacity) || _q025.Allocate(buf, reqCapacity, normCapacity)
-                || _q000.Allocate(buf, reqCapacity, normCapacity) || _qInit.Allocate(buf, reqCapacity, normCapacity)
-                || _q075.Allocate(buf, reqCapacity, normCapacity))
+            if (_q050.Allocate(buf, reqCapacity, normCapacity, threadCache) ||
+                _q025.Allocate(buf, reqCapacity, normCapacity, threadCache) ||
+                _q000.Allocate(buf, reqCapacity, normCapacity, threadCache) ||
+                _qInit.Allocate(buf, reqCapacity, normCapacity, threadCache) ||
+                _q075.Allocate(buf, reqCapacity, normCapacity, threadCache))
             {
                 return;
             }
 
             // Add a new chunk.
             PoolChunk<T> c = NewChunk(PageSize, _maxOrder, PageShifts, ChunkSize);
-            long handle = c.Allocate(normCapacity);
-            Debug.Assert(handle > 0);
-            c.InitBuf(buf, handle, reqCapacity);
+            bool success = c.Allocate(buf, reqCapacity, normCapacity, threadCache);
+            Debug.Assert(success);
             _qInit.Add(c);
         }
 
@@ -344,18 +345,12 @@ namespace DotNetty.Buffers
             if (IsTiny(elemSize))
             {
                 // < 512
-                tableIdx = elemSize.RightUShift(4);
+                tableIdx = TinyIdx(elemSize);
                 table = _tinySubpagePools;
             }
             else
             {
-                tableIdx = 0;
-                elemSize = elemSize.RightUShift(10);
-                while (elemSize != 0)
-                {
-                    elemSize = elemSize.RightUShift(1);
-                    tableIdx++;
-                }
+                tableIdx = SmallIdx(elemSize);
                 table = _smallSubpagePools;
             }
 
@@ -498,7 +493,16 @@ namespace DotNetty.Buffers
 
         public long NumSmallAllocations => Volatile.Read(ref _allocationsSmall);
 
-        public long NumNormalAllocations => Volatile.Read(ref _allocationsNormal);
+        public long NumNormalAllocations
+        {
+            get
+            {
+                lock (this)
+                {
+                    return _allocationsNormal;
+                }
+            }
+        }
 
         public long NumDeallocations
         {
@@ -514,11 +518,38 @@ namespace DotNetty.Buffers
             }
         }
 
-        public long NumTinyDeallocations => Volatile.Read(ref _deallocationsTiny);
+        public long NumTinyDeallocations
+        {
+            get
+            {
+                lock (this)
+                {
+                    return _deallocationsTiny;
+                }
+            }
+        }
 
-        public long NumSmallDeallocations => Volatile.Read(ref _deallocationsSmall);
+        public long NumSmallDeallocations
+        {
+            get
+            {
+                lock (this)
+                {
+                    return _deallocationsSmall;
+                }
+            }
+        }
 
-        public long NumNormalDeallocations => Volatile.Read(ref _deallocationsNormal);
+        public long NumNormalDeallocations
+        {
+            get
+            {
+                lock (this)
+                {
+                    return _deallocationsNormal;
+                }
+            }
+        }
 
         public long NumHugeAllocations => Volatile.Read(ref _allocationsHuge);
 
@@ -588,39 +619,42 @@ namespace DotNetty.Buffers
 
         public override string ToString()
         {
-            var buf = StringBuilderManager.Allocate()
-                .Append("Chunk(s) at 0~25%:")
-                .Append(StringUtil.Newline)
-                .Append(_qInit)
-                .Append(StringUtil.Newline)
-                .Append("Chunk(s) at 0~50%:")
-                .Append(StringUtil.Newline)
-                .Append(_q000)
-                .Append(StringUtil.Newline)
-                .Append("Chunk(s) at 25~75%:")
-                .Append(StringUtil.Newline)
-                .Append(_q025)
-                .Append(StringUtil.Newline)
-                .Append("Chunk(s) at 50~100%:")
-                .Append(StringUtil.Newline)
-                .Append(_q050)
-                .Append(StringUtil.Newline)
-                .Append("Chunk(s) at 75~100%:")
-                .Append(StringUtil.Newline)
-                .Append(_q075)
-                .Append(StringUtil.Newline)
-                .Append("Chunk(s) at 100%:")
-                .Append(StringUtil.Newline)
-                .Append(_q100)
-                .Append(StringUtil.Newline)
-                .Append("tiny subpages:");
-            AppendPoolSubPages(buf, _tinySubpagePools);
-            _ = buf.Append(StringUtil.Newline)
-                .Append("small subpages:");
-            AppendPoolSubPages(buf, _smallSubpagePools);
-            _ = buf.Append(StringUtil.Newline);
+            lock (this)
+            {
+                var buf = StringBuilderManager.Allocate()
+                    .Append("Chunk(s) at 0~25%:")
+                    .Append(StringUtil.Newline)
+                    .Append(_qInit)
+                    .Append(StringUtil.Newline)
+                    .Append("Chunk(s) at 0~50%:")
+                    .Append(StringUtil.Newline)
+                    .Append(_q000)
+                    .Append(StringUtil.Newline)
+                    .Append("Chunk(s) at 25~75%:")
+                    .Append(StringUtil.Newline)
+                    .Append(_q025)
+                    .Append(StringUtil.Newline)
+                    .Append("Chunk(s) at 50~100%:")
+                    .Append(StringUtil.Newline)
+                    .Append(_q050)
+                    .Append(StringUtil.Newline)
+                    .Append("Chunk(s) at 75~100%:")
+                    .Append(StringUtil.Newline)
+                    .Append(_q075)
+                    .Append(StringUtil.Newline)
+                    .Append("Chunk(s) at 100%:")
+                    .Append(StringUtil.Newline)
+                    .Append(_q100)
+                    .Append(StringUtil.Newline)
+                    .Append("tiny subpages:");
+                AppendPoolSubPages(buf, _tinySubpagePools);
+                _ = buf.Append(StringUtil.Newline)
+                    .Append("small subpages:");
+                AppendPoolSubPages(buf, _smallSubpagePools);
+                _ = buf.Append(StringUtil.Newline);
 
-            return StringBuilderManager.ReturnAndFree(buf);
+                return StringBuilderManager.ReturnAndFree(buf);
+            }
         }
 
         static void AppendPoolSubPages(StringBuilder buf, PoolSubpage<T>[] subpages)

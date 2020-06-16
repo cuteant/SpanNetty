@@ -5,6 +5,7 @@ namespace DotNetty.Codecs
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Transport.Channels;
@@ -306,28 +307,30 @@ namespace DotNetty.Codecs
                 }
                 finally
                 {
-                    if (_cumulation is object && !_cumulation.IsReadable())
+                    try
                     {
-                        _numReads = 0;
-                        _ = _cumulation.Release();
-                        _cumulation = null;
-                    }
-                    else if (++_numReads >= _discardAfterReads)
-                    {
-                        // We did enough reads already try to discard some bytes so we not risk to see a OOME.
-                        // See https://github.com/netty/netty/issues/4275
-                        _numReads = 0;
-                        DiscardSomeReadBytes();
-                    }
+                        if (_cumulation is object && !_cumulation.IsReadable())
+                        {
+                            _numReads = 0;
+                            _ = _cumulation.Release();
+                            _cumulation = null;
+                        }
+                        else if (++_numReads >= _discardAfterReads)
+                        {
+                            // We did enough reads already try to discard some bytes so we not risk to see a OOME.
+                            // See https://github.com/netty/netty/issues/4275
+                            _numReads = 0;
+                            DiscardSomeReadBytes();
+                        }
 
-                    int size = output.Count;
-                    _firedChannelRead |= (uint)size > 0u;
-
-                    for (int i = 0; i < size; i++)
-                    {
-                        _ = context.FireChannelRead(output[i]);
+                        int size = output.Count;
+                        _firedChannelRead |= (uint)size > 0u;
+                        FireChannelRead(context, output, size);
                     }
-                    output.Return();
+                    finally
+                    {
+                        output.Return();
+                    }
                 }
             }
             else
@@ -342,6 +345,7 @@ namespace DotNetty.Codecs
         /// <param name="ctx"></param>
         /// <param name="output"></param>
         /// <param name="numElements"></param>
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         protected static void FireChannelRead(IChannelHandlerContext ctx, List<object> output, int numElements)
         {
             for (int i = 0; i < numElements; i++)
@@ -422,10 +426,7 @@ namespace DotNetty.Codecs
                         _cumulation = null;
                     }
                     int size = output.Count;
-                    for (int i = 0; i < size; i++)
-                    {
-                        _ = ctx.FireChannelRead(output[i]);
-                    }
+                    FireChannelRead(ctx, output, size);
                     if (size > 0)
                     {
                         // Something was read, call fireChannelReadComplete()
@@ -483,10 +484,7 @@ namespace DotNetty.Codecs
                     int initialOutputCount = output.Count;
                     if (initialOutputCount > 0)
                     {
-                        for (int i = 0; i < initialOutputCount; i++)
-                        {
-                            _ = context.FireChannelRead(output[i]);
-                        }
+                        FireChannelRead(context, output, initialOutputCount);
                         output.Clear();
 
                         // Check if this handler was removed before continuing with decoding.

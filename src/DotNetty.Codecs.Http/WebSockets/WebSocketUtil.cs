@@ -59,6 +59,8 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         internal static string Base64String(byte[] data)
         {
+            if (0u >= (uint)data.Length) { return string.Empty; }
+
             var maxLen = Base64.GetMaxEncodedToUtf8Length(data.Length);
             byte[] utf8Array = null;
             char[] utf16Array = null;

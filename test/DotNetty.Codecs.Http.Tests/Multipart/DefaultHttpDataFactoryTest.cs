@@ -12,27 +12,43 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
     public sealed class DefaultHttpDataFactoryTest : IDisposable
     {
         // req1 equals req2
-        readonly IHttpRequest req1 = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/form");
-        readonly IHttpRequest req2 = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/form");
-        readonly DefaultHttpDataFactory factory;
+        readonly IHttpRequest _req1 = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/form");
+        readonly IHttpRequest _req2 = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/form");
+        readonly DefaultHttpDataFactory _factory;
 
         public DefaultHttpDataFactoryTest()
         {
             // Before doing anything, assert that the requests are equal
-            Assert.Equal(this.req1.GetHashCode(), this.req2.GetHashCode());
-            Assert.True(this.req1.Equals(this.req2));
+            Assert.Equal(_req1.GetHashCode(), _req2.GetHashCode());
+            Assert.True(_req1.Equals(_req2));
 
-            this.factory = new DefaultHttpDataFactory();
+            _factory = new DefaultHttpDataFactory();
+        }
+
+        [Fact]
+        public void CustomBaseDirAndDeleteOnExit()
+        {
+            DefaultHttpDataFactory defaultHttpDataFactory = new DefaultHttpDataFactory(true);
+            string dir = "target/DefaultHttpDataFactoryTest/customBaseDirAndDeleteOnExit";
+            defaultHttpDataFactory.SetBaseDir(dir);
+            defaultHttpDataFactory.SetDeleteOnExit(true);
+            IAttribute attr = defaultHttpDataFactory.CreateAttribute(_req1, "attribute1");
+            IFileUpload fu = defaultHttpDataFactory.CreateFileUpload(
+                    _req1, "attribute1", "f.txt", "text/plain", null, null, 0);
+            Assert.Equal(dir, ((DiskAttribute)attr).BaseDirectory);
+            Assert.Equal(dir, ((DiskFileUpload)fu).BaseDirectory);
+            Assert.True(((DiskAttribute)attr).DeleteOnExit);
+            Assert.True(((DiskFileUpload)fu).DeleteOnExit);
         }
 
         [Fact]
         public void CleanRequestHttpDataShouldIdentifiesRequestsByTheirIdentities()
         {
             // Create some data belonging to req1 and req2
-            IAttribute attribute1 = this.factory.CreateAttribute(this.req1, "attribute1", "value1");
-            IAttribute attribute2 = this.factory.CreateAttribute(this.req2, "attribute2", "value2");
-            IFileUpload file1 = this.factory.CreateFileUpload(
-                this.req1,
+            IAttribute attribute1 = _factory.CreateAttribute(_req1, "attribute1", "value1");
+            IAttribute attribute2 = _factory.CreateAttribute(_req2, "attribute2", "value2");
+            IFileUpload file1 = _factory.CreateFileUpload(
+                _req1,
                 "file1",
                 "file1.txt",
                 HttpPostBodyUtil.DefaultTextContentType,
@@ -40,8 +56,8 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 Encoding.UTF8,
                 123);
 
-            IFileUpload file2 = this.factory.CreateFileUpload(
-                this.req2,
+            IFileUpload file2 = _factory.CreateFileUpload(
+                _req2,
                 "file2",
                 "file2.txt",
                 HttpPostBodyUtil.DefaultTextContentType,
@@ -62,7 +78,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             Assert.Equal(1, file2.ReferenceCount);
 
             // Clean up by req1
-            this.factory.CleanRequestHttpData(this.req1);
+            _factory.CleanRequestHttpData(_req1);
 
             // Assert that data belonging to req1 has been cleaned up
             Assert.Null(attribute1.GetByteBuffer());
@@ -81,18 +97,18 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
         public void RemoveHttpDataFromCleanShouldIdentifiesDataByTheirIdentities()
         {
             // Create some equal data items belonging to the same request
-            IAttribute attribute1 = this.factory.CreateAttribute(this.req1, "attribute", "value");
-            IAttribute attribute2 = this.factory.CreateAttribute(this.req1, "attribute", "value");
-            IFileUpload file1 = this.factory.CreateFileUpload(
-                this.req1,
+            IAttribute attribute1 = _factory.CreateAttribute(_req1, "attribute", "value");
+            IAttribute attribute2 = _factory.CreateAttribute(_req1, "attribute", "value");
+            IFileUpload file1 = _factory.CreateFileUpload(
+                _req1,
                 "file",
                 "file.txt",
                 HttpPostBodyUtil.DefaultTextContentType,
                 HttpHeaderValues.Identity.ToString(),
                 Encoding.UTF8,
                 123);
-            IFileUpload file2 = this.factory.CreateFileUpload(
-                this.req1,
+            IFileUpload file2 = _factory.CreateFileUpload(
+                _req1,
                 "file",
                 "file.txt",
                 HttpPostBodyUtil.DefaultTextContentType,
@@ -109,11 +125,11 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             Assert.True(file1.Equals(file2));
 
             // Remove attribute2 and file2 from being cleaned up by factory
-            this.factory.RemoveHttpDataFromClean(this.req1, attribute2);
-            this.factory.RemoveHttpDataFromClean(this.req1, file2);
+            _factory.RemoveHttpDataFromClean(_req1, attribute2);
+            _factory.RemoveHttpDataFromClean(_req1, file2);
 
             // Clean up by req1
-            this.factory.CleanRequestHttpData(this.req1);
+            _factory.CleanRequestHttpData(_req1);
 
             // Assert that attribute1 and file1 have been cleaned up
             Assert.Null(attribute1.GetByteBuffer());
@@ -134,6 +150,6 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             Assert.Equal(0, file2.ReferenceCount);
         }
 
-        public void Dispose() => this.factory.CleanAllHttpData();
+        public void Dispose() => _factory.CleanAllHttpData();
     }
 }

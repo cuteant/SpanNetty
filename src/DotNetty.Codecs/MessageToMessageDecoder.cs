@@ -50,12 +50,18 @@ namespace DotNetty.Codecs
             }
             finally
             {
-                int size = output.Count;
-                for (int i = 0; i < size; i++)
+                try
                 {
-                    _ = context.FireChannelRead(output[i]);
+                    int size = output.Count;
+                    for (int i = 0; i < size; i++)
+                    {
+                        _ = context.FireChannelRead(output[i]);
+                    }
                 }
-                output.Return();
+                finally
+                {
+                    output.Return();
+                }
             }
         }
 
