@@ -40,7 +40,7 @@ namespace DotNetty.Codecs.Base64
                 {
                     if (breakLines)
                     {
-                        if (charCount == MAX_LINE_LENGTH)
+                        if (0u >= (uint)(charCount - MAX_LINE_LENGTH))
                         {
                             destArray[j++] = NEW_LINE;
                             charCount = 0;
@@ -57,7 +57,7 @@ namespace DotNetty.Codecs.Base64
 
                 i = calcLength;
 
-                if (breakLines && (remainderLength != 0) && (charCount == MAX_LINE_LENGTH))
+                if (breakLines && ((uint)remainderLength > 0u) && (0u >= (uint)(charCount - MAX_LINE_LENGTH)))
                 {
                     destArray[j++] = NEW_LINE;
                 }
@@ -79,7 +79,7 @@ namespace DotNetty.Codecs.Base64
                         break;
                 }
                 //remove last byte if it's NewLine
-                int destLength = destArray[j - 1] == NEW_LINE ? j - 1 : j;
+                int destLength = 0u >= (uint)(destArray[j - 1] - NEW_LINE) ? j - 1 : j;
                 return destLength;
             }
         }
@@ -96,7 +96,7 @@ namespace DotNetty.Codecs.Base64
             {
                 if (breakLines)
                 {
-                    if (charCount == MAX_LINE_LENGTH)
+                    if (0u >= (uint)(charCount - MAX_LINE_LENGTH))
                     {
                         _ = dest.SetByte(j++, NEW_LINE);
                         charCount = 0;
@@ -116,7 +116,7 @@ namespace DotNetty.Codecs.Base64
 
             i = calcLength;
 
-            if (breakLines && (remainderLength != 0) && (charCount == MAX_LINE_LENGTH))
+            if (breakLines && ((uint)remainderLength > 0u) && (0u >= (uint)(charCount - MAX_LINE_LENGTH)))
             {
                 _ = dest.SetByte(j++, NEW_LINE);
             }
@@ -141,7 +141,7 @@ namespace DotNetty.Codecs.Base64
                     break;
             }
             //remove last byte if it's NewLine
-            int destLength = dest.GetByte(j - 1) == NEW_LINE ? j - 1 : j;
+            int destLength = 0u >= (uint)(dest.GetByte(j - 1) - NEW_LINE) ? j - 1 : j;
             return destLength;
         }
 
@@ -205,23 +205,23 @@ namespace DotNetty.Codecs.Base64
                 for (; i < calcLength; ++i)
                 {
                     var value = srcArray[i];
-                    if (decodabet[value] < WHITE_SPACE_ENC)
+                    var sbiDecode = decodabet[value];
+                    if (sbiDecode < WHITE_SPACE_ENC)
                     {
-                        CThrowHelper.ThrowArgumentException_BadBase64InputChar(i, value);
+                        CThrowHelper.ThrowArgumentException_InvalidBase64InputChar(i, value);
                     }
-                    if (decodabet[value] >= EQUALS_SIGN_ENC)
+                    if (sbiDecode >= EQUALS_SIGN_ENC)
                     {
                         b4[b4Count++] = value;
-                        if (b4Count <= 3)
-                            continue;
+                        if (b4Count <= 3) { continue; }
 
-                        if (b4[2] == EQUALS_SIGN)
+                        if (0u >= (uint)(b4[2] - EQUALS_SIGN))
                         {
                             int output = ((decodabet[b4[0]] & 0xFF) << 18) |
                                 ((decodabet[b4[1]] & 0xFF) << 12);
                             destArray[charCount++] = (byte)((uint)output >> 16);
                         }
-                        else if (b4[3] == EQUALS_SIGN)
+                        else if (0u >= (uint)(b4[3] - EQUALS_SIGN))
                         {
                             int output = ((decodabet[b4[0]] & 0xFF) << 18) |
                                 ((decodabet[b4[1]] & 0xFF) << 12) |
@@ -241,7 +241,7 @@ namespace DotNetty.Codecs.Base64
                         }
 
                         b4Count = 0;
-                        if (value == EQUALS_SIGN)
+                        if (0u >= (uint)(value - EQUALS_SIGN))
                         {
                             break;
                         }
@@ -262,23 +262,23 @@ namespace DotNetty.Codecs.Base64
             for (i = offset; i < offset + length; ++i)
             {
                 var value = src.GetByte(i);
-                if (decodabet[value] < WHITE_SPACE_ENC)
+                var sbiDecode = decodabet[value];
+                if (sbiDecode < WHITE_SPACE_ENC)
                 {
-                    CThrowHelper.ThrowArgumentException_BadBase64InputChar(i, value);
+                    CThrowHelper.ThrowArgumentException_InvalidBase64InputChar(i, value);
                 }
-                if (decodabet[value] >= EQUALS_SIGN_ENC)
+                if (sbiDecode >= EQUALS_SIGN_ENC)
                 {
                     b4[b4Count++] = value;
-                    if (b4Count <= 3)
-                        continue;
+                    if (b4Count <= 3) { continue; }
 
-                    if (b4[2] == EQUALS_SIGN)
+                    if (0u >= (uint)(b4[2] - EQUALS_SIGN))
                     {
                         int output = ((decodabet[b4[0]] & 0xFF) << 18) |
                             ((decodabet[b4[1]] & 0xFF) << 12);
                         _ = dest.SetByte(charCount++, (int)((uint)output >> 16));
                     }
-                    else if (b4[3] == EQUALS_SIGN)
+                    else if (0u >= (uint)(b4[3] - EQUALS_SIGN))
                     {
                         int output = ((decodabet[b4[0]] & 0xFF) << 18) |
                             ((decodabet[b4[1]] & 0xFF) << 12) |
@@ -298,7 +298,7 @@ namespace DotNetty.Codecs.Base64
                     }
 
                     b4Count = 0;
-                    if (value == EQUALS_SIGN)
+                    if (0u >= (uint)(value - EQUALS_SIGN))
                     {
                         break;
                     }
@@ -321,7 +321,7 @@ namespace DotNetty.Codecs.Base64
             {
                 CThrowHelper.ThrowArgumentOutOfRangeException(CExceptionArgument.offset);
             }
-            Debug.Assert(dialect.Decodabet.Length == 128, "decodabet.Length must be 128!");
+            Debug.Assert(dialect.Decodabet.Length == 256, "decodabet.Length must be 256!");
             if ((uint)(length - 1) > SharedConstants.TooBigOrNegative)
             {
                 return Unpooled.Empty;

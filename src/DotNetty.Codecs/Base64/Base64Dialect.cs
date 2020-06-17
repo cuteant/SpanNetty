@@ -53,30 +53,40 @@ namespace DotNetty.Codecs.Base64
                 (byte)'8', (byte)'9', (byte)'+', (byte)'/'
             };
 
-            private static ReadOnlySpan<sbyte> InternalDecodabet => new sbyte[]
+            private static ReadOnlySpan<sbyte> InternalDecodabet => new sbyte[256]
             {
-                -9, -9, -9, -9, -9, -9,
-                -9, -9, -9, // Decimal  0 -  8
-                -5, -5, // Whitespace: Tab and Linefeed
-                -9, -9, // Decimal 11 - 12
-                -5, // Whitespace: Carriage Return
+                -9, -9, -9, -9, -9, -9,                             // Decimal  0 -  5
+                -9, -9, -9,                                         // Decimal  6 -  8
+                -5, -5,                                             // Whitespace: Tab and Linefeed
+                -9, -9,                                             // Decimal 11 - 12
+                -5,                                                 // Whitespace: Carriage Return
                 -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 14 - 26
-                -9, -9, -9, -9, -9, // Decimal 27 - 31
-                -5, // Whitespace: Space
-                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 33 - 42
-                62, // Plus sign at decimal 43
-                -9, -9, -9, // Decimal 44 - 46
-                63, // Slash at decimal 47
-                52, 53, 54, 55, 56, 57, 58, 59, 60, 61, // Numbers zero through nine
-                -9, -9, -9, // Decimal 58 - 60
-                -1, // Equals sign at decimal 61
-                -9, -9, -9, // Decimal 62 - 64
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, // Letters 'A' through 'N'
-                14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, // Letters 'O' through 'Z'
-                -9, -9, -9, -9, -9, -9, // Decimal 91 - 96
+                -9, -9, -9, -9, -9,                                 // Decimal 27 - 31
+                -5,                                                 // Whitespace: Space
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9,             // Decimal 33 - 42
+                62,                                                 // Plus sign at decimal 43
+                -9, -9, -9,                                         // Decimal 44 - 46
+                63,                                                 // Slash at decimal 47
+                52, 53, 54, 55, 56, 57, 58, 59, 60, 61,             // Numbers zero through nine
+                -9, -9, -9,                                         // Decimal 58 - 60
+                -1,                                                 // Equals sign at decimal 61
+                -9, -9, -9,                                         // Decimal 62 - 64
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,       // Letters 'A' through 'N'
+                14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,     // Letters 'O' through 'Z'
+                -9, -9, -9, -9, -9, -9,                             // Decimal 91 - 96
                 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, // Letters 'a' through 'm'
                 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, // Letters 'n' through 'z'
-                -9, -9, -9, -9, -9 // Decimal 123 - 127
+                -9, -9, -9, -9, -9,                                 // Decimal 123 - 127
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 128 - 140
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 141 - 153
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 154 - 166
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 167 - 179
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 180 - 192
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 193 - 205
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 206 - 218
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 219 - 231
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 232 - 244
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9          // Decimal 245 - 255
             };
         }
 
@@ -113,34 +123,44 @@ namespace DotNetty.Codecs.Base64
                 (byte)'8', (byte)'9', (byte)'-', (byte)'_'
             };
 
-            private static ReadOnlySpan<sbyte> InternalDecodabet => new sbyte[]
+            private static ReadOnlySpan<sbyte> InternalDecodabet => new sbyte[256]
             {
-                -9, -9, -9, -9, -9, -9,
-                -9, -9, -9, // Decimal  0 -  8
-                -5, -5, // Whitespace: Tab and Linefeed
-                -9, -9, // Decimal 11 - 12
-                -5, // Whitespace: Carriage Return
+                -9, -9, -9, -9, -9, -9,                             // Decimal  0 -  5
+                -9, -9, -9,                                         // Decimal  6 -  8
+                -5, -5,                                             // Whitespace: Tab and Linefeed
+                -9, -9,                                             // Decimal 11 - 12
+                -5,                                                 // Whitespace: Carriage Return
                 -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 14 - 26
-                -9, -9, -9, -9, -9, // Decimal 27 - 31
-                -5, // Whitespace: Space
-                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 33 - 42
-                -9, // Plus sign at decimal 43
-                -9, // Decimal 44
-                62, // Minus sign at decimal 45
-                -9, // Decimal 46
-                -9, // Slash at decimal 47
-                52, 53, 54, 55, 56, 57, 58, 59, 60, 61, // Numbers zero through nine
-                -9, -9, -9, // Decimal 58 - 60
-                -1, // Equals sign at decimal 61
-                -9, -9, -9, // Decimal 62 - 64
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, // Letters 'A' through 'N'
-                14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, // Letters 'O' through 'Z'
-                -9, -9, -9, -9, // Decimal 91 - 94
-                63, // Underscore at decimal 95
-                -9, // Decimal 96
+                -9, -9, -9, -9, -9,                                 // Decimal 27 - 31
+                -5,                                                 // Whitespace: Space
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9,             // Decimal 33 - 42
+                -9,                                                 // Plus sign at decimal 43
+                -9,                                                 // Decimal 44
+                62,                                                 // Minus sign at decimal 45
+                -9,                                                 // Decimal 46
+                -9,                                                 // Slash at decimal 47
+                52, 53, 54, 55, 56, 57, 58, 59, 60, 61,             // Numbers zero through nine
+                -9, -9, -9,                                         // Decimal 58 - 60
+                -1,                                                 // Equals sign at decimal 61
+                -9, -9, -9,                                         // Decimal 62 - 64
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,       // Letters 'A' through 'N'
+                14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,     // Letters 'O' through 'Z'
+                -9, -9, -9, -9,                                     // Decimal 91 - 94
+                63,                                                 // Underscore at decimal 95
+                -9,                                                 // Decimal 96
                 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, // Letters 'a' through 'm'
                 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, // Letters 'n' through 'z'
-                -9, -9, -9, -9, -9, // Decimal 123 - 127
+                -9, -9, -9, -9, -9,                                 // Decimal 123 - 127
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 128 - 140
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 141 - 153
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 154 - 166
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 167 - 179
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 180 - 192
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 193 - 205
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 206 - 218
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 219 - 231
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, // Decimal 232 - 244
+                -9, -9, -9, -9, -9, -9, -9, -9, -9, -9, -9          // Decimal 245 - 255
             };
         }
     }

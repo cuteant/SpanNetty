@@ -270,12 +270,12 @@ namespace DotNetty.Codecs
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_BadBase64InputChar(int index, byte value)
+        internal static void ThrowArgumentException_InvalidBase64InputChar(int index, byte value)
         {
             throw GetException();
             ArgumentException GetException()
             {
-                return new ArgumentException(string.Format("bad Base64 input character at {0}:{1}", index, value));
+                return new ArgumentException(string.Format("invalid Base64 input character at {0}:{1}", index, value));
             }
         }
 
