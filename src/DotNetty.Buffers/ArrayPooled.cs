@@ -252,9 +252,9 @@ namespace DotNetty.Buffers
 
             // Merge the specified buffers into one buffer.
             int length = 0;
-            foreach (IByteBuffer b in buffers)
+            for (int i = 0; i < buffers.Length; i++)
             {
-                int bLen = b.ReadableBytes;
+                int bLen = buffers[i].ReadableBytes;
                 if ((uint)(bLen - 1) > SharedConstants.TooBigOrNegative) // bLen <= 0
                 {
                     continue;
@@ -272,9 +272,9 @@ namespace DotNetty.Buffers
             var mergedArray = DefaultArrayPool.Rent(length);
             for (int i = 0, j = 0; i < buffers.Length; i++)
             {
-                IByteBuffer b = buffers[i];
-                int bLen = b.ReadableBytes;
-                _ = b.GetBytes(b.ReaderIndex, mergedArray, j, bLen);
+                IByteBuffer buf = buffers[i];
+                int bLen = buf.ReadableBytes;
+                _ = buf.GetBytes(buf.ReaderIndex, mergedArray, j, bLen);
                 j += bLen;
             }
 

@@ -3,8 +3,10 @@
   <PropertyGroup>
     <AssemblyVersion>0.7.0.0</AssemblyVersion>
     <VersionPrefix Condition=" '$(VersionPrefix)'=='' ">0.7.0</VersionPrefix>
-    <VersionSuffix Condition=" '$(VersionSuffix)'=='' ">beta</VersionSuffix>
-    <VersionSuffix Condition=" '$(VersionDateSuffix)'!='' ">$(VersionSuffix)-$(VersionDateSuffix)</VersionSuffix>
+    <VersionPrefix Condition=" '$(VersionYearPrefix)'!='' ">0.7.$(VersionYearPrefix)</VersionPrefix>
+    <VersionPrefix Condition=" '$(VersionDatePrefix)'!='' ">$(VersionPrefix).$(VersionDatePrefix)</VersionPrefix>
+    <VersionSuffix Condition=" '$(VersionSuffix)'=='' and '$(VersionYearPrefix)'=='' ">beta</VersionSuffix>
+    <VersionSuffix Condition=" '$(VersionDateSuffix)'!='' and '$(VersionYearPrefix)'=='' ">$(VersionSuffix)-$(VersionDateSuffix)</VersionSuffix>
   </PropertyGroup>
   <Choose>
     <When Condition=" '$(TargetFramework)' == 'net40' ">

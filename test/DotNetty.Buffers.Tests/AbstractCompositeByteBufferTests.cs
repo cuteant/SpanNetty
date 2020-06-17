@@ -41,7 +41,19 @@ namespace DotNetty.Buffers.Tests
                 buffers.Add(Unpooled.Empty);
             }
 
-            IByteBuffer buffer = Unpooled.WrappedBuffer(int.MaxValue, buffers.ToArray());
+            IByteBuffer buffer;// = Unpooled.WrappedBuffer(int.MaxValue, buffers.ToArray());
+            switch (buffers.Count)
+            {
+                case 0:
+                    buffer = Unpooled.CompositeBuffer(int.MaxValue);
+                    break;
+                case 1:
+                    buffer = Unpooled.CompositeBuffer(int.MaxValue).AddComponent(buffers[0]);
+                    break;
+                default:
+                    buffer = Unpooled.WrappedBuffer(int.MaxValue, buffers.ToArray());
+                    break;
+            }
 
             // Truncate to the requested capacity.
             buffer.AdjustCapacity(length);
@@ -51,6 +63,11 @@ namespace DotNetty.Buffers.Tests
             Assert.False(buffer.IsWritable());
             buffer.SetWriterIndex(0);
             return buffer;
+        }
+
+        protected virtual CompositeByteBuffer NewCompositeBuffer()
+        {
+            return Unpooled.CompositeBuffer();
         }
 
         protected override bool DiscardReadBytesDoesNotMoveWritableBytes() => false;
@@ -1098,8 +1115,19 @@ namespace DotNetty.Buffers.Tests
         [Fact]
         public void AddFlattenedComponentsTest()
         {
+            AddFlattenedComponentsTest0(false);
+        }
+
+        [Fact]
+        public void AddFlattenedComponentsWithWrappedCompositeTest()
+        {
+            AddFlattenedComponentsTest0(true);
+        }
+
+        private void AddFlattenedComponentsTest0(bool addWrapped)
+        {
             var b1 = Unpooled.WrappedBuffer(new byte[] { 1, 2, 3 });
-            CompositeByteBuffer newComposite = Unpooled.CompositeBuffer()
+            CompositeByteBuffer newComposite = NewCompositeBuffer()
                     .AddComponent(true, b1)
                     .AddFlattenedComponents(true, (IByteBuffer)b1.Retain())
                     .AddFlattenedComponents(true, Unpooled.Empty);
@@ -1135,6 +1163,11 @@ namespace DotNetty.Buffers.Tests
 
             var compositeCopy = compositeToAdd.Copy();
 
+            if (addWrapped)
+            {
+                compositeToAdd = new WrappedCompositeByteBuffer(compositeToAdd);
+            }
+
             newComposite.AddFlattenedComponents(true, compositeToAdd);
 
             // verify that added range matches
@@ -1164,7 +1197,7 @@ namespace DotNetty.Buffers.Tests
         //    @Test
         //public void testIterator()
         //    {
-        //        CompositeByteBuf cbuf = compositeBuffer();
+        //        CompositeByteBuf cbuf = NewCompositeBuffer();
         //        cbuf.addComponent(EMPTY_BUFFER);
         //        cbuf.addComponent(EMPTY_BUFFER);
 
@@ -1190,7 +1223,7 @@ namespace DotNetty.Buffers.Tests
         //    @Test
         //public void testEmptyIterator()
         //    {
-        //        CompositeByteBuf cbuf = compositeBuffer();
+        //        CompositeByteBuf cbuf = NewCompositeBuffer();
 
         //        Iterator<ByteBuf> it = cbuf.iterator();
         //        assertFalse(it.hasNext());
@@ -1210,7 +1243,7 @@ namespace DotNetty.Buffers.Tests
         //    @Test(expected = ConcurrentModificationException.class)
         //public void testIteratorConcurrentModificationAdd()
         //    {
-        //        CompositeByteBuf cbuf = compositeBuffer();
+        //        CompositeByteBuf cbuf = NewCompositeBuffer();
         //        cbuf.addComponent(EMPTY_BUFFER);
 
         //        Iterator<ByteBuf> it = cbuf.iterator();
@@ -1230,7 +1263,7 @@ namespace DotNetty.Buffers.Tests
         //    @Test(expected = ConcurrentModificationException.class)
         //public void testIteratorConcurrentModificationRemove()
         //    {
-        //        CompositeByteBuf cbuf = compositeBuffer();
+        //        CompositeByteBuf cbuf = NewCompositeBuffer();
         //        cbuf.addComponent(EMPTY_BUFFER);
 
         //        Iterator<ByteBuf> it = cbuf.iterator();
@@ -1293,7 +1326,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer s3 = s2.ReadRetainedSlice(2); // 4
             IByteBuffer s4 = s3.ReadRetainedSlice(2); // 5
 
-            IByteBuffer composite = Unpooled.CompositeBuffer()
+            IByteBuffer composite = NewCompositeBuffer()
                 .AddComponent(s1)
                 .AddComponents(s2, s3, s4);
             //.order(ByteOrder.LITTLE_ENDIAN);
@@ -1318,7 +1351,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer b2 = Unpooled.Buffer(2).WriteShort(2);
 
             // composite takes ownership of s1 and s2
-            IByteBuffer composite = Unpooled.CompositeBuffer()
+            IByteBuffer composite = NewCompositeBuffer()
                 .AddComponents(b1, b2);
 
             Assert.Equal(4, composite.Capacity);
@@ -1349,7 +1382,7 @@ namespace DotNetty.Buffers.Tests
             IByteBuffer b2 = b1.RetainedSlice(b1.ReaderIndex, 2);
 
             // composite takes ownership of b1 and b2
-            IByteBuffer composite = Unpooled.CompositeBuffer()
+            IByteBuffer composite = NewCompositeBuffer()
                 .AddComponents(b1, b2);
 
             Assert.Equal(4, composite.Capacity);
@@ -1404,7 +1437,7 @@ namespace DotNetty.Buffers.Tests
             TestDecompose(310, 0, 0);
         }
 
-        static void TestDecompose(int offset, int length, int expectedListSize)
+        private void TestDecompose(int offset, int length, int expectedListSize)
         {
             byte[] bytes = new byte[1024];
             var seed = Environment.TickCount;
@@ -1412,7 +1445,7 @@ namespace DotNetty.Buffers.Tests
             random.NextBytes(bytes);
             IByteBuffer buf = Unpooled.WrappedBuffer(bytes);
 
-            var composite = Unpooled.CompositeBuffer();
+            var composite = NewCompositeBuffer();
             composite.AddComponents(true,
                                     buf.RetainedSlice(100, 200),
                                     buf.RetainedSlice(300, 400),
@@ -1483,9 +1516,9 @@ namespace DotNetty.Buffers.Tests
             DiscardCorrectlyUpdatesLastAccessed0(false);
         }
 
-        private static void DiscardCorrectlyUpdatesLastAccessed0(bool discardSome)
+        private void DiscardCorrectlyUpdatesLastAccessed0(bool discardSome)
         {
-            CompositeByteBuffer cbuf = Unpooled.CompositeBuffer();
+            CompositeByteBuffer cbuf = NewCompositeBuffer();
             List<IByteBuffer> buffers = new List<IByteBuffer>(4);
             for (int i = 0; i < 4; i++)
             {
@@ -1626,7 +1659,7 @@ namespace DotNetty.Buffers.Tests
                 }
                 Assert.False(true);
             }
-            catch(Exception exc)
+            catch (Exception exc)
             {
                 Assert.IsType<InvalidOperationException>(exc);
             }

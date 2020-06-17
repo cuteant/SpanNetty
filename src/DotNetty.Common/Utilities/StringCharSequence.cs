@@ -136,7 +136,8 @@ namespace DotNetty.Common.Utilities
 
             return false;
         }
-        bool IEquatable<ICharSequence>.Equals(ICharSequence other)
+
+        public bool Equals(ICharSequence other)
         {
             if (ReferenceEquals(this, other)) { return true; }
 
@@ -146,7 +147,7 @@ namespace DotNetty.Common.Utilities
                     && 0u >= (uint)string.Compare(this.value, this.offset, comparand.value, comparand.offset, this.count, StringComparison.Ordinal);
             }
 
-            return other is ICharSequence seq && this.ContentEquals(seq);
+            return other is object && this.ContentEquals(other);
         }
 
         public int HashCode(bool ignoreCase) => ignoreCase

@@ -31,10 +31,10 @@ namespace DotNetty.Codecs.Http.Multipart
         bool _isLastChunk;
 
         // HttpDatas from Body
-        readonly List<IInterfaceHttpData> _bodyListHttpData = new List<IInterfaceHttpData>();
+        readonly List<IInterfaceHttpData> _bodyListHttpData;
 
         // HttpDatas as Map from Body
-        readonly Dictionary<AsciiString, List<IInterfaceHttpData>> _bodyMapHttpData = new Dictionary<AsciiString, List<IInterfaceHttpData>>(AsciiStringComparer.IgnoreCase);
+        readonly Dictionary<string, List<IInterfaceHttpData>> _bodyMapHttpData;
 
         // The current channelBuffer
         IByteBuffer _undecodedChunk;
@@ -50,7 +50,7 @@ namespace DotNetty.Codecs.Http.Multipart
         ICharSequence _multipartMixedBoundary;
 
         // Current getStatus
-        MultiPartStatus _currentStatus = MultiPartStatus.Notstarted;
+        MultiPartStatus _currentStatus;
 
         // Used in Multipart
         Dictionary<AsciiString, IAttribute> _currentFieldAttributes;
@@ -63,7 +63,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         bool _destroyed;
 
-        int _discardThreshold = HttpPostRequestDecoder.DefaultDiscardThreshold;
+        int _discardThreshold;
 
         public HttpPostMultipartRequestDecoder(IHttpRequest request)
             : this(new DefaultHttpDataFactory(DefaultHttpDataFactory.MinSize), request, HttpConstants.DefaultEncoding)
@@ -81,6 +81,11 @@ namespace DotNetty.Codecs.Http.Multipart
             if (charset is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.charset); }
             if (factory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
 
+            _currentStatus = MultiPartStatus.Notstarted;
+            _discardThreshold = HttpPostRequestDecoder.DefaultDiscardThreshold;
+            _bodyListHttpData = new List<IInterfaceHttpData>();
+            _bodyMapHttpData = new Dictionary<string, List<IInterfaceHttpData>>(StringComparer.OrdinalIgnoreCase);
+
             _factory = factory;
             _request = request;
             _charset = charset;
@@ -95,7 +100,6 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             else
             {
-                _undecodedChunk = ArrayPooled.Buffer();
                 ParseBody();
             }
         }
@@ -156,7 +160,7 @@ namespace DotNetty.Codecs.Http.Multipart
             return _bodyListHttpData;
         }
 
-        public List<IInterfaceHttpData> GetBodyHttpDatas(AsciiString name)
+        public List<IInterfaceHttpData> GetBodyHttpDatas(string name)
         {
             CheckDestroyed();
 
@@ -167,7 +171,7 @@ namespace DotNetty.Codecs.Http.Multipart
             return _bodyMapHttpData[name];
         }
 
-        public IInterfaceHttpData GetBodyHttpData(AsciiString name)
+        public IInterfaceHttpData GetBodyHttpData(string name)
         {
             CheckDestroyed();
 
@@ -186,21 +190,29 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             CheckDestroyed();
 
-            // Maybe we should better not copy here for performance reasons but this will need
-            // more care by the caller to release the content in a correct manner later
-            // So maybe something to optimize on a later stage
+            if (content is ILastHttpContent)
+            {
+                _isLastChunk = true;
+            }
+
             IByteBuffer buf = content.Content;
             if (_undecodedChunk is null)
             {
-                _undecodedChunk = buf.Copy();
+                _undecodedChunk = _isLastChunk ?
+                        // Take a slice instead of copying when the first chunk is also the last
+                        // as undecodedChunk.writeBytes will never be called.
+                        buf.RetainedSlice() :
+                        // Maybe we should better not copy here for performance reasons but this will need
+                        // more care by the caller to release the content in a correct manner later
+                        // So maybe something to optimize on a later stage
+                        //
+                        // We are explicit allocate a buffer and NOT calling copy() as otherwise it may set a maxCapacity
+                        // which is not really usable for us as we may exceed it once we add more bytes.
+                        buf.Allocator.Buffer(buf.ReadableBytes).WriteBytes(buf);
             }
             else
             {
                 _ = _undecodedChunk.WriteBytes(buf);
-            }
-            if (content is ILastHttpContent)
-            {
-                _isLastChunk = true;
             }
             ParseBody();
             if (_undecodedChunk is object
@@ -274,7 +286,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 return;
             }
-            var name = new AsciiString(data.Name);
+            var name = data.Name;
             if (!_bodyMapHttpData.TryGetValue(name, out List<IInterfaceHttpData> datas))
             {
                 datas = new List<IInterfaceHttpData>(1);
@@ -965,7 +977,7 @@ namespace DotNetty.Codecs.Http.Multipart
         static StringCharSequence ReadLineStandard(IByteBuffer undecodedChunk, Encoding charset)
         {
             int readerIndex = undecodedChunk.ReaderIndex;
-            IByteBuffer line = ArrayPooled.Buffer(64);
+            IByteBuffer line = undecodedChunk.Allocator.HeapBuffer(64);
             try
             {
                 while (undecodedChunk.IsReadable())
@@ -1015,7 +1027,7 @@ namespace DotNetty.Codecs.Http.Multipart
             }
             var sao = new HttpPostBodyUtil.SeekAheadOptimize(undecodedChunk);
             int readerIndex = undecodedChunk.ReaderIndex;
-            IByteBuffer line = ArrayPooled.Buffer(64);
+            IByteBuffer line = undecodedChunk.Allocator.HeapBuffer(64);
             try
             {
                 while (sao.Pos < sao.Limit)
@@ -1355,7 +1367,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 lastPosition--;
             }
-            IByteBuffer content = undecodedChunk.Copy(startReaderIndex, lastPosition - startReaderIndex);
+            IByteBuffer content = undecodedChunk.RetainedSlice(startReaderIndex, lastPosition - startReaderIndex);
             try
             {
                 httpData.AddContent(content, delimiterFound);
@@ -1408,7 +1420,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 lastRealPos--;
             }
             int lastPosition = sao.GetReadPosition(lastRealPos);
-            IByteBuffer content = undecodedChunk.Copy(startReaderIndex, lastPosition - startReaderIndex);
+            IByteBuffer content = undecodedChunk.RetainedSlice(startReaderIndex, lastPosition - startReaderIndex);
             try
             {
                 httpData.AddContent(content, delimiterFound);

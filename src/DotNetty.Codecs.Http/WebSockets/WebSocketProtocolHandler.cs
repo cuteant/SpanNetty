@@ -101,14 +101,16 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 _ = ReferenceCountUtil.Release(message);
                 promise.SetException(ThrowHelper.GetClosedChannelException());
-                return;
             }
-            if (message is CloseWebSocketFrame)
+            else if (message is CloseWebSocketFrame)
             {
-                promise = promise.Unvoid();
-                _closeSent = promise;
+                _closeSent = promise.Unvoid();
+                ctx.WriteAsync(message).LinkOutcome(_closeSent);
             }
-            _ = ctx.WriteAsync(message, promise);
+            else
+            {
+                _ = ctx.WriteAsync(message, promise);
+            }
         }
 
         private void ApplyCloseSentTimeout(IChannelHandlerContext ctx)

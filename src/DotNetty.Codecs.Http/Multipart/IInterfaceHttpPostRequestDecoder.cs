@@ -14,9 +14,9 @@ namespace DotNetty.Codecs.Http.Multipart
 
         List<IInterfaceHttpData> GetBodyHttpDatas();
 
-        List<IInterfaceHttpData> GetBodyHttpDatas(AsciiString name);
+        List<IInterfaceHttpData> GetBodyHttpDatas(string name);
 
-        IInterfaceHttpData GetBodyHttpData(AsciiString name);
+        IInterfaceHttpData GetBodyHttpData(string name);
 
         IInterfaceHttpPostRequestDecoder Offer(IHttpContent content);
 

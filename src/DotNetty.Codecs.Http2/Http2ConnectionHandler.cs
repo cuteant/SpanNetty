@@ -5,6 +5,7 @@ namespace DotNetty.Codecs.Http2
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
@@ -1092,6 +1093,7 @@ namespace DotNetty.Codecs.Http2
             private readonly IChannelHandlerContext _ctx;
             private readonly IPromise _promise;
             private readonly IScheduledTask _timeoutTask;
+            private bool _closed;
 
             public ClosingChannelFutureListener(IChannelHandlerContext ctx, IPromise promise)
             {
@@ -1120,6 +1122,15 @@ namespace DotNetty.Codecs.Http2
 
             private void DoClose()
             {
+                // We need to guard against multiple calls as the timeout may trigger close() first and then it will be
+                // triggered again because of operationComplete(...) is called.
+                if (_closed)
+                {
+                    // This only happens if we also scheduled a timeout task.
+                    Debug.Assert(_timeoutTask is object);
+                    return;
+                }
+                _closed = true;
                 if (_promise is null)
                 {
                     _ = _ctx.CloseAsync();

@@ -194,6 +194,12 @@ namespace DotNetty.Common
         #region -- ArgumentException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static ArgumentException GetArgumentException_DecodeHexByte(string s, int pos)
+        {
+            return new ArgumentException($"invalid hex byte '{s.Substring(pos, 2)}' at index {pos} of '{s}'");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
         internal static void ThrowArgumentException(string name)
         {
             throw GetException();
@@ -302,16 +308,6 @@ namespace DotNetty.Common
             static ArgumentException GetException()
             {
                 return new ArgumentException($"tickInterval must be less than or equal to ${int.MaxValue} ms.");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowArgumentException_DecodeHexByte(string s, int pos)
-        {
-            throw GetException();
-            ArgumentException GetException()
-            {
-                return new ArgumentException($"invalid hex byte '{s.Substring(pos, 2)}' at index {pos} of '{s}'");
             }
         }
 

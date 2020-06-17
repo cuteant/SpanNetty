@@ -432,7 +432,14 @@ namespace DotNetty.Buffers
                 _ = buffer.Release();
                 return this;
             }
-            if (!(buffer is CompositeByteBuffer from))
+            if (buffer is CompositeByteBuffer from)
+            {
+                if (buffer is WrappedCompositeByteBuffer wrappedBuf)
+                {
+                    from = (CompositeByteBuffer)wrappedBuf.Unwrap();
+                }
+            }
+            else
             {
                 _ = AddComponent0(increaseWriterIndex, _componentCount, buffer);
                 ConsolidateIfNeeded();

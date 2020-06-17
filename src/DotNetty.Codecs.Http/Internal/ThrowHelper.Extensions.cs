@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
+using DotNetty.Buffers;
 using DotNetty.Codecs.Compression;
 using DotNetty.Codecs.Http.Cookies;
 using DotNetty.Codecs.Http.Multipart;
@@ -1298,6 +1300,17 @@ namespace DotNetty.Codecs.Http
             ErrorDataDecoderException GetErrorDataDecoderException()
             {
                 return new ErrorDataDecoderException("TransferEncoding Unknown: " + code);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowErrorDataDecoderException_Invalid_hex_byte_at_index(int idx, IByteBuffer b, Encoding charset)
+        {
+            throw GetErrorDataDecoderException();
+            ErrorDataDecoderException GetErrorDataDecoderException()
+            {
+                return new ErrorDataDecoderException(
+                    string.Format("Invalid hex byte at index '{0}' in string: '{1}'", idx, b.ToString(charset)));
             }
         }
 

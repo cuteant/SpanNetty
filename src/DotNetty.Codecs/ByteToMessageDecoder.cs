@@ -369,7 +369,7 @@ namespace DotNetty.Codecs
 
         protected void DiscardSomeReadBytes()
         {
-            if (_cumulation is object && !_first && _cumulation.ReferenceCount == 1)
+            if (_cumulation is object && !_first && 0u >= (uint)(_cumulation.ReferenceCount - 1))
             {
                 // discard some bytes if possible to make more room input the
                 // buffer but only if the refCnt == 1  as otherwise the user may have
@@ -426,9 +426,9 @@ namespace DotNetty.Codecs
                         _cumulation = null;
                     }
                     int size = output.Count;
-                    FireChannelRead(ctx, output, size);
-                    if (size > 0)
+                    if ((uint)size > 0u)
                     {
+                        FireChannelRead(ctx, output, size);
                         // Something was read, call fireChannelReadComplete()
                         _ = ctx.FireChannelReadComplete();
                     }
@@ -482,7 +482,7 @@ namespace DotNetty.Codecs
                 while (input.IsReadable())
                 {
                     int initialOutputCount = output.Count;
-                    if (initialOutputCount > 0)
+                    if ((uint)initialOutputCount > 0u)
                     {
                         FireChannelRead(context, output, initialOutputCount);
                         output.Clear();
@@ -511,11 +511,12 @@ namespace DotNetty.Codecs
                         break;
                     }
 
-                    if (initialOutputCount == output.Count)
+                    bool noOutgoingMessages = 0u >= (uint)(oldInputLength - input.ReadableBytes);
+                    if (0u >= (uint)(initialOutputCount - output.Count))
                     {
                         // no outgoing messages have been produced
 
-                        if (oldInputLength == input.ReadableBytes)
+                        if (noOutgoingMessages)
                         {
                             break;
                         }
@@ -525,7 +526,7 @@ namespace DotNetty.Codecs
                         }
                     }
 
-                    if (oldInputLength == input.ReadableBytes)
+                    if (noOutgoingMessages)
                     {
                         CThrowHelper.ThrowDecoderException_ByteToMessageDecoder(GetType());
                     }

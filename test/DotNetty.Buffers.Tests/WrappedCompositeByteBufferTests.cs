@@ -8,5 +8,10 @@ namespace DotNetty.Buffers.Tests
         protected sealed override IByteBuffer NewBuffer(int length, int maxCapacity) => this.Wrap((CompositeByteBuffer)base.NewBuffer(length, maxCapacity));
 
         protected virtual IByteBuffer Wrap(CompositeByteBuffer buffer) => new WrappedCompositeByteBuffer(buffer);
+
+        protected override CompositeByteBuffer NewCompositeBuffer()
+        {
+            return (CompositeByteBuffer)Wrap(base.NewCompositeBuffer());
+        }
     }
 }

@@ -215,14 +215,14 @@ namespace DotNetty.Common.Utilities
         // Decode a 2-digit hex byte from within a string.
         public static byte DecodeHexByte(string s, int pos)
         {
+            const uint MaxHex2B = 15U;
             int hi = DecodeHexNibble(s[pos]);
             int lo = DecodeHexNibble(s[pos + 1]);
-            if (hi == -1 || lo == -1)
+            if(MaxHex2B >= (uint)hi && MaxHex2B >= (uint)lo)
             {
-                ThrowHelper.ThrowArgumentException_DecodeHexByte(s, pos);
+                return (byte)((hi << 4) + lo);
             }
-
-            return (byte)((hi << 4) + lo);
+            throw ThrowHelper.GetArgumentException_DecodeHexByte(s, pos);
         }
 
         //Decodes part of a string with <a href="http://en.wikipedia.org/wiki/Hex_dump">hex dump</a>

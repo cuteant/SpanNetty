@@ -595,9 +595,10 @@ namespace DotNetty.Buffers
                 long val = Volatile.Read(ref _activeBytesHuge);
                 lock (this)
                 {
-                    foreach (IPoolChunkListMetric t in _chunkListMetrics)
+                    for (int i = 0; i < _chunkListMetrics.Count; i++)
                     {
-                        foreach (IPoolChunkMetric m in t)
+                        var metrics = _chunkListMetrics[i];
+                        foreach (IPoolChunkMetric m in metrics)
                         {
                             val += m.ChunkSize;
                         }
@@ -692,17 +693,17 @@ namespace DotNetty.Buffers
 
         static void DestroyPoolSubPages(PoolSubpage<T>[] pages)
         {
-            foreach (PoolSubpage<T> page in pages)
+            for (int i = 0; i < pages.Length; i++)
             {
-                page.Destroy();
+                pages[i].Destroy();
             }
         }
 
         void DestroyPoolChunkLists(params PoolChunkList<T>[] chunkLists)
         {
-            foreach (PoolChunkList<T> chunkList in chunkLists)
+            for (int i = 0; i < chunkLists.Length; i++)
             {
-                chunkList.Destroy(this);
+                chunkLists[i].Destroy(this);
             }
         }
     }

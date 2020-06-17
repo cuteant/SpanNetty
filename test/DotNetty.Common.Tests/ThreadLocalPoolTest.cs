@@ -12,8 +12,13 @@ namespace DotNetty.Common.Tests
 
     public class ThreadLocalPoolTest
     {
-        private static ThreadLocalPool<HandledObject> NewPool(int max)
-            => new ThreadLocalPool<HandledObject>(handle => new HandledObject(handle), max);
+        private static ThreadLocalPool<HandledObject> NewPool(int maxCapacityPerThread)
+            => NewPool(maxCapacityPerThread, 2, 8, 2, 8);
+        private static ThreadLocalPool<HandledObject> NewPool(int maxCapacityPerThread, int maxSharedCapacityFactor,
+            int ratio, int maxDelayedQueuesPerThread, int delayedQueueRatio)
+            => new ThreadLocalPool<HandledObject>(handle => new HandledObject(handle),
+                maxCapacityPerThread, maxSharedCapacityFactor, ratio,
+                maxDelayedQueuesPerThread, delayedQueueRatio);
 
         //Not use Task to do all `AtDifferentThreadTest`, because can't promise Task won't be run inline.
 
@@ -74,6 +79,7 @@ namespace DotNetty.Common.Tests
             var exception = Assert.ThrowsAny<InvalidOperationException>(() => obj.Release());
             Assert.True(exception != null);
         }
+
         [Fact]
         public void MultipleReleaseAtDifferentThreadTest()
         {
@@ -140,6 +146,38 @@ namespace DotNetty.Common.Tests
         }
 
         [Fact]
+        public void RecycleDisableDrop()
+        {
+            ThreadLocalPool<HandledObject> recycler = NewPool(1024, 2, 0, 2, 0);
+            HandledObject obj = recycler.Take();
+            obj.Release();
+            HandledObject obj2 = recycler.Take();
+            Assert.Same(obj, obj2);
+            obj2.Release();
+            HandledObject obj3 = recycler.Take();
+            Assert.Same(obj, obj3);
+            obj3.Release();
+        }
+
+        [Fact]
+        public void RecycleDisableDelayedQueueDrop()
+        {
+            ThreadLocalPool<HandledObject> recycler = NewPool(1024, 2, 1, 2, 0);
+            HandledObject o = recycler.Take();
+            HandledObject o2 = recycler.Take();
+            HandledObject o3 = recycler.Take();
+            Task.Run(() =>
+            {
+                o.Release();
+                o2.Release();
+                o3.Release();
+            }).Wait();
+            // In reverse order
+            Assert.Same(o3, recycler.Take());
+            Assert.Same(o, recycler.Take());
+        }
+
+        [Fact]
         public void MaxCapacityTest()
         {
             MaxCapacityTest0(300);
@@ -173,8 +211,7 @@ namespace DotNetty.Common.Tests
         [Fact]
         public void ReleaseAtDifferentThreadTest()
         {
-            ThreadLocalPool<HandledObject> pool = new ThreadLocalPool<HandledObject>(handle => new HandledObject(handle),
-                256, 10, 2, 10);
+            ThreadLocalPool<HandledObject> pool = NewPool(256, 10, 2, 10, 2);
 
             HandledObject obj = pool.Take();
             HandledObject obj2 = pool.Take();

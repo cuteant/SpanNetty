@@ -199,5 +199,64 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 fis.Close();
             }
         }
+
+        [Fact]
+        public void Delete()
+        {
+            string json = "{\"foo\":\"bar\"}";
+            byte[] bytes = Encoding.UTF8.GetBytes(json);
+            FileStream tmpFile = null;
+            DiskFileUpload f1 = new DiskFileUpload("file4", "file4", "application/json", null, null, 0);
+            try
+            {
+                Assert.Null(f1.GetFile());
+                f1.SetContent(Unpooled.WrappedBuffer(bytes));
+                Assert.NotNull(tmpFile = f1.GetFile());
+            }
+            finally
+            {
+                f1.Delete();
+                Assert.Null(f1.GetFile());
+                Assert.NotNull(tmpFile);
+                Assert.False(File.Exists(tmpFile.Name));
+            }
+        }
+
+        [Fact]
+        public void SetSetContentFromFileExceptionally()
+        {
+            long maxSize = 4;
+            DiskFileUpload f1 = new DiskFileUpload("file5", "file5", "application/json", null, null, 0);
+            f1.MaxSize = maxSize;
+            try
+            {
+                f1.SetContent(Unpooled.WrappedBuffer(new byte[(int)maxSize]));
+                var originalFile = f1.GetFile();
+                Assert.NotNull(originalFile);
+                Assert.Equal(maxSize, originalFile.Length);
+                Assert.Equal(maxSize, f1.Length);
+                byte[] bytes = new byte[8];
+                (new Random()).NextBytes(bytes);
+
+                var tmpFs = File.Create(Path.GetTempFileName(), 4096, FileOptions.DeleteOnClose);
+                try
+                {
+                    tmpFs.Write(bytes, 0, bytes.Length);
+                    tmpFs.Position = 0;
+                    f1.SetContent(tmpFs);
+                    Assert.False(true); // should not reach here!
+                }
+                catch (IOException)
+                {
+                    Assert.NotNull(f1.GetFile());
+                    Assert.NotEqual(originalFile, f1.GetFile());
+                    Assert.Equal(maxSize, f1.Length);
+                }
+            }
+            finally
+            {
+                f1.Delete();
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Text;
     using Xunit;
     using static ArrayPooled;
 
@@ -319,6 +320,37 @@
             Assert.False(wrapped.Release()); // Empty Buffer cannot be released
             Assert.Equal(0, buf1.ReferenceCount);
             Assert.Equal(0, buf2.ReferenceCount);
+        }
+
+        [Fact]
+        public void CopiedBufferUtf8()
+        {
+            CopiedBufferCharSequence("Some UTF_8 like äÄ∏ŒŒ", Encoding.UTF8);
+        }
+
+        [Fact]
+        public void CopiedBufferAscii()
+        {
+            CopiedBufferCharSequence("Some US_ASCII", Encoding.ASCII);
+        }
+
+        [Fact]
+        public void CopiedBufferSomeOtherCharset()
+        {
+            CopiedBufferCharSequence("Some ISO_8859_1", Encoding.GetEncoding("iso-8859-1"));
+        }
+
+        private static void CopiedBufferCharSequence(string sequence, Encoding charset)
+        {
+            IByteBuffer copied = Unpooled.CopiedBuffer(sequence, charset);
+            try
+            {
+                Assert.Equal(sequence, copied.ToString(charset));
+            }
+            finally
+            {
+                copied.Release();
+            }
         }
 
         [Fact]

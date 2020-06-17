@@ -11,7 +11,7 @@ namespace DotNetty.Codecs.Http.Multipart
     {
         internal static readonly int DefaultDiscardThreshold = 10 * 1024 * 1024;
 
-        readonly IInterfaceHttpPostRequestDecoder decoder;
+        readonly IInterfaceHttpPostRequestDecoder _decoder;
 
         public HttpPostRequestDecoder(IHttpRequest request)
             : this(new DefaultHttpDataFactory(DefaultHttpDataFactory.MinSize), request, HttpConstants.DefaultEncoding)
@@ -32,11 +32,11 @@ namespace DotNetty.Codecs.Http.Multipart
             // Fill default values
             if (IsMultipartRequest(request))
             {
-                this.decoder = new HttpPostMultipartRequestDecoder(factory, request, encoding);
+                _decoder = new HttpPostMultipartRequestDecoder(factory, request, encoding);
             }
             else
             {
-                this.decoder = new HttpPostStandardRequestDecoder(factory, request, encoding);
+                _decoder = new HttpPostStandardRequestDecoder(factory, request, encoding);
             }
         }
 
@@ -46,7 +46,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 if (mimeType.StartsWith(HttpHeaderValues.MultipartFormData))
                 {
-                    return GetMultipartDataBoundary(mimeType) != null;
+                    return GetMultipartDataBoundary(mimeType) is object;
                 }
             }
             return false;
@@ -118,33 +118,33 @@ namespace DotNetty.Codecs.Http.Multipart
             return null;
         }
 
-        public bool IsMultipart => this.decoder.IsMultipart;
+        public bool IsMultipart => _decoder.IsMultipart;
 
         public int DiscardThreshold
         {
-            get => this.decoder.DiscardThreshold;
-            set => this.decoder.DiscardThreshold = value;
+            get => _decoder.DiscardThreshold;
+            set => _decoder.DiscardThreshold = value;
         }
 
-        public List<IInterfaceHttpData> GetBodyHttpDatas() => this.decoder.GetBodyHttpDatas();
+        public List<IInterfaceHttpData> GetBodyHttpDatas() => _decoder.GetBodyHttpDatas();
 
-        public List<IInterfaceHttpData> GetBodyHttpDatas(AsciiString name) => this.decoder.GetBodyHttpDatas(name);
+        public List<IInterfaceHttpData> GetBodyHttpDatas(string name) => _decoder.GetBodyHttpDatas(name);
 
-        public IInterfaceHttpData GetBodyHttpData(AsciiString name) => this.decoder.GetBodyHttpData(name);
+        public IInterfaceHttpData GetBodyHttpData(string name) => _decoder.GetBodyHttpData(name);
 
-        public IInterfaceHttpPostRequestDecoder Offer(IHttpContent content) => this.decoder.Offer(content);
+        public IInterfaceHttpPostRequestDecoder Offer(IHttpContent content) => _decoder.Offer(content);
 
-        public bool HasNext => this.decoder.HasNext;
+        public bool HasNext => _decoder.HasNext;
 
-        public IInterfaceHttpData Next() => this.decoder.Next();
+        public IInterfaceHttpData Next() => _decoder.Next();
 
-        public IInterfaceHttpData CurrentPartialHttpData => this.decoder.CurrentPartialHttpData;
+        public IInterfaceHttpData CurrentPartialHttpData => _decoder.CurrentPartialHttpData;
 
-        public void Destroy() => this.decoder.Destroy();
+        public void Destroy() => _decoder.Destroy();
 
-        public void CleanFiles() => this.decoder.CleanFiles();
+        public void CleanFiles() => _decoder.CleanFiles();
 
-        public void RemoveHttpDataFromClean(IInterfaceHttpData data) => this.decoder.RemoveHttpDataFromClean(data);
+        public void RemoveHttpDataFromClean(IInterfaceHttpData data) => _decoder.RemoveHttpDataFromClean(data);
 
         static ICharSequence[] SplitHeaderContentType(ICharSequence sb)
         {

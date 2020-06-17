@@ -4,9 +4,13 @@
 namespace DotNetty.Codecs.Http.Tests.WebSockets
 {
     using System.Text;
+    using System.Threading;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http.WebSockets;
+    using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Utilities;
     using DotNetty.Handlers.Flow;
+    using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Embedded;
     using Xunit;
 
@@ -124,6 +128,46 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
 
             textFrame.Release();
             Assert.False(channel.Finish());
+        }
+
+        [Fact]
+        public void Timeout()
+        {
+            AtomicReference<IPromise> refp = new AtomicReference<IPromise>();
+            WebSocketProtocolHandler handler = new TestWebSocketProtocolHandler(false, WebSocketCloseStatus.NormalClosure, 1) { };
+            EmbeddedChannel channel = new EmbeddedChannel(new TimeoutHandler(refp), handler);
+
+            var future = channel.WriteAndFlushAsync(new CloseWebSocketFrame());
+            IChannelHandlerContext ctx = channel.Pipeline.Context<WebSocketProtocolHandler>();
+            handler.Close(ctx, ctx.NewPromise());
+
+            do
+            {
+                Thread.Sleep(10);
+                channel.RunPendingTasks();
+            } while (!future.IsCompleted);
+
+            Assert.True(future.Exception.InnerException is WebSocketHandshakeException);
+            Assert.False(refp.Value.IsCompleted);
+            Assert.False(channel.Finish());
+        }
+
+        sealed class TestWebSocketProtocolHandler : WebSocketProtocolHandler
+        {
+            internal TestWebSocketProtocolHandler(bool dropPongFrames, WebSocketCloseStatus closeStatus, long forceCloseTimeoutMillis)
+                : base(dropPongFrames, closeStatus, forceCloseTimeoutMillis) { }
+        }
+
+        sealed class TimeoutHandler : ChannelHandlerAdapter
+        {
+            private AtomicReference<IPromise> _refp;
+            public TimeoutHandler(AtomicReference<IPromise> refp) => _refp = refp;
+
+            public override void Write(IChannelHandlerContext context, object message, IPromise promise)
+            {
+                _refp.Value = promise;
+                ReferenceCountUtil.Release(message);
+            }
         }
 
         static void AssertPropagatedInbound<T>(T message, EmbeddedChannel channel)

@@ -4,6 +4,7 @@
 namespace DotNetty.Common.Tests.Utilities
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
     using System.Text;
     using DotNetty.Common.Utilities;
@@ -418,6 +419,36 @@ namespace DotNetty.Common.Tests.Utilities
             Assert.True(i3 + 1 < foo.Count);
             int i4 = foo.IndexOf(' ', i3 + 1);
             Assert.Equal(-1, i4);
+        }
+
+        [Fact]
+        public void AsciiStringComparerTest()
+        {
+            var dict = new Dictionary<AsciiString, int>(AsciiStringComparer.Default);
+            dict.Add(AsciiString.Of("town"), 0);
+            dict.Add(AsciiString.Of("foo"), 1);
+            dict.Add(AsciiString.Of("bar"), 2);
+            Assert.True(dict.ContainsKey((AsciiString)"town"));
+            Assert.Equal(0, dict[(AsciiString)"town"]);
+            Assert.True(dict.ContainsKey((AsciiString)"foo"));
+            Assert.Equal(1, dict[(AsciiString)"foo"]);
+            Assert.True(dict.ContainsKey((AsciiString)"bar"));
+            Assert.Equal(2, dict[(AsciiString)"bar"]);
+        }
+
+        [Fact]
+        public void AsciiStringComparerIgnoreCaseTest()
+        {
+            var dict = new Dictionary<AsciiString, int>(AsciiStringComparer.IgnoreCase);
+            dict.Add(AsciiString.Of("Town"), 0);
+            dict.Add(AsciiString.Of("fOo"), 1);
+            dict.Add(AsciiString.Of("baR"), 2);
+            Assert.True(dict.ContainsKey((AsciiString)"town"));
+            Assert.Equal(0, dict[(AsciiString)"town"]);
+            Assert.True(dict.ContainsKey((AsciiString)"foo"));
+            Assert.Equal(1, dict[(AsciiString)"foo"]);
+            Assert.True(dict.ContainsKey((AsciiString)"bar"));
+            Assert.Equal(2, dict[(AsciiString)"bar"]);
         }
     }
 }

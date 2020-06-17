@@ -149,7 +149,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
                 Assert.False(list.Count == 0);
 
                 // Check correctness: data size
-                IInterfaceHttpData httpData = decoder.GetBodyHttpData(new AsciiString($"file{i}"));
+                IInterfaceHttpData httpData = decoder.GetBodyHttpData($"file{i}");
                 Assert.NotNull(httpData);
                 var attribute = httpData as IAttribute;
                 Assert.NotNull(attribute);
@@ -289,19 +289,37 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             const int FirstChunk = 10;
             const int MiddleChunk = 1024;
 
-            var part1 = new DefaultHttpContent(Unpooled.WrappedBuffer(
-                Encoding.UTF8.GetBytes(Payload.Substring(0, FirstChunk))));
-            var part2 = new DefaultHttpContent(Unpooled.WrappedBuffer(
-                Encoding.UTF8.GetBytes(Payload.Substring(FirstChunk, MiddleChunk))));
-            var part3 = new DefaultHttpContent(Unpooled.WrappedBuffer(
-                Encoding.UTF8.GetBytes(Payload.Substring(FirstChunk + MiddleChunk, MiddleChunk))));
-            var part4 = new DefaultHttpContent(Unpooled.WrappedBuffer(
-                Encoding.UTF8.GetBytes(Payload.Substring(FirstChunk + MiddleChunk * 2))));
+            byte[] payload1 = Encoding.UTF8.GetBytes(Payload.Substring(0, FirstChunk));
+            byte[] payload2 = Encoding.UTF8.GetBytes(Payload.Substring(FirstChunk, MiddleChunk));
+            byte[] payload3 = Encoding.UTF8.GetBytes(Payload.Substring(FirstChunk + MiddleChunk, MiddleChunk));
+            byte[] payload4 = Encoding.UTF8.GetBytes(Payload.Substring(FirstChunk + MiddleChunk * 2));
 
-            decoder.Offer(part1);
-            decoder.Offer(part2);
-            decoder.Offer(part3);
-            decoder.Offer(part4);
+            IByteBuffer buf1 = Unpooled.DirectBuffer(payload1.Length);
+            IByteBuffer buf2 = Unpooled.DirectBuffer(payload2.Length);
+            IByteBuffer buf3 = Unpooled.DirectBuffer(payload3.Length);
+            IByteBuffer buf4 = Unpooled.DirectBuffer(payload4.Length);
+
+            buf1.WriteBytes(payload1);
+            buf2.WriteBytes(payload2);
+            buf3.WriteBytes(payload3);
+            buf4.WriteBytes(payload4);
+
+            decoder.Offer(new DefaultHttpContent(buf1));
+            decoder.Offer(new DefaultHttpContent(buf2));
+            decoder.Offer(new DefaultHttpContent(buf3));
+            decoder.Offer(new DefaultLastHttpContent(buf4));
+
+            Assert.NotEmpty(decoder.GetBodyHttpDatas());
+            Assert.Equal(139, decoder.GetBodyHttpDatas().Count);
+
+            IAttribute attr = (IAttribute)decoder.GetBodyHttpData("town");
+            Assert.Equal("794649819", attr.Value);
+
+            decoder.Destroy();
+            buf1.Release();
+            buf2.Release();
+            buf3.Release();
+            buf4.Release();
         }
 
         // See https://github.com/netty/netty/issues/3326
@@ -501,8 +519,8 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             string filenameEncoded = HttpUtility.UrlEncode(Filename, Encoding.UTF8);
 
             string body = "--" + Boundary + "\r\n" +
-                "Content-Disposition: form-data; name=\"file\"; filename*=" + Charset + "''" + filenameEncoded + "\r\n" +
-                "\r\n" +
+                "Content-Disposition: form-data; name=\"file\"; filename*=" + Charset + "''" + filenameEncoded +
+                "\r\n\r\n" +
                 "foo\r\n" +
                 "\r\n" +
                 "--" + Boundary + "--";
@@ -647,15 +665,17 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
         {
             string BOUNDARY = "01f136d9282f";
 
-            IByteBuffer byteBuf = Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes("--" + BOUNDARY + "\n" +
-                    "Content-Disposition: form-data; name=\"msg_id\"\n" +
-                    "\n" +
-                    "15200\n" +
-                    "--" + BOUNDARY + "\n" +
-                    "Content-Disposition: form-data; name=\"msg\"\n" +
-                    "\n" +
-                    "test message\n" +
-                    "--" + BOUNDARY + "--"));
+            byte[] bodyBytes = Encoding.UTF8.GetBytes("--" + BOUNDARY + "\n" +
+                "Content-Disposition: form-data; name=\"msg_id\"\n" +
+                "\n" +
+                "15200\n" +
+                "--" + BOUNDARY + "\n" +
+                "Content-Disposition: form-data; name=\"msg\"\n" +
+                "\n" +
+                "test message\n" +
+                "--" + BOUNDARY + "--");
+            IByteBuffer byteBuf = Unpooled.DirectBuffer(bodyBytes.Length);
+            byteBuf.WriteBytes(bodyBytes);
 
             IFullHttpRequest req = new DefaultFullHttpRequest(HttpVersion.Http10, HttpMethod.Post, "/up", byteBuf);
             req.Headers.Add(HttpHeaderNames.ContentType, "multipart/form-data; boundary=" + BOUNDARY);
@@ -668,11 +688,16 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             Assert.True(decoder.IsMultipart);
             Assert.NotEmpty(decoder.GetBodyHttpDatas());
             Assert.Equal(2, decoder.GetBodyHttpDatas().Count);
-            Assert.Equal("test message", ((IAttribute)decoder.GetBodyHttpData(AsciiString.Of("msg"))).Value);
-            Assert.Equal("15200", ((IAttribute)decoder.GetBodyHttpData(AsciiString.Of("msg_id"))).Value);
+
+            IAttribute attrMsg = (IAttribute)decoder.GetBodyHttpData("msg");
+            Assert.True(attrMsg.GetByteBuffer().IsDirect);
+            Assert.Equal("test message", attrMsg.Value);
+            IAttribute attrMsgId = (IAttribute)decoder.GetBodyHttpData("msg_id");
+            Assert.True(attrMsgId.GetByteBuffer().IsDirect);
+            Assert.Equal("15200", attrMsgId.Value);
 
             decoder.Destroy();
-            Assert.Equal(1, req.ReferenceCount);
+            Assert.True(req.Release());
         }
 
         [Fact]
@@ -709,7 +734,7 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
 
         private static void NotLeakWhenWrapIllegalArgumentException(IByteBuffer buf)
         {
-            buf.WriteCharSequence((AsciiString)"==", Encoding.ASCII);
+            buf.WriteCharSequence((AsciiString)"a=b&foo=%22bar%22&==", Encoding.ASCII);
             IFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/", buf);
             try
             {
@@ -766,8 +791,135 @@ namespace DotNetty.Codecs.Http.Tests.Multipart
             Assert.True(part1 is IFileUpload); // "the item should be a FileUpload"
             IFileUpload fileUpload = (IFileUpload)part1;
             Assert.Equal(filename, fileUpload.FileName); // "the filename should be decoded"
+
             decoder.Destroy();
             req.Release();
+        }
+
+        [Fact]
+        public void DecodeFullHttpRequestWithUrlEncodedBody()
+        {
+            byte[] bodyBytes = Encoding.UTF8.GetBytes("foo=bar&a=b&empty=&city=%3c%22new%22%20york%20city%3e");
+            IByteBuffer content = Unpooled.DirectBuffer(bodyBytes.Length);
+            content.WriteBytes(bodyBytes);
+
+            IFullHttpRequest req = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/", content);
+            HttpPostRequestDecoder decoder = new HttpPostRequestDecoder(req);
+            Assert.NotEmpty(decoder.GetBodyHttpDatas());
+
+            Assert.NotEmpty(decoder.GetBodyHttpDatas());
+            Assert.Equal(4, decoder.GetBodyHttpDatas().Count);
+
+            IAttribute attr = (IAttribute)decoder.GetBodyHttpData("foo");
+            Assert.True(attr.GetByteBuffer().IsDirect);
+            Assert.Equal("bar", attr.Value);
+
+            attr = (IAttribute)decoder.GetBodyHttpData("a");
+            Assert.True(attr.GetByteBuffer().IsDirect);
+            Assert.Equal("b", attr.Value);
+
+            attr = (IAttribute)decoder.GetBodyHttpData("empty");
+            Assert.True(attr.GetByteBuffer().IsDirect);
+            Assert.Equal("", attr.Value);
+
+            attr = (IAttribute)decoder.GetBodyHttpData("city");
+            Assert.True(attr.GetByteBuffer().IsDirect);
+            Assert.Equal("<\"new\" york city>", attr.Value);
+
+            decoder.Destroy();
+            req.Release();
+        }
+
+        [Fact]
+        public void DecodeFullHttpRequestWithUrlEncodedBodyWithBrokenHexByte0()
+        {
+            byte[] bodyBytes = Encoding.UTF8.GetBytes("foo=bar&a=b&empty=%&city=paris");
+            IByteBuffer content = Unpooled.DirectBuffer(bodyBytes.Length);
+            content.WriteBytes(bodyBytes);
+
+            IFullHttpRequest req = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/", content);
+            try
+            {
+                new HttpPostRequestDecoder(req);
+                Assert.False(true); // Was expecting an ErrorDataDecoderException
+            }
+            catch (ErrorDataDecoderException e)
+            {
+                Assert.Equal("Invalid hex byte at index '0' in string: '%'", e.Message);
+            }
+            finally
+            {
+                req.Release();
+            }
+        }
+
+        [Fact]
+        public void DecodeFullHttpRequestWithUrlEncodedBodyWithBrokenHexByte1()
+        {
+            byte[] bodyBytes = Encoding.UTF8.GetBytes("foo=bar&a=b&empty=%2&city=london");
+            IByteBuffer content = Unpooled.DirectBuffer(bodyBytes.Length);
+            content.WriteBytes(bodyBytes);
+
+            IFullHttpRequest req = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/", content);
+            try
+            {
+                new HttpPostRequestDecoder(req);
+                Assert.False(true); // Was expecting an ErrorDataDecoderException
+            }
+            catch (ErrorDataDecoderException e)
+            {
+                Assert.Equal("Invalid hex byte at index '0' in string: '%2'", e.Message);
+            }
+            finally
+            {
+                req.Release();
+            }
+        }
+
+        [Fact]
+        public void DecodeFullHttpRequestWithUrlEncodedBodyWithInvalidHexNibbleHi()
+        {
+            byte[] bodyBytes = Encoding.UTF8.GetBytes("foo=bar&a=b&empty=%Zc&city=london");
+            IByteBuffer content = Unpooled.DirectBuffer(bodyBytes.Length);
+            content.WriteBytes(bodyBytes);
+
+            IFullHttpRequest req = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/", content);
+            try
+            {
+                new HttpPostRequestDecoder(req);
+                Assert.False(true); // Was expecting an ErrorDataDecoderException
+            }
+            catch (ErrorDataDecoderException e)
+            {
+                Assert.Equal("Invalid hex byte at index '0' in string: '%Zc'", e.Message);
+            }
+            finally
+            {
+                req.Release();
+            }
+        }
+
+        [Fact]
+        public void DecodeFullHttpRequestWithUrlEncodedBodyWithInvalidHexNibbleLo()
+        {
+            byte[] bodyBytes = Encoding.UTF8.GetBytes("foo=bar&a=b&empty=%2g&city=london");
+            IByteBuffer content = Unpooled.DirectBuffer(bodyBytes.Length);
+            content.WriteBytes(bodyBytes);
+
+            IFullHttpRequest req = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Post, "/", content);
+            try
+            {
+                new HttpPostRequestDecoder(req);
+                Assert.False(true); // Was expecting an ErrorDataDecoderException
+            }
+            catch (ErrorDataDecoderException e)
+            {
+                Assert.Equal("Invalid hex byte at index '0' in string: '%2g'", e.Message);
+            }
+            finally
+            {
+                req.Release();
+            }
         }
     }
 }

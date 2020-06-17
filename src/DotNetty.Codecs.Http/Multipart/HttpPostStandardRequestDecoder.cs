@@ -30,7 +30,7 @@ namespace DotNetty.Codecs.Http.Multipart
         private readonly List<IInterfaceHttpData> _bodyListHttpData;
 
         //  HttpDatas as Map from Body
-        private readonly Dictionary<ICharSequence, List<IInterfaceHttpData>> _bodyMapHttpData;
+        private readonly Dictionary<string, List<IInterfaceHttpData>> _bodyMapHttpData;
 
         // The current channelBuffer
         private IByteBuffer _undecodedChunk;
@@ -65,7 +65,7 @@ namespace DotNetty.Codecs.Http.Multipart
             if (factory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.factory); }
 
             _bodyListHttpData = new List<IInterfaceHttpData>();
-            _bodyMapHttpData = new Dictionary<ICharSequence, List<IInterfaceHttpData>>(CharSequenceComparer.IgnoreCase);
+            _bodyMapHttpData = new Dictionary<string, List<IInterfaceHttpData>>(StringComparer.OrdinalIgnoreCase);
             _currentStatus = MultiPartStatus.Notstarted;
             _discardThreshold = HttpPostRequestDecoder.DefaultDiscardThreshold;
 
@@ -82,7 +82,6 @@ namespace DotNetty.Codecs.Http.Multipart
                 }
                 else
                 {
-                    _undecodedChunk = ArrayPooled.Buffer();
                     ParseBody();
                 }
             }
@@ -132,7 +131,7 @@ namespace DotNetty.Codecs.Http.Multipart
             return _bodyListHttpData;
         }
 
-        public List<IInterfaceHttpData> GetBodyHttpDatas(AsciiString name)
+        public List<IInterfaceHttpData> GetBodyHttpDatas(string name)
         {
             CheckDestroyed();
 
@@ -143,7 +142,7 @@ namespace DotNetty.Codecs.Http.Multipart
             return _bodyMapHttpData[name];
         }
 
-        public IInterfaceHttpData GetBodyHttpData(AsciiString name)
+        public IInterfaceHttpData GetBodyHttpData(string name)
         {
             CheckDestroyed();
 
@@ -163,22 +162,29 @@ namespace DotNetty.Codecs.Http.Multipart
         {
             CheckDestroyed();
 
-            // Maybe we should better not copy here for performance reasons but this will need
-            // more care by the caller to release the content in a correct manner later
-            // So maybe something to optimize on a later stage
+            if (content is ILastHttpContent)
+            {
+                _isLastChunk = true;
+            }
+
             IByteBuffer buf = content.Content;
             if (_undecodedChunk is null)
             {
-                _undecodedChunk = buf.Copy();
+                _undecodedChunk = _isLastChunk ?
+                        // Take a slice instead of copying when the first chunk is also the last
+                        // as undecodedChunk.writeBytes will never be called.
+                        buf.RetainedSlice() :
+                        // Maybe we should better not copy here for performance reasons but this will need
+                        // more care by the caller to release the content in a correct manner later
+                        // So maybe something to optimize on a later stage.
+                        //
+                        // We are explicit allocate a buffer and NOT calling copy() as otherwise it may set a maxCapacity
+                        // which is not really usable for us as we may exceed it once we add more bytes.
+                        buf.Allocator.Buffer(buf.ReadableBytes).WriteBytes(buf);
             }
             else
             {
                 _ = _undecodedChunk.WriteBytes(buf);
-            }
-
-            if (content is ILastHttpContent)
-            {
-                _isLastChunk = true;
             }
 
             ParseBody();
@@ -240,7 +246,7 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 return;
             }
-            ICharSequence name = new StringCharSequence(data.Name);
+            var name = data.Name;
             if (!_bodyMapHttpData.TryGetValue(name, out List<IInterfaceHttpData> datas))
             {
                 datas = new List<IInterfaceHttpData>(1);
@@ -299,7 +305,7 @@ namespace DotNetty.Codecs.Http.Multipart
                                 case HttpConstants.AmpersandChar:
                                     _currentStatus = MultiPartStatus.Disposition;
                                     ampersandpos = currentpos - 1;
-                                    SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                    SetFinalBuffer(_undecodedChunk.RetainedSlice(firstpos, ampersandpos - firstpos));
                                     firstpos = currentpos;
                                     contRead = true;
                                     break;
@@ -313,7 +319,7 @@ namespace DotNetty.Codecs.Http.Multipart
                                         {
                                             _currentStatus = MultiPartStatus.PreEpilogue;
                                             ampersandpos = currentpos - 2;
-                                            SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                            SetFinalBuffer(_undecodedChunk.RetainedSlice(firstpos, ampersandpos - firstpos));
                                             firstpos = currentpos;
                                             contRead = false;
                                         }
@@ -332,7 +338,7 @@ namespace DotNetty.Codecs.Http.Multipart
                                 case HttpConstants.LineFeedChar:
                                     _currentStatus = MultiPartStatus.PreEpilogue;
                                     ampersandpos = currentpos - 1;
-                                    SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                    SetFinalBuffer(_undecodedChunk.RetainedSlice(firstpos, ampersandpos - firstpos));
                                     firstpos = currentpos;
                                     contRead = false;
                                     break;
@@ -350,7 +356,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     ampersandpos = currentpos;
                     if (ampersandpos > firstpos)
                     {
-                        SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                        SetFinalBuffer(_undecodedChunk.RetainedSlice(firstpos, ampersandpos - firstpos));
                     }
                     else if (!_currentAttribute.IsCompleted)
                     {
@@ -362,7 +368,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 else if (contRead && _currentAttribute is object && _currentStatus == MultiPartStatus.Field)
                 {
                     // reset index except if to continue in case of FIELD getStatus
-                    _currentAttribute.AddContent(_undecodedChunk.Copy(firstpos, currentpos - firstpos), false);
+                    _currentAttribute.AddContent(_undecodedChunk.RetainedSlice(firstpos, currentpos - firstpos), false);
                     firstpos = currentpos;
                 }
                 _ = _undecodedChunk.SetReaderIndex(firstpos);
@@ -389,6 +395,7 @@ namespace DotNetty.Codecs.Http.Multipart
 
         void ParseBodyAttributes()
         {
+            if (_undecodedChunk is null) { return; }
             if (!_undecodedChunk.HasArray)
             {
                 ParseBodyAttributesStandard();
@@ -443,7 +450,7 @@ namespace DotNetty.Codecs.Http.Multipart
                                 case HttpConstants.AmpersandChar:
                                     _currentStatus = MultiPartStatus.Disposition;
                                     ampersandpos = currentpos - 1;
-                                    SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                    SetFinalBuffer(_undecodedChunk.RetainedSlice(firstpos, ampersandpos - firstpos));
                                     firstpos = currentpos;
                                     contRead = true;
                                     break;
@@ -458,7 +465,7 @@ namespace DotNetty.Codecs.Http.Multipart
                                             _currentStatus = MultiPartStatus.PreEpilogue;
                                             ampersandpos = currentpos - 2;
                                             sao.SetReadPosition(0);
-                                            SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                            SetFinalBuffer(_undecodedChunk.RetainedSlice(firstpos, ampersandpos - firstpos));
                                             firstpos = currentpos;
                                             contRead = false;
                                             goto loop;
@@ -483,7 +490,7 @@ namespace DotNetty.Codecs.Http.Multipart
                                     _currentStatus = MultiPartStatus.PreEpilogue;
                                     ampersandpos = currentpos - 1;
                                     sao.SetReadPosition(0);
-                                    SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                                    SetFinalBuffer(_undecodedChunk.RetainedSlice(firstpos, ampersandpos - firstpos));
                                     firstpos = currentpos;
                                     contRead = false;
                                     goto loop;
@@ -503,7 +510,7 @@ namespace DotNetty.Codecs.Http.Multipart
                     ampersandpos = currentpos;
                     if (ampersandpos > firstpos)
                     {
-                        SetFinalBuffer(_undecodedChunk.Copy(firstpos, ampersandpos - firstpos));
+                        SetFinalBuffer(_undecodedChunk.RetainedSlice(firstpos, ampersandpos - firstpos));
                     }
                     else if (!_currentAttribute.IsCompleted)
                     {
@@ -515,7 +522,7 @@ namespace DotNetty.Codecs.Http.Multipart
                 else if (contRead && _currentAttribute is object && _currentStatus == MultiPartStatus.Field)
                 {
                     // reset index except if to continue in case of FIELD getStatus
-                    _currentAttribute.AddContent(_undecodedChunk.Copy(firstpos, currentpos - firstpos), false);
+                    _currentAttribute.AddContent(_undecodedChunk.RetainedSlice(firstpos, currentpos - firstpos), false);
                     firstpos = currentpos;
                 }
                 _ = _undecodedChunk.SetReaderIndex(firstpos);
@@ -543,8 +550,11 @@ namespace DotNetty.Codecs.Http.Multipart
         void SetFinalBuffer(IByteBuffer buffer)
         {
             _currentAttribute.AddContent(buffer, true);
-            string value = DecodeAttribute(_currentAttribute.GetByteBuffer().ToString(_charset), _charset);
-            _currentAttribute.Value = value;
+            IByteBuffer decodedBuf = DecodeAttribute(_currentAttribute.GetByteBuffer(), _charset);
+            if (decodedBuf is object)
+            { // override content only when ByteBuf needed decoding
+                _currentAttribute.SetContent(decodedBuf);
+            }
             AddHttpData(_currentAttribute);
             _currentAttribute = null;
         }
@@ -559,6 +569,32 @@ namespace DotNetty.Codecs.Http.Multipart
             {
                 return ThrowHelper.ThrowErrorDataDecoderException_BadString(s, e);
             }
+        }
+
+        private static IByteBuffer DecodeAttribute(IByteBuffer b, Encoding charset)
+        {
+            //int firstEscaped = b.ForEachByte(new IndexOfProcessor((byte)'%'));
+            int firstEscaped = b.IndexOf(HttpConstants.Percent);
+            if ((uint)firstEscaped > SharedConstants.TooBigOrNegative) // == -1
+            {
+                return null; // nothing to decode
+            }
+
+            IByteBuffer buf = b.Allocator.Buffer(b.ReadableBytes);
+            UrlDecoder urlDecode = new UrlDecoder(buf);
+            int idx = b.ForEachByte(urlDecode);
+            if (urlDecode.NextEscapedIdx != 0)
+            { // incomplete hex byte
+                if ((uint)idx > SharedConstants.TooBigOrNegative) // == -1
+                {
+                    idx = b.ReadableBytes - 1;
+                }
+                idx -= urlDecode.NextEscapedIdx - 1;
+                buf.Release();
+                ThrowHelper.ThrowErrorDataDecoderException_Invalid_hex_byte_at_index(idx, b, charset);
+            }
+
+            return buf;
         }
 
         public void Destroy()
@@ -587,6 +623,53 @@ namespace DotNetty.Codecs.Http.Multipart
             CheckDestroyed();
 
             _factory.RemoveHttpDataFromClean(_request, data);
+        }
+
+        sealed class UrlDecoder : IByteProcessor
+        {
+            private readonly IByteBuffer _output;
+            public int NextEscapedIdx;
+            private byte _hiByte;
+
+            public UrlDecoder(IByteBuffer output) => _output = output;
+
+            public bool Process(byte value)
+            {
+                const uint MaxHex2B = 15U;
+
+                if (NextEscapedIdx != 0)
+                {
+                    if (0u >= (uint)(NextEscapedIdx - 1))
+                    {
+                        _hiByte = value;
+                        ++NextEscapedIdx;
+                    }
+                    else
+                    {
+                        int hi = StringUtil.DecodeHexNibble((char)_hiByte);
+                        int lo = StringUtil.DecodeHexNibble((char)value);
+                        if (MaxHex2B >= (uint)hi && MaxHex2B >= (uint)lo)
+                        {
+                            _output.WriteByte((hi << 4) + lo);
+                            NextEscapedIdx = 0;
+                        }
+                        else
+                        {
+                            ++NextEscapedIdx;
+                            return false;
+                        }
+                    }
+                }
+                else if (0u >= (uint)(value - HttpConstants.Percent))
+                {
+                    NextEscapedIdx = 1;
+                }
+                else
+                {
+                    _output.WriteByte(value);
+                }
+                return true;
+            }
         }
     }
 }

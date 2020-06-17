@@ -9,6 +9,25 @@ namespace DotNetty.Codecs
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
 
+    /// <summary>
+    /// A formatter for HTTP header dates, such as "Expires" and "Date" headers, or "expires" field in "Set-Cookie".
+    ///
+    /// On the parsing side, it honors RFC6265 (so it supports RFC1123).
+    /// Note that:
+    /// <ul>
+    ///     <li>Day of week is ignored and not validated</li>
+    ///     <li>Timezone is ignored, as RFC6265 assumes UTC</li>
+    /// </ul>
+    /// If you're looking for a date format that validates day of week, or supports other timezones, consider using
+    /// java.util.DateTimeFormatter.RFC_1123_DATE_TIME.
+    ///
+    /// On the formatting side, it uses a subset of RFC1123 (2 digit day-of-month and 4 digit year) as per RFC2616.
+    /// This subset supports RFC6265.
+    ///
+    /// @see <a href="https://tools.ietf.org/html/rfc6265#section-5.1.1">RFC6265</a> for the parsing side
+    /// @see <a href="https://tools.ietf.org/html/rfc1123#page-55">RFC1123</a> and
+    /// <a href="https://tools.ietf.org/html/rfc2616#section-3.3.1">RFC2616</a> for the encoding side.
+    /// </summary>
     public sealed class DateFormatter
     {
         static readonly BitArray Delimiters = GetDelimiters();
@@ -442,9 +461,10 @@ namespace DotNetty.Codecs
         static StringBuilder Append0(DateTime dateTime, StringBuilder buffer)
         {
             _ = buffer.Append(DayOfWeekToShortName[(int)dateTime.DayOfWeek]).Append(", ");
-            _ = buffer.Append(dateTime.Day).Append(' ');
-            _ = buffer.Append(CalendarMonthToShortName[dateTime.Month - 1]).Append(' ');
-            _ = buffer.Append(dateTime.Year).Append(' ');
+            _ = AppendZeroLeftPadded(dateTime.Day, buffer).Append(' ');
+            _ = buffer
+                .Append(CalendarMonthToShortName[dateTime.Month - 1]).Append(' ')
+                .Append(dateTime.Year).Append(' ');
 
             _ = AppendZeroLeftPadded(dateTime.Hour, buffer).Append(':');
             _ = AppendZeroLeftPadded(dateTime.Minute, buffer).Append(':');

@@ -35,7 +35,13 @@ namespace DotNetty.Common
 
         public ThreadLocalPool(Func<Handle, T> valueFactory, int maxCapacityPerThread, int maxSharedCapacityFactor,
                        int ratio, int maxDelayedQueuesPerThread, bool preCreate = false)
-            : base(maxCapacityPerThread, maxSharedCapacityFactor, ratio, maxDelayedQueuesPerThread)
+            : this(valueFactory, maxCapacityPerThread, maxSharedCapacityFactor, ratio, maxDelayedQueuesPerThread, DelayedQueueRatio, preCreate)
+        {
+        }
+
+        public ThreadLocalPool(Func<Handle, T> valueFactory, int maxCapacityPerThread, int maxSharedCapacityFactor,
+                       int ratio, int maxDelayedQueuesPerThread, int delayedQueueRatio, bool preCreate = false)
+            : base(maxCapacityPerThread, maxSharedCapacityFactor, ratio, maxDelayedQueuesPerThread, delayedQueueRatio)
         {
             if (valueFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.valueFactory); }
 
@@ -83,7 +89,7 @@ namespace DotNetty.Common
             protected override Stack GetInitialValue()
             {
                 var stack = new Stack(_owner, Thread.CurrentThread, _owner._maxCapacityPerThread,
-                        _owner._maxSharedCapacityFactor, _owner._interval, _owner._maxDelayedQueuesPerThread);
+                        _owner._maxSharedCapacityFactor, _owner._interval, _owner._maxDelayedQueuesPerThread, _owner._delayedQueueInterval);
                 if (_owner._preCreate)
                 {
                     for (int i = 0; i < _owner._maxCapacityPerThread; i++)

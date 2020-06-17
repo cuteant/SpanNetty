@@ -4,12 +4,9 @@
 namespace DotNetty.Common.Utilities
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Globalization;
     using System.Runtime.CompilerServices;
-    using System.Runtime.InteropServices;
-    using System.Text;
     using DotNetty.Common.Internal;
 
     partial class AsciiString

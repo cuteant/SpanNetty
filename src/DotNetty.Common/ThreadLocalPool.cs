@@ -196,7 +196,7 @@ namespace DotNetty.Common
                 _head = new Head(stack._availableSharedCapacity, countedWeakTable.Counter);
                 _head._link = _tail;
                 _owner = new WeakReference<Thread>(thread);
-                _interval = stack._interval;
+                _interval = stack._delayedQueueInterval;
                 _handleRecycleCount = _interval; // Start at interval so the first one will be recycled.
             }
 
@@ -384,6 +384,7 @@ namespace DotNetty.Common
 
             private readonly int _maxCapacity;
             internal readonly int _interval;
+            internal readonly int _delayedQueueInterval;
             internal DefaultHandle[] _elements;
             internal int _size;
             private int _handleRecycleCount;
@@ -391,7 +392,7 @@ namespace DotNetty.Common
             private volatile WeakOrderQueue _headQueue;
 
             internal Stack(ThreadLocalPool parent, Thread thread, int maxCapacity, int maxSharedCapacityFactor,
-                int interval, int maxDelayedQueues)
+                int interval, int maxDelayedQueues, int delayedQueueInterval)
             {
                 _parent = parent;
                 _threadRef = new WeakReference<Thread>(thread);
@@ -399,6 +400,7 @@ namespace DotNetty.Common
                 _availableSharedCapacity = new StrongBox<int>(Math.Max(maxCapacity / maxSharedCapacityFactor, LinkCapacity));
                 _elements = new DefaultHandle[Math.Min(DefaultInitialCapacity, maxCapacity)];
                 _interval = interval;
+                _delayedQueueInterval = delayedQueueInterval;
                 _handleRecycleCount = interval; // Start at interval so the first one will be recycled.
                 _maxDelayedQueues = maxDelayedQueues;
             }
@@ -667,6 +669,7 @@ namespace DotNetty.Common
         protected static readonly int DefaultMaxDelayedQueuesPerThread;
         protected static readonly int LinkCapacity;
         protected static readonly int DefaultRatio;
+        protected static readonly int DelayedQueueRatio;
         private static int s_idSource = int.MinValue;
         private static readonly int s_ownThreadId = Interlocked.Increment(ref s_idSource);
 
@@ -712,7 +715,8 @@ namespace DotNetty.Common
             // By default we allow one push to a Recycler for each 8th try on handles that were never recycled before.
             // This should help to slowly increase the capacity of the recycler while not be too sensitive to allocation
             // bursts.
-            DefaultRatio = MathUtil.SafeFindNextPositivePowerOfTwo(SystemPropertyUtil.GetInt("io.netty.recycler.ratio", 8));
+            DefaultRatio = Math.Max(0, SystemPropertyUtil.GetInt("io.netty.recycler.ratio", 8));
+            DelayedQueueRatio = Math.Max(0, SystemPropertyUtil.GetInt("io.netty.recycler.delayedQueue.ratio", DefaultRatio));
 
             IInternalLogger logger = InternalLoggerFactory.GetInstance(typeof(ThreadLocalPool));
             if (logger.DebugEnabled)
@@ -724,6 +728,7 @@ namespace DotNetty.Common
                     logger.Debug("-Dio.netty.recycler.maxDelayedQueuesPerThread: disabled");
                     logger.Debug("-Dio.netty.recycler.linkCapacity: disabled");
                     logger.Debug("-Dio.netty.recycler.ratio: disabled");
+                    logger.Debug("-Dio.netty.recycler.delayedQueue.ratio: disabled");
                 }
                 else
                 {
@@ -732,6 +737,7 @@ namespace DotNetty.Common
                     logger.Debug("-Dio.netty.recycler.maxDelayedQueuesPerThread: {}", DefaultMaxDelayedQueuesPerThread);
                     logger.Debug("-Dio.netty.recycler.linkCapacity: {}", LinkCapacity);
                     logger.Debug("-Dio.netty.recycler.ratio: {}", DefaultRatio);
+                    logger.Debug("-Dio.netty.recycler.delayedQueue.ratio: {}", DelayedQueueRatio);
                 }
             }
 
@@ -742,11 +748,17 @@ namespace DotNetty.Common
             : this(maxCapacityPerThread, DefaultMaxSharedCapacityFactor, DefaultRatio, DefaultMaxDelayedQueuesPerThread)
         {
         }
+        public ThreadLocalPool(int maxCapacityPerThread, int maxSharedCapacityFactor, int ratio, int maxDelayedQueuesPerThread)
+            : this(maxCapacityPerThread, maxSharedCapacityFactor, ratio, maxDelayedQueuesPerThread, DelayedQueueRatio)
+        {
+
+        }
 
         public ThreadLocalPool(int maxCapacityPerThread, int maxSharedCapacityFactor,
-                       int ratio, int maxDelayedQueuesPerThread)
+            int ratio, int maxDelayedQueuesPerThread, int delayedQueueRatio)
         {
-            _interval = MathUtil.SafeFindNextPositivePowerOfTwo(ratio);
+            _interval = Math.Max(0, ratio);
+            _delayedQueueInterval = Math.Max(0, delayedQueueRatio);
             if ((uint)(maxCapacityPerThread - 1) > SharedConstants.TooBigOrNegative) // <= 0
             {
                 _maxCapacityPerThread = 0;
@@ -765,5 +777,6 @@ namespace DotNetty.Common
         protected readonly int _interval;
         protected readonly int _maxSharedCapacityFactor;
         protected readonly int _maxDelayedQueuesPerThread;
+        protected readonly int _delayedQueueInterval;
     }
 }

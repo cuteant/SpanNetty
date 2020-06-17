@@ -296,6 +296,8 @@ namespace DotNetty.Buffers
         {
             if (src is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             CheckSrcIndex(index, length, srcIndex, src.Capacity);
+            if (0u >= (uint)length) { return this; }
+
             fixed (byte* addr = &Addr(index))
             {
                 UnsafeByteBufferUtil.SetBytes(this, addr, index, src, srcIndex, length);
@@ -307,15 +309,13 @@ namespace DotNetty.Buffers
         {
             if (src is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.src); }
             CheckSrcIndex(index, length, srcIndex, src.Length);
-            if (length != 0)
+            if (0u >= (uint)length) { return this; }
+
+            fixed (byte* addr = &Addr(index))
             {
-                fixed (byte* addr = &Addr(index))
-                {
-                    UnsafeByteBufferUtil.SetBytes(addr, src, srcIndex, length);
-                    return this;
-                }
+                UnsafeByteBufferUtil.SetBytes(addr, src, srcIndex, length);
+                return this;
             }
-            return this;
         }
 
         public sealed override IByteBuffer GetBytes(int index, Stream output, int length)
