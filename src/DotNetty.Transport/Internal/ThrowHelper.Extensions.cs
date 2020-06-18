@@ -461,9 +461,9 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowInvalidOperationException_RemoteAddrNotSet()
+        internal static Task<IChannel> ThrowInvalidOperationException_RemoteAddrNotSet()
         {
-            throw GetInvalidOperationException();
+            return TaskUtil.FromException<IChannel>(GetInvalidOperationException());
 
             static InvalidOperationException GetInvalidOperationException()
             {
@@ -512,6 +512,17 @@ namespace DotNetty.Transport
             static InvalidOperationException GetInvalidOperationException()
             {
                 return new InvalidOperationException("group has already been set.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_ChannelFactoryHasAlreadyBeenSet()
+        {
+            throw GetInvalidOperationException();
+
+            static InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException("channelFactory has already been set.");
             }
         }
 

@@ -8,6 +8,7 @@ namespace DotNetty.Transport.Bootstrapping
     using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
+    using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
@@ -26,7 +27,7 @@ namespace DotNetty.Transport.Bootstrapping
         private IEventLoopGroup v_childGroup;
         private IEventLoopGroup InternalChildGroup
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => Volatile.Read(ref v_childGroup);
             set => Interlocked.Exchange(ref v_childGroup, value);
         }
@@ -34,7 +35,7 @@ namespace DotNetty.Transport.Bootstrapping
         private IChannelHandler v_childHandler;
         private IChannelHandler InternalChildHandler
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => Volatile.Read(ref v_childHandler);
             set => Interlocked.Exchange(ref v_childHandler, value);
         }
@@ -134,7 +135,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// Returns the configured <see cref="IEventLoopGroup"/> which will be used for the child channels or <c>null</c>
         /// if none is configured yet.
         /// </summary>
-        public IEventLoopGroup ChildGroup() => Volatile.Read(ref v_childGroup);
+        public IEventLoopGroup ChildGroup() => InternalChildGroup;
 
         protected override void Init(IChannel channel)
         {
@@ -146,22 +147,12 @@ namespace DotNetty.Transport.Bootstrapping
             }
 
             IChannelPipeline p = channel.Pipeline;
-            IChannelHandler channelHandler = Handler();
-            if (channelHandler is object)
-            {
-                p.AddLast((string)null, channelHandler);
-            }
 
-            IEventLoopGroup currentChildGroup = InternalChildGroup;
-            IChannelHandler currentChildHandler = InternalChildHandler;
-            ChannelOptionValue[] currentChildOptions = _childOptions.Values.ToArray();
-            AttributeValue[] currentChildAttrs = _childAttrs.Values.ToArray();
-
-            p.AddLast(new ActionChannelInitializer<IChannel>(ch =>
-            {
-                ch.Pipeline.AddLast(new ServerBootstrapAcceptor(currentChildGroup, currentChildHandler,
-                    currentChildOptions, currentChildAttrs));
-            }));
+            p.AddLast(new ServerChannelInitializer(
+                this,
+                _childOptions.Values.ToArray(),
+                _childAttrs.Values.ToArray())
+            );
         }
 
         public override ServerBootstrap Validate()
@@ -179,14 +170,75 @@ namespace DotNetty.Transport.Bootstrapping
             return this;
         }
 
+        sealed class ServerChannelInitializer : ChannelInitializer<IChannel>
+        {
+            private readonly ServerBootstrap _owner;
+            private readonly ChannelOptionValue[] _currentChildOptions;
+            private readonly AttributeValue[] _currentChildAttrs;
+
+            public ServerChannelInitializer(
+                ServerBootstrap owner,
+                ChannelOptionValue[] currentChildOptions,
+                AttributeValue[] currentChildAttrs)
+            {
+                _owner = owner;
+                _currentChildOptions = currentChildOptions;
+                _currentChildAttrs = currentChildAttrs;
+            }
+
+            protected override void InitChannel(IChannel channel)
+            {
+                var pipeline = channel.Pipeline;
+                IChannelHandler channelHandler = _owner.Handler();
+                if (channelHandler is object)
+                {
+                    pipeline.AddLast(name: null, handler: channelHandler);
+                }
+
+                channel.EventLoop.Execute(new AddServerBootstrapAcceptorTask(
+                    _owner, _currentChildOptions, _currentChildAttrs, channel));
+            }
+
+            sealed class AddServerBootstrapAcceptorTask : IRunnable
+            {
+                private readonly ServerBootstrap _owner;
+                private readonly ChannelOptionValue[] _currentChildOptions;
+                private readonly AttributeValue[] _currentChildAttrs;
+                private readonly IChannel _channel;
+
+                public AddServerBootstrapAcceptorTask(
+                    ServerBootstrap owner,
+                    ChannelOptionValue[] currentChildOptions,
+                    AttributeValue[] currentChildAttrs,
+                    IChannel channel)
+                {
+                    _owner = owner;
+                    _currentChildOptions = currentChildOptions;
+                    _currentChildAttrs = currentChildAttrs;
+                    _channel = channel;
+                }
+
+                public void Run()
+                {
+                    _channel.Pipeline.AddLast(new ServerBootstrapAcceptor(_channel,
+                        _owner.InternalChildGroup,
+                        _owner.InternalChildHandler,
+                        _currentChildOptions,
+                        _currentChildAttrs)
+                    );
+                }
+            }
+        }
+
         sealed class ServerBootstrapAcceptor : ChannelHandlerAdapter
         {
-            readonly IEventLoopGroup _childGroup;
-            readonly IChannelHandler _childHandler;
-            readonly ChannelOptionValue[] _childOptions;
-            readonly AttributeValue[] _childAttrs;
+            private readonly IEventLoopGroup _childGroup;
+            private readonly IChannelHandler _childHandler;
+            private readonly ChannelOptionValue[] _childOptions;
+            private readonly AttributeValue[] _childAttrs;
+            private readonly IRunnable _enableAutoReadTask;
 
-            public ServerBootstrapAcceptor(
+            public ServerBootstrapAcceptor(IChannel channel,
                 IEventLoopGroup childGroup, IChannelHandler childHandler,
                 ChannelOptionValue[] childOptions, AttributeValue[] childAttrs)
             {
@@ -194,19 +246,26 @@ namespace DotNetty.Transport.Bootstrapping
                 _childHandler = childHandler;
                 _childOptions = childOptions;
                 _childAttrs = childAttrs;
+
+                // Task which is scheduled to re-enable auto-read.
+                // It's important to create this Runnable before we try to submit it as otherwise the URLClassLoader may
+                // not be able to load the class because of the file limit it already reached.
+                //
+                // See https://github.com/netty/netty/issues/1328
+                _enableAutoReadTask = new EnableAutoReadTask(channel);
             }
 
             public override void ChannelRead(IChannelHandlerContext ctx, object msg)
             {
                 var child = (IChannel)msg;
 
-                child.Pipeline.AddLast((string)null, _childHandler);
+                child.Pipeline.AddLast(name: null, handler: _childHandler);
 
                 SetChannelOptions(child, _childOptions, Logger);
 
-                foreach (AttributeValue attr in _childAttrs)
+                for (int i = 0; i < _childAttrs.Length; i++)
                 {
-                    attr.Set(child);
+                    _childAttrs[i].Set(child);
                 }
 
                 // todo: async/await instead?
@@ -242,11 +301,23 @@ namespace DotNetty.Transport.Bootstrapping
                     // stop accept new connections for 1 second to allow the channel to recover
                     // See https://github.com/netty/netty/issues/1328
                     config.AutoRead = false;
-                    ctx.Channel.EventLoop.ScheduleAsync(c => { ((IChannelConfiguration)c).AutoRead = true; }, config, TimeSpan.FromSeconds(1));
+                    _ = ctx.Channel.EventLoop.Schedule(_enableAutoReadTask, TimeSpan.FromSeconds(1));
                 }
                 // still let the ExceptionCaught event flow through the pipeline to give the user
                 // a chance to do something with it
                 ctx.FireExceptionCaught(cause);
+            }
+
+            sealed class EnableAutoReadTask : IRunnable
+            {
+                private readonly IChannel _channel;
+
+                public EnableAutoReadTask(IChannel channel) => _channel = channel;
+
+                public void Run()
+                {
+                    _channel.Configuration.AutoRead = true;
+                }
             }
         }
 
@@ -255,7 +326,7 @@ namespace DotNetty.Transport.Bootstrapping
         public override string ToString()
         {
             var buf = StringBuilderManager.Allocate().Append(base.ToString());
-            buf.Length = buf.Length - 1;
+            buf.Length -= 1;
             buf.Append(", ");
             var childGroup = InternalChildGroup;
             if (childGroup is object)
@@ -291,7 +362,7 @@ namespace DotNetty.Transport.Bootstrapping
             else
             {
                 buf[buf.Length - 2] = ')';
-                buf.Length = buf.Length - 1;
+                buf.Length -= 1;
             }
 
             return StringBuilderManager.ReturnAndFree(buf);

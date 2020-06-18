@@ -64,7 +64,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
             await sc.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync();
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
         }
 
         [Fact]
@@ -103,7 +103,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await channel.CloseAsync();
             await channel2.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync();
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
         }
 
         /**
@@ -145,7 +145,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await sc.CloseAsync();
             await channel3.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync();
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
         }
 
         /**
@@ -183,7 +183,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await sc.CloseAsync();
             await channel2.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync();
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
         }
 
         [Fact]
@@ -299,7 +299,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             Assert.True(ch2.Open);
 
             // Close asynchronously with timeout
-            await TaskUtil.WaitAsync(pool.CloseAsync(), TimeSpan.FromSeconds(1));
+            await pool.CloseAsync().WithTimeout(TimeSpan.FromSeconds(1));
 
             // Assert channels were indeed closed
             Assert.False(ch1.Open);
@@ -307,7 +307,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
             await sc.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync();
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
         }
     }
 }

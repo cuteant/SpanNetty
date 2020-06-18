@@ -7,20 +7,20 @@ namespace DotNetty.Transport.Channels.Pool
 
     public sealed class CountingChannelPoolHandler : IChannelPoolHandler
     {
-        int channelCount;
-        int acquiredCount;
-        int releasedCount;
+        private int _channelCount;
+        private int _acquiredCount;
+        private int _releasedCount;
         
-        public int ChannelCount => Volatile.Read(ref this.channelCount);
+        public int ChannelCount => Volatile.Read(ref _channelCount);
 
-        public int AcquiredCount => Volatile.Read(ref this.acquiredCount);
+        public int AcquiredCount => Volatile.Read(ref _acquiredCount);
 
-        public int ReleasedCount => Volatile.Read(ref this.releasedCount);
+        public int ReleasedCount => Volatile.Read(ref _releasedCount);
 
-        public void ChannelCreated(IChannel ch) => Interlocked.Increment(ref this.channelCount);
+        public void ChannelCreated(IChannel ch) => Interlocked.Increment(ref _channelCount);
 
-        public void ChannelReleased(IChannel ch) => Interlocked.Increment(ref this.releasedCount);
+        public void ChannelReleased(IChannel ch) => Interlocked.Increment(ref _releasedCount);
 
-        public void ChannelAcquired(IChannel ch) => Interlocked.Increment(ref this.acquiredCount);
+        public void ChannelAcquired(IChannel ch) => Interlocked.Increment(ref _acquiredCount);
     }
 }

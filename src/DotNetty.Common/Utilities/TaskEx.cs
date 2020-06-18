@@ -30,7 +30,11 @@ namespace DotNetty.Common.Utilities
 
         static Task<int> CreateCancelledTask()
         {
-            var tcs = new TaskCompletionSource<int>();
+            var tcs = new TaskCompletionSource<int>(
+#if !NET451
+                TaskCreationOptions.RunContinuationsAsynchronously
+#endif
+                );
             tcs.SetCanceled();
             return tcs.Task;
         }
@@ -329,7 +333,7 @@ namespace DotNetty.Common.Utilities
 #endif
         }
 
-        private static readonly Action<Task> IgnoreTaskContinuation = t => { var ignored = t.Exception; };
+        private static readonly Action<Task> IgnoreTaskContinuation = t => { _ = t.Exception; };
 
         /// <summary>Observes and ignores a potential exception on a given Task.
         /// If a Task fails and throws an exception which is never observed, it will be caught by the .NET finalizer thread.
@@ -340,7 +344,7 @@ namespace DotNetty.Common.Utilities
         {
             if (task.IsCompleted)
             {
-                var ignored = task.Exception;
+                _ = task.Exception;
             }
             else
             {
@@ -355,6 +359,219 @@ namespace DotNetty.Common.Utilities
         public static async Task<bool> WaitAsync(Task task, TimeSpan timeout)
         {
             return await Task.WhenAny(task, Task.Delay(timeout)).ConfigureAwait(false) == task;
+        }
+
+        public static void WaitWithThrow(this Task task, TimeSpan timeout)
+        {
+            if (!task.Wait(timeout))
+            {
+                ThrowHelper.ThrowTimeoutException_WaitWithThrow(timeout);
+            }
+        }
+
+        public static T WaitWithThrow<T>(this Task<T> task, TimeSpan timeout)
+        {
+            if (!task.Wait(timeout))
+            {
+                ThrowHelper.ThrowTimeoutException_WaitWithThrow(timeout);
+            }
+            return task.Result;
+        }
+
+        /// <summary>
+        /// This will apply a timeout delay to the task, allowing us to exit early
+        /// </summary>
+        /// <param name="taskToComplete">The task we will timeout after timeSpan</param>
+        /// <param name="timeout">Amount of time to wait before timing out</param>
+        /// <returns>The completed task</returns>
+        public static async Task WithTimeout(this Task taskToComplete, TimeSpan timeout)
+        {
+            if (taskToComplete.IsCompleted)
+            {
+                await taskToComplete;
+                return;
+            }
+
+            var timeoutCancellationTokenSource = new CancellationTokenSource();
+            var completedTask = await Task.WhenAny(taskToComplete, Task.Delay(timeout, timeoutCancellationTokenSource.Token));
+
+            // We got done before the timeout, or were able to complete before this code ran, return the result
+            if (taskToComplete == completedTask)
+            {
+                timeoutCancellationTokenSource.Cancel();
+                // Await this so as to propagate the exception correctly
+                await taskToComplete;
+                return;
+            }
+
+            // We did not complete before the timeout, we fire and forget to ensure we observe any exceptions that may occur
+            taskToComplete.Ignore();
+            ThrowHelper.ThrowTimeoutException_WithTimeout(timeout);
+        }
+
+        /// <summary>
+        /// This will apply a timeout delay to the task, allowing us to exit early
+        /// </summary>
+        /// <param name="taskToComplete">The task we will timeout after timeSpan</param>
+        /// <param name="timeSpan">Amount of time to wait before timing out</param>
+        /// <exception cref="TimeoutException">If we time out we will get this exception</exception>
+        /// <exception cref="TimeoutException">If we time out we will get this exception</exception>
+        /// <returns>The value of the completed task</returns>
+        public static async Task<T> WithTimeout<T>(this Task<T> taskToComplete, TimeSpan timeSpan)
+        {
+            if (taskToComplete.IsCompleted)
+            {
+                return await taskToComplete;
+            }
+
+            var timeoutCancellationTokenSource = new CancellationTokenSource();
+            var completedTask = await Task.WhenAny(taskToComplete, Task.Delay(timeSpan, timeoutCancellationTokenSource.Token));
+
+            // We got done before the timeout, or were able to complete before this code ran, return the result
+            if (taskToComplete == completedTask)
+            {
+                timeoutCancellationTokenSource.Cancel();
+                // Await this so as to propagate the exception correctly
+                return await taskToComplete;
+            }
+
+            // We did not complete before the timeout, we fire and forget to ensure we observe any exceptions that may occur
+            taskToComplete.Ignore();
+            throw ThrowHelper.GetTimeoutException_WithTimeout(timeSpan);
+        }
+
+        /// <summary>
+        /// For making an uncancellable task cancellable, by ignoring its result.
+        /// </summary>
+        /// <param name="taskToComplete">The task to wait for unless cancelled</param>
+        /// <param name="cancellationToken">A cancellation token for cancelling the wait</param>
+        /// <param name="message">Message to set in the exception</param>
+        /// <returns></returns>
+        public static async Task WithCancellation(this Task taskToComplete, CancellationToken cancellationToken, string message)
+        {
+            try
+            {
+                await taskToComplete.WithCancellation(cancellationToken);
+            }
+            catch (TaskCanceledException ex)
+            {
+                throw new TaskCanceledException(message, ex);
+            }
+        }
+
+        /// <summary>
+        /// For making an uncancellable task cancellable, by ignoring its result.
+        /// </summary>
+        /// <param name="taskToComplete">The task to wait for unless cancelled</param>
+        /// <param name="cancellationToken">A cancellation token for cancelling the wait</param>
+        /// <returns></returns>
+        public static Task WithCancellation(this Task taskToComplete, CancellationToken cancellationToken)
+        {
+            if (taskToComplete.IsCompleted || !cancellationToken.CanBeCanceled)
+            {
+                return taskToComplete;
+            }
+            else if (cancellationToken.IsCancellationRequested)
+            {
+                return FromCanceled<object>(cancellationToken);
+            }
+            else
+            {
+                return MakeCancellable(taskToComplete, cancellationToken);
+            }
+        }
+
+        private static async Task MakeCancellable(Task task, CancellationToken cancellationToken)
+        {
+            var tcs = new TaskCompletionSource<object>(
+#if !NET451
+                TaskCreationOptions.RunContinuationsAsynchronously
+#endif
+                );
+            using (cancellationToken.Register(() =>
+                      tcs.TrySetCanceled(
+#if !NET451
+                          cancellationToken
+#endif
+                          ), useSynchronizationContext: false))
+            {
+                var firstToComplete = await Task.WhenAny(task, tcs.Task).ConfigureAwait(false);
+
+                if (firstToComplete != task)
+                {
+                    task.Ignore();
+                }
+
+                await firstToComplete.ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        /// For making an uncancellable task cancellable, by ignoring its result.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="taskToComplete">The task to wait for unless cancelled</param>
+        /// <param name="cancellationToken">A cancellation token for cancelling the wait</param>
+        /// <param name="message">Message to set in the exception</param>
+        /// <returns></returns>
+        public static async Task<T> WithCancellation<T>(this Task<T> taskToComplete, CancellationToken cancellationToken, string message)
+        {
+            try
+            {
+                return await taskToComplete.WithCancellation(cancellationToken);
+            }
+            catch (TaskCanceledException ex)
+            {
+                throw new TaskCanceledException(message, ex);
+            }
+        }
+
+        /// <summary>
+        /// For making an uncancellable task cancellable, by ignoring its result.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="taskToComplete">The task to wait for unless cancelled</param>
+        /// <param name="cancellationToken">A cancellation token for cancelling the wait</param>
+        /// <returns></returns>
+        public static Task<T> WithCancellation<T>(this Task<T> taskToComplete, CancellationToken cancellationToken)
+        {
+            if (taskToComplete.IsCompleted || !cancellationToken.CanBeCanceled)
+            {
+                return taskToComplete;
+            }
+            else if (cancellationToken.IsCancellationRequested)
+            {
+                return FromCanceled<T>(cancellationToken);
+            }
+            else
+            {
+                return MakeCancellable(taskToComplete, cancellationToken);
+            }
+        }
+
+        private static async Task<T> MakeCancellable<T>(Task<T> task, CancellationToken cancellationToken)
+        {
+            var tcs = new TaskCompletionSource<T>(
+#if !NET451
+                TaskCreationOptions.RunContinuationsAsynchronously
+#endif
+                );
+            using (cancellationToken.Register(() =>
+                      tcs.TrySetCanceled(
+#if !NET451
+                          cancellationToken
+#endif
+                          ), useSynchronizationContext: false))
+            {
+                var firstToComplete = await Task.WhenAny(task, tcs.Task).ConfigureAwait(false);
+
+                if (firstToComplete != task)
+                {
+                    task.Ignore();
+                }
+
+                return await firstToComplete.ConfigureAwait(false);
+            }
         }
     }
 }

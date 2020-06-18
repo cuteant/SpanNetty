@@ -35,7 +35,7 @@ namespace DotNetty.Transport.Channels.Pool
                 if (!ReferenceEquals(old, pool))
                 {
                     // We need to destroy the newly created pool as we not use it.
-                    pool.Close();
+                    _ = PoolCloseAsyncIfSupported(pool);
                     pool = old;
                 }
             }
@@ -139,16 +139,30 @@ namespace DotNetty.Transport.Channels.Pool
         /// <returns>The new <typeparamref name="TPool"/> corresponding to the given <typeparamref name="TKey"/>.</returns>
         protected abstract TPool NewPool(TKey key);
 
+        public virtual void Close()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         public void Dispose()
         {
-            foreach (TKey key in _map.Keys)
+            Close();
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                // Wait for remove to finish to ensure that resources are released before returning from close
-                try
+                foreach (TKey key in _map.Keys)
                 {
-                    _ = RemoveAsyncIfSupported(key).GetAwaiter().GetResult();
+                    // Wait for remove to finish to ensure that resources are released before returning from close
+                    try
+                    {
+                        _ = RemoveAsyncIfSupported(key).GetAwaiter().GetResult();
+                    }
+                    catch { }
                 }
-                catch { }
             }
         }
     }

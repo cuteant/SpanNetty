@@ -841,5 +841,32 @@ namespace DotNetty.Common
         }
 
         #endregion
+
+        #region -- TimeoutException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static TimeoutException GetTimeoutException_WithTimeout(TimeSpan timeout)
+        {
+            return new TimeoutException($"WithTimeout has timed out after {timeout}");
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowTimeoutException_WithTimeout(TimeSpan timeout)
+        {
+            throw GetTimeoutException_WithTimeout(timeout);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowTimeoutException_WaitWithThrow(TimeSpan timeout)
+        {
+            throw GetException();
+
+            TimeoutException GetException()
+            {
+                return new TimeoutException($"Task.WaitWithThrow has timed out after {timeout}.");
+            }
+        }
+
+        #endregion
     }
 }

@@ -30,7 +30,7 @@ namespace DotNetty.Transport.Bootstrapping
         private INameResolver v_resolver = DefaultResolver;
         private INameResolver InternalResolver
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => Volatile.Read(ref v_resolver);
             set => Interlocked.Exchange(ref v_resolver, value);
         }
@@ -38,7 +38,7 @@ namespace DotNetty.Transport.Bootstrapping
         private EndPoint v_remoteAddress;
         private EndPoint InternalRemoteAddress
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => Volatile.Read(ref v_remoteAddress);
             set => Interlocked.Exchange(ref v_remoteAddress, value);
         }
@@ -111,7 +111,7 @@ namespace DotNetty.Transport.Bootstrapping
             EndPoint remoteAddress = InternalRemoteAddress;
             if (remoteAddress is null)
             {
-                ThrowHelper.ThrowInvalidOperationException_RemoteAddrNotSet();
+                return ThrowHelper.ThrowInvalidOperationException_RemoteAddrNotSet();
             }
 
             return DoResolveAndConnectAsync(remoteAddress, LocalAddress());
@@ -261,12 +261,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// the given <see cref="IEventLoopGroup"/>. This method is useful when making multiple <see cref="IChannel"/>s with similar
         /// settings.
         /// </summary>
-        public Bootstrap Clone(IEventLoopGroup group)
-        {
-            var bs = new Bootstrap(this);
-            bs.Group(group);
-            return bs;
-        }
+        public Bootstrap Clone(IEventLoopGroup group) => new Bootstrap(this) { InternalGroup = group };
 
         public override string ToString()
         {
@@ -277,7 +272,7 @@ namespace DotNetty.Transport.Bootstrapping
             }
 
             var buf = StringBuilderManager.Allocate().Append(base.ToString());
-            buf.Length = buf.Length - 1;
+            buf.Length -= 1;
 
             return StringBuilderManager.ReturnAndFree(buf.Append(", remoteAddress: ")
                 .Append(remoteAddress)

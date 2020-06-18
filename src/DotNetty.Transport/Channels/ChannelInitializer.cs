@@ -34,9 +34,10 @@ namespace DotNetty.Transport.Channels
     public abstract class ChannelInitializer<T> : ChannelHandlerAdapter
         where T : IChannel
     {
-        static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChannelInitializer<T>>();
+        private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChannelInitializer<T>>();
 
-        readonly ConcurrentDictionary<IChannelHandlerContext, bool> initMap = new ConcurrentDictionary<IChannelHandlerContext, bool>(ChannelHandlerContextComparer.Default);
+        private readonly ConcurrentDictionary<IChannelHandlerContext, bool> _initMap =
+            new ConcurrentDictionary<IChannelHandlerContext, bool>(ChannelHandlerContextComparer.Default);
 
         /// <summary>
         /// This method will be called once the <see cref="IChannel"/> was registered. After the method returns this instance
@@ -51,14 +52,14 @@ namespace DotNetty.Transport.Channels
         {
             // Normally this method will never be called as handlerAdded(...) should call initChannel(...) and remove
             // the handler.
-            if (this.InitChannel(ctx))
+            if (InitChannel(ctx))
             {
                 // we called InitChannel(...) so we need to call now pipeline.fireChannelRegistered() to ensure we not
                 // miss an event.
                 _ = ctx.Pipeline.FireChannelRegistered();
 
                 // We are done with init the Channel, removing all the state for the Channel now.
-                this.RemoveState(ctx);
+                RemoveState(ctx);
             }
             else
             {
@@ -81,33 +82,33 @@ namespace DotNetty.Transport.Channels
                 // The good thing about calling InitChannel(...) in HandlerAdded(...) is that there will be no ordering
                 // surprises if a ChannelInitializer will add another ChannelInitializer. This is as all handlers
                 // will be added in the expected order.
-                if (this.InitChannel(ctx))
+                if (InitChannel(ctx))
                 {
 
                     // We are done with init the Channel, removing the initializer now.
-                    this.RemoveState(ctx);
+                    RemoveState(ctx);
                 }
             }
         }
 
         public override void HandlerRemoved(IChannelHandlerContext ctx)
         {
-            _ = this.initMap.TryRemove(ctx, out _);
+            _ = _initMap.TryRemove(ctx, out _);
         }
 
         bool InitChannel(IChannelHandlerContext ctx)
         {
-            if (this.initMap.TryAdd(ctx, true)) // Guard against re-entrance.
+            if (_initMap.TryAdd(ctx, true)) // Guard against re-entrance.
             {
                 try
                 {
-                    this.InitChannel((T)ctx.Channel);
+                    InitChannel((T)ctx.Channel);
                 }
                 catch (Exception cause)
                 {
                     // Explicitly call exceptionCaught(...) as we removed the handler before calling initChannel(...).
                     // We do so to prevent multiple calls to initChannel(...).
-                    this.ExceptionCaught(ctx, cause);
+                    ExceptionCaught(ctx, cause);
                 }
                 finally
                 {
@@ -127,13 +128,13 @@ namespace DotNetty.Transport.Channels
             // The removal may happen in an async fashion if the EventExecutor we use does something funky.
             if (ctx.Removed)
             {
-                _ = this.initMap.TryRemove(ctx, out _);
+                _ = _initMap.TryRemove(ctx, out _);
             }
             else
             {
                 // The context is not removed yet which is most likely the case because a custom EventExecutor is used.
                 // Let's schedule it on the EventExecutor to give it some more time to be completed in case it is offloaded.
-                ctx.Executor.Execute(() => this.initMap.TryRemove(ctx, out _));
+                ctx.Executor.Execute(() => _initMap.TryRemove(ctx, out _));
             }
         }
     }

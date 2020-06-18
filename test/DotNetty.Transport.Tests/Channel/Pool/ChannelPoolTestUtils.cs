@@ -10,7 +10,7 @@
         [ThreadStatic]
         static Random s_random;
 
-        private static Random ThreadLocalRandom => s_random ?? (s_random = new Random());
+        private static Random ThreadLocalRandom => s_random ??= new Random();
 
         public static string GetLocalAddrId()
         {

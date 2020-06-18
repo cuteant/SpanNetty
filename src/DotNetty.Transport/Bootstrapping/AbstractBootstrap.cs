@@ -35,7 +35,7 @@ namespace DotNetty.Transport.Bootstrapping
         private readonly CachedReadConcurrentDictionary<IConstant, AttributeValue> _attrs;
         private IChannelHandler v_handler;
 
-        private IEventLoopGroup InternalGroup
+        internal IEventLoopGroup InternalGroup
         {
             [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => Volatile.Read(ref v_group);
@@ -107,6 +107,10 @@ namespace DotNetty.Transport.Bootstrapping
         public TBootstrap ChannelFactory(Func<TChannel> channelFactory)
         {
             if (channelFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channelFactory); }
+            if (InternalChannelFactory is object)
+            {
+                ThrowHelper.ThrowInvalidOperationException_ChannelFactoryHasAlreadyBeenSet();
+            }
             InternalChannelFactory = channelFactory;
             return (TBootstrap)this;
         }
@@ -288,14 +292,16 @@ namespace DotNetty.Transport.Bootstrapping
 
         protected async Task<IChannel> InitAndRegisterAsync()
         {
-            IChannel channel = InternalChannelFactory();
+            IChannel channel = null;
             try
             {
+                channel = InternalChannelFactory();
                 Init(channel);
             }
             catch (Exception)
             {
-                channel.Unsafe.CloseForcibly();
+                // channel can be null if newChannel crashed (eg SocketException("too many open files"))
+                channel?.Unsafe.CloseForcibly();
                 // as the Channel is not registered yet we need to force the usage of the GlobalEventExecutor
                 throw;
             }
@@ -374,14 +380,14 @@ namespace DotNetty.Transport.Bootstrapping
             return (TBootstrap)this;
         }
 
-        protected EndPoint LocalAddress() => Volatile.Read(ref v_localAddress);
+        protected EndPoint LocalAddress() => InternalLocalAddress;
 
-        protected IChannelHandler Handler() => Volatile.Read(ref v_handler);
+        protected IChannelHandler Handler() => InternalHandler;
 
         /// <summary>
         /// Returns the configured <see cref="IEventLoopGroup"/> or <c>null</c> if none is configured yet.
         /// </summary>
-        public IEventLoopGroup Group() => Volatile.Read(ref v_group);
+        public IEventLoopGroup Group() => InternalGroup;
 
         protected ICollection<ChannelOptionValue> Options => _options.Values;
 
@@ -530,7 +536,7 @@ namespace DotNetty.Transport.Bootstrapping
         protected sealed class ChannelOptionValue<T> : ChannelOptionValue
         {
             public override ChannelOption Option { get; }
-            readonly T _value;
+            private readonly T _value;
 
             public ChannelOptionValue(ChannelOption<T> option, T value)
             {
@@ -551,8 +557,8 @@ namespace DotNetty.Transport.Bootstrapping
         protected sealed class AttributeValue<T> : AttributeValue
             where T : class
         {
-            readonly AttributeKey<T> _key;
-            readonly T _value;
+            private readonly AttributeKey<T> _key;
+            private readonly T _value;
 
             public AttributeValue(AttributeKey<T> key, T value)
             {

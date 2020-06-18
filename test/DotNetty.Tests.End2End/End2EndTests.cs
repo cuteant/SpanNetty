@@ -15,6 +15,7 @@ namespace DotNetty.Tests.End2End
     using DotNetty.Codecs.Mqtt;
     using DotNetty.Codecs.Mqtt.Packets;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Utilities;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
     using DotNetty.Tests.Common;
