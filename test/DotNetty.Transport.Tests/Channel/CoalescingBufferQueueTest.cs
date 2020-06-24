@@ -1,17 +1,13 @@
-﻿
-namespace DotNetty.Transport.Tests.Channel
+﻿namespace DotNetty.Transport.Tests.Channel
 {
     using System;
-    using System.Collections.Generic;
     using System.Text;
-    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
-    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
-    using DotNetty.Transport.Channels.Embedded;
     using DotNetty.Transport.Channels;
+    using DotNetty.Transport.Channels.Embedded;
     using Xunit;
 
     public class CoalescingBufferQueueTest : IDisposable

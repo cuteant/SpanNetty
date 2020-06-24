@@ -52,7 +52,7 @@ namespace DotNetty.Transport.Channels.Sockets
                         _ = pipeline.FireChannelRead(message);
                         allocHandle.IncMessagesRead(1);
 
-                        if (!config.AutoRead && !ch.ReadPending)
+                        if (!config.IsAutoRead && !ch.ReadPending)
                         {
                             // ChannelConfig.setAutoRead(false) was called in the meantime.
                             // Completed Accept has to be processed though.
@@ -105,7 +105,7 @@ namespace DotNetty.Transport.Channels.Sockets
                         _ = pipeline.FireExceptionCaught(exception);
                     }
 
-                    if (ch.Open)
+                    if (ch.IsOpen)
                     {
                         if (closed) { Close(VoidPromise()); }
                         else if (aborted) { ch.CloseSafe(); }
@@ -114,7 +114,7 @@ namespace DotNetty.Transport.Channels.Sockets
                 finally
                 {
                     // Check if there is a readPending which was not processed yet.
-                    if (!closed && (ch.ReadPending || config.AutoRead))
+                    if (!closed && (ch.ReadPending || config.IsAutoRead))
                     {
                         ch.DoBeginRead();
                     }

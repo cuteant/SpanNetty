@@ -43,11 +43,11 @@ namespace DotNetty.Transport.Channels
 
         /// <summary>Gets or sets if <see cref="IChannelHandlerContext.Read()"/> will be invoked automatically so that a user application doesn't
         /// need to call it at all. The default value is <c>true</c>.</summary>
-        bool AutoRead { get; set; }
+        bool IsAutoRead { get; set; }
 
         /// <summary>Gets or sets whether the <see cref="IChannel"/> should be closed automatically and immediately on write failure.
         /// The default is <c>true</c>.</summary>
-        bool AutoClose { get; set; }
+        bool IsAutoClose { get; set; }
 
         /// <summary>Gets or sets the high water mark of the write buffer.  If the number of bytes
         /// queued in the write buffer exceeds this value, <see cref="IChannel.IsWritable"/>
@@ -63,5 +63,7 @@ namespace DotNetty.Transport.Channels
         /// <summary>Gets or sets the <see cref="IMessageSizeEstimator"/> which is used for the channel
         /// to detect the size of a message.</summary>
         IMessageSizeEstimator MessageSizeEstimator { get; set; }
+
+        bool PinEventExecutorPerGroup { get; set; }
     }
 }

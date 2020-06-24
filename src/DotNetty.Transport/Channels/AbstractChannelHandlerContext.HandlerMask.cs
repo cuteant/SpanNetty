@@ -11,141 +11,131 @@ namespace DotNetty.Transport.Channels
 
     partial class AbstractChannelHandlerContext
     {
-        [Flags]
-        protected internal enum SkipFlags
+        protected internal static class SkipFlags
         {
-            HandlerAdded = 1,
-            HandlerRemoved = 1 << 1,
-            ExceptionCaught = 1 << 2,
-            ChannelRegistered = 1 << 3,
-            ChannelUnregistered = 1 << 4,
-            ChannelActive = 1 << 5,
-            ChannelInactive = 1 << 6,
-            ChannelRead = 1 << 7,
-            ChannelReadComplete = 1 << 8,
-            ChannelWritabilityChanged = 1 << 9,
-            UserEventTriggered = 1 << 10,
-            Bind = 1 << 11,
-            Connect = 1 << 12,
-            Disconnect = 1 << 13,
-            Close = 1 << 14,
-            Deregister = 1 << 15,
-            Read = 1 << 16,
-            Write = 1 << 17,
-            Flush = 1 << 18,
+            // Using to mask which methods must be called for a ChannelHandler.
+            public const int ExceptionCaught = 1;
+            public const int ChannelRegistered = 1 << 1;
+            public const int ChannelUnregistered = 1 << 2;
+            public const int ChannelActive = 1 << 3;
+            public const int ChannelInactive = 1 << 4;
+            public const int ChannelRead = 1 << 5;
+            public const int ChannelReadComplete = 1 << 6;
+            public const int UserEventTriggered = 1 << 7;
+            public const int ChannelWritabilityChanged = 1 << 8;
+            public const int Bind = 1 << 9;
+            public const int Connect = 1 << 10;
+            public const int Disconnect = 1 << 11;
+            public const int Close = 1 << 12;
+            public const int Deregister = 1 << 13;
+            public const int Read = 1 << 14;
+            public const int Write = 1 << 15;
+            public const int Flush = 1 << 16;
 
-            Inbound = ExceptionCaught |
-                ChannelRegistered |
-                ChannelUnregistered |
-                ChannelActive |
-                ChannelInactive |
-                ChannelRead |
-                ChannelReadComplete |
-                ChannelWritabilityChanged |
-                UserEventTriggered,
+            public const int WriteAndFlush = Write | Flush;
 
-            Outbound = Bind |
-                Connect |
-                Disconnect |
-                Close |
-                Deregister |
-                Read |
-                Write |
-                Flush,
+            public const int OnlyInbound = ChannelRegistered |
+                ChannelUnregistered | ChannelActive | ChannelInactive | ChannelRead |
+                ChannelReadComplete | UserEventTriggered | ChannelWritabilityChanged;
+            public const int AllInbound = ExceptionCaught | OnlyInbound;
+
+            public const int OnlyOutbound = Bind | Connect | Disconnect |
+                Close | Deregister | Read | Write | Flush;
+            public const int AllOutbound = ExceptionCaught | OnlyOutbound;
         }
 
-        private static readonly ConditionalWeakTable<Type, Tuple<SkipFlags>> SkipTable = new ConditionalWeakTable<Type, Tuple<SkipFlags>>();
+        private static readonly ConditionalWeakTable<Type, Tuple<int>> SkipTable = new ConditionalWeakTable<Type, Tuple<int>>();
 
-        protected static SkipFlags GetSkipPropagationFlags(IChannelHandler handler)
+        protected static int GetSkipPropagationFlags(IChannelHandler handler)
         {
-            Tuple<SkipFlags> skipDirection = SkipTable.GetValue(
+            Tuple<int> skipDirection = SkipTable.GetValue(
                 handler.GetType(),
                 handlerType => Tuple.Create(CalculateSkipPropagationFlags(handlerType)));
 
             return skipDirection?.Item1 ?? 0;
         }
 
-        protected static SkipFlags CalculateSkipPropagationFlags(Type handlerType)
+        protected static int CalculateSkipPropagationFlags(Type handlerType)
         {
-            SkipFlags flags = 0;
+            int flags = SkipFlags.ExceptionCaught;
 
             // this method should never throw
-            if (IsSkippable(handlerType, nameof(IChannelHandler.HandlerAdded)))
-            {
-                flags |= SkipFlags.HandlerAdded;
-            }
-            if (IsSkippable(handlerType, nameof(IChannelHandler.HandlerRemoved)))
-            {
-                flags |= SkipFlags.HandlerRemoved;
-            }
-            if (IsSkippable(handlerType, nameof(IChannelHandler.ExceptionCaught), typeof(Exception)))
-            {
-                flags |= SkipFlags.ExceptionCaught;
-            }
+
+            flags |= SkipFlags.AllInbound;
+
             if (IsSkippable(handlerType, nameof(IChannelHandler.ChannelRegistered)))
             {
-                flags |= SkipFlags.ChannelRegistered;
+                flags &= ~SkipFlags.ChannelRegistered;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.ChannelUnregistered)))
             {
-                flags |= SkipFlags.ChannelUnregistered;
+                flags &= ~SkipFlags.ChannelUnregistered;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.ChannelActive)))
             {
-                flags |= SkipFlags.ChannelActive;
+                flags &= ~SkipFlags.ChannelActive;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.ChannelInactive)))
             {
-                flags |= SkipFlags.ChannelInactive;
+                flags &= ~SkipFlags.ChannelInactive;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.ChannelRead), typeof(object)))
             {
-                flags |= SkipFlags.ChannelRead;
+                flags &= ~SkipFlags.ChannelRead;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.ChannelReadComplete)))
             {
-                flags |= SkipFlags.ChannelReadComplete;
+                flags &= ~SkipFlags.ChannelReadComplete;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.ChannelWritabilityChanged)))
             {
-                flags |= SkipFlags.ChannelWritabilityChanged;
+                flags &= ~SkipFlags.ChannelWritabilityChanged;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.UserEventTriggered), typeof(object)))
             {
-                flags |= SkipFlags.UserEventTriggered;
+                flags &= ~SkipFlags.UserEventTriggered;
             }
+
+            flags |= SkipFlags.AllOutbound;
+
             if (IsSkippable(handlerType, nameof(IChannelHandler.BindAsync), typeof(EndPoint)))
             {
-                flags |= SkipFlags.Bind;
+                flags &= ~SkipFlags.Bind;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.ConnectAsync), typeof(EndPoint), typeof(EndPoint)))
             {
-                flags |= SkipFlags.Connect;
+                flags &= ~SkipFlags.Connect;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.Disconnect), typeof(IPromise)))
             {
-                flags |= SkipFlags.Disconnect;
+                flags &= ~SkipFlags.Disconnect;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.Close), typeof(IPromise)))
             {
-                flags |= SkipFlags.Close;
+                flags &= ~SkipFlags.Close;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.Deregister), typeof(IPromise)))
             {
-                flags |= SkipFlags.Deregister;
+                flags &= ~SkipFlags.Deregister;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.Read)))
             {
-                flags |= SkipFlags.Read;
+                flags &= ~SkipFlags.Read;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.Write), typeof(object), typeof(IPromise)))
             {
-                flags |= SkipFlags.Write;
+                flags &= ~SkipFlags.Write;
             }
             if (IsSkippable(handlerType, nameof(IChannelHandler.Flush)))
             {
-                flags |= SkipFlags.Flush;
+                flags &= ~SkipFlags.Flush;
             }
+
+            if (IsSkippable(handlerType, nameof(IChannelHandler.ExceptionCaught), typeof(Exception)))
+            {
+                flags &= ~SkipFlags.ExceptionCaught;
+            }
+
             return flags;
         }
 

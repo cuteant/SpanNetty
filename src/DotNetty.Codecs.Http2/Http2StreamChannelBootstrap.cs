@@ -145,7 +145,7 @@ namespace DotNetty.Codecs.Http2
         {
             // First try to use cached context and if this not work lets try to lookup the context.
             var ctx = InternalMultiplexContext;
-            if (ctx is object && !ctx.Removed)
+            if (ctx is object && !ctx.IsRemoved)
             {
                 return ctx;
             }
@@ -154,7 +154,7 @@ namespace DotNetty.Codecs.Http2
             if (ctx is null) { ctx = pipeline.Context<Http2MultiplexCodec>(); }
             if (ctx is null)
             {
-                if (_channel.Active)
+                if (_channel.IsActive)
                 {
                     ThrowHelper.ThrowInvalidOperationException_Multiplex_CodecOrHandler_must_be_in_pipeline_of_channel(_channel);
                 }
@@ -219,7 +219,7 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-                if (streamChannel.Registered)
+                if (streamChannel.IsRegistered)
                 {
                     _ = streamChannel.CloseAsync();
                 }
@@ -249,7 +249,7 @@ namespace DotNetty.Codecs.Http2
             }
             else
             {
-                if (streamChannel.Registered)
+                if (streamChannel.IsRegistered)
                 {
                     _ = streamChannel.CloseAsync();
                 }

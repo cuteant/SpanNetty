@@ -62,7 +62,7 @@ namespace DotNetty.Codecs.Http.Tests
                     "Content-Length: 1\r\n\r\n")));
 
             // Ensure the aggregator generates nothing.
-            var next = ch.ReadInbound<object>();
+            var next = ch.ReadInbound();
             Assert.Null(next);
 
             // Ensure the aggregator writes a 100 Continue response.
@@ -71,7 +71,7 @@ namespace DotNetty.Codecs.Http.Tests
             continueResponse.Release();
 
             // But nothing more.
-            next = ch.ReadInbound<object>();
+            next = ch.ReadInbound();
             Assert.Null(next);
 
             // Send the content of the request.
@@ -85,7 +85,7 @@ namespace DotNetty.Codecs.Http.Tests
             req.Release();
 
             // But nothing more.
-            next = ch.ReadInbound<object>();
+            next = ch.ReadInbound();
             Assert.Null(next);
 
             // Send the actual response.

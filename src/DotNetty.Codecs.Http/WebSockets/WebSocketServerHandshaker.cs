@@ -141,10 +141,12 @@ namespace DotNetty.Codecs.Http.WebSockets
         /// <param name="completion">the <see cref="IPromise"/> to be notified when the opening handshake is done</param>
         public void Handshake(IChannel channel, IFullHttpRequest req, HttpHeaders responseHeaders, IPromise completion)
         {
+#if DEBUG
             if (Logger.DebugEnabled)
             {
                 Logger.WebSocketVersionServerHandshake(channel, _version);
             }
+#endif
 
             IFullHttpResponse response = NewHandshakeResponse(req, responseHeaders);
             IChannelPipeline p = channel.Pipeline;
@@ -211,10 +213,12 @@ namespace DotNetty.Codecs.Http.WebSockets
             {
                 return HandshakeAsync(channel, request, responseHeaders);
             }
+#if DEBUG
             if (Logger.DebugEnabled)
             {
                 Logger.WebSocketVersionServerHandshake(channel, _version);
             }
+#endif
             IChannelPipeline p = channel.Pipeline;
             IChannelHandlerContext ctx = p.Context<HttpRequestDecoder>();
             if (ctx is null)

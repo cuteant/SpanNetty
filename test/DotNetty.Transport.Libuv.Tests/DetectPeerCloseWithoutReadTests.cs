@@ -85,7 +85,7 @@ namespace DotNetty.Transport.Libuv.Tests
 
             public override void ChannelActive(IChannelHandlerContext ctx)
             {
-                if (!ctx.Channel.Configuration.AutoRead)
+                if (!ctx.Channel.Configuration.IsAutoRead)
                 {
                     ctx.Read();
                 }

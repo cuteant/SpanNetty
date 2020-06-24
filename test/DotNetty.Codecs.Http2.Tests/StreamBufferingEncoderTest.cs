@@ -79,7 +79,7 @@ namespace DotNetty.Codecs.Http2.Tests
             _executor.SetupGet(x => x.InEventLoop).Returns(true);
             _ctx.Setup(x => x.NewPromise()).Returns(() => NewPromise());
             _ctx.SetupGet(x => x.Executor).Returns(() => _executor.Object);
-            _channel.SetupGet(x => x.Active).Returns(false);
+            _channel.SetupGet(x => x.IsActive).Returns(false);
             _channel.SetupGet(x => x.Configuration).Returns(() => _config.Object);
             _channel.SetupGet(x => x.IsWritable).Returns(true);
             _channel.SetupGet(x => x.BytesBeforeUnwritable).Returns(long.MaxValue);

@@ -182,7 +182,7 @@ namespace DotNetty.Codecs.Http.Tests
             c.Release();
 
             Assert.False(channel.Finish());
-            var last = channel.ReadInbound<object>();
+            var last = channel.ReadInbound();
             Assert.Null(last);
         }
 

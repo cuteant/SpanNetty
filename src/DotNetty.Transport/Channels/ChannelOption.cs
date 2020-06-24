@@ -53,7 +53,7 @@ namespace DotNetty.Transport.Channels
         /// <param name="name">The name to associate with the new option.</param>
         /// <exception cref="ArgumentException">Thrown if a <see cref="ChannelOption"/> for the given <paramref name="name"/> exists.</exception>
         /// <returns>The new <see cref="ChannelOption{T}"/> instance.</returns>
-        public static  ChannelOption<T> NewInstance<T>(string name) => (ChannelOption<T>)Pool.NewInstance<T>(name);
+        public static ChannelOption<T> NewInstance<T>(string name) => (ChannelOption<T>)Pool.NewInstance<T>(name);
 
         public static readonly ChannelOption<IByteBufferAllocator> Allocator = ValueOf<IByteBufferAllocator>("ALLOCATOR");
         public static readonly ChannelOption<IRecvByteBufAllocator> RcvbufAllocator = ValueOf<IRecvByteBufAllocator>("RCVBUF_ALLOCATOR");
@@ -86,6 +86,8 @@ namespace DotNetty.Transport.Channels
         public static readonly ChannelOption<bool> IpMulticastLoopDisabled = ValueOf<bool>("IP_MULTICAST_LOOP_DISABLED");
 
         public static readonly ChannelOption<bool> TcpNodelay = ValueOf<bool>("TCP_NODELAY");
+
+        public static readonly ChannelOption<bool> SingleEventexecutorPerGroup = ValueOf<bool>("SINGLE_EVENTEXECUTOR_PER_GROUP");
 
         internal ChannelOption(int id, string name)
             : base(id, name)

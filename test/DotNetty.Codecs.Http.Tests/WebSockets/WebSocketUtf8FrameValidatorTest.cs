@@ -48,7 +48,7 @@
             {
                 buf.Release();
             }
-            Assert.Null(channel.ReadOutbound<object>());
+            Assert.Null(channel.ReadOutbound());
             Assert.Equal(0, frame.ReferenceCount);
         }
     }

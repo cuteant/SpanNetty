@@ -114,7 +114,7 @@ namespace DotNetty.Transport.Libuv
 
         protected override void DoBeginRead()
         {
-            if (!Open)
+            if (!IsOpen)
             {
                 return;
             }
@@ -129,7 +129,7 @@ namespace DotNetty.Transport.Libuv
 
         protected override void DoStopRead()
         {
-            if (!Open)
+            if (!IsOpen)
             {
                 return;
             }

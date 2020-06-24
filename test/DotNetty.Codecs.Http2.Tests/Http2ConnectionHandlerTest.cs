@@ -87,7 +87,7 @@ namespace DotNetty.Codecs.Http2.Tests
                     buf.Release();
                     return _future;
                 });
-            _channel.Setup(x => x.Active).Returns(true);
+            _channel.Setup(x => x.IsActive).Returns(true);
             _channel.Setup(x => x.Pipeline).Returns(_pipeline.Object);
             _connection.Setup(x => x.Remote).Returns(_remote.Object);
             _remote.Setup(x => x.FlowController).Returns(_remoteFlowController.Object);
@@ -179,9 +179,9 @@ namespace DotNetty.Codecs.Http2.Tests
         public void ClientShouldveSentPrefaceAndSettingsFrameWhenUserEventIsTriggered()
         {
             _connection.Setup(x => x.IsServer).Returns(false);
-            _channel.Setup(x => x.Active).Returns(false);
+            _channel.Setup(x => x.IsActive).Returns(false);
             _handler = NewHandler();
-            _channel.Setup(x => x.Active).Returns(true);
+            _channel.Setup(x => x.IsActive).Returns(true);
 
             var evt = Http2ConnectionPrefaceAndSettingsFrameWrittenEvent.Instance;
 
@@ -209,9 +209,9 @@ namespace DotNetty.Codecs.Http2.Tests
         public void ClientShouldSendClientPrefaceStringWhenActive()
         {
             _connection.Setup(x => x.IsServer).Returns(false);
-            _channel.Setup(x => x.Active).Returns(false);
+            _channel.Setup(x => x.IsActive).Returns(false);
             _handler = NewHandler();
-            _channel.Setup(x => x.Active).Returns(true);
+            _channel.Setup(x => x.IsActive).Returns(true);
             _handler.ChannelActive(_ctx.Object);
             _ctx.Verify(x => x.WriteAsync(It.Is<object>(d => Http2CodecUtil.ConnectionPrefaceBuf().Equals((IByteBuffer)d))));
         }
@@ -220,9 +220,9 @@ namespace DotNetty.Codecs.Http2.Tests
         public void ServerShouldNotSendClientPrefaceStringWhenActive()
         {
             _connection.Setup(x => x.IsServer).Returns(true);
-            _channel.Setup(x => x.Active).Returns(false);
+            _channel.Setup(x => x.IsActive).Returns(false);
             _handler = NewHandler();
-            _channel.Setup(x => x.Active).Returns(true);
+            _channel.Setup(x => x.IsActive).Returns(true);
             _handler.ChannelActive(_ctx.Object);
             _ctx.Verify(x => x.WriteAsync(It.Is<object>(d => Http2CodecUtil.ConnectionPrefaceBuf().Equals((IByteBuffer)d))), Times.Never());
         }
@@ -596,7 +596,7 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             _handler = NewHandler();
             _handler.ChannelActive(_ctx.Object);
-            _channel.Setup(x => x.Active).Returns(false);
+            _channel.Setup(x => x.IsActive).Returns(false);
             _handler.ChannelInactive(_ctx.Object);
             _encoder.Verify(x => x.Close());
             _decoder.Verify(x => x.Close());
@@ -844,7 +844,7 @@ namespace DotNetty.Codecs.Http2.Tests
         [Fact]
         public void ChannelReadCompleteCallsReadWhenAutoReadFalse()
         {
-            _channel.Object.Configuration.AutoRead = false;
+            _channel.Object.Configuration.IsAutoRead = false;
             _handler = NewHandler();
             _handler.ChannelReadComplete(_ctx.Object);
             _ctx.Verify(x => x.Read(), Times.Once());
@@ -855,7 +855,7 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             _connection.Setup(x => x.IsServer).Returns(true);
             _handler = NewHandler();
-            _channel.Setup(x => x.Active).Returns(false);
+            _channel.Setup(x => x.IsActive).Returns(false);
             _handler.ChannelInactive(_ctx.Object);
             _frameWriter.Verify(
                 x => x.WriteGoAwayAsync(

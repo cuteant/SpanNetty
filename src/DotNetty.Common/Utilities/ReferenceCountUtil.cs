@@ -175,10 +175,12 @@ namespace DotNetty.Common.Utilities
                         {
                             Logger.NonZeroRefCnt(referenceCounted, decrement);
                         }
+#if DEBUG
                         else
                         {
                             if (Logger.DebugEnabled) Logger.ReleasedObject(referenceCounted, decrement);
                         }
+#endif
                     }
                     catch (Exception ex)
                     {

@@ -18,7 +18,7 @@ namespace DotNetty.Transport.Tests.Channel.Sockets
     using Xunit;
     using Xunit.Abstractions;
 
-    [Collection("UDP Transport Tests")]
+    [Collection("Transport Tests")]
     public class SocketDatagramChannelUnicastTest : TestBase
     {
         const int DefaultTimeOutInMilliseconds = 800;

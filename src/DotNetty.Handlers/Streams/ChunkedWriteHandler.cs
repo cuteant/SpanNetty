@@ -133,7 +133,7 @@ namespace DotNetty.Handlers.Streams
         void DoFlush(IChannelHandlerContext context)
         {
             IChannel channel = context.Channel;
-            if (!channel.Active)
+            if (!channel.IsActive)
             {
                 Discard();
                 return;
@@ -256,7 +256,7 @@ namespace DotNetty.Handlers.Streams
                     requiresFlush = true;
                 }
 
-                if (!channel.Active)
+                if (!channel.IsActive)
                 {
                     Discard(new ClosedChannelException());
                     break;

@@ -257,7 +257,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             for (; ; )
             {
-                var msg = ch.ReadOutbound<object>();
+                var msg = ch.ReadOutbound();
                 if (msg == null)
                 {
                     break;
@@ -266,7 +266,7 @@ namespace DotNetty.Codecs.Http.Tests
             }
             for (; ; )
             {
-                var msg = ch.ReadInbound<object>();
+                var msg = ch.ReadInbound();
                 if (msg == null)
                 {
                     break;
@@ -351,7 +351,7 @@ namespace DotNetty.Codecs.Http.Tests
             content.Release();
 
             Assert.False(ch.Finish());
-            var next = ch.ReadInbound<object>();
+            var next = ch.ReadInbound();
             Assert.Null(next);
         }
 
@@ -390,7 +390,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.True(ch.WriteOutbound(new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Head, "/")));
             var buffer = ch.ReadOutbound<IByteBuffer>();
             buffer.Release();
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.True(ch.WriteInbound(Unpooled.WrappedBuffer(data)));
             var res = ch.ReadInbound<IHttpResponse>();
             Assert.Same(HttpVersion.Http11, res.ProtocolVersion);
@@ -404,7 +404,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.True(ch.WriteOutbound(new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, "/")));
             buffer = ch.ReadOutbound<IByteBuffer>();
             buffer.Release();
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.True(ch.WriteInbound(Unpooled.WrappedBuffer(data2)));
 
             res = ch.ReadInbound<IHttpResponse>();

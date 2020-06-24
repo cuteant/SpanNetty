@@ -58,18 +58,17 @@ namespace DotNetty.Transport.Channels.Sockets
         public TcpServerSocketChannel(Socket socket)
             : base(null, socket)
         {
-            this._config = new TcpServerSocketChannelConfig((TServerChannel)this, socket);
+            _config = new TcpServerSocketChannelConfig((TServerChannel)this, socket);
             _channelFactory = new TChannelFactory();
         }
 
         public override IChannelConfiguration Configuration => _config;
 
-        public override bool Active
+        public override bool IsActive
         {
-            // 待测试
             // As IsBound will continue to return true even after the channel was closed
             // we will also need to check if it is open.
-            get => Open && Socket.IsBound;
+            get => IsOpen && Socket.IsBound;
         }
 
         public override ChannelMetadata Metadata => METADATA;
@@ -137,7 +136,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     closed = true;
                 }
             }
-            if (Open)
+            if (IsOpen)
             {
                 if (closed) { Unsafe.Close(Unsafe.VoidPromise()); }
                 else if (aborted) { this.CloseSafe(); }
@@ -148,27 +147,27 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override bool DoConnect(EndPoint remoteAddress, EndPoint localAddress)
         {
-            throw new NotSupportedException();
+            throw ThrowHelper.GetNotSupportedException();
         }
 
         protected override void DoFinishConnect(SocketChannelAsyncOperation<TServerChannel, TcpServerSocketChannelUnsafe> operation)
         {
-            throw new NotSupportedException();
+            throw ThrowHelper.GetNotSupportedException();
         }
 
         protected override void DoDisconnect()
         {
-            throw new NotSupportedException();
+            throw ThrowHelper.GetNotSupportedException();
         }
 
         protected override void DoWrite(ChannelOutboundBuffer input)
         {
-            throw new NotSupportedException();
+            throw ThrowHelper.GetNotSupportedException();
         }
 
         protected sealed override object FilterOutboundMessage(object msg)
         {
-            throw new NotSupportedException();
+            throw ThrowHelper.GetNotSupportedException();
         }
     }
 }

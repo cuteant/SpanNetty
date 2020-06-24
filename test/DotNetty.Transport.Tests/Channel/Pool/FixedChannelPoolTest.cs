@@ -34,7 +34,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
         public void Dispose()
         {
-            _group?.ShutdownGracefullyAsync();
+            _group?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
         }
 
         [Fact]
@@ -287,7 +287,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
             // Since the pool is closed, the Channel should have been closed as well.
             await channel.CloseCompletion;
-            Assert.False(channel.Open, "Unexpected open channel");
+            Assert.False(channel.IsOpen, "Unexpected open channel");
             await sc.CloseAsync();
             pool.Close();
         }

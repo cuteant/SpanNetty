@@ -164,7 +164,7 @@ namespace DotNetty.Codecs
 
         /// <summary>
         /// This flag is used to determine if we need to call <see cref="IChannelHandlerContext.Read"/> to consume more data
-        /// when <see cref="IChannelConfiguration.AutoRead"/> is <c>false</c>.
+        /// when <see cref="IChannelConfiguration.IsAutoRead"/> is <c>false</c>.
         /// </summary>
         private bool _firedChannelRead;
 
@@ -359,7 +359,7 @@ namespace DotNetty.Codecs
         {
             _numReads = 0;
             DiscardSomeReadBytes();
-            if (!_firedChannelRead && !context.Channel.Configuration.AutoRead)
+            if (!_firedChannelRead && !context.Channel.Configuration.IsAutoRead)
             {
                 _ = context.Read();
             }
@@ -492,7 +492,7 @@ namespace DotNetty.Codecs
                         //
                         // See:
                         // - https://github.com/netty/netty/issues/4635
-                        if (context.Removed)
+                        if (context.IsRemoved)
                         {
                             break;
                         }
@@ -506,7 +506,7 @@ namespace DotNetty.Codecs
                     // If it was removed, it is not safe to continue to operate on the buffer.
                     //
                     // See https://github.com/netty/netty/issues/1664
-                    if (context.Removed)
+                    if (context.IsRemoved)
                     {
                         break;
                     }

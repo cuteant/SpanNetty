@@ -42,7 +42,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             string text4 = "Hello, world #4";
 
             EmbeddedChannel channel = new EmbeddedChannel();
-            channel.Configuration.AutoRead = false;
+            channel.Configuration.IsAutoRead = false;
             channel.Pipeline.AddLast(new FlowControlHandler());
             channel.Pipeline.AddLast(new Handler() { });
 
@@ -55,8 +55,8 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             ));
 
             // Then - no messages were handled or propagated
-            Assert.Null(channel.ReadInbound<object>());
-            Assert.Null(channel.ReadOutbound<object>());
+            Assert.Null(channel.ReadInbound());
+            Assert.Null(channel.ReadOutbound());
 
             // When
             channel.Read();
@@ -70,8 +70,8 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             Assert.Equal(text2, message2.Text());
 
             // And - no more messages were handled or propagated
-            Assert.Null(channel.ReadInbound<object>());
-            Assert.Null(channel.ReadOutbound<object>());
+            Assert.Null(channel.ReadInbound());
+            Assert.Null(channel.ReadOutbound());
 
             // When
             channel.Read();
@@ -83,8 +83,8 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             // And - no more messages were handled or propagated
             // Precisely, ping frame 'text4' was NOT read or handled.
             // It would be handle ONLY on the next 'channel.read()' call.
-            Assert.Null(channel.ReadInbound<object>());
-            Assert.Null(channel.ReadOutbound<object>());
+            Assert.Null(channel.ReadInbound());
+            Assert.Null(channel.ReadOutbound());
 
             // Cleanup
             response1.Release();

@@ -101,7 +101,7 @@ namespace DotNetty.Handlers.Tls
             {
                 // Only continue to loop if the handler was not removed in the meantime.
                 // See https://github.com/netty/netty/issues/5860
-                while (!context.Removed)
+                while (!context.IsRemoved)
                 {
                     List<object> messages = _pendingUnencryptedWrites.Current;
                     if (messages is null || 0u >= (uint)messages.Count)

@@ -76,7 +76,7 @@
                 var pipeline = ch.Pipeline;
 
                 _ = pipeline.FireChannelRegistered();
-                if (ch.Active)
+                if (ch.IsActive)
                 {
                     _ = pipeline.FireChannelActive();
                 }
@@ -117,14 +117,14 @@
                 // Just set to false as removing from an underlying queue would even be more expensive.
                 ch._readCompletePending = false;
 
-                bool wasActive = ch.Active;
+                bool wasActive = ch.IsActive;
 
                 // There is no need to update the local window as once the stream is closed all the pending bytes will be
                 // given back to the connection window by the controller itself.
 
                 // Only ever send a reset frame if the connection is still alive and if the stream was created before
                 // as otherwise we may send a RST on a stream in an invalid state and cause a connection error.
-                if (ch.Parent.Active && !ReadEOS && Http2CodecUtil.IsStreamIdValid(ch._stream.Id))
+                if (ch.Parent.IsActive && !ReadEOS && Http2CodecUtil.IsStreamIdValid(ch._stream.Id))
                 {
                     IHttp2StreamFrame resetFrame = new DefaultHttp2ResetFrame(Http2Error.Cancel) { Stream = ch._stream };
                     Write(resetFrame, VoidPromise());
@@ -214,7 +214,7 @@
             public void BeginRead()
             {
                 var ch = _channel;
-                if (!ch.Active) { return; }
+                if (!ch.IsActive) { return; }
 
                 UpdateLocalWindowIfNeeded();
 
@@ -370,7 +370,7 @@
                 }
 
                 var ch = _channel;
-                if (!ch.Active ||
+                if (!ch.IsActive ||
                     // Once the outbound side was closed we should not allow header / data frames
                     ch.OutboundClosed && (msg is IHttp2HeadersFrame || msg is IHttp2DataFrame))
                 {
@@ -483,7 +483,7 @@
                     var error = WrapStreamClosedError(cause);
                     if (error is IOException)
                     {
-                        if (_channel._config.AutoClose)
+                        if (_channel._config.IsAutoClose)
                         {
                             // Close channel if needed.
                             CloseForcibly();

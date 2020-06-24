@@ -20,17 +20,9 @@ namespace DotNetty.Transport.Channels
         /// <param name="logger">The <see cref="IInternalLogger"/> to use to log a failure message.</param>
         public static void SafeSetSuccess(IPromise promise, IInternalLogger logger)
         {
-            if (!promise.IsVoid && !promise.TryComplete() && logger.WarnEnabled)
+            if (!promise.IsVoid && !promise.TryComplete() && logger is object)
             {
-                var err = promise.Task.Exception?.InnerException;
-                if (err is null)
-                {
-                    logger.FailedToMarkAPromiseAsSuccess(promise);
-                }
-                else
-                {
-                    logger.FailedToMarkAPromiseAsSuccessFailed(promise, err);
-                }
+                logger.FailedToMarkAPromiseAsSuccess(promise);
             }
         }
 
@@ -43,17 +35,9 @@ namespace DotNetty.Transport.Channels
         /// <param name="logger">The <see cref="IInternalLogger"/> to use to log a failure message.</param>
         public static void SafeSetFailure(IPromise promise, Exception cause, IInternalLogger logger)
         {
-            if (!promise.IsVoid && !promise.TrySetException(cause) && logger.WarnEnabled)
+            if (!promise.IsVoid && !promise.TrySetException(cause) && logger is object)
             {
-                var err = promise.Task.Exception?.InnerException;
-                if (err is null)
-                {
-                    logger.FailedToMarkAPromiseAsFailure(promise, cause);
-                }
-                else
-                {
-                    logger.FailedToMarkAPromiseAsFailureFailed(promise, cause, err);
-                }
+                logger.FailedToMarkAPromiseAsFailure(promise, cause);
             }
         }
 
@@ -73,16 +57,18 @@ namespace DotNetty.Transport.Channels
             {
                 await closeTask;
             }
-            catch (TaskCanceledException)
-            {
-            }
-            catch (Exception ex) 
+            catch (TaskCanceledException) { }
+#if DEBUG
+            catch (Exception ex)
             {
                 if (Log.DebugEnabled)
                 {
                     Log.FailedToCloseChannelCleanly(channelObject, ex);
                 }
             }
+#else
+            catch (Exception) { }
+#endif
         }
     }
 }

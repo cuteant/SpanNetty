@@ -53,13 +53,13 @@ namespace DotNetty.Codecs.Http.Tests
             SetupMessageLength(setSelfDefinedMessageLength, response);
 
             Assert.True(channel.WriteInbound(request));
-            var requestForwarded = channel.ReadInbound<object>();
+            var requestForwarded = channel.ReadInbound();
             Assert.Equal(request, requestForwarded);
             ReferenceCountUtil.Release(requestForwarded);
             channel.WriteAndFlushAsync(response).Wait(TimeSpan.FromSeconds(1));
             var writtenResponse = channel.ReadOutbound<IHttpResponse>();
 
-            Assert.Equal(isKeepAliveResponseExpected, channel.Open);
+            Assert.Equal(isKeepAliveResponseExpected, channel.IsOpen);
             Assert.Equal(isKeepAliveResponseExpected, HttpUtil.IsKeepAlive(writtenResponse));
             ReferenceCountUtil.Release(writtenResponse);
             Assert.False(channel.FinishAndReleaseAll());
@@ -79,7 +79,7 @@ namespace DotNetty.Codecs.Http.Tests
             channel.WriteAndFlushAsync(response).Wait(TimeSpan.FromSeconds(1));
             var writtenResponse = channel.ReadOutbound<IHttpResponse>();
 
-            Assert.False(channel.Open);
+            Assert.False(channel.IsOpen);
             ReferenceCountUtil.Release(writtenResponse);
             Assert.False(channel.FinishAndReleaseAll());
         }
@@ -103,23 +103,23 @@ namespace DotNetty.Codecs.Http.Tests
 
             Assert.True(channel.WriteInbound(firstRequest, secondRequest, finalRequest));
 
-            var requestForwarded = channel.ReadInbound<object>();
+            var requestForwarded = channel.ReadInbound();
             Assert.Equal(firstRequest, requestForwarded);
             ReferenceCountUtil.Release(requestForwarded);
 
             channel.WriteAndFlushAsync(response.Duplicate().Retain()).Wait(TimeSpan.FromSeconds(1));
             var firstResponse = channel.ReadOutbound<IHttpResponse>();
-            Assert.True(channel.Open);
+            Assert.True(channel.IsOpen);
             Assert.True(HttpUtil.IsKeepAlive(firstResponse));
             ReferenceCountUtil.Release(firstResponse);
 
-            requestForwarded = channel.ReadInbound<object>();
+            requestForwarded = channel.ReadInbound();
             Assert.Equal(secondRequest, requestForwarded);
             ReferenceCountUtil.Release(requestForwarded);
 
             channel.WriteAndFlushAsync(informationalResp).Wait(TimeSpan.FromSeconds(1));
             var writtenInfoResp = channel.ReadOutbound<IHttpResponse>();
-            Assert.True(channel.Open);
+            Assert.True(channel.IsOpen);
             Assert.True(HttpUtil.IsKeepAlive(writtenInfoResp));
             ReferenceCountUtil.Release(writtenInfoResp);
 
@@ -134,11 +134,11 @@ namespace DotNetty.Codecs.Http.Tests
             SetupMessageLength(setSelfDefinedMessageLength, response);
             channel.WriteAndFlushAsync(response.Duplicate().Retain()).Wait(TimeSpan.FromSeconds(1));
             var secondResponse = channel.ReadOutbound<IHttpResponse>();
-            Assert.Equal(isKeepAliveResponseExpected, channel.Open);
+            Assert.Equal(isKeepAliveResponseExpected, channel.IsOpen);
             Assert.Equal(isKeepAliveResponseExpected, HttpUtil.IsKeepAlive(secondResponse));
             ReferenceCountUtil.Release(secondResponse);
 
-            requestForwarded = channel.ReadInbound<object>();
+            requestForwarded = channel.ReadInbound();
             Assert.Equal(finalRequest, requestForwarded);
             ReferenceCountUtil.Release(requestForwarded);
 
@@ -146,7 +146,7 @@ namespace DotNetty.Codecs.Http.Tests
             {
                 channel.WriteAndFlushAsync(response).Wait(TimeSpan.FromSeconds(1));
                 var finalResponse = channel.ReadOutbound<IHttpResponse>();
-                Assert.False(channel.Open);
+                Assert.False(channel.IsOpen);
                 Assert.False(HttpUtil.IsKeepAlive(finalResponse));
             }
             ReferenceCountUtil.Release(response);

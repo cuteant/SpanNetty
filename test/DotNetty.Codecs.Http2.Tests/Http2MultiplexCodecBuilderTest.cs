@@ -75,10 +75,10 @@ namespace DotNetty.Codecs.Http2.Tests
         public void MultipleOutboundStreams()
         {
             IHttp2StreamChannel childChannel1 = this.NewOutboundStream(new TestChannelInitializer());
-            Assert.True(childChannel1.Active);
+            Assert.True(childChannel1.IsActive);
             Assert.False(Http2CodecUtil.IsStreamIdValid(childChannel1.Stream.Id));
             IHttp2StreamChannel childChannel2 = this.NewOutboundStream(new TestChannelInitializer());
-            Assert.True(childChannel2.Active);
+            Assert.True(childChannel2.IsActive);
             Assert.False(Http2CodecUtil.IsStreamIdValid(childChannel2.Stream.Id));
 
             IHttp2Headers headers1 = new DefaultHttp2Headers();
@@ -109,8 +109,8 @@ namespace DotNetty.Codecs.Http2.Tests
         public void CreateOutboundStream()
         {
             IChannel childChannel = this.NewOutboundStream(new TestChannelInitializer());
-            Assert.True(childChannel.Registered);
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsRegistered);
+            Assert.True(childChannel.IsActive);
 
             IHttp2Headers headers = new DefaultHttp2Headers();
             childChannel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(headers));

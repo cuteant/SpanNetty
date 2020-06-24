@@ -62,10 +62,10 @@ namespace DotNetty.Codecs.Http2.Tests
                 serverConnectedChannel.CloseAsync().GetAwaiter().GetResult();
                 _serverConnectedChannel = null;
             }
-            Task.WhenAll(
-                _sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
-                _sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
-                _bs.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5))).GetAwaiter().GetResult();
+            Task.WaitAll(
+                _sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
+                _sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
+                _bs.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)));
         }
 
         [Fact]
@@ -227,7 +227,7 @@ namespace DotNetty.Codecs.Http2.Tests
             }
             finally
             {
-                executorService.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
+                executorService.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
             }
         }
 

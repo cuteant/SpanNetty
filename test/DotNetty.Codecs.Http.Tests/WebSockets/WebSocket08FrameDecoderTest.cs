@@ -47,13 +47,13 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
                 Assert.True(encoderChannel.WriteOutbound(new CloseWebSocketFrame(statusCode, AsciiString.Of("Bye"))));
                 Assert.True(encoderChannel.Finish());
                 var serializedCloseFrame = encoderChannel.ReadOutbound<IByteBuffer>();
-                Assert.Null(encoderChannel.ReadOutbound<object>());
+                Assert.Null(encoderChannel.ReadOutbound());
 
                 Assert.True(decoderChannel.WriteInbound(serializedCloseFrame));
                 Assert.True(decoderChannel.Finish());
 
                 var outputFrame = decoderChannel.ReadInbound<CloseWebSocketFrame>();
-                Assert.Null(decoderChannel.ReadOutbound<object>());
+                Assert.Null(decoderChannel.ReadOutbound());
                 try
                 {
                     Assert.Equal(statusCode, outputFrame.StatusCode());

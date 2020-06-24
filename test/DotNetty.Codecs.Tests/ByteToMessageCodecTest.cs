@@ -32,8 +32,8 @@
             IByteBuffer buf = ch.ReadInbound<IByteBuffer>();
             Assert.Equal(Unpooled.WrappedBuffer(new byte[] { (byte)'0' }), buf);
             buf.Release();
-            Assert.Null(ch.ReadInbound<object>());
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadInbound());
+            Assert.Null(ch.ReadOutbound());
         }
 
         sealed class IntegerByteToMessageCodec : ByteToMessageCodec<int>

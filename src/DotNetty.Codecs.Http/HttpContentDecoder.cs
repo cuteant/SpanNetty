@@ -200,7 +200,7 @@ namespace DotNetty.Codecs.Http
             }
             finally
             {
-                if (needRead && !context.Channel.Configuration.AutoRead)
+                if (needRead && !context.Channel.Configuration.IsAutoRead)
                 {
                     _ = context.Read();
                 }

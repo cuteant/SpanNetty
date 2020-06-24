@@ -3,6 +3,7 @@
 
 namespace DotNetty.Transport.Channels.Sockets
 {
+    using System;
     using System.Collections.Generic;
     using System.Net.Sockets;
 
@@ -13,6 +14,8 @@ namespace DotNetty.Transport.Channels.Sockets
         where TChannel : AbstractSocketMessageChannel<TChannel, TUnsafe>
         where TUnsafe : AbstractSocketMessageChannel<TChannel, TUnsafe>.SocketMessageUnsafe, new()
     {
+        private bool _inputShutdown;
+
         /// <summary>
         /// Creates a new <see cref="AbstractSocketMessageChannel{TChannel, TUnsafe}"/> instance.
         /// </summary>
@@ -24,6 +27,12 @@ namespace DotNetty.Transport.Channels.Sockets
         }
 
         //protected override IChannelUnsafe NewUnsafe() => new SocketMessageUnsafe(this); ## 苦竹 屏蔽 ##
+
+        protected override void DoBeginRead()
+        {
+            if (_inputShutdown) { return; }
+            base.DoBeginRead();
+        }
 
         protected override void DoWrite(ChannelOutboundBuffer input)
         {
@@ -77,6 +86,22 @@ namespace DotNetty.Transport.Channels.Sockets
         /// Returns <c>true</c> if we should continue the write loop on a write error.
         /// </summary>
         protected virtual bool ContinueOnWriteError => false;
+
+        protected virtual bool CloseOnReadError(Exception cause)
+        {
+            if (!IsActive)
+            {
+                // If the channel is not active anymore for whatever reason we should not try to continue reading.
+                return true;
+            }
+            if (cause is SocketException asSocketException && asSocketException.SocketErrorCode != SocketError.TryAgain) // todo: other conditions for not closing message-based socket?
+            {
+                // ServerChannel should not be closed even on IOException because it can often continue
+                // accepting incoming connections. (e.g. too many open files)
+                return !(this is IServerChannel);
+            }
+            return true;
+        }
 
         /// <summary>
         /// Reads messages into the given list and returns the amount which was read.

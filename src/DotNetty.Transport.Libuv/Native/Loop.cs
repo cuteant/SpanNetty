@@ -138,17 +138,25 @@ namespace DotNetty.Transport.Libuv.Native
             //https://github.com/libuv/libuv/blob/v1.x/test/task.h#L190
 
             int count = 0;
+#if DEBUG
             var debugEnabled = Logger.DebugEnabled;
+#endif
             while (true)
             {
+#if DEBUG
                 if (debugEnabled) Logger.LoopWalkingHandles(handle, count);
+#endif
                 NativeMethods.uv_walk(handle, WalkCallback, handle);
 
+#if DEBUG
                 if (debugEnabled) Logger.LoopRunningDefaultToCallCloseCallbacks(handle, count);
+#endif
                 _ = NativeMethods.uv_run(handle, uv_run_mode.UV_RUN_DEFAULT);
 
                 int result = NativeMethods.uv_loop_close(handle);
+#if DEBUG
                 if (debugEnabled) Logger.LoopCloseResult(handle, result, count);
+#endif
                 if (0u >= (uint)result)
                 {
                     break;
@@ -193,7 +201,9 @@ namespace DotNetty.Transport.Libuv.Native
                 // All handles must implement IDisposable
                 var target = NativeHandle.GetTarget<IDisposable>(handle);
                 target?.Dispose();
+#if DEBUG
                 if (Logger.DebugEnabled) Logger.LoopWalkCallbackDisposed(handle, loopHandle, target);
+#endif
             }
             catch (Exception exception)
             {

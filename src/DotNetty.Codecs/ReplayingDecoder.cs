@@ -381,7 +381,7 @@ namespace DotNetty.Codecs
                         //
                         // See:
                         // - https://github.com/netty/netty/issues/4635
-                        if (context.Removed) { break; }
+                        if (context.IsRemoved) { break; }
                         outSize = 0;
                     }
 
@@ -395,7 +395,7 @@ namespace DotNetty.Codecs
                         // If it was removed, it is not safe to continue to operate on the buffer.
                         //
                         // See https://github.com/netty/netty/issues/1664
-                        if (context.Removed) { break; }
+                        if (context.IsRemoved) { break; }
 
                         if (_replayRequested)
                         {
@@ -435,7 +435,7 @@ namespace DotNetty.Codecs
                         // If it was removed, it is not safe to continue to operate on the buffer.
                         //
                         // See https://github.com/netty/netty/issues/1664
-                        if (context.Removed) { break; }
+                        if (context.IsRemoved) { break; }
 
                         // Return to the checkpoint (or oldPosition) and retry.
                         int restorationPoint = _checkpoint;

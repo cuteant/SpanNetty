@@ -21,16 +21,24 @@ namespace DotNetty.Transport.Channels.Sockets
             void CloseOnRead()
             {
                 var ch = _channel;
-                ch.ShutdownInput();
-                if (ch.Open)
+                if (!ch.IsOpen) { return; }
+
+                if (!ch.IsInputShutdown)
                 {
-                    // todo: support half-closure
-                    //if (bool.TrueString.Equals(this.channel.Configuration.getOption(ChannelOption.ALLOW_HALF_CLOSURE))) {
-                    //    key.interestOps(key.interestOps() & ~readInterestOp);
-                    //    this.channel.Pipeline.FireUserEventTriggered(ChannelInputShutdownEvent.INSTANCE);
-                    //} else {
-                    Close(VoidPromise());
-                    //}
+                    if (IsAllowHalfClosure(ch.Configuration))
+                    {
+                        _ = ch.ShutdownInputAsync();
+                        ch.Pipeline.FireUserEventTriggered(ChannelInputShutdownEvent.Instance);
+                    }
+                    else
+                    {
+                        Close(VoidPromise());
+                    }
+                }
+                else
+                {
+                    ch._inputClosedSeenErrorOnRead = true;
+                    ch.Pipeline.FireUserEventTriggered(ChannelInputShutdownReadComplete.Instance);
                 }
             }
 
@@ -65,7 +73,14 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     return; // read was signaled as a result of channel closure
                 }
+
                 IChannelConfiguration config = ch.Configuration;
+                if (ch.ShouldBreakReadReady(config))
+                {
+                    ch.ClearReadPending();
+                    return;
+                }
+
                 IChannelPipeline pipeline = ch.Pipeline;
                 IByteBufferAllocator allocator = config.Allocator;
                 IRecvByteBufAllocatorHandle allocHandle = RecvBufAllocHandle;
@@ -80,14 +95,13 @@ namespace DotNetty.Transport.Channels.Sockets
                     do
                     {
                         byteBuf = allocHandle.Allocate(allocator);
-                        //int writable = byteBuf.WritableBytes;
                         allocHandle.LastBytesRead = ch.DoReadBytes(byteBuf);
-                        if (allocHandle.LastBytesRead <= 0)
+                        if ((uint)(allocHandle.LastBytesRead - 1) > SharedConstants.TooBigOrNegative) // <= 0
                         {
                             // nothing was read -> release the buffer.
                             _ = byteBuf.Release();
                             byteBuf = null;
-                            close = allocHandle.LastBytesRead < 0;
+                            close = (uint)allocHandle.LastBytesRead > SharedConstants.TooBigOrNegative; // < 0
                             if (close)
                             {
                                 // There is nothing left to read as we received an EOF.
@@ -124,7 +138,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     // /// The user called Channel.read() or ChannelHandlerContext.read() input channelReadComplete(...) method
                     //
                     // See https://github.com/netty/netty/issues/2254
-                    if (!close && (ch.ReadPending || config.AutoRead))
+                    if (!close && (ch.ReadPending || config.IsAutoRead))
                     {
                         ch.DoBeginRead();
                     }

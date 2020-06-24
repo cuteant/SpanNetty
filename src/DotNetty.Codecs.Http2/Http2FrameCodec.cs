@@ -612,7 +612,9 @@ namespace DotNetty.Codecs.Http2
             // Since this is likely to be normal we log at DEBUG level.
             if (streamException.Error == Http2Error.StreamClosed)
             {
+#if DEBUG
                 if (Logger.DebugEnabled) { Logger.StreamExceptionThrownForUnkownStreamD(streamException.StreamId, cause); }
+#endif
             }
             else
             {

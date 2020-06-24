@@ -25,10 +25,11 @@
 
         public void Dispose()
         {
-            _groupA.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
-            _groupB.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
-            _groupA.TerminationCompletion.GetAwaiter().GetResult();
-            _groupB.TerminationCompletion.GetAwaiter().GetResult();
+            Task.WaitAll(
+                _groupA.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
+                _groupB.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5))
+            );
+            Task.WaitAll(_groupA.TerminationCompletion, _groupB.TerminationCompletion);
         }
 
         [Fact]
@@ -141,7 +142,7 @@
 
             // Connect to the server using the asynchronous resolver.
             var connectFuture = bootstrapA.ConnectAsync(localAddress);
-            
+
             // Should fail with the UnknownHostException.
             Assert.True(TaskUtil.WaitAsync(connectFuture, TimeSpan.FromSeconds(10)).GetAwaiter().GetResult());
             Assert.False(connectFuture.IsSuccess());
@@ -173,7 +174,7 @@
                 }
                 else
                 {
-                    return Task.FromException<EndPoint>(new System.Net.Sockets.SocketException());
+                    return TaskUtil.FromException<EndPoint>(new System.Net.Sockets.SocketException());
                 }
             }
         }

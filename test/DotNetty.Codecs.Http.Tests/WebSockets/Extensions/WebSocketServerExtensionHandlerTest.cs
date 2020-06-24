@@ -243,7 +243,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets.Extensions
             failurePromise.SetException(new IOException("Cannot write response"));
 
             // test
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.NotNull(ch.Pipeline.Context(extensionHandler));
             Assert.True(ch.Finish());
         }

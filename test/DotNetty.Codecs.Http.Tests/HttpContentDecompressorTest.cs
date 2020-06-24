@@ -15,7 +15,7 @@
             var readCalled = new AtomicInteger();
             EmbeddedChannel channel = new EmbeddedChannel(new TestHandler(readCalled), new HttpContentDecompressor(), new DecompressorHandler());
 
-            channel.Configuration.AutoRead = false;
+            channel.Configuration.IsAutoRead = false;
 
             readCalled.Value = 0;
             IHttpResponse response = new DefaultHttpResponse(HttpVersion.Http11, HttpResponseStatus.OK);
@@ -28,7 +28,7 @@
             // we triggered read explicitly
             Assert.Equal(1, readCalled.Value);
 
-            Assert.True(channel.ReadInbound<object>() is IHttpResponse);
+            Assert.True(channel.ReadInbound() is IHttpResponse);
 
             Assert.False(channel.WriteInbound(new DefaultHttpContent(Unpooled.Empty)));
 

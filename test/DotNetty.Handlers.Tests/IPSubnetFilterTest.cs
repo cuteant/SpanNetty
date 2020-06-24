@@ -98,12 +98,12 @@ namespace DotNetty.Handlers.Tests
             }
             //waiting finish of ContinueWith for chDeny.ChannelRejected
             Thread.Sleep(300);
-            Assert.False(chDeny.Active);
-            Assert.False(chDeny.Open);
+            Assert.False(chDeny.IsActive);
+            Assert.False(chDeny.IsOpen);
             RuleBasedIPFilter allowHandler = new TestAllowFilter(filter0);
             EmbeddedChannel chAllow = new TestIpFilterRuleHandlerChannel2(allowHandler);
-            Assert.True(chAllow.Active);
-            Assert.True(chAllow.Open);
+            Assert.True(chAllow.IsActive);
+            Assert.True(chAllow.IsOpen);
         }
         
         [Fact]
@@ -111,11 +111,11 @@ namespace DotNetty.Handlers.Tests
             var handler = new UniqueIPFilter();
 
             EmbeddedChannel ch1 = new TestUniqueIPFilterHandlerChannel1(handler);
-            Assert.True(ch1.Active);
+            Assert.True(ch1.IsActive);
             EmbeddedChannel ch2 = new TestUniqueIPFilterHandlerChannel2(handler);
-            Assert.True(ch2.Active);
+            Assert.True(ch2.IsActive);
             EmbeddedChannel ch3 =new TestUniqueIPFilterHandlerChannel1( handler);
-            Assert.False(ch3.Active);
+            Assert.False(ch3.IsActive);
 
             // false means that no data is left to read/write
             Assert.False(ch1.Finish());
@@ -124,7 +124,7 @@ namespace DotNetty.Handlers.Tests
             Thread.Sleep(300);
 
             EmbeddedChannel ch4 = new TestUniqueIPFilterHandlerChannel1(handler);
-            Assert.True(ch4.Active);
+            Assert.True(ch4.IsActive);
         }
 
         #region private
@@ -172,7 +172,7 @@ namespace DotNetty.Handlers.Tests
 
             protected override Task ChannelRejected(IChannelHandlerContext ctx, IPEndPoint remoteAddress)
             {
-                Assert.True(ctx.Channel.Active);
+                Assert.True(ctx.Channel.IsActive);
                 Assert.True(ctx.Channel.IsWritable);
                 Assert.Equal(this.ip, remoteAddress.Address.ToString());
                 return ctx.WriteAndFlushAsync(Unpooled.WrappedBuffer(this.message));
@@ -198,7 +198,7 @@ namespace DotNetty.Handlers.Tests
             {
             }
 
-            protected override EndPoint RemoteAddressInternal => this.Active 
+            protected override EndPoint RemoteAddressInternal => this.IsActive 
                 ? CreateIPEndPoint(TestUniqueIPFilterHandlerConstants.IP1, 5421) 
                 : null;
         }
@@ -209,7 +209,7 @@ namespace DotNetty.Handlers.Tests
             {
             }
 
-            protected override EndPoint RemoteAddressInternal => this.Active 
+            protected override EndPoint RemoteAddressInternal => this.IsActive 
                 ? CreateIPEndPoint(TestUniqueIPFilterHandlerConstants.IP2, 5421) 
                 : null;
         }
@@ -220,7 +220,7 @@ namespace DotNetty.Handlers.Tests
             {
             }
 
-            protected override EndPoint RemoteAddressInternal => this.Active 
+            protected override EndPoint RemoteAddressInternal => this.IsActive 
                 ? CreateIPEndPoint(TestIPFilterRuleHandlerConstants.IP1, 5421) 
                 : null;
         }
@@ -231,7 +231,7 @@ namespace DotNetty.Handlers.Tests
             {
             }
 
-            protected override EndPoint RemoteAddressInternal => this.Active 
+            protected override EndPoint RemoteAddressInternal => this.IsActive 
                 ? CreateIPEndPoint(TestIPFilterRuleHandlerConstants.IP2, 5421) 
                 : null;
         }

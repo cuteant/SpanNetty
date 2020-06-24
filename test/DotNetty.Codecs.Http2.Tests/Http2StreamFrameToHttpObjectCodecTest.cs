@@ -29,7 +29,7 @@ namespace DotNetty.Codecs.Http2.Tests
             var headersFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
             Assert.Equal("200", headersFrame.Headers.Status.ToString());
             Assert.True(headersFrame.IsEndStream);
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -43,7 +43,7 @@ namespace DotNetty.Codecs.Http2.Tests
             var headersFrame = ch.ReadOutbound<IHttp2HeadersFrame>();
             Assert.Equal("100", headersFrame.Headers.Status.ToString());
             Assert.False(headersFrame.IsEndStream);
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -91,7 +91,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 dataFrame.Release();
             }
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -112,7 +112,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal("value", trailersFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(trailersFrame.IsEndStream);
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -145,7 +145,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal("value", trailersFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(trailersFrame.IsEndStream);
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -160,7 +160,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal("200", headersFrame.Headers.Status.ToString());
             Assert.False(headersFrame.IsEndStream);
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -183,7 +183,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 dataFrame.Release();
             }
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -205,7 +205,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 emptyFrame.Release();
             }
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -228,7 +228,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 dataFrame.Release();
             }
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -245,7 +245,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal("value", headerFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(headerFrame.IsEndStream);
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -274,7 +274,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal("value", headerFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(headerFrame.IsEndStream);
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -297,7 +297,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.False(request is IFullHttpRequest);
             Assert.True(HttpUtil.IsTransferEncodingChunked(request));
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -321,7 +321,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.False(request is IFullHttpRequest);
             Assert.False(HttpUtil.IsTransferEncodingChunked(request));
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -352,7 +352,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 request.Release();
             }
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -376,7 +376,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 trailers.Release();
             }
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -398,7 +398,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 content.Release();
             }
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -420,7 +420,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 content.Release();
             }
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -439,7 +439,7 @@ namespace DotNetty.Codecs.Http2.Tests
             try
             {
                 Assert.Equal(goaway, frame);
-                Assert.Null(ch.ReadInbound<object>());
+                Assert.Null(ch.ReadInbound());
                 Assert.False(ch.Finish());
             }
             finally
@@ -464,7 +464,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal("/hello/world", headers.Path.ToString());
             Assert.True(headersFrame.IsEndStream);
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -547,7 +547,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 dataFrame.Release();
             }
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -574,7 +574,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal("value", trailersFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(trailersFrame.IsEndStream);
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -613,7 +613,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal("value", trailersFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(trailersFrame.IsEndStream);
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -632,7 +632,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal("/hello/world", headers.Path);
             Assert.False(headersFrame.IsEndStream);
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -655,7 +655,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 dataFrame.Release();
             }
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -677,7 +677,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 emptyFrame.Release();
             }
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -700,7 +700,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 dataFrame.Release();
             }
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -717,7 +717,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal("value", headerFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(headerFrame.IsEndStream);
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -746,7 +746,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal("value", headerFrame.Headers.Get((AsciiString)"key", null));
             Assert.True(headerFrame.IsEndStream);
 
-            Assert.Null(ch.ReadOutbound<object>());
+            Assert.Null(ch.ReadOutbound());
             Assert.False(ch.Finish());
         }
 
@@ -771,7 +771,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 response.Release();
             }
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -791,7 +791,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.False(response is IFullHttpResponse);
             Assert.True(HttpUtil.IsTransferEncodingChunked(response));
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -812,7 +812,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.False(response is IFullHttpResponse);
             Assert.False(HttpUtil.IsTransferEncodingChunked(response));
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -872,7 +872,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 response.Release();
             }
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -896,7 +896,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 trailers.Release();
             }
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -918,7 +918,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 content.Release();
             }
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -940,7 +940,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 content.Release();
             }
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             Assert.False(ch.Finish());
         }
 
@@ -953,13 +953,13 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.True(ch.WriteInbound(reset));
             Assert.True(ch.WriteInbound(goaway.Retain()));
 
-            Assert.Equal(reset, ch.ReadInbound<object>());
+            Assert.Equal(reset, ch.ReadInbound<IHttp2ResetFrame>());
 
             IHttp2GoAwayFrame frame = ch.ReadInbound<IHttp2GoAwayFrame>();
             try
             {
                 Assert.Equal(goaway, frame);
-                Assert.Null(ch.ReadInbound<object>());
+                Assert.Null(ch.ReadInbound());
                 Assert.False(ch.Finish());
             }
             finally

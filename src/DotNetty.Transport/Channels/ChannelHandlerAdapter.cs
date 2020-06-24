@@ -5,6 +5,7 @@ namespace DotNetty.Transport.Channels
 {
     using System;
     using System.Net;
+    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
 
@@ -33,12 +34,10 @@ namespace DotNetty.Transport.Channels
         [Skip]
         public virtual void ChannelWritabilityChanged(IChannelHandlerContext context) => context.FireChannelWritabilityChanged();
 
-        [Skip]
         public virtual void HandlerAdded(IChannelHandlerContext context)
         {
         }
 
-        [Skip]
         public virtual void HandlerRemoved(IChannelHandlerContext context)
         {
         }
@@ -75,9 +74,10 @@ namespace DotNetty.Transport.Channels
 
         public virtual bool IsSharable => false;
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         protected void EnsureNotSharable()
         {
-            if (this.IsSharable)
+            if (IsSharable)
             {
                 ThrowHelper.ThrowInvalidOperationException_EnsureNotSharable(this);
             }

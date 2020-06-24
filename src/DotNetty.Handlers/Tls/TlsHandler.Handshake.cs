@@ -134,7 +134,7 @@ namespace DotNetty.Handlers.Tls
                 var capturedContext = self.CapturedContext;
                 _ = capturedContext.FireUserEventTriggered(TlsHandshakeCompletionEvent.Success);
 
-                if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !capturedContext.Channel.Configuration.AutoRead)
+                if (oldState.Has(TlsHandlerState.ReadRequestedBeforeAuthenticated) && !capturedContext.Channel.Configuration.IsAutoRead)
                 {
                     _ = capturedContext.Read();
                 }

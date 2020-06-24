@@ -45,7 +45,7 @@
             object msg = new object();
             var write = channel.WriteAndFlushAsync(msg);
             Assert.Same(firstWriteException, write.Exception.InnerException);
-            Assert.Same(msg, channel.ReadOutbound<object>());
+            Assert.Same(msg, channel.ReadOutbound());
             Assert.False(channel.Finish());
         }
 

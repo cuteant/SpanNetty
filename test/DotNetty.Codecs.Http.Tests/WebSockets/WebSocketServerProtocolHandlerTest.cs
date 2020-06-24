@@ -188,23 +188,23 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             EmbeddedChannel client = CreateClient();
             EmbeddedChannel server = CreateServer();
 
-            Assert.False(server.WriteInbound(client.ReadOutbound<object>()));
-            Assert.False(client.WriteInbound(server.ReadOutbound<object>()));
+            Assert.False(server.WriteInbound(client.ReadOutbound()));
+            Assert.False(client.WriteInbound(server.ReadOutbound()));
 
             // When server channel closed with explicit close-frame
             Assert.True(server.WriteOutbound(new CloseWebSocketFrame(closeStatus)));
             server.CloseAsync();
 
             // Then client receives provided close-frame
-            Assert.True(client.WriteInbound(server.ReadOutbound<object>()));
-            Assert.False(server.Open);
+            Assert.True(client.WriteInbound(server.ReadOutbound()));
+            Assert.False(server.IsOpen);
 
             CloseWebSocketFrame closeMessage = client.ReadInbound<CloseWebSocketFrame>();
             Assert.Equal(closeMessage.StatusCode(), closeStatus.Code);
             closeMessage.Release();
 
             client.CloseAsync();
-            Assert.True(ReferenceCountUtil.Release(client.ReadOutbound<object>()));
+            Assert.True(ReferenceCountUtil.Release(client.ReadOutbound()));
             Assert.False(client.FinishAndReleaseAll());
             Assert.False(server.FinishAndReleaseAll());
         }
@@ -215,22 +215,22 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             EmbeddedChannel client = CreateClient();
             EmbeddedChannel server = CreateServer();
 
-            Assert.False(server.WriteInbound(client.ReadOutbound<object>()));
-            Assert.False(client.WriteInbound(server.ReadOutbound<object>()));
+            Assert.False(server.WriteInbound(client.ReadOutbound()));
+            Assert.False(client.WriteInbound(server.ReadOutbound()));
 
             // When server channel closed without explicit close-frame
             server.CloseAsync();
 
             // Then client receives NORMAL_CLOSURE close-frame
-            Assert.True(client.WriteInbound(server.ReadOutbound<object>()));
-            Assert.False(server.Open);
+            Assert.True(client.WriteInbound(server.ReadOutbound()));
+            Assert.False(server.IsOpen);
 
             CloseWebSocketFrame closeMessage = client.ReadInbound<CloseWebSocketFrame>();
             Assert.Equal(closeMessage.StatusCode(), WebSocketCloseStatus.NormalClosure.Code);
             closeMessage.Release();
 
             client.CloseAsync();
-            Assert.True(ReferenceCountUtil.Release(client.ReadOutbound<object>()));
+            Assert.True(ReferenceCountUtil.Release(client.ReadOutbound()));
             Assert.False(client.FinishAndReleaseAll());
             Assert.False(server.FinishAndReleaseAll());
         }
@@ -242,17 +242,17 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             EmbeddedChannel client = CreateClient();
             EmbeddedChannel server = CreateServer();
 
-            Assert.False(server.WriteInbound(client.ReadOutbound<object>()));
-            Assert.False(client.WriteInbound(server.ReadOutbound<object>()));
+            Assert.False(server.WriteInbound(client.ReadOutbound()));
+            Assert.False(client.WriteInbound(server.ReadOutbound()));
 
             // When client channel closed with explicit close-frame
             Assert.True(client.WriteOutbound(new CloseWebSocketFrame(closeStatus)));
             client.CloseAsync();
 
             // Then client receives provided close-frame
-            Assert.False(server.WriteInbound(client.ReadOutbound<object>()));
-            Assert.False(client.Open);
-            Assert.False(server.Open);
+            Assert.False(server.WriteInbound(client.ReadOutbound()));
+            Assert.False(client.IsOpen);
+            Assert.False(server.IsOpen);
 
             CloseWebSocketFrame closeMessage = Decode<CloseWebSocketFrame>(server.ReadOutbound<IByteBuffer>());
             Assert.Equal(closeMessage.StatusCode(), closeStatus.Code);
@@ -268,16 +268,16 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             EmbeddedChannel client = CreateClient();
             EmbeddedChannel server = CreateServer();
 
-            Assert.False(server.WriteInbound(client.ReadOutbound<object>()));
-            Assert.False(client.WriteInbound(server.ReadOutbound<object>()));
+            Assert.False(server.WriteInbound(client.ReadOutbound()));
+            Assert.False(client.WriteInbound(server.ReadOutbound()));
 
             // When client channel closed without explicit close-frame
             client.CloseAsync();
 
             // Then server receives NORMAL_CLOSURE close-frame
-            Assert.False(server.WriteInbound(client.ReadOutbound<object>()));
-            Assert.False(client.Open);
-            Assert.False(server.Open);
+            Assert.False(server.WriteInbound(client.ReadOutbound()));
+            Assert.False(client.IsOpen);
+            Assert.False(server.IsOpen);
 
             CloseWebSocketFrame closeMessage = Decode<CloseWebSocketFrame>(server.ReadOutbound<IByteBuffer>());
             Assert.Equal(closeMessage, new CloseWebSocketFrame(WebSocketCloseStatus.NormalClosure));
@@ -324,7 +324,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
         {
             EmbeddedChannel ch = new EmbeddedChannel(new WebSocket13FrameDecoder(true, false, 65536, true));
             Assert.True(ch.WriteInbound(input));
-            var decoded = ch.ReadInbound<object>();
+            var decoded = ch.ReadInbound();
             Assert.NotNull(decoded);
             Assert.False(ch.Finish());
             return decoded as T;

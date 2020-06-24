@@ -205,7 +205,7 @@ namespace DotNetty.Codecs.Http2
             {
                 try
                 {
-                    if (ctx.Channel.Active && ReadClientPrefaceString(input) && VerifyFirstFrameIsSettings(input))
+                    if (ctx.Channel.IsActive && ReadClientPrefaceString(input) && VerifyFirstFrameIsSettings(input))
                     {
                         // After the preface is read, it is time to hand over control to the post initialized decoder.
                         var byteDecoder = new FrameDecoder(_connHandler);
@@ -322,7 +322,7 @@ namespace DotNetty.Codecs.Http2
             /// <param name="ctx"></param>
             private void SendPreface(IChannelHandlerContext ctx)
             {
-                if (_prefaceSent || !ctx.Channel.Active) { return; }
+                if (_prefaceSent || !ctx.Channel.IsActive) { return; }
 
                 _prefaceSent = true;
 
@@ -453,7 +453,7 @@ namespace DotNetty.Codecs.Http2
             }
             promise = promise.Unvoid();
             // Avoid NotYetConnectedException
-            if (!ctx.Channel.Active)
+            if (!ctx.Channel.IsActive)
             {
                 _ = ctx.CloseAsync(promise);
                 return;
@@ -574,7 +574,7 @@ namespace DotNetty.Codecs.Http2
             // Ensure we never stale the HTTP/2 Channel. Flow-control is enforced by HTTP/2.
             //
             // See https://tools.ietf.org/html/rfc7540#section-5.2.2
-            if (!ctx.Channel.Configuration.AutoRead)
+            if (!ctx.Channel.Configuration.IsAutoRead)
             {
                 _ = ctx.Read();
             }
@@ -1036,19 +1036,23 @@ namespace DotNetty.Codecs.Http2
                 {
                     if (errorCode != Http2Error.NoError)
                     {
+#if DEBUG
                         if (Logger.DebugEnabled)
                         {
                             Logger.SendGoAwaySuccess(ctx, lastStreamId, errorCode, debugData, future);
                         }
+#endif
                         _ = ctx.CloseAsync();
                     }
                 }
                 else
                 {
+#if DEBUG
                     if (Logger.DebugEnabled)
                     {
                         Logger.SendingGoAwayFailed(ctx, lastStreamId, errorCode, debugData, future);
                     }
+#endif
                     _ = ctx.CloseAsync();
                 }
             }

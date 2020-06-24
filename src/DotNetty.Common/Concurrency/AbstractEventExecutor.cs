@@ -32,78 +32,78 @@ namespace DotNetty.Common.Concurrency
             Parent = parent;
         }
 
-        /// <inheritdoc cref="IEventExecutorGroup"/>
+        /// <inheritdoc />
         public abstract bool IsShuttingDown { get; }
 
-        /// <inheritdoc cref="IEventExecutorGroup"/>
+        /// <inheritdoc cref="IEventExecutorGroup.TerminationCompletion"/>
         public abstract Task TerminationCompletion { get; }
 
-        /// <inheritdoc cref="IEventExecutorGroup"/>
+        /// <inheritdoc cref="IEventExecutorGroup.GetNext()"/>
         public IEventExecutor GetNext() => this;
 
-        /// <inheritdoc cref="IEventExecutor"/>
+        /// <inheritdoc />
         public IEventExecutorGroup Parent { get; }
 
-        /// <inheritdoc cref="IEventExecutor"/>
+        /// <inheritdoc />
         public bool InEventLoop => IsInEventLoop(Thread.CurrentThread);
 
-        /// <inheritdoc cref="IEventExecutor" />
+        /// <inheritdoc />
         public IEnumerable<IEventExecutor> Items => GetItems();
 
         protected abstract IEnumerable<IEventExecutor> GetItems();
 
-        /// <inheritdoc cref="IEventExecutor"/>
+        /// <inheritdoc />
         public abstract bool IsInEventLoop(Thread thread);
 
-        /// <inheritdoc cref="IScheduledExecutorService"/>
+        /// <inheritdoc />
         public virtual IScheduledTask Schedule(IRunnable action, TimeSpan delay)
         {
             throw new NotSupportedException();
         }
 
-        /// <inheritdoc cref="IScheduledExecutorService"/>
+        /// <inheritdoc />
         public virtual IScheduledTask Schedule(Action action, TimeSpan delay)
         {
             throw new NotSupportedException();
         }
 
-        /// <inheritdoc cref="IScheduledExecutorService"/>
+        /// <inheritdoc />
         public virtual IScheduledTask Schedule(Action<object> action, object state, TimeSpan delay)
         {
             throw new NotSupportedException();
         }
 
-        /// <inheritdoc cref="IScheduledExecutorService"/>
+        /// <inheritdoc />
         public virtual IScheduledTask Schedule(Action<object, object> action, object context, object state, TimeSpan delay)
         {
             throw new NotSupportedException();
         }
 
-        /// <inheritdoc cref="IScheduledExecutorService"/>
+        /// <inheritdoc />
         public virtual Task ScheduleAsync(Action action, TimeSpan delay) =>
             ScheduleAsync(action, delay, CancellationToken.None);
 
-        /// <inheritdoc cref="IScheduledExecutorService"/>
+        /// <inheritdoc />
         public virtual Task ScheduleAsync(Action<object> action, object state, TimeSpan delay, CancellationToken cancellationToken)
         {
             throw new NotSupportedException();
         }
 
-        /// <inheritdoc cref="IScheduledExecutorService"/>
+        /// <inheritdoc />
         public virtual Task ScheduleAsync(Action<object> action, object state, TimeSpan delay) =>
             ScheduleAsync(action, state, delay, CancellationToken.None);
 
-        /// <inheritdoc cref="IScheduledExecutorService"/>
+        /// <inheritdoc />
         public virtual Task ScheduleAsync(Action action, TimeSpan delay, CancellationToken cancellationToken)
         {
             throw new NotSupportedException();
         }
 
-        /// <inheritdoc cref="IScheduledExecutorService"/>
+        /// <inheritdoc />
         public virtual Task ScheduleAsync(Action<object, object> action, object context, object state, TimeSpan delay) =>
             ScheduleAsync(action, context, state, delay, CancellationToken.None);
 
-        /// <inheritdoc cref="IScheduledExecutorService"/>
+        /// <inheritdoc />
         public virtual Task ScheduleAsync(
             Action<object, object> action,
             object context,
@@ -114,17 +114,17 @@ namespace DotNetty.Common.Concurrency
             throw new NotSupportedException();
         }
 
-        /// <inheritdoc cref="IScheduledExecutorService"/>
+        /// <inheritdoc />
         public Task ShutdownGracefullyAsync() => ShutdownGracefullyAsync(DefaultShutdownQuietPeriod, DefaultShutdownTimeout);
 
-        /// <inheritdoc cref="IScheduledExecutorService"/>
+        /// <inheritdoc />
         public abstract Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout);
 
         public IPromise NewPromise() => new TaskCompletionSource();
 
         public IPromise NewPromise(object state) => new TaskCompletionSource(state);
 
-        /// <inheritdoc cref="IEventExecutor"/>
+        /// <inheritdoc />
         protected void SetCurrentExecutor(IEventExecutor executor) => ExecutionEnvironment.SetCurrentExecutor(executor);
 
         /// <summary>

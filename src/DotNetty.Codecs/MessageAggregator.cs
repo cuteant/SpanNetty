@@ -407,7 +407,7 @@ namespace DotNetty.Codecs
             // We might need keep reading the channel until the full message is aggregated.
             //
             // See https://github.com/netty/netty/issues/6583
-            if (_currentMessage is object && !_handlerContext.Channel.Configuration.AutoRead)
+            if (_currentMessage is object && !_handlerContext.Channel.Configuration.IsAutoRead)
             {
                 _ = context.Read();
             }

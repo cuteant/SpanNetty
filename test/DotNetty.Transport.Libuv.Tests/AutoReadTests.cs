@@ -131,7 +131,7 @@ namespace DotNetty.Transport.Libuv.Tests
                 ReferenceCountUtil.Release(msg);
                 if (Interlocked.Increment(ref this.count) == 1)
                 {
-                    ctx.Channel.Configuration.AutoRead = false;
+                    ctx.Channel.Configuration.IsAutoRead = false;
                 }
                 if (this.callRead)
                 {
@@ -188,7 +188,7 @@ namespace DotNetty.Transport.Libuv.Tests
 
                 public int AttemptedBytesRead { get; set; }
 
-                public bool ContinueReading() => this.config.AutoRead;
+                public bool ContinueReading() => this.config.IsAutoRead;
 
                 public void ReadComplete()
                 {

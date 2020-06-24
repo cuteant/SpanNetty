@@ -25,110 +25,115 @@ namespace DotNetty.Codecs.Http2.Tests
      */
     public class LastInboundHandler : ChannelDuplexHandler
     {
-        private readonly List<object> queue = new List<object>();
-        private readonly IConsumer<IChannelHandlerContext> channelReadCompleteConsumer;
+        private readonly List<object> _queue = new List<object>();
+        private readonly IConsumer<IChannelHandlerContext> _channelReadCompleteConsumer;
 
-        private Exception lastException;
-        private IChannelHandlerContext ctx;
-        private bool channelActive;
-        private string writabilityStates = "";
+        private Exception _lastException;
+        private IChannelHandlerContext _ctx;
+        private bool _channelActive;
+        private string _writabilityStates = "";
 
         public LastInboundHandler() : this(NoopConsumer<IChannelHandlerContext>.Instance) { }
 
         public LastInboundHandler(IConsumer<IChannelHandlerContext> channelReadCompleteConsumer)
         {
-            this.channelReadCompleteConsumer = channelReadCompleteConsumer ?? throw new ArgumentNullException(nameof(channelReadCompleteConsumer));
+            _channelReadCompleteConsumer = channelReadCompleteConsumer ?? throw new ArgumentNullException(nameof(channelReadCompleteConsumer));
         }
 
         public override void HandlerAdded(IChannelHandlerContext context)
         {
             base.HandlerAdded(context);
-            this.ctx = context;
+            _ctx = context;
         }
 
         public override void ChannelActive(IChannelHandlerContext context)
         {
-            if (this.channelActive)
+            if (_channelActive)
             {
                 throw new InvalidOperationException("channelActive may only be fired once.");
             }
-            this.channelActive = true;
+            _channelActive = true;
             base.ChannelActive(context);
         }
 
-        public bool IsChannelActive => this.channelActive;
+        public bool IsChannelActive => _channelActive;
 
-        public string WritabilityStates => this.writabilityStates;
+        public string WritabilityStates => _writabilityStates;
 
         public override void ChannelInactive(IChannelHandlerContext context)
         {
-            if (!this.channelActive)
+            if (!_channelActive)
             {
                 throw new InvalidOperationException("channelInactive may only be fired once after channelActive.");
             }
-            this.channelActive = false;
+            _channelActive = false;
             base.ChannelInactive(context);
         }
 
         public override void ChannelWritabilityChanged(IChannelHandlerContext context)
         {
-            if (string.IsNullOrEmpty(this.writabilityStates))
+            if (string.IsNullOrEmpty(_writabilityStates))
             {
-                this.writabilityStates = context.Channel.IsWritable.ToString();
+                _writabilityStates = context.Channel.IsWritable.ToString();
             }
             else
             {
-                this.writabilityStates += "," + context.Channel.IsWritable;
+                _writabilityStates += "," + context.Channel.IsWritable;
             }
             base.ChannelWritabilityChanged(context);
         }
 
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
-            this.queue.Add(message);
+            _queue.Add(message);
         }
 
         public override void ChannelReadComplete(IChannelHandlerContext context)
         {
-            this.channelReadCompleteConsumer.Accept(context);
+            _channelReadCompleteConsumer.Accept(context);
         }
 
         public override void UserEventTriggered(IChannelHandlerContext context, object evt)
         {
-            this.queue.Add(new UserEvent(evt));
+            _queue.Add(new UserEvent(evt));
         }
 
         public override void ExceptionCaught(IChannelHandlerContext context, Exception cause)
         {
-            if (lastException != null)
+            if (_lastException != null)
             {
                 //cause.printStackTrace();
             }
             else
             {
-                this.lastException = cause;
+                _lastException = cause;
             }
         }
 
         public T ReadInbound<T>()
         {
-            for (int i = 0; i < this.queue.Count; i++)
+            return (T)ReadInbound();
+        }
+
+        public object ReadInbound()
+        {
+            for (int i = 0; i < _queue.Count; i++)
             {
-                var item = this.queue[i];
+                var item = _queue[i];
                 if (!(item is UserEvent))
                 {
-                    this.queue.RemoveAt(i);
-                    return (T)item;
+                    _queue.RemoveAt(i);
+                    return item;
                 }
             }
-            return default;
+            return null;
         }
 
         public T BlockingReadInbound<T>()
         {
             T msg;
             var sw = new SpinWait();
-            while ((msg = this.ReadInbound<T>()) == null)
+            while ((msg = ReadInbound<T>()) == null)
             {
                 sw.SpinOnce();
             }
@@ -138,12 +143,12 @@ namespace DotNetty.Codecs.Http2.Tests
 
         public T ReadUserEvent<T>()
         {
-            for (int i = 0; i < this.queue.Count; i++)
+            for (int i = 0; i < _queue.Count; i++)
             {
-                var item = this.queue[i];
+                var item = _queue[i];
                 if (item is UserEvent userEvt)
                 {
-                    this.queue.RemoveAt(i);
+                    _queue.RemoveAt(i);
                     return (T)userEvt.evt;
                 }
             }
@@ -155,10 +160,10 @@ namespace DotNetty.Codecs.Http2.Tests
          */
         public T ReadInboundMessageOrUserEvent<T>()
         {
-            if (this.queue.Count <= 0) { return default; }
+            if (_queue.Count <= 0) { return default; }
 
-            var o = this.queue[0];
-            this.queue.RemoveAt(0);
+            var o = _queue[0];
+            _queue.RemoveAt(0);
             if (o is UserEvent userEvent)
             {
                 return (T)userEvent.evt;
@@ -171,32 +176,32 @@ namespace DotNetty.Codecs.Http2.Tests
             if (null == msgs) { return; }
             foreach (var item in msgs)
             {
-                this.ctx.WriteAsync(item);
+                _ctx.WriteAsync(item);
             }
-            this.ctx.Flush();
-            EmbeddedChannel ch = (EmbeddedChannel)this.ctx.Channel;
+            _ctx.Flush();
+            EmbeddedChannel ch = (EmbeddedChannel)_ctx.Channel;
             ch.RunPendingTasks();
             ch.CheckException();
-            this.CheckException();
+            CheckException();
         }
 
         public void FinishAndReleaseAll()
         {
-            this.CheckException();
+            CheckException();
             object o;
-            while ((o = this.ReadInboundMessageOrUserEvent<object>()) != null)
+            while ((o = ReadInboundMessageOrUserEvent<object>()) != null)
             {
                 ReferenceCountUtil.Release(o);
             }
         }
 
-        public IChannel Channel => this.ctx.Channel;
+        public IChannel Channel => _ctx.Channel;
 
         public void CheckException()
         {
-            if (this.lastException == null) { return; }
-            var t = this.lastException;
-            this.lastException = null;
+            if (_lastException == null) { return; }
+            var t = _lastException;
+            _lastException = null;
             throw t;
         }
 

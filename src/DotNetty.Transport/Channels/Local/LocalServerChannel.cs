@@ -33,9 +33,9 @@ namespace DotNetty.Transport.Channels.Local
 
         public override IChannelConfiguration Configuration { get; }
 
-        public override bool Open => (uint)Volatile.Read(ref v_state) < 2u;
+        public override bool IsOpen => (uint)Volatile.Read(ref v_state) < 2u;
 
-        public override bool Active => Volatile.Read(ref v_state) == 1;
+        public override bool IsActive => Volatile.Read(ref v_state) == 1;
 
         protected override EndPoint LocalAddressInternal => Volatile.Read(ref v_localAddress);
 
@@ -104,16 +104,16 @@ namespace DotNetty.Transport.Channels.Local
 
         private void ReadInbound()
         {
-            // TODO Respect MAX_MESSAGES_PER_READ in LocalChannel / LocalServerChannel.
-            //var handle = this.Unsafe.RecvBufAllocHandle;
-            //handle.Reset(this.Configuration);
+            var handle = Unsafe.RecvBufAllocHandle;
+            handle.Reset(Configuration);
+
             var pipeline = Pipeline;
             var inboundBuffer = _inboundBuffer;
-
-            while (inboundBuffer.TryDequeue(out object m))
+            do
             {
+                if (!inboundBuffer.TryDequeue(out object m)) { break; }
                 _ = pipeline.FireChannelRead(m);
-            }
+            } while (handle.ContinueReading());
 
             _ = pipeline.FireChannelReadComplete();
         }

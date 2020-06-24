@@ -24,7 +24,7 @@ namespace DotNetty.Codecs.Mqtt.Tests
             this.serverDecoder = new MqttDecoder(true, 256 * 1024);
             this.clientDecoder = new MqttDecoder(false, 256 * 1024);
             this.contextMock = new Mock<IChannelHandlerContext>(MockBehavior.Strict);
-            this.contextMock.Setup(x => x.Removed).Returns(false);
+            this.contextMock.Setup(x => x.IsRemoved).Returns(false);
             this.contextMock.Setup(x => x.Allocator).Returns(UnpooledByteBufferAllocator.Default);
         }
 

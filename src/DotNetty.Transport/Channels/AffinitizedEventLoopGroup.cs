@@ -21,7 +21,7 @@ namespace DotNetty.Transport.Channels
 
         public override bool IsShuttingDown => _innerGroup.IsShuttingDown;
 
-        /// <inheritdoc cref="IEventExecutorGroup"/>
+        /// <inheritdoc cref="IEventExecutorGroup.TerminationCompletion"/>
         public override Task TerminationCompletion => _innerGroup.TerminationCompletion;
 
         protected override IEnumerable<IEventExecutor> GetItems() => _innerGroup.Items;
@@ -57,7 +57,7 @@ namespace DotNetty.Transport.Channels
 
         public Task RegisterAsync(IChannel channel) => ((IEventLoop)GetNext()).RegisterAsync(channel);
 
-        /// <inheritdoc cref="IEventExecutorGroup"/>
+        /// <inheritdoc cref="IEventExecutorGroup.ShutdownGracefullyAsync(TimeSpan, TimeSpan)"/>
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout) => _innerGroup.ShutdownGracefullyAsync(quietPeriod, timeout);
     }
 }

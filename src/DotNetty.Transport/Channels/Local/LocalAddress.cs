@@ -7,9 +7,9 @@ namespace DotNetty.Transport.Channels.Local
     using System.Net;
     using DotNetty.Common.Internal;
 
-    public class LocalAddress : EndPoint, IComparable<LocalAddress>
+    public class LocalAddress : EndPoint, IComparable<LocalAddress>, IEquatable<LocalAddress>
     {
-        public static readonly LocalAddress Any = new LocalAddress("ANY"); 
+        public static readonly LocalAddress Any = new LocalAddress("ANY");
 
         private readonly string _id;
         private readonly string _strVal;
@@ -23,7 +23,7 @@ namespace DotNetty.Transport.Channels.Local
 
             _strVal = StringBuilderCache.GetStringAndRelease(buf);
             _id = _strVal.Substring(6);
-       }
+        }
 
         public LocalAddress(string id)
         {
@@ -37,18 +37,34 @@ namespace DotNetty.Transport.Channels.Local
 
         public string Id => _id;
 
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as LocalAddress);
+        }
+
+        public bool Equals(LocalAddress other)
+        {
+            if (ReferenceEquals(this, other)) { return true; }
+            return other is object && string.Equals(_strVal, other._strVal
+#if NETCOREAPP_3_0_GREATER || NETSTANDARD_2_0_GREATER
+                        );
+#else
+                        , StringComparison.Ordinal);
+#endif
+        }
+
         public override int GetHashCode() => _id.GetHashCode();
-        
+
         public override string ToString() => _strVal;
 
         public int CompareTo(LocalAddress other)
         {
             if (ReferenceEquals(this, other))
                 return 0;
-            
+
             if (other is null)
                 return 1;
-            
+
             return string.Compare(_id, other._id, StringComparison.Ordinal);
         }
     }

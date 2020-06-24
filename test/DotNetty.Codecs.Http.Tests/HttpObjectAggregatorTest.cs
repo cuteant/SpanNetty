@@ -40,7 +40,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(chunk1.Content.ReadableBytes + chunk2.Content.ReadableBytes, HttpUtil.GetContentLength(aggregatedMessage));
             Assert.Equal(bool.TrueString, aggregatedMessage.Headers.Get((AsciiString)"X-Test", null)?.ToString());
             CheckContentBuffer(aggregatedMessage);
-            var last = ch.ReadInbound<object>();
+            var last = ch.ReadInbound();
             Assert.Null(last);
         }
 
@@ -71,7 +71,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(bool.TrueString, aggregatedMessage.Headers.Get((AsciiString)"X-Test", null)?.ToString());
             Assert.Equal(bool.TrueString, aggregatedMessage.TrailingHeaders.Get((AsciiString)"X-Trailer", null)?.ToString());
             CheckContentBuffer(aggregatedMessage);
-            var last = ch.ReadInbound<object>();
+            var last = ch.ReadInbound();
             Assert.Null(last);
         }
 
@@ -92,7 +92,7 @@ namespace DotNetty.Codecs.Http.Tests
             var response = ch.ReadOutbound<IFullHttpResponse>();
             Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
             Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
-            Assert.False(ch.Open);
+            Assert.False(ch.IsOpen);
 
             try
             {
@@ -115,18 +115,18 @@ namespace DotNetty.Codecs.Http.Tests
                     "PUT /upload HTTP/1.1\r\n" +
                             "Content-Length: 5\r\n\r\n", Encoding.ASCII)));
 
-            Assert.Null(embedder.ReadInbound<object>());
+            Assert.Null(embedder.ReadInbound());
 
             var response = embedder.ReadOutbound<IFullHttpResponse>();
             Assert.Equal(HttpResponseStatus.RequestEntityTooLarge, response.Status);
             Assert.Equal("0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
 
-            Assert.True(embedder.Open);
+            Assert.True(embedder.IsOpen);
 
             Assert.False(embedder.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 1, 2, 3, 4 })));
             Assert.False(embedder.WriteInbound(Unpooled.WrappedBuffer(new byte[] { 5 })));
 
-            Assert.Null(embedder.ReadOutbound<object>());
+            Assert.Null(embedder.ReadOutbound());
 
             Assert.False(embedder.WriteInbound(Unpooled.CopiedBuffer(
                     "PUT /upload HTTP/1.1\r\n" +
@@ -138,12 +138,12 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(response as ILastHttpContent);
             ReferenceCountUtil.Release(response);
 
-            Assert.True(embedder.Open);
+            Assert.True(embedder.IsOpen);
 
             Assert.False(embedder.WriteInbound(Unpooled.CopiedBuffer(new byte[] { 1 })));
-            Assert.Null(embedder.ReadOutbound<object>());
+            Assert.Null(embedder.ReadOutbound());
             Assert.True(embedder.WriteInbound(Unpooled.CopiedBuffer(new byte[] { 2 })));
-            Assert.Null(embedder.ReadOutbound<object>());
+            Assert.Null(embedder.ReadOutbound());
 
             var request = embedder.ReadInbound<IFullHttpRequest>();
             Assert.Equal(HttpVersion.Http11, request.ProtocolVersion);
@@ -189,7 +189,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.False(ch.WriteInbound(chunk1));
             Assert.Throws<TooLongFrameException>(() => ch.WriteInbound(chunk2));
 
-            Assert.False(ch.Open);
+            Assert.False(ch.IsOpen);
             Assert.False(ch.Finish());
         }
 
@@ -241,7 +241,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(chunk1.Content.ReadableBytes + chunk2.Content.ReadableBytes, HttpUtil.GetContentLength(aggregatedMessage));
             Assert.Equal(bool.TrueString, aggregatedMessage.Headers.Get((AsciiString)"X-Test", null));
             CheckContentBuffer(aggregatedMessage);
-            var last = ch.ReadInbound<object>();
+            var last = ch.ReadInbound();
             Assert.Null(last);
         }
 
@@ -253,7 +253,7 @@ namespace DotNetty.Codecs.Http.Tests
             var req = ch.ReadInbound<IFullHttpRequest>();
             Assert.NotNull(req);
             Assert.True(req.Result.IsFailure);
-            var last = ch.ReadInbound<object>();
+            var last = ch.ReadInbound();
             Assert.Null(last);
             ch.Finish();
         }
@@ -266,7 +266,7 @@ namespace DotNetty.Codecs.Http.Tests
             var resp = ch.ReadInbound<IFullHttpResponse>();
             Assert.NotNull(resp);
             Assert.True(resp.Result.IsFailure);
-            var last = ch.ReadInbound<object>();
+            var last = ch.ReadInbound();
             Assert.Null(last);
             ch.Finish();
         }
@@ -297,7 +297,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.False(ch.WriteInbound(chunk1));
 
             // The aggregator should not close the connection because keep-alive is on.
-            Assert.True(ch.Open);
+            Assert.True(ch.IsOpen);
 
             // Now send a valid request.
             var message2 = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Put, "http://localhost");
@@ -329,7 +329,7 @@ namespace DotNetty.Codecs.Http.Tests
                 "GET / HTTP/1.1\r\n" +
                 "Expect: chocolate=yummy\r\n" +
                 "Content-Length: 100\r\n\r\n"))));
-            var next = ch.ReadInbound<object>();
+            var next = ch.ReadInbound();
             Assert.Null(next);
 
             var response = ch.ReadOutbound<IFullHttpResponse>();
@@ -339,12 +339,12 @@ namespace DotNetty.Codecs.Http.Tests
 
             if (close)
             {
-                Assert.False(ch.Open);
+                Assert.False(ch.IsOpen);
             }
             else
             {
                 // keep-alive is on by default in HTTP/1.1, so the connection should be still alive
-                Assert.True(ch.Open);
+                Assert.True(ch.IsOpen);
 
                 // the decoder should be reset by the aggregator at this point and be able to decode the next request
                 Assert.True(ch.WriteInbound(Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes("GET / HTTP/1.1\r\n\r\n"))));
@@ -387,7 +387,7 @@ namespace DotNetty.Codecs.Http.Tests
                             "Expect: 100-continue\r\n" +
                             "Content-Length: 100\r\n\r\n")));
 
-            var next = ch.ReadInbound<object>();
+            var next = ch.ReadInbound();
             Assert.Null(next);
 
             var response = ch.ReadOutbound<IFullHttpResponse>();
@@ -395,7 +395,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal((AsciiString)"0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
 
             // Keep-alive is on by default in HTTP/1.1, so the connection should be still alive.
-            Assert.True(ch.Open);
+            Assert.True(ch.IsOpen);
 
             // The decoder should be reset by the aggregator at this point and be able to decode the next request.
             ch.WriteInbound(Unpooled.CopiedBuffer(Encoding.ASCII.GetBytes("GET /max-upload-size HTTP/1.1\r\n\r\n")));
@@ -418,7 +418,7 @@ namespace DotNetty.Codecs.Http.Tests
                             "Expect: 100-continue\r\n" +
                             "Content-Length: 100\r\n\r\n")));
 
-            var next = ch.ReadInbound<object>();
+            var next = ch.ReadInbound();
             Assert.Null(next);
 
             var response = ch.ReadOutbound<IFullHttpResponse>();
@@ -426,7 +426,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal((AsciiString)"0", response.Headers.Get(HttpHeaderNames.ContentLength, null));
 
             // We are forcing the connection closed if an expectation is exceeded.
-            Assert.False(ch.Open);
+            Assert.False(ch.IsOpen);
             Assert.False(ch.Finish());
         }
 
@@ -456,7 +456,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.False(ch.WriteInbound(chunk1));
 
             // The aggregator should not close the connection because keep-alive is on.
-            Assert.True(ch.Open);
+            Assert.True(ch.IsOpen);
 
             // Now send a valid request.
             var message2 = new DefaultHttpRequest(HttpVersion.Http11, HttpMethod.Put, "http://localhost");
@@ -528,7 +528,7 @@ namespace DotNetty.Codecs.Http.Tests
                 Assert.True(channel.WriteInbound(request1, content1, EmptyLastHttpContent.Default));
 
                 // Getting an aggregated response out
-                var msg1 = channel.ReadInbound<object>();
+                var msg1 = channel.ReadInbound();
                 try
                 {
                     Assert.True(msg1 is IFullHttpRequest);
@@ -601,7 +601,7 @@ namespace DotNetty.Codecs.Http.Tests
                 Assert.True(channel.WriteInbound(response1, content1, EmptyLastHttpContent.Default));
 
                 // Getting an aggregated response out
-                var msg1 = channel.ReadInbound<object>();
+                var msg1 = channel.ReadInbound();
                 try
                 {
                     Assert.True(msg1 is IFullHttpResponse);
@@ -674,7 +674,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             if (ServerShouldCloseConnection(message, response))
             {
-                Assert.False(ch.Open);
+                Assert.False(ch.IsOpen);
                 try
                 {
                     ch.WriteInbound(new DefaultHttpContent(Unpooled.Empty));
@@ -689,7 +689,7 @@ namespace DotNetty.Codecs.Http.Tests
             }
             else
             {
-                Assert.True(ch.Open);
+                Assert.True(ch.IsOpen);
                 Assert.False(ch.WriteInbound(new DefaultHttpContent(Unpooled.CopiedBuffer(new byte[8]))));
                 Assert.False(ch.WriteInbound(new DefaultHttpContent(Unpooled.CopiedBuffer(new byte[8]))));
 
@@ -698,11 +698,11 @@ namespace DotNetty.Codecs.Http.Tests
                 HttpUtil.SetContentLength(message, 2);
 
                 Assert.False(ch.WriteInbound(message2));
-                Assert.Null(ch.ReadOutbound<object>());
+                Assert.Null(ch.ReadOutbound());
                 Assert.False(ch.WriteInbound(new DefaultHttpContent(Unpooled.CopiedBuffer(new byte[] { 1 }))));
-                Assert.Null(ch.ReadOutbound<object>());
+                Assert.Null(ch.ReadOutbound());
                 Assert.True(ch.WriteInbound(new DefaultLastHttpContent(Unpooled.CopiedBuffer(new byte[] { 2 }))));
-                Assert.Null(ch.ReadOutbound<object>());
+                Assert.Null(ch.ReadOutbound());
 
                 var request = ch.ReadInbound<IFullHttpRequest>();
                 Assert.Equal(message2.ProtocolVersion, request.ProtocolVersion);

@@ -6,7 +6,9 @@ namespace DotNetty.Transport.Channels.Sockets
     using System;
     using System.Collections.Generic;
     using System.Net;
+    using System.Net.NetworkInformation;
     using System.Net.Sockets;
+    using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Common.Concurrency;
@@ -40,10 +42,14 @@ namespace DotNetty.Transport.Channels.Sockets
         where TChannel : TcpSocketChannel<TChannel>
     {
         private static readonly Action<object, object> ShutdownOutputAction = OnShutdownOutput;
+        private static readonly Action<object, object> ShutdownInputAction = OnShutdownInput;
 
         private static readonly ChannelMetadata METADATA = new ChannelMetadata(false, 16);
 
         private readonly ISocketChannelConfiguration _config;
+
+        private int v_inputShutdown;
+        private int v_outputShutdown;
 
         /// <summary>Create a new instance</summary>
         public TcpSocketChannel()
@@ -92,24 +98,49 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override EndPoint RemoteAddressInternal => Socket.RemoteEndPoint;
 
-        public bool IsOutputShutdown
+        public override bool IsInputShutdown => SharedConstants.False < (uint)Volatile.Read(ref v_inputShutdown) || !IsActive;
+
+        public bool IsOutputShutdown => SharedConstants.False < (uint)Volatile.Read(ref v_outputShutdown) || !IsActive;
+
+        public bool IsShutdown => (IsInputShutdown && IsOutputShutdown) || !IsActive;
+
+        protected override Task ShutdownInputAsync()
         {
-            get { throw new NotImplementedException(); } // todo: impl with stateflags
+            var tcs = NewPromise();
+            IEventLoop loop = EventLoop;
+            if (loop.InEventLoop)
+            {
+                ShutdownInput0(tcs);
+            }
+            else
+            {
+                loop.Execute(ShutdownInputAction, this, tcs);
+            }
+            return tcs.Task;
+        }
+
+        void ShutdownInput0(IPromise promise)
+        {
+            try
+            {
+                Socket.Shutdown(SocketShutdown.Receive);
+                _ = Interlocked.Exchange(ref v_inputShutdown, SharedConstants.True);
+                promise.Complete();
+            }
+            catch (Exception ex)
+            {
+                promise.SetException(ex);
+            }
+        }
+
+        private static void OnShutdownInput(object channel, object promise)
+        {
+            ((TcpSocketChannel<TChannel>)channel).ShutdownInput0((IPromise)promise);
         }
 
         public Task ShutdownOutputAsync()
         {
             var tcs = NewPromise();
-            // todo: use closeExecutor if available
-            //Executor closeExecutor = ((TcpSocketChannelUnsafe) unsafe()).closeExecutor();
-            //if (closeExecutor is object) {
-            //    closeExecutor.execute(new OneTimeTask() {
-
-            //        public void run() {
-            //            shutdownOutput0(promise);
-            //        }
-            //    });
-            //} else {
             IEventLoop loop = EventLoop;
             if (loop.InEventLoop)
             {
@@ -119,7 +150,6 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 loop.Execute(ShutdownOutputAction, this, tcs);
             }
-            //}
             return tcs.Task;
         }
 
@@ -128,6 +158,7 @@ namespace DotNetty.Transport.Channels.Sockets
             try
             {
                 Socket.Shutdown(SocketShutdown.Send);
+                _ = Interlocked.Exchange(ref v_outputShutdown, SharedConstants.True);
                 promise.Complete();
             }
             catch (Exception ex)

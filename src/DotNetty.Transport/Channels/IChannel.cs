@@ -84,17 +84,17 @@ namespace DotNetty.Transport.Channels
         /// <summary>
         /// Returns <c>true</c> if the <see cref="IChannel"/> is open and may get active later.
         /// </summary>
-        bool Open { get; }
+        bool IsOpen { get; }
 
         /// <summary>
         /// Returns <c>true</c> if the <see cref="IChannel"/> is active and so connected.
         /// </summary>
-        bool Active { get; }
+        bool IsActive { get; }
 
         /// <summary>
         /// Returns <c>true</c> if the <see cref="IChannel"/> is registered with an <see cref="IEventLoop"/>.
         /// </summary>
-        bool Registered { get; }
+        bool IsRegistered { get; }
 
         /// <summary>
         /// Returns the <see cref="ChannelMetadata"/> of the <see cref="IChannel"/> which describe the nature of the

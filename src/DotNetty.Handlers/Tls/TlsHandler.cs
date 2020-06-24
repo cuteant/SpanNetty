@@ -157,7 +157,7 @@ namespace DotNetty.Handlers.Tls
             {
                 // Close the connection explicitly just in case the transport
                 // did not close the connection automatically.
-                if (context.Channel.Active)
+                if (context.Channel.IsActive)
                 {
                     _ = context.CloseAsync();
                 }
@@ -178,7 +178,7 @@ namespace DotNetty.Handlers.Tls
             base.HandlerAdded(context);
             CapturedContext = context;
             _pendingUnencryptedWrites = new BatchingPendingWriteQueue(context, c_unencryptedWriteBatchSize);
-            if (context.Channel.Active && !_isServer)
+            if (context.Channel.IsActive && !_isServer)
             {
                 // todo: support delayed initialization on an existing/active channel if in client mode
                 _ = EnsureAuthenticated(context);

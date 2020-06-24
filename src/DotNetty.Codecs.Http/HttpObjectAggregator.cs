@@ -247,10 +247,12 @@ namespace DotNetty.Codecs.Http
         static readonly Action<Task, object> CloseOnCompleteAction = CloseOnComplete;
         static void CloseOnComplete(Task t, object s)
         {
+#if DEBUG
             if (t.IsFaulted)
             {
                 if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
             }
+#endif
             _ = ((IChannelHandlerContext)s).CloseAsync();
         }
 
@@ -259,7 +261,9 @@ namespace DotNetty.Codecs.Http
         {
             if (t.IsFaulted)
             {
+#if DEBUG
                 if (Logger.DebugEnabled) Logger.FailedToSendA413RequestEntityTooLarge(t);
+#endif
                 _ = ((IChannelHandlerContext)s).CloseAsync();
             }
         }

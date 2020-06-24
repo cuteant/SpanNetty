@@ -13,7 +13,7 @@ namespace DotNetty.Handlers.Timeout
             var self = (IdleStateHandler)handler; // instead of this
             var context = (IChannelHandlerContext)ctx;
 
-            if (!context.Channel.Open)
+            if (!context.Channel.IsOpen)
             {
                 return;
             }
@@ -26,7 +26,7 @@ namespace DotNetty.Handlers.Timeout
             var self = (IdleStateHandler)handler; // instead of this
             var context = (IChannelHandlerContext)ctx;
 
-            if (!context.Channel.Open)
+            if (!context.Channel.IsOpen)
             {
                 return;
             }
@@ -39,7 +39,7 @@ namespace DotNetty.Handlers.Timeout
             var self = (IdleStateHandler)handler; // instead of this
             var context = (IChannelHandlerContext)ctx;
 
-            if (!context.Channel.Open)
+            if (!context.Channel.IsOpen)
             {
                 return;
             }

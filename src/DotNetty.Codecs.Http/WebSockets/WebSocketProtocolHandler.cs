@@ -71,7 +71,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         protected static void ReadIfNeeded(IChannelHandlerContext ctx)
         {
-            if (!ctx.Channel.Configuration.AutoRead)
+            if (!ctx.Channel.Configuration.IsAutoRead)
             {
                 _ = ctx.Read();
             }
@@ -79,7 +79,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public override void Close(IChannelHandlerContext ctx, IPromise promise)
         {
-            if (_closeStatus is null || !ctx.Channel.Active)
+            if (_closeStatus is null || !ctx.Channel.IsActive)
             {
                 _ = ctx.CloseAsync(promise);
             }

@@ -25,6 +25,7 @@ namespace DotNetty.Transport.Channels
         private int _writeBufferHighWaterMark = 64 * 1024;
         private int _writeBufferLowWaterMark = 32 * 1024;
         private long _connectTimeout = DefaultConnectTimeout.Ticks;
+        private int _pinEventExecutor = SharedConstants.True;
 
         protected readonly IChannel Channel;
 
@@ -71,11 +72,11 @@ namespace DotNetty.Transport.Channels
             }
             if (ChannelOption.AutoRead.Equals(option))
             {
-                return (T)(object)AutoRead;
+                return (T)(object)IsAutoRead;
             }
             if (ChannelOption.AutoClose.Equals(option))
             {
-                return (T)(object)AutoClose;
+                return (T)(object)IsAutoClose;
             }
             if (ChannelOption.WriteBufferHighWaterMark.Equals(option))
             {
@@ -95,6 +96,10 @@ namespace DotNetty.Transport.Channels
                 {
                     return (T)(object)MaxMessagesPerRead;
                 }
+            }
+            if (ChannelOption.SingleEventexecutorPerGroup.Equals(option))
+            {
+                return (T)(object)PinEventExecutorPerGroup;
             }
             return default;
         }
@@ -123,11 +128,11 @@ namespace DotNetty.Transport.Channels
             }
             else if (ChannelOption.AutoRead.Equals(option))
             {
-                AutoRead = (bool)(object)value;
+                IsAutoRead = (bool)(object)value;
             }
             else if (ChannelOption.AutoClose.Equals(option))
             {
-                AutoClose = (bool)(object)value;
+                IsAutoClose = (bool)(object)value;
             }
             else if (ChannelOption.WriteBufferHighWaterMark.Equals(option))
             {
@@ -151,6 +156,10 @@ namespace DotNetty.Transport.Channels
                 {
                     return false;
                 }
+            }
+            else if (ChannelOption.SingleEventexecutorPerGroup.Equals(option))
+            {
+                PinEventExecutorPerGroup = (bool)(object)value;
             }
             else
             {
@@ -206,7 +215,7 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        public bool AutoRead
+        public bool IsAutoRead
         {
             get { return SharedConstants.False < (uint)Volatile.Read(ref _autoRead); }
             set
@@ -229,7 +238,7 @@ namespace DotNetty.Transport.Channels
         {
         }
 
-        public bool AutoClose
+        public bool IsAutoClose
         {
             get { return SharedConstants.False < (uint)Volatile.Read(ref _autoClose); }
             set { Interlocked.Exchange(ref _autoClose, value ? SharedConstants.True : SharedConstants.False); }
@@ -274,6 +283,12 @@ namespace DotNetty.Transport.Channels
         {
             get { return ((IMaxMessagesRecvByteBufAllocator)RecvByteBufAllocator).MaxMessagesPerRead; }
             set { ((IMaxMessagesRecvByteBufAllocator)RecvByteBufAllocator).MaxMessagesPerRead = value; }
+        }
+
+        public bool PinEventExecutorPerGroup
+        {
+            get { return SharedConstants.False < (uint)Volatile.Read(ref _pinEventExecutor); }
+            set { Interlocked.Exchange(ref _pinEventExecutor, value ? SharedConstants.True : SharedConstants.False); }
         }
     }
 }

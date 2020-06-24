@@ -35,7 +35,7 @@ namespace DotNetty.Transport.Libuv
         private const int ShutdownState = 4;
         private const int TerminatedState = 5;
 
-        private readonly ThreadLocalPool<WriteRequest> _writeRequestPool = new ThreadLocalPool<WriteRequest>(s_valueFactory);
+        private readonly ThreadLocalPool<WriteRequest> _writeRequestPool;
         private readonly long _preciseBreakoutInterval;
         private readonly IQueue<IRunnable> _taskQueue;
         private readonly XThread _thread;
@@ -57,6 +57,8 @@ namespace DotNetty.Transport.Libuv
         // the loop, only accessed when InEventLoop is true
         private int v_wakeUp = SharedConstants.True;
 
+        private bool _firstTask; // 不需要设置 volatile
+
         public LoopExecutor(string threadName)
             : this(null, threadName, DefaultBreakoutInterval)
         {
@@ -69,6 +71,9 @@ namespace DotNetty.Transport.Libuv
 
         public LoopExecutor(IEventLoopGroup parent, string threadName, TimeSpan breakoutInterval) : base(parent)
         {
+            _firstTask = true;
+            _writeRequestPool = new ThreadLocalPool<WriteRequest>(s_valueFactory);
+
             _preciseBreakoutInterval = (long)breakoutInterval.TotalMilliseconds;
             _terminationCompletionSource = NewPromise();
             _taskQueue = PlatformDependent.NewMpscQueue<IRunnable>();
@@ -452,12 +457,22 @@ namespace DotNetty.Transport.Libuv
 
         public override void Execute(IRunnable task)
         {
-            InternalExecute(task, !(task is ILazyRunnable));
+            if (!(task is ILazyRunnable))
+            {
+                InternalExecute(task, true);
+            }
+            else
+            {
+                LazyExecute(task);
+            }
         }
 
         public override void LazyExecute(IRunnable task)
         {
-            InternalExecute(task, false);
+            // netty 第一个任务进来，不管是否延迟任务，都会启动线程
+            var firstTask = _firstTask;
+            if (firstTask) { _firstTask = false; }
+            InternalExecute(task, firstTask);
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]

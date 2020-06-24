@@ -443,7 +443,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         private void ApplyForceCloseTimeout(IChannel channel, IPromise flushFuture)
         {
-            if (ForceCloseTimeoutMillis <= 0 || !channel.Active || (uint)ForceCloseInit > 0u)
+            if (ForceCloseTimeoutMillis <= 0 || !channel.IsActive || (uint)ForceCloseInit > 0u)
             {
                 return;
             }
@@ -461,7 +461,7 @@ namespace DotNetty.Codecs.Http.WebSockets
             // a server to receive CloseFrame. Thus this should be handled
             // by the application separately.
             // Also, close might be called twice from different threads.
-            if (t.IsSuccess() && channel.Active &&
+            if (t.IsSuccess() && channel.IsActive &&
                 0u >= (uint)Interlocked.CompareExchange(ref self._forceCloseInit, 1, 0))
             {
                 var timeoutTask = channel.EventLoop.Schedule(CloseChannelAction, channel, self, TimeSpan.FromMilliseconds(self.ForceCloseTimeoutMillis));
@@ -473,7 +473,7 @@ namespace DotNetty.Codecs.Http.WebSockets
         private static void CloseChannel(object c, object p)
         {
             var channel = (IChannel)c;
-            if (channel.Active)
+            if (channel.IsActive)
             {
                 _ = channel.CloseAsync();
                 _ = Interlocked.Exchange(ref ((WebSocketClientHandshaker)p)._forceCloseComplete, SharedConstants.True);

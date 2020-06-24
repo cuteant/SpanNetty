@@ -320,7 +320,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             IByteBuffer mergedBuffer = null;
             for (; ; )
             {
-                var srcData = srcChannel.ReadOutbound<object>();
+                var srcData = srcChannel.ReadOutbound();
                 if (srcData != null)
                 {
                     Assert.IsAssignableFrom<IByteBuffer>(srcData);

@@ -313,6 +313,13 @@ namespace DotNetty.Transport.Channels
         IChannelPipeline AddAfter(IEventExecutorGroup group, string baseName, string name, IChannelHandler handler);
 
         /// <summary>
+        /// Inserts a <see cref="IChannelHandler"/> at the first position of this pipeline.
+        /// </summary>
+        /// <param name="handler">The <see cref="IChannelHandler"/> to insert.</param>
+        /// <returns>This <see cref="IChannelPipeline"/>.</returns>
+        IChannelPipeline AddFirst(IChannelHandler handler);
+
+        /// <summary>
         /// Inserts multiple <see cref="IChannelHandler"/>s at the first position of this pipeline.
         /// </summary>
         /// <param name="handlers">The <see cref="IChannelHandler"/>s to insert.</param>
@@ -328,6 +335,13 @@ namespace DotNetty.Transport.Channels
         /// <param name="handlers">The <see cref="IChannelHandler"/>s to insert.</param>
         /// <returns>This <see cref="IChannelPipeline"/>.</returns>
         IChannelPipeline AddFirst(IEventExecutorGroup group, params IChannelHandler[] handlers);
+
+        /// <summary>
+        /// Inserts a <see cref="IChannelHandler"/> at the last position of this pipeline.
+        /// </summary>
+        /// <param name="handler">The <see cref="IChannelHandler"/> to insert.</param>
+        /// <returns>This <see cref="IChannelPipeline"/>.</returns>
+        IChannelPipeline AddLast(IChannelHandler handler);
 
         /// <summary>
         /// Inserts multiple <see cref="IChannelHandler"/>s at the last position of this pipeline.

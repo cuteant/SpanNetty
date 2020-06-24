@@ -103,7 +103,7 @@ namespace DotNetty.Codecs
 
         static void WritePromiseCombiner(IChannelHandlerContext ctx, List<object> output, IPromise promise)
         {
-            PromiseCombiner combiner = new PromiseCombiner();
+            PromiseCombiner combiner = new PromiseCombiner(ctx.Executor);
             for (int i = 0; i < output.Count; i++)
             {
                 combiner.Add(ctx.WriteAsync(output[i]));

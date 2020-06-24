@@ -41,7 +41,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 // todo: handle cancellation
                 var ch = _channel;
-                if (!ch.Open)
+                if (!ch.IsOpen)
                 {
                     return CreateClosedChannelExceptionTask();
                 }
@@ -53,7 +53,7 @@ namespace DotNetty.Transport.Channels.Sockets
                         ThrowHelper.ThrowInvalidOperationException_ConnAttemptAlreadyMade();
                     }
 
-                    bool wasActive = _channel.Active;
+                    bool wasActive = _channel.IsActive;
                     if (ch.DoConnect(remoteAddress, localAddress))
                     {
                         FulfillConnectPromise(ch._connectPromise, wasActive);
@@ -97,7 +97,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
                 // Get the state as trySuccess() may trigger an ChannelFutureListener that will close the Channel.
                 // We still need to ensure we call fireChannelActive() in this case.
-                bool active = ch.Active;
+                bool active = ch.IsActive;
 
                 // trySuccess() will return false if a user cancelled the connection attempt.
                 bool promiseSet = promise.TryComplete();
@@ -136,7 +136,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
                 try
                 {
-                    bool wasActive = ch.Active;
+                    bool wasActive = ch.IsActive;
                     ch.DoFinishConnect(operation);
                     FulfillConnectPromise(ch._connectPromise, wasActive);
                 }

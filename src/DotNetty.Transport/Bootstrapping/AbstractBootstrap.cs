@@ -222,7 +222,7 @@ namespace DotNetty.Transport.Bootstrapping
         /// <summary>
         /// Creates a new <see cref="IChannel"/> and registers it with an <see cref="IEventLoop"/>.
         /// </summary>
-        public Task RegisterAsync()
+        public Task<IChannel> RegisterAsync()
         {
             Validate();
             return InitAndRegisterAsync();
@@ -312,7 +312,7 @@ namespace DotNetty.Transport.Bootstrapping
             }
             catch (Exception)
             {
-                if (channel.Registered)
+                if (channel.IsRegistered)
                 {
                     try
                     {

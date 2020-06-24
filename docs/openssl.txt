@@ -1,0 +1,7 @@
+https://www.cnblogs.com/jsjliyang/p/10606908.html
+https://github.com/NuGet/Home/issues/8169#issuecomment-497591809
+
+sudo rm -d /usr/local/ssl/certs
+
+sudo ln -s /etc/ssl/certs /usr/local/ssl/certs
+

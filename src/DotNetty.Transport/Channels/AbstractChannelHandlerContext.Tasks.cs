@@ -119,6 +119,54 @@
 
         #endregion
 
+        #region -- class ReadCompleteTask --
+
+        sealed class ReadCompleteTask : IRunnable
+        {
+            private readonly AbstractChannelHandlerContext _ctx;
+
+            public ReadCompleteTask(AbstractChannelHandlerContext ctx) => _ctx = ctx;
+
+            public void Run()
+            {
+                _ctx.InvokeChannelReadComplete();
+            }
+        }
+
+        #endregion
+
+        #region -- class ReadTask --
+
+        sealed class ReadTask : IRunnable
+        {
+            private readonly AbstractChannelHandlerContext _ctx;
+
+            public ReadTask(AbstractChannelHandlerContext ctx) => _ctx = ctx;
+
+            public void Run()
+            {
+                _ctx.InvokeRead();
+            }
+        }
+
+        #endregion
+
+        #region -- class WritableStateChangedTask --
+
+        sealed class WritableStateChangedTask : IRunnable
+        {
+            private readonly AbstractChannelHandlerContext _ctx;
+
+            public WritableStateChangedTask(AbstractChannelHandlerContext ctx) => _ctx = ctx;
+
+            public void Run()
+            {
+                _ctx.InvokeChannelWritabilityChanged();
+            }
+        }
+
+        #endregion
+
         #region -- class FlushTask --
 
         sealed class FlushTask : IRunnable
@@ -192,13 +240,13 @@
                 try
                 {
                     DecrementPendingOutboundBytes();
-                    if ((uint)_size > SharedConstants.TooBigOrNegative)
+                    if (SharedConstants.TooBigOrNegative >= (uint)_size)
                     {
-                        _ctx.InvokeWriteAndFlush(_msg, _promise);
+                        _ctx.InvokeWrite(_msg, _promise);
                     }
                     else
                     {
-                        _ctx.InvokeWrite(_msg, _promise);
+                        _ctx.InvokeWriteAndFlush(_msg, _promise);
                     }
                 }
                 finally
@@ -235,6 +283,34 @@
                 _promise = null;
                 _handle.Release(this);
             }
+        }
+
+        #endregion
+
+        #region -- class ContextTasks --
+
+        sealed class ContextTasks
+        {
+            private readonly AbstractChannelHandlerContext _ctx;
+
+            public readonly IRunnable InvokeChannelReadCompleteTask;
+
+            public readonly IRunnable InvokeReadTask;
+
+            public readonly IRunnable InvokeChannelWritableStateChangedTask;
+
+            public readonly IRunnable InvokeFlushTask;
+
+            public ContextTasks(AbstractChannelHandlerContext ctx)
+            {
+                _ctx = ctx;
+
+                InvokeChannelReadCompleteTask = new ReadCompleteTask(ctx);
+                InvokeReadTask = new ReadTask(ctx);
+                InvokeChannelWritableStateChangedTask = new WritableStateChangedTask(ctx);
+                InvokeFlushTask = new FlushTask(ctx);
+            }
+
         }
 
         #endregion

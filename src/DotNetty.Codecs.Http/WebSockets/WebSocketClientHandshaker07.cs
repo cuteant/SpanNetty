@@ -124,10 +124,12 @@ namespace DotNetty.Codecs.Http.WebSockets
             byte[] sha1 = WebSocketUtil.Sha1(Encoding.ASCII.GetBytes(acceptSeed));
             _expectedChallengeResponseString = new AsciiString(WebSocketUtil.Base64String(sha1));
 
+#if DEBUG
             if (Logger.DebugEnabled)
             {
                 Logger.WebSocketVersion07ClientHandshakeKey(key, _expectedChallengeResponseString);
             }
+#endif
 
             // Format request
             var request = new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, UpgradeUrl(wsUrl),

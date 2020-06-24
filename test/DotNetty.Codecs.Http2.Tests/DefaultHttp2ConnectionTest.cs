@@ -20,7 +20,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
         public void Dispose()
         {
-            Group.ShutdownGracefullyAsync();
+            Group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
         }
     }
 

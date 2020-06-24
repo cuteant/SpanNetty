@@ -10,7 +10,7 @@ namespace DotNetty.Transport.Channels.Local
 
         public bool Equals(LocalAddress x, LocalAddress y)
         {
-            return ReferenceEquals(x, y);
+            return x is object ? x.Equals(y) : y is null;
         }
 
         public int GetHashCode(LocalAddress obj)

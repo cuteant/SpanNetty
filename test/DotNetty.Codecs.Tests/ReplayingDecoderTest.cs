@@ -20,11 +20,11 @@
 
             // Ordinary input
             ch.WriteInbound(Unpooled.WrappedBuffer(new byte[] { (byte)'A' }));
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             ch.WriteInbound(Unpooled.WrappedBuffer(new byte[] { (byte)'B' }));
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             ch.WriteInbound(Unpooled.WrappedBuffer(new byte[] { (byte)'C' }));
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
             ch.WriteInbound(Unpooled.WrappedBuffer(new byte[] { (byte)'\n' }));
 
             IByteBuffer buf = Unpooled.WrappedBuffer(new byte[] { (byte)'A', (byte)'B', (byte)'C' });
@@ -36,10 +36,10 @@
 
             // Truncated input
             ch.WriteInbound(Unpooled.WrappedBuffer(new byte[] { (byte)'A' }));
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
 
             ch.Finish();
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
         }
 
         sealed class LineDecoder : ReplayingDecoder
@@ -60,7 +60,7 @@
 
             // "AB" should be forwarded to LineDecoder by BloatedLineDecoder.
             ch.WriteInbound(Unpooled.WrappedBuffer(new byte[] { (byte)'A', (byte)'B' }));
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
 
             // "C\n" should be appended to "AB" so that LineDecoder decodes it correctly.
             ch.WriteInbound(Unpooled.WrappedBuffer(new byte[] { (byte)'C', (byte)'\n' }));
@@ -73,7 +73,7 @@
             buf2.Release();
 
             ch.Finish();
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
         }
 
         sealed class BloatedLineDecoder : ChannelHandlerAdapter
@@ -102,7 +102,7 @@
             buf.Release();
             buf2.Release();
 
-            Assert.Null(ch.ReadInbound<object>()); // "Must be null as it must only decode one frame"
+            Assert.Null(ch.ReadInbound()); // "Must be null as it must only decode one frame"
 
             ch.Read();
             ch.Finish();
@@ -114,7 +114,7 @@
             buf.Release();
             buf2.Release();
 
-            Assert.Null(ch.ReadInbound<object>());
+            Assert.Null(ch.ReadInbound());
         }
 
         [Fact]
@@ -260,7 +260,7 @@
 
             public override void ChannelReadComplete(IChannelHandlerContext context)
             {
-                if (!context.Channel.Active)
+                if (!context.Channel.IsActive)
                 {
                     _queue.Enqueue(2);
                 }

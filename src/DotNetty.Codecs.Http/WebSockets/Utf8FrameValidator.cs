@@ -95,7 +95,7 @@ namespace DotNetty.Codecs.Http.WebSockets
 
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception exception)
         {
-            if (exception is CorruptedFrameException && ctx.Channel.Open)
+            if (exception is CorruptedFrameException && ctx.Channel.IsOpen)
             {
                 _ = ctx.WriteAndFlushAsync(Unpooled.Empty).CloseOnComplete(ctx.Channel);
             }

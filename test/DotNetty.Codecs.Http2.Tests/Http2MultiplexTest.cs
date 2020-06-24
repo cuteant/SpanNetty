@@ -104,7 +104,7 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             IHttp2StreamChannel childChannel = NewOutboundStream(new ChannelHandlerForWriteUnknownFrame());
 
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsActive);
 
             _parentChannel.RunPendingTasks();
 
@@ -168,7 +168,7 @@ namespace DotNetty.Codecs.Http2.Tests
             VerifyFramesMultiplexedToCorrectChannel(channel, handler, 2);
 
             var childChannel = NewOutboundStream(new ChannelHandlerAdapter());
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsActive);
         }
 
         [Fact]
@@ -191,7 +191,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Http2TestUtil.AssertEqualsAndRelease(dataFrame1, inboundHandler.ReadInbound<IHttp2Frame>());
             Http2TestUtil.AssertEqualsAndRelease(dataFrame2, inboundHandler.ReadInbound<IHttp2Frame>());
 
-            Assert.Null(inboundHandler.ReadInbound<object>());
+            Assert.Null(inboundHandler.ReadInbound());
         }
 
         [Fact]
@@ -246,7 +246,7 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             IHttp2PingFrame pingFrame = new DefaultHttp2PingFrame(0);
             _frameInboundWriter.WriteInboundPing(false, 0);
-            Assert.Equal(_parentChannel.ReadInbound<object>(), pingFrame);
+            Assert.Equal(_parentChannel.ReadInbound<IHttp2PingFrame>(), pingFrame);
 
             DefaultHttp2GoAwayFrame goAwayFrame = new DefaultHttp2GoAwayFrame((Http2Error)1,
                     _parentChannel.Allocator.Buffer().WriteLong(8));
@@ -261,11 +261,11 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             LastInboundHandler inboundHandler = new LastInboundHandler();
             IHttp2StreamChannel childChannel = NewInboundStream(3, false, inboundHandler);
-            Assert.True(childChannel.Configuration.AutoRead);
+            Assert.True(childChannel.Configuration.IsAutoRead);
             var headersFrame = inboundHandler.ReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(headersFrame);
 
-            childChannel.Configuration.AutoRead = false;
+            childChannel.Configuration.IsAutoRead = false;
 
             _frameInboundWriter.WriteInboundData(childChannel.Stream.Id, Http2TestUtil.BB("hello world"), 0, false);
             var dataFrame0 = inboundHandler.ReadInbound<IHttp2DataFrame>();
@@ -275,9 +275,9 @@ namespace DotNetty.Codecs.Http2.Tests
             _frameInboundWriter.WriteInboundData(childChannel.Stream.Id, Http2TestUtil.BB("foo"), 0, false);
             _frameInboundWriter.WriteInboundData(childChannel.Stream.Id, Http2TestUtil.BB("bar"), 0, false);
 
-            Assert.Null(inboundHandler.ReadInbound<object>());
+            Assert.Null(inboundHandler.ReadInbound());
 
-            childChannel.Configuration.AutoRead = true;
+            childChannel.Configuration.IsAutoRead = true;
             VerifyFramesMultiplexedToCorrectChannel(childChannel, inboundHandler, 2);
         }
 
@@ -301,11 +301,11 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             LastInboundHandler inboundHandler = new LastInboundHandler();
             IHttp2StreamChannel childChannel = NewInboundStream(3, false, inboundHandler);
-            Assert.True(childChannel.Configuration.AutoRead);
+            Assert.True(childChannel.Configuration.IsAutoRead);
             var headersFrame = inboundHandler.ReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(headersFrame);
 
-            childChannel.Configuration.AutoRead = false;
+            childChannel.Configuration.IsAutoRead = false;
             childChannel.Pipeline.AddFirst(new ChannelReadShouldRespectAutoReadAndNotProduceNPEHandler());
             _frameInboundWriter.WriteInboundData(childChannel.Stream.Id, Http2TestUtil.BB("hello world"), 0, false);
             var dataFrame0 = inboundHandler.ReadInbound<IHttp2DataFrame>();
@@ -316,9 +316,9 @@ namespace DotNetty.Codecs.Http2.Tests
             _frameInboundWriter.WriteInboundData(childChannel.Stream.Id, Http2TestUtil.BB("bar"), 0, false);
             _frameInboundWriter.WriteInboundData(childChannel.Stream.Id, Http2TestUtil.BB("bar"), 0, false);
 
-            Assert.Null(inboundHandler.ReadInbound<object>());
+            Assert.Null(inboundHandler.ReadInbound());
 
-            childChannel.Configuration.AutoRead = true;
+            childChannel.Configuration.IsAutoRead = true;
             VerifyFramesMultiplexedToCorrectChannel(childChannel, inboundHandler, 3);
             inboundHandler.CheckException();
         }
@@ -364,9 +364,9 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             LastInboundHandler inboundHandler = new LastInboundHandler();
             IHttp2StreamChannel childChannel = NewInboundStream(3, false, inboundHandler);
-            Assert.True(childChannel.Configuration.AutoRead);
-            childChannel.Configuration.AutoRead = false;
-            Assert.False(childChannel.Configuration.AutoRead);
+            Assert.True(childChannel.Configuration.IsAutoRead);
+            childChannel.Configuration.IsAutoRead = false;
+            Assert.False(childChannel.Configuration.IsAutoRead);
 
             var headersFrame = inboundHandler.ReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(headersFrame);
@@ -400,14 +400,14 @@ namespace DotNetty.Codecs.Http2.Tests
             LastInboundHandler handler = new LastInboundHandler();
 
             IChannel childChannel = NewOutboundStream(handler);
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsActive);
 
             childChannel.CloseAsync();
             _parentChannel.RunPendingTasks();
 
-            Assert.False(childChannel.Open);
-            Assert.False(childChannel.Active);
-            Assert.Null(_parentChannel.ReadOutbound<object>());
+            Assert.False(childChannel.IsOpen);
+            Assert.False(childChannel.IsActive);
+            Assert.Null(_parentChannel.ReadOutbound());
         }
 
         class ChannelHandler_OutboundStreamShouldNotWriteResetFrameOnClose : ChannelHandlerAdapter
@@ -424,7 +424,7 @@ namespace DotNetty.Codecs.Http2.Tests
             IChannelHandler handler = new ChannelHandler_OutboundStreamShouldNotWriteResetFrameOnClose();
 
             IHttp2StreamChannel childChannel = NewOutboundStream(handler);
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsActive);
 
             childChannel.CloseAsync();
             _frameWriter.Verify(
@@ -463,7 +463,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             var childChannel = NewOutboundStream(new ChannelHandler_OutboundStreamShouldNotWriteResetFrameOnClose());
 
-            Assert.False(childChannel.Active);
+            Assert.False(childChannel.IsActive);
 
             childChannel.CloseAsync();
             _parentChannel.RunPendingTasks();
@@ -504,11 +504,11 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             LastInboundHandler inboundHandler = new LastInboundHandler();
             IHttp2StreamChannel channel = NewInboundStream(3, false, inboundHandler);
-            Assert.True(channel.Active);
+            Assert.True(channel.IsActive);
             StreamException cause = new StreamException(channel.Stream.Id, Http2Error.ProtocolError, "baaam!");
             _parentChannel.Pipeline.FireExceptionCaught(cause);
 
-            Assert.False(channel.Active);
+            Assert.False(channel.IsActive);
 
             Assert.Throws<StreamException>(() => inboundHandler.CheckException());
         }
@@ -519,7 +519,7 @@ namespace DotNetty.Codecs.Http2.Tests
             LastInboundHandler inboundHandler = new LastInboundHandler();
 
             IHttp2StreamChannel childChannel = NewOutboundStream(inboundHandler);
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsActive);
 
             IHttp2Headers headers = new DefaultHttp2Headers();
             _frameWriter
@@ -539,8 +539,8 @@ namespace DotNetty.Codecs.Http2.Tests
 
             _parentChannel.Flush();
 
-            Assert.False(childChannel.Active);
-            Assert.False(childChannel.Open);
+            Assert.False(childChannel.IsActive);
+            Assert.False(childChannel.IsOpen);
 
             inboundHandler.CheckException();
 
@@ -552,7 +552,7 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             LastInboundHandler inboundHandler = new LastInboundHandler();
             IHttp2StreamChannel childChannel = NewOutboundStream(inboundHandler);
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsActive);
             Assert.True(inboundHandler.IsChannelActive);
 
             // Write to the child channel
@@ -583,8 +583,8 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<Http2Error>(),
                     It.IsAny<IPromise>()));
 
-            Assert.False(childChannel.Open);
-            Assert.False(childChannel.Active);
+            Assert.False(childChannel.IsOpen);
+            Assert.False(childChannel.IsActive);
             Assert.False(inboundHandler.IsChannelActive);
         }
 
@@ -596,7 +596,7 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             LastInboundHandler handler = new LastInboundHandler();
             IHttp2StreamChannel childChannel = NewOutboundStream(handler);
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsActive);
 
             IHttp2Headers headers = new DefaultHttp2Headers();
             _frameWriter
@@ -616,8 +616,8 @@ namespace DotNetty.Codecs.Http2.Tests
             var future = childChannel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(headers));
             _parentChannel.Flush();
 
-            Assert.False(childChannel.Active);
-            Assert.False(childChannel.Open);
+            Assert.False(childChannel.IsActive);
+            Assert.False(childChannel.IsOpen);
 
             handler.CheckException();
 
@@ -630,8 +630,8 @@ namespace DotNetty.Codecs.Http2.Tests
             LastInboundHandler inboundHandler = new LastInboundHandler();
             IHttp2StreamChannel childChannel = NewInboundStream(3, false, inboundHandler);
 
-            Assert.True(childChannel.Open);
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsOpen);
+            Assert.True(childChannel.IsActive);
 
             AtomicBoolean channelOpen = new AtomicBoolean(true);
             AtomicBoolean channelActive = new AtomicBoolean(true);
@@ -641,14 +641,14 @@ namespace DotNetty.Codecs.Http2.Tests
             var p = childChannel.NewPromise();
             p.Task.ContinueWith(future =>
             {
-                channelOpen.Value = childChannel.Open;
-                channelActive.Value = childChannel.Active;
+                channelOpen.Value = childChannel.IsOpen;
+                channelActive.Value = childChannel.IsActive;
             }, TaskContinuationOptions.ExecuteSynchronously);
             childChannel.CloseAsync(p).GetAwaiter().GetResult();
 
             Assert.False(channelOpen.Value);
             Assert.False(channelActive.Value);
-            Assert.False(childChannel.Active);
+            Assert.False(childChannel.IsActive);
         }
 
         [Fact]
@@ -657,8 +657,8 @@ namespace DotNetty.Codecs.Http2.Tests
             LastInboundHandler inboundHandler = new LastInboundHandler();
             IHttp2StreamChannel childChannel = NewInboundStream(3, false, inboundHandler);
 
-            Assert.True(childChannel.Open);
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsOpen);
+            Assert.True(childChannel.IsActive);
 
             AtomicBoolean channelOpen = new AtomicBoolean(true);
             AtomicBoolean channelActive = new AtomicBoolean(true);
@@ -666,14 +666,14 @@ namespace DotNetty.Codecs.Http2.Tests
             var closeFuture = childChannel.CloseAsync();
             closeFuture.ContinueWith(future =>
             {
-                channelOpen.Value = childChannel.Open;
-                channelActive.Value = childChannel.Active;
+                channelOpen.Value = childChannel.IsOpen;
+                channelActive.Value = childChannel.IsActive;
             }, TaskContinuationOptions.ExecuteSynchronously);
             closeFuture.GetAwaiter().GetResult();
 
             Assert.False(channelOpen.Value);
             Assert.False(channelActive.Value);
-            Assert.False(childChannel.Active);
+            Assert.False(childChannel.IsActive);
         }
 
         [Fact]
@@ -684,8 +684,8 @@ namespace DotNetty.Codecs.Http2.Tests
             LastInboundHandler inboundHandler = new LastInboundHandler();
             IHttp2StreamChannel childChannel = NewInboundStream(3, false, inboundHandler);
 
-            Assert.True(childChannel.Open);
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsOpen);
+            Assert.True(childChannel.IsActive);
 
             AtomicBoolean channelOpen = new AtomicBoolean(true);
             AtomicBoolean channelActive = new AtomicBoolean(true);
@@ -709,8 +709,8 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.False(f.IsCompleted);
             f.ContinueWith(future =>
             {
-                channelOpen.Value = childChannel.Open;
-                channelActive.Value = childChannel.Active;
+                channelOpen.Value = childChannel.IsOpen;
+                channelActive.Value = childChannel.IsActive;
             }, TaskContinuationOptions.ExecuteSynchronously);
 
             var first = writePromises.RemoveFromFront();
@@ -723,7 +723,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             Assert.False(channelOpen.Value);
             Assert.False(channelActive.Value);
-            Assert.False(childChannel.Active);
+            Assert.False(childChannel.IsActive);
         }
 
         [Fact]
@@ -732,13 +732,13 @@ namespace DotNetty.Codecs.Http2.Tests
             LastInboundHandler inboundHandler = new LastInboundHandler();
             IHttp2StreamChannel childChannel = NewInboundStream(3, false, inboundHandler);
 
-            Assert.True(childChannel.Open);
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsOpen);
+            Assert.True(childChannel.IsActive);
             childChannel.CloseAsync().GetAwaiter().GetResult();
             childChannel.CloseAsync().GetAwaiter().GetResult();
 
-            Assert.False(childChannel.Open);
-            Assert.False(childChannel.Active);
+            Assert.False(childChannel.IsOpen);
+            Assert.False(childChannel.IsActive);
         }
 
         [Fact]
@@ -747,10 +747,10 @@ namespace DotNetty.Codecs.Http2.Tests
             AttributeKey<string> key = AttributeKey<string>.NewInstance(Guid.NewGuid().ToString());
 
             IChannel childChannel = NewOutboundStream(new ChannelHandlerAdapter());
-            childChannel.Configuration.AutoRead = false;
+            childChannel.Configuration.IsAutoRead = false;
             childChannel.Configuration.WriteSpinCount = 1000;
             childChannel.GetAttribute(key).Set("bar");
-            Assert.False(childChannel.Configuration.AutoRead);
+            Assert.False(childChannel.Configuration.IsAutoRead);
             Assert.Equal(1000, childChannel.Configuration.WriteSpinCount);
             Assert.Equal("bar", childChannel.GetAttribute(key).Get());
         }
@@ -759,7 +759,7 @@ namespace DotNetty.Codecs.Http2.Tests
         public void OutboundFlowControlWritability()
         {
             IHttp2StreamChannel childChannel = NewOutboundStream(new ChannelHandlerAdapter());
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsActive);
 
             Assert.True(childChannel.IsWritable);
             childChannel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()));
@@ -783,7 +783,7 @@ namespace DotNetty.Codecs.Http2.Tests
             _parentChannel.Configuration.WriteBufferLowWaterMark = 256;
             _parentChannel.Configuration.WriteBufferHighWaterMark = 512;
             Assert.True(childChannel.IsWritable);
-            Assert.True(_parentChannel.Active);
+            Assert.True(_parentChannel.IsActive);
 
             childChannel.WriteAndFlushAsync(new DefaultHttp2HeadersFrame(new DefaultHttp2Headers()));
             _parentChannel.Flush();
@@ -841,8 +841,8 @@ namespace DotNetty.Codecs.Http2.Tests
 
             public override void ChannelInactive(IChannelHandlerContext ctx)
             {
-                _channelOpen.Value = ctx.Channel.Open;
-                _channelActive.Value = ctx.Channel.Active;
+                _channelOpen.Value = ctx.Channel.IsOpen;
+                _channelActive.Value = ctx.Channel.IsActive;
 
                 base.ChannelInactive(ctx);
             }
@@ -856,8 +856,8 @@ namespace DotNetty.Codecs.Http2.Tests
 
             AtomicBoolean channelOpen = new AtomicBoolean(false);
             AtomicBoolean channelActive = new AtomicBoolean(false);
-            Assert.True(childChannel.Open);
-            Assert.True(childChannel.Active);
+            Assert.True(childChannel.IsOpen);
+            Assert.True(childChannel.IsActive);
 
             childChannel.Pipeline.AddLast(new ChannelHandler_ChannelClosedWhenInactiveFired(channelOpen, channelActive));
 
@@ -959,7 +959,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 _channelReadCompleteCount?.Increment();
                 if (_shouldDisableAutoRead.Value)
                 {
-                    obj.Channel.Configuration.AutoRead = false;
+                    obj.Channel.Configuration.IsAutoRead = false;
                 }
             }
         }
@@ -979,7 +979,7 @@ namespace DotNetty.Codecs.Http2.Tests
             AtomicBoolean shouldDisableAutoRead = new AtomicBoolean(false);
             LastInboundHandler inboundHandler = new LastInboundHandler(new ChannelHandlerContextConsumer(shouldDisableAutoRead));
             IHttp2StreamChannel childChannel = NewInboundStream(3, false, numReads, inboundHandler);
-            childChannel.Configuration.AutoRead = false;
+            childChannel.Configuration.IsAutoRead = false;
 
             IHttp2DataFrame dataFrame1 = new DefaultHttp2DataFrame(Http2TestUtil.BB("1")) { Stream = childChannel.Stream };
             IHttp2DataFrame dataFrame2 = new DefaultHttp2DataFrame(Http2TestUtil.BB("2")) { Stream = childChannel.Stream };
@@ -1000,14 +1000,14 @@ namespace DotNetty.Codecs.Http2.Tests
             _frameInboundWriter.WriteInboundData(childChannel.Stream.Id, Http2TestUtil.BB("4"), 0, false);
 
             shouldDisableAutoRead.Value = true;
-            childChannel.Configuration.AutoRead = true;
+            childChannel.Configuration.IsAutoRead = true;
             numReads.Value = 1;
 
             _frameInboundWriter.WriteInboundRstStream(childChannel.Stream.Id, Http2Error.NoError);
 
             // Detecting EOS should flush all pending data regardless of read calls.
             Http2TestUtil.AssertEqualsAndRelease(dataFrame2, inboundHandler.ReadInbound<IHttp2DataFrame>());
-            Assert.Null(inboundHandler.ReadInbound<object>());
+            Assert.Null(inboundHandler.ReadInbound());
 
             // As we limited the number to 1 we also need to call read() again.
             childChannel.Read();
@@ -1021,7 +1021,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal(childChannel.Stream, resetFrame.Stream);
             Assert.Equal(Http2Error.NoError, resetFrame.ErrorCode);
 
-            Assert.Null(inboundHandler.ReadInbound<object>());
+            Assert.Null(inboundHandler.ReadInbound());
 
             // Now we want to call channelReadComplete and simulate the end of the read loop.
             _parentChannel.Pipeline.Remove(readCompleteSupressHandler);
@@ -1043,7 +1043,7 @@ namespace DotNetty.Codecs.Http2.Tests
             IConsumer<IChannelHandlerContext> ctxConsumer = new ChannelHandlerContextConsumer(shouldDisableAutoRead, channelReadCompleteCount);
             LastInboundHandler inboundHandler = new LastInboundHandler(ctxConsumer);
             IHttp2StreamChannel childChannel = NewInboundStream(3, false, numReads, inboundHandler);
-            childChannel.Configuration.AutoRead = false;
+            childChannel.Configuration.IsAutoRead = false;
 
             IHttp2DataFrame dataFrame1 = new DefaultHttp2DataFrame(Http2TestUtil.BB("1")) { Stream = childChannel.Stream };
             IHttp2DataFrame dataFrame2 = new DefaultHttp2DataFrame(Http2TestUtil.BB("2")) { Stream = childChannel.Stream };
@@ -1065,7 +1065,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             numReads.Value = 10;
             shouldDisableAutoRead.Value = true;
-            childChannel.Configuration.AutoRead = true;
+            childChannel.Configuration.IsAutoRead = true;
 
             _frameInboundWriter.WriteInboundData(childChannel.Stream.Id, Http2TestUtil.BB("3"), 0, false);
             _frameInboundWriter.WriteInboundData(childChannel.Stream.Id, Http2TestUtil.BB("4"), 0, false);
@@ -1075,7 +1075,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Http2TestUtil.AssertEqualsAndRelease(dataFrame3, inboundHandler.ReadInbound<IHttp2DataFrame>());
             Http2TestUtil.AssertEqualsAndRelease(dataFrame4, inboundHandler.ReadInbound<IHttp2DataFrame>());
 
-            Assert.Null(inboundHandler.ReadInbound<object>());
+            Assert.Null(inboundHandler.ReadInbound());
 
             // Now we want to call channelReadComplete and simulate the end of the read loop.
             _parentChannel.Pipeline.Remove(readCompleteSupressHandler);
@@ -1094,7 +1094,7 @@ namespace DotNetty.Codecs.Http2.Tests
             IConsumer<IChannelHandlerContext> ctxConsumer = new ChannelHandlerContextConsumer(shouldDisableAutoRead, channelReadCompleteCount);
             LastInboundHandler inboundHandler = new LastInboundHandler(ctxConsumer);
             IHttp2StreamChannel childChannel = NewInboundStream(3, false, numReads, inboundHandler);
-            childChannel.Configuration.AutoRead = false;
+            childChannel.Configuration.IsAutoRead = false;
 
             IHttp2DataFrame dataFrame1 = new DefaultHttp2DataFrame(Http2TestUtil.BB("1")) { Stream = childChannel.Stream };
             IHttp2DataFrame dataFrame2 = new DefaultHttp2DataFrame(Http2TestUtil.BB("2")) { Stream = childChannel.Stream };
@@ -1119,7 +1119,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             Http2TestUtil.AssertEqualsAndRelease(dataFrame2, inboundHandler.ReadInbound<IHttp2Frame>());
 
-            Assert.Null(inboundHandler.ReadInbound<object>());
+            Assert.Null(inboundHandler.ReadInbound());
 
             // This is the second item that was read, this should be the last until we call read() again. This should also
             // notify of readComplete().
@@ -1128,13 +1128,13 @@ namespace DotNetty.Codecs.Http2.Tests
             Http2TestUtil.AssertEqualsAndRelease(dataFrame3, inboundHandler.ReadInbound<IHttp2Frame>());
 
             _frameInboundWriter.WriteInboundData(childChannel.Stream.Id, Http2TestUtil.BB("4"), 0, false);
-            Assert.Null(inboundHandler.ReadInbound<object>());
+            Assert.Null(inboundHandler.ReadInbound());
 
             childChannel.Read();
 
             Http2TestUtil.AssertEqualsAndRelease(dataFrame4, inboundHandler.ReadInbound<IHttp2Frame>());
 
-            Assert.Null(inboundHandler.ReadInbound<object>());
+            Assert.Null(inboundHandler.ReadInbound());
 
             // Now we want to call channelReadComplete and simulate the end of the read loop.
             _parentChannel.Pipeline.Remove(readCompleteSupressHandler);
@@ -1161,9 +1161,9 @@ namespace DotNetty.Codecs.Http2.Tests
         {
             LastInboundHandler inboundHandler = new LastInboundHandler();
             IHttp2StreamChannel childChannel = NewInboundStream(3, false, inboundHandler);
-            Assert.True(childChannel.Configuration.AutoRead);
-            childChannel.Configuration.AutoRead = false;
-            Assert.False(childChannel.Configuration.AutoRead);
+            Assert.True(childChannel.Configuration.IsAutoRead);
+            childChannel.Configuration.IsAutoRead = false;
+            Assert.False(childChannel.Configuration.IsAutoRead);
 
             var headersFrame = inboundHandler.ReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(headersFrame);
@@ -1244,9 +1244,9 @@ namespace DotNetty.Codecs.Http2.Tests
             _parentChannel.Pipeline.AddFirst(flushSniffer);
 
             IHttp2StreamChannel childChannel = NewInboundStream(3, false, inboundHandler);
-            Assert.True(childChannel.Configuration.AutoRead);
-            childChannel.Configuration.AutoRead = false;
-            Assert.False(childChannel.Configuration.AutoRead);
+            Assert.True(childChannel.Configuration.IsAutoRead);
+            childChannel.Configuration.IsAutoRead = false;
+            Assert.False(childChannel.Configuration.IsAutoRead);
 
             IHttp2HeadersFrame headersFrame = inboundHandler.ReadInbound<IHttp2HeadersFrame>();
             Assert.NotNull(headersFrame);
@@ -1312,7 +1312,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 Assert.Equal(streamChannel.Stream, frame.Stream);
                 ReferenceCountUtil.Release(frame);
             }
-            Assert.Null(inboundHandler.ReadInbound<object>());
+            Assert.Null(inboundHandler.ReadInbound());
         }
 
         private static int EqStreamId(IHttp2StreamChannel channel)

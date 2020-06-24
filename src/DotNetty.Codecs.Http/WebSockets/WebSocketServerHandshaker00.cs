@@ -132,10 +132,12 @@ namespace DotNetty.Codecs.Http.WebSockets
                     string selectedSubprotocol = this.SelectSubprotocol(subprotocols.ToString());
                     if (selectedSubprotocol is null)
                     {
+#if DEBUG
                         if (Logger.DebugEnabled)
                         {
                             Logger.RequestedSubprotocolNotSupported(subprotocols);
                         }
+#endif
                     }
                     else
                     {

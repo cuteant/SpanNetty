@@ -338,7 +338,7 @@
             ReadInterceptingHandler interceptor = new ReadInterceptingHandler();
 
             EmbeddedChannel channel = new EmbeddedChannel();
-            channel.Configuration.AutoRead = false;
+            channel.Configuration.IsAutoRead = false;
             channel.Pipeline.AddLast(interceptor, new FixedLengthFrameDecoder(3));
             Assert.Equal(0, interceptor.readsTriggered);
 
@@ -491,7 +491,7 @@
 
         public override void ChannelReadComplete(IChannelHandlerContext context)
         {
-            if (!context.Channel.Active)
+            if (!context.Channel.IsActive)
             {
                 _queue.Enqueue(2);
             }

@@ -20,7 +20,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             Assert.True(channel.Finish());
             AssertCloseWebSocketFrame(channel);
             AssertCloseWebSocketFrame(channel);
-            Assert.Null(channel.ReadOutbound<object>());
+            Assert.Null(channel.ReadOutbound());
         }
 
         static void AssertCloseWebSocketFrame(EmbeddedChannel channel)

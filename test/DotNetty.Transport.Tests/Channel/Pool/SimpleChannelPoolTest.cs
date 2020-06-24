@@ -47,7 +47,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
             // Should fail on multiple release calls.
             await Assert.ThrowsAsync<ArgumentException>(async () => await pool.ReleaseAsync(channel2));
-            Assert.False(channel.Active);
+            Assert.False(channel.IsActive);
             try
             {
                 await pool.ReleaseAsync(channel2);
@@ -56,7 +56,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             catch (ArgumentException)
             {
                 // expected
-                Assert.False(channel.Active);
+                Assert.False(channel.IsActive);
             }
 
             Assert.Equal(1, handler.AcquiredCount);
@@ -64,7 +64,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
 
             await sc.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
         }
 
         [Fact]
@@ -103,7 +103,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await channel.CloseAsync();
             await channel2.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
         }
 
         /**
@@ -145,7 +145,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await sc.CloseAsync();
             await channel3.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
         }
 
         /**
@@ -183,7 +183,7 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             await sc.CloseAsync();
             await channel2.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
         }
 
         [Fact]
@@ -295,19 +295,19 @@ namespace DotNetty.Transport.Tests.Channel.Pool
             pool.ReleaseAsync(ch2).Wait(TimeSpan.FromSeconds(1));
 
             // Assert that returned channels are open before close
-            Assert.True(ch1.Open);
-            Assert.True(ch2.Open);
+            Assert.True(ch1.IsOpen);
+            Assert.True(ch2.IsOpen);
 
             // Close asynchronously with timeout
             await pool.CloseAsync().WithTimeout(TimeSpan.FromSeconds(1));
 
             // Assert channels were indeed closed
-            Assert.False(ch1.Open);
-            Assert.False(ch2.Open);
+            Assert.False(ch1.IsOpen);
+            Assert.False(ch2.IsOpen);
 
             await sc.CloseAsync();
             pool.Close();
-            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
+            await group.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
         }
     }
 }

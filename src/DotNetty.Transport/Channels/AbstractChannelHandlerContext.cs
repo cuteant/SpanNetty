@@ -12,6 +12,7 @@ namespace DotNetty.Transport.Channels
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
 
     abstract partial class AbstractChannelHandlerContext : IChannelHandlerContext, IResourceLeakHint
@@ -19,7 +20,7 @@ namespace DotNetty.Transport.Channels
         private AbstractChannelHandlerContext v_next;
         internal AbstractChannelHandlerContext Next
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => Volatile.Read(ref v_next);
             set => Interlocked.Exchange(ref v_next, value);
         }
@@ -27,12 +28,12 @@ namespace DotNetty.Transport.Channels
         private AbstractChannelHandlerContext v_prev;
         internal AbstractChannelHandlerContext Prev
         {
-            [MethodImpl(InlineMethod.AggressiveInlining)]
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => Volatile.Read(ref v_prev);
             set => Interlocked.Exchange(ref v_prev, value);
         }
 
-        internal readonly SkipFlags SkipPropagationFlags;
+        private readonly int _executionMask;
 
         internal readonly DefaultChannelPipeline _pipeline;
         private readonly bool _ordered;
@@ -40,10 +41,20 @@ namespace DotNetty.Transport.Channels
         // Will be set to null if no child executor should be used, otherwise it will be set to the
         // child executor.
         internal readonly IEventExecutor _executor;
+
+        // Lazily instantiated tasks used to trigger events to a handler with different executor.
+        // There is no need to make this volatile as at worse it will just create a few more instances then needed.
+        private ContextTasks _invokeTasks;
+        private ContextTasks InvokeTasks
+        {
+            [MethodImpl(InlineMethod.AggressiveOptimization)]
+            get => _invokeTasks ?? EnsureTastsCreated();
+        }
+
         private int v_handlerState = HandlerState.Init;
 
         protected AbstractChannelHandlerContext(DefaultChannelPipeline pipeline, IEventExecutor executor,
-            string name, SkipFlags skipPropagationDirections)
+            string name, int executionMask)
         {
             if (pipeline is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.pipeline); }
             if (name is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.name); }
@@ -51,7 +62,7 @@ namespace DotNetty.Transport.Channels
             _pipeline = pipeline;
             Name = name;
             _executor = executor;
-            SkipPropagationFlags = skipPropagationDirections;
+            _executionMask = executionMask;
             // Its ordered if its driven by the EventLoop or the given Executor is an instanceof OrderedEventExecutor.
             _ordered = executor is null || executor is IOrderedEventExecutor;
         }
@@ -81,11 +92,15 @@ namespace DotNetty.Transport.Channels
             {
                 // Store in local variable to reduce volatile reads.
                 var thisState = Volatile.Read(ref v_handlerState);
-                return thisState == HandlerState.AddComplete || (!_ordered && thisState == HandlerState.AddPending);
+                return 0u >= (uint)(thisState - HandlerState.AddComplete) ||
+                    (!_ordered && 0u >= (uint)(thisState - HandlerState.AddPending));
             }
         }
 
-        public bool Removed => Volatile.Read(ref v_handlerState) == HandlerState.RemoveComplete;
+        [Obsolete("=>IsRemoved")]
+        public bool Removed => IsRemoved;
+
+        public bool IsRemoved => 0u >= (uint)(Volatile.Read(ref v_handlerState) - HandlerState.RemoveComplete);
 
         internal bool SetAddComplete()
         {
@@ -93,13 +108,13 @@ namespace DotNetty.Transport.Channels
             int oldState;
             do
             {
-                if (prevState == HandlerState.RemoveComplete) { return false; }
+                if (0u >= (uint)(prevState - HandlerState.RemoveComplete)) { return false; }
                 oldState = prevState;
                 // Ensure we never update when the handlerState is REMOVE_COMPLETE already.
                 // oldState is usually ADD_PENDING but can also be REMOVE_COMPLETE when an EventExecutor is used that is not
                 // exposing ordering guarantees.
                 prevState = Interlocked.CompareExchange(ref v_handlerState, HandlerState.AddComplete, prevState);
-            } while (prevState != oldState);
+            } while ((uint)(prevState - oldState) > 0u);
             return true;
         }
 
@@ -155,7 +170,7 @@ namespace DotNetty.Transport.Channels
         }
         public IChannelHandlerContext FireChannelRegistered()
         {
-            InvokeChannelRegistered(FindContextInbound());
+            InvokeChannelRegistered(FindContextInbound(SkipFlags.ChannelRegistered));
             return this;
         }
 
@@ -193,7 +208,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelHandlerContext FireChannelUnregistered()
         {
-            InvokeChannelUnregistered(FindContextInbound());
+            InvokeChannelUnregistered(FindContextInbound(SkipFlags.ChannelUnregistered));
             return this;
         }
 
@@ -231,7 +246,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelHandlerContext FireChannelActive()
         {
-            InvokeChannelActive(FindContextInbound());
+            InvokeChannelActive(FindContextInbound(SkipFlags.ChannelActive));
             return this;
         }
 
@@ -269,7 +284,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelHandlerContext FireChannelInactive()
         {
-            InvokeChannelInactive(FindContextInbound());
+            InvokeChannelInactive(FindContextInbound(SkipFlags.ChannelInactive));
             return this;
         }
 
@@ -307,7 +322,7 @@ namespace DotNetty.Transport.Channels
 
         public virtual IChannelHandlerContext FireExceptionCaught(Exception cause)
         {
-            InvokeExceptionCaught(FindContextInbound(), cause);
+            InvokeExceptionCaught(FindContextInbound(SkipFlags.ExceptionCaught), cause);
             return this;
         }
 
@@ -364,7 +379,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelHandlerContext FireUserEventTriggered(object evt)
         {
-            InvokeUserEventTriggered(FindContextInbound(), evt);
+            InvokeUserEventTriggered(FindContextInbound(SkipFlags.UserEventTriggered), evt);
             return this;
         }
 
@@ -403,7 +418,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelHandlerContext FireChannelRead(object msg)
         {
-            InvokeChannelRead(FindContextInbound(), msg);
+            InvokeChannelRead(FindContextInbound(SkipFlags.ChannelRead), msg);
             return this;
         }
 
@@ -444,7 +459,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelHandlerContext FireChannelReadComplete()
         {
-            InvokeChannelReadComplete(FindContextInbound());
+            InvokeChannelReadComplete(FindContextInbound(SkipFlags.ChannelReadComplete));
             return this;
         }
 
@@ -457,8 +472,8 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                // todo: consider caching task
-                nextExecutor.Execute(InvokeChannelReadCompleteAction, next);
+                var tasks = next.InvokeTasks;
+                nextExecutor.Execute(tasks.InvokeChannelReadCompleteTask);
             }
         }
 
@@ -483,7 +498,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelHandlerContext FireChannelWritabilityChanged()
         {
-            InvokeChannelWritabilityChanged(FindContextInbound());
+            InvokeChannelWritabilityChanged(FindContextInbound(SkipFlags.ChannelWritabilityChanged));
             return this;
         }
 
@@ -496,8 +511,8 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                // todo: consider caching task
-                nextExecutor.Execute(InvokeChannelWritabilityChangedAction, next);
+                var tasks = next.InvokeTasks;
+                nextExecutor.Execute(tasks.InvokeChannelWritableStateChangedTask);
             }
         }
 
@@ -529,7 +544,7 @@ namespace DotNetty.Transport.Channels
             //    return;
             //}
 
-            AbstractChannelHandlerContext next = FindContextOutbound();
+            AbstractChannelHandlerContext next = FindContextOutbound(SkipFlags.Bind);
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
             {
@@ -564,7 +579,7 @@ namespace DotNetty.Transport.Channels
 
         public Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
         {
-            AbstractChannelHandlerContext next = FindContextOutbound();
+            AbstractChannelHandlerContext next = FindContextOutbound(SkipFlags.Connect);
             if (remoteAddress is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.remoteAddress); }
             // todo: check for cancellation
 
@@ -615,7 +630,7 @@ namespace DotNetty.Transport.Channels
                 return promise.Task;
             }
 
-            AbstractChannelHandlerContext next = FindContextOutbound();
+            AbstractChannelHandlerContext next = FindContextOutbound(SkipFlags.Disconnect);
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
             {
@@ -639,7 +654,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    Util.SafeSetFailure(promise, ex, DefaultChannelPipeline.Logger);
+                    NotifyOutboundHandlerException(ex, promise);
                 }
             }
             else
@@ -658,7 +673,7 @@ namespace DotNetty.Transport.Channels
                 return promise.Task;
             }
 
-            AbstractChannelHandlerContext next = FindContextOutbound();
+            AbstractChannelHandlerContext next = FindContextOutbound(SkipFlags.Close);
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
             {
@@ -682,7 +697,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    Util.SafeSetFailure(promise, ex, DefaultChannelPipeline.Logger);
+                    NotifyOutboundHandlerException(ex, promise);
                 }
             }
             else
@@ -701,7 +716,7 @@ namespace DotNetty.Transport.Channels
                 return promise.Task;
             }
 
-            AbstractChannelHandlerContext next = FindContextOutbound();
+            AbstractChannelHandlerContext next = FindContextOutbound(SkipFlags.Deregister);
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
             {
@@ -725,7 +740,7 @@ namespace DotNetty.Transport.Channels
                 }
                 catch (Exception ex)
                 {
-                    Util.SafeSetFailure(promise, ex, DefaultChannelPipeline.Logger);
+                    NotifyOutboundHandlerException(ex, promise);
                 }
             }
             else
@@ -736,7 +751,7 @@ namespace DotNetty.Transport.Channels
 
         public IChannelHandlerContext Read()
         {
-            AbstractChannelHandlerContext next = FindContextOutbound();
+            AbstractChannelHandlerContext next = FindContextOutbound(SkipFlags.Read);
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
             {
@@ -744,8 +759,8 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                // todo: consider caching task
-                nextExecutor.Execute(InvokeReadAction, next);
+                var tasks = next.InvokeTasks;
+                nextExecutor.Execute(tasks.InvokeReadTask);
             }
             return this;
         }
@@ -798,13 +813,13 @@ namespace DotNetty.Transport.Channels
             }
             catch (Exception ex)
             {
-                Util.SafeSetFailure(promise, ex, DefaultChannelPipeline.Logger);
+                NotifyOutboundHandlerException(ex, promise);
             }
         }
 
         public IChannelHandlerContext Flush()
         {
-            AbstractChannelHandlerContext next = FindContextOutbound();
+            AbstractChannelHandlerContext next = FindContextOutbound(SkipFlags.Flush);
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
             {
@@ -812,7 +827,8 @@ namespace DotNetty.Transport.Channels
             }
             else
             {
-                _ = SafeExecuteOutbound(nextExecutor, new FlushTask(next), VoidPromise(), null, false);
+                var tasks = next.InvokeTasks;
+                _ = SafeExecuteOutbound(nextExecutor, tasks.InvokeFlushTask, VoidPromise(), null, false);
             }
             return this;
         }
@@ -881,7 +897,8 @@ namespace DotNetty.Transport.Channels
                 throw;
             }
 
-            AbstractChannelHandlerContext next = FindContextOutbound();
+            AbstractChannelHandlerContext next = FindContextOutbound(
+                flush ? SkipFlags.WriteAndFlush : SkipFlags.Write);
             object m = _pipeline.Touch(msg, next);
             IEventExecutor nextExecutor = next.Executor;
             if (nextExecutor.InEventLoop)
@@ -909,6 +926,13 @@ namespace DotNetty.Transport.Channels
             }
         }
 
+        private static void NotifyOutboundHandlerException(Exception cause, IPromise promise)
+        {
+            // Only log if the given promise is not of type VoidChannelPromise as tryFailure(...) is expected to return
+            // false.
+            PromiseNotificationUtil.TryFailure(promise, cause, promise.IsVoid ? null : DefaultChannelPipeline.Logger);
+        }
+
         public IPromise NewPromise() => new TaskCompletionSource();
 
         public IPromise NewPromise(object state) => new TaskCompletionSource(state);
@@ -917,26 +941,40 @@ namespace DotNetty.Transport.Channels
 
         static Task ComposeExceptionTask(Exception cause) => TaskUtil.FromException(cause);
 
-        AbstractChannelHandlerContext FindContextInbound()
+        AbstractChannelHandlerContext FindContextInbound(int mask)
         {
             AbstractChannelHandlerContext ctx = this;
+            IEventExecutor currentExecutor = Executor;
             do
             {
                 ctx = ctx.Next;
             }
-            while ((ctx.SkipPropagationFlags & SkipFlags.Inbound) == SkipFlags.Inbound);
+            while (SkipContext(ctx, currentExecutor, mask, SkipFlags.OnlyInbound));
             return ctx;
         }
 
-        AbstractChannelHandlerContext FindContextOutbound()
+        AbstractChannelHandlerContext FindContextOutbound(int mask)
         {
             AbstractChannelHandlerContext ctx = this;
+            IEventExecutor currentExecutor = Executor;
             do
             {
                 ctx = ctx.Prev;
             }
-            while ((ctx.SkipPropagationFlags & SkipFlags.Outbound) == SkipFlags.Outbound);
+            while (SkipContext(ctx, currentExecutor, mask, SkipFlags.OnlyOutbound));
             return ctx;
+        }
+
+        private static bool SkipContext(
+                AbstractChannelHandlerContext ctx, IEventExecutor currentExecutor, int mask, int onlyMask)
+        {
+            // Ensure we correctly handle MASK_EXCEPTION_CAUGHT which is not included in the MASK_EXCEPTION_CAUGHT
+            return (0u >= (uint)(ctx._executionMask & (onlyMask | mask))) ||
+                    // We can only skip if the EventExecutor is the same as otherwise we need to ensure we offload
+                    // everything to preserve ordering.
+                    //
+                    // See https://github.com/netty/netty/issues/10067
+                    (ctx.Executor == currentExecutor && 0u >= (uint)(ctx._executionMask & mask));
         }
 
         static bool SafeExecuteOutbound(IEventExecutor executor, IRunnable task,
@@ -987,15 +1025,18 @@ namespace DotNetty.Transport.Channels
                 ThrowHelper.ThrowArgumentException_PromiseAlreadyCompleted(promise);
             }
 
-            if (promise.IsVoid)
+            if (!allowVoidPromise && promise.IsVoid)
             {
-                if (allowVoidPromise) { return false; }
-
                 ThrowHelper.ThrowArgumentException_VoidPromiseIsNotAllowed();
             }
 
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private ContextTasks EnsureTastsCreated()
+        {
+            return _invokeTasks = new ContextTasks(this);
+        }
     }
 }

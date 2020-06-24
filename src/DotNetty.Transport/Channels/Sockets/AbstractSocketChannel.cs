@@ -25,7 +25,6 @@ namespace DotNetty.Transport.Channels.Sockets
 
         private SocketChannelAsyncOperation<TChannel, TUnsafe> _readOperation;
         private SocketChannelAsyncOperation<TChannel, TUnsafe> _writeOperation;
-        private int _inputShutdown;
         private int v_state;
         private int InternalState
         {
@@ -65,13 +64,13 @@ namespace DotNetty.Transport.Channels.Sockets
             }
         }
 
-        public override bool Open
+        public override bool IsOpen
         {
             [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => IsInState(StateFlags.Open);
         }
 
-        public override bool Active
+        public override bool IsActive
         {
             [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => IsInState(StateFlags.Active);
@@ -82,7 +81,7 @@ namespace DotNetty.Transport.Channels.Sockets
         /// </summary>
         protected internal void ClearReadPending()
         {
-            if (Registered)
+            if (IsRegistered)
             {
                 IEventLoop eventLoop = EventLoop;
                 if (eventLoop.InEventLoop)
@@ -104,10 +103,6 @@ namespace DotNetty.Transport.Channels.Sockets
         }
 
         void ClearReadPending0() => ReadPending = false;
-
-        protected bool InputShutdown => SharedConstants.False < (uint)Volatile.Read(ref _inputShutdown);
-
-        protected void ShutdownInput() => Interlocked.Exchange(ref _inputShutdown, SharedConstants.True);
 
         protected void SetState(int stateToSet) => InternalState |= stateToSet;
 
@@ -240,15 +235,7 @@ namespace DotNetty.Transport.Channels.Sockets
 
         protected override void DoBeginRead()
         {
-            if (SharedConstants.False < (uint)Volatile.Read(ref _inputShutdown))
-            {
-                return;
-            }
-
-            if (!Open)
-            {
-                return;
-            }
+            if (!IsOpen) { return; }
 
             ReadPending = true;
 

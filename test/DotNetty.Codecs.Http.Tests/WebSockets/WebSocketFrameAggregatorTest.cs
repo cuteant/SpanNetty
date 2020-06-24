@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             Assert.Equal(0, frame4.Rsv);
             Assert.Equal(this.aggregatedContent, ToBytes(frame4.Content));
 
-            Assert.Null(channel.ReadInbound<object>());
+            Assert.Null(channel.ReadInbound());
         }
 
         [Fact]
@@ -95,7 +95,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             Assert.Equal(0, frame4.Rsv);
             Assert.Equal(this.aggregatedContent, ToBytes(frame4.Content));
 
-            Assert.Null(channel.ReadInbound<object>());
+            Assert.Null(channel.ReadInbound());
         }
 
         [Fact]
@@ -119,7 +119,7 @@ namespace DotNetty.Codecs.Http.Tests.WebSockets
             channel.WriteInbound(new ContinuationWebSocketFrame(true, 0, Unpooled.WrappedBuffer(this.content2)));
             for (;;)
             {
-                var msg = channel.ReadInbound<object>();
+                var msg = channel.ReadInbound();
                 if (msg == null)
                 {
                     break;

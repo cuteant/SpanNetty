@@ -37,14 +37,16 @@ namespace DotNetty.Common.Concurrency
         private int v_executionState = ST_NOT_STARTED;
         private readonly PreciseTimeSpan _preciseBreakoutInterval;
         private PreciseTimeSpan _lastExecutionTime;
-        private readonly ManualResetEventSlim _emptyEvent = new ManualResetEventSlim(false, 1);
+        private readonly ManualResetEventSlim _emptyEvent;
         private readonly TaskScheduler _scheduler;
         private readonly IPromise _terminationCompletionSource;
         private PreciseTimeSpan _gracefulShutdownStartTime;
         private PreciseTimeSpan _gracefulShutdownQuietPeriod;
         private PreciseTimeSpan _gracefulShutdownTimeout;
-        private readonly ISet<Action> _shutdownHooks = new HashSet<Action>();
+        private readonly ISet<Action> _shutdownHooks;
         private long v_progress;
+
+        private bool _firstTask; // 不需要设置 volatile
 
         /// <summary>Creates a new instance of <see cref="SingleThreadEventExecutor"/>.</summary>
         public SingleThreadEventExecutor(string threadName, TimeSpan breakoutInterval)
@@ -65,6 +67,10 @@ namespace DotNetty.Common.Concurrency
         protected SingleThreadEventExecutor(IEventExecutorGroup parent, string threadName, TimeSpan breakoutInterval, IQueue<IRunnable> taskQueue)
             : base(parent)
         {
+            _firstTask = true;
+            _emptyEvent = new ManualResetEventSlim(false, 1);
+            _shutdownHooks = new HashSet<Action>();
+
             _loopAction = Loop;
             _loopCoreAciton = LoopCore;
 
@@ -130,30 +136,40 @@ namespace DotNetty.Common.Concurrency
             }
         }
 
-        /// <inheritdoc cref="IEventExecutor"/>
+        /// <inheritdoc />
         public override bool IsShuttingDown => (uint)Volatile.Read(ref v_executionState) >= ST_SHUTTING_DOWN;
 
-        /// <inheritdoc cref="IEventExecutor"/>
+        /// <inheritdoc />
         public override Task TerminationCompletion => _terminationCompletionSource.Task;
 
-        /// <inheritdoc cref="IEventExecutor"/>
+        /// <inheritdoc />
         public override bool IsShutdown => (uint)Volatile.Read(ref v_executionState) >= ST_SHUTDOWN;
 
-        /// <inheritdoc cref="IEventExecutor"/>
+        /// <inheritdoc />
         public override bool IsTerminated => (uint)Volatile.Read(ref v_executionState) >=/*==*/ ST_TERMINATED;
 
-        /// <inheritdoc cref="IEventExecutor"/>
+        /// <inheritdoc />
         public override bool IsInEventLoop(Thread t) => _thread == t;
 
-        /// <inheritdoc cref="IEventExecutor"/>
+        /// <inheritdoc />
         public override void Execute(IRunnable task)
         {
-            InternalExecute(task, !(task is ILazyRunnable));
+            if (!(task is ILazyRunnable))
+            {
+                InternalExecute(task, true);
+            }
+            else
+            {
+                LazyExecute(task);
+            }
         }
 
         public override void LazyExecute(IRunnable task)
         {
-            InternalExecute(task, false);
+            // netty 第一个任务进来，不管是否延迟任务，都会启动线程
+            var firstTask = _firstTask;
+            if (firstTask) { _firstTask = false; }
+            InternalExecute(task, firstTask);
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
@@ -272,7 +288,7 @@ namespace DotNetty.Common.Concurrency
             return ran;
         }
 
-        /// <inheritdoc cref="IEventExecutor"/>
+        /// <inheritdoc />
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
         {
             if (quietPeriod < TimeSpan.Zero) { ThrowHelper.ThrowArgumentException_MustBeGreaterThanOrEquelToZero(quietPeriod); }

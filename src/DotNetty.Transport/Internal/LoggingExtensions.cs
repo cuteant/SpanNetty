@@ -174,25 +174,29 @@ namespace DotNetty.Transport
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void FailedToMarkAPromiseAsSuccess(this IInternalLogger logger, IPromise promise)
         {
-            logger.Warn($"Failed to mark a promise as success because it has succeeded already: {promise}");
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void FailedToMarkAPromiseAsSuccessFailed(this IInternalLogger logger, IPromise promise, Exception err)
-        {
-            logger.Warn($"Failed to mark a promise as success because it has failed already: {promise}, unnotified cause {err.ToString()}");
+            var err = promise.Task.Exception?.InnerException;
+            if (err is null)
+            {
+                logger.Warn("Failed to mark a promise as success because it has succeeded already: {}", promise);
+            }
+            else
+            {
+                logger.Warn("Failed to mark a promise as success because it has failed already: {}, unnotified cause:", promise, err);
+            }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void FailedToMarkAPromiseAsFailure(this IInternalLogger logger, IPromise promise, Exception cause)
         {
-            logger.Warn($"Failed to mark a promise as failure because it has succeeded already: {promise}", cause);
-        }
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void FailedToMarkAPromiseAsFailureFailed(this IInternalLogger logger, IPromise promise, Exception cause, Exception err)
-        {
-            logger.Warn($"Failed to mark a promise as failure because it has failed already: {promise}, unnotified cause {err.ToString()}", cause);
+            var err = promise.Task.Exception?.InnerException;
+            if (err is null)
+            {
+                logger.Warn("Failed to mark a promise as failure because it has succeeded already: {}", promise, cause);
+            }
+            else
+            {
+                logger.Warn("Failed to mark a promise as failure because it has failed already: {}, unnotified cause {}", promise, err.ToString(), cause);
+            }
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]

@@ -106,10 +106,12 @@ namespace DotNetty.Codecs.Http.WebSockets
             byte[] sha1 = WebSocketUtil.Sha1(Encoding.ASCII.GetBytes(acceptSeed));
             string accept = WebSocketUtil.Base64String(sha1);
 
+#if DEBUG
             if (Logger.DebugEnabled)
             {
                 Logger.WebSocketVersion08ServerHandshakeKey(key, accept);
             }
+#endif
 
             _ = res.Headers.Add(HttpHeaderNames.Upgrade, HttpHeaderValues.Websocket);
             _ = res.Headers.Add(HttpHeaderNames.Connection, HttpHeaderValues.Upgrade);
@@ -121,10 +123,12 @@ namespace DotNetty.Codecs.Http.WebSockets
                 string selectedSubprotocol = this.SelectSubprotocol(subprotocols.ToString());
                 if (selectedSubprotocol is null)
                 {
+#if DEBUG
                     if (Logger.DebugEnabled)
                     {
                         Logger.RequestedSubprotocolNotSupported(subprotocols);
                     }
+#endif
                 }
                 else
                 {

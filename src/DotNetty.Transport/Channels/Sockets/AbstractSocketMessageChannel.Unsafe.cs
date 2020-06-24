@@ -6,7 +6,6 @@ namespace DotNetty.Transport.Channels.Sockets
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Net.Sockets;
 
     partial class AbstractSocketMessageChannel<TChannel, TUnsafe>
     {
@@ -77,19 +76,15 @@ namespace DotNetty.Transport.Channels.Sockets
 
                     if (exception is object)
                     {
-                        if (exception is SocketException asSocketException && asSocketException.SocketErrorCode != SocketError.TryAgain) // todo: other conditions for not closing message-based socket?
-                        {
-                            // ServerChannel should not be closed even on SocketException because it can often continue
-                            // accepting incoming connections. (e.g. too many open files)
-                            closed = !(ch is IServerChannel);
-                        }
+                        closed = ch.CloseOnReadError(exception);
 
                         _ = pipeline.FireExceptionCaught(exception);
                     }
 
                     if (closed)
                     {
-                        if (ch.Open)
+                        ch._inputShutdown = true;
+                        if (ch.IsOpen)
                         {
                             Close(VoidPromise());
                         }
@@ -103,7 +98,7 @@ namespace DotNetty.Transport.Channels.Sockets
                     // /// The user called Channel.read() or ChannelHandlerContext.read() in channelReadComplete(...) method
                     //
                     // See https://github.com/netty/netty/issues/2254
-                    if (!closed && (ch.ReadPending || config.AutoRead))
+                    if (!closed && (ch.ReadPending || config.IsAutoRead))
                     {
                         ch.DoBeginRead();
                     }

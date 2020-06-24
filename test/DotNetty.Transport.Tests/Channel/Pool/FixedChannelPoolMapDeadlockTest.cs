@@ -1,6 +1,7 @@
 ﻿namespace DotNetty.Transport.Tests.Channel.Pool
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using DotNetty.Common.Concurrency;
@@ -292,10 +293,12 @@
 
         private static void Shutdown(params IEventLoop[] eventLoops)
         {
+            var tasks = new List<Task>();
             foreach (var eventLoop in eventLoops)
             {
-                eventLoop.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
+                tasks.Add(eventLoop.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100)));
             }
+            Task.WaitAll(tasks.ToArray());
         }
 
         sealed class NoopHandler : AbstractChannelPoolHandler

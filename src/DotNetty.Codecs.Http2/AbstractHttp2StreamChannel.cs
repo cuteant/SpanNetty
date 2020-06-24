@@ -106,13 +106,13 @@
 
         public IChannelConfiguration Configuration => _config;
 
-        public bool Open
+        public bool IsOpen
         {
             [MethodImpl(InlineMethod.AggressiveOptimization)]
             get => !_closePromise.IsCompleted;
         }
 
-        public bool Active => Open;
+        public bool IsActive => IsOpen;
 
         public bool IsWritable => 0u >= (uint)Volatile.Read(ref v_unwritable);
 
@@ -122,7 +122,7 @@
 
         public IChannel Parent => ParentContext.Channel;
 
-        public bool Registered => InternalRegistered;
+        public bool IsRegistered => InternalRegistered;
 
         public EndPoint LocalAddress => Parent.LocalAddress;
 
@@ -293,7 +293,7 @@
         internal void FireChildRead(IHttp2Frame frame)
         {
             Debug.Assert(EventLoop.InEventLoop);
-            if (!Active)
+            if (!IsActive)
             {
                 _ = ReferenceCountUtil.Release(frame);
             }

@@ -122,7 +122,7 @@ namespace DotNetty.Codecs.Http
 
             if (this.upgradeRequested)
             {
-                Util.SafeSetFailure(promise, ThrowHelper.GetInvalidOperationException_Attempting(), Logger);
+                promise.TrySetException(ThrowHelper.GetInvalidOperationException_Attempting());
                 return;
             }
 

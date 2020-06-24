@@ -51,7 +51,7 @@ namespace DotNetty.Common.Tests.Concurrency
             });
 
             Task.WhenAll(tasks).Wait(TimeSpan.FromSeconds(500));
-            executor.ShutdownGracefullyAsync();
+            executor.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
         }
 
         [Theory]

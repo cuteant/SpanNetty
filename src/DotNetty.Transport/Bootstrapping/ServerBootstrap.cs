@@ -296,11 +296,11 @@ namespace DotNetty.Transport.Bootstrapping
             public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
             {
                 IChannelConfiguration config = ctx.Channel.Configuration;
-                if (config.AutoRead)
+                if (config.IsAutoRead)
                 {
                     // stop accept new connections for 1 second to allow the channel to recover
                     // See https://github.com/netty/netty/issues/1328
-                    config.AutoRead = false;
+                    config.IsAutoRead = false;
                     _ = ctx.Channel.EventLoop.Schedule(_enableAutoReadTask, TimeSpan.FromSeconds(1));
                 }
                 // still let the ExceptionCaught event flow through the pipeline to give the user
@@ -316,7 +316,7 @@ namespace DotNetty.Transport.Bootstrapping
 
                 public void Run()
                 {
-                    _channel.Configuration.AutoRead = true;
+                    _channel.Configuration.IsAutoRead = true;
                 }
             }
         }

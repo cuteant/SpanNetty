@@ -20,21 +20,21 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             if (channel is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.channel); }
 
-            this.Channel = channel;
-            this.Completed += AbstractSocketChannel<TChannel, TUnsafe>.IoCompletedCallback;
+            Channel = channel;
+            Completed += AbstractSocketChannel<TChannel, TUnsafe>.IoCompletedCallback;
             if (setEmptyBuffer)
             {
 #if NETCOREAPP || NETSTANDARD_2_0_GREATER
-                this.SetBuffer(Memory<byte>.Empty);
+                SetBuffer(Memory<byte>.Empty);
 #else
-                this.SetBuffer(ArrayExtensions.ZeroBytes, 0, 0);
+                SetBuffer(ArrayExtensions.ZeroBytes, 0, 0);
 #endif
             }
         }
 
         public void Validate()
         {
-            SocketError socketError = this.SocketError;
+            SocketError socketError = SocketError;
             if (socketError != SocketError.Success)
             {
                 ThrowHelper.ThrowSocketException(socketError);

@@ -745,7 +745,7 @@ namespace DotNetty.Buffers
 
             static IndexOutOfRangeException GetIndexOutOfRangeException(int readerIndex, int writerIndex, int capacity)
             {
-                throw new IndexOutOfRangeException(
+                return new IndexOutOfRangeException(
                     $"readerIndex: {readerIndex}, writerIndex: {writerIndex} (expected: 0 <= readerIndex <= writerIndex <= capacity({capacity}))");
             }
         }

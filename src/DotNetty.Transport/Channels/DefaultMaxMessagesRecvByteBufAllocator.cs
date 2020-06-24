@@ -8,7 +8,7 @@ namespace DotNetty.Transport.Channels
 
     /// <summary>
     ///     Default implementation of <see cref="IMaxMessagesRecvByteBufAllocator" /> which respects
-    ///     <see cref="IChannelConfiguration.AutoRead" />
+    ///     <see cref="IChannelConfiguration.IsAutoRead" />
     ///     and also prevents overflow.
     /// </summary>
     public abstract class DefaultMaxMessagesRecvByteBufAllocator : IMaxMessagesRecvByteBufAllocator
@@ -94,7 +94,7 @@ namespace DotNetty.Transport.Channels
 
             public virtual bool ContinueReading()
             {
-                return _config.AutoRead
+                return _config.IsAutoRead
                     && (!_respectMaybeMoreData || AttemptedBytesRead == _lastBytesRead)
                     && _totalMessages < _maxMessagePerRead
                     && _totalBytesRead > 0;

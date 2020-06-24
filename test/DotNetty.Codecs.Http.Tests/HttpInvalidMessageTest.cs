@@ -106,7 +106,7 @@ namespace DotNetty.Codecs.Http.Tests
                 buf.SetIndex(0, data.Length);
                 ch.WriteInbound(buf.Retain());
                 ch.CheckException();
-                Assert.Null(ch.ReadInbound<object>());
+                Assert.Null(ch.ReadInbound());
             }
             buf.Release();
         }

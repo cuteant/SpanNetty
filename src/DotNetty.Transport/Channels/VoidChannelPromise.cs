@@ -124,7 +124,7 @@ namespace DotNetty.Transport.Channels
             // if not the pipeline is not setup and so it would hit the tail
             // of the pipeline.
             // See https://github.com/netty/netty/issues/1517
-            if (_channel.Registered)
+            if (_channel.IsRegistered)
             {
                 _ = _channel.Pipeline.FireExceptionCaught(cause);
             }

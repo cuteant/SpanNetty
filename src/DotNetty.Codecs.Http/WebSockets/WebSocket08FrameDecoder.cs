@@ -98,10 +98,12 @@ namespace DotNetty.Codecs.Http.WebSockets
                     this.frameRsv = (b & 0x70) >> 4;
                     this.frameOpcode = b & 0x0F;
 
+#if DEBUG
                     if (Logger.TraceEnabled)
                     {
                         Logger.DecodingWebSocketFrameOpCode(this.frameOpcode);
                     }
+#endif
 
                     this.state = State.ReadingSecond;
                     goto case State.ReadingSecond;
@@ -245,10 +247,12 @@ namespace DotNetty.Codecs.Http.WebSockets
                         return;
                     }
 
+#if DEBUG
                     if (Logger.TraceEnabled)
                     {
                         Logger.DecodingWebSocketFrameLength(this.framePayloadLength);
                     }
+#endif
 
                     this.state = State.MaskingKey;
                     goto case State.MaskingKey;
@@ -416,7 +420,7 @@ namespace DotNetty.Codecs.Http.WebSockets
                 // buffer 'cumulation' is released ONLY when no more readable bytes available.
                 _ = input.SkipBytes(readableBytes);
             }
-            if (ctx.Channel.Active && _config.CloseOnProtocolViolation)
+            if (ctx.Channel.IsActive && _config.CloseOnProtocolViolation)
             {
                 object closeMessage;
                 if (this.receivedClosingHandshake)

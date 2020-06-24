@@ -46,7 +46,7 @@ namespace DotNetty.Handlers.Tls
         private void ReadIfNeeded(IChannelHandlerContext ctx)
         {
             // if handshake is not finished yet, we need more data
-            if (!ctx.Channel.Configuration.AutoRead && (!_firedChannelRead || !State.HasAny(TlsHandlerState.AuthenticationCompleted)))
+            if (!ctx.Channel.Configuration.IsAutoRead && (!_firedChannelRead || !State.HasAny(TlsHandlerState.AuthenticationCompleted)))
             {
                 // No auto-read used and no message was passed through the ChannelPipeline or the handshake was not completed
                 // yet, which means we need to trigger the read to ensure we will not stall

@@ -62,7 +62,7 @@ namespace DotNetty.Codecs.Http2.Tests
             this.promise = new TaskCompletionSource();
             var headersReceivedState = new AtomicInteger();
 
-            this.channel.Setup(x => x.Active).Returns(true);
+            this.channel.Setup(x => x.IsActive).Returns(true);
             this.stream.Setup(x => x.Id).Returns(STREAM_ID);
             this.stream.Setup(x => x.State).Returns(Http2StreamState.Open);
             this.stream.Setup(x => x.Open(It.IsAny<bool>())).Returns(this.stream.Object);

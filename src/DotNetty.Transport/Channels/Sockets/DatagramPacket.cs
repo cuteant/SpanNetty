@@ -19,35 +19,35 @@ namespace DotNetty.Transport.Channels.Sockets
         {
         }
 
-        public IByteBufferHolder Copy() => new DatagramPacket(this.Content.Copy(), this.Sender, this.Recipient);
+        public IByteBufferHolder Copy() => new DatagramPacket(Content.Copy(), Sender, Recipient);
 
-        public IByteBufferHolder Duplicate() => new DatagramPacket(this.Content.Duplicate(), this.Sender, this.Recipient);
+        public IByteBufferHolder Duplicate() => new DatagramPacket(Content.Duplicate(), Sender, Recipient);
 
-        public IByteBufferHolder RetainedDuplicate() => this.Replace(this.Content.RetainedDuplicate());
+        public IByteBufferHolder RetainedDuplicate() => Replace(Content.RetainedDuplicate());
 
-        public IByteBufferHolder Replace(IByteBuffer content) => new DatagramPacket(content, this.Recipient, this.Sender);
+        public IByteBufferHolder Replace(IByteBuffer content) => new DatagramPacket(content, Recipient, Sender);
 
         public override IReferenceCounted Retain()
         {
-            base.Retain();
+            _ = base.Retain();
             return this;
         }
 
         public override IReferenceCounted Retain(int increment)
         {
-            base.Retain(increment);
+            _ = base.Retain(increment);
             return this;
         }
 
         public override IReferenceCounted Touch()
         {
-            base.Touch();
+            _ = base.Touch();
             return this;
         }
 
         public override IReferenceCounted Touch(object hint)
         {
-            base.Touch(hint);
+            _ = base.Touch(hint);
             return this;
         }
     }

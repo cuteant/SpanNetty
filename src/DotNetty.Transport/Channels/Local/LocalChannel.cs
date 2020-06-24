@@ -40,7 +40,8 @@ namespace DotNetty.Transport.Channels.Local
             InternalReadAction = InternalRead;
         }
 
-        private readonly IQueue<object> _inboundBuffer;
+        // To further optimize this we could write our own SPSC queue.
+        internal readonly IQueue<object> _inboundBuffer;
 
         private int v_state;
         private LocalChannel v_peer;
@@ -89,9 +90,9 @@ namespace DotNetty.Transport.Channels.Local
 
         public new LocalAddress RemoteAddress => (LocalAddress)base.RemoteAddress;
 
-        public override bool Open => Volatile.Read(ref v_state) != State.Closed;
+        public override bool IsOpen => Volatile.Read(ref v_state) != State.Closed;
 
-        public override bool Active => Volatile.Read(ref v_state) == State.Connected;
+        public override bool IsActive => Volatile.Read(ref v_state) == State.Connected;
 
         //protected override IChannelUnsafe NewUnsafe() => new LocalUnsafe(this);
 
@@ -200,7 +201,7 @@ namespace DotNetty.Transport.Channels.Local
                     // This ensures that if both channels are on the same event loop, the peer's channelInActive
                     // event is triggered *after* this peer's channelInActive event
                     IEventLoop peerEventLoop = peer.EventLoop;
-                    bool peerIsActive = peer.Active;
+                    bool peerIsActive = peer.IsActive;
                     try
                     {
                         peerEventLoop.Execute(() => peer.TryClose(peerIsActive));
@@ -253,21 +254,16 @@ namespace DotNetty.Transport.Channels.Local
 
         private void ReadInbound()
         {
-            // TODO Respect MAX_MESSAGES_PER_READ in LocalChannel / LocalServerChannel.
-            //var handle = this.Unsafe.RecvBufAllocHandle;
-            //handle.Reset(this.Configuration);
+            var handle = Unsafe.RecvBufAllocHandle;
+            handle.Reset(Configuration);
+
             var pipeline = Pipeline;
             var inboundBuffer = _inboundBuffer;
-
-            //do
-            //{
-            //    if (!inboundBuffer.TryDequeue(out object received)) { break; }
-            //    pipeline.FireChannelRead(received);
-            //} while (handle.ContinueReading());
-            while (inboundBuffer.TryDequeue(out object received))
+            do
             {
+                if (!inboundBuffer.TryDequeue(out object received)) { break; }
                 _ = pipeline.FireChannelRead(received);
-            }
+            } while (handle.ContinueReading());
 
             _ = pipeline.FireChannelReadComplete();
         }
@@ -500,7 +496,7 @@ namespace DotNetty.Transport.Channels.Local
                 }
 
                 IChannel boundChannel = LocalChannelRegistry.Get(remoteAddress);
-                if (!(boundChannel is LocalServerChannel))
+                if (!(boundChannel is LocalServerChannel serverChannel))
                 {
                     Exception cause = new ConnectException($"connection refused: {remoteAddress}", null);
                     Util.SafeSetFailure(promise, cause, Logger);
@@ -508,7 +504,7 @@ namespace DotNetty.Transport.Channels.Local
                     return promise.Task;
                 }
 
-                _ = Interlocked.Exchange(ref _channel.v_peer, ((LocalServerChannel)boundChannel).Serve(_channel));
+                _ = Interlocked.Exchange(ref _channel.v_peer, serverChannel.Serve(_channel));
                 return promise.Task;
             }
         }

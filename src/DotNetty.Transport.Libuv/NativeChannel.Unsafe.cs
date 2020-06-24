@@ -25,7 +25,7 @@ namespace DotNetty.Transport.Libuv
             public override Task ConnectAsync(EndPoint remoteAddress, EndPoint localAddress)
             {
                 var ch = _channel;
-                if (!ch.Open)
+                if (!ch.IsOpen)
                 {
                     return CreateClosedChannelExceptionTask();
                 }
@@ -96,13 +96,13 @@ namespace DotNetty.Transport.Libuv
                         }
                         else
                         {
-                            bool wasActive = ch.Active;
+                            bool wasActive = ch.IsActive;
                             ch.DoFinishConnect();
                             success = promise.TryComplete();
 
                             // Regardless if the connection attempt was cancelled, channelActive() 
                             // event should be triggered, because what happened is what happened.
-                            if (!wasActive && ch.Active)
+                            if (!wasActive && ch.IsActive)
                             {
                                 _ = ch.Pipeline.FireChannelActive();
                             }
@@ -183,13 +183,13 @@ namespace DotNetty.Transport.Libuv
                     {
                         _ = pipeline.FireExceptionCaught(ThrowHelper.GetChannelException(error));
                     }
-                    if (ch.Open) { Close(VoidPromise()); } // ## 苦竹 修改 this.CloseSafe(); ##
+                    if (ch.IsOpen) { Close(VoidPromise()); } // ## 苦竹 修改 this.CloseSafe(); ##
                 }
                 else
                 {
                     // If read is called from channel read or read complete
                     // do not stop reading
-                    if (!ch.ReadPending && !config.AutoRead)
+                    if (!ch.ReadPending && !config.IsAutoRead)
                     {
                         ch.DoStopRead();
                     }
@@ -207,6 +207,7 @@ namespace DotNetty.Transport.Libuv
                 catch (TaskCanceledException)
                 {
                 }
+#if DEBUG
                 catch (Exception ex)
                 {
                     if (Logger.DebugEnabled)
@@ -214,6 +215,9 @@ namespace DotNetty.Transport.Libuv
                         Logger.FailedToCloseChannelCleanly(channelObject, ex);
                     }
                 }
+#else
+                catch (Exception) { }
+#endif
             }
 
             protected sealed override void Flush0()

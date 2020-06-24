@@ -48,7 +48,7 @@ namespace DotNetty.Codecs.Http2.Tests
             _lifecycleManager = new Mock<IHttp2LifecycleManager>();
 
             ChannelMetadata metadata = new ChannelMetadata(false, 16);
-            _channel.Setup(x => x.Active).Returns(true);
+            _channel.Setup(x => x.IsActive).Returns(true);
             _channel.Setup(x => x.Pipeline).Returns(_pipeline.Object);
             _channel.Setup(x => x.Metadata).Returns(metadata);
             _channel.Setup(x => x.Unsafe).Returns(_channelUnsafe.Object);

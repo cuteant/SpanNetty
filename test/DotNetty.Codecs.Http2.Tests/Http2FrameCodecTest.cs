@@ -127,7 +127,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.NotNull(stream2);
             Assert.Equal(1, stream2.Id);
             Assert.Equal(inboundFrame, new DefaultHttp2HeadersFrame(_request, true, 31) { Stream = stream2 });
-            Assert.Null(_inboundHandler.ReadInbound<object>());
+            Assert.Null(_inboundHandler.ReadInbound());
 
             _channel.WriteOutbound(new DefaultHttp2HeadersFrame(_response, true, 27) { Stream = stream2 });
             _frameWriter.Verify(
@@ -150,7 +150,7 @@ namespace DotNetty.Codecs.Http2.Tests
             evt = _inboundHandler.ReadInboundMessageOrUserEvent<Http2FrameStreamEvent>();
             Assert.Equal(Http2StreamState.Closed, evt.Stream.State);
 
-            Assert.True(_channel.Active);
+            Assert.True(_channel.IsActive);
         }
 
         [Fact]
@@ -167,7 +167,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.NotNull(stream2);
             Assert.Equal(1, stream2.Id);
             Assert.Equal(inboundFrame, new DefaultHttp2HeadersFrame(_request, true, 31) { Stream = stream2 });
-            Assert.Null(_inboundHandler.ReadInbound<object>());
+            Assert.Null(_inboundHandler.ReadInbound());
 
             _channel.WriteOutbound(new DefaultHttp2HeadersFrame(_response, true, 27) { Stream = stream2 });
             _frameWriter.Verify(
@@ -187,7 +187,7 @@ namespace DotNetty.Codecs.Http2.Tests
                 Times.Never());
 
             Assert.Equal(Http2StreamState.Closed, stream.State);
-            Assert.True(_channel.Active);
+            Assert.True(_channel.IsActive);
         }
 
         [Fact]
@@ -220,7 +220,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.NotNull(stream2);
             Assert.Equal(1, stream2.Id);
             Assert.Equal(new DefaultHttp2HeadersFrame(_request, false) { Stream = stream2 }, inboundHeaders);
-            Assert.Null(_inboundHandler.ReadInbound<object>());
+            Assert.Null(_inboundHandler.ReadInbound());
 
             IByteBuffer hello = Http2TestUtil.BB("hello");
             _frameInboundWriter.WriteInboundData(1, hello, 31, true);
@@ -228,7 +228,7 @@ namespace DotNetty.Codecs.Http2.Tests
             IHttp2DataFrame expected = new DefaultHttp2DataFrame(Http2TestUtil.BB("hello"), true, 31) { Stream = stream2 };
             Http2TestUtil.AssertEqualsAndRelease(expected, inboundData);
 
-            Assert.Null(_inboundHandler.ReadInbound<object>());
+            Assert.Null(_inboundHandler.ReadInbound());
 
             _channel.WriteOutbound(new DefaultHttp2HeadersFrame(_response, false) { Stream = stream2 });
             _frameWriter.Verify(
@@ -263,7 +263,7 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<int>(),
                     It.IsAny<Http2Error>(),
                     It.IsAny<IPromise>()), Times.Never());
-            Assert.True(_channel.Active);
+            Assert.True(_channel.IsActive);
         }
 
         [Fact]
@@ -291,7 +291,7 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<Http2Error>(v => v == (Http2Error)314L),
                     It.IsAny<IPromise>()));
             Assert.Equal(Http2StreamState.Closed, stream.State);
-            Assert.True(_channel.Active);
+            Assert.True(_channel.IsActive);
         }
 
         [Fact]
@@ -314,7 +314,7 @@ namespace DotNetty.Codecs.Http2.Tests
             IHttp2ResetFrame actualRst = _inboundHandler.ReadInbound<IHttp2ResetFrame>();
             Assert.Equal(expectedRst, actualRst);
 
-            Assert.Null(_inboundHandler.ReadInbound<object>());
+            Assert.Null(_inboundHandler.ReadInbound());
         }
 
         [Fact]
@@ -341,7 +341,7 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.Is<IByteBuffer>(v => v.Equals(expected)),
                     It.IsAny<IPromise>()));
             Assert.Equal(Http2StreamState.Open, stream.State);
-            Assert.True(_channel.Active);
+            Assert.True(_channel.IsActive);
             expected.Release();
             debugData.Release();
         }
@@ -355,7 +355,7 @@ namespace DotNetty.Codecs.Http2.Tests
             IHttp2GoAwayFrame actualFrame = _inboundHandler.ReadInbound<IHttp2GoAwayFrame>();
 
             Http2TestUtil.AssertEqualsAndRelease(expectedFrame, actualFrame);
-            Assert.Null(_inboundHandler.ReadInbound<object>());
+            Assert.Null(_inboundHandler.ReadInbound());
         }
 
         sealed class TestUnknownHttp2Frame : AbstractReferenceCounted, IHttp2Frame
@@ -417,7 +417,7 @@ namespace DotNetty.Codecs.Http2.Tests
                     It.IsAny<IPromise>()));
             debugData.Release();
             Assert.Equal(Http2StreamState.Open, stream.State);
-            Assert.True(_channel.Active);
+            Assert.True(_channel.IsActive);
         }
 
         [Fact]
@@ -535,7 +535,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.Equal(100, windowUpdateFrame.WindowSizeIncrement);
 
             // Window update for the connection should not be forwarded.
-            Assert.Null(_inboundHandler.ReadInbound<object>());
+            Assert.Null(_inboundHandler.ReadInbound());
         }
 
         [Fact]

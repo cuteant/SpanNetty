@@ -34,7 +34,7 @@ namespace DotNetty.Transport.Libuv
 
                 var connError = connection.Error;
                 // If the AutoRead is false, reject the connection
-                if (!ch._config.AutoRead || connError is object)
+                if (!ch._config.IsAutoRead || connError is object)
                 {
                     if (connError is object)
                     {
@@ -115,7 +115,7 @@ namespace DotNetty.Transport.Libuv
                     _ = pipeline.FireExceptionCaught(exception);
                 }
 
-                if (closed && ch.Open)
+                if (closed && ch.IsOpen)
                 {
                     CloseSafe();
                 }

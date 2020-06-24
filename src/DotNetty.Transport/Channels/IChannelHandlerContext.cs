@@ -147,7 +147,7 @@ namespace DotNetty.Transport.Channels
         /// from the <see cref="IChannelPipeline"/>. Note that this method is only meant to be called from with in the
         /// <see cref="IEventLoop"/>.
         /// </summary>
-        bool Removed { get; }
+        bool IsRemoved { get; }
 
         /// <summary>
         /// A <see cref="IChannel"/> was registered to its <see cref="IEventLoop"/>. This will result in having the

@@ -42,7 +42,7 @@ namespace DotNetty.Transport.Channels
 
             public IChannelHandler Handler => _ctx.Handler;
 
-            public bool Removed => _removed || _ctx.Removed;
+            public bool IsRemoved => _removed || _ctx.IsRemoved;
 
             public IChannelHandlerContext FireChannelRegistered()
             {

@@ -89,7 +89,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.NotNull(buf);
             buf.Release();
 
-            Assert.Null(channel.ReadOutbound<object>());
+            Assert.Null(channel.ReadOutbound());
         }
 
         sealed class HttpInboundHandler : ChannelHandlerAdapter

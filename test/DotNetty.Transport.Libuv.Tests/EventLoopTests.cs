@@ -102,7 +102,7 @@ namespace DotNetty.Transport.Libuv.Tests
             var channel = new TcpChannel();
             var exception = Assert.Throws<AggregateException>(() => this.eventLoop.RegisterAsync(channel).Wait(DefaultTimeout));
             Assert.IsType<RejectedExecutionException>(exception.InnerException);
-            Assert.False(channel.Open);
+            Assert.False(channel.IsOpen);
         }
 
         [Fact]

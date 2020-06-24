@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using DotNetty.Buffers;
 using DotNetty.Common.Concurrency;
 using DotNetty.Common.Utilities;
 using DotNetty.Transport.Channels;
@@ -134,6 +133,7 @@ namespace DotNetty.Transport
         healthChecker,
         attributeType,
 
+        eventLoopCount,
         initialization,
         inboundHandler,
         parameterTypes,
@@ -143,6 +143,7 @@ namespace DotNetty.Transport
         estimatorHandle,
 
         aggregatePromise,
+        eventLoopFactory,
         networkInterface,
 
         qualifiedTypeName,
@@ -614,7 +615,7 @@ namespace DotNetty.Transport
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static void ThrowInvalidOperationException_WritabilityMask(int index)
+        internal static int ThrowInvalidOperationException_WritabilityMask(int index)
         {
             throw GetInvalidOperationException();
             InvalidOperationException GetInvalidOperationException()
@@ -680,7 +681,7 @@ namespace DotNetty.Transport
             return TaskUtil.FromException(GetInvalidOperationException());
             InvalidOperationException GetInvalidOperationException()
             {
-                throw new InvalidOperationException(pending.Message, pending);
+                return new InvalidOperationException(pending.Message, pending);
             }
         }
 
@@ -690,7 +691,18 @@ namespace DotNetty.Transport
             return TaskUtil.FromException(GetInvalidOperationException());
             InvalidOperationException GetInvalidOperationException()
             {
-                throw new InvalidOperationException("buffer queue length overflow: " + readableBytes + " + " + increment);
+                return new InvalidOperationException("buffer queue length overflow: " + readableBytes + " + " + increment);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_UnexpectedType_expecting_DatagramPacket_IAddressedEnvelope(object message)
+        {
+            throw GetInvalidOperationException();
+            InvalidOperationException GetInvalidOperationException()
+            {
+                return new InvalidOperationException(
+                    $"Unexpected type: {message.GetType().FullName}, expecting DatagramPacket or IAddressedEnvelope.");
             }
         }
 
@@ -812,20 +824,6 @@ namespace DotNetty.Transport
 
         #endregion
 
-        #region -- NotSupportedException --
-
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static object ThrowNotSupportedException_UnsupportedMsgType(object msg)
-        {
-            throw GetArgumentException();
-            NotSupportedException GetArgumentException()
-            {
-                return new NotSupportedException($"unsupported message type: {msg.GetType().Name} (expected: {StringUtil.SimpleClassName<IByteBuffer>()})");
-            }
-        }
-
-        #endregion
-
         #region -- ClosedChannelException --
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -872,6 +870,22 @@ namespace DotNetty.Transport
         public static ChannelPipelineException GetChannelPipelineException_HandlerRemovedThrowExc(AbstractChannelHandlerContext ctx, Exception ex)
         {
             return new ChannelPipelineException($"{ctx.Handler.GetType().Name}.HandlerRemoved() has thrown an exception.", ex);
+        }
+
+        #endregion
+
+        #region -- NotSupportedException --
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static NotSupportedException GetNotSupportedException()
+        {
+            return new NotSupportedException();
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static NotSupportedException GetNotSupportedException_Socket_address_family(AddressFamily addressFamily)
+        {
+            return new NotSupportedException($"Socket address family {addressFamily} not supported, expecting InterNetwork or InterNetworkV6");
         }
 
         #endregion

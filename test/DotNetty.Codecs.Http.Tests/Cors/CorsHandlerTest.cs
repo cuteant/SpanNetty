@@ -323,7 +323,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             var response = channel.ReadOutbound<IHttpResponse>();
             Assert.True(HttpUtil.IsKeepAlive(response));
 
-            Assert.True(channel.Open);
+            Assert.True(channel.IsOpen);
             Assert.Equal(HttpResponseStatus.Forbidden, response.Status);
             Assert.True(ReferenceCountUtil.Release(response));
             Assert.False(channel.Finish());
@@ -342,7 +342,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             var response = channel.ReadOutbound<IHttpResponse>();
             Assert.True(HttpUtil.IsKeepAlive(response));
 
-            Assert.True(channel.Open);
+            Assert.True(channel.IsOpen);
             Assert.Equal(HttpResponseStatus.Forbidden, response.Status);
             Assert.True(ReferenceCountUtil.Release(response));
             Assert.False(channel.Finish());
@@ -362,7 +362,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             var response = channel.ReadOutbound<IHttpResponse>();
             Assert.False(HttpUtil.IsKeepAlive(response));
 
-            Assert.False(channel.Open);
+            Assert.False(channel.IsOpen);
             Assert.Equal(HttpResponseStatus.Forbidden, response.Status);
             Assert.True(ReferenceCountUtil.Release(response));
             Assert.False(channel.Finish());
@@ -378,7 +378,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             IFullHttpRequest request = OptionsRequest("http://localhost:8888", "content-type, xheader1", null);
             Assert.False(channel.WriteInbound(request));
             Assert.Equal(0, request.ReferenceCount);
-            Assert.True(ReferenceCountUtil.Release(channel.ReadOutbound<object>()));
+            Assert.True(ReferenceCountUtil.Release(channel.ReadOutbound()));
             Assert.False(channel.Finish());
         }
 
@@ -392,7 +392,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             var response = channel.ReadOutbound<IHttpResponse>();
             Assert.True(HttpUtil.IsKeepAlive(response));
 
-            Assert.True(channel.Open);
+            Assert.True(channel.IsOpen);
             Assert.Equal(HttpResponseStatus.OK, response.Status);
             Assert.True(ReferenceCountUtil.Release(response));
             Assert.False(channel.Finish());
@@ -408,7 +408,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             var response = channel.ReadOutbound<IHttpResponse>();
             Assert.True(HttpUtil.IsKeepAlive(response));
 
-            Assert.True(channel.Open);
+            Assert.True(channel.IsOpen);
             Assert.Equal(HttpResponseStatus.OK, response.Status);
             Assert.True(ReferenceCountUtil.Release(response));
             Assert.False(channel.Finish());
@@ -424,7 +424,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             var response = channel.ReadOutbound<IHttpResponse>();
             Assert.False(HttpUtil.IsKeepAlive(response));
 
-            Assert.False(channel.Open);
+            Assert.False(channel.IsOpen);
             Assert.Equal(HttpResponseStatus.OK, response.Status);
             Assert.True(ReferenceCountUtil.Release(response));
             Assert.False(channel.Finish());
@@ -439,7 +439,7 @@ namespace DotNetty.Codecs.Http.Tests.Cors
             request.Headers.Set(HttpHeaderNames.Origin, "http://localhost:8888");
             Assert.False(channel.WriteInbound(request));
             Assert.Equal(0, request.ReferenceCount);
-            Assert.True(ReferenceCountUtil.Release(channel.ReadOutbound<object>()));
+            Assert.True(ReferenceCountUtil.Release(channel.ReadOutbound()));
             Assert.False(channel.Finish());
         }
 

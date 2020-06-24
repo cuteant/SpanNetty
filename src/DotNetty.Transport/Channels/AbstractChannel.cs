@@ -33,7 +33,7 @@ namespace DotNetty.Transport.Channels
 
         private EndPoint v_localAddress;
         private EndPoint v_remoteAddress;
-        private IEventLoop eventLoop;
+        private IEventLoop v_eventLoop;
         private int v_registered;
         private int v_closeInitiated;
 
@@ -116,7 +116,7 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                IEventLoop eventLoop = Volatile.Read(ref this.eventLoop);
+                IEventLoop eventLoop = Volatile.Read(ref v_eventLoop);
                 if (eventLoop is null)
                 {
                     ThrowHelper.ThrowInvalidOperationException_ChannelNotReg();
@@ -125,9 +125,9 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        public abstract bool Open { get; }
+        public abstract bool IsOpen { get; }
 
-        public abstract bool Active { get; }
+        public abstract bool IsActive { get; }
 
         public abstract ChannelMetadata Metadata { get; }
 
@@ -190,7 +190,7 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        public bool Registered => SharedConstants.False < (uint)Volatile.Read(ref v_registered);
+        public bool IsRegistered => SharedConstants.False < (uint)Volatile.Read(ref v_registered);
 
         /// <summary>
         /// Returns a new <see cref="DefaultChannelId"/> instance. Subclasses may override this method to assign custom
@@ -284,7 +284,7 @@ namespace DotNetty.Transport.Channels
         /// </summary>
         public override string ToString()
         {
-            bool active = Active;
+            bool active = IsActive;
             if (_strValActive == active && _strVal is object)
             {
                 return _strVal;

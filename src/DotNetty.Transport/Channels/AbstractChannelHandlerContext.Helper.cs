@@ -7,9 +7,6 @@ namespace DotNetty.Transport.Channels
 
     partial class AbstractChannelHandlerContext
     {
-        private static readonly Action<object> InvokeChannelReadCompleteAction = OnInvokeChannelReadComplete;
-        private static readonly Action<object> InvokeReadAction = OnInvokeRead;
-        private static readonly Action<object> InvokeChannelWritabilityChangedAction = OnInvokeChannelWritabilityChanged;
         private static readonly Action<object> InvokeChannelRegisteredAction = OnInvokeChannelRegistered;
         private static readonly Action<object> InvokeChannelUnregisteredAction = OnInvokeChannelUnregistered;
         private static readonly Action<object> InvokeChannelActiveAction = OnInvokeChannelActive;
@@ -18,21 +15,6 @@ namespace DotNetty.Transport.Channels
         private static readonly Action<object, object> InvokeUserEventTriggeredAction = OnInvokeUserEventTriggered;
         private static readonly Action<object, object> InvokeChannelReadAction = OnInvokeChannelRead;
         private static readonly Action<object, object> InvokeExceptionCaughtAction = OnInvokeExceptionCaught;
-
-        private static void OnInvokeChannelReadComplete(object ctx)
-        {
-            ((AbstractChannelHandlerContext)ctx).InvokeChannelReadComplete();
-        }
-
-        private static void OnInvokeRead(object ctx)
-        {
-            ((AbstractChannelHandlerContext)ctx).InvokeRead();
-        }
-
-        private static void OnInvokeChannelWritabilityChanged(object ctx)
-        {
-            ((AbstractChannelHandlerContext)ctx).InvokeChannelWritabilityChanged();
-        }
 
         private static void OnInvokeUserEventTriggered(object ctx, object evt)
         {

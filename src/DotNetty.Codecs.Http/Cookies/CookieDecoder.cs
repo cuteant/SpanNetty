@@ -22,13 +22,17 @@ namespace DotNetty.Codecs.Http.Cookies
         {
             if (nameBegin == -1 || nameBegin == nameEnd)
             {
+#if DEBUG
                 if (Logger.DebugEnabled) Logger.SkippingCookieWithNullName();
+#endif
                 return null;
             }
 
             if (valueBegin == -1)
             {
+#if DEBUG
                 if (Logger.DebugEnabled) Logger.SkippingCookieWithNullValue();
+#endif
                 return null;
             }
 
@@ -36,7 +40,9 @@ namespace DotNetty.Codecs.Http.Cookies
             ICharSequence unwrappedValue = UnwrapValue(sequence);
             if (unwrappedValue is null)
             {
+#if DEBUG
                 if (Logger.DebugEnabled) Logger.SkippingCookieBecauseStartingQuotesAreNotProperlyBalancedIn(sequence);
+#endif
                 return null;
             }
 
@@ -45,10 +51,12 @@ namespace DotNetty.Codecs.Http.Cookies
             int invalidOctetPos;
             if (this.Strict && (invalidOctetPos = FirstInvalidCookieNameOctet(name)) >= 0)
             {
+#if DEBUG
                 if (Logger.DebugEnabled)
                 {
                     Logger.SkippingCookieBecauseNameContainsInvalidChar(name, invalidOctetPos);
                 }
+#endif
                 return null;
             }
 
@@ -56,10 +64,12 @@ namespace DotNetty.Codecs.Http.Cookies
 
             if (this.Strict && (invalidOctetPos = FirstInvalidCookieValueOctet(unwrappedValue)) >= 0)
             {
+#if DEBUG
                 if (Logger.DebugEnabled)
                 {
                     Logger.SkippingCookieBecauseValueContainsInvalidChar(unwrappedValue, invalidOctetPos);
                 }
+#endif
 
                 return null;
             }

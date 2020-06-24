@@ -12,7 +12,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
             }
 
-            protected override bool CanWrite => _channel.Open && _channel.Registered;
+            protected override bool CanWrite => _channel.IsOpen && _channel.IsRegistered;
         }
     }
 }

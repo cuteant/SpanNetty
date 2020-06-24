@@ -14,7 +14,7 @@
         public AdaptiveRecvByteBufAllocatorTest()
         {
             _config = new Mock<IChannelConfiguration>();
-            _config.SetupGet(x => x.AutoRead).Returns(true);
+            _config.SetupGet(x => x.IsAutoRead).Returns(true);
             AdaptiveRecvByteBufAllocator recvByteBufAllocator = new AdaptiveRecvByteBufAllocator(64, 512, 1024 * 1024 * 10);
             _handle = recvByteBufAllocator.NewHandle();
             _handle.Reset(_config.Object);

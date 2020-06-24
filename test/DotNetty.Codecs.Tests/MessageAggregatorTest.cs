@@ -95,7 +95,7 @@
 
             var agg = new MockMessageAggregator(first, chunk, last);
             EmbeddedChannel embedded = new EmbeddedChannel(counter, agg);
-            embedded.Configuration.AutoRead = false;
+            embedded.Configuration.IsAutoRead = false;
 
             Assert.False(embedded.WriteInbound(first));
             Assert.False(embedded.WriteInbound(chunk));

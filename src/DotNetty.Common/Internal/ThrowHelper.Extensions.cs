@@ -71,6 +71,7 @@ namespace DotNetty.Common
         builder,
 
         comparer,
+        executor,
         sequence,
         capacity,
         typeName,
@@ -590,6 +591,17 @@ namespace DotNetty.Common
             static InvalidOperationException GetException()
             {
                 return new InvalidOperationException("Already finished");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static void ThrowInvalidOperationException_MustBeCalledFromEventexecutorThread()
+        {
+            throw GetException();
+
+            static InvalidOperationException GetException()
+            {
+                return new InvalidOperationException("Must be called from EventExecutor thread");
             }
         }
 

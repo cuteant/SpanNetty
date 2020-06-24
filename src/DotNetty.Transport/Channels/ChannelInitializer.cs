@@ -76,7 +76,7 @@ namespace DotNetty.Transport.Channels
 
         public override void HandlerAdded(IChannelHandlerContext ctx)
         {
-            if (ctx.Channel.Registered)
+            if (ctx.Channel.IsRegistered)
             {
                 // This should always be true with our current DefaultChannelPipeline implementation.
                 // The good thing about calling InitChannel(...) in HandlerAdded(...) is that there will be no ordering
@@ -126,7 +126,7 @@ namespace DotNetty.Transport.Channels
         void RemoveState(IChannelHandlerContext ctx)
         {
             // The removal may happen in an async fashion if the EventExecutor we use does something funky.
-            if (ctx.Removed)
+            if (ctx.IsRemoved)
             {
                 _ = _initMap.TryRemove(ctx, out _);
             }

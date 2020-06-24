@@ -9,16 +9,16 @@ namespace DotNetty.Common.Concurrency
 
     public abstract class AbstractExecutorService : IExecutorService
     {
-        /// <inheritdoc cref="IExecutorService"/>
+        /// <inheritdoc />
         public abstract bool IsShutdown { get; }
 
-        /// <inheritdoc cref="IExecutorService"/>
+        /// <inheritdoc />
         public abstract bool IsTerminated { get; }
 
-        /// <inheritdoc cref="IExecutorService"/>
+        /// <inheritdoc />
         public Task<T> SubmitAsync<T>(Func<T> func) => SubmitAsync(func, CancellationToken.None);
 
-        /// <inheritdoc cref="IExecutorService"/>
+        /// <inheritdoc />
         public Task<T> SubmitAsync<T>(Func<T> func, CancellationToken cancellationToken)
         {
             var node = new FuncSubmitQueueNode<T>(func, cancellationToken);
@@ -26,10 +26,10 @@ namespace DotNetty.Common.Concurrency
             return node.Completion;
         }
 
-        /// <inheritdoc cref="IExecutorService"/>
+        /// <inheritdoc />
         public Task<T> SubmitAsync<T>(Func<object, T> func, object state) => SubmitAsync(func, state, CancellationToken.None);
 
-        /// <inheritdoc cref="IExecutorService"/>
+        /// <inheritdoc />
         public Task<T> SubmitAsync<T>(Func<object, T> func, object state, CancellationToken cancellationToken)
         {
             var node = new StateFuncSubmitQueueNode<T>(func, state, cancellationToken);
@@ -37,11 +37,11 @@ namespace DotNetty.Common.Concurrency
             return node.Completion;
         }
 
-        /// <inheritdoc cref="IExecutorService"/>
+        /// <inheritdoc />
         public Task<T> SubmitAsync<T>(Func<object, object, T> func, object context, object state) =>
             SubmitAsync(func, context, state, CancellationToken.None);
 
-        /// <inheritdoc cref="IExecutorService"/>
+        /// <inheritdoc />
         public Task<T> SubmitAsync<T>(
             Func<object, object, T> func,
             object context,
@@ -53,16 +53,16 @@ namespace DotNetty.Common.Concurrency
             return node.Completion;
         }
 
-        /// <inheritdoc cref="IExecutor"/>
+        /// <inheritdoc />
         public abstract void Execute(IRunnable task);
 
-        /// <inheritdoc cref="IExecutor"/>
+        /// <inheritdoc />
         public void Execute(Action<object> action, object state) => Execute(new StateActionTaskQueueNode(action, state));
 
-        /// <inheritdoc cref="IExecutor"/>
+        /// <inheritdoc />
         public void Execute(Action<object, object> action, object context, object state) => Execute(new StateActionWithContextTaskQueueNode(action, context, state));
 
-        /// <inheritdoc cref="IExecutor"/>
+        /// <inheritdoc />
         public void Execute(Action action) => Execute(new ActionTaskQueueNode(action));
 
         #region Queuing data structures

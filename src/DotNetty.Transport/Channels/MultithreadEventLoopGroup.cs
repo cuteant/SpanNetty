@@ -57,6 +57,9 @@ namespace DotNetty.Transport.Channels
         /// <summary>Creates a new instance of <see cref="MultithreadEventLoopGroup"/>.</summary>
         public MultithreadEventLoopGroup(Func<IEventLoopGroup, IEventLoop> eventLoopFactory, int eventLoopCount)
         {
+            if (eventLoopFactory is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.eventLoopFactory); }
+            if (eventLoopCount <= 0) { ThrowHelper.ThrowArgumentException_Positive(eventLoopCount, ExceptionArgument.eventLoopCount); }
+
             _eventLoops = new IEventLoop[eventLoopCount];
             var terminationTasks = new Task[eventLoopCount];
             for (int i = 0; i < eventLoopCount; i++)
@@ -101,7 +104,7 @@ namespace DotNetty.Transport.Channels
 
         public Task RegisterAsync(IChannel channel) => ((IEventLoop)GetNext()).RegisterAsync(channel);
 
-        /// <inheritdoc cref="IEventExecutorGroup.ShutdownGracefullyAsync()" />
+        /// <inheritdoc cref="IEventExecutorGroup.ShutdownGracefullyAsync(TimeSpan, TimeSpan)" />
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
         {
             for (int i = 0; i < _eventLoops.Length; i++)

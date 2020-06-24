@@ -130,7 +130,9 @@ namespace DotNetty.Codecs.Http.Cors
                 SetVaryHeader(response);
                 return true;
             }
+#if DEBUG
             if (Logger.DebugEnabled) Logger.RequestOriginWasNotAmongTheConfiguredOrigins(origin, this.config);
+#endif
 
             return false;
         }

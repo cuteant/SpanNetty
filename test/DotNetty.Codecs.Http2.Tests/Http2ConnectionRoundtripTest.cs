@@ -143,10 +143,10 @@ namespace DotNetty.Codecs.Http2.Tests
                 serverConnectedChannel.CloseAsync().GetAwaiter().GetResult();
                 _serverConnectedChannel = null;
             }
-            Task.WhenAll(
-                _sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
-                _sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)),
-                _cb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5))).GetAwaiter().GetResult();
+            Task.WaitAll(
+                _sb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
+                _sb.ChildGroup().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
+                _cb.Group().ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)));
         }
 
         [Fact]
@@ -738,7 +738,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             // Wait for the close to occur.
             Assert.True(closeLatch.Wait(TimeSpan.FromSeconds(DEFAULT_AWAIT_TIMEOUT_SECONDS)));
-            Assert.False(_clientChannel.Open);
+            Assert.False(_clientChannel.IsOpen);
         }
 
         [Fact]
@@ -780,7 +780,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             // Wait for the close to occur.
             Assert.True(closeLatch.Wait(TimeSpan.FromSeconds(DEFAULT_AWAIT_TIMEOUT_SECONDS)));
-            Assert.False(_clientChannel.Open);
+            Assert.False(_clientChannel.IsOpen);
         }
 
         enum WriteEmptyBufferMode
@@ -960,7 +960,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             // The close should NOT occur.
             Assert.False(closeLatch.Wait(TimeSpan.FromSeconds(2)));
-            Assert.True(_clientChannel.Open);
+            Assert.True(_clientChannel.IsOpen);
 
             // Set the timeout very low because we know graceful shutdown won't complete
             SetClientGracefulShutdownTime(0);

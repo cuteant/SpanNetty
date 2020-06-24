@@ -6,7 +6,7 @@ namespace DotNetty.Transport.Channels.Pool
     using System.Threading.Tasks;
 
     /// <summary>
-    /// <see cref="IChannelHealthChecker"/> implementation that checks if <see cref="IChannel.Active"/> returns <c>true</c>.
+    /// <see cref="IChannelHealthChecker"/> implementation that checks if <see cref="IChannel.IsActive"/> returns <c>true</c>.
     /// </summary>
     public class ChannelActiveHealthChecker : IChannelHealthChecker
     {
@@ -21,6 +21,6 @@ namespace DotNetty.Transport.Channels.Pool
         {
         }
 
-        public ValueTask<bool> IsHealthyAsync(IChannel channel) => new ValueTask<bool>(channel.Active);
+        public ValueTask<bool> IsHealthyAsync(IChannel channel) => new ValueTask<bool>(channel.IsActive);
     }
 }

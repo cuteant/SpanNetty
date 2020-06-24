@@ -59,7 +59,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.IsAssignableFrom<ILastHttpContent>(chunk);
             chunk.Release();
 
-            var next = ch.ReadOutbound<object>();
+            var next = ch.ReadOutbound();
             Assert.Null(next);
         }
 
@@ -96,7 +96,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.IsAssignableFrom<ILastHttpContent>(chunk);
             chunk.Release();
 
-            var next = ch.ReadOutbound<object>();
+            var next = ch.ReadOutbound();
             Assert.Null(next);
         }
 
@@ -137,7 +137,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(DecoderResult.Success, res.Result);
             last.Release();
 
-            var next = ch.ReadOutbound<object>();
+            var next = ch.ReadOutbound();
             Assert.Null(next);
         }
 
@@ -168,7 +168,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(0, last.Content.ReadableBytes);
             last.Release();
 
-            var next = ch.ReadOutbound<object>();
+            var next = ch.ReadOutbound();
             Assert.Null(next);
         }
 
@@ -194,7 +194,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal(0, last.Content.ReadableBytes);
             last.Release();
 
-            var next = ch.ReadOutbound<object>();
+            var next = ch.ReadOutbound();
             Assert.Null(next);
         }
 
@@ -221,7 +221,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.False(last.Content.IsReadable());
             last.Release();
 
-            var next = ch.ReadOutbound<object>();
+            var next = ch.ReadOutbound();
             Assert.Null(next);
         }
 
@@ -245,7 +245,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal("", res.Content.ToString(Encoding.ASCII));
             res.Release();
 
-            var next = ch.ReadOutbound<object>();
+            var next = ch.ReadOutbound();
             Assert.Null(next);
         }
 
@@ -271,7 +271,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Equal("Netty", res.TrailingHeaders.Get((AsciiString)"X-Test", null));
             Assert.Equal(DecoderResult.Success, res.Result);
 
-            var next = ch.ReadOutbound<object>();
+            var next = ch.ReadOutbound();
             Assert.Null(next);
         }
 
@@ -352,7 +352,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(last);
             last.Release();
 
-            var next = ch.ReadOutbound<object>();
+            var next = ch.ReadOutbound();
             Assert.Null(next);
         }
 
@@ -371,7 +371,7 @@ namespace DotNetty.Codecs.Http.Tests
 
             var request = ch.ReadInbound<IFullHttpRequest>();
             Assert.True(request.Release());
-            var next = ch.ReadInbound<object>();
+            var next = ch.ReadInbound();
             Assert.Null(next);
 
             var response = ch.ReadOutbound<IHttpResponse>();
@@ -381,7 +381,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.Same(content, EmptyLastHttpContent.Default);
             content.Release();
 
-            next = ch.ReadOutbound<object>();
+            next = ch.ReadOutbound();
             Assert.Null(next);
         }
 
@@ -441,7 +441,7 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.NotNull(chunk);
             chunk.Release();
 
-            var next = ch.ReadOutbound<object>();
+            var next = ch.ReadOutbound();
             Assert.Null(next);
         }
 

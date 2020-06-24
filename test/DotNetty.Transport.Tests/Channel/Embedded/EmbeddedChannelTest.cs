@@ -32,9 +32,9 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
         public void TestNotRegistered()
         {
             EmbeddedChannel channel = new EmbeddedChannel(hasDisconnect: false, register: false);
-            Assert.False(channel.Registered);
+            Assert.False(channel.IsRegistered);
             channel.Register();
-            Assert.True(channel.Registered);
+            Assert.True(channel.IsRegistered);
             Assert.False(channel.Finish());
         }
 
@@ -42,7 +42,7 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
         public void TestRegistered()
         {
             EmbeddedChannel channel = new EmbeddedChannel(hasDisconnect: false, register: true);
-            Assert.True(channel.Registered);
+            Assert.True(channel.IsRegistered);
             Assert.Throws<InvalidOperationException>(() => channel.Register());
             Assert.False(channel.Finish());
         }
@@ -76,9 +76,9 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
             Assert.Same(handler, pipeline.FirstContext().Handler);
             Assert.True(channel.WriteInbound(3));
             Assert.True(channel.Finish());
-            Assert.Equal(first, channel.ReadInbound<object>());
-            Assert.Equal(second, channel.ReadInbound<object>());
-            Assert.Null(channel.ReadInbound<object>());
+            Assert.Equal(first, channel.ReadInbound<int>());
+            Assert.Equal(second, channel.ReadInbound<int>());
+            Assert.Null(channel.ReadInbound());
         }
 
         [Fact]
@@ -190,10 +190,10 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
             Assert.True(channel.WriteInbound(1));
             Assert.True(channel.WriteOutbound(2));
             Assert.True(channel.Finish());
-            Assert.Equal(1, channel.ReadInbound<object>());
-            Assert.Null(channel.ReadInbound<object>());
-            Assert.Equal(2, channel.ReadOutbound<object>());
-            Assert.Null(channel.ReadOutbound<object>());
+            Assert.Equal(1, channel.ReadInbound<int>());
+            Assert.Null(channel.ReadInbound());
+            Assert.Equal(2, channel.ReadOutbound<int>());
+            Assert.Null(channel.ReadOutbound());
         }
 
         [Theory]
@@ -325,8 +325,8 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
                 Assert.Equal(0, input.ReferenceCount);
                 Assert.Equal(0, output.ReferenceCount);
 
-                Assert.Null(channel.ReadInbound<object>());
-                Assert.Null(channel.ReadOutbound<object>());
+                Assert.Null(channel.ReadInbound());
+                Assert.Null(channel.ReadOutbound());
             }
             finally
             {
@@ -353,13 +353,13 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
                 Assert.Equal(1, output.ReferenceCount);
 
                 Assert.True(channel.Finish());
-                Assert.Null(channel.ReadInbound<object>());
+                Assert.Null(channel.ReadInbound());
 
                 IByteBuffer buffer = channel.ReadOutbound<IByteBuffer>();
                 Assert.Same(output, buffer);
                 buffer.Release();
 
-                Assert.Null(channel.ReadOutbound<object>());
+                Assert.Null(channel.ReadOutbound());
             }
             finally
             {
@@ -386,13 +386,13 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
                 Assert.Equal(0, output.ReferenceCount);
 
                 Assert.True(channel.Finish());
-                Assert.Null(channel.ReadOutbound<object>());
+                Assert.Null(channel.ReadOutbound());
 
                 IByteBuffer buffer = channel.ReadInbound<IByteBuffer>();
                 Assert.Same(input, buffer);
                 buffer.Release();
 
-                Assert.Null(channel.ReadInbound<object>());
+                Assert.Null(channel.ReadInbound());
             }
             finally
             {
@@ -416,8 +416,8 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
 
             Assert.True(channel.WriteOutbound(msg));
             Assert.True(channel.Finish());
-            Assert.Same(msg, channel.ReadOutbound<object>());
-            Assert.Null(channel.ReadOutbound<object>());
+            Assert.Same(msg, channel.ReadOutbound());
+            Assert.Null(channel.ReadOutbound());
         }
 
         class ChannelHandlerForWriteScheduled : ChannelHandlerAdapter
@@ -442,8 +442,8 @@ namespace DotNetty.Transport.Tests.Channel.Embedded
             Assert.False(channel.WriteOutbound(msg));
             Thread.Sleep(delay * 2);
             Assert.True(channel.Finish());
-            Assert.Same(msg, channel.ReadOutbound<object>());
-            Assert.Null(channel.ReadOutbound<object>());
+            Assert.Same(msg, channel.ReadOutbound());
+            Assert.Null(channel.ReadOutbound());
         }
 
         class ChannelHandlerForFlushInbound : ChannelHandlerAdapter

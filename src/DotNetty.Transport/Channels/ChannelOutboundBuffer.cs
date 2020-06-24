@@ -6,16 +6,28 @@ namespace DotNetty.Transport.Channels
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using DotNetty.Buffers;
     using DotNetty.Common;
     using DotNetty.Common.Concurrency;
+    using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels.Sockets;
 
     public sealed class ChannelOutboundBuffer
     {
+        // Assuming a 64-bit JVM:
+        //  - 16 bytes object header
+        //  - 6 reference fields
+        //  - 2 long fields
+        //  - 2 int fields
+        //  - 1 boolean field
+        //  - padding
+        internal static readonly int ChannelOutboundBufferEntryOverhead =
+                SystemPropertyUtil.GetInt("io.netty.transport.outboundBufferEntrySizeOverhead", 96);
+
         private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<ChannelOutboundBuffer>();
 
         private static readonly ThreadLocalByteBufferList NioBuffers = new ThreadLocalByteBufferList();
@@ -33,13 +45,16 @@ namespace DotNetty.Transport.Channels
         // The number of flushed entries that are not written yet
         private int _flushed;
 
+        private int _nioBufferCount;
         private long _nioBufferSize;
 
         private bool _inFail;
 
-        private long _totalPendingSize;
+        private long v_totalPendingSize;
 
-        private int _unwritable;
+        private int v_unwritable;
+
+        private IRunnable v_fireChannelWritabilityChangedTask;
 
         internal ChannelOutboundBuffer(IChannel channel)
         {
@@ -126,7 +141,7 @@ namespace DotNetty.Transport.Channels
                 return;
             }
 
-            long newWriteBufferSize = Interlocked.Add(ref _totalPendingSize, size);
+            long newWriteBufferSize = Interlocked.Add(ref v_totalPendingSize, size);
             if (newWriteBufferSize > _channel.Configuration.WriteBufferHighWaterMark)
             {
                 SetUnwritable(invokeLater);
@@ -147,18 +162,12 @@ namespace DotNetty.Transport.Channels
                 return;
             }
 
-            long newWriteBufferSize = Interlocked.Add(ref _totalPendingSize, -size);
+            long newWriteBufferSize = Interlocked.Add(ref v_totalPendingSize, -size);
             if (notifyWritability && newWriteBufferSize <= _channel.Configuration.WriteBufferLowWaterMark)
             {
                 SetWritable(invokeLater);
             }
         }
-
-        /// <summary>
-        /// Returns the current message to write, or <c>null</c> if nothing was flushed before and so is ready to be
-        /// written.
-        /// </summary>
-        public object Current => _flushedEntry?.Message;
 
         private static long Total(object msg) => msg switch
         {
@@ -167,6 +176,12 @@ namespace DotNetty.Transport.Channels
             IByteBufferHolder byteBufferHolder => byteBufferHolder.Content.ReadableBytes,
             _ => -1L,
         };
+
+        /// <summary>
+        /// Returns the current message to write, or <c>null</c> if nothing was flushed before and so is ready to be
+        /// written.
+        /// </summary>
+        public object Current => _flushedEntry?.Message;
 
         /// <summary>
         /// Return the current message flush progress.
@@ -258,6 +273,7 @@ namespace DotNetty.Transport.Channels
             {
                 // only release message, fail and decrement if it was not canceled before.
                 ReferenceCountUtil.SafeRelease(msg);
+
                 SafeFail(promise, cause);
                 DecrementPendingOutboundBytes(size, false, notifyWritability);
             }
@@ -319,7 +335,7 @@ namespace DotNetty.Transport.Channels
                     // readableBytes > writtenBytes
                     if (writtenBytes != 0)
                     {
-                        //Invalid nio buffer cache for partial writen, see https://github.com/Azure/DotNetty/issues/422
+                        // Invalid nio buffer cache for partial writen, see https://github.com/Azure/DotNetty/issues/422
                         _flushedEntry.Buffer = new ArraySegment<byte>();
                         _flushedEntry.Buffers = null;
 
@@ -336,7 +352,15 @@ namespace DotNetty.Transport.Channels
         /// Clears all ByteBuffer from the array so these can be GC'ed.
         /// See https://github.com/netty/netty/issues/3837
         /// </summary>
-        void ClearNioBuffers() => NioBuffers.Value.Clear();
+        void ClearNioBuffers()
+        {
+            var count = _nioBufferCount;
+            if (count > 0)
+            {
+                _nioBufferCount = 0;
+                NioBuffers.Value.Clear();
+            }
+        }
 
         /// <summary>
         /// Returns a list of direct ArraySegment&lt;byte&gt;, if the currently pending messages are made of
@@ -374,11 +398,10 @@ namespace DotNetty.Transport.Channels
             InternalThreadLocalMap threadLocalMap = InternalThreadLocalMap.Get();
             List<ArraySegment<byte>> nioBuffers = NioBuffers.Get(threadLocalMap);
             Entry entry = _flushedEntry;
-            while (IsFlushedEntry(entry) && entry.Message is IByteBuffer)
+            while (IsFlushedEntry(entry) && entry.Message is IByteBuffer buf)
             {
                 if (!entry.Cancelled)
                 {
-                    var buf = (IByteBuffer)entry.Message;
                     int readerIndex = buf.ReaderIndex;
                     int readableBytes = buf.WriterIndex - readerIndex;
 
@@ -401,11 +424,11 @@ namespace DotNetty.Transport.Channels
                         }
                         ioBufferSize += readableBytes;
                         int count = entry.Count;
-                        if (count == -1)
+                        if ((uint)count > SharedConstants.TooBigOrNegative) // == -1
                         {
                             entry.Count = count = buf.IoBufferCount;
                         }
-                        if (count == 1)
+                        if (0u >= (uint)(count - 1))
                         {
                             ArraySegment<byte> nioBuf = entry.Buffer;
                             if (nioBuf.Array is null)
@@ -431,12 +454,13 @@ namespace DotNetty.Transport.Channels
                 }
                 entry = entry.Next;
             }
+            _nioBufferCount = nioBufferCount;
             _nioBufferSize = ioBufferSize;
 
             return nioBuffers;
         }
 
-        static int GetSharedBufferList(Entry entry, IByteBuffer buf, List<ArraySegment<byte>> nioBuffers, int nioBufferCount, int maxCount)
+        private static int GetSharedBufferList(Entry entry, IByteBuffer buf, List<ArraySegment<byte>> nioBuffers, int nioBufferCount, int maxCount)
         {
             ArraySegment<byte>[] nioBufs = entry.Buffers;
             if (nioBufs is null)
@@ -463,9 +487,16 @@ namespace DotNetty.Transport.Channels
         }
 
         /// <summary>
+        /// Returns the number of <see cref="IByteBuffer"/> that can be written out of the <see cref="IByteBuffer"/> array that was
+        /// obtained via <see cref="GetSharedBufferList()"/>. This method <strong>MUST</strong> be called after <see cref="GetSharedBufferList()"/>
+        /// was called.
+        /// </summary>
+        public int NioBufferCount => _nioBufferCount;
+
+        /// <summary>
         /// Returns the number of bytes that can be written out of the <see cref="IByteBuffer"/> array that was
         /// obtained via <see cref="GetSharedBufferList()"/>. This method <strong>MUST</strong> be called after
-        /// <see cref="GetSharedBufferList()"/>.
+        /// <see cref="GetSharedBufferList()"/> was called..
         /// </summary>
         public long NioBufferSize => _nioBufferSize;
 
@@ -474,7 +505,7 @@ namespace DotNetty.Transport.Channels
         /// did not exceed the write watermark of the <see cref="IChannel"/> and no user-defined writability flag
         /// (<see cref="SetUserDefinedWritability(int, bool)"/>) has been set to <c>false</c>.
         /// </summary>
-        public bool IsWritable => 0u >= (uint)Volatile.Read(ref _unwritable);
+        public bool IsWritable => 0u >= (uint)Volatile.Read(ref v_unwritable);
 
         /// <summary>
         /// Returns <c>true</c> if and only if the user-defined writability flag at the specified index is set to
@@ -484,7 +515,7 @@ namespace DotNetty.Transport.Channels
         /// <returns>
         /// <c>true</c> if the user-defined writability flag at the specified index is set to <c>true</c>.
         /// </returns>
-        public bool GetUserDefinedWritability(int index) => 0u >= (uint)(Volatile.Read(ref _unwritable) & WritabilityMask(index));
+        public bool GetUserDefinedWritability(int index) => 0u >= (uint)(Volatile.Read(ref v_unwritable) & WritabilityMask(index));
 
         /// <summary>
         /// Sets a user-defined writability flag at the specified index.
@@ -506,12 +537,12 @@ namespace DotNetty.Transport.Channels
         void SetUserDefinedWritability(int index)
         {
             int mask = ~WritabilityMask(index);
-            var prevValue = Volatile.Read(ref _unwritable);
+            var prevValue = Volatile.Read(ref v_unwritable);
             while (true)
             {
                 int oldValue = prevValue;
                 int newValue = prevValue & mask;
-                prevValue = Interlocked.CompareExchange(ref _unwritable, newValue, prevValue);
+                prevValue = Interlocked.CompareExchange(ref v_unwritable, newValue, prevValue);
                 if (prevValue == oldValue)
                 {
                     if (prevValue != 0 && 0u >= (uint)newValue)
@@ -526,12 +557,12 @@ namespace DotNetty.Transport.Channels
         void ClearUserDefinedWritability(int index)
         {
             int mask = WritabilityMask(index);
-            var prevValue = Volatile.Read(ref _unwritable);
+            var prevValue = Volatile.Read(ref v_unwritable);
             while (true)
             {
                 int oldValue = prevValue;
                 int newValue = prevValue | mask;
-                prevValue = Interlocked.CompareExchange(ref _unwritable, newValue, prevValue);
+                prevValue = Interlocked.CompareExchange(ref v_unwritable, newValue, prevValue);
                 if (prevValue == oldValue)
                 {
                     if (0u >= (uint)prevValue && newValue != 0)
@@ -543,23 +574,25 @@ namespace DotNetty.Transport.Channels
             }
         }
 
+        private const uint c_writabilityMaskDiff = 31u - 1u;
+        [MethodImpl(InlineMethod.AggressiveInlining)]
         static int WritabilityMask(int index)
         {
-            if (index < 1 || index > 31)
+            if ((uint)(index - 1) <= c_writabilityMaskDiff)
             {
-                ThrowHelper.ThrowInvalidOperationException_WritabilityMask(index);
+                return 1 << index;
             }
-            return 1 << index;
+            return ThrowHelper.ThrowInvalidOperationException_WritabilityMask(index); // index < 1 || index > 31
         }
 
         void SetWritable(bool invokeLater)
         {
-            var prevValue = Volatile.Read(ref _unwritable);
+            var prevValue = Volatile.Read(ref v_unwritable);
             while (true)
             {
                 int oldValue = prevValue;
                 int newValue = prevValue & ~1;
-                prevValue = Interlocked.CompareExchange(ref _unwritable, newValue, prevValue);
+                prevValue = Interlocked.CompareExchange(ref v_unwritable, newValue, prevValue);
                 if (prevValue == oldValue)
                 {
                     if (prevValue != 0 && 0u >= (uint)newValue)
@@ -573,12 +606,12 @@ namespace DotNetty.Transport.Channels
 
         void SetUnwritable(bool invokeLater)
         {
-            var prevValue = Volatile.Read(ref _unwritable);
+            var prevValue = Volatile.Read(ref v_unwritable);
             while (true)
             {
                 int oldValue = prevValue;
                 int newValue = prevValue | 1;
-                prevValue = Interlocked.CompareExchange(ref _unwritable, newValue, prevValue);
+                prevValue = Interlocked.CompareExchange(ref v_unwritable, newValue, prevValue);
                 if (prevValue == oldValue)
                 {
                     if (0u >= (uint)prevValue && newValue != 0)
@@ -595,7 +628,8 @@ namespace DotNetty.Transport.Channels
             IChannelPipeline pipeline = _channel.Pipeline;
             if (invokeLater)
             {
-                _channel.EventLoop.Execute(FireChannelWritabilityChangedAction, pipeline);
+                var task = Volatile.Read(ref v_fireChannelWritabilityChangedTask) ?? EnsureFireChannelWritabilityChangedTaskCreated(pipeline);
+                _channel.EventLoop.Execute(task);
             }
             else
             {
@@ -603,10 +637,27 @@ namespace DotNetty.Transport.Channels
             }
         }
 
-        private static readonly Action<object> FireChannelWritabilityChangedAction = OnFireChannelWritabilityChanged;
-        static void OnFireChannelWritabilityChanged(object p)
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private FireChannelWritabilityChangedTask EnsureFireChannelWritabilityChangedTaskCreated(IChannelPipeline pipeline)
         {
-            _ = ((IChannelPipeline)p).FireChannelWritabilityChanged();
+            var task = new FireChannelWritabilityChangedTask(pipeline);
+            Interlocked.Exchange(ref v_fireChannelWritabilityChangedTask, task);
+            return task;
+        }
+
+        sealed class FireChannelWritabilityChangedTask : IRunnable
+        {
+            private readonly IChannelPipeline _pipeline;
+
+            public FireChannelWritabilityChangedTask(IChannelPipeline pipeline)
+            {
+                _pipeline = pipeline;
+            }
+
+            public void Run()
+            {
+                _pipeline.FireChannelWritabilityChanged();
+            }
         }
 
         /// <summary>
@@ -675,7 +726,7 @@ namespace DotNetty.Transport.Channels
 
             _inFail = true;
 
-            if (!allowChannelOpen && _channel.Open)
+            if (!allowChannelOpen && _channel.IsOpen)
             {
                 ThrowHelper.ThrowInvalidOperationException_Close0();
             }
@@ -693,7 +744,7 @@ namespace DotNetty.Transport.Channels
                 {
                     // Just decrease; do not trigger any events via DecrementPendingOutboundBytes()
                     int size = e.PendingSize;
-                    _ = Interlocked.Add(ref _totalPendingSize, -size);
+                    _ = Interlocked.Add(ref v_totalPendingSize, -size);
 
                     if (!e.Cancelled)
                     {
@@ -714,21 +765,19 @@ namespace DotNetty.Transport.Channels
 
         static void SafeSuccess(IPromise promise)
         {
-            // TODO:ChannelPromise
             // Only log if the given promise is not of type VoidChannelPromise as trySuccess(...) is expected to return
             // false.
-            Util.SafeSetSuccess(promise, Logger);
+            PromiseNotificationUtil.TrySuccess(promise, promise.IsVoid ? null : Logger);
         }
 
         static void SafeFail(IPromise promise, Exception cause)
         {
-            // TODO:ChannelPromise
             // Only log if the given promise is not of type VoidChannelPromise as tryFailure(...) is expected to return
             // false.
-            Util.SafeSetFailure(promise, cause, Logger);
+            PromiseNotificationUtil.TryFailure(promise, cause, promise.IsVoid ? null : Logger);
         }
 
-        public long TotalPendingWriteBytes() => Volatile.Read(ref _totalPendingSize);
+        public long TotalPendingWriteBytes => Volatile.Read(ref v_totalPendingSize);
 
         /// <summary>
         /// Gets the number of bytes that can be written before <see cref="IsWritable"/> returns <c>false</c>.
@@ -742,7 +791,7 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                long bytes = _channel.Configuration.WriteBufferHighWaterMark - Volatile.Read(ref _totalPendingSize);
+                long bytes = _channel.Configuration.WriteBufferHighWaterMark - Volatile.Read(ref v_totalPendingSize);
                 // If bytes is negative we know we are not writable, but if bytes is non-negative we have to check writability.
                 // Note that totalPendingSize and isWritable() use different volatile variables that are not synchronized
                 // together. totalPendingSize will be updated before isWritable().
@@ -762,7 +811,7 @@ namespace DotNetty.Transport.Channels
         {
             get
             {
-                long bytes = Volatile.Read(ref _totalPendingSize) - _channel.Configuration.WriteBufferLowWaterMark;
+                long bytes = Volatile.Read(ref v_totalPendingSize) - _channel.Configuration.WriteBufferLowWaterMark;
                 // If bytes is negative we know we are writable, but if bytes is non-negative we have to check writability.
                 // Note that totalPendingSize and isWritable() use different volatile variables that are not synchronized
                 // together. totalPendingSize will be updated before isWritable().
@@ -839,7 +888,7 @@ namespace DotNetty.Transport.Channels
             {
                 Entry entry = Pool.Take();
                 entry.Message = msg;
-                entry.PendingSize = size;
+                entry.PendingSize = size + ChannelOutboundBufferEntryOverhead;
                 entry.Total = total;
                 entry.Promise = promise;
                 return entry;
@@ -857,6 +906,8 @@ namespace DotNetty.Transport.Channels
                     Message = Unpooled.Empty;
 
                     PendingSize = 0;
+                    Total = 0L;
+                    Progress = 0L;
                     Buffers = null;
                     Buffer = new ArraySegment<byte>();
                     return pSize;

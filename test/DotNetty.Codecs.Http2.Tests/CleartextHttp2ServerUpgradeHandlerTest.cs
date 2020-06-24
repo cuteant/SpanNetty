@@ -158,7 +158,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             Assert.True(_channel.WriteInbound(inbound));
 
-            object firstInbound = _channel.ReadInbound<object>();
+            object firstInbound = _channel.ReadInbound();
             Assert.True(firstInbound is IHttpRequest);
             IHttpRequest request = (IHttpRequest)firstInbound;
             Assert.Equal(HttpMethod.Get, request.Method);
@@ -168,7 +168,7 @@ namespace DotNetty.Codecs.Http2.Tests
 
             _channel.ReadInbound<ILastHttpContent>().Release();
 
-            Assert.Null(_channel.ReadInbound<object>());
+            Assert.Null(_channel.ReadInbound());
         }
 
 
@@ -266,7 +266,7 @@ namespace DotNetty.Codecs.Http2.Tests
             Assert.NotNull(settingsBuffer);
             settingsBuffer.Release();
 
-            Assert.Null(_channel.ReadOutbound<object>());
+            Assert.Null(_channel.ReadOutbound());
         }
     }
 }

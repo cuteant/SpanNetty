@@ -1,9 +1,8 @@
-﻿
-namespace DotNetty.Common.Concurrency
+﻿namespace DotNetty.Common.Concurrency
 {
     using System;
-    using System.Collections.ObjectModel;
-    using System.Threading;
+    using System.Diagnostics;
+    using System.Runtime.CompilerServices;
     using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
 
@@ -15,35 +14,38 @@ namespace DotNetty.Common.Concurrency
     /// futures fails, exactly which cause of failure will be assigned to the aggregate promise is undefined.
     /// 
     /// <para>Callers may populate a promise combiner with any number of futures to be combined via the
-    /// {@link PromiseCombiner#add(Future)} and {@link PromiseCombiner#addAll(Future[])} methods. When all futures to be
+    /// <see cref="PromiseCombiner.Add(Task)"/> and <see cref="PromiseCombiner.AddAll(Task[])"/> methods. When all futures to be
     /// combined have been added, callers must provide an aggregate promise to be notified when all combined promises have
-    /// finished via the {@link PromiseCombiner#finish(Promise)} method.</para>
+    /// finished via the <see cref="PromiseCombiner.Finish(IPromise)"/> method.</para>
     /// </summary>
     public sealed class PromiseCombiner
     {
-        private int expectedCount;
-        private int doneCount;
-        private int doneAdding;
-        private IPromise aggregatePromise;
-        private ReadOnlyCollection<Exception> causes;
+        private readonly IEventExecutor _executor;
+        private int _expectedCount;
+        private int _doneCount;
+        private IPromise _aggregatePromise;
+        private Exception _cause;
+
+        public PromiseCombiner(IEventExecutor executor)
+        {
+            if (executor is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.executor); }
+            _executor = executor;
+        }
 
         public void Add(IPromise promise)
         {
-            this.Add(promise.Task);
+            Add(promise.Task);
         }
 
         public void Add(Task future)
         {
-            if (SharedConstants.False < (uint)Volatile.Read(ref this.doneAdding))
-            {
-                ThrowHelper.ThrowInvalidOperationException_AddingPromisesIsNotAllowedAfterFinishedAdding();
-            }
-
-            _ = Interlocked.Increment(ref this.expectedCount);
+            CheckAddAllowed();
+            CheckInEventLoop();
+            ++_expectedCount;
 
             if (future.IsCompleted)
             {
-                OperationComplete(future, this);
+                OperationComplete(future);
             }
             else
             {
@@ -57,7 +59,7 @@ namespace DotNetty.Common.Concurrency
 
             for (int i = 0; i < promises.Length; i++)
             {
-                this.Add(promises[i].Task);
+                Add(promises[i].Task);
             }
         }
 
@@ -67,7 +69,7 @@ namespace DotNetty.Common.Concurrency
 
             for (int i = 0; i < futures.Length; i++)
             {
-                this.Add(futures[i]);
+                Add(futures[i]);
             }
         }
 
@@ -77,36 +79,84 @@ namespace DotNetty.Common.Concurrency
             {
                 ThrowHelper.ThrowArgumentNullException(ExceptionArgument.aggregatePromise);
             }
-            if (SharedConstants.False < (uint)Volatile.Read(ref this.doneAdding))
+            CheckInEventLoop();
+            if (_aggregatePromise is object)
             {
                 ThrowHelper.ThrowInvalidOperationException_AlreadyFinished();
             }
-            _ = Interlocked.Exchange(ref this.doneAdding, SharedConstants.True);
-            this.aggregatePromise = aggregatePromise;
-            if (Volatile.Read(ref this.doneCount) == Volatile.Read(ref this.expectedCount))
+            _aggregatePromise = aggregatePromise;
+            if (0u >= (uint)(_doneCount - _expectedCount))
             {
-                _ = this.TryPromise();
+                _ = TryPromise();
             }
         }
 
-        bool TryPromise()
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private void CheckInEventLoop()
         {
-            var excs = Volatile.Read(ref this.causes);
-            return (excs is null) ? this.aggregatePromise.TryComplete() : this.aggregatePromise.TrySetException(excs);
+            if (!_executor.InEventLoop)
+            {
+                ThrowHelper.ThrowInvalidOperationException_MustBeCalledFromEventexecutorThread();
+            }
         }
 
-        static readonly Action<Task, object> OperationCompleteAction = OperationComplete;
-        static void OperationComplete(Task future, object state)
+        private bool TryPromise()
+        {
+            return (_cause is null) ? _aggregatePromise.TryComplete() : _aggregatePromise.TrySetException(_cause);
+        }
+
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private void CheckAddAllowed()
+        {
+            if (_aggregatePromise is object)
+            {
+                ThrowHelper.ThrowInvalidOperationException_AddingPromisesIsNotAllowedAfterFinishedAdding();
+            }
+        }
+
+        private static readonly Action<Task, object> OperationCompleteAction = OperationComplete;
+        private static void OperationComplete(Task future, object state)
         {
             var self = (PromiseCombiner)state;
-            _ = Interlocked.Increment(ref self.doneCount);
-            if (!future.IsSuccess() && Volatile.Read(ref self.causes) is null)
+            var executor = self._executor;
+            if (executor.InEventLoop)
             {
-                _ = Interlocked.Exchange(ref self.causes, future.Exception.InnerExceptions);
+                self.OperationComplete(future);
             }
-            if (Volatile.Read(ref self.doneCount) == Volatile.Read(ref self.expectedCount) && SharedConstants.False < (uint)Volatile.Read(ref self.doneAdding))
+            else
             {
-                _ = self.TryPromise();
+                executor.Execute(new OperationCompleteTask(self, future));
+            }
+        }
+
+        private void OperationComplete(Task future)
+        {
+            Debug.Assert(_executor.InEventLoop);
+            ++_doneCount;
+            if (!future.IsSuccess() && _cause is null)
+            {
+                _cause = future.Exception.InnerException;
+            }
+            if (0u >= (uint)(_doneCount - _expectedCount) && _aggregatePromise is object)
+            {
+                _ = TryPromise();
+            }
+        }
+
+        sealed class OperationCompleteTask : IRunnable
+        {
+            private readonly PromiseCombiner _owner;
+            private readonly Task _future;
+
+            public OperationCompleteTask(PromiseCombiner owner, Task future)
+            {
+                _owner = owner;
+                _future = future;
+            }
+
+            public void Run()
+            {
+                _owner.OperationComplete(_future);
             }
         }
     }

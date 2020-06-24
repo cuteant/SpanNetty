@@ -32,13 +32,13 @@ namespace DotNetty.Transport.Channels
 
         protected override EndPoint RemoteAddressInternal => null;
 
-        protected override void DoDisconnect() => throw new NotSupportedException();
+        protected override void DoDisconnect() => throw ThrowHelper.GetNotSupportedException();
 
         //protected override IChannelUnsafe NewUnsafe() => new DefaultServerUnsafe(this);
 
-        protected override void DoWrite(ChannelOutboundBuffer buf) => throw new NotSupportedException();
+        protected override void DoWrite(ChannelOutboundBuffer buf) => throw ThrowHelper.GetNotSupportedException();
 
-        protected override object FilterOutboundMessage(object msg) => throw new NotSupportedException();
+        protected override object FilterOutboundMessage(object msg) => throw ThrowHelper.GetNotSupportedException();
 
         public class DefaultServerUnsafe : AbstractUnsafe
         {

@@ -29,7 +29,7 @@ namespace DotNetty.Codecs.Http2
     ///
     /// <para>Outbound streams are supported via the <see cref="Http2StreamChannelBootstrap"/>.</para>
     ///
-    /// <para><see cref="IChannelConfiguration.MaxMessagesPerRead"/> and <see cref="IChannelConfiguration.AutoRead"/> are supported.</para>
+    /// <para><see cref="IChannelConfiguration.MaxMessagesPerRead"/> and <see cref="IChannelConfiguration.IsAutoRead"/> are supported.</para>
     ///
     /// <h3>Reference Counting</h3>
     ///

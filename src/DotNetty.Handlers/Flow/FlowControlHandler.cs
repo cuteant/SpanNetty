@@ -3,46 +3,48 @@
 
 namespace DotNetty.Handlers.Flow
 {
+    using DotNetty.Codecs;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
-    /**
-     * The {@link FlowControlHandler} ensures that only one message per {@code read()} is sent downstream.
-     *
-     * Classes such as {@link ByteToMessageDecoder} or {@link MessageToByteEncoder} are free to emit as
-     * many events as they like for any given input. A channel's auto reading configuration doesn't usually
-     * apply in these scenarios. This is causing problems in downstream {@link ChannelHandler}s that would
-     * like to hold subsequent events while they're processing one event. It's a common problem with the
-     * {@code HttpObjectDecoder} that will very often fire an {@code HttpRequest} that is immediately followed
-     * by a {@code LastHttpContent} event.
-     *
-     * <pre>{@code
-     * ChannelPipeline pipeline = ...;
-     *
-     * pipeline.addLast(new HttpServerCodec());
-     * pipeline.addLast(new FlowControlHandler());
-     *
-     * pipeline.addLast(new MyExampleHandler());
-     *
-     * class MyExampleHandler extends ChannelInboundHandlerAdapter {
-     *   @Override
-     *   public void channelRead(IChannelHandlerContext ctx, Object msg) {
-     *     if (msg instanceof HttpRequest) {
-     *       ctx.channel().config().setAutoRead(false);
-     *
-     *       // The FlowControlHandler will hold any subsequent events that
-     *       // were emitted by HttpObjectDecoder until auto reading is turned
-     *       // back on or Channel#read() is being called.
-     *     }
-     *   }
-     * }
-     * }</pre>
-     *
-     * @see ChannelConfig#setAutoRead(bool)
-     */
+    /// <summary>
+    /// The <see cref="FlowControlHandler"/> ensures that only one message per {@code read()} is sent downstream.
+    ///
+    /// Classes such as <see cref="ByteToMessageDecoder"/> or <see cref="MessageToByteEncoder{T}"/> are free to emit as
+    /// many events as they like for any given input. A channel's auto reading configuration doesn't usually
+    /// apply in these scenarios. This is causing problems in downstream <see cref="IChannelHandler"/>s that would
+    /// like to hold subsequent events while they're processing one event. It's a common problem with the
+    /// <see cref="T:DotNetty.Codecs.Http.HttpObjectDecoder"/> that will very often fire an
+    /// <see cref="T:DotNetty.Codecs.Http.IHttpRequest"/> that is immediately followed
+    /// by a <see cref="T:DotNetty.Codecs.Http.ILastHttpContent"/> event.
+    ///
+    /// <code>
+    /// ChannelPipeline pipeline = ...;
+    ///
+    /// pipeline.addLast(new HttpServerCodec());
+    /// pipeline.addLast(new FlowControlHandler());
+    ///
+    /// pipeline.addLast(new MyExampleHandler());
+    ///
+    /// class MyExampleHandler extends ChannelInboundHandlerAdapter {
+    ///   @Override
+    ///   public void channelRead(ChannelHandlerContext ctx, Object msg) {
+    ///     if (msg instanceof HttpRequest) {
+    ///       ctx.channel().config().setAutoRead(false);
+    ///
+    ///       // The FlowControlHandler will hold any subsequent events that
+    ///       // were emitted by HttpObjectDecoder until auto reading is turned
+    ///       // back on or Channel#read() is being called.
+    ///     }
+    ///   }
+    /// }
+    /// }</code>
+    ///
+    /// @see ChannelConfig#setAutoRead(boolean)
+    /// </summary>
     public class FlowControlHandler : ChannelDuplexHandler
     {
         static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<FlowControlHandler>();
@@ -82,7 +84,9 @@ namespace DotNetty.Handlers.Flow
             {
                 if (_queue.NonEmpty)
                 {
+#if DEBUG
                     if (Logger.TraceEnabled) Logger.NonEmptyQueue(_queue);
+#endif
 
                     if (_releaseMessages)
                     {
@@ -171,7 +175,7 @@ namespace DotNetty.Handlers.Flow
 
             // fireChannelRead(...) may call ctx.read() and so this method may reentrance. Because of this we need to
             // check if queue was set to null in the meantime and if so break the loop.
-            while (_queue is object && (consumed < minConsume || _config.AutoRead))
+            while (_queue is object && (consumed < minConsume || _config.IsAutoRead))
             {
                 if (!_queue.TryDequeue(out object msg) || msg is null) { break; }
 

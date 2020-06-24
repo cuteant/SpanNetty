@@ -14,18 +14,18 @@ namespace DotNetty.Transport.Channels.Sockets
     public class DefaultSocketChannelConfiguration : DefaultChannelConfiguration, ISocketChannelConfiguration
     {
         protected readonly Socket Socket;
-        int allowHalfClosure;
+        private int _allowHalfClosure;
 
         public DefaultSocketChannelConfiguration(ISocketChannel channel, Socket socket)
             : base(channel)
         {
             if (socket is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.socket); }
-            this.Socket = socket;
+            Socket = socket;
 
             // Enable TCP_NODELAY by default if possible.
             try
             {
-                this.TcpNoDelay = true;
+                TcpNoDelay = true;
             }
             catch
             {
@@ -36,27 +36,27 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             if (ChannelOption.SoRcvbuf.Equals(option))
             {
-                return (T)(object)this.ReceiveBufferSize;
+                return (T)(object)ReceiveBufferSize;
             }
             if (ChannelOption.SoSndbuf.Equals(option))
             {
-                return (T)(object)this.SendBufferSize;
+                return (T)(object)SendBufferSize;
             }
             if (ChannelOption.TcpNodelay.Equals(option))
             {
-                return (T)(object)this.TcpNoDelay;
+                return (T)(object)TcpNoDelay;
             }
             if (ChannelOption.SoKeepalive.Equals(option))
             {
-                return (T)(object)this.KeepAlive;
+                return (T)(object)KeepAlive;
             }
             if (ChannelOption.SoReuseaddr.Equals(option))
             {
-                return (T)(object)this.ReuseAddress;
+                return (T)(object)ReuseAddress;
             }
             if (ChannelOption.SoLinger.Equals(option))
             {
-                return (T)(object)this.Linger;
+                return (T)(object)Linger;
             }
             //if (ChannelOption.IP_TOS.Equals(option))
             //{
@@ -64,7 +64,7 @@ namespace DotNetty.Transport.Channels.Sockets
             //}
             if (ChannelOption.AllowHalfClosure.Equals(option))
             {
-                return (T)(object)this.AllowHalfClosure;
+                return (T)(object)AllowHalfClosure;
             }
 
             return base.GetOption(option);
@@ -79,27 +79,27 @@ namespace DotNetty.Transport.Channels.Sockets
 
             if (ChannelOption.SoRcvbuf.Equals(option))
             {
-                this.ReceiveBufferSize = (int)(object)value;
+                ReceiveBufferSize = (int)(object)value;
             }
             else if (ChannelOption.SoSndbuf.Equals(option))
             {
-                this.SendBufferSize = (int)(object)value;
+                SendBufferSize = (int)(object)value;
             }
             else if (ChannelOption.TcpNodelay.Equals(option))
             {
-                this.TcpNoDelay = (bool)(object)value;
+                TcpNoDelay = (bool)(object)value;
             }
             else if (ChannelOption.SoKeepalive.Equals(option))
             {
-                this.KeepAlive = (bool)(object)value;
+                KeepAlive = (bool)(object)value;
             }
             else if (ChannelOption.SoReuseaddr.Equals(option))
             {
-                this.ReuseAddress = (bool)(object)value;
+                ReuseAddress = (bool)(object)value;
             }
             else if (ChannelOption.SoLinger.Equals(option))
             {
-                this.Linger = (int)(object)value;
+                Linger = (int)(object)value;
             }
             //else if (option == IP_TOS)
             //{
@@ -107,7 +107,7 @@ namespace DotNetty.Transport.Channels.Sockets
             //}
             else if (ChannelOption.AllowHalfClosure.Equals(option))
             {
-                this.AllowHalfClosure = (bool)(object)value;
+                AllowHalfClosure = (bool)(object)value;
             }
             else
             {
@@ -119,8 +119,8 @@ namespace DotNetty.Transport.Channels.Sockets
 
         public bool AllowHalfClosure
         {
-            get { return SharedConstants.False < (uint)Volatile.Read(ref this.allowHalfClosure); }
-            set { Interlocked.Exchange(ref this.allowHalfClosure, value ? SharedConstants.True : SharedConstants.False); }
+            get { return SharedConstants.False < (uint)Volatile.Read(ref _allowHalfClosure); }
+            set { Interlocked.Exchange(ref _allowHalfClosure, value ? SharedConstants.True : SharedConstants.False); }
         }
 
         public int ReceiveBufferSize
@@ -129,7 +129,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    return this.Socket.ReceiveBufferSize;
+                    return Socket.ReceiveBufferSize;
                 }
                 catch (ObjectDisposedException ex)
                 {
@@ -144,7 +144,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    this.Socket.ReceiveBufferSize = value;
+                    Socket.ReceiveBufferSize = value;
                 }
                 catch (ObjectDisposedException ex)
                 {
@@ -163,7 +163,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    return this.Socket.SendBufferSize;
+                    return Socket.SendBufferSize;
                 }
                 catch (ObjectDisposedException ex)
                 {
@@ -178,7 +178,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    this.Socket.SendBufferSize = value;
+                    Socket.SendBufferSize = value;
                 }
                 catch (ObjectDisposedException ex)
                 {
@@ -197,7 +197,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    LingerOption lingerState = this.Socket.LingerState;
+                    LingerOption lingerState = Socket.LingerState;
                     return lingerState.Enabled ? lingerState.LingerTime : -1;
                 }
                 catch (ObjectDisposedException ex)
@@ -215,17 +215,17 @@ namespace DotNetty.Transport.Channels.Sockets
                 {
                     if (value < 0)
                     {
-                        this.Socket.LingerState = new LingerOption(false, 0);
+                        Socket.LingerState = new LingerOption(false, 0);
                     }
                     else
                     {
                         if (s_lingerCache.TryGetValue(value, out var lingerOption))
                         {
-                            this.Socket.LingerState = lingerOption;
+                            Socket.LingerState = lingerOption;
                         }
                         else
                         {
-                            this.Socket.LingerState = new LingerOption(true, value);
+                            Socket.LingerState = new LingerOption(true, value);
                         }
                     }
                 }
@@ -246,7 +246,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    return (int)this.Socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive) != 0;
+                    return (int)Socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive) != 0;
                 }
                 catch (ObjectDisposedException ex)
                 {
@@ -261,7 +261,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    this.Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, value ? 1 : 0);
+                    Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, value ? 1 : 0);
                 }
                 catch (ObjectDisposedException ex)
                 {
@@ -280,7 +280,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    return (int)this.Socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress) != 0;
+                    return (int)Socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress) != 0;
                 }
                 catch (ObjectDisposedException ex)
                 {
@@ -295,7 +295,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    this.Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, value ? 1 : 0);
+                    Socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, value ? 1 : 0);
                 }
                 catch (ObjectDisposedException ex)
                 {
@@ -314,7 +314,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    return this.Socket.NoDelay;
+                    return Socket.NoDelay;
                 }
                 catch (ObjectDisposedException ex)
                 {
@@ -329,7 +329,7 @@ namespace DotNetty.Transport.Channels.Sockets
             {
                 try
                 {
-                    this.Socket.NoDelay = value;
+                    Socket.NoDelay = value;
                 }
                 catch (ObjectDisposedException ex)
                 {

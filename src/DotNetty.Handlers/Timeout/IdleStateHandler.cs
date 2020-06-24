@@ -231,7 +231,7 @@ namespace DotNetty.Handlers.Timeout
 
         public override void HandlerAdded(IChannelHandlerContext context)
         {
-            if (context.Channel.Active && context.Channel.Registered)
+            if (context.Channel.IsActive && context.Channel.IsRegistered)
             {
                 // channelActive() event has been fired already, which means this.channelActive() will
                 // not be invoked. We have to initialize here instead.
@@ -252,7 +252,7 @@ namespace DotNetty.Handlers.Timeout
         public override void ChannelRegistered(IChannelHandlerContext context)
         {
             // Initialize early if channel is active already.
-            if (context.Channel.Active)
+            if (context.Channel.IsActive)
             {
                 Initialize(context);
             }
@@ -433,7 +433,7 @@ namespace DotNetty.Handlers.Timeout
                 if (buf is object)
                 {
                     _lastMessageHashCode = RuntimeHelpers.GetHashCode(buf.Current);
-                    _lastPendingWriteBytes = buf.TotalPendingWriteBytes();
+                    _lastPendingWriteBytes = buf.TotalPendingWriteBytes;
                     _lastFlushProgress = buf.CurrentProgress();
                 }
             }
@@ -475,7 +475,7 @@ namespace DotNetty.Handlers.Timeout
                 if (buf is object)
                 {
                     int messageHashCode = RuntimeHelpers.GetHashCode(buf.Current);
-                    long pendingWriteBytes = buf.TotalPendingWriteBytes();
+                    long pendingWriteBytes = buf.TotalPendingWriteBytes;
 
                     if (messageHashCode != _lastMessageHashCode || pendingWriteBytes != _lastPendingWriteBytes)
                     {

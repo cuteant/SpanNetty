@@ -253,7 +253,7 @@ namespace DotNetty.Handlers.Tests
 
                 if (readResultBuffer.ReadableBytes < output.Count)
                 {
-                    if (ch.Active)
+                    if (ch.IsActive)
                     {
 #pragma warning disable CS1998 // 异步方法缺少 "await" 运算符，将以同步方式运行
                         await ReadOutboundAsync(async () => ch.ReadOutbound<IByteBuffer>(), output.Count - readResultBuffer.ReadableBytes, readResultBuffer, TestTimeout, readResultBuffer.ReadableBytes != 0 ? 0 : 1);
@@ -342,9 +342,9 @@ namespace DotNetty.Handlers.Tests
                new ActivatingHandler(dropChannelActive)
             );
 
-            ch.Configuration.AutoRead = false;
+            ch.Configuration.IsAutoRead = false;
             ch.Register();
-            Assert.False(ch.Configuration.AutoRead);
+            Assert.False(ch.Configuration.IsAutoRead);
             Assert.True(ch.WriteOutbound(Unpooled.Empty));
             Assert.True(readHandler.ReadIssued);
             ch.CloseAsync();

@@ -63,18 +63,27 @@ namespace DotNetty.Transport.Channels
             }
         }
 
+        private int GetSize(object msg)
+        {
+            // It is possible for writes to be triggered from removeAndFailAll(). To preserve ordering,
+            // we should add them to the queue and let removeAndFailAll() fail them later.
+            int messageSize = _estimatorHandle.Size(msg);
+            if (messageSize < 0)
+            {
+                // Size may be unknown so just use 0
+                messageSize = 0;
+            }
+            return messageSize + PendingWriteQueue.PendingWriteOverhead;
+        }
+
         /// <summary>Add the given <c>msg</c> and returns <see cref="Task" /> for completion of processing <c>msg</c>.</summary>
         public void Add(object msg, IPromise promise)
         {
             Debug.Assert(_ctx.Executor.InEventLoop);
             if (msg is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.msg); }
 
-            int messageSize = _estimatorHandle.Size(msg);
-            if (messageSize < 0)
-            {
-                // Size may be unknow so just use 0
-                messageSize = 0;
-            }
+            int messageSize = GetSize(msg);
+
             PendingWrite currentTail = _tail;
             if (currentTail is object)
             {
@@ -180,32 +189,38 @@ namespace DotNetty.Transport.Channels
         {
             Debug.Assert(_ctx.Executor.InEventLoop);
 
-            if (IsEmpty) { return TaskUtil.Completed; }
+            if (IsEmpty) { return null; }
 
-            // Guard against re-entrance by directly reset
-            int currentSize = _size;
-            var tasks = new List<Task>(currentSize);
-
-            // It is possible for some of the written promises to trigger more writes. The new writes
-            // will "revive" the queue, so we need to write them up until the queue is empty.
-            for (PendingWrite write = _head; write is object; write = _head)
+            var p = _ctx.NewPromise();
+            PromiseCombiner combiner = new PromiseCombiner(_ctx.Executor);
+            try
             {
-                _head = _tail = null;
-                _size = 0;
-
-                while (write is object)
+                // It is possible for some of the written promises to trigger more writes. The new writes
+                // will "revive" the queue, so we need to write them up until the queue is empty.
+                for (PendingWrite write = _head; write is object; write = _head)
                 {
-                    PendingWrite next = write.Next;
-                    object msg = write.Messages;
-                    IPromise promise = write.Promise;
-                    Recycle(write, false);
-                    if (!promise.IsVoid) { tasks.Add(promise.Task); }
-                    _ = _ctx.WriteAsync(msg, promise);
-                    write = next;
+                    _head = _tail = null;
+                    _size = 0;
+
+                    while (write is object)
+                    {
+                        PendingWrite next = write.Next;
+                        object msg = write.Messages;
+                        IPromise promise = write.Promise;
+                        Recycle(write, false);
+                        if (!promise.IsVoid) { combiner.Add(promise.Task); }
+                        _ = _ctx.WriteAsync(msg, promise);
+                        write = next;
+                    }
                 }
+                combiner.Finish(p);
+            }
+            catch (Exception exc)
+            {
+                p.SetException(exc);
             }
             AssertEmpty();
-            return Task.WhenAll(tasks);
+            return p.Task;
         }
 
         [Conditional("DEBUG")]

@@ -85,7 +85,7 @@ namespace DotNetty.Codecs.Http2
                     return promise.Task;
                 }
 
-                var tasks = new List<Task>();
+                PromiseCombiner combiner = new PromiseCombiner(ctx.Executor);
                 while (true)
                 {
                     var nextBuf = NextReadableBuf(channel);
@@ -97,7 +97,7 @@ namespace DotNetty.Codecs.Http2
                     }
 
                     var bufPromise = ctx.NewPromise();
-                    tasks.Add(bufPromise.Task);
+                    combiner.Add(bufPromise.Task);
                     _ = base.WriteDataAsync(ctx, streamId, buf, padding, compressedEndOfStream, bufPromise);
 
                     if (nextBuf is null) { break; }
@@ -105,7 +105,7 @@ namespace DotNetty.Codecs.Http2
                     padding = 0; // Padding is only communicated once on the first iteration
                     buf = nextBuf;
                 }
-                Task.WhenAll(tasks).LinkOutcome(promise);
+                combiner.Finish(promise);
             }
             catch (Exception cause)
             {

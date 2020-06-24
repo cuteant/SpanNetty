@@ -31,7 +31,7 @@ namespace DotNetty.Handlers.Tests.Flow
 
         public void Dispose()
         {
-            this.group?.ShutdownGracefullyAsync();
+            this.group?.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
         }
 
         /**
@@ -91,7 +91,7 @@ namespace DotNetty.Handlers.Tests.Flow
                     ReferenceCountUtil.Release(msg);
                     // We're turning off auto reading in the hope that no
                     // new messages are being sent but that is not true.
-                    ctx.Channel.Configuration.AutoRead = false;
+                    ctx.Channel.Configuration.IsAutoRead = false;
 
                     latch.Signal();
                 });
@@ -230,7 +230,7 @@ namespace DotNetty.Handlers.Tests.Flow
                     ReferenceCountUtil.Release(msg);
 
                     // Disable auto reading after each message
-                    ctx.Channel.Configuration.AutoRead = false;
+                    ctx.Channel.Configuration.IsAutoRead = false;
 
                     if (msgRcvCount++ != expectedMsgCount)
                     {
@@ -274,12 +274,12 @@ namespace DotNetty.Handlers.Tests.Flow
                 Assert.True(msgRcvLatch1.Wait(TimeSpan.FromSeconds(1)));
 
                 // channelRead(2)
-                peer.Configuration.AutoRead = true;
+                peer.Configuration.IsAutoRead = true;
                 setAutoReadLatch1.Signal();
                 Assert.True(msgRcvLatch1.Wait(TimeSpan.FromSeconds(1)));
 
                 // channelRead(3)
-                peer.Configuration.AutoRead = true;
+                peer.Configuration.IsAutoRead = true;
                 setAutoReadLatch2.Signal();
                 Assert.True(msgRcvLatch3.Wait(TimeSpan.FromSeconds(1)));
                 Assert.True(flow.IsQueueEmpty);
@@ -428,8 +428,8 @@ namespace DotNetty.Handlers.Tests.Flow
                 new IdleStateHandler(TimeSpan.FromMilliseconds(delayMillis), TimeSpan.Zero, TimeSpan.Zero),
                 new SwallowedReadCompleteHandler(userEvents));
 
-            channel.Configuration.AutoRead = false;
-            Assert.False(channel.Configuration.AutoRead);
+            channel.Configuration.IsAutoRead = false;
+            Assert.False(channel.Configuration.IsAutoRead);
 
             channel.Register();
 

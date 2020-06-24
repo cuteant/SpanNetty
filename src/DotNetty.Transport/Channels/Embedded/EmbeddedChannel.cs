@@ -141,8 +141,9 @@ namespace DotNetty.Transport.Channels.Embedded
             p.AddLast(new ActionChannelInitializer<IChannel>(channel =>
             {
                 IChannelPipeline pipeline = channel.Pipeline;
-                foreach (IChannelHandler h in handlers)
+                for (int i = 0; i < handlers.Length; i++)
                 {
+                    IChannelHandler h = handlers[i];
                     if (h is null) { break; }
                     pipeline.AddLast(h);
                 }
@@ -187,40 +188,52 @@ namespace DotNetty.Transport.Channels.Embedded
         /// <summary>
         /// Return received data from this <see cref="IChannel"/>.
         /// </summary>
-        public T ReadInbound<T>()
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        public T ReadInbound<T>() => (T)ReadInbound();
+
+        /// <summary>
+        /// Return received data from this <see cref="IChannel"/>.
+        /// </summary>
+        public object ReadInbound()
         {
 #if DEBUG
-            var message = (T)Poll(_inboundMessages);
+            var message = Poll(_inboundMessages);
             if (message is object)
             {
                 _ = ReferenceCountUtil.Touch(message, "Caller of readInbound() will handle the message from this point");
             }
             return message;
 #else
-            return (T)Poll(_inboundMessages);
+            return Poll(_inboundMessages);
 #endif
         }
 
         /// <summary>
         /// Read data from the outbound. This may return <c>null</c> if nothing is readable.
         /// </summary>
-        public T ReadOutbound<T>()
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        public T ReadOutbound<T>() => (T)ReadOutbound();
+
+        /// <summary>
+        /// Read data from the outbound. This may return <c>null</c> if nothing is readable.
+        /// </summary>
+        public object ReadOutbound()
         {
 #if DEBUG
-            var message = (T)Poll(_outboundMessages);
+            var message = Poll(_outboundMessages);
             if (message is object)
             {
                 _ = ReferenceCountUtil.Touch(message, "Caller of readOutbound() will handle the message from this point.");
             }
             return message;
 #else
-            return (T)Poll(_outboundMessages);
+            return Poll(_outboundMessages);
 #endif
         }
 
-        protected override EndPoint LocalAddressInternal => Active ? LOCAL_ADDRESS : null;
+        protected override EndPoint LocalAddressInternal => IsActive ? LOCAL_ADDRESS : null;
 
-        protected override EndPoint RemoteAddressInternal => Active ? REMOTE_ADDRESS : null;
+        protected override EndPoint RemoteAddressInternal => IsActive ? REMOTE_ADDRESS : null;
 
         //protected override IChannelUnsafe NewUnsafe() => new EmbeddedUnsafe(this); ## 苦竹 屏蔽 ##
 
@@ -261,9 +274,9 @@ namespace DotNetty.Transport.Channels.Embedded
             }
         }
 
-        public override bool Open => _state != State.Closed;
+        public override bool IsOpen => _state != State.Closed;
 
-        public override bool Active => _state == State.Active;
+        public override bool IsActive => _state == State.Active;
 
         /// <summary>
         ///     Run all tasks (which also includes scheduled tasks) that are pending in the <see cref="IEventLoop" />
@@ -382,8 +395,9 @@ namespace DotNetty.Transport.Channels.Embedded
 
             try
             {
-                foreach (object m in msgs)
+                for (int i = 0; i < msgs.Length; i++)
                 {
+                    object m = msgs[i];
                     if (m is null)
                     {
                         break;
@@ -404,7 +418,7 @@ namespace DotNetty.Transport.Channels.Embedded
                     else
                     {
                         // The write may be delayed to run later by RunPendingTasks()
-                        future.ContinueWith(t => RecordException(t));
+                        future.ContinueWith(t => RecordException(t), TaskContinuationOptions.ExecuteSynchronously);
                     }
                 }
 
@@ -417,6 +431,7 @@ namespace DotNetty.Transport.Channels.Embedded
             }
         }
 
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         void RecordException(Task future)
         {
             if (future.IsCanceled || future.IsFaulted)
@@ -425,7 +440,7 @@ namespace DotNetty.Transport.Channels.Embedded
             }
         }
 
-        [MethodImpl(InlineMethod.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.NoInlining)]
         void RecordException(Exception cause)
         {
             if (_lastException is null)
@@ -607,7 +622,7 @@ namespace DotNetty.Transport.Channels.Embedded
         [MethodImpl(InlineMethod.AggressiveInlining)]
         bool CheckOpen(bool recordException)
         {
-            if (!Open)
+            if (!IsOpen)
             {
                 if (recordException)
                 {
@@ -630,11 +645,10 @@ namespace DotNetty.Transport.Channels.Embedded
             }
         }
 
-        [MethodImpl(InlineMethod.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         static object Poll(QueueX<object> queue)
         {
-            _ = queue.TryDequeue(out var result);
-            return result;
+            return queue.TryDequeue(out var result) ? result : null;
         }
 
         /// <summary>Called for each outbound message.</summary>

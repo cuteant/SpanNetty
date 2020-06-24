@@ -89,16 +89,16 @@ namespace DotNetty.Codecs.Http.Tests
             Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer("0\r\n", Encoding.ASCII)));
             Assert.True(channel.WriteInbound(Unpooled.CopiedBuffer("My-Trailer: 42\r\n\r\n\r\n", Encoding.ASCII)));
 
-            object ob1 = channel.ReadInbound<object>();
+            object ob1 = channel.ReadInbound();
             Assert.True(ob1 is DefaultHttpResponse);
 
-            object ob2 = channel.ReadInbound<object>();
+            object ob2 = channel.ReadInbound();
             Assert.True(ob1 is DefaultHttpResponse);
             IHttpContent content = (IHttpContent)ob2;
             Assert.Equal(HelloWorld, content.Content.ToString(Encoding.ASCII));
             content.Release();
 
-            object ob3 = channel.ReadInbound<object>();
+            object ob3 = channel.ReadInbound();
             Assert.True(ob1 is DefaultHttpResponse);
             ILastHttpContent lastContent = (ILastHttpContent)ob3;
             Assert.NotNull(lastContent.Result);
@@ -658,7 +658,7 @@ namespace DotNetty.Codecs.Http.Tests
             {
                 while (true)
                 {
-                    o = channel.ReadInbound<object>();
+                    o = channel.ReadInbound();
                     Assert.NotNull(o);
                     ReferenceCountUtil.Release(o);
                     if (o is ILastHttpContent)
@@ -669,7 +669,7 @@ namespace DotNetty.Codecs.Http.Tests
             }
             else
             {
-                o = channel.ReadInbound<object>();
+                o = channel.ReadInbound();
                 Assert.Null(o);
             }
         }
@@ -681,7 +681,7 @@ namespace DotNetty.Codecs.Http.Tests
             {
                 while (true)
                 {
-                    o = channel.ReadOutbound<object>();
+                    o = channel.ReadOutbound();
                     Assert.NotNull(o);
                     ReferenceCountUtil.Release(o);
                     if (o is ILastHttpContent)
@@ -692,7 +692,7 @@ namespace DotNetty.Codecs.Http.Tests
             }
             else
             {
-                o = channel.ReadOutbound<object>();
+                o = channel.ReadOutbound();
                 Assert.Null(o);
             }
         }

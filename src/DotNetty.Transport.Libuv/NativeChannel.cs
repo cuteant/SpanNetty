@@ -33,9 +33,9 @@ namespace DotNetty.Transport.Libuv
             InternalState = StateFlags.Open;
         }
 
-        public override bool Open => IsInState(StateFlags.Open);
+        public override bool IsOpen => IsInState(StateFlags.Open);
 
-        public override bool Active => IsInState(StateFlags.Active);
+        public override bool IsActive => IsInState(StateFlags.Active);
 
         protected override bool IsCompatible(IEventLoop eventLoop) => eventLoop is LoopExecutor;
 
