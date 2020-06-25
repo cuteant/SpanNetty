@@ -14,6 +14,7 @@ namespace DotNetty.Buffers
 
     public ref partial struct ByteBufferReader
     {
+        private readonly IByteBuffer _origin;
         private SequencePosition _currentPosition;
         private SequencePosition _nextPosition;
         private bool _moreData;
@@ -25,28 +26,51 @@ namespace DotNetty.Buffers
         private long _consumed;
 
         /// <summary>Create a <see cref="ByteBufferReader" /> over the given <see cref="IByteBuffer"/>.</summary>
-        public ByteBufferReader(IByteBuffer buffer) : this(buffer.UnreadSequence) { }
-
-        /// <summary>Create a <see cref="ByteBufferReader" /> over the given <see cref="ReadOnlySequence{T}"/>.</summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ByteBufferReader(ReadOnlySequence<byte> buffer)
+        public ByteBufferReader(IByteBuffer buffer)
         {
+            _origin = buffer;
+            var sequence = buffer.UnreadSequence;
+
             _currentSpanIndex = 0;
             _consumed = 0;
-            _sequence = buffer;
-            _currentPosition = buffer.Start;
+            _sequence = sequence;
+            _currentPosition = sequence.Start;
             _length = -1;
 
-            ByteBufferReaderHelper.GetFirstSpan(buffer, out ReadOnlySpan<byte> first, out _nextPosition);
+            ByteBufferReaderHelper.GetFirstSpan(sequence, out ReadOnlySpan<byte> first, out _nextPosition);
             _currentSpan = first;
             _moreData = (uint)first.Length > 0u;
 
-            if (!buffer.IsSingleSegment && !_moreData)
+            if (!sequence.IsSingleSegment && !_moreData)
             {
                 _moreData = true;
                 GetNextSpan();
             }
         }
+
+        /// <summary>Create a <see cref="ByteBufferReader" /> over the given <see cref="ReadOnlySequence{T}"/>.</summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ByteBufferReader(ReadOnlySequence<byte> sequence)
+        {
+            _origin = null;
+            _currentSpanIndex = 0;
+            _consumed = 0;
+            _sequence = sequence;
+            _currentPosition = sequence.Start;
+            _length = -1;
+
+            ByteBufferReaderHelper.GetFirstSpan(sequence, out ReadOnlySpan<byte> first, out _nextPosition);
+            _currentSpan = first;
+            _moreData = (uint)first.Length > 0u;
+
+            if (!sequence.IsSingleSegment && !_moreData)
+            {
+                _moreData = true;
+                GetNextSpan();
+            }
+        }
+
+        public IByteBuffer Origin => _origin;
 
         /// <summary>Return true if we're in the last segment.</summary>
         public readonly bool IsLastSegment => _nextPosition.GetObject() is null;
