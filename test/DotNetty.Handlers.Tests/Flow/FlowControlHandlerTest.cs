@@ -422,7 +422,7 @@ namespace DotNetty.Handlers.Tests.Flow
         public void TestSwallowedReadComplete()
         {
             int delayMillis = 100;
-            var userEvents = new ConcurrentQueue<IdleStateEvent>();
+            var userEvents = new BlockingCollection<IdleStateEvent>();
             EmbeddedChannel channel = new EmbeddedChannel(false, false,
                 new FlowControlHandler(),
                 new IdleStateHandler(TimeSpan.FromMilliseconds(delayMillis), TimeSpan.Zero, TimeSpan.Zero),
@@ -444,7 +444,7 @@ namespace DotNetty.Handlers.Tests.Flow
 
             Thread.Sleep(delayMillis);
             channel.RunPendingTasks();
-            var result = userEvents.TryDequeue(out var evt);
+            var result = userEvents.TryTake(out var evt, TimeSpan.FromSeconds(5));
             Assert.True(result);
             Assert.Equal(IdleStateEvent.FirstReaderIdleStateEvent, evt);
             Assert.False(channel.Finish());
@@ -452,9 +452,9 @@ namespace DotNetty.Handlers.Tests.Flow
 
         class SwallowedReadCompleteHandler : ChannelHandlerAdapter
         {
-            private ConcurrentQueue<IdleStateEvent> _userEvents;
+            private BlockingCollection<IdleStateEvent> _userEvents;
 
-            public SwallowedReadCompleteHandler(ConcurrentQueue<IdleStateEvent> userEvents)
+            public SwallowedReadCompleteHandler(BlockingCollection<IdleStateEvent> userEvents)
             {
                 _userEvents = userEvents;
             }
@@ -481,7 +481,7 @@ namespace DotNetty.Handlers.Tests.Flow
             {
                 if (evt is IdleStateEvent idleStateEvent)
                 {
-                    _userEvents.Enqueue(idleStateEvent);
+                    _userEvents.Add(idleStateEvent);
                 }
                 context.FireUserEventTriggered(evt);
             }

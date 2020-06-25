@@ -1,6 +1,7 @@
 ﻿namespace DotNetty.Handlers.Tests.Flush
 {
     using System;
+    using System.Threading.Tasks;
     using DotNetty.Common.Utilities;
     using DotNetty.Handlers.Flush;
     using DotNetty.Transport.Channels;
@@ -152,7 +153,7 @@
             channel.WriteAndFlushAsync(1L).ContinueWith(t =>
             {
                 channel.WriteAndFlushAsync(1L);
-            });
+            }, TaskContinuationOptions.ExecuteSynchronously);
             channel.FlushOutbound();
             Assert.Equal(1L, channel.ReadOutbound<long>());
             Assert.Equal(1L, channel.ReadOutbound<long>());
