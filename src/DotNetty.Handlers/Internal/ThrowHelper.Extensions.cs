@@ -105,6 +105,8 @@ namespace DotNetty.Handlers
         includedAssemblies,
 
         serverTlsSettingMap,
+
+        explicitFlushAfterFlushes,
     }
 
     #endregion
