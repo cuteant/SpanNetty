@@ -5,42 +5,40 @@ namespace DotNetty.Codecs.Protobuf
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
     using Google.Protobuf;
 
     public class ProtobufDecoder : MessageToMessageDecoder<IByteBuffer>
     {
-        readonly MessageParser messageParser;
+        private readonly MessageParser _messageParser;
 
         public ProtobufDecoder(MessageParser messageParser)
         {
-            Contract.Requires(messageParser != null);
+            if (messageParser is null) { ThrowArgumentNullException(); }
 
-            this.messageParser = messageParser;
+            _messageParser = messageParser;
         }
 
         public override bool IsSharable => true;
 
         protected override void Decode(IChannelHandlerContext context, IByteBuffer message, List<object> output)
         {
-            Contract.Requires(context != null);
-            Contract.Requires(message != null);
-            Contract.Requires(output != null);
+            Debug.Assert(context != null);
+            Debug.Assert(message != null);
+            Debug.Assert(output != null);
 
             int length = message.ReadableBytes;
-            if (length <= 0)
-            {
-                return;
-            }
+            if (0u >= (uint)length) { return; }
 
             Stream inputStream = null;
             try
             {
                 CodedInputStream codedInputStream;
-                if (message.IoBufferCount == 1)
+                if (message.IsSingleIoBuffer)
                 {
                     ArraySegment<byte> bytes = message.GetIoBuffer(message.ReaderIndex, length);
                     codedInputStream = new CodedInputStream(bytes.Array, bytes.Offset, length);
@@ -59,19 +57,39 @@ namespace DotNetty.Codecs.Protobuf
                 // 
                 // In this case it is ok because the CodedInputStream does not own the byte data.
                 //
-                IMessage decoded = this.messageParser.ParseFrom(codedInputStream);
-                if (decoded != null)
+                IMessage decoded = _messageParser.ParseFrom(codedInputStream);
+                if (decoded is object)
                 {
                     output.Add(decoded);
                 }
             }
             catch (Exception exception)
             {
-                throw new CodecException(exception);
+                ThrowCodecException(exception);
             }
             finally
             {
                 inputStream?.Dispose();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void ThrowCodecException(Exception exc)
+        {
+            throw GetException();
+            CodecException GetException()
+            {
+                return new CodecException(exc);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void ThrowArgumentNullException()
+        {
+            throw GetException();
+            static ArgumentNullException GetException()
+            {
+                return new ArgumentNullException("messageParser");
             }
         }
     }

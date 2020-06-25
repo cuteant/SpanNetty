@@ -2,17 +2,14 @@
   <Import Project="..\nuget.props" />
   
   <PropertyGroup>
-    <TargetFrameworks>net471;net451;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <RootNamespace>DotNetty.Codecs.Protobuf</RootNamespace>
     <AssemblyName>DotNetty.Codecs.Protobuf</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>SpanNetty.Codecs.Protobuf</PackageId>
-    <Title>SpanNetty.Codecs.Protobuf</Title>
-    <Description>Protobuf Proto3 codec：the complete port of the DotNetty.Codecs.Protobuf assembly to support .NET 4.5.1 and newer.</Description>
-    <PackageTags>socket;tcp;protocol;netty;dotnetty;network;Protobuf</PackageTags>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DotNetty.Codecs\DotNetty.Codecs.csproj" />
+    <ProjectReference Include="..\DotNetty.Codecs\DotNetty.Codecs.Netstandard.csproj" />
   </ItemGroup>
 
   <Import Project="..\version.props" />

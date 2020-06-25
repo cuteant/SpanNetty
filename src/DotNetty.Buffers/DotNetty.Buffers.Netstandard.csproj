@@ -9,10 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>DotNetty.Buffers.Unofficial</PackageId>
-    <Title>DotNetty.Buffers.Unofficial</Title>
-    <Description>Buffer management in DotNetty：the complete port of the DotNetty.Buffers assembly to support .NET 4.0 and newer.</Description>
-    <PackageTags>socket;tcp;protocol;netty;dotnetty;network</PackageTags>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

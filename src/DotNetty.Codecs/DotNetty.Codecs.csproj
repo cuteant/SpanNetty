@@ -11,7 +11,7 @@
   <PropertyGroup Label="NuGet">
     <PackageId>SpanNetty.Codecs</PackageId>
     <Title>SpanNetty.Codecs</Title>
-    <Description>General purpose codecs for DotNetty：the complete port of the DotNetty.Codecs assembly to support .NET 4.5.1 and newer.</Description>
+    <Description>General purpose codecs：the complete port of the DotNetty.Codecs assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;codec</PackageTags>
   </PropertyGroup>
 

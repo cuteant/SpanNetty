@@ -5,42 +5,69 @@ namespace DotNetty.Codecs.Protobuf
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
+    using System.Diagnostics;
+    using System.Runtime.CompilerServices;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
     using Google.Protobuf;
 
     public class ProtobufEncoder : MessageToMessageEncoder<IMessage>
     {
+        private const int DefaultInitialCapacity = 1024 * 2;
+
+        private readonly int _initialCapacity;
+
+        public ProtobufEncoder() => _initialCapacity = DefaultInitialCapacity;
+
+        public ProtobufEncoder(int initialCapacity)
+        {
+            if ((uint)(initialCapacity - 1) > SharedConstants.TooBigOrNegative)
+            {
+                initialCapacity = DefaultInitialCapacity;
+            }
+            _initialCapacity = initialCapacity;
+        }
+
         public override bool IsSharable => true;
 
         protected override void Encode(IChannelHandlerContext context, IMessage message, List<object> output)
         {
-            Contract.Requires(context != null);
-            Contract.Requires(message != null);
-            Contract.Requires(output != null);
+            Debug.Assert(context != null);
+            Debug.Assert(message != null);
+            Debug.Assert(output != null);
 
             IByteBuffer buffer = null;
-
             try
             {
                 int size = message.CalculateSize();
-                if (size == 0)
+                if (0u >= (uint)size) { return; }
+
+                buffer = context.Allocator.Buffer(_initialCapacity);
+                using (var input = new ByteBufferStream(buffer, true, false))
                 {
-                    return;
+                    message.WriteTo(input);
+                    input.Flush();
                 }
-                //todo: Implement ByteBufferStream to avoid allocations.
-                buffer = Unpooled.WrappedBuffer(message.ToByteArray());
                 output.Add(buffer);
                 buffer = null;
             }
             catch (Exception exception)
             {
-                throw new CodecException(exception);
+                ThrowCodecException(exception);
             }
             finally
             {
                 buffer?.Release();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void ThrowCodecException(Exception exc)
+        {
+            throw GetException();
+            CodecException GetException()
+            {
+                return new CodecException(exc);
             }
         }
     }

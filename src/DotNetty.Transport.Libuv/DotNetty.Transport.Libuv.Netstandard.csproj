@@ -9,10 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>DotNetty.Transport.Libuv.Unofficial</PackageId>
-    <Title>DotNetty.Transport.Libuv.Unofficial</Title>
-    <Description>Libuv transport model in DotNetty.</Description>
-    <PackageTags>socket;tcp;protocol;netty;dotnetty;network</PackageTags>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

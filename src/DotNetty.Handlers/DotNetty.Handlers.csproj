@@ -11,7 +11,7 @@
   <PropertyGroup Label="NuGet">
     <PackageId>SpanNetty.Handlers</PackageId>
     <Title>SpanNetty.Handlers</Title>
-    <Description>Application handlers for DotNetty：the complete port of the DotNetty.Handlers assembly to support .NET 4.5.1 and newer.</Description>
+    <Description>Application handlers：the complete port of the DotNetty.Handlers assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;protocol;netty;dotnetty;network;tls;ssl</PackageTags>
   </PropertyGroup>
 

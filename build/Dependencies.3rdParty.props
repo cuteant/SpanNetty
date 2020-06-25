@@ -139,14 +139,14 @@
 
     <!-- Serialization related packages -->
     <GoogleApiCommonProtosPackageVersion>1.6.0</GoogleApiCommonProtosPackageVersion>
-    <GoogleProtobufPackageVersion>3.8.0</GoogleProtobufPackageVersion>
-    <GoogleProtobufToolsPackageVersion>3.8.0</GoogleProtobufToolsPackageVersion>
+    <GoogleProtobufPackageVersion>3.12.3</GoogleProtobufPackageVersion>
+    <GoogleProtobufToolsPackageVersion>3.12.3</GoogleProtobufToolsPackageVersion>
     <HyperionPackageVersion>0.9.15</HyperionPackageVersion>
     <MessagePackAnalyzerPackageVersion>1.7.3.7</MessagePackAnalyzerPackageVersion>
     <NewtonsoftJsonBsonPackageVersion>1.0.2</NewtonsoftJsonBsonPackageVersion>
     <NewtonsoftJsonPackageVersion>12.0.3</NewtonsoftJsonPackageVersion>
-    <ProtobufNetPackageVersion>2.4.4</ProtobufNetPackageVersion>
-    <ProtobufNetDataPackageVersion>3.0.0</ProtobufNetDataPackageVersion>
+    <ProtobufNetPackageVersion>2.4.6</ProtobufNetPackageVersion>
+    <ProtobufNetDataPackageVersion>3.0.1</ProtobufNetDataPackageVersion>
     <YamlDotNetPackageVersion>8.1.0</YamlDotNetPackageVersion>
   </PropertyGroup>
 </Project>

@@ -9,10 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>DotNetty.Handlers.Unofficial</PackageId>
-    <Title>DotNetty.Handlers.Unofficial</Title>
-    <Description>Application handlers for DotNetty：the complete port of the DotNetty.Handlers assembly to support .NET 4.0 and newer.</Description>
-    <PackageTags>socket;tcp;protocol;netty;dotnetty;network;tls;ssl</PackageTags>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

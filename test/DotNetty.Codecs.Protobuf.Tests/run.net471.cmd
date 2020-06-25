@@ -1,0 +1,1 @@
+dotnet test --framework net471 -- RunConfiguration.TargetPlatform=x64

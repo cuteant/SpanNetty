@@ -1,13 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   
   <PropertyGroup>
-    <TargetFrameworks>$(StandardTestTfms)</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1</TargetFrameworks>
     <RootNamespace>DotNetty.Codecs.Protobuf.Tests</RootNamespace>
     <AssemblyName>DotNetty.Codecs.Protobuf.Tests</AssemblyName>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(ImportLibs)' == 'netfx' ">
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,7 +15,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\DotNetty.Codecs.Protobuf\DotNetty.Codecs.Protobuf.csproj" />
+    <ProjectReference Include="..\..\src\DotNetty.Codecs.Protobuf\DotNetty.Codecs.Protobuf.Netstandard.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\DotNetty.Codecs.Protobuf.Tests\**\*.cs" Exclude="..\DotNetty.Codecs.Protobuf.Tests\bin\**;..\DotNetty.Codecs.Protobuf.Tests\obj\**" />
+    <EmbeddedResource Include="..\DotNetty.Codecs.Protobuf.Tests\**\*.resx" Exclude="..\DotNetty.Codecs.Protobuf.Tests\bin\**;..\DotNetty.Codecs.Protobuf.Tests\obj\**;@(EmbeddedResource)" />
   </ItemGroup>
 
 </Project>

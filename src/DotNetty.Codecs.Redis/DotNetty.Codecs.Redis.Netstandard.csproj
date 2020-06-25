@@ -9,10 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>DotNetty.Codecs.Redis.Unofficial</PackageId>
-    <Title>DotNetty.Codecs.Redis.Unofficial</Title>
-    <Description>Redis codec for DotNetty：the complete port of the DotNetty.Codecs.Redis assembly to support .NET 4.0 and newer.</Description>
-    <PackageTags>socket;tcp;protocol;netty;dotnetty;network;redis</PackageTags>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

@@ -252,9 +252,9 @@ namespace DotNetty.Buffers
         public override int Read(byte[] buffer, int offset, int count)
         {
             if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
-            if (offset < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.offset); }
-            if (count < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.count); }
-            if (buffer.Length - offset < count) { ThrowHelper.ThrowArgumentException_InvalidOffLen(); }
+            if ((uint)offset > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.offset); }
+            if ((uint)count > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.count); }
+            if ((uint)buffer.Length < (uint)(offset + count)) { ThrowHelper.ThrowArgumentException_InvalidOffLen(); }
 
             EnsureNotClosed();
 
@@ -300,9 +300,9 @@ namespace DotNetty.Buffers
         public override void Write(byte[] buffer, int offset, int count)
         {
             if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
-            if (offset < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.offset); }
-            if (count < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.count); }
-            if (buffer.Length - offset < count) { ThrowHelper.ThrowArgumentException_InvalidOffLen(); }
+            if ((uint)offset > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.offset); }
+            if ((uint)count > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.count); }
+            if ((uint)buffer.Length < (uint)(offset + count)) { ThrowHelper.ThrowArgumentException_InvalidOffLen(); }
 
             EnsureNotClosed();
             EnsureWriteable();
@@ -313,9 +313,9 @@ namespace DotNetty.Buffers
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             if (buffer is null) { ThrowHelper.ThrowArgumentNullException(ExceptionArgument.buffer); }
-            if (offset < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.offset); }
-            if (count < 0) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.count); }
-            if (buffer.Length - offset < count) { ThrowHelper.ThrowArgumentException_InvalidOffLen(); }
+            if ((uint)offset > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.offset); }
+            if ((uint)count > SharedConstants.TooBigOrNegative) { ThrowHelper.ThrowArgumentOutOfRangeException_NeedNonNegNum(ExceptionArgument.count); }
+            if ((uint)buffer.Length < (uint)(offset + count)) { ThrowHelper.ThrowArgumentException_InvalidOffLen(); }
 
             EnsureNotClosed();
             EnsureWriteable();
@@ -404,13 +404,13 @@ namespace DotNetty.Buffers
 
         #region ** Helper **
 
-        [MethodImpl(InlineMethod.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         private void EnsureNotClosed()
         {
             if (!_isOpen) { ThrowHelper.ThrowObjectDisposedException_StreamIsClosed(); }
         }
 
-        [MethodImpl(InlineMethod.AggressiveInlining)]
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
         private void EnsureWriteable()
         {
             if (!_writable) { ThrowHelper.ThrowNotSupportedException_UnwritableStream(); }

@@ -11,7 +11,7 @@
   <PropertyGroup Label="NuGet">
     <PackageId>SpanNetty.Transport</PackageId>
     <Title>SpanNetty.Transport</Title>
-    <Description>Transport model in DotNetty：the complete port of the DotNetty.Buffers assembly to support .NET 4.5.1 and newer.</Description>
+    <Description>Transport model：the complete port of the DotNetty.Transport assembly to support .NET 4.5.1 and newer.</Description>
     <PackageTags>socket;tcp;udp;protocol;netty;dotnetty;network</PackageTags>
   </PropertyGroup>
 

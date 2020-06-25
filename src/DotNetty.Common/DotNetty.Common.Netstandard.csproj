@@ -9,10 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>DotNetty.Common.Unofficial</PackageId>
-    <Title>DotNetty.Common.Unofficial</Title>
-    <Description>DotNetty common routines：the complete port of the DotNetty.Common assembly to support .NET 4.0 and newer.</Description>
-    <PackageTags>socket;tcp;protocol;netty;dotnetty;network</PackageTags>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">

@@ -9,6 +9,7 @@ namespace DotNetty.Codecs
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
+    /// <inheritdoc cref="ReplayingDecoder{T}" />
     public abstract class ReplayingDecoder : ReplayingDecoder<ReplayingDecoder.Void>
     {
         public enum Void

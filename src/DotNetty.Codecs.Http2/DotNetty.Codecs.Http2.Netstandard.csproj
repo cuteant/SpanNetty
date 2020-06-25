@@ -9,10 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>DotNetty.Codecs.Http2.Unofficial</PackageId>
-    <Title>DotNetty.Codecs.Unofficial</Title>
-    <Description>General purpose codecs for DotNetty：the complete port of the DotNetty.Codecs assembly to support .NET 4.0 and newer.</Description>
-    <PackageTags>socket;tcp;protocol;netty;dotnetty;network;Http2</PackageTags>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

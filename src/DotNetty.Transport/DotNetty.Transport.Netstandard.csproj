@@ -9,10 +9,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>DotNetty.Transport.Unofficial</PackageId>
-    <Title>DotNetty.Transport.Unofficial</Title>
-    <Description>Transport model in DotNetty：the complete port of the DotNetty.Buffers assembly to support .NET 4.0 and newer.</Description>
-    <PackageTags>socket;tcp;udp;protocol;netty;dotnetty;network</PackageTags>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
