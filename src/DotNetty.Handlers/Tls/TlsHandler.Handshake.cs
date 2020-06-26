@@ -33,12 +33,7 @@ namespace DotNetty.Handlers.Tls
                         X509Certificate LocalServerCertificateSelection(object sender, string name)
                         {
                             ctx.GetAttribute(SslStreamAttrKey).Set(_sslStream);
-                            var cert = _serverCertificateSelector(ctx, name);
-                            if (cert is object)
-                            {
-                                EnsureCertificateIsAllowedForServerAuth(cert);
-                            }
-                            return cert;
+                            return _serverCertificateSelector(ctx, name);
                         }
                         selector = new ServerCertificateSelectionCallback(LocalServerCertificateSelection);
                     }
@@ -60,18 +55,7 @@ namespace DotNetty.Handlers.Tls
                     _sslStream.AuthenticateAsServerAsync(sslOptions, CancellationToken.None)
                               .ContinueWith(s_handshakeCompletionCallback, this, TaskContinuationOptions.ExecuteSynchronously);
 #else
-                    var serverCert = _serverCertificate;
-                    if (_serverCertificateSelector is object)
-                    {
-                        ctx.GetAttribute(SslStreamAttrKey).Set(_sslStream);
-                        var serverCert2 = _serverCertificateSelector(ctx, null);
-                        if (serverCert2 is object)
-                        {
-                            EnsureCertificateIsAllowedForServerAuth(serverCert2);
-                            serverCert = serverCert2;
-                        }
-                    }
-                    _sslStream.AuthenticateAsServerAsync(serverCert,
+                    _sslStream.AuthenticateAsServerAsync(_serverCertificate,
                                                          _serverSettings.NegotiateClientCertificate,
                                                          _serverSettings.EnabledProtocols,
                                                          _serverSettings.CheckCertificateRevocation)

@@ -88,6 +88,8 @@ namespace DotNetty.Handlers.Tls
         /// </summary>
         public Func<X509Certificate2, X509Chain, SslPolicyErrors, bool> ClientCertificateValidation { get; set; }
 
+#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
+
         /// <summary>
         /// <para>
         /// A callback that will be invoked to dynamically select a server certificate. This is higher priority than ServerCertificate.
@@ -99,7 +101,6 @@ namespace DotNetty.Handlers.Tls
         /// </summary>
         public Func<IChannelHandlerContext, string, X509Certificate2> ServerCertificateSelector { get; set; }
 
-#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
         public System.Collections.Generic.List<SslApplicationProtocol> ApplicationProtocols { get; set; }
 #endif
     }

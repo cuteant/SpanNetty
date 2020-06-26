@@ -25,9 +25,9 @@ namespace DotNetty.Handlers.Tls
         private readonly ServerTlsSettings _serverSettings;
         private readonly ClientTlsSettings _clientSettings;
         private readonly X509Certificate _serverCertificate;
-        private readonly Func<IChannelHandlerContext, string, X509Certificate2> _serverCertificateSelector;
 #if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
         private readonly bool _hasHttp2Protocol;
+        private readonly Func<IChannelHandlerContext, string, X509Certificate2> _serverCertificateSelector;
         private readonly Func<IChannelHandlerContext, string, X509CertificateCollection, X509Certificate, string[], X509Certificate2> _userCertSelector;
 #endif
 
@@ -79,30 +79,23 @@ namespace DotNetty.Handlers.Tls
 
                 // capture the certificate now so it can't be switched after validation
                 _serverCertificate = _serverSettings.Certificate;
+#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
                 _serverCertificateSelector = _serverSettings.ServerCertificateSelector;
                 if (_serverCertificate is null && _serverCertificateSelector is null)
                 {
                     ThrowHelper.ThrowArgumentException_ServerCertificateRequired();
                 }
-
-#if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
                 var serverApplicationProtocols = _serverSettings.ApplicationProtocols;
                 if (serverApplicationProtocols is object)
                 {
                     _hasHttp2Protocol = serverApplicationProtocols.Contains(SslApplicationProtocol.Http2);
                 }
+#else
+                if (_serverCertificate is null)
+                {
+                    ThrowHelper.ThrowArgumentException_ServerCertificateRequired();
+                }
 #endif
-
-                // If a selector is provided then ignore the cert, it may be a default cert.
-                if (_serverCertificateSelector is object)
-                {
-                    // SslStream doesn't allow both.
-                    _serverCertificate = null;
-                }
-                else
-                {
-                    EnsureCertificateIsAllowedForServerAuth(ConvertToX509Certificate2(_serverCertificate));
-                }
             }
             _clientSettings = settings as ClientTlsSettings;
 #if NETCOREAPP_2_0_GREATER || NETSTANDARD_2_0_GREATER
