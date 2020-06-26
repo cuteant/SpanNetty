@@ -34,6 +34,7 @@ namespace DotNetty.Handlers.Tls
                 }
                 return;
             }
+            ReferenceCountUtil.SafeRelease(message);
             _ = promise.TrySetException(ThrowHelper.GetUnsupportedMessageTypeException(message));
         }
 
@@ -125,6 +126,7 @@ namespace DotNetty.Handlers.Tls
                     }
                     _ = buf.ReadBytes(_sslStream, buf.ReadableBytes); // this leads to FinishWrap being called 0+ times
                     _ = buf.Release();
+                    buf = null;
 
                     var promise = _pendingUnencryptedWrites.Remove();
                     Task task = _lastContextWriteTask;
@@ -142,7 +144,7 @@ namespace DotNetty.Handlers.Tls
             finally
             {
                 // Ownership of buffer was not transferred, release it.
-                buf?.SafeRelease();
+                buf?.Release();
             }
         }
 
