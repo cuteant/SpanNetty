@@ -91,11 +91,11 @@ namespace DotNetty.Transport.Channels.Sockets
             switch (errorCode)
             {
                 case SocketError.OperationAborted:
-                case SocketError.InvalidArgument:
                 case SocketError.Interrupted:
-
-                case SocketError.Shutdown:
+                // Calling Dispose after ReceiveAsync can cause an "InvalidArgument" error on *nix.
+                case SocketError.InvalidArgument when !PlatformApis.IsWindows:
                     return true;
+
                 default:
                     return false;
             }
@@ -105,17 +105,14 @@ namespace DotNetty.Transport.Channels.Sockets
         {
             switch (errorCode)
             {
-                case SocketError.ConnectionAborted:
                 case SocketError.ConnectionReset:
-                case SocketError.ConnectionRefused:
-
-                case SocketError.OperationAborted:
-                case SocketError.InvalidArgument:
-                case SocketError.Interrupted:
-
                 case SocketError.Shutdown:
-                case SocketError.TimedOut:
+                // A connection reset can be reported as SocketError.ConnectionAborted on Windows.
+                case SocketError.ConnectionAborted when PlatformApis.IsWindows:
+                // ProtocolType can be removed once https://github.com/dotnet/corefx/issues/31927 is fixed.
+                case SocketError.ProtocolType when PlatformApis.IsDarwin:
                     return true;
+
                 default:
                     return false;
             }
