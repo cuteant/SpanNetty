@@ -1164,7 +1164,7 @@ namespace DotNetty.Common.Tests.Internal
             deque.AddToBack(5);
             Assert.Equal(new[] { 1, 2, 3, 4, 5 }, deque);
 
-            var queue = new QueueX<int>(new[] { 1, 2, 3, 4 });
+            var queue = new Queue<int>(new[] { 1, 2, 3, 4 });
             queue.Enqueue(5);
             Assert.Equal(new[] { 1, 2, 3, 4, 5 }, queue);
 
@@ -1180,21 +1180,17 @@ namespace DotNetty.Common.Tests.Internal
             deque.Reverse((item, lst) => lst.Add(item), lstComparer);
             Assert.Equal(new[] { 5, 4, 3, 2, 1 }, lstComparer);
 
-            lstComparer.Clear();
-            queue.ForEach((item, lst) => lst.Add(item), lstComparer);
+            lstComparer = queue.ToList();
             Assert.Equal(new[] { 1, 2, 3, 4, 5 }, lstComparer);
 
-            lstComparer.Clear();
-            queue.Reverse((item, lst) => lst.Add(item), lstComparer);
+            lstComparer = queue.Reverse().ToList();
             Assert.Equal(new[] { 5, 4, 3, 2, 1 }, lstComparer);
 
-            //lstComparer.Clear();
-            //stack.ForEach((item, lst) => lst.Add(item), lstComparer);
-            //Assert.Equal(new[] { 5, 4, 3, 2, 1 }, lstComparer);
+            lstComparer = stack.ToList();
+            Assert.Equal(new[] { 5, 4, 3, 2, 1 }, lstComparer);
 
-            //lstComparer.Clear();
-            //stack.Reverse((item, lst) => lst.Add(item), lstComparer);
-            //Assert.Equal(new[] { 1, 2, 3, 4, 5 }, lstComparer);
+            lstComparer = stack.Reverse().ToList();
+            Assert.Equal(new[] { 1, 2, 3, 4, 5 }, lstComparer);
 
             var list = new List<int>(new[] { 1, 2 });
             Assert.Equal(new[] { 1, 2 }, list);

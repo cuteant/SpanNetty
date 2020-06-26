@@ -4,12 +4,12 @@
 
     sealed class MaxCapacityQueue<T>
     {
-        private readonly QueueX<T> _queue;
+        private readonly Deque<T> _queue;
         private readonly int _maxCapacity;
 
         public MaxCapacityQueue(int maxCapacity)
         {
-            _queue = new QueueX<T>(8);
+            _queue = new Deque<T>(8);
             _maxCapacity = maxCapacity;
         }
 
@@ -18,13 +18,13 @@
             var queue = _queue;
             if ((uint)_maxCapacity > (uint)queue.Count)
             {
-                queue.Enqueue(item);
+                queue.AddToBack(item);
                 return true;
             }
             return false;
         }
 
-        public bool TryDequeue(out T result) => _queue.TryDequeue(out result);
+        public bool TryDequeue(out T result) => _queue.TryRemoveFromFront(out result);
 
         public void Clear() => _queue.Clear();
     }

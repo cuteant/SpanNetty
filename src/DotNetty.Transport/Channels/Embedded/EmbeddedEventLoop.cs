@@ -13,7 +13,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
     sealed class EmbeddedEventLoop : AbstractScheduledEventExecutor, IEventLoop
     {
-        readonly QueueX<IRunnable> _tasks = new QueueX<IRunnable>(2);
+        readonly Deque<IRunnable> _tasks = new Deque<IRunnable>(2);
 
         public new IEventLoop GetNext() => this;
 
@@ -41,7 +41,7 @@ namespace DotNetty.Transport.Channels.Embedded
             {
                 ThrowHelper.ThrowNullReferenceException_Command();
             }
-            _tasks.Enqueue(command);
+            _tasks.AddToBack(command);
         }
 
         public override Task ShutdownGracefullyAsync(TimeSpan quietPeriod, TimeSpan timeout)
@@ -53,7 +53,7 @@ namespace DotNetty.Transport.Channels.Embedded
 
         internal void RunTasks()
         {
-            while (_tasks.TryDequeue(out var task))
+            while (_tasks.TryRemoveFromFront(out var task))
             {
                 task.Run();
             }

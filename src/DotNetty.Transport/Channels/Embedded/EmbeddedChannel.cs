@@ -47,8 +47,8 @@ namespace DotNetty.Transport.Channels.Embedded
 
         private readonly EmbeddedEventLoop _loop = new EmbeddedEventLoop();
 
-        private readonly QueueX<object> _inboundMessages = new QueueX<object>();
-        private readonly QueueX<object> _outboundMessages = new QueueX<object>();
+        private readonly Deque<object> _inboundMessages = new Deque<object>();
+        private readonly Deque<object> _outboundMessages = new Deque<object>();
         private Exception _lastException;
         private State _state;
 
@@ -177,13 +177,13 @@ namespace DotNetty.Transport.Channels.Embedded
         ///     Returns the <see cref="Queue{T}" /> which holds all of the <see cref="object" />s that
         ///     were received by this <see cref="IChannel" />.
         /// </summary>
-        public QueueX<object> InboundMessages => _inboundMessages;
+        public Deque<object> InboundMessages => _inboundMessages;
 
         /// <summary>
         ///     Returns the <see cref="Queue{T}" /> which holds all of the <see cref="object" />s that
         ///     were written by this <see cref="IChannel" />.
         /// </summary>
-        public QueueX<object> OutboundMessages => _outboundMessages;
+        public Deque<object> OutboundMessages => _outboundMessages;
 
         /// <summary>
         /// Return received data from this <see cref="IChannel"/>.
@@ -540,11 +540,11 @@ namespace DotNetty.Transport.Channels.Embedded
         /// <returns><c>true</c> if any were in the outbound buffer, otherwise <c>false</c>.</returns>
         public bool ReleaseOutbound() => ReleaseAll(_outboundMessages);
 
-        static bool ReleaseAll(QueueX<object> queue)
+        static bool ReleaseAll(Deque<object> queue)
         {
             if (queue.IsEmpty) { return false; }
 
-            while (queue.TryDequeue(out var msg))
+            while (queue.TryRemoveFromFront(out var msg))
             {
                 _ = ReferenceCountUtil.Release(msg);
             }
@@ -646,23 +646,23 @@ namespace DotNetty.Transport.Channels.Embedded
         }
 
         [MethodImpl(InlineMethod.AggressiveOptimization)]
-        static object Poll(QueueX<object> queue)
+        static object Poll(Deque<object> queue)
         {
-            return queue.TryDequeue(out var result) ? result : null;
+            return queue.TryRemoveFromFront(out var result) ? result : null;
         }
 
         /// <summary>Called for each outbound message.</summary>
         /// <param name="msg"></param>
         protected virtual void HandleOutboundMessage(object msg)
         {
-            _outboundMessages.Enqueue(msg);
+            _outboundMessages.AddToBack(msg);
         }
 
         /// <summary>Called for each inbound message.</summary>
         /// <param name="msg"></param>
         protected virtual void HandleInboundMessage(object msg)
         {
-            _inboundMessages.Enqueue(msg);
+            _inboundMessages.AddToBack(msg);
         }
 
         protected override WrappingEmbeddedUnsafe NewUnsafe()
