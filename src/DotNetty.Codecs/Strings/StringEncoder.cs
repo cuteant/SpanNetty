@@ -6,41 +6,41 @@ namespace DotNetty.Codecs
     using System;
     using System.Collections.Generic;
     using System.Text;
+    using DotNetty.Common.Internal;
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
-    /**
-    * Encodes the requested {@link String} into a {@link ByteBuf}.
-    * A typical setup for a text-based line protocol in a TCP/IP socket would be:
-    * <pre>
-    * {@link ChannelPipeline} pipeline = ...;
-    *
-    * // Decoders
-    * pipeline.addLast("frameDecoder", new {@link LineBasedFrameDecoder}(80));
-    * pipeline.addLast("stringDecoder", new {@link StringDecoder}(CharsetUtil.UTF_8));
-    *
-    * // Encoder
-    * pipeline.addLast("stringEncoder", new {@link StringEncoder}(CharsetUtil.UTF_8));
-    * </pre>
-    * and then you can use a {@link String} instead of a {@link ByteBuf}
-    * as a message:
-    * <pre>
-    * void channelRead({@link ChannelHandlerContext} ctx, {@link String} msg) {
-    *     ch.write("Did you say '" + msg + "'?\n");
-    * }
-    * </pre>
-    */
-
+    /// <summary>
+    /// Encodes the requested <see cref="String"/> into a <see cref="IByteBuffer"/>.
+    /// A typical setup for a text-based line protocol in a TCP/IP socket would be:
+    /// <code>
+    /// <see cref="IChannelPipeline"/> pipeline = ...;
+    ///
+    /// // Decoders
+    /// pipeline.addLast("frameDecoder", new <see cref="LineBasedFrameDecoder"/>(80));
+    /// pipeline.addLast("stringDecoder", new <see cref="StringDecoder"/>);
+    ///
+    /// // Encoder
+    /// pipeline.addLast("stringEncoder", new <see cref="StringEncoder"/>);
+    /// </code>
+    /// and then you can use a <see cref="String"/> instead of a <see cref="IByteBuffer"/>
+    /// as a message:
+    /// <code>
+    /// void channelRead(<see cref="IChannelHandlerContext"/> ctx, <see cref="String"/> msg) {
+    ///     ch.write("Did you say '" + msg + "'?\n");
+    /// }
+    /// </code>
+    /// </summary>
     public class StringEncoder : MessageToMessageEncoder<string>
     {
-        readonly Encoding encoding;
+        readonly Encoding _encoding;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="StringEncoder" /> class with the current system
         ///     character set.
         /// </summary>
         public StringEncoder()
-            : this(Encoding.GetEncoding(0))
+            : this(TextEncodings.UTF8NoBOM)
         {
         }
 
@@ -56,7 +56,7 @@ namespace DotNetty.Codecs
                 CThrowHelper.ThrowNullReferenceException(CExceptionArgument.encoding);
             }
 
-            this.encoding = encoding;
+            _encoding = encoding;
         }
 
         public override bool IsSharable => true;
@@ -68,7 +68,7 @@ namespace DotNetty.Codecs
                 return;
             }
 
-            output.Add(ByteBufferUtil.EncodeString(context.Allocator, message, this.encoding));
+            output.Add(ByteBufferUtil.EncodeString(context.Allocator, message, _encoding));
         }
     }
 }
