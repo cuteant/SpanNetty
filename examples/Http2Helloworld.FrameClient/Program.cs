@@ -1,20 +1,18 @@
-﻿namespace Http2Helloworld.Client
+﻿namespace Http2Helloworld.FrameClient
 {
     using System;
     using System.IO;
     using System.Net;
-    using System.Text;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
-    using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Codecs.Http2;
     using DotNetty.Common.Utilities;
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
-    using Examples.Common;
     using DotNetty.Transport.Libuv;
+    using Examples.Common;
 
     /// <summary>
     /// An HTTP2 client that allows you to send HTTP2 frames to a server using HTTP1-style approaches
@@ -57,7 +55,8 @@
                 var bootstrap = new Bootstrap();
                 bootstrap
                     .Group(group)
-                    .Option(ChannelOption.TcpNodelay, true);
+                    .Option(ChannelOption.TcpNodelay, true)
+                    .Option(ChannelOption.SoKeepalive, true);
                 if (useLibuv)
                 {
                     bootstrap.Channel<TcpChannel>();
@@ -67,53 +66,41 @@
                     bootstrap.Channel<TcpSocketChannel>();
                 }
 
-                Http2ClientInitializer initializer = new Http2ClientInitializer(cert, targetHost, int.MaxValue);
+                bootstrap.Handler(new Http2ClientFrameInitializer(cert, targetHost));
 
-                bootstrap.Handler(initializer);
-
-                IChannel ch = await bootstrap.ConnectAsync(new IPEndPoint(ClientSettings.Host, ClientSettings.Port));
+                IChannel channel = await bootstrap.ConnectAsync(new IPEndPoint(ClientSettings.Host, ClientSettings.Port));
 
                 try
                 {
                     Console.WriteLine("Connected to [" + ClientSettings.Host + ':' + ClientSettings.Port + ']');
 
-                    // Wait for the HTTP/2 upgrade to occur.
-                    Http2SettingsHandler http2SettingsHandler = initializer.SettingsHandler;
-                    await http2SettingsHandler.AwaitSettings(TimeSpan.FromSeconds(5));
+                    Http2ClientStreamFrameResponseHandler streamFrameResponseHandler =
+                           new Http2ClientStreamFrameResponseHandler();
 
-                    HttpResponseHandler responseHandler = initializer.ResponseHandler;
-                    int streamId = 3;
+                    Http2StreamChannelBootstrap streamChannelBootstrap = new Http2StreamChannelBootstrap(channel);
+                    IHttp2StreamChannel streamChannel = await streamChannelBootstrap.OpenAsync();
+                    streamChannel.Pipeline.AddLast(streamFrameResponseHandler);
+
+                    // Send request (a HTTP/2 HEADERS frame - with ':method = GET' in this case)
+                    var path = ExampleHelper.Configuration["path"];
                     HttpScheme scheme = ClientSettings.IsSsl ? HttpScheme.Https : HttpScheme.Http;
-                    AsciiString hostName = new AsciiString(ClientSettings.Host.ToString() + ':' + ClientSettings.Port);
-                    Console.WriteLine("Sending request(s)...");
-                    var url = ExampleHelper.Configuration["url"];
-                    var url2 = ExampleHelper.Configuration["url2"];
-                    var url2Data = ExampleHelper.Configuration["url2data"];
-                    if (!string.IsNullOrEmpty(url))
+                    DefaultHttp2Headers headers = new DefaultHttp2Headers
                     {
-                        // Create a simple GET request.
-                        IFullHttpRequest request = new DefaultFullHttpRequest(DotNetty.Codecs.Http.HttpVersion.Http11, HttpMethod.Get, url, Unpooled.Empty);
-                        request.Headers.Add(HttpHeaderNames.Host, hostName);
-                        request.Headers.Add(HttpConversionUtil.ExtensionHeaderNames.Scheme, scheme.Name);
-                        request.Headers.Add(HttpHeaderNames.AcceptEncoding, HttpHeaderValues.Gzip);
-                        request.Headers.Add(HttpHeaderNames.AcceptEncoding, HttpHeaderValues.Deflate);
-                        responseHandler.Put(streamId, ch.WriteAsync(request), ch.NewPromise());
-                        streamId += 2;
-                    }
-                    if (!string.IsNullOrEmpty(url2))
+                        Method = HttpMethod.Get.AsciiName,
+                        Path = AsciiString.Of(path),
+                        Scheme = scheme.Name
+                    };
+                    IHttp2HeadersFrame headersFrame = new DefaultHttp2HeadersFrame(headers);
+                    await streamChannel.WriteAndFlushAsync(headersFrame);
+                    Console.WriteLine("Sent HTTP/2 GET request to " + path);
+
+                    // Wait for the responses (or for the latch to expire), then clean up the connections
+                    if (!streamFrameResponseHandler.ResponseSuccessfullyCompleted())
                     {
-                        // Create a simple POST request with a body.
-                        IFullHttpRequest request = new DefaultFullHttpRequest(DotNetty.Codecs.Http.HttpVersion.Http11, HttpMethod.Post, url2,
-                                Unpooled.WrappedBuffer(Encoding.UTF8.GetBytes(url2Data)));
-                        request.Headers.Add(HttpHeaderNames.Host, hostName);
-                        request.Headers.Add(HttpConversionUtil.ExtensionHeaderNames.Scheme, scheme.Name);
-                        request.Headers.Add(HttpHeaderNames.AcceptEncoding, HttpHeaderValues.Gzip);
-                        request.Headers.Add(HttpHeaderNames.AcceptEncoding, HttpHeaderValues.Deflate);
-                        responseHandler.Put(streamId, ch.WriteAsync(request), ch.NewPromise());
+                        Console.WriteLine("Did not get HTTP/2 response in expected time.");
                     }
-                    ch.Flush();
-                    await responseHandler.AwaitResponses(TimeSpan.FromSeconds(5));
-                    Console.WriteLine("Finished HTTP/2 request(s)");
+
+                    Console.WriteLine("Finished HTTP/2 request, will close the connection.");
                     Console.ReadKey();
                 }
                 catch (Exception ex)
@@ -124,9 +111,8 @@
                 }
                 finally
                 {
-
                     // Wait until the connection is closed.
-                    await ch.CloseAsync();
+                    await channel.CloseAsync();
                 }
             }
             finally

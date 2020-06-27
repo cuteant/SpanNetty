@@ -75,7 +75,7 @@ namespace HttpServer
                 if (useLibuv)
                 {
                     bootstrap.Channel<TcpServerChannel>();
-                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) 
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
                         || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                     {
                         bootstrap
@@ -89,7 +89,7 @@ namespace HttpServer
                 }
 
                 bootstrap
-                    .Option(ChannelOption.SoBacklog, 8192)
+                    .Option(ChannelOption.SoBacklog, 200)
 #if DEBUG
                     .Handler(new LoggingHandler("LSTN"))
 #endif
@@ -103,9 +103,9 @@ namespace HttpServer
 #if DEBUG
                         pipeline.AddLast(new LoggingHandler("CONN"));
 #endif
-                        pipeline.AddLast("encoder", new HttpResponseEncoder());
-                        pipeline.AddLast("decoder", new HttpRequestDecoder(4096, 8192, 8192, false));
-                        //pipeline.AddLast(new HttpServerCodec(4096, 8192, 8192, false));
+                        //pipeline.AddLast("encoder", new HttpResponseEncoder());
+                        //pipeline.AddLast("decoder", new HttpRequestDecoder(4096, 8192, 8192, false));
+                        pipeline.AddLast(new HttpServerCodec(4096, 8192, 8192, false));
 
                         //pipeline.AddLast(new HttpObjectAggregator(65536));
 
@@ -114,7 +114,7 @@ namespace HttpServer
                         pipeline.AddLast("handler", new HelloServerHandler());
                     }));
 
-                IChannel bootstrapChannel = await bootstrap.BindAsync(ServerSettings.Port);
+                IChannel bootstrapChannel = await bootstrap.BindAsync(IPAddress.IPv6Any, ServerSettings.Port);
 
                 Console.WriteLine($"Httpd started. Listening on {bootstrapChannel.LocalAddress}");
                 Console.ReadLine();

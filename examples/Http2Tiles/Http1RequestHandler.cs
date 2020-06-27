@@ -1,8 +1,7 @@
-﻿
-namespace Http2Tiles
+﻿namespace Http2Tiles
 {
     using System;
-    using System.Threading.Tasks;
+    using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Transport.Channels;
 
@@ -15,7 +14,7 @@ namespace Http2Tiles
         {
             if (HttpUtil.Is100ContinueExpected(request))
             {
-                ctx.WriteAsync(new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.Continue));
+                ctx.WriteAsync(new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.Continue, Unpooled.Empty));
             }
             base.ChannelRead0(ctx, request);
         }
@@ -27,13 +26,17 @@ namespace Http2Tiles
             {
                 if (HttpUtil.IsKeepAlive(request))
                 {
-                    response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
+                    if (request.ProtocolVersion.Equals(HttpVersion.Http10))
+                    {
+                        response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
+                    }
                     ctx.WriteAndFlushAsync(response);
                 }
                 else
                 {
-                    ctx.WriteAndFlushAsync(response)
-                       .ContinueWith(t => ctx.Channel.CloseAsync(), TaskContinuationOptions.ExecuteSynchronously);
+                    // Tell the client we're going to close the connection.
+                    response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.Close);
+                    ctx.WriteAndFlushAsync(response).CloseOnComplete(ctx.Channel);
                 }
             }, TimeSpan.FromMilliseconds(latency));
         }

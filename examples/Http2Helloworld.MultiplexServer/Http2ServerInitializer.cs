@@ -1,7 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-namespace Http2Helloworld.MultiplexServer
+﻿namespace Http2Helloworld.MultiplexServer
 {
     using System;
     using System.Collections.Generic;
@@ -93,7 +90,9 @@ namespace Http2Helloworld.MultiplexServer
             {
                 if (AsciiString.ContentEquals(Http2CodecUtil.HttpUpgradeProtocolName, protocol))
                 {
-                    return new Http2ServerUpgradeCodec(Http2MultiplexCodecBuilder.ForServer(new HelloWorldHttp2Handler()).Build());
+                    return new Http2ServerUpgradeCodec(
+                        Http2FrameCodecBuilder.ForServer().Build(),
+                        new Http2MultiplexHandler(new HelloWorldHttp2Handler()));
                 }
                 else
                 {
@@ -113,8 +112,7 @@ namespace Http2Helloworld.MultiplexServer
                 // If this handler is hit then no upgrade has been attempted and the client is just talking HTTP.
                 s_logger.LogInformation("Directly talking: " + msg.ProtocolVersion + " (no upgrade was attempted)");
                 IChannelPipeline pipeline = ctx.Pipeline;
-                IChannelHandlerContext thisCtx = pipeline.Context(this);
-                pipeline.AddAfter(thisCtx.Name, null, new Http2Helloworld.Server.HelloWorldHttp1Handler("Direct. No Upgrade Attempted."));
+                pipeline.AddAfter(ctx.Name, null, new Http2Helloworld.Server.HelloWorldHttp1Handler("Direct. No Upgrade Attempted."));
                 pipeline.Replace(this, null, new HttpObjectAggregator(this.maxHttpContentLength));
                 ctx.FireChannelRead(ReferenceCountUtil.Retain(msg));
             }

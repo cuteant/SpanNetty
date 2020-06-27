@@ -1,7 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-namespace Http2Helloworld.Server
+﻿namespace Http2Helloworld.Server
 {
     using System;
     using System.IO;
@@ -18,10 +15,12 @@ namespace Http2Helloworld.Server
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
     using Examples.Common;
-#if !NET40
     using DotNetty.Transport.Libuv;
-#endif
 
+    /// <summary>
+    /// An HTTP/2 Server that responds to requests with a Hello World. Once started, you can test the
+    /// server with the example client.
+    /// </summary>
     class Program
     {
         static Program()
@@ -33,25 +32,19 @@ namespace Http2Helloworld.Server
         {
             ExampleHelper.SetConsoleLogger();
 
-#if !NET40
             Console.WriteLine(
                 $"\n{RuntimeInformation.OSArchitecture} {RuntimeInformation.OSDescription}"
                 + $"\n{RuntimeInformation.ProcessArchitecture} {RuntimeInformation.FrameworkDescription}"
                 + $"\nProcessor Count : {Environment.ProcessorCount}\n");
-#endif
 
             bool useLibuv = ServerSettings.UseLibuv;
-#if NET40
             useLibuv = false;
-#endif
             Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
 
-#if !NET40
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
             }
-#endif
 
             Console.WriteLine($"Server garbage collection : {(GCSettings.IsServerGC ? "Enabled" : "Disabled")}");
             Console.WriteLine($"Current latency mode for garbage collection: {GCSettings.LatencyMode}");
@@ -59,7 +52,6 @@ namespace Http2Helloworld.Server
 
             IEventLoopGroup bossGroup;
             IEventLoopGroup workGroup;
-#if !NET40
             if (useLibuv)
             {
                 var dispatcher = new DispatcherEventLoopGroup();
@@ -67,7 +59,6 @@ namespace Http2Helloworld.Server
                 workGroup = new WorkerEventLoopGroup(dispatcher);
             }
             else
-#endif
             {
                 bossGroup = new MultithreadEventLoopGroup(1);
                 workGroup = new MultithreadEventLoopGroup();
@@ -86,7 +77,6 @@ namespace Http2Helloworld.Server
                 var bootstrap = new ServerBootstrap();
                 bootstrap.Group(bossGroup, workGroup);
 
-#if !NET40
                 if (useLibuv)
                 {
                     bootstrap.Channel<TcpServerChannel>();
@@ -99,7 +89,6 @@ namespace Http2Helloworld.Server
                     }
                 }
                 else
-#endif
                 {
                     bootstrap.Channel<TcpServerSocketChannel>();
                 }
@@ -133,8 +122,10 @@ namespace Http2Helloworld.Server
             }
             finally
             {
-                await workGroup.ShutdownGracefullyAsync(); // (TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
-                await bossGroup.ShutdownGracefullyAsync(); // (TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5));
+                await Task.WhenAll(
+                    workGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1)),
+                    bossGroup.ShutdownGracefullyAsync(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1))
+                );
             }
         }
     }

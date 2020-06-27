@@ -19,10 +19,8 @@ namespace WebSockets.Client
     using DotNetty.Transport.Bootstrapping;
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
-    using Examples.Common;
-#if !NET40
     using DotNetty.Transport.Libuv;
-#endif
+    using Examples.Common;
 
     class Program
     {
@@ -44,19 +42,14 @@ namespace WebSockets.Client
             ExampleHelper.SetConsoleLogger();
 
             bool useLibuv = ClientSettings.UseLibuv;
-#if NET40
-            useLibuv = false;
-#endif
             Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
 
             IEventLoopGroup group;
-#if !NET40
             if (useLibuv)
             {
                 group = new EventLoopGroup();
             }
             else
-#endif
             {
                 group = new MultithreadEventLoopGroup();
             }
@@ -74,13 +67,11 @@ namespace WebSockets.Client
                 bootstrap
                     .Group(group)
                     .Option(ChannelOption.TcpNodelay, true);
-#if !NET40
                 if (useLibuv)
                 {
                     bootstrap.Channel<TcpChannel>();
                 }
                 else
-#endif
                 {
                     bootstrap.Channel<TcpSocketChannel>();
                 }
@@ -88,7 +79,10 @@ namespace WebSockets.Client
                 // Connect with V13 (RFC 6455 aka HyBi-17). You can change it to V08 or V00.
                 // If you change it to V00, ping is not supported and remember to change
                 // HttpResponseDecoder to WebSocketHttpResponseDecoder in the pipeline.
-                var handler = new WebSocketClientHandler();
+                WebSocketClientHandler handler =
+                    new WebSocketClientHandler(
+                            WebSocketClientHandshakerFactory.NewHandshaker(
+                                    uri, WebSocketVersion.V13, null, true, new DefaultHttpHeaders()));
 
                 bootstrap.Handler(new ActionChannelInitializer<IChannel>(channel =>
                 {
@@ -104,18 +98,18 @@ namespace WebSockets.Client
                     pipeline.AddLast(
                         new HttpClientCodec(),
                         new HttpObjectAggregator(8192),
-                        //WebSocketClientCompressionHandler.Instance,
-                        new WebSocketClientProtocolHandler(
-                            webSocketUrl: uri,
-                            version: WebSocketVersion.V13,
-                            subprotocol: null,
-                            allowExtensions: true,
-                            customHeaders: new DefaultHttpHeaders(),
-                            maxFramePayloadLength: 65536,
-                            handleCloseFrames: true,
-                            performMasking: false,
-                            allowMaskMismatch: true,
-                            enableUtf8Validator: false),
+                        WebSocketClientCompressionHandler.Instance,
+                        //new WebSocketClientProtocolHandler(
+                        //    webSocketUrl: uri,
+                        //    version: WebSocketVersion.V13,
+                        //    subprotocol: null,
+                        //    allowExtensions: true,
+                        //    customHeaders: new DefaultHttpHeaders(),
+                        //    maxFramePayloadLength: 65536,
+                        //    handleCloseFrames: true,
+                        //    performMasking: false,
+                        //    allowMaskMismatch: true,
+                        //    enableUtf8Validator: false),
                         new WebSocketFrameAggregator(65536),
                         handler);
                 }));

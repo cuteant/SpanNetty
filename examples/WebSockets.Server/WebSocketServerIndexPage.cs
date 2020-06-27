@@ -3,6 +3,9 @@
     using System.Text;
     using DotNetty.Buffers;
 
+    /// <summary>
+    /// Generates the demo HTML page which is served at http://localhost:8080/
+    /// </summary>
     static class WebSocketServerIndexPage
     {
         const string Newline = "\r\n";

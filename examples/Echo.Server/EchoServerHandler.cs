@@ -8,12 +8,16 @@ namespace Echo.Server
     using DotNetty.Buffers;
     using DotNetty.Transport.Channels;
 
+    /// <summary>
+    /// Handler implementation for the echo server.
+    /// </summary>
     public class EchoServerHandler : ChannelHandlerAdapter
     {
+        public override bool IsSharable => true;
+
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
-            var buffer = message as IByteBuffer;
-            if (buffer != null)
+            if (message is IByteBuffer buffer)
             {
                 Console.WriteLine("Received from client: " + buffer.ToString(Encoding.UTF8));
             }

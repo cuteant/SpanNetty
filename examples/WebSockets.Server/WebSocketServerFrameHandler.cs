@@ -11,7 +11,7 @@ namespace WebSockets.Server
     using DotNetty.Common.Internal.Logging;
     using Microsoft.Extensions.Logging;
 
-    public sealed class WebSocketServerFrameHandler : SimpleChannelInboundHandler2<WebSocketFrame>
+    public sealed class WebSocketServerFrameHandler : SimpleChannelInboundHandler<WebSocketFrame>
     {
         static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<WebSocketServerFrameHandler>();
 
@@ -25,18 +25,18 @@ namespace WebSockets.Server
                     throw new Exception(msg.Substring(6, msg.Length - 6));
                 }
                 // Echo the frame
-                ctx.WriteAsync(frame.Retain());
+                ctx.Channel.WriteAndFlushAsync(new TextWebSocketFrame(msg));
                 return;
             }
 
-            if (frame is BinaryWebSocketFrame)
+            if (frame is BinaryWebSocketFrame binaryFrame)
             {
                 // Echo the frame
-                ctx.WriteAsync(frame.Retain());
+                ctx.Channel.WriteAndFlushAsync(new BinaryWebSocketFrame(binaryFrame.Content.RetainedDuplicate()));
             }
         }
 
-        public override void ChannelReadComplete(IChannelHandlerContext context) => context.Flush();
+        //public override void ChannelReadComplete(IChannelHandlerContext context) => context.Flush();
 
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception e)
         {

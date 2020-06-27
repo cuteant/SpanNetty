@@ -1,5 +1,4 @@
-﻿
-namespace Http2Tiles
+﻿namespace Http2Tiles
 {
     using System;
     using DotNetty.Buffers;

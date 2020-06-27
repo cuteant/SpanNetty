@@ -14,6 +14,9 @@ namespace QuoteOfTheMoment.Client
     using DotNetty.Transport.Channels.Sockets;
     using Examples.Common;
 
+    /// <summary>
+    /// A UDP broadcast client that asks for a quote of the moment (QOTM) to {@link QuoteOfTheMomentServer}.
+    /// </summary>
     class Program
     {
         static async Task Main(string[] args)

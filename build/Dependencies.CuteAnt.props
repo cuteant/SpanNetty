@@ -130,16 +130,16 @@
     <AkkaStreamsUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaStreamsUnofficialPackageVersion>
     <AkkaStreamsTestKitUnofficialPackageVersion>1.3.13-rtm-190629-01</AkkaStreamsTestKitUnofficialPackageVersion>
 
-    <DotNettyBuffersUnofficialPackageVersion>0.6.0-rtm-190618-01</DotNettyBuffersUnofficialPackageVersion>
-    <DotNettyCodecsHttpUnofficialPackageVersion>0.6.0-rtm-190618-01</DotNettyCodecsHttpUnofficialPackageVersion>
-    <DotNettyCodecsHttp2UnofficialPackageVersion>0.6.0-rtm-190618-01</DotNettyCodecsHttp2UnofficialPackageVersion>
-    <DotNettyCodecsMqttUnofficialPackageVersion>0.6.0-rtm-190618-01</DotNettyCodecsMqttUnofficialPackageVersion>
-    <DotNettyCodecsRedisUnofficialPackageVersion>0.6.0-rtm-190618-01</DotNettyCodecsRedisUnofficialPackageVersion>
-    <DotNettyCodecsUnofficialPackageVersion>0.6.0-rtm-190618-01</DotNettyCodecsUnofficialPackageVersion>
-    <DotNettyCommonUnofficialPackageVersion>0.6.0-rtm-190618-01</DotNettyCommonUnofficialPackageVersion>
-    <DotNettyHandlersUnofficialPackageVersion>0.6.0-rtm-190618-01</DotNettyHandlersUnofficialPackageVersion>
-    <DotNettyTransportLibuvUnofficialPackageVersion>0.6.0-rtm-190618-01</DotNettyTransportLibuvUnofficialPackageVersion>
-    <DotNettyTransportUnofficialPackageVersion>0.6.0-rtm-190618-01</DotNettyTransportUnofficialPackageVersion>
+    <SpanNettyBuffersPackageVersion>0.7.2006.2717</SpanNettyBuffersPackageVersion>
+    <SpanNettyCodecsHttpPackageVersion>0.7.2006.2717</SpanNettyCodecsHttpPackageVersion>
+    <SpanNettyCodecsHttp2PackageVersion>0.7.2006.2717</SpanNettyCodecsHttp2PackageVersion>
+    <SpanNettyCodecsMqttPackageVersion>0.7.2006.2717</SpanNettyCodecsMqttPackageVersion>
+    <SpanNettyCodecsProtobufPackageVersion>0.7.2006.2717</SpanNettyCodecsProtobufPackageVersion>
+    <SpanNettyCodecsPackageVersion>0.7.2006.2717</SpanNettyCodecsPackageVersion>
+    <SpanNettyCommonPackageVersion>0.7.2006.2717</SpanNettyCommonPackageVersion>
+    <SpanNettyHandlersPackageVersion>0.7.2006.2717</SpanNettyHandlersPackageVersion>
+    <SpanNettyTransportLibuvPackageVersion>0.7.2006.2717</SpanNettyTransportLibuvPackageVersion>
+    <SpanNettyTransportPackageVersion>0.7.2006.2717</SpanNettyTransportPackageVersion>
 
     <!-- Serialization related packages -->
     <HyperionUnofficialPackageVersion>0.9.15-rtm-200401-01</HyperionUnofficialPackageVersion>

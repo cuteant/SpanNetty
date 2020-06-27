@@ -1,13 +1,27 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>$(ExamplesTargetFramework)</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
-  <PropertyGroup>
-    <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>../../build/DotNetty.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\shared\dotnetty.com.pfx" Link="dotnetty.com.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SpanNetty.Codecs.Http2" Version="$(SpanNettyCodecsHttp2PackageVersion)" />
+    <ProjectReference Include="..\Examples.Common\Examples.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <ItemGroup>
     <None Remove="images\tile-0-0.jpeg" />
     <None Remove="images\tile-0-1.jpeg" />
@@ -411,20 +425,5 @@
     <EmbeddedResource Include="images\tile-9-7.jpeg" />
     <EmbeddedResource Include="images\tile-9-8.jpeg" />
     <EmbeddedResource Include="images\tile-9-9.jpeg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\shared\dotnetty.com.pfx" Link="dotnetty.com.pfx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\DotNetty.Codecs.Http2\DotNetty.Codecs.Http2.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
-    <ProjectReference Include="..\Examples.Common\Examples.Common.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 </Project>

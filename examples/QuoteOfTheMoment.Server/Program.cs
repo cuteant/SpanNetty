@@ -11,6 +11,9 @@ namespace QuoteOfTheMoment.Server
     using DotNetty.Transport.Channels.Sockets;
     using Examples.Common;
 
+    /// <summary>
+    /// A UDP server that responds to the QOTM (quote of the moment) request to a {@link QuoteOfTheMomentClient}.
+    /// </summary>
     class Program
     {
         static async Task Main(string[] args)

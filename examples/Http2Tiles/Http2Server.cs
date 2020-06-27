@@ -8,7 +8,6 @@ namespace Http2Tiles
     using System.Runtime.InteropServices;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
-    using DotNetty.Codecs.Http;
     using DotNetty.Handlers.Logging;
     using DotNetty.Handlers.Tls;
     using DotNetty.Transport.Bootstrapping;
@@ -18,7 +17,7 @@ namespace Http2Tiles
     using Examples.Common;
 
     /**
-     * Demonstrates a Http2 server using Netty to display a bunch of images and
+     * Demonstrates an Http2 server using Netty to display a bunch of images and
      * simulate latency. It is a Netty version of the <a href="https://http2.golang.org/gophertiles?latency=0">
      * Go lang HTTP2 tiles demo</a>.
      */

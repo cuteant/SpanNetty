@@ -1,5 +1,4 @@
-﻿
-namespace Http2Tiles
+﻿namespace Http2Tiles
 {
     using System;
     using System.Text;
@@ -27,7 +26,7 @@ namespace Http2Tiles
         {
             if (HttpUtil.Is100ContinueExpected(req))
             {
-                ctx.WriteAsync(new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.Continue));
+                ctx.WriteAsync(new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.Continue, Unpooled.Empty));
             }
 
             IByteBuffer content = ctx.Allocator.Buffer();

@@ -1,7 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-namespace Http2Helloworld.Server
+﻿namespace Http2Helloworld.Server
 {
     using System;
     using System.Collections.Generic;
@@ -116,8 +113,7 @@ namespace Http2Helloworld.Server
                 // If this handler is hit then no upgrade has been attempted and the client is just talking HTTP.
                 s_logger.LogInformation("Directly talking: " + msg.ProtocolVersion + " (no upgrade was attempted)");
                 IChannelPipeline pipeline = ctx.Pipeline;
-                IChannelHandlerContext thisCtx = pipeline.Context(this);
-                pipeline.AddAfter(thisCtx.Name, null, new HelloWorldHttp1Handler("Direct. No Upgrade Attempted."));
+                pipeline.AddAfter(ctx.Name, null, new HelloWorldHttp1Handler("Direct. No Upgrade Attempted."));
                 pipeline.Replace(this, null, new HttpObjectAggregator(this.maxHttpContentLength));
                 ctx.FireChannelRead(ReferenceCountUtil.Retain(msg));
             }

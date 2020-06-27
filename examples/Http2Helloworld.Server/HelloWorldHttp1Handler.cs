@@ -1,7 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-namespace Http2Helloworld.Server
+﻿namespace Http2Helloworld.Server
 {
     using System;
     using System.Text;
@@ -32,7 +29,7 @@ namespace Http2Helloworld.Server
         {
             if (HttpUtil.Is100ContinueExpected(req))
             {
-                ctx.WriteAsync(new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.Continue));
+                ctx.WriteAsync(new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.Continue, Unpooled.Empty));
             }
             var keepAlive = HttpUtil.IsKeepAlive(req);
 
@@ -44,15 +41,19 @@ namespace Http2Helloworld.Server
             response.Headers.Set(HttpHeaderNames.ContentType, "text/plain; charset=UTF-8");
             response.Headers.SetInt(HttpHeaderNames.ContentLength, response.Content.ReadableBytes);
 
-            if (!keepAlive)
+            if (keepAlive)
             {
-                ctx.WriteAsync(response)
-                   .ContinueWith(t => ctx.Channel.CloseAsync(), TaskContinuationOptions.ExecuteSynchronously);
+                if (req.ProtocolVersion.Equals(HttpVersion.Http10))
+                {
+                    response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
+                }
+                ctx.WriteAsync(response);
             }
             else
             {
-                response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.KeepAlive);
-                ctx.WriteAsync(response);
+                // Tell the client we're going to close the connection.
+                response.Headers.Set(HttpHeaderNames.Connection, HttpHeaderValues.Close);
+                ctx.WriteAsync(response).CloseOnComplete(ctx.Channel);
             }
         }
 

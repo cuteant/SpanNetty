@@ -9,23 +9,27 @@ namespace Echo.Client
     using DotNetty.Transport.Channels;
     using Examples.Common;
 
+    /// <summary>
+    /// Handler implementation for the echo client.  It initiates the ping-pong
+    /// traffic between the echo client and server by sending the first message to
+    /// the server.
+    /// </summary>
     public class EchoClientHandler : ChannelHandlerAdapter
     {
-        readonly IByteBuffer initialMessage;
+        readonly IByteBuffer _initialMessage;
 
         public EchoClientHandler()
         {
-            this.initialMessage = Unpooled.Buffer(ClientSettings.Size);
+            _initialMessage = Unpooled.Buffer(ClientSettings.Size);
             byte[] messageBytes = Encoding.UTF8.GetBytes("Hello world");
-            this.initialMessage.WriteBytes(messageBytes);
+            _initialMessage.WriteBytes(messageBytes);
         }
 
-        public override void ChannelActive(IChannelHandlerContext context) => context.WriteAndFlushAsync(this.initialMessage);
+        public override void ChannelActive(IChannelHandlerContext context) => context.WriteAndFlushAsync(_initialMessage);
 
         public override void ChannelRead(IChannelHandlerContext context, object message)
         {
-            var byteBuffer = message as IByteBuffer;
-            if (byteBuffer != null)
+            if (message is IByteBuffer byteBuffer)
             {
                 Console.WriteLine("Received from server: " + byteBuffer.ToString(Encoding.UTF8));
             }
@@ -36,6 +40,7 @@ namespace Echo.Client
 
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
+            // Close the connection when an exception is raised.
             Console.WriteLine("Exception: " + exception);
             context.CloseAsync();
         }

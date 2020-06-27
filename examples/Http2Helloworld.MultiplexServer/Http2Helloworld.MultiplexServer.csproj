@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1;net471;net451</TargetFrameworks>
+    <TargetFrameworks>$(ExamplesTargetFramework)</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   
@@ -11,9 +11,8 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\..\src\DotNetty.Codecs.Http2\DotNetty.Codecs.Http2.csproj" />
+    <PackageReference Include="SpanNetty.Codecs.Http2" Version="$(SpanNettyCodecsHttp2PackageVersion)" />
     <ProjectReference Include="..\Examples.Common\Examples.Common.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj" />
   </ItemGroup>
 
   <ItemGroup>

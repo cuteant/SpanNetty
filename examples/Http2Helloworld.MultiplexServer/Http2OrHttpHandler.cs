@@ -1,7 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-#if NETCOREAPP_2_0_GREATER
+﻿#if NETCOREAPP_2_0_GREATER
 namespace Http2Helloworld.MultiplexServer
 {
     using System;
@@ -24,7 +21,8 @@ namespace Http2Helloworld.MultiplexServer
         {
             if (SslApplicationProtocol.Http2.Equals(protocol))
             {
-                ctx.Pipeline.AddLast(Http2MultiplexCodecBuilder.ForServer(new HelloWorldHttp2Handler()).Build());
+                ctx.Pipeline.AddLast(Http2FrameCodecBuilder.ForServer().Build());
+                ctx.Pipeline.AddLast(new Http2MultiplexHandler(new HelloWorldHttp2Handler()));
                 return;
             }
 

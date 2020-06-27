@@ -30,14 +30,14 @@ namespace WebSockets.Server
             // Handle a bad request.
             if (!req.Result.IsSuccess)
             {
-                SendHttpResponse(ctx, req, new DefaultFullHttpResponse(Http11, BadRequest));
+                SendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.ProtocolVersion, BadRequest, ctx.Allocator.Buffer(0)));
                 return;
             }
 
             // Allow only GET methods.
             if (!HttpMethod.Get.Equals(req.Method))
             {
-                SendHttpResponse(ctx, req, new DefaultFullHttpResponse(Http11, Forbidden));
+                SendHttpResponse(ctx, req, new DefaultFullHttpResponse(req.ProtocolVersion, Forbidden, ctx.Allocator.Buffer(0)));
                 return;
             }
 
@@ -47,7 +47,7 @@ namespace WebSockets.Server
                 case "/benchmark":
                     {
                         IByteBuffer content = WebSocketServerBenchmarkPage.GetContent(GetWebSocketLocation(req, this.websocketPath));
-                        var res = new DefaultFullHttpResponse(Http11, OK, content);
+                        var res = new DefaultFullHttpResponse(req.ProtocolVersion, OK, content);
 
                         res.Headers.Set(HttpHeaderNames.ContentType, "text/html; charset=UTF-8");
                         HttpUtil.SetContentLength(res, content.ReadableBytes);
@@ -59,7 +59,7 @@ namespace WebSockets.Server
                 case "/index.html":
                     {
                         IByteBuffer content = WebSocketServerIndexPage.GetContent(GetWebSocketLocation(req, this.websocketPath));
-                        var res = new DefaultFullHttpResponse(Http11, OK, content);
+                        var res = new DefaultFullHttpResponse(req.ProtocolVersion, OK, content);
 
                         res.Headers.Set(HttpHeaderNames.ContentType, "text/html; charset=UTF-8");
                         HttpUtil.SetContentLength(res, content.ReadableBytes);
@@ -70,7 +70,7 @@ namespace WebSockets.Server
                 case "/favicon.ico":
                 default:
                     {
-                        var res = new DefaultFullHttpResponse(Http11, NotFound);
+                        var res = new DefaultFullHttpResponse(req.ProtocolVersion, NotFound, ctx.Allocator.Buffer(0));
                         SendHttpResponse(ctx, req, res);
                         return;
                     }
@@ -80,20 +80,20 @@ namespace WebSockets.Server
         static void SendHttpResponse(IChannelHandlerContext ctx, IFullHttpRequest req, IFullHttpResponse res)
         {
             // Generate an error page if response getStatus code is not OK (200).
-            if (res.Status.Code != 200)
+            HttpResponseStatus responseStatus = res.Status;
+            if (responseStatus.Code != 200)
             {
-                IByteBuffer buf = Unpooled.CopiedBuffer(Encoding.UTF8.GetBytes(res.Status.ToString()));
-                res.Content.WriteBytes(buf);
-                buf.Release();
+                ByteBufferUtil.WriteUtf8(res.Content, responseStatus.ToString());
                 HttpUtil.SetContentLength(res, res.Content.ReadableBytes);
             }
 
             // Send the response and close the connection if necessary.
-            Task task = ctx.Channel.WriteAndFlushAsync(res);
-            if (!HttpUtil.IsKeepAlive(req) || res.Status.Code != 200)
+            var keepAlive = HttpUtil.IsKeepAlive(req) && responseStatus.Code == 200;
+            HttpUtil.SetKeepAlive(res, keepAlive);
+            var future = ctx.WriteAndFlushAsync(res);
+            if (!keepAlive)
             {
-                task.ContinueWith((t, c) => ((IChannelHandlerContext)c).CloseAsync(),
-                    ctx, TaskContinuationOptions.ExecuteSynchronously);
+                future.CloseOnComplete(ctx.Channel);
             }
         }
 

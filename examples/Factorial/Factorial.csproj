@@ -1,12 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.1;netcoreapp2.1;net451</TargetFrameworks>
+    <TargetFrameworks>$(ExamplesTargetFramework)</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\DotNetty.Common\DotNetty.Common.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Buffers\DotNetty.Buffers.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Codecs\DotNetty.Codecs.csproj" />
+    <PackageReference Include="SpanNetty.Codecs" Version="$(SpanNettyCodecsPackageVersion)" />
   </ItemGroup>
 </Project>

@@ -16,40 +16,79 @@ namespace WebSockets.Client
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
 
-    public class WebSocketClientHandler : SimpleChannelInboundHandler2<WebSocketFrame>
+    public class WebSocketClientHandler : SimpleChannelInboundHandler<object>
     {
         static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<WebSocketClientHandler>();
 
-        readonly TaskCompletionSource completionSource;
+        readonly WebSocketClientHandshaker _handshaker;
+        IPromise _handshakeFuture;
 
-        public WebSocketClientHandler()
+        public WebSocketClientHandler(WebSocketClientHandshaker handshaker)
         {
-            this.completionSource = new TaskCompletionSource();
+            _handshaker = handshaker;
         }
 
-        public Task HandshakeCompletion => this.completionSource.Task;
+        public Task HandshakeCompletion => _handshakeFuture.Task;
 
-        public override void ChannelReadComplete(IChannelHandlerContext context) => context.Flush();
+        public override void HandlerAdded(IChannelHandlerContext context)
+        {
+            _handshakeFuture = context.NewPromise();
+        }
+
+        public override void ChannelActive(IChannelHandlerContext context)
+        {
+            _handshaker.HandshakeAsync(context.Channel);
+        }
 
         public override void ChannelInactive(IChannelHandlerContext context)
         {
             s_logger.LogInformation("WebSocket Client disconnected!");
         }
 
-        protected override void ChannelRead0(IChannelHandlerContext ctx, WebSocketFrame msg)
+        protected override void ChannelRead0(IChannelHandlerContext ctx, object msg)
         {
             IChannel ch = ctx.Channel;
+            if (!_handshaker.IsHandshakeComplete)
+            {
+                try
+                {
+                    _handshaker.FinishHandshake(ch, (IFullHttpResponse)msg);
+                    s_logger.LogInformation("WebSocket Client connected!");
+                    _handshakeFuture.TryComplete();
+                }
+                catch (WebSocketHandshakeException e)
+                {
+                    s_logger.LogWarning("WebSocket Client failed to connect");
+                    _handshakeFuture.TrySetException(e);
+                }
+                return;
+            }
+
+            if (msg is IFullHttpResponse response)
+            {
+                throw new InvalidOperationException(
+                        "Unexpected FullHttpResponse (getStatus=" + response.Status +
+                                ", content=" + response.Content.ToString(Encoding.UTF8) + ')');
+            }
 
             if (msg is TextWebSocketFrame textFrame)
             {
                 s_logger.LogInformation($"WebSocket Client received message: {textFrame.Text()}");
+            }
+            else if (msg is PongWebSocketFrame)
+            {
+                s_logger.LogInformation("WebSocket Client received pong");
+            }
+            else if (msg is CloseWebSocketFrame)
+            {
+                s_logger.LogInformation("WebSocket Client received closing");
             }
         }
 
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception exception)
         {
             s_logger.LogError(exception, $"{nameof(WebSocketClientHandler)} caught exception:");
-            this.completionSource.TrySetException(exception);
+            _handshakeFuture.TrySetException(exception);
             ctx.CloseAsync();
         }
 
@@ -63,7 +102,7 @@ namespace WebSockets.Client
             }
             else if (evt is WebSocketClientProtocolHandler.ClientHandshakeStateEvent handshakeStateEvt && handshakeStateEvt == WebSocketClientProtocolHandler.ClientHandshakeStateEvent.HandshakeComplete)
             {
-                completionSource.TryComplete();
+                _handshakeFuture.TryComplete();
             }
         }
     }

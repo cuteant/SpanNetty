@@ -1,22 +1,21 @@
 ﻿namespace HttpUpload.Client
 {
     using System;
-    using System.Collections.Generic;
     using System.Text;
-    using System.Threading.Tasks;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
-    using DotNetty.Codecs.Http.Cookies;
-    using DotNetty.Codecs.Http.Multipart;
     using DotNetty.Common.Internal.Logging;
     using DotNetty.Transport.Channels;
     using Microsoft.Extensions.Logging;
 
+    /// <summary>
+    /// Handler that just dumps the contents of the response from the server
+    /// </summary>
     public class HttpUploadClientHandler : SimpleChannelInboundHandler2<IHttpObject>
     {
         static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<HttpUploadClientHandler>();
 
-        bool readingChunks;
+        bool _readingChunks;
 
         protected override void ChannelRead0(IChannelHandlerContext ctx, IHttpObject msg)
         {
@@ -38,7 +37,7 @@
 
                 if (response.Status.Code == 200 && HttpUtil.IsTransferEncodingChunked(response))
                 {
-                    this.readingChunks = true;
+                    _readingChunks = true;
                     s_logger.LogInformation("CHUNKED CONTENT {");
                 }
                 else
@@ -52,7 +51,7 @@
 
                 if (chunk is ILastHttpContent)
                 {
-                    if (this.readingChunks)
+                    if (_readingChunks)
                     {
                         s_logger.LogInformation("} END OF CHUNKED CONTENT");
                     }
@@ -60,7 +59,7 @@
                     {
                         s_logger.LogInformation("} END OF CONTENT");
                     }
-                    this.readingChunks = false;
+                    _readingChunks = false;
                 }
                 else
                 {

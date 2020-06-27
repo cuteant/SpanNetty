@@ -3,42 +3,67 @@
 
 namespace Factorial.Client
 {
+    using System;
     using System.Collections.Concurrent;
     using System.Numerics;
+    using System.Threading.Tasks;
+    using DotNetty.Common.Utilities;
     using DotNetty.Transport.Channels;
 
     public class FactorialClientHandler : SimpleChannelInboundHandler<BigInteger>
     {
-        IChannelHandlerContext ctx;
-        int receivedMessages;
-        int next = 1;
-        readonly BlockingCollection<BigInteger> answer = new BlockingCollection<BigInteger>();
+        IChannelHandlerContext _ctx;
+        int _receivedMessages;
+        int _next = 1;
+        readonly BlockingCollection<BigInteger> _answer = new BlockingCollection<BigInteger>();
 
-        public BigInteger GetFactorial() => this.answer.Take();
+        public BigInteger GetFactorial() => _answer.Take();
 
         public override void ChannelActive(IChannelHandlerContext ctx)
         {
-            this.ctx = ctx;
-            this.SendNumbers();
+            _ctx = ctx;
+            SendNumbers();
         }
 
         protected override void ChannelRead0(IChannelHandlerContext ctx, BigInteger msg)
         {
-            this.receivedMessages++;
-            if (this.receivedMessages == ClientSettings.Count)
+            _receivedMessages++;
+            if (_receivedMessages == ClientSettings.Count)
             {
-                ctx.CloseAsync().ContinueWith(t => this.answer.Add(msg));
+                ctx.CloseAsync().ContinueWith(t => _answer.Add(msg));
             }
+        }
+
+        public override void ExceptionCaught(IChannelHandlerContext ctx, Exception cause)
+        {
+            Console.WriteLine("{0}", cause.ToString());
+            ctx.CloseAsync();
         }
 
         void SendNumbers()
         {
-            for (int i = 0; (i < 4096) && (this.next <= ClientSettings.Count); i++)
+            // Do not send more than 4096 numbers.
+            Task future = null;
+            for (int i = 0; (i < 4096) && (_next <= ClientSettings.Count); i++)
             {
-                this.ctx.WriteAsync(new BigInteger(this.next));
-                this.next++;
+                future = _ctx.WriteAsync(new BigInteger(_next));
+                _next++;
             }
-            this.ctx.Flush();
+            if (_next <= ClientSettings.Count)
+            {
+                future.ContinueWith(t =>
+                {
+                    if (t.IsSuccess())
+                    {
+                        SendNumbers();
+                    }
+                    else
+                    {
+                        _ctx.Channel.CloseAsync();
+                    }
+                });
+            }
+            _ctx.Flush();
         }
     }
 }

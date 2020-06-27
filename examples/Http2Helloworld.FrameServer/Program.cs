@@ -1,7 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-namespace Http2Helloworld.FrameServer
+﻿namespace Http2Helloworld.FrameServer
 {
     using System;
     using System.IO;
@@ -20,6 +17,13 @@ namespace Http2Helloworld.FrameServer
     using DotNetty.Transport.Libuv;
     using Examples.Common;
 
+    /// <summary>
+    /// An HTTP/2 Server that responds to requests with a Hello World. Once started, you can test the
+    /// server with the example client.
+    /// 
+    /// <para>This example is making use of the "multiplexing" http2 API, where streams are mapped to child
+    /// Channels. This API is very experimental and incomplete.</para>
+    /// </summary>
     class Program
     {
         static Program()

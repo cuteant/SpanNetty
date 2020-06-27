@@ -25,9 +25,7 @@ namespace HttpUpload.Client
     using DotNetty.Transport.Channels;
     using DotNetty.Transport.Channels.Sockets;
     using Examples.Common;
-#if !NET40
     using DotNetty.Transport.Libuv;
-#endif
 
     partial class Program
     {
@@ -60,19 +58,14 @@ namespace HttpUpload.Client
             var uriFile = new Uri(postFile);
 
             bool useLibuv = ClientSettings.UseLibuv;
-#if NET40
-            useLibuv = false;
-#endif
             Console.WriteLine("Transport type : " + (useLibuv ? "Libuv" : "Socket"));
 
             IEventLoopGroup group;
-#if !NET40
             if (useLibuv)
             {
                 group = new EventLoopGroup();
             }
             else
-#endif
             {
                 group = new MultithreadEventLoopGroup();
             }
@@ -90,13 +83,11 @@ namespace HttpUpload.Client
                 bootstrap
                     .Group(group)
                     .Option(ChannelOption.TcpNodelay, true);
-#if !NET40
                 if (useLibuv)
                 {
                     bootstrap.Channel<TcpChannel>();
                 }
                 else
-#endif
                 {
                     bootstrap.Channel<TcpSocketChannel>();
                 }

@@ -12,6 +12,10 @@ namespace Http2Tiles
     using DotNetty.Transport.Libuv;
     using Examples.Common;
 
+    /// <summary>
+    /// Demonstrates an http server using Netty to display a bunch of images, simulate
+    /// latency and compare it against the http2 implementation.
+    /// </summary>
     class HttpServer
     {
         public static readonly int PORT = int.Parse(ExampleHelper.Configuration["http-port"]);

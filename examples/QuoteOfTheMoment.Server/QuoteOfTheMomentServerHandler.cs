@@ -53,7 +53,7 @@ namespace QuoteOfTheMoment.Server
         public override void ExceptionCaught(IChannelHandlerContext context, Exception exception)
         {
             Console.WriteLine("Exception: " + exception);
-            context.CloseAsync();
+            // We don't close the channel because we can keep serving requests.
         }
     }
 }

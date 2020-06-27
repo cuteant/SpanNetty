@@ -74,9 +74,9 @@
     <TopshelfSerilogPackageVersion>4.2.1</TopshelfSerilogPackageVersion>
 
     <!-- Logging related packages -->
-    <NLogPackageVersion>4.7.0</NLogPackageVersion>
-    <NLogDevPackageVersion>4.7.0</NLogDevPackageVersion>
-    <NLogExtensionsLoggingPackageVersion>1.6.2</NLogExtensionsLoggingPackageVersion>
+    <NLogPackageVersion>4.7.2</NLogPackageVersion>
+    <NLogDevPackageVersion>4.7.2</NLogDevPackageVersion>
+    <NLogExtensionsLoggingPackageVersion>1.6.4</NLogExtensionsLoggingPackageVersion>
     <NLogWebAspNetCorePackageVersion>4.9.2</NLogWebAspNetCorePackageVersion>
 
     <SerilogPackageVersion>2.9.0</SerilogPackageVersion>
@@ -146,6 +146,7 @@
     <NewtonsoftJsonBsonPackageVersion>1.0.2</NewtonsoftJsonBsonPackageVersion>
     <NewtonsoftJsonPackageVersion>12.0.3</NewtonsoftJsonPackageVersion>
     <ProtobufNetPackageVersion>2.4.6</ProtobufNetPackageVersion>
+    <ProtobufNetDevPackageVersion>3.0.0-alpha.155</ProtobufNetDevPackageVersion>
     <ProtobufNetDataPackageVersion>3.0.1</ProtobufNetDataPackageVersion>
     <YamlDotNetPackageVersion>8.1.0</YamlDotNetPackageVersion>
   </PropertyGroup>

@@ -32,19 +32,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Transport.Libuv", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Http", "src\DotNetty.Codecs.Http\DotNetty.Codecs.Http.csproj", "{87DD4EAA-BBCF-439F-A263-59044B6E8930}"
 EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "CuteAnt.Extensions.Reflection.Sources", "shared\CuteAnt.Extensions.Reflection.Sources\CuteAnt.Extensions.Reflection.Sources.shproj", "{C7F8DBE6-77B7-494D-AF00-018F7579548C}"
-EndProject
-Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Nito.AsyncEx.ExceptionEnlightenment.Sources", "shared\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.shproj", "{D90E9B82-6317-4055-82E3-FE8625C143E9}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Http2", "src\DotNetty.Codecs.Http2\DotNetty.Codecs.Http2.csproj", "{85BC5580-3A11-4078-8DB7-3C113DA938A2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Protobuf", "src\DotNetty.Codecs.Protobuf\DotNetty.Codecs.Protobuf.csproj", "{F5A34D9C-854C-4972-ABF3-8BAE4712386D}"
 EndProject
 Global
-	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		shared\CuteAnt.Extensions.Reflection.Sources\CuteAnt.Extensions.Reflection.Sources.projitems*{c7f8dbe6-77b7-494d-af00-018f7579548c}*SharedItemsImports = 13
-		shared\Nito.AsyncEx.ExceptionEnlightenment.Sources\Nito.AsyncEx.ExceptionEnlightenment.Sources.projitems*{d90e9b82-6317-4055-82e3-fe8625c143e9}*SharedItemsImports = 13
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|ARM = Debug|ARM
@@ -246,8 +238,6 @@ Global
 		{4ED4B313-21BA-473E-ADC0-FF36E64C2DCF} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{87DD4EAA-BBCF-439F-A263-59044B6E8930} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
-		{C7F8DBE6-77B7-494D-AF00-018F7579548C} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
-		{D90E9B82-6317-4055-82E3-FE8625C143E9} = {B6984E67-A4D0-459E-B3C9-01CA4DBBE241}
 		{85BC5580-3A11-4078-8DB7-3C113DA938A2} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 		{F5A34D9C-854C-4972-ABF3-8BAE4712386D} = {3D04C4DC-6F8E-4326-9569-92F3E26C6EEB}
 	EndGlobalSection

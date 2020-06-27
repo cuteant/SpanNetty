@@ -8,18 +8,21 @@ namespace Discard.Client
     using DotNetty.Transport.Channels;
     using Examples.Common;
 
+    /// <summary>
+    /// Handles a client-side channel.
+    /// </summary>
     public class DiscardClientHandler : SimpleChannelInboundHandler<object>
     {
-        IChannelHandlerContext ctx;
-        byte[] array;
+        IChannelHandlerContext _ctx;
+        byte[] _array;
 
         public override void ChannelActive(IChannelHandlerContext ctx)
         {
-            this.array = new byte[ClientSettings.Size];
-            this.ctx = ctx;
+            _array = new byte[ClientSettings.Size];
+            _ctx = ctx;
 
             // Send the initial messages.
-            this.GenerateTraffic();
+            GenerateTraffic();
         }
 
         protected override void ChannelRead0(IChannelHandlerContext context, object message)
@@ -29,23 +32,24 @@ namespace Discard.Client
 
         public override void ExceptionCaught(IChannelHandlerContext ctx, Exception e)
         {
+            // Close the connection when an exception is raised.
             Console.WriteLine("{0}", e.ToString());
-            this.ctx.CloseAsync();
+            _ctx.CloseAsync();
         }
 
         async void GenerateTraffic()
         {
             try
             {
-                IByteBuffer buffer = Unpooled.WrappedBuffer(this.array);
+                IByteBuffer buffer = Unpooled.WrappedBuffer(_array);
                 // Flush the outbound buffer to the socket.
                 // Once flushed, generate the same amount of traffic again.
-                await this.ctx.WriteAndFlushAsync(buffer);
-                this.GenerateTraffic();
+                await _ctx.WriteAndFlushAsync(buffer);
+                GenerateTraffic();
             }
             catch
             {
-                await this.ctx.CloseAsync();
+                await _ctx.CloseAsync();
             }
         }
     }

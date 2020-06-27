@@ -90,7 +90,7 @@ namespace HttpUpload.Server
                 }
 
                 bootstrap
-                    .Option(ChannelOption.SoBacklog, 8192)
+                    .Option(ChannelOption.SoBacklog, 1024)
                     //.Handler(new LoggingHandler("LSTN"))
                     .ChildHandler(new ActionChannelInitializer<IChannel>(channel =>
                     {

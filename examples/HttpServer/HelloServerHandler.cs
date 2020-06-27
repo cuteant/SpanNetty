@@ -79,12 +79,10 @@ namespace HttpServer
                     break;
                 default:
                     var response = new DefaultFullHttpResponse(HttpVersion.Http11, HttpResponseStatus.NotFound, Unpooled.Empty, false);
-                    ctx.WriteAsync(response).ContinueWith(CloseAfterWriteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                    ctx.WriteAsync(response).CloseOnComplete(ctx.Channel);
                     break;
             }
         }
-
-        static void CloseAfterWriteAction(Task t, object s) => ((IChannelHandlerContext)s).CloseAsync();
 
         void WriteResponse(IChannelHandlerContext ctx, IByteBuffer buf, ICharSequence contentType, ICharSequence contentLength, bool keepAlive)
         {
@@ -103,7 +101,7 @@ namespace HttpServer
             }
             else
             {
-                ctx.WriteAsync(response).ContinueWith(CloseAfterWriteAction, ctx, TaskContinuationOptions.ExecuteSynchronously);
+                ctx.WriteAsync(response).CloseOnComplete(ctx.Channel);
             }
         }
 

@@ -118,9 +118,9 @@ namespace WebSockets.Server
                         pipeline.AddLast("idleStateHandler", new IdleStateHandler(0, 0, 120));
 
                         //pipeline.AddLast(new LoggingHandler("CONN"));
-                        pipeline.AddLast(new HttpRequestDecoder());
-                        pipeline.AddLast(new HttpResponseEncoder());
-                        //pipeline.AddLast(new HttpServerCodec());
+                        //pipeline.AddLast(new HttpRequestDecoder());
+                        //pipeline.AddLast(new HttpResponseEncoder());
+                        pipeline.AddLast(new HttpServerCodec());
                         pipeline.AddLast(new HttpObjectAggregator(65536));
                         pipeline.AddLast(new WebSocketServerCompressionHandler());
                         pipeline.AddLast(new WebSocketServerProtocolHandler(

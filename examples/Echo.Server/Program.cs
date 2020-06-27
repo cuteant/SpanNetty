@@ -4,8 +4,6 @@
 namespace Echo.Server
 {
     using System;
-    using System.Diagnostics.Tracing;
-    using System.Net.Security;
     using System.Security.Cryptography.X509Certificates;
     using System.Threading.Tasks;
     using DotNetty.Codecs;
@@ -44,6 +42,7 @@ namespace Echo.Server
             {
                 tlsCertificate = new X509Certificate2("dotnetty.com.pfx", "password");
             }
+            EchoServerHandler serverHandler = new EchoServerHandler();
             try
             {
                 var bootstrap = new ServerBootstrap();
@@ -72,7 +71,7 @@ namespace Echo.Server
                       pipeline.AddLast("framing-enc", new LengthFieldPrepender2(2));
                       pipeline.AddLast("framing-dec", new LengthFieldBasedFrameDecoder2(ushort.MaxValue, 0, 2, 0, 2));
 
-                      pipeline.AddLast("echo", new EchoServerHandler());
+                      pipeline.AddLast("echo", serverHandler);
                   }));
 
                 IChannel boundChannel = await bootstrap.BindAsync(ServerSettings.Port);

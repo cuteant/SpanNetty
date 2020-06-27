@@ -1,7 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-namespace Http2Helloworld.Client
+﻿namespace Http2Helloworld.Client
 {
     using System;
     using System.Collections.Generic;
@@ -13,61 +10,66 @@ namespace Http2Helloworld.Client
     using DotNetty.Transport.Channels;
     using DotNetty.Common.Internal.Logging;
     using Microsoft.Extensions.Logging;
+    using DotNetty.Buffers;
+    using System.Net;
 
+    /// <summary>
+    /// Configures the client pipeline to support HTTP/2 frames.
+    /// </summary>
     public class Http2ClientInitializer : ChannelInitializer<IChannel>
     {
         static readonly ILogger s_logger = InternalLoggerFactory.DefaultFactory.CreateLogger<Http2ClientInitializer>();
         static readonly IHttp2FrameLogger Logger = new Http2FrameMsLogger(LogLevel.Information, typeof(Http2ClientInitializer));
 
-        readonly X509Certificate2 cert;
-        readonly string targetHost;
-        readonly int maxContentLength;
+        readonly X509Certificate2 _cert;
+        readonly string _targetHost;
+        readonly int _maxContentLength;
 
-        HttpToHttp2ConnectionHandler connectionHandler;
-        HttpResponseHandler responseHandler;
-        Http2SettingsHandler settingsHandler;
+        HttpToHttp2ConnectionHandler _connectionHandler;
+        HttpResponseHandler _responseHandler;
+        Http2SettingsHandler _settingsHandler;
 
         public Http2ClientInitializer(X509Certificate2 cert, string targetHost, int maxContentLength)
         {
-            this.cert = cert;
-            this.targetHost = targetHost;
-            this.maxContentLength = maxContentLength;
+            _cert = cert;
+            _targetHost = targetHost;
+            _maxContentLength = maxContentLength;
         }
 
         protected override void InitChannel(IChannel channel)
         {
             IHttp2Connection connection = new DefaultHttp2Connection(false);
-            this.connectionHandler = new HttpToHttp2ConnectionHandlerBuilder()
+            _connectionHandler = new HttpToHttp2ConnectionHandlerBuilder()
             {
                 FrameListener = new DelegatingDecompressorFrameListener(
                     connection,
                     new InboundHttp2ToHttpAdapterBuilder(connection)
                     {
-                        MaxContentLength = this.maxContentLength,
+                        MaxContentLength = _maxContentLength,
                         IsPropagateSettings = true
                     }.Build()),
                 FrameLogger = Logger,
                 Connection = connection
             }.Build();
-            this.responseHandler = new HttpResponseHandler();
-            this.settingsHandler = new Http2SettingsHandler(channel.NewPromise());
-            if (this.cert != null)
+            _responseHandler = new HttpResponseHandler();
+            _settingsHandler = new Http2SettingsHandler(channel.NewPromise());
+            if (_cert != null)
             {
-                this.ConfigureSsl(channel);
+                ConfigureSsl(channel);
             }
             else
             {
-                this.ConfigureClearText(channel);
+                ConfigureClearText(channel);
             }
         }
 
-        public HttpResponseHandler ResponseHandler => this.responseHandler;
+        public HttpResponseHandler ResponseHandler => _responseHandler;
 
-        public Http2SettingsHandler SettingsHandler => this.settingsHandler;
+        public Http2SettingsHandler SettingsHandler => _settingsHandler;
 
         protected void ConfigureEndOfPipeline(IChannelPipeline pipeline)
         {
-            pipeline.AddLast(this.settingsHandler, this.responseHandler);
+            pipeline.AddLast(_settingsHandler, _responseHandler);
         }
 
         /// <summary>
@@ -79,7 +81,7 @@ namespace Http2Helloworld.Client
             var pipeline = ch.Pipeline;
             pipeline.AddLast("tls", new TlsHandler(
                 stream => new SslStream(stream, true, (sender, certificate, chain, errors) => true),
-                new ClientTlsSettings(this.targetHost)
+                new ClientTlsSettings(_targetHost)
 #if NETCOREAPP_2_0_GREATER
                 {
                     ApplicationProtocols = new List<SslApplicationProtocol>(new[]
@@ -103,12 +105,12 @@ namespace Http2Helloworld.Client
 #if NETCOREAPP_2_0_GREATER
         sealed class ClientApplicationProtocolNegotiationHandler : ApplicationProtocolNegotiationHandler
         {
-            readonly Http2ClientInitializer self;
+            readonly Http2ClientInitializer _self;
 
             public ClientApplicationProtocolNegotiationHandler(Http2ClientInitializer self)
                 : base(default(SslApplicationProtocol))
             {
-                this.self = self;
+                _self = self;
             }
 
             protected override void ConfigurePipeline(IChannelHandlerContext ctx, SslApplicationProtocol protocol)
@@ -116,8 +118,8 @@ namespace Http2Helloworld.Client
                 if (SslApplicationProtocol.Http2.Equals(protocol))
                 {
                     var p = ctx.Pipeline;
-                    p.AddLast(this.self.connectionHandler);
-                    this.self.ConfigureEndOfPipeline(p);
+                    p.AddLast(_self._connectionHandler);
+                    _self.ConfigureEndOfPipeline(p);
                     return;
                 }
                 ctx.CloseAsync();
@@ -133,7 +135,7 @@ namespace Http2Helloworld.Client
         void ConfigureClearText(IChannel ch)
         {
             HttpClientCodec sourceCodec = new HttpClientCodec();
-            Http2ClientUpgradeCodec upgradeCodec = new Http2ClientUpgradeCodec(connectionHandler);
+            Http2ClientUpgradeCodec upgradeCodec = new Http2ClientUpgradeCodec(_connectionHandler);
             HttpClientUpgradeHandler upgradeHandler = new HttpClientUpgradeHandler(sourceCodec, upgradeCodec, 65536);
 
             ch.Pipeline.AddLast(sourceCodec,
@@ -147,14 +149,24 @@ namespace Http2Helloworld.Client
         /// </summary>
         sealed class UpgradeRequestHandler : ChannelHandlerAdapter
         {
-            readonly Http2ClientInitializer self;
+            readonly Http2ClientInitializer _self;
 
-            public UpgradeRequestHandler(Http2ClientInitializer self) => this.self = self;
+            public UpgradeRequestHandler(Http2ClientInitializer self) => _self = self;
 
             public override void ChannelActive(IChannelHandlerContext ctx)
             {
                 DefaultFullHttpRequest upgradeRequest =
-                        new DefaultFullHttpRequest(HttpVersion.Http11, HttpMethod.Get, "/");
+                        new DefaultFullHttpRequest(DotNetty.Codecs.Http.HttpVersion.Http11, HttpMethod.Get, "/", Unpooled.Empty);
+
+                // Set HOST header as the remote peer may require it.
+                var remote = (IPEndPoint)ctx.Channel.RemoteAddress;
+                //String hostString = remote.getHostString();
+                //if (hostString == null)
+                //{
+                //    hostString = remote.getAddress().getHostAddress();
+                //}
+                upgradeRequest.Headers.Set(HttpHeaderNames.Host, _self._targetHost + ':' + remote.Port);
+
                 ctx.WriteAndFlushAsync(upgradeRequest);
 
                 ctx.FireChannelActive();
@@ -162,7 +174,7 @@ namespace Http2Helloworld.Client
                 // Done with this handler, remove it from the pipeline.
                 ctx.Pipeline.Remove(this);
 
-                this.self.ConfigureEndOfPipeline(ctx.Pipeline);
+                _self.ConfigureEndOfPipeline(ctx.Pipeline);
             }
         }
 

@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp3.1;netcoreapp2.1;net451</TargetFrameworks>
+    <TargetFrameworks>$(ExamplesTargetFramework)</TargetFrameworks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net451' ">
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net451' or '$(TargetFramework)' == 'net471' ">
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>
@@ -19,11 +19,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\DotNetty.Buffers\DotNetty.Buffers.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Codecs\DotNetty.Codecs.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Common\DotNetty.Common.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Handlers\DotNetty.Handlers.csproj" />
-    <ProjectReference Include="..\..\src\DotNetty.Transport\DotNetty.Transport.csproj" />
+    <PackageReference Include="SpanNetty.Handlers" Version="$(SpanNettyHandlersPackageVersion)" />
     <ProjectReference Include="..\Examples.Common\Examples.Common.csproj" />
   </ItemGroup>
 </Project>

@@ -6,8 +6,13 @@ namespace Telnet.Client
     using System;
     using DotNetty.Transport.Channels;
 
+    /// <summary>
+    /// Handles a client-side channel.
+    /// </summary>
     public class TelnetClientHandler : SimpleChannelInboundHandler<string>
     {
+        public override bool IsSharable => true;
+
         protected override void ChannelRead0(IChannelHandlerContext contex, string msg)
         {
             Console.WriteLine(msg);
