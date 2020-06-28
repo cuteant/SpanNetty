@@ -5,7 +5,6 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.Diagnostics;
-    using System.Reflection;
     using System.Runtime.CompilerServices;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
@@ -169,21 +168,24 @@ namespace DotNetty.Buffers
             return s_integerSizeMinusOne - IntegerExtensions.NumberOfLeadingZeros(val);
         }
 
-        /**
-         * Try to allocate a tiny buffer out of the cache. Returns <c>true</c> if successful <c>false</c> otherwise
-         */
+        /// <summary>
+        /// Try to allocate a tiny buffer out of the cache.
+        /// </summary>
+        /// <returns><c>true</c> if successful <c>false</c> otherwise</returns>
         internal bool AllocateTiny(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
             Allocate(CacheForTiny(area, normCapacity), buf, reqCapacity);
 
-        /**
-         * Try to allocate a small buffer out of the cache. Returns <c>true</c> if successful <c>false</c> otherwise
-         */
+        /// <summary>
+        /// Try to allocate a small buffer out of the cache.
+        /// </summary>
+        /// <returns><c>true</c> if successful <c>false</c> otherwise</returns>
         internal bool AllocateSmall(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
             Allocate(CacheForSmall(area, normCapacity), buf, reqCapacity);
 
-        /**
-         * Try to allocate a small buffer out of the cache. Returns <c>true</c> if successful <c>false</c> otherwise
-         */
+        /// <summary>
+        /// Try to allocate a small buffer out of the cache
+        /// </summary>
+        /// <returns><c>true</c> if successful <c>false</c> otherwise</returns>
         internal bool AllocateNormal(PoolArena<T> area, PooledByteBuffer<T> buf, int reqCapacity, int normCapacity) =>
             Allocate(CacheForNormal(area, normCapacity), buf, reqCapacity);
 
@@ -203,10 +205,10 @@ namespace DotNetty.Buffers
             return allocated;
         }
 
-        /**
-         * Add {@link PoolChunk} and {@code handle} to the cache if there is enough room.
-         * Returns <c>true</c> if it fit into the cache <c>false</c> otherwise.
-         */
+        /// <summary>
+        /// Add <see cref="PoolChunk{T}"/> and <paramref name="handle"/> to the cache if there is enough room.
+        /// </summary>
+        /// <returns><c>true</c> if it fit into the cache <c>false</c> otherwise.</returns>
         internal bool Add(PoolArena<T> area, PoolChunk<T> chunk, long handle, int normCapacity, SizeClass sizeClass)
         {
             MemoryRegionCache cache = Cache(area, normCapacity, sizeClass);
@@ -232,9 +234,9 @@ namespace DotNetty.Buffers
             }
         }
 
-        /**
-         *  Should be called if the Thread that uses this cache is about to exist to release resources out of the cache
-         */
+        /// <summary>
+        /// Should be called if the Thread that uses this cache is about to exist to release resources out of the cache
+        /// </summary>
         internal void Free()
         {
             if (_freeTask is object)
@@ -344,9 +346,9 @@ namespace DotNetty.Buffers
             return cache[idx];
         }
 
-        /**
-         * Cache used for buffers which are backed by TINY or SMALL size.
-         */
+        /// <summary>
+        /// Cache used for buffers which are backed by TINY or SMALL size.
+        /// </summary>
         sealed class SubPageMemoryRegionCache : MemoryRegionCache
         {
             internal SubPageMemoryRegionCache(int size, SizeClass sizeClass)
@@ -359,9 +361,9 @@ namespace DotNetty.Buffers
                 chunk.InitBufWithSubpage(buf, handle, reqCapacity, threadCache);
         }
 
-        /**
-         * Cache used for buffers which are backed by NORMAL size.
-         */
+        /// <summary>
+        /// Cache used for buffers which are backed by NORMAL size.
+        /// </summary>
         sealed class NormalMemoryRegionCache : MemoryRegionCache
         {
             internal NormalMemoryRegionCache(int size)
@@ -388,15 +390,15 @@ namespace DotNetty.Buffers
                 _sizeClass = sizeClass;
             }
 
-            /**
-             * Init the {@link PooledByteBuffer} using the provided chunk and handle with the capacity restrictions.
-             */
+            /// <summary>
+            /// Init the <see cref="PooledByteBuffer{T}"/> using the provided chunk and handle with the capacity restrictions.
+            /// </summary>
             protected abstract void InitBuf(PoolChunk<T> chunk, long handle,
                 PooledByteBuffer<T> buf, int reqCapacity, PoolThreadCache<T> threadCache);
 
-            /**
-             * Add to cache if not already full.
-             */
+            /// <summary>
+            /// Add to cache if not already full.
+            /// </summary>
             public bool Add(PoolChunk<T> chunk, long handle)
             {
                 Entry entry = NewEntry(chunk, handle);
@@ -410,9 +412,9 @@ namespace DotNetty.Buffers
                 return queued;
             }
 
-            /**
-             * Allocate something out of the cache if possible and remove the entry from the cache.
-             */
+            /// <summary>
+            /// Allocate something out of the cache if possible and remove the entry from the cache.
+            /// </summary>
             public bool Allocate(PooledByteBuffer<T> buf, int reqCapacity, PoolThreadCache<T> threadCache)
             {
                 if (!_queue.TryDequeue(out Entry entry))
@@ -427,9 +429,9 @@ namespace DotNetty.Buffers
                 return true;
             }
 
-            /**
-             * Clear out this cache and free up all previous cached {@link PoolChunk}s and {@code handle}s.
-             */
+            /// <summary>
+            /// Clear out this cache and free up all previous cached <see cref="PoolChunk{T}"/>s and {@code handle}s.
+            /// </summary>
             public int Free() => Free(int.MaxValue);
 
             int Free(int max)
@@ -450,9 +452,9 @@ namespace DotNetty.Buffers
                 return numFreed;
             }
 
-            /**
-             * Free up cached {@link PoolChunk}s if not allocated frequently enough.
-             */
+            /// <summary>
+            /// Free up cached <see cref="PoolChunk{T}"/>s if not allocated frequently enough.
+            /// </summary>
             public void Trim()
             {
                 int toFree = _size - _allocations;
