@@ -5,9 +5,12 @@ namespace DotNetty.Buffers
 {
     using System;
     using System.Diagnostics;
+    using System.Reflection;
+    using System.Runtime.CompilerServices;
     using DotNetty.Common;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Internal.Logging;
+    using DotNetty.Common.Utilities;
     using Thread = DotNetty.Common.Concurrency.XThread;
 
     /// <summary>
@@ -20,6 +23,7 @@ namespace DotNetty.Buffers
     sealed class PoolThreadCache<T>
     {
         private static readonly IInternalLogger Logger = InternalLoggerFactory.GetInstance<PoolThreadCache<T>>();
+        private static readonly int s_integerSizeMinusOne = IntegerExtensions.SizeInBits - 1;
 
         internal readonly PoolArena<T> HeapArena;
         internal readonly PoolArena<T> DirectArena;
@@ -158,16 +162,11 @@ namespace DotNetty.Buffers
             }
         }
 
-        static int Log2(int val)
+        // val > 0
+        [MethodImpl(InlineMethod.AggressiveOptimization)]
+        private static int Log2(int val)
         {
-            // todo: revisit this vs IntegerExtensions.(Ceil/Floor)Log2
-            int res = 0;
-            while (val > 1)
-            {
-                val >>= 1;
-                res++;
-            }
-            return res;
+            return s_integerSizeMinusOne - IntegerExtensions.NumberOfLeadingZeros(val);
         }
 
         /**

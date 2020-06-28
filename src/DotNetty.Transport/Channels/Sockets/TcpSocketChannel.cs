@@ -413,8 +413,9 @@ namespace DotNetty.Transport.Channels.Sockets
         List<ArraySegment<byte>> AdjustBufferList(long localWrittenBytes, List<ArraySegment<byte>> bufferList)
         {
             var adjusted = new List<ArraySegment<byte>>(bufferList.Count);
-            foreach (ArraySegment<byte> buffer in bufferList)
+            for (int i = 0; i < bufferList.Count; i++)
             {
+                ArraySegment<byte> buffer = bufferList[i];
                 if (localWrittenBytes > 0)
                 {
                     long leftBytes = localWrittenBytes - buffer.Count;

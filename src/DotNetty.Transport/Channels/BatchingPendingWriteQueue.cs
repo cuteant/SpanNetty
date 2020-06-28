@@ -337,9 +337,9 @@ namespace DotNetty.Transport.Channels
 
         static void ReleaseMessages(List<object> messages)
         {
-            foreach (object msg in messages)
+            for (int i = 0; i < messages.Count; i++)
             {
-                ReferenceCountUtil.SafeRelease(msg);
+                ReferenceCountUtil.SafeRelease(messages[i]);
             }
         }
 
