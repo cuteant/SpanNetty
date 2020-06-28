@@ -102,7 +102,7 @@ namespace DotNetty.Buffers
                         return this;
                     }
                 }
-                else if (unewCapacity > (uint)MaxLength.RightUShift(1)
+                else if (unewCapacity > MaxLength.RightShift2U(1)
                     && (uMaxLength > 512u || unewCapacity > uMaxLength - 16u))
                 {
                     // here newCapacity < length

@@ -71,10 +71,10 @@ namespace DotNetty.Common.Utilities
             //if ((uint)i > SharedConstants.TooBigOrNegative) { return 0; }
 
             int n = 1;
-            if (0u >= (uint)i.RightUShift(16)) { n += 16; i <<= 16; }
-            if (0u >= (uint)i.RightUShift(24)) { n += 8; i <<= 8; }
-            if (0u >= (uint)i.RightUShift(28)) { n += 4; i <<= 4; }
-            if (0u >= (uint)i.RightUShift(30)) { n += 2; i <<= 2; }
+            if (0u >= i.RightShift2U(16)) { n += 16; i <<= 16; }
+            if (0u >= i.RightShift2U(24)) { n += 8; i <<= 8; }
+            if (0u >= i.RightShift2U(28)) { n += 4; i <<= 4; }
+            if (0u >= i.RightShift2U(30)) { n += 2; i <<= 2; }
             n -= i.RightUShift(31);
             return n;
         }
