@@ -4,9 +4,13 @@
 namespace DotNetty.Microbench.Internal
 {
     using BenchmarkDotNet.Attributes;
+    using BenchmarkDotNet.Jobs;
     using DotNetty.Common.Internal;
 
-    [CoreJob]
+    [SimpleJob(RuntimeMoniker.Net48)]
+    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
+    [RPlotExporter]
+    [MemoryDiagnoser]
     [BenchmarkCategory("Internal")]
     public class PlatformDependentBenchmark
     {

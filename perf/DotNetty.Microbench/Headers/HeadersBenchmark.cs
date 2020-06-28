@@ -5,13 +5,15 @@ namespace DotNetty.Microbench.Headers
 {
     using System.Collections.Generic;
     using BenchmarkDotNet.Attributes;
-    using BenchmarkDotNet.Engines;
+    using BenchmarkDotNet.Jobs;
     using DotNetty.Codecs;
     using DotNetty.Codecs.Http;
     using DotNetty.Common;
     using DotNetty.Common.Utilities;
 
-    [SimpleJob(RunStrategy.Monitoring, 10, 5, 10)]
+    [SimpleJob(RuntimeMoniker.Net48)]
+    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
+    [RPlotExporter]
     [BenchmarkCategory("Headers")]
     public class HeadersBenchmark
     {

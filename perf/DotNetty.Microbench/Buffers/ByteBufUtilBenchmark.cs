@@ -5,10 +5,14 @@ namespace DotNetty.Microbench.Buffers
 {
     using System.Text;
     using BenchmarkDotNet.Attributes;
+    using BenchmarkDotNet.Jobs;
     using DotNetty.Buffers;
     using DotNetty.Common;
 
-    [CoreJob]
+    [SimpleJob(RuntimeMoniker.Net48)]
+    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
+    [MemoryDiagnoser]
+    [RPlotExporter]
     [BenchmarkCategory("ByteBuffer")]
     public class ByteBufUtilBenchmark
     {

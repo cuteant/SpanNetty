@@ -5,13 +5,15 @@ namespace DotNetty.Microbench.Http
 {
     using System.Text;
     using BenchmarkDotNet.Attributes;
-    using BenchmarkDotNet.Engines;
+    using BenchmarkDotNet.Jobs;
     using DotNetty.Buffers;
     using DotNetty.Codecs.Http;
     using DotNetty.Common;
     using DotNetty.Transport.Channels.Embedded;
 
-    [SimpleJob(RunStrategy.Monitoring, 10, 5, 20)]
+    [SimpleJob(RuntimeMoniker.Net48)]
+    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
+    [RPlotExporter]
     [BenchmarkCategory("Http")]
     public class HttpRequestDecoderBenchmark
     {

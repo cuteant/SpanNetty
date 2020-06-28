@@ -4,18 +4,14 @@
 namespace DotNetty.Microbench.Buffers
 {
     using BenchmarkDotNet.Attributes;
+    using BenchmarkDotNet.Jobs;
     using DotNetty.Buffers;
     using DotNetty.Common;
-#if DESKTOPCLR
-    using BenchmarkDotNet.Diagnostics.Windows.Configs;
-#endif
 
-#if !DESKTOPCLR
-    [CoreJob]
-#else
-    [ClrJob]
-    [InliningDiagnoser]
-#endif
+    [SimpleJob(RuntimeMoniker.Net48)]
+    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
+    [MemoryDiagnoser]
+    [RPlotExporter]
     [BenchmarkCategory("ByteBuffer")]
     public class PooledByteBufferBenchmark
     {

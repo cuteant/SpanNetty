@@ -6,18 +6,13 @@ namespace DotNetty.Microbench.Common
     using System;
     using System.Text;
     using BenchmarkDotNet.Attributes;
+    using BenchmarkDotNet.Jobs;
     using DotNetty.Common.Internal;
     using DotNetty.Common.Utilities;
-#if DESKTOPCLR
-    using BenchmarkDotNet.Diagnostics.Windows.Configs;
-#endif
 
-#if !DESKTOPCLR
-    [CoreJob]
-#else
-    [ClrJob]
-    [InliningDiagnoser]
-#endif
+    [SimpleJob(RuntimeMoniker.Net48)]
+    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
+    [RPlotExporter]
     [BenchmarkCategory("Common")]
     public class AsciiStringBenchmark
     {

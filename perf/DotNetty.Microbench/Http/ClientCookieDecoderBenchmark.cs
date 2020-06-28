@@ -4,10 +4,14 @@
 namespace DotNetty.Microbench.Http
 {
     using BenchmarkDotNet.Attributes;
+    using BenchmarkDotNet.Jobs;
     using DotNetty.Codecs.Http.Cookies;
     using DotNetty.Common;
 
-    [CoreJob]
+    [SimpleJob(RuntimeMoniker.Net48)]
+    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
+    [RPlotExporter]
+    [MemoryDiagnoser]
     [BenchmarkCategory("Http")]
     public class ClientCookieDecoderBenchmark
     {

@@ -5,9 +5,12 @@ namespace DotNetty.Microbench.Codecs
 {
     using System;
     using BenchmarkDotNet.Attributes;
+    using BenchmarkDotNet.Jobs;
     using DotNetty.Codecs;
 
-    [CoreJob]
+    [SimpleJob(RuntimeMoniker.Net48)]
+    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
+    [RPlotExporter]
     [BenchmarkCategory("Codecs")]
     public class DateFormatterBenchmark
     {

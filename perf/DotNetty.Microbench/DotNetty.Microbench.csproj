@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\DotNetty.Codecs.Http\DotNetty.Codecs.Http.csproj" />
+    <ProjectReference Include="..\..\src\DotNetty.Codecs.Http2\DotNetty.Codecs.Http2.csproj" />
   </ItemGroup>
 
   <ItemGroup>

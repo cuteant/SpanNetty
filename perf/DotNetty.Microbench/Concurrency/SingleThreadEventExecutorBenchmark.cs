@@ -6,11 +6,13 @@ namespace DotNetty.Microbench.Concurrency
     using System;
     using System.Threading;
     using BenchmarkDotNet.Attributes;
-    using BenchmarkDotNet.Engines;
+    using BenchmarkDotNet.Jobs;
     using DotNetty.Common.Concurrency;
     using DotNetty.Common.Internal;
 
-    [SimpleJob(RunStrategy.Monitoring)]
+    [SimpleJob(RuntimeMoniker.Net48)]
+    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
+    [RPlotExporter]
     [BenchmarkCategory("Concurrency")]
     public class SingleThreadEventExecutorBenchmark
     {

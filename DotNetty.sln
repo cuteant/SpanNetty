@@ -48,8 +48,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Redis.Tests
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Transport.Libuv", "src\DotNetty.Transport.Libuv\DotNetty.Transport.Libuv.csproj", "{F89EE43E-F0AE-4EA1-BEFF-6322C6E8EAF5}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmark", "benchmark", "{78B5F58B-549D-42E7-BA3D-9E85B7CBCC78}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Http", "src\DotNetty.Codecs.Http\DotNetty.Codecs.Http.csproj", "{87DD4EAA-BBCF-439F-A263-59044B6E8930}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetty.Codecs.Http.Tests", "test\DotNetty.Codecs.Http.Tests\DotNetty.Codecs.Http.Tests.csproj", "{26A8779A-44B1-46D4-A43E-FA2616EBFD02}"

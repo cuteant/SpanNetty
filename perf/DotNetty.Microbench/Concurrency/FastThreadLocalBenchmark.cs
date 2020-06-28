@@ -4,9 +4,12 @@
 namespace DotNetty.Microbench.Concurrency
 {
     using BenchmarkDotNet.Attributes;
+    using BenchmarkDotNet.Jobs;
     using DotNetty.Common;
 
-    [CoreJob]
+    [SimpleJob(RuntimeMoniker.Net48)]
+    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
+    [RPlotExporter]
     [BenchmarkCategory("Concurrency")]
     public class FastThreadLocalBenchmark
     {

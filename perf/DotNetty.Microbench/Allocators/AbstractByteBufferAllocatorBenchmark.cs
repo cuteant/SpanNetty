@@ -5,12 +5,15 @@ namespace DotNetty.Microbench.Allocators
 {
     using System;
     using BenchmarkDotNet.Attributes;
+    using BenchmarkDotNet.Jobs;
     using DotNetty.Buffers;
     using DotNetty.Common;
 
-    [CoreJob]
-    [BenchmarkCategory("ByteBufferAllocator")]
+    [SimpleJob(RuntimeMoniker.Net48)]
+    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
     [MemoryDiagnoser]
+    [RPlotExporter]
+    [BenchmarkCategory("ByteBufferAllocator")]
     public abstract class AbstractByteBufferAllocatorBenchmark
     {
         const int MaxLiveBuffers = 8192;
